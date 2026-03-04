@@ -2,30 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nuave – AI Visibility Audit</title>
     <meta
       name="description"
       content="Nuave is an AI Visibility Platform that helps you see how often ChatGPT mentions your brand and where you stand against competitors."
     />
-    <link rel="stylesheet" href="./styles/tokens.css" />
-    <link rel="stylesheet" href="./styles/landing.css" />
+    <link rel="stylesheet" href="./styles/main.css" />
   </head>
-  <body class="nuave-page">
+  <body>
     <header class="nuave-header">
       <div class="nuave-header-inner">
         <a href="#" class="nuave-logo" aria-label="Nuave home">
-          <span class="nuave-logo-mark">N</span>
+          <span class="nuave-logo-mark" aria-hidden="true">N</span>
           <span class="nuave-logo-text">Nuave</span>
         </a>
         <div class="nuave-header-actions">
           <a href="#" class="btn btn-ghost">Log in</a>
           <a href="#" class="btn btn-primary">
             <span>Start free audit</span>
-            <span class="btn-arrow">→</span>
+            <span class="btn-arrow" aria-hidden="true">→</span>
           </a>
         </div>
       </div>
@@ -43,8 +39,11 @@
             competitors rank for, and get a roadmap to improve.
           </p>
 
-          <div class="nuave-form-card" aria-label="Start free audit form">
-            <form class="nuave-form-grid">
+          <div class="nuave-form-card">
+            <form
+              class="nuave-form-grid"
+              aria-label="Start free audit"
+            >
               <div class="field">
                 <label for="brand-name" class="field-label">
                   Brand / Company name
@@ -73,7 +72,7 @@
 
               <button type="submit" class="btn btn-primary btn-full">
                 <span>Start free audit</span>
-                <span class="btn-arrow">→</span>
+                <span class="btn-arrow" aria-hidden="true">→</span>
               </button>
             </form>
 
@@ -83,14 +82,9 @@
             </div>
           </div>
 
-          <section
-            class="nuave-social-proof"
-            aria-label="Nuave customer logos"
-          >
+          <section class="nuave-social-proof" aria-label="Customers">
             <div class="nuave-social-inner">
-              <p class="nuave-social-label">
-                Used by marketing teams at
-              </p>
+              <p class="nuave-social-label">Used by marketing teams at</p>
               <div class="nuave-social-logos">
                 <span class="nuave-social-logo">Northbeam</span>
                 <span class="nuave-social-logo">SignalFlow</span>
@@ -106,4 +100,3 @@
     </main>
   </body>
 </html>
-
