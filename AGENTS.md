@@ -19,3 +19,27 @@ aftersales work:
 
 Repository files are the source of truth between sessions. Chat history is not
 the progress tracker.
+
+Before editing, briefly report:
+
+  - current phase and status;
+  - next exact task;
+  - governing files you will use;
+  - files you expect to create or modify;
+  - unresolved decisions that could block the task.
+
+  Work on one bounded deliverable. Use the shared fixture and upstream artifact
+  contracts. Do not silently change settled decisions, clinic facts, the offer,
+  measurement definitions, or lifecycle states.
+
+  At the end:
+
+  - validate the artifact against the workflow acceptance questions;
+  - update the artifact manifest;
+  - update ARTIFACT_STATUS.md, including the checklist, progress log, and next
+  exact task;
+  - update DECISION_LOG.md only for material cross-cutting decisions;
+  - do not mark the phase complete unless its exit gate passes;
+  - report the files changed, decisions made, remaining blockers, and next task.
+
+  Do not commit or push unless I explicitly request it.
