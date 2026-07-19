@@ -8,3 +8,8 @@ MVP, measurement, funnel, operations, architecture, compliance, experiments,
 and decision history.
 
 The existing `src/` directory contains the current landing-page prototype.
+
+Low-fidelity touchpoint work is routed through
+[`artifacts/README.md`](./artifacts/README.md). Its current phase and next task
+are tracked in
+[`docs/v2/ARTIFACT_STATUS.md`](./docs/v2/ARTIFACT_STATUS.md).

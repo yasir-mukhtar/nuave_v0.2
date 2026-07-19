@@ -26,6 +26,7 @@ old rows to make history cleaner; add a superseding row.
 | 2026-07-19 | Review every founding-cohort report and log interventions. | SETTLED | Early quality and learning outweigh zero-touch delivery. | Review causes are understood, automated checks pass, and operational metrics support selective QA. |
 | 2026-07-19 | Use a fresh v2 repository and data model, with selective reviewed reuse of small legacy modules. | SETTLED | Avoid legacy SaaS scope while not rewriting proven utilities for ideological purity. | A reuse candidate introduces coupling or a rewrite is demonstrably safer. |
 | 2026-07-19 | Acquire the first 20–30 customers through founder-assisted and partner channels before cold-ad scale. | SETTLED | Learn objections and delivery value before paying to amplify the funnel. | Report-value and operational gates pass. |
+| 2026-07-19 | Create touchpoint artifacts through a tracked golden-path phase workflow, with repository files rather than chat history as the AI handoff. | SETTLED | Preserve context while exposing end-to-end contradictions before engineering or visual polish. | The workflow repeatedly slows learning or fails to maintain cross-touchpoint consistency. |
 | 2026-07-19 | Make aftersales, action selection, referrals, and comparable re-audits part of the measured product lifecycle. | SETTLED | The product must change action, not merely deliver a PDF. | Customer evidence shows a different value-realization mechanism. |
 
 ## Superseded directions
