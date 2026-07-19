@@ -24,6 +24,8 @@ when a narrower source is sufficient.
 | Validation gates, metrics, experiments, scale rules | [`EXPERIMENTS_AND_GATES.md`](./EXPERIMENTS_AND_GATES.md) |
 | Clinic claims, privacy, consent, retention | [`COMPLIANCE_AND_DATA.md`](./COMPLIANCE_AND_DATA.md) |
 | Dated decisions and revisit triggers | [`DECISION_LOG.md`](./DECISION_LOG.md) |
+| Artifact phases, fidelity, session protocol, acceptance | [`ARTIFACT_WORKFLOW.md`](./ARTIFACT_WORKFLOW.md) |
+| Current artifact phase, progress, blockers, next task | [`ARTIFACT_STATUS.md`](./ARTIFACT_STATUS.md) |
 
 ## Authority order
 
@@ -56,6 +58,8 @@ When documents conflict:
 6. Record material strategy or scope changes in `DECISION_LOG.md`.
 7. Put experiments and evidence in `EXPERIMENTS_AND_GATES.md`; do not rewrite
    history to make an experiment look pre-decided.
+8. For artifact work, read `ARTIFACT_STATUS.md` before acting and update it in
+   the same change as the artifact; do not use chat history as the tracker.
 
 ## Maintenance
 
