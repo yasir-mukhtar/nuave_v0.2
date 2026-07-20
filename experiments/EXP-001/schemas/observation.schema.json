@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nuave:schema:exp-001-observation-v0.1",
+  "title": "EXP-001 provider observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "subject_id",
+    "measurement_version",
+    "prompt_pack_id",
+    "prompt_id",
+    "prompt_class",
+    "rendered_prompt",
+    "run_index",
+    "surface",
+    "provider",
+    "model",
+    "request_started_at",
+    "response_completed_at",
+    "timezone",
+    "language",
+    "city_context",
+    "status",
+    "raw_evidence_ref",
+    "citations",
+    "entity_observations",
+    "latency_ms",
+    "retry_count",
+    "review_status"
+  ],
+  "properties": {
+    "schema_version": { "const": "exp-001-observation-v0.1" },
+    "experiment_id": { "const": "EXP-001" },
+    "subject_id": { "type": "string", "minLength": 1 },
+    "measurement_version": { "const": "measurement-v0.1" },
+    "prompt_pack_id": { "const": "dental-id-jakarta-v0.1" },
+    "prompt_id": { "type": "string", "pattern": "^DEN-JKT-(CORE|EXP|BRAND)-[0-9]{3}$" },
+    "prompt_class": {
+      "enum": ["core_non_branded_discovery", "exploratory_non_branded", "branded_accuracy"]
+    },
+    "rendered_prompt": { "type": "string", "minLength": 1 },
+    "run_index": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "surface": { "enum": ["openai_web_search", "gemini_google_search_grounding"] },
+    "provider": { "enum": ["OpenAI", "Google"] },
+    "model": { "type": "string", "minLength": 1 },
+    "request_settings": { "type": "object" },
+    "provider_request_id": { "type": ["string", "null"] },
+    "request_started_at": { "type": "string", "format": "date-time" },
+    "response_completed_at": { "type": "string", "format": "date-time" },
+    "timezone": { "const": "Asia/Jakarta" },
+    "language": { "const": "id-ID" },
+    "city_context": { "const": "Jakarta" },
+    "provider_accepted_context": { "type": ["boolean", "null"] },
+    "status": {
+      "enum": ["success", "valid_no_recommendations", "provider_failure", "safety_block", "unevaluable"]
+    },
+    "failure": {
+      "type": ["object", "null"],
+      "properties": {
+        "class": { "type": "string" },
+        "message_sanitized": { "type": "string" },
+        "transient": { "type": "boolean" }
+      },
+      "required": ["class", "message_sanitized", "transient"],
+      "additionalProperties": false
+    },
+    "raw_evidence_ref": { "type": "string", "minLength": 1 },
+    "raw_evidence_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url", "provider_label"],
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "provider_label": { "type": ["string", "null"] },
+          "source_type": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "entity_observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["observed_name", "role", "identity_outcome", "appearance", "mention", "recommendation_inclusion", "comparative_inclusion"],
+        "properties": {
+          "observed_name": { "type": "string", "minLength": 1 },
+          "role": { "enum": ["audited_clinic", "candidate_competitor", "unresolved_entity"] },
+          "resolved_business_ref": { "type": ["string", "null"] },
+          "identity_outcome": { "enum": ["resolved", "ambiguous", "unresolved"] },
+          "identity_evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "appearance": { "type": "boolean" },
+          "mention": { "type": "boolean" },
+          "recommendation_inclusion": { "type": "boolean" },
+          "comparative_inclusion": { "type": "boolean" },
+          "presentation_order": { "type": ["integer", "null"], "minimum": 1 },
+          "factual_statements": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "cost": {
+      "type": ["object", "null"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+        "provider_reported": { "type": "boolean" }
+      },
+      "required": ["amount", "currency", "provider_reported"],
+      "additionalProperties": false
+    },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "retry_count": { "type": "integer", "minimum": 0 },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "extraction_version": { "type": ["string", "null"] },
+    "review_status": { "enum": ["pending", "pass", "revise", "blocked"] },
+    "reviewer": { "type": ["string", "null"] },
+    "reviewed_at": { "type": ["string", "null"], "format": "date-time" },
+    "review_notes": { "type": ["string", "null"] }
+  }
+}

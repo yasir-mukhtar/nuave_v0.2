@@ -1,0 +1,140 @@
+{
+  "schema_version": "prompt-pack-v0.1",
+  "prompt_pack_id": "dental-id-jakarta-v0.1",
+  "status": "experimental_frozen_for_calibration",
+  "vertical": "dental_clinic",
+  "city": "Jakarta",
+  "language": "id-ID",
+  "locale_context": "Jakarta, Indonesia",
+  "measurement_version": "measurement-v0.1",
+  "created_at": "2026-07-19",
+  "boundary": {
+    "independent_requests": true,
+    "shared_conversation_history": false,
+    "audited_clinic_seeded_in_non_branded_prompts": false,
+    "consumer_interface_equivalence_claimed": false,
+    "notes": "Exact model identifiers, supported settings, and run spacing are frozen in the execution manifest before calibration."
+  },
+  "classes": [
+    {
+      "class_id": "core_non_branded_discovery",
+      "prompt_count": 4,
+      "runs_per_surface": 3,
+      "purpose": "Observe high-value local discovery inclusion and expose run-to-run variability."
+    },
+    {
+      "class_id": "exploratory_non_branded",
+      "prompt_count": 4,
+      "runs_per_surface": 1,
+      "purpose": "Explore service, comparison, trust, and informational intents without implying frequency."
+    },
+    {
+      "class_id": "branded_accuracy",
+      "prompt_count": 2,
+      "runs_per_surface": 1,
+      "purpose": "Inspect identity and factual representation when the clinic is named; report separately from discovery."
+    }
+  ],
+  "prompts": [
+    {
+      "prompt_id": "DEN-JKT-CORE-001",
+      "class_id": "core_non_branded_discovery",
+      "intent": "general_discovery",
+      "branded": false,
+      "exact_text": "Rekomendasikan beberapa klinik gigi di Jakarta untuk pemeriksaan gigi rutin. Jelaskan alasan setiap pilihan.",
+      "placeholders": [],
+      "rationale": "Tests general local dental-clinic discovery with an ordinary preventive-care context.",
+      "safety_note": "Do not interpret recommendation inclusion as clinical quality or treatment suitability."
+    },
+    {
+      "prompt_id": "DEN-JKT-CORE-002",
+      "class_id": "core_non_branded_discovery",
+      "intent": "family_discovery",
+      "branded": false,
+      "exact_text": "Saya sedang mencari klinik gigi di Jakarta untuk keluarga. Klinik mana yang dapat dipertimbangkan dan apa alasan utamanya?",
+      "placeholders": [],
+      "rationale": "Tests a common family-oriented choice context without requesting medical advice.",
+      "safety_note": "Treat suitability language as provider output to review, not a Nuave endorsement."
+    },
+    {
+      "prompt_id": "DEN-JKT-CORE-003",
+      "class_id": "core_non_branded_discovery",
+      "intent": "information_clarity_discovery",
+      "branded": false,
+      "exact_text": "Saya mencari klinik gigi di Jakarta dengan informasi layanan dan lokasi yang jelas. Klinik mana yang patut dipertimbangkan dan mengapa?",
+      "placeholders": [],
+      "rationale": "Tests whether clear public business information is retrieved in a discovery task.",
+      "safety_note": "Public-information clarity is not evidence of clinical superiority."
+    },
+    {
+      "prompt_id": "DEN-JKT-CORE-004",
+      "class_id": "core_non_branded_discovery",
+      "intent": "new_patient_comparison",
+      "branded": false,
+      "exact_text": "Bandingkan beberapa pilihan klinik gigi di Jakarta untuk pasien baru berdasarkan informasi publik yang dapat diverifikasi. Sertakan sumber dan jelaskan keterbatasan informasinya.",
+      "placeholders": [],
+      "rationale": "Tests comparative inclusion while explicitly requesting sources and limitations.",
+      "safety_note": "Do not turn comparison into a claim about care quality, legality, safety, or outcomes."
+    },
+    {
+      "prompt_id": "DEN-JKT-EXP-001",
+      "class_id": "exploratory_non_branded",
+      "intent": "service_intent",
+      "branded": false,
+      "exact_text": "Klinik gigi di Jakarta mana yang secara publik menyebutkan layanan pembersihan karang gigi? Berikan beberapa contoh dan tautkan sumber yang menyebutkan layanan tersebut.",
+      "placeholders": [],
+      "rationale": "Explores a specific service intent through verifiable public descriptions.",
+      "safety_note": "Presence of a service description does not verify suitability, efficacy, price, or availability."
+    },
+    {
+      "prompt_id": "DEN-JKT-EXP-002",
+      "class_id": "exploratory_non_branded",
+      "intent": "comparison_intent",
+      "branded": false,
+      "exact_text": "Sebutkan beberapa klinik gigi di Jakarta yang dapat dibandingkan oleh pasien baru. Gunakan hanya informasi publik yang dapat diperiksa, jelaskan aspek perbandingannya, dan sertakan sumber.",
+      "placeholders": [],
+      "rationale": "Explores which entities and public attributes appear in an open comparison task.",
+      "safety_note": "Exclude or escalate unsupported comparative-superiority and clinical-quality claims."
+    },
+    {
+      "prompt_id": "DEN-JKT-EXP-003",
+      "class_id": "exploratory_non_branded",
+      "intent": "trust_intent",
+      "branded": false,
+      "exact_text": "Bagaimana cara memeriksa kredibilitas informasi publik sebuah klinik gigi di Jakarta? Gunakan beberapa klinik nyata sebagai contoh dan sertakan sumber yang dapat diperiksa.",
+      "placeholders": [],
+      "rationale": "Explores trust-oriented source retrieval without asking the provider to certify clinical quality.",
+      "safety_note": "Credentials and regulatory status require authoritative verification; do not infer quality from visibility."
+    },
+    {
+      "prompt_id": "DEN-JKT-EXP-004",
+      "class_id": "exploratory_non_branded",
+      "intent": "informational_intent",
+      "branded": false,
+      "exact_text": "Informasi publik apa yang biasanya membantu seseorang membandingkan klinik gigi di Jakarta? Gunakan beberapa contoh klinik nyata, bedakan fakta dari saran, dan sertakan sumber.",
+      "placeholders": [],
+      "rationale": "Explores informational source patterns and whether concrete clinics are used as examples.",
+      "safety_note": "Examples are observations, not Nuave endorsements or proof of patient outcomes."
+    },
+    {
+      "prompt_id": "DEN-JKT-BRAND-001",
+      "class_id": "branded_accuracy",
+      "intent": "identity_and_facts",
+      "branded": true,
+      "exact_text": "Apa informasi publik yang dapat diverifikasi tentang {{clinic_name}} di {{clinic_address}}, Jakarta? Ringkas lokasi, layanan yang disebutkan, kontak publik, dan sumbernya. Jangan menebak jika informasi tidak tersedia.",
+      "placeholders": ["clinic_name", "clinic_address"],
+      "rationale": "Inspects public identity and factual representation for the named clinic.",
+      "safety_note": "Customer or provider claims remain unverified unless corroborated by an accepted authoritative source."
+    },
+    {
+      "prompt_id": "DEN-JKT-BRAND-002",
+      "class_id": "branded_accuracy",
+      "intent": "source_consistency",
+      "branded": true,
+      "exact_text": "Apakah informasi publik tentang {{clinic_name}} di {{clinic_address}}, Jakarta konsisten antara situs resmi, listing bisnis, dan sumber publik lain yang ditemukan? Tunjukkan konflik atau ketidakpastian dan sertakan sumber. Jangan menilai kualitas perawatan.",
+      "placeholders": ["clinic_name", "clinic_address"],
+      "rationale": "Inspects contradictions and uncertainty across public sources while prohibiting clinical-quality inference.",
+      "safety_note": "A missing source is not proof that a clinic fact is false; conflicts require review."
+    }
+  ]
+}

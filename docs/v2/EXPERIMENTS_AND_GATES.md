@@ -131,6 +131,12 @@ not founder preference, creates a new decision.
 - **Primary evidence:** identity success, provider coverage, variance, useful
   finding rate under operator review.
 - **Decision:** choose city and finalize or revise the v0 audit spec.
+- **Status:** `SAMPLE_LOCKED` — 10 evidence clinics and one excluded calibration
+  clinic are frozen; no provider observations or result are available.
+- **Pre-registered record:**
+  [`experiments/EXP-001/README.md`](../../experiments/EXP-001/README.md), including
+  the frozen prompt pack, sampling rules, observation schema, review rubric,
+  identity sample, experimental thresholds, and stop rules.
 
 ### EXP-002: paid founding offer
 

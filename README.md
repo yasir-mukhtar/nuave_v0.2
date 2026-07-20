@@ -1,15 +1,37 @@
-# Nuave v0.2
+# Nuave
 
-Nuave v0.2 is the new one-time AI visibility audit for local businesses. The
-current validation wedge is single-location dental clinics.
+Nuave is a one-time AI visibility audit for single-location dental clinics. It
+uses real web information and observed AI responses to show what a clinic can
+learn and improve. The first version is a manually delivered concierge product,
+not a subscription platform.
 
-Start with [`docs/v2/README.md`](./docs/v2/README.md) for the canonical strategy,
-MVP, measurement, funnel, operations, architecture, compliance, experiments,
-and decision history.
+## Start here
 
-The existing `src/` directory contains the current landing-page prototype.
+| Need | Read |
+|---|---|
+| Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
+| Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
+| How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
+| Experiment to run now | [`experiments/ACTIVE.md`](./experiments/ACTIVE.md) |
+| Current go-to-market action | [`gtm/NOW.md`](./gtm/NOW.md) |
+| Dated product decisions | [`docs/v2/DECISION_LOG.md`](./docs/v2/DECISION_LOG.md) |
 
-Low-fidelity touchpoint work is routed through
-[`artifacts/README.md`](./artifacts/README.md). Its current phase and next task
-are tracked in
-[`docs/v2/ARTIFACT_STATUS.md`](./docs/v2/ARTIFACT_STATUS.md).
+Load only the document needed for the current task. The larger `docs/v2/`,
+`artifacts/`, and `experiments/EXP-001/` materials preserve earlier detailed
+planning, but they are not required reading for raw-MVP work.
+
+## Current product flow
+
+```text
+outreach or simple landing page
+  -> confirm one clinic
+  -> payment link
+  -> short intake
+  -> manual audit
+  -> reviewed report
+  -> customer feedback
+```
+
+The existing `src/` landing page is an earlier prototype. Its free-audit,
+account, score, and social-proof claims do not match the current product and
+must not be published as-is.

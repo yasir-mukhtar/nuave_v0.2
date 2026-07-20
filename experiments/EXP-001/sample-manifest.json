@@ -1,0 +1,365 @@
+{
+  "schema_version": "exp-001-sample-manifest-v0.1",
+  "experiment_id": "EXP-001",
+  "status": "locked_identity_only",
+  "city": "Jakarta",
+  "vertical": "dental_clinic",
+  "selection_method": {
+    "candidate_pool_rule": "Public candidates were screened without inspecting AI-provider inclusion. Qualifying stable Maps listing identifiers were sorted by SHA-256 of the experiment seed, a colon separator, and the identifier.",
+    "seed": "EXP-001-JKT-v0.1",
+    "hash_algorithm": "SHA-256",
+    "hash_input_format": "{seed}:{maps_provider_id}",
+    "role_assignment_rule": "The first 10 qualifying subjects in ascending hash order are evidence subjects; the 11th is the excluded calibration subject.",
+    "candidate_pool_size": 12,
+    "qualifying_candidate_count": 11,
+    "excluded_candidate_count": 1,
+    "evidence_sample_size": 10,
+    "calibration_sample_size": 1,
+    "model_visibility_screened": false,
+    "provider_observations_started": false,
+    "locked_at": "2026-07-19T10:26:59Z"
+  },
+  "required_subject_fields": [
+    "subject_id",
+    "sample_role",
+    "public_clinic_name",
+    "known_name_variants",
+    "selected_branch",
+    "full_address",
+    "maps_provider_id",
+    "maps_url",
+    "official_website_or_social_url",
+    "public_phone",
+    "public_category",
+    "identity_source_urls",
+    "identity_captured_at",
+    "identity_status",
+    "inclusion_decision",
+    "inclusion_reason",
+    "selection_order_hash",
+    "identity_notes"
+  ],
+  "calibration_subject": {
+    "subject_id": "EXP-001-JKT-CAL-01",
+    "sample_role": "calibration",
+    "selection_order": 11,
+    "public_clinic_name": "Precious Dental Care",
+    "known_name_variants": [
+      "Klinik Gigi Muara Karang (Precious Dental)",
+      "Precious Dental Clinic"
+    ],
+    "selected_branch": "Muara Karang, Pluit",
+    "full_address": "Jl. Pluit Karang Barat Blok O6 Barat No. 9A, RT.2/RW.8, Pluit, Penjaringan, Jakarta Utara 14450",
+    "maps_provider_id": "google_place_id:ChIJ32yJ6p4dai4Rlg8-s49CStw",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Precious%20Dental%20Care&query_place_id=ChIJ32yJ6p4dai4Rlg8-s49CStw",
+    "official_website_or_social_url": "https://preciousdentalcare.id/hubungi/",
+    "public_phone": "+62 878 3800 3388",
+    "public_category": "Dental clinic",
+    "identity_source_urls": [
+      "https://preciousdentalcare.id/hubungi/",
+      "https://www.waze.com/id/live-map/directions/id/daerah-khusus-ibukota-jakarta/klinik-gigi-muara-karang-%28precious-dental-%E5%8F%A3%E8%85%94%E8%AF%8A%E6%89%80%29?to=place.ChIJ32yJ6p4dai4Rlg8-s49CStw"
+    ],
+    "identity_captured_at": "2026-07-19T10:26:59Z",
+    "identity_status": "resolved",
+    "inclusion_decision": "included",
+    "inclusion_reason": "The official contact page and Maps-linked listing agree on the clinic name, one Muara Karang location, address, phone, and dental-clinic activity.",
+    "selection_order_hash": "fb05d4a377f54e565a424e958f823cbcbe841c67933b4e047b055690561f08c9",
+    "identity_notes": "Reserved for runner and review calibration; excluded from the ten-clinic result denominator."
+  },
+  "evidence_subjects": [
+    {
+      "subject_id": "EXP-001-JKT-E01",
+      "sample_role": "evidence",
+      "selection_order": 1,
+      "public_clinic_name": "Estetika Dental Clinic",
+      "known_name_variants": [
+        "Estetika Dental",
+        "Estetika Dental Clinic Cempaka Putih"
+      ],
+      "selected_branch": "Cempaka Putih",
+      "full_address": "Jl. Cempaka Putih Raya No. B4, Jakarta Pusat 10510",
+      "maps_provider_id": "google_share:c5MU11vv60hWPwbOq",
+      "maps_url": "https://share.google/c5MU11vv60hWPwbOq",
+      "official_website_or_social_url": "https://estetikadental.com/kontak/",
+      "public_phone": "+62 21 4245731",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://estetikadental.com/kontak/",
+        "https://www.waze.com/live-map/directions/estetika-dental-clinic-cempaka-putih-raya-jakarta-pusat?to=place.w.70059722.700400614.21901686"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official contact page links the Maps share identifier and agrees with the public listing on name, Cempaka Putih location, phone, and dental-clinic activity.",
+      "selection_order_hash": "18ef774238199576d4d62548a2e672cbd18a8b743528e792dd302532781806af",
+      "identity_notes": "Use the official Google share token as the frozen listing identifier; do not substitute similarly named overseas clinics."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E02",
+      "sample_role": "evidence",
+      "selection_order": 2,
+      "public_clinic_name": "Ardaya Klinik Gigi",
+      "known_name_variants": [
+        "Klinik Gigi Ardaya",
+        "Ardaya Dental Clinic"
+      ],
+      "selected_branch": "Bassura City Tower Geranium",
+      "full_address": "Apartemen Bassura City Tower Geranium, RT.3/RW.8, Cipinang Besar Selatan, Jatinegara, Jakarta Timur 13410",
+      "maps_provider_id": "google_place_id:ChIJE-zCe-vzaS4R6GycSl92mTs",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Ardaya%20Klinik%20Gigi&query_place_id=ChIJE-zCe-vzaS4R6GycSl92mTs",
+      "official_website_or_social_url": "https://www.instagram.com/ardayaklinikgigi/",
+      "public_phone": "+62 812 8333 9757",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://www.instagram.com/ardayaklinikgigi/",
+        "https://www.waze.com/live-map/directions/id/daerah-khusus-ibukota-jakarta/ardaya-klinik-gigi?to=place.ChIJE-zCe-vzaS4R6GycSl92mTs"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The authoritative social profile and Maps-linked listing resolve to the same named clinic, Bassura City location, phone, and dental-clinic activity.",
+      "selection_order_hash": "2f0eac5187190c16949d3c98a01d380b5b18030440390cd0fac0c66f6958f883",
+      "identity_notes": "The clinic is located inside the Bassura City apartment complex; retain the tower name in branded prompts."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E03",
+      "sample_role": "evidence",
+      "selection_order": 3,
+      "public_clinic_name": "Klinik Gigi Synergy",
+      "known_name_variants": [
+        "Synergy Dental Clinic",
+        "Klinik Gigi Synergy Orthodontics and Aesthetic Dentistry"
+      ],
+      "selected_branch": "Duri Kepa",
+      "full_address": "Jl. Ratu Kemuning Blok D9 No. 11, Duri Kepa, Kebon Jeruk, Jakarta Barat 11510",
+      "maps_provider_id": "google_cid:1266104875626984038",
+      "maps_url": "https://www.google.com/maps/?cid=1266104875626984038",
+      "official_website_or_social_url": "https://www.klinikgigisynergy.com/",
+      "public_phone": "+62 878 7688 8098",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://www.klinikgigisynergy.com/",
+        "https://www.semuabis.com/klinik-gigi-synergy-orthodontics-and-0878-7688-8098"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official site and Maps-linked business directory agree on the distinctive clinic name, Duri Kepa address, phone, and dental-clinic activity.",
+      "selection_order_hash": "317ff7cb659ff4b7e9da8488a8d33515288bb519222b13cda562e12357fb7b6a",
+      "identity_notes": "Distinguish this independent Duri Kepa clinic from unrelated businesses using the generic word Synergy."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E04",
+      "sample_role": "evidence",
+      "selection_order": 4,
+      "public_clinic_name": "Klinik Drg. Mia Kemayoran",
+      "known_name_variants": [
+        "Klinik Gigi Drg Mia",
+        "Klinik Gigi Jakarta Pusat Drg. Mia"
+      ],
+      "selected_branch": "Sumur Batu, Kemayoran",
+      "full_address": "Jl. Baiduri Raya No. 371 Blok Q, RT.13/RW.2, Sumur Batu, Kemayoran, Jakarta Pusat 10640",
+      "maps_provider_id": "google_place_id:ChIJS0aNQkj1aS4R2LkCjfw1a_I",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Klinik%20Drg.%20Mia%20Kemayoran&query_place_id=ChIJS0aNQkj1aS4R2LkCjfw1a_I",
+      "official_website_or_social_url": "https://www.klinikgigijakartapusat.web.id/",
+      "public_phone": "+62 812 6419 5500",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://www.klinikgigijakartapusat.web.id/",
+        "https://www.waze.com/live-map/directions/id/daerah-khusus-ibukota-jakarta/klinik-drg.-mia-kemayoran?to=place.ChIJS0aNQkj1aS4R2LkCjfw1a_I"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The clinic site and Maps-linked listing agree on the practitioner-led name, Sumur Batu address, phone, and dental-clinic activity.",
+      "selection_order_hash": "37d6ca977f509c1acb08d57db5e4b08bc6b6c108fdfe35af60ce4e8dc8622a7d",
+      "identity_notes": "Keep Kemayoran in branded prompts because Mia is a common personal name."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E05",
+      "sample_role": "evidence",
+      "selection_order": 5,
+      "public_clinic_name": "Dharmawangsa Dental Studio",
+      "known_name_variants": [
+        "Klinik Dharmawangsa",
+        "DDS Dharmawangsa"
+      ],
+      "selected_branch": "JIVAS Space, Dharmawangsa",
+      "full_address": "JIVAS Space, Jl. Dharmawangsa Raya No. 8A, Pulo, Kebayoran Baru, Jakarta Selatan 12160",
+      "maps_provider_id": "google_short:oNLRRyCtTEhqcCkW6",
+      "maps_url": "https://goo.gl/maps/oNLRRyCtTEhqcCkW6",
+      "official_website_or_social_url": "https://dharmawangsadentalstudio.com/",
+      "public_phone": "+62 21 7398484",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://dharmawangsadentalstudio.com/",
+        "https://linktr.ee/dharmawangsadentalstudio",
+        "https://www.cybo.com/ID-biz/dharmawangsa-dental-studio_1E"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official site and profile plus the Maps-linked public listing agree on the distinctive name, JIVAS Space location, phone, and dental-clinic activity.",
+      "selection_order_hash": "5dbbf3b98810edd56e25907def14594d9aa2d46787faa5d6506808225cb79936",
+      "identity_notes": "Do not confuse this clinic with other dental practices using Dharmawangsa as a neighborhood label."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E06",
+      "sample_role": "evidence",
+      "selection_order": 6,
+      "public_clinic_name": "Pondok Gigi",
+      "known_name_variants": [
+        "Pondok Gigi Antasari",
+        "Klinik Pondok Gigi"
+      ],
+      "selected_branch": "Cipete Selatan, Antasari",
+      "full_address": "Jl. Pangeran Antasari No. 20B, Cipete Selatan, Cilandak, Jakarta Selatan",
+      "maps_provider_id": "google_place_id:ChIJq_J8o4_xaS4Rv_bhevZcP9Y",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Pondok%20Gigi&query_place_id=ChIJq_J8o4_xaS4Rv_bhevZcP9Y",
+      "official_website_or_social_url": "https://pondokgigi.com/tentang-pondok-gigi/",
+      "public_phone": "+62 812 3206 6161",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://pondokgigi.com/tentang-pondok-gigi/",
+        "https://www.waze.com/live-map/directions/id/daerah-khusus-ibukota-jakarta/pondok-gigi?to=place.ChIJq_J8o4_xaS4Rv_bhevZcP9Y"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official site and Maps-linked listing agree on the clinic name, Antasari address, phone, and dental-clinic activity.",
+      "selection_order_hash": "6174c3439d414414309f6428716c6020a8e28e86cd69d2d280ff1f4e91fd87a8",
+      "identity_notes": "Retain Antasari or Cipete Selatan in branded prompts because Pondok Gigi is a generic Indonesian name."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E07",
+      "sample_role": "evidence",
+      "selection_order": 7,
+      "public_clinic_name": "Palapa Dentists",
+      "known_name_variants": [
+        "Palapa Dentists Dental Clinic",
+        "Palapa Dentist"
+      ],
+      "selected_branch": "Pasar Minggu",
+      "full_address": "Jl. Palapa I No. 4, RT.1/RW.5, Pasar Minggu, Jakarta Selatan 12520",
+      "maps_provider_id": "google_place_id:ChIJ80PqrxLyaS4RFph2DICRn5M",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Palapa%20Dentists&query_place_id=ChIJ80PqrxLyaS4RFph2DICRn5M",
+      "official_website_or_social_url": "https://www.palapadentists.com/contact.html",
+      "public_phone": "+62 21 7806291",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://www.palapadentists.com/contact.html",
+        "https://www.waze.com/el/live-map/directions/id/daerah-khusus-ibukota-jakarta/palapa-dentists-dental-clinic-drg.-dr.-anggraeni%2C-sp.kg.?to=place.ChIJ80PqrxLyaS4RFph2DICRn5M"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official contact page and Maps-linked listing agree on the distinctive clinic name, Palapa I address, phone, and dental-clinic activity.",
+      "selection_order_hash": "6b20114bc7da01eb80b321f4ab07ee638f378b98a6b4ccb451f7b9e74fd70793",
+      "identity_notes": "The listing may append a practitioner name; the frozen subject remains the clinic entity at Jl. Palapa I No. 4."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E08",
+      "sample_role": "evidence",
+      "selection_order": 8,
+      "public_clinic_name": "Denticle Dental Care",
+      "known_name_variants": [
+        "Denticle Dental",
+        "Denticle Dental JKT"
+      ],
+      "selected_branch": "Pejaten Barat",
+      "full_address": "Jl. Warung Jati Barat Raya No. 24, RT.2/RW.7, Pejaten Barat, Pasar Minggu, Jakarta Selatan 12510",
+      "maps_provider_id": "google_place_id:ChIJU7Gp5hryaS4RyJSRck67Mhg",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Denticle%20Dental%20Care&query_place_id=ChIJU7Gp5hryaS4RyJSRck67Mhg",
+      "official_website_or_social_url": "https://denticledentaljkt.com/",
+      "public_phone": "+62 812 8332 2737",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://denticledentaljkt.com/",
+        "https://www.waze.com/it/live-map/directions/id/daerah-khusus-ibukota-jakarta/denticle-dental-care?to=place.ChIJU7Gp5hryaS4RyJSRck67Mhg"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official site and Maps-linked listing agree on the distinctive clinic name, Pejaten address, phone, and dental-clinic activity.",
+      "selection_order_hash": "791eda165ffe79c57a695377137339fcd95d5c0b29c2ae6bdb82d9a4a9c1d2c1",
+      "identity_notes": "Use Denticle, not similarly spelled Denticare or Denticare entities, when resolving branded responses."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E09",
+      "sample_role": "evidence",
+      "selection_order": 9,
+      "public_clinic_name": "Iman Djajadi Slamet Dental Clinic",
+      "known_name_variants": [
+        "Iman Slamet Dental Clinic",
+        "drg. Iman Djajadi Slamet"
+      ],
+      "selected_branch": "Cideng Timur",
+      "full_address": "Jl. Cideng Timur No. 28, Petojo Utara, Gambir, Jakarta Pusat 10130",
+      "maps_provider_id": "google_place_id:ChIJ0-AVFnr2aS4Rogyvse568gU",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Iman%20Djajadi%20Slamet%20Dental%20Clinic&query_place_id=ChIJ0-AVFnr2aS4Rogyvse568gU",
+      "official_website_or_social_url": "https://cal.com/imanslamet",
+      "public_phone": "+62 815 8020 900",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://cal.com/imanslamet",
+        "https://www.waze.com/live-map/directions/indonesia/jakarta/central-jakarta/iman-djajadi-slamet-dental-clinic?to=place.ChIJ0-AVFnr2aS4Rogyvse568gU"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The public booking profile and Maps-linked listing resolve to the same practitioner-led clinic, Cideng Timur address, phone, and dental-clinic activity.",
+      "selection_order_hash": "e4643a1c4c290e885d34211de216e1c0c6116d2e53445e36d51e7518e69431a7",
+      "identity_notes": "Treat the full practitioner name plus Cideng location as the identity key; do not resolve name-only mentions."
+    },
+    {
+      "subject_id": "EXP-001-JKT-E10",
+      "sample_role": "evidence",
+      "selection_order": 10,
+      "public_clinic_name": "Klinik Gigi Dewi Anastasia",
+      "known_name_variants": [
+        "Apotek dan Klinik Gigi Dewi Anastasia",
+        "Klinik Gigi Anastasia"
+      ],
+      "selected_branch": "Munjul, Cipayung",
+      "full_address": "Jl. Dalang No. 3, RT.5/RW.5, Munjul, Cipayung, Jakarta Timur 13850",
+      "maps_provider_id": "google_place_id:ChIJQTWUP8XsaS4RiAHOLCJQL9E",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Klinik%20Gigi%20Dewi%20Anastasia&query_place_id=ChIJQTWUP8XsaS4RiAHOLCJQL9E",
+      "official_website_or_social_url": "https://klinikgigianastasia.com/",
+      "public_phone": "+62 888 1911 513",
+      "public_category": "Dental clinic",
+      "identity_source_urls": [
+        "https://klinikgigianastasia.com/",
+        "https://www.waze.com/live-map/directions/indonesia/jakarta/east-jakarta/apotek-dan-klinik-gigi-dewi-anastasia?to=place.ChIJQTWUP8XsaS4RiAHOLCJQL9E"
+      ],
+      "identity_captured_at": "2026-07-19T10:26:59Z",
+      "identity_status": "resolved",
+      "inclusion_decision": "included",
+      "inclusion_reason": "The official site and Maps-linked listing agree on the combined pharmacy-clinic identity, Munjul address, phone, and dental-clinic activity.",
+      "selection_order_hash": "fa753f17885689ab2706350983b94f7435dbb59914b02f4fb3a165145db1fd3a",
+      "identity_notes": "The public listing can include Apotek dan; count only identity matches that also resolve the clinic name and Munjul location."
+    }
+  ],
+  "exclusions": [
+    {
+      "candidate_name": "Tiga Dental",
+      "candidate_listing_id": "google_feature:0x2e69f169133c7fa7:0x1a206fcd63227fc5",
+      "inclusion_decision": "excluded",
+      "reason_code": "identity_location_conflict",
+      "reason": "A Jakarta Maps-linked listing and older public references point to Jakarta, but the current official site identifies the clinic address in Gading Serpong, Tangerang. The Jakarta branch could not be confirmed as active and controlled by the same clinic, so the identity failed before model observation.",
+      "identity_source_urls": [
+        "https://klinikgigi-kf.com/",
+        "https://id4769216-tiga-dental.contact.page/",
+        "https://www.google.com/maps/place/Klinik%2BGigi%2Btiga%2Bdental/%40-6.254471%2C106.83061599999999%2C14z/data=%214m8%211m2%212m1%211sKlinik%2BGigi%2Btiga%2Bdental%213m4%211s0x2e69f169133c7fa7%3A0x1a206fcd63227fc5%218m2%213d-6.254471%214d106.83061599999999"
+      ],
+      "excluded_at": "2026-07-19T10:26:59Z",
+      "model_visibility_screened": false
+    }
+  ],
+  "limitations": [
+    "The sample is not a Jakarta market estimate.",
+    "Public-data eligibility underrepresents clinics with sparse online information.",
+    "Provider visibility was not used to select, exclude, order, or replace subjects.",
+    "Two frozen Maps identifiers are provider-issued share or short-link tokens rather than exposed Place IDs; their exact targets must be confirmed during the pre-run source-readiness check without changing sample membership.",
+    "Sample membership indicates protocol eligibility only; it is not endorsement, customer participation, permission for outreach, or permission to publish clinic-specific results."
+  ]
+}

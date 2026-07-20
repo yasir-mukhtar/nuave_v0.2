@@ -1,7 +1,7 @@
 # Nuave v2 decision log
 
 > Status: **Canonical decision history**
-> Updated: 2026-07-19
+> Updated: 2026-07-20
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
@@ -28,6 +28,9 @@ old rows to make history cleaner; add a superseding row.
 | 2026-07-19 | Acquire the first 20–30 customers through founder-assisted and partner channels before cold-ad scale. | SETTLED | Learn objections and delivery value before paying to amplify the funnel. | Report-value and operational gates pass. |
 | 2026-07-19 | Create touchpoint artifacts through a tracked golden-path phase workflow, with repository files rather than chat history as the AI handoff. | SETTLED | Preserve context while exposing end-to-end contradictions before engineering or visual polish. | The workflow repeatedly slows learning or fails to maintain cross-touchpoint consistency. |
 | 2026-07-19 | Make aftersales, action selection, referrals, and comparable re-audits part of the measured product lifecycle. | SETTLED | The product must change action, not merely deliver a PDF. | Customer evidence shows a different value-realization mechanism. |
+| 2026-07-19 | Use Jakarta as the provisional EXP-001 and artifact city and competitive discovery as the first working message family; neither choice settles the public launch city or validates the message. | EXPERIMENT | Unblock one coherent P1 journey while using measurement and founder-access evidence, rather than preference, to settle the launch city and message. | EXP-001 results, founder/partner access, or buyer-language evidence materially favors another city or message family. |
+| 2026-07-19 | Establish a repository-backed acting CMO operating system for Nuave's zero-customer stage. The acting CMO may own internal analysis, drafts, evidence records, and experiment preparation; external communication, publishing, spend, contracts, discounts, and material public decisions remain founder-approved. | SETTLED | Give the solo founder durable strategic and execution leverage without inventing market validation or delegating irreversible commercial authority by default. | Review after the first ten paid customers, a proposed external-action delegation, or repeated workflow friction. |
+| 2026-07-20 | Test Jabodetabek as the market umbrella while keeping prompts, reports, and customer comparisons local to a city or practical travel area, starting with Sozo Dental Depok/Margonda in EXP-R1. This does not yet settle the public launch geography. | EXPERIMENT | The founder identified a digitally active Depok clinic and proposed Jabodetabek as more representative than Jakarta alone; local intent remains necessary for a useful clinic comparison. | Owner-comprehension evidence, access to prospects, or additional city-level audits show whether the umbrella improves or weakens relevance. |
 
 ## Superseded directions
 

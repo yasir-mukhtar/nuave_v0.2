@@ -1,45 +1,38 @@
-# Nuave v0.2 agent instructions
+# Nuave agent instructions
 
-For every product or implementation task, start with
-[`docs/v2/README.md`](./docs/v2/README.md) and load only the specialist context
-relevant to the task.
+## Default mode: raw MVP
 
-For artifact, prototype, UX, copy, acquisition, conversion, report, or
-aftersales work:
+Start with [`README.md`](./README.md) and [`docs/NOW.md`](./docs/NOW.md). Load
+only the product, audit, experiment, or GTM document needed for the task. Do not
+load all historical planning by default.
 
-1. read [`docs/v2/ARTIFACT_STATUS.md`](./docs/v2/ARTIFACT_STATUS.md);
-2. follow [`docs/v2/ARTIFACT_WORKFLOW.md`](./docs/v2/ARTIFACT_WORKFLOW.md);
-3. work only on the current phase and bounded next task unless the founder
-   explicitly changes scope;
-4. use the shared fixture and upstream artifact contracts;
-5. update the artifact manifest, live tracker, and next exact task in the same
-   change as the artifact; and
-6. record material strategy changes in `docs/v2/DECISION_LOG.md` rather than
-   silently settling them in an artifact.
+Optimize for one functional customer touchpoint or one piece of real evidence.
+Prefer a manual working flow over a generalized system.
 
-Repository files are the source of truth between sessions. Chat history is not
-the progress tracker.
+## Working rules
 
-Before editing, briefly report:
+1. Use plain language and explain unavoidable technical terms.
+2. Work on one bounded deliverable that can be reviewed or tested today.
+3. Prefer existing tools, manual review, and small samples.
+4. Do not add roadmaps, frameworks, schemas, trackers, or architecture unless
+   the current deliverable cannot work without them.
+5. Do not solve scale, automation, multi-city, multi-vertical, dashboard, or
+   subscription problems during raw-MVP work.
+6. Use real data. Record the source, query, system or model, and observation
+   date when they affect a report claim.
+7. Separate observed evidence, Nuave interpretation, and recommended action.
+8. Never fabricate customer proof, clinic facts, AI results, conversion data,
+   urgency, causation, rankings, or guarantees.
+9. Do not collect patient data or make claims about clinical quality.
+10. Preserve existing user changes. Do not delete or broadly rewrite files
+    merely to make the repository look cleaner.
 
-  - current phase and status;
-  - next exact task;
-  - governing files you will use;
-  - files you expect to create or modify;
-  - unresolved decisions that could block the task.
+Material product decisions belong in `docs/v2/DECISION_LOG.md`. Current status
+and the next action belong in `docs/NOW.md`. Update them only when the work
+actually changes those facts.
 
-  Work on one bounded deliverable. Use the shared fixture and upstream artifact
-  contracts. Do not silently change settled decisions, clinic facts, the offer,
-  measurement definitions, or lifecycle states.
+Before editing, briefly state the current objective, bounded deliverable, files
+you will touch, and any real blocker. At the end, validate the result, list the
+files changed, and name the next smallest useful action.
 
-  At the end:
-
-  - validate the artifact against the workflow acceptance questions;
-  - update the artifact manifest;
-  - update ARTIFACT_STATUS.md, including the checklist, progress log, and next
-  exact task;
-  - update DECISION_LOG.md only for material cross-cutting decisions;
-  - do not mark the phase complete unless its exit gate passes;
-  - report the files changed, decisions made, remaining blockers, and next task.
-
-  Do not commit or push unless I explicitly request it.
+Do not commit or push unless the founder explicitly requests it.

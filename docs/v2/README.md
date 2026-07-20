@@ -22,6 +22,7 @@ when a narrower source is sufficient.
 | QA, delivery, support, failures, refunds | [`OPERATIONS_RUNBOOK.md`](./OPERATIONS_RUNBOOK.md) |
 | Stack, data model, state machine, jobs, security | [`TECHNICAL_ARCHITECTURE.md`](./TECHNICAL_ARCHITECTURE.md) |
 | Validation gates, metrics, experiments, scale rules | [`EXPERIMENTS_AND_GATES.md`](./EXPERIMENTS_AND_GATES.md) |
+| Acting CMO mandate, authority, zero-customer mode, cadence | [`CMO_OPERATING_SYSTEM.md`](./CMO_OPERATING_SYSTEM.md) |
 | Clinic claims, privacy, consent, retention | [`COMPLIANCE_AND_DATA.md`](./COMPLIANCE_AND_DATA.md) |
 | Dated decisions and revisit triggers | [`DECISION_LOG.md`](./DECISION_LOG.md) |
 | Artifact phases, fidelity, session protocol, acceptance | [`ARTIFACT_WORKFLOW.md`](./ARTIFACT_WORKFLOW.md) |
@@ -60,6 +61,9 @@ When documents conflict:
    history to make an experiment look pre-decided.
 8. For artifact work, read `ARTIFACT_STATUS.md` before acting and update it in
    the same change as the artifact; do not use chat history as the tracker.
+9. For go-to-market work, use `CMO_OPERATING_SYSTEM.md` and the live records in
+   [`../../gtm/README.md`](../../gtm/README.md); do not infer customer evidence
+   from plans, thresholds, legacy data, or prepared experiments.
 
 ## Maintenance
 

@@ -10,10 +10,13 @@ what to do next. It records progress, not strategy authority.
 ## Current state
 
 - **Current phase:** P1 — Journey contract
-- **Phase status:** READY
+- **Phase status:** IN_PROGRESS
 - **Last completed phase:** P0 — Workflow setup
-- **Next exact task:** Ask the founder to select one provisional artifact city
-  and one working message family; record both choices here before drafting P1.
+- **Next exact task:** Create and review the EXP-001 execution-configuration
+  record: name the execution owner and measurement reviewer; freeze exact
+  OpenAI and Gemini model identifiers and settings, run spacing, audit-window
+  maximum, restricted evidence-store location, and retention period. Do not run
+  provider observations in that task.
 - **Phase owner:** [OPEN]
 - **Review owner:** Founder
 
@@ -22,8 +25,9 @@ what to do next. It records progress, not strategy authority.
 | Item | Current value | Status |
 |---|---|---|
 | Initial vertical | Single-location dental clinic | SETTLED |
-| Artifact city | Choose one of Jakarta, Bandung, or Surabaya | OPEN — required before P1 exits |
-| First message family | Competitive discovery, accuracy, or controllability | OPEN — choose one working hypothesis in P1 |
+| Artifact city | Jakarta | HYPOTHESIS — provisional for EXP-001 and artifacts; launch city remains OPEN |
+| First message family | Competitive discovery | HYPOTHESIS — working message, not validated |
+| Commercial evidence baseline | Zero customers | OBSERVED_ZERO — founder-confirmed; no customer-derived claims or metrics exist yet |
 | Public offer | Founding Cohort Full Audit — Rp149,000 | SETTLED |
 | Pre-payment personalized audit | Not allowed | SETTLED |
 | Pre-payment proof | Dated market observation, permissioned sample, or clearly illustrative material | SETTLED |
@@ -39,7 +43,7 @@ or `COMPLETE`.
 | Phase | Status | Dependencies | Completion evidence |
 |---|---|---|---|
 | P0 — Workflow setup | COMPLETE | None | Workflow, tracker, artifact index, and brief template committed |
-| P1 — Journey contract | READY | Founder selects or approves a provisional artifact city and working message family before phase exit | Not yet available |
+| P1 — Journey contract | IN_PROGRESS | Provisional Jakarta and competitive-discovery hypotheses approved; EXP-001 prepared but unrun | [`experiments/EXP-001/README.md`](../../experiments/EXP-001/README.md) is supporting preparation, not P1 completion evidence |
 | P2 — Acquisition and landing | NOT_STARTED | P1 complete | Not yet available |
 | P3 — Eligibility and purchase | NOT_STARTED | P1 complete; relevant P2 promise stable | Not yet available |
 | P4 — Intake and fulfillment | NOT_STARTED | P3 purchase contract stable | Not yet available |
@@ -49,9 +53,9 @@ or `COMPLETE`.
 
 ## P1 checklist
 
-- [ ] Select one provisional artifact city; record whether it is only a design
+- [x] Select one provisional artifact city; record whether it is only a design
   hypothesis or also the intended launch-city decision.
-- [ ] Select one primary acquisition message family as a working hypothesis.
+- [x] Select one primary acquisition message family as a working hypothesis.
 - [ ] Create `artifacts/JOURNEY_MAP.md` covering the complete golden path and
   principal recovery branches.
 - [ ] Create `artifacts/MESSAGE_CONTRACT.md` defining audience, problem, promise,
@@ -78,6 +82,10 @@ promise, offer, evidence definition, or action vocabulary.
 |---|---|---|---|---|---|
 | [`artifacts/README.md`](../../artifacts/README.md) | P0 | Instruction | COMPLETE | 2026-07-19 | Directory rules and planned structure |
 | [`artifacts/templates/ARTIFACT_BRIEF.md`](../../artifacts/templates/ARTIFACT_BRIEF.md) | P0 | Template | COMPLETE | 2026-07-19 | Required context capsule for touchpoints |
+| [`experiments/EXP-001/README.md`](../../experiments/EXP-001/README.md) | P1 support | Experiment protocol | COMPLETE | 2026-07-19 | Pre-registration package complete; EXP-001 remains unrun and has not passed |
+| [`experiments/EXP-001/sample-manifest.json`](../../experiments/EXP-001/sample-manifest.json) | P1 support | Identity sample | COMPLETE | 2026-07-19 | 10 evidence clinics and one excluded calibration clinic locked without provider-visibility screening; one stale or conflicting candidate recorded as excluded |
+| [`docs/v2/CMO_OPERATING_SYSTEM.md`](./CMO_OPERATING_SYSTEM.md) | P1 support | Operating instruction | COMPLETE | 2026-07-19 | Zero-customer mandate, authority, approval gates, evidence rules, and cadence |
+| [`gtm/README.md`](../../gtm/README.md) | P1 support | Operating records | COMPLETE | 2026-07-19 | Baseline scorecard, evidence register, and reusable review/conversation templates established |
 | `artifacts/JOURNEY_MAP.md` | P1 | L0 | NOT_STARTED | — | Next phase output |
 | `artifacts/MESSAGE_CONTRACT.md` | P1 | L0 | NOT_STARTED | — | Next phase output |
 | `artifacts/fixtures/dental-clinic-v0.json` | P1 | Fixture | NOT_STARTED | — | Shared source data |
@@ -88,6 +96,9 @@ promise, offer, evidence definition, or action vocabulary.
 | Date | Phase | Change | Decision or evidence | Next task |
 |---|---|---|---|---|
 | 2026-07-19 | P0 | Established the artifact workflow, tracker, directory instruction, and artifact brief | Founder requested a durable phased workflow for future AI sessions | Begin P1 journey contract |
+| 2026-07-19 | P1 | Approved provisional Jakarta and competitive-discovery hypotheses; prepared the EXP-001 protocol, prompt pack, sample rules, evidence schema, and review rubric | Preparation is complete, but no feasibility observations exist and the launch city remains open | Populate and verify the 10 evidence clinics and one excluded calibration clinic without running provider observations |
+| 2026-07-19 | P1 | Locked the EXP-001 public-identity sample and deterministic selection record | 10 evidence clinics and one excluded calibration clinic resolve across all five Jakarta administrative cities; Tiga Dental was excluded before selection because its current official location conflicted with the Jakarta listing; no provider observations were run | Freeze the execution owner, reviewer, provider settings, run timing, restricted evidence store, and retention period without running providers |
+| 2026-07-19 | P1 support | Established the repository-backed acting CMO operating system, zero-customer scorecard, evidence register, and review templates | Founder confirmed zero customers and authorized the setup; no customer or channel validation was inferred | Freeze the EXP-001 execution owner, reviewer, provider settings, run timing, restricted evidence store, and retention period without running providers |
 
 ## Tracker update rule
 
