@@ -1,0 +1,224 @@
+"use client";
+
+import { useRef, useEffect, useState, useCallback } from "react";
+import { IconCheck } from "@tabler/icons-react";
+import { useTranslations } from 'next-intl';
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+
+const VisibilityScoreChart = dynamic(() => import("@/components/VisibilityScoreChart"), { ssr: false });
+const RecommendationsPreview = dynamic(() => import("@/components/RecommendationsPreview"), { ssr: false });
+const PromptResultPreview = dynamic(() => import("@/components/PromptResultPreview"), { ssr: false });
+
+
+/* ── Interactive gradient panel ── */
+function InteractiveGradientPanel({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const posRef = useRef({ x: 50, y: 50 });
+  const targetRef = useRef({ x: 50, y: 50 });
+  const rafRef = useRef<number>(0);
+  const [, forceRender] = useState(0);
+
+  useEffect(() => {
+    let running = true;
+    const lerp = () => {
+      const cur = posRef.current;
+      const tgt = targetRef.current;
+      const nx = cur.x + (tgt.x - cur.x) * 0.06;
+      const ny = cur.y + (tgt.y - cur.y) * 0.06;
+      if (Math.abs(nx - cur.x) > 0.05 || Math.abs(ny - cur.y) > 0.05) {
+        posRef.current = { x: nx, y: ny };
+        forceRender((n) => n + 1);
+      }
+      if (running) rafRef.current = requestAnimationFrame(lerp);
+    };
+    rafRef.current = requestAnimationFrame(lerp);
+    return () => { running = false; cancelAnimationFrame(rafRef.current); };
+  }, []);
+
+  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    targetRef.current = {
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    };
+  }, []);
+
+  const handleLeave = useCallback(() => {
+    targetRef.current = { x: 50, y: 50 };
+  }, []);
+
+  const { x, y } = posRef.current;
+
+  return (
+    <div
+      ref={ref}
+      className={cn("relative overflow-hidden", className)}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{
+        background: `
+          radial-gradient(500px circle at ${x}% ${y}%, rgba(129,140,248,0.3) 0%, rgba(196,181,253,0.15) 35%, transparent 70%),
+          radial-gradient(350px circle at ${100 - x * 0.5}% ${100 - y * 0.5}%, rgba(147,197,253,0.22) 0%, transparent 60%),
+          linear-gradient(135deg, #e0e7ff, #dbeafe, #ede9fe, #e0f2fe, #f3e8ff)
+        `,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ── Main component ── */
+export default function HowItWorks() {
+  const t = useTranslations();
+
+  const CARDS = [
+    {
+      step: "1",
+      label: t('howItWorks.step1Label'),
+      title: t('howItWorks.step1Title'),
+      desc: t('howItWorks.step1Desc'),
+      checks: [
+        t('howItWorks.step1Check1'),
+        t('howItWorks.step1Check2'),
+        t('howItWorks.step1Check3'),
+      ],
+    },
+    {
+      step: "2",
+      label: t('howItWorks.step2Label'),
+      title: t('howItWorks.step2Title'),
+      desc: t('howItWorks.step2Desc'),
+      checks: [
+        t('howItWorks.step2Check1'),
+        t('howItWorks.step2Check2'),
+        t('howItWorks.step2Check3'),
+      ],
+      flip: true,
+    },
+    {
+      step: "3",
+      label: t('howItWorks.step3Label'),
+      title: t('howItWorks.step3Title'),
+      desc: t('howItWorks.step3Desc'),
+      checks: [
+        t('howItWorks.step3Check1'),
+        t('howItWorks.step3Check2'),
+        t('howItWorks.step3Check3'),
+      ],
+    },
+  ];
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [headingOpacity, setHeadingOpacity] = useState(1);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const sectionTop = rect.top + window.scrollY;
+      const sectionHeight = sectionRef.current.offsetHeight;
+      const sectionBottom = sectionTop + sectionHeight;
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+
+      // Fade heading as section scrolls off screen
+      const fadeStart = sectionBottom - vh - 200;
+      const fadeEnd = sectionBottom - vh;
+      const alpha = 1 - Math.max(0, Math.min(1, (scrollY - fadeStart) / (fadeEnd - fadeStart)));
+      setHeadingOpacity(alpha);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div id="cara-kerja" ref={sectionRef} className="lp-hiw-section relative pt-[120px]" style={{ background: "var(--lp-bg)" }}>
+      {/* Sticky heading */}
+      <div
+        className="lp-hiw-sticky-heading sticky top-20 z-10 pb-10 px-8 pointer-events-none"
+        style={{ opacity: headingOpacity, transition: "opacity 0.1s linear" }}
+      >
+        <div className="max-w-[868px] mx-auto text-center">
+          <h2 className="lp-hiw-heading">
+            {t('howItWorks.heading')}
+          </h2>
+        </div>
+      </div>
+
+      {/* Cards scroll area */}
+      <div className="pb-[120px]">
+        {CARDS.map((card, i) => (
+          <div
+            key={card.step}
+            className="lp-hiw-card-wrapper sticky px-8 pb-6 mb-6"
+            style={{ top: 232, zIndex: 20 + i }}
+          >
+            <div
+              className="lp-hiw-card-grid max-w-[868px] mx-auto grid grid-cols-2 rounded-[12px] overflow-hidden bg-white border border-[#E5E7EB] shadow-[0_8px_40px_rgba(0,0,0,0.10)] min-h-[360px]"
+              style={{ transformOrigin: "top center" }}
+            >
+              {/* Left panel — white */}
+              <div className={cn(
+                "lp-hiw-left-panel bg-white p-10 flex flex-col justify-between",
+                card.flip ? "order-2" : "order-1"
+              )}>
+                <div>
+                  {/* Step circle */}
+                  <div className="w-10 h-10 rounded-full bg-[var(--lp-purple)] text-white text-[24px] font-bold tracking-[-0.5px] leading-[1.4] flex items-center justify-center mb-6">
+                    {card.step}
+                  </div>
+                  <h3 className="mb-3">
+                    {card.title}
+                  </h3>
+                  <p className="text-[16px] leading-[28px] text-[#858585] mb-6">
+                    {card.desc}
+                  </p>
+                </div>
+                {/* Checklist */}
+                <div className="flex flex-col gap-2.5">
+                  {card.checks.map((check) => (
+                    <div key={check} className="flex items-center gap-2.5">
+                      <IconCheck size={16} color="var(--lp-text-primary)" stroke={2} className="shrink-0" />
+                      <span className="text-[16px] font-normal leading-[28px] text-[var(--lp-text-primary)]">{check}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right panel — interactive preview (desktop) */}
+              <InteractiveGradientPanel
+                className={cn(
+                  "lp-hiw-right-panel flex items-center justify-center",
+                  card.flip ? "order-1" : "order-2"
+                )}
+              >
+                {card.step === "1" && <PromptResultPreview />}
+                {card.step === "2" && <RecommendationsPreview />}
+                {card.step === "3" && <VisibilityScoreChart />}
+              </InteractiveGradientPanel>
+
+              {/* Mobile preview */}
+              <div className="lp-hiw-mobile-preview p-3 order-3">
+                <InteractiveGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
+                  {card.step === "1" && <PromptResultPreview />}
+                  {card.step === "2" && <RecommendationsPreview />}
+                  {card.step === "3" && <VisibilityScoreChart />}
+                </InteractiveGradientPanel>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

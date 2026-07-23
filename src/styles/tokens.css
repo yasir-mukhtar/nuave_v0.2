@@ -1,0 +1,133 @@
+:root {
+  /* Colors */
+  --bg-page: #ffffff;
+  --bg-surface: #f9fafb;
+  --bg-surface-raised: #f3f4f6;
+  --bg-neutral: #f5f5f5;
+  --border-default: #e5e7eb;
+  --border-light: #ececec;
+  --border-strong: #d1d5db;
+  --text-heading: #111827;
+  --text-body: #374151;
+  --text-muted: #6b7280;
+  --text-placeholder: #9ca3af;
+  --purple: #533AFD;
+  --purple-dark: #3d2bc7;
+  --purple-light: #ece8ff;
+  --green: #22c55e;
+  --green-light: #dcfce7;
+  --red: #ef4444;
+  --red-light: #fee2e2;
+  --amber: #f59e0b;
+  --amber-light: #fef3c7;
+
+  /* Typography — fixed perfect-fourth scale (14px base, ratio 1.333) */
+  /* @link https://utopia.fyi/type/calculator?c=375,14,1.333,1440,14,1.333,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
+  --step--2: 0.4924rem;   /*  ~7.9px */
+  --step--1: 0.6564rem;   /* ~10.5px */
+  --step-0:  0.875rem;    /*    14px */
+  --step-1:  1.1664rem;   /* ~18.7px */
+  --step-2:  1.5548rem;   /* ~24.9px */
+  --step-3:  2.0725rem;   /* ~33.2px */
+  --step-4:  2.7627rem;   /* ~44.2px */
+  --step-5:  3.6826rem;   /* ~58.9px */
+
+  /* Semantic aliases — use these in components */
+  --text-caption:    0.75rem;        /*    12px — timestamps, meta, micro labels */
+  --text-body:       var(--step-0);  /*    14px — default body, descriptions     */
+  --text-subtitle:   1rem;           /*    16px — bar titles, secondary headings */
+  --text-page-title: 1.125rem;      /*    18px — page titles, primary headings  */
+  --text-body-lg:    var(--step-1);  /* ~18.7px — intro text, card subtitles     */
+  --text-heading-sm: var(--step-2);  /* ~24.9px — h3, section subheads           */
+  --text-heading-md: var(--step-3);  /* ~33.2px — h2, page section titles        */
+  --text-heading-lg: var(--step-4);  /* ~44.2px — h1, page titles               */
+  --text-display:    var(--step-5);  /* ~58.9px — hero/display                  */
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* Icons */
+  --icon-stroke: 1.6;
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-focus: 0 0 0 3px #533afd1f;
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+  /* ── Buttons ── */
+  --btn-radius:       var(--radius-sm);   /* 6px */
+  --btn-font-size:    var(--text-body);   /* 14px */
+  --btn-font-weight:  500;
+  --btn-transition:   var(--transition-base);
+
+  /* Sizes — height / horizontal padding */
+  --btn-h-sm:         30px;
+  --btn-px-sm:        10px;
+  --btn-h-default:    36px;
+  --btn-px-default:   14px;
+  --btn-h-lg:         44px;
+  --btn-px-lg:        20px;
+
+  /* Default / Outline — stroked, white bg */
+  --btn-default-bg:           var(--bg-page);
+  --btn-default-border:       var(--border-default);
+  --btn-default-text:         var(--text-body);
+  --btn-default-bg-hover:     var(--bg-surface);
+  --btn-default-border-hover: var(--border-strong);
+  --btn-default-text-hover:   var(--text-heading);
+
+  /* Brand — CTA only */
+  --btn-brand-bg:             var(--purple);
+  --btn-brand-text:           #ffffff;
+  --btn-brand-bg-hover:       var(--purple-dark);
+
+  /* Ghost — no border, hover bg */
+  --btn-ghost-text:           var(--text-muted);
+  --btn-ghost-text-hover:     var(--text-body);
+  --btn-ghost-bg-hover:       var(--bg-surface);
+
+  /* Secondary — subtle filled */
+  --btn-secondary-bg:         var(--bg-surface-raised);
+  --btn-secondary-text:       var(--text-body);
+  --btn-secondary-bg-hover:   var(--bg-neutral);
+  --btn-secondary-text-hover: var(--text-heading);
+
+  /* Destructive */
+  --btn-destructive-bg:       var(--red);
+  --btn-destructive-text:     #ffffff;
+  --btn-destructive-bg-hover: #dc2626;
+
+  /* Landing page (Framer design) */
+  --lp-bg: #f7f7f5;
+  --lp-text-primary: #0a0a0a;
+  --lp-text-secondary: #5b5b5b;
+  --lp-purple: #533AFD;
+  --lp-purple-dark: #3d2bc7;
+  --black-hover: #1f2937;
+  --lp-border: rgba(59, 59, 59, 0.12);
+  --lp-nav-glass: rgba(255, 255, 255, 0.9);
+  --lp-nav-border: rgba(117, 115, 114, 0.15);
+  --lp-card-glass: rgba(255, 255, 255, 0.54);
+}

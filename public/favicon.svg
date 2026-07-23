@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><style>
+    #light-icon {
+      display: inline;
+    }
+    #dark-icon {
+      display: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #light-icon {
+        display: none;
+      }
+      #dark-icon {
+        display: inline;
+      }
+    }
+  </style><g id="light-icon"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><g><g transform="matrix(3.816793893129771,0,0,3.816793893129771,0,0)"><svg xmlns="http://www.w3.org/2000/svg" width="262" height="262" viewBox="0 0 262 262" fill="none"><path d="M174.877 207.207L131 130.898L86.4609 210.756H0L87.123 54.5488L130.999 130.857L175.539 51H262L174.877 207.207Z" fill="#533AFD"></path></svg></g></g></svg></g><g id="dark-icon"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><g><g transform="matrix(3.816793893129771,0,0,3.816793893129771,0,0)"><svg xmlns="http://www.w3.org/2000/svg" width="262" height="262" viewBox="0 0 262 262" fill="none"><path d="M174.877 207.207L131 130.898L86.4609 210.756H0L87.123 54.5488L130.999 130.857L175.539 51H262L174.877 207.207Z" fill="white"></path></svg></g></g></svg></g></svg>

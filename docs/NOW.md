@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-07-20
+> Updated: 2026-07-23
 > Stage: pre-customer raw MVP
 
 ## Current objective
@@ -27,8 +27,9 @@ EXP-R1 produced a `PASS_CANDIDATE` report:
   ChatGPT Free remains unobserved because this workspace cannot access it.
 - A detailed ten-clinic methodology package exists under
   `experiments/EXP-001/`, but no AI observations have been collected.
-- The existing landing prototype does not match the current offer and must not
-  be published as-is.
+- The local landing page now preserves the previous Nuave website as a visual
+  and interaction baseline. Its copy still describes the earlier free-audit
+  platform and requires a later content pass for the current offer.
 
 ## What is not known
 

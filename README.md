@@ -32,6 +32,6 @@ outreach or simple landing page
   -> customer feedback
 ```
 
-The existing `src/` landing page is an earlier prototype. Its free-audit,
-account, score, and social-proof claims do not match the current product and
-must not be published as-is.
+The `src/` landing page preserves the previous Nuave website as the visual and
+interaction baseline. Its copy still describes the earlier free-audit platform
+and does not yet reflect the current one-time raw-MVP offer.
