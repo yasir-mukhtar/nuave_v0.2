@@ -12,6 +12,7 @@ not a subscription platform.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
+| How to generate the ten audit questions | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
 | Experiment to run now | [`experiments/ACTIVE.md`](./experiments/ACTIVE.md) |
 | Current go-to-market action | [`gtm/NOW.md`](./gtm/NOW.md) |
 | Dated product decisions | [`docs/v2/DECISION_LOG.md`](./docs/v2/DECISION_LOG.md) |

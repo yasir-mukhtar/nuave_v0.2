@@ -1,12 +1,13 @@
 # Nuave now
 
-> Updated: 2026-07-23
+> Updated: 2026-07-29
 > Stage: pre-customer raw MVP
 
 ## Current objective
 
-Review the completed Sozo Dental Depok raw audit and decide whether it is clear
-and useful enough to show privately to a clinic owner.
+Validate the founder-approved Intent-5 prompt method by generating one
+ten-question ChatGPT prompt pack from verified Sozo Dental Depok inputs and
+reviewing whether the questions sound like plausible customer language.
 
 EXP-R1 produced a `PASS_CANDIDATE` report:
 [`REPORT.md`](../experiments/runs/2026-07-20-sozo-dental-depok/REPORT.md).
@@ -27,6 +28,13 @@ EXP-R1 produced a `PASS_CANDIDATE` report:
   ChatGPT Free remains unobserved because this workspace cannot access it.
 - A detailed ten-clinic methodology package exists under
   `experiments/EXP-001/`, but no AI observations have been collected.
+- The next prompt pack uses five customer-intent categories with two questions
+  each, split into five unbranded and five branded questions.
+- ChatGPT is the only AI product in scope for the next prompt pack; the exact
+  execution surface must still be recorded honestly.
+- The prompt-generation context and repository-owned skill now exist and have
+  passed structural and synthetic forward tests. No real clinic prompt pack
+  has been approved yet.
 - The local landing page now preserves the previous Nuave website as a visual
   and interaction baseline. Its copy still describes the earlier free-audit
   platform and requires a later content pass for the current offer.
@@ -42,11 +50,14 @@ EXP-R1 produced a `PASS_CANDIDATE` report:
 
 ## Do now
 
-1. Review the Sozo report for clarity, usefulness, and credibility.
-2. Revise any language that requires too much explanation.
-3. Show it privately to three to five relevant people.
-4. Ask what is useful, confusing, missing, or unbelievable.
-5. Record reactions and payment behavior without upgrading anecdotes into proof.
+1. Confirm the verified Sozo branch, services, local area, official sources,
+   and one real relevant competitor.
+2. Use the prompt-generation skill to create one ten-question draft.
+3. Review every question for natural customer language, category overlap,
+   brand leakage, and unsupported facts.
+4. Revise and freeze the exact prompt-pack version only after human approval.
+5. Run the approved questions in the separately defined ChatGPT execution
+   surface; do not run draft questions as final audit evidence.
 
 ## Not now
 
@@ -60,9 +71,9 @@ EXP-R1 produced a `PASS_CANDIDATE` report:
 
 ## Done for this cycle
 
-The raw-report cycle is complete. The current cycle ends when the founder has
-reviewed the report and either approves it for a small private comprehension
-test or records the revisions required first.
+The prompt-generation cycle ends when one real ten-question Sozo prompt pack is
+human-reviewed and either approved for an audit run or returned for specific
+revision.
 
 Material changes to customer, offer, promise, or scope must be added to
 [`v2/DECISION_LOG.md`](./v2/DECISION_LOG.md). Historical detailed plans remain

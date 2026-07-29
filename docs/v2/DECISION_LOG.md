@@ -1,7 +1,7 @@
 # Nuave v2 decision log
 
 > Status: **Canonical decision history**
-> Updated: 2026-07-20
+> Updated: 2026-07-29
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
@@ -31,6 +31,8 @@ old rows to make history cleaner; add a superseding row.
 | 2026-07-19 | Use Jakarta as the provisional EXP-001 and artifact city and competitive discovery as the first working message family; neither choice settles the public launch city or validates the message. | EXPERIMENT | Unblock one coherent P1 journey while using measurement and founder-access evidence, rather than preference, to settle the launch city and message. | EXP-001 results, founder/partner access, or buyer-language evidence materially favors another city or message family. |
 | 2026-07-19 | Establish a repository-backed acting CMO operating system for Nuave's zero-customer stage. The acting CMO may own internal analysis, drafts, evidence records, and experiment preparation; external communication, publishing, spend, contracts, discounts, and material public decisions remain founder-approved. | SETTLED | Give the solo founder durable strategic and execution leverage without inventing market validation or delegating irreversible commercial authority by default. | Review after the first ten paid customers, a proposed external-action delegation, or repeated workflow friction. |
 | 2026-07-20 | Test Jabodetabek as the market umbrella while keeping prompts, reports, and customer comparisons local to a city or practical travel area, starting with Sozo Dental Depok/Margonda in EXP-R1. This does not yet settle the public launch geography. | EXPERIMENT | The founder identified a digitally active Depok clinic and proposed Jabodetabek as more representative than Jakarta alone; local intent remains necessary for a useful clinic comparison. | Owner-comprehension evidence, access to prospects, or additional city-level audits show whether the umbrella improves or weakens relevance. |
+| 2026-07-29 | Use the Nuave Intent-5 framework for the next dental prompt pack: Problem Discovery, Provider Discovery, Comparison, Validation, and Action, with two questions per category and a five-unbranded/five-branded allocation. Branded and unbranded results remain distinct. | SETTLED | Cover the customer's path from problem recognition through practical action while keeping discovery separate from factual representation of a known clinic. | Real customer language, audit usefulness, or repeated overlap between categories shows that the taxonomy or allocation should change. |
+| 2026-07-29 | Target ChatGPT only for the next prompt pack and remove Gemini from this scope. Record the exact execution surface and do not represent API output as an exact reproduction of personalized consumer ChatGPT. This supersedes the two-provider rule for this next prompt pack. | SETTLED | Focus the audit on the AI product selected by the founder while preserving an honest surface boundary. | ChatGPT execution feasibility fails or customer evidence shows that another AI product materially improves report value. |
 
 ## Superseded directions
 

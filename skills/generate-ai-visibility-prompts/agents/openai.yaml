@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate AI Visibility Prompts"
+  short_description: "Generate structured Nuave audit questions"
+  default_prompt: "Use $generate-ai-visibility-prompts to create a ten-question Nuave audit prompt pack from verified clinic inputs."
