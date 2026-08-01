@@ -14,7 +14,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Website tidak dapat dianalisis.",
+            : "We couldn't analyze this website.",
       },
       { status: 400 },
     );

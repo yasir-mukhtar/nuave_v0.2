@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Pertanyaan tidak dapat dibuat.",
+            : "We couldn't create the audit questions.",
       },
       { status: 400 },
     );

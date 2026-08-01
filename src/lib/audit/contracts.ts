@@ -5,8 +5,9 @@ import type {
   BusinessBrief,
   ReportContent,
 } from "./types";
+import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
 
-export const PROMPT_CONTRACT_VERSION = "draft-v1";
+export const PROMPT_CONTRACT_VERSION = "draft-v2-en";
 
 export const PROMPT_MATRIX = [
   [
@@ -73,9 +74,13 @@ export const PROMPT_MATRIX = [
 
 function normalize(value: string) {
   return value
-    .toLocaleLowerCase("id-ID")
+    .toLocaleLowerCase("en-US")
     .replace(/[^a-z0-9]+/gi, " ")
     .trim();
+}
+
+function normalizeWhitespace(value: string) {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 export function validatePromptPack(
@@ -84,19 +89,19 @@ export function validatePromptPack(
 ) {
   const errors: string[] = [];
   if (prompts.length !== 10)
-    errors.push("Paket harus berisi tepat 10 pertanyaan.");
+    errors.push("The audit must contain exactly 10 questions.");
 
   PROMPT_MATRIX.forEach(([id, category, branded, role], index) => {
     const prompt = prompts[index];
     if (!prompt) return;
     if (prompt.prompt_id !== id)
-      errors.push(`ID pertanyaan ${index + 1} tidak sesuai.`);
+      errors.push(`Question ${index + 1} has the wrong ID.`);
     if (prompt.category !== category)
-      errors.push(`Kategori ${id} tidak sesuai.`);
+      errors.push(`${id} has the wrong category.`);
     if (prompt.branded !== branded)
-      errors.push(`Status branded ${id} tidak sesuai.`);
-    if (prompt.role !== role) errors.push(`Peran ${id} tidak sesuai.`);
-    if (!prompt.question.trim()) errors.push(`Pertanyaan ${id} kosong.`);
+      errors.push(`${id} has the wrong branded status.`);
+    if (prompt.role !== role) errors.push(`${id} has the wrong role.`);
+    if (!prompt.question.trim()) errors.push(`${id} has an empty question.`);
   });
 
   const brandSignals = [brief.brand_name, ...brief.brand_name_variants]
@@ -107,7 +112,9 @@ export function validatePromptPack(
     .forEach((prompt) => {
       const question = normalize(prompt.question);
       if (brandSignals.some((signal) => question.includes(signal))) {
-        errors.push(`${prompt.prompt_id} membocorkan nama atau varian brand.`);
+        errors.push(
+          `${prompt.prompt_id} reveals the brand name or one of its variants.`,
+        );
       }
     });
 
@@ -123,11 +130,11 @@ export function validatePromptPack(
     "action",
   ]) {
     if (counts.get(category) !== 2)
-      errors.push(`Kategori ${category} harus memiliki dua pertanyaan.`);
+      errors.push(`The ${category} category must contain two questions.`);
   }
   if (prompts.filter((prompt) => prompt.branded).length !== 5) {
     errors.push(
-      "Paket harus berisi lima pertanyaan branded dan lima unbranded.",
+      "The audit must contain five branded and five unbranded questions.",
     );
   }
   return errors;
@@ -143,42 +150,40 @@ export function validateReportContent(
   const validateIds = (ids: string[], label: string) => {
     ids.forEach((id) => {
       if (!promptIds.has(id))
-        errors.push(`${label} merujuk pertanyaan yang tidak ada: ${id}.`);
+        errors.push(`${label} references an unknown question: ${id}.`);
     });
   };
   content.key_findings.forEach((finding) =>
-    validateIds(finding.evidence_prompt_ids, "Temuan"),
+    validateIds(finding.evidence_prompt_ids, "Finding"),
   );
   content.priorities.forEach((priority) =>
-    validateIds(priority.evidence_prompt_ids, "Prioritas"),
+    validateIds(priority.evidence_prompt_ids, "Priority"),
   );
   if (
     new Set(content.details.map((detail) => detail.prompt_id)).size !==
     observations.length
   ) {
-    errors.push("Setiap pertanyaan harus memiliki tepat satu temuan detail.");
+    errors.push("Each question must have exactly one detailed finding.");
   }
   const brandSignals = [brief.brand_name, ...brief.brand_name_variants]
     .map(normalize)
     .filter(Boolean);
   content.details.forEach((detail, index) => {
     if (!promptIds.has(detail.prompt_id))
-      errors.push(`Temuan detail tidak dikenal: ${detail.prompt_id}.`);
+      errors.push(`Unknown detailed finding: ${detail.prompt_id}.`);
     const observation = observations.find(
       (item) => item.prompt_id === detail.prompt_id,
     );
     if (!observation) return;
     if (detail.prompt_id !== observations[index]?.prompt_id) {
-      errors.push(
-        `Urutan temuan detail tidak sesuai pada ${detail.prompt_id}.`,
-      );
+      errors.push(`Detailed findings are out of order at ${detail.prompt_id}.`);
     }
     if (
       observation.run_status === "failed" &&
       detail.status !== "could_not_be_tested"
     ) {
       errors.push(
-        `${detail.prompt_id} gagal tetapi tidak ditandai tidak dapat diuji.`,
+        `${detail.prompt_id} failed but was not marked could_not_be_tested.`,
       );
     }
     const claimsBrandAppeared = [
@@ -193,7 +198,7 @@ export function validateReportContent(
       !brandSignals.some((signal) => normalizedAnswer.includes(signal))
     ) {
       errors.push(
-        `${detail.prompt_id} mengklaim brand muncul tanpa penyebutan brand dalam jawaban mentah.`,
+        `${detail.prompt_id} claims the brand appeared, but the raw response does not name it.`,
       );
     }
     const permittedSources = new Set(
@@ -202,9 +207,25 @@ export function validateReportContent(
     detail.source_urls.forEach((url) => {
       if (!permittedSources.has(url))
         errors.push(
-          `${detail.prompt_id} memakai sumber yang tidak ada di observasi.`,
+          `${detail.prompt_id} uses a source that is not attached to the observation.`,
         );
     });
+    const normalizedExcerpt = normalizeWhitespace(detail.answer_excerpt);
+    const normalizedRawAnswer = normalizeWhitespace(observation.raw_answer);
+    if (
+      observation.run_status === "completed" &&
+      normalizedRawAnswer &&
+      !normalizedExcerpt
+    ) {
+      errors.push(`${detail.prompt_id} is missing an exact answer excerpt.`);
+    } else if (
+      normalizedExcerpt &&
+      !normalizedRawAnswer.includes(normalizedExcerpt)
+    ) {
+      errors.push(
+        `${detail.prompt_id} has an answer excerpt that is not copied exactly from the raw response.`,
+      );
+    }
   });
   return errors;
 }
@@ -234,9 +255,10 @@ export function buildAuditReport(
 
   return {
     ...content,
-    report_version: "nuave-report-v1",
+    report_version: "nuave-report-v2",
+    writing_standard_version: REPORT_WRITING_STANDARD_VERSION,
     generated_at: new Date().toISOString(),
-    system_label: `OpenAI Responses API — ${returnedModels.join(", ") || "model tidak tersedia"} dengan web search`,
+    system_label: `OpenAI Responses API - ${returnedModels.join(", ") || "model unavailable"} with web search`,
     counts: {
       unbranded_recommended: unbranded.filter(
         (item) => statusFor(item.prompt_id) === "appeared_as_recommendation",
@@ -262,10 +284,10 @@ export function makeEvidenceExport(
   report: AuditReport,
 ) {
   return {
-    export_version: "nuave-evidence-v1",
+    export_version: "nuave-evidence-v2",
     exported_at: new Date().toISOString(),
     disclosure:
-      "Observasi berasal dari OpenAI Responses API, bukan reproduksi persis antarmuka konsumen ChatGPT.",
+      "Observations come from the OpenAI Responses API and do not exactly reproduce the consumer ChatGPT interface.",
     brief: {
       ...brief,
       agency_logo_data_url: brief.agency_logo_data_url

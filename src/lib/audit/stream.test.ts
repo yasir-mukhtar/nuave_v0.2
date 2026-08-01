@@ -17,16 +17,16 @@ function observation(
     prompt_id: promptId,
     category: "need_discovery",
     branded: false,
-    question: "Pertanyaan pengujian?",
+    question: "Test question?",
     system: "OpenAI Responses API",
     requested_model: "gpt-5.6",
     returned_model: status === "completed" ? "gpt-5.6" : "",
     response_id: status === "completed" ? `resp_${promptId}` : "",
     observed_at: "2026-08-01T00:00:00.000Z",
-    raw_answer: status === "completed" ? "Jawaban" : "",
+    raw_answer: status === "completed" ? "Answer" : "",
     sources: [],
     run_status: status,
-    failure_reason: status === "failed" ? "Pengujian gagal" : "",
+    failure_reason: status === "failed" ? "Observation failed" : "",
   };
 }
 

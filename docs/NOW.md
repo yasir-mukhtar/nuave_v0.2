@@ -52,11 +52,19 @@ the broader agency-offer validation remains in
   locks verified inputs after execution starts, streams real per-prompt status,
   preserves interrupted observations in the browser session, and expands all
   ten detailed findings in print from the same report data shown on screen.
+- The `/audit` workflow now uses English from intake through prompt generation,
+  API observations, the final report, and the evidence export. The public
+  landing page remains bilingual.
+- New reports use the versioned `plain-en-v1` writing contract: short
+  customer-facing explanations, result-first wording, exact evidence excerpts,
+  technical run details in the method section, and one protected language-only
+  retry when the first draft misses a writing limit.
 - The workflow stores state only in the browser session. It has no account,
   database, payment, public rate limit, or hosted report access.
-- Live workflow behavior is not yet observed because `OPENAI_API_KEY` is not
-  configured. A successful build and mocked contract tests are engineering
-  evidence only, not audit-quality evidence.
+- Live workflow behavior is not yet observed. The local private smoke-test
+  configuration now uses `gpt-5.6-luna` with `max` reasoning for every audit
+  stage. A successful build and mocked contract tests are engineering evidence
+  only, not audit-quality evidence.
 
 ## What is not known
 

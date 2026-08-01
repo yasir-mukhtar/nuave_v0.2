@@ -13,7 +13,7 @@ import {
   type ExtractionDraft,
   type PromptPack,
 } from "@/lib/audit/types";
-import { validatePromptPack } from "@/lib/audit/contracts";
+import { makeEvidenceExport, validatePromptPack } from "@/lib/audit/contracts";
 import {
   AuditRunEventParser,
   deriveAuditStep,
@@ -39,7 +39,7 @@ type SavedState = {
   executionStarted?: boolean;
 };
 
-const STORAGE_KEY = "nuave.audit.workflow.v1";
+const STORAGE_KEY = "nuave.audit.workflow.v2";
 const SESSION_KEY = "nuave.audit.session.v1";
 
 const emptyBrief: BusinessBrief = {
@@ -61,16 +61,16 @@ const emptyBrief: BusinessBrief = {
   known_accuracy_questions: [],
   usp: "",
   regulated_category_notes: "",
-  language: "id-ID",
+  language: "en-US",
   agency_name: "",
   agency_logo_data_url: "",
 };
 
 const stepLabels = [
-  "Brief bisnis",
-  "Verifikasi fakta",
-  "Tinjau pertanyaan",
-  "Jalankan audit",
+  "Client brief",
+  "Verify facts",
+  "Review questions",
+  "Run audit",
 ];
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
@@ -81,7 +81,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   });
   const data = (await response.json()) as T & { error?: string };
   if (!response.ok) {
-    throw new Error(data.error || "Permintaan tidak dapat diselesaikan.");
+    throw new Error(data.error || "We couldn't complete that request.");
   }
   return data;
 }
@@ -92,8 +92,8 @@ function friendlyBriefError(brief: BusinessBrief) {
   const first = result.error.issues[0];
   const field = first.path
     .join(".")
-    .replace("verified_competitor.", "kompetitor.");
-  return `Lengkapi ${field || "brief bisnis"}: ${first.message}`;
+    .replace("verified_competitor.", "competitor.");
+  return `Complete ${field || "the client brief"}: ${first.message}`;
 }
 
 function initialStatuses(
@@ -236,7 +236,7 @@ export default function AuditWorkflow() {
   async function extractWebsite() {
     setError("");
     if (!websiteUrl.trim()) {
-      setError("Masukkan URL website resmi terlebih dahulu.");
+      setError("Enter the client's official website URL first.");
       return;
     }
     setBusy("extract");
@@ -281,7 +281,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Website tidak dapat dianalisis.",
+          : "We couldn't analyze this website.",
       );
     } finally {
       setBusy(null);
@@ -296,7 +296,7 @@ export default function AuditWorkflow() {
       return;
     }
     if (!factsConfirmed) {
-      setError("Konfirmasikan bahwa seluruh fakta sudah diperiksa.");
+      setError("Confirm that you have checked every fact before continuing.");
       return;
     }
     setBusy("prompts");
@@ -311,7 +311,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Pertanyaan tidak dapat dibuat.",
+          : "We couldn't create the audit questions.",
       );
     } finally {
       setBusy(null);
@@ -401,10 +401,10 @@ export default function AuditWorkflow() {
       });
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        throw new Error(data.error || "Audit tidak dapat dijalankan.");
+        throw new Error(data.error || "We couldn't run the audit.");
       }
       if (!response.body)
-        throw new Error("Server tidak mengirim aliran audit.");
+        throw new Error("The server did not return an audit stream.");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -425,14 +425,16 @@ export default function AuditWorkflow() {
         if (event.type === "run_completed") runCompleted = true;
       }
       if (!runCompleted || finalObservations.length !== 10) {
-        throw new Error("Koneksi terputus sebelum sepuluh observasi selesai.");
+        throw new Error(
+          "The connection closed before all ten observations finished.",
+        );
       }
       await createReport(finalObservations);
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Audit tidak dapat diselesaikan.",
+          : "We couldn't complete the audit.",
       );
     } finally {
       setBusy(null);
@@ -448,7 +450,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Laporan tidak dapat dibuat ulang.",
+          : "We couldn't create the report again.",
       );
     } finally {
       setBusy(null);
@@ -476,7 +478,7 @@ export default function AuditWorkflow() {
       return;
     }
     if (!file.type.match(/^image\/(png|jpeg)$/) || file.size > 1_000_000) {
-      setError("Logo harus berupa PNG/JPG dan berukuran maksimal 1 MB.");
+      setError("Upload a PNG or JPG logo no larger than 1 MB.");
       return;
     }
     const reader = new FileReader();
@@ -485,11 +487,38 @@ export default function AuditWorkflow() {
     reader.readAsDataURL(file);
   }
 
+  function downloadEvidenceJson() {
+    if (!report || !promptPack) return;
+
+    const evidence = makeEvidenceExport(
+      brief,
+      promptPack.prompts,
+      observations,
+      report,
+    );
+    const blob = new Blob([JSON.stringify(evidence, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const brandSlug =
+      brief.brand_name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "client";
+
+    link.href = url;
+    link.download = `${brandSlug}-nuave-evidence.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   const interrupted =
     executionStarted && !busy && !report && observations.length < 10;
 
   return (
-    <main className={styles.shell} lang="id" data-theme="light">
+    <main className={styles.shell} lang="en" data-theme="light">
       <header className={`${styles.topbar} ${styles.noPrint}`}>
         <Link href="/" className={styles.brand}>
           <Image
@@ -515,18 +544,31 @@ export default function AuditWorkflow() {
       {!report ? (
         <nav
           className={`${styles.stepper} ${styles.noPrint}`}
-          aria-label="Tahapan audit"
+          aria-label="Audit stages"
         >
-          {stepLabels.map((label, index) => (
-            <div
-              key={label}
-              className={`${styles.step} ${index <= step ? styles.stepActive : ""} ${index < step ? styles.stepComplete : ""}`}
-              aria-current={index === step ? "step" : undefined}
-            >
-              <span>{index < step ? <IconCheck /> : index + 1}</span>
-              <small>{label}</small>
-            </div>
-          ))}
+          <div className={styles.stepContext}>
+            <span>Audit setup</span>
+            <strong>
+              Step {step + 1} of {stepLabels.length}
+            </strong>
+          </div>
+          <ol className={styles.stepList}>
+            {stepLabels.map((label, index) => (
+              <li
+                key={label}
+                className={`${styles.step} ${index <= step ? styles.stepActive : ""} ${index < step ? styles.stepComplete : ""}`}
+                aria-current={index === step ? "step" : undefined}
+              >
+                <span className={styles.stepBar} aria-hidden="true" />
+                <span className={styles.stepLabel}>
+                  <span className={styles.stepMarker} aria-hidden="true">
+                    {index < step ? <IconCheck /> : index + 1}
+                  </span>
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ol>
         </nav>
       ) : null}
 
@@ -535,7 +577,7 @@ export default function AuditWorkflow() {
           <Alert status="danger" role="alert">
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Ada yang perlu diperbaiki</Alert.Title>
+              <Alert.Title>Check this before continuing</Alert.Title>
               <Alert.Description>{error}</Alert.Description>
             </Alert.Content>
           </Alert>
@@ -592,7 +634,12 @@ export default function AuditWorkflow() {
       ) : null}
 
       {step === 4 && report && promptPack ? (
-        <ReportView report={report} brief={brief} observations={observations} />
+        <ReportView
+          report={report}
+          brief={brief}
+          observations={observations}
+          onDownloadJson={downloadEvidenceJson}
+        />
       ) : null}
     </main>
   );

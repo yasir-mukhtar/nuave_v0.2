@@ -24,12 +24,14 @@ const sourceUrl = z
   .max(2_000)
   .refine(
     (value) => value.startsWith("https://") || value.startsWith("http://"),
-    "URL harus memakai http atau https.",
+    "URL must start with http:// or https://.",
   );
+
+export const SOURCE_TITLE_MAX_LENGTH = 300;
 
 export const sourceSchema = z.object({
   url: sourceUrl,
-  title: z.string().trim().max(300),
+  title: z.string().trim().max(SOURCE_TITLE_MAX_LENGTH),
 });
 
 export const businessBriefSchema = z.object({
@@ -41,8 +43,8 @@ export const businessBriefSchema = z.object({
   target_customer: requiredText.max(500),
   official_sources: z.array(sourceUrl).min(1).max(10),
   verified_offerings: z.array(requiredText.max(300)).min(1).max(12),
-  verified_customer_needs: z.array(requiredText.max(300)).min(2).max(12),
-  verified_decision_criteria: z.array(requiredText.max(300)).min(2).max(12),
+  verified_customer_needs: z.array(requiredText.max(300)).max(12),
+  verified_decision_criteria: z.array(requiredText.max(300)).max(12),
   verified_competitor: z.object({
     name: requiredText.max(160),
     scope: requiredText.max(300),
@@ -55,14 +57,14 @@ export const businessBriefSchema = z.object({
   known_accuracy_questions: z.array(requiredText.max(500)).max(12),
   usp: z.string().trim().max(1_000),
   regulated_category_notes: z.string().trim().max(1_000),
-  language: z.literal("id-ID"),
+  language: z.literal("en-US"),
   agency_name: z.string().trim().max(160),
   agency_logo_data_url: z
     .string()
     .max(1_500_000)
     .refine(
       (value) => !value || /^data:image\/(png|jpeg);base64,/.test(value),
-      "Format logo tidak didukung.",
+      "Unsupported logo format.",
     ),
 });
 
@@ -117,7 +119,7 @@ export const promptSchema = z.object({
 export const promptPackSchema = z.object({
   status: z.literal("draft_for_review"),
   prompt_pack_version: z.string(),
-  language: z.literal("id-ID"),
+  language: z.literal("en-US"),
   target_product: z.literal("ChatGPT"),
   brand: z.object({
     brand_name: z.string(),
@@ -175,7 +177,11 @@ export const reportDetailSchema = z.object({
 
 export const reportContentSchema = z.object({
   conclusion: z.string(),
-  accuracy_status: z.enum(["baik", "perlu_diperbaiki", "tidak_dapat_dinilai"]),
+  accuracy_status: z.enum([
+    "no_clear_issues",
+    "needs_correction",
+    "could_not_assess",
+  ]),
   key_findings: z
     .array(
       z.object({
@@ -190,12 +196,12 @@ export const reportContentSchema = z.object({
     .array(
       z.object({
         order: z.number().int().min(1).max(5),
-        timing: z.enum(["kerjakan_lebih_dulu", "kerjakan_berikutnya"]),
+        timing: z.enum(["do_first", "do_next"]),
         action: z.string(),
         why: z.string(),
         basis: z.string(),
         owner: z.enum([
-          "pemilik_bisnis",
+          "business_owner",
           "admin",
           "marketing",
           "web_developer",
@@ -208,7 +214,6 @@ export const reportContentSchema = z.object({
     .min(1)
     .max(5),
   details: z.array(reportDetailSchema).length(10),
-  methodology_note: z.string(),
 });
 
 export type Source = z.infer<typeof sourceSchema>;
@@ -221,7 +226,8 @@ export type ReportDetail = z.infer<typeof reportDetailSchema>;
 export type ReportContent = z.infer<typeof reportContentSchema>;
 
 export type AuditReport = ReportContent & {
-  report_version: "nuave-report-v1";
+  report_version: "nuave-report-v2";
+  writing_standard_version: "plain-en-v1";
   generated_at: string;
   system_label: string;
   counts: {

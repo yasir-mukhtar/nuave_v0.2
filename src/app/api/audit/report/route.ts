@@ -7,6 +7,10 @@ import {
 } from "@/lib/audit/types";
 import { buildAuditReport, validateReportContent } from "@/lib/audit/contracts";
 import { generateReportContent } from "@/lib/audit/openai";
+import {
+  validateReportLanguage,
+  validateReportLanguageRevision,
+} from "@/lib/audit/report-language";
 
 export const runtime = "nodejs";
 
@@ -20,14 +24,39 @@ const requestSchema = z.object({
 export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
-    const content = await generateReportContent(input);
-    const errors = validateReportContent(
+    let content = await generateReportContent(input);
+    const evidenceErrors = validateReportContent(
       content,
       input.observations,
       input.brief,
     );
-    if (errors.length)
-      return NextResponse.json({ error: errors.join(" ") }, { status: 422 });
+    if (evidenceErrors.length) {
+      return NextResponse.json(
+        { error: evidenceErrors.join(" ") },
+        { status: 422 },
+      );
+    }
+
+    const languageErrors = validateReportLanguage(content);
+    if (languageErrors.length) {
+      const original = content;
+      content = await generateReportContent(input, {
+        draft: original,
+        violations: languageErrors,
+      });
+      const retryErrors = [
+        ...validateReportLanguageRevision(original, content),
+        ...validateReportContent(content, input.observations, input.brief),
+        ...validateReportLanguage(content),
+      ];
+      if (retryErrors.length) {
+        return NextResponse.json(
+          { error: retryErrors.join(" ") },
+          { status: 422 },
+        );
+      }
+    }
+
     return NextResponse.json({
       report: buildAuditReport(content, input.observations),
     });
@@ -37,7 +66,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Laporan tidak dapat dibuat.",
+            : "We couldn't create the report.",
       },
       { status: 400 },
     );

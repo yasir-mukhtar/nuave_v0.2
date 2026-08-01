@@ -1,25 +1,43 @@
 "use client";
 
 import Image from "next/image";
-import { Alert, Chip, Disclosure, Separator } from "@heroui/react";
-import { IconExternalLink } from "@tabler/icons-react";
+import { Alert, Button, Chip, Disclosure, Separator } from "@heroui/react";
+import { IconDownload, IconExternalLink } from "@tabler/icons-react";
 import type {
   AuditObservation,
   AuditReport,
   BusinessBrief,
   ReportDetail,
 } from "@/lib/audit/types";
-import { categoryLabels } from "./AuditStages";
 import styles from "./audit.module.css";
 
 const statusLabels: Record<string, string> = {
-  appeared_as_recommendation: "Muncul sebagai rekomendasi",
-  mentioned_not_recommended: "Disebut, tetapi tidak direkomendasikan",
-  did_not_appear: "Tidak muncul",
-  incomplete_information: "Informasi tidak lengkap",
-  conflicting_information: "Informasi bertentangan",
-  could_not_be_tested: "Tidak dapat diuji",
+  appeared_as_recommendation: "Recommended",
+  mentioned_not_recommended: "Named, not recommended",
+  did_not_appear: "Not named",
+  incomplete_information: "Missing information",
+  conflicting_information: "Conflicting information",
+  could_not_be_tested: "Test could not run",
 };
+
+const reportCategoryLabels: Record<string, string> = {
+  need_discovery: "Customer need",
+  solution_discovery: "Provider options",
+  comparison: "Comparison",
+  validation: "Business facts",
+  action: "Next step",
+};
+
+const ownerLabels: Record<string, string> = {
+  business_owner: "Business owner",
+  admin: "Admin",
+  marketing: "Marketing",
+  web_developer: "Web developer",
+};
+
+function testReferences(ids: string[], testNumberById: Map<string, string>) {
+  return ids.map((id) => testNumberById.get(id) ?? id).join(", ");
+}
 
 function sourceTitle(url: string) {
   try {
@@ -39,20 +57,23 @@ function DetailContent({
   return (
     <div className={styles.detailContent}>
       <div>
-        <h4>Temuan</h4>
+        <h4>What happened</h4>
         <p>{detail.finding}</p>
       </div>
       <div>
-        <h4>Pertanyaan yang diuji</h4>
+        <h4>Question asked</h4>
         <blockquote>{observation?.question}</blockquote>
       </div>
       <div>
-        <h4>Jawaban API — kutipan relevan</h4>
+        <h4>What the AI said</h4>
         <blockquote>
-          {detail.answer_excerpt || "Tidak ada jawaban yang dapat dikutip."}
+          {detail.answer_excerpt || "No answer was available."}
         </blockquote>
       </div>
-      <p className={styles.evidenceNote}>{detail.evidence_note}</p>
+      <div>
+        <h4>What it means</h4>
+        <p className={styles.evidenceNote}>{detail.evidence_note}</p>
+      </div>
       {detail.source_urls.length ? (
         <div className={styles.sources}>
           {detail.source_urls.map((url) => (
@@ -63,12 +84,13 @@ function DetailContent({
         </div>
       ) : null}
       <small>
+        Checked{" "}
         {observation
-          ? new Intl.DateTimeFormat("id-ID", {
+          ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "short",
             }).format(new Date(observation.observed_at))
-          : "Waktu observasi tidak tersedia"}
+          : "at an unknown time"}
       </small>
     </div>
   );
@@ -93,27 +115,40 @@ export default function ReportView({
   report,
   brief,
   observations,
+  onDownloadJson,
 }: {
   report: AuditReport;
   brief: BusinessBrief;
   observations: AuditObservation[];
+  onDownloadJson: () => void;
 }) {
   const observationById = new Map(
     observations.map((item) => [item.prompt_id, item]),
   );
+  const testNumberById = new Map(
+    observations.map((item, index) => [
+      item.prompt_id,
+      String(index + 1).padStart(2, "0"),
+    ]),
+  );
   const accuracyLabel =
-    report.accuracy_status === "baik"
-      ? "Baik"
-      : report.accuracy_status === "perlu_diperbaiki"
-        ? "Perlu diperbaiki"
-        : "Tidak dapat dinilai";
+    report.accuracy_status === "no_clear_issues"
+      ? "No clear issues found"
+      : report.accuracy_status === "needs_correction"
+        ? "Needs correction"
+        : "Could not assess";
 
   return (
     <div className={styles.reportWrap}>
+      <div className={`${styles.reportToolbar} ${styles.noPrint}`}>
+        <Button variant="ghost" size="sm" onPress={onDownloadJson}>
+          <IconDownload /> Download JSON
+        </Button>
+      </div>
       <article className={styles.report}>
         <header className={styles.reportHero} id="stage-5" tabIndex={-1}>
           <div className={styles.reportTitleBlock}>
-            <p className={styles.reportEyebrow}>Laporan Audit Visibilitas AI</p>
+            <p className={styles.reportEyebrow}>AI Visibility Report</p>
             <h1>{brief.brand_name}</h1>
             <p className={styles.reportSubtitle}>
               {brief.entity_scope} · {brief.market_context}
@@ -126,88 +161,90 @@ export default function ReportView({
                 width={96}
                 height={54}
                 unoptimized
-                alt="Logo agency"
+                alt="Agency logo"
               />
             ) : null}
             <div>
-              <small>Disiapkan oleh</small>
+              <small>Prepared by</small>
               <strong>{brief.agency_name || "Nuave"}</strong>
             </div>
           </div>
           <Separator className={styles.heroRule} />
           <dl className={styles.scopeGrid}>
             <div>
-              <dt>Tanggal audit</dt>
+              <dt>Audit date</dt>
               <dd>
-                {new Intl.DateTimeFormat("id-ID", {
+                {new Intl.DateTimeFormat("en-US", {
                   dateStyle: "long",
                   timeStyle: "short",
                 }).format(new Date(report.generated_at))}
               </dd>
             </div>
             <div>
-              <dt>Sistem diuji</dt>
-              <dd>{report.system_label}</dd>
+              <dt>Questions checked</dt>
+              <dd>{observations.length} independent questions</dd>
             </div>
           </dl>
-          <nav className={styles.reportContents} aria-label="Isi laporan">
-            <span>Isi laporan</span>
+          <nav className={styles.reportContents} aria-label="Report contents">
+            <span>In this report</span>
             <ol>
               <li>
-                <a href="#summary">Ringkasan audit</a>
+                <a href="#summary">Main result</a>
               </li>
               <li>
-                <a href="#findings">Temuan utama</a>
+                <a href="#findings">Key findings</a>
               </li>
               <li>
-                <a href="#priorities">Prioritas perbaikan</a>
+                <a href="#priorities">What to do next</a>
               </li>
               <li>
-                <a href="#detail">Temuan detail</a>
+                <a href="#detail">Test-by-test results</a>
               </li>
               <li>
-                <a href="#method">Metode &amp; batasan</a>
+                <a href="#method">How this audit works</a>
               </li>
             </ol>
           </nav>
         </header>
 
         <section className={styles.reportSection} id="summary">
-          <SectionHeading number="01">Ringkasan Audit</SectionHeading>
+          <SectionHeading number="01">Main Result</SectionHeading>
           <div className={styles.resultGrid}>
             <div className={styles.mainResult}>
               <strong>{report.counts.unbranded_recommended}</strong>
               <span>
-                dari {report.counts.unbranded_total} pertanyaan tanpa brand
-                menghasilkan rekomendasi
+                of {report.counts.unbranded_total} discovery questions
+                recommended the business
               </span>
             </div>
             <div>
               <strong>{report.counts.unbranded_mentioned}</strong>
-              <span>disebut tanpa direkomendasikan</span>
+              <span>other discovery answers named the business</span>
             </div>
             <div>
               <strong>
                 {report.counts.branded_recognized}/{report.counts.branded_total}
               </strong>
-              <span>pertanyaan branded dikenali</span>
+              <span>direct business checks found the business</span>
             </div>
             <div>
               <strong>{report.counts.failed}</strong>
-              <span>pengujian gagal</span>
+              <span>tests could not be completed</span>
             </div>
           </div>
           <div className={styles.executiveTakeaway}>
-            <p>Kesimpulan eksekutif</p>
+            <p>What this means</p>
             <div>
               <p className={styles.conclusion}>{report.conclusion}</p>
               <Chip
                 color={
-                  report.accuracy_status === "baik" ? "success" : "warning"
+                  report.accuracy_status === "no_clear_issues"
+                    ? "success"
+                    : "warning"
                 }
                 variant="soft"
               >
-                Ketepatan informasi: {accuracyLabel}
+                Public information: {accuracyLabel}
               </Chip>
             </div>
           </div>
@@ -217,17 +254,18 @@ export default function ReportView({
           >
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Snapshot, bukan peringkat permanen</Alert.Title>
+              <Alert.Title>This result can change</Alert.Title>
               <Alert.Description>
-                Hasil menggambarkan sepuluh pengujian pada waktu yang tercantum
-                dan bukan representasi setiap kemungkinan respons ChatGPT.
+                This report shows ten AI answers from the date above. A
+                different model, date, location, or conversation may return
+                different answers.
               </Alert.Description>
             </Alert.Content>
           </Alert>
         </section>
 
         <section className={styles.reportSection} id="findings">
-          <SectionHeading number="02">Temuan Utama</SectionHeading>
+          <SectionHeading number="02">Key Findings</SectionHeading>
           <ol className={styles.findings}>
             {report.key_findings.map((finding, index) => (
               <li key={finding.title}>
@@ -236,14 +274,17 @@ export default function ReportView({
                   <h3>{finding.title}</h3>
                   <p>{finding.explanation}</p>
                 </div>
-                <small>Dasar: {finding.evidence_prompt_ids.join(", ")}</small>
+                <small>
+                  Based on tests:{" "}
+                  {testReferences(finding.evidence_prompt_ids, testNumberById)}
+                </small>
               </li>
             ))}
           </ol>
         </section>
 
         <section className={styles.reportSection} id="priorities">
-          <SectionHeading number="03">Prioritas Perbaikan</SectionHeading>
+          <SectionHeading number="03">What to Do Next</SectionHeading>
           <ol className={styles.priorities}>
             {[...report.priorities]
               .sort((a, b) => a.order - b.order)
@@ -258,36 +299,36 @@ export default function ReportView({
                     </span>
                     <Chip
                       color={
-                        priority.timing === "kerjakan_lebih_dulu"
-                          ? "accent"
-                          : "default"
+                        priority.timing === "do_first" ? "accent" : "default"
                       }
                       variant="soft"
                     >
-                      {priority.timing === "kerjakan_lebih_dulu"
-                        ? "Kerjakan lebih dulu"
-                        : "Kerjakan berikutnya"}
+                      {priority.timing === "do_first" ? "Do first" : "Do next"}
                     </Chip>
                   </div>
                   <h3>{priority.action}</h3>
                   <dl>
                     <div>
-                      <dt>Mengapa penting</dt>
+                      <dt>Why</dt>
                       <dd>{priority.why}</dd>
                     </div>
                     <div>
-                      <dt>Dasar rekomendasi</dt>
+                      <dt>Based on</dt>
                       <dd>
-                        {priority.basis} (
-                        {priority.evidence_prompt_ids.join(", ")})
+                        {priority.basis} Tests{" "}
+                        {testReferences(
+                          priority.evidence_prompt_ids,
+                          testNumberById,
+                        )}
+                        .
                       </dd>
                     </div>
                     <div>
-                      <dt>Penanggung jawab</dt>
-                      <dd>{priority.owner.replaceAll("_", " ")}</dd>
+                      <dt>Who should do this</dt>
+                      <dd>{ownerLabels[priority.owner]}</dd>
                     </div>
                     <div>
-                      <dt>Selesai ketika</dt>
+                      <dt>You’re done when</dt>
                       <dd>{priority.done_when}</dd>
                     </div>
                   </dl>
@@ -300,10 +341,10 @@ export default function ReportView({
         </section>
 
         <section className={styles.reportSection} id="detail">
-          <SectionHeading number="04">Temuan Detail</SectionHeading>
+          <SectionHeading number="04">Test-by-Test Results</SectionHeading>
           <p className={styles.sectionLead}>
-            Buka setiap temuan untuk melihat pertanyaan, kutipan jawaban,
-            sumber, dan waktu observasi.
+            Open a test to see the question, exact answer excerpt, sources, and
+            time checked.
           </p>
           <div className={`${styles.detailsScreen} ${styles.noPrint}`}>
             {report.details.map((detail, index) => {
@@ -321,8 +362,8 @@ export default function ReportView({
                       <span className={styles.detailTitle}>
                         <small>
                           {observation
-                            ? categoryLabels[observation.category]
-                            : "Pengujian"}
+                            ? reportCategoryLabels[observation.category]
+                            : "Test"}
                         </small>
                         <strong>{statusLabels[detail.status]}</strong>
                       </span>
@@ -352,8 +393,8 @@ export default function ReportView({
                     <div>
                       <small>
                         {observation
-                          ? categoryLabels[observation.category]
-                          : "Pengujian"}
+                          ? reportCategoryLabels[observation.category]
+                          : "Test"}
                       </small>
                       <h3>{statusLabels[detail.status]}</h3>
                     </div>
@@ -367,41 +408,39 @@ export default function ReportView({
         </section>
 
         <section className={styles.reportSection} id="method">
-          <SectionHeading number="05">Metode dan Batasan</SectionHeading>
+          <SectionHeading number="05">How This Audit Works</SectionHeading>
           <div className={styles.methodGrid}>
-            <p>{report.methodology_note}</p>
+            <p>
+              We tested {observations.length} questions one at a time through{" "}
+              {report.system_label}. Five discovery questions did not name the
+              business. Five direct checks asked about its public information.
+            </p>
             <ul className={styles.methodList}>
               <li>
-                Sepuluh pertanyaan diuji secara independen melalui OpenAI
-                Responses API dengan live web search.
+                The evidence export keeps each question, full answer, source,
+                time, model, and result.
               </li>
               <li>
-                Lima pertanyaan tidak menyebut brand dan lima menguji pengenalan
-                serta informasi brand.
+                The API is not the consumer ChatGPT app. Answers can change by
+                model, time, location, and conversation.
               </li>
               <li>
-                Ekspor bukti menyimpan pertanyaan, jawaban mentah, waktu, model
-                yang dikembalikan, status, dan sumber.
+                A mention is not a recommendation. A failed test is not a
+                negative result.
               </li>
               <li>
-                Pengujian API bukan reproduksi persis pengalaman ChatGPT
-                konsumen; hasil dapat berubah karena model, waktu, lokasi,
-                personalisasi, dan konteks.
-              </li>
-              <li>
-                Rekomendasi laporan tidak menjamin perubahan akan membuat brand
-                direkomendasikan.
+                This report shows what happened in this test. It does not prove
+                cause or guarantee future recommendations.
               </li>
             </ul>
           </div>
           <Alert status="accent" className={styles.editorialAlert}>
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Cara menggunakan laporan</Alert.Title>
+              <Alert.Title>Use this report to choose one next step</Alert.Title>
               <Alert.Description>
-                Gunakan temuan untuk memprioritaskan perbaikan, verifikasi
-                kembali informasi bisnis, lalu ulangi pengujian setelah
-                perubahan penting.
+                Check the public information first. Then make one useful change
+                and repeat the same test.
               </Alert.Description>
             </Alert.Content>
           </Alert>
@@ -411,7 +450,7 @@ export default function ReportView({
           <span>{brief.brand_name}</span>
           <span>Nuave AI Visibility Audit</span>
           <span>
-            {new Intl.DateTimeFormat("id-ID", { year: "numeric" }).format(
+            {new Intl.DateTimeFormat("en-US", { year: "numeric" }).format(
               new Date(report.generated_at),
             )}
           </span>

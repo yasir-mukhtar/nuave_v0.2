@@ -58,7 +58,7 @@ export async function POST(request: Request) {
             message:
               error instanceof Error
                 ? error.message
-                : "Audit tidak dapat dijalankan.",
+                : "We couldn't run the audit.",
           });
         } finally {
           controller.close();
@@ -77,9 +77,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Audit tidak dapat dijalankan.",
+          error instanceof Error ? error.message : "We couldn't run the audit.",
       },
       { status: 400 },
     );
