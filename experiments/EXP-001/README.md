@@ -5,7 +5,13 @@
 > Measurement version: `measurement-v0.1`
 > Prompt pack: `dental-id-jakarta-v0.1`
 > Prepared: 2026-07-19
-> Governing documents: [`EXPERIMENTS_AND_GATES.md`](../../docs/v2/EXPERIMENTS_AND_GATES.md), [`MEASUREMENT_SPEC.md`](../../docs/v2/MEASUREMENT_SPEC.md), [`OPERATIONS_RUNBOOK.md`](../../docs/v2/OPERATIONS_RUNBOOK.md), and [`COMPLIANCE_AND_DATA.md`](../../docs/v2/COMPLIANCE_AND_DATA.md)
+> Updated: 2026-07-31
+> Historical basis: prepared against the former v2 experiment, measurement,
+> operations, and compliance specifications, now retained only in Git history.
+> Reconcile any future execution with
+> [`../../docs/AUDIT.md`](../../docs/AUDIT.md),
+> [`../../docs/DECISION_LOG.md`](../../docs/DECISION_LOG.md), and the frozen
+> rules reproduced in this package before running it.
 
 This is an internal methodology experiment. It is not a customer audit, a free
 lead magnet, a case study, or evidence that clinics will pay for Nuave.
@@ -16,7 +22,7 @@ lead magnet, a case study, or evidence that clinics will pay for Nuave.
 |---|---|
 | ID and dates | `EXP-001`; preparation on 2026-07-19; run dates recorded when execution begins |
 | Hypothesis | The v0 identity and prompt design will produce traceable, differentiated observations for single-location dental clinics without requiring fabricated certainty. |
-| Governing decision | Gate 0 and EXP-001 in `EXPERIMENTS_AND_GATES.md`; measurement boundary in `MEASUREMENT_SPEC.md` |
+| Prepared basis | Frozen 2026-07-19 Gate 0 and measurement rules reproduced in this package; former source specifications remain available in Git history |
 | Segment | Publicly identifiable, single-location dental clinics in Jakarta that meet the sampling rules below |
 | Variant/control | No customer-facing variant. The fixed operational treatment is one prompt pack, two named grounded API surfaces, and one review rubric. |
 | Primary metric | Proportion of sampled clinics for which the protocol produces a reviewable, traceable audit candidate under the pre-registered coverage and truth criteria |

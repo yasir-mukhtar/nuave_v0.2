@@ -1,69 +1,89 @@
 # Nuave go-to-market now
 
-> Updated: 2026-07-20
+> Updated: 2026-07-31
 > Stage: zero customers
 
 ## Current focus
 
-Do not scale reach yet. First create one credible raw report, then learn whether
-clinic owners understand the problem, value the findings, and will pay for the
-full audit.
+Validate whether agencies, SEO freelancers, Google Business Profile
+consultants, and independent marketers will pay for a client-ready AI
+Visibility Audit and use it in a real client or prospect conversation.
+
+Do not scale reach yet. First make the sample and offer understandable to a
+small set of relevant buyers.
 
 ## Current customer and message
 
-- Customer: owner, operator, or marketing lead of one dental-clinic location.
-- Working geography: Jabodetabek as the market umbrella, with city- and
-  area-specific reports and conversations; EXP-R1 starts in Depok/Margonda.
-- Message: see where your clinic appears or is missing from tested AI
-  recommendations, what the systems say, and what to fix first.
-- Offer: Full AI Visibility Audit — Rp149,000.
-- Primary early channel: founder-assisted conversations, referrals, and trusted
-  partners.
+- Customer: a small agency, freelancer, or marketing consultant serving local
+  business clients.
+- Audited subject: one clearly identified client business supported by the
+  current audit method.
+- Working question: "Does ChatGPT recommend your client's business?"
+- Working value proposition: help the buyer sell, deliver, and differentiate
+  with a client-ready AI Visibility Audit.
+- Offer: one reviewed audit for one client; agency-facing pilot price is open.
+- Primary CTA: `See Sample Audit`.
+- Initial channels: targeted founder outreach and, after the sample is ready,
+  a small founder-approved paid acquisition test aimed at agency audiences.
 
-The message, price, city, and channel are working choices. None has been
-validated by customer behavior.
+The customer, message, price, and channels are working choices. None has been
+validated by customer behavior. Do not claim that agencies are cheaper to
+acquire until real acquisition and delivered-order economics exist.
+
+## Message angles to test
+
+- New service: add AI Visibility Audits without building the audit method.
+- Differentiation: offer clients something beyond another SEO report.
+- Sales support: open a proposal with a client-specific AI visibility finding.
+- Client readiness: answer questions about ChatGPT visibility with evidence.
+
+These are hypotheses about buyer value, not proven sales or retention outcomes.
 
 ## Next GTM action
 
-After EXP-R1 produces an approved sample report:
+1. Prepare one truthful, client-ready sample with neutral presentation and an
+   optional agency name and logo.
+2. Show it privately to three to five relevant agencies or freelancers.
+3. Ask how they would use it, what is missing, and what makes it credible or
+   unconvincing.
+4. Make one concrete per-audit offer at a founder-approved pilot price.
+5. Record payment, rejection, objection, requested concession, and intended
+   client use.
+6. Decide whether to revise the report, message, price, or target buyer before
+   any larger paid campaign.
 
-1. Show it privately to three to five relevant clinic owners, marketers, or
-   trusted specialists.
-2. Ask what is useful, confusing, missing, or unbelievable.
-3. Offer the paid audit without a ranking or outcome guarantee.
-4. Record actual payment, rejection, objection, and requested concession.
-5. Decide whether to revise the report, message, offer, or customer segment.
-
-Do not count compliments, clicks, replies, or free-report interest as payment
-evidence.
+Do not count compliments, clicks, replies, sample views, or free-report interest
+as payment evidence.
 
 ## Minimum conversation record
 
 For each real conversation, record only:
 
 - date and non-identifying prospect ID;
-- role and clinic type;
+- buyer role and service type;
+- client types they currently serve;
 - how the conversation started;
-- the prospect's own description of the problem;
-- useful, confusing, or unconvincing report sections;
+- intended use for the audit;
+- useful, confusing, missing, or unconvincing report sections;
 - offer response and payment outcome;
-- important objection;
+- important objection or requested concession;
 - allowed follow-up; and
 - next action.
 
 Keep private contact details and sensitive conversation material outside the
-repository. Do not publish quotes or clinic-specific findings without
-permission.
+repository. Do not publish quotes, logos, client names, or client-specific
+findings without permission.
 
 ## Not needed yet
 
-- weekly executive scorecards without new activity;
+- agency dashboards, team accounts, or client-management systems;
 - content calendars or multi-channel campaign systems;
-- paid-ad budgets and scaling rules;
-- partner programs and commission structures;
+- paid-ad scaling rules before a bounded test exists;
+- partner programs or commission structures;
+- complex pricing tiers, credits, bundles, or subscriptions;
 - conversion dashboards without a real denominator; or
-- customer, referral, and re-audit metrics before customers exist.
+- fabricated testimonials, resale results, retention claims, or demand.
 
-The existing `gtm/` scorecard, evidence register, templates, and detailed CMO
-operating system remain reference material. Update them only if they become
-useful for real activity rather than as preparation for hypothetical activity.
+Create a new dated conversation or review record only when real agency activity
+creates evidence worth recording. The evidence register and prospect template
+are sufficient for the current test.

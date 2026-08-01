@@ -1,0 +1,425 @@
+/* Landing-only presentation. Shared resets, utilities, and tokens stay global. */
+
+.btn-lp-purple {
+  background-color: var(--lp-purple);
+  transition:
+    background-color 0.15s ease,
+    transform var(--transition-fast);
+}
+
+.btn-lp-purple:hover {
+  background-color: var(--lp-purple-dark);
+}
+
+.btn-lp-purple:active,
+.btn-lp-black:active {
+  transform: scale(0.985);
+}
+
+.btn-lp-black {
+  background-color: var(--lp-text-primary);
+  transition:
+    background-color 0.15s ease,
+    transform var(--transition-fast);
+}
+
+.btn-lp-black:hover {
+  background-color: var(--black-hover);
+}
+
+body:has(.lp-root) {
+  background-color: var(--lp-bg) !important;
+}
+
+.lp-root {
+  background-color: var(--lp-bg) !important;
+  color: var(--lp-text-primary);
+}
+
+.lp-page {
+  background: var(--lp-bg, #f7f7f5);
+}
+
+.lp-page h1,
+.lp-page h2,
+.lp-page h3 {
+  font-family: var(--font-geist-sans), sans-serif;
+  color: var(--lp-text-primary);
+}
+
+.lp-page h1 {
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 58px;
+  letter-spacing: -0.03em;
+}
+
+.lp-page h2 {
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1.2em;
+  letter-spacing: -2px;
+}
+
+.lp-page h3 {
+  font-family: Inter, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 34px;
+}
+
+.lp-page .lp-hero-heading,
+.lp-page .lp-cta-heading {
+  font-size: 60px;
+  font-weight: 600;
+  line-height: 1em;
+  letter-spacing: -2px;
+}
+
+.lp-page .lp-faq-heading {
+  font-size: 36px;
+  line-height: 1.4em;
+  letter-spacing: -1px;
+}
+
+.lp-root p,
+.lp-root span,
+.lp-root div,
+.lp-root button,
+.lp-root a {
+  font-family: inherit;
+}
+
+.lp-hiw-mobile-preview {
+  display: none;
+}
+
+@keyframes lp-hero-bg-drift {
+  0%,
+  100% {
+    transform: scale(1.2) translate(0%, 0%) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.3) translate(-5%, 3%) rotate(1.5deg);
+  }
+  50% {
+    transform: scale(1.25) translate(4%, -4%) rotate(-1deg);
+  }
+  75% {
+    transform: scale(1.35) translate(-3%, -2%) rotate(0.8deg);
+  }
+}
+
+@keyframes lp-hero-overlay-drift-1 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+    opacity: 0.3;
+  }
+  33% {
+    transform: translate(10%, -8%) rotate(4deg) scale(1.15);
+    opacity: 0.5;
+  }
+  66% {
+    transform: translate(-8%, 10%) rotate(-3deg) scale(0.9);
+    opacity: 0.2;
+  }
+}
+
+@keyframes lp-hero-overlay-drift-2 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+    opacity: 0.25;
+  }
+  33% {
+    transform: translate(-8%, 6%) rotate(-3deg) scale(1.1);
+    opacity: 0.45;
+  }
+  66% {
+    transform: translate(6%, -5%) rotate(2deg) scale(1.15);
+    opacity: 0.15;
+  }
+}
+
+@keyframes lp-hero-overlay-drift-3 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(6%, 8%) scale(1.15);
+    opacity: 0.4;
+  }
+}
+
+.lp-hero-bg-base,
+.lp-hero-overlay-1,
+.lp-hero-overlay-2,
+.lp-hero-overlay-3 {
+  position: absolute;
+  inset: -20%;
+  width: 140%;
+  height: 140%;
+  pointer-events: none;
+}
+
+.lp-hero-bg-base {
+  z-index: 0;
+  background-image: url("/bg-footer-2.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  animation: lp-hero-bg-drift 12s ease-in-out infinite;
+  will-change: transform;
+}
+
+.lp-hero-overlay-1,
+.lp-hero-overlay-2,
+.lp-hero-overlay-3 {
+  z-index: 1;
+  will-change: transform, opacity;
+}
+
+.lp-hero-overlay-1 {
+  background: radial-gradient(
+    ellipse 60% 50% at 30% 20%,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(200, 210, 255, 0.15) 40%,
+    transparent 70%
+  );
+  animation: lp-hero-overlay-drift-1 8s ease-in-out infinite;
+}
+
+.lp-hero-overlay-2 {
+  background: radial-gradient(
+    ellipse 50% 60% at 75% 60%,
+    rgba(130, 120, 240, 0.2) 0%,
+    rgba(140, 160, 255, 0.1) 40%,
+    transparent 65%
+  );
+  animation: lp-hero-overlay-drift-2 10s ease-in-out infinite;
+}
+
+.lp-hero-overlay-3 {
+  background: radial-gradient(
+    ellipse 45% 40% at 50% 40%,
+    rgba(180, 190, 255, 0.25) 0%,
+    rgba(160, 180, 255, 0.08) 50%,
+    transparent 70%
+  );
+  animation: lp-hero-overlay-drift-3 7s ease-in-out infinite;
+}
+
+@media (max-width: 768px) {
+  .lp-nav-links,
+  .lp-nav-masuk {
+    display: none !important;
+  }
+
+  .lp-nav-hamburger {
+    display: flex !important;
+  }
+
+  .lp-nav-bar {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+  }
+
+  .lp-nav-inner {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(117, 115, 114, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .lp-hero-heading,
+  .lp-cta-heading {
+    font-size: 36px !important;
+    line-height: 1.1em;
+    letter-spacing: -1px !important;
+  }
+
+  .lp-problem-heading,
+  .lp-stats-heading,
+  .lp-hiw-heading,
+  .lp-faq-heading {
+    font-size: 28px !important;
+  }
+
+  .lp-hero-subtitle,
+  .lp-marquee-text,
+  .lp-stats-subtitle,
+  .lp-problem-card span {
+    font-size: 16px !important;
+  }
+
+  .lp-hero-section {
+    padding: 120px 20px 0 !important;
+  }
+
+  .lp-hero-preview {
+    display: block !important;
+    margin-top: 40px !important;
+  }
+
+  .lp-hero-preview-frame {
+    min-height: 680px;
+    aspect-ratio: auto !important;
+  }
+
+  .lp-hero-preview-content {
+    padding: 24px 12px !important;
+  }
+
+  .lp-hero-stepper {
+    align-self: stretch;
+    overflow-x: auto;
+  }
+
+  .lp-hero-report-shell {
+    height: 570px !important;
+    padding: 12px !important;
+  }
+
+  .lp-hero-report-card {
+    inset: 12px !important;
+    padding: 24px !important;
+  }
+
+  .lp-hero-report-card h2 {
+    font-size: 26px !important;
+  }
+
+  .lp-marquee-section {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+
+  .lp-problem-section {
+    padding: 60px 16px !important;
+  }
+
+  .lp-problem-grid,
+  .lp-stats-grid-inner,
+  .lp-hiw-card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lp-problem-card {
+    min-height: 320px !important;
+  }
+
+  .lp-problem-card > div {
+    padding: 24px !important;
+  }
+
+  .lp-stats-section {
+    padding-top: 60px !important;
+    padding-bottom: 60px !important;
+  }
+
+  .lp-stats-br {
+    display: none;
+  }
+
+  .lp-stats-grid-inner {
+    margin: 0 16px !important;
+  }
+
+  .lp-stat-item {
+    padding: 32px 24px !important;
+    border-right: 1px solid #e5e7eb !important;
+    border-bottom: none !important;
+    border-left: 1px solid #e5e7eb !important;
+  }
+
+  .lp-stat-item:nth-child(1),
+  .lp-stat-item:nth-child(2) {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  .lp-faq-section {
+    padding: 48px 16px 60px !important;
+  }
+
+  .lp-cta-section {
+    min-height: auto !important;
+    padding: 80px 20px !important;
+  }
+
+  .lp-hiw-section {
+    padding-top: 60px !important;
+  }
+
+  .lp-hiw-sticky-heading {
+    position: relative !important;
+    top: auto !important;
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+  }
+
+  .lp-hiw-card-wrapper {
+    position: relative !important;
+    top: auto !important;
+    margin-bottom: 0 !important;
+    padding-right: 16px !important;
+    padding-bottom: 16px !important;
+    padding-left: 16px !important;
+  }
+
+  .lp-hiw-right-panel {
+    display: none !important;
+  }
+
+  .lp-hiw-mobile-preview {
+    display: flex !important;
+  }
+
+  .lp-hiw-left-panel {
+    padding: 24px !important;
+  }
+
+  .lp-footer {
+    padding: 60px 16px !important;
+  }
+
+  .lp-footer-row1,
+  .lp-footer-row2,
+  .lp-footer-nav,
+  .lp-footer-social {
+    align-items: flex-start !important;
+  }
+
+  .lp-footer-row1,
+  .lp-footer-row2 {
+    flex-direction: column !important;
+  }
+
+  .lp-footer-row1 {
+    gap: 40px !important;
+  }
+
+  .lp-footer-row2 {
+    gap: 16px !important;
+  }
+
+  .lp-footer-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .lp-footer-social {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .lp-footer-copyright {
+    margin-left: 0 !important;
+  }
+
+  .lp-footer-social-label {
+    margin-right: 0 !important;
+  }
+}

@@ -2,6 +2,7 @@
 
 > Status: **PREPARED — no reviews completed**
 > Applies to: `exp-001-v0.1`
+> Updated: 2026-07-19
 
 One named measurement reviewer applies this rubric to all ten evidence clinics.
 A second reviewer may inspect critical defects, but must not silently replace

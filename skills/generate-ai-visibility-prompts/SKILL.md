@@ -1,160 +1,161 @@
 ---
 name: generate-ai-visibility-prompts
-description: Generate, revise, or quality-check a structured ten-question Bahasa Indonesia prompt pack for a Nuave dental-clinic AI visibility audit using verified single-location clinic inputs, the Nuave Intent-5 taxonomy, and a five-unbranded/five-branded allocation. Use when preparing realistic customer questions that will later be run independently in ChatGPT. Do not use this skill to execute the questions, analyze ChatGPT responses, calculate scores, or write the customer report.
+description: Generate, revise, or quality-check a structured ten-question AI visibility prompt pack for any verified client brand or business, using a universal Intent-5 matrix with five unbranded and five branded questions. Use for agencies, freelancers, and consultants preparing brand-specific questions for later independent execution in ChatGPT across local services, ecommerce, B2B, software, professional services, or other reviewed categories. Do not use the universal skill when a dedicated vertical skill applies, or to execute questions, analyze answers, calculate scores, or write the audit report.
 ---
 
-# Generate AI Visibility Prompts
+# Generate Brand AI Visibility Prompts
 
-Create one reviewable ten-question prompt pack for one verified dental-clinic
-location. Preserve realistic customer language without favoring the audited
-clinic or inventing business facts.
+Create one reviewable ten-question prompt pack for one exact, verified brand
+scope. Tailor the customer language to the brand's real category and market
+without favoring the brand or inventing facts.
 
-## Load the product context
+## Load the universal context
 
 Read
 [`../../docs/PROMPT_GENERATION_CONTEXT.md`](../../docs/PROMPT_GENERATION_CONTEXT.md)
-completely before generating or revising a prompt pack. Treat it as the
-canonical source for the taxonomy, allocation, language rules, safety
-boundaries, and interpretation limits.
+completely before generating or revising a pack. Treat it as the source for the
+required inputs, Intent-5 matrix, natural-language rules, safety boundaries, and
+acceptance checks.
 
-If the context file is missing or conflicts with this skill, stop and report
-the conflict. Follow the newer founder-approved decision when the repository
-decision log clearly resolves it.
+If the client is a dental clinic and the task is a dental-specific audit or
+methodology experiment, use
+[`generate-dental-clinic-ai-visibility-prompts`](../generate-dental-clinic-ai-visibility-prompts/SKILL.md)
+instead.
+
+If the context is missing or conflicts with this skill, stop and report the
+conflict. Follow the newest founder-approved decision when the decision log
+clearly resolves it.
 
 ## Keep the task boundary
 
-Perform only prompt-pack generation and review.
+Perform only prompt-pack generation, revision, and quality review.
 
 Do not:
 
-- send the generated questions to ChatGPT;
-- browse for or silently verify missing clinic facts;
-- analyze prior AI answers;
+- send questions to ChatGPT or another provider;
+- browse for or silently verify missing brand facts;
+- analyze prior AI responses;
+- predict whether the audited brand will appear;
 - calculate visibility, accuracy, or composite scores;
 - generate findings, recommendations, or report copy; or
 - change repository files unless the user explicitly requests saved output.
 
-## Collect the audit inputs
+## Collect and validate inputs
 
-Require:
+Require every field defined as required in the universal context:
 
-- `clinic_name`: canonical public clinic name;
-- `branch_name`: exact audited branch or location label;
-- `address`: exact public branch address;
-- `city`: city used in the audit;
-- `local_area`: practical neighborhood, landmark, or travel area;
-- `official_sources`: at least one authoritative clinic or business-listing
-  source;
-- `verified_services`: one or more services approved for use in questions; and
-- `verified_competitor`: one real, locally relevant competitor with its name,
-  location, and verification source.
+- `brand_name`;
+- `entity_scope`;
+- `brand_type`;
+- `category`;
+- `market_context`;
+- `target_customer`;
+- `official_sources`;
+- `verified_offerings`;
+- `verified_customer_needs`;
+- `verified_decision_criteria`; and
+- `verified_competitor`.
 
-Accept when available:
+Accept the optional fields defined there. Treat verified inputs as approved for
+wording, while keeping customer-supplied facts visibly identified. Do not
+invent a missing customer need, comparison criterion, competitor, location,
+offering, price, policy, or conversion action.
 
-- `name_variants`;
-- `priority_service`;
-- `intended_customer_context`;
-- `customer_supplied_facts`;
-- `known_accuracy_questions`; and
-- `prompt_pack_version`.
+Never request private customer records, sensitive personal data, confidential
+business data, or patient information.
 
-Treat explicit `verified_*` inputs as approved for prompt generation. Keep
-customer-supplied facts identified as customer-supplied. Do not treat an
-unverified customer statement as an established public fact.
-
-Never request or use patient names, appointment data, diagnoses, treatment
-records, private messages, or patient photographs.
-
-If any required input is missing, return only:
+If required inputs are missing, ambiguous, contradictory, or unsafe, return
+only:
 
 ```json
 {
   "status": "needs_input",
   "missing_inputs": ["field_name"],
+  "conflicts": [],
   "prompts": []
 }
 ```
 
 Add a short plain-language explanation after the JSON only when it helps the
-user supply the missing information. Do not fabricate or return a
-complete-looking partial pack.
+user supply or resolve the input. Do not return a complete-looking partial pack.
 
-## Build the fixed Intent-5 matrix
+## Build the fixed universal matrix
 
-Generate the following records and no others:
+Generate the ten records in the exact order defined in the universal context:
 
-| Prompt ID | Category | Role | Branded |
-|---|---|---|---|
-| `NUAVE-PROBLEM-01` | `problem_discovery` | First symptom- or situation-led local need | `false` |
-| `NUAVE-PROBLEM-02` | `problem_discovery` | Different symptom- or situation-led local need | `false` |
-| `NUAVE-PROVIDER-01` | `provider_discovery` | General local clinic discovery | `false` |
-| `NUAVE-PROVIDER-02` | `provider_discovery` | Verified service-led local discovery | `false` |
-| `NUAVE-COMPARISON-01` | `comparison` | Open comparison using practical criteria | `false` |
-| `NUAVE-COMPARISON-02` | `comparison` | Head-to-head with the verified competitor | `true` |
-| `NUAVE-VALIDATION-01` | `validation` | Verify a priority service or important public fact | `true` |
-| `NUAVE-VALIDATION-02` | `validation` | Verify branch identity, location, hours, or consistency | `true` |
-| `NUAVE-ACTION-01` | `action` | Price, service access, or availability | `true` |
-| `NUAVE-ACTION-02` | `action` | Hours, contact, directions, or booking | `true` |
+1. two unbranded `need_discovery` questions;
+2. two unbranded `solution_discovery` questions;
+3. one unbranded and one branded `comparison` question;
+4. two branded `validation` questions; and
+5. two branded `action` questions.
 
-Do not change the matrix merely to make generation easier. Return
-`needs_input` when the approved inputs cannot support one of its required
-roles.
+Preserve the exact `NUAVE-BRAND-*` prompt IDs, category, role, and branded
+status. Return `needs_input` when approved inputs cannot support a required row.
+
+Do not change the matrix simply because another question would be easier to
+write.
 
 ## Generate natural customer questions
 
-For each matrix row:
+For each row:
 
-1. Identify the customer's immediate situation and decision.
-2. Use only approved clinic, location, service, and competitor inputs.
-3. Write one independently understandable question in casual-neutral
-   Indonesian.
-4. Keep one main request. A short setup sentence may precede it.
-5. Include the city or local area naturally when local relevance affects the
-   answer.
-6. Prefer familiar customer words over clinical, marketing, or audit terms.
-7. Vary sentence shape without forcing slang or artificial personas.
-8. Keep the wording concise; prefer roughly 8–30 words when natural.
+1. Identify the customer's immediate need and decision.
+2. Select only approved inputs relevant to that row.
+3. Write one independently understandable customer question.
+4. Use the requested language; default to natural Bahasa Indonesia.
+5. Include location only for local decisions. Otherwise use the relevant
+   country, industry, audience, use case, or other verified market context.
+6. Use ordinary customer terms instead of audit, SEO, GEO, or AI-ranking jargon.
+7. Keep one main request and concise wording.
+8. Make branded validation and action questions useful without presuming the
+   brand is good, suitable, available, or recommended.
 
-Do not put the clinic name, its branch name, an identifiable name variant, its
-website, or another unique brand clue into any unbranded question.
+Keep the audited brand, its name variants, URLs, slogans, unique product names,
+and other identifying clues out of every unbranded question.
 
-Do not ask the customer-style question to provide citations, explain
-methodology, use public information only, or discuss limitations. Put web,
-source, and evidence requirements in the later execution configuration.
+Do not ask the customer-style question to provide sources, explain methodology,
+calculate a score, or discuss audit limitations. Those belong to execution and
+reporting.
 
 Avoid:
 
-- keyword-stuffed or corporate wording;
-- multiple unrelated requests in one question;
-- diagnosis, medication, or treatment-plan requests;
-- `terbaik`, `paling bagus`, or other clinical-superiority framing;
-- claims that a service, price, hour, review, credential, or conflict exists
-  unless supported by an approved input; and
-- wording optimized to cause the audited clinic to appear.
+- generic questions that could apply unchanged to any category;
+- keyword stuffing or corporate marketing language;
+- multiple unrelated requests;
+- unsupported superlatives or winner requests;
+- invented prices, availability, features, locations, policies, reviews,
+  credentials, outcomes, conflicts, or customer pain;
+- sensitive profiling or individualized high-impact advice; and
+- wording designed to trigger the audited brand.
 
-When a symptom-led question is needed, describe a common synthetic situation
-and ask about an appropriate clinic, service, or provider to check. Do not
-diagnose the symptom in the question or imply that the audited clinic is
-clinically suitable.
+## Apply category safety
 
-## Review before returning
+For regulated or high-impact categories, keep prompts to business discovery and
+public brand facts. Do not request medical, legal, financial, employment,
+housing, insurance, or eligibility advice, or ask ChatGPT to certify safety,
+legality, suitability, quality, returns, or outcomes.
 
-Review the complete pack as a set. Revise it until all checks pass:
+Return `needs_input` with a `regulated_category_review` conflict when the fixed
+matrix cannot be completed safely from approved business facts.
 
-- exactly ten prompts;
-- exactly two prompts in every Intent-5 category;
+## Review the complete pack
+
+Revise until all checks pass:
+
+- exactly ten prompts in matrix order;
+- exactly two prompts in each Intent-5 category;
 - exactly five unbranded and five branded prompts;
-- the fixed role and branded status for every prompt ID;
-- no clinic or unique brand leakage in unbranded prompts;
-- one verified competitor used only where appropriate;
-- no invented facts or unsupported conflict premise;
-- no diagnosis, prescription, guarantee, or clinical-quality verdict;
-- no two prompts performing substantially the same customer job;
-- every question understandable without conversation history; and
-- ordinary Indonesian when read aloud.
+- exact prompt IDs, roles, and branded status;
+- no brand leakage in unbranded prompts;
+- one exact entity and market scope throughout;
+- only verified offerings, needs, criteria, and competitor facts;
+- no unsupported premise, prediction, recommendation, or category guarantee;
+- no duplicate customer job;
+- every question works without conversation history;
+- natural language appropriate to the category; and
+- regulated-category guardrails pass.
 
-Do not claim that model self-review equals human approval. Every successfully
-generated pack remains a draft until a human reviews its exact wording.
+Every generated pack remains a draft until a human reviews the exact wording.
 
 ## Return structured output
 
@@ -166,11 +167,13 @@ Return valid JSON in this shape:
   "prompt_pack_version": "draft-v1",
   "language": "id-ID",
   "target_product": "ChatGPT",
-  "clinic": {
-    "clinic_name": "Canonical clinic name",
-    "branch_name": "Exact branch",
-    "city": "City",
-    "local_area": "Local area"
+  "brand": {
+    "brand_name": "Canonical brand name",
+    "entity_scope": "Exact measured scope",
+    "brand_type": "Plain-language brand type",
+    "category": "Customer-facing category",
+    "market_context": "Relevant market context",
+    "target_customer": "Verified target customer"
   },
   "summary": {
     "total_prompts": 10,
@@ -179,13 +182,13 @@ Return valid JSON in this shape:
   },
   "prompts": [
     {
-      "prompt_id": "NUAVE-PROBLEM-01",
-      "category": "problem_discovery",
-      "role": "First symptom- or situation-led local need",
+      "prompt_id": "NUAVE-BRAND-NEED-01",
+      "category": "need_discovery",
+      "role": "Explore one verified need without naming a brand",
       "branded": false,
-      "question": "Exact Bahasa Indonesia customer question",
-      "rationale": "Why this question represents the assigned customer intent",
-      "inputs_used": ["city", "verified_services[0]"],
+      "question": "Exact customer-style question",
+      "rationale": "Why this question represents the assigned intent",
+      "inputs_used": ["verified_customer_needs[0]", "market_context"],
       "review_status": "needs_human_review"
     }
   ],
@@ -195,30 +198,30 @@ Return valid JSON in this shape:
     "five_unbranded": true,
     "five_branded": true,
     "no_brand_leakage": true,
+    "verified_inputs_only": true,
     "verified_competitor_only": true,
-    "no_clinical_quality_request": true,
+    "single_entity_scope": true,
+    "category_safety_pass": true,
     "independent_natural_questions": true
   },
   "warnings": []
 }
 ```
 
-Return all ten prompt records in matrix order. Use the supplied
-`prompt_pack_version`; otherwise use `draft-v1`. Keep `warnings` factual and
-specific. In `inputs_used`, list only approved input fields whose values appear
-in or directly determine the wording of that question; do not list facts kept
-only for later answer verification. Do not include a score, predicted ChatGPT
-answer, expected clinic appearance, or customer-facing audit conclusion.
+Return all ten prompt records. Use the supplied `prompt_pack_version`; otherwise
+use `draft-v1`. List only inputs that directly determine each question in
+`inputs_used`. Keep warnings factual and specific.
 
-If any self-check cannot pass, revise the pack. If the issue depends on missing
-or conflicting inputs, return `needs_input` instead.
+Do not include predicted answers, expected visibility, a score, report findings,
+or claims about why ChatGPT may include or omit the brand.
 
 ## Revise an existing pack
 
 When revising:
 
 1. Preserve prompt IDs, category roles, and branded allocation.
-2. Change only wording or approved input substitutions needed by the feedback.
-3. Re-run every set-level check, including brand leakage and duplication.
-4. Return the complete ten-prompt pack, not only the changed records.
-5. Keep every record marked `needs_human_review`.
+2. Change only wording or approved input substitutions required by feedback.
+3. Re-run every pack-level check, including scope, leakage, duplication, and
+   category safety.
+4. Return the complete ten-question pack, not only changed rows.
+5. Keep every prompt marked `needs_human_review`.

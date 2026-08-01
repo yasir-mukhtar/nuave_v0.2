@@ -1,72 +1,90 @@
-# Active experiment — EXP-R1 raw report
+# Active experiment — EXP-R2 agency offer validation
 
-> Status: complete — PASS_CANDIDATE
-> Time box: one working day
+> Status: ready to prepare
+> Updated: 2026-07-31
+> Time box: one working cycle
 > Owner: founder or assigned operator
 
 ## Question
 
-Can Nuave produce one specific, evidence-backed dental-clinic report that is
-useful enough to show a real clinic owner?
+Will a relevant agency, SEO freelancer, Google Business Profile consultant, or
+independent marketer pay for one client-ready AI Visibility Audit and identify
+a real client use for it?
 
 ## Hypothesis
 
-Five realistic questions across up to two AI systems, combined with public web
-research, will produce at least three specific observations or actions that are
-more useful than an unstructured chatbot conversation.
+One truthful sample audit, a clear per-audit offer, and basic neutral or agency
+branding will be sufficient for a relevant buyer to understand the product and
+make a concrete purchase decision without an agency dashboard.
+
+This is a working hypothesis, not proven demand.
 
 ## Scope
 
-- One real, clearly identified Jabodetabek dental-clinic branch.
-- Five questions from [`../docs/AUDIT.md`](../docs/AUDIT.md).
-- Up to two AI systems available to the operator.
-- One run per question and system.
-- One short internal report.
-- No customer contact, publication, paid order, or broad market claim.
+- One exact, verified client brand and one human-reviewed prompt pack generated
+  with the universal brand skill.
+- One agency-ready sample based on retained or newly collected reviewable
+  evidence.
+- One audit for one clearly identified client business.
+- Neutral presentation with optional agency name and logo.
+- One concise executive or sales summary.
+- One founder-approved per-audit pilot price.
+- Three to five relevant buyer conversations.
+- No public demand claim, broad paid-ad scale, dashboard, subscription, or
+  multi-client system.
 
-The detailed ten-clinic experiment under `EXP-001/` is preserved but deferred.
-EXP-R1 is a faster product-learning test and must not be reported as a result of
-that frozen protocol.
+The universal prompt matrix does not establish that every client category is
+safe or supported. Review the chosen category before audit execution. The
+dental-specific skill is preserved for a later deliberate dental experiment.
+Do not publish identifiable client findings without the appropriate permission.
 
-## Five actions
+## Actions
 
-1. Choose and verify one clinic before observing its AI visibility.
-2. Run the five questions and save all answers, dates, systems, and source links.
-3. Check the clinic and relevant competitors against public sources.
-4. Produce the short report defined in `docs/AUDIT.md`.
-5. Review every claim and record the result below.
+1. Select one exact client brand and verify every required universal-skill input.
+2. Generate and human-review one universal ten-question prompt pack.
+3. Collect or select reviewable evidence for the approved pack without treating
+   draft questions as final observations.
+4. Produce the neutral report and optional agency name/logo variant manually.
+5. Add a short summary showing appearances, non-appearances, competitors, the
+   most important findings, three recommended actions, scope, and limitations.
+6. State the one-audit offer, commercial-use boundary, and one pilot price.
+7. Show the sample to three to five relevant buyers and make the paid offer.
+8. Record the buyer's intended use, payment outcome, objections, requested
+   concessions, and repeat-purchase interest.
 
-## Pass signal
+## Evidence and result labels
 
-Pass as a candidate for owner testing when:
+- `PASS_CANDIDATE`: at least one relevant buyer pays for a client audit and
+  names a credible client use.
+- `REVISE`: buyers understand the idea but a repeated, specific objection blocks
+  purchase or use.
+- `INCONCLUSIVE`: the sample does not reach enough relevant buyers or the offer
+  changes during the test.
+- `STOP`: buyers consistently reject the core report value, or a credible pilot
+  cannot be delivered within the product boundaries.
 
-- at least three findings or actions are specific to the selected clinic;
-- every finding traces to retained evidence;
-- no finding depends on guessed identity, causation, or clinical quality;
-- the report can be explained in ten minutes; and
-- the founder would be comfortable showing it privately as an honest sample.
+Compliments, clicks, sample views, free-report requests, and hypothetical
+willingness to pay do not count as payment.
 
-Otherwise record `REVISE`, `INCONCLUSIVE`, or `STOP`. A pass does not validate
-willingness to pay or customer usefulness; it only unlocks a small owner test.
+## Guardrails
 
-## Stop conditions
+- Preserve the exact tested scope, evidence, observation dates, and limitations.
+- Separate observation, Nuave inference, recommendation, confidence, and
+  limitation.
+- Do not claim that the audit will win, retain, or grow client revenue.
+- Do not imply that one observed answer is a permanent ChatGPT ranking.
+- Do not collect patient or other sensitive customer data.
+- Do not fabricate client use, resale value, demand, testimonials, or results.
 
-Stop the run if clinic identity is ambiguous, patient information appears, a
-system cannot be used within its permitted access, or useful-looking results
-would require hiding contradictions or inventing certainty.
+## Previous evidence
 
-## Result
+EXP-R1 produced a `PASS_CANDIDATE` internal dental-clinic report for Sozo Dental
+Depok on 2026-07-20. It showed that Nuave could produce specific,
+evidence-backed findings from a small observed sample. It did not test agency
+interest, willingness to pay, white-label delivery, or repeat purchasing.
 
-| Field | Value |
-|---|---|
-| Clinic and exact branch | Sozo Dental Depok, Jl. Margonda No.267 |
-| Run date | 2026-07-20 |
-| Systems used | OpenAI Codex web search; Gemini Developer API Free (`gemini-3.5-flash`) |
-| Successful observations | 10 of 10 across two observed surfaces |
-| Specific evidence-backed findings | 4 primary findings, including a conflicting Gemini branch address |
-| Report location | [`runs/2026-07-20-sozo-dental-depok/REPORT.md`](./runs/2026-07-20-sozo-dental-depok/REPORT.md) |
-| Review outcome | `PASS_CANDIDATE` for founder and private owner review |
-| What to change next | Add ChatGPT Free answers manually, then test report comprehension with 3–5 relevant people |
+- Report: [`runs/2026-07-20-sozo-dental-depok/REPORT.md`](./runs/2026-07-20-sozo-dental-depok/REPORT.md)
+- Evidence: [`runs/2026-07-20-sozo-dental-depok/EVIDENCE.md`](./runs/2026-07-20-sozo-dental-depok/EVIDENCE.md)
 
-Do not add more tracking fields before running the experiment. Add only what a
+Do not add more tracking fields before running this experiment. Add only what a
 real execution proves necessary.

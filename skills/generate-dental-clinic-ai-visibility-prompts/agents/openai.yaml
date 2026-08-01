@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate Dental Clinic AI Visibility Prompts"
+  short_description: "Generate audit questions for dental clinics"
+  default_prompt: "Use $generate-dental-clinic-ai-visibility-prompts to create a ten-question AI visibility prompt pack from verified dental-clinic inputs."

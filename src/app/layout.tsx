@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
-import { GeistSans } from 'geist/font/sans';
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,8 +19,9 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Nuave - AI Brand Visibility Audit",
-  description: "Does ChatGPT know your brand? Find out in 2 minutes with a free AI visibility audit.",
+  title: "Nuave - Client-ready AI Visibility Audits",
+  description:
+    "One manually reviewed AI Visibility Audit for one client business, delivered as a client-ready report for agencies and marketing consultants.",
   manifest: "/site.webmanifest",
   icons: {
     icon: [
@@ -41,7 +42,10 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${GeistSans.variable} ${inter.variable} ${lora.variable}`}>
+    <html
+      lang={locale}
+      className={`${GeistSans.variable} ${inter.variable} ${lora.variable}`}
+    >
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
           <SmoothScroll />

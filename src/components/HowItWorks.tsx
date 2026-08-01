@@ -2,14 +2,35 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { IconCheck } from "@tabler/icons-react";
-import { useTranslations } from 'next-intl';
-import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-const VisibilityScoreChart = dynamic(() => import("@/components/VisibilityScoreChart"), { ssr: false });
-const RecommendationsPreview = dynamic(() => import("@/components/RecommendationsPreview"), { ssr: false });
-const PromptResultPreview = dynamic(() => import("@/components/PromptResultPreview"), { ssr: false });
-
+function ProcessPreview({
+  label,
+  title,
+  items,
+}: Readonly<{ label: string; title: string; items: string[] }>) {
+  return (
+    <div className="w-full max-w-[340px] min-h-[310px] rounded-[6px] border border-border-light bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--lp-purple)] mb-4">
+        {label}
+      </p>
+      <p className="text-[22px] font-semibold leading-[1.3] text-gray-900 mb-6">
+        {title}
+      </p>
+      <div className="flex flex-col gap-3">
+        {items.map((item) => (
+          <div
+            key={item}
+            className="rounded-[8px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-[13px] leading-[1.5] text-[#4B5563]"
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ── Interactive gradient panel ── */
 function InteractiveGradientPanel({
@@ -20,26 +41,29 @@ function InteractiveGradientPanel({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const posRef = useRef({ x: 50, y: 50 });
   const targetRef = useRef({ x: 50, y: 50 });
   const rafRef = useRef<number>(0);
-  const [, forceRender] = useState(0);
+  const [position, setPosition] = useState({ x: 50, y: 50 });
 
   useEffect(() => {
     let running = true;
     const lerp = () => {
-      const cur = posRef.current;
-      const tgt = targetRef.current;
-      const nx = cur.x + (tgt.x - cur.x) * 0.06;
-      const ny = cur.y + (tgt.y - cur.y) * 0.06;
-      if (Math.abs(nx - cur.x) > 0.05 || Math.abs(ny - cur.y) > 0.05) {
-        posRef.current = { x: nx, y: ny };
-        forceRender((n) => n + 1);
-      }
+      setPosition((current) => {
+        const target = targetRef.current;
+        const x = current.x + (target.x - current.x) * 0.06;
+        const y = current.y + (target.y - current.y) * 0.06;
+
+        return Math.abs(x - current.x) > 0.05 || Math.abs(y - current.y) > 0.05
+          ? { x, y }
+          : current;
+      });
       if (running) rafRef.current = requestAnimationFrame(lerp);
     };
     rafRef.current = requestAnimationFrame(lerp);
-    return () => { running = false; cancelAnimationFrame(rafRef.current); };
+    return () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -55,7 +79,7 @@ function InteractiveGradientPanel({
     targetRef.current = { x: 50, y: 50 };
   }, []);
 
-  const { x, y } = posRef.current;
+  const { x, y } = position;
 
   return (
     <div
@@ -83,36 +107,54 @@ export default function HowItWorks() {
   const CARDS = [
     {
       step: "1",
-      label: t('howItWorks.step1Label'),
-      title: t('howItWorks.step1Title'),
-      desc: t('howItWorks.step1Desc'),
+      label: t("howItWorks.step1Label"),
+      title: t("howItWorks.step1Title"),
+      desc: t("howItWorks.step1Desc"),
       checks: [
-        t('howItWorks.step1Check1'),
-        t('howItWorks.step1Check2'),
-        t('howItWorks.step1Check3'),
+        t("howItWorks.step1Check1"),
+        t("howItWorks.step1Check2"),
+        t("howItWorks.step1Check3"),
+      ],
+      previewTitle: t("howItWorks.step1PreviewTitle"),
+      previewItems: [
+        t("howItWorks.step1Preview1"),
+        t("howItWorks.step1Preview2"),
+        t("howItWorks.step1Preview3"),
       ],
     },
     {
       step: "2",
-      label: t('howItWorks.step2Label'),
-      title: t('howItWorks.step2Title'),
-      desc: t('howItWorks.step2Desc'),
+      label: t("howItWorks.step2Label"),
+      title: t("howItWorks.step2Title"),
+      desc: t("howItWorks.step2Desc"),
       checks: [
-        t('howItWorks.step2Check1'),
-        t('howItWorks.step2Check2'),
-        t('howItWorks.step2Check3'),
+        t("howItWorks.step2Check1"),
+        t("howItWorks.step2Check2"),
+        t("howItWorks.step2Check3"),
+      ],
+      previewTitle: t("howItWorks.step2PreviewTitle"),
+      previewItems: [
+        t("howItWorks.step2Preview1"),
+        t("howItWorks.step2Preview2"),
+        t("howItWorks.step2Preview3"),
       ],
       flip: true,
     },
     {
       step: "3",
-      label: t('howItWorks.step3Label'),
-      title: t('howItWorks.step3Title'),
-      desc: t('howItWorks.step3Desc'),
+      label: t("howItWorks.step3Label"),
+      title: t("howItWorks.step3Title"),
+      desc: t("howItWorks.step3Desc"),
       checks: [
-        t('howItWorks.step3Check1'),
-        t('howItWorks.step3Check2'),
-        t('howItWorks.step3Check3'),
+        t("howItWorks.step3Check1"),
+        t("howItWorks.step3Check2"),
+        t("howItWorks.step3Check3"),
+      ],
+      previewTitle: t("howItWorks.step3PreviewTitle"),
+      previewItems: [
+        t("howItWorks.step3Preview1"),
+        t("howItWorks.step3Preview2"),
+        t("howItWorks.step3Preview3"),
       ],
     },
   ];
@@ -132,7 +174,9 @@ export default function HowItWorks() {
       // Fade heading as section scrolls off screen
       const fadeStart = sectionBottom - vh - 200;
       const fadeEnd = sectionBottom - vh;
-      const alpha = 1 - Math.max(0, Math.min(1, (scrollY - fadeStart) / (fadeEnd - fadeStart)));
+      const alpha =
+        1 -
+        Math.max(0, Math.min(1, (scrollY - fadeStart) / (fadeEnd - fadeStart)));
       setHeadingOpacity(alpha);
     };
 
@@ -142,16 +186,19 @@ export default function HowItWorks() {
   }, []);
 
   return (
-    <div id="cara-kerja" ref={sectionRef} className="lp-hiw-section relative pt-[120px]" style={{ background: "var(--lp-bg)" }}>
+    <div
+      id="cara-kerja"
+      ref={sectionRef}
+      className="lp-hiw-section relative pt-[120px] scroll-mt-[100px]"
+      style={{ background: "var(--lp-bg)" }}
+    >
       {/* Sticky heading */}
       <div
         className="lp-hiw-sticky-heading sticky top-20 z-10 pb-10 px-8 pointer-events-none"
         style={{ opacity: headingOpacity, transition: "opacity 0.1s linear" }}
       >
         <div className="max-w-[868px] mx-auto text-center">
-          <h2 className="lp-hiw-heading">
-            {t('howItWorks.heading')}
-          </h2>
+          <h2 className="lp-hiw-heading">{t("howItWorks.heading")}</h2>
         </div>
       </div>
 
@@ -168,18 +215,18 @@ export default function HowItWorks() {
               style={{ transformOrigin: "top center" }}
             >
               {/* Left panel — white */}
-              <div className={cn(
-                "lp-hiw-left-panel bg-white p-10 flex flex-col justify-between",
-                card.flip ? "order-2" : "order-1"
-              )}>
+              <div
+                className={cn(
+                  "lp-hiw-left-panel bg-white p-10 flex flex-col justify-between",
+                  card.flip ? "order-2" : "order-1",
+                )}
+              >
                 <div>
                   {/* Step circle */}
                   <div className="w-10 h-10 rounded-full bg-[var(--lp-purple)] text-white text-[24px] font-bold tracking-[-0.5px] leading-[1.4] flex items-center justify-center mb-6">
                     {card.step}
                   </div>
-                  <h3 className="mb-3">
-                    {card.title}
-                  </h3>
+                  <h3 className="mb-3">{card.title}</h3>
                   <p className="text-[16px] leading-[28px] text-[#858585] mb-6">
                     {card.desc}
                   </p>
@@ -188,8 +235,15 @@ export default function HowItWorks() {
                 <div className="flex flex-col gap-2.5">
                   {card.checks.map((check) => (
                     <div key={check} className="flex items-center gap-2.5">
-                      <IconCheck size={16} color="var(--lp-text-primary)" stroke={2} className="shrink-0" />
-                      <span className="text-[16px] font-normal leading-[28px] text-[var(--lp-text-primary)]">{check}</span>
+                      <IconCheck
+                        size={16}
+                        color="var(--lp-text-primary)"
+                        stroke={2}
+                        className="shrink-0"
+                      />
+                      <span className="text-[16px] font-normal leading-[28px] text-[var(--lp-text-primary)]">
+                        {check}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -199,20 +253,24 @@ export default function HowItWorks() {
               <InteractiveGradientPanel
                 className={cn(
                   "lp-hiw-right-panel flex items-center justify-center",
-                  card.flip ? "order-1" : "order-2"
+                  card.flip ? "order-1" : "order-2",
                 )}
               >
-                {card.step === "1" && <PromptResultPreview />}
-                {card.step === "2" && <RecommendationsPreview />}
-                {card.step === "3" && <VisibilityScoreChart />}
+                <ProcessPreview
+                  label={t("howItWorks.previewLabel")}
+                  title={card.previewTitle}
+                  items={card.previewItems}
+                />
               </InteractiveGradientPanel>
 
               {/* Mobile preview */}
               <div className="lp-hiw-mobile-preview p-3 order-3">
                 <InteractiveGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
-                  {card.step === "1" && <PromptResultPreview />}
-                  {card.step === "2" && <RecommendationsPreview />}
-                  {card.step === "3" && <VisibilityScoreChart />}
+                  <ProcessPreview
+                    label={t("howItWorks.previewLabel")}
+                    title={card.previewTitle}
+                    items={card.previewItems}
+                  />
                 </InteractiveGradientPanel>
               </div>
             </div>

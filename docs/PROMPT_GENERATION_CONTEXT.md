@@ -1,291 +1,200 @@
-# Nuave prompt-generation context
+# Nuave universal brand prompt-generation context
 
-> Status: **Founder-approved product context for the next prompt pack**
+> Status: **Working product context for the universal brand prompt pack**
 >
-> Updated: 2026-07-29
+> Updated: 2026-07-31
 
 ## Purpose
 
-This document is the product-knowledge source for generating the ten customer
-questions used in a Nuave AI visibility audit. It defines what the questions
-must represent, what inputs may shape them, and what the generator must never
-invent.
+This document defines how to generate a ten-question AI visibility prompt pack
+for one verified client brand. It supports agencies, freelancers, and marketing
+consultants whose clients may operate in different industries.
 
 The
 [`generate-ai-visibility-prompts`](../skills/generate-ai-visibility-prompts/SKILL.md)
-skill reads this file before creating an audit prompt pack. Per-clinic facts
-remain runtime inputs and do not belong in this document.
+skill reads this file before creating or revising a pack.
 
-This context is intentionally narrower than [`PRODUCT.md`](./PRODUCT.md). It
-does not define the offer, report layout, scoring formula, acquisition plan, or
-implementation architecture.
+The universal method is a working prompt framework. It does not prove that one
+matrix fits every industry or that Nuave can safely deliver a complete audit for
+every brand type. Regulated, sensitive, or unusually complex categories still
+require category-specific review.
+
+The preserved dental method lives in
+[`DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md`](./DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md)
+and uses the separate
+[`generate-dental-clinic-ai-visibility-prompts`](../skills/generate-dental-clinic-ai-visibility-prompts/SKILL.md)
+skill.
 
 ## Product boundary
 
 Nuave observes how ChatGPT responds to a defined sample of realistic customer
-questions about one verified dental-clinic location. The audit is a dated
-snapshot, not a permanent ranking or a guarantee that another person will
-receive the same answer.
+questions about one exact brand scope. The scope may be a local business, one
+branch, a professional-service firm, an ecommerce brand, a software company, or
+another clearly identified commercial brand.
 
-The next prompt pack uses:
+Every pack must define one measured entity. Do not silently combine multiple
+branches, product lines, countries, audiences, or substantially different
+offers in one pack.
 
-- one verified dental clinic and one exact branch;
-- ten questions in Bahasa Indonesia;
+The audit is a dated sample, not a permanent ranking, a prediction of every
+consumer response, or proof of brand quality.
+
+The universal pack uses:
+
+- one verified brand and one exact entity scope;
+- ten independently understandable questions;
 - five customer-intent categories with two questions each;
-- five questions without the audited clinic's name;
-- five questions that name the audited clinic;
-- independent questions with no shared conversation history; and
-- human review before the questions are used in an audit.
+- five unbranded and five branded questions;
+- the language requested by the user, defaulting to Bahasa Indonesia;
+- ChatGPT as the named target product; and
+- human review before audit execution.
 
-ChatGPT is the only AI product in scope for this prompt pack. The audit must
-still record the exact execution surface, model when available, date, language,
-location context, and run conditions. An API observation must not be presented
-as an exact reproduction of a personalized consumer ChatGPT session.
+The exact execution surface, model when available, date, language, market
+context, and run conditions belong to the later audit configuration. Do not
+represent an API observation as an exact reproduction of personalized ChatGPT.
 
-## What the questions should represent
+## Required verified inputs
 
-The questions should resemble how a prospective dental-clinic customer might
-ask for help in an ordinary ChatGPT conversation. They should preserve the
-customer's underlying intent, imperfect knowledge, and practical constraints
-without manufacturing patient evidence.
+Require:
 
-The framework is adapted from consumer decision-journey models, then narrowed
-for local-service AI visibility. It is not a claim that customers move through
-the categories in a fixed order. A person may move back and forth, skip a
-category, or combine multiple concerns in one real conversation.
+- `brand_name`: canonical public brand or business name;
+- `entity_scope`: exact branch, business, product line, or brand scope being
+  measured;
+- `brand_type`: local service, ecommerce, B2B service, software, consumer
+  product, professional service, or another plain-language type;
+- `category`: the ordinary category customers use to describe the offering;
+- `market_context`: the location, country, service area, industry, or customer
+  market needed to make the questions meaningful;
+- `target_customer`: the intended customer or buyer described without sensitive
+  profiling;
+- `official_sources`: at least one authoritative brand source;
+- `verified_offerings`: one or more approved products, services, or capabilities;
+- `verified_customer_needs`: at least two real needs, jobs, or situations the
+  offering is intended to address;
+- `verified_decision_criteria`: at least two practical, publicly checkable
+  factors customers may use when comparing options; and
+- `verified_competitor`: one real relevant competitor with its scope and source.
 
-## Nuave Intent-5
+Accept when available:
 
-| ID | Category | Customer's job | Brand rule | Audit role |
-|---|---|---|---|---|
-| `problem_discovery` | Problem Discovery | Connect a symptom or situation to an appropriate kind of dental help. | Two unbranded questions. | Observe whether ChatGPT connects the need to relevant services or providers. |
-| `provider_discovery` | Provider Discovery | Find clinics that could meet a known local or service need. | Two unbranded questions. | Observe whether the clinic enters the customer's consideration set without being named. |
-| `comparison` | Comparison | Narrow several possible clinic choices. | One unbranded question and one branded head-to-head question. | Observe open comparative inclusion and representation against one verified competitor. |
-| `validation` | Validation | Check important facts about a clinic already being considered. | Two branded questions. | Inspect service, branch, location, hours, and other factual representation. |
-| `action` | Action | Get the practical information needed to contact, book, or visit. | Two branded questions. | Inspect price information, availability, contact paths, hours, and booking readiness. |
+- `brand_name_variants`;
+- `priority_offering`;
+- `conversion_action`, such as contact, visit, book, request a quote, start a
+  trial, or purchase;
+- `customer_supplied_facts`;
+- `known_accuracy_questions`;
+- `regulated_category_notes`;
+- `language`; and
+- `prompt_pack_version`.
 
-### 1. Problem Discovery
+Inputs labelled `verified_*` must be approved by the operator or supplied with
+a reviewable source. Keep customer-supplied facts identified as such. Do not
+turn an unverified claim into a premise merely because it would make a useful
+question.
 
-The customer starts with a symptom, concern, or situation rather than a service
-name or clinic brand.
+## Universal Intent-5 matrix
 
-The two questions should cover different common situations. They may ask which
-kind of clinic, service, or provider could be checked, but they must not ask
-ChatGPT to diagnose a condition, prescribe medication, or provide a treatment
-plan.
+| Prompt ID | Category | Customer job | Branded |
+|---|---|---|---|
+| `NUAVE-BRAND-NEED-01` | `need_discovery` | Explore one verified need or situation without naming a brand | `false` |
+| `NUAVE-BRAND-NEED-02` | `need_discovery` | Explore a different verified need or situation | `false` |
+| `NUAVE-BRAND-SOLUTION-01` | `solution_discovery` | Find relevant category options in the market context | `false` |
+| `NUAVE-BRAND-SOLUTION-02` | `solution_discovery` | Find options for one verified offering or use case | `false` |
+| `NUAVE-BRAND-COMPARISON-01` | `comparison` | Compare unnamed category options using verified criteria | `false` |
+| `NUAVE-BRAND-COMPARISON-02` | `comparison` | Compare the brand with one verified competitor | `true` |
+| `NUAVE-BRAND-VALIDATION-01` | `validation` | Verify category fit, offering, or an important public fact | `true` |
+| `NUAVE-BRAND-VALIDATION-02` | `validation` | Verify identity, scope, market, or information consistency | `true` |
+| `NUAVE-BRAND-ACTION-01` | `action` | Ask about a practical next step or access path | `true` |
+| `NUAVE-BRAND-ACTION-02` | `action` | Ask about another verified decision or conversion detail | `true` |
 
-Illustrative language:
+### Need discovery
 
-> Gigi belakang saya tumbuh dan gusinya sakit. Ada klinik di Depok yang
-> menangani keluhan seperti ini?
+Use situations or jobs already present in `verified_customer_needs`. Do not
+invent pain, urgency, demographics, or outcomes. Ask what category, approach,
+or type of provider/product a customer could consider without steering the
+answer toward the audited brand.
 
-> Gigi saya ngilu tiap minum dingin. Kalau mau periksa di Depok, klinik mana
-> yang bisa saya cek?
+### Solution discovery
 
-These are synthetic customer scenarios, not patient records. A clinic's
-non-appearance is not automatically equivalent to failure in a direct
-provider-discovery question because ChatGPT may reasonably answer a
-symptom-led question without naming any clinic.
+Ask for relevant options using natural category language. Use geography only
+for genuinely local decisions. Use industry, audience, use case, or country when
+those define the real market instead.
 
-### 2. Provider Discovery
+### Comparison
 
-The customer already knows they want a dental clinic or a particular service
-and is looking for local options. The audited clinic must not be named.
+The unbranded question should expose practical comparison criteria without
+naming the audited brand. The branded question may name the audited brand and
+one verified competitor. Do not ask for an unsupported winner, universal
+ranking, or subjective superiority verdict.
 
-Use:
+### Validation
 
-- one general local-discovery question; and
-- one service-led local-discovery question based on a verified relevant
-  service.
+Ask about facts a prospective customer could reasonably verify after learning
+the brand name. Suitable topics include offering fit, service area, product
+scope, availability, compatibility, branch identity, public policies, or other
+approved facts.
 
-Illustrative language:
+### Action
 
-> Rekomendasiin beberapa klinik gigi di Depok yang gampang dijangkau dari
-> Margonda.
-
-> Saya mau scaling di Depok. Klinik mana yang bisa saya cek?
-
-### 3. Comparison
-
-The customer is narrowing choices using practical criteria. Use:
-
-- one open, unbranded comparison among local clinics; and
-- one branded comparison between the audited clinic and one real, relevant,
-  verified competitor.
-
-Illustrative language:
-
-> Kalau buat scaling di Depok, bandingin beberapa klinik dari lokasi, jam buka,
-> dan kisaran harganya.
-
-> Mending Sozo Dental Depok atau [kompetitor terverifikasi] buat scaling? Apa
-> bedanya?
-
-The generator must never invent a competitor. If no suitable competitor has
-been verified, it must return a missing-input warning instead of producing the
-branded comparison.
-
-### 4. Validation
-
-The customer already knows the clinic and wants to verify decision-relevant
-facts.
-
-Use:
-
-- one question about a verified priority service or another important public
-  fact; and
-- one question about branch identity, location, hours, or factual consistency.
-
-Illustrative language:
-
-> Sozo Dental Depok ada layanan scaling nggak? Info yang tersedia bilang apa?
-
-> Alamat dan jam buka Sozo Dental Depok yang terbaru apa? Saya takut salah
-> cabang.
-
-Do not seed a supposed conflict, missing fact, or negative reputation unless it
-is present in the approved audit inputs.
-
-### 5. Action
-
-The customer is close to contacting or visiting the clinic and needs practical
-information to proceed.
-
-Use:
-
-- one price, service-access, or availability question; and
-- one hours, contact, directions, or booking question.
-
-Illustrative language:
-
-> Kalau mau scaling di Sozo Dental Depok, kisaran biayanya berapa?
-
-> Sozo Dental Depok buka hari Minggu nggak? Bookingnya lewat mana?
-
-These questions test information readiness. They do not imply that a displayed
-price is current or that an appointment is available; the audit must review
-such claims against retained sources.
-
-## Required per-audit inputs
-
-The prompt generator may use only approved inputs for the audited clinic:
-
-- canonical clinic name and known public name variants;
-- exact branch, address, city, and practical local area;
-- authoritative website, business listing, or public profile;
-- verified services relevant to the audit;
-- intended customer context or priority service when supplied;
-- one real, locally relevant, verified competitor for the branded comparison;
-  and
-- customer-supplied business facts, clearly identified as customer-supplied
-  until independently verified.
-
-Missing required information must be reported. It must not be guessed or
-silently replaced.
-
-Do not supply or request patient names, appointment details, diagnoses,
-photographs, treatment records, private messages, or other patient data.
+Ask about the practical next step appropriate to the brand: contact, visit,
+book, request a quote, start a trial, buy, or another verified action. Do not
+invent prices, stock, availability, promotions, response times, or contractual
+terms.
 
 ## Natural-language rules
 
-Every generated question must:
-
-- sound like one prospective customer asking ChatGPT for practical help;
-- use casual-neutral Indonesian appropriate to the clinic's local context;
-- contain one understandable situation and one main request;
-- stand alone without relying on an earlier message;
-- include location naturally when local relevance affects the answer;
-- use the audited clinic's canonical public name in branded questions;
-- vary sentence shape and vocabulary without changing the intended job; and
-- remain specific enough that the response can be reviewed against the audit
-  inputs.
-
-Natural contractions such as `nggak`, `mending`, or `rekomendasiin` are
-permitted when they fit the sentence. Do not force slang into every question.
-
-Avoid language that sounds written for an evaluator, marketer, or computer,
-including:
-
-- `berdasarkan informasi publik yang dapat diverifikasi`;
-- `sertakan sumber dan jelaskan keterbatasannya`;
-- `berikan analisis komprehensif`;
-- `klinik mana yang layak dipertimbangkan`;
-- long lists of artificial constraints; and
-- repeated keyword-style phrasing.
-
-Requirements for web access, citations, metadata capture, or response
-structure belong in the audit execution configuration, not in the simulated
-customer's wording unless a real customer would naturally ask for them.
+- Write as a plausible prospective customer, not an auditor or marketer.
+- Keep one main request per question.
+- Use ordinary category language and the requested language naturally.
+- Make every question understandable without conversation history.
+- Use only the market context needed for a meaningful answer.
+- Vary sentence shape without forcing slang or artificial personas.
+- Keep unbranded questions free of the brand name, name variants, URLs, slogans,
+  unique product names, or other clues that reveal the audited brand.
+- Do not request citations, methodology, scoring, or audit limitations inside
+  the customer-style question.
+- Do not optimize wording to make the audited brand appear.
 
 ## Integrity and safety rules
 
-The prompt generator must not:
+Never request or use private customer records, health information, financial
+account data, identity documents, confidential contracts, private messages, or
+other unnecessary personal data.
 
-- place the audited clinic's name or a recognizable variant in an unbranded
-  question;
-- invent a clinic, competitor, branch, service, price, review, credential,
-  opening hour, contact method, or information conflict;
-- imply that the customer has seen conflicting information unless that context
-  is an approved input;
-- ask ChatGPT to diagnose, prescribe, guarantee an outcome, or determine which
-  clinic provides clinically superior care;
-- convert AI visibility into a claim about safety, legality, treatment quality,
-  popularity, patient outcomes, leads, or revenue;
-- optimize the wording to make the audited clinic more likely to appear; or
-- reuse clinic-specific facts from another audit.
+For healthcare, finance, legal, employment, housing, insurance, education, or
+another regulated or high-impact category:
 
-If a natural customer phrase such as `bagus` or `terbaik` would invite an
-unsupported clinical-quality judgment, replace it with concrete considerations
-such as service, location, hours, price information, accessibility, or booking
-method.
+- keep questions to business discovery and publicly verifiable brand facts;
+- do not request diagnosis, treatment, legal conclusions, financial advice,
+  eligibility decisions, or individualized recommendations;
+- do not ask ChatGPT to certify safety, legality, professional quality, returns,
+  outcomes, or suitability; and
+- return `needs_input` or escalate for category-specific review when the fixed
+  matrix cannot be filled safely.
 
-## Expected prompt-pack output
-
-The prompt-generation skill should return ten reviewable prompt records. Each
-record should contain at least:
-
-- stable prompt ID;
-- intent category;
-- branded or unbranded status;
-- exact customer question;
-- short rationale for inclusion;
-- clinic inputs used in the question; and
-- a review status or missing-input warning.
-
-The output format may later become machine-readable, but the product meaning of
-these fields should remain stable.
+Across all categories, avoid unsupported `best`, `safest`, `most trusted`,
+guaranteed outcome, revenue, performance, quality, or reputation premises.
 
 ## Pre-audit acceptance check
 
-A prompt pack is ready only when:
+Approve a draft only when:
 
-- it contains exactly ten questions;
-- every Intent-5 category has exactly two questions;
-- five questions are unbranded and five are branded;
-- the comparison pair contains one unbranded and one branded question;
-- the audited clinic does not appear in any unbranded wording;
-- every named clinic, branch, service, area, and competitor comes from approved
-  inputs;
-- no two questions test substantially the same customer job;
-- every question sounds plausible when read aloud in isolation;
-- no question asks for diagnosis, treatment instructions, or a clinical-quality
-  verdict;
-- a human reviewer approves the exact wording; and
-- the approved questions are versioned and frozen before the audit runs.
+- all required inputs are present and internally consistent;
+- the measured entity and market scope are unambiguous;
+- all ten rows match the fixed matrix;
+- exactly five questions are unbranded and five are branded;
+- no unbranded question leaks the audited brand;
+- every factual premise traces to an approved input;
+- the two need questions and two solution questions perform different jobs;
+- the competitor is real, relevant, and verified;
+- regulated-category boundaries are respected; and
+- a human has reviewed the exact wording.
 
 ## Interpretation boundary
 
-Equal prompt counts create a balanced sample, not five equally weighted score
-components.
+This context generates questions only. It does not execute them, predict
+answers, calculate scores, infer visibility, or write findings and
+recommendations.
 
-- Problem Discovery primarily observes problem-to-service or
-  problem-to-provider association.
-- Provider Discovery and the open comparison observe unbranded
-  discoverability.
-- Branded comparison, Validation, and Action observe how a known clinic is
-  represented.
-
-A branded answer is not evidence that the clinic is discoverable when its name
-is absent. A symptom-led non-appearance is not automatically equivalent to
-non-appearance in a direct clinic-recommendation request. Any future scoring
-method must preserve these distinctions.
+Do not infer universal support from a structurally valid pack. Each new client
+category still needs report and claims review before paid delivery.

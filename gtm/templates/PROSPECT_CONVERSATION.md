@@ -1,5 +1,8 @@
 # Prospect conversation — YYYY-MM-DD — prospect ID
 
+> Status: **Current conversation-record template**
+> Updated: 2026-07-31
+>
 > Do not put patient data, unnecessary contact details, access tokens, or private
 > free text in this record. Use a non-identifying prospect ID and link to any
 > restricted source record.
@@ -14,7 +17,10 @@
 | Segment and role | |
 | City | |
 | Acquisition source or introducer | |
-| Clinic eligibility status | `UNKNOWN`, `ELIGIBLE`, `CLARIFICATION`, `UNSUPPORTED`, or `INSUFFICIENT_DATA` |
+| Agency or freelancer service type | |
+| Client types currently served | |
+| Intended client use | |
+| Proposed client-business eligibility | `UNKNOWN`, `ELIGIBLE`, `CLARIFICATION`, `UNSUPPORTED`, or `INSUFFICIENT_DATA` |
 | Interaction type | `DISCOVERY`, `SALES`, `PARTNER`, `FOLLOW_UP`, or `DECLINE` |
 | Recording/note consent | |
 | Publication permission | `NONE`, `ANONYMIZED`, or `ATTRIBUTED` |
@@ -23,13 +29,14 @@
 ## Factual context
 
 - Current role and responsibility:
-- Current patient-discovery or marketing workflow:
+- Current client-service or marketing workflow:
+- How they would use the audit with a client or prospect:
 - Who would evaluate the purchase:
-- Who would implement recommendations:
+- Who would present and implement recommendations:
 - Relevant constraints stated by the prospect:
 
-Do not infer clinic facts the prospect did not state or a public source did not
-confirm.
+Do not infer agency, client, or audited-business facts the prospect did not
+state or a public source did not confirm.
 
 ## Prospect language
 
@@ -41,6 +48,7 @@ Capture short, decision-relevant language rather than a polished narrative.
 - What would make the audit credible:
 - What would make the audit meaningfully different from casual chatbot use:
 - Price response:
+- Resale or repeat-purchase expectation:
 - Purchase trigger:
 - Reason to decline or delay:
 - Trust or methodology concern:

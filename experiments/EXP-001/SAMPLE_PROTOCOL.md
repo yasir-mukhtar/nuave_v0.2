@@ -3,6 +3,7 @@
 > Status: **LOCKED — identity sample populated; no provider observations**
 > Applies to: `exp-001-v0.1`
 > City hypothesis: Jakarta
+> Updated: 2026-07-19
 
 ## Sampling objective
 

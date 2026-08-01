@@ -1,6 +1,7 @@
 # Local credentials and machine-specific files
 .env.local
 .DS_Store
+.obsidian/
 
 # Next.js build output and installed dependencies
 .next/

@@ -2,12 +2,18 @@
   "name": "nuave-landing",
   "version": "0.2.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit --incremental false",
-    "test:audit": "vitest run src/lib/audit"
+    "test:audit": "vitest run src/lib/audit",
+    "lint": "eslint .",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"*.{json,mjs}\" \".github/**/*.yml\"",
+    "check": "npm run typecheck && npm run lint && npm run format:check"
   },
   "dependencies": {
     "@heroui/react": "3.2.2",
@@ -22,7 +28,6 @@
     "openai": "^7.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "recharts": "3.8.0",
     "tailwind-merge": "3.5.0",
     "tw-animate-css": "1.4.0",
     "zod": "4.4.3"
@@ -32,6 +37,9 @@
     "@types/node": "20.19.17",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.2.11",
+    "prettier": "3.9.6",
     "tailwindcss": "4.1.14",
     "typescript": "5.9.3",
     "vitest": "^4.1.10"

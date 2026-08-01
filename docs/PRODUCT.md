@@ -1,130 +1,172 @@
 # Nuave product
 
+> Status: **Current product direction**
+> Updated: 2026-07-31
+
 ## Product in one sentence
 
-Nuave is a manually delivered AI visibility audit that shows a dental clinic
-how selected AI systems describe and recommend it, which competitors appear,
-what public-information gaps are visible, and what to improve first.
+Nuave is a manually delivered, one-time AI visibility audit that helps agencies,
+freelancers, and marketing consultants show how one client business appears in
+tested AI recommendations and deliver the findings as a client-ready report.
 
 ## Customer
 
-The first customer is the owner, operator, or marketing lead of a
-single-location dental clinic. They are a non-technical decision maker who may
-delegate changes to staff, a freelancer, a developer, or an agency.
+The first buyer is a small digital or SEO agency, SEO freelancer, Google
+Business Profile consultant, independent marketing consultant, or website
+agency that already provides marketing services.
+
+The audited business is the buyer's client. The buyer may use the report to
+support a sales conversation, deliver a paid service, or strengthen existing
+SEO, website, or local-search work.
 
 Their practical question is:
 
-> When people ask AI for dental-clinic recommendations, what appears about my
-> clinic, what appears instead, and what can I realistically improve?
+> Does ChatGPT recommend my client's business, what appears instead, and what
+> can I credibly show the client to improve next?
+
+This buyer direction is a working launch hypothesis. Nuave has not proven that
+agencies will pay, resell the audit, win work, retain clients, or buy repeatedly.
 
 ## Promise
 
-> See where your clinic appears or is missing from tested AI recommendations,
-> what the systems say, and what to fix first.
+> Help your agency sell, deliver, and differentiate with client-ready AI
+> Visibility Audits.
 
-This is a sampled observation, not a permanent ranking. Nuave does not promise
-future inclusion, leads, revenue, or a clinical outcome.
+The report shows sampled observations, not a permanent ranking. Nuave does not
+promise future inclusion, client revenue, leads, retention, or sales outcomes.
 
 ## Current offer
 
-One public founding offer:
+One audit for one client business, delivered as a client-ready report.
 
-> Full AI Visibility Audit — Rp149,000
+The current workflow experiment lets the user confirm public business facts,
+approve the ten questions, and receive an automatically generated final-format
+report. It has no separate Nuave report-review gate. This is not evidence that
+the automatic report is reliable enough for public or paid delivery.
 
-The price and willingness to pay remain unvalidated. Do not add public tiers,
-subscriptions, or a free personalized audit before customer evidence supports
-them.
+The agency-facing per-audit price is open and must be tested as one clear pilot
+price. Do not add public tiers, subscriptions, bundles, credits, or volume plans
+before real purchasing behavior supports them.
 
 ## Minimum customer journey
 
 ### 1. Discovery
 
-A short outreach message or one-screen landing page explains the problem in
-dental-clinic language and shows a truthful sample of the report.
+A short outreach message, ad, or one-screen landing page leads with the agency's
+commercial use and shows a truthful sample report. The primary CTA is:
 
-### 2. Clinic confirmation
+> See Sample Audit
 
-Confirm the clinic name, exact location, public listing, and official website
-or social profile. This prevents analyzing the wrong clinic. It is not a free
-personalized audit.
+### 2. Buyer and client confirmation
 
-### 3. Payment
+Confirm the buyer's business and one exact client business to audit. Confirm the
+client name, location, public listing, and official website or social profile so
+Nuave does not analyze the wrong entity. Before using buyer or client branding,
+confirm that the buyer is allowed to supply and use it for this report.
 
-Use an existing payment link or the smallest reliable Midtrans flow. Confirm
-payment before starting a personalized audit. Avoid building a full checkout
-system until the manual flow reveals a real need.
+### 3. Offer and payment
+
+State one per-audit pilot price, what the report includes, delivery timing,
+commercial-use rights, and limitations. Confirm payment before starting the
+personalized audit. A payment link is sufficient for the raw MVP.
 
 ### 4. Intake
 
 Collect only what changes the report:
 
-- priority services;
+- client business and exact location;
+- priority services or offers;
 - intended customer;
 - important differentiators;
-- known competitors, optional; and
-- public facts that AI may get wrong, optional.
+- known competitors, optional;
+- public facts that AI may get wrong, optional; and
+- agency name and logo, optional.
 
-Do not collect patient data.
+Mark buyer-supplied facts as such until they are verified. Do not collect
+patient data, private client-customer records, payment credentials, or other
+sensitive information that the audit does not need.
 
-### 5. Manual audit
+### 5. Self-service audit experiment
 
-An operator confirms identity, runs the selected queries, saves the observed
-answers and sources, identifies useful patterns, and reviews every finding.
+The user confirms the client identity and business facts, reviews the selected
+questions, and starts the audit. Nuave runs each question independently through
+the OpenAI Responses API with web search, retains the observed answers and
+sources in the browser session, and automatically generates the report.
 
 ### 6. Delivery
 
-Deliver a short mobile-readable document or PDF. It should contain:
+Deliver a short, downloadable, client-facing report with neutral presentation
+or the buyer's basic branding. It should contain:
 
+- a concise executive or sales summary;
 - what was tested;
-- where the clinic appeared or did not appear;
+- where the client appeared or did not appear;
 - relevant competitor observations;
 - inaccurate, inconsistent, or missing public information;
-- three priority actions; and
-- sources, limitations, and a suggested recheck point.
+- the top three recommended actions; and
+- sources, confidence, limitations, and a suggested recheck point.
 
 A web application is optional. A useful report is the product.
 
+The report must state who it was prepared for and by, what the buyer may do
+with it, and whether any client name, logo, quote, or finding may be published.
+Basic branding and commercial use do not remove Nuave's method, evidence,
+limitations, source attribution, or correction path.
+
 ### 7. Feedback
 
-Ask three questions:
+Ask the buyer:
 
-1. What finding was new or useful?
-2. What was confusing or unconvincing?
-3. Which action, if any, will you take?
+1. Would you show or sell this report to a real client?
+2. What was useful, confusing, missing, or unconvincing?
+3. Would you pay for this audit for another client?
 
-Record whether the person paid, received a concession, completed an action, or
-only expressed interest.
+Record payment, intended client use, actual use when known, objections,
+requested concessions, and repeat-purchase interest. Do not treat stated intent
+as completed client use or revenue.
 
 ## What happens behind the scenes
 
-The raw MVP may use manual research, spreadsheets, documents, AI tools, and
-human review. Manual work is acceptable when it helps Nuave learn. Record major
-sources of effort so repeated pain can later justify automation.
+The workflow prototype uses public web sources, a user-confirmed brief, OpenAI
+API observations, automated evidence checks, and a report generated from those
+retained observations. Agency name and logo remain optional and device-local.
+Manual inspection remains useful for learning, but it is not a blocking report
+gate in this experiment.
 
-Build software only when it removes a problem observed in the working customer
-flow. Do not build infrastructure to satisfy a hypothetical future workflow.
+Build software only when it removes a problem observed in the working one-audit
+flow. Do not build infrastructure for a hypothetical agency operation.
 
 ## Non-goals
 
 - permanent or universal AI rankings;
-- guarantees of inclusion, patients, leads, or revenue;
+- guarantees of inclusion, leads, revenue, sales, or client retention;
 - clinical-quality assessment or medical recommendations;
-- traditional full-service SEO audits;
-- automatic website or profile changes;
-- customer accounts, dashboards, or report libraries;
+- a full traditional SEO audit or automatic optimization tool;
+- customer accounts, agency dashboards, or client-management systems;
 - recurring monitoring or subscriptions;
-- multiple cities, verticals, branches, franchises, or enterprise support; and
-- a marketplace or bundled implementation agency.
+- team accounts, custom domains, API access, or bulk workflows;
+- broad multi-vertical support without a reviewed method; and
+- replacing the buyer's strategy or implementation work.
 
 ## Current success signals
 
 The raw MVP is promising when:
 
-- a real owner understands the report without a long explanation;
-- the report contains at least one specific useful finding beyond casual AI use;
-- an owner pays without receiving a ranking guarantee;
-- the owner selects or completes a realistic action; and
-- the report can be delivered repeatedly without hidden effort overwhelming
-  the price.
+- a relevant agency or freelancer understands the sample without a long
+  explanation;
+- a buyer pays for one client audit without a ranking or revenue guarantee;
+- the buyer identifies a real client conversation or delivery use;
+- the report contains a specific useful finding beyond casual chatbot use;
+- basic neutral or agency-branded delivery is sufficient; and
+- at least one buyer requests or purchases another client audit without hidden
+  delivery effort overwhelming the price.
 
 These are questions to test, not claims that Nuave has already proven.
+
+## Open terms before a paid offer
+
+Before accepting a paid audit, state one founder-approved price, a realistic
+delivery promise, the exact report scope, commercial-use and sharing terms,
+privacy and retention treatment, and a correction or remedy path. Legal or
+regulatory requirements remain subject to qualified review; do not present an
+internal checklist as legal advice or a completed compliance review.

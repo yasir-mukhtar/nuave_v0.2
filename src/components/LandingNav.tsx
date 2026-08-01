@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const LOGO_SVG = "https://framerusercontent.com/images/r9wYEZlQeEIZBKytCeKUn5f1QGw.svg";
+const LOGO_SVG =
+  "https://framerusercontent.com/images/r9wYEZlQeEIZBKytCeKUn5f1QGw.svg";
 
 function useScrolled() {
   const [scrolled, setScrolled] = useState(false);
@@ -19,7 +20,15 @@ function useScrolled() {
 }
 
 /* ───── Mobile Menu ───── */
-function MobileMenu({ open, onClose, t }: Readonly<{ open: boolean; onClose: () => void; t: ReturnType<typeof useTranslations> }>) {
+function MobileMenu({
+  open,
+  onClose,
+  t,
+}: Readonly<{
+  open: boolean;
+  onClose: () => void;
+  t: ReturnType<typeof useTranslations>;
+}>) {
   return (
     <>
       <button
@@ -30,7 +39,8 @@ function MobileMenu({ open, onClose, t }: Readonly<{ open: boolean; onClose: () 
           WebkitBackdropFilter: open ? "blur(1px)" : "blur(0px)",
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.3s ease, backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease",
+          transition:
+            "opacity 0.3s ease, backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease",
         }}
         onClick={onClose}
       />
@@ -39,34 +49,37 @@ function MobileMenu({ open, onClose, t }: Readonly<{ open: boolean; onClose: () 
         style={{
           top: 92,
           opacity: open ? 1 : 0,
-          transform: open ? "translateY(0) scale(1)" : "translateY(-12px) scale(0.97)",
+          transform: open
+            ? "translateY(0) scale(1)"
+            : "translateY(-12px) scale(0.97)",
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transition:
+            "opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
-        <Link
-          href="/pricing"
-          onClick={onClose}
-          className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
-        >
-          {t('nav.pricing')}
-        </Link>
         <a
-          href="/support"
+          href="#sample-audit"
           onClick={onClose}
           className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
         >
-          {t('nav.contact')}
+          {t("nav.sampleAudit")}
+        </a>
+        <a
+          href="#cara-kerja"
+          onClick={onClose}
+          className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
+        >
+          {t("nav.howItWorks")}
         </a>
         <div className="h-px bg-[#E5E7EB] mx-4 self-stretch" />
         <div className="px-4 py-3 w-full box-border">
-          <Link
-            href="/auth"
+          <a
+            href="#sample-audit"
             onClick={onClose}
             className="btn-lp-black flex items-center justify-center px-5 py-3 text-white text-[15px] font-medium rounded-[8px] no-underline cursor-pointer w-full"
           >
-            {t('nav.login')}
-          </Link>
+            {t("cta.seeSampleAudit")}
+          </a>
         </div>
       </div>
     </>
@@ -80,14 +93,18 @@ export default function LandingNav() {
   const t = useTranslations();
 
   useEffect(() => {
-    const onResize = () => { if (globalThis.innerWidth > 768) setMobileMenuOpen(false); };
+    const onResize = () => {
+      if (globalThis.innerWidth > 768) setMobileMenuOpen(false);
+    };
     globalThis.addEventListener("resize", onResize);
     return () => globalThis.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileMenuOpen]);
 
   const closeMobile = () => setMobileMenuOpen(false);
@@ -116,42 +133,58 @@ export default function LandingNav() {
             justifyContent: "space-between",
             height: 60,
             padding: "12px 12px 12px 14px",
-            backgroundColor: scrolled ? "rgba(255, 255, 255, 0.9)" : "transparent",
+            backgroundColor: scrolled
+              ? "rgba(255, 255, 255, 0.9)"
+              : "transparent",
             backdropFilter: scrolled ? "blur(10px)" : "none",
             WebkitBackdropFilter: scrolled ? "blur(10px)" : "none",
             borderRadius: 12,
-            border: scrolled ? "1px solid rgba(117, 115, 114, 0.15)" : "1px solid transparent",
-            transition: "background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
+            border: scrolled
+              ? "1px solid rgba(117, 115, 114, 0.15)"
+              : "1px solid transparent",
+            transition:
+              "background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
           }}
         >
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 no-underline">
-            <img src={LOGO_SVG} alt="Nuave logo" width={28} height={28} className="object-contain" />
-            <span className="text-[20px] font-semibold text-[#0d0d0d]">Nuave</span>
+            <img
+              src={LOGO_SVG}
+              alt="Nuave logo"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
+            <span className="text-[20px] font-semibold text-[#0d0d0d]">
+              Nuave
+            </span>
           </Link>
 
           {/* Links (desktop) */}
           <div className="lp-nav-links flex items-center gap-8">
-            <Link href="/pricing" className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150">
-              {t('nav.pricing')}
-            </Link>
             <a
-              href="/support"
+              href="#sample-audit"
               className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
             >
-              {t('nav.contact')}
+              {t("nav.sampleAudit")}
+            </a>
+            <a
+              href="#cara-kerja"
+              className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
+            >
+              {t("nav.howItWorks")}
             </a>
           </div>
 
           {/* Language switcher + login button (desktop) */}
           <div className="lp-nav-masuk flex items-center gap-3">
-            <LanguageSwitcher variant="compact" />
-            <Link
-              href="/auth"
+            <LanguageSwitcher />
+            <a
+              href="#sample-audit"
               className="btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
             >
-              {t('nav.login')}
-            </Link>
+              {t("cta.seeSampleAudit")}
+            </a>
           </div>
 
           {/* Hamburger button (mobile) */}
@@ -163,13 +196,33 @@ export default function LandingNav() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               {mobileMenuOpen ? (
                 <>
-                  <path d="M6 6L18 18" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M18 6L6 18" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M6 6L18 18"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M18 6L6 18"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </>
               ) : (
                 <>
-                  <path d="M4 8H20" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M4 16H20" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M4 8H20"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 16H20"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </>
               )}
             </svg>
