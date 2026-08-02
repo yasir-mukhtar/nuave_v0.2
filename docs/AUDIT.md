@@ -153,28 +153,54 @@ questions were valid, and do not invent a cause.
 
 Use this five-section sequence for the agency-ready sample:
 
-1. **Ringkasan Audit:** report identity, tested scope, visible counts, separate
+1. **Main Result:** report identity, tested scope, visible counts, separate
    information-accuracy status, a short conclusion, and the snapshot
    limitation.
-2. **Temuan Utama:** three to five specific evidence-led findings, including
+2. **Key Findings:** three to five specific evidence-led findings, including
    contradictory or negative evidence when material.
-3. **Prioritas Perbaikan:** a short ordered action list. Each material action
+3. **What to Do Next:** a short ordered action list. Each material action
    states what to do, why it matters, its evidence basis, owner, and observable
    completion check. Add effort, confidence, dependency, and caveat when useful.
-4. **Temuan Detail:** one entry per tested question containing the finding, the
-   exact question (`Pertanyaan yang diuji`), the full answer or clearly marked
+4. **Test-by-Test Results:** one entry per tested question containing the
+   finding, the exact question, the full answer or clearly marked
    excerpt, status, date, context, and separated source types.
-5. **Metode dan Batasan:** identity, systems and surface, dates, language,
+5. **How This Audit Works:** identity, systems and surface, dates, language,
    question classes, run and failure handling, automatic-analysis disclosure,
-   evidence terms,
-   and what the audit does not prove.
+   evidence terms, and what the audit does not prove.
 
 Show before the main content:
 
 - audited business, exact branch or service area, and location;
-- audit date, language, system, surface, and number of questions;
+- audit date and number of questions;
 - prepared for the client business; and
 - prepared by the agency when supplied and permitted.
+
+Keep the exact language, system, execution surface, returned model, and web
+search condition in **How This Audit Works**. The summary and findings should
+use ordinary business language.
+
+### Plain-language writing standard
+
+New reports use the versioned `plain-en-v1` writing contract in
+[`report-language.ts`](../src/lib/audit/report-language.ts). That file is the
+single runtime source for section word limits, sentence length, and wording to
+avoid. Increase the writing-standard version when those rules materially
+change.
+
+- Write for a non-technical business owner or small-brand founder.
+- Put the result or action first and supporting detail after it.
+- Prefer common words, active voice, one idea per sentence, and no filler.
+- Apply the configured limits only to Nuave-written explanations. Do not shorten
+  a business name, tested question, official term, source, or evidence excerpt
+  to meet them.
+- Copy every answer excerpt exactly from the retained answer. A language-only
+  retry must not change classifications, evidence IDs, sources, or excerpts.
+- Generate no separate methodology narrative. Build that section from recorded
+  run facts so it stays short and consistent.
+
+New outputs identify both `nuave-report-v2` and the writing-standard version.
+The evidence export retains those versions and the complete underlying
+evidence.
 
 Use direct counts and denominators. Report unbranded discovery, branded
 recognition, recommendation, accuracy, and failed tests separately. Do not use
@@ -224,7 +250,8 @@ before treating the generated report as usable sample evidence:
   quotes, screenshots, or findings;
 - limitations and any partial coverage are prominent;
 - the report can be understood by a non-technical agency and client reader;
-  and
+- Nuave-written fields pass the current plain-language limits, while exact
+  questions and answer excerpts remain unchanged; and
 - the final screen and PDF, when both exist, show the same facts and report
   version.
 

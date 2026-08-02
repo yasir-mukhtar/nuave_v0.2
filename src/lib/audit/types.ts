@@ -8,13 +8,31 @@ export const promptCategories = [
   "action",
 ] as const;
 
-export const observationStatuses = [
-  "appeared_as_recommendation",
-  "mentioned_not_recommended",
-  "did_not_appear",
-  "incomplete_information",
-  "conflicting_information",
-  "could_not_be_tested",
+export const appearanceStatuses = [
+  "absent",
+  "mentioned",
+  "not_assessed",
+] as const;
+
+export const recommendationStatuses = [
+  "recommended",
+  "not_recommended",
+  "not_assessed",
+] as const;
+
+export const comparisonStatuses = [
+  "client_preferred",
+  "competitor_preferred",
+  "compared_no_preference",
+  "not_observed",
+  "not_assessed",
+] as const;
+
+export const informationStatuses = [
+  "confirmed",
+  "incomplete",
+  "conflicting",
+  "not_assessed",
 ] as const;
 
 const requiredText = z.string().trim().min(1).max(2_000);
@@ -24,12 +42,14 @@ const sourceUrl = z
   .max(2_000)
   .refine(
     (value) => value.startsWith("https://") || value.startsWith("http://"),
-    "URL harus memakai http atau https.",
+    "URL must start with http:// or https://.",
   );
+
+export const SOURCE_TITLE_MAX_LENGTH = 300;
 
 export const sourceSchema = z.object({
   url: sourceUrl,
-  title: z.string().trim().max(300),
+  title: z.string().trim().max(SOURCE_TITLE_MAX_LENGTH),
 });
 
 export const businessBriefSchema = z.object({
@@ -41,8 +61,8 @@ export const businessBriefSchema = z.object({
   target_customer: requiredText.max(500),
   official_sources: z.array(sourceUrl).min(1).max(10),
   verified_offerings: z.array(requiredText.max(300)).min(1).max(12),
-  verified_customer_needs: z.array(requiredText.max(300)).min(2).max(12),
-  verified_decision_criteria: z.array(requiredText.max(300)).min(2).max(12),
+  verified_customer_needs: z.array(requiredText.max(300)).max(12),
+  verified_decision_criteria: z.array(requiredText.max(300)).max(12),
   verified_competitor: z.object({
     name: requiredText.max(160),
     scope: requiredText.max(300),
@@ -55,14 +75,14 @@ export const businessBriefSchema = z.object({
   known_accuracy_questions: z.array(requiredText.max(500)).max(12),
   usp: z.string().trim().max(1_000),
   regulated_category_notes: z.string().trim().max(1_000),
-  language: z.literal("id-ID"),
+  language: z.literal("en-US"),
   agency_name: z.string().trim().max(160),
   agency_logo_data_url: z
     .string()
     .max(1_500_000)
     .refine(
       (value) => !value || /^data:image\/(png|jpeg);base64,/.test(value),
-      "Format logo tidak didukung.",
+      "Unsupported logo format.",
     ),
 });
 
@@ -117,7 +137,7 @@ export const promptSchema = z.object({
 export const promptPackSchema = z.object({
   status: z.literal("draft_for_review"),
   prompt_pack_version: z.string(),
-  language: z.literal("id-ID"),
+  language: z.literal("en-US"),
   target_product: z.literal("ChatGPT"),
   brand: z.object({
     brand_name: z.string(),
@@ -162,20 +182,85 @@ export const auditObservationSchema = z.object({
   sources: z.array(sourceSchema),
   run_status: z.enum(["completed", "failed"]),
   failure_reason: z.string(),
+  telemetry: z.array(
+    z.object({
+      stage: z.enum(["extract", "prompts", "observation", "report"]),
+      attempt: z.number().int().min(1),
+      status: z.enum(["completed", "failed"]),
+      started_at: z.string(),
+      completed_at: z.string(),
+      latency_ms: z.number().int().nonnegative(),
+      requested_model: z.string(),
+      returned_model: z.string(),
+      response_id: z.string(),
+      service_tier: z.string(),
+      usage: z.object({
+        input_tokens: z.number().int().nonnegative(),
+        cached_input_tokens: z.number().int().nonnegative(),
+        cache_write_input_tokens: z.number().int().nonnegative(),
+        output_tokens: z.number().int().nonnegative(),
+        reasoning_output_tokens: z.number().int().nonnegative(),
+        total_tokens: z.number().int().nonnegative(),
+      }),
+      web_search_calls: z.number().int().nonnegative(),
+      accounted_cost_usd: z.number().nonnegative(),
+      cost_basis: z.enum(["provider_usage", "preflight_reservation"]),
+      pricing_version: z.string(),
+      failure_reason: z.string(),
+      // Safe provider completion diagnostics. These record how a response
+      // ended, never any provider-authored content.
+      provider_status: z.string().max(60).default(""),
+      incomplete_reason: z.string().max(60).default(""),
+      output_text_present: z.boolean().default(false),
+      refusal_present: z.boolean().default(false),
+    }),
+  ),
+});
+
+export const AUDIT_COST_LIMIT_USD = 5;
+
+export const auditCallTelemetrySchema =
+  auditObservationSchema.shape.telemetry.element;
+
+export const auditBudgetSchema = z.object({
+  limit_usd: z.literal(AUDIT_COST_LIMIT_USD),
+  carryover_cost_usd: z.number().nonnegative().max(AUDIT_COST_LIMIT_USD),
+  calls: z.array(auditCallTelemetrySchema).max(20),
 });
 
 export const reportDetailSchema = z.object({
   prompt_id: z.string(),
-  status: z.enum(observationStatuses),
+  run: z.enum(["completed", "failed"]),
+  appearance: z.enum(appearanceStatuses),
+  recommendation: z.enum(recommendationStatuses),
+  comparison: z.enum(comparisonStatuses),
+  information: z.enum(informationStatuses),
   finding: z.string(),
   answer_excerpt: z.string(),
   evidence_note: z.string(),
   source_urls: z.array(z.string()),
 });
 
+export const observedCompetitorSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  relationship: z.enum([
+    "client_preferred",
+    "competitor_preferred",
+    "compared_no_preference",
+    "mentioned",
+  ]),
+  evidence_prompt_ids: z.array(z.string()).min(1).max(10),
+});
+
 export const reportContentSchema = z.object({
   conclusion: z.string(),
-  accuracy_status: z.enum(["baik", "perlu_diperbaiki", "tidak_dapat_dinilai"]),
+  accuracy_status: z.enum([
+    "no_clear_issues",
+    "needs_confirmation",
+    "needs_correction",
+    "could_not_assess",
+  ]),
+  observed_competitors: z.array(observedCompetitorSchema).max(20),
   key_findings: z
     .array(
       z.object({
@@ -189,13 +274,13 @@ export const reportContentSchema = z.object({
   priorities: z
     .array(
       z.object({
-        order: z.number().int().min(1).max(5),
-        timing: z.enum(["kerjakan_lebih_dulu", "kerjakan_berikutnya"]),
+        order: z.number().int().min(1).max(3),
+        timing: z.enum(["do_first", "do_next"]),
         action: z.string(),
         why: z.string(),
         basis: z.string(),
         owner: z.enum([
-          "pemilik_bisnis",
+          "business_owner",
           "admin",
           "marketing",
           "web_developer",
@@ -206,10 +291,29 @@ export const reportContentSchema = z.object({
       }),
     )
     .min(1)
-    .max(5),
+    .max(3),
   details: z.array(reportDetailSchema).length(10),
-  methodology_note: z.string(),
 });
+
+export const reportSynthesisSchema = reportContentSchema
+  .pick({
+    conclusion: true,
+    accuracy_status: true,
+    key_findings: true,
+    priorities: true,
+  })
+  .extend({
+    assessments: z
+      .array(
+        z.object({
+          prompt_id: z.string(),
+          recommendation: z.enum(recommendationStatuses),
+          comparison: z.enum(comparisonStatuses),
+          information: z.enum(informationStatuses),
+        }),
+      )
+      .length(10),
+  });
 
 export type Source = z.infer<typeof sourceSchema>;
 export type BusinessBrief = z.infer<typeof businessBriefSchema>;
@@ -217,13 +321,67 @@ export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;
 export type AuditPrompt = z.infer<typeof promptSchema>;
 export type PromptPack = z.infer<typeof promptPackSchema>;
 export type AuditObservation = z.infer<typeof auditObservationSchema>;
+export type AuditCallTelemetry = z.infer<typeof auditCallTelemetrySchema>;
+export type AuditBudget = z.infer<typeof auditBudgetSchema>;
 export type ReportDetail = z.infer<typeof reportDetailSchema>;
+export type ObservedCompetitor = z.infer<typeof observedCompetitorSchema>;
 export type ReportContent = z.infer<typeof reportContentSchema>;
+export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
 
 export type AuditReport = ReportContent & {
-  report_version: "nuave-report-v1";
+  report_version: "nuave-report-v3";
+  writing_standard_version: "plain-en-v1";
   generated_at: string;
   system_label: string;
+  provenance: {
+    report_prompt_version: string;
+    prompt_contract_version: string;
+    requested_report_model: string;
+    returned_report_model: string;
+    report_response_id: string;
+    initial_report_response_id: string;
+    report_call_count: number;
+    language_retry_performed: boolean;
+    language_retry_violations: string[];
+  };
+  method_summary: string;
+  facts: {
+    discovery: {
+      recommended: number;
+      mentioned_not_recommended: number;
+      absent: number;
+      completed: number;
+      total: number;
+      failed: number;
+      recommendation_label: string;
+      mention_label: string;
+    };
+    recognition: {
+      recognized: number;
+      completed: number;
+      total: number;
+      failed: number;
+      label: string;
+    };
+    comparison: {
+      client_preferred: number;
+      competitor_preferred: number;
+      compared_no_preference: number;
+      label: string;
+    };
+    information: {
+      confirmed: number;
+      incomplete: number;
+      conflicting: number;
+      label: string;
+    };
+    coverage: {
+      completed: number;
+      total: number;
+      failed: number;
+      label: string;
+    };
+  };
   counts: {
     unbranded_recommended: number;
     unbranded_mentioned: number;
@@ -231,5 +389,22 @@ export type AuditReport = ReportContent & {
     branded_recognized: number;
     branded_total: number;
     failed: number;
+  };
+  operational_telemetry: {
+    pricing_version: string;
+    cost_limit_usd: number;
+    carryover_cost_usd: number;
+    call_count: number;
+    failed_call_count: number;
+    latency_ms: number;
+    input_tokens: number;
+    cached_input_tokens: number;
+    cache_write_input_tokens: number;
+    output_tokens: number;
+    reasoning_output_tokens: number;
+    total_tokens: number;
+    web_search_calls: number;
+    accounted_cost_usd: number;
+    calls: AuditCallTelemetry[];
   };
 };

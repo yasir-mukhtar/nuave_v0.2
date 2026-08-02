@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import AuditWorkflow from "./AuditWorkflow";
 
 export const metadata: Metadata = {
-  title: "Buat Audit AI Visibility | Nuave",
+  title: "Create an AI Visibility Audit | Nuave",
   description:
-    "Buat, tinjau, jalankan, dan ekspor satu audit AI Visibility berbasis bukti.",
+    "Verify one client business, review ten questions, and create an evidence-led AI Visibility Report.",
 };
 
 export default function AuditPage() {

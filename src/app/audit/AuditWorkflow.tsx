@@ -7,13 +7,17 @@ import { Alert, Button } from "@heroui/react";
 import { IconCheck, IconDownload } from "@tabler/icons-react";
 import {
   businessBriefSchema,
+  AUDIT_COST_LIMIT_USD,
+  type AuditCallTelemetry,
+  type AuditBudget,
   type AuditObservation,
   type AuditReport,
   type BusinessBrief,
   type ExtractionDraft,
   type PromptPack,
 } from "@/lib/audit/types";
-import { validatePromptPack } from "@/lib/audit/contracts";
+import { makeEvidenceExport, validatePromptPack } from "@/lib/audit/contracts";
+import { summarizeAuditTelemetry } from "@/lib/audit/telemetry";
 import {
   AuditRunEventParser,
   deriveAuditStep,
@@ -36,10 +40,11 @@ type SavedState = {
   promptPack: PromptPack | null;
   observations: AuditObservation[];
   report: AuditReport | null;
+  setupTelemetry?: AuditCallTelemetry[];
   executionStarted?: boolean;
 };
 
-const STORAGE_KEY = "nuave.audit.workflow.v1";
+const STORAGE_KEY = "nuave.audit.workflow.v3";
 const SESSION_KEY = "nuave.audit.session.v1";
 
 const emptyBrief: BusinessBrief = {
@@ -61,17 +66,27 @@ const emptyBrief: BusinessBrief = {
   known_accuracy_questions: [],
   usp: "",
   regulated_category_notes: "",
-  language: "id-ID",
+  language: "en-US",
   agency_name: "",
   agency_logo_data_url: "",
 };
 
 const stepLabels = [
-  "Brief bisnis",
-  "Verifikasi fakta",
-  "Tinjau pertanyaan",
-  "Jalankan audit",
+  "Client brief",
+  "Verify facts",
+  "Review questions",
+  "Run audit",
 ];
+
+class AuditRequestError extends Error {
+  readonly telemetry: AuditCallTelemetry[];
+
+  constructor(message: string, telemetry: AuditCallTelemetry[] = []) {
+    super(message);
+    this.name = "AuditRequestError";
+    this.telemetry = telemetry;
+  }
+}
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
@@ -79,9 +94,15 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const data = (await response.json()) as T & { error?: string };
+  const data = (await response.json()) as T & {
+    error?: string;
+    telemetry?: AuditCallTelemetry[];
+  };
   if (!response.ok) {
-    throw new Error(data.error || "Permintaan tidak dapat diselesaikan.");
+    throw new AuditRequestError(
+      data.error || "We couldn't complete that request.",
+      data.telemetry || [],
+    );
   }
   return data;
 }
@@ -92,8 +113,8 @@ function friendlyBriefError(brief: BusinessBrief) {
   const first = result.error.issues[0];
   const field = first.path
     .join(".")
-    .replace("verified_competitor.", "kompetitor.");
-  return `Lengkapi ${field || "brief bisnis"}: ${first.message}`;
+    .replace("verified_competitor.", "competitor.");
+  return `Complete ${field || "the client brief"}: ${first.message}`;
 }
 
 function initialStatuses(
@@ -119,6 +140,9 @@ export default function AuditWorkflow() {
   const [promptPack, setPromptPack] = useState<PromptPack | null>(null);
   const [observations, setObservations] = useState<AuditObservation[]>([]);
   const [report, setReport] = useState<AuditReport | null>(null);
+  const [setupTelemetry, setSetupTelemetry] = useState<AuditCallTelemetry[]>(
+    [],
+  );
   const [executionStarted, setExecutionStarted] = useState(false);
   const [promptStatuses, setPromptStatuses] = useState<
     Record<string, PromptRunStatus>
@@ -126,6 +150,8 @@ export default function AuditWorkflow() {
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState("");
   const [restored, setRestored] = useState(false);
+  const [carryoverCostUsd, setCarryoverCostUsd] = useState(0);
+  const [budgetReady, setBudgetReady] = useState(false);
 
   const safetyIdentifier = useMemo(() => {
     if (typeof window === "undefined") return "nuave-server-placeholder";
@@ -152,6 +178,7 @@ export default function AuditWorkflow() {
           setPromptPack(restoredPack);
           setObservations(restoredObservations);
           setReport(state.report || null);
+          setSetupTelemetry(state.setupTelemetry || []);
           setExecutionStarted(
             Boolean(state.executionStarted || restoredObservations.length),
           );
@@ -169,6 +196,48 @@ export default function AuditWorkflow() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/audit/extract", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = (await response.json()) as Partial<AuditBudget> & {
+          error?: string;
+        };
+        if (
+          !response.ok ||
+          data.limit_usd !== AUDIT_COST_LIMIT_USD ||
+          typeof data.carryover_cost_usd !== "number" ||
+          data.carryover_cost_usd < 0 ||
+          data.carryover_cost_usd > AUDIT_COST_LIMIT_USD
+        ) {
+          throw new Error(
+            data.error || "The private cost guard returned invalid settings.",
+          );
+        }
+        if (!cancelled) {
+          setCarryoverCostUsd(data.carryover_cost_usd);
+          setBudgetReady(true);
+        }
+      } catch (cause) {
+        if (!cancelled) {
+          setBudgetReady(false);
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "The private cost guard is unavailable.",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!restored) return;
     const state: SavedState = {
       websiteUrl,
@@ -179,6 +248,7 @@ export default function AuditWorkflow() {
       promptPack,
       observations,
       report,
+      setupTelemetry,
       executionStarted,
     };
     try {
@@ -195,6 +265,7 @@ export default function AuditWorkflow() {
     observations,
     promptPack,
     report,
+    setupTelemetry,
     restored,
     websiteUrl,
   ]);
@@ -235,22 +306,31 @@ export default function AuditWorkflow() {
 
   async function extractWebsite() {
     setError("");
+    if (!budgetReady) {
+      setError("Wait for the private cost guard before starting the audit.");
+      return;
+    }
     if (!websiteUrl.trim()) {
-      setError("Masukkan URL website resmi terlebih dahulu.");
+      setError("Enter the client's official website URL first.");
       return;
     }
     setBusy("extract");
     try {
-      const result = await postJson<{ draft: ExtractionDraft }>(
-        "/api/audit/extract",
-        {
-          website_url: websiteUrl.trim(),
-          brand_name: brief.brand_name,
-          market_context: brief.market_context,
-          category: brief.category,
-          safety_identifier: safetyIdentifier,
+      const result = await postJson<{
+        draft: ExtractionDraft;
+        telemetry: AuditCallTelemetry[];
+      }>("/api/audit/extract", {
+        website_url: websiteUrl.trim(),
+        brand_name: brief.brand_name,
+        market_context: brief.market_context,
+        category: brief.category,
+        safety_identifier: safetyIdentifier,
+        budget: {
+          limit_usd: AUDIT_COST_LIMIT_USD,
+          carryover_cost_usd: carryoverCostUsd,
+          calls: setupTelemetry,
         },
-      );
+      });
       const draft = result.draft;
       setExtraction(draft);
       setBrief((current) => ({
@@ -277,11 +357,15 @@ export default function AuditWorkflow() {
       }));
       setFactsExtracted(true);
       setFactsConfirmed(false);
+      setSetupTelemetry((calls) => [...calls, ...result.telemetry]);
     } catch (cause) {
+      if (cause instanceof AuditRequestError && cause.telemetry.length) {
+        setSetupTelemetry((calls) => [...calls, ...cause.telemetry]);
+      }
       setError(
         cause instanceof Error
           ? cause.message
-          : "Website tidak dapat dianalisis.",
+          : "We couldn't analyze this website.",
       );
     } finally {
       setBusy(null);
@@ -296,22 +380,25 @@ export default function AuditWorkflow() {
       return;
     }
     if (!factsConfirmed) {
-      setError("Konfirmasikan bahwa seluruh fakta sudah diperiksa.");
+      setError("Confirm that you have checked every fact before continuing.");
       return;
     }
     setBusy("prompts");
     try {
-      const pack = await postJson<PromptPack>("/api/audit/prompts", {
-        brief,
-        safety_identifier: safetyIdentifier,
-      });
+      // Questions are built from the verified brief in code, so this request
+      // makes no API call and cannot change accounted audit spend.
+      const result = await postJson<{ pack: PromptPack }>(
+        "/api/audit/prompts",
+        { brief },
+      );
+      const pack = result.pack;
       setPromptPack(pack);
       setPromptStatuses(initialStatuses(pack, []));
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Pertanyaan tidak dapat dibuat.",
+          : "We couldn't create the audit questions.",
       );
     } finally {
       setBusy(null);
@@ -334,19 +421,42 @@ export default function AuditWorkflow() {
     setReport(null);
   }
 
-  async function createReport(finalObservations: AuditObservation[]) {
+  async function createReport(
+    finalObservations: AuditObservation[],
+    priorCalls = setupTelemetry,
+  ) {
     if (!promptPack) return;
+    if (!budgetReady) {
+      throw new Error("The private cost guard is unavailable.");
+    }
     setBusy("report");
-    const reportResult = await postJson<{ report: AuditReport }>(
-      "/api/audit/report",
-      {
-        brief,
-        prompts: promptPack.prompts,
-        observations: finalObservations,
-        safety_identifier: safetyIdentifier,
-      },
-    );
-    setReport(reportResult.report);
+    try {
+      const reportResult = await postJson<{ report: AuditReport }>(
+        "/api/audit/report",
+        {
+          brief,
+          prompts: promptPack.prompts,
+          observations: finalObservations,
+          safety_identifier: safetyIdentifier,
+          budget: {
+            limit_usd: AUDIT_COST_LIMIT_USD,
+            carryover_cost_usd: carryoverCostUsd,
+            calls: [
+              ...priorCalls,
+              ...finalObservations.flatMap(
+                (observation) => observation.telemetry || [],
+              ),
+            ],
+          },
+        },
+      );
+      setReport(reportResult.report);
+    } catch (cause) {
+      if (cause instanceof AuditRequestError && cause.telemetry.length) {
+        setSetupTelemetry((calls) => [...calls, ...cause.telemetry]);
+      }
+      throw cause;
+    }
   }
 
   function handleRunEvent(event: AuditRunEvent, current: AuditObservation[]) {
@@ -375,6 +485,10 @@ export default function AuditWorkflow() {
   async function runAudit() {
     if (!promptPack) return;
     setError("");
+    if (!budgetReady) {
+      setError("Wait for the private cost guard before running the audit.");
+      return;
+    }
     const promptErrors = validatePromptPack(promptPack.prompts, brief);
     if (promptErrors.length) {
       setError(promptErrors.join(" "));
@@ -383,6 +497,11 @@ export default function AuditWorkflow() {
 
     setExecutionStarted(true);
     setReport(null);
+    const runPriorCalls = [
+      ...setupTelemetry,
+      ...observations.flatMap((observation) => observation.telemetry || []),
+    ];
+    setSetupTelemetry(runPriorCalls);
     setObservations([]);
     setPromptStatuses(initialStatuses(promptPack, []));
     setBusy("run");
@@ -397,14 +516,19 @@ export default function AuditWorkflow() {
           brief,
           prompts: promptPack.prompts,
           safety_identifier: safetyIdentifier,
+          budget: {
+            limit_usd: AUDIT_COST_LIMIT_USD,
+            carryover_cost_usd: carryoverCostUsd,
+            calls: runPriorCalls,
+          },
         }),
       });
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        throw new Error(data.error || "Audit tidak dapat dijalankan.");
+        throw new Error(data.error || "We couldn't run the audit.");
       }
       if (!response.body)
-        throw new Error("Server tidak mengirim aliran audit.");
+        throw new Error("The server did not return an audit stream.");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -425,14 +549,16 @@ export default function AuditWorkflow() {
         if (event.type === "run_completed") runCompleted = true;
       }
       if (!runCompleted || finalObservations.length !== 10) {
-        throw new Error("Koneksi terputus sebelum sepuluh observasi selesai.");
+        throw new Error(
+          "The connection closed before all ten observations finished.",
+        );
       }
-      await createReport(finalObservations);
+      await createReport(finalObservations, runPriorCalls);
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Audit tidak dapat diselesaikan.",
+          : "We couldn't complete the audit.",
       );
     } finally {
       setBusy(null);
@@ -448,7 +574,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Laporan tidak dapat dibuat ulang.",
+          : "We couldn't create the report again.",
       );
     } finally {
       setBusy(null);
@@ -465,6 +591,7 @@ export default function AuditWorkflow() {
     setPromptPack(null);
     setObservations([]);
     setReport(null);
+    setSetupTelemetry([]);
     setExecutionStarted(false);
     setPromptStatuses({});
     setError("");
@@ -476,7 +603,7 @@ export default function AuditWorkflow() {
       return;
     }
     if (!file.type.match(/^image\/(png|jpeg)$/) || file.size > 1_000_000) {
-      setError("Logo harus berupa PNG/JPG dan berukuran maksimal 1 MB.");
+      setError("Upload a PNG or JPG logo no larger than 1 MB.");
       return;
     }
     const reader = new FileReader();
@@ -485,11 +612,48 @@ export default function AuditWorkflow() {
     reader.readAsDataURL(file);
   }
 
+  function downloadEvidenceJson() {
+    if (!report || !promptPack) return;
+
+    const evidence = makeEvidenceExport(
+      brief,
+      promptPack.prompts,
+      observations,
+      report,
+    );
+    const blob = new Blob([JSON.stringify(evidence, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const brandSlug =
+      brief.brand_name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "client";
+
+    link.href = url;
+    link.download = `${brandSlug}-nuave-evidence.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   const interrupted =
     executionStarted && !busy && !report && observations.length < 10;
+  const telemetrySummary =
+    report?.operational_telemetry ??
+    summarizeAuditTelemetry(
+      [
+        ...setupTelemetry,
+        ...observations.flatMap((observation) => observation.telemetry || []),
+      ],
+      AUDIT_COST_LIMIT_USD,
+      carryoverCostUsd,
+    );
 
   return (
-    <main className={styles.shell} lang="id" data-theme="light">
+    <main className={styles.shell} lang="en" data-theme="light">
       <header className={`${styles.topbar} ${styles.noPrint}`}>
         <Link href="/" className={styles.brand}>
           <Image
@@ -515,18 +679,31 @@ export default function AuditWorkflow() {
       {!report ? (
         <nav
           className={`${styles.stepper} ${styles.noPrint}`}
-          aria-label="Tahapan audit"
+          aria-label="Audit stages"
         >
-          {stepLabels.map((label, index) => (
-            <div
-              key={label}
-              className={`${styles.step} ${index <= step ? styles.stepActive : ""} ${index < step ? styles.stepComplete : ""}`}
-              aria-current={index === step ? "step" : undefined}
-            >
-              <span>{index < step ? <IconCheck /> : index + 1}</span>
-              <small>{label}</small>
-            </div>
-          ))}
+          <div className={styles.stepContext}>
+            <span>Audit setup</span>
+            <strong>
+              Step {step + 1} of {stepLabels.length}
+            </strong>
+          </div>
+          <ol className={styles.stepList}>
+            {stepLabels.map((label, index) => (
+              <li
+                key={label}
+                className={`${styles.step} ${index <= step ? styles.stepActive : ""} ${index < step ? styles.stepComplete : ""}`}
+                aria-current={index === step ? "step" : undefined}
+              >
+                <span className={styles.stepBar} aria-hidden="true" />
+                <span className={styles.stepLabel}>
+                  <span className={styles.stepMarker} aria-hidden="true">
+                    {index < step ? <IconCheck /> : index + 1}
+                  </span>
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ol>
         </nav>
       ) : null}
 
@@ -535,8 +712,32 @@ export default function AuditWorkflow() {
           <Alert status="danger" role="alert">
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Ada yang perlu diperbaiki</Alert.Title>
+              <Alert.Title>Check this before continuing</Alert.Title>
               <Alert.Description>{error}</Alert.Description>
+            </Alert.Content>
+          </Alert>
+        </div>
+      ) : null}
+
+      {telemetrySummary.call_count || telemetrySummary.carryover_cost_usd ? (
+        <div className={`${styles.globalAlert} ${styles.noPrint}`}>
+          <Alert status="default">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Private run cost control</Alert.Title>
+              <Alert.Description>
+                {telemetrySummary.call_count} API calls · USD{" "}
+                {telemetrySummary.accounted_cost_usd.toFixed(4)} accounted of
+                USD {telemetrySummary.cost_limit_usd.toFixed(2)}
+                {` · USD ${Math.max(
+                  0,
+                  telemetrySummary.cost_limit_usd -
+                    telemetrySummary.accounted_cost_usd,
+                ).toFixed(4)} remaining`}
+                {telemetrySummary.carryover_cost_usd
+                  ? ` · USD ${telemetrySummary.carryover_cost_usd.toFixed(4)} carried over`
+                  : ""}
+              </Alert.Description>
             </Alert.Content>
           </Alert>
         </div>
@@ -592,7 +793,12 @@ export default function AuditWorkflow() {
       ) : null}
 
       {step === 4 && report && promptPack ? (
-        <ReportView report={report} brief={brief} observations={observations} />
+        <ReportView
+          report={report}
+          brief={brief}
+          observations={observations}
+          onDownloadJson={downloadEvidenceJson}
+        />
       ) : null}
     </main>
   );

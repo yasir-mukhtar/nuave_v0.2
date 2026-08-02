@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Alert,
   Button,
@@ -13,7 +14,6 @@ import {
   Label,
   ProgressBar,
   Spinner,
-  Surface,
   TextArea,
   TextField,
 } from "@heroui/react";
@@ -41,11 +41,11 @@ type UpdateBrief = <K extends keyof BusinessBrief>(
 ) => void;
 
 export const categoryLabels: Record<string, string> = {
-  need_discovery: "Penemuan kebutuhan",
-  solution_discovery: "Penemuan solusi",
-  comparison: "Perbandingan",
-  validation: "Validasi",
-  action: "Tindakan",
+  need_discovery: "Need discovery",
+  solution_discovery: "Solution discovery",
+  comparison: "Comparison",
+  validation: "Validation",
+  action: "Action",
 };
 
 const categories = [
@@ -88,12 +88,36 @@ function StageIntro({
 }) {
   return (
     <header className={styles.stageIntro} tabIndex={-1} id={`stage-${number}`}>
-      <Chip color="accent" variant="soft">
-        Langkah {number} · {eyebrow}
-      </Chip>
+      <p className={styles.stageMeta}>
+        Step {number} of 4 <span aria-hidden="true">·</span> {eyebrow}
+      </p>
       <h1>{title}</h1>
       <p>{description}</p>
     </header>
+  );
+}
+
+function StageSection({
+  id,
+  title,
+  description,
+  children,
+  className = "",
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`${styles.stageSection} ${className}`}>
+      <header className={styles.stageSectionHeader}>
+        <h2 id={id}>{title}</h2>
+        {description ? <p>{description}</p> : null}
+      </header>
+      <div className={styles.stageSectionBody}>{children}</div>
+    </section>
   );
 }
 
@@ -158,11 +182,69 @@ function LongInput({
   );
 }
 
-function Panel({ children }: { children: React.ReactNode }) {
+function LineListEditor({
+  label,
+  initialValue,
+  onChange,
+  hint,
+  required,
+  rows = 3,
+}: {
+  label: string;
+  initialValue: string;
+  onChange: (value: string[]) => void;
+  hint?: string;
+  required?: boolean;
+  rows?: number;
+}) {
+  const [draft, setDraft] = useState(initialValue);
+
+  function commitDraft() {
+    const normalizedValue = lines(draft);
+    setDraft(text(normalizedValue));
+    onChange(normalizedValue);
+  }
+
   return (
-    <Surface variant="default" className={styles.panel}>
-      {children}
-    </Surface>
+    <TextField fullWidth isRequired={required}>
+      <Label>{label}</Label>
+      <TextArea
+        rows={rows}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commitDraft}
+      />
+      {hint ? <Description>{hint}</Description> : null}
+    </TextField>
+  );
+}
+
+function LineListInput({
+  label,
+  value,
+  onChange,
+  hint,
+  required,
+  rows = 3,
+}: {
+  label: string;
+  value: string[];
+  onChange: (value: string[]) => void;
+  hint?: string;
+  required?: boolean;
+  rows?: number;
+}) {
+  const serializedValue = text(value);
+  return (
+    <LineListEditor
+      key={serializedValue}
+      label={label}
+      initialValue={serializedValue}
+      onChange={onChange}
+      hint={hint}
+      required={required}
+      rows={rows}
+    />
   );
 }
 
@@ -184,65 +266,72 @@ export function SourceStep({
   onExtract: () => void;
 }) {
   return (
-    <section className={styles.workspace}>
+    <section className={`${styles.workspace} ${styles.workspaceFocused}`}>
       <StageIntro
         number={1}
-        eyebrow="Sumber resmi"
-        title="Mulai audit dari informasi yang dapat diperiksa."
-        description="Nuave menyusun draf dari website resmi. Anda akan memeriksa semua fakta sebelum satu pertanyaan pun dijalankan."
+        eyebrow="Official source"
+        title="Start with facts you can verify."
+        description="Add the client's official website. Nuave will draft the business brief, and you will check every fact before the audit runs."
       />
-      <Panel>
-        <Form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onExtract();
-          }}
+      <Form
+        className={styles.stageForm}
+        onSubmit={(event) => {
+          event.preventDefault();
+          onExtract();
+        }}
+      >
+        <StageSection
+          id="client-business-heading"
+          title="Client business"
+          description="Use the official business identity so every later observation refers to the right entity."
+          className={styles.focusedSection}
         >
-          <Fieldset>
-            <Fieldset.Legend>Informasi awal bisnis</Fieldset.Legend>
+          <Fieldset aria-labelledby="client-business-heading">
             <Fieldset.Group className={styles.gridTwo}>
               <TextInput
-                label="Website resmi"
+                label="Official website"
                 type="url"
                 required
                 value={websiteUrl}
-                placeholder="https://contoh.co.id"
-                hint="Sumber utama untuk draf fakta."
+                placeholder="https://example.com"
+                hint="Nuave uses this domain as the primary source for the draft."
                 onChange={setWebsiteUrl}
               />
               <TextInput
-                label="Nama brand"
+                label="Brand name"
                 value={brief.brand_name}
-                placeholder="Nama publik brand"
+                placeholder="Public brand name"
                 onChange={(value) => updateBrief("brand_name", value)}
               />
               <TextInput
-                label="Pasar atau lokasi"
+                label="Market or location"
                 value={brief.market_context}
-                placeholder="Contoh: Depok, Indonesia"
+                placeholder="For example: Jakarta, Indonesia"
                 onChange={(value) => updateBrief("market_context", value)}
               />
               <TextInput
-                label="Kategori bisnis"
+                label="Business category"
                 value={brief.category}
-                placeholder="Contoh: klinik gigi"
+                placeholder="For example: dental clinic"
                 onChange={(value) => updateBrief("category", value)}
               />
             </Fieldset.Group>
-            <Fieldset.Actions className={styles.actionRow}>
-              <p>Ekstraksi dibatasi pada informasi publik dari domain resmi.</p>
+            <Fieldset.Actions
+              className={`${styles.actionRow} ${styles.inlineAction}`}
+            >
+              <p>Only public information from the official domain is used.</p>
               <Button
                 type="submit"
                 variant="primary"
                 isDisabled={Boolean(busy)}
               >
                 {busy === "extract" ? <Spinner size="sm" /> : <IconSearch />}
-                {factsExtracted ? "Analisis ulang" : "Analisis website"}
+                {factsExtracted ? "Analyze again" : "Draft the client brief"}
               </Button>
             </Fieldset.Actions>
           </Fieldset>
-        </Form>
-      </Panel>
+        </StageSection>
+      </Form>
     </section>
   );
 }
@@ -269,22 +358,22 @@ export function BriefStep({
   onLogo: (file: File | undefined) => void;
 }) {
   return (
-    <section className={styles.workspace}>
+    <section className={`${styles.workspace} ${styles.workspaceWide}`}>
       <Button variant="ghost" onPress={onBack} className={styles.backButton}>
-        <IconArrowLeft /> Ubah sumber
+        <IconArrowLeft /> Change website
       </Button>
       <StageIntro
         number={2}
-        eyebrow="Verifikasi fakta"
-        title="Pastikan brief hanya berisi fakta yang dapat dipertanggungjawabkan."
-        description="Nilai di bawah adalah draf ekstraksi, bukan fakta terverifikasi. Koreksi, lengkapi, lalu konfirmasikan."
+        eyebrow="Verify facts"
+        title="Check the client brief before it shapes the audit."
+        description="These details are a draft, not verified facts. Correct anything that is wrong, fill any gaps, then confirm the brief."
       />
 
       {extraction?.warnings.length ? (
         <Alert status="warning">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Perlu diperiksa</Alert.Title>
+            <Alert.Title>Review these items</Alert.Title>
             <Alert.Description>
               <ul className={styles.compactList}>
                 {extraction.warnings.map((warning) => (
@@ -296,37 +385,40 @@ export function BriefStep({
         </Alert>
       ) : null}
 
-      <Panel>
-        <Fieldset>
-          <Fieldset.Legend>Identitas dan cakupan</Fieldset.Legend>
+      <StageSection
+        id="identity-scope-heading"
+        title="Identity and audit scope"
+        description="Confirm the exact business, market, and customer context the audit will test."
+      >
+        <Fieldset aria-labelledby="identity-scope-heading">
           <Fieldset.Group className={styles.gridTwo}>
             <TextInput
-              label="Nama brand"
+              label="Brand name"
               required
               value={brief.brand_name}
               onChange={(value) => updateBrief("brand_name", value)}
             />
             <TextInput
-              label="Cakupan entitas"
+              label="Business scope"
               required
-              hint="Satu cabang, brand, atau lini produk yang diuji."
+              hint="The one branch, brand, or product line this audit will test."
               value={brief.entity_scope}
               onChange={(value) => updateBrief("entity_scope", value)}
             />
             <TextInput
-              label="Tipe brand"
+              label="Brand type"
               required
               value={brief.brand_type}
               onChange={(value) => updateBrief("brand_type", value)}
             />
             <TextInput
-              label="Kategori"
+              label="Category"
               required
               value={brief.category}
               onChange={(value) => updateBrief("category", value)}
             />
             <TextInput
-              label="Pasar atau lokasi"
+              label="Market or location"
               required
               value={brief.market_context}
               onChange={(value) => updateBrief("market_context", value)}
@@ -339,58 +431,58 @@ export function BriefStep({
             />
           </Fieldset.Group>
         </Fieldset>
-      </Panel>
+      </StageSection>
 
-      <Panel>
-        <Fieldset>
-          <Fieldset.Legend>Penawaran dan kebutuhan customer</Fieldset.Legend>
+      <StageSection
+        id="offer-needs-heading"
+        title="Offer and customer needs"
+        description="Keep each list specific enough to support ordinary customer questions."
+      >
+        <Fieldset aria-labelledby="offer-needs-heading">
           <Fieldset.Group className={styles.gridTwo}>
-            <LongInput
-              label="Produk atau layanan"
+            <LineListInput
+              label="Products or services"
               required
-              hint="Satu item per baris."
-              value={text(brief.verified_offerings)}
+              hint="One verified item per line."
+              value={brief.verified_offerings}
+              onChange={(value) => updateBrief("verified_offerings", value)}
+            />
+            <LineListInput
+              label="Customer needs"
+              hint="Optional. Add one need per line."
+              value={brief.verified_customer_needs}
               onChange={(value) =>
-                updateBrief("verified_offerings", lines(value))
+                updateBrief("verified_customer_needs", value)
               }
             />
-            <LongInput
-              label="Kebutuhan customer"
-              required
-              hint="Minimal dua, satu per baris."
-              value={text(brief.verified_customer_needs)}
+            <LineListInput
+              label="Decision criteria"
+              hint="Optional. Add one factor per line."
+              value={brief.verified_decision_criteria}
               onChange={(value) =>
-                updateBrief("verified_customer_needs", lines(value))
+                updateBrief("verified_decision_criteria", value)
               }
             />
-            <LongInput
-              label="Kriteria keputusan"
+            <LineListInput
+              label="Official sources"
               required
-              hint="Minimal dua faktor yang dapat diperiksa."
-              value={text(brief.verified_decision_criteria)}
-              onChange={(value) =>
-                updateBrief("verified_decision_criteria", lines(value))
-              }
-            />
-            <LongInput
-              label="Sumber resmi"
-              required
-              hint="Satu URL per baris."
-              value={text(brief.official_sources)}
-              onChange={(value) =>
-                updateBrief("official_sources", lines(value))
-              }
+              hint="One URL per line."
+              value={brief.official_sources}
+              onChange={(value) => updateBrief("official_sources", value)}
             />
           </Fieldset.Group>
         </Fieldset>
-      </Panel>
+      </StageSection>
 
-      <Panel>
-        <Fieldset>
-          <Fieldset.Legend>Kompetitor terverifikasi</Fieldset.Legend>
+      <StageSection
+        id="competitor-heading"
+        title="Verified competitor"
+        description="Use one real comparison business with enough scope to avoid a name-only match."
+      >
+        <Fieldset aria-labelledby="competitor-heading">
           <Fieldset.Group className={styles.gridThree}>
             <TextInput
-              label="Nama"
+              label="Name"
               required
               value={brief.verified_competitor.name}
               onChange={(value) =>
@@ -401,7 +493,7 @@ export function BriefStep({
               }
             />
             <TextInput
-              label="Cakupan"
+              label="Scope"
               required
               value={brief.verified_competitor.scope}
               onChange={(value) =>
@@ -412,7 +504,7 @@ export function BriefStep({
               }
             />
             <TextInput
-              label="URL sumber"
+              label="Source URL"
               type="url"
               required
               value={brief.verified_competitor.source_url}
@@ -425,12 +517,12 @@ export function BriefStep({
             />
           </Fieldset.Group>
         </Fieldset>
-      </Panel>
+      </StageSection>
 
       <Disclosure className={styles.disclosure}>
         <Disclosure.Heading>
           <Disclosure.Trigger>
-            Detail opsional dan branding laporan
+            Optional details and report branding
             <Disclosure.Indicator />
           </Disclosure.Trigger>
         </Disclosure.Heading>
@@ -438,61 +530,59 @@ export function BriefStep({
           <Disclosure.Body>
             <div className={styles.gridTwo}>
               <LongInput
-                label="USP atau pembeda"
+                label="Differentiator"
                 value={brief.usp}
                 onChange={(value) => updateBrief("usp", value)}
               />
-              <LongInput
-                label="Nama lain brand"
-                value={text(brief.brand_name_variants)}
-                onChange={(value) =>
-                  updateBrief("brand_name_variants", lines(value))
-                }
+              <LineListInput
+                label="Other brand names"
+                value={brief.brand_name_variants}
+                onChange={(value) => updateBrief("brand_name_variants", value)}
               />
               <TextInput
-                label="Layanan prioritas"
+                label="Priority offer"
                 value={brief.priority_offering}
                 onChange={(value) => updateBrief("priority_offering", value)}
               />
               <TextInput
-                label="Tindakan konversi"
+                label="Customer next step"
                 value={brief.conversion_action}
                 onChange={(value) => updateBrief("conversion_action", value)}
               />
-              <LongInput
-                label="Fakta yang sering keliru"
-                value={text(brief.customer_supplied_facts)}
+              <LineListInput
+                label="Facts that are often wrong"
+                value={brief.customer_supplied_facts}
                 onChange={(value) =>
-                  updateBrief("customer_supplied_facts", lines(value))
+                  updateBrief("customer_supplied_facts", value)
+                }
+              />
+              <LineListInput
+                label="Accuracy questions"
+                value={brief.known_accuracy_questions}
+                onChange={(value) =>
+                  updateBrief("known_accuracy_questions", value)
                 }
               />
               <LongInput
-                label="Pertanyaan akurasi"
-                value={text(brief.known_accuracy_questions)}
-                onChange={(value) =>
-                  updateBrief("known_accuracy_questions", lines(value))
-                }
-              />
-              <LongInput
-                label="Catatan kategori teregulasi"
+                label="Regulated-category notes"
                 value={brief.regulated_category_notes}
                 onChange={(value) =>
                   updateBrief("regulated_category_notes", value)
                 }
               />
               <TextInput
-                label="Nama agency"
+                label="Agency name"
                 value={brief.agency_name}
                 onChange={(value) => updateBrief("agency_name", value)}
               />
               <TextField fullWidth>
-                <Label>Logo agency</Label>
+                <Label>Agency logo</Label>
                 <Input
                   type="file"
                   accept="image/png,image/jpeg"
                   onChange={(event) => onLogo(event.target.files?.[0])}
                 />
-                <Description>PNG/JPG, maksimal 1 MB.</Description>
+                <Description>PNG or JPG, up to 1 MB.</Description>
               </TextField>
             </div>
           </Disclosure.Body>
@@ -503,7 +593,7 @@ export function BriefStep({
         <Disclosure className={styles.disclosure}>
           <Disclosure.Heading>
             <Disclosure.Trigger>
-              {extraction.evidence.length} catatan sumber ekstraksi
+              {extraction.evidence.length} extraction source notes
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
@@ -525,26 +615,28 @@ export function BriefStep({
         </Disclosure>
       ) : null}
 
-      <Panel>
-        <Checkbox
-          isSelected={factsConfirmed}
-          onChange={setFactsConfirmed}
-          variant="secondary"
-        >
-          <Checkbox.Content>
-            <Checkbox.Control>
-              <Checkbox.Indicator />
-            </Checkbox.Control>
-            <Label>
-              Saya sudah memeriksa fakta ini dan mengizinkannya dipakai untuk
-              menyusun pertanyaan audit.
-            </Label>
-          </Checkbox.Content>
-        </Checkbox>
+      <div className={styles.stickyAction}>
+        <div className={styles.confirmation}>
+          <Checkbox
+            isSelected={factsConfirmed}
+            onChange={setFactsConfirmed}
+            variant="secondary"
+          >
+            <Checkbox.Content>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Label>
+                I have checked these facts and approve them for use in the audit
+                questions.
+              </Label>
+            </Checkbox.Content>
+          </Checkbox>
+        </div>
         <div className={styles.actionRow}>
           <p>
-            Nuave akan membuat tepat lima pertanyaan tanpa brand dan lima dengan
-            brand.
+            Nuave builds five unbranded and five branded questions from these
+            verified facts. This step makes no API call and costs nothing.
           </p>
           <Button
             variant="primary"
@@ -552,10 +644,10 @@ export function BriefStep({
             isDisabled={Boolean(busy) || !factsConfirmed}
           >
             {busy === "prompts" ? <Spinner size="sm" /> : <IconArrowRight />}
-            Buat 10 pertanyaan
+            Create 10 audit questions
           </Button>
         </div>
-      </Panel>
+      </div>
     </section>
   );
 }
@@ -576,22 +668,22 @@ export function QuestionsStep({
   onRun: () => void;
 }) {
   return (
-    <section className={styles.workspace}>
+    <section className={`${styles.workspace} ${styles.workspaceWide}`}>
       <Button variant="ghost" onPress={onBack} className={styles.backButton}>
-        <IconArrowLeft /> Kembali ke fakta
+        <IconArrowLeft /> Back to client brief
       </Button>
       <StageIntro
         number={3}
-        eyebrow="Tinjau pertanyaan"
-        title="Periksa sepuluh pertanyaan sebelum audit dijalankan."
-        description={`Pertanyaan tanpa brand tidak boleh memberi petunjuk tentang ${brandName}. Setiap pertanyaan akan dijalankan sebagai pengujian independen.`}
+        eyebrow="Review questions"
+        title="Review the ten questions before you run the audit."
+        description={`Unbranded questions must not hint at ${brandName}. Each question runs as a separate observation.`}
       />
       <div className={styles.summaryChips}>
         <Chip color="accent" variant="soft">
-          5 tanpa brand
+          5 unbranded
         </Chip>
         <Chip color="success" variant="soft">
-          5 dengan brand
+          5 branded
         </Chip>
         <Chip variant="soft">Target: ChatGPT</Chip>
       </div>
@@ -599,15 +691,19 @@ export function QuestionsStep({
         <Alert status="warning">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Peringatan dari generator</Alert.Title>
+            <Alert.Title>Question generator warning</Alert.Title>
             <Alert.Description>{pack.warnings.join(" ")}</Alert.Description>
           </Alert.Content>
         </Alert>
       ) : null}
       <div className={styles.categoryList}>
         {categories.map((category) => (
-          <Panel key={category}>
-            <h2>{categoryLabels[category]}</h2>
+          <StageSection
+            key={category}
+            id={`category-${category}`}
+            title={categoryLabels[category]}
+            className={styles.promptSection}
+          >
             <div className={styles.promptPair}>
               {pack.prompts.map((prompt, index) =>
                 prompt.category === category ? (
@@ -618,11 +714,11 @@ export function QuestionsStep({
                         color={prompt.branded ? "success" : "accent"}
                         variant="soft"
                       >
-                        {prompt.branded ? "Dengan brand" : "Tanpa brand"}
+                        {prompt.branded ? "Branded" : "Unbranded"}
                       </Chip>
                       <code>{prompt.prompt_id}</code>
                     </div>
-                    <Label>Pertanyaan {index + 1}</Label>
+                    <Label>Question {index + 1}</Label>
                     <TextArea
                       rows={3}
                       value={prompt.question}
@@ -633,18 +729,20 @@ export function QuestionsStep({
                 ) : null,
               )}
             </div>
-          </Panel>
+          </StageSection>
         ))}
       </div>
-      <Surface variant="secondary" className={styles.stickyAction}>
+      <div className={styles.stickyAction}>
         <div>
-          <strong>Siap menjalankan 10 pengujian independen</strong>
-          <span>Setelah dimulai, brief dan pertanyaan akan dikunci.</span>
+          <strong>Ready to run 10 independent observations</strong>
+          <span>
+            The client brief and questions lock when the audit starts.
+          </span>
         </div>
         <Button variant="primary" onPress={onRun} isDisabled={Boolean(busy)}>
-          <IconSparkles /> Jalankan audit
+          <IconSparkles /> Run the audit
         </Button>
-      </Surface>
+      </div>
     </section>
   );
 }
@@ -669,39 +767,39 @@ export function RunStep({
   const completed = observations.length;
   const reporting = busy === "report";
   return (
-    <section className={styles.workspace}>
+    <section className={`${styles.workspace} ${styles.workspaceFocused}`}>
       <StageIntro
         number={4}
-        eyebrow="Jalankan audit"
+        eyebrow="Run audit"
         title={
           reporting
-            ? "Semua observasi selesai. Menyusun laporan…"
-            : "Mengumpulkan sepuluh observasi independen."
+            ? "All observations are complete. Creating the report…"
+            : "Collecting ten independent observations."
         }
-        description="Kemajuan di bawah berasal dari respons server yang sebenarnya. Pengujian gagal tetap disimpan dan ditandai secara eksplisit."
+        description="This progress comes from live server responses. Failed observations remain in the evidence and are clearly labeled."
       />
       {interrupted ? (
         <Alert status="danger">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Proses audit terputus</Alert.Title>
+            <Alert.Title>The audit was interrupted</Alert.Title>
             <Alert.Description>
-              {completed} dari 10 observasi tersimpan. Nuave tidak mengklaim
-              dapat melanjutkan sesi server yang terputus.
+              {completed} of 10 observations were saved. A disconnected server
+              session cannot be resumed.
             </Alert.Description>
           </Alert.Content>
         </Alert>
       ) : null}
-      <Panel>
+      <section className={styles.runSection} aria-label="Audit observations">
         <ProgressBar
-          aria-label={reporting ? "Menyusun laporan" : "Kemajuan audit"}
+          aria-label={reporting ? "Creating report" : "Audit progress"}
           value={completed}
           maxValue={10}
           isIndeterminate={reporting}
           color={reporting ? "accent" : "success"}
         >
           <ProgressBar.Output>
-            {reporting ? "Menyusun laporan" : `${completed} dari 10 selesai`}
+            {reporting ? "Creating report" : `${completed} of 10 complete`}
           </ProgressBar.Output>
           <ProgressBar.Track>
             <ProgressBar.Fill />
@@ -736,39 +834,37 @@ export function RunStep({
                 <Chip color={color} variant="soft" size="sm">
                   {status === "running" ? <Spinner size="sm" /> : null}
                   {status === "pending"
-                    ? "Menunggu"
+                    ? "Waiting"
                     : status === "running"
-                      ? "Berjalan"
+                      ? "Running"
                       : status === "failed"
-                        ? "Gagal"
-                        : "Selesai"}
+                        ? "Failed"
+                        : "Complete"}
                 </Chip>
               </div>
             );
           })}
         </div>
         {interrupted ? (
-          <div className={styles.actionRow}>
+          <div className={`${styles.actionRow} ${styles.runRecovery}`}>
             <p>
-              Pengulangan menjalankan kembali seluruh sepuluh pertanyaan dan
-              mengganti observasi parsial.
+              Running again replaces the partial evidence with ten new
+              observations.
             </p>
             <Button variant="primary" onPress={onRerun}>
-              <IconRefresh /> Jalankan ulang semua
+              <IconRefresh /> Run all 10 again
             </Button>
           </div>
         ) : null}
         {!busy && completed === 10 ? (
-          <div className={styles.actionRow}>
-            <p>
-              Observasi lengkap. Pembuatan laporan sebelumnya belum selesai.
-            </p>
+          <div className={`${styles.actionRow} ${styles.runRecovery}`}>
+            <p>All observations are saved, but the report was not created.</p>
             <Button variant="primary" onPress={onRetryReport}>
-              <IconRefresh /> Coba buat laporan lagi
+              <IconRefresh /> Create the report again
             </Button>
           </div>
         ) : null}
-      </Panel>
+      </section>
     </section>
   );
 }
