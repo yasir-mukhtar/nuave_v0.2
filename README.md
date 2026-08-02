@@ -76,10 +76,12 @@ npm run dev
 
 Copy `.env.example` to `.env.local`, add `OPENAI_API_KEY`, and open
 <http://localhost:3000/audit>. The optional `OPENAI_AUDIT_MODEL` defaults to
-`gpt-5.6`; every completed observation records the exact returned model. Set
+`gpt-5.6-luna`; every completed observation records the exact returned model. Set
 `OPENAI_AUDIT_REASONING_EFFORT` to override reasoning effort for every audit
 stage with one supported value: `none`, `low`, `medium`, `high`, `xhigh`, or
-`max`.
+`max`. For a resumed private run, set `OPENAI_AUDIT_CARRYOVER_COST_USD` to the
+already-accounted cost before starting the server. The server treats that value
+as a minimum, shows it in the UI, and subtracts it from the USD 5 run ceiling.
 
 Run the non-mutating engineering checks and production build with:
 

@@ -117,7 +117,7 @@ export function reportWritingInstructions() {
     `Keep every sentence to ${REPORT_MAX_SENTENCE_WORDS} words or fewer.`,
     "Do not use API observation, branded question, causal evidence, consumer ChatGPT equivalence, execution surface, point-in-time, retained observation, or unbranded question in customer-facing fields.",
     `Maximum words: conclusion ${limits.conclusion}; finding title ${limits.key_finding_title}; finding explanation ${limits.key_finding_explanation}; priority action ${limits.priority_action}; priority reason ${limits.priority_why}; priority evidence ${limits.priority_basis}; completion check ${limits.priority_done_when}; caveat ${limits.priority_caveat}; detailed finding ${limits.detail_finding}; detailed meaning ${limits.detail_evidence_note}.`,
-    "Copy answer_excerpt exactly from raw_answer. Do not paraphrase it, add quotation marks, or add an ellipsis.",
+    "Do not write excerpts, source links, run state, or visible-brand appearance; Nuave derives those fields from retained evidence.",
     "Do not write method copy. The report page creates the method section from recorded facts.",
   ];
 }
@@ -156,6 +156,7 @@ export function validateReportLanguage(content: ReportContent): string[] {
 function protectedReportShape(content: ReportContent) {
   return {
     accuracy_status: content.accuracy_status,
+    observed_competitors: content.observed_competitors,
     key_findings: content.key_findings.map((finding) => ({
       evidence_prompt_ids: finding.evidence_prompt_ids,
     })),
@@ -167,7 +168,11 @@ function protectedReportShape(content: ReportContent) {
     })),
     details: content.details.map((detail) => ({
       prompt_id: detail.prompt_id,
-      status: detail.status,
+      run: detail.run,
+      appearance: detail.appearance,
+      recommendation: detail.recommendation,
+      comparison: detail.comparison,
+      information: detail.information,
       answer_excerpt: detail.answer_excerpt,
       source_urls: detail.source_urls,
     })),

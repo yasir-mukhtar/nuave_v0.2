@@ -635,8 +635,8 @@ export function BriefStep({
         </div>
         <div className={styles.actionRow}>
           <p>
-            Nuave will create five unbranded questions and five branded
-            questions.
+            Nuave builds five unbranded and five branded questions from these
+            verified facts. This step makes no API call and costs nothing.
           </p>
           <Button
             variant="primary"

@@ -11,14 +11,20 @@ import type {
 } from "@/lib/audit/types";
 import styles from "./audit.module.css";
 
-const statusLabels: Record<string, string> = {
-  appeared_as_recommendation: "Recommended",
-  mentioned_not_recommended: "Named, not recommended",
-  did_not_appear: "Not named",
-  incomplete_information: "Missing information",
-  conflicting_information: "Conflicting information",
-  could_not_be_tested: "Test could not run",
-};
+function resultLabel(detail: ReportDetail) {
+  if (detail.run === "failed") return "Test could not run";
+  if (detail.appearance === "absent") return "Not named";
+  if (detail.comparison === "client_preferred")
+    return "Preferred in this comparison";
+  if (detail.comparison === "competitor_preferred")
+    return "Another provider was preferred";
+  if (detail.comparison === "compared_no_preference")
+    return "Compared without a preference";
+  if (detail.recommendation === "recommended") return "Recommended";
+  if (detail.information === "conflicting") return "Conflicting information";
+  if (detail.information === "incomplete") return "Missing information";
+  return "Named, not recommended";
+}
 
 const reportCategoryLabels: Record<string, string> = {
   need_discovery: "Customer need",
@@ -134,9 +140,11 @@ export default function ReportView({
   const accuracyLabel =
     report.accuracy_status === "no_clear_issues"
       ? "No clear issues found"
-      : report.accuracy_status === "needs_correction"
-        ? "Needs correction"
-        : "Could not assess";
+      : report.accuracy_status === "needs_confirmation"
+        ? "Needs confirmation"
+        : report.accuracy_status === "needs_correction"
+          ? "Needs correction"
+          : "Could not assess";
 
   return (
     <div className={styles.reportWrap}>
@@ -212,24 +220,21 @@ export default function ReportView({
           <div className={styles.resultGrid}>
             <div className={styles.mainResult}>
               <strong>{report.counts.unbranded_recommended}</strong>
-              <span>
-                of {report.counts.unbranded_total} discovery questions
-                recommended the business
-              </span>
+              <span>{report.facts.discovery.recommendation_label}</span>
             </div>
             <div>
               <strong>{report.counts.unbranded_mentioned}</strong>
-              <span>other discovery answers named the business</span>
+              <span>{report.facts.discovery.mention_label}</span>
             </div>
             <div>
               <strong>
                 {report.counts.branded_recognized}/{report.counts.branded_total}
               </strong>
-              <span>direct business checks found the business</span>
+              <span>{report.facts.recognition.label}</span>
             </div>
             <div>
               <strong>{report.counts.failed}</strong>
-              <span>tests could not be completed</span>
+              <span>{report.facts.coverage.label}</span>
             </div>
           </div>
           <div className={styles.executiveTakeaway}>
@@ -365,7 +370,7 @@ export default function ReportView({
                             ? reportCategoryLabels[observation.category]
                             : "Test"}
                         </small>
-                        <strong>{statusLabels[detail.status]}</strong>
+                        <strong>{resultLabel(detail)}</strong>
                       </span>
                       <code>{detail.prompt_id}</code>
                       <Disclosure.Indicator />
@@ -396,7 +401,7 @@ export default function ReportView({
                           ? reportCategoryLabels[observation.category]
                           : "Test"}
                       </small>
-                      <h3>{statusLabels[detail.status]}</h3>
+                      <h3>{resultLabel(detail)}</h3>
                     </div>
                     <code>{detail.prompt_id}</code>
                   </div>
@@ -410,11 +415,7 @@ export default function ReportView({
         <section className={styles.reportSection} id="method">
           <SectionHeading number="05">How This Audit Works</SectionHeading>
           <div className={styles.methodGrid}>
-            <p>
-              We tested {observations.length} questions one at a time through{" "}
-              {report.system_label}. Five discovery questions did not name the
-              business. Five direct checks asked about its public information.
-            </p>
+            <p>{report.method_summary}</p>
             <ul className={styles.methodList}>
               <li>
                 The evidence export keeps each question, full answer, source,

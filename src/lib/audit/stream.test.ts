@@ -27,6 +27,7 @@ function observation(
     sources: [],
     run_status: status,
     failure_reason: status === "failed" ? "Observation failed" : "",
+    telemetry: [],
   };
 }
 

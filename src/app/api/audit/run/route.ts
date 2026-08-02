@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { businessBriefSchema, promptSchema } from "@/lib/audit/types";
+import {
+  auditBudgetSchema,
+  businessBriefSchema,
+  promptSchema,
+  type AuditCallTelemetry,
+} from "@/lib/audit/types";
 import { validatePromptPack } from "@/lib/audit/contracts";
 import { executeAuditPrompt } from "@/lib/audit/openai";
 import {
@@ -15,6 +20,7 @@ const requestSchema = z.object({
   brief: businessBriefSchema,
   prompts: z.array(promptSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
+  budget: auditBudgetSchema,
 });
 
 export async function POST(request: Request) {
@@ -31,9 +37,10 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(encodeAuditRunEvent(event)));
         try {
           send({ type: "run_started", total: 10 });
+          const runCalls: AuditCallTelemetry[] = [];
           const observations = await runWithConcurrency({
             items: input.prompts,
-            limit: 3,
+            limit: 1,
             onStart(prompt, index) {
               send({
                 type: "prompt_started",
@@ -46,8 +53,13 @@ export async function POST(request: Request) {
                 prompt,
                 brief: input.brief,
                 safety_identifier: input.safety_identifier,
+                budget: {
+                  ...input.budget,
+                  calls: [...input.budget.calls, ...runCalls],
+                },
               }),
             onComplete(observation, index) {
+              runCalls.push(...observation.telemetry);
               send({ type: "prompt_completed", index, observation });
             },
           });

@@ -2,15 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   auditObservationSchema,
+  auditBudgetSchema,
   businessBriefSchema,
   promptSchema,
 } from "@/lib/audit/types";
-import { buildAuditReport, validateReportContent } from "@/lib/audit/contracts";
-import { generateReportContent } from "@/lib/audit/openai";
 import {
-  validateReportLanguage,
-  validateReportLanguageRevision,
-} from "@/lib/audit/report-language";
+  ReportPipelineError,
+  createValidatedAuditReport,
+} from "@/lib/audit/report-pipeline";
+import {
+  AuditBudgetError,
+  AuditCallExecutionError,
+} from "@/lib/audit/telemetry";
 
 export const runtime = "nodejs";
 
@@ -19,46 +22,14 @@ const requestSchema = z.object({
   prompts: z.array(promptSchema).length(10),
   observations: z.array(auditObservationSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
+  budget: auditBudgetSchema,
 });
 
 export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
-    let content = await generateReportContent(input);
-    const evidenceErrors = validateReportContent(
-      content,
-      input.observations,
-      input.brief,
-    );
-    if (evidenceErrors.length) {
-      return NextResponse.json(
-        { error: evidenceErrors.join(" ") },
-        { status: 422 },
-      );
-    }
-
-    const languageErrors = validateReportLanguage(content);
-    if (languageErrors.length) {
-      const original = content;
-      content = await generateReportContent(input, {
-        draft: original,
-        violations: languageErrors,
-      });
-      const retryErrors = [
-        ...validateReportLanguageRevision(original, content),
-        ...validateReportContent(content, input.observations, input.brief),
-        ...validateReportLanguage(content),
-      ];
-      if (retryErrors.length) {
-        return NextResponse.json(
-          { error: retryErrors.join(" ") },
-          { status: 422 },
-        );
-      }
-    }
-
     return NextResponse.json({
-      report: buildAuditReport(content, input.observations),
+      report: await createValidatedAuditReport(input),
     });
   } catch (error) {
     return NextResponse.json(
@@ -67,8 +38,20 @@ export async function POST(request: Request) {
           error instanceof Error
             ? error.message
             : "We couldn't create the report.",
+        telemetry:
+          error instanceof ReportPipelineError ||
+          error instanceof AuditCallExecutionError
+            ? error.telemetry
+            : [],
       },
-      { status: 400 },
+      {
+        status:
+          error instanceof ReportPipelineError ||
+          error instanceof AuditBudgetError ||
+          error instanceof AuditCallExecutionError
+            ? error.status
+            : 400,
+      },
     );
   }
 }

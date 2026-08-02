@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   PROMPT_MATRIX,
+  assemblePromptPack,
   buildAuditReport,
   makeEvidenceExport,
+  promptQuestionSpecs,
   validatePromptPack,
   validateReportContent,
 } from "./contracts";
@@ -11,7 +13,7 @@ import {
   validateReportLanguage,
   validateReportLanguageRevision,
 } from "./report-language";
-import { businessBriefSchema } from "./types";
+import { businessBriefSchema, promptPackSchema } from "./types";
 import type {
   AuditObservation,
   AuditPrompt,
@@ -85,12 +87,14 @@ const observations: AuditObservation[] = prompts.map((prompt, index) => ({
   sources: [{ url: "https://example.com", title: "Example" }],
   run_status: "completed",
   failure_reason: "",
+  telemetry: [],
 }));
 
 function reportContent(): ReportContent {
   return {
     conclusion: "The observations contain findings that need review.",
-    accuracy_status: "needs_correction",
+    accuracy_status: "no_clear_issues",
+    observed_competitors: [],
     key_findings: [
       {
         title: "Finding",
@@ -113,13 +117,24 @@ function reportContent(): ReportContent {
     ],
     details: prompts.map((prompt, index) => ({
       prompt_id: prompt.prompt_id,
-      status: index === 0 ? "mentioned_not_recommended" : "did_not_appear",
+      run: "completed",
+      appearance: index === 0 ? "mentioned" : "absent",
+      recommendation: "not_recommended",
+      comparison: "not_observed",
+      information: "not_assessed",
       finding: "Finding based on the response.",
       answer_excerpt: observations[index].raw_answer,
       evidence_note: "The answer supports this result.",
       source_urls: ["https://example.com"],
     })),
   };
+}
+
+// The first verified field the fixed matrix allows for that question.
+function allowedInput(index: number) {
+  return [
+    Object.keys(promptQuestionSpecs(brief)[index].allowed_context)[0],
+  ] as (keyof BusinessBrief)[];
 }
 
 describe("prompt-pack contract", () => {
@@ -137,6 +152,81 @@ describe("prompt-pack contract", () => {
     expect(validatePromptPack(prompts, brief)).toEqual([]);
   });
 
+  it("assembles the full review pack from ten code-owned question drafts", () => {
+    const drafts = prompts.map((prompt, index) => ({
+      question: prompt.question,
+      inputs_used: allowedInput(index),
+    }));
+    const pack = assemblePromptPack(drafts, brief);
+
+    expect(pack.prompt_pack_version).toBe("deterministic-v4-en");
+    expect(pack.prompts).toHaveLength(10);
+    expect(pack.prompts[0]).toMatchObject({
+      prompt_id: PROMPT_MATRIX[0][0],
+      category: PROMPT_MATRIX[0][1],
+      branded: PROMPT_MATRIX[0][2],
+      role: PROMPT_MATRIX[0][3],
+      question: drafts[0].question,
+      rationale: `${PROMPT_MATRIX[0][3]}. Built from verified ${allowedInput(0)[0]}.`,
+      inputs_used: allowedInput(0),
+      review_status: "needs_human_review",
+    });
+    expect(pack.summary).toEqual({
+      total_prompts: 10,
+      unbranded_prompts: 5,
+      branded_prompts: 5,
+    });
+    expect(Object.values(pack.self_check).every(Boolean)).toBe(true);
+    expect(validatePromptPack(pack.prompts, brief)).toEqual([]);
+    expect(promptPackSchema.parse(pack)).toEqual(pack);
+  });
+
+  it("rejects a question that used an input outside its matrix scope", () => {
+    const drafts = prompts.map((prompt, index) => ({
+      question: prompt.question,
+      inputs_used: index === 0 ? ["brand_name" as const] : allowedInput(index),
+    }));
+
+    expect(() => assemblePromptPack(drafts, brief)).toThrow(
+      "used unverified or out-of-scope input brand_name",
+    );
+  });
+
+  it("rejects an assembly that does not contain ten questions", () => {
+    expect(() =>
+      assemblePromptPack(
+        prompts.slice(0, 9).map((prompt, index) => ({
+          question: prompt.question,
+          inputs_used: allowedInput(index),
+        })),
+        brief,
+      ),
+    ).toThrow("expected 10 questions and received 9");
+  });
+
+  it("limits competitor context to the designated branded comparison", () => {
+    const specs = promptQuestionSpecs(brief);
+    const withCompetitor = specs.filter((spec) =>
+      Object.hasOwn(spec.allowed_context, "verified_competitor"),
+    );
+
+    expect(withCompetitor).toHaveLength(1);
+    expect(withCompetitor[0].prompt_id).toBe("NUAVE-BRAND-COMPARISON-02");
+    expect(Object.hasOwn(specs[0].allowed_context, "brand_name")).toBe(false);
+  });
+
+  it("rejects brand leakage during deterministic assembly", () => {
+    expect(() =>
+      assemblePromptPack(
+        prompts.map((prompt, index) => ({
+          question: index === 0 ? "Is Nuave Test suitable?" : prompt.question,
+          inputs_used: allowedInput(index),
+        })),
+        brief,
+      ),
+    ).toThrow("reveals the brand");
+  });
+
   it("blocks brand leakage in an unbranded question", () => {
     const leaked = prompts.map((prompt, index) =>
       index === 0 ? { ...prompt, question: "Is Nuave good?" } : prompt,
@@ -144,6 +234,30 @@ describe("prompt-pack contract", () => {
     expect(validatePromptPack(leaked, brief).join(" ")).toContain(
       "reveals the brand",
     );
+  });
+
+  it("blocks competitor leakage outside the designated comparison question", () => {
+    const leaked = prompts.map((prompt, index) =>
+      index === 0
+        ? { ...prompt, question: "Should I choose Test Competitor?" }
+        : prompt,
+    );
+    expect(validatePromptPack(leaked, brief).join(" ")).toContain(
+      "reveals the competitor",
+    );
+  });
+
+  it("blocks duplicate questions and unsupported premises", () => {
+    const invalid = prompts.map((prompt, index) => {
+      if (index === 1) return { ...prompt, question: prompts[0].question };
+      if (index === 2)
+        return { ...prompt, question: "What is the best audit service?" };
+      return prompt;
+    });
+    const errors = validatePromptPack(invalid, brief).join(" ");
+
+    expect(errors).toContain("must be distinct");
+    expect(errors).toContain("unsupported premise");
   });
 });
 
@@ -156,7 +270,8 @@ describe("report evidence guardrails", () => {
 
   it("rejects a visibility claim without a literal brand mention", () => {
     const content = reportContent();
-    content.details[1].status = "appeared_as_recommendation";
+    content.details[1].appearance = "mentioned";
+    content.details[1].recommendation = "recommended";
     expect(
       validateReportContent(content, observations, brief).join(" "),
     ).toContain("raw response does not name it");
@@ -170,8 +285,12 @@ describe("report evidence guardrails", () => {
     ).toContain("not copied exactly");
   });
 
-  it("derives counts from detail statuses rather than model-supplied totals", () => {
-    const report = buildAuditReport(reportContent(), observations);
+  it("derives counts from separate detail dimensions", () => {
+    const report = buildAuditReport(reportContent(), observations, {
+      requested_model: "gpt-5.6",
+      returned_model: "gpt-5.6-sol",
+      response_id: "resp_report",
+    });
     expect(report.counts).toEqual({
       unbranded_recommended: 0,
       unbranded_mentioned: 1,
@@ -181,13 +300,102 @@ describe("report evidence guardrails", () => {
       failed: 0,
     });
     expect(report.system_label).toContain("gpt-5.6-sol");
-    expect(report.report_version).toBe("nuave-report-v2");
+    expect(report.facts.discovery.recommendation_label).toBe(
+      "Recommended in 0 of 5 discovery questions.",
+    );
+    expect(report.facts.recognition.label).toBe(
+      "Recognized in 0 of 5 brand questions.",
+    );
+    expect(report.facts.coverage.label).toBe("10 of 10 questions completed.");
+    expect(report.method_summary).toContain(
+      "A mention is not a recommendation",
+    );
+    expect(report.report_version).toBe("nuave-report-v3");
+    expect(report.provenance).toEqual({
+      report_prompt_version: "report-synthesis-v3",
+      prompt_contract_version: "deterministic-v4-en",
+      requested_report_model: "gpt-5.6",
+      returned_report_model: "gpt-5.6-sol",
+      report_response_id: "resp_report",
+      initial_report_response_id: "resp_report",
+      report_call_count: 1,
+      language_retry_performed: false,
+      language_retry_violations: [],
+    });
     expect(report.writing_standard_version).toBe(
       REPORT_WRITING_STANDARD_VERSION,
     );
     expect(
       makeEvidenceExport(brief, prompts, observations, report).export_version,
-    ).toBe("nuave-evidence-v2");
+    ).toBe("nuave-evidence-v4");
+  });
+
+  it("produces identical facts and method copy from identical evidence", () => {
+    const first = buildAuditReport(reportContent(), observations);
+    const second = buildAuditReport(reportContent(), observations);
+
+    expect(first.facts).toEqual(second.facts);
+    expect(first.method_summary).toBe(second.method_summary);
+  });
+
+  it("exports v3 facts and provenance while omitting a device-local logo", () => {
+    const report = buildAuditReport(reportContent(), observations, {
+      requested_model: "requested-report-model",
+      returned_model: "returned-report-model",
+      response_id: "report-response",
+      call_count: 2,
+      language_retry_performed: true,
+      language_retry_violations: ["Synthetic writing violation."],
+    });
+    const exported = makeEvidenceExport(
+      {
+        ...brief,
+        agency_logo_data_url: "data:image/png;base64,ZmFrZQ==",
+      },
+      prompts,
+      observations,
+      report,
+    );
+
+    expect(exported.export_version).toBe("nuave-evidence-v4");
+    expect(exported.brief.agency_logo_data_url).toBe(
+      "[device-local logo omitted]",
+    );
+    expect(exported.report.facts).toEqual(report.facts);
+    expect(exported.report.provenance).toEqual(report.provenance);
+    expect(exported.observations).toEqual(observations);
+  });
+
+  it.each([
+    ["a permanent ranking", "Nuave Test is permanently ranked number 1."],
+    [
+      "consumer app equivalence",
+      "This is the same as the consumer ChatGPT app.",
+    ],
+    ["a guarantee", "This action guarantees future recommendations."],
+    ["lost revenue", "The missing mention is costing sales."],
+    ["unsupported causation", "The result was caused by weak website copy."],
+  ])("rejects %s in model-authored report copy", (_label, claim) => {
+    const content = reportContent();
+    content.conclusion = claim;
+
+    expect(validateReportContent(content, observations, brief)).not.toEqual([]);
+  });
+
+  it("allows an explicit no-guarantee limitation", () => {
+    const content = reportContent();
+    content.priorities[0].caveat = "Results are not guaranteed.";
+
+    expect(validateReportContent(content, observations, brief)).toEqual([]);
+  });
+
+  it("rejects a global accuracy conclusion that contradicts detail facts", () => {
+    const content = reportContent();
+    content.details[0].information = "conflicting";
+
+    expect(
+      validateReportContent(content, observations, brief).join(" "),
+    ).toContain("Accuracy status says no clear issues");
   });
 });
 
@@ -228,6 +436,15 @@ describe("plain-language report contract", () => {
     const original = reportContent();
     const revision = structuredClone(original);
     revision.details[0].answer_excerpt = "Changed evidence";
+    expect(
+      validateReportLanguageRevision(original, revision).join(" "),
+    ).toContain("protected classifications or evidence");
+  });
+
+  it("prevents a language retry from changing a result dimension", () => {
+    const original = reportContent();
+    const revision = structuredClone(original);
+    revision.details[0].recommendation = "recommended";
     expect(
       validateReportLanguageRevision(original, revision).join(" "),
     ).toContain("protected classifications or evidence");
