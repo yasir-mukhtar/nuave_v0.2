@@ -3,6 +3,12 @@
 .DS_Store
 .obsidian/
 
+# Hermes desktop internal state
+.hermes/
+
+# Local Python virtualenvs
+.venv*/
+
 # Next.js build output and installed dependencies
 .next/
 node_modules/

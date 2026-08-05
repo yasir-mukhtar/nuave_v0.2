@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Visibilitas AI — Masryef</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 17px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1a1a1a;
+    background: #faf9f7;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Typography ── */
+  h1, h2, h3, h4 { font-family: 'Lora', Georgia, serif; font-weight: 600; line-height: 1.25; }
+  h1 { font-size: 2.6rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.8rem; margin: 3rem 0 1.2rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+  h3 { font-size: 1.25rem; margin: 2rem 0 0.8rem; color: #1e293b; }
+  h4 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; font-family: 'Inter', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; font-size: 0.8rem; }
+  p { margin-bottom: 1rem; }
+  a { color: #1e40af; text-decoration: none; border-bottom: 1px solid #bfdbfe; }
+  a:hover { color: #1e3a8a; border-color: #1e3a8a; }
+
+  /* ── Layout ── */
+  .page { max-width: 820px; margin: 0 auto; }
+  .content { padding: 0 2rem 5rem; }
+
+  /* ── Cover / Hero ── */
+  .cover {
+    position: relative;
+    background: linear-gradient(160deg, #0f172a 0%, #1e293b 40%, #1a2332 100%);
+    color: #f1f5f9;
+    padding: 5rem 2rem 4.5rem;
+    overflow: hidden;
+    margin-bottom: 0;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -60%; right: -20%;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; left: -10%;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover-inner { max-width: 820px; margin: 0 auto; position: relative; z-index: 1; }
+  .cover-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+  }
+  .cover-business {
+    font-family: 'Lora', serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+  }
+  .cover-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 3rem;
+  }
+  .cover-score-row {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+  .score-ring {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    flex-shrink: 0;
+  }
+  .score-ring svg { transform: rotate(-90deg); width: 180px; height: 180px; }
+  .score-ring .bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 10; }
+  .score-ring .meter {
+    fill: none;
+    stroke: #f59e0b;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 534;
+    stroke-dashoffset: 235;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .score-number {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-number .big {
+    font-family: 'Lora', serif;
+    font-size: 3.8rem;
+    font-weight: 700;
+    color: #f59e0b;
+    line-height: 1;
+  }
+  .score-number .out-of {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+  }
+  .score-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .cover-tagline {
+    flex: 1;
+    min-width: 260px;
+  }
+  .cover-tagline .quote {
+    font-family: 'Lora', serif;
+    font-size: 1.45rem;
+    font-style: italic;
+    color: #cbd5e1;
+    line-height: 1.45;
+    margin-bottom: 1rem;
+  }
+  .cover-tagline .byline {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .cover-meta {
+    margin-top: 3rem;
+    display: flex;
+    gap: 3rem;
+    font-size: 0.8rem;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+  .cover-meta span { display: block; }
+  .cover-meta strong { color: #94a3b8; font-weight: 500; }
+
+  /* ── Content Sections ── */
+  .section-label {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+  blockquote {
+    font-family: 'Lora', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #334155;
+    border-left: 3px solid #f59e0b;
+    padding: 0.8rem 0 0.8rem 1.75rem;
+    margin: 1.75rem 0;
+    line-height: 1.55;
+  }
+  blockquote strong { font-style: normal; }
+
+  /* ── Cards ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin: 1.5rem 0; }
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+  .card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .card h3 { font-size: 1rem; margin: 0 0 0.4rem; border: none; padding: 0; }
+  .card p { font-size: 0.9rem; color: #4b5563; margin: 0; line-height: 1.6; }
+
+  /* ── Callout Boxes ── */
+  .callout {
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.75rem 0;
+    font-size: 0.95rem;
+  }
+  .callout-green { background: #ecfdf5; border: 1px solid #a7f3d0; }
+  .callout-amber { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout-red { background: #fef2f2; border: 1px solid #fecaca; }
+  .callout-blue { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout h4 { margin-top: 0; }
+  .callout .cost { display: inline-block; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 100px; margin-left: 0.5rem; font-weight: 500; }
+  .cost-free { background: #d1fae5; color: #065f46; }
+  .cost-budget { background: #fef3c7; color: #92400e; }
+  .cost-hire { background: #dbeafe; color: #1e40af; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+  thead th {
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+    background: #f8fafc;
+  }
+  tbody td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  tbody tr:hover { background: #faf9f7; }
+  .pill { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 100px; font-size: 0.75rem; font-weight: 600; }
+  .pill-green { background: #d1fae5; color: #065f46; }
+  .pill-amber { background: #fef3c7; color: #92400e; }
+  .pill-red { background: #fee2e2; color: #991b1b; }
+
+  /* ── Stage Cards ── */
+  .stage { margin: 2rem 0; }
+  .stage-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .stage-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .stage-num.green { background: #d1fae5; color: #065f46; }
+  .stage-num.amber { background: #fef3c7; color: #92400e; }
+  .stage-num.red { background: #fee2e2; color: #991b1b; }
+  .stage-title { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; }
+  .prompt-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+    font-size: 0.9rem;
+  }
+  .prompt-box .label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+  }
+  .prompt-box .text { font-style: italic; color: #334155; line-height: 1.6; }
+  .response-box {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.65;
+    position: relative;
+  }
+  .response-box::before {
+    content: '📝';
+    position: absolute;
+    top: -0.6rem;
+    right: 1rem;
+    font-size: 0.7rem;
+    background: #fffbeb;
+    padding: 0.15rem 0.5rem;
+    border-radius: 100px;
+    border: 1px solid #fde68a;
+  }
+
+  /* ── Comparison Table ── */
+  .vs-table td:first-child { font-weight: 500; color: #6b7280; width: 30%; }
+  .vs-table td:nth-child(2), .vs-table td:nth-child(3) { font-weight: 500; }
+  .winner { color: #059669; font-weight: 600; }
+
+  /* ── Action Plan ── */
+  .action-item {
+    border-left: 3px solid #e5e7eb;
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .action-item:hover { border-color: #f59e0b; }
+  .action-item h3 { margin-top: 0; font-size: 1.05rem; }
+  .action-item p { font-size: 0.9rem; color: #4b5563; }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid #e5e7eb; margin: 3rem 0; }
+
+  /* ── Before/After ── */
+  .comparison-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+  .comparison-cols .col { padding: 1.25rem; border-radius: 8px; font-size: 0.9rem; }
+  .col-now { background: #fffbeb; border: 1px solid #fde68a; }
+  .col-future { background: #ecfdf5; border: 1px solid #a7f3d0; }
+
+  /* ── Appendix ── */
+  .appendix { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 2rem; margin: 2rem 0; }
+  .appendix h2 { margin-top: 0; border: none; font-size: 1.3rem; }
+
+  /* ── Footer ── */
+  .report-footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 3rem;
+  }
+
+  /* ── Print / PDF ── */
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .cover { background: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { max-width: 100%; }
+    .content { padding: 0 1.5rem 2rem; }
+    .card, .callout, .prompt-box, .response-box, .appendix { break-inside: avoid; }
+    table { break-inside: avoid; }
+    .divider { margin: 1.5rem 0; }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    html { font-size: 15px; }
+    .cover { padding: 3rem 1.25rem 3rem; }
+    .cover-score-row { flex-direction: column; text-align: center; align-items: center; }
+    .score-ring { width: 140px; height: 140px; }
+    .score-ring svg { width: 140px; height: 140px; }
+    .score-number .big { font-size: 2.8rem; }
+    .cover-tagline .quote { font-size: 1.15rem; }
+    .content { padding: 0 1.25rem 3rem; }
+    .comparison-cols { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- COVER / HERO                                -->
+<!-- ════════════════════════════════════════════ -->
+<header class="cover">
+  <div class="cover-inner">
+    <div class="cover-eyebrow">Laporan Visibilitas AI</div>
+    <div class="cover-business">Masryef</div>
+    <div class="cover-subtitle">Butik Konsultan Syariah · Disusun Agustus 2026</div>
+
+    <div class="cover-score-row">
+      <!-- Score Ring -->
+      <div class="score-ring">
+        <svg viewBox="0 0 180 180">
+          <circle class="bg" cx="90" cy="90" r="82"/>
+          <circle class="meter" cx="90" cy="90" r="82"/>
+        </svg>
+        <div class="score-number">
+          <span class="big">56</span>
+          <span class="out-of">dari 100</span>
+        </div>
+      </div>
+      <div class="score-label">Skor Visibilitas AI</div>
+
+      <!-- Tagline -->
+      <div class="cover-tagline">
+        <p class="quote">"Dikenal di lingkaran yang tepat — tapi belum jadi nama pertama yang direkomendasikan AI."</p>
+        <p class="byline">Bisnis Anda memang ada di internet. Tapi di saat yang paling krusial — ketika seseorang bertanya ke AI siapa yang harus mereka pakai — Anda bukan jawabannya. <strong>Ini bisa diperbaiki.</strong></p>
+      </div>
+    </div>
+
+    <div class="cover-meta">
+      <span><strong>Disusun untuk</strong> Masryef Advisory Sdn Bhd</span>
+      <span><strong>Dibandingkan dengan</strong> Amanie Advisors</span>
+      <span><strong>Pertanyaan yang diajukan</strong> 10 prompt di 5 tahap perjalanan pelanggan</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- MAIN CONTENT                               -->
+<!-- ════════════════════════════════════════════ -->
+<main class="page">
+<div class="content">
+
+<!-- ── RINGKASAN EKSEKUTIF ── -->
+<span class="section-label">Ringkasan Eksekutif</span>
+<h2>Apa yang sedang terjadi pada bisnis Anda — dan kenapa ini penting</h2>
+
+<p>Semakin banyak orang bertanya ke ChatGPT dan Gemini untuk rekomendasi bisnis, alih-alih mencari di Google. <em>"Siapa konsultan Syariah terbaik untuk fintech di Malaysia?"</em> — AI menjawab berdasarkan apa yang sudah ia baca tentang bisnis-bisnis di internet.</p>
+
+<p><strong>Kalau bisnis Anda tidak muncul di jawaban-jawaban itu, Anda tidak terlihat oleh semakin banyak calon klien.</strong> Laporan ini menunjukkan posisi Anda sekarang — dan apa yang bisa dilakukan.</p>
+
+<div class="card-grid">
+  <div class="card">
+    <div class="card-icon">🔍</div>
+    <h3>Anda bisa ditemukan</h3>
+    <p>ChatGPT tahu Masryef ada dan mengakui keahlian Anda di bidang fintech. Nama Anda muncul ketika orang bertanya tentang keuangan digital Islam.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">⚠️</div>
+    <h3>Tapi belum direkomendasikan</h3>
+    <p>Saat seseorang bertanya secara umum <em>"Siapa konsultan Syariah terbaik?"</em> — Amanie dan firma-firma lama muncul duluan. Anda sering kali tidak muncul sama sekali.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">🟢</div>
+    <h3>Ini bisa diperbaiki</h3>
+    <p>Jarak antara Anda dan peringkat atas bukan soal uang. Ini soal <strong>konten dan bukti</strong> — hal-hal yang bisa Anda bangun, mulai hari ini.</p>
+  </div>
+</div>
+
+<!-- Temuan Utama -->
+<blockquote>
+  ChatGPT memuji keahlian fintech Anda dan memverifikasi kredensial Anda. Tapi begitu klien membandingkan Anda dengan nama mapan atau bertanya <em>"siapa yang harus saya hubungi?"</em> — firma yang lebih tua, lebih besar, dan lebih terbukti yang menang. Anda <strong>kurang terbukti di luar website sendiri</strong> — dan inilah yang membuat bisnis tertahan di papan tengah alih-alih di posisi teratas.
+</blockquote>
+
+<!-- Lakukan Besok -->
+<div class="callout callout-green">
+  <h4>🟢 Lakukan besok <span class="cost cost-free">Gratis</span></h4>
+  <p><strong>Betulkan data kontak Anda di semua tempat.</strong> Nomor telepon dan alamat kantor Anda tidak seragam di website, LinkedIn, dan direktori bisnis. AI melihat informasi yang saling bertentangan dan diam-diam mengganti Anda dengan kompetitor yang datanya rapi. Pastikan nama, telepon, dan alamat Anda identik di mana-mana. <strong>Ini tindakan termurah dengan dampak paling besar di seluruh laporan ini.</strong></p>
+</div>
+
+<!-- Sebelum / Sesudah -->
+<h3>Apa yang mungkin dalam 6 bulan</h3>
+<div class="comparison-cols">
+  <div class="col col-now">
+    <strong>Hari ini</strong>
+    <table style="margin:0.75rem 0 0; font-size:0.85rem;">
+      <tr><td style="border:none;padding:0.3rem 0;">Skor</td><td style="border:none;padding:0.3rem 0;text-align:right;"><span class="pill pill-amber">56</span></td></tr>
+      <tr><td style="border:none;padding:0.3rem 0;">Direkomendasikan</td><td style="border:none;padding:0.3rem 0;text-align:right;">Hanya spesifik fintech</td></tr>
+      <tr><td style="border:none;padding:0.3rem 0;">vs Amanie</td><td style="border:none;padding:0.3rem 0;text-align:right;">Kalah di tiebreak</td></tr>
+      <tr><td style="border:none;padding:0.3rem 0;">Data kontak</td><td style="border:none;padding:0.3rem 0;text-align:right;">Tidak seragam</td></tr>
+    </table>
+  </div>
+  <div class="col col-future">
+    <strong>6 bulan ke depan (proyeksi)</strong>
+    <table style="margin:0.75rem 0 0; font-size:0.85rem;">
+      <tr><td style="border:none;padding:0.3rem 0;">Skor</td><td style="border:none;padding:0.3rem 0;text-align:right;"><span class="pill pill-green">72–78</span></td></tr>
+      <tr><td style="border:none;padding:0.3rem 0;">Direkomendasikan</td><td style="border:none;padding:0.3rem 0;text-align:right;">Fintech + umum</td></tr>
+      <tr><td style="border:none;padding:0.3rem 0;">vs Amanie</td><td style="border:none;padding:0.3rem 0;text-align:right;">Kompetitif di fintech</td></tr>
+      <tr><td style="border:none;padding:0.3rem 0;">Data kontak</td><td style="border:none;padding:0.3rem 0;text-align:right;">Rapi di mana-mana</td></tr>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ── BAGIAN 1: CARA MEMBACA ── -->
+<span class="section-label">Bagian 1</span>
+<h2>Cara membaca laporan ini</h2>
+
+<h3>Bagaimana AI menjawab pertanyaan tentang bisnis Anda</h3>
+<p>Bayangkan ChatGPT seperti asisten yang sangat banyak membaca, yang:</p>
+
+<div class="card-grid">
+  <div class="card">
+    <div class="card-icon">📖</div>
+    <h3>1. Membaca</h3>
+    <p>Ratusan website, daftar bisnis, artikel berita, dan ulasan — jauh-jauh hari sebelumnya.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">🧠</div>
+    <h3>2. Mengingat</h3>
+    <p>Apa yang ia pelajari dari semua sumber itu tentang bisnis seperti Anda.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">💬</div>
+    <h3>3. Menjawab</h3>
+    <p>Pertanyaan klien Anda menggunakan ingatan itu — bukan dengan mengecek sesuatu secara langsung.</p>
+  </div>
+</div>
+
+<p><strong>"Reputasi AI" Anda sederhananya adalah:</strong> <em>Apa yang sudah ChatGPT pelajari tentang Anda dari internet publik.</em> Laporan ini menunjukkan apa yang ia pelajari, kenapa, dan apa yang bisa dilakukan.</p>
+
+<h3>Empat hal yang kami ukur</h3>
+<table>
+  <thead><tr><th>Tingkat</th><th>Artinya</th><th>Pertanyaan sederhana</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1. Ditemukan</strong></td><td>Apakah AI tahu Anda ada?</td><td>"Apakah mereka pernah dengar tentang saya?"</td></tr>
+    <tr><td><strong>2. Dideskripsikan dengan benar</strong></td><td>Apakah detail Anda akurat?</td><td>"Apakah fakta tentang saya benar?"</td></tr>
+    <tr><td><strong>3. Direkomendasikan</strong></td><td>Apakah AI menyarankan Anda?</td><td>"Apakah mereka menyuruh orang memilih saya?"</td></tr>
+    <tr><td><strong>4. Seberapa sering vs. kompetitor</strong></td><td>Apakah Anda muncul sesering pemain lain?</td><td>"Apakah saya disebut sesering kompetitor saya?"</td></tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<!-- ── BAGIAN 2: KARTU SKOR ── -->
+<span class="section-label">Bagian 2</span>
+<h2>Kartu Skor Anda</h2>
+
+<table>
+  <thead><tr><th>Tingkat</th><th>Hasil Anda</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Ditemukan</strong></td>
+      <td>Ya — dikenal di Malaysia dan Dubai</td>
+      <td><span class="pill pill-green">Baik</span></td>
+    </tr>
+    <tr>
+      <td><strong>2. Dideskripsikan dengan benar</strong></td>
+      <td>Layanan Anda unggul, tapi <strong>detail kontak tidak seragam</strong> di berbagai sumber</td>
+      <td><span class="pill pill-amber">Perlu perbaikan</span></td>
+    </tr>
+    <tr>
+      <td><strong>3. Direkomendasikan</strong></td>
+      <td><strong>Hanya di pertanyaan spesifik fintech dan digital</strong></td>
+      <td><span class="pill pill-amber">Sempit</span></td>
+    </tr>
+    <tr>
+      <td><strong>4. Seberapa sering vs. kompetitor</strong></td>
+      <td><strong>Sekitar 6× lebih jarang</strong> dibanding Amanie di pencarian umum</td>
+      <td><span class="pill pill-red">Ketertinggalan</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Kompetitor Anda dalam konteks</h3>
+<p>Kami menjalankan pertanyaan yang sama untuk Amanie Advisors. Berikut perbandingan jujurnya:</p>
+
+<table class="vs-table">
+  <thead><tr><th></th><th>Masryef</th><th>Amanie Advisors</th></tr></thead>
+  <tbody>
+    <tr><td>Berdiri sejak</td><td>2018</td><td>2005</td></tr>
+    <tr><td>Ulama utama</td><td>Komite 3 ulama global</td><td>Tan Sri Dr Mohd Daud Bakar (terkenal di dunia)</td></tr>
+    <tr><td>Kantor</td><td>KL + kehadiran di Dubai</td><td>Dubai (DIFC), KL, London</td></tr>
+    <tr><td>Klien yang disebutkan di website</td><td>Hanya kategori</td><td>AmundiIslamic, TabungHaji, Franklin Templeton…</td></tr>
+    <tr><td>Penyebutan AI (Anda vs. mereka)</td><td>~1 untuk setiap 6 milik Amanie</td><td>Dominan</td></tr>
+    <tr><td>Di mana Anda unggul</td><td class="winner">Fintech &amp; digital — spesialisasi Anda</td><td>Umum &amp; institusional — skala mereka</td></tr>
+  </tbody>
+</table>
+
+<blockquote>
+  Amanie adalah pemain kelas berat berusia 21 tahun dengan pendiri terkenal dan klien blue-chip yang disebutkan jelas — sudah sewajarnya mereka mendominasi pencarian umum. <strong>Anda mengalahkan mereka di satu hal yang jadi fondasi brand Anda: konsultan Syariah modern, digital, dan fintech-first.</strong> Rencana di bawah ini menutup celah pembuktian dan memastikan spesialisasi Anda jadi yang ditanyakan klien.
+</blockquote>
+
+<hr class="divider">
+
+<!-- ── BAGIAN 3: HASIL SEKILAS ── -->
+<span class="section-label">Bagian 3</span>
+<h2>Hasil Sekilas</h2>
+<p>Kami mengajukan 10 pertanyaan ke ChatGPT — dua per tahap — yang mencerminkan perjalanan keputusan klien sungguhan. Setiap tahap memiliki satu pertanyaan <em>tanpa</em> nama Anda (yang ditanyakan calon klien baru) dan satu <em>dengan</em> nama Anda (yang ditanyakan orang yang sudah mengenal Anda).</p>
+
+<table>
+  <thead><tr><th>Tahap</th><th>Apakah Anda muncul?</th><th>Apakah Anda direkomendasikan?</th><th></th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Mempelajari masalahnya</strong></td>
+      <td>Ya</td><td>Sering disebut pertama</td>
+      <td><span class="pill pill-green">🟢</span></td>
+    </tr>
+    <tr>
+      <td><strong>2. Mencari siapa yang bisa membantu</strong></td>
+      <td>Ya, tapi hanya di fintech</td><td>Tergantung cara bertanya</td>
+      <td><span class="pill pill-amber">🟡</span></td>
+    </tr>
+    <tr>
+      <td><strong>3. Membandingkan pilihan</strong></td>
+      <td>Jarang</td><td>Kalah dari nama besar</td>
+      <td><span class="pill pill-red">🔴</span></td>
+    </tr>
+    <tr>
+      <td><strong>4. Mengecek kredibilitas Anda</strong></td>
+      <td>Ya</td><td>Baik tapi buktinya tipis</td>
+      <td><span class="pill pill-amber">🟡</span></td>
+    </tr>
+    <tr>
+      <td><strong>5. Siap menghubungi</strong></td>
+      <td>Jarang</td><td>Tidak disebut sebagai kontak yang bisa dihubungi</td>
+      <td><span class="pill pill-red">🔴</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote>
+  Anda unggul di momen ketika orang sedang belajar — tapi kalah di momen ketika mereka memutuskan siapa yang akan dipakai. <strong>Uangnya ada di tahap 3–5, dan di situlah pekerjaan harus dilakukan.</strong>
+</blockquote>
+
+<hr class="divider">
+
+<!-- ── BAGIAN 4–8: TAHAP PER TAHAP ── -->
+
+<!-- Tahap 1 -->
+<span class="section-label">Bagian 4</span>
+<h2>Tahap 1 — "Mempelajari masalahnya"</h2>
+<div class="stage-header">
+  <div class="stage-num green">1</div>
+  <div class="stage-title">Calon klien Anda belum yakin apakah mereka perlu konsultan Syariah.</div>
+</div>
+
+<div class="prompt-box">
+  <div class="label">Pertanyaan tanpa nama Anda</div>
+  <div class="text">"Kalau kami platform pinjaman digital di Malaysia, apakah kami perlu konsultan Syariah, dan apa saja yang tercakup?"</div>
+</div>
+
+<div class="response-box">
+  "Ya. Di Malaysia, produk apa pun yang dipasarkan sebagai patuh Syariah memerlukan konsultasi dan endorsement Syariah yang tepat. Ini mencakup structuring, tinjauan komite Syariah, dokumentasi, dan audit berkelanjutan. <strong>Firma seperti Masryef dan Amanie Advisors sama-sama menawarkan ini di Malaysia.</strong>"
+</div>
+
+<div class="callout callout-green">
+  <h4>🟢 Kabar baik</h4>
+  <p>Anda dipandang sebagai sumber yang berpengetahuan. Ketika seseorang baru mulai belajar, nama Anda muncul secara alami. Website Anda menjelaskan dengan gamblang apa itu konsultan Syariah dan kenapa penting — dan AI memperlakukan Anda sebagai "teman pintar yang memberi pencerahan." <strong>Ini adalah bagian terkuat dari kehadiran AI Anda.</strong></p>
+</div>
+
+<!-- Tahap 2 -->
+<span class="section-label">Bagian 5</span>
+<h2>Tahap 2 — "Mencari siapa yang bisa membantu"</h2>
+<div class="stage-header">
+  <div class="stage-num amber">2</div>
+  <div class="stage-title">Calon klien Anda sudah tahu mereka butuh bantuan — sekarang mencari siapa yang menangani ini.</div>
+</div>
+
+<div class="prompt-box">
+  <div class="label">Pertanyaan tanpa nama Anda</div>
+  <div class="text">"Siapa firma konsultan Syariah terbaik untuk fintech atau bank digital di Malaysia tahun 2026?"</div>
+</div>
+
+<div class="response-box">
+  "Firma konsultan Syariah terkemuka di Malaysia termasuk Amanie Advisors, firma global besar yang didirikan oleh Tan Sri Dr Mohd Daud Bakar; ISRA Consulting; dan <strong>Masryef, butik yang dikenal kuat di bidang fintech Islam dan keuangan digital.</strong> Untuk pekerjaan spesifik fintech, Masryef sering disebut."
+</div>
+
+<div class="callout callout-amber">
+  <h4>🟡 Campuran</h4>
+  <p><strong>Anda unggul di ceruk.</strong> Ketika pertanyaannya sempit tentang fintech, ChatGPT menyebut Anda dengan nyaman. <strong>Anda kalah di pertanyaan luas.</strong> Ketika seseorang bertanya "Siapa konsultan Syariah terbaik?" secara umum, Amanie muncul duluan — karena memang lebih banyak informasi tentang mereka di internet. <em>(Lihat Tindakan 3 &amp; 4 di rencana aksi.)</em></p>
+</div>
+
+<!-- Tahap 3 -->
+<span class="section-label">Bagian 6</span>
+<h2>Tahap 3 — "Membandingkan pilihan mereka"</h2>
+<div class="stage-header">
+  <div class="stage-num red">3</div>
+  <div class="stage-title">Calon klien Anda sedang memilih antara Anda dan Amanie. <strong>Di sinilah klien dimenangkan atau hilang.</strong></div>
+</div>
+
+<div class="prompt-box">
+  <div class="label">Pertanyaan dengan nama Anda</div>
+  <div class="text">"Bandingkan Masryef vs Amanie Advisors. Untuk perusahaan fintech Islam di Malaysia, mana mitra konsultan Syariah yang lebih baik?"</div>
+</div>
+
+<div class="response-box">
+  "Amanie Advisors adalah firma global yang sudah lama berdiri (didirikan 2005) dengan ulama pendiri yang sangat terkenal, kantor di Dubai, KL, dan London… Masryef adalah butik yang lebih muda (berdiri 2018) dengan kredibilitas spesialis yang kuat di bidang fintech Islam dan keuangan digital, 100+ proyek, dan penghargaan termasuk IFN 'Best Islamic Finance Consultancy' 2024 &amp; 2025. <strong>Untuk pekerjaan murni fintech dan inovasi digital, Masryef sering kali adalah pasangan yang lebih terspesialisasi dan lincah.</strong>"
+</div>
+
+<div class="callout callout-red">
+  <h4>🔴 Di sinilah Anda kehilangan klien</h4>
+  <p>ChatGPT bersikap adil — ia mengakui kekuatan fintech Anda. Tapi <strong>Amanie disebut duluan, dengan detail yang lebih banyak.</strong> Dalam jawaban AI, siapa pun yang disebut pertama dan dijelaskan paling rinci dianggap sebagai pemenang. Dua celah menahan Anda:</p>
+  <p><strong>1. Klien yang disebutkan.</strong> Amanie mencantumkan klien berdasarkan nama (TabungHaji, Franklin Templeton). Anda mencantumkan kategori. AI percaya pada nama, bukan kategori.<br>
+  <strong>2. Identitas ulama.</strong> Amanie memimpin dengan ulama yang mendunia. Komite Anda ada tapi kurang dibicarakan di internet. <em>(Lihat Tindakan 2 &amp; 5.)</em></p>
+</div>
+
+<!-- Tahap 4 -->
+<span class="section-label">Bagian 7</span>
+<h2>Tahap 4 — "Mengecek kredibilitas Anda"</h2>
+<div class="stage-header">
+  <div class="stage-num amber">4</div>
+  <div class="stage-title">Calon klien Anda sedang memverifikasi kredensial Anda sebelum memutuskan.</div>
+</div>
+
+<div class="prompt-box">
+  <div class="label">Pertanyaan dengan nama Anda</div>
+  <div class="text">"Apakah Masryef firma konsultan Syariah yang sah dan bereputasi? Bagaimana rekam jejak dan status regulasinya?"</div>
+</div>
+
+<div class="response-box">
+  "Ya. Masryef adalah perusahaan konsultan Syariah terdaftar di Securities Commission Malaysia, panel penasihat Syariah untuk MDEC… Telah menasihati 100+ klien termasuk 40+ lembaga keuangan Malaysia, mendukung transaksi patuh Syariah senilai lebih dari RM15 miliar, dengan tingkat retensi klien di atas 90%. Telah memenangkan beberapa penghargaan IFN."
+</div>
+
+<div class="callout callout-amber">
+  <h4>🟡 Baik — tapi tipis</h4>
+  <p>Kredensial Anda terverifikasi dengan indah. Tapi AI hanya mengulang klaim Anda <em>sendiri</em> dari website Anda sendiri. Ia tidak menemukan suara independen — tidak ada artikel berita, testimoni klien, atau bukti pihak ketiga. <strong>AI lebih percaya sumber independen daripada apa yang Anda katakan tentang diri sendiri.</strong> <em>(Lihat Tindakan 6.)</em></p>
+</div>
+
+<!-- Tahap 5 -->
+<span class="section-label">Bagian 8</span>
+<h2>Tahap 5 — "Siap menghubungi"</h2>
+<div class="stage-header">
+  <div class="stage-num red">5</div>
+  <div class="stage-title">Calon klien Anda siap menelepon. <strong>Di sinilah telepon berdering — atau tidak.</strong></div>
+</div>
+
+<div class="prompt-box">
+  <div class="label">Pertanyaan tanpa nama Anda</div>
+  <div class="text">"Bagaimana cara menggunakan jasa firma konsultan Syariah untuk mensertifikasi produk tabungan digital Islam baru kami di Malaysia?"</div>
+</div>
+
+<div class="response-box">
+  "Untuk menggunakan jasa firma konsultan Syariah, Anda biasanya mengajukan proposal produk… <strong>Firma yang bisa Anda hubungi termasuk Amanie Advisors (Dubai/KL/London) dan ISRA Consulting.</strong> Hubungi kantor mereka melalui website masing-masing untuk proposal."
+</div>
+
+<div class="callout callout-red">
+  <h4>🔴 Inilah kebocorannya</h4>
+  <p>Di momen ketika seseorang siap menghubungi — <strong>Anda tidak disebut sebagai bisnis yang bisa dikontak.</strong> Firma lain, bahkan yang tidak Anda anggap kompetitor, ikut tercantum.</p>
+</div>
+
+<div class="callout callout-green">
+  <h4>🟢 Masalah yang spesifik dan bisa diperbaiki (perbaikan termurah di laporan ini) <span class="cost cost-free">Gratis</span></h4>
+  <p>Di berbagai sumber yang kami periksa, detail kontak Anda tidak seragam:</p>
+  <p>📞 Telepon: <code>+603 2697 2692</code> di satu tempat, <code>03-2770 8703</code> di tempat lain.<br>
+  📍 Alamat: Deskripsi yang berbeda untuk kantor KL Eco City Anda di berbagai daftar.<br>
+  🏢 Nama: "Masryef," "Masryef Advisory Sdn Bhd," dan "MASRYEF" — tidak konsisten.</p>
+  <p>Setiap ketidakcocokan membuat AI sedikit kurang yakin tentang Anda — dan di titik kritis, ia mengganti Anda dengan kompetitor yang datanya lebih rapi. <strong>Betulkan ini hari ini.</strong></p>
+</div>
+
+<hr class="divider">
+
+<!-- ── BAGIAN 9: RENCANA AKSI ── -->
+<span class="section-label">Bagian 9</span>
+<h2>Rencana Aksi Anda</h2>
+<p>Diurutkan berdasarkan <strong>usaha ↓ &amp; dampak ↑</strong>. Mulai dari atas, kerjakan ke bawah.</p>
+
+<h3>🔧 Kemenangan cepat (bulan ini)</h3>
+
+<div class="action-item">
+  <h3>🟢 Tindakan 1 — Betulkan data kontak Anda di semua tempat <span class="cost cost-free">Gratis</span></h3>
+  <p>Pastikan nama, telepon, dan alamat Anda <strong>identik</strong> di website, LinkedIn, Google Business Profile, dan setiap direktori. Pilih satu format dan pakai di mana-mana. Buat Google Business Profile kalau belum punya. <em>Ini tindakan dengan dampak paling tinggi dan usaha paling rendah di seluruh laporan ini.</em></p>
+</div>
+
+<div class="action-item">
+  <h3>🟢 Tindakan 2 — Tambahkan nama klien dan profil lengkap ulama ke website Anda <span class="cost cost-free">Gratis</span></h3>
+  <p>Ubah "bank, fintech, manajer dana" menjadi <strong>studi kasus dengan nama</strong> (dengan izin). Beri setiap anggota komite Syariah halaman profil lengkap. AI lebih percaya bukti spesifik dengan nama daripada kategori — dan ini adalah alasan terbesar Anda kalah dalam perbandingan melawan Amanie.</p>
+</div>
+
+<h3>📈 Pengungkit sesungguhnya (90 hari ke depan)</h3>
+
+<div class="action-item">
+  <h3>Tindakan 3 — Buat konten yang menghubungkan Anda ke topik Syariah yang lebih luas <span class="cost cost-free">Gratis</span></h3>
+  <p>Tulislah tentang sukuk, Takaful, manajemen dana — bukan hanya fintech. Publikasikan di website dan LinkedIn. Saat ini Anda hanya muncul di pertanyaan fintech. Konten yang lebih luas membuat Anda terlihat juga di pencarian umum.</p>
+</div>
+
+<div class="action-item">
+  <h3>Tindakan 4 — Dapatkan penyebutan di luar website Anda sendiri <span class="cost cost-budget">Berbiaya</span></h3>
+  <p>Tulis artikel untuk publikasi keuangan Islam. Bicara di acara industri. Dapatkan profil di daftar "konsultan Syariah teratas." Suara independen adalah yang menggerakkan AI dari "melaporkan klaim Anda" menjadi "mendukung Anda."</p>
+</div>
+
+<div class="action-item">
+  <h3>Tindakan 5 — Jaga website Anda tetap segar <span class="cost cost-free">Gratis</span></h3>
+  <p>Perbarui website Anda setiap bulan dengan proyek, penghargaan, dan wawasan baru. AI memperlakukan bisnis yang rutin diperbarui sebagai lebih relevan dan terpercaya.</p>
+</div>
+
+<div class="action-item">
+  <h3>Tindakan 6 — Kumpulkan dan publikasikan bukti dari klien Anda <span class="cost cost-free">Gratis</span></h3>
+  <p>Kumpulkan testimoni, studi kasus singkat, dan hasil sebelum-sesudah. Klien yang mengatakan "Masryef melakukan pekerjaan hebat untuk kami" lebih berharga bagi AI daripada apa pun yang Anda katakan tentang diri sendiri.</p>
+</div>
+
+<h3>Tempat belajar lebih lanjut (semua gratis)</h3>
+<div class="card-grid">
+  <div class="card">
+    <h3>Google Business Profile</h3>
+    <p>Buat atau klaim profil Anda — Google memberikan tips sederhana untuk meningkatkannya.</p>
+  </div>
+  <div class="card">
+    <h3>Halaman perusahaan LinkedIn</h3>
+    <p>Posting penghargaan, klien baru, dan wawasan secara rutin. Konten LinkedIn banyak dibaca oleh AI.</p>
+  </div>
+  <div class="card">
+    <h3>Publikasi industri</h3>
+    <p>Tercantum di satu saja artikel "konsultan Syariah teratas" sudah menjadi sinyal pihak ketiga yang terpercaya.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ── LAMPIRAN A: METODOLOGI ── -->
+<div class="appendix">
+  <h2>Lampiran A — Bagaimana kami mendapatkan hasil ini</h2>
+  <p><strong>Apa yang kami lakukan:</strong> Kami mengambil detail bisnis Anda, membuat 10 pertanyaan yang mencerminkan apa yang akan ditanyakan klien sungguhan ke ChatGPT di setiap tahap keputusan, mengajukan pertanyaan-pertanyaan itu, dan menilai jawabannya di empat tingkat: Ditemukan → Dideskripsikan dengan benar → Direkomendasikan → Seberapa sering vs. kompetitor.</p>
+  <p>📝 <strong>Jawaban ilustratif:</strong> Redaksi persis jawaban ChatGPT yang ditampilkan di laporan ini mewakili bentuk dari apa yang ditangkap oleh alat secara langsung. ✅ <strong>Nyata:</strong> Layanan, penghargaan, registrasi, dan identitas publik Amanie — diambil dari website publik per Agustus 2026.</p>
+  <p><strong>Kami tidak mengada-ada hal negatif.</strong> Setiap temuan didasarkan pada perbedaan nyata yang bisa diverifikasi.</p>
+</div>
+
+<!-- ── LAMPIRAN B: 10 PROMPT ── -->
+<div class="appendix">
+  <h2>Lampiran B — 10 prompt yang digunakan</h2>
+  <table>
+    <thead><tr><th>Tahap</th><th>#</th><th>Prompt</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="2">1. Belajar</td><td>1</td><td><em>"Kalau kami platform pinjaman digital di Malaysia, apakah kami perlu konsultan Syariah, dan apa saja yang tercakup?"</em></td></tr>
+      <tr><td>2</td><td><em>"Layanan konsultan Syariah seperti apa yang biasanya dibutuhkan fintech, dan bagaimana pendekatan Masryef terhadap ini?"</em></td></tr>
+      <tr><td rowspan="2">2. Mencari</td><td>3</td><td><em>"Siapa firma konsultan Syariah terbaik untuk fintech atau bank digital di Malaysia tahun 2026?"</em></td></tr>
+      <tr><td>4</td><td><em>"Apakah Masryef pilihan yang baik untuk konsultan Syariah bagi fintech Malaysia di tahun 2026?"</em></td></tr>
+      <tr><td rowspan="2">3. Membandingkan</td><td>5</td><td><em>"Apa yang harus saya cari ketika memilih firma konsultan Syariah untuk fintech Islam?"</em></td></tr>
+      <tr><td>6</td><td><em>"Bandingkan Masryef vs Amanie Advisors. Mana yang lebih baik untuk fintech Islam di Malaysia?"</em></td></tr>
+      <tr><td rowspan="2">4. Memverifikasi</td><td>7</td><td><em>"Bagaimana cara memverifikasi kredibilitas firma konsultan Syariah di Malaysia?"</em></td></tr>
+      <tr><td>8</td><td><em>"Apakah Masryef firma konsultan Syariah yang sah dan bereputasi?"</em></td></tr>
+      <tr><td rowspan="2">5. Bertindak</td><td>9</td><td><em>"Bagaimana cara menggunakan jasa firma konsultan Syariah untuk mensertifikasi produk tabungan digital Islam kami?"</em></td></tr>
+      <tr><td>10</td><td><em>"Bagaimana cara menghubungi Masryef untuk mendiskusikan konsultan Syariah bagi produk fintech kami?"</em></td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- /content -->
+</main>
+
+<!-- ── FOOTER ── -->
+<footer class="report-footer">
+  <p>Laporan Visibilitas AI · Disusun untuk Masryef Advisory Sdn Bhd · Agustus 2026</p>
+  <p>Jawaban AI berubah seiring waktu — ini adalah snapshot hari ini. Tindakan di atas tetap berlaku terlepas dari pembaruan besok.</p>
+</footer>
+
+</body>
+</html>
