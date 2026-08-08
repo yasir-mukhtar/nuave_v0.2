@@ -1,24 +1,25 @@
 # Nuave
 
-Nuave is a manually delivered, one-time AI visibility audit for agencies, SEO
-freelancers, Google Business Profile consultants, and independent marketers. It
-helps them show how one client business appears across tested AI
-recommendations, then deliver the findings as a client-ready report.
+Nuave is a manually delivered, one-time AI visibility audit for small and medium
+Indonesian businesses, sold direct to the business owner. It shows how that
+owner's own business appears across tested AI recommendations, then delivers the
+findings as a short report the owner can read and act on.
 
-The current experiment is one bounded self-service audit workflow, not an
-agency dashboard or subscription platform.
+The audited business is the customer's own business, not a client's. The current
+experiment is one bounded audit workflow, not a monitoring dashboard or
+subscription platform.
 
 ## Start here
 
 | Need | Read |
 |---|---|
+| Why Nuave exists, who it serves, what it believes | [`docs/VISION.md`](./docs/VISION.md) |
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How to generate a universal client-brand prompt pack | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
 | Dental-clinic prompt method for later experiments | [`docs/DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md`](./docs/DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md) |
-| Broader agency-offer validation experiment | [`experiments/ACTIVE.md`](./experiments/ACTIVE.md) |
-| Current go-to-market action | [`gtm/NOW.md`](./gtm/NOW.md) |
+| Broader offer validation experiment | [`experiments/ACTIVE.md`](./experiments/ACTIVE.md) |
 | Dated product decisions | [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) |
 
 ## Authority chain
@@ -27,11 +28,13 @@ When repository documents conflict, trust them in this order:
 
 1. the newest founder-approved entry in
    [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md);
-2. [`docs/NOW.md`](./docs/NOW.md) for the current stage, facts, objective, and
+2. [`docs/VISION.md`](./docs/VISION.md) for why Nuave exists, who it serves, and
+   the principles that govern downstream work;
+3. [`docs/NOW.md`](./docs/NOW.md) for the current stage, facts, objective, and
    next action;
-3. [`docs/PRODUCT.md`](./docs/PRODUCT.md) for the current customer, offer,
+4. [`docs/PRODUCT.md`](./docs/PRODUCT.md) for the current customer, offer,
    promise, journey, and non-goals; and
-4. one relevant audit, prompt, experiment, or GTM document for task detail.
+5. one relevant audit, prompt, or experiment document for task detail.
 
 This `README.md` is the repository-wide routing page. [`AGENTS.md`](./AGENTS.md)
 contains contributor instructions, and [`CLAUDE.md`](./CLAUDE.md) is only a
@@ -44,22 +47,23 @@ active task or evidence that its prepared experiment passed.
 ## Current product flow
 
 ```text
-targeted outreach or simple landing page
-  -> show a truthful sample audit
-  -> confirm one agency and one client business
-  -> agree one per-audit price and payment
-  -> collect a short client and branding brief
-  -> confirm facts and approve the ten-question pack
+run a few unbranded questions on a prospect before any contact
+  -> lead with the observed finding, or show a truthful sample audit
+  -> confirm one business and one price
+  -> collect a short intake brief
+  -> confirm facts and approve the ten-question pack in Indonesian
   -> run ten independent OpenAI API observations with web search
   -> generate the final-format report and evidence export
-  -> deliver the client-ready report
-  -> collect agency feedback and purchase evidence
+  -> deliver the report to the business owner
+  -> recommend a re-check six to eight weeks later
 ```
 
 The `src/` landing page keeps the previous Nuave website as its visual baseline,
-but its English and Indonesian copy now describes the agency-facing raw-MVP
-offer. Its report preview is explicitly illustrative and contains no client
-result or performance claim.
+but its English and Indonesian copy still describes the agency-facing raw-MVP
+offer. That copy now contradicts the customer defined in
+[`docs/VISION.md`](./docs/VISION.md) and needs rewriting in Indonesian for the
+business owner; treat it as a known gap, not as aligned. Its report preview is
+explicitly illustrative and contains no client result or performance claim.
 
 ## Development
 

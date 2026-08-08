@@ -1,18 +1,20 @@
 # Nuave audit method
 
 > Status: **Current self-service workflow experiment**
-> Updated: 2026-07-31
+> Updated: 2026-08-08
 >
-> Buyer context: Nuave's current customer is an agency, freelancer, or marketing
-> consultant ordering an audit for one client business. The retained dental
-> work is methodology evidence, not the definition of Nuave's buyer or proof
-> that another vertical is supported.
+> Customer context: Nuave's customer is the owner of a small or medium
+> Indonesian business, ordering an audit of their own business. The retained
+> dental work is methodology evidence, not proof that another vertical is
+> supported. This document derives from [`VISION.md`](./VISION.md); where they
+> disagree, the vision governs.
 
 ## Purpose
 
 The raw audit should turn real public information and observed AI responses
-into a short, honest, client-ready report. It needs enough structure to be
-trustworthy, but not enough machinery to delay the first useful result.
+into a short, honest report an Indonesian business owner can read in ten
+minutes. It needs enough structure to be trustworthy, but not enough machinery
+to delay the first useful result.
 
 ## Measurement statement
 
@@ -23,27 +25,34 @@ AI ranking.
 
 ## Raw-MVP scope
 
-For the current agency-ready sample, use:
+For the current sample, use:
 
-- one exact, verified client business;
-- one user-reviewed ten-question pack from the current prompt method;
+- one exact, verified business;
+- one user-reviewed ten-question pack from the current prompt method, written
+  in natural Indonesian;
 - five unbranded and five branded questions;
 - ChatGPT on one honestly named execution surface;
-- relevant public client and competitor sources;
+- relevant public business and competitor sources, weighted towards the
+  Indonesian sources AI systems actually draw on;
 - the exact run design recorded before execution; and
 - automatic report analysis with evidence-reference and count validation.
 
 Name the execution surface as the OpenAI Responses API, exact returned model,
 and web-search condition. Do not represent an API, standardized run, or one
-account's result as every consumer's personalized ChatGPT experience. Do not
-add repetitions, systems, or broad vertical claims unless the current sample
-shows why they are needed.
+account's result as every consumer's personalized ChatGPT experience. Do not add systems or
+broad vertical claims unless the current sample shows why they are needed.
+
+Each question is observed once for the reported result. Deliberately re-asking
+a small number of questions to measure how much identical runs vary is a
+separate, encouraged activity: the score band must be wider than that
+variation, and it has never been measured. Record such repeats as variance
+measurement, not as additional observations feeding the reported counts.
 
 The completed EXP-R1 dental run used a different five-question, two-system
 method. Preserve its recorded scope when citing that evidence; do not silently
 convert its observations into the current ten-question method.
 
-## Confirm the client business first
+## Confirm the business first
 
 Before running questions, record:
 
@@ -62,11 +71,13 @@ Generate the current pack through
 [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) and its
 repository skill. The user review gate must confirm that:
 
-- the questions sound like ordinary customer language;
-- unbranded questions do not leak the client name or a unique identifier;
+- the questions are in natural Indonesian and sound like something a real
+  Indonesian customer would actually type, not a translated English sentence;
+- unbranded questions do not leak the business name or a unique identifier;
 - branded questions test recognition and factual representation rather than
   inflating discovery;
-- every business, service, location, and competitor fact is verified; and
+- every business, service, location, and competitor fact is verified;
+- the location is expressed the way local customers would say it; and
 - regulated, clinical-quality, medical-advice, or unsupported superiority
   requests are excluded.
 
@@ -90,7 +101,7 @@ schema solely for the first run.
 
 Use the following terms consistently:
 
-- **Appearance:** the resolved client business is identifiable in the answer.
+- **Appearance:** the resolved business is identifiable in the answer.
 - **Mention:** the business is named but is not necessarily proposed.
 - **Recommendation:** the answer affirmatively proposes the business for the
   requested need.
@@ -107,15 +118,18 @@ information`, or `could not be tested`.
 
 ## Verify sources and conflicts
 
-For factual checks, prefer the exact official website and business listing,
-then an applicable authoritative registry or source, then clearly labeled
-buyer-supplied facts, then relevant third-party sources. Public availability
+For factual checks, prefer the exact official website and Google Business
+Profile listing, then the Indonesian sources that actually feed answers about
+this kind of business — marketplaces, sector directories, local news, and
+applicable public registries — then clearly labeled owner-supplied facts, then
+other third-party sources. A source hierarchy built for another market will
+mis-weight what Indonesian AI answers are drawn from. Public availability
 does not prove accuracy, and a source returned by ChatGPT does not by itself
 validate the claim it supports.
 
 Record conflicting authoritative sources as a finding instead of selecting the
 version that makes the report cleaner. Never attribute a competitor fact or
-client appearance to a name-only match.
+business appearance to a name-only match.
 
 ## Turn evidence into findings
 
@@ -123,7 +137,7 @@ Keep three layers separate:
 
 1. **Observation:** what the AI response or public source actually showed.
 2. **Interpretation:** a qualified explanation of what the pattern may mean.
-3. **Action:** something the client business can complete or delegate.
+3. **Action:** something the business owner can complete or delegate.
 
 Example:
 
@@ -149,11 +163,12 @@ Zero appearance across successful unbranded questions can be a valid result.
 State the tested denominator and limitations, confirm that identity and
 questions were valid, and do not invent a cause.
 
-## Client-ready report format
+## Report format
 
-Use this five-section sequence for the agency-ready sample:
+Use this five-section sequence for the sample:
 
-1. **Main Result:** report identity, tested scope, visible counts, separate
+1. **Main Result:** report identity, tested scope, visible counts with their
+   denominators, the score band and its components, separate
    information-accuracy status, a short conclusion, and the snapshot
    limitation.
 2. **Key Findings:** three to five specific evidence-led findings, including
@@ -171,9 +186,11 @@ Use this five-section sequence for the agency-ready sample:
 Show before the main content:
 
 - audited business, exact branch or service area, and location;
-- audit date and number of questions;
-- prepared for the client business; and
-- prepared by the agency when supplied and permitted.
+- audit date and number of questions; and
+- prepared for the business owner.
+
+An agency or reseller attribution line is not part of the standard report. It
+is a later white-label concern, not a field to design around now.
 
 Keep the exact language, system, execution surface, returned model, and web
 search condition in **How This Audit Works**. The summary and findings should
@@ -181,13 +198,17 @@ use ordinary business language.
 
 ### Plain-language writing standard
 
-New reports use the versioned `plain-en-v1` writing contract in
+Customer-facing reports are written in Indonesian. The versioned writing
+contract in
 [`report-language.ts`](../src/lib/audit/report-language.ts). That file is the
 single runtime source for section word limits, sentence length, and wording to
 avoid. Increase the writing-standard version when those rules materially
 change.
 
-- Write for a non-technical business owner or small-brand founder.
+- Write in Indonesian, for a non-technical business owner.
+- The word limits and banned-jargon list are currently calibrated for English
+  only. An Indonesian contract version is required before an Indonesian report
+  can be checked properly.
 - Put the result or action first and supporting detail after it.
 - Prefer common words, active voice, one idea per sentence, and no filler.
 - Apply the configured limits only to Nuave-written explanations. Do not shorten
@@ -203,21 +224,34 @@ The evidence export retains those versions and the complete underlying
 evidence.
 
 Use direct counts and denominators. Report unbranded discovery, branded
-recognition, recommendation, accuracy, and failed tests separately. Do not use
-a composite 0–100 score or blend branded recognition into unbranded discovery.
+recognition, recommendation, accuracy, and failed tests separately.
+
+The headline is always the count with its denominator. Beneath it, report an
+AI Visibility Score as a **band**, never an exact integer:
+
+- the band is a transparent composition of the separately reported components,
+  each shown beside it with its own denominator;
+- the formula and band definitions are published in the report and versioned,
+  and a re-check may only compare scores computed under the same version;
+- the band must be wider than the observed variation between identical runs,
+  so that a change in the band means a change in the world; and
+- no peer benchmark is stated until enough businesses in the category have
+  been measured to state one honestly.
+
+Never blend branded recognition into unbranded discovery. The score is a
+composition of separate measures, not a replacement for them.
 
 Place the limitation beside the summary, not in fine print: this is a snapshot
 of the stated test date, not a permanent ranking or every possible ChatGPT
 answer; results may vary by model, time, location, language, and conversation
 context, and business information should be verified before a decision.
 
-The report may use neutral presentation or the buyer's basic name and logo.
-Branding must not hide the tested scope, evidence, limitations, source types,
-or correction path. Keep the report scannable on screen and printable; a PDF
+The report uses neutral Nuave presentation. Presentation must never hide the
+tested scope, evidence, limitations, source types, or correction path. Keep the report scannable on screen and printable; a PDF
 must render the same generated report version rather than a second
 interpretation.
 
-If a shorter internal draft is needed before the client-ready version, it may
+If a shorter internal draft is needed before the owner-facing version, it may
 use this compact review shape:
 
 1. **Scope:** business, date, systems, questions, and limitations.
@@ -233,23 +267,26 @@ The workflow must reject machine-checkable evidence failures. During the
 private workflow test, inspect the remaining judgment and permission items
 before treating the generated report as usable sample evidence:
 
-- the exact client business, branch, and buyer are correct;
-- the report identifies who it was prepared for and by;
+- the exact business and branch are correct;
+- the report identifies who it was prepared for;
 - every material statement links to an AI observation or public source;
 - observation, interpretation, and action are visibly distinct;
 - appearance, mention, recommendation, non-appearance, and failure are not
   conflated;
 - branded recognition and unbranded discovery remain separate;
-- competitors are real and not confused with similarly named businesses;
+- competitors are real, locally relevant, and not confused with similarly
+  named businesses;
 - failed, contradictory, and missing results remain visible;
-- no statement implies permanent ranking or consumer-interface equivalence;
+- no statement implies permanent ranking, consumer-interface equivalence, a
+  peer benchmark that has not been earned, or a forecast of future results;
 - no clinical-quality, treatment, safety, lead, or revenue claim is made;
 - each action is specific, evidence-backed, realistically controllable, and has
   an owner and completion check;
-- permissions cover any agency logo and any external use of client identity,
-  quotes, screenshots, or findings;
+- permissions cover any external use of business identity, quotes,
+  screenshots, or findings;
 - limitations and any partial coverage are prominent;
-- the report can be understood by a non-technical agency and client reader;
+- the report can be understood by a non-technical Indonesian business owner
+  reading it alone;
 - Nuave-written fields pass the current plain-language limits, while exact
   questions and answer excerpts remain unchanged; and
 - the final screen and PDF, when both exist, show the same facts and report
@@ -263,16 +300,18 @@ not silently rewrite a provider answer or prior delivered report.
 
 - Use only the public business information the audit needs and record its
   source and observation date.
-- Label buyer-supplied business facts until verified.
-- Do not collect patient data or send customer contact, payment, private client
-  records, access tokens, or other unnecessary personal data to an AI provider.
+- Label owner-supplied business facts until verified.
+- Do not collect patient data or send customer contact, payment, private
+  business records, access tokens, or other unnecessary personal data to an AI
+  provider.
 - Keep API keys and account credentials outside reports and repository files.
 - Keep raw provider responses restricted when they include unnecessary personal
   information or provider metadata.
 - Minimize copied third-party content; retain the source link and only the
   excerpt needed for evidence.
-- Do not publish a client name, logo, quote, screenshot, or finding, or use it
-  in outreach, without the appropriate review and specific permission.
+- Do not publish a business name, logo, quote, screenshot, or finding without
+  the appropriate review and specific permission. Showing a business its own
+  observed result during outreach is permitted; publishing it is not.
 
 If sensitive personal information is received, stop processing it, restrict
 access, do not copy it into another tool or model, and escalate to the founder.

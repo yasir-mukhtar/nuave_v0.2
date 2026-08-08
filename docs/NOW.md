@@ -1,13 +1,14 @@
 # Nuave now
 
-> Updated: 2026-08-02
+> Updated: 2026-08-08
 > Stage: pre-customer raw MVP
 
 ## Current objective
 
-Create one credible agency-ready sample audit, then test whether small agencies,
-SEO freelancers, Google Business Profile consultants, or independent marketers
-will pay for one client-ready AI Visibility Audit for one of their clients.
+Produce one credible Indonesian sample audit by hand, from real observations and
+without depending on the automated workflow, then test whether Indonesian small
+and medium business owners will pay for one AI visibility audit of their own
+business.
 
 The compact report synthesis, carry-over guard, and null-extraction fallback
 pass offline. Two live attempts proved that model-authored structured question
@@ -16,39 +17,61 @@ any model: the ten questions are now built in code from the verified brief and
 the fixed Intent-5 matrix, and the prompts stage is capped at zero paid calls.
 Cumulative accounted spend remains USD 0.4357, leaving USD 4.5643 under the
 existing USD 5 ceiling. The next paid step is the ten observations, which still
-needs founder approval.
-For this immediate task, [`AUDIT.md`](./AUDIT.md) governs execution and review;
-the broader agency-offer validation remains in
-[`experiments/ACTIVE.md`](../experiments/ACTIVE.md).
+needs founder approval. That automated run is no longer on the critical path;
+the hand-made sample is.
+
+For this immediate task, [`AUDIT.md`](./AUDIT.md) governs execution and review,
+and [`VISION.md`](./VISION.md) governs who the customer is, what is sold, and
+the principles the work must follow.
 
 ## What is known
 
 - Nuave is a manually delivered, one-time audit, not subscription software.
-- The buyer is now an agency, freelancer, or marketing consultant; the audited
-  business is that buyer's client.
-- The working promise is to help the buyer sell, deliver, or strengthen a client
-  service with a credible AI Visibility Audit.
-- The minimum delivery is a reviewed, downloadable client-facing report with a
-  concise summary, neutral presentation, and optional agency name and logo.
-- One agency can order one audit for one client without an account or dashboard.
-- Nuave has zero paying v2 customers, including zero agency customers.
-- Pricing for the agency-facing offer is open. The former Rp149,000 clinic-owner
-  price must not be carried forward without validation.
+- [`VISION.md`](./VISION.md) now exists and governs this repository. It sits
+  above this document and below the newest founder-approved decision-log entry.
+- The buyer is the owner or marketing decision-maker of a small or medium
+  Indonesian business, approached directly. The audited business is the buyer's
+  own business, not a client's.
+- The agency, freelancer, and consultant white-label layer is a later business,
+  deliberately deferred until direct owner demand is proven or disproven.
+- The working promise is to show an owner whether AI systems name their business
+  when a customer asks, with the observed answers as evidence, and what to do
+  about it.
+- The minimum delivery is a reviewed, downloadable report a non-technical owner
+  can read in about ten minutes, with a concise summary and neutral
+  presentation.
+- One business owner can order one audit for one business without an account or
+  dashboard.
+- Every customer-facing touchpoint moves to Indonesian: landing page, intake,
+  the questions asked of AI systems, the report, and outreach messages. English
+  remains acceptable only for internal engineering artefacts no customer sees.
+- The score is reported counts-led: the observed count with its denominator is
+  the headline, and the AI Visibility Score sits underneath it as a band, not an
+  exact integer, with discovery, recognition, recommendation, and information
+  accuracy keeping their own denominators.
+- The re-check, run six to eight weeks after the first audit, is the recurring
+  product. The interval is a recommended cadence, not a derived one.
+- Outreach is demonstrate-before-selling: run a few unbranded questions on a
+  prospect before any contact, then lead with the observed finding.
+- Nuave has zero paying v2 customers.
+- Pricing is open. The former Rp149,000 clinic-owner price must not be carried
+  forward as an anchor without validation.
 - EXP-R1 produced a `PASS_CANDIDATE` dental-clinic report from real evidence:
   [`REPORT.md`](../experiments/runs/2026-07-20-sozo-dental-depok/REPORT.md).
-  It is methodology evidence, not agency-demand evidence.
+  It is methodology evidence, not demand evidence.
 - The universal brand prompt context and `generate-ai-visibility-prompts` skill
-  now support varied client categories through one verified brand scope, five
+  now support varied business categories through one verified brand scope, five
   unbranded questions, and five branded questions.
 - The universal matrix is a working method, not validated cross-industry proof.
-  Each client category still needs claims and report review.
+  Each business category still needs claims and report review.
 - The former dental prompt context and skill are preserved under explicit
   dental-clinic names for later dental experiments.
 - ChatGPT remains the named target product for prompt generation. Any later
   execution must record the exact surface honestly.
-- The local landing page now describes the agency-facing raw-MVP offer in
-  English and Indonesian. Its report preview is illustrative, the pilot price
-  remains unpublished, and no client result or agency-demand claim is shown.
+- The local landing page describes the agency-facing raw-MVP offer in English
+  and Indonesian. That copy no longer matches the customer above and needs
+  rewriting. Its report preview is illustrative, the pilot price remains
+  unpublished, and no client result or demand claim is shown.
 - A local `/audit` workflow now covers official-website extraction, human fact
   confirmation, ten-question prompt review, independent OpenAI Responses API
   execution with web search, final-format report generation, A4 print/PDF, and
@@ -57,8 +80,9 @@ the broader agency-offer validation remains in
   locks verified inputs after execution starts, streams real per-prompt status,
   preserves interrupted observations in the browser session, and expands all
   ten detailed findings in print from the same report data shown on screen.
-- The `/audit` workflow now uses English from intake through prompt generation,
-  API observations, the final report, and the evidence export. The public
+- The `/audit` workflow currently uses English from intake through prompt
+  generation, API observations, the final report, and the evidence export. That
+  is now a known gap against the Indonesian requirement above. The public
   landing page remains bilingual.
 - New reports use the versioned `plain-en-v1` writing contract: short
   customer-facing explanations, result-first wording, exact evidence excerpts,
@@ -93,7 +117,7 @@ the broader agency-offer validation remains in
   retry violations, and initial/final response IDs. Evidence failures never
   retry, and a protected-field mutation after retry is blocked.
 - Fictional screen/print QA passed the five-section report, ten screen details,
-  ten expanded print details, agency attribution, direct denominators, and v3
+  ten expanded print details, buyer attribution, direct denominators, and v3
   export. The temporary QA route was removed before the final build.
 - Private audit calls now retain usage, latency, response IDs, web-search calls,
   failures, retries, and accounted cost. The workflow is pinned to
@@ -103,7 +127,7 @@ the broader agency-offer validation remains in
 - The private Masryef Batch 7 run completed extraction, human fact review, ten
   question review, and all ten observations. It stopped at 19 calls and USD
   0.3483 because no report cleared both structured-output and integrity gates.
-  No report, PDF, export, sample, or client finding was published or stored in
+  No report, PDF, export, sample, or business finding was published or stored in
   this repository.
 - Live report failures showed that a monolithic schema is still unstable:
   medium reasoning exhausted 10,000, 20,000, and sometimes 40,000 output-token
@@ -156,56 +180,69 @@ the broader agency-offer validation remains in
 
 ## What is not known
 
-- Whether agencies or freelancers will pay for the audit.
-- Whether the report helps them sell, deliver, differentiate, or retain work.
-- Whether a neutral template plus agency name and logo is sufficient.
-- Which client verticals should be supported after the first test.
-- What per-audit price leaves the buyer a useful resale margin.
-- Whether targeted paid advertising can acquire agency buyers economically.
-- Whether buyers will purchase repeatedly for multiple clients.
+- Whether Indonesian small and medium business owners will pay for one audit at
+  all.
+- What single price they will pay. The former Rp149,000 clinic price is not an
+  anchor.
+- Whether an owner who receives a report acts on any recommendation, or reads
+  it, agrees, and does nothing.
+- Whether an owner will buy a re-check, and on what interval.
+- How wide the score bands need to be. They must be wider than the variation
+  between two identical runs, and that run-to-run variation has not been
+  measured.
+- Whether a category benchmark can be stated after roughly twenty audits or
+  needs many more.
+- Which verticals the method transfers to without new claims and report review.
+- Whether demonstrate-before-selling outreach converts, and at what rate.
 
 ## Do now
 
-1. Review the ten code-built questions on screen before approving any paid run.
-2. With founder approval, resume the private run at the ten observations, which
-   are now the next paid stage after the one extraction call.
-3. Compare every retained answer, source,
-   classification, finding, action, screen, print, and export.
-4. Stop at the three-report-call ceiling unless a report passes every gate.
-5. Turn a later validated result into one concise agency-ready sample without
-   inventing results or publishing client-specific findings without permission.
-6. Add only the minimum agency delivery layer: neutral presentation, optional
-   agency name and logo, and a short sales or executive summary.
-7. State the tested scope, evidence, limitations, and commercial-use boundary
-   clearly in the sample and pilot offer.
-8. Choose one founder-approved pilot price before making a paid offer; do not
-   create tiers, subscriptions, or volume plans.
-9. Show the sample to three to five relevant agencies or freelancers, make a
-   concrete per-audit offer, and record payment, rejection, intended use, and
-   objections.
+1. Build one credible Indonesian sample audit by hand, from real observations,
+   without depending on the automated workflow. This is the blocking asset.
+2. Pick one vertical and one city, and fix the question set and competitor set
+   to that scope.
+3. While collecting those observations, re-ask two or three questions to measure
+   run-to-run variation, and use the result to set the score band width.
+4. Write the sample in Indonesian, counts-led, with the limitation stated beside
+   each finding and no ranking, revenue, or causal claim.
+5. Choose one founder-approved price for one audit before making any offer. No
+   tiers, bundles, credits, or volume plans.
+6. Run the demonstrate-before-selling outreach on about thirty businesses in
+   that vertical and city: run a few unbranded questions first, then approach
+   the ones that do not appear with the actual observed answer.
+7. Record the real responses: payment, rejection, price objection, what the
+   owner said they would do next, and whether they asked for a re-check.
+8. Rewrite the landing page copy in Indonesian for the business owner, since it
+   still describes the agency-facing offer.
+9. Resume the automated private run only with founder approval, and only when it
+   does not delay the sample. The ten observations remain the next paid stage
+   after the one extraction call, and the three-report-call ceiling still holds.
 
 ## Not now
 
-- agency dashboard, client management, or team accounts;
+- a white-label or agency reseller layer, including partner pricing, resale
+  margins, and outreach to agencies or freelancers;
+- an agency dashboard, client management, or team accounts;
 - custom domains or advanced brand controls;
 - bulk imports, API access, or integrations;
 - automated recurring monitoring or subscriptions;
 - complex credits, packages, or volume tiers;
-- broad multi-vertical support before one client workflow works;
+- broad multi-vertical support before one vertical and one city work;
 - cold paid-ad scaling before the sample and offer receive direct buyer review;
-- automated scoring or a composite visibility score; or
-- fabricated agency demand, resale results, client outcomes, or testimonials.
+- an exact-integer visibility score, or any peer benchmark, before enough
+  audits in one category support one honestly; or
+- fabricated demand, business outcomes, results, or testimonials.
 - public exposure of the workflow before rate limits, cost controls, privacy
   terms, and a correction or remedy path exist.
 
 ## Done for this cycle
 
-This cycle ends when one agency-ready sample and one clear per-audit offer have
-been reviewed with three to five relevant buyers and the actual responses are
-recorded. A compliment, click, or request for a free report is not payment
-evidence.
+This cycle ends when one hand-made Indonesian sample audit and one clear
+per-audit price have been shown to real Indonesian business owners through
+demonstrate-before-selling outreach, and the actual responses are recorded. A
+compliment, click, or request for a free report is not payment evidence.
 
 Material changes to customer, offer, promise, or scope belong in
-[`DECISION_LOG.md`](./DECISION_LOG.md). Historical dental-clinic plans and
-experiments remain evidence and decision history, not the active customer
-definition.
+[`DECISION_LOG.md`](./DECISION_LOG.md). Historical dental-clinic and
+agency-facing plans remain evidence and decision history, not the active
+customer definition.

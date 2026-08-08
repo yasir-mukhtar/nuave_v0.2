@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Visibility Report — Masryef (Navy Cover + Stripe Study v2)</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ── Stripe Color Palette ── */
+    --navy:       #061b31;
+    --navy-dark:  #0d253d;
+    --slate:      #64748d;
+    --slate-dark: #273951;
+    --white:      #ffffff;
+    --purple:     #533afd;
+    --purple-hover: #4434d4;
+    --purple-light:  #b9b9f9;
+    --purple-soft:   #d6d9fc;
+    --border:     #e5edf5;
+    --border-soft:#f6f9fc;
+
+    /* ── Status Colors (Nuave domain vocabulary, Stripe-toned) ── */
+    --green-bg:   rgba(21,190,83,0.08);
+    --green-text: #108c3d;
+    --green-border:rgba(21,190,83,0.25);
+    --amber-bg:   rgba(155,104,41,0.08);
+    --amber-text: #9b6829;
+    --amber-border:rgba(155,104,41,0.25);
+    --red-bg:     rgba(220,38,38,0.07);
+    --red-text:   #991b1b;
+    --red-border: rgba(220,38,38,0.25);
+    --blue-bg:    rgba(83,58,253,0.05);
+    --blue-text:  #273951;
+    --blue-border:rgba(83,58,253,0.18);
+
+    /* ── Shadows (Stripe's blue-tinted multi-layer) ── */
+    --shadow-card:    rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px;
+    --shadow-ambient: rgba(23,23,23,0.06) 0px 3px 6px;
+    --shadow-elevated: rgba(50,50,93,0.25) 0px 14px 21px -14px, rgba(0,0,0,0.08) 0px 8px 17px -8px;
+
+    /* ── Spacing (Stripe's 8px base) ── */
+    --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+    --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+    --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+    --space-16: 64px; --space-20: 80px;
+
+    /* ── Radii (Stripe's conservative scale) ── */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+
+    /* ── Navy Cover (revision 2) ── */
+    --navy-bg:      #0d1738;   /* measured from reference */
+    --navy-raised:  #121a3f;   /* button fill */
+    --navy-line:    rgba(159,178,255,0.22);
+    --navy-text:    #fafafa;
+    --navy-body:    #a7b4d9;
+    --spec-blue:    #7ba2fe;
+    --grad-metrics: linear-gradient(90deg, #f2a9a0, #b551e6);
+
+    /* ── Stripe study v2 additions ── */
+    --surface-alt:  #f6f9fc;   /* pale section rhythm (Stripe: white ↔ pale gray) */
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--slate);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Typography ── */
+  h2 { font-weight: 300; font-size: 2rem; line-height: 1.15; letter-spacing: -0.02em; color: var(--navy); }
+  h3 { font-weight: 300; font-size: 1.5rem; line-height: 1.2;  letter-spacing: -0.015em; color: var(--navy); }
+  h4 { font-weight: 400; font-size: 1.125rem; line-height: 1.3; color: var(--navy); }
+
+  .section-label {
+    font-weight: 400; font-size: 0.6875rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--purple); margin-bottom: var(--space-3);
+  }
+
+  .text-body    { font-weight: 400; font-size: 1rem; line-height: 1.55; color: var(--slate); }
+  .text-caption { font-weight: 400; font-size: 0.75rem; line-height: 1.4; color: var(--slate); }
+  .text-muted   { color: var(--slate); opacity: 0.7; }
+
+  strong { font-weight: 600; color: var(--navy); }
+  em     { font-style: italic; }
+
+  /* ── Layout ── */
+  .container { max-width: 820px; margin: 0 auto; padding: 0 var(--space-6); }
+  .section   { padding: var(--space-16) 0; }
+  .section + .section { border-top: 1px solid var(--border); }
+  .section-alt { background: var(--surface-alt); }
+  .section-alt + .section, .section + .section-alt { border-top: none; }
+
+  /* ── Score Badge ── */
+  .score-badge {
+    width: 170px; height: 170px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--white); border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+  }
+  .score-badge .score-number {
+    font-family: 'Source Sans 3', sans-serif; font-weight: 300; font-size: 3.6rem;
+    line-height: 1; color: var(--navy); letter-spacing: -0.03em;
+  }
+  .score-badge .score-label {
+    font-weight: 400; font-size: 0.72rem; color: var(--slate);
+    letter-spacing: 0.06em; text-transform: uppercase; margin-top: var(--space-1);
+  }
+
+  .report-header {
+    padding: var(--space-16) 0 var(--space-12);
+  }
+  .report-header .top-bar {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: var(--space-10);
+  }
+  .report-header .meta { flex: 1; }
+  .report-header .meta .report-type {
+    font-weight: 400; font-size: 0.75rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--slate); margin-bottom: var(--space-2);
+  }
+  .report-header .meta .business-name {
+    font-weight: 300; font-size: 2.2rem; line-height: 1.1; color: var(--navy);
+    letter-spacing: -0.02em; margin-bottom: var(--space-1);
+  }
+  .report-header .meta .business-sub {
+    font-weight: 400; font-size: 0.95rem; color: var(--slate);
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'Source Sans 3', sans-serif; font-weight: 400; font-size: 0.9375rem;
+    padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--purple); color: var(--white); border: none;
+  }
+  .btn-primary:hover { background: var(--purple-hover); }
+  .btn-ghost {
+    background: transparent; color: var(--purple);
+    border: 1px solid var(--purple-light);
+  }
+  .btn-ghost:hover { background: rgba(83,58,253,0.05); }
+  .btn-sm { font-size: 0.8125rem; padding: 5px 12px; }
+
+  .lang-toggle { display: flex; gap: 4px; }
+  .lang-toggle button {
+    font-family: 'Source Sans 3', sans-serif; font-weight: 400; font-size: 0.75rem;
+    padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer;
+    background: transparent; color: var(--slate); border: 1px solid var(--border);
+    transition: all 0.15s ease;
+  }
+  .lang-toggle button.active {
+    background: var(--navy); color: var(--white); border-color: var(--navy);
+  }
+
+  /* ── Summary Card Grid ── */
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5);
+    margin: var(--space-8) 0;
+  }
+  .summary-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: var(--space-6);
+    box-shadow: var(--shadow-card); position: relative; overflow: hidden;
+  }
+  .summary-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .summary-card.card-green::before  { background: var(--green-text); }
+  .summary-card.card-amber::before  { background: var(--amber-text); }
+  .summary-card.card-blue::before   { background: var(--purple); }
+
+  .summary-card h3 { margin-bottom: var(--space-3); }
+  .summary-card p  { font-size: 0.9375rem; }
+
+  .card-icon { margin-bottom: var(--space-3); }
+  .card-icon svg { display: block; }
+
+  /* ── Status Pills ── */
+  .pill {
+    display: inline-block; font-weight: 400; font-size: 0.625rem;
+    padding: 1px 6px; border-radius: var(--radius-sm); letter-spacing: 0.03em;
+    text-transform: uppercase; line-height: 1.6;
+  }
+  .pill-green  { background: var(--green-bg);  color: var(--green-text);  border: 1px solid var(--green-border); }
+  .pill-amber  { background: var(--amber-bg);  color: var(--amber-text);  border: 1px solid var(--amber-border); }
+  .pill-red    { background: var(--red-bg);    color: var(--red-text);    border: 1px solid var(--red-border); }
+  .pill-blue   { background: var(--blue-bg);   color: var(--blue-text);   border: 1px solid var(--blue-border); }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%; border-collapse: collapse; font-size: 0.9375rem;
+    margin: var(--space-6) 0;
+  }
+  .data-table th {
+    font-weight: 400; font-size: 0.75rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--slate); text-align: left;
+    padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border);
+    color: var(--navy); vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .cell-muted { color: var(--slate); }
+
+  /* ── Callout Cards (white + left border) ── */
+  .callout {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: var(--space-5) var(--space-6);
+    margin: var(--space-6) 0; position: relative; overflow: hidden;
+    box-shadow: var(--shadow-ambient);
+  }
+  .callout::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .callout-green::before  { background: var(--green-text); }
+  .callout-amber::before { background: var(--amber-text); }
+  .callout-red::before   { background: var(--red-text); }
+  .callout-blue::before  { background: var(--purple); }
+
+  .callout .callout-header {
+    display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);
+  }
+  .callout .callout-header h4 { margin-bottom: 0; }
+
+  /* ── Blockquote ── */
+  blockquote {
+    font-family: 'Lora', Georgia, serif; font-style: italic; font-weight: 400;
+    font-size: 0.9375rem; line-height: 1.6; color: var(--slate-dark);
+    border-left: 3px solid var(--purple-light); padding: var(--space-4) var(--space-5);
+    margin: var(--space-6) 0; background: var(--white);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    box-shadow: var(--shadow-ambient);
+  }
+  blockquote strong { font-family: 'Source Sans 3', sans-serif; font-style: normal; }
+  blockquote em     { font-style: italic; }
+
+  /* ── AI Response Quote Box ── */
+  .ai-response {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: var(--space-5);
+    margin: var(--space-4) 0; box-shadow: var(--shadow-card);
+    font-size: 0.9375rem; line-height: 1.55;
+  }
+  .ai-response .ai-label {
+    font-weight: 400; font-size: 0.6875rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--slate); margin-bottom: var(--space-2);
+    display: flex; align-items: center; gap: var(--space-2);
+  }
+  .ai-response .ai-label::before {
+    content: ''; display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--purple);
+  }
+
+  /* ── Hairline step list (Stripe study v2: dividers, not tile cards) ── */
+  .step-list { border-top: 1px solid var(--border); margin-top: var(--space-6); }
+  .step-row {
+    display: flex; gap: var(--space-5);
+    padding: var(--space-5) 0; border-bottom: 1px solid var(--border);
+  }
+  .step-idx {
+    font-weight: 300; font-size: 1.75rem; line-height: 1;
+    color: var(--purple); min-width: 44px;
+  }
+  .step-row h4 { margin-bottom: var(--space-2); }
+
+  /* ── Step Number Badge ── */
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: var(--navy); color: var(--white);
+    font-weight: 300; font-size: 1.1rem; margin-right: var(--space-3);
+    flex-shrink: 0;
+  }
+
+  /* ── Comparison Card ── */
+  .comparison-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-5);
+    margin: var(--space-6) 0;
+  }
+  .comparison-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-card);
+  }
+  .comparison-card .cc-header {
+    padding: var(--space-3) var(--space-5); font-weight: 400; font-size: 0.8125rem;
+    letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border);
+    color: var(--slate);
+  }
+  .comparison-card .cc-body { padding: var(--space-5); }
+  .comparison-card .cc-row {
+    display: flex; justify-content: space-between; padding: var(--space-2) 0;
+    font-size: 0.9375rem;
+  }
+  .comparison-card .cc-row + .cc-row { border-top: 1px solid var(--border-soft); }
+  .comparison-card .cc-label { color: var(--slate); }
+  .comparison-card .cc-value { color: var(--navy); font-weight: 600; }
+
+  /* ── Action Cards ── */
+  .action-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: var(--space-5) var(--space-6);
+    margin-bottom: var(--space-4); box-shadow: var(--shadow-ambient);
+    position: relative; overflow: hidden;
+  }
+  .action-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--purple);
+  }
+  .action-card .action-header {
+    display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);
+  }
+  .action-card .action-header h4 { margin-bottom: 0; }
+  .action-card .cost-badge {
+    font-weight: 400; font-size: 0.6875rem; letter-spacing: 0.04em;
+    padding: 1px 8px; border-radius: var(--radius-sm); text-transform: uppercase;
+    background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border);
+  }
+
+  /* ── Scorecard Visual ── */
+  .scorecard-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5);
+    margin: var(--space-6) 0;
+  }
+  .scorecard-panel {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-card);
+  }
+  .scorecard-panel .sp-header {
+    padding: var(--space-3) var(--space-5); font-weight: 400; font-size: 0.75rem;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate);
+    border-bottom: 1px solid var(--border);
+  }
+  .scorecard-panel .sp-body { padding: var(--space-5); }
+  .scorecard-panel .sp-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-2) 0; font-size: 0.9375rem;
+  }
+  .scorecard-panel .sp-row + .sp-row { border-top: 1px solid var(--border-soft); }
+  .scorecard-panel .sp-label { color: var(--slate); }
+  .scorecard-panel .sp-value { color: var(--navy); font-weight: 600; }
+
+  /* ── Separator ── */
+  .sep { border: none; border-top: 1px solid var(--border); margin: var(--space-12) 0; }
+
+  /* ═══ Navy Cover (revision 2) ═══ */
+  html { scroll-behavior: smooth; }
+
+  .cover {
+    position: relative;
+    min-height: 100vh;
+    background: var(--navy-bg);
+    color: var(--navy-text);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cover::before,
+  .cover::after {
+    content: '';
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: var(--navy-line); z-index: 2;
+  }
+  .cover::before { top: 0; }
+  .cover::after  { bottom: 0; }
+
+  .cover-glow {
+    position: absolute; right: -8%; top: -14%;
+    width: 72%; height: 130%;
+    background: radial-gradient(closest-side, rgba(148,120,255,0.30), transparent 72%);
+    pointer-events: none;
+  }
+  .cover-ribbon {
+    position: absolute; right: -6%; top: -9%;
+    width: 64%; max-width: none;
+    pointer-events: none; z-index: 1; opacity: 0.96;
+  }
+  .cover-inner {
+    position: relative; z-index: 3;
+    max-width: 820px; width: 100%;
+    margin: 0 auto; padding: 96px 24px;
+  }
+  .cover-label {
+    font-size: 0.75rem; font-weight: 400; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--spec-blue);
+    margin-bottom: 28px;
+  }
+  .cover-name {
+    font-weight: 300; font-size: 3.5rem; line-height: 1.05;
+    letter-spacing: -0.02em; color: var(--navy-text);
+    margin-bottom: 6px;
+  }
+  .cover-sub {
+    font-weight: 400; font-size: 1rem; color: var(--navy-body);
+    margin-bottom: 22px;
+  }
+  .cover-title {
+    font-weight: 300; font-size: 2.4rem; line-height: 1.15;
+    letter-spacing: -0.015em; color: var(--navy-text);
+    max-width: 560px; margin-bottom: 16px;
+  }
+  .cover-scope {
+    font-weight: 400; font-size: 1rem; line-height: 1.55;
+    color: var(--navy-body); max-width: 480px; margin-bottom: 40px;
+  }
+  .cover-metrics {
+    display: flex; gap: 48px; margin-bottom: 40px; flex-wrap: wrap;
+  }
+  .cover-platforms {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .cover-platforms .p-label {
+    font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--navy-body);
+  }
+  .cover-platforms .p-item {
+    font-size: 0.9375rem; font-weight: 400; color: rgba(250,250,250,0.88);
+    padding-left: 18px; border-left: 1px solid var(--navy-line);
+  }
+  .grad-key {
+    background: var(--grad-metrics);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+  .cover-metric .m-num {
+    font-weight: 300; font-size: 2.75rem; line-height: 1;
+    letter-spacing: -0.02em;
+    background: var(--grad-metrics);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+  .cover-metric .m-label {
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--navy-body); margin-top: 6px;
+  }
+  .cover-actions {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 36px; flex-wrap: wrap;
+  }
+  .btn-dark {
+    background: var(--navy-raised); color: var(--navy-text);
+    border: 1px solid rgba(255,255,255,0.28);
+  }
+  .btn-dark:hover { background: #1a2350; }
+  .cover-meta {
+    font-size: 0.8125rem; color: var(--navy-body);
+    display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  .cover-meta strong { font-weight: 600; color: var(--navy-text); }
+
+  /* ── Quiet footer (Stripe study v2: no CTA, no newsletter) ── */
+  .report-footer {
+    background: var(--surface-alt); border-top: 1px solid var(--border);
+    padding: var(--space-12) 0;
+  }
+  .footer-next { display: flex; align-items: baseline; gap: var(--space-4); margin-bottom: var(--space-3); }
+  .footer-label {
+    font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--purple);
+  }
+  .footer-link {
+    font-weight: 400; font-size: 1rem; color: var(--navy); text-decoration: none;
+    border-bottom: 1px solid var(--purple-light);
+  }
+  .footer-link:hover { color: var(--purple); }
+  .footer-note { font-size: 0.8125rem; color: var(--slate); max-width: 640px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .comparison-grid { grid-template-columns: 1fr; }
+    .scorecard-grid { grid-template-columns: 1fr; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    .report-header .top-bar { flex-direction: column; gap: var(--space-4); }
+    .container { padding: 0 var(--space-4); }
+    .section { padding: var(--space-10) 0; }
+  }
+  @media (max-width: 768px) {
+    .cover-name { font-size: 2.4rem; }
+    .cover-title { font-size: 1.7rem; }
+    .cover-ribbon { width: 115%; right: -25%; top: -4%; opacity: 0.85; }
+    .cover-metrics { gap: 28px; }
+    .cover-inner { padding: 72px 20px; }
+  }
+  @media print {
+    .cover { min-height: 100vh; }
+    .cover-ribbon { opacity: 0.55; }
+  }
+  @media (max-width: 480px) {
+    .score-badge { width: 130px; height: 130px; }
+    .score-badge .score-number { font-size: 2.6rem; }
+    .report-header .meta .business-name { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- COVER — navy, ribbon ornament (revision 2) -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="cover" aria-label="Report cover">
+  <div class="cover-glow" aria-hidden="true"></div>
+  <img class="cover-ribbon" src="public/ribbon-swoosh.png" alt="" aria-hidden="true" />
+  <div class="cover-inner">
+    <p class="cover-label">Nuave · AI Visibility Report</p>
+    <h1 class="cover-name">Masryef</h1>
+    <p class="cover-sub">Boutique Shariah Advisory · Kuala Lumpur</p>
+    <p class="cover-title">How Masryef shows up when clients ask <span class="grad-key">AI</span> for a Shariah advisor</p>
+    <p class="cover-scope">
+      A structured AI visibility audit across ChatGPT and Gemini — 10 questions mirroring
+      a real client's decision journey, scored against Amanie Advisors.
+    </p>
+    <div class="cover-metrics">
+      <div class="cover-metric"><span class="m-num">10</span><p class="m-label">Prompts tested</p></div>
+      <div class="cover-metric"><span class="m-num">5</span><p class="m-label">Customer stages</p></div>
+      <div class="cover-metric"><span class="m-num">2</span><p class="m-label">AI platforms</p></div>
+    </div>
+    <div class="cover-platforms" aria-label="Platforms tested">
+      <span class="p-label">Tested on</span>
+      <span class="p-item">ChatGPT</span>
+      <span class="p-item">Gemini</span>
+    </div>
+    <div class="cover-actions">
+      <a href="#priorities" class="btn btn-primary">See your priorities</a>
+      <a href="#" class="btn btn-dark">Download summary</a>
+    </div>
+    <p class="cover-meta">
+      <span><strong>Audited</strong> August 2026</span>
+      <span><strong>Methodology</strong> v3</span>
+      <span><strong>Status</strong> Complete</span>
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- HEADER -->
+<!-- ═══════════════════════════════════════════ -->
+<header class="report-header">
+  <div class="container">
+    <div class="top-bar">
+      <div class="meta">
+        <p class="report-type">AI Visibility Report</p>
+        <h1 class="business-name">Masryef</h1>
+        <p class="business-sub">Boutique Shariah Advisory · Prepared August 2026</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="lang-toggle">
+          <button class="active">EN</button>
+          <button>ID</button>
+        </div>
+        <a href="#" class="btn btn-primary btn-sm">Download PDF</a>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:28px;margin-bottom:var(--space-8);">
+      <div class="score-badge">
+        <span class="score-number">56</span>
+        <span class="score-label">out of 100</span>
+      </div>
+      <div>
+        <p style="font-weight:300;font-size:0.8125rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--slate);margin-bottom:4px;">AI Visibility Score</p>
+        <p style="font-family:'Lora',Georgia,serif;font-style:italic;font-size:1.1rem;line-height:1.5;color:var(--slate-dark);">
+          "Known in the right rooms — but not yet the first name AI recommends."
+        </p>
+        <p style="font-size:0.9375rem;color:var(--slate);margin-top:var(--space-2);">
+          Your business exists online. But when it matters most — when someone asks AI who to hire — you're not the answer.
+        </p>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-6);font-size:0.8125rem;color:var(--slate);">
+      <span><strong style="font-weight:600;color:var(--navy);">Prepared for</strong> Masryef Advisory Sdn Bhd</span>
+      <span><strong style="font-weight:600;color:var(--navy);">Compared to</strong> Amanie Advisors</span>
+      <span><strong style="font-weight:600;color:var(--navy);">Questions asked</strong> 10 prompts across 5 customer stages</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- EXECUTIVE SUMMARY -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="exec-summary">
+  <div class="container">
+    <p class="section-label">Executive Summary</p>
+    <h2>What's happening to your business — and why it matters</h2>
+
+    <p class="text-body" style="margin-top:var(--space-4);">
+      More people are asking ChatGPT and Gemini for business recommendations instead of searching Google.
+      <em>"Who's the best Shariah advisor for a fintech in Malaysia?"</em> — the AI answers based on what it has read about businesses online.
+    </p>
+    <p class="text-body" style="margin-top:var(--space-3);">
+      <strong>If your business isn't showing up in those answers, you are invisible to a growing number of potential clients.</strong>
+      This report shows you exactly where you stand — and what to do about it.
+    </p>
+
+    <!-- Three summary cards -->
+    <div class="summary-grid">
+      <div class="summary-card card-green">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#108c3d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>You're findable</h3>
+        <p>ChatGPT knows Masryef exists and respects your fintech expertise. Your name comes up when people ask about Islamic digital finance.</p>
+      </div>
+      <div class="summary-card card-amber">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b6829" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3>But not recommendable</h3>
+        <p>When someone asks broadly <em>"Who's the best Shariah advisor?"</em> — Amanie and older firms come first. You often don't appear at all.</p>
+      </div>
+      <div class="summary-card card-blue">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#533afd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        </div>
+        <h3>This is fixable</h3>
+        <p>The gap between you and the top isn't about money. It's about <strong>content and proof</strong> — things you can create, starting today.</p>
+      </div>
+    </div>
+
+    <blockquote>
+      ChatGPT praises your fintech expertise and verifies your credentials. But the moment a client compares you to an established name or asks <em>"who should I contact?"</em> — the older, bigger, better-proven firm wins. You're <strong>under-proven outside your own website</strong> — and that's exactly what keeps a business mid-list instead of at the top.
+    </blockquote>
+
+    <!-- Quick wins -->
+    <div class="callout callout-green" style="margin-top:var(--space-8);">
+      <div class="callout-header">
+        <span class="pill pill-green">Free</span>
+        <h4>Do this tomorrow</h4>
+      </div>
+      <p class="text-body">
+        <strong>Fix your contact details everywhere.</strong> Your phone number and office address don't match across your website, LinkedIn, and business directories. AI sees conflicting information and quietly drops you for the competitor whose details are clean. Make your name, phone, and address identical everywhere. <strong>This is the cheapest, highest-impact action in this entire report.</strong>
+      </p>
+    </div>
+
+    <!-- Scorecard: Today vs 6 months -->
+    <h3 style="margin-top:var(--space-12);">What's possible in 6 months</h3>
+    <div class="scorecard-grid">
+      <div class="scorecard-panel">
+        <div class="sp-header">Today</div>
+        <div class="sp-body">
+          <div class="sp-row"><span class="sp-label">Score</span><span class="sp-value">56</span></div>
+          <div class="sp-row"><span class="sp-label">Recommended</span><span class="sp-value">Only fintech-specific</span></div>
+          <div class="sp-row"><span class="sp-label">vs Amanie</span><span class="sp-value">Loses tiebreak</span></div>
+          <div class="sp-row"><span class="sp-label">Contact data</span><span class="sp-value">Inconsistent</span></div>
+        </div>
+      </div>
+      <div class="scorecard-panel">
+        <div class="sp-header">In 6 months (projected)</div>
+        <div class="sp-body">
+          <div class="sp-row"><span class="sp-label">Score</span><span class="sp-value">72–78</span></div>
+          <div class="sp-row"><span class="sp-label">Recommended</span><span class="sp-value">Fintech + general</span></div>
+          <div class="sp-row"><span class="sp-label">vs Amanie</span><span class="sp-value">Competitive on fintech</span></div>
+          <div class="sp-row"><span class="sp-label">Contact data</span><span class="sp-value">Clean everywhere</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 1 — HOW TO READ THIS REPORT -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label">Reading guide</p>
+    <h2>How to read this report</h2>
+
+    <h3 style="margin-top:var(--space-8);">How AI answers questions about your business</h3>
+    <p class="text-body" style="margin-top:var(--space-4);">Think of ChatGPT like a very well-read assistant who:</p>
+
+    <div class="step-list">
+      <div class="step-row">
+        <span class="step-idx">1</span>
+        <div>
+          <h4>Reads</h4>
+          <p class="text-body" style="font-size:0.9375rem;">Hundreds of websites, business listings, news articles, and reviews — ahead of time.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <span class="step-idx">2</span>
+        <div>
+          <h4>Remembers</h4>
+          <p class="text-body" style="font-size:0.9375rem;">What it learned from all those sources about businesses like yours.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <span class="step-idx">3</span>
+        <div>
+          <h4>Answers</h4>
+          <p class="text-body" style="font-size:0.9375rem;">Your client's question using that memory — not by checking anything live.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-body" style="margin-top:var(--space-6);">
+      <strong>Your "AI reputation" is simply:</strong> <em>What ChatGPT has learned about you from the public internet.</em>
+      This report shows you what it learned, why, and what to do about it.
+    </p>
+
+    <h3 style="margin-top:var(--space-10);">The four things we measured</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>Level</th><th>What it means</th><th>Simple question</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1. Found</strong></td><td>Does AI know you exist?</td><td class="cell-muted">"Have they heard of me at all?"</td></tr>
+        <tr><td><strong>2. Described correctly</strong></td><td>Are your details right?</td><td class="cell-muted">"Do they get my facts straight?"</td></tr>
+        <tr><td><strong>3. Recommended</strong></td><td>Does AI suggest you?</td><td class="cell-muted">"Do they tell people to pick me?"</td></tr>
+        <tr><td><strong>4. How often vs. competitors</strong></td><td>Do you appear as often as the other players?</td><td class="cell-muted">"Am I mentioned as much as my competitor?"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 2 — SCORECARD -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <p class="section-label">Scorecard</p>
+    <h2>Your Scorecard</h2>
+
+    <table class="data-table" style="margin-top:var(--space-6);">
+      <thead>
+        <tr><th>Level</th><th>Your result</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Found</strong></td>
+          <td>Yes — known across Malaysia and Dubai</td>
+          <td><span class="pill pill-green">Good</span></td>
+        </tr>
+        <tr>
+          <td><strong>2. Described correctly</strong></td>
+          <td>Services are excellent, but contact details don't match across sources</td>
+          <td><span class="pill pill-amber">Needs work</span></td>
+        </tr>
+        <tr>
+          <td><strong>3. Recommended</strong></td>
+          <td>Only in fintech and digital-specific questions</td>
+          <td><span class="pill pill-amber">Narrow</span></td>
+        </tr>
+        <tr>
+          <td><strong>4. How often vs. competitors</strong></td>
+          <td>About 6× less often than Amanie in general searches</td>
+          <td><span class="pill pill-red">Gap</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:var(--space-10);">Your competitor in context</h3>
+    <p class="text-body" style="margin-top:var(--space-3);">We ran the same questions for Amanie Advisors. Here's the honest comparison:</p>
+
+    <div class="comparison-grid">
+      <div class="comparison-card">
+        <div class="cc-header">Masryef</div>
+        <div class="cc-body">
+          <div class="cc-row"><span class="cc-label">In business since</span><span class="cc-value">2018</span></div>
+          <div class="cc-row"><span class="cc-label">Lead scholar</span><span class="cc-value">Committee of 3 global scholars</span></div>
+          <div class="cc-row"><span class="cc-label">Offices</span><span class="cc-value">KL + Dubai presence</span></div>
+          <div class="cc-row"><span class="cc-label">Named clients on site</span><span class="cc-value">Categories only</span></div>
+          <div class="cc-row"><span class="cc-label">AI mentions</span><span class="cc-value">~1 for every 6 of Amanie's</span></div>
+          <div class="cc-row"><span class="cc-label">Where you win</span><span class="cc-value">Fintech & digital</span></div>
+        </div>
+      </div>
+      <div class="comparison-card">
+        <div class="cc-header">Amanie Advisors</div>
+        <div class="cc-body">
+          <div class="cc-row"><span class="cc-label">In business since</span><span class="cc-value">2005</span></div>
+          <div class="cc-row"><span class="cc-label">Lead scholar</span><span class="cc-value">Tan Sri Dr Mohd Daud Bakar</span></div>
+          <div class="cc-row"><span class="cc-label">Offices</span><span class="cc-value">Dubai (DIFC), KL, London</span></div>
+          <div class="cc-row"><span class="cc-label">Named clients on site</span><span class="cc-value">AmundiIslamic, TabungHaji, Franklin Templeton…</span></div>
+          <div class="cc-row"><span class="cc-label">AI mentions</span><span class="cc-value">Dominant</span></div>
+          <div class="cc-row"><span class="cc-label">Where you win</span><span class="cc-value">General & institutional</span></div>
+        </div>
+      </div>
+    </div>
+
+    <blockquote>
+      Amanie is a 21-year-old heavyweight with a famous founder and named blue-chip clients — they <em>should</em> dominate general queries. <strong>You beat them at the one thing your brand is built on: modern, digital, fintech-first Shariah advisory.</strong> The plan below closes the proof gap and makes sure your specialty is the one clients ask about.
+    </blockquote>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 3 — RESULTS AT A GLANCE -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label">Findings</p>
+    <h2>Results at a Glance</h2>
+    <p class="text-body" style="margin-top:var(--space-4);">
+      We asked ChatGPT 10 questions — two per stage — that mirror a real client's decision journey. Each stage has one question <em>without</em> your name and one <em>with</em> your name.
+    </p>
+
+    <table class="data-table" style="margin-top:var(--space-6);">
+      <thead>
+        <tr><th>Step</th><th>Do you show up?</th><th>Are you recommended?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Learning about the problem</strong></td>
+          <td><span class="pill pill-green">Yes</span></td>
+          <td>Often first named</td>
+        </tr>
+        <tr>
+          <td><strong>2. Looking for who can help</strong></td>
+          <td><span class="pill pill-amber">Yes, but only in fintech</span></td>
+          <td>Depends on how they ask</td>
+        </tr>
+        <tr>
+          <td><strong>3. Comparing options</strong></td>
+          <td><span class="pill pill-red">Rarely</span></td>
+          <td>Loses to bigger names</td>
+        </tr>
+        <tr>
+          <td><strong>4. Checking if you're legit</strong></td>
+          <td><span class="pill pill-green">Yes</span></td>
+          <td>Good but thin evidence</td>
+        </tr>
+        <tr>
+          <td><strong>5. Ready to reach out</strong></td>
+          <td><span class="pill pill-red">Rarely</span></td>
+          <td>Not named as someone to contact</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <blockquote>
+      You win the moments when someone is learning — but lose the moments when they're deciding who to hire. <strong>The money is in steps 3–5, and that's where the work is.</strong>
+    </blockquote>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 4 — SAMPLE STEP (Step 1) -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <p class="section-label">Evidence · Step 1</p>
+    <div style="display:flex;align-items:center;margin-bottom:var(--space-4);">
+      <span class="step-num">1</span>
+      <h2 style="margin-bottom:0;">Step 1 — "Learning about the problem"</h2>
+    </div>
+    <p class="text-body" style="margin-top:var(--space-2);">
+      Your prospect isn't sure they even need Shariah advisory yet.
+    </p>
+
+    <!-- Question A -->
+    <p style="font-weight:400;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate);margin-top:var(--space-8);">Question A — Without your name</p>
+    <p class="text-body" style="font-style:italic;margin-top:var(--space-2);">
+      "If we're a digital lending platform in Malaysia, do we need Shariah advisory, and what does it actually involve?"
+    </p>
+    <div class="ai-response">
+      <div class="ai-label">AI response</div>
+      "Yes. In Malaysia, any product marketed as Shariah-compliant needs proper Shariah advisory and endorsement. This covers structuring, Shariah committee review, documentation, and ongoing audit. <strong>Firms like Masryef and Amanie Advisors both offer this in Malaysia.</strong>"
+    </div>
+
+    <!-- Question B -->
+    <p style="font-weight:400;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate);margin-top:var(--space-8);">Question B — With your name</p>
+    <p class="text-body" style="font-style:italic;margin-top:var(--space-2);">
+      "What kind of Shariah advisory services would a fintech in Malaysia typically need, and how does Masryef approach this?"
+    </p>
+    <div class="ai-response">
+      <div class="ai-label">AI response</div>
+      "Masryef, as a boutique Shariah advisory firm, offers structured services for fintech companies including product structuring, Shariah review, documentation, and ongoing compliance audits. Their digital-first positioning and MDEC panel status make them particularly suited for fintech engagements in Malaysia."
+    </div>
+
+    <!-- Verdict callout -->
+    <div class="callout callout-green" style="margin-top:var(--space-8);">
+      <div class="callout-header">
+        <span class="pill pill-green">Great news</span>
+        <h4>You're seen as a knowledgeable source</h4>
+      </div>
+      <p class="text-body">
+        When someone is just learning, your name comes up naturally. Your website explains clearly what Shariah advisory is and why it matters — and AI treats you as the "smart friend who educates." <strong>This is the strongest part of your AI presence.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 5 — SAMPLE STEP (Step 5 — The Leak) -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label">Evidence · Step 5</p>
+    <div style="display:flex;align-items:center;margin-bottom:var(--space-4);">
+      <span class="step-num">5</span>
+      <h2 style="margin-bottom:0;">Step 5 — "Ready to reach out"</h2>
+    </div>
+    <p class="text-body" style="margin-top:var(--space-2);">
+      Your prospect is ready to call. <strong>This is where the phone either rings — or it doesn't.</strong>
+    </p>
+
+    <!-- Question A -->
+    <p style="font-weight:400;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate);margin-top:var(--space-8);">Question A — Without your name</p>
+    <p class="text-body" style="font-style:italic;margin-top:var(--space-2);">
+      "How do we engage a Shariah advisory firm to certify our new Islamic digital savings product in Malaysia?"
+    </p>
+    <div class="ai-response">
+      <div class="ai-label">AI response</div>
+      "To engage a Shariah advisory firm, you typically submit a product proposal… <strong>Firms you can approach include Amanie Advisors (Dubai/KL/London) and ISRA Consulting.</strong> Contact their offices via their websites for a proposal."
+    </div>
+
+    <!-- Question B -->
+    <p style="font-weight:400;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--slate);margin-top:var(--space-8);">Question B — With your name</p>
+    <p class="text-body" style="font-style:italic;margin-top:var(--space-2);">
+      "How do I contact Masryef to discuss Shariah advisory for our fintech product?"
+    </p>
+    <div class="ai-response">
+      <div class="ai-label">AI response</div>
+      "You can contact Masryef Advisory Sdn Bhd through their website at masryef.com or by phone. However, their contact details appear to differ across sources — the phone number is listed as +603 2697 2692 in one place and 03-2770 8703 in another, and their office address varies between listings. It's best to use the contact form on their official website for the most reliable connection."
+    </div>
+
+    <!-- Verdict callout -->
+    <div class="callout callout-red" style="margin-top:var(--space-8);">
+      <div class="callout-header">
+        <span class="pill pill-red">This is the leak</span>
+        <h4>At the moment someone is ready to reach out — you are not named</h4>
+      </div>
+      <p class="text-body">
+        Other firms, even ones you don't consider competitors, get listed. <strong>Fix this today.</strong>
+      </p>
+    </div>
+
+    <!-- Contact mismatch detail -->
+    <div class="callout callout-amber" style="margin-top:var(--space-4);">
+      <div class="callout-header">
+        <span class="pill pill-amber">A specific, fixable problem</span>
+        <span class="cost-badge">Free</span>
+      </div>
+      <p class="text-body" style="margin-top:var(--space-2);">
+        Across the sources we checked, your contact details don't match: Phone <code style="font-family:monospace;font-size:0.875rem;background:var(--border-soft);padding:1px 6px;border-radius:var(--radius-sm);">+603 2697 2692</code> in one place, <code style="font-family:monospace;font-size:0.875rem;background:var(--border-soft);padding:1px 6px;border-radius:var(--radius-sm);">03-2770 8703</code> in another. Address descriptions vary across listings. Every mismatch makes AI slightly less sure about you — and at the tipping point, it drops you for the competitor with cleaner data.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECTION 9 — ACTION PLAN -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="priorities">
+  <div class="container">
+    <p class="section-label">Recommendations</p>
+    <h2>Your Action Plan</h2>
+    <p class="text-body" style="margin-top:var(--space-3);">
+      Ranked by <strong>effort ↓ & impact ↑</strong>. Start at the top, work down.
+    </p>
+
+    <h3 style="margin-top:var(--space-10);">Quick wins (this month)</h3>
+
+    <div class="action-card" style="margin-top:var(--space-6);">
+      <div class="action-header">
+        <span class="cost-badge">Free</span>
+        <h4>Action 1 — Fix your contact details everywhere</h4>
+      </div>
+      <p class="text-body">
+        Make your name, phone, and address <strong>identical</strong> across your website, LinkedIn, Google Business Profile, and every directory. Pick one format and use it everywhere. <em>This is the single highest-impact, lowest-effort action in this report.</em>
+      </p>
+    </div>
+
+    <div class="action-card">
+      <div class="action-header">
+        <span class="cost-badge">Free</span>
+        <h4>Action 2 — Add named clients and full scholar profiles</h4>
+      </div>
+      <p class="text-body">
+        Turn "banks, fintechs, fund managers" into <strong>named case studies</strong> (with permission). Give each Shariah committee member a full profile page. AI trusts named, specific proof far more than categories.
+      </p>
+    </div>
+
+    <h3 style="margin-top:var(--space-10);">The real levers (next 90 days)</h3>
+
+    <div class="action-card" style="margin-top:var(--space-6);">
+      <div class="action-header">
+        <span class="cost-badge">Free</span>
+        <h4>Action 3 — Create content that connects you to broader Shariah topics</h4>
+      </div>
+      <p class="text-body">
+        Write about sukuk, Takaful, fund management — not only fintech. Publish on your website and LinkedIn. Right now you only appear in fintech questions. Broader content makes you visible in general queries too.
+      </p>
+    </div>
+
+    <div class="action-card">
+      <div class="action-header">
+        <span class="cost-badge" style="background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border);">Budget</span>
+        <h4>Action 4 — Get mentioned outside your own website</h4>
+      </div>
+      <p class="text-body">
+        Write articles for Islamic finance publications. Speak at industry events. Get profiled in "top Shariah advisors" lists. Independent voices are what move AI from "reports your claims" to "endorses you."
+      </p>
+    </div>
+
+    <div class="action-card">
+      <div class="action-header">
+        <span class="cost-badge">Free</span>
+        <h4>Action 5 — Keep your website fresh</h4>
+      </div>
+      <p class="text-body">
+        Update your site monthly with new projects, awards, and insights. AI treats regularly updated businesses as more relevant and trustworthy.
+      </p>
+    </div>
+
+    <div class="action-card">
+      <div class="action-header">
+        <span class="cost-badge">Free</span>
+        <h4>Action 6 — Collect and publish proof from your clients</h4>
+      </div>
+      <p class="text-body">
+        Gather testimonials, short case studies, and before-and-after results. A client saying "Masryef did great work for us" is worth more to AI than anything you say about yourself.
+      </p>
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-12);">
+      <a href="#" class="btn btn-primary">Download Full Report PDF</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- APPENDIX -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label">Methodology</p>
+    <h2>How we got these results</h2>
+    <p class="text-body" style="margin-top:var(--space-4);">
+      <strong>What we did:</strong> We took your business details, created 10 questions that mirror what a real client would ask ChatGPT at each decision stage, asked those questions, and scored the answers across four levels: Found → Described correctly → Recommended → How often vs. competitors.
+    </p>
+    <p class="text-body" style="margin-top:var(--space-3);">
+      <strong>We did not invent anything negative.</strong> Every finding is grounded in a real, verifiable difference. Real: your services, awards, registrations, and Amanie's public identity — pulled from public websites as of August 2026.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- QUIET FOOTER — next action + limitations (Stripe study v2) -->
+<!-- ═══════════════════════════════════════════ -->
+<footer class="report-footer">
+  <div class="container">
+    <div class="footer-next">
+      <span class="footer-label">Next step</span>
+      <a class="footer-link" href="#priorities">Fix your contact details everywhere →</a>
+    </div>
+    <p class="footer-note">
+      This report describes observations from 10 prompts across 2 AI platforms, August 2026. AI responses change; re-test quarterly. Findings are observations, not a permanent ranking.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
