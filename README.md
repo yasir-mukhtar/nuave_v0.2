@@ -1,13 +1,17 @@
 # Nuave
 
-Nuave is a manually delivered, one-time AI visibility audit for small and medium
-Indonesian businesses, sold direct to the business owner. It shows how that
-owner's own business appears across tested AI recommendations, then delivers the
-findings as a short report the owner can read and act on.
+Nuave is a one-time AI visibility audit for small and medium Indonesian
+businesses, sold direct to the business owner. It shows how that owner's own
+business appears across tested AI recommendations, then delivers the findings as
+a short report the owner can read and act on.
 
-The audited business is the customer's own business, not a client's. The current
-experiment is one bounded audit workflow, not a monitoring dashboard or
-subscription platform.
+The audited business is the customer's own business, not a client's. Nuave is
+one automated path from intake form to downloadable report, not a monitoring
+dashboard or subscription platform.
+
+The current work is Phase 1 in [`docs/VISION.md`](./docs/VISION.md): make that
+path run end to end without human rescue. Payment, report persistence, and
+design polish come after it, in that order.
 
 ## Start here
 
@@ -17,10 +21,14 @@ subscription platform.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
-| How to generate a universal client-brand prompt pack | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
-| Dental-clinic prompt method for later experiments | [`docs/DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md`](./docs/DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md) |
-| Broader offer validation experiment | [`experiments/ACTIVE.md`](./experiments/ACTIVE.md) |
+| How to generate a prompt pack for one business | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
+| Current offer validation experiment | [`experiments/ACTIVE.md`](./experiments/ACTIVE.md) |
 | Dated product decisions | [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) |
+
+Vertical-specific material from earlier cycles — the dental prompt context, the
+former `generate-dental-clinic-ai-visibility-prompts` skill (removed), and the
+`EXP-001` package — is retained as history. It is not part of the current
+direction and should not be loaded for current work.
 
 ## Authority chain
 
@@ -41,35 +49,41 @@ contains contributor instructions, and [`CLAUDE.md`](./CLAUDE.md) is only a
 compatibility pointer to that same route.
 
 Load only the document needed for the current task. The locked, unrun
-`experiments/EXP-001/` package is a deliberate dental-method reference, not an
-active task or evidence that its prepared experiment passed.
+`experiments/EXP-001/` package is retained history, not an active task or
+evidence that its prepared experiment passed.
 
 ## Current product flow
 
 ```text
 run a few unbranded questions on a prospect before any contact
-  -> lead with the observed finding, or show a truthful sample audit
-  -> confirm one business and one price
+  -> lead with the observed finding
   -> collect a short intake brief
   -> confirm facts and approve the ten-question pack in Indonesian
+  -> pay for one audit
   -> run ten independent OpenAI API observations with web search
   -> generate the final-format report and evidence export
-  -> deliver the report to the business owner
+  -> owner opens the report at a private link
   -> recommend a re-check six to eight weeks later
 ```
 
+Payment and the private link are Phase 3. Everything else in that flow is
+Phase 1 and is what is being built now.
+
 The `src/` landing page keeps the previous Nuave website as its visual baseline,
 but its English and Indonesian copy still describes the agency-facing raw-MVP
-offer. That copy now contradicts the customer defined in
-[`docs/VISION.md`](./docs/VISION.md) and needs rewriting in Indonesian for the
-business owner; treat it as a known gap, not as aligned. Its report preview is
-explicitly illustrative and contains no client result or performance claim.
+offer. That copy contradicts the customer defined in
+[`docs/VISION.md`](./docs/VISION.md) and is rewritten in Indonesian for the
+business owner in Phase 4; treat it as a known gap, not as aligned. Its report
+preview is explicitly illustrative and contains no client result or performance
+claim.
 
 ## Development
 
 The implemented application includes the existing bilingual Next.js landing
 page and a local `/audit` workflow. The workflow has no database, payments,
-customer accounts, public rate limiting, or hosted report access.
+customer accounts, public rate limiting, or hosted report access. Those are
+Phase 3, except hosted report access at an unguessable link, which Phase 1
+needs so a run can be closed and reopened.
 
 Use Node.js 22 and npm. From a clean checkout:
 

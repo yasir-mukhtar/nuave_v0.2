@@ -1,13 +1,13 @@
 # Nuave audit method
 
-> Status: **Current self-service workflow experiment**
-> Updated: 2026-08-08
+> Status: **Current audit method**
+> Updated: 2026-08-09
 >
 > Customer context: Nuave's customer is the owner of a small or medium
-> Indonesian business, ordering an audit of their own business. The retained
-> dental work is methodology evidence, not proof that another vertical is
-> supported. This document derives from [`VISION.md`](./VISION.md); where they
-> disagree, the vision governs.
+> Indonesian business, ordering an audit of their own business. Completed work
+> in earlier verticals is methodology evidence, not proof that another vertical
+> is supported. This document derives from [`VISION.md`](./VISION.md); where
+> they disagree, the vision governs.
 
 ## Purpose
 
@@ -23,9 +23,9 @@ recorded time. Results can vary by system, model, date, location, language, and
 conversation context. The audit is not a permanent, universal, or personalized
 AI ranking.
 
-## Raw-MVP scope
+## Scope of one audit
 
-For the current sample, use:
+Every run uses:
 
 - one exact, verified business;
 - one user-reviewed ten-question pack from the current prompt method, written
@@ -48,9 +48,9 @@ separate, encouraged activity: the score band must be wider than that
 variation, and it has never been measured. Record such repeats as variance
 measurement, not as additional observations feeding the reported counts.
 
-The completed EXP-R1 dental run used a different five-question, two-system
-method. Preserve its recorded scope when citing that evidence; do not silently
-convert its observations into the current ten-question method.
+Completed runs from earlier cycles used a different five-question, two-system
+method. Preserve their recorded scope when citing that evidence; do not silently
+convert those observations into the current ten-question method.
 
 ## Confirm the business first
 
@@ -78,7 +78,7 @@ repository skill. The user review gate must confirm that:
   inflating discovery;
 - every business, service, location, and competitor fact is verified;
 - the location is expressed the way local customers would say it; and
-- regulated, clinical-quality, medical-advice, or unsupported superiority
+- regulated, professional-advice, service-quality, or unsupported superiority
   requests are excluded.
 
 ## Capture only what the report needs
@@ -96,8 +96,10 @@ For every AI response, save:
 - factual conflicts, missing information, or uncertainty; and
 - failure or unavailable-source notes.
 
-A simple document, table, or spreadsheet is enough. Do not create a database or
-schema solely for the first run.
+Capture is part of the pipeline, not a side note: the run must retain this
+itself, so a report can be regenerated and a re-check can replay the same
+question pack verbatim. Do not depend on browser session state for anything a
+re-check will need.
 
 Use the following terms consistently:
 
@@ -141,9 +143,9 @@ Keep three layers separate:
 
 Example:
 
-- Observation: the official service page lists teeth cleaning, but one AI
+- Observation: the official service page lists a priority service, but one AI
   response cited a directory that omitted it.
-- Interpretation: the clinic's service information may not be equally clear
+- Interpretation: the business's service information may not be equally clear
   across sources used by the tested system.
 - Action: make the service description consistent on the official website and
   priority business profiles, then verify the updates directly.
@@ -165,7 +167,7 @@ questions were valid, and do not invent a cause.
 
 ## Report format
 
-Use this five-section sequence for the sample:
+Use this five-section sequence for every report:
 
 1. **Main Result:** report identity, tested scope, visible counts with their
    denominators, the score band and its components, separate
@@ -219,7 +221,7 @@ change.
 - Generate no separate methodology narrative. Build that section from recorded
   run facts so it stays short and consistent.
 
-New outputs identify both `nuave-report-v2` and the writing-standard version.
+New outputs identify both `nuave-report-v3` and the writing-standard version.
 The evidence export retains those versions and the complete underlying
 evidence.
 
@@ -279,7 +281,7 @@ before treating the generated report as usable sample evidence:
 - failed, contradictory, and missing results remain visible;
 - no statement implies permanent ranking, consumer-interface equivalence, a
   peer benchmark that has not been earned, or a forecast of future results;
-- no clinical-quality, treatment, safety, lead, or revenue claim is made;
+- no service-quality, treatment, safety, lead, or revenue claim is made;
 - each action is specific, evidence-backed, realistically controllable, and has
   an owner and completion check;
 - permissions cover any external use of business identity, quotes,
@@ -301,9 +303,9 @@ not silently rewrite a provider answer or prior delivered report.
 - Use only the public business information the audit needs and record its
   source and observation date.
 - Label owner-supplied business facts until verified.
-- Do not collect patient data or send customer contact, payment, private
-  business records, access tokens, or other unnecessary personal data to an AI
-  provider.
+- Do not collect regulated personal records, and do not send customer contact,
+  payment, private business records, access tokens, or other unnecessary
+  personal data to an AI provider.
 - Keep API keys and account credentials outside reports and repository files.
 - Keep raw provider responses restricted when they include unnecessary personal
   information or provider metadata.
@@ -315,9 +317,12 @@ not silently rewrite a provider answer or prior delivered report.
 
 If sensitive personal information is received, stop processing it, restrict
 access, do not copy it into another tool or model, and escalate to the founder.
-Do not promise permanent report hosting or indefinite data retention.
+Report links are private and finite. State the retention period; do not promise
+permanent report hosting or indefinite data retention.
 
 Before accepting paid orders, use a reliable payment method, state the delivery
 promise and limitations, provide a correction or remedy path, and disclose the
-minimum applicable privacy and retention terms. Expand these controls when real
-orders reveal a need; do not build an enterprise compliance system first.
+minimum applicable privacy and retention terms. These are the Phase 3 checklist
+in [`VISION.md`](./VISION.md) and must exist before any owner outside this
+repository uses the product. Expand them when real orders reveal a need; do not
+build an enterprise compliance system first.

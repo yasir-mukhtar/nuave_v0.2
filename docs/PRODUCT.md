@@ -1,7 +1,7 @@
 # Nuave product
 
 > Status: **Current product direction**
-> Updated: 2026-08-08
+> Updated: 2026-08-09
 >
 > This document describes the current customer, offer, promise, journey, and
 > non-goals. It derives from [`VISION.md`](./VISION.md), which states why Nuave
@@ -57,7 +57,9 @@ scientifically derived one.
 
 One founder-approved price per audit. No public tiers, subscriptions, bundles,
 credits, or volume plans before real purchasing behaviour supports them. The
-former Rp149,000 clinic price must not be carried forward as an anchor.
+Rp149,000 price from the v1 pilot must not be carried forward as an anchor. The
+price is chosen when checkout is built, because a checkout needs a number, and
+stays provisional until strangers respond to it.
 
 ## How results are reported
 
@@ -77,7 +79,12 @@ definitions are published in the report and versioned; a re-check may only
 compare scores computed under the same version. No peer benchmark is stated
 until enough businesses in a category have been measured to state one honestly.
 
-## Minimum customer journey
+## Customer journey
+
+The journey below is the target. It is built in the order set out in
+[`VISION.md`](./VISION.md): the measurement path first (steps 4 to 6), then
+payment and report persistence (step 3), then one polish pass across all of it,
+then owners. Steps 1 and 2 are how an owner arrives, and are not automated.
 
 ### 1. Demonstrate before selling
 
@@ -102,8 +109,8 @@ entity an AI answer refers to.
 ### 3. Offer and payment
 
 State one price, what the report includes, delivery timing, and limitations.
-Confirm payment before starting the personalised audit. A payment link is
-sufficient for the raw MVP.
+Confirm payment before starting the personalised audit. A hosted payment link is
+enough; no account is required to buy.
 
 ### 4. Intake
 
@@ -128,7 +135,8 @@ evidence.
 
 ### 6. Delivery
 
-Deliver a short, downloadable, Indonesian report containing:
+Deliver a short, downloadable, Indonesian report at a private link the owner can
+return to, containing:
 
 - the headline counts with denominators, and the score band;
 - what was tested;
@@ -138,7 +146,8 @@ Deliver a short, downloadable, Indonesian report containing:
 - the top three recommended actions; and
 - sources, limitations, and the recommended re-check point.
 
-A web application is optional. A useful report is the product.
+The report is produced by the pipeline, not assembled by hand. A run that needs
+a person to rescue it mid-way is a defect, not a delivery style.
 
 ### 7. Re-check
 
@@ -163,8 +172,13 @@ The workflow uses public web sources, an owner-confirmed brief, AI observations
 with web search, automated evidence checks, and a report generated from the
 retained observations.
 
-Build software only when it removes a problem observed in a real delivery. Do
-not build infrastructure for a hypothetical operation.
+The intake-to-report path is the product surface and is built before anything is
+sold. Everything around it — dashboards, client management, integrations,
+multi-vertical support — is built only to remove a problem observed in a real
+delivery.
+
+Two steps inside the run stay under human review and are not automated away:
+confirming the business facts, and approving the ten questions.
 
 ## Non-goals
 
@@ -174,7 +188,7 @@ not build infrastructure for a hypothetical operation.
 - an exact-integer score, or a peer benchmark before it is earned;
 - clinical-quality assessment or medical recommendations;
 - a full traditional SEO audit or automatic optimisation tool;
-- customer accounts or client-management systems;
+- client-management systems, team accounts, or any dashboard;
 - an agency, reseller, or white-label offer at this stage;
 - broad multi-vertical or multi-city support before one works; and
 - replacing the owner's implementation work.

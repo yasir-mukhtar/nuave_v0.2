@@ -1,7 +1,7 @@
 # Nuave product vision
 
 > Status: **Highest-level product document**
-> Updated: 2026-08-08
+> Updated: 2026-08-09
 
 ## How to use this document
 
@@ -93,7 +93,7 @@ roadmap.
 
 ## What we believe
 
-These eight principles are the operative part of this document. Downstream
+These seven principles are the operative part of this document. Downstream
 work should cite them by name.
 
 **1. Evidence before advice.** Our recommendations will often resemble good
@@ -166,10 +166,6 @@ Three further rules:
   the single most valuable line in the report and the easiest one to
   fabricate. It stays out until it is earned.
 
-**8. Manual until it hurts.** Build software only to remove a problem observed
-in a real delivery. A useful report is the product. A workflow that produces
-it is convenience.
-
 ## Positioning
 
 For Indonesian business owners who cannot see whether AI recommends them,
@@ -231,54 +227,81 @@ of these.
 
 ## How we get there
 
-The vision above is not the current state. The path to it is deliberately
-narrow, and the near-term steps are constrained by the fact that Nuave is one
-person with no customers.
+Nuave is one person with no customers, and that person's fastest work is
+building and designing the product. So we build the whole journey before we sell
+any of it: make it work, make it buyable, make it good, then show it to people.
 
-**Phase 1 — one true artefact.** Produce a single credible sample report by
-hand, from real observations, without depending on the automated workflow.
-The sample is the asset that unlocks everything else, and it does not require
-the pipeline to work.
+Each phase finishes before the next starts.
 
-**Phase 2 — one vertical, one city.** Choose a single business category in a
-single area. Narrow scope sharpens the question set and the competitor set,
-and makes word of mouth compound. Run a small number of unbranded questions
-across a list of candidate businesses, and approach the ones that do not
-appear with the actual observed answer.
+**Phase 1 — the measurement path works end to end.** A business goes in at the
+intake form and a finished report comes out. Nobody steps in mid-run. No account
+and no checkout yet; the report sits at an unguessable link. Rough copy and
+unstyled screens are fine here. A broken or manual step is not. Question
+generation and report synthesis have both failed live, so each needs a
+deterministic Indonesian fallback that cannot fail. The human review steps inside
+the run — confirming facts, approving questions — stay. On the first real run,
+re-ask two or three questions to measure how much answers vary between runs.
+Without that number the score bands cannot be set honestly.
 
-**Phase 3 — one price, tested.** Set one founder-approved price for one audit.
-No tiers, bundles, credits, or volume plans until real purchasing behaviour
-justifies them.
+**Phase 2 — read one real report. This is a gate.** Read the pipeline's first
+report twice: once as an owner who has never heard of this, once as someone
+trying to pull it apart. If there is no finding worth paying for, the method is
+wrong and design will not fix it. Stop and fix the method. Everything after this
+phase is cancelled until it passes. (Principles 1 and 3.)
 
-**Phase 4 — the re-check.** Deliver a second measurement to a business that
-acted on the first. This is the first moment the recurring model is real
-rather than theoretical, and the first entry in the before-and-after corpus.
+**Phase 3 — make it buyable.** Add a way to pay for one audit, and a way for
+reports to persist and be found again. A checkout needs a number, so set one
+price for one audit and treat it as provisional. No tiers, bundles, credits, or
+volume plans. Real people on the system also means rate limits, cost controls,
+privacy terms, and a stated way to correct a mistake.
 
-**Phase 5 — earn the benchmark.** Once enough businesses in the chosen
-category have been measured, the score can carry a peer comparison. That is
-the point at which the report answers the owner's real question — *am I
-normal?* — and the point at which the accumulated evidence starts to compound
-into something a competitor cannot copy.
+**Phase 4 — polish every touchpoint, in one pass.** Landing page, intake,
+waiting state, report, checkout, every message. Designed properly, written in
+Indonesian an owner would use themselves. This comes last among the build
+phases, because polishing one screen while its neighbours still move is work
+done twice. (Principle 5.)
 
-**Phase 6 — automate what hurt, and open the white-label layer.** Only after
-several real deliveries, build the workflow around the parts that actually
-consumed time. Widen engine coverage, verticals, and geography only where a
-real customer conversation demanded it. A reseller offer for agencies and
+**Phase 5 — show it to owners we know.** One at a time, watching them use it
+rather than describing it. Two things are being tested: do they understand the
+finding without being taught the category, and is anything in the report new to
+them. A friend's compliment is not a purchase. Ask what they would pay anyway.
+
+**Phase 6 — sell to strangers.** Pick one vertical in one city. Run a few
+unbranded questions across a list of businesses first, then approach the ones
+that did not appear with the answer we observed. The first message is a finding,
+not a pitch. This is the first real demand evidence, and the first real test of
+the price.
+
+**Phase 7 — the re-check.** A second measurement for a business that acted on
+the first. The recurring model becomes real here, and the before-and-after
+corpus starts.
+
+**Phase 8 — earn the benchmark.** Once enough businesses in one category are
+measured, the score can carry a peer comparison. That answers the owner's real
+question: am I normal?
+
+**Phase 9 — widen, and open the white-label layer.** More engines, verticals,
+and cities only where a customer asked. The reseller offer for agencies and
 freelancers belongs here, once direct demand is understood.
 
-Engine coverage follows the same discipline. We begin with ChatGPT, named
-honestly and precisely. We do not claim to cover "AI" while testing one
-system. Google's assistant surfaces matter enormously in an Android-dominant
-market, and covering them is a stated obligation of this vision — an
-acknowledged debt, not an optional extra.
+Engine coverage follows the same rule. We start with ChatGPT and name it. We do
+not say we cover "AI" while testing one system. Google's assistant surfaces
+matter in an Android-dominant market; covering them is a debt this vision
+acknowledges, not an optional extra.
+
+**What this costs us.** We may polish and price something nobody wants. We take
+that risk because most of the measurement path already exists, and because a
+hand-delivered report does not test what we intend to sell. Phase 2 is the
+containment: if the first report holds nothing worth paying for, nothing after
+it happens.
 
 ## What we do not know
 
 Stated plainly so that no downstream document treats these as settled.
 
 - Whether Indonesian business owners will pay for this at all, or at what
-  price. The former Rp149,000 clinic price must not be carried forward as an
-  anchor.
+  price. The Rp149,000 price from the v1 pilot must not be carried forward as
+  an anchor.
 - Whether an owner who receives a report will act on it, or will read it,
   agree, and do nothing. If this fails, the product needs an implementation
   path we do not currently have.

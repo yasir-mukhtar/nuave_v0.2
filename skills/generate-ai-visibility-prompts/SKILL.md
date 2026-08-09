@@ -1,26 +1,22 @@
 ---
 name: generate-ai-visibility-prompts
-description: Generate, revise, or quality-check a structured ten-question AI visibility prompt pack for any verified client brand or business, using a universal Intent-5 matrix with five unbranded and five branded questions. Use for agencies, freelancers, and consultants preparing brand-specific questions for later independent execution in ChatGPT across local services, ecommerce, B2B, software, professional services, or other reviewed categories. Do not use the universal skill when a dedicated vertical skill applies, or to execute questions, analyze answers, calculate scores, or write the audit report.
+description: Generate, revise, or quality-check a structured ten-question AI visibility prompt pack for one verified Indonesian business, using the Intent-5 matrix with five unbranded and five branded questions. Questions are written in natural Indonesian for later independent execution in ChatGPT, across local services, ecommerce, B2B, software, professional services, or other reviewed categories. Do not use it to execute questions, analyze answers, calculate scores, or write the audit report.
 ---
 
 # Generate Brand AI Visibility Prompts
 
-Create one reviewable ten-question prompt pack for one exact, verified brand
-scope. Tailor the customer language to the brand's real category and market
-without favoring the brand or inventing facts.
+Create one reviewable ten-question prompt pack for one exact, verified business.
+Write the questions in natural Indonesian, as a real Indonesian customer would
+type them. Tailor the language to the business's real category and market
+without favouring it or inventing facts.
 
-## Load the universal context
+## Load the context
 
 Read
 [`../../docs/PROMPT_GENERATION_CONTEXT.md`](../../docs/PROMPT_GENERATION_CONTEXT.md)
 completely before generating or revising a pack. Treat it as the source for the
 required inputs, Intent-5 matrix, natural-language rules, safety boundaries, and
 acceptance checks.
-
-If the client is a dental clinic and the task is a dental-specific audit or
-methodology experiment, use
-[`generate-dental-clinic-ai-visibility-prompts`](../generate-dental-clinic-ai-visibility-prompts/SKILL.md)
-instead.
 
 If the context is missing or conflicts with this skill, stop and report the
 conflict. Follow the newest founder-approved decision when the decision log
@@ -62,7 +58,7 @@ invent a missing customer need, comparison criterion, competitor, location,
 offering, price, policy, or conversion action.
 
 Never request private customer records, sensitive personal data, confidential
-business data, or patient information.
+business data, or regulated personal records.
 
 If required inputs are missing, ambiguous, contradictory, or unsafe, return
 only:

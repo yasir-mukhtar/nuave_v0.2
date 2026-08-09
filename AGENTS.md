@@ -1,13 +1,15 @@
 # Nuave agent instructions
 
-## Default mode: raw MVP
+## Default mode: build the pipeline
 
 Start with [`README.md`](./README.md) and [`docs/NOW.md`](./docs/NOW.md). Load
 only the product, audit, experiment, or GTM document needed for the task. Do not
 load all historical planning by default.
 
-Optimize for one functional customer touchpoint or one piece of real evidence.
-Prefer a manual working flow over a generalized system.
+The current deliverable is one working path from intake form to downloadable
+report, per Phase 1 in [`docs/VISION.md`](./docs/VISION.md). Optimize for that
+path working end to end. Prefer the smallest thing that removes a manual step
+from it over a generalized system that serves a hypothetical one.
 
 ## Working rules
 
@@ -16,21 +18,24 @@ Prefer a manual working flow over a generalized system.
 3. Prefer existing tools, manual review, and small samples.
 4. Do not add roadmaps, frameworks, schemas, trackers, or architecture unless
    the current deliverable cannot work without them.
-5. Do not solve scale, automation, multi-city, multi-vertical, dashboard, or
-   subscription problems during raw-MVP work.
+5. Do not solve scale, multi-city, multi-vertical, dashboard, or subscription
+   problems yet. Automating the intake-to-report path is in scope; automating
+   anything around it is not.
 6. Use real data. Record the source, query, system or model, and observation
    date when they affect a report claim.
 7. Separate observed evidence, Nuave interpretation, and recommended action.
-8. Never fabricate customer proof, clinic facts, AI results, conversion data,
+8. Never fabricate customer proof, business facts, AI results, conversion data,
    urgency, causation, rankings, or guarantees.
-9. Do not collect patient data or make claims about clinical quality.
+9. Do not collect medical, legal, financial, or other regulated personal
+   records, and do not make claims about the quality of a business's actual
+   service.
 10. Keep customer contact, payment details, credentials, access tokens, and
     sensitive free text out of model prompts, reports, analytics, and Git.
 11. Use only the public business information an audit needs. Label
     buyer-supplied facts, minimize copied source content, and keep raw provider
     responses in restricted evidence storage when they contain unnecessary
     personal information or provider metadata.
-12. If patient or other sensitive personal data is received, stop processing
+12. If sensitive personal data is received, stop processing
     it, restrict access, do not copy it into another tool, and tell the founder.
 13. Preserve existing user changes. Do not delete or broadly rewrite files
     merely to make the repository look cleaner.

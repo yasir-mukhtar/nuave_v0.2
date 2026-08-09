@@ -1,14 +1,15 @@
-# Nuave universal brand prompt-generation context
+# Nuave prompt-generation context
 
-> Status: **Working product context for the universal brand prompt pack**
+> Status: **Working product context for the ten-question prompt pack**
 >
-> Updated: 2026-07-31
+> Updated: 2026-08-09
 
 ## Purpose
 
 This document defines how to generate a ten-question AI visibility prompt pack
-for one verified client brand. It supports agencies, freelancers, and marketing
-consultants whose clients may operate in different industries.
+for one verified business. The audited business is the buyer's own business.
+The matrix is category-agnostic so that one method covers the range of small and
+medium Indonesian businesses without a new framework per vertical.
 
 The
 [`generate-ai-visibility-prompts`](../skills/generate-ai-visibility-prompts/SKILL.md)
@@ -19,11 +20,13 @@ matrix fits every industry or that Nuave can safely deliver a complete audit for
 every brand type. Regulated, sensitive, or unusually complex categories still
 require category-specific review.
 
-The preserved dental method lives in
-[`DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md`](./DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md)
-and uses the separate
-[`generate-dental-clinic-ai-visibility-prompts`](../skills/generate-dental-clinic-ai-visibility-prompts/SKILL.md)
-skill.
+Questions are written in natural Indonesian, as a real Indonesian customer would
+type them, not translated from an English template. A deterministic Indonesian
+template set is retained as the guaranteed fallback so this stage cannot
+hard-fail.
+
+An earlier vertical-specific method is retained in the repository as history.
+It is not part of the current direction.
 
 ## Product boundary
 
