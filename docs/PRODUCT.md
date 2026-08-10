@@ -10,15 +10,19 @@
 ## Product in one sentence
 
 Nuave is an AI visibility audit for small and medium Indonesian businesses. It
-shows the owner what AI assistants actually say when a customer asks about
-their kind of business in their area, what to fix, and — on a later re-check —
-what changed.
+shows the person responsible for marketing how the business appears in defined
+AI-assisted searches, what to improve, and — on a later re-check — what
+changed.
 
 ## Customer
 
 The customer is the owner or marketing decision-maker of a small or medium
 Indonesian business that depends on being chosen locally. The audited business
 is the customer's own business.
+
+The initial focus is one category and location where customers research and
+compare options before choosing, and where accurate representation could
+materially affect consideration.
 
 Their practical question is:
 
@@ -30,12 +34,12 @@ not want a monitoring tool. They want that question answered, and they want to
 know what to do about the answer.
 
 This direction is a working launch hypothesis. Nuave has not proven that
-Indonesian business owners will pay, act on the report, or return for a
-re-check.
+Indonesian business decision-makers will pay, act on the report, or return for
+a re-check.
 
 Agencies, freelancers, and marketing consultants are a deliberate later layer.
 A white-label offer for people who resell marketing services is a credible
-second business, but it is deferred until direct owner demand is proven or
+second business, but it is deferred until direct-business demand is proven or
 disproven. If one approaches us, we serve them; we do not market to them.
 
 ## Promise
@@ -48,8 +52,8 @@ outcomes, and does not forecast improvement.
 
 ## Current offer
 
-One audit for one verified business, delivered as a report the owner can read
-in ten minutes, in Indonesian.
+One audit for one verified business, delivered as a report its marketing
+decision-maker can read in ten minutes, in Indonesian.
 
 A re-check of the same business after six to eight weeks, showing what changed,
 is the recurring offer. The interval is a recommended cadence, not a
@@ -65,13 +69,14 @@ stays provisional until strangers respond to it.
 
 The headline is always the observed count with its denominator — *muncul di 3
 dari 10 pertanyaan*. Underneath it, the report gives an AI Visibility Score as
-a **band**, not an exact integer, so the owner has something to benchmark
+a **band**, not an exact integer, so the customer has something to benchmark
 against and improve.
 
 The band is deliberate. Each question is observed once and AI answers vary
-between runs, so a few points of movement means nothing. A band only changes
-when something real has changed, which means a re-check cannot show an owner an
-improvement they did not earn or a decline they did not cause.
+between runs, so a few points of movement may mean nothing. Its width must be
+calibrated against measured run-to-run variation so ordinary variation is not
+presented as improvement or decline. That calibration has not yet been
+completed.
 
 Discovery, recognition, recommendation, and information accuracy each keep
 their own denominator and appear beside the band. The formula and band
@@ -81,10 +86,10 @@ until enough businesses in a category have been measured to state one honestly.
 
 ## Customer journey
 
-The journey below is the target. It is built in the order set out in
-[`VISION.md`](./VISION.md): the measurement path first (steps 4 to 6), then
-payment and report persistence (step 3), then one polish pass across all of it,
-then owners. Steps 1 and 2 are how an owner arrives, and are not automated.
+The journey below is the target. [`NOW.md`](./NOW.md) and the newest
+founder-approved entry in [`DECISION_LOG.md`](./DECISION_LOG.md) own the current
+build order. Steps 1 and 2 describe how a customer arrives and are not
+automated.
 
 ### 1. Demonstrate before selling
 
@@ -123,7 +128,7 @@ Collect only what changes the report:
 - known competitors, optional; and
 - public facts that AI may get wrong, optional.
 
-Mark owner-supplied facts as such until verified. Do not collect customer
+Mark buyer-supplied facts as such until verified. Do not collect customer
 records, payment credentials, or other sensitive information the audit does not
 need.
 
@@ -135,8 +140,8 @@ evidence.
 
 ### 6. Delivery
 
-Deliver a short, downloadable, Indonesian report at a private link the owner can
-return to, containing:
+Deliver a short, downloadable, Indonesian report at a private link the named
+recipient can return to, containing:
 
 - the headline counts with denominators, and the score band;
 - what was tested;
@@ -149,6 +154,10 @@ return to, containing:
 The report is produced by the pipeline, not assembled by hand. A run that needs
 a person to rescue it mid-way is a defect, not a delivery style.
 
+The report must also work as a shareable decision artifact: the primary reader
+can use it to explain the evidence and recommended actions to the person who
+approves or carries out the work.
+
 ### 7. Re-check
 
 After six to eight weeks, offer to re-run the same questions and show what
@@ -157,20 +166,20 @@ verbatim, and the score to be computed under the same version.
 
 ### 8. Feedback
 
-Ask the owner:
+Ask the primary reader:
 
 1. Was anything in this report new to you?
 2. What was useful, confusing, missing, or unconvincing?
 3. Which action will you actually do, and by when?
 
-Record payment, objections, requested concessions, whether the owner acted, and
-re-check interest. Do not treat stated intent as completed action.
+Record payment, objections, requested concessions, whether the customer acted,
+and re-check interest. Do not treat stated intent as completed action.
 
 ## What happens behind the scenes
 
-The workflow uses public web sources, an owner-confirmed brief, AI observations
-with web search, automated evidence checks, and a report generated from the
-retained observations.
+The workflow uses public web sources, a customer-confirmed brief, AI
+observations with web search, automated evidence checks, and a report generated
+from the retained observations.
 
 The intake-to-report path is the product surface and is built before anything is
 sold. Everything around it — dashboards, client management, integrations,
@@ -191,22 +200,25 @@ confirming the business facts, and approving the ten questions.
 - client-management systems, team accounts, or any dashboard;
 - an agency, reseller, or white-label offer at this stage;
 - broad multi-vertical or multi-city support before one works; and
-- replacing the owner's implementation work.
+- replacing the customer's implementation work.
 
-The re-check is not monitoring. It is a second measurement the owner chooses to
-buy, at a cadence that matches how fast the underlying reality moves.
+The re-check is not monitoring. It is a second measurement the customer chooses
+to buy, at a cadence that matches how fast the underlying reality moves.
 
 ## Current success signals
 
 The raw MVP is promising when:
 
-- an owner reads the sample and understands the problem without being taught
-  the category;
-- an owner pays for one audit with no ranking or revenue guarantee offered;
-- the report contains a specific finding the owner did not already know and
+- a target decision-maker reads the sample and understands the problem without
+  being taught the category;
+- a target decision-maker pays for one audit with no ranking or revenue
+  guarantee offered;
+- the report contains a specific finding the reader did not already know and
   could not have got by casually asking a chatbot;
-- the owner completes at least one recommended action;
-- an owner buys a re-check, or refers another business; and
+- the report is shared with someone responsible for approving or completing an
+  action;
+- the customer completes at least one recommended action;
+- the customer buys a re-check, or refers another business; and
 - delivery effort per audit falls below what the price supports.
 
 These are questions to test, not claims that Nuave has proven them.

@@ -3,18 +3,18 @@
 > Status: **Current audit method**
 > Updated: 2026-08-09
 >
-> Customer context: Nuave's customer is the owner of a small or medium
-> Indonesian business, ordering an audit of their own business. Completed work
-> in earlier verticals is methodology evidence, not proof that another vertical
-> is supported. This document derives from [`VISION.md`](./VISION.md); where
-> they disagree, the vision governs.
+> Customer context: Nuave's customer is the owner or marketing decision-maker
+> of a small or medium Indonesian business, ordering an audit of the business
+> they are accountable for. Completed work in earlier verticals is methodology
+> evidence, not proof that another vertical is supported. This document derives
+> from [`VISION.md`](./VISION.md); where they disagree, the vision governs.
 
 ## Purpose
 
 The raw audit should turn real public information and observed AI responses
-into a short, honest report an Indonesian business owner can read in ten
-minutes. It needs enough structure to be trustworthy, but not enough machinery
-to delay the first useful result.
+into a short, honest report an Indonesian business decision-maker can read in
+ten minutes. It needs enough structure to be trustworthy, but not enough
+machinery to delay the first useful result.
 
 ## Measurement statement
 
@@ -123,7 +123,7 @@ information`, or `could not be tested`.
 For factual checks, prefer the exact official website and Google Business
 Profile listing, then the Indonesian sources that actually feed answers about
 this kind of business — marketplaces, sector directories, local news, and
-applicable public registries — then clearly labeled owner-supplied facts, then
+applicable public registries — then clearly labeled buyer-supplied facts, then
 other third-party sources. A source hierarchy built for another market will
 mis-weight what Indonesian AI answers are drawn from. Public availability
 does not prove accuracy, and a source returned by ChatGPT does not by itself
@@ -139,7 +139,7 @@ Keep three layers separate:
 
 1. **Observation:** what the AI response or public source actually showed.
 2. **Interpretation:** a qualified explanation of what the pattern may mean.
-3. **Action:** something the business owner can complete or delegate.
+3. **Action:** something the business can complete or delegate.
 
 Example:
 
@@ -189,7 +189,7 @@ Show before the main content:
 
 - audited business, exact branch or service area, and location;
 - audit date and number of questions; and
-- prepared for the business owner.
+- prepared for the ordering business and named recipient.
 
 An agency or reseller attribution line is not part of the standard report. It
 is a later white-label concern, not a field to design around now.
@@ -207,7 +207,7 @@ single runtime source for section word limits, sentence length, and wording to
 avoid. Increase the writing-standard version when those rules materially
 change.
 
-- Write in Indonesian, for a non-technical business owner.
+- Write in Indonesian, for a non-technical business decision-maker.
 - The word limits and banned-jargon list are currently calibrated for English
   only. An Indonesian contract version is required before an Indonesian report
   can be checked properly.
@@ -253,7 +253,7 @@ tested scope, evidence, limitations, source types, or correction path. Keep the 
 must render the same generated report version rather than a second
 interpretation.
 
-If a shorter internal draft is needed before the owner-facing version, it may
+If a shorter internal draft is needed before the customer-facing version, it may
 use this compact review shape:
 
 1. **Scope:** business, date, systems, questions, and limitations.
@@ -287,8 +287,8 @@ before treating the generated report as usable sample evidence:
 - permissions cover any external use of business identity, quotes,
   screenshots, or findings;
 - limitations and any partial coverage are prominent;
-- the report can be understood by a non-technical Indonesian business owner
-  reading it alone;
+- the report can be understood by a non-technical Indonesian business
+  decision-maker reading it alone;
 - Nuave-written fields pass the current plain-language limits, while exact
   questions and answer excerpts remain unchanged; and
 - the final screen and PDF, when both exist, show the same facts and report
@@ -302,7 +302,7 @@ not silently rewrite a provider answer or prior delivered report.
 
 - Use only the public business information the audit needs and record its
   source and observation date.
-- Label owner-supplied business facts until verified.
+- Label buyer-supplied business facts until verified.
 - Do not collect regulated personal records, and do not send customer contact,
   payment, private business records, access tokens, or other unnecessary
   personal data to an AI provider.
@@ -322,7 +322,6 @@ permanent report hosting or indefinite data retention.
 
 Before accepting paid orders, use a reliable payment method, state the delivery
 promise and limitations, provide a correction or remedy path, and disclose the
-minimum applicable privacy and retention terms. These are the Phase 3 checklist
-in [`VISION.md`](./VISION.md) and must exist before any owner outside this
-repository uses the product. Expand them when real orders reveal a need; do not
-build an enterprise compliance system first.
+minimum applicable privacy and retention terms. These safeguards must exist
+before any customer outside this repository uses the product. Expand them when
+real orders reveal a need; do not build an enterprise compliance system first.

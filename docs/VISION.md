@@ -1,328 +1,354 @@
 # Nuave product vision
 
-> Status: **Highest-level product document**
+> Status: **Canonical — founder approved**
 > Updated: 2026-08-09
+>
+> This document defines the highest-level product direction for Nuave. It
+> should guide product specifications, the audit method, design, language,
+> go-to-market work, the pitch deck, landing pages, and other downstream
+> decisions. It deliberately does not prescribe implementation phases, exact
+> question counts, score formulas, prices, or delivery intervals.
+
+## Vision
+
+Indonesian businesses can understand and improve how they are represented when
+people use AI to discover, compare, and choose businesses.
+
+## The change Nuave exists for
+
+People are beginning to ask AI assistants questions they previously took to a
+search engine, directory, social platform, or friend. The assistant does more
+than retrieve links: it summarizes businesses, compares alternatives, repeats
+public information, and may recommend a choice.
+
+For a business, this creates a new and opaque point of influence. It can be
+mentioned accurately, described poorly, omitted, or passed over in favor of a
+competitor without knowing that it happened. Ordinary analytics cannot show
+the answer because the interaction takes place outside the business's own
+website and AI responses can vary by question, system, model, time, language,
+location, and context.
+
+Small and medium businesses should not need specialist knowledge, continuous
+monitoring, or another complex dashboard to understand this new channel. They
+need a credible answer to a practical question:
+
+> When a potential customer asks AI about businesses like mine, how does my
+> business appear, and what should I improve next?
 
-## How to use this document
-
-This document states why Nuave exists, who it serves, what it sells, and what
-it believes. It is the parent of every other Nuave document. Product specs,
-the design system, tone and voice, go-to-market plans, the pitch deck, and the
-landing page should all be traceable to a section here.
-
-It does not describe current status or the next action. Those belong in
-[`NOW.md`](./NOW.md). It does not describe method. That belongs in
-[`AUDIT.md`](./AUDIT.md). Where this document and a dated founder-approved
-entry in [`DECISION_LOG.md`](./DECISION_LOG.md) conflict, the decision log
-wins and this document should be updated.
-
-This is a direction, not a claim of achievement. Nuave has zero paying v2
-customers. Everything below is what we are building toward and testing, not
-what we have proven.
-
-## The shift we are responding to
-
-People used to search and choose from a list. Increasingly, they ask and
-receive an answer. When someone asks an AI assistant for a dentist, a notary,
-a caterer, or a contractor, the assistant names two or three businesses. The
-rest are not ranked lower. They are absent.
-
-Indonesia is not a late market for this. As of mid-2026, published traffic
-estimates place Indonesia fifth in the world for ChatGPT usage, at roughly 216
-million monthly visits and around 29.6 million weekly active users, with
-Indonesia and the Philippines together accounting for about 6.7% of global
-traffic. These are third-party estimates rather than audited figures, but the
-scale is not in doubt: Indonesian consumers are already asking, in volume,
-today.
-
-Almost no Indonesian business can see any of it. There are no impressions, no
-clicks, no rank tracker, no dashboard. A business can be systematically passed
-over for months and receive no signal at all. It simply gets fewer calls and
-never learns why.
-
-**Nuave exists to make that invisible loss visible, and to prove it.**
-
-## Who we serve
-
-Our customer is the owner or marketing decision-maker of a small or medium
-Indonesian business that depends on being chosen locally.
-
-They are not analysts. They do not want a monitoring tool, and they will not
-log into a dashboard weekly. They want a specific and uncomfortable question
-answered: *when a customer asks AI about my kind of business in my area, do I
-come up, and if not, who does?*
-
-They are reachable because the problem can be demonstrated before it is sold.
-We can run the questions first and show them the answer. That is a finding
-about their business, not a pitch.
-
-Agencies, freelancers, and consultants are a later layer, not a parallel one.
-A white-label offer for people who resell marketing services is a credible
-second business, and our reports should stay clean enough that one could be
-handed to their own client unchanged. But it is deliberately deferred until
-direct demand from business owners is proven or disproven. Until then we do
-not market to them or design the product around them. If they come to us, we
-serve them.
-
-## What we sell
-
-**A credible AI visibility audit a business owner can act on, and the re-check
-that shows whether the fixes worked.**
-
-The audit is one bounded deliverable for one verified business: a set of real
-customer-style questions run against AI systems at a recorded time, with the
-observed answers retained as evidence, turned into a short report that a
-non-technical owner can read in ten minutes.
-
-The re-check is the same audit run again after the business has acted, showing
-what changed. That is the recurring product, and it is the only recurring
-promise the evidence supports.
-
-The six-to-eight week interval is a recommended cadence, not a scientifically
-derived one. It is roughly long enough for changes to a business's public
-information to be picked up by the sources AI systems draw on, and short
-enough that the owner still remembers what they changed. We should describe it
-that way and not imply more precision than we have.
-
-We are not a monitoring subscription. AI answers do not change meaningfully
-day to day, so charging monthly to watch them is selling motion rather than
-value. The established products in this category are all priced as monthly
-subscriptions, at rates an Indonesian small business will not pay. Being
-priced as a measurement instead is a deliberate position, not a gap in our
-roadmap.
-
-## What we believe
-
-These seven principles are the operative part of this document. Downstream
-work should cite them by name.
-
-**1. Evidence before advice.** Our recommendations will often resemble good
-digital hygiene: accurate listings, clear service pages, consistent public
-information. That advice is not our differentiator and we should not pretend
-it is. What no one else in Indonesia can give a business owner is the exact
-answer an AI gave about them, with the competitor it named instead. We sell
-proof. The advice follows from it.
-
-**2. Show what changed, never predict what will change.** We may only claim
-what we have observed. We do not forecast visibility gains, leads, ranking, or
-revenue. When we can eventually say "businesses that did X saw Y," it will be
-because we measured it across real re-checks — not before. Until then, the
-honest offer is: here is the gap, here is the fix, we will measure again and
-show you the difference.
-
-**3. One finding the owner feels, one report a professional can defend.** The
-first page must land in the gut of someone who is not technical. The rest must
-survive scrutiny from someone who is. These are not in tension; they are two
-layers of the same document. A report that is only rigorous does not sell, and
-a report that is only dramatic does not deserve to.
-
-**4. Measure, do not monitor.** The unit of value is a measurement at a stated
-moment, with a stated method and a stated limitation. A snapshot honestly
-labelled is worth more than a live number that implies a permanence AI search
-does not have.
-
-**5. Indonesian by construction.** Every customer-facing touchpoint is in
-Indonesian: the landing page, the intake, the questions we ask AI systems, the
-report, and every message we send. Indonesian sources, Indonesian competitor
-sets, Indonesian local search behaviour, Indonesian price expectations. Not an
-English product with a translated interface. The ten questions are generated
-in natural Indonesian for each business, not translated from an English
-template — a question that no Indonesian would actually type does not test
-anything real. English remains acceptable only for internal engineering
-artefacts that no customer sees.
-
-**6. State the limit in the same breath as the finding.** Every number carries
-its denominator. Appearance, mention, and recommendation are measured and
-reported separately. Branded recognition is never reported as unbranded
-discovery. A failed test is never counted as absence. Limitations sit beside
-the summary, not in fine print. Our credibility is the product; protecting it
-is not overhead.
-
-**7. Counts lead, the score supports.** The headline evidence is always the
-observed count with its denominator — *muncul di 3 dari 10 pertanyaan*. That
-is concrete, checkable, and impossible to inflate. Underneath it, Nuave reports
-an AI Visibility Score so the owner has something to benchmark against and
-improve, but the score is reported as a **band**, not an exact integer.
-
-The band is the honesty mechanism, not a compromise. Each question is observed
-once, and AI answers vary between runs, so a few points of movement means
-nothing. A band only changes when something real has changed — which means a
-re-check cannot show an owner an improvement they did not earn, or a decline
-they did not cause. Precision we do not have is not withheld reluctantly; it
-is withheld because claiming it would break the one product moment our
-recurring revenue depends on.
-
-Three further rules:
-
-- The score is a transparent composition, never a black box. Discovery,
-  recognition, recommendation, and information accuracy each keep their own
-  denominator and appear beside the band, so the reader can see what it is
-  made of.
-- The formula and the band definitions are published in the report and
-  versioned. A re-check may only compare scores computed under the same
-  version.
-- We state no peer benchmark until we have measured enough businesses in a
-  category to state one honestly. "Most businesses like yours score 40–60" is
-  the single most valuable line in the report and the easiest one to
-  fabricate. It stays out until it is earned.
-
-## Positioning
-
-For Indonesian business owners who cannot see whether AI recommends them,
-Nuave is an AI visibility audit that shows exactly what AI says about their
-business and what to do about it — unlike AI visibility monitoring platforms,
-which charge monthly to watch a number that rarely moves, are built for
-English-language markets, and are priced beyond what an Indonesian small
-business will pay.
-
-The category we intend to own is not "AI visibility tracking." It is **the
-AI visibility check-up**: periodic, evidence-led, locally grounded, and priced
-as a measurement rather than a subscription.
-
-## Where our advantage comes from
-
-Three things, in order of durability.
-
-**Local depth.** Well-funded international tools will out-build us on features
-indefinitely. They will not build Bahasa Indonesia question sets, Indonesian
-source ecosystems, local competitor resolution, or Indonesian local-search
-behaviour. That is the ground we can hold.
-
-**Method credibility.** In a category where anyone can screenshot a chatbot,
-the defensible asset is a method that separates what was observed from what it
-might mean, and that a business could show to a sceptical partner without
-embarrassment.
-
-**Accumulated before-and-after evidence.** Every re-check adds to a body of
-observations about what actually moves AI visibility in Indonesia. Over time
-that corpus is the thing no competitor can copy and the thing that eventually
-makes honest guidance possible.
-
-## What we are not
-
-- a permanent, universal, or personalised AI ranking;
-- a guarantee of inclusion, leads, revenue, or retention;
-- a monitoring subscription or a dashboard product;
-- a full traditional SEO audit or an automatic optimisation tool;
-- an agency, or a replacement for the implementation work itself;
-- a clinical, medical, legal, or regulatory quality assessment; and
-- a broad multi-vertical platform before one vertical demonstrably works.
-
-## How we will know this is working
-
-In order. Each one only counts once the one before it has happened.
-
-1. A business owner reads the sample and understands the problem without
-   being taught the category.
-2. A business owner pays for one audit, with no ranking or revenue guarantee
-   offered.
-3. The report contains at least one specific finding the owner did not already
-   know and could not have got by casually asking a chatbot themselves.
-4. The owner acts on at least one recommendation.
-5. The owner buys a re-check, or refers another business.
-6. Delivery effort per audit falls below what the price supports.
-
-A compliment, a click, or a request for a free report is not evidence of any
-of these.
-
-## How we get there
-
-Nuave is one person with no customers, and that person's fastest work is
-building and designing the product. So we build the whole journey before we sell
-any of it: make it work, make it buyable, make it good, then show it to people.
-
-Each phase finishes before the next starts.
-
-**Phase 1 — the measurement path works end to end.** A business goes in at the
-intake form and a finished report comes out. Nobody steps in mid-run. No account
-and no checkout yet; the report sits at an unguessable link. Rough copy and
-unstyled screens are fine here. A broken or manual step is not. Question
-generation and report synthesis have both failed live, so each needs a
-deterministic Indonesian fallback that cannot fail. The human review steps inside
-the run — confirming facts, approving questions — stay. On the first real run,
-re-ask two or three questions to measure how much answers vary between runs.
-Without that number the score bands cannot be set honestly.
-
-**Phase 2 — read one real report. This is a gate.** Read the pipeline's first
-report twice: once as an owner who has never heard of this, once as someone
-trying to pull it apart. If there is no finding worth paying for, the method is
-wrong and design will not fix it. Stop and fix the method. Everything after this
-phase is cancelled until it passes. (Principles 1 and 3.)
-
-**Phase 3 — make it buyable.** Add a way to pay for one audit, and a way for
-reports to persist and be found again. A checkout needs a number, so set one
-price for one audit and treat it as provisional. No tiers, bundles, credits, or
-volume plans. Real people on the system also means rate limits, cost controls,
-privacy terms, and a stated way to correct a mistake.
-
-**Phase 4 — polish every touchpoint, in one pass.** Landing page, intake,
-waiting state, report, checkout, every message. Designed properly, written in
-Indonesian an owner would use themselves. This comes last among the build
-phases, because polishing one screen while its neighbours still move is work
-done twice. (Principle 5.)
-
-**Phase 5 — show it to owners we know.** One at a time, watching them use it
-rather than describing it. Two things are being tested: do they understand the
-finding without being taught the category, and is anything in the report new to
-them. A friend's compliment is not a purchase. Ask what they would pay anyway.
-
-**Phase 6 — sell to strangers.** Pick one vertical in one city. Run a few
-unbranded questions across a list of businesses first, then approach the ones
-that did not appear with the answer we observed. The first message is a finding,
-not a pitch. This is the first real demand evidence, and the first real test of
-the price.
-
-**Phase 7 — the re-check.** A second measurement for a business that acted on
-the first. The recurring model becomes real here, and the before-and-after
-corpus starts.
-
-**Phase 8 — earn the benchmark.** Once enough businesses in one category are
-measured, the score can carry a peer comparison. That answers the owner's real
-question: am I normal?
-
-**Phase 9 — widen, and open the white-label layer.** More engines, verticals,
-and cities only where a customer asked. The reseller offer for agencies and
-freelancers belongs here, once direct demand is understood.
-
-Engine coverage follows the same rule. We start with ChatGPT and name it. We do
-not say we cover "AI" while testing one system. Google's assistant surfaces
-matter in an Android-dominant market; covering them is a debt this vision
-acknowledges, not an optional extra.
-
-**What this costs us.** We may polish and price something nobody wants. We take
-that risk because most of the measurement path already exists, and because a
-hand-delivered report does not test what we intend to sell. Phase 2 is the
-containment: if the first report holds nothing worth paying for, nothing after
-it happens.
-
-## What we do not know
-
-Stated plainly so that no downstream document treats these as settled.
-
-- Whether Indonesian business owners will pay for this at all, or at what
-  price. The Rp149,000 price from the v1 pilot must not be carried forward as
-  an anchor.
-- Whether an owner who receives a report will act on it, or will read it,
-  agree, and do nothing. If this fails, the product needs an implementation
-  path we do not currently have.
-- How wide the score bands need to be. They must be wider than the variation
-  between two identical runs, and we have not measured that variation yet. The
-  first real audits should re-ask a few questions purely to find out.
-- Whether a category benchmark can be stated after roughly twenty audits or
-  needs many more.
-- Which verticals the method transfers to without new review.
-- Whether re-checks will be bought, and on what interval.
-- How much of AI visibility a business can actually influence.
-
-## Changing this document
-
-This document should change slowly, and only when evidence contradicts it —
-not when a week goes badly. A material change to the customer, the promise,
-the product, or the principles requires a dated entry in
-[`DECISION_LOG.md`](./DECISION_LOG.md) recording what was believed, what was
-observed, and what changed as a result.
-
-The specific signal that would overturn the customer decision above: if
-business owners consistently understand the report, agree with it, and then
-take no action, the direct-to-owner model is incomplete and Nuave must either
-partner for implementation or sell to people who already do it.
+## Who Nuave serves
+
+Nuave serves the person accountable for marketing performance in a small or
+medium Indonesian business. That person may be the owner, a marketing lead, or
+another decision-maker responsible for how the business is discovered and
+understood.
+
+The initial focus is businesses whose customers research and compare options
+before choosing, and for which accurate representation during that process can
+materially affect consideration. Nuave is not intended for every Indonesian
+business from the beginning. Early product and market decisions should favor a
+narrow segment in which the problem is frequent, understandable, and worth
+acting on.
+
+The report may also be read by a founder, executive, or other budget holder.
+It must therefore help the primary user do two things: understand the evidence
+and communicate its significance to the people who approve action.
+
+This customer definition is a launch hypothesis, not a claim of proven demand.
+
+## Product promise
+
+Nuave shows a business how it appeared in a defined sample of AI-assisted
+searches, where its public representation is weak or inconsistent, and which
+actions deserve attention first.
+
+Nuave then enables the business to repeat a comparable measurement later and
+see what changed.
+
+In shorter form:
+
+> See how your business appears when customers ask AI, and know what to improve
+> next.
+
+The promise is bounded. Nuave reports observed evidence from named tests at a
+recorded time. It does not claim to reveal every answer every customer will
+receive, prove why an AI system produced an answer, or predict leads, revenue,
+rankings, or future inclusion.
+
+## The product is an improvement loop
+
+The report is Nuave's principal deliverable, but the report itself is not the
+ultimate value. The value is a repeatable path from uncertainty to informed
+action:
+
+1. **Define the business.** Establish the exact business, audience, location,
+   offers, and public facts that matter to the measurement.
+2. **Observe.** Ask realistic questions on a clearly named AI surface and
+   preserve the answers and sources.
+3. **Explain.** Turn those observations into a concise account of where the
+   business appeared, how it was presented, where competitors appeared, and
+   which information was absent, inconsistent, or inaccurate.
+4. **Prioritize.** Recommend a small number of actions that are supported by
+   the evidence and realistically controllable by the business.
+5. **Act.** The business or its chosen provider implements the changes. Nuave
+   does not need to become the implementation agency.
+6. **Re-measure.** Repeat a comparable test after the underlying information
+   has had time to change, and show the observed differences without claiming
+   unsupported causation.
+
+This loop distinguishes Nuave from a one-off collection of chatbot screenshots
+and from continuous monitoring software. Customers pay for useful measurement,
+interpretation, and comparison—not for the obligation to maintain another
+software habit.
+
+## Value created
+
+### For the person responsible for marketing
+
+Nuave should help them:
+
+- see whether the business appears in relevant tested situations;
+- distinguish being named from being actively recommended;
+- understand how the business is described and which public facts may be weak,
+  missing, inconsistent, or wrong;
+- see which competitors appeared in the same observations;
+- choose a small number of defensible next actions;
+- share the evidence with leadership or implementation partners; and
+- return later to a durable record rather than lose the result in a temporary
+  interaction.
+
+### For the business
+
+Nuave should replace vague concern with bounded evidence, make an emerging
+discovery channel discussable, and focus limited time and money on changes that
+have an observable basis.
+
+### What Nuave does not promise
+
+Nuave does not promise that an action will change an AI answer within a fixed
+number of weeks. It can recommend when to check again and report what changed.
+Forecasts will require evidence that does not yet exist.
+
+## Strategic position
+
+Nuave is not an AI ranking platform. It is an evidence-backed diagnostic and
+improvement product for AI-assisted discovery.
+
+Its intended differentiation comes from five choices:
+
+1. **Evidence before scoring.** Customers can see the questions, observed
+   answers, sources, dates, and conditions behind material conclusions.
+2. **Action before analytics.** The product reduces the result to the few
+   changes worth considering first instead of presenting a dashboard full of
+   metrics.
+3. **Indonesia before generic global coverage.** Questions, language, sources,
+   business context, and recommendations should reflect how Indonesian
+   customers and businesses actually communicate.
+4. **Honest scope before impressive claims.** Nuave names what was tested and
+   what the result cannot prove. A sampled observation is never presented as a
+   permanent or universal ranking.
+5. **Change over time before constant surveillance.** Nuave measures again
+   when a customer has a reason to expect meaningful change, rather than
+   manufacturing urgency through daily fluctuations.
+
+## Product principles
+
+### 1. Observed evidence comes first
+
+Every material finding begins with something observed in an AI response or a
+relevant public source. Nuave clearly separates observation, interpretation,
+and recommended action. It does not invent a cause when the evidence only
+shows a correlation or gap.
+
+### 2. Trust is more valuable than apparent precision
+
+Counts must retain their denominators. Failures, contradictions, and missing
+evidence remain visible. Nuave avoids exact-looking scores, rankings,
+benchmarks, and forecasts until their reliability has been demonstrated.
+
+### 3. The result must lead to a decision
+
+A report succeeds when the reader knows what matters, why it matters, and what
+to do next. More measurements, charts, or prose are not inherently more
+valuable. Recommendations must be specific, prioritized, evidence-linked, and
+within the realistic control of the business.
+
+### 4. Indonesian is a product requirement
+
+Customer-facing questions, explanations, recommendations, and support should
+be natural to an Indonesian reader, not merely translated from English. Local
+business conventions and information sources are part of measurement quality,
+not cosmetic localization.
+
+### 5. The report is durable and shareable
+
+The result must remain privately accessible long enough to support internal
+discussion, implementation, and later comparison. A marketing lead should be
+able to bring it to leadership, return to it, and share it with the person who
+will carry out an action.
+
+### 6. Delivery is autonomous by default
+
+Each audit must be producible consistently without founder intervention or
+manual report assembly. Customers may confirm their business facts and approve
+what will be tested, but the measurement, analysis, validation, and report
+production form one automated product path.
+
+When the path lacks enough reliable evidence, it should fail clearly, produce
+an explicitly partial result when appropriate, or offer a defined remedy. It
+must never rely on invisible manual rescue or lower the evidence standard to
+complete a report.
+
+Automation is not permission to remove judgment from product development.
+Customer feedback and failed or weak reports should be used to improve the
+method between deliveries without making each delivery dependent on the
+founder.
+
+### 7. Comparable change requires a stable method
+
+A later measurement is valuable only when the customer can understand what
+remained comparable and what changed. Nuave preserves the tested questions,
+method, evidence, and relevant versions. It discloses material differences
+instead of presenting incompatible runs as progress.
+
+### 8. Simplicity belongs on the customer side
+
+The method may require rigor behind the scenes, but the customer should receive
+a short, plain-language result that can be understood without learning a new
+analytics discipline. Technical detail should be available for trust without
+dominating the experience.
+
+### 9. Privacy and permission are part of trust
+
+Nuave collects only what the audit needs, protects private report access, and
+does not publish a business's identity, findings, or evidence without specific
+permission. Publicly available information is not automatically permission to
+use a business as public marketing material.
+
+## Product boundaries
+
+Nuave is not:
+
+- a permanent or universal measure of AI visibility;
+- a guarantee of recommendation, ranking, traffic, leads, revenue, or sales;
+- proof that a particular information gap caused an observed AI response;
+- a replacement for the business's implementation work or marketing provider;
+- a traditional SEO audit presented under a new name;
+- a daily monitoring dashboard designed to create engagement from noise;
+- an exact benchmark against peers before representative evidence exists;
+- a claim to cover every AI assistant, model, language, location, or customer
+  context; or
+- a reason to collect sensitive customer or business information that the
+  measurement does not need.
+
+These boundaries protect the product's credibility. They may be revisited only
+when observed customer needs and reliable evidence justify a broader promise.
+
+## Scope: focused beginning, broader destination
+
+The enduring problem is representation across AI-assisted discovery. The
+initial product should nevertheless test one honestly named surface, for one
+narrow customer segment, in a context Nuave can measure credibly.
+
+Starting with a selected ChatGPT measurement surface does not make Nuave a
+claim about every ChatGPT interaction or every AI product. Additional systems,
+locations, languages, or business categories should be added only when they
+materially improve a customer decision and the method can represent them
+honestly.
+
+The long-term opportunity is to become the trusted way Indonesian businesses
+understand and improve their representation wherever AI influences customer
+choice. Breadth is an outcome of earned measurement credibility, not the
+starting feature set.
+
+## Business model logic
+
+Nuave charges for a completed diagnosis and, when useful, a later comparable
+measurement. The business model should align revenue with moments of customer
+value rather than with frequent logins or artificial alert volume.
+
+A later measurement is a separate value event, not monitoring disguised as a
+subscription. The appropriate price, interval, packaging, and retention policy
+remain commercial hypotheses until customers demonstrate actual purchasing and
+return behavior.
+
+Direct service to the business keeps Nuave close to the underlying customer
+problem. Agencies, consultants, and other partners may become customers or
+distribution channels later, but Nuave should not design a reseller platform
+before the direct value of the diagnosis is understood.
+
+The economic requirement is firm even while pricing is open: a standard audit
+must be deliverable with sufficiently low marginal labor and provider cost to
+support a sustainable price for the target customer.
+
+## How Nuave knows it is creating value
+
+The product is working when customers consistently demonstrate that:
+
+- the report reveals a material fact or pattern they did not already know;
+- they understand the result without needing specialist interpretation;
+- they trust the conclusion because they can inspect its evidence and limits;
+- they share the report with someone responsible for approving or completing
+  an action;
+- they complete at least one recommended action;
+- they return for a comparable measurement or refer another business; and
+- Nuave can deliver the result autonomously at sustainable cost and quality.
+
+The strongest long-term signal is not report generation or account activity.
+It is a customer moving from evidence to action and later returning to learn
+what changed.
+
+## What remains to be proven
+
+Nuave's direction is coherent, but its market is not yet validated. The
+following remain explicit hypotheses:
+
+- the chosen Indonesian business segment recognizes AI-assisted discovery as
+  a problem worth paying to understand;
+- the report contains insight that is more useful than casually asking a
+  chatbot;
+- the marketing decision-maker can persuade leadership to act on the result;
+- recommended actions are feasible and specific enough to be completed;
+- customers return for a later measurement after acting;
+- one standardized measurement surface is credible enough for the initial
+  promise;
+- the method can distinguish meaningful change from ordinary response
+  variation; and
+- autonomous delivery can meet the evidence standard at a sustainable cost.
+
+Product development, go-to-market work, and customer research should reduce
+these uncertainties in roughly that order of importance. Internal technical
+completion is not evidence of customer demand.
+
+## Guidance for downstream work
+
+Every downstream document and artifact should be traceable to this vision:
+
+- **Product specifications** should strengthen the evidence-to-action loop,
+  autonomous delivery, durable access, or comparable re-measurement.
+- **Audit specifications** should protect identity, provenance, honest scope,
+  repeatability, and the boundary between observation and interpretation.
+- **Design systems** should make evidence, priority, limitations, and next
+  actions easy to scan. Trust and comprehension matter more than visualizing
+  activity.
+- **Tone and voice** should be plain, calm, specific, and respectful in natural
+  Indonesian. Nuave should sound like a careful adviser, never an alarmist or
+  an all-knowing authority.
+- **Go-to-market strategy** should demonstrate a real observed problem before
+  making a sales claim and should target people able to act on the result.
+- **Pitch decks and landing pages** should sell clarity, evidence, and useful
+  action—not fear, vanity scores, or guaranteed growth.
+- **Commercial decisions** should preserve trust and align payment with a
+  completed value event rather than force subscription behavior the problem
+  does not require.
+
+When a proposed feature, message, metric, or business model does not strengthen
+the customer's path from uncertainty to evidence, action, and comparable
+learning, Nuave should not pursue it without new evidence.
+
+## Product thesis
+
+AI-assisted discovery is too important for Indonesian businesses to remain
+invisible, but too variable to reduce to a permanent ranking. By turning a
+carefully bounded sample into durable evidence, prioritized action, and honest
+re-measurement, Nuave can make this new channel understandable and useful
+without pretending it is more certain than it is.

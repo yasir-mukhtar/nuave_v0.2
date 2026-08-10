@@ -7,9 +7,16 @@ only the product, audit, experiment, or GTM document needed for the task. Do not
 load all historical planning by default.
 
 The current deliverable is one working path from intake form to downloadable
-report, per Phase 1 in [`docs/VISION.md`](./docs/VISION.md). Optimize for that
-path working end to end. Prefer the smallest thing that removes a manual step
-from it over a generalized system that serves a hypothetical one.
+report, as defined in [`docs/NOW.md`](./docs/NOW.md). Optimize for that path
+working end to end. Prefer the smallest thing that removes a manual step from
+it over a generalized system that serves a hypothetical one.
+
+[`docs/INDEX.md`](./docs/INDEX.md) is the canonical document map, and
+[`docs/WORKFLOW.md`](./docs/WORKFLOW.md) governs fresh-session drafting,
+specifications, worker handoffs, and verification. For implementation work,
+read the approved specification named by `NOW.md` and only the additional
+context it requires. Do not implement a draft specification. If no approved
+spec is active, prepare or review the spec before broad implementation.
 
 ## Working rules
 
@@ -39,10 +46,17 @@ from it over a generalized system that serves a hypothetical one.
     it, restrict access, do not copy it into another tool, and tell the founder.
 13. Preserve existing user changes. Do not delete or broadly rewrite files
     merely to make the repository look cleaner.
+14. Do not read or use `archive/` unless the task names a specific archived
+    path for historical comparison or evidence. Archived material is not
+    authoritative or active.
 
 Material product decisions belong in `docs/DECISION_LOG.md`. Current status
 and the next action belong in `docs/NOW.md`. Update them only when the work
 actually changes those facts.
+
+A specification may refine a bounded capability but may not silently override
+`docs/VISION.md`, `docs/PRODUCT.md`, or the relevant domain guide. Escalate a
+conflict or missing product decision to the founder through the orchestrator.
 
 Before editing, briefly state the current objective, bounded deliverable, files
 you will touch, and any real blocker. At the end, validate the result, list the

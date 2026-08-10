@@ -7,9 +7,8 @@
 
 Get the measurement path working end to end: a business goes in at the intake
 form and a finished report comes out, with nobody stepping in mid-run. This is
-Phase 1 in [`VISION.md`](./VISION.md), and it is the blocking asset. Rough copy
-and unstyled screens are acceptable at this stage. A broken or manual step is
-not.
+the current pipeline build and the blocking asset. Rough copy and unstyled
+screens are acceptable at this stage. A broken or manual step is not.
 
 The compact report synthesis, carry-over guard, and null-extraction fallback
 pass offline. Question generation no longer calls any model: the ten questions
@@ -21,7 +20,8 @@ which still needs founder approval.
 
 For this immediate task, [`AUDIT.md`](./AUDIT.md) governs execution and review,
 and [`VISION.md`](./VISION.md) governs who the customer is, what is sold, the
-principles the work must follow, and the phase order.
+principles and boundaries the work must follow. This document and the newest
+founder-approved decision govern the current build order.
 
 ## What is known
 
@@ -29,20 +29,22 @@ principles the work must follow, and the phase order.
 - [`VISION.md`](./VISION.md) governs this repository. It sits above this
   document and below the newest founder-approved decision-log entry.
 - The build order is pipeline first, then payment and report persistence, then
-  one polish pass across every touchpoint, then owners we know, then strangers.
-  Phase 2 is a gate: if the pipeline's first real report holds no finding worth
-  paying for, everything after it stops until the method is fixed.
+  one polish pass across every touchpoint, then target customers we know, then
+  strangers.
+  A report-quality gate comes immediately after the pipeline: if its first real
+  report holds no finding worth paying for, everything after it stops until the
+  method is fixed.
 - The buyer is the owner or marketing decision-maker of a small or medium
   Indonesian business, approached directly. The audited business is the buyer's
   own business, not a client's.
 - The agency, freelancer, and consultant white-label layer is a later business,
-  deliberately deferred until direct owner demand is proven or disproven.
-- The working promise is to show an owner whether AI systems name their business
-  when a customer asks, with the observed answers as evidence, and what to do
-  about it.
-- The minimum delivery is a reviewed, downloadable report a non-technical owner
-  can read in about ten minutes, with a concise summary and neutral
-  presentation.
+  deliberately deferred until direct-business demand is proven or disproven.
+- The working promise is to show the person responsible for marketing whether
+  AI systems name their business when a customer asks, with the observed
+  answers as evidence, and what to do about it.
+- The minimum delivery is a reviewed, downloadable report a non-technical
+  business decision-maker can read in about ten minutes, with a concise summary
+  and neutral presentation.
 - Every customer-facing touchpoint moves to Indonesian: landing page, intake,
   the questions asked of AI systems, the report, and outreach messages. English
   remains acceptable only for internal engineering artefacts no customer sees.
@@ -56,18 +58,20 @@ principles the work must follow, and the phase order.
   prospect before any contact, then lead with the observed finding.
 - Nuave has zero paying v2 customers.
 - Pricing is open. The Rp149,000 price from the v1 pilot must not be carried
-  forward as an anchor. A price has to be chosen in Phase 3 because a checkout
-  needs a number; treat that price as provisional until strangers respond to it.
+  forward as an anchor. A price has to be chosen when checkout is built because
+  a checkout needs a number; treat that price as provisional until strangers
+  respond to it.
 - The universal brand prompt context and `generate-ai-visibility-prompts` skill
-  support varied business categories through one verified brand scope, five
-  unbranded questions, and five branded questions.
-- The universal matrix is a working method, not validated cross-industry proof.
-  Each business category still needs claims and report review.
+  are retained mechanisms for building one verified question pack with five
+  unbranded and five branded questions.
+- The active launch scope remains one vertical in one city until it works. The
+  universal matrix is not permission to claim cross-industry support; each new
+  category still needs claims and report review.
 - ChatGPT remains the named target product for prompt generation. Any later
   execution must record the exact surface honestly.
 - The local landing page describes the agency-facing raw-MVP offer in English
   and Indonesian. That copy contradicts the customer above. It is rewritten in
-  Phase 4, not now.
+  the later product-wide polish pass, not now.
 - A local `/audit` workflow covers official-website extraction, human fact
   confirmation, ten-question prompt review, independent OpenAI Responses API
   execution with web search, final-format report generation, A4 print/PDF, and
@@ -78,8 +82,9 @@ principles the work must follow, and the phase order.
   detailed findings in print from the same report data shown on screen.
 - The `/audit` workflow currently uses English from intake through prompt
   generation, API observations, the final report, and the evidence export. That
-  is a known gap against the Indonesian requirement above and must close inside
-  Phase 1, because an English report cannot pass the Phase 2 gate.
+  is a known gap against the Indonesian requirement above and must close in the
+  current pipeline build, because an English report cannot pass the
+  report-quality gate.
 - New reports use the versioned `plain-en-v1` writing contract: short
   customer-facing explanations, result-first wording, exact evidence excerpts,
   technical run details in the method section, and one protected language-only
@@ -87,8 +92,9 @@ principles the work must follow, and the phase order.
   version is required before an Indonesian report can be checked properly.
 - The workflow stores state only in the browser session. It has no account,
   database, payment, public rate limit, or hosted report access. Report
-  persistence and payment are Phase 3, and how reports persist — magic link,
-  permanent emailed link with no login, or a real account — is still open.
+  persistence and payment follow the report-quality gate, and how reports
+  persist — magic link, permanent emailed link with no login, or a real account
+  — is still open.
 - One founder-approved private live smoke test completed all ten observations
   with `gpt-5.6-luna` and low reasoning. The first report attempt was correctly
   blocked for an unsupported brand-appearance claim; a manual retry rendered a
@@ -162,13 +168,13 @@ principles the work must follow, and the phase order.
 
 ## What is not known
 
-- Whether Indonesian small and medium business owners will pay for one audit at
-  all.
+- Whether Indonesian small and medium business decision-makers will pay for one
+  audit at all.
 - What single price they will pay. The Rp149,000 v1 pilot price is not an
   anchor.
-- Whether an owner who receives a report acts on any recommendation, or reads
+- Whether a customer who receives a report acts on any recommendation, or reads
   it, agrees, and does nothing.
-- Whether an owner will buy a re-check, and on what interval.
+- Whether a customer will buy a re-check, and on what interval.
 - How wide the score bands need to be. They must be wider than the variation
   between two identical runs, and that run-to-run variation has not been
   measured.
@@ -181,8 +187,8 @@ principles the work must follow, and the phase order.
 
 ## Do now
 
-Phase 1 only. Everything below is one path: intake form to downloadable report,
-no human rescue.
+Current pipeline only. Everything below is one path: intake form to
+downloadable report, no human rescue.
 
 1. Fix question generation so it produces natural Indonesian questions, and keep
    a deterministic Indonesian template set as the guaranteed fallback so the
@@ -200,23 +206,27 @@ no human rescue.
 6. Run one real audit for one real Indonesian business, with founder approval
    for the ten observations. During that run, re-ask two or three questions to
    measure run-to-run variation and set the score band width from the result.
-7. Then Phase 2: read that report twice, as a sceptical owner and as a
-   professional. If it holds no finding worth paying for, stop and fix the
-   method before anything else.
+7. Then apply the report-quality gate: read that report twice, as a sceptical
+   customer and as a professional. If it holds no finding worth paying for,
+   stop and fix the method before anything else.
 
 ## Not now
 
-- payment, checkout, and report persistence beyond an unguessable link — Phase 3;
-- design polish, final copy, and the landing-page rewrite — Phase 4;
-- showing the product to any business owner — Phase 5;
-- outreach, pricing conversations, and selling — Phase 6;
+- payment, checkout, and report persistence beyond an unguessable link — after
+  the report-quality gate;
+- design polish, final copy, and the landing-page rewrite — after checkout and
+  persistence;
+- showing the product to any target customer — after the product-wide polish
+  pass;
+- outreach, pricing conversations, and selling — after known-customer review;
 - a white-label or agency reseller layer, including partner pricing, resale
   margins, and outreach to agencies or freelancers;
 - an agency dashboard, client management, or team accounts;
 - custom domains or advanced brand controls;
 - bulk imports, API access, or integrations;
 - automated recurring monitoring, or any subscription. The paid re-check is a
-  second measurement the owner chooses to buy and is not covered by this line;
+  second measurement the customer chooses to buy and is not covered by this
+  line;
 - complex credits, packages, or volume tiers;
 - broad multi-vertical support before one vertical and one city work;
 - an exact-integer visibility score, or any peer benchmark, before enough audits
@@ -224,16 +234,16 @@ no human rescue.
 - fabricated demand, business outcomes, results, or testimonials.
 
 Public exposure of the workflow is no longer a "not now". Rate limits, cost
-controls, privacy terms, and a correction or remedy path are the Phase 3
-checklist, and they must exist before any owner outside this repository touches
-the product in Phase 5.
+controls, privacy terms, and a correction or remedy path are prerequisites for
+external use, and they must exist before any customer outside this repository
+touches the product.
 
 ## Done for this cycle
 
 This cycle ends when the pipeline runs from intake form to downloadable
 Indonesian report without human rescue, one real report has been produced by it,
-and that report has been read against the Phase 2 gate with a written verdict on
-whether it holds a finding worth paying for.
+and that report has been read against the report-quality gate with a written
+verdict on whether it holds a finding worth paying for.
 
 Material changes to customer, offer, promise, or scope belong in
 [`DECISION_LOG.md`](./DECISION_LOG.md). Earlier vertical-specific and

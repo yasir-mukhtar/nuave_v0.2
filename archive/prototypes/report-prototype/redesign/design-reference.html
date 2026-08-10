@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuave Report — Design Reference Specimen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   NUAVE REPORT — DESIGN TOKENS
+   This block is the whole system. Nothing outside it invents values.
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  /* ── Ink (all derived from the navy cover) ── */
+  --ink-1:#0d1738;   /* headings, emphasis */
+  --ink-2:#3d4a6b;   /* body text */
+  --ink-3:#6b7794;   /* labels, captions, secondary */
+  --ink-4:#9aa4bd;   /* quiet numerals, disabled */
+
+  /* ── Surfaces ── */
+  --paper:#ffffff;
+  --band:#f7f8fb;    /* full-bleed section band */
+  --fill:#f4f6fa;    /* the ONLY box fill in the report */
+
+  /* ── Rules ── */
+  --rule:#e4e8f0;
+  --rule-strong:#ccd3e2;
+
+  /* ── Accent ── */
+  --accent:#533afd;
+  --accent-ink:#3a26c9;   /* purple that passes contrast as text */
+
+  /* ── Status (text colour only — never a filled pill) ── */
+  --good:#0f7a3d;
+  --watch:#8a5a12;
+  --gap:#b3261e;
+
+  /* ── Widths: two tiers, never a third ── */
+  --w-text:680px;    /* prose, callouts, evidence, actions */
+  --w-wide:960px;    /* tables, 3-up rows, cover */
+
+  /* ── Space: 8px base ── */
+  --s-1:8px;  --s-2:16px; --s-3:24px; --s-4:32px;
+  --s-5:40px; --s-6:56px; --s-7:72px; --s-8:96px; --s-9:128px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:"Inter",system-ui,sans-serif;
+  font-size:17px; line-height:1.7;
+  color:var(--ink-2); background:var(--paper);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ═══ LAYOUT ═══════════════════════════════════════════════ */
+.section{padding:104px var(--s-4)}   /* 104 top + 104 bottom = 208px between sections */
+.band{background:var(--band)}
+.wide{max-width:var(--w-wide);margin:0 auto}
+.text{max-width:var(--w-text)}
+.wide > .text{margin-left:0}
+
+/* ═══ TYPE ═════════════════════════════════════════════════ */
+.eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:var(--s-2);
+}
+h1{
+  font-family:"Instrument Serif",Georgia,serif;font-weight:400;
+  font-size:64px;line-height:1.05;letter-spacing:-.02em;color:var(--ink-1);
+}
+h2{
+  font-family:"Instrument Serif",Georgia,serif;font-weight:400;
+  font-size:40px;line-height:1.15;letter-spacing:-.015em;color:var(--ink-1);
+  margin-bottom:var(--s-4);
+}
+h3{
+  font-family:"Inter",sans-serif;font-weight:600;
+  font-size:19px;line-height:1.35;letter-spacing:-.01em;color:var(--ink-1);
+  margin-bottom:var(--s-2);
+}
+.lead{font-size:20px;line-height:1.6;color:var(--ink-2);margin-bottom:var(--s-4)}
+p{margin-bottom:var(--s-3)}
+p:last-child{margin-bottom:0}
+strong{color:var(--ink-1);font-weight:600}
+em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-size:1.08em}
+.caption{font-size:14px;line-height:1.5;color:var(--ink-3)}
+
+/* ═══ STATUS: a dot and a word. Never a filled pill. ═══════ */
+.status{display:inline-flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.status.is-good{color:var(--good)}
+.status.is-watch{color:var(--watch)}
+.status.is-gap{color:var(--gap)}
+
+.cost{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.cost.is-free{color:var(--good)}
+.cost.is-paid{color:var(--watch)}
+
+/* ═══ FINDINGS ROW — three columns, no cards ══════════════ */
+.findings{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s-7);
+  align-items:start;
+}
+.finding .status{margin-bottom:var(--s-2);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.finding h3{font-size:22px;margin-bottom:var(--s-1)}
+.finding p{font-size:16px;line-height:1.6}
+
+/* ═══ NOTE (replaces "callout") — top hairline + label ═════ */
+.note{
+  border-top:1px solid var(--rule);
+  padding-top:var(--s-3);margin-top:var(--s-6);max-width:var(--w-text);
+}
+.note-head{display:flex;align-items:baseline;gap:var(--s-2);margin-bottom:var(--s-1)}
+.note-head h3{margin-bottom:0}
+.note p{font-size:16px}
+
+/* ═══ EVIDENCE — the ONLY container in the whole report ════ */
+.evidence-label{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:var(--s-1);
+}
+.evidence{
+  background:var(--fill);border-radius:10px;padding:var(--s-3) var(--s-4);
+  max-width:var(--w-text);margin-bottom:var(--s-5);
+  font-size:16px;line-height:1.65;color:var(--ink-2);
+}
+.evidence strong{color:var(--ink-1)}
+
+/* ═══ PULL QUOTE — type only, no box, no rail ══════════════ */
+.pull{
+  font-family:"Instrument Serif",Georgia,serif;font-style:italic;
+  font-size:28px;line-height:1.4;color:var(--ink-1);letter-spacing:-.01em;
+  max-width:var(--w-text);margin:var(--s-6) 0;
+}
+
+/* ═══ ACTION LIST — number in the gutter, hairline rows ════ */
+.actions{max-width:var(--w-text);margin-top:var(--s-5)}
+.action{
+  display:grid;grid-template-columns:56px 1fr;gap:var(--s-3);
+  border-top:1px solid var(--rule);padding:var(--s-5) 0;
+}
+.action-num{
+  font-family:"Instrument Serif",Georgia,serif;font-size:34px;line-height:1;
+  color:var(--ink-4);padding-top:2px;
+}
+.action-head{display:flex;align-items:baseline;gap:var(--s-2);margin-bottom:var(--s-1);flex-wrap:wrap}
+.action-head h3{margin-bottom:0}
+.action p{font-size:16px}
+
+/* ═══ TABLE — hairline rows, no outer box ═════════════════ */
+table{width:100%;border-collapse:collapse;max-width:var(--w-wide)}
+th{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);text-align:left;padding:0 var(--s-4) var(--s-2) 0;
+  border-bottom:1px solid var(--rule-strong);
+}
+td{
+  padding:var(--s-3) var(--s-4) var(--s-3) 0;
+  border-bottom:1px solid var(--rule);vertical-align:top;font-size:16px;
+}
+tr td:first-child{color:var(--ink-1);font-weight:500;white-space:nowrap}
+td:last-child,th:last-child{padding-right:0}
+th.t-num,td.t-num{text-align:right}
+.num{font-weight:600;color:var(--ink-1);font-variant-numeric:tabular-nums}
+
+/* ═══ COVER ═══════════════════════════════════════════════ */
+.cover{
+  background:var(--ink-1);color:#fff;
+  padding:var(--s-9) var(--s-4) var(--s-8);
+}
+.cover .eyebrow{color:#8fa0d4}
+.cover h1{color:#fff;margin:var(--s-3) 0 var(--s-2)}
+.cover .sub{font-size:19px;color:#a7b4d9;max-width:560px;line-height:1.6}
+.cover-meta{display:flex;gap:var(--s-8);margin-top:var(--s-7)}
+.metric-num{font-family:"Instrument Serif",serif;font-size:52px;line-height:1;color:#fff}
+.metric-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:#8fa0d4;margin-top:var(--s-1)}
+.cover-rule{height:1px;background:rgba(159,178,255,.2);margin:var(--s-7) 0 var(--s-3)}
+.cover-foot{display:flex;gap:var(--s-6);font-size:13px;color:#8fa0d4}
+.cover-foot strong{color:#e8ecf8;font-weight:500}
+
+/* ═══ SPECIMEN CHROME (not part of the system) ════════════ */
+.spec-label{font-family:"Inter";font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#b3261e;border-top:1px dashed #f0c8c5;padding-top:6px;margin:0 auto var(--s-5);
+  max-width:var(--w-wide)}
+
+@media(max-width:840px){
+  .findings{grid-template-columns:1fr;gap:var(--s-5)}
+  .cover-meta{gap:var(--s-5)}
+  h1{font-size:44px} h2{font-size:32px}
+  .section{padding:var(--s-8) var(--s-3)}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ COVER ══════════ -->
+<div class="cover">
+  <div class="wide">
+    <div class="eyebrow">Nuave · Laporan Visibilitas AI</div>
+    <h1>Masryef</h1>
+    <p class="sub">Bagaimana Masryef muncul ketika calon klien bertanya ke AI tentang penasihat Syariah — diuji dengan 10 pertanyaan, dibandingkan dengan Amanie Advisors.</p>
+    <div class="cover-meta">
+      <div><div class="metric-num">10</div><div class="metric-label">Pertanyaan</div></div>
+      <div><div class="metric-num">5</div><div class="metric-label">Tahap</div></div>
+      <div><div class="metric-num">3</div><div class="metric-label">Kali muncul</div></div>
+    </div>
+    <div class="cover-rule"></div>
+    <div class="cover-foot">
+      <span><strong>Diaudit</strong> Agustus 2026</span>
+      <span><strong>Metode</strong> v3</span>
+      <span><strong>Mesin</strong> ChatGPT</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ FINDINGS: no cards ══════════ -->
+<div class="section">
+  <div class="wide">
+    <div class="spec-label">A · Findings row — three columns, zero containers</div>
+    <div class="eyebrow">Ringkasan</div>
+    <h2>Temuan tentang bisnis Anda</h2>
+    <p class="lead text">Nama Anda dikenali AI. Tapi saat calon klien bertanya siapa yang sebaiknya dihubungi, nama lain yang disebut lebih dulu.</p>
+
+    <div class="findings" style="margin-top:56px">
+      <div class="finding">
+        <div class="status is-good">Ditemukan</div>
+        <h3>AI tahu Anda ada</h3>
+        <p>ChatGPT mengenali Masryef dan menyebut keahlian fintech Anda ketika ditanya soal keuangan digital syariah.</p>
+      </div>
+      <div class="finding">
+        <div class="status is-watch">Belum jadi rujukan</div>
+        <h3>Tapi belum jadi rujukan</h3>
+        <p>Pada pertanyaan umum "siapa penasihat syariah terbaik", Amanie disebut lebih dulu. Anda sering tidak muncul.</p>
+      </div>
+      <div class="finding">
+        <div class="status is-gap">Bisa diperbaiki</div>
+        <h3>Dan ini bisa dikejar</h3>
+        <p>Yang memisahkan Anda dari yang teratas adalah bukti dan konten — dua hal yang bisa Anda buat sendiri.</p>
+      </div>
+    </div>
+
+    <!-- pull quote: type only -->
+    <div class="spec-label" style="margin-top:72px">B · Pull quote — no box, no left rail</div>
+    <p class="pull">"AI memuji keahlian Anda. Tapi begitu klien membandingkan Anda dengan nama yang lebih lama, nama itu yang menang."</p>
+
+    <!-- note replaces callout -->
+    <div class="spec-label">C · Note — replaces the boxed callout entirely</div>
+    <div class="note">
+      <div class="note-head">
+        <span class="cost is-free">Gratis</span>
+        <h3>Lakukan besok</h3>
+      </div>
+      <p>Samakan nomor telepon dan alamat kantor Anda di website, LinkedIn, dan semua direktori. AI melihat informasi yang bertentangan lalu diam-diam memilih kompetitor yang datanya bersih. <strong>Ini tindakan termurah dengan dampak terbesar di seluruh laporan ini.</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ BAND + EVIDENCE ══════════ -->
+<div class="section band">
+  <div class="wide">
+    <div class="spec-label">D · Band section + evidence — the only container in the report</div>
+    <div class="eyebrow">Bukti · Tahap 1</div>
+    <h2>Saat calon klien baru mencari tahu</h2>
+    <p class="text">Prospek Anda belum yakin mereka butuh penasihat syariah.</p>
+
+    <div style="margin-top:40px">
+      <div class="evidence-label">Pertanyaan A — tanpa nama Anda</div>
+      <p class="pull" style="font-size:22px;margin:0 0 16px">"Kalau kami platform lending digital di Malaysia, apakah kami butuh penasihat syariah?"</p>
+      <div class="evidence-label">Jawaban ChatGPT</div>
+      <div class="evidence">
+        Ya. Di Malaysia, produk apa pun yang dipasarkan sebagai patuh syariah memerlukan penasihat dan endorsemen syariah yang layak. <strong>Firma seperti Masryef dan Amanie Advisors sama-sama menawarkan ini.</strong>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="note-head">
+        <span class="status is-good">Kabar baik</span>
+        <h3>Anda dianggap sumber yang paham</h3>
+      </div>
+      <p>Ketika orang baru belajar, nama Anda muncul secara alami. Ini bagian terkuat dari kehadiran AI Anda.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TABLE ══════════ -->
+<div class="section">
+  <div class="wide">
+    <div class="spec-label">E · Scorecard — real table, hairline rows, no panel</div>
+    <div class="eyebrow">Skor</div>
+    <h2>Posisi Anda di empat tingkat</h2>
+    <table style="margin-top:40px">
+      <thead><tr><th style="width:220px">Tingkat</th><th>Hasil Anda</th><th style="width:170px">Status</th></tr></thead>
+      <tbody>
+        <tr><td>1. Ditemukan</td><td>Ya — dikenal di Malaysia dan Dubai</td><td><span class="status is-good">Baik</span></td></tr>
+        <tr><td>2. Dijelaskan benar</td><td>Layanan akurat, tapi detail kontak tidak konsisten antar sumber</td><td><span class="status is-watch">Perlu dibenahi</span></td></tr>
+        <tr><td>3. Direkomendasikan</td><td>Hanya pada pertanyaan fintech dan digital</td><td><span class="status is-watch">Sempit</span></td></tr>
+        <tr><td>4. Sesering apa</td><td>Sekitar 6× lebih jarang dari Amanie pada pencarian umum</td><td><span class="status is-gap">Tertinggal</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="spec-label" style="margin-top:72px">F · Comparison — one table, not two cards</div>
+    <table style="margin-top:40px">
+      <thead><tr><th style="width:220px">&nbsp;</th><th>Masryef</th><th>Amanie Advisors</th></tr></thead>
+      <tbody>
+        <tr><td>Berdiri sejak</td><td><span class="num">2018</span></td><td><span class="num">2005</span></td></tr>
+        <tr><td>Ulama utama</td><td>Komite 3 ulama global</td><td>Tan Sri Dr Mohd Daud Bakar</td></tr>
+        <tr><td>Kantor</td><td>KL + Dubai</td><td>Dubai, KL, London</td></tr>
+        <tr><td>Muncul di 10 pertanyaan</td><td><span class="num">3 dari 10</span></td><td><span class="num">9 dari 10</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ ACTIONS ══════════ -->
+<div class="section band">
+  <div class="wide">
+    <div class="spec-label">G · Action list — numeral in the gutter, no cards</div>
+    <div class="eyebrow">Rekomendasi</div>
+    <h2>Rencana tindakan</h2>
+    <p class="text">Diurutkan dari yang paling ringan dan paling berdampak. Mulai dari atas.</p>
+
+    <div class="actions">
+      <div class="action">
+        <div class="action-num">1</div>
+        <div>
+          <div class="action-head"><h3>Samakan detail kontak di mana-mana</h3><span class="cost is-free">Gratis</span></div>
+          <p>Nama, telepon, dan alamat harus <strong>identik</strong> di website, LinkedIn, Google Business Profile, dan setiap direktori. Pilih satu format, pakai di semua tempat.</p>
+        </div>
+      </div>
+      <div class="action">
+        <div class="action-num">2</div>
+        <div>
+          <div class="action-head"><h3>Tambahkan klien bernama dan profil ulama</h3><span class="cost is-free">Gratis</span></div>
+          <p>Ubah "bank, fintech, manajer dana" jadi studi kasus dengan nama (seizin klien). AI mempercayai bukti spesifik jauh lebih dari kategori.</p>
+        </div>
+      </div>
+      <div class="action">
+        <div class="action-num">3</div>
+        <div>
+          <div class="action-head"><h3>Dapatkan sebutan di luar website Anda</h3><span class="cost is-paid">Perlu biaya</span></div>
+          <p>Tulis artikel untuk publikasi keuangan islam. Suara independen adalah yang memindahkan AI dari "melaporkan klaim Anda" ke "merekomendasikan Anda".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
