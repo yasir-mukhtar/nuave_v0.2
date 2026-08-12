@@ -6,6 +6,11 @@
   "cta": {
     "seeSampleAudit": "Lihat Contoh Audit"
   },
+  "preview": {
+    "badge": "Pratinjau produk fiktif",
+    "startPreview": "Mulai pratinjau fiktif",
+    "heroNotice": "Hanya contoh bisnis. Audit disimulasikan dan tidak ada pembayaran."
+  },
   "footer": {
     "followUs": "Ikuti Kami",
     "sampleAudit": "Contoh Audit",

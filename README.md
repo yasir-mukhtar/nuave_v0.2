@@ -9,10 +9,10 @@ The audited business is the customer's own business, not a client's. Nuave is
 one automated path from intake form to downloadable report, not a monitoring
 dashboard or subscription platform.
 
-The current objective in [`docs/NOW.md`](./docs/NOW.md) is to make that path run
-end to end without human rescue. Payment, durable report access beyond the
-private-link requirement, and design polish come later in the current build
-order.
+The current objective in [`docs/NOW.md`](./docs/NOW.md) is to make the complete
+journey reviewable with deterministic fixtures and a clearly simulated checkout,
+then replace its boundaries one at a time. Real payment, durable delivery, and
+design polish remain gated later in the build order.
 
 ## Start here
 
@@ -21,6 +21,8 @@ order.
 | Which documents govern a task | [`docs/INDEX.md`](./docs/INDEX.md) |
 | Why Nuave exists, who it serves, what it believes | [`docs/VISION.md`](./docs/VISION.md) |
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
+| End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
+| Active fixture-journey specification | [`specs/001-simulated-journey-shell/SPEC.md`](./specs/001-simulated-journey-shell/SPEC.md) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
@@ -65,9 +67,10 @@ run a few unbranded questions on a prospect before any contact
   -> recommend a re-check six to eight weeks later
 ```
 
-The current pipeline build covers the path from intake through an unguessable
-private report link. Checkout and the later commercial journey remain outside
-that bounded outcome.
+The current build starts with a fixture-backed version of this whole journey,
+including an unmistakably simulated checkout and report destination. The live
+report and its quality gate come next. Durable private delivery and real
+checkout are added only after that report proves worth paying for.
 
 The `src/` landing page keeps the previous Nuave website as its visual baseline,
 but its English and Indonesian copy still describes the agency-facing raw-MVP
@@ -81,9 +84,9 @@ contains no client result or performance claim.
 
 The implemented application includes the existing bilingual Next.js landing
 page and a local `/audit` workflow. The workflow has no database, payments,
-customer accounts, public rate limiting, or hosted report access. Those are
-outside the current pipeline outcome, except hosted access at an unguessable
-link, which is required so a run can be closed and reopened.
+customer accounts, public rate limiting, or hosted report access. The current
+journey shell may simulate checkout and a private destination, but must not
+claim either is real. Durable access and real payment follow the quality gate.
 
 Use Node.js 22 and npm. From a clean checkout:
 
@@ -107,6 +110,18 @@ Run the non-mutating engineering checks and production build with:
 npm run check
 npm run build
 ```
+
+To review the protected fixture-preview journey, set
+`NUAVE_FIXTURE_PREVIEW_ENABLED=true` (in `.env.local` or the shell
+environment) before starting the server, then open
+<http://localhost:3000/audit/fixture>. The landing page then shows one
+fictional-preview action instead of the default sample-audit action. When the
+variable is unset or false, the fixture route renders a safe unavailable state
+and the landing page keeps its normal behavior. The flag is read only on the
+server and is not a query parameter or client toggle. The fixture journey
+makes no `/api/audit/*` call and stores only its own versioned state
+(`nuave.fixtureJourney.v2`) in the browser session, separate from the live
+workflow keys.
 
 Code map:
 

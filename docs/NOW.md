@@ -1,38 +1,47 @@
 # Nuave now
 
-> Updated: 2026-08-09
+> Updated: 2026-08-12
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
 
-Get the measurement path working end to end: a business goes in at the intake
-form and a finished report comes out, with nobody stepping in mid-run. This is
-the current pipeline build and the blocking asset. Rough copy and unstyled
-screens are acceptable at this stage. A broken or manual step is not.
+Make the intended landing-to-report journey reviewable end to end with the
+privacy-safe fixture before replacing its simulated boundaries. The first
+bounded deliverable is a clearly simulated journey shell: landing, short
+intake, fact confirmation, question review, simulated checkout, processing,
+and report. It must preserve the existing live audit engine and must not look
+like a real purchase.
 
-The compact report synthesis, carry-over guard, and null-extraction fallback
-pass offline. Question generation no longer calls any model: the ten questions
-are built in code from the verified brief and the fixed Intent-5 matrix, and the
-prompts stage is capped at zero paid calls. That template set is currently in
-English, which is a known gap. Cumulative accounted spend is USD 0.4357, leaving
-USD 4.5643 under the USD 5 ceiling. The next paid step is the ten observations,
-which still needs founder approval.
+After the shell passes, replace boundaries in the order defined by
+[`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md): Indonesian contracts, live report
+and quality gate, durable private delivery, real checkout and remedies, polish,
+pilot, launch, then re-check. Cumulative accounted private-run spend remains USD
+0.4357, leaving USD 4.5643 under the USD 5 ceiling. No additional paid
+observation is approved by this planning change.
 
-For this immediate task, [`AUDIT.md`](./AUDIT.md) governs execution and review,
-and [`VISION.md`](./VISION.md) governs who the customer is, what is sold, the
-principles and boundaries the work must follow. This document and the newest
-founder-approved decision govern the current build order.
+For the immediate task, the end-to-end plan governs sequencing, while
+[`VISION.md`](./VISION.md), [`PRODUCT.md`](./PRODUCT.md), and
+[`AUDIT.md`](./AUDIT.md) govern product and evidence behavior. The [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)
+specification is founder-approved and now **Implementing**. Chunk 1 built the
+protected landing entry, example intake, fact confirmation, and ten-question
+approval. Chunk 2 added the order summary, unmistakably simulated checkout,
+deterministic simulated processing, and the evidence-faithful example report
+destination with backward navigation, refresh recovery, start over, and a
+testable construction-failure path. The next bounded action is Chunk 3:
+small browser automation proving the complete fixture path, refresh
+restoration, reset behavior, the persistent simulation disclosure, and the
+absence of audit API calls.
 
 ## What is known
 
 - Nuave sells a one-time audit and a re-check, not subscription software.
 - [`VISION.md`](./VISION.md) governs this repository. It sits above this
   document and below the newest founder-approved decision-log entry.
-- The build order is pipeline first, then payment and report persistence, then
-  one polish pass across every touchpoint, then target customers we know, then
-  strangers.
-  A report-quality gate comes immediately after the pipeline: if its first real
-  report holds no finding worth paying for, everything after it stops until the
+- The build order is a fixture-backed complete journey first, then Indonesian
+  audit/report contracts, the live report and quality gate, durable private
+  delivery, real payment, one polish pass, target owners we know, and strangers.
+  The simulated checkout is never a real purchase. If the first real report
+  holds no finding worth paying for, everything commercial stops until the
   method is fixed.
 - The buyer is the owner or marketing decision-maker of a small or medium
   Indonesian business, approached directly. The audited business is the buyer's
@@ -58,9 +67,9 @@ founder-approved decision govern the current build order.
   prospect before any contact, then lead with the observed finding.
 - Nuave has zero paying v2 customers.
 - Pricing is open. The Rp149,000 price from the v1 pilot must not be carried
-  forward as an anchor. A price has to be chosen when checkout is built because
-  a checkout needs a number; treat that price as provisional until strangers
-  respond to it.
+  forward as an anchor. A price has to be chosen when real checkout is built;
+  treat that price as provisional until strangers respond to it. The simulated
+  checkout must not introduce a numeric price anchor.
 - The universal brand prompt context and `generate-ai-visibility-prompts` skill
   are retained mechanisms for building one verified question pack with five
   unbranded and five branded questions.
@@ -70,8 +79,9 @@ founder-approved decision govern the current build order.
 - ChatGPT remains the named target product for prompt generation. Any later
   execution must record the exact surface honestly.
 - The local landing page describes the agency-facing raw-MVP offer in English
-  and Indonesian. That copy contradicts the customer above. It is rewritten in
-  the later product-wide polish pass, not now.
+  and Indonesian. The journey shell changes only enough routing and copy to make
+  the owner-facing walkthrough coherent. The full landing rewrite remains in
+  the later product-wide polish pass.
 - A local `/audit` workflow covers official-website extraction, human fact
   confirmation, ten-question prompt review, independent OpenAI Responses API
   execution with web search, final-format report generation, A4 print/PDF, and
@@ -91,10 +101,11 @@ founder-approved decision govern the current build order.
   retry when the first draft misses a writing limit. An Indonesian contract
   version is required before an Indonesian report can be checked properly.
 - The workflow stores state only in the browser session. It has no account,
-  database, payment, public rate limit, or hosted report access. Report
-  persistence and payment follow the report-quality gate, and how reports
-  persist — magic link, permanent emailed link with no login, or a real account
-  — is still open.
+  database, payment, public rate limit, or hosted report access. The shell may
+  simulate checkout and a private destination, but durable persistence and real
+  payment follow the report-quality gate. The first real product uses an
+  unguessable, revocable link with no required account; retention and recovery
+  details remain open.
 - One founder-approved private live smoke test completed all ten observations
   with `gpt-5.6-luna` and low reasoning. The first report attempt was correctly
   blocked for an unsupported brand-appearance claim; a manual retry rendered a
@@ -187,33 +198,34 @@ founder-approved decision govern the current build order.
 
 ## Do now
 
-Current pipeline only. Everything below is one path: intake form to
-downloadable report, no human rescue.
+Follow the phase gates in [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md). The
+current bounded sequence is:
 
-1. Fix question generation so it produces natural Indonesian questions, and keep
-   a deterministic Indonesian template set as the guaranteed fallback so the
-   stage cannot hard-fail. Use the retained telemetry to attribute the next
-   structured-output failure instead of inferring it.
-2. Get the compact report path through one live report end to end. It passes 65
-   tests offline and has never completed a paid run.
-3. Write the Indonesian version of the report writing contract. The current
-   limits and banned-jargon list are calibrated for English, so an Indonesian
-   report cannot be checked properly until this exists.
-4. Move the rest of the `/audit` workflow to Indonesian: intake, stage copy,
-   observations, report, evidence export.
-5. Make the finished report reachable at an unguessable link instead of living
-   only in browser session state, so a run can be closed and reopened.
-6. Run one real audit for one real Indonesian business, with founder approval
-   for the ten observations. During that run, re-ask two or three questions to
-   measure run-to-run variation and set the score band width from the result.
-7. Then apply the report-quality gate: read that report twice, as a sceptical
-   customer and as a professional. If it holds no finding worth paying for,
-   stop and fix the method before anything else.
+1. Chunk 1 of the founder-approved
+   [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)
+   is complete: the protected landing entry, example intake, fact
+   confirmation, and ten-question approval now exist.
+2. Chunk 2 is complete: the order summary, simulated checkout, deterministic
+   simulated processing, and fixture-backed example report now exist, with the
+   review corrections applied (truthful construction-failure state, explicit
+   resume after interruption, confirmed start over everywhere, tighter
+   persisted-state validation, and a fixture-derived order summary).
+3. Build Chunk 3: the smallest browser automation that proves the complete
+   fixture path, refresh restoration, explicit resume, reset behavior, the
+   persistent simulation disclosure, and the absence of audit API calls, then
+   independently verify the fixture path.
+4. Specify and implement the Indonesian audit and report contract.
+5. Connect the live engine and produce one real Indonesian report.
+6. Apply the report-quality gate. Stop and fix the method if the report holds no
+   finding worth paying for.
+7. Only after the gate, add durable private delivery, real payment and remedies,
+   product-wide polish, and customer exposure in the planned order.
 
 ## Not now
 
-- payment, checkout, and report persistence beyond an unguessable link — after
-  the report-quality gate;
+- real payment, durable jobs, and durable report persistence — after the
+  report-quality gate; an explicitly simulated checkout and destination are in
+  scope for the fixture journey;
 - design polish, final copy, and the landing-page rewrite — after checkout and
   persistence;
 - showing the product to any target customer — after the product-wide polish

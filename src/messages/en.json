@@ -6,6 +6,11 @@
   "cta": {
     "seeSampleAudit": "See Sample Audit"
   },
+  "preview": {
+    "badge": "Fictional product preview",
+    "startPreview": "Start the fictional preview",
+    "heroNotice": "Example business only: the audit is simulated and no payment is taken."
+  },
   "footer": {
     "followUs": "Follow Us",
     "sampleAudit": "Sample Audit",

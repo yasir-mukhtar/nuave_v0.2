@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-08-09
+> Updated: 2026-08-12
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -29,10 +29,16 @@ decision log does not become a permanent hidden override.
 | Document | Governs | Status |
 |---|---|---|
 | [`VISION.md`](./VISION.md) | Why Nuave exists and the principles all downstream work follows | Canonical |
-| [`PRODUCT.md`](./PRODUCT.md) | Current customer, offer, promise, journey, scope, and success signals | Aligned with the canonical vision on 2026-08-09 |
+| [`PRODUCT.md`](./PRODUCT.md) | Current customer, offer, promise, journey, scope, and success signals | Aligned with the canonical vision on 2026-08-12 |
 | [`AUDIT.md`](./AUDIT.md) | Measurement, evidence, report, and data-handling method | Aligned with the canonical vision on 2026-08-09 |
 | [`NOW.md`](./NOW.md) | Current objective, facts, blockers, and next action | Current operating state |
 | [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions | Canonical history |
+
+## Current development plan
+
+| Document | Governs | Status |
+|---|---|---|
+| [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) | Thin v2 journey, integration sequence, quality gates, and launch readiness | Founder-approved direction; each implementation phase still requires an approved spec |
 
 ## Guidance documents
 
@@ -56,6 +62,10 @@ defines the specification lifecycle.
 
 Each active specification lives at `specs/NNN-short-name/SPEC.md` and lists the
 exact context an agent must read. Do not implement a draft specification.
+
+| Active package | Outcome | Status |
+|---|---|---|
+| [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md) | Fixture-backed landing-to-report preview with unmistakably simulated checkout | Implementing |
 
 ## Reference and history
 

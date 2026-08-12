@@ -46,7 +46,11 @@ verification is against its acceptance criteria.
 
 ## Active specification
 
-[`../docs/NOW.md`](../docs/NOW.md) names the only active specification. If no
-active spec is named, the next task is to prepare or approve one rather than
-begin broad implementation.
+[`001-simulated-journey-shell/SPEC.md`](./001-simulated-journey-shell/SPEC.md)
+is the only active specification. Its status is **Implementing**. Implementation
+proceeds against the approved spec in bounded chunks; independent verification
+is recorded in the spec package's `VERIFICATION.md`.
 
+[`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
+no active spec is named, the next task is to prepare or approve one rather than
+begin broad implementation.

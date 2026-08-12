@@ -24,10 +24,12 @@ function MobileMenu({
   open,
   onClose,
   t,
+  fixturePreviewEnabled,
 }: Readonly<{
   open: boolean;
   onClose: () => void;
   t: ReturnType<typeof useTranslations>;
+  fixturePreviewEnabled: boolean;
 }>) {
   return (
     <>
@@ -74,11 +76,13 @@ function MobileMenu({
         <div className="h-px bg-[#E5E7EB] mx-4 self-stretch" />
         <div className="px-4 py-3 w-full box-border">
           <a
-            href="#sample-audit"
+            href={fixturePreviewEnabled ? "/audit/fixture" : "#sample-audit"}
             onClick={onClose}
             className="btn-lp-black flex items-center justify-center px-5 py-3 text-white text-[15px] font-medium rounded-[8px] no-underline cursor-pointer w-full"
           >
-            {t("cta.seeSampleAudit")}
+            {fixturePreviewEnabled
+              ? t("preview.startPreview")
+              : t("cta.seeSampleAudit")}
           </a>
         </div>
       </div>
@@ -87,7 +91,11 @@ function MobileMenu({
 }
 
 /* ───── LandingNav ───── */
-export default function LandingNav() {
+export default function LandingNav({
+  fixturePreviewEnabled = false,
+}: {
+  fixturePreviewEnabled?: boolean;
+}) {
   const scrolled = useScrolled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useTranslations();
@@ -180,10 +188,12 @@ export default function LandingNav() {
           <div className="lp-nav-masuk flex items-center gap-3">
             <LanguageSwitcher />
             <a
-              href="#sample-audit"
+              href={fixturePreviewEnabled ? "/audit/fixture" : "#sample-audit"}
               className="btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
             >
-              {t("cta.seeSampleAudit")}
+              {fixturePreviewEnabled
+                ? t("preview.startPreview")
+                : t("cta.seeSampleAudit")}
             </a>
           </div>
 
@@ -230,7 +240,12 @@ export default function LandingNav() {
         </div>
       </nav>
 
-      <MobileMenu open={mobileMenuOpen} onClose={closeMobile} t={t} />
+      <MobileMenu
+        open={mobileMenuOpen}
+        onClose={closeMobile}
+        t={t}
+        fixturePreviewEnabled={fixturePreviewEnabled}
+      />
     </>
   );
 }

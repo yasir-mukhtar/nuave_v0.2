@@ -16,3 +16,8 @@ node_modules/
 .env*
 !.env.example
 *.tsbuildinfo
+
+# Playwright browser-test artifacts
+test-results/
+playwright-report/
+blob-report/

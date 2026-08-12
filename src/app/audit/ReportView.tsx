@@ -122,11 +122,18 @@ export default function ReportView({
   brief,
   observations,
   onDownloadJson,
+  previewNotice,
 }: {
   report: AuditReport;
   brief: BusinessBrief;
   observations: AuditObservation[];
   onDownloadJson: () => void;
+  /**
+   * Optional fixture-preview disclosure rendered inside the report article so
+   * it appears on screen and in printed output. The live workflow never
+   * passes this prop.
+   */
+  previewNotice?: React.ReactNode;
 }) {
   const observationById = new Map(
     observations.map((item) => [item.prompt_id, item]),
@@ -154,6 +161,7 @@ export default function ReportView({
         </Button>
       </div>
       <article className={styles.report}>
+        {previewNotice ? previewNotice : null}
         <header className={styles.reportHero} id="stage-5" tabIndex={-1}>
           <div className={styles.reportTitleBlock}>
             <p className={styles.reportEyebrow}>AI Visibility Report</p>

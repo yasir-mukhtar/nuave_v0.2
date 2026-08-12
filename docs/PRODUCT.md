@@ -1,7 +1,7 @@
 # Nuave product
 
 > Status: **Current product direction**
-> Updated: 2026-08-09
+> Updated: 2026-08-12
 >
 > This document describes the current customer, offer, promise, journey, and
 > non-goals. It derives from [`VISION.md`](./VISION.md), which states why Nuave
@@ -62,8 +62,8 @@ scientifically derived one.
 One founder-approved price per audit. No public tiers, subscriptions, bundles,
 credits, or volume plans before real purchasing behaviour supports them. The
 Rp149,000 price from the v1 pilot must not be carried forward as an anchor. The
-price is chosen when checkout is built, because a checkout needs a number, and
-stays provisional until strangers respond to it.
+price is chosen when real checkout is built, because a real checkout needs a
+number, and stays provisional until strangers respond to it.
 
 ## How results are reported
 
@@ -88,8 +88,8 @@ until enough businesses in a category have been measured to state one honestly.
 
 The journey below is the target. [`NOW.md`](./NOW.md) and the newest
 founder-approved entry in [`DECISION_LOG.md`](./DECISION_LOG.md) own the current
-build order. Steps 1 and 2 describe how a customer arrives and are not
-automated.
+build order. Step 1 describes how a customer arrives and sits outside the
+product. Step 2 onward is the product journey.
 
 ### 1. Demonstrate before selling
 
@@ -104,24 +104,17 @@ pitch.
 
 Never contact a business using a finding that was not actually observed.
 
-### 2. Business confirmation
+### 2. Short intake and business confirmation
 
-Confirm one exact business: name and known variants, location or service area,
-public listing, official website or authoritative social profile. If identity
-is ambiguous, stop or select another business. Never guess which branch or
-entity an AI answer refers to.
+Collect the official website or authoritative public profile, exact location or
+service area, and a delivery email. Resolve one exact business: name and known
+variants, location or service area, public listing, official website or
+authoritative social profile. If identity is ambiguous, stop or ask the
+customer to correct it. Never guess which branch or entity an AI answer refers
+to.
 
-### 3. Offer and payment
+Collect only the additional facts that change the report:
 
-State one price, what the report includes, delivery timing, and limitations.
-Confirm payment before starting the personalised audit. A hosted payment link is
-enough; no account is required to buy.
-
-### 4. Intake
-
-Collect only what changes the report:
-
-- exact business location or service area;
 - priority services or offers;
 - intended customer;
 - important differentiators;
@@ -132,11 +125,25 @@ Mark buyer-supplied facts as such until verified. Do not collect customer
 records, payment credentials, or other sensitive information the audit does not
 need.
 
+### 3. Question review
+
+Build ten natural Indonesian questions from the confirmed facts: five that do
+not name the business and five that test recognition or public information.
+Show the complete pack and let the customer correct wording before it is locked.
+Do not start the audit from unconfirmed facts or unapproved questions.
+
+### 4. Offer and payment
+
+After the customer can see the exact business scope and ten questions, state one
+price, what the report includes, delivery timing, limitations, and the failure
+or correction remedy. Confirm payment before starting the personalised audit. A
+hosted payment link is enough; no account is required to buy.
+
 ### 5. Audit
 
-Confirm the business facts, review the ten Indonesian questions, and run each
-one independently with web search. Retain the observed answers and sources as
-evidence.
+Run each approved Indonesian question independently with web search. Retain the
+observed answers and sources as evidence, and do not silently change the locked
+facts or question pack during execution.
 
 ### 6. Delivery
 

@@ -11,6 +11,10 @@
     "start": "next start",
     "typecheck": "tsc --noEmit --incremental false",
     "test:audit": "vitest run src/lib/audit",
+    "test:e2e": "playwright test && playwright test -c playwright.config.failure.ts && playwright test -c playwright.config.disabled.ts",
+    "test:e2e:enabled": "playwright test",
+    "test:e2e:failure": "playwright test -c playwright.config.failure.ts",
+    "test:e2e:disabled": "playwright test -c playwright.config.disabled.ts",
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"*.{json,mjs}\" \".github/**/*.yml\"",
     "check": "npm run typecheck && npm run lint && npm run format:check"
@@ -33,6 +37,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "4.1.14",
     "@types/node": "20.19.17",
     "@types/react": "19.2.7",

@@ -6,7 +6,11 @@ import { useTranslations } from "next-intl";
 
 const HERO_STEP_COUNT = 3;
 
-export default function LandingHeroSection() {
+export default function LandingHeroSection({
+  fixturePreviewEnabled = false,
+}: {
+  fixturePreviewEnabled?: boolean;
+}) {
   const t = useTranslations();
   const steps = [
     t("landing.heroStep1"),
@@ -63,12 +67,35 @@ export default function LandingHeroSection() {
             <p className="lp-hero-subtitle m-0 max-w-[740px] text-center text-[18px] leading-[1.7em] font-normal tracking-[-0.5px] text-[var(--lp-text-secondary)]">
               {t("landing.heroSubtitle")}
             </p>
-            <Link
-              href="#sample-audit"
-              className="btn-lp-purple inline-flex cursor-pointer items-center rounded-[6px] border border-[var(--lp-border)] px-[22px] py-3 text-[14px] leading-[1.7em] font-medium text-white no-underline"
-            >
-              {t("cta.seeSampleAudit")}
-            </Link>
+            {fixturePreviewEnabled ? (
+              <div className="flex flex-col items-center gap-3">
+                <span className="rounded-full border border-[var(--lp-border)] bg-[#533afd]/10 px-3 py-1 text-[12px] font-semibold tracking-[0.14em] text-[var(--lp-purple)] uppercase">
+                  {t("preview.badge")}
+                </span>
+                <Link
+                  href="/audit/fixture"
+                  className="btn-lp-purple inline-flex cursor-pointer items-center rounded-[6px] border border-[var(--lp-border)] px-[22px] py-3 text-[14px] leading-[1.7em] font-medium text-white no-underline"
+                >
+                  {t("preview.startPreview")}
+                </Link>
+                <p className="m-0 max-w-[560px] text-center text-[13px] leading-[1.6em] text-[var(--lp-text-secondary)]">
+                  {t("preview.heroNotice")}
+                </p>
+                <a
+                  href="#sample-audit"
+                  className="text-[13px] font-medium text-[var(--lp-text-secondary)] no-underline hover:text-[var(--lp-text-primary)]"
+                >
+                  {t("cta.seeSampleAudit")}
+                </a>
+              </div>
+            ) : (
+              <Link
+                href="#sample-audit"
+                className="btn-lp-purple inline-flex cursor-pointer items-center rounded-[6px] border border-[var(--lp-border)] px-[22px] py-3 text-[14px] leading-[1.7em] font-medium text-white no-underline"
+              >
+                {t("cta.seeSampleAudit")}
+              </Link>
+            )}
           </div>
 
           <div
