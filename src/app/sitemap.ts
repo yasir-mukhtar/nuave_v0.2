@@ -34,7 +34,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${BASE}/support`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.8,
     },
   ];
 }
