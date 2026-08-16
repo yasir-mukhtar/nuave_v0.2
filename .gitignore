@@ -34,3 +34,6 @@ blob-report/
 # Production build env for Cloudflare deploy (gitignored; CI uses GitHub secrets)
 .env.production
 .env.production.local
+
+# Local-only access codes (never commit)
+.secrets/

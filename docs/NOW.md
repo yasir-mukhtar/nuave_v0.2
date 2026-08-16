@@ -7,16 +7,36 @@
 
 Implementing the founder-approved [`V2_SUBDOMAIN_LAUNCH_PLAN.md`](./V2_SUBDOMAIN_LAUNCH_PLAN.md):
 ship this repository to `v2.nuave.ai` in Indonesian with the audit tool behind an
-access code, without touching `nuave.ai`. Phases 1–2 are implemented and
-verified locally (Indonesian-only site; `/audit` and `/api/audit/*` gated by the
-httpOnly `nuave_access` cookie against server-only `NUAVE_ACCESS_CODE`; a
-fail-closed `src/proxy.ts` gate; `/access` entry screen; robots noindex while
-pre-release). All local gates pass: `npm run check`, `npm run test:audit` (208),
-and `npm run test:e2e` (23). Phase 3+ (Vercel deploy, DNS, live smoke test) are
-publishing actions and await explicit founder approval; DNS for `nuave.ai` lives
-at Cloudflare, the Vercel team is `nuave-ai` (existing `nuave-v02` project links
-`nuave_v0.3`, so a fresh project is needed), and the first live run is budgeted
-for the free Gemini path (`NUAVE_PROVIDER=gemini`).
+access code, without touching `nuave.ai`.
+
+Status: Phases 1–2 are implemented, committed, and verified; **Phase 3 is
+deployed to Cloudflare Workers** (founder chose Cloudflare over the plan's
+Vercel target): live at `https://nuave-v2.mail-yasirmukhtar.workers.dev`
+(project `nuave-v2`, account `Mail.yasirmukhtar@gmail.com's Account`). The
+Indonesian landing renders, robots noindex is active, and the access gate holds
+on the live URL: `/` public 200; `/audit` and `/audit/fixture` redirect to
+`/access` without the cookie; `/api/audit/*` returns 401 before any handler
+runs; correct `nuave_access` cookie passes (200/400); static assets and CSS
+serve correctly.
+
+Deploy target note: Next.js 16 via OpenNext officially targets **Workers with
+static assets**, not Pages — Pages advanced mode (`_worker.js`) ran the gate
+but could not serve static assets. The GitHub Actions workflow
+(`.github/workflows/deploy-pages.yml`) builds with build-time env from secrets
+and deploys with `cloudflare/wrangler-action@v3`. **Middleware env is inlined
+at build time**, so `NUAVE_ACCESS_CODE` and all runtime envs must be set as
+build-time envs in CI; changing the access code requires a redeploy. The
+production access code is stored locally at `.secrets/v2-access-code.txt`
+(gitignored) and in `.env.production.local`; CI secrets still need to be
+created in the repo (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
+NUAVE_ACCESS_CODE, NUAVE_PROVIDER=gemini, GEMINI_API_KEY,
+NUAVE_FIXTURE_PREVIEW_ENABLED=true, OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357).
+
+Remaining: attach `v2.nuave.ai` custom domain to the worker (Cloudflare
+dashboard, DNS record auto-managed; DNS host is Cloudflare, apex `nuave.ai`
+untouched), then the Phase 5 live smoke test (founder names a business;
+budgeted for the free Gemini path, `NUAVE_PROVIDER=gemini`, against the USD
+0.4357 accounted spend / USD 5 ceiling in NOW.md below).
 
 Known gap logged by the launch plan, not fixed in this task: `/audit` and
 `/audit/fixture` remain mostly English in hardcoded JSX, and the landing copy is
