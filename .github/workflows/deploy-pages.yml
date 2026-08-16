@@ -23,19 +23,25 @@ jobs:
         run: npm ci
 
       # Build-time env. The OpenNext Cloudflare adapter inlines process.env
-      # into the middleware/worker at BUILD time (verified live), so every
-      # variable the running app needs must exist here. No NEXT_PUBLIC_ vars.
+      # ONLY from Next.js .env* files (verified: shell env vars are ignored at
+      # build time), so we write a gitignored .env.production.local from the
+      # GitHub secrets. This file is never committed (see .gitignore) and the
+      # values never appear in logs. No NEXT_PUBLIC_ vars.
+      - name: Prepare build env
+        run: |
+          cat > .env.production.local <<'EOF'
+          NUAVE_ACCESS_CODE=${{ secrets.NUAVE_ACCESS_CODE }}
+          NUAVE_PROVIDER=${{ secrets.NUAVE_PROVIDER }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_AUDIT_MODEL=${{ secrets.OPENAI_AUDIT_MODEL }}
+          NUAVE_FIXTURE_PREVIEW_ENABLED=${{ secrets.NUAVE_FIXTURE_PREVIEW_ENABLED }}
+          NUAVE_FIXTURE_FORCE_REPORT_FAILURE=${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
+          OPENAI_AUDIT_CARRYOVER_COST_USD=${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
+          EOF
+
       - name: Build OpenNext worker
         run: npm run build:cf
-        env:
-          NUAVE_ACCESS_CODE: ${{ secrets.NUAVE_ACCESS_CODE }}
-          NUAVE_PROVIDER: ${{ secrets.NUAVE_PROVIDER }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_AUDIT_MODEL: ${{ secrets.OPENAI_AUDIT_MODEL }}
-          NUAVE_FIXTURE_PREVIEW_ENABLED: ${{ secrets.NUAVE_FIXTURE_PREVIEW_ENABLED }}
-          NUAVE_FIXTURE_FORCE_REPORT_FAILURE: ${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
-          OPENAI_AUDIT_CARRYOVER_COST_USD: ${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
