@@ -19,6 +19,13 @@ on the live URL: `/` public 200; `/audit` and `/audit/fixture` redirect to
 runs; correct `nuave_access` cookie passes (200/400); static assets and CSS
 serve correctly.
 
+**CI is live**: GitHub Actions (`.github/workflows/deploy-pages.yml`) builds
+with `@opennextjs/cloudflare` and deploys to the `nuave-v2` worker on every
+push to `main` (verified end to end). All GitHub secrets are set
+(`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ACCESS_CODE`,
+`NUAVE_PROVIDER=gemini`, `GEMINI_API_KEY`, `NUAVE_FIXTURE_PREVIEW_ENABLED=true`,
+`OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357`).
+
 Deploy target note: Next.js 16 via OpenNext officially targets **Workers with
 static assets**, not Pages — Pages advanced mode (`_worker.js`) ran the gate
 but could not serve static assets. The GitHub Actions workflow
