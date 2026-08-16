@@ -47,7 +47,7 @@ test.describe("preview disabled", () => {
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "Lihat Contoh Audit" }).first(),
+      page.getByRole("link", { name: "Audit brand Anda — Gratis" }).first(),
     ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });

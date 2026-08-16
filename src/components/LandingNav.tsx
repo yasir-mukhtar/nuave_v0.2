@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-const LOGO_SVG = "/nuave-logo.svg";
+const LOGO_SVG = "/logo-nuave.svg";
 
 function useScrolled() {
   const [scrolled, setScrolled] = useState(false);
@@ -22,12 +22,10 @@ function MobileMenu({
   open,
   onClose,
   t,
-  fixturePreviewEnabled,
 }: Readonly<{
   open: boolean;
   onClose: () => void;
   t: ReturnType<typeof useTranslations>;
-  fixturePreviewEnabled: boolean;
 }>) {
   return (
     <>
@@ -57,31 +55,29 @@ function MobileMenu({
             "opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
-        <a
-          href="#sample-audit"
+        <Link
+          href="/pricing"
           onClick={onClose}
           className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
         >
-          {t("nav.sampleAudit")}
-        </a>
+          {t("nav.pricing")}
+        </Link>
         <a
-          href="#cara-kerja"
+          href="/support"
           onClick={onClose}
           className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
         >
-          {t("nav.howItWorks")}
+          {t("nav.contact")}
         </a>
         <div className="h-px bg-[#E5E7EB] mx-4 self-stretch" />
         <div className="px-4 py-3 w-full box-border">
-          <a
-            href={fixturePreviewEnabled ? "/audit/fixture" : "#sample-audit"}
+          <Link
+            href="#cta"
             onClick={onClose}
             className="btn-lp-black flex items-center justify-center px-5 py-3 text-white text-[15px] font-medium rounded-[8px] no-underline cursor-pointer w-full"
           >
-            {fixturePreviewEnabled
-              ? t("preview.startPreview")
-              : t("cta.seeSampleAudit")}
-          </a>
+            {t("cta.auditBrandFreeNoExclaim")}
+          </Link>
         </div>
       </div>
     </>
@@ -89,11 +85,7 @@ function MobileMenu({
 }
 
 /* ───── LandingNav ───── */
-export default function LandingNav({
-  fixturePreviewEnabled = false,
-}: {
-  fixturePreviewEnabled?: boolean;
-}) {
+export default function LandingNav() {
   const scrolled = useScrolled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useTranslations();
@@ -168,30 +160,28 @@ export default function LandingNav({
 
           {/* Links (desktop) */}
           <div className="lp-nav-links flex items-center gap-8">
-            <a
-              href="#sample-audit"
+            <Link
+              href="/pricing"
               className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
             >
-              {t("nav.sampleAudit")}
-            </a>
+              {t("nav.pricing")}
+            </Link>
             <a
-              href="#cara-kerja"
+              href="/support"
               className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
             >
-              {t("nav.howItWorks")}
+              {t("nav.contact")}
             </a>
           </div>
 
-          {/* CTA (desktop) */}
+          {/* CTA button (desktop) */}
           <div className="lp-nav-masuk flex items-center gap-3">
-            <a
-              href={fixturePreviewEnabled ? "/audit/fixture" : "#sample-audit"}
+            <Link
+              href="#cta"
               className="btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
             >
-              {fixturePreviewEnabled
-                ? t("preview.startPreview")
-                : t("cta.seeSampleAudit")}
-            </a>
+              {t("cta.auditBrandFreeNoExclaim")}
+            </Link>
           </div>
 
           {/* Hamburger button (mobile) */}
@@ -237,12 +227,7 @@ export default function LandingNav({
         </div>
       </nav>
 
-      <MobileMenu
-        open={mobileMenuOpen}
-        onClose={closeMobile}
-        t={t}
-        fixturePreviewEnabled={fixturePreviewEnabled}
-      />
+      <MobileMenu open={mobileMenuOpen} onClose={closeMobile} t={t} />
     </>
   );
 }

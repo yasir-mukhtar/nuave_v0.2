@@ -7,11 +7,12 @@ import {
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 
-const LOGO_SVG = "/nuave-logo.svg";
+const LOGO_SVG = "/logo-nuave.svg";
 
 const NAV_LINK_KEYS = [
-  { key: "sampleAudit" as const, href: "#sample-audit" },
-  { key: "howItWorks" as const, href: "#cara-kerja" },
+  { key: "terms" as const, href: "/terms" },
+  { key: "privacy" as const, href: "/privacy" },
+  { key: "contact" as const, href: "/support" },
 ];
 
 const SOCIAL = [

@@ -22,22 +22,22 @@ test.beforeEach(async ({ page }) => {
   await grantAccess(page);
 });
 
-test.describe("landing entry (preview enabled)", () => {
-  test("shows one fictional-preview action and opens the example intake", async ({
+test.describe("landing (fixture CTA removed)", () => {
+  test("landing shows no fixture CTA; the gated fixture route stays reachable directly", async ({
     page,
   }) => {
     const requests = collectRequests(page);
     await page.goto("/");
-    const startLink = page
-      .getByRole("link", { name: "Mulai pratinjau fiktif" })
-      .first();
-    await expect(startLink).toBeVisible();
+    // Founder decision: the landing CTA was removed — LP-remote landing is
+    // as-is; the fixture entry will be re-added later.
     await expect(
-      page.getByText(
-        "Hanya contoh bisnis. Audit disimulasikan dan tidak ada pembayaran.",
-      ),
+      page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Audit brand Anda — Gratis" }).first(),
     ).toBeVisible();
-    await startLink.click();
+    // The fixture route itself stays intact and gated.
+    await page.goto("/audit/fixture");
     await expect(
       page.getByRole("heading", {
         name: "Start with the fixed example business",
