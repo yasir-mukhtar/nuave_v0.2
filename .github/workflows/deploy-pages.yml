@@ -1,0 +1,46 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build-time env. The OpenNext Cloudflare adapter inlines process.env
+      # into the middleware/worker at BUILD time (verified live), so every
+      # variable the running app needs must exist here. No NEXT_PUBLIC_ vars.
+      - name: Build OpenNext worker
+        run: npm run build:cf
+        env:
+          NUAVE_ACCESS_CODE: ${{ secrets.NUAVE_ACCESS_CODE }}
+          NUAVE_PROVIDER: ${{ secrets.NUAVE_PROVIDER }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_AUDIT_MODEL: ${{ secrets.OPENAI_AUDIT_MODEL }}
+          NUAVE_FIXTURE_PREVIEW_ENABLED: ${{ secrets.NUAVE_FIXTURE_PREVIEW_ENABLED }}
+          NUAVE_FIXTURE_FORCE_REPORT_FAILURE: ${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
+          OPENAI_AUDIT_CARRYOVER_COST_USD: ${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: .

@@ -30,3 +30,7 @@ blob-report/
 
 # Wrangler local dev state (miniflare cache, sqlite)
 .wrangler/
+
+# Production build env for Cloudflare deploy (gitignored; CI uses GitHub secrets)
+.env.production
+.env.production.local
