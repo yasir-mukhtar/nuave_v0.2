@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 const LOGO_SVG = "/logo-nuave.svg";
 
 const NAV_LINK_KEYS = [
+  { key: "faq" as const, href: "/faq" },
   { key: "terms" as const, href: "/terms" },
   { key: "privacy" as const, href: "/privacy" },
   { key: "contact" as const, href: "/support" },
