@@ -3,8 +3,13 @@ import {
   assertNoSideEffects,
   collectRequests,
   freshPaidState,
+  grantAccess,
   seedFixtureState,
 } from "./helpers";
+
+test.beforeEach(async ({ page }) => {
+  await grantAccess(page);
+});
 
 async function reachTerminalFailure(page: import("@playwright/test").Page) {
   seedFixtureState(page, freshPaidState());

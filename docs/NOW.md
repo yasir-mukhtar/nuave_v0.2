@@ -1,16 +1,30 @@
 # Nuave now
 
-> Updated: 2026-08-12
+> Updated: 2026-08-16
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
 
-Make the intended landing-to-report journey reviewable end to end with the
-privacy-safe fixture before replacing its simulated boundaries. The first
-bounded deliverable is a clearly simulated journey shell: landing, short
-intake, fact confirmation, question review, simulated checkout, processing,
-and report. It must preserve the existing live audit engine and must not look
-like a real purchase.
+Implementing the founder-approved [`V2_SUBDOMAIN_LAUNCH_PLAN.md`](./V2_SUBDOMAIN_LAUNCH_PLAN.md):
+ship this repository to `v2.nuave.ai` in Indonesian with the audit tool behind an
+access code, without touching `nuave.ai`. Phases 1–2 are implemented and
+verified locally (Indonesian-only site; `/audit` and `/api/audit/*` gated by the
+httpOnly `nuave_access` cookie against server-only `NUAVE_ACCESS_CODE`; a
+fail-closed `src/proxy.ts` gate; `/access` entry screen; robots noindex while
+pre-release). All local gates pass: `npm run check`, `npm run test:audit` (208),
+and `npm run test:e2e` (23). Phase 3+ (Vercel deploy, DNS, live smoke test) are
+publishing actions and await explicit founder approval; DNS for `nuave.ai` lives
+at Cloudflare, the Vercel team is `nuave-ai` (existing `nuave-v02` project links
+`nuave_v0.3`, so a fresh project is needed), and the first live run is budgeted
+for the free Gemini path (`NUAVE_PROVIDER=gemini`).
+
+Known gap logged by the launch plan, not fixed in this task: `/audit` and
+`/audit/fixture` remain mostly English in hardcoded JSX, and the landing copy is
+still agency-facing by explicit founder decision; the founder edits the landing
+directly after the task.
+
+The earlier journey-shell objective below remains the active product build once
+the launch task ships.
 
 After the shell passes, replace boundaries in the order defined by
 [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md): Indonesian contracts, live report

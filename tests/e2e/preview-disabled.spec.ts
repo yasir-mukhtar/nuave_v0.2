@@ -3,8 +3,13 @@ import {
   assertNoSideEffects,
   collectRequests,
   freshPaidState,
+  grantAccess,
   seedFixtureState,
 } from "./helpers";
+
+test.beforeEach(async ({ page }) => {
+  await grantAccess(page);
+});
 
 test.describe("preview disabled", () => {
   test("the fixture route is unavailable even with fixture session state present", async ({
@@ -39,10 +44,10 @@ test.describe("preview disabled", () => {
     const requests = collectRequests(page);
     await page.goto("/");
     await expect(
-      page.getByRole("link", { name: "Start the fictional preview" }),
+      page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "See Sample Audit" }).first(),
+      page.getByRole("link", { name: "Lihat Contoh Audit" }).first(),
     ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });

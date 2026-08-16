@@ -1,4 +1,20 @@
 import { expect, type Page } from "@playwright/test";
+import { E2E_ACCESS_CODE } from "./shared-config";
+
+/**
+ * Grants the middleware access cookie to the browser context. Must run before
+ * any navigation to a gated route (`/audit` and `/api/audit/*`).
+ */
+export async function grantAccess(page: Page): Promise<void> {
+  await page.context().addCookies([
+    {
+      name: "nuave_access",
+      value: E2E_ACCESS_CODE,
+      domain: "localhost",
+      path: "/",
+    },
+  ]);
+}
 
 /** Fixture-journey session key and the live workflow keys it must never touch. */
 export const FIXTURE_SESSION_KEY = "nuave.fixtureJourney.v2";

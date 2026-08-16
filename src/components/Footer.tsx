@@ -7,8 +7,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 
-const LOGO_SVG =
-  "https://framerusercontent.com/images/r9wYEZlQeEIZBKytCeKUn5f1QGw.svg";
+const LOGO_SVG = "/nuave-logo.svg";
 
 const NAV_LINK_KEYS = [
   { key: "sampleAudit" as const, href: "#sample-audit" },

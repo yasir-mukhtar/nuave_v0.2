@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const LOGO_SVG =
-  "https://framerusercontent.com/images/r9wYEZlQeEIZBKytCeKUn5f1QGw.svg";
+const LOGO_SVG = "/nuave-logo.svg";
 
 function useScrolled() {
   const [scrolled, setScrolled] = useState(false);
@@ -184,9 +182,8 @@ export default function LandingNav({
             </a>
           </div>
 
-          {/* Language switcher + login button (desktop) */}
+          {/* CTA (desktop) */}
           <div className="lp-nav-masuk flex items-center gap-3">
-            <LanguageSwitcher />
             <a
               href={fixturePreviewEnabled ? "/audit/fixture" : "#sample-audit"}
               className="btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"

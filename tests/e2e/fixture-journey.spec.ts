@@ -11,11 +11,16 @@ import {
   collectRequests,
   confirmFactsAndApprove,
   expectReadyReport,
+  grantAccess,
   seedFixtureState,
   simulatePaymentAndStartRun,
 } from "./helpers";
 
 const PREVIEW_NOTICE = "Fictional preview notice";
+
+test.beforeEach(async ({ page }) => {
+  await grantAccess(page);
+});
 
 test.describe("landing entry (preview enabled)", () => {
   test("shows one fictional-preview action and opens the example intake", async ({
@@ -24,12 +29,12 @@ test.describe("landing entry (preview enabled)", () => {
     const requests = collectRequests(page);
     await page.goto("/");
     const startLink = page
-      .getByRole("link", { name: "Start the fictional preview" })
+      .getByRole("link", { name: "Mulai pratinjau fiktif" })
       .first();
     await expect(startLink).toBeVisible();
     await expect(
       page.getByText(
-        "Example business only: the audit is simulated and no payment is taken.",
+        "Hanya contoh bisnis. Audit disimulasikan dan tidak ada pembayaran.",
       ),
     ).toBeVisible();
     await startLink.click();
