@@ -21,3 +21,12 @@ node_modules/
 test-results/
 playwright-report/
 blob-report/
+
+# Cloudflare worker local preview secrets (wrangler dev reads .dev.vars)
+.dev.vars
+
+# OpenNext Cloudflare build output (contains build-time env; never commit)
+.open-next/
+
+# Wrangler local dev state (miniflare cache, sqlite)
+.wrangler/

@@ -17,7 +17,10 @@
     "test:e2e:disabled": "playwright test -c playwright.config.disabled.ts",
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"*.{json,mjs}\" \".github/**/*.yml\"",
-    "check": "npm run typecheck && npm run lint && npm run format:check"
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@heroui/react": "3.2.2",
@@ -36,11 +39,13 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "4.1.14",
     "@types/node": "20.19.17",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "esbuild": "^0.28.2",
     "eslint": "9.39.5",
     "eslint-config-next": "16.2.11",
     "prettier": "3.9.6",
