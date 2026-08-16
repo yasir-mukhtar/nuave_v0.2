@@ -6,16 +6,19 @@ import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 
-const VisibilityScoreChart = dynamic(
-  () => import("@/components/VisibilityScoreChart"),
+const ConfirmBusinessPreview = dynamic(
+  () => import("@/components/ConfirmBusinessPreview"),
   { ssr: false },
 );
-const RecommendationsPreview = dynamic(
-  () => import("@/components/RecommendationsPreview"),
+const PaymentPreview = dynamic(() => import("@/components/PaymentPreview"), {
+  ssr: false,
+});
+const QuestionsPreview = dynamic(
+  () => import("@/components/QuestionsPreview"),
   { ssr: false },
 );
-const PromptResultPreview = dynamic(
-  () => import("@/components/PromptResultPreview"),
+const ReportPagePreview = dynamic(
+  () => import("@/components/ReportPagePreview"),
   { ssr: false },
 );
 
@@ -126,6 +129,18 @@ export default function HowItWorks() {
         t("howItWorks.step3Check3"),
       ],
     },
+    {
+      step: "4",
+      label: t("howItWorks.step4Label"),
+      title: t("howItWorks.step4Title"),
+      desc: t("howItWorks.step4Desc"),
+      checks: [
+        t("howItWorks.step4Check1"),
+        t("howItWorks.step4Check2"),
+        t("howItWorks.step4Check3"),
+      ],
+      flip: true,
+    },
   ];
   const sectionRef = useRef<HTMLDivElement>(null);
   const [headingOpacity, setHeadingOpacity] = useState(1);
@@ -225,17 +240,19 @@ export default function HowItWorks() {
                   card.flip ? "order-1" : "order-2",
                 )}
               >
-                {card.step === "1" && <PromptResultPreview />}
-                {card.step === "2" && <RecommendationsPreview />}
-                {card.step === "3" && <VisibilityScoreChart />}
+                {card.step === "1" && <ConfirmBusinessPreview />}
+                {card.step === "2" && <PaymentPreview />}
+                {card.step === "3" && <QuestionsPreview />}
+                {card.step === "4" && <ReportPagePreview />}
               </InteractiveGradientPanel>
 
               {/* Mobile preview */}
               <div className="lp-hiw-mobile-preview p-3 order-3">
                 <InteractiveGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
-                  {card.step === "1" && <PromptResultPreview />}
-                  {card.step === "2" && <RecommendationsPreview />}
-                  {card.step === "3" && <VisibilityScoreChart />}
+                  {card.step === "1" && <ConfirmBusinessPreview />}
+                  {card.step === "2" && <PaymentPreview />}
+                  {card.step === "3" && <QuestionsPreview />}
+                  {card.step === "4" && <ReportPagePreview />}
                 </InteractiveGradientPanel>
               </div>
             </div>

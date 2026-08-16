@@ -2,12 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { IconChevronDown } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconCheck,
+  IconShieldLock,
+} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import HowItWorks from "@/components/HowItWorks";
 import LandingNav from "@/components/LandingNav";
+import ExampleReportPreview from "@/components/ExampleReportPreview";
 
 /* ───── Data ───── */
 
@@ -75,13 +80,21 @@ function HeroSection() {
             {t("landing.heroSubtitle")}
           </p>
 
-          {/* CTA Button */}
-          <Link
-            href="#cta"
-            className="btn-lp-purple inline-flex items-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] no-underline cursor-pointer"
-          >
-            {t("cta.auditBrandFree")}
-          </Link>
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="#cta"
+              className="btn-lp-purple inline-flex items-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] no-underline cursor-pointer"
+            >
+              {t("cta.auditBrandFree")}
+            </Link>
+            <Link
+              href="#contoh-laporan"
+              className="inline-flex items-center px-[22px] py-3 text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] bg-white text-[var(--lp-text-primary)] no-underline cursor-pointer hover:bg-[#fafafa] transition-colors duration-150"
+            >
+              {t("cta.seeExampleReport")}
+            </Link>
+          </div>
         </div>
 
         {/* Preview area */}
@@ -171,6 +184,130 @@ function HeroSection() {
   );
 }
 
+/* ───── What you receive (Isi Laporan) ───── */
+
+function IsilaporanSection() {
+  const t = useTranslations();
+  const ITEMS = Array.from({ length: 7 }, (_, i) => ({
+    title: t(`report.item${i + 1}Title`),
+    body: t(`report.item${i + 1}Body`),
+  }));
+  return (
+    <section
+      id="isi-laporan"
+      className="lp-report-section bg-white px-8 py-[120px]"
+    >
+      <div className="max-w-[1044px] mx-auto">
+        <h2 className="lp-report-heading text-center m-0 mb-6">
+          {t("report.heading")}
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-14">
+          {ITEMS.map((item, i) => (
+            <div
+              key={item.title}
+              className={cn(
+                "flex items-start gap-3.5 rounded-[12px] border border-[#E5E7EB] bg-white p-5",
+                i === 6 && "md:col-span-2",
+              )}
+            >
+              <div className="w-6 h-6 rounded-full bg-[#ECE8FF] flex items-center justify-center shrink-0 mt-0.5">
+                <IconCheck size={14} stroke={2.5} color="var(--lp-purple)" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-[16px] font-semibold tracking-[-0.3px] leading-[1.5em] text-[var(--lp-text-primary)] m-0">
+                  {item.title}
+                </p>
+                <p className="text-[14px] font-normal leading-[1.6em] text-[#6B7280] m-0">
+                  {item.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Example report */}
+        <div className="mt-16 flex flex-col items-center gap-5">
+          <Link
+            href="#contoh-laporan"
+            className="btn-lp-purple inline-flex items-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] no-underline cursor-pointer"
+          >
+            {t("report.cta")}
+          </Link>
+          <ExampleReportPreview />
+          <p className="text-[13px] text-[#9CA3AF] m-0">
+            {t("report.exampleFootnote")}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───── Boundaries (Batasan) ───── */
+
+function BatasanSection() {
+  const t = useTranslations();
+  const ITEMS = [
+    { title: t("batasan.item1Title"), body: t("batasan.item1Body") },
+    { title: t("batasan.item2Title"), body: t("batasan.item2Body") },
+    { title: t("batasan.item3Title"), body: t("batasan.item3Body") },
+  ];
+  return (
+    <section
+      id="batasan"
+      className="lp-batasan-section bg-white px-8 py-[120px]"
+    >
+      <div className="max-w-[1044px] mx-auto">
+        <h2 className="lp-batasan-heading text-center m-0 mb-14">
+          {t("batasan.heading")}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {ITEMS.map((item) => (
+            <div
+              key={item.title}
+              className="rounded-[12px] border border-[#E5E7EB] bg-[#F9FAFB] p-8 flex flex-col gap-3"
+            >
+              <p className="text-[20px] font-semibold tracking-[-0.5px] leading-[1.4em] text-[#111827] m-0">
+                {item.title}
+              </p>
+              <p className="text-[15px] font-normal leading-[1.7em] text-[#6B7280] m-0">
+                {item.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───── Data policy (Kebijakan Data) ───── */
+
+function KebijakanDataSection() {
+  const t = useTranslations();
+  return (
+    <section
+      id="kebijakan-data"
+      className="lp-data-section bg-white px-8 pb-[120px]"
+    >
+      <div className="max-w-[1044px] mx-auto">
+        <div className="rounded-[16px] bg-[#0d1738] px-8 py-14 flex flex-col items-center text-center gap-5">
+          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+            <IconShieldLock size={22} color="#fff" stroke={1.6} />
+          </div>
+          <h3 className="text-[22px] font-semibold tracking-[-0.5px] leading-[1.4em] text-white m-0">
+            {t("dataPolicy.heading")}
+          </h3>
+          <p className="text-[15px] font-normal leading-[1.8em] text-white/80 m-0 max-w-[640px]">
+            {t("dataPolicy.statement")}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ───── FAQ Section ───── */
 
 function FAQSection() {
@@ -229,10 +366,6 @@ function FAQSection() {
     </section>
   );
 }
-
-/* ───── Problem Cards ───── */
-
-/* PROBLEM_CARDS moved inside Home for i18n access */
 
 /* ───── Problem Card with cursor-following glow ───── */
 
@@ -414,12 +547,15 @@ export default function Home() {
       </div>
       {/* end Framer hero+marquee wrapper */}
 
-      {/* ──── Problem Section ──── */}
+      {/* ──── Educate Section (masalah) ──── */}
       <section className="lp-problem-section bg-white px-8 py-[120px]">
         <div className="max-w-[1044px] mx-auto">
-          <h2 className="lp-problem-heading text-center m-0 mb-14">
-            {t("landing.problemHeading")}
+          <h2 className="lp-problem-heading text-center m-0 mb-5">
+            {t("landing.educateHeading")}
           </h2>
+          <p className="lp-problem-subtitle text-center text-[18px] font-normal leading-[1.7em] tracking-[-0.5px] text-[var(--lp-text-secondary)] m-0 mb-14">
+            {t("landing.educateSubtitle")}
+          </p>
           <div className="lp-problem-grid grid grid-cols-2 gap-6">
             {[
               {
@@ -458,6 +594,9 @@ export default function Home() {
 
       {/* ──── How it works ──── */}
       <HowItWorks />
+
+      {/* ──── Isi Laporan (what you receive) ──── */}
+      <IsilaporanSection />
 
       {/* ──── Stats ──── */}
       <section className="lp-stats-section bg-[#F9FAFB] pt-[120px] pb-[120px]">
@@ -540,6 +679,12 @@ export default function Home() {
           </a>
         </p>
       </section>
+
+      {/* ──── Batasan (honest boundaries) ──── */}
+      <BatasanSection />
+
+      {/* ──── Kebijakan Data ──── */}
+      <KebijakanDataSection />
 
       {/* ──── FAQ ──── */}
       <FAQSection />

@@ -4,23 +4,23 @@ import ActionItemPanel from "@/components/dashboard/ActionItemPanel";
 
 const DUMMY_FINDINGS = [
   {
-    title: "Optimize futsal category page with AI keywords",
+    title: "Optimalkan halaman kategori futsal dengan kata kunci AI",
     description:
-      "AI doesn't mention Ortuseight when asked about the best futsal shoes in Indonesia. The category page needs relevant keywords.",
+      "AI tidak menyebut Ortuseight saat ditanya sepatu futsal terbaik di Indonesia. Halaman kategori butuh kata kunci yang relevan.",
     severity: "high" as const,
     problem_type: "meta_structure",
   },
   {
-    title: "Create Ortuseight vs Specs comparison content",
+    title: "Buat konten perbandingan Ortuseight vs Specs",
     description:
-      "Many AI searches compare local brands. There's no detailed comparison content on the website that AI can reference.",
+      "Banyak pencarian AI membandingkan brand lokal. Belum ada konten perbandingan detail di website yang bisa dirujuk AI.",
     severity: "high" as const,
     problem_type: "content_gap",
   },
   {
-    title: "Add FAQ about Ortus sole technology",
+    title: "Tambahkan FAQ tentang teknologi sol Ortus",
     description:
-      "AI frequently answers technical questions about shoe materials. A structured FAQ page will help AI reference your brand.",
+      "AI sering menjawab pertanyaan teknis soal material sepatu. Halaman FAQ terstruktur akan membantu AI merujuk brand Anda.",
     severity: "medium" as const,
     problem_type: "structured_data",
   },

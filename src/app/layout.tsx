@@ -19,9 +19,9 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Nuave - Audit Visibilitas AI",
+  title: "Nuave · Apakah brand Anda muncul di ChatGPT?",
   description:
-    "Lihat bagaimana satu bisnis klien muncul dalam rangkaian rekomendasi ChatGPT yang ditentukan, lalu sampaikan temuan yang telah ditinjau dalam laporan yang jelas dan dapat diunduh.",
+    "Nuave memberi Anda laporan bagaimana AI menyebut brand Anda dan apa yang bisa diperbaiki.",
   robots: { index: false, follow: false },
   manifest: "/site.webmanifest",
   icons: {

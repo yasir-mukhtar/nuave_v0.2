@@ -243,13 +243,16 @@ body:has(.lp-root) {
   .lp-problem-heading,
   .lp-stats-heading,
   .lp-hiw-heading,
-  .lp-faq-heading {
+  .lp-faq-heading,
+  .lp-report-heading,
+  .lp-batasan-heading {
     font-size: 28px !important;
   }
 
   .lp-hero-subtitle,
   .lp-marquee-text,
   .lp-stats-subtitle,
+  .lp-problem-subtitle,
   .lp-problem-card span {
     font-size: 16px !important;
   }

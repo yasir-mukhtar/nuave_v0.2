@@ -34,7 +34,7 @@ test.describe("landing (fixture CTA removed)", () => {
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "Audit brand Anda — Gratis" }).first(),
+      page.getByRole("link", { name: "Audit bisnis saya" }).first(),
     ).toBeVisible();
     // The fixture route itself stays intact and gated.
     await page.goto("/audit/fixture");

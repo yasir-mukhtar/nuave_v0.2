@@ -53,7 +53,7 @@ function CustomTooltip({
 export default function VisibilityScoreChart() {
   return (
     <div className="w-[340px] h-[310px] rounded-[6px] border border-border-light bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
-      <p className="mb-3 type-title text-gray-900 m-0">AI visibility score</p>
+      <p className="mb-3 type-title text-gray-900 m-0">Skor visibilitas AI</p>
       <ResponsiveContainer width="100%" height={242}>
         <AreaChart
           data={data}
