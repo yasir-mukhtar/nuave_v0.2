@@ -11,13 +11,14 @@ access code, without touching `nuave.ai`.
 
 Status: Phases 1–2 are implemented, committed, and verified; **Phase 3 is
 deployed to Cloudflare Workers** (founder chose Cloudflare over the plan's
-Vercel target): live at `https://nuave-v2.mail-yasirmukhtar.workers.dev`
-(project `nuave-v2`, account `Mail.yasirmukhtar@gmail.com's Account`). The
-Indonesian landing renders, robots noindex is active, and the access gate holds
-on the live URL: `/` public 200; `/audit` and `/audit/fixture` redirect to
-`/access` without the cookie; `/api/audit/*` returns 401 before any handler
-runs; correct `nuave_access` cookie passes (200/400); static assets and CSS
-serve correctly.
+Vercel target) and **Phase 4 is done**: **`https://v2.nuave.ai` is live**,
+serving the Indonesian landing with the access gate verified on the final
+domain (`/` public 200; `/audit` redirects to `/access` without the cookie;
+`/api/audit/*` 401 before any handler; correct `nuave_access` cookie passes;
+assets + robots noindex OK). The custom domain is attached to worker
+`nuave-v2` (Cloudflare auto-created the proxied AAAA record; apex `nuave.ai`
+and `www.nuave.ai` verified byte-for-byte unchanged). The deployment URL
+`https://nuave-v2.mail-yasirmukhtar.workers.dev` remains as a fallback.
 
 **CI is live**: GitHub Actions (`.github/workflows/deploy-pages.yml`) builds
 with `@opennextjs/cloudflare` and deploys to the `nuave-v2` worker on every
