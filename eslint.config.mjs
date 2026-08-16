@@ -12,5 +12,6 @@ export default defineConfig([
     ".open-next/**",
     "next-env.d.ts",
     "archive/**",
+    "LP-remote/**",
   ]),
 ]);

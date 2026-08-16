@@ -4,12 +4,22 @@
     "sampleAudit": "Contoh Audit"
   },
   "cta": {
-    "seeSampleAudit": "Lihat Contoh Audit"
+    "seeSampleAudit": "Lihat Contoh Audit",
+    "viewAll": "Lihat semua"
   },
   "preview": {
     "badge": "Pratinjau produk fiktif",
     "startPreview": "Mulai pratinjau fiktif",
     "heroNotice": "Hanya contoh bisnis. Audit disimulasikan dan tidak ada pembayaran."
+  },
+  "dashboard": {
+    "findings": "Temuan",
+    "noProblemsDetected": "Belum ada masalah terdeteksi."
+  },
+  "severity": {
+    "critical": "Kritis",
+    "important": "Penting",
+    "normal": "Normal"
   },
   "footer": {
     "followUs": "Ikuti Kami",
