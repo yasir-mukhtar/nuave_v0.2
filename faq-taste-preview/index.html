@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pertanyaan yang Sering Diajukan | Nuave</title>
+    <meta
+      name="description"
+      content="Jawaban singkat tentang audit visibilitas AI Nuave, proses pengujian, isi laporan, biaya, privasi, dan batasannya."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <!-- NAV: border-only, no shadow; CTA is a secondary button -->
+      <header class="nav">
+        <div class="nav__inner">
+          <a class="nav__brand" href="/" aria-label="Nuave">
+            <img src="../public/nuave-logo.svg" alt="" width="24" height="24" class="nav__logo" />
+            <span>Nuave</span>
+          </a>
+          <nav class="nav__links" aria-label="Navigasi utama">
+            <a href="/pricing">Harga</a>
+            <a href="/faq" class="is-active" aria-current="page">FAQ</a>
+            <a href="/support">Kontak</a>
+          </nav>
+          <a class="btn btn--secondary" href="/">Audit brand Anda</a>
+        </div>
+      </header>
+
+      <!-- MAIN: flat white list, category groups, accordion rows -->
+      <main class="main">
+        <header class="main__head">
+          <h1>Pertanyaan yang sering diajukan</h1>
+          <p class="main__lede">
+            Hal penting tentang cara kerja Nuave, apa yang Anda terima, dan apa
+            yang tidak bisa dijanjikan oleh audit ini.
+          </p>
+        </header>
+
+        <section class="group" aria-labelledby="g-umum">
+          <h2 class="group__label" id="g-umum">Umum</h2>
+          <div class="group__list">
+            <div class="item">
+              <button class="item__q" id="q1" aria-expanded="false" aria-controls="a1">
+                <span>Apa itu Nuave?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a1" role="region" aria-labelledby="q1">
+                <div class="item__a-inner">
+                  <p>Nuave adalah layanan audit visibilitas AI untuk bisnis. Kami menguji pertanyaan yang mungkin diajukan calon pelanggan kepada AI, lalu menunjukkan apakah bisnis Anda disebutkan, informasi apa yang muncul, dan bagian mana yang bisa diperbaiki.</p>
+                  <p>Nuave memberikan satu laporan untuk satu bisnis. Nuave bukan layanan monitoring, dashboard, atau langganan.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q2" aria-expanded="false" aria-controls="a2">
+                <span>Apa yang diuji oleh Nuave?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a2" role="region" aria-labelledby="q2">
+                <div class="item__a-inner">
+                  <p>Kami menguji 10 pertanyaan berbahasa Indonesia pada GPT-4o (ChatGPT): lima pertanyaan tanpa nama bisnis Anda dan lima pertanyaan yang menyebut nama bisnis Anda.</p>
+                  <p>Anda dapat memeriksa dan mengubah pertanyaan tersebut sebelum audit dimulai. Setelah Anda menyetujuinya, pertanyaan dikunci agar laporan sesuai dengan ruang lingkup yang Anda pesan.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q3" aria-expanded="false" aria-controls="a3">
+                <span>Apakah hasil Nuave merupakan peringkat?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a3" role="region" aria-labelledby="q3">
+                <div class="item__a-inner">
+                  <p>Tidak. Laporan menunjukkan hasil dari 10 pertanyaan pada satu layanan AI dan pada waktu tertentu. Hasil tersebut bukan peringkat permanen dan tidak mewakili semua pertanyaan atau semua jawaban AI yang mungkin diterima orang lain.</p>
+                  <p>Jawaban AI dapat berubah meskipun pertanyaannya sama. Karena itu, laporan selalu menyebutkan metode dan waktu pengujian.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q4" aria-expanded="false" aria-controls="a4">
+                <span>Apakah Nuave menjamin bisnis saya akan lebih sering muncul?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a4" role="region" aria-labelledby="q4">
+                <div class="item__a-inner">
+                  <p>Tidak. Nuave menunjukkan apa yang diamati dan apa yang layak diperbaiki, tetapi tidak dapat mengendalikan jawaban AI.</p>
+                  <p>Kami tidak menjamin kenaikan visibilitas, traffic, calon pelanggan, penjualan, atau pendapatan setelah rekomendasi dijalankan.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q5" aria-expanded="false" aria-controls="a5">
+                <span>Apa itu re-check?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a5" role="region" aria-labelledby="q5">
+                <div class="item__a-inner">
+                  <p>Re-check adalah audit baru yang menggunakan pertanyaan yang sama untuk melihat apa yang berubah. Re-check dibeli terpisah dan bukan langganan atau monitoring.</p>
+                  <p>Kami biasanya menyarankan re-check setelah enam sampai delapan minggu agar bisnis memiliki waktu untuk memperbaiki informasi publiknya. Jangka waktu tersebut adalah saran praktis, bukan jaminan bahwa hasil akan berubah.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q6" aria-expanded="false" aria-controls="a6">
+                <span>Apakah saya harus mempunyai website?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a6" role="region" aria-labelledby="q6">
+                <div class="item__a-inner">
+                  <p>Tidak selalu, tetapi Nuave membutuhkan sumber publik yang cukup untuk memastikan identitas bisnis dan menilai informasi yang tersedia. Website resmi, profil bisnis, atau profil sosial yang aktif dapat membantu.</p>
+                  <p>Jika bisnis atau cabang yang dimaksud tidak dapat dipastikan, kami akan meminta perbaikan sebelum audit dimulai atau menolak pesanan dan mengembalikan pembayaran.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-laporan">
+          <h2 class="group__label" id="g-laporan">Laporan</h2>
+          <div class="group__list">
+            <div class="item">
+              <button class="item__q" id="q7" aria-expanded="false" aria-controls="a7">
+                <span>Apa yang saya terima?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a7" role="region" aria-labelledby="q7">
+                <div class="item__a-inner">
+                  <p>Anda menerima laporan privat yang dapat dibaca di web dan diunduh. Isinya mencakup:</p>
+                  <ul>
+                    <li>berapa kali bisnis Anda disebutkan, lengkap dengan jumlah pertanyaan yang diuji;</li>
+                    <li>jawaban AI yang diamati dan sumber yang tersedia;</li>
+                    <li>bisnis lain yang disebutkan dalam pertanyaan yang sama;</li>
+                    <li>informasi publik tentang bisnis Anda yang keliru, tidak konsisten, atau tidak ditemukan;</li>
+                    <li>sampai tiga rekomendasi yang terkait langsung dengan temuan; dan</li>
+                    <li>metode, batasan, serta waktu pengujian.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q8" aria-expanded="false" aria-controls="a8">
+                <span>Kapan laporan saya selesai?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a8" role="region" aria-labelledby="q8">
+                <div class="item__a-inner">
+                  <p>Laporan dikirim paling lambat <span class="ph">[WAKTU PENGIRIMAN]</span> setelah pembayaran berhasil dan 10 pertanyaan disetujui. Jika kami memperkirakan keterlambatan, kami akan menghubungi Anda melalui email yang digunakan saat memesan.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q9" aria-expanded="false" aria-controls="a9">
+                <span>Bagaimana jika audit gagal atau laporan tidak lengkap?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a9" role="region" aria-labelledby="q9">
+                <div class="item__a-inner">
+                  <p>Jika kegagalan teknis di pihak Nuave membuat kami tidak dapat menghasilkan laporan yang dapat digunakan, kami akan mencoba menjalankan audit kembali. Jika percobaan tersebut tetap gagal, Anda dapat memilih pengembalian dana penuh.</p>
+                  <p>Jika laporan tidak sesuai dengan ruang lingkup pesanan atau memuat kesalahan yang dibuat Nuave, hubungi <a href="mailto:hello@nuave.ai">hello@nuave.ai</a>. Kami akan memeriksa dan memperbaikinya tanpa biaya. Rincian lengkap terdapat dalam <a href="/terms">Syarat dan Ketentuan</a>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-pembayaran-dan-pesanan">
+          <h2 class="group__label" id="g-pembayaran-dan-pesanan">Pembayaran dan pesanan</h2>
+          <div class="group__list">
+            <div class="item">
+              <button class="item__q" id="q10" aria-expanded="false" aria-controls="a10">
+                <span>Berapa harga audit Nuave?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a10" role="region" aria-labelledby="q10">
+                <div class="item__a-inner">
+                  <p>Satu audit berharga <span class="ph">[HARGA]</span> dan dibayar satu kali melalui <span class="ph">[METODE PEMBAYARAN]</span>. Tidak ada langganan atau perpanjangan otomatis.</p>
+                  <p>Sebelum membayar, Anda akan melihat bisnis yang diuji, 10 pertanyaan yang telah disetujui, isi laporan, total harga, waktu pengiriman, dan ketentuan yang berlaku.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q11" aria-expanded="false" aria-controls="a11">
+                <span>Apakah saya bisa membatalkan pesanan?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a11" role="region" aria-labelledby="q11">
+                <div class="item__a-inner">
+                  <p>Anda dapat meminta pembatalan sebelum audit mulai dijalankan. Setelah audit dimulai, pembatalan karena perubahan pikiran tidak selalu dapat dilakukan karena biaya pemrosesan sudah digunakan.</p>
+                  <p>Kegagalan layanan, pembayaran ganda, dan laporan yang tidak sesuai dengan pesanan ditangani secara terpisah dalam <a href="/terms">Syarat dan Ketentuan</a>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="group" aria-labelledby="g-privasi-dan-data">
+          <h2 class="group__label" id="g-privasi-dan-data">Privasi dan data</h2>
+          <div class="group__list">
+            <div class="item">
+              <button class="item__q" id="q12" aria-expanded="false" aria-controls="a12">
+                <span>Data apa yang dikumpulkan Nuave?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a12" role="region" aria-labelledby="q12">
+                <div class="item__a-inner">
+                  <p>Kami meminta informasi yang diperlukan untuk memastikan bisnis yang tepat, menyusun pertanyaan, menerima pembayaran, dan mengirimkan laporan. Informasi ini umumnya meliputi nama dan email pemesan, identitas bisnis, situs atau profil publik bisnis, pertanyaan yang disetujui, serta status pembayaran.</p>
+                  <p>Jangan mengirim data pelanggan, kata sandi, data kesehatan, data keuangan pribadi, atau informasi sensitif lainnya. Penjelasan lengkap tersedia di <a href="/privacy">Kebijakan Privasi dan Data</a>.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q13" aria-expanded="false" aria-controls="a13">
+                <span>Apakah laporan saya dipublikasikan?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a13" role="region" aria-labelledby="q13">
+                <div class="item__a-inner">
+                  <p>Tidak. Laporan dikirim melalui tautan privat dan tidak dipublikasikan sebagai contoh, studi kasus, atau materi promosi tanpa izin terpisah dari Anda.</p>
+                  <p>Tautan laporan tersedia selama <span class="ph">[MASA AKSES LAPORAN]</span>. Unduh dan simpan salinan laporan Anda sebelum masa akses berakhir.</p>
+                </div>
+              </div>
+            </div>
+            <div class="item">
+              <button class="item__q" id="q14" aria-expanded="false" aria-controls="a14">
+                <span>Siapa yang menjalankan Nuave?</span>
+                <svg class="item__chevron" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="item__a" id="a14" role="region" aria-labelledby="q14">
+                <div class="item__a-inner">
+                  <p>Nuave adalah layanan independen yang dioperasikan oleh <span class="ph">[NAMA PENGELOLA]</span> di <span class="ph">[KOTA]</span>, Indonesia. Sebelum membayar, Anda dapat melihat ruang lingkup audit, harga, pertanyaan yang diuji, ketentuan layanan, dan kanal bantuan yang dapat dihubungi.</p>
+                  <p>Masih punya pertanyaan? Hubungi <a href="/support">Kontak dan Bantuan</a> atau email <a href="mailto:hello@nuave.ai">hello@nuave.ai</a>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- FOOTER: grouped links, hairline top border, muted text -->
+      <footer class="foot">
+        <div class="foot__inner">
+          <div class="foot__brand">
+            <img src="../public/nuave-logo.svg" alt="" width="24" height="24" class="foot__logo" />
+            <span>Nuave</span>
+          </div>
+          <nav class="foot__links" aria-label="Tautan situs">
+            <a href="/faq">FAQ</a>
+            <a href="/terms">Syarat</a>
+            <a href="/privacy">Privasi</a>
+            <a href="/support">Kontak</a>
+          </nav>
+          <nav class="foot__social" aria-label="Sosial media">
+            <a href="https://linkedin.com/company/nuave">LinkedIn</a>
+            <a href="https://x.com/nuaveAI">X</a>
+            <a href="https://instagram.com/nuave.ai">Instagram</a>
+          </nav>
+          <p class="foot__copy">© 2026 Nuave. Audit visibilitas AI untuk bisnis Anda.</p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,421 @@
+/* ════════════════════════════════════════════════════════════════════════
+   NUAWE FAQ - TASTE SYSTEM PREVIEW (concept: flat list-view accordion)
+   Tokens ported verbatim from taste-system/packages/tokens/tokens.css.
+   Concept reference: flat white page, bold H1, category groups, accordion
+   rows with chevrons, hairline dividers, no shadows, no cards.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --color-canvas: #fafafa;          /* page floor, never holds content */
+  --color-surface: #ffffff;         /* the page itself (flat per concept) */
+  --color-surface-subtle: #f7f7f7;  /* hovered rows */
+
+  /* Borders - elevation is a border, not a shadow */
+  --color-border-hairline: #ededed;
+  --color-border: #e7e7e7;
+  --color-border-strong: #d4d4d4;
+  --color-border-heavy: #b8b8b8;
+
+  /* Text */
+  --color-text-strong: #1a1a1a;
+  --color-text-body: #333333;
+  --color-text-secondary: #5d5d5d;
+  --color-text-muted: #777777;
+  --color-text-disabled: #a3a3a3;
+  /* FAQ accordion text: mirror landing page accordion (src/app/page.tsx:339,357)
+     per founder request. Deliberate exception to token purity (home page colors). */
+  --color-faq-q: #111827;
+  --color-faq-a: #6b7280;
+
+  /* Accent - ONE blue. No second hue. */
+  --color-accent: #0077e6;
+  --color-accent-hover: #0069cc;
+  --color-accent-border: #bfdcfb;
+
+  /* Semantic - status only, red as TEXT on neutral (never a fill) */
+  --color-danger: #d93036;
+
+  /* Radius */
+  --radius-sm: 8px;   /* nav row */
+  --radius-md: 10px;  /* button */
+
+  /* Type - compressed scale, negative tracking >= 16px */
+  --t-sm: 13px;
+  --t-base: 14px;
+  --t-md: 16px;
+  --t-lg: 18px;
+  --t-3xl: 40px;
+
+  /* Spacing - component scale (4·8·12·16·20·24·32) */
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Section scale (48·64·96·128) */
+  --section-xs: 48px;
+  --section-sm: 64px;
+  --section-md: 96px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --duration-base: 180ms;
+
+  /* Focus ring - the ONLY shadow in this file */
+  --ring-focus: 0 0 0 3px rgba(0, 119, 230, 0.16);
+}
+
+/* ═══════════ RESET (minimal) ═══════════ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", system-ui, sans-serif;
+  background-color: var(--color-surface);
+  color: var(--color-text-body);
+  font-size: var(--t-md);
+  line-height: 26px;
+  letter-spacing: -0.1px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-accent-border);
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+/* ═══════════ NAV ═══════════ */
+.nav {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+
+.nav__inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: var(--sp-4) var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+.nav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: var(--color-text-strong);
+  font-size: var(--t-md);
+  font-weight: 600;
+  letter-spacing: -0.1px;
+}
+
+.nav__logo {
+  width: 24px;
+  height: 24px;
+}
+
+.nav__links {
+  display: flex;
+  gap: var(--sp-5);
+  margin-left: var(--sp-6);
+}
+
+.nav__links a {
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: var(--t-base);
+  line-height: 22px;
+  padding: var(--sp-2) 0;
+}
+
+.nav__links a:hover {
+  color: var(--color-text-strong);
+}
+
+.nav__links a.is-active {
+  color: var(--color-text-strong);
+  font-weight: 600;
+}
+
+.nav .btn {
+  margin-left: auto;
+}
+
+/* ═══════════ BUTTON (secondary - the only CTA on this page) ═══════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-md);
+  font-size: var(--t-base);
+  font-weight: 600;
+  line-height: 22px;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--color-border-strong);
+  background-color: var(--color-surface);
+  color: var(--color-text-strong);
+  transition: border-color var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out);
+}
+
+.btn:hover {
+  border-color: var(--color-border-heavy);
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-strong);
+}
+
+.btn:focus-visible,
+a:focus-visible,
+.item__q:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+/* ═══════════ MAIN - flat list, generous whitespace (concept) ═══════════ */
+.main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--section-md) var(--sp-6) var(--section-md);
+}
+
+.main__head {
+  padding-bottom: var(--section-xs);
+  border-bottom: 1px solid var(--color-border-hairline);
+  margin-bottom: var(--section-xs);
+}
+
+.main__head h1 {
+  font-size: var(--t-3xl);
+  font-weight: 700;
+  line-height: 48px;
+  letter-spacing: -0.8px;
+  color: var(--color-text-strong);
+  margin-bottom: var(--sp-4);
+}
+
+.main__lede {
+  font-size: var(--t-md);
+  line-height: 26px;
+  color: var(--color-text-secondary);
+  max-width: 560px;
+}
+
+/* ═══════════ CATEGORY GROUPS ═══════════ */
+.group {
+  margin-bottom: var(--section-sm);
+}
+
+.group:last-child {
+  margin-bottom: 0;
+}
+
+.group__label {
+  font-size: var(--t-md);
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: -0.1px;
+  color: var(--color-text-strong);
+  margin-bottom: var(--sp-3);
+}
+
+/* ═══════════ ACCORDION ITEMS - rows, hairline dividers, no cards ═══════════ */
+.group__list {
+  border-top: 1px solid var(--color-border-hairline);
+}
+
+.item {
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+
+.item__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  width: 100%;
+  padding: var(--sp-5) 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: 1.7em;
+  letter-spacing: -0.5px;
+  color: var(--color-faq-q);
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.item__chevron {
+  flex-shrink: 0;
+  color: var(--color-faq-a);
+  transition: transform 300ms var(--ease-out);
+}
+
+.item.is-open .item__chevron {
+  transform: rotate(180deg);
+}
+
+/* Jawaban: animasi accordion sama seperti FAQ landing page -
+   grid-template-rows 0fr→1fr, ease-in-out 300ms, inner overflow hidden. */
+.item__a {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms ease-in-out;
+  font-size: var(--t-md);
+  font-weight: 400;
+  line-height: 1.6em;
+  color: var(--color-faq-a);
+}
+
+.item.is-open .item__a {
+  grid-template-rows: 1fr;
+}
+
+.item__a-inner {
+  overflow: hidden;
+}
+
+.item__a-inner > :last-child {
+  margin-bottom: 0;
+  padding-bottom: var(--sp-5);
+}
+
+.item__a p {
+  margin-bottom: var(--sp-4);
+}
+
+.item__a p:last-child {
+  margin-bottom: 0;
+}
+
+.item__a ul {
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+}
+
+.item__a li {
+  position: relative;
+  padding-left: var(--sp-5);
+  margin-bottom: var(--sp-2);
+}
+
+.item__a li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 11px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-border-heavy);
+}
+
+.item__a li:last-child {
+  margin-bottom: 0;
+}
+
+/* Placeholder merah - fakta yang belum tersedia, harus diisi founder.
+   Red TEXT on neutral row (taste semantic), never a fill. */
+.ph {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* ═══════════ FOOTER - grouped links, hairline top border ═══════════ */
+.foot {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border-hairline);
+}
+
+.foot__inner {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: var(--section-xs) var(--sp-6);
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--sp-6) var(--sp-8);
+  align-items: start;
+}
+
+.foot__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  font-size: var(--t-md);
+  color: var(--color-text-strong);
+}
+
+.foot__logo {
+  width: 24px;
+  height: 24px;
+}
+
+.foot__links,
+.foot__social {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.foot__links a,
+.foot__social a {
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-size: var(--t-base);
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.foot__links a:hover,
+.foot__social a:hover {
+  color: var(--color-text-strong);
+}
+
+.foot__copy {
+  grid-column: 1 / -1;
+  color: var(--color-text-disabled);
+  font-size: var(--t-sm);
+  line-height: 16px;
+  margin-top: var(--sp-3);
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 720px) {
+  .nav__links {
+    display: none;
+  }
+
+  .main {
+    padding: var(--section-xs) var(--sp-5) var(--section-sm);
+  }
+
+  .foot__inner {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+
+  .foot__copy {
+    margin-top: var(--sp-2);
+  }
+}
