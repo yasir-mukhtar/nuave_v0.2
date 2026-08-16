@@ -7,7 +7,7 @@ import {
   type AuditCallTelemetry,
 } from "@/lib/audit/types";
 import { validatePromptPack } from "@/lib/audit/contracts";
-import { executeAuditPrompt } from "@/lib/audit/openai";
+import { executeAuditPrompt } from "@/lib/audit/provider";
 import {
   encodeAuditRunEvent,
   runWithConcurrency,

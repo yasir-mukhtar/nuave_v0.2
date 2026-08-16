@@ -877,6 +877,46 @@ export function validateReportContent(
   return errors;
 }
 
+// Derive the human-readable name of an audit system from the value the provider
+// actually recorded on each observation. This avoids hardcoding a system that
+// contradicts the observations (e.g. reporting "OpenAI" when the data came from
+// Groq + Tavily). The `system` enum in types.ts lists the only valid values.
+function describeAuditSystem(system: string): string {
+  switch (system) {
+    case "OpenAI Responses API":
+      return "OpenAI Responses API";
+    case "Google Gemini API":
+      return "Google Gemini API";
+    case "Groq + Tavily":
+      return "Groq + Tavily web search";
+    default:
+      return system || "unknown system";
+  }
+}
+
+// Build a system label from the distinct systems present in the completed
+// observations, in stable order. A run selects one provider per process, so this
+// is normally a single value; if observations ever mix systems we list each
+// rather than silently collapsing the distinction.
+function deriveSystemLabel(observations: AuditObservation[]): string {
+  const completed = observations.filter(
+    (item) => item.run_status === "completed",
+  );
+  const systems = [
+    ...new Set(
+      completed.map((item) => describeAuditSystem(item.system)).filter(Boolean),
+    ),
+  ];
+  const models = [
+    ...new Set(completed.map((item) => item.returned_model).filter(Boolean)),
+  ];
+  const systemPart = systems.length
+    ? systems.join(" and ")
+    : "model unavailable";
+  const modelPart = models.length ? ` - ${models.join(", ")}` : "";
+  return `${systemPart}${modelPart} with web search`;
+}
+
 export function buildAuditReport(
   content: ReportContent,
   observations: AuditObservation[],
@@ -901,9 +941,6 @@ export function buildAuditReport(
     (item) => item.run_status === "completed",
   );
   const detailFor = (id: string) => details.get(id);
-  const returnedModels = [
-    ...new Set(completed.map((item) => item.returned_model).filter(Boolean)),
-  ];
 
   const failed = observations.length - completed.length;
   const unbrandedFailed = unbranded.length - completedUnbranded.length;
@@ -929,7 +966,7 @@ export function buildAuditReport(
   const countInformation = (
     value: ReportContent["details"][number]["information"],
   ) => detailValues.filter((detail) => detail.information === value).length;
-  const systemLabel = `OpenAI Responses API - ${returnedModels.join(", ") || "model unavailable"} with web search`;
+  const systemLabel = deriveSystemLabel(observations);
   const failedDiscoveryContext = unbrandedFailed
     ? `; ${unbrandedFailed} ${plural(unbrandedFailed, "question")} could not be tested.`
     : ".";
@@ -1016,11 +1053,17 @@ export function makeEvidenceExport(
   observations: AuditObservation[],
   report: AuditReport,
 ) {
+  const systemName =
+    observations.length === 0
+      ? "the audit system"
+      : describeAuditSystem(
+          observations.find((item) => item.run_status === "completed")
+            ?.system ?? observations[0].system,
+        );
   return {
     export_version: "nuave-evidence-v4",
     exported_at: new Date().toISOString(),
-    disclosure:
-      "Observations come from the OpenAI Responses API and do not exactly reproduce the consumer ChatGPT interface.",
+    disclosure: `Observations come from ${systemName} and do not exactly reproduce the consumer ChatGPT interface.`,
     brief: {
       ...brief,
       agency_logo_data_url: brief.agency_logo_data_url

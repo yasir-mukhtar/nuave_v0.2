@@ -399,6 +399,47 @@ describe("report evidence guardrails", () => {
   });
 });
 
+describe("report system-label and disclosure provenance", () => {
+  it("names the OpenAI system when observations came from OpenAI", () => {
+    const report = buildAuditReport(reportContent(), observations, {
+      requested_model: "gpt-5.6",
+      returned_model: "gpt-5.6-sol",
+      response_id: "resp_report",
+    });
+    expect(report.system_label).toContain("OpenAI Responses API");
+    expect(report.method_summary).toContain("OpenAI Responses API");
+    expect(
+      makeEvidenceExport(brief, prompts, observations, report).disclosure,
+    ).toContain("OpenAI Responses API");
+  });
+
+  it("names Groq + Tavily when observations came from Groq and never says OpenAI", () => {
+    const groqObservations = observations.map((observation) => ({
+      ...observation,
+      system: "Groq + Tavily" as const,
+      requested_model: "llama-3.3-70b-versatile",
+      returned_model: "llama-3.3-70b-versatile",
+    }));
+    const report = buildAuditReport(reportContent(), groqObservations, {
+      requested_model: "llama-3.3-70b-versatile",
+      returned_model: "llama-3.3-70b-versatile",
+      response_id: "resp_groq",
+    });
+    expect(report.system_label).toContain("Groq + Tavily");
+    expect(report.system_label).not.toContain("OpenAI");
+    expect(report.method_summary).toContain("Groq + Tavily");
+    expect(report.method_summary).not.toContain("OpenAI");
+    const disclosure = makeEvidenceExport(
+      brief,
+      prompts,
+      groqObservations,
+      report,
+    ).disclosure;
+    expect(disclosure).toContain("Groq + Tavily");
+    expect(disclosure).not.toContain("OpenAI");
+  });
+});
+
 describe("plain-language report contract", () => {
   it("accepts concise customer-facing copy", () => {
     expect(validateReportLanguage(reportContent())).toEqual([]);

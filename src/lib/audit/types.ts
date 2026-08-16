@@ -173,7 +173,11 @@ export const auditObservationSchema = z.object({
   category: z.enum(promptCategories),
   branded: z.boolean(),
   question: z.string(),
-  system: z.literal("OpenAI Responses API"),
+  system: z.enum([
+    "OpenAI Responses API",
+    "Google Gemini API",
+    "Groq + Tavily",
+  ]),
   requested_model: z.string(),
   returned_model: z.string(),
   response_id: z.string(),

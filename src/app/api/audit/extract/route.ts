@@ -4,7 +4,7 @@ import {
   auditBudgetSchema,
   extractionRequestSchema,
 } from "@/lib/audit/types";
-import { extractBusinessDraft } from "@/lib/audit/openai";
+import { extractBusinessDraft } from "@/lib/audit/provider";
 import {
   AuditBudgetError,
   AuditCallExecutionError,

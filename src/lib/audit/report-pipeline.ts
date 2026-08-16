@@ -3,7 +3,7 @@ import {
   normalizeReportEvidence,
   validateReportContent,
 } from "./contracts";
-import { generateReportContent } from "./openai";
+import { generateReportContent } from "./provider";
 import {
   validateReportLanguage,
   validateReportLanguageRevision,

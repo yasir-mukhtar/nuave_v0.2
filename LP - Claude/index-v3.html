@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<!--
+  Nuave landing — v3.
+  Method: landing-page-conversion (Schwartz awareness stage, Eisenberg trinity,
+  section-pattern catalog) + bahasa-indonesia-plain (plain language, EYD, RASA).
+
+  Awareness stage assumed: PROBLEM-AWARE, leaning Unaware.
+  Traffic source is unknown, so this is the safer error. It is hypothesis #1 —
+  if traffic turns out to be branded or retargeting, the hero must change.
+
+  Hero pattern: A4 (reframe) fused with A5 (diagnostic question). Both are
+  permitted at problem-aware. v2's hero was A2 (outcome promise), which is not
+  permitted at this stage — that mismatch is part of why v2 reads flat.
+
+  Section order and the objection each one kills:
+    1 Hero            — "AI belum urusan saya"
+    2 Cek sendiri     — "Masalah ini tidak nyata"        (reader-run demo, D5)
+    3 Yang sudah ada  — "Profil Google saya sudah rapi"  (C2, absent in v1/v2)
+    4 Catatan pendiri — "Siapa di balik ini?"            (Humanistic, absent in v1/v2)
+    5 Cara kerja      — "Repot dan makan waktu saya"     (C4)
+    6 Isi laporan     — "Saya dapat apa, konkretnya?"    (D5)
+    7 Untuk siapa     — "Cocok untuk bisnis saya?"       (E5, costly signal)
+    8 Minta audit     — "Berapa? Setelah klik apa?"      (F1)
+    9 Sebelum memesan — sisa keberatan                   (E2)
+
+  Buying-modality coverage: Competitive (2, 7) · Spontaneous (1, 8) ·
+  Methodical (3, 5, 6, 9) · Humanistic (4).
+
+  PERLU DIISI SEBELUM TAYANG — jangan tayangkan dengan placeholder:
+    - [Nama pendiri] di bagian "Catatan dari pendiri"
+    - Nomor WhatsApp resmi pada tautan wa.me di bagian "Minta audit"
+    - Badan usaha, alamat, dan email kontak di footer
+  Ketiganya adalah sinyal legitimasi. Untuk pembeli Indonesia yang belum kenal
+  merek, ini keberatan pertama — bukan keberatan keempat.
+
+  Klaim yang sengaja TIDAK dibuat: tidak ada statistik pemakaian AI tanpa
+  sumber, tidak ada testimoni, tidak ada jaminan peringkat, calon pelanggan,
+  atau penjualan. Angka pada contoh laporan ditandai sebagai ilustrasi.
+
+  CATATAN JUJUR SOAL NASKAH INI:
+  - UNVALIDATED_VOICE. Belum ada wawancara pelanggan, log chat, atau tiket
+    dukungan yang jadi sumber kalimat di halaman ini. Semua kata dipilih dari
+    penalaran, bukan dari rekaman ucapan pemilik bisnis. Begitu ada lima
+    percakapan nyata, ganti kalimat kunci dengan kata mereka sendiri.
+  - Nuave belum punya mekanisme unik yang tidak bisa ditiru pesaing dalam
+    sebulan. Yang paling mendekati adalah berkasnya: pertanyaan yang sama,
+    bertanggal, bisa diuji ulang dan dibandingkan. Halaman ini bersandar ke
+    sana, bukan berpura-pura punya metode rahasia.
+  - Harga belum ada. Tidak ada naskah yang bisa menambal itu. Selama harga
+    belum terbit, pembaca dengan niat paling tinggi akan berhenti di sini.
+
+  HAPUS SELURUH BLOK KOMENTAR INI SEBELUM HALAMAN TAYANG.
+-->
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nuave: apakah bisnis Anda disebut ChatGPT?</title>
+  <meta name="description" content="Nuave menguji 10 pertanyaan di ChatGPT untuk menunjukkan kapan bisnis Anda muncul, apa yang disebut, dan apa yang perlu diperbaiki. Audit satu kali, bukan langganan." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="top">
+    <div class="container nav__inner">
+      <a class="nav__brand" href="#top" aria-label="Beranda Nuave">Nuave</a>
+      <nav class="nav__links" aria-label="Navigasi utama">
+        <a href="#cek-sendiri">Cek sendiri</a>
+        <a href="#cara-kerja">Cara kerja</a>
+        <a href="#contoh">Isi laporan</a>
+        <a href="#sebelum-memesan">Sebelum memesan</a>
+      </nav>
+      <a class="btn btn--secondary nav__cta" href="#mulai">Minta audit</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <!-- Trinity: relevance carries this section. Judul memakai pertanyaan yang
+         bisa dijawab pembaca sendiri dalam 30 detik di bagian berikutnya. -->
+    <section class="hero" id="hero">
+      <div class="container hero__inner">
+        <p class="eyebrow">Audit kemunculan bisnis di ChatGPT</p>
+        <h1 class="hero__title">Pelanggan sudah bertanya ke ChatGPT. Bisnis Anda disebut?</h1>
+        <p class="hero__subtitle">
+          Nuave menguji 10 pertanyaan yang wajar diajukan calon pelanggan. Anda akan tahu kapan bisnis Anda muncul, apa yang disebut, dan apa yang perlu diperbaiki lebih dulu.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--brand btn--lg" href="#mulai">Minta audit bisnis saya</a>
+          <!-- Sengaja bukan btn--lg: jalur kedua harus terlihat lebih rendah
+               daripada jalur utama, bukan sejajar. -->
+          <a class="btn btn--secondary" href="#contoh">Lihat isi laporan</a>
+        </div>
+        <p class="hero__note">Satu bisnis, satu audit bertanggal. Laporannya bisa dibaca sekitar 10 menit.</p>
+      </div>
+    </section>
+
+    <!-- ============ CEK SENDIRI ============ -->
+    <!-- D5 Demonstration, dijalankan pembaca di perangkatnya sendiri.
+         Ini menggantikan klaim tren pemakaian AI yang tidak bisa kami sumberkan.
+         Bukti yang bisa diperiksa sendiri lebih kuat daripada angka tanpa rujukan.
+         Kedua kartu sengaja menutup dua hasil, supaya pembaca yang namanya
+         muncul pun tidak berhenti membaca di sini. -->
+    <section class="section section--surface" id="cek-sendiri">
+      <div class="container">
+        <h2 class="section__title">Sebelum memesan apa pun, periksa sendiri dulu</h2>
+        <p class="section__lead">
+          Buka ChatGPT. Ketik pertanyaan yang mungkin diajukan calon pelanggan Anda, misalnya "rekomendasikan bengkel mobil di Bandung". Lalu baca siapa saja yang disebut.
+        </p>
+        <div class="problem-grid">
+          <article class="problem-card">
+            <p class="problem-card__number">Nama Anda muncul</p>
+            <h3 class="problem-card__desc">Satu pertanyaan belum cukup jadi kesimpulan</h3>
+            <ul class="chips">
+              <li>pertanyaan lain bisa memberi hasil berbeda</li>
+              <li>keterangan tentang Anda belum tentu tepat</li>
+              <li>pesaing bisa disebut lebih dulu</li>
+            </ul>
+          </article>
+          <article class="problem-card">
+            <p class="problem-card__number">Nama Anda tidak muncul</p>
+            <h3 class="problem-card__desc">Calon pelanggan membaca daftar tanpa Anda</h3>
+            <ul class="chips">
+              <li>pesaing yang direkomendasikan</li>
+              <li>alasannya tidak dijelaskan</li>
+              <li>Anda tidak menerima pemberitahuan apa pun</li>
+            </ul>
+          </article>
+        </div>
+        <!-- Satu kalimat konsekuensi, bukan satu paragraf. Agitasi berlebihan
+             terbaca manipulatif dan justru menurunkan konversi di pasar ini. -->
+        <p class="section__close">Kalau nama Anda tidak disebut, tidak ada yang memberi tahu. Tidak ada notifikasi, tidak ada catatan, dan calon pelanggan itu sudah pindah ke nama lain.</p>
+        <p class="section__close">Satu pertanyaan juga hanya satu potret. Nuave menguji 10 pertanyaan sekaligus, mencatat jawabannya, dan menyimpan sumbernya sebagai bukti yang bisa Anda periksa ulang.</p>
+      </div>
+    </section>
+
+    <!-- ============ YANG SUDAH ANDA URUS ============ -->
+    <!-- C2 Why Existing Approaches Fail. Bagian bernilai tertinggi menurut
+         katalog pola, dan tidak ada di v1 maupun v2.
+         Aturan bagian ini: serang pendekatannya, bukan penyedianya, dan akui
+         di mana pendekatan lama tetap bekerja — pengakuan itu yang membuat
+         kritiknya bisa dipercaya. -->
+    <section class="section" id="yang-sudah-ada">
+      <div class="container">
+        <h2 class="section__title">Yang sudah Anda urus belum tentu terbaca ChatGPT</h2>
+        <p class="section__lead">
+          Sebagian besar pemilik bisnis sudah mengurus profil Google, media sosial, dan situs. Ketiganya tetap berguna dan tidak perlu dibongkar. Persoalannya, jawaban ChatGPT tidak selalu mengikuti urutan hasil pencarian.
+        </p>
+        <div class="problem-grid">
+          <article class="problem-card">
+            <p class="problem-card__number">Profil dan media sosial</p>
+            <h3 class="problem-card__desc">Berguna, tapi bukan satu-satunya yang dibaca</h3>
+            <ul class="chips">
+              <li>jawaban dirangkum dari banyak sumber</li>
+              <li>jam buka berbeda antar tempat</li>
+              <li>alamat lama masih ikut terbaca</li>
+            </ul>
+          </article>
+          <article class="problem-card">
+            <p class="problem-card__number">SEO dan iklan</p>
+            <h3 class="problem-card__desc">Menang di halaman hasil, belum tentu di jawaban</h3>
+            <ul class="chips">
+              <li>jawaban dirangkum, bukan diurutkan</li>
+              <li>dua atau tiga nama saja sudah cukup</li>
+              <li>pelanggan memakai kata yang berbeda dari kata Anda</li>
+            </ul>
+          </article>
+        </div>
+        <p class="section__close">Nuave tidak menebak bagian mana yang bermasalah. Kami menguji, mencatat jawabannya apa adanya, lalu menunjukkan apa yang sebaiknya diperbaiki lebih dulu.</p>
+      </div>
+    </section>
+
+    <!-- ============ CATATAN DARI PENDIRI ============ -->
+    <!-- Satu-satunya bagian yang melayani pembaca Humanistic, dan sekaligus
+         sinyal legitimasi. Kejujuran soal belum adanya klien dipakai sebagai
+         bukti, bukan ditutupi. Menurut katalog pola, mengakui batas adalah
+         costly signal — justru karena merugikan, ia dipercaya.
+         GANTI [Nama pendiri] sebelum tayang. Jangan diganti nama karangan. -->
+    <section class="section section--surface" id="catatan">
+      <div class="container container--narrow">
+        <h2 class="section__title">Nuave masih baru. Ini yang perlu Anda tahu.</h2>
+        <p class="section__lead">
+          Saya membuat Nuave setelah melihat calon pelanggan bertanya ke ChatGPT sebelum membuka situs mana pun. Belum ada cara sederhana bagi pemilik bisnis untuk memeriksa hasilnya sendiri.
+        </p>
+        <p class="section__close">
+          Nuave belum punya daftar klien untuk ditunjukkan. Yang ada baru metodenya — 10 pertanyaan yang sama, jawaban apa adanya, sumber yang bisa Anda periksa ulang, dan batasan yang ditulis terbuka.
+        </p>
+        <!-- Batasnya disandarkan ke fakta yang bisa diperiksa (dikerjakan satu
+             orang), bukan ke klaim "kuota terbatas" yang tidak bisa dibuktikan.
+             Kelangkaan yang tidak terbukti terbaca sebagai penipuan di sini. -->
+        <p class="section__close">
+          Saya mengerjakan audit ini sendiri, jadi jumlah yang bisa saya ambil memang sedikit. Setiap laporan harus bisa saya pertanggungjawabkan kalau Anda menanyakannya.
+        </p>
+        <p class="section__close">— [Nama pendiri], pendiri Nuave</p>
+      </div>
+    </section>
+
+    <!-- ============ CARA KERJA ============ -->
+    <!-- C4. Kicker memakai kata urutan, bukan hanya angka — lebih ramah untuk
+         pembaca dengan diskalkulia dan tetap terbaca screen reader.
+         Fokus kalimat: apa yang dilakukan PEMBACA, bukan apa yang dilakukan sistem. -->
+    <section class="section" id="cara-kerja">
+      <div class="container">
+        <h2 class="section__title">Cara kerja</h2>
+        <p class="section__lead">Tiga langkah. Anda hanya perlu terlibat di langkah pertama.</p>
+
+        <ol class="steps">
+          <li class="step">
+            <div class="step__media" aria-hidden="true">
+              <p class="step__media-label">1</p>
+              <div class="step__mock">
+                <p class="step__mock-line">Nama bisnis</p>
+                <p class="step__mock-line">Lokasi</p>
+                <p class="step__mock-line">Layanan</p>
+              </div>
+            </div>
+            <div class="step__body">
+              <p class="step__kicker">Pertama</p>
+              <h3 class="step__title">Anda tetapkan bisnis yang diuji</h3>
+              <p class="step__text">Anda mengonfirmasi nama bisnis, lokasi, layanan utama, dan situs resmi. Keterangan yang belum bisa kami cocokkan dengan sumber publik tetap kami tandai di laporan.</p>
+            </div>
+          </li>
+
+          <li class="step step--reverse">
+            <div class="step__media" aria-hidden="true">
+              <p class="step__media-label">2</p>
+              <div class="step__mock step__mock--alt">
+                <p class="step__mock-line">10 pertanyaan</p>
+                <p class="step__mock-line">5 tanpa nama</p>
+                <p class="step__mock-line">5 dengan nama</p>
+              </div>
+            </div>
+            <div class="step__body">
+              <p class="step__kicker">Kedua</p>
+              <h3 class="step__title">Kami menguji 10 pertanyaan</h3>
+              <p class="step__text">Lima pertanyaan tanpa menyebut nama bisnis Anda, lima pertanyaan dengan nama. Jawaban, sumber, dan pengujian yang gagal sama-sama kami catat.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step__media" aria-hidden="true">
+              <p class="step__media-label">3</p>
+              <div class="step__mock step__mock--report">
+                <p class="step__mock-line">Laporan</p>
+                <p class="step__mock-line">3 tindakan</p>
+                <p class="step__mock-line">Sumber</p>
+              </div>
+            </div>
+            <div class="step__body">
+              <p class="step__kicker">Terakhir</p>
+              <h3 class="step__title">Anda terima laporan dan tiga tindakan</h3>
+              <p class="step__text">Laporan memisahkan temuan, artinya bagi bisnis Anda, dan paling banyak tiga tindakan. Bisa diunduh dan dibagikan ke tim.</p>
+            </div>
+          </li>
+        </ol>
+
+        <p class="section__close">Setelah 6 sampai 8 minggu, Anda bisa memesan cek ulang dengan pertanyaan yang sama. Nuave bukan langganan, jadi tidak ada tagihan berjalan.</p>
+      </div>
+    </section>
+
+    <!-- ============ ISI LAPORAN ============ -->
+    <!-- D5. Satu-satunya unsur bukti pada halaman ini, dan ditandai ilustratif.
+         Aturan kejujuran dari CONTENT.md dipertahankan: tidak ada hasil nyata,
+         tidak ada skor angka pasti, hanya rentang. -->
+    <section class="section section--surface" id="contoh">
+      <div class="container">
+        <h2 class="section__title">Isi laporan yang akan Anda terima</h2>
+        <p class="section__lead">Hasil utama lebih dulu, lalu buktinya, lalu tindakannya. Contoh di bawah hanya menggambarkan strukturnya.</p>
+
+        <figure class="report">
+          <div class="report__sheet">
+            <p class="report__brand">Laporan kemunculan bisnis di ChatGPT</p>
+            <h3 class="report__title">Bagaimana bisnis Anda muncul saat diuji</h3>
+
+            <div class="report__headline">
+              <p class="report__metric">Muncul di 3 dari 10 pertanyaan</p>
+              <p class="report__band">Rentang visibilitas: menengah</p>
+            </div>
+
+            <div class="report__rows">
+              <div class="report__row"><span>Penemuan</span><span>2 dari 5 pertanyaan</span></div>
+              <div class="report__row"><span>Pengenalan</span><span>1 dari 5 pertanyaan</span></div>
+              <div class="report__row"><span>Rekomendasi</span><span>1 dari 10 pertanyaan</span></div>
+              <div class="report__row"><span>Pesaing yang disebut</span><span>2 bisnis</span></div>
+            </div>
+
+            <p class="report__priorities-label">3 tindakan prioritas</p>
+            <ol class="report__priorities">
+              <li>Samakan jam buka di situs resmi dan profil Google.</li>
+              <li>Tambahkan halaman layanan utama memakai kata yang dicari pelanggan.</li>
+              <li>Sebutkan area layanan dengan nama daerah yang dipakai warga.</li>
+            </ol>
+
+            <p class="report__disclaimer">Contoh tampilan. Angka dan temuan ini bukan hasil bisnis nyata.</p>
+          </div>
+        </figure>
+
+        <p class="section__close">Laporan lengkap juga memuat pertanyaan yang diajukan, jawaban penuh, sumbernya, dan batasan pengujian pada tanggal tersebut. Karena pertanyaannya tetap sama, hasil audit berikutnya bisa dibandingkan langsung dengan yang ini.</p>
+        <!-- Keberatan pembeli yang nyata, dinaikkan dari daftar batasan ke alur
+             utama. Yang menghambat pembelian tidak boleh disembunyikan di akordeon. -->
+        <p class="section__close">Kalau bisnis Anda ternyata tidak muncul sama sekali, laporan tetap dikirim dan tetap berisi tindakan. Hasil kosong juga temuan, dan biasanya justru paling jelas menunjukkan bagian mana yang perlu dibenahi.</p>
+        <div class="hero__actions">
+          <a class="btn btn--brand btn--lg" href="#mulai">Minta audit bisnis saya</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ UNTUK SIAPA ============ -->
+    <!-- E5 Qualification. Menyebut siapa yang belum cocok adalah salah satu pola
+         paling menumbuhkan kepercayaan yang tersedia, dan cocok dengan cakupan
+         peluncuran yang memang masih sempit. Jangan dihapus untuk mengejar volume. -->
+    <section class="section" id="untuk-siapa">
+      <div class="container">
+        <h2 class="section__title">Audit ini cocok untuk siapa</h2>
+        <p class="section__lead">Satu audit mengerjakan satu bisnis. Lebih baik Anda tahu sekarang kalau memang belum cocok.</p>
+        <div class="problem-grid">
+          <article class="problem-card">
+            <p class="problem-card__number">Cocok</p>
+            <h3 class="problem-card__desc">Pemilik atau penanggung jawab pemasaran satu bisnis</h3>
+            <ul class="chips">
+              <li>punya lokasi atau area layanan yang jelas</li>
+              <li>sudah punya situs atau profil Google</li>
+              <li>ingin tahu apa yang diperbaiki lebih dulu</li>
+            </ul>
+          </article>
+          <article class="problem-card">
+            <p class="problem-card__number">Belum cocok</p>
+            <h3 class="problem-card__desc">Agensi, penjual ulang, atau bisnis yang belum berjalan</h3>
+            <ul class="chips">
+              <li>ingin mengaudit banyak klien sekaligus</li>
+              <li>ingin jaminan naik peringkat</li>
+              <li>ingin pantauan harian atau dasbor</li>
+            </ul>
+          </article>
+        </div>
+        <p class="section__close">Kalau bisnis Anda ada di kolom kanan, audit ini belum akan berguna. Sebaiknya tunggu dulu sampai cakupan kami bertambah.</p>
+      </div>
+    </section>
+
+    <!-- ============ MINTA AUDIT ============ -->
+    <!-- F1. Tiga kecemasan yang paling sering tidak dijawab halaman sejenis:
+         setelah klik apa, berapa lama, dan berapa biayanya. Ketiganya dijawab
+         dalam ukuran teks normal, bukan di keterangan abu-abu kecil.
+         Tiga kolom saja: masing-masing dipakai untuk langkah berikutnya.
+         GANTI nomor WhatsApp sebelum tayang. -->
+    <section class="section section--surface cta" id="mulai">
+      <div class="container cta__inner">
+        <div class="cta__copy">
+          <h2 class="cta__title">Minta audit untuk bisnis Anda</h2>
+          <p class="cta__text">Isi tiga kolom di sebelah. Kami balas ke email Anda dalam 1 hari kerja.</p>
+          <!-- Harga disebut di alur utama, bukan hanya di daftar batasan. Selama
+               harganya belum terbit, keterbukaan soal itu yang menggantikan angka.
+               Ini tambalan, bukan perbaikan: terbitkan harga secepat mungkin. -->
+          <p class="cta__text">Soal harga, terus terang: belum kami tetapkan karena Nuave baru mulai. Balasan kami berisi cakupan pengujian dan satu harga, dan tidak ada tagihan sebelum Anda setuju.</p>
+          <p class="cta__text">Email Anda hanya dipakai untuk mengirim laporan dan tidak kami bagikan ke siapa pun.</p>
+          <p class="cta__text">Ada yang ingin ditanyakan lebih dulu? <a href="https://wa.me/62XXXXXXXXXX?text=Halo%20Nuave%2C%20saya%20ingin%20bertanya%20soal%20audit%20untuk%20bisnis%20saya.">Tanya lewat WhatsApp</a>.</p>
+        </div>
+
+        <form class="form" id="start-form" novalidate>
+          <div class="form__row">
+            <label class="form__label" for="biz">Nama bisnis</label>
+            <input class="form__input" id="biz" name="biz" type="text" required placeholder="Contoh: Kopi Senja" />
+          </div>
+          <div class="form__row">
+            <label class="form__label" for="loc">Lokasi</label>
+            <input class="form__input" id="loc" name="loc" type="text" required placeholder="Contoh: Makassar" />
+          </div>
+          <div class="form__row">
+            <label class="form__label" for="email">Email Anda</label>
+            <input class="form__input" id="email" name="email" type="email" required placeholder="Contoh: nama@email.com" />
+          </div>
+          <button class="btn btn--brand btn--lg form__submit" type="submit">Minta audit bisnis saya</button>
+          <p class="form__note">Tiga kolom, sekitar satu menit.</p>
+          <p class="form__success" id="form-success" role="status" hidden>
+            Isian sudah lengkap. Formulir ini masih berupa contoh dan belum mengirim permintaan.
+          </p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ SEBELUM MEMESAN ============ -->
+    <!-- E2. Bukan FAQ: pertanyaan utama sudah dijawab di alur utama, jadi bagian
+         ini hanya menampung batasan dan sisa keberatan.
+         id="faq-list" dipertahankan karena dipakai script.js. -->
+    <section class="section" id="sebelum-memesan">
+      <div class="container container--narrow">
+        <h2 class="section__title">Sebelum Anda memesan</h2>
+        <p class="section__lead">Nuave adalah audit satu kali untuk pemilik atau penanggung jawab pemasaran bisnis. Berikut batasannya, ditulis terbuka.</p>
+        <div class="faq" id="faq-list">
+          <details class="faq__item" open>
+            <summary class="faq__q">Yang diuji</summary>
+            <div class="faq__a">Sepuluh pertanyaan di ChatGPT, dan versinya disebutkan di laporan. Lima pertanyaan tanpa nama bisnis Anda, lima dengan nama. Baru satu layanan AI, belum semuanya.</div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Yang Anda terima</summary>
+            <div class="faq__a">Satu laporan yang bisa diunduh. Isinya pertanyaan, jawaban, sumber, hasil utama, batasan pengujian, dan paling banyak tiga tindakan yang didukung temuan.</div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Yang tidak kami janjikan</summary>
+            <div class="faq__a">Hasil menunjukkan apa yang terjadi pada tanggal pengujian. Ini bukan peringkat permanen. Kami tidak menjanjikan kunjungan, calon pelanggan, atau penjualan.</div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Kalau bisnis saya tidak muncul sama sekali</summary>
+            <div class="faq__a">Laporan tetap dikirim dan tetap berisi tindakan. Hasil kosong juga temuan, dan biasanya justru paling jelas menunjukkan bagian mana yang perlu dibenahi.</div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Harga</summary>
+            <div class="faq__a">Belum kami publikasikan. Anda akan melihat satu harga per audit sebelum memesan, dan tidak ada tagihan sebelum Anda setuju. Tidak ada langganan.</div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Data yang kami simpan</summary>
+            <div class="faq__a">Nama bisnis, lokasi, dan email Anda, dipakai untuk mengerjakan dan mengirim audit. Kami tidak menjual atau membagikannya.</div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Cek ulang</summary>
+            <div class="faq__a">Setelah 6 sampai 8 minggu, Anda bisa memesan cek ulang dengan pertanyaan yang sama supaya hasilnya bisa dibandingkan. Sifatnya pilihan, bukan kewajiban.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <!-- GANTI badan usaha, alamat, dan email kontak. Untuk pembeli Indonesia yang
+       belum mengenal merek, ketiganya adalah pemeriksaan legitimasi pertama. -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <p class="footer__name">Nuave</p>
+        <p class="footer__tag">Lihat bagaimana bisnis Anda muncul di ChatGPT. Tentukan langkah berikutnya dari bukti, bukan dugaan.</p>
+      </div>
+      <nav class="footer__links" aria-label="Tautan kaki">
+        <a href="#cek-sendiri">Cek sendiri</a>
+        <a href="#yang-sudah-ada">Yang sudah Anda urus</a>
+        <a href="#cara-kerja">Cara kerja</a>
+        <a href="#contoh">Isi laporan</a>
+        <a href="#untuk-siapa">Untuk siapa</a>
+        <a href="#sebelum-memesan">Sebelum memesan</a>
+      </nav>
+    </div>
+    <div class="container footer__legal">
+      <p>[PT Nama Badan Usaha] · [Alamat kantor] · [email kontak]</p>
+      <p>© 2026 Nuave. Audit kemunculan bisnis di ChatGPT untuk bisnis di Indonesia.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
