@@ -22,7 +22,7 @@ const RED_STYLE =
   ".nuave-privacy h1 { font-family: var(--font-geist-sans), sans-serif; font-size: 40px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.15; color: #111827; margin: 0 0 8px; }" +
   ".nuave-privacy h2 { font-family: var(--font-geist-sans), sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.35; color: #111827; margin: 0 0 12px; }" +
   ".nuave-privacy h3 { font-family: var(--font-geist-sans), sans-serif; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; line-height: 1.4; color: #111827; margin: 24px 0 8px; }" +
-  ".nuave-privacy a { color: var(--lp-purple, #533AFD); text-decoration: underline; text-underline-offset: 3px; }" +
+  ".nuave-privacy main a { color: var(--lp-purple, #533AFD); text-decoration: underline; text-underline-offset: 3px; }" +
   ".nuave-privacy p { margin: 0 0 16px; }" +
   ".nuave-privacy ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
   ".nuave-privacy li { margin: 0 0 8px; line-height: 1.7; }";

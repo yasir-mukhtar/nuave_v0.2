@@ -22,7 +22,7 @@ const FAQ_STYLE =
   ".nuave-faq { font-family: var(--font-inter), sans-serif; color: #374151; }" +
   ".nuave-faq h1 { font-family: var(--font-geist-sans), sans-serif; font-size: 40px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.15; color: #111827; margin: 0 0 8px; }" +
   ".nuave-faq h2 { font-family: var(--font-geist-sans), sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.35; color: #111827; margin: 0 0 12px; }" +
-  ".nuave-faq a { color: var(--lp-purple, #533AFD); text-decoration: underline; text-underline-offset: 3px; }" +
+  ".nuave-faq main a { color: var(--lp-purple, #533AFD); text-decoration: underline; text-underline-offset: 3px; }" +
   ".nuave-faq p { margin: 0 0 16px; }" +
   ".nuave-faq ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
   ".nuave-faq li { margin: 0 0 8px; line-height: 1.7; }";
