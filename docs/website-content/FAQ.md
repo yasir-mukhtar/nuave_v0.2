@@ -13,19 +13,22 @@ guessing. Link `/terms`, `/privacy`, and `/support` where named. Use an accessib
 accordion or a simple heading-and-paragraph layout. Every answer must remain
 readable without JavaScript.
 
-Do not add subscriptions, accounts, dashboards, monitoring, multiple AI systems,
-guaranteed visibility, or guaranteed business results. The landing-page copy is
-being handled separately.
+Do not add subscriptions, general-purpose accounts or dashboards, monitoring,
+multiple AI systems, guaranteed visibility, or guaranteed business results. Do
+not name or exclude a bounded private-access mechanism until Module 07 is
+approved. The landing-page copy is being handled separately.
 
 ## Fields to confirm before publishing
 
-- `[HARGA]`
-- `[METODE PEMBAYARAN]`
 - `[WAKTU PENGIRIMAN]`
 - `[LAYANAN AI YANG DIUJI]`
 - `[MASA AKSES LAPORAN]`
-- `[EMAIL DUKUNGAN]`
-- the final correction, rerun, cancellation, and refund rules
+- the maximum delayed-delivery period and terminal remedy;
+- the final correction, cancellation, and refund rules; and
+- the support response expectation.
+
+Settled: Rp99.000 total, no added Nuave checkout tax or fee, a 30-day unpaid
+quote, Midtrans with QRIS/bank transfer/GoPay/DANA, and `support@nuave.ai`.
 
 ---
 
@@ -54,9 +57,10 @@ dashboard, atau langganan.
 
 ## Apa yang diuji oleh Nuave?
 
-Kami menguji 10 pertanyaan berbahasa Indonesia pada `[LAYANAN AI YANG DIUJI]`:
-lima pertanyaan tanpa nama bisnis Anda dan lima pertanyaan yang menyebut nama
-bisnis Anda.
+Kami menguji 10 pertanyaan berbahasa Indonesia pada `[LAYANAN AI YANG DIUJI]`.
+Saran awal berisi lima pertanyaan tanpa nama bisnis Anda dan lima pertanyaan
+yang menyebut nama bisnis Anda, tetapi Anda dapat mengubah pertanyaan dan
+komposisi tersebut sebelum audit dimulai.
 
 Anda dapat memeriksa dan mengubah pertanyaan tersebut sebelum audit dimulai.
 Setelah Anda menyetujuinya, pertanyaan dikunci agar laporan sesuai dengan ruang
@@ -64,14 +68,16 @@ lingkup yang Anda pesan.
 
 ## Apa yang saya terima?
 
-Anda menerima laporan privat yang dapat dibaca di web dan diunduh. Isinya
+Anda menerima laporan privat yang dapat dibaca di web. PDF dapat diunduh dari
+versi laporan yang sama ketika selesai dibuat. Isinya
 mencakup:
 
 - berapa kali bisnis Anda disebutkan, lengkap dengan jumlah pertanyaan yang diuji;
 - jawaban AI yang diamati dan sumber yang tersedia;
 - bisnis lain yang disebutkan dalam pertanyaan yang sama;
 - informasi publik tentang bisnis Anda yang keliru, tidak konsisten, atau tidak ditemukan;
-- sampai tiga rekomendasi yang terkait langsung dengan temuan; dan
+- satu sampai lima temuan material dan satu sampai lima tindakan yang terkait
+  langsung dengan bukti; dan
 - metode, batasan, serta waktu pengujian.
 
 ## Apakah hasil Nuave merupakan peringkat?
@@ -93,11 +99,14 @@ atau pendapatan setelah rekomendasi dijalankan.
 
 ## Berapa harga audit Nuave?
 
-Satu audit berharga `[HARGA]` dan dibayar satu kali melalui
-`[METODE PEMBAYARAN]`. Tidak ada langganan atau perpanjangan otomatis.
+Satu audit berharga **Rp99.000 total**. Nuave tidak menambahkan pajak atau biaya
+lain saat checkout. Pembayaran dilakukan melalui Midtrans menggunakan QRIS,
+transfer bank, GoPay, atau DANA. Tidak ada langganan atau perpanjangan otomatis.
 
-Sebelum membayar, Anda akan melihat bisnis yang diuji, 10 pertanyaan yang telah
-disetujui, isi laporan, total harga, waktu pengiriman, dan ketentuan yang berlaku.
+Sebelum membayar, Anda akan melihat pratinjau bisnis, isi laporan, total harga,
+dan ketentuan yang berlaku. Ringkasan pesanan yang belum dibayar berlaku 30
+hari. Setelah pembayaran, Anda memeriksa informasi bisnis dan 10 pertanyaan
+sebelum memilih untuk memulai audit.
 
 ## Kapan laporan saya selesai?
 
@@ -107,12 +116,17 @@ menghubungi Anda melalui email yang digunakan saat memesan.
 
 ## Bagaimana jika audit gagal atau laporan tidak lengkap?
 
-Jika kegagalan teknis di pihak Nuave membuat kami tidak dapat menghasilkan
-laporan yang dapat digunakan, kami akan mencoba menjalankan audit kembali. Jika
-percobaan tersebut tetap gagal, Anda dapat memilih pengembalian dana penuh.
+Nuave hanya mengirim laporan setelah 10 dari 10 pertanyaan menghasilkan
+pengamatan yang dapat digunakan. Jika satu pekerjaan gagal secara teknis,
+pengiriman ditunda, hasil lain tetap disimpan, dan Nuave mencoba kembali hanya
+pekerjaan yang gagal. Anda dapat meminta bantuan melalui `support@nuave.ai`.
+
+Jika laporan web sudah lengkap tetapi PDF belum berhasil dibuat, laporan web
+tetap dikirim. Nuave akan mencoba atau memeriksa kembali pembuatan PDF dari
+versi laporan yang sama.
 
 Jika laporan tidak sesuai dengan ruang lingkup pesanan atau memuat kesalahan yang
-dibuat Nuave, hubungi `[EMAIL DUKUNGAN]`. Kami akan memeriksa dan memperbaikinya
+dibuat Nuave, hubungi `support@nuave.ai`. Kami akan memeriksa dan memperbaikinya
 tanpa biaya. Rincian lengkap terdapat dalam [Syarat dan Ketentuan](/terms).
 
 ## Apakah saya bisa membatalkan pesanan?
@@ -120,6 +134,11 @@ tanpa biaya. Rincian lengkap terdapat dalam [Syarat dan Ketentuan](/terms).
 Anda dapat meminta pembatalan sebelum audit mulai dijalankan. Setelah audit
 dimulai, pembatalan karena perubahan pikiran tidak selalu dapat dilakukan karena
 biaya pemrosesan sudah digunakan.
+
+Periksa bisnis, cabang, dan pertanyaan dengan teliti sebelum memulai. Jika Anda
+baru menyadari setelah mulai bahwa bisnis yang dipilih salah, hubungi
+`support@nuave.ai`. Pengelola dapat memberi satu kesempatan audit pengganti;
+pesanan pengganti digunakan sebagai pilihan terakhir.
 
 Kegagalan layanan, pembayaran ganda, dan laporan yang tidak sesuai dengan pesanan
 ditangani secara terpisah dalam [Syarat dan Ketentuan](/terms).
@@ -137,10 +156,10 @@ atau informasi sensitif lainnya. Penjelasan lengkap tersedia di
 
 ## Apakah laporan saya dipublikasikan?
 
-Tidak. Laporan dikirim melalui tautan privat dan tidak dipublikasikan sebagai
+Tidak. Laporan diberikan melalui akses privat dan tidak dipublikasikan sebagai
 contoh, studi kasus, atau materi promosi tanpa izin terpisah dari Anda.
 
-Tautan laporan tersedia selama `[MASA AKSES LAPORAN]`. Unduh dan simpan salinan
+Akses laporan tersedia selama `[MASA AKSES LAPORAN]`. Unduh dan simpan salinan
 laporan Anda sebelum masa akses berakhir.
 
 ## Apakah saya harus mempunyai website?
@@ -169,4 +188,4 @@ harga, pertanyaan yang diuji, ketentuan layanan, dan kanal bantuan yang dapat
 dihubungi.
 
 Masih punya pertanyaan? Hubungi [Kontak dan Bantuan](/support) atau email
-`[EMAIL DUKUNGAN]`.
+`support@nuave.ai`.

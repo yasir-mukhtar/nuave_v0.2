@@ -28,7 +28,7 @@ pembayaran, akses laporan, koreksi, pengembalian dana, atau permintaan data.
 # Kontak dan bantuan
 
 Punya pertanyaan atau mengalami masalah? Hubungi kami melalui
-`[EMAIL DUKUNGAN]`. Nuave adalah layanan independen yang dioperasikan oleh
+`support@nuave.ai`. Nuave adalah layanan independen yang dioperasikan oleh
 `[NAMA PENGELOLA]` di `[KOTA]`, Indonesia.
 
 Kami mengonfirmasi pesan paling lambat `[TARGET RESPONS]` pada hari kerja. Masalah
@@ -84,10 +84,10 @@ penerimaan dan memberi tahu langkah selanjutnya.
 
 ## Kanal resmi
 
-**Dukungan:** `[EMAIL DUKUNGAN]`  
+**Dukungan:** `support@nuave.ai`
 **Privasi:** `[EMAIL PRIVASI]`  
 **Jam pemantauan:** `[HARI/JAM, WIB]`
 
 Kami tidak memberikan dukungan pembayaran atau meminta data rahasia melalui akun
 sosial pribadi. Jika Anda menerima pesan mencurigakan yang mengatasnamakan Nuave,
-kirim tangkapan layar ke `[EMAIL DUKUNGAN]` tanpa membalas pesan tersebut.
+kirim tangkapan layar ke `support@nuave.ai` tanpa membalas pesan tersebut.

@@ -2,28 +2,22 @@
 #Hero
 # Apakah brand Anda muncul di ChatGPT?
 
-Nuave memberi Anda laporan bagaimana AI seperti ChatGPT menyebut brand Anda dan bagaimana memperbaikinya.
+Nuave memberi Anda laporan bagaimana AI menyebut brand Anda dan apa yang bisa diperbaiki.
 
 Audit bisnis saya
 Lihat contoh laporan
 
+---
 
-#Agitate 
-### Yang sudah Anda urus belum tentu terbaca ChatGPT
+#Logo
 
-Sebagian besar pemilik bisnis sudah mengurus website, Profil Bisnis Google, dan media sosial. Tapi jawaban ChatGPT sering berbeda dari hasil pencarian di Google.
+Dibuat untuk membantu bisnis ditemukan di era AI
 
-- Website Anda bukan satu-satunya sumber jawaban AI
-- Ranking bagus di Google tidak menjamin nama Anda disebut AI
-- Review, forum, dan artikel pihak ketiga bisa ikut muncul di jawaban AI
-
-Nuave melakukan pengujian ke AI, mencatat jawaban AI apa adanya, lalu menunjukkan  apa yang bisa diperbaiki.
-
+---
 
 #Educate
-
-Jutaan orang kini melakukan pencarian lewat AI, bukan lagi search engine.
-Pertanyaannya, saat calon pelanggan Anda mencari solusi, apakah brand Anda disebutkan oleh AI?
+####  Customer Anda kini bertanya ke AI
+Saat calon customer Anda mencari informasi, apakah brand Anda disebutkan oleh AI?
 
 ### 49% pencarian di ChatGPT meminta saran atau informasi
 Sepatu lari brand lokal terbaik
@@ -35,58 +29,60 @@ Jasa digital marketing untuk startup
 Software akuntansi terbaik untuk UMKM
 Vendor cloud storage terpercaya di Indonesia
 
-#Objection
-### Kenapa tidak cek sendiri saja di ChatGPT?
-
-Bisa saja, namun ada beberapa keterbatasan:
-
-1. Apakah Anda tahu bentuk pertanyaan yang lazim ditanyakan calon pelanggan Anda?
-2. Setelah mengetahui jawaban AI, apakah Anda tahu apa maknanya bagi bisnis Anda?
-3. Setelah Anda menemukan masalah, apakah Anda tahu bagaimana memperbaikinya?
-4. Jawaban AI bisa berubah. Apakah Anda mau mengajukan pertanyaan secara manual setiap bulan?
-
-Nuave menawarkan:
-
-1. 10 pertanyaan dengan format yang mewakili berbagai tipe pertanyaan calon pelanggan.
-2. Menjelaskan apa arti dari jawaban AI bagi bisnis Anda.
-3. Menunjukkan apa yang bisa diperbaiki.
-4. Audit yang konsisten, hemat waktu, dengan frekuensi sesuai kebutuhan Anda.
-
+---
 
 #HowItWorks
 ### Nuave membantu brand Anda muncul dalam jawaban ChatGPT
 
-1. **Konfirmasi bisnis Anda**
-Anda memastikan nama bisnis, lokasi atau area layanan, layanan utama, dan website resmi. Ini menentukan bisnis mana yang diuji, supaya tidak tertukar dengan cabang lain atau bisnis lain yang mirip.
+1. **Lihat pratinjau bisnis Anda**
+Masukkan satu website, profil Instagram bisnis, atau tautan Google Maps. Nuave menampilkan identitas publik yang ditemukan dan ringkasan pesanan. Ini belum merupakan hasil audit.
 
-**2. Bayar**
-Rp99.000, sekali bayar. Tidak perlu berlangganan.
+- Sumber publik bisnis
+- Nama bisnis yang ditemukan
+- Ringkasan satu audit
 
-**3. Review 10 pertanyaannya**
-Kami menyusun 10 pertanyaan dari data yang Anda berikan. Anda tidak perlu memikirkannya sendiri. Anda bisa mengeditnya sebelum dijalankan.
+**2. Lakukan pembayaran**
+Pilih saluran pembayaran Midtrans: QRIS, transfer bank, GoPay, atau DANA.
 
-**4. Terima laporan**
-Anda bisa melihat laporan di website dan mendownloadnya. Laporan juga otomatis dikirimkan ke email Anda.
+- Rp99.000 total
+- Tidak ada pajak atau biaya tambahan dari Nuave
+- Sekali bayar
+- Tidak perlu berlangganan
+
+**3. Periksa informasi bisnis**
+Setelah pembayaran terverifikasi, Nuave menyiapkan informasi bisnis dari sumber publik. Anda dapat memperbaikinya sebelum pertanyaan dibuat.
+
+**4. Review 10 pertanyaan**
+Kami menyusun 10 pertanyaan untuk kami uji ke AI. Anda bisa mengeditnya sebelum dijalankan.
+
+- 5 pertanyaan tanpa nama brand Anda
+- 5 pertanyaan dengan nama brand Anda
+
+**5. Terima laporan**
+Lihat laporan di web Nuave. Laporan bisa di-download dan otomatis dikirimkan ke email Anda.
+
+- Skor kemunculan langsung, misalnya 4/10
+- Respon AI dan analisisnya
+- Rekomendasi untuk perbaikan
 
 
 #Isilaporan
 ### Apa yang Anda terima
 
-- **Berapa kali bisnis Anda muncul**, dengan penyebutnya — misalnya 3 dari 10 pertanyaan
-- **Skor visibilitas sebagai rentang**, bukan angka pasti, supaya ada patokan untuk diperbaiki
+- **Skor kemunculan langsung**, misalnya bisnis Anda muncul di 4 dari 10 pertanyaan
+- **Tanpa menyebut bisnis Anda** dan **Menyebut bisnis Anda** ditampilkan terpisah
 - **Jawaban ChatGPT apa adanya**, dikutip persis, lengkap dengan tautan sumbernya
-- **Siapa yang disebut ketika Anda tidak disebut** — nama kompetitor yang muncul di pertanyaan yang sama
-- **Informasi publik tentang bisnis Anda yang keliru, tidak konsisten, atau tidak ada**
-- **Tiga tindakan yang paling layak dikerjakan lebih dulu**, masing-masing terkait ke temuan tertentu
-- **Batasan pengujian dan kapan sebaiknya dicek ulang**
-
-Laporannya dibuat untuk dibaca 10 menit dan untuk bisa diteruskan ke orang yang menyetujui atau mengerjakan tindakannya.
+- **Daftar kompetitor yang disebutkan** — nama kompetitor yang muncul di pertanyaan yang sama
+- **Informasi publik tentang bisnis Anda yang keliru, tidak konsisten, atau tidak ditemukan**
+- **Rekomendasi perbaikan**, sesuai dengan temuan yang ada
+- **Limitas pengujian dan kapan sebaiknya dicek ulang**
 
 **[Lihat contoh laporan]**
 
+---
+
 #CalltoAction
-## Jadi yang Pertama Ditemukan  
-di Era _Answer Engine_
+## Jadi yang Pertama Ditemukan  di Era _Answer Engine_
 
 Nuave membantu brand Anda ditemukan, dipercaya,  
 dan langsung dipilih di pencarian AI.
@@ -106,6 +102,7 @@ Sumber: [MyBrandi.ai](https://mybrandi.ai/referrals-from-ai-vs-google/), [Supe
 
 
 #Batasan
+[Section baru]
 ### Yang tidak bisa laporan ini beritahu
 
 **Ini bukan peringkat.** Sepuluh pertanyaan, satu waktu, pada satu layanan AI. Tidak menggambarkan 100% setiap jawaban yang akan diterima setiap calon pelanggan Anda.

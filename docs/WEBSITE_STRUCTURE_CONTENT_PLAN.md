@@ -90,11 +90,13 @@ The page assembly should give each section one responsibility:
 2. **Why this matters.** Explain buyer behaviour in plain language. Every
    statistic or market claim needs a named, current, credible source and wording
    that does not turn correlation into a promise. Remove unsupported claims.
-3. **How it works.** Show the real sequence: confirm one business, review ten
-   Indonesian questions, see the exact order and pay once, receive the report.
-4. **What the report contains.** Describe observed counts with denominators,
-   score band, exact evidence, competitor observations, public-information gaps,
-   up to three actions, sources, and limitations.
+3. **How it works.** Show the real sequence: submit one public business source,
+   review the free identity and order preview, pay once, confirm prepared
+   business facts, approve ten Indonesian questions, and receive the report.
+4. **What the report contains.** Describe the direct appearance count out of
+   ten, the separate name/no-name measures, exact evidence, other-business
+   observations, public-information gaps, one to five actions, sources, and
+   limitations.
 5. **Example report.** Demonstrate the experience without presenting fiction as
    proof. Keep the example clearly and persistently labelled “Ilustrasi”.
 6. **Method limits.** State that this is a sampled observation at a recorded
@@ -139,10 +141,11 @@ Start with the shortlist below. Each answer should be two to five sentences,
 lead with the answer, and link to terms, privacy, or support for detail. It must
 not introduce a new commercial promise.
 
-Founder-supplied or approved fields: final price and tax/fee treatment; delivery
-time and clock start; supported business/location scope; payment provider and
-methods; correction, failure, cancellation, refund and re-check rules; report
-access/retention; and support channel/response target.
+Settled fields: Rp99.000 total with no added Nuave checkout tax or fee; a
+30-day unpaid quote; Midtrans with QRIS, bank transfer, GoPay, and DANA; and
+`support@nuave.ai`. Still required: delivery time and clock start; supported
+business/location scope; terminal failure, cancellation, refund, and re-check
+rules; report access/retention; and support response target.
 
 ### `/terms` — Syarat dan Ketentuan
 
@@ -160,18 +163,21 @@ page. The page should cover:
 4. **Service:** one audit of one verified business, ten approved Indonesian
    questions, one sampled run on the named AI surface, and one private,
    downloadable report; state geography/category limits.
-5. **Exclusions:** no account, dashboard, monitoring, subscription, ranking,
-   implementation service, guaranteed inclusion, traffic, leads, or sales.
+5. **Exclusions:** no general account or dashboard, monitoring, subscription,
+   ranking, implementation service, guaranteed inclusion, traffic, leads, or
+   sales. A later bounded private report-access mechanism remains open.
 6. **Inputs/question approval:** required facts, branch resolution, correction
    before lock, consequences of bad/late input, and prohibition on customer
    records, sensitive personal data, unlawful material, and secrets.
 7. **Price/payment:** `[TOTAL PRICE]`, taxes/fees, currency, methods/provider,
    when payment is final, invoice/receipt, and failed payment.
-8. **Order formation:** exact service, business, question pack, price, terms,
-   timing, and remedy shown before acceptance; define contract formation and how
-   confirmation/accepted terms can be saved or downloaded.
-9. **Execution/delivery:** `[DELIVERY WINDOW]`, clock start/pause, delivery
-   email/private link, access period, recovery, and delay communication.
+8. **Order formation:** previewed business, one-audit service, price, terms,
+   timing, and remedy shown before payment; personalized facts and questions are
+   prepared after verified payment and approved before the audit starts. Define
+   contract formation and how confirmation/accepted terms can be saved.
+9. **Execution/delivery:** `[DELIVERY WINDOW]`, clock start/pause, report-ready
+   email, approved private-access mechanism, access period, recovery, and delay
+   communication.
 10. **Correction/failure/cancellation/refund:** material nonconformity,
     correction window, incomplete run, rerun, cancellation cutoff, duplicate
     payment, refund amount/timing/method, and buyer error. Avoid “all sales final”;
@@ -265,8 +271,9 @@ These notes are answer responsibilities, not finished copy:
 
 1. **Apa itu audit visibilitas AI Nuave?** One sampled audit/report for the
    buyer's own business, not monitoring software.
-2. **Apa yang diuji?** Ten buyer-approved Indonesian questions: five unbranded
-   and five branded, on the exact launch AI surface.
+2. **Apa yang diuji?** Ten buyer-approved Indonesian questions on the exact
+   launch AI surface. The suggested pack starts five/five, but the customer may
+   replace any question and the report follows the final composition.
 3. **Apa yang saya terima?** Approved report contents and private/downloadable
    delivery, without unsupported features.
 4. **Apakah hasilnya peringkat atau jaminan bisnis saya akan muncul?** No;
@@ -465,12 +472,14 @@ Do not accept a paid public order until the practical minimum below is true:
    personal identity the founder is comfortable publishing. Never imply a PT.
 2. **Registration check:** individual-UMK NIB/KBLI position and PSE
    assessment/result/number using current OSS and Komdigi guidance.
-3. **Offer/price:** exact price, currency, tax, provider fee, launch
-   category/location, and included output.
+3. **Offer/price:** verify the settled Rp99.000 customer total, no additional
+   Nuave checkout tax or fee, 30-day quote, launch category/location, and
+   included output.
 4. **Delivery:** window, clock start/pause, delivery/recovery, report/link access
    period, and delay communication.
-5. **Payment:** provider/methods, settlement rule, receipt/invoice issuer, failed
-   or duplicate payment, and chargeback handling.
+5. **Payment:** verify Midtrans QRIS, bank transfer, GoPay, and DANA; settlement
+   rule; receipt/invoice issuer; failed or duplicate payment; and chargeback
+   handling.
 6. **Remedies:** correction window, nonconformity, failure/rerun, cancellation,
    refund eligibility/amount/method/timing, and escalation.
 
@@ -491,8 +500,8 @@ Do not accept a paid public order until the practical minimum below is true:
 
 ### Before support and terms are final
 
-12. **Support:** monitored channel, hours/time zone, response target, order and
-    privacy escalation, complaint owner, outage fallback.
+12. **Support:** `support@nuave.ai` monitoring hours/time zone, response target,
+    order and privacy escalation, complaint owner, and outage fallback.
 13. **Disputes:** Indonesian law, good-faith internal complaint step, and a
     competent Indonesian dispute forum stated without pretending Nuave has a
     lawyer or sophisticated arbitration process.

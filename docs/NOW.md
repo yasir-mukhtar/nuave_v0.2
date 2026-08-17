@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-08-16
+> Updated: 2026-08-17
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -99,22 +99,30 @@ absence of audit API calls.
 - Every customer-facing touchpoint moves to Indonesian: landing page, intake,
   the questions asked of AI systems, the report, and outreach messages. English
   remains acceptable only for internal engineering artefacts no customer sees.
-- The score is reported counts-led: the observed count with its denominator is
-  the headline, and the AI Visibility Score sits underneath it as a band, not an
-  exact integer, with discovery, recognition, recommendation, and information
-  accuracy keeping their own denominators.
+- The Nuave score is the direct visible-appearance count across the ten retained
+  answers, for example 4/10. **Tanpa menyebut bisnis Anda**, **Menyebut bisnis
+  Anda**, recommendation, comparison, and public-information assessment remain
+  visible separately with their own eligible denominators.
 - The re-check, run six to eight weeks after the first audit, is the recurring
   product. The interval is a recommended cadence, not a derived one.
 - Outreach is demonstrate-before-selling: run a few unbranded questions on a
   prospect before any contact, then lead with the observed finding.
 - Nuave has zero paying v2 customers.
-- Pricing is open. The Rp149,000 price from the v1 pilot must not be carried
-  forward as an anchor. A price has to be chosen when real checkout is built;
-  treat that price as provisional until strangers respond to it. The simulated
-  checkout must not introduce a numeric price anchor.
+- The current one-audit total is Rp99.000, with no additional tax or fee charged
+  to the customer at checkout. An unpaid Order Preview keeps that quote for 30
+  days, after which the customer must refresh it. Treat the price as provisional
+  until strangers respond to it.
+- Midtrans is the approved checkout provider for QRIS, bank transfer, GoPay,
+  and DANA, subject to production configuration and verification.
+- The target customer sequence is Landing → Order Preview → Payment → Business
+  Facts → Questions → Audit Run → Audit Report. Payment unlocks personalized
+  preparation; only the explicit approved-question start action consumes the
+  audit.
 - The universal brand prompt context and `generate-ai-visibility-prompts` skill
-  are retained mechanisms for building one verified question pack with five
-  unbranded and five branded questions.
+  are retained mechanisms for suggesting one verified question pack. Five
+  questions without the business name and five with it are the default coverage
+  guide, not a composition the customer must preserve. The report follows the
+  exact final customer-approved mix.
 - The active launch scope remains one vertical in one city until it works. The
   universal matrix is not permission to claim cross-industry support; each new
   category still needs claims and report review.
@@ -145,9 +153,10 @@ absence of audit API calls.
 - The workflow stores state only in the browser session. It has no account,
   database, payment, public rate limit, or hosted report access. The shell may
   simulate checkout and a private destination, but durable persistence and real
-  payment follow the report-quality gate. The first real product uses an
-  unguessable, revocable link with no required account; retention and recovery
-  details remain open.
+  payment follow the report-quality gate. The later access specification must
+  provide private, revocable, recoverable access, but whether it uses a private
+  link, narrow report history, an account, or another bounded mechanism remains
+  open. A general dashboard remains out of scope.
 - One founder-approved private live smoke test completed all ten observations
   with `gpt-5.6-luna` and low reasoning. The first report attempt was correctly
   blocked for an unsupported brand-appearance claim; a manual retry rendered a
@@ -168,9 +177,29 @@ absence of audit API calls.
   computed in code with direct denominators and failed-test context. Method copy
   is deterministic, and unsupported ranking, equivalence, guarantee, revenue,
   and causal claims are blocked before rendering.
-- The single report synthesis returns at most three priorities, each tied to an
-  observed gap. The report retains synthesis/prompt versions and requested/
-  returned model provenance, and all audit contract tests pass normally.
+- The current single report synthesis returns at most three priorities, each
+  tied to an observed gap. This is now a known implementation gap: the approved
+  report requires one to five evidence-backed actions and must not invent a
+  deficiency to meet the minimum. When no corrective gap is supported, it may
+  recommend preserving a strength, improving its public evidence, or checking
+  an explicitly untested aspect. The report retains
+  synthesis/prompt versions and requested/returned model provenance, and the
+  existing audit contract tests pass normally.
+- A delivered paid report requires 10/10 evaluable observations, one to five
+  material findings, and one to five evidence-backed actions. One or two strong
+  findings are sufficient. A substantive refusal is evaluable; a provider or
+  policy block with no usable answer is a failed test and receives targeted
+  recovery.
+- If technical recovery cannot reach 10/10, delivery is delayed while Nuave
+  retries the failed work or the customer asks founder support for help. No
+  partial report is delivered. A validated web report may be delivered while
+  PDF generation is retried from the same immutable report version.
+- Before audit start, an incorrect business can be corrected under the same
+  order and its questions regenerated. After start, the original run stays
+  locked; founder support may grant one replacement audit chance from the admin
+  support view. A replacement order is the last resort.
+- Transactional email uses Resend as **Tim Nuave <support@nuave.ai>**. Customer
+  support uses `support@nuave.ai`.
 - Report orchestration records one-call versus language-retry behavior, retry
   violations, and initial/final response IDs. Evidence failures never retry, and
   a protected-field mutation after retry is blocked.
@@ -223,20 +252,25 @@ absence of audit API calls.
 
 - Whether Indonesian small and medium business decision-makers will pay for one
   audit at all.
-- What single price they will pay. The Rp149,000 v1 pilot price is not an
-  anchor.
+- Whether customers will pay the current Rp99.000 total.
 - Whether a customer who receives a report acts on any recommendation, or reads
   it, agrees, and does nothing.
 - Whether a customer will buy a re-check, and on what interval.
-- How wide the score bands need to be. They must be wider than the variation
-  between two identical runs, and that run-to-run variation has not been
-  measured.
+- How much ordinary run-to-run variation affects the direct appearance count.
 - Whether a category benchmark can be stated after roughly twenty audits or
   needs many more.
 - Which verticals the method transfers to without new claims and report review.
 - Whether demonstrate-before-selling outreach converts, and at what rate.
 - Whether the structured-output failures are a provider limit or a bug in how
   the call is made.
+- The Module 07 private-access, return, expiry, revocation, and recovery
+  mechanism; use [`briefs/REPORT_ACCESS_RECOVERY.md`](./briefs/REPORT_ACCESS_RECOVERY.md)
+  when that decision session starts.
+- The maximum delayed-delivery period and terminal remedy if targeted retries
+  and founder support still cannot complete 10/10.
+- The support response expectation and recipient-change verification method.
+- Whether an objectively wrong delivered report needs a separate correction
+  submission and corrected-version notification workflow.
 
 ## Do now
 
@@ -252,11 +286,22 @@ current bounded sequence is:
    review corrections applied (truthful construction-failure state, explicit
    resume after interruption, confirmed start over everywhere, tighter
    persisted-state validation, and a fixture-derived order summary).
-3. Build Chunk 3: the smallest browser automation that proves the complete
-   fixture path, refresh restoration, explicit resume, reset behavior, the
-   persistent simulation disclosure, and the absence of audit API calls, then
-   independently verify the fixture path.
-4. Specify and implement the Indonesian audit and report contract.
+3. Chunk 3 (browser automation) is implemented and re-verified 2026-08-17:
+   23/23 e2e across three server modes, 208 audit unit tests, check and build
+   pass (recorded in
+   [`specs/001-simulated-journey-shell/VERIFICATION.md`](../specs/001-simulated-journey-shell/VERIFICATION.md)).
+   The only remaining gate for Spec 001 is AC-21, the founder's human trust
+   review of the fixture path.
+4. [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md)
+   is founder-approved (2026-08-17) and implemented: the fixture journey is
+   realigned to Order Preview → simulated payment → Business Facts → Questions
+   → Audit Run → Report with Indonesian copy per the canonical `docs/VOICE.md`,
+   the frozen 10/10 Kopi Taman Senja fixture chain, the Indonesian
+   question-generation boundary, and the Indonesian report-language calibration
+   (values founder-approved 2026-08-17). Verified 2026-08-17: 276 audit unit
+   tests, 126 fixture-journey unit tests, 31 e2e tests, check and build all
+   pass. **Verified 2026-08-17** (founder walkthrough completed AC-29; native-
+   language judgment completed AC-30).
 5. Connect the live engine and produce one real Indonesian report.
 6. Apply the report-quality gate. Stop and fix the method if the report holds no
    finding worth paying for.
@@ -283,8 +328,8 @@ current bounded sequence is:
   line;
 - complex credits, packages, or volume tiers;
 - broad multi-vertical support before one vertical and one city work;
-- an exact-integer visibility score, or any peer benchmark, before enough audits
-  in one category support one honestly; and
+- a normalized, banded, percentage, rank, or peer benchmark score beyond the
+  direct observed count out of ten; and
 - fabricated demand, business outcomes, results, or testimonials.
 
 Public exposure of the workflow is no longer a "not now". Rate limits, cost

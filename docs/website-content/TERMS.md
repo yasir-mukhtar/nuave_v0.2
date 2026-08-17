@@ -27,12 +27,16 @@ is internal review material, not public copy.
 ## Founder decisions before publishing
 
 - public operator name and city/correspondence identity;
-- price, taxes or fees, payment methods, and payment provider;
 - delivery deadline and report-link access period;
 - when an audit is considered to have started;
 - correction response time;
-- the proposed cancellation, rerun, and refund rules below; and
-- monitored support email (hello@nuave.ai is filled from the live site; confirm it is still monitored).
+- the proposed cancellation and refund rules below; and
+- maximum delayed-delivery period and terminal remedy if targeted recovery and
+  founder support still cannot complete the audit.
+
+Settled commercial facts: Rp99.000 customer total with no added Nuave checkout
+tax or fee; a 30-day unpaid quote; Midtrans with QRIS, bank transfer, GoPay, and
+DANA; and `support@nuave.ai` as the monitored support address.
 
 ## Proposed fair remedy policy
 
@@ -40,8 +44,8 @@ The public copy below proposes this simple policy:
 
 1. Full refund for duplicate payment.
 2. Cancellation and full refund before the audit starts.
-3. One rerun after a Nuave technical failure; full refund if no usable report can
-   be produced after the rerun.
+3. Delayed delivery and targeted retry after a Nuave technical failure, with a
+   founder-support path. The maximum delay and terminal remedy remain open.
 4. Free correction when Nuave delivers something outside the agreed scope or
    introduces a factual/formatting error.
 5. No refund merely because the observed AI answer is unfavourable or the buyer
@@ -75,7 +79,7 @@ batasan, dan penyelesaian masalah dapat dipahami sebelum Anda membayar.
 Nuave adalah layanan audit visibilitas AI yang dioperasikan secara independen
 oleh <span style="color:#d00">[NAMA LENGKAP PENGELOLA]</span> di <span style="color:#d00">[KOTA]</span>, Indonesia.
 
-Kontak layanan: `hello@nuave.ai`  
+Kontak layanan: `support@nuave.ai`
 Alamat korespondensi atau identitas usaha: <span style="color:#d00">[ALAMAT KORESPONDENSI/NIB JIKA ADA]</span>
 
 Dalam syarat ini, “Anda” adalah orang atau bisnis yang memesan audit dan “kami”
@@ -108,20 +112,34 @@ Anda mengirim ulang informasi yang aman.
 
 ## 4. Konfirmasi bisnis dan pertanyaan
 
-Sebelum pembayaran atau pelaksanaan audit, Anda dapat memeriksa identitas bisnis,
-cabang atau wilayah, fakta yang Anda berikan, serta 10 pertanyaan yang akan diuji.
+Sebelum pembayaran, Anda melihat pratinjau identitas bisnis dari sumber publik
+yang dikirim dan ruang lingkup satu pesanan. Setelah pembayaran berhasil, Nuave
+menyiapkan fakta bisnis untuk Anda periksa dan perbaiki, lalu menyiapkan 10
+pertanyaan yang dapat Anda ubah sebelum pengujian dimulai.
 
 Audit tidak dimulai sampai Anda menyetujuinya. Setelah disetujui, pertanyaan
-dikunci. Perubahan setelah audit dimulai dapat memerlukan pesanan baru karena
-hasil lama dan hasil baru tidak lagi membahas ruang lingkup yang sama.
+dikunci. Permintaan perubahan setelah audit dimulai ditangani melalui dukungan;
+hasil yang sudah dibuat tetap disimpan dan tidak ditulis ulang.
+
+Anda bertanggung jawab memeriksa bisnis, cabang, dan pertanyaan sebelum memulai
+audit. Koreksi untuk bisnis yang sama sebelum audit dimulai tetap menggunakan
+pesanan tersebut dan memerlukan pemeriksaan ulang pertanyaan. Jika Anda baru
+menyadari setelah audit dimulai bahwa bisnis yang dipilih salah, hubungi
+`support@nuave.ai`. Pengelola dapat memberikan satu kesempatan audit pengganti
+melalui proses dukungan. Pesanan pengganti digunakan sebagai pilihan terakhir;
+hasil audit lama tidak diubah atau dihapus.
 
 Jika identitas bisnis atau cabang tidak dapat dipastikan, kami dapat meminta
-perbaikan atau menolak pesanan. Jika pembayaran sudah diterima tetapi audit belum
-dimulai, pembayaran akan dikembalikan penuh.
+perbaikan atau menolak pesanan. Pembatalan sebelum audit dimulai mengikuti
+ketentuan pembatalan di bawah.
 
 ## 5. Harga dan pembayaran
 
-Harga satu audit adalah <span style="color:#d00">[HARGA TOTAL]</span>, termasuk <span style="color:#d00">[PAJAK/BIAYA ATAU “tidak ada biaya tambahan”]</span>. Pembayaran dilakukan melalui <span style="color:#d00">[PENYEDIA/METODE PEMBAYARAN]</span>.
+Harga total satu audit adalah **Rp99.000**. Nuave tidak menambahkan pajak atau
+biaya lain pada saat checkout. Ringkasan pesanan yang belum dibayar berlaku 30
+hari; setelah itu identitas bisnis, harga, dan versi ketentuan harus diperbarui
+sebelum pembayaran. Pembayaran dilakukan melalui Midtrans menggunakan QRIS,
+transfer bank, GoPay, atau DANA.
 Kami tidak menyimpan nomor kartu atau kredensial pembayaran Anda.
 
 Audit hanya dimulai setelah pembayaran dinyatakan berhasil dan 10 pertanyaan
@@ -132,10 +150,20 @@ yang diterima.
 ## 6. Pelaksanaan dan pengiriman
 
 Laporan dikirim paling lambat <span style="color:#d00">[WAKTU PENGIRIMAN]</span> setelah pembayaran berhasil
-dan pertanyaan disetujui. Laporan dikirim ke email pemesan melalui tautan privat
-dan dapat diunduh.
+dan pertanyaan disetujui. Petunjuk akses privat dikirim ke email pemesan.
 
-Tautan laporan tersedia selama <span style="color:#d00">[MASA AKSES]</span>. Anda bertanggung jawab mengunduh
+Laporan lengkap dibuat hanya setelah seluruh 10 pertanyaan menghasilkan
+pengamatan yang dapat digunakan. Jika satu pertanyaan masih gagal karena masalah
+teknis, hasil lain tetap disimpan dan Nuave mengikuti proses pemulihan atau
+penyelesaian yang disetujui; Nuave tidak mengirim laporan sembilan pertanyaan
+seolah-olah pesanan telah lengkap.
+
+Laporan web yang lengkap dan tervalidasi dapat dikirim meskipun pembuatan PDF
+masih gagal atau sedang dicoba kembali. PDF tetap dibuat dari versi laporan
+yang sama. Kegagalan PDF tidak mengubah hasil audit dan tidak menjalankan ulang
+10 pertanyaan.
+
+Akses laporan tersedia selama <span style="color:#d00">[MASA AKSES]</span>. Anda bertanggung jawab mengunduh
 dan menyimpan salinan sebelum masa akses berakhir. Jika ada keterlambatan, kami
 akan memberi kabar melalui email dan menjelaskan pilihan yang tersedia.
 
@@ -145,15 +173,17 @@ akan memberi kabar melalui email dan menjelaskan pilihan yang tersedia.
 
 Jika laporan tidak sesuai dengan bisnis atau pertanyaan yang disepakati, tidak
 lengkap karena kesalahan Nuave, atau memuat kesalahan yang kami masukkan, hubungi
-`hello@nuave.ai` dalam <span style="color:#d00">[BATAS WAKTU KOREKSI]</span> setelah laporan dikirim. Kami
+`support@nuave.ai` dalam <span style="color:#d00">[BATAS WAKTU KOREKSI]</span> setelah laporan dikirim. Kami
 akan memeriksa dan, jika benar, memperbaikinya tanpa biaya.
 
 ### Kegagalan teknis
 
-Jika kegagalan di sistem Nuave membuat laporan yang dapat digunakan tidak bisa
-dihasilkan, kami akan mencoba menjalankan audit kembali satu kali. Jika percobaan
-tersebut tetap gagal, Anda dapat memilih pengembalian dana penuh melalui metode
-pembayaran semula.
+Jika masalah teknis membuat salah satu dari 10 pengamatan belum dapat digunakan,
+pengiriman ditunda. Kami menyimpan pengamatan yang sudah selesai dan mencoba
+kembali hanya pekerjaan yang gagal dengan metode yang sama. Anda dapat meminta
+bantuan melalui `support@nuave.ai`. Dukungan tidak mengubah pertanyaan yang
+sudah dikunci atau hasil yang sah. Jika pesanan belum selesai setelah
+<span style="color:#d00">[BATAS PENUNDAAN]</span>, <span style="color:#d00">[PENYELESAIAN TERAKHIR]</span>.
 
 ### Pembatalan
 
@@ -241,10 +271,10 @@ menyetujuinya.
 
 ## 14. Keluhan dan penyelesaian masalah
 
-Kirim pertanyaan, permintaan koreksi, atau keluhan ke `hello@nuave.ai` dengan
+Kirim pertanyaan, permintaan koreksi, atau keluhan ke `support@nuave.ai` dengan
 nomor pesanan dan nama bisnis. Jangan mengirim kata sandi atau data sensitif.
 
-Kami akan mengonfirmasi penerimaan dalam 1–2 hari kerja dan berusaha
+Kami akan mengonfirmasi penerimaan dalam <span style="color:#d00">[TARGET RESPONS]</span> dan berusaha
 menyelesaikan masalah melalui komunikasi langsung terlebih dahulu. Syarat ini
 tunduk pada hukum Republik Indonesia. Jika masalah tidak dapat diselesaikan,
 para pihak dapat menggunakan mekanisme penyelesaian sengketa yang tersedia dan
@@ -266,12 +296,13 @@ atau draft yang ada di repo, dan tetap perlu diverifikasi founder.
 | `[NAMA LENGKAP PENGELOLA]` | 🔴 Perlu diisi founder | Situs lama hanya menyebut "Nuave"; tidak ada nama pengelola perorangan. |
 | `[KOTA]` | 🔴 Perlu diisi founder | Tidak disebut di situs. |
 | `[ALAMAT KORESPONDENSI/NIB JIKA ADA]` | 🔴 Perlu diisi founder | Situs lama tidak mencantumkan alamat atau NIB. Baris opsional ini bisa dihilangkan jika belum ada. |
-| `[HARGA TOTAL]` | 🔴 Perlu diisi founder | Situs lama memakai sistem kredit (mulai Rp75.000), produk V1 yang tidak dipakai. Draft `Landing Page Copy.md` di repo menyebut Rp99.000 sekali bayar; belum final. |
-| `[PAJAK/BIAYA ATAU “tidak ada biaya tambahan”]` | 🔴 Perlu diisi founder | Pilih salah satu: nilai pajak/biaya, atau "tidak ada biaya tambahan". Tidak ada di situs. |
-| `[PENYEDIA/METODE PEMBAYARAN]` | 🔴 Perlu diisi founder | Situs lama: Stripe. Draft landing copy: QRIS, transfer bank, kartu kredit, atau Gopay. Belum ada keputusan V2. |
+| Harga total | ✅ Ditetapkan founder | Rp99.000 untuk satu audit; Nuave tidak menambahkan pajak atau biaya lain pada checkout; quote belum dibayar berlaku 30 hari. Wording ini bukan klaim bahwa pengelola bebas pajak secara hukum. |
+| Penyedia/metode pembayaran | ✅ Ditetapkan founder | Midtrans: QRIS, transfer bank, GoPay, dan DANA. Konfigurasi produksi tetap harus diverifikasi. |
 | `[WAKTU PENGIRIMAN]` | 🔴 Perlu diisi founder | Situs lama menyebut "results come in minutes" untuk produk otomatis lama; tidak berlaku untuk layanan audit V2. |
+| `[BATAS PENUNDAAN]` | 🔴 Perlu diisi founder | Batas maksimum sebelum penyelesaian terakhir ditawarkan. |
+| `[PENYELESAIAN TERAKHIR]` | 🔴 Perlu diisi founder | Tindakan jika targeted retry dan bantuan founder tetap tidak dapat menyelesaikan 10/10. |
 | `[MASA AKSES]` | 🔴 Perlu diisi founder | Tidak ada pernyataan masa akses di situs. |
 | `[BATAS WAKTU KOREKSI]` | 🔴 Perlu diisi founder | Tidak ada di situs. |
-| `[EMAIL DUKUNGAN]` | ✅ Diisi dari nuave.ai | `hello@nuave.ai` (tertera di /terms, /privacy, /support). Pastikan tetap dipantau. |
+| Email dukungan | ✅ Ditetapkan founder | `support@nuave.ai`; email transaksional dikirim melalui Resend sebagai `Tim Nuave <support@nuave.ai>`. |
 | `[WAKTU REFUND]` | ✅ Diisi dari nuave.ai | Situs lama: "refund issued within 7–14 business days via the original payment method". Verifikasi ulang jika penyedia pembayaran V2 berbeda. |
-| `[TARGET RESPONS]` | ✅ Diisi dari nuave.ai | Situs lama: "respond within 1–2 business days". Verifikasi ulang bersama jam pemantauan dukungan. |
+| `[TARGET RESPONS]` | 🔴 Perlu diisi founder | Situs lama menyebut 1–2 hari kerja, tetapi komitmen V2 belum disetujui. |

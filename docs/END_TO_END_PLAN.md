@@ -16,13 +16,14 @@ Build one thin but complete Indonesian journey for one AI visibility audit:
 
 ```text
 landing page
-  -> short business intake
-  -> confirm extracted business facts
-  -> review the ten questions
-  -> simulated checkout, later replaced by real checkout
+  -> submit one public business source
+  -> free identity and order preview
+  -> simulated checkout, later replaced by verified payment
+  -> confirm prepared business facts
+  -> review and approve the ten questions
   -> visible audit processing
-  -> private report link
-  -> read, download, share, and request a correction
+  -> private report access
+  -> report-ready email, read, and Download PDF
 ```
 
 The first version should feel complete even while selected boundaries are
@@ -31,9 +32,10 @@ existing evidence and report engine remains the protected core and is connected
 to the journey after the shell is reviewable.
 
 The plan succeeds when a stranger can eventually complete this journey without
-an account or founder intervention, while Nuave preserves the questions,
-observations, sources, report version, payment state, and private report access
-needed for delivery and a later re-check.
+founder intervention, while Nuave preserves the questions, observations,
+sources, report version, payment state, and private report access needed for
+delivery and a later re-check. The later access specification decides whether
+the bounded return path requires an account.
 
 ## 2. Strategic decisions carried into the plan
 
@@ -45,14 +47,17 @@ needed for delivery and a later re-check.
 3. **One honest surface first.** The launch measurement names the OpenAI
    Responses API, exact returned model, date, language, and web-search condition.
    It does not claim to reproduce every consumer ChatGPT answer.
-4. **Evidence before scores.** Counts keep their denominators. Mention,
-   recommendation, comparison, information accuracy, non-appearance, and failed
-   tests remain separate.
+4. **Direct count before abstraction.** The Nuave score is the observed
+   appearance count out of ten, such as 4/10. Appearance before the business is
+   named, recognition after it is named, recommendation, comparison,
+   information accuracy, non-appearance, and failed tests remain separate.
 5. **Indonesian is part of measurement quality.** Every customer-facing screen,
    question, explanation, report field, email, and remedy path uses reviewed,
    natural Indonesian.
-6. **No account for the first purchase.** A private, unguessable, revocable link
-   is the primary access mechanism. Account creation remains deferred.
+6. **Access without premature architecture.** The report remains private and
+   recoverable, but the later access specification chooses whether that uses a
+   private link, narrow report history, an account, or another bounded method.
+   A general dashboard remains deferred.
 7. **Simulate before integrating.** The full journey is made reviewable with
    deterministic fixture data and an explicitly simulated checkout. Real audit,
    persistence, jobs, delivery, and payment replace those boundaries one at a
@@ -60,6 +65,10 @@ needed for delivery and a later re-check.
 8. **The report-quality gate remains decisive.** After the first complete real
    Indonesian report, stop if it contains no finding worth paying for. Do not
    hide a weak product behind polish or payment infrastructure.
+9. **Payment before personalized preparation.** The free preview uses only
+   bounded public metadata. Verified payment unlocks prepared business facts
+   and question suggestions, while the explicit approved-question start action
+   remains the only audit-consumption boundary.
 
 ## 3. Current baseline
 
@@ -67,7 +76,8 @@ needed for delivery and a later re-check.
 
 - A five-stage `/audit` workflow for website extraction, fact confirmation,
   question review, live observations, and report display.
-- Ten-question contract with five unbranded and five branded questions.
+- Ten-question default with five questions that do not name the business and
+  five that do, followed by free customer editing and dynamic composition.
 - Independent OpenAI Responses API observations with web search and streamed
   per-question progress.
 - Evidence contracts that preserve exact excerpts, sources, failures, model
@@ -85,14 +95,14 @@ needed for delivery and a later re-check.
 | Area | Current state | Target state |
 |---|---|---|
 | Landing | Attractive but agency-facing and disconnected | Owner-facing Indonesian entry into the audit |
-| Intake | Long, English, operator-oriented | Short first step with progressive fact confirmation |
+| Intake | Long, English, operator-oriented | One public source leading to a free identity and order preview |
 | Questions | Deterministic English templates | Natural Indonesian with a safe deterministic fallback |
 | Checkout | Missing | Clearly simulated first, then real hosted payment |
 | Execution | Browser-connected request | Durable run that survives navigation and interruption |
 | State | Browser session only | Server-owned order, run, evidence, and report state |
 | Report | English and local-session bound | Indonesian, privately hosted, downloadable, shareable |
-| Delivery | No email or return path | Named recipient receives and can recover a private link |
-| Recovery | Partial local recovery | Explicit retry, partial-result, remedy, and support states |
+| Delivery | No email or return path | Named recipient receives and can recover private report access |
+| Recovery | Partial local recovery | Targeted retry, full-report gate, remedy, and support states |
 | Re-check | Product intent only | Persisted question pack replayed under compatible versions |
 | Public safety | Private cost guard only | Rate limits, abuse controls, retention, privacy, correction |
 
@@ -126,76 +136,84 @@ The shell phase changes navigation and enough copy to make the journey coherent.
 The final product-wide visual and copy pass happens only after the report-quality
 gate and commercial terms are settled.
 
-### Touchpoint 2 — Short intake
+### Touchpoint 2 — Order preview
 
-**Customer question:** “Which exact business are you checking?”
+**Customer question:** “Did Nuave find my business, and what am I buying?”
 
-Collect only the minimum required to begin:
+Collect one official website, Google Maps listing, or public Instagram business
+profile plus one delivery email. Use bounded public metadata to show a
+best-effort business identity, the one-audit scope, the report deliverables, and
+the snapshot limitation. Ask for a name and location only when the submitted
+source cannot support a confident preview.
 
-- official website or authoritative public profile;
-- business name if extraction cannot resolve it;
-- city, branch, or service area;
-- customer email for draft recovery and eventual delivery; and
-- consent to use the submitted public sources for this audit.
+The preview is not the personalized audit. It shows no result, competitor,
+finding, recommendation, or score and makes no personalized preparation or
+observation call.
 
-Do not collect payment credentials, customer records, private operational data,
-or broad marketing questionnaires.
+The unpaid preview quotes **Rp99.000 total**, with no additional tax or fee
+added by Nuave at checkout, for 30 days. After expiry, refresh the business
+preview, price, and policy versions before allowing payment. This does not
+expire or change an already-paid order.
 
-### Touchpoint 3 — Fact confirmation
+### Touchpoint 3 — Payment
+
+**Customer question:** “How do I pay, and what happens after payment?”
+
+The order summary shows the previewed business, recipient, one approved total
+when available, report scope, limitations, Terms, and Privacy notice. Verified
+payment unlocks Business Facts preparation. It does not start observations or
+consume the audit entitlement.
+
+Production checkout uses Midtrans with QRIS, bank transfer, GoPay, and DANA.
+The current total is Rp99.000 with no additional checkout tax or fee. In the
+already-approved journey-shell specification the checkout remains a historical
+numeric-free simulator labelled **Simulasi pembayaran — tidak ada tagihan**;
+it collects no payment details, emits no receipt, and cannot be mistaken for a
+purchase.
+
+Real checkout replaces the simulator only after the report-quality gate,
+durable delivery, production Midtrans verification, and founder approval of
+the delivery promise, privacy, retention, and terminal remedy.
+
+### Touchpoint 4 — Business Facts
 
 **Customer question:** “Did Nuave understand my business correctly?”
 
-Show extracted facts with source attribution and ask the customer to confirm or
-correct:
+After verified or explicitly simulated payment, prepare facts from the submitted
+source and other exact official sources needed for identity. Show attribution
+and ask the customer to confirm or correct:
 
 - exact identity and scope;
 - category and target customer;
 - priority services or offers;
 - known name variants;
 - location or service area;
-- one verified competitor when available; and
+- one verified comparison business when available; and
 - optional public facts that AI may get wrong.
 
 Facts supplied by the customer remain labelled until verified. If extraction
-fails, open the same confirmation screen with blank manual fields rather than
-ending the journey.
+fails, open the same confirmation screen with manual fields rather than ending
+the journey. Preparation does not start the audit.
 
-### Touchpoint 4 — Question review
+Warn the customer to verify the exact business and branch before starting. A
+same-business correction before start creates a new fact version and requires a
+new question review. After start, the original run stays locked. A genuine
+wrong-business mistake goes to founder support for one recorded replacement
+audit chance; a replacement order is the last resort.
+
+### Touchpoint 5 — Questions
 
 **Customer question:** “What exactly will Nuave ask?”
 
-Show all ten Indonesian questions in their final order. Explain the five
-unbranded discovery questions and five branded recognition or factual questions
-without requiring the customer to learn those internal terms.
+Show all ten Indonesian questions in their final order. The suggested pack
+starts with five **Tanpa menyebut bisnis Anda** and five **Menyebut bisnis
+Anda**, but the customer may replace any question and change that composition.
 
-The customer may edit wording, but validation must still block brand leakage,
-unsupported facts, duplicate questions, unsafe regulated claims, and competitor
-names outside the designated comparison question. Confirmation locks the brief
-and question pack for the run.
-
-### Touchpoint 5 — Order summary and checkout
-
-**Customer question:** “What am I buying, when will I receive it, and what if it
-fails?”
-
-The summary shows:
-
-- the exact business and scope;
-- ten approved questions;
-- one named AI execution surface;
-- report contents and limitations;
-- delivery estimate;
-- one price when approved; and
-- the correction, partial-delivery, failure, and remedy policy.
-
-In the journey-shell phase, this screen is labelled **Simulasi pembayaran — tidak
-ada tagihan**. It collects no real payment details, emits no real receipt, and
-cannot be mistaken for a purchase. A deterministic action advances to a
-simulated paid state.
-
-Real checkout replaces the simulator only after the report-quality gate and
-after price, delivery promise, privacy, retention, and remedy terms are
-founder-approved.
+Explain the measurement consequences and block only empty or unexecutable text,
+sensitive personal data, disallowed high-impact advice, content unrelated to the
+business decision, or content the production provider cannot safely process.
+Confirmation locks the exact final brief and question pack. The explicit audit
+start action—not payment or preparation—consumes the audit entitlement.
 
 ### Touchpoint 6 — Processing
 
@@ -203,22 +221,29 @@ founder-approved.
 
 Use customer-meaningful stages rather than provider internals:
 
-1. preparing the verified business brief;
-2. running the ten questions;
+1. running the ten approved questions;
+2. recovering only technically failed questions;
 3. checking evidence and sources;
 4. preparing the report; and
 5. report ready.
 
 Show honest progress only. Never animate fake per-question completion in live
 mode. Once durable jobs exist, tell the customer they may close the page and
-will receive the private link by email.
+will receive report access by email.
+
+If targeted technical recovery cannot reach 10/10, show delayed delivery and
+offer retry plus **Minta bantuan**. Founder support may retry only failed work
+under the locked method and cannot alter valid observations.
 
 ### Touchpoint 7 — Report delivery
 
 **Customer question:** “What happened, what matters, and what should I do?”
 
-The private web report and its PDF render the same report version and facts. The
-report keeps the five canonical sections:
+The private web report and its PDF derive from the same report version and
+facts. Web validation is the delivery gate. PDF has its own pending, ready, or
+failed state; a failed PDF does not withhold the validated web report or its
+report-ready email. Nuave retries or troubleshoots only the PDF artifact.
+The report keeps the five canonical sections:
 
 1. main result;
 2. key findings;
@@ -228,24 +253,34 @@ report keeps the five canonical sections:
 
 The report supports:
 
-- private access through an opaque, unguessable token;
-- PDF download;
+- delivery only after 10/10 observations are evaluable;
+- private access through the mechanism selected by the later access
+  specification;
+- **Download PDF** when the artifact is ready, with truthful pending or failed
+  status otherwise;
 - evidence inspection without overwhelming the main result;
-- sharing the same private link;
+- sharing through the approved private-access mechanism;
 - correction or problem reporting;
 - clear report date, version, and limitations; and
 - a later re-check invitation without implying guaranteed improvement.
+
+This touchpoint owns the report-ready customer email, email-delivery failure,
+and resend. An email retry creates a new delivery attempt; it never regenerates
+the report or reruns an observation.
 
 ### Touchpoint 8 — Return and recovery
 
 **Customer question:** “How do I find my report again?”
 
-Email the named recipient the private report link. Provide a recovery mechanism
-that does not reveal whether arbitrary emails have an order. Tokens must be
-revocable and governed by a founder-approved finite retention period.
+The later access-and-recovery module owns private-access opening, another-device
+return, expired or revoked access, and recovery that does not reveal whether an
+arbitrary email has an order. It must provide private, revocable, finite access
+without exposing report existence.
 
-No dashboard is needed. A customer returning to one report should land directly
-on that report.
+The mechanism remains open: a private link, narrow report history, an account,
+or another bounded design may satisfy it. Do not infer a general analytics or
+monitoring dashboard from this requirement. A customer returning to one report
+should reach that report without unrelated product navigation.
 
 ## 5. Experience state model
 
@@ -256,26 +291,31 @@ integration does not rewrite the interface.
 
 | State | Meaning | Main available action |
 |---|---|---|
-| Draft | Initial business details are incomplete | Continue intake |
+| Draft | A supported public business source has not been submitted | Continue from landing |
+| Preview ready | Nuave found enough public identity for an order preview | Review order |
+| Awaiting payment | Checkout is incomplete | Pay or resume later |
+| Paid | Payment is verified or explicitly simulated | Prepare business facts |
 | Facts ready | Nuave has a draft business profile | Confirm or correct facts |
 | Questions ready | Ten questions are ready for review | Edit and approve |
-| Awaiting payment | Scope is locked but checkout is incomplete | Pay or resume later |
-| Paid | Payment is confirmed or explicitly simulated | Start/continue processing |
 | Running | Observations are executing | View honest progress |
 | Preparing report | Evidence is being validated and synthesized | Wait or leave safely |
 | Ready | Private report is available | Read, download, share |
-| Partial | A usable but incomplete report meets the approved partial policy | Read report and remedy note |
 | Failed | No deliverable passed the evidence standard | Retry when safe or receive remedy |
 | Cancelled | The customer abandoned or cancelled before execution | Start again or resume where valid |
 
 ### Internal invariants
 
-- A run cannot start without confirmed facts and an approved question pack.
+- Personalized fact and question preparation cannot start before verified or
+  explicitly simulated payment.
+- A run cannot start without verified payment, confirmed facts, and an approved
+  question pack.
 - Live execution cannot start without verified payment once real checkout is
   enabled; internal founder-approved test runs are explicitly marked.
 - Simulated payment can exist only in non-production or protected preview mode.
 - Failed tests never become non-appearance.
 - Evidence validation failure never becomes a customer report.
+- Automatic report generation and delivery require 10/10 evaluable
+  observations. A failed or blocked test never becomes a partial paid report.
 - A report always points to one immutable brief version, question-pack version,
   observation set, method version, and report version.
 - Re-checks reference the original approved question pack and may compare only
@@ -331,7 +371,7 @@ remove any field that does not support the journey:
 | `audit_questions` | Ordered approved questions and provenance |
 | `audit_observations` | Raw answer, sources, classifications, failure state, provider provenance |
 | `audit_reports` | Immutable report payload, report versions, generated file reference |
-| `report_access_tokens` | Hashed opaque token, expiry, revocation, last access |
+| `report_access_grants` | Private access proof, expiry, revocation, recovery, last access |
 | `payment_events` | Idempotent provider events and reconciled payment state |
 
 This is not an organization/workspace schema. One order belongs to one recipient
@@ -357,13 +397,18 @@ not a particular vendor.
 
 ### Private report access
 
-- Generate at least 128 bits of randomness for the bearer token.
-- Store only a token hash when practical.
-- Use an opaque public route such as `/r/<token>`.
-- Allow revocation and replacement without changing the report.
-- Apply a founder-approved expiry and retention policy.
-- Prevent indexing, referrer leakage, and sensitive analytics capture.
-- Do not expose raw provider metadata or unnecessary personal information.
+The access mechanism is selected in the durable-delivery specification. A
+strong opaque link is one candidate, but this plan does not preselect a private
+link, narrow report history, account, or dashboard architecture.
+
+Any selected mechanism must:
+
+- use unguessable access proof and store reusable secrets safely;
+- allow revocation and replacement without changing the report;
+- apply a founder-approved expiry and retention policy;
+- support authorized another-device return and recovery;
+- prevent indexing, referrer leakage, and sensitive analytics capture; and
+- avoid exposing raw provider metadata or unnecessary personal information.
 
 ### Payment boundary
 
@@ -376,9 +421,10 @@ Define a small adapter around:
 - request the approved refund or remedy action.
 
 The simulator implements the same state transitions without contacting a
-provider. Midtrans is the first donor candidate because the legacy repository
-already contains IDR payment patterns, but provider choice and copied code must
-be confirmed by the payment specification.
+provider. Production uses Midtrans with QRIS, bank transfer, GoPay, and DANA.
+The payment specification must still verify the merchant configuration,
+supported bank-transfer rails, webhooks, reconciliation, sandbox-to-live
+transition, and any reused legacy pattern before enabling charges.
 
 ## 7. Delivery phases
 
@@ -436,6 +482,12 @@ model call, database, real email, or real payment.
 - real email; and
 - real payment.
 
+`specs/001-simulated-journey-shell` remains the approved record of the fixture
+order implemented before the 2026-08-17 sequence decision. Finish and verify it
+without rewriting that implementation record. The next approved specification
+adapts the protected fixture to Order Preview → simulated payment → Business
+Facts → Questions before live behavior is connected.
+
 ### Phase 2 — Indonesian audit and report contract
 
 **Outcome:** the fixture journey and audit contracts can produce customer-facing
@@ -443,6 +495,8 @@ Indonesian that is natural, bounded, and machine-checkable.
 
 **Work**
 
+- Align the protected fixture journey to the current modular sequence using the
+  existing simulated payment boundary; do not add real checkout.
 - Create and approve `docs/VOICE.md` for customer vocabulary, tone, prohibited
   jargon, numerals, dates, and explanation patterns.
 - Change customer-facing locale contracts from `en-US` to Indonesian.
@@ -474,28 +528,32 @@ produces one complete real report without manual rescue.
   behind the same journey states.
 - Preserve explicit fixture/live separation.
 - Run the first founder-approved audit within the server cost ceiling.
-- Re-ask two or three designated questions separately to measure run-to-run
+- Re-ask two or three designated questions separately to observe run-to-run
   variation; do not blend repeats into reported counts.
-- Set or defer score-band width based on observed variation. If evidence is
-  insufficient, show the component counts without pretending the band is
-  calibrated.
-- Review the final web report, PDF, and evidence export as a sceptical owner and
-  as an audit professional.
+- Report the direct appearance count out of ten and its separate name/no-name
+  components. Use repeat evidence only to explain ordinary variation; do not
+  manufacture a band, rank, or percentage forecast.
+- Review the final web report and evidence export as a sceptical owner and as
+  an audit professional. Review the PDF too when it renders, but do not make a
+  PDF-renderer failure invalidate an otherwise complete report-quality verdict.
 - Record the quality-gate verdict and the concrete evidence behind it.
 
 **Exit gate: report worth paying for**
 
 The report must:
 
-- reveal at least one material, specific finding not obvious from casually
-  asking one chatbot question;
+- contain 10/10 evaluable observations;
+- reveal one to five material, specific findings, with one or two strong
+  findings sufficient;
 - make every important claim traceable to an observation or public source;
 - be understandable by a non-technical Indonesian decision-maker in about ten
   minutes;
 - distinguish observation, interpretation, and action;
-- offer no more than three feasible, evidence-linked priorities;
+- offer one to five feasible, evidence-linked actions, including a clearly
+  labelled maintenance or further-investigation action when no immediate
+  corrective gap is supported;
 - retain failures and limitations visibly; and
-- render the same facts on screen and in PDF.
+- render the same facts in the PDF whenever that derived artifact is available.
 
 If the gate fails, stop. Improve questions, observation analysis, evidence
 normalization, or report synthesis and repeat this phase. Do not proceed to real
@@ -504,29 +562,40 @@ persistence, payment, or polish merely because the software ran.
 ### Phase 4 — Durable orders, jobs, and private reports
 
 **Outcome:** a live run survives browser closure and its recipient can reopen the
-finished report at a private link.
+finished report through approved private access.
 
 **Work**
 
 - Add the minimal persistence records from Section 6.
 - Move journey authority from browser session storage to the server.
-- Add opaque resumable draft access before payment.
+- Add private resumable order access using the mechanism selected in this
+  specification.
 - Move execution to a durable, idempotent job path.
 - Persist each observation and terminal status.
-- Store immutable report versions and serve `/r/<token>` privately.
-- Add report-link delivery and recovery email in protected test mode.
-- Define and implement token revocation, retention, deletion, and recovery
+- Store immutable report versions and serve them through the approved private
+  access mechanism.
+- Store independent web-report and PDF-artifact statuses under the same report
+  version; web delivery must remain possible while PDF is failed or retrying.
+- Add 06 report-ready email through Resend as
+  **Tim Nuave <support@nuave.ai>** and delivery retry in protected test mode.
+- Add 07 access-recovery email in protected test mode.
+- Make `06 — Audit Report` own report-ready email, delivery failure, and resend.
+- Specify the later private access and recovery module without assuming an
+  account or dashboard architecture.
+- Define and implement access revocation, retention, deletion, and recovery
   behavior after founder approval.
+- Add a restricted founder support action that can grant one replacement audit
+  chance linked to the original order without rewriting its run or evidence.
 - Migrate interrupted local runs only if needed for current private evidence;
   do not build a general migration system.
 
 **Exit gate**
 
 - Close the browser during a live run; the run finishes or safely resumes.
-- Open the delivered private link in a fresh browser and retrieve the same
+- Open the delivered private access in a fresh browser and retrieve the same
   report.
 - Duplicate job delivery does not duplicate paid observations or reports.
-- Revoked and expired tokens fail safely.
+- Revoked and expired access fails safely.
 - The stored approved question pack can support a future re-check.
 
 ### Phase 5 — Real checkout and launch safety
@@ -536,18 +605,19 @@ and receive the approved remedy when delivery fails.
 
 **Founder decisions required before implementation**
 
-- one provisional price;
-- what the price includes;
 - realistic delivery promise;
-- partial-result threshold;
-- refund, rerun, or credit remedy;
+- maximum delayed-delivery period and terminal remedy;
 - report retention period;
-- correction process; and
+- recipient-change verification;
 - minimum privacy and terms copy, subject to qualified review where needed.
 
 **Work**
 
-- Replace the simulator through the payment adapter.
+- Implement and verify Midtrans as the selected payment provider.
+- Replace the simulator through the Midtrans payment adapter at Rp99.000 total,
+  with no additional Nuave checkout tax or fee.
+- Enforce the 30-day unpaid quote expiry and refresh behavior.
+- Enable and test QRIS, bank transfer, GoPay, and DANA.
 - Use hosted provider payment UI; never collect card or bank credentials.
 - Verify and reconcile webhooks idempotently.
 - Start customer execution only from trusted paid state.
@@ -556,6 +626,8 @@ and receive the approved remedy when delivery fails.
 - Add public rate limits, bot/abuse controls, per-brand caching where useful,
   server cost ceilings, and operational alerts.
 - Add correction and delivery-failure support paths.
+- Test the same-business correction, founder-granted replacement audit chance,
+  and last-resort replacement-order path without rewriting original evidence.
 - Test provider sandbox behavior before any production credential is enabled.
 
 **Exit gate**
@@ -656,7 +728,7 @@ changed under a comparable method.
 - Retrieve the original verified brief and approved question pack.
 - Confirm only facts that may legitimately have changed.
 - Replay questions verbatim unless a disclosed incompatibility prevents it.
-- Compare counts and score bands only under compatible versions.
+- Compare direct counts only under compatible question and method versions.
 - Separate observed change from claimed causation.
 - Show completed customer actions as customer-supplied until independently
   verified.
@@ -719,16 +791,18 @@ changed under a comparable method.
 ### Automated layers
 
 1. **Contract tests:** brief, question pack, observations, evidence, report,
-   language, score, telemetry, payment state, and access tokens.
-2. **Integration tests:** each API boundary with provider calls stubbed, including
-   retries, duplicate events, partial results, and failures.
+   language, score, telemetry, payment state, and the selected private-access
+   grant or proof.
+2. **Integration tests:** each API boundary with provider calls stubbed,
+   including retries, duplicate events, incomplete observation sets, and
+   failures.
 3. **Browser tests:** fixture journey from landing to report; recovery after
    refresh; simulated and sandbox checkout; private report access.
 4. **Rendering tests:** report screen and print/PDF use the same payload and
    version.
-5. **Security tests:** token guessing resistance, revoked/expired access,
-   webhook verification, rate limiting, and server-authoritative mode/payment
-   state.
+5. **Security tests:** resistance to guessing or bypassing the selected access
+   proof, revoked/expired access, webhook verification, rate limiting, and
+   server-authoritative mode/payment state.
 
 ### Human gates
 
@@ -737,7 +811,7 @@ changed under a comparable method.
 - Mobile and desktop visual QA.
 - Permission and privacy review before using any real business as a public
   sample.
-- Founder approval for price, delivery promise, retention, and remedy terms.
+- Founder approval for delivery promise, retention, and terminal remedy terms.
 
 Every specification receives a `VERIFICATION.md`. A passing build is necessary
 but does not replace judgment-based acceptance.
@@ -746,17 +820,20 @@ but does not replace judgment-based acceptance.
 
 | Failure | Preserve | Customer response | Recovery |
 |---|---|---|---|
+| Unpaid quote expires after 30 days | Submitted source and recipient draft | Explain that the order preview needs refreshing | Refresh identity, price, and policy versions before payment |
 | Website extraction fails | URL and entered identity | Ask for manual facts | Continue without a second extraction call |
 | Questions fail validation | Confirmed brief and edits | Identify the unsafe or unsupported wording | Edit or use safe fallback |
 | Simulated checkout abandoned | Locked draft in preview | State that no charge occurred | Resume or restart |
 | Real payment pending/cancelled | Locked order, no run | Show provider status without claiming payment | Retry checkout or expire order |
-| Observation fails | All completed observations and telemetry | Show failed test separately | Retry only under approved same-method policy |
+| Observation remains failed | All completed observations and telemetry | Delay delivery; offer targeted retry and founder help | Retry only failed work under the locked method; never deliver fewer than ten |
 | Browser closes | Persisted order/run state | Explain that work continues | Resume status from server |
 | Evidence validation fails | Raw observations and diagnostics | Do not publish a report | Safe engineering retry or approved remedy |
 | Report writing check fails | Protected evidence and first attempt | Keep processing within retry policy | One language-only retry |
-| Delivery email fails | Ready report and token | Do not mark report failed | Retry email and allow recovery |
-| Private token expires/revokes | Immutable report | Safe unavailable page | Verified recovery or replacement token |
-| Full run fails after payment | Order, evidence, payment record | Clear apology and remedy state | Approved rerun/refund/credit policy |
+| PDF generation fails after web validation | Immutable web report and PDF diagnostics | Deliver web report; show **Download PDF** temporarily unavailable | Retry or troubleshoot only the PDF artifact from the same report version |
+| Delivery email fails | Ready web report and access destination | Do not mark report failed | Module 06 retries through Resend and allows recovery |
+| Private access expires or is revoked | Immutable report | Safe unavailable page | Verified recovery or replacement access under the selected Module 07 mechanism |
+| Customer started the wrong business | Original order, run, evidence, and payment record | Ask the customer to contact support | Founder may grant one linked replacement audit chance; replacement order is last resort |
+| Full run remains incomplete after support | Order, evidence, payment record, and intervention log | State that delivery remains delayed | Terminal deadline and remedy still require founder approval |
 
 ## 11. Risks and controls
 
@@ -768,15 +845,16 @@ but does not replace judgment-based acceptance.
 | Serverless request dies | Paid report can disappear after navigation | Durable job and per-observation persistence before external use |
 | Simulated checkout looks real | Misleads reviewers or leaks into production | Persistent demo label, no payment fields, server-controlled mode |
 | Cost exceeds viable price | Business may be structurally uneconomic | Per-run ceiling, actual cost tracking, cost review before price approval |
-| Private bearer link leaks | Exposes business findings | Strong token, hashing, finite retention, revocation, no indexing |
-| Score implies false precision | Damages trust and re-check value | Counts first, band only after variance measurement, versioned formula |
+| Private access leaks | Exposes business findings | Unguessable access proof, finite retention, revocation, no indexing |
+| Overall count is mistaken for spontaneous discovery or a stable rank | Damages trust and re-check value | Show the 4/10-style appearance count with mandatory name/no-name components and the snapshot limitation |
 | Scope broadens too early | Recreates the legacy SaaS | One vertical/city, explicit non-scope, one bounded spec at a time |
 | Payment precedes policy decisions | Creates unresolved customer obligations | Block real checkout until price, delivery, privacy, retention, remedy approval |
 
 ## 12. Explicit non-scope through initial launch
 
-- customer accounts and passwords;
-- dashboards or continuous monitoring;
+- general-purpose customer accounts unrelated to report access;
+- analytics, monitoring, agency, or multi-product dashboards; the minimum
+  bounded access mechanism for Module 07 remains undecided;
 - subscriptions, credits, packages, bundles, or volume tiers;
 - organizations, teams, workspaces, roles, or agency client management;
 - white-label reports or custom domains;
@@ -794,29 +872,29 @@ but does not replace judgment-based acceptance.
 - The real business, with permission for the private run.
 - Initial vertical and city for the launch wedge.
 - Approval for paid provider calls and the per-run ceiling.
-- Whether a score band is omitted until variance evidence exists.
+- Approval of the direct-count presentation and its name/no-name breakdown in
+  the first real report.
 
 ### Needed before durable delivery
 
 - Private report retention period.
-- Recovery identity check and token replacement rules.
+- Recovery identity check and replacement-access rules.
 - Whether the initial email is transactional delivery only or also includes a
   re-check reminder.
 
 ### Needed before real checkout
 
-- Provisional price.
-- Payment provider.
 - Delivery promise.
-- Partial-result threshold.
-- Refund, rerun, or credit policy.
-- Correction path.
+- Maximum delayed-delivery period and terminal remedy when targeted retries and
+  founder support cannot produce 10/10 evaluable observations.
+- Cancellation and refund operations for the approved Midtrans methods.
+- Recipient-change verification.
 - Customer-facing privacy, retention, and terms language.
 
 ### Needed before public launch
 
 - Permissioned or fictional sample strategy.
-- Production support contact and response expectation.
+- Production support response expectation; the contact is `support@nuave.ai`.
 - Known-owner pilot verdict.
 - Explicit go/no-go approval for strangers.
 
@@ -849,8 +927,9 @@ Nuave v2 is ready for a controlled public launch when:
 - the audit continues without the browser and without founder rescue;
 - each observation, source, failure, and version is retained;
 - the report passes evidence and Indonesian-language checks;
-- the recipient receives and can recover a private report link;
-- web and PDF reports show the same facts;
+- the recipient receives and can recover private report access;
+- any available PDF shows the same facts as its web report version, while PDF
+  failure never withholds a validated web report;
 - payment, generation, delivery, and access failures have defined recovery;
 - public cost, rate, privacy, retention, correction, and remedy controls exist;
 - the product has passed the real-report quality gate and known-owner review;

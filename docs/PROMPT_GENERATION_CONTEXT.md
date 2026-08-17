@@ -2,14 +2,14 @@
 
 > Status: **Working product context for the ten-question prompt pack**
 >
-> Updated: 2026-08-09
+> Updated: 2026-08-17
 
 ## Purpose
 
 This document defines how to generate a ten-question AI visibility prompt pack
 for one verified business. The audited business is the buyer's own business.
-The matrix is category-agnostic so that one method covers the range of small and
-medium Indonesian businesses without a new framework per vertical.
+The matrix is a default coverage guide for one model-authored suggestion. It is
+not a universal template or a composition the customer must preserve.
 
 The
 [`generate-ai-visibility-prompts`](../skills/generate-ai-visibility-prompts/SKILL.md)
@@ -20,10 +20,10 @@ matrix fits every industry or that Nuave can safely deliver a complete audit for
 every brand type. Regulated, sensitive, or unusually complex categories still
 require category-specific review.
 
-Questions are written in natural Indonesian, as a real Indonesian customer would
-type them, not translated from an English template. A deterministic Indonesian
-template set is retained as the guaranteed fallback so this stage cannot
-hard-fail.
+The primary suggestion is written with one bounded, no-search model call in
+natural Indonesian, as a real Indonesian customer would ask it, not translated
+from an English template. A deterministic Indonesian set is retained only as
+the guaranteed fallback so this stage cannot hard-fail.
 
 An earlier vertical-specific method is retained in the repository as history.
 It is not part of the current direction.
@@ -42,15 +42,20 @@ offers in one pack.
 The audit is a dated sample, not a permanent ranking, a prediction of every
 consumer response, or proof of brand quality.
 
-The universal pack uses:
+The suggested pack starts with:
 
 - one verified brand and one exact entity scope;
 - ten independently understandable questions;
-- five customer-intent categories with two questions each;
-- five unbranded and five branded questions;
+- five customer-intent purposes with two questions each as a coverage guide;
+- five questions that do not name the business and five that do;
 - the language requested by the user, defaulting to Bahasa Indonesia;
 - ChatGPT as the named target product; and
-- human review before audit execution.
+- unrestricted customer replacement subject only to narrow privacy, safety,
+  scope, and technical blockers;
+- human approval of the exact final pack before audit execution.
+
+The final pack may use any name/no-name composition. Persist and report the
+exact final text and derive its denominators from that final composition.
 
 The exact execution surface, model when available, date, language, market
 context, and run conditions belong to the later audit configuration. Do not
@@ -75,12 +80,13 @@ Require:
 - `verified_customer_needs`: at least two real needs, jobs, or situations the
   offering is intended to address;
 - `verified_decision_criteria`: at least two practical, publicly checkable
-  factors customers may use when comparing options; and
-- `verified_competitor`: one real relevant competitor with its scope and source.
+  factors customers may use when comparing options.
 
 Accept when available:
 
 - `brand_name_variants`;
+- `verified_competitor`: one real relevant comparison business with its scope
+  and source. Use an unnamed-alternative fallback when absent;
 - `priority_offering`;
 - `conversion_action`, such as contact, visit, book, request a quote, start a
   trial, or purchase;
@@ -95,7 +101,7 @@ a reviewable source. Keep customer-supplied facts identified as such. Do not
 turn an unverified claim into a premise merely because it would make a useful
 question.
 
-## Universal Intent-5 matrix
+## Default Intent-5 coverage matrix
 
 | Prompt ID | Category | Customer job | Branded |
 |---|---|---|---|
@@ -125,10 +131,11 @@ those define the real market instead.
 
 ### Comparison
 
-The unbranded question should expose practical comparison criteria without
-naming the audited brand. The branded question may name the audited brand and
-one verified competitor. Do not ask for an unsupported winner, universal
-ranking, or subjective superiority verdict.
+The question without the business name should expose practical comparison
+criteria without revealing the audited business. The named-business suggestion
+may compare it with one verified comparison business. When none is credible,
+compare with relevant unnamed alternatives. Do not invent a business or ask for
+an unsupported winner, universal ranking, or subjective superiority verdict.
 
 ### Validation
 
@@ -180,18 +187,26 @@ guaranteed outcome, revenue, performance, quality, or reputation premises.
 
 ## Pre-audit acceptance check
 
-Approve a draft only when:
+Approve the Nuave-generated suggestion only when:
 
 - all required inputs are present and internally consistent;
 - the measured entity and market scope are unambiguous;
-- all ten rows match the fixed matrix;
+- all ten suggestion slots follow the default coverage guide;
 - exactly five questions are unbranded and five are branded;
 - no unbranded question leaks the audited brand;
 - every factual premise traces to an approved input;
 - the two need questions and two solution questions perform different jobs;
-- the competitor is real, relevant, and verified;
+- any named comparison business is real, relevant, and verified;
 - regulated-category boundaries are respected; and
 - a human has reviewed the exact wording.
+
+After customer editing, do not require the original purpose labels or five/five
+composition to remain true. Recalculate **Tanpa menyebut bisnis Anda** and
+**Menyebut bisnis Anda** from the exact final text. Block approval only for an
+empty or unexecutable request, sensitive personal data, disallowed high-impact
+advice, content unrelated to the audited business decision, or content the
+chosen provider cannot safely process. Explain coverage consequences instead
+of silently rewriting allowed customer wording.
 
 ## Interpretation boundary
 

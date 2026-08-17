@@ -37,7 +37,8 @@ Use these only if implementation can enforce them:
 
 - abandoned intake: 30 days;
 - order inputs, approved questions, evidence, and report: 90 days after delivery;
-- private report link: 90 days after delivery;
+- report-access grant or proof: no longer than the report-access period selected
+  for Module 07;
 - support correspondence: 12 months after the issue closes;
 - security/access logs: 30 days;
 - payment and bookkeeping records: as long as required for payment, tax, fraud,
@@ -115,7 +116,7 @@ hasil analisis, rekomendasi, dan laporan akhir.
 
 ### Data pembayaran
 
-Pembayaran diproses oleh `[PENYEDIA PEMBAYARAN]`. Kami menerima informasi seperti
+Pembayaran diproses oleh Midtrans. Kami menerima informasi seperti
 status, jumlah, waktu, dan referensi transaksi. Kami tidak menerima atau menyimpan
 nomor kartu, PIN, kata sandi perbankan, atau kode OTP Anda.
 
@@ -184,8 +185,8 @@ Kami menggunakan penyedia layanan hanya untuk fungsi yang diperlukan, antara lai
 |---|---|---|
 | Hosting dan keamanan situs | `[PENYEDIA HOSTING]` | permintaan web, log teknis, dan data layanan yang disimpan |
 | AI dan pencarian | `[PENYEDIA AI/SEARCH]` | pertanyaan serta informasi bisnis yang diperlukan untuk audit |
-| Pembayaran | `[PENYEDIA PEMBAYARAN]` | detail transaksi dan data yang Anda berikan langsung kepada penyedia |
-| Email/pengiriman laporan | `[PENYEDIA EMAIL]` | nama, email, nomor pesanan, dan tautan laporan |
+| Pembayaran | Midtrans | detail transaksi dan data yang Anda berikan langsung kepada penyedia |
+| Email/pengiriman laporan | Resend | nama, email, nomor pesanan, dan petunjuk akses laporan |
 | Penyimpanan data | `[PENYEDIA PENYIMPANAN]` | data pesanan, audit, dan laporan sesuai kebutuhan |
 | Dukungan/analitik, jika digunakan | `[PENYEDIA ATAU “tidak digunakan”]` | komunikasi dukungan atau data penggunaan yang dijelaskan di sini |
 
@@ -211,7 +212,7 @@ Kami tidak ingin menyimpan data tanpa batas. Jadwal yang kami gunakan adalah:
 |---|---|
 | Draf pesanan yang tidak dilanjutkan | `[30 hari]` |
 | Informasi pesanan, pertanyaan, bukti audit, dan laporan | `[90 hari setelah laporan dikirim]` |
-| Tautan privat laporan | `[90 hari setelah laporan dikirim]` |
+| Akses privat laporan | `[MASA AKSES LAPORAN]` |
 | Komunikasi bantuan atau keluhan | `[12 bulan setelah masalah selesai]` |
 | Log keamanan dan akses | `[30 hari]` |
 | Catatan transaksi dan pembukuan | selama diperlukan untuk pembayaran, pajak, pencegahan fraud, atau kewajiban hukum |
@@ -236,9 +237,9 @@ tersebut digunakan.
 ## 12. Cara kami melindungi data
 
 Kami menggunakan langkah yang sesuai dengan ukuran layanan, seperti koneksi
-HTTPS, pembatasan akses, penyimpanan kredensial di sisi server, tautan laporan
-yang sulit ditebak, pencatatan akses yang diperlukan, dan pembaruan perangkat
-lunak.
+HTTPS, pembatasan akses, penyimpanan kredensial di sisi server, perlindungan
+akses privat sesuai mekanisme yang digunakan, pencatatan akses yang diperlukan,
+dan pembaruan perangkat lunak.
 
 Tidak ada sistem yang sepenuhnya bebas risiko. Jika terjadi insiden yang berdampak
 pada data Anda, kami akan memeriksanya, membatasi dampaknya, dan memberikan
@@ -264,12 +265,11 @@ dan menanggapi secepat yang dapat kami lakukan sesuai kewajiban yang berlaku.
 
 ## 14. Privasi laporan
 
-Laporan tersedia melalui tautan privat untuk penerima yang ditentukan. Siapa pun
-yang memperoleh tautan mungkin dapat membuka laporan, jadi jangan membagikannya
-kepada orang yang tidak berwenang.
+Laporan tersedia melalui akses privat untuk penerima yang ditentukan. Jangan
+membagikan bukti atau petunjuk akses kepada orang yang tidak berwenang.
 
-Jika tautan diduga bocor, hubungi `[EMAIL DUKUNGAN]` agar kami dapat menonaktifkan
-dan menggantinya jika fitur tersebut tersedia.
+Jika akses diduga bocor, hubungi `support@nuave.ai` agar kami dapat menonaktifkan
+dan menggantinya sesuai mekanisme akses yang nanti disetujui.
 
 ## 15. Anak
 
@@ -290,5 +290,5 @@ Untuk pertanyaan, koreksi, penghapusan, keluhan, atau insiden privasi:
 
 **Pengelola:** `[NAMA LENGKAP PENGELOLA]`  
 **Email privasi:** `[EMAIL PRIVASI]`  
-**Bantuan umum:** `[EMAIL DUKUNGAN]`  
+**Bantuan umum:** `support@nuave.ai`
 **Halaman bantuan:** [Kontak dan Bantuan](/support)

@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-08-12
+> Updated: 2026-08-17
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -39,6 +39,11 @@ decision log does not become a permanent hidden override.
 | Document | Governs | Status |
 |---|---|---|
 | [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) | Thin v2 journey, integration sequence, quality gates, and launch readiness | Founder-approved direction; each implementation phase still requires an approved spec |
+| [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md) | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries | Current founder-approved product contract; implementation still requires an approved spec |
+
+Future Module 07 access-mechanism work starts from
+[`briefs/REPORT_ACCESS_RECOVERY.md`](./briefs/REPORT_ACCESS_RECOVERY.md). It is a
+decision-session prompt, not an approved implementation specification.
 
 ## Guidance documents
 

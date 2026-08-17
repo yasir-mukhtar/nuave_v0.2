@@ -22,6 +22,7 @@ design polish remain gated later in the build order.
 | Why Nuave exists, who it serves, what it believes | [`docs/VISION.md`](./docs/VISION.md) |
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
+| Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
 | Active fixture-journey specification | [`specs/001-simulated-journey-shell/SPEC.md`](./specs/001-simulated-journey-shell/SPEC.md) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
@@ -58,12 +59,15 @@ that its prepared experiment passed.
 ```text
 run a few unbranded questions on a prospect before any contact
   -> lead with the observed finding
-  -> collect a short intake brief
-  -> confirm facts and approve the ten-question pack in Indonesian
-  -> pay for one audit
+  -> collect one public business link
+  -> show a free identity and Rp99.000 order preview valid for 30 days
+  -> pay through Midtrans with QRIS, bank transfer, GoPay, or DANA
+  -> prepare and confirm the business facts
+  -> prepare and approve the ten-question pack in Indonesian
   -> run ten independent OpenAI API observations with web search
-  -> generate the final-format report and evidence export
-  -> named recipient opens the report at a private link
+  -> generate the final-format web report and evidence export
+  -> named recipient opens the report through private access
+  -> provide Download PDF when its derived artifact is ready
   -> recommend a re-check six to eight weeks later
 ```
 
@@ -71,6 +75,12 @@ The current build starts with a fixture-backed version of this whole journey,
 including an unmistakably simulated checkout and report destination. The live
 report and its quality gate come next. Durable private delivery and real
 checkout are added only after that report proves worth paying for.
+
+The settled commercial direction does not make the current fixture a real
+checkout: production payment still requires its approved implementation
+specification, Midtrans verification, durable delivery, and remaining remedy
+and access decisions. A validated web report may be delivered while PDF
+generation is retried from the same report version.
 
 The `src/` landing page keeps the previous Nuave website as its visual baseline,
 but its English and Indonesian copy still describes the agency-facing raw-MVP
