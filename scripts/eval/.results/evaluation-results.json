@@ -28,34 +28,261 @@
       "03-extraction-gemini-3.5-flash-lite": {
         "status": "failed",
         "requested_model": "gemini-3.5-flash-lite",
-        "latency_ms": 9721,
+        "latency_ms": 9776,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "03-extraction-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-        "requested_model": "gpt-5.6-luna"
+        "status": "completed",
+        "requested_model": "gpt-5.6-luna",
+        "returned_model": "gpt-5.6-luna",
+        "response_id": "resp_02457b2054e11eba016a83249e6a74819993df1d611a33ac4b",
+        "latency_ms": 8157,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 9339,
+          "output_tokens": 961,
+          "total_tokens": 10300,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_02457b2054e11eba016a83249e6a74819993df1d611a33ac4b"
+        },
+        "notional_cost_usd": 0.013021,
+        "draft": {
+          "brand_name": "Sozo Dental Depok",
+          "entity_scope": "Sozo Dental Depok branch in Kota Depok, Jawa Barat, Indonesia",
+          "brand_type": "Dental clinic",
+          "category": "Klinik gigi",
+          "market_context": "Kota Depok, Jawa Barat, Indonesia",
+          "target_customer": "",
+          "official_sources": [
+            "https://www.sozodental.com/lokasi/depok/"
+          ],
+          "verified_offerings": [
+            "Pasang Behel Gigi",
+            "Behel Spesialis Ortho",
+            "Perawatan Pemutihan Gigi",
+            "Pembersihan Karang Gigi",
+            "Tambal Gigi Depan Belakang",
+            "Veneer Gigi",
+            "Pencabutan Gigi",
+            "Pemasangan Gigi Palsu",
+            "Pasang Implan Gigi",
+            "Perawatan Akar dan Saraf Gigi",
+            "Pelurus Gigi"
+          ],
+          "verified_customer_needs": [
+            "Perawatan ortodonti",
+            "Pemutihan gigi",
+            "Pembersihan karang gigi",
+            "Perbaikan gigi berlubang, rusak, atau retak",
+            "Penggantian gigi yang hilang",
+            "Perawatan akar dan saraf gigi"
+          ],
+          "verified_decision_criteria": [
+            "Lokasi cabang",
+            "Jenis perawatan yang tersedia",
+            "Ketersediaan dokter spesialis orthodonti"
+          ],
+          "brand_name_variants": [
+            "Sozo Dental Depok"
+          ],
+          "priority_offering": "",
+          "conversion_action": "Reservasi atau konsultasi melalui WhatsApp",
+          "customer_supplied_facts": [
+            "Nama merek: Sozo Dental Depok",
+            "Konteks pasar: Kota Depok, Jawa Barat, Indonesia",
+            "Kategori: Klinik gigi"
+          ],
+          "known_accuracy_questions": [
+            "Perlu konfirmasi apakah seluruh layanan yang tercantum di halaman tersedia khusus di cabang Depok Margonda.",
+            "Perlu konfirmasi jam operasional, harga, jadwal dokter, dan ketersediaan layanan."
+          ],
+          "usp": "",
+          "regulated_category_notes": "",
+          "evidence": [
+            {
+              "field": "brand_name",
+              "value": "Sozo Dental Depok",
+              "source_url": "https://www.sozodental.com/lokasi/depok/",
+              "note": "Nama cabang ditampilkan pada bagian lokasi Depok."
+            },
+            {
+              "field": "entity_scope",
+              "value": "Sozo Dental Depok branch in Kota Depok, Jawa Barat, Indonesia",
+              "source_url": "https://www.sozodental.com/lokasi/depok/",
+              "note": "Halaman mencantumkan cabang Sozo Dental Depok di Kota Depok."
+            },
+            {
+              "field": "category",
+              "value": "Klinik gigi",
+              "source_url": "https://www.sozodental.com/lokasi/depok/",
+              "note": "Judul halaman dan isi halaman mendeskripsikan layanan klinik gigi."
+            },
+            {
+              "field": "verified_offerings",
+              "value": "Pasang Behel Gigi; Behel Spesialis Ortho; Perawatan Pemutihan Gigi; Pembersihan Karang Gigi; Tambal Gigi Depan Belakang; Veneer Gigi; Pencabutan Gigi; Pemasangan Gigi Palsu; Pasang Implan Gigi; Perawatan Akar dan Saraf Gigi; Pelurus Gigi",
+              "source_url": "https://www.sozodental.com/lokasi/depok/",
+              "note": "Layanan tercantum pada bagian “Layanan Perawatan Gigi”."
+            },
+            {
+              "field": "conversion_action",
+              "value": "Reservasi atau konsultasi melalui WhatsApp",
+              "source_url": "https://www.sozodental.com/lokasi/depok/",
+              "note": "Halaman menyediakan tautan “Reservasi Sekarang” dan “Konsultasi Sekarang” melalui WhatsApp."
+            },
+            {
+              "field": "verified_decision_criteria",
+              "value": "Lokasi cabang",
+              "source_url": "https://www.sozodental.com/lokasi/depok/",
+              "note": "Halaman mencantumkan lokasi Margonda dan Cinere."
+            }
+          ],
+          "warnings": [
+            "Deskripsi ini hanya menggunakan informasi dari halaman resmi yang disediakan.",
+            "Klaim seperti “terbaik”, “terpercaya”, “profesional”, “nyaman”, dan “berpengalaman” tidak diperlakukan sebagai bukti reputasi atau hasil layanan."
+          ]
+        },
+        "telemetry_recorded_by_module": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "status": "completed",
+            "started_at": "2026-08-17T15:11:25.968Z",
+            "completed_at": "2026-08-17T15:11:34.114Z",
+            "latency_ms": 8146,
+            "requested_model": "gpt-5.6-luna",
+            "returned_model": "gpt-5.6-luna",
+            "response_id": "resp_02457b2054e11eba016a83249e6a74819993df1d611a33ac4b",
+            "service_tier": "default",
+            "usage": {
+              "input_tokens": 9339,
+              "cached_input_tokens": 4709,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 961,
+              "reasoning_output_tokens": 117,
+              "total_tokens": 10300
+            },
+            "web_search_calls": 1,
+            "accounted_cost_usd": 0.01217338,
+            "cost_basis": "provider_usage",
+            "pricing_version": "openai-standard-2026-08-01",
+            "failure_reason": "",
+            "provider_status": "completed",
+            "incomplete_reason": "",
+            "output_text_present": true,
+            "refusal_present": false
+          }
+        ]
       },
       "04-questions-gemini-3.5-flash-lite": {
         "status": "degraded_to_fallback",
         "requested_model": "gemini-3.5-flash-lite",
         "instruction_version": "question-writer-v1",
-        "latency_ms": 535,
+        "latency_ms": 378,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "04-questions-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "status": "completed",
+        "pack_source": "model",
+        "warnings": [],
         "requested_model": "gpt-5.6-luna",
-        "instruction_version": "question-writer-v1"
+        "returned_model": "not recorded",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 5669,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 626,
+          "output_tokens": 457,
+          "total_tokens": 1083,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_0eb7ffb5f94a9bfa016a8324a6b2ec8198b4c159b3a4c418c4"
+        },
+        "notional_cost_usd": 0.0006736,
+        "boundary_telemetry": null,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": [],
+          "identity_or_competitor_leaks": [],
+          "unsupported_premises": [],
+          "distinctness_issues": [],
+          "source": "model",
+          "warnings": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Klinik gigi terdekat di sekitar Margonda atau Beji yang bisa menangani scaling dan tambal gigi dengan harga terjangkau ada di mana?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 2,
+            "text": "Ada klinik gigi yang cocok untuk perawatan keluarga atau karyawan sepulang kerja di area Depok?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 3,
+            "text": "Apa saja pilihan klinik gigi di Margonda untuk scaling, behel, atau tambal gigi?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 4,
+            "text": "Klinik gigi mana di Depok yang menawarkan konsultasi dan reservasi lewat WhatsApp?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 5,
+            "text": "Bagaimana perbandingan klinik gigi di Margonda dari sisi harga, jam buka, pengalaman dokter, dan kemudahan akses?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 6,
+            "text": "Apa perbedaan Sozo Dental Depok dan SATU Dental Margonda dalam hal lokasi, harga, jam buka, dan pilihan perawatan?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 7,
+            "text": "Apakah Sozo Dental memiliki cabang di Margonda dan Cinere, dan mana yang paling dekat dari Beji?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 8,
+            "text": "Di mana saya bisa melihat jam buka, layanan, dan informasi kontak resmi Sozo Dental Depok?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara reservasi konsultasi atau perawatan di Sozo Dental Depok melalui WhatsApp?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          },
+          {
+            "order": 10,
+            "text": "Apa yang perlu saya siapkan dan tanyakan saat membuat janji scaling, behel, atau tambal gigi di Sozo Dental Depok?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          }
+        ]
       },
       "04-questions-deterministic-fallback": {
         "status": "completed",
-        "latency_ms": 6,
+        "latency_ms": 1,
         "accounted_cost_usd": 0,
         "mechanical": {
           "question_count": 10,
@@ -146,34 +373,242 @@
       "03-extraction-gemini-3.5-flash-lite": {
         "status": "failed",
         "requested_model": "gemini-3.5-flash-lite",
-        "latency_ms": 9424,
+        "latency_ms": 9952,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "03-extraction-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-        "requested_model": "gpt-5.6-luna"
+        "status": "completed",
+        "requested_model": "gpt-5.6-luna",
+        "returned_model": "gpt-5.6-luna",
+        "response_id": "resp_032b2ed537e62528016a8324b663c0819aab653f9a8a4e035c",
+        "latency_ms": 6869,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 6908,
+          "output_tokens": 736,
+          "total_tokens": 7644,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_032b2ed537e62528016a8324b663c0819aab653f9a8a4e035c"
+        },
+        "notional_cost_usd": 0.0122648,
+        "draft": {
+          "brand_name": "SATU Dental Margonda",
+          "entity_scope": "Klinik Gigi SATU Dental Margonda Depok",
+          "brand_type": "Klinik gigi",
+          "category": "Klinik gigi",
+          "market_context": "Kota Depok, Jawa Barat, Indonesia",
+          "target_customer": "",
+          "official_sources": [
+            "https://www.satudental.com/lokasi/klinik-gigi-margonda/"
+          ],
+          "verified_offerings": [],
+          "verified_customer_needs": [],
+          "verified_decision_criteria": [],
+          "brand_name_variants": [
+            "Klinik Gigi SATU Dental Margonda Depok",
+            "Satu Dental Depok Margonda"
+          ],
+          "priority_offering": "",
+          "conversion_action": "Book Now",
+          "customer_supplied_facts": [
+            "The supplied brand name is SATU Dental Margonda.",
+            "The supplied market context is Kota Depok, Jawa Barat, Indonesia.",
+            "The supplied category is Klinik gigi."
+          ],
+          "known_accuracy_questions": [],
+          "usp": "",
+          "regulated_category_notes": "Dental healthcare provider; specific services and clinical claims were not verified from the supplied page.",
+          "evidence": [
+            {
+              "field": "brand_name",
+              "value": "SATU Dental Margonda",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "The page identifies the location as Klinik Gigi SATU Dental Margonda Depok."
+            },
+            {
+              "field": "entity_scope",
+              "value": "Klinik Gigi SATU Dental Margonda Depok",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "Published page heading."
+            },
+            {
+              "field": "brand_type",
+              "value": "Klinik gigi",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "The official page labels the entity as a dental clinic."
+            },
+            {
+              "field": "market_context",
+              "value": "Kota Depok, Jawa Barat, Indonesia",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "The page lists the address in Pondok Cina, Beji, Kota Depok."
+            },
+            {
+              "field": "brand_name_variants",
+              "value": "Klinik Gigi SATU Dental Margonda Depok",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "Published page heading."
+            },
+            {
+              "field": "brand_name_variants",
+              "value": "Satu Dental Depok Margonda",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "Displayed Google Maps location label on the official page."
+            },
+            {
+              "field": "conversion_action",
+              "value": "Book Now",
+              "source_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+              "note": "The page includes a BOOK NOW call to action."
+            }
+          ],
+          "warnings": [
+            "No specific dental services, doctors, pricing, outcomes, customer segments, or differentiators were verified from the supplied official page.",
+            "The extracted values are suggestions for human confirmation, not verified facts."
+          ]
+        },
+        "telemetry_recorded_by_module": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "status": "completed",
+            "started_at": "2026-08-17T15:11:50.124Z",
+            "completed_at": "2026-08-17T15:11:56.984Z",
+            "latency_ms": 6860,
+            "requested_model": "gpt-5.6-luna",
+            "returned_model": "gpt-5.6-luna",
+            "response_id": "resp_032b2ed537e62528016a8324b663c0819aab653f9a8a4e035c",
+            "service_tier": "default",
+            "usage": {
+              "input_tokens": 6908,
+              "cached_input_tokens": 4713,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 736,
+              "reasoning_output_tokens": 111,
+              "total_tokens": 7644
+            },
+            "web_search_calls": 1,
+            "accounted_cost_usd": 0.01141646,
+            "cost_basis": "provider_usage",
+            "pricing_version": "openai-standard-2026-08-01",
+            "failure_reason": "",
+            "provider_status": "completed",
+            "incomplete_reason": "",
+            "output_text_present": true,
+            "refusal_present": false
+          }
+        ]
       },
       "04-questions-gemini-3.5-flash-lite": {
         "status": "degraded_to_fallback",
         "requested_model": "gemini-3.5-flash-lite",
         "instruction_version": "question-writer-v1",
-        "latency_ms": 335,
+        "latency_ms": 434,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "04-questions-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "status": "completed",
+        "pack_source": "model",
+        "warnings": [],
         "requested_model": "gpt-5.6-luna",
-        "instruction_version": "question-writer-v1"
+        "returned_model": "not recorded",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 2942,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 626,
+          "output_tokens": 216,
+          "total_tokens": 842,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_030c4daf215e4c4f016a8324bd9e4087d0a16f8d789fbc0335"
+        },
+        "notional_cost_usd": 0.0003844,
+        "boundary_telemetry": null,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": [],
+          "identity_or_competitor_leaks": [],
+          "unsupported_premises": [],
+          "distinctness_issues": [],
+          "source": "model",
+          "warnings": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Di mana saya bisa pasang behel gigi di sekitar Margonda, Depok?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 2,
+            "text": "Klinik gigi mana yang bisa melakukan scaling setelah jam kantor atau kuliah?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 3,
+            "text": "Apa saja pilihan klinik gigi di area Margonda yang menyediakan behel, veneer, dan scaling?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 4,
+            "text": "Klinik gigi di Margonda mana yang punya jam buka sampai malam dan bisa booking online?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 5,
+            "text": "Untuk perawatan gigi di Margonda, lebih baik memilih klinik dengan laboratorium in-house atau klinik dengan harga lebih terjangkau?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 6,
+            "text": "Apa perbedaan SATU Dental Margonda dan Sozo Dental Depok untuk perawatan behel dan scaling?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 7,
+            "text": "Berapa jam operasional SATU Dental Margonda?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 8,
+            "text": "Apakah SATU Dental Margonda menyediakan booking online melalui patients.satudental.com?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara membuat janji perawatan di SATU Dental Margonda lewat website?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          },
+          {
+            "order": 10,
+            "text": "Apakah SATU Dental Margonda cocok untuk saya yang ingin scaling setelah jam kerja?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          }
+        ]
       },
       "04-questions-deterministic-fallback": {
         "status": "completed",
-        "latency_ms": 4,
+        "latency_ms": 0,
         "accounted_cost_usd": 0,
         "mechanical": {
           "question_count": 10,
@@ -263,34 +698,237 @@
       "03-extraction-gemini-3.5-flash-lite": {
         "status": "failed",
         "requested_model": "gemini-3.5-flash-lite",
-        "latency_ms": 9414,
+        "latency_ms": 9723,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "03-extraction-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-        "requested_model": "gpt-5.6-luna"
+        "status": "completed",
+        "requested_model": "gpt-5.6-luna",
+        "returned_model": "gpt-5.6-luna",
+        "response_id": "resp_02b1653d3f5d951a016a8324ca5ac4819a824f928072e8fefc",
+        "latency_ms": 6582,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 5468,
+          "output_tokens": 684,
+          "total_tokens": 6152,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_02b1653d3f5d951a016a8324ca5ac4819a824f928072e8fefc"
+        },
+        "notional_cost_usd": 0.0119144,
+        "draft": {
+          "brand_name": "FDC Dental Clinic Margonda",
+          "entity_scope": "FDC Margonda clinic location",
+          "brand_type": "Dental clinic",
+          "category": "Klinik gigi",
+          "market_context": "Kota Depok, Jawa Barat, Indonesia",
+          "target_customer": "",
+          "official_sources": [
+            "https://fdcdentalclinic.co.id/lokasi/fdc-margonda"
+          ],
+          "verified_offerings": [],
+          "verified_customer_needs": [],
+          "verified_decision_criteria": [],
+          "brand_name_variants": [
+            "FDC Margonda"
+          ],
+          "priority_offering": "",
+          "conversion_action": "Buat Reservasi",
+          "customer_supplied_facts": [
+            "Supplied brand name: FDC Dental Clinic Margonda",
+            "Supplied market context: Kota Depok, Jawa Barat, Indonesia",
+            "Supplied category: Klinik gigi"
+          ],
+          "known_accuracy_questions": [
+            "The official page displays a 5.0 rating, but its meaning, review count, and calculation basis are not specified."
+          ],
+          "usp": "",
+          "regulated_category_notes": "",
+          "evidence": [
+            {
+              "field": "brand_name",
+              "value": "FDC Dental Clinic Margonda",
+              "source_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+              "note": "The supplied brand name identifies the location as FDC Dental Clinic Margonda; the official page titles the clinic location “FDC Margonda.”"
+            },
+            {
+              "field": "entity_scope",
+              "value": "FDC Margonda clinic location",
+              "source_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+              "note": "The official page labels the page “Detail Klinik” and names the location “FDC Margonda.”"
+            },
+            {
+              "field": "brand_name_variants",
+              "value": "FDC Margonda",
+              "source_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+              "note": "Published as the official location name."
+            },
+            {
+              "field": "category",
+              "value": "Klinik gigi",
+              "source_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+              "note": "Category supplied by the user; the official page identifies the entity as a clinic and is hosted on FDC Dental Clinic’s official website."
+            },
+            {
+              "field": "market_context",
+              "value": "Kota Depok, Jawa Barat, Indonesia",
+              "source_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+              "note": "The official page lists an address in Depok, Jawa Barat."
+            },
+            {
+              "field": "conversion_action",
+              "value": "Buat Reservasi",
+              "source_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+              "note": "The page provides a “Buat Reservasi” action."
+            }
+          ],
+          "warnings": [
+            "This draft uses only the supplied official website and supplied facts.",
+            "No specific dental services, facilities, promotions, customer needs, outcomes, or reputation claims were extracted because the supplied page does not provide supporting details."
+          ]
+        },
+        "telemetry_recorded_by_module": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "status": "completed",
+            "started_at": "2026-08-17T15:12:10.090Z",
+            "completed_at": "2026-08-17T15:12:16.669Z",
+            "latency_ms": 6579,
+            "requested_model": "gpt-5.6-luna",
+            "returned_model": "gpt-5.6-luna",
+            "response_id": "resp_02b1653d3f5d951a016a8324ca5ac4819a824f928072e8fefc",
+            "service_tier": "default",
+            "usage": {
+              "input_tokens": 5468,
+              "cached_input_tokens": 4711,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 684,
+              "reasoning_output_tokens": 110,
+              "total_tokens": 6152
+            },
+            "web_search_calls": 1,
+            "accounted_cost_usd": 0.01106642,
+            "cost_basis": "provider_usage",
+            "pricing_version": "openai-standard-2026-08-01",
+            "failure_reason": "",
+            "provider_status": "completed",
+            "incomplete_reason": "",
+            "output_text_present": true,
+            "refusal_present": false
+          }
+        ]
       },
       "04-questions-gemini-3.5-flash-lite": {
         "status": "degraded_to_fallback",
         "requested_model": "gemini-3.5-flash-lite",
         "instruction_version": "question-writer-v1",
-        "latency_ms": 349,
+        "latency_ms": 398,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "04-questions-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "status": "completed",
+        "pack_source": "model",
+        "warnings": [],
         "requested_model": "gpt-5.6-luna",
-        "instruction_version": "question-writer-v1"
+        "returned_model": "not recorded",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 4007,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 612,
+          "output_tokens": 317,
+          "total_tokens": 929,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_039f17ced6b3bbd9016a8324d13fe8819a981550b1e4cb662f"
+        },
+        "notional_cost_usd": 0.0005028,
+        "boundary_telemetry": null,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": [],
+          "identity_or_competitor_leaks": [],
+          "unsupported_premises": [],
+          "distinctness_issues": [],
+          "source": "model",
+          "warnings": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Di Margonda, Depok, klinik gigi mana yang cocok untuk scaling dengan biaya terjangkau?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 2,
+            "text": "Bagaimana cara mendapatkan perawatan behel yang murah dan mudah dipesan di area Margonda?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 3,
+            "text": "Apa saja pilihan klinik gigi di Margonda yang menyediakan scaling dan reservasi dokter secara online?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 4,
+            "text": "Klinik gigi mana di sekitar Margonda yang menawarkan promo scaling atau behel?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 5,
+            "text": "Apa perbedaan harga, kemudahan reservasi, dan fasilitas klinik gigi di Margonda untuk scaling?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 6,
+            "text": "Lebih cocok reservasi di FDC Dental Clinic Margonda atau OMDC Dental Margonda untuk perawatan gigi yang terjangkau?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 7,
+            "text": "Apakah FDC Dental Clinic Margonda menyediakan reservasi dokter gigi secara online?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 8,
+            "text": "Apakah FDC Dental Clinic Margonda melayani scaling gigi dan behel?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara membuat reservasi online di FDC Dental Clinic Margonda?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          },
+          {
+            "order": 10,
+            "text": "Apa yang perlu saya siapkan sebelum reservasi scaling atau konsultasi behel di FDC Dental Clinic Margonda?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          }
+        ]
       },
       "04-questions-deterministic-fallback": {
         "status": "completed",
-        "latency_ms": 11,
+        "latency_ms": 7,
         "accounted_cost_usd": 0,
         "mechanical": {
           "question_count": 10,
@@ -382,34 +1020,248 @@
       "03-extraction-gemini-3.5-flash-lite": {
         "status": "failed",
         "requested_model": "gemini-3.5-flash-lite",
-        "latency_ms": 9414,
+        "latency_ms": 9585,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "03-extraction-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-        "requested_model": "gpt-5.6-luna"
+        "status": "completed",
+        "requested_model": "gpt-5.6-luna",
+        "returned_model": "gpt-5.6-luna",
+        "response_id": "resp_0666e3f64427be4d016a8324df25008199a1adaaed68baca45",
+        "latency_ms": 8810,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 5933,
+          "output_tokens": 857,
+          "total_tokens": 6790,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_0666e3f64427be4d016a8324df25008199a1adaaed68baca45"
+        },
+        "notional_cost_usd": 0.012215,
+        "draft": {
+          "brand_name": "OMDC Margonda",
+          "entity_scope": "OMDC Margonda location",
+          "brand_type": "Dental clinic location",
+          "category": "Klinik gigi",
+          "market_context": "Kota Depok, Jawa Barat, Indonesia",
+          "target_customer": "",
+          "official_sources": [
+            "https://www.omdc.co.id/location/omdc-margonda"
+          ],
+          "verified_offerings": [
+            "OMDC Dental"
+          ],
+          "verified_customer_needs": [],
+          "verified_decision_criteria": [
+            "Location",
+            "Opening hours",
+            "WhatsApp contact"
+          ],
+          "brand_name_variants": [
+            "OMDC Dental Margonda",
+            "OMDC Margonda"
+          ],
+          "priority_offering": "",
+          "conversion_action": "Contact via WhatsApp at 0812900900",
+          "customer_supplied_facts": [
+            "Supplied brand name: OMDC Dental Margonda",
+            "Supplied market context: Kota Depok, Jawa Barat, Indonesia",
+            "Supplied category: Klinik gigi"
+          ],
+          "known_accuracy_questions": [],
+          "usp": "",
+          "regulated_category_notes": "The official page describes OMDC Dental Clinic as providing dental and oral education and care. Specific clinical claims are not stated.",
+          "evidence": [
+            {
+              "field": "brand_name",
+              "value": "OMDC Margonda",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "The official location page heading identifies the branch as OMDC Margonda."
+            },
+            {
+              "field": "entity_scope",
+              "value": "OMDC Margonda location",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "The page is an official branch detail page under Lokasi."
+            },
+            {
+              "field": "category",
+              "value": "Dental clinic",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "The page states “OMDC Dental Clinic.”"
+            },
+            {
+              "field": "market_context",
+              "value": "Pondok Cina, Kecamatan Beji, Kota Depok 16424",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "This location is listed in the official address."
+            },
+            {
+              "field": "verified_offerings",
+              "value": "OMDC Dental",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "OMDC Dental is listed among the official service categories."
+            },
+            {
+              "field": "conversion_action",
+              "value": "WhatsApp: 0812900900",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "The official page provides a WhatsApp contact link and number."
+            },
+            {
+              "field": "verified_decision_criteria",
+              "value": "Opening hours: 10:00–21:00",
+              "source_url": "https://www.omdc.co.id/location/omdc-margonda",
+              "note": "The official page lists the branch opening schedule."
+            }
+          ],
+          "warnings": [
+            "The supplied brand name differs from the official page heading; confirm the preferred public-facing name.",
+            "Specific treatments, prices, facilities, outcomes, and customer segments are not stated on the supplied official page."
+          ]
+        },
+        "telemetry_recorded_by_module": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "status": "completed",
+            "started_at": "2026-08-17T15:12:30.671Z",
+            "completed_at": "2026-08-17T15:12:39.479Z",
+            "latency_ms": 8808,
+            "requested_model": "gpt-5.6-luna",
+            "returned_model": "gpt-5.6-luna",
+            "response_id": "resp_0666e3f64427be4d016a8324df25008199a1adaaed68baca45",
+            "service_tier": "default",
+            "usage": {
+              "input_tokens": 5933,
+              "cached_input_tokens": 4709,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 857,
+              "reasoning_output_tokens": 257,
+              "total_tokens": 6790
+            },
+            "web_search_calls": 1,
+            "accounted_cost_usd": 0.01136738,
+            "cost_basis": "provider_usage",
+            "pricing_version": "openai-standard-2026-08-01",
+            "failure_reason": "",
+            "provider_status": "completed",
+            "incomplete_reason": "",
+            "output_text_present": true,
+            "refusal_present": false
+          }
+        ]
       },
       "04-questions-gemini-3.5-flash-lite": {
         "status": "degraded_to_fallback",
         "requested_model": "gemini-3.5-flash-lite",
         "instruction_version": "question-writer-v1",
-        "latency_ms": 335,
+        "latency_ms": 586,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "04-questions-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "status": "completed",
+        "pack_source": "model",
+        "warnings": [],
         "requested_model": "gpt-5.6-luna",
-        "instruction_version": "question-writer-v1"
+        "returned_model": "not recorded",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 4960,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 625,
+          "output_tokens": 415,
+          "total_tokens": 1040,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_0b85389143f22762016a8324e83ad08199a78f103a6b296ca2"
+        },
+        "notional_cost_usd": 0.000623,
+        "boundary_telemetry": null,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": [],
+          "identity_or_competitor_leaks": [],
+          "unsupported_premises": [],
+          "distinctness_issues": [],
+          "source": "model",
+          "warnings": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Di mana saya bisa melakukan scaling gigi dengan harga terjangkau di Depok?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 2,
+            "text": "Klinik gigi mana yang nyaman untuk perawatan anak dan keluarga serta bisa menerima reservasi terjadwal?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 3,
+            "text": "Apa saja pilihan klinik gigi di area Margonda untuk scaling, tambal gigi, atau pasang behel?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 4,
+            "text": "Bisa rekomendasikan klinik gigi di Depok yang menawarkan harga perawatan secara transparan?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 5,
+            "text": "Apa perbedaan fasilitas, harga, dan sistem reservasi klinik gigi di Margonda yang menyediakan scaling dan behel?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 6,
+            "text": "Untuk perawatan gigi keluarga, bagaimana perbandingan OMDC Dental Margonda dengan FDC Dental Clinic Margonda dari segi harga, fasilitas anak, dokter, dan reservasi?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 7,
+            "text": "Apakah OMDC Dental Margonda berlokasi di area Margonda atau Pondok Cina, Depok?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 8,
+            "text": "Apakah OMDC Dental Margonda memiliki playground dan movie theater untuk pasien anak?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara membuat reservasi di OMDC Dental Margonda melalui WhatsApp atau booking.omdc.co.id?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          },
+          {
+            "order": 10,
+            "text": "Sebelum booking di OMDC Dental Margonda, bagaimana cara menanyakan estimasi biaya scaling, tambal gigi, atau behel?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          }
+        ]
       },
       "04-questions-deterministic-fallback": {
         "status": "completed",
-        "latency_ms": 2,
+        "latency_ms": 1,
         "accounted_cost_usd": 0,
         "mechanical": {
           "question_count": 10,
@@ -502,34 +1354,263 @@
       "03-extraction-gemini-3.5-flash-lite": {
         "status": "failed",
         "requested_model": "gemini-3.5-flash-lite",
-        "latency_ms": 9324,
+        "latency_ms": 9542,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "03-extraction-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-        "requested_model": "gpt-5.6-luna"
+        "status": "completed",
+        "requested_model": "gpt-5.6-luna",
+        "returned_model": "gpt-5.6-luna",
+        "response_id": "resp_017a32bd86c3885a016a8324f6d0f087d09688f218003e3be9",
+        "latency_ms": 9050,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 9500,
+          "output_tokens": 1034,
+          "total_tokens": 10534,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_017a32bd86c3885a016a8324f6d0f087d09688f218003e3be9"
+        },
+        "notional_cost_usd": 0.0131408,
+        "draft": {
+          "brand_name": "Nirmala Dental",
+          "entity_scope": "Klinik kesehatan umum dan gigi",
+          "brand_type": "Klinik gigi",
+          "category": "Klinik gigi",
+          "market_context": "Kota Depok, Jawa Barat, Indonesia",
+          "target_customer": "",
+          "official_sources": [
+            "https://nirmaladental.com/"
+          ],
+          "verified_offerings": [
+            "Layanan dokter umum",
+            "Pemeriksaan dan konsultasi gigi",
+            "Pembersihan karang gigi",
+            "Konservasi gigi dan estetik",
+            "Ortodonti",
+            "Penyakit mulut",
+            "Bedah mulut dan maksilofasial",
+            "Implan",
+            "Perawatan gigi anak",
+            "Dental spa",
+            "Pembuatan gigi tiruan"
+          ],
+          "verified_customer_needs": [],
+          "verified_decision_criteria": [],
+          "brand_name_variants": [
+            "Klinik Nirmala Dental",
+            "Nirmala Dental Clinic"
+          ],
+          "priority_offering": "Reservasi pemeriksaan dan perawatan gigi",
+          "conversion_action": "Reservasi sekarang",
+          "customer_supplied_facts": [
+            "Nama merek: Nirmala Dental",
+            "Konteks pasar: Kota Depok, Jawa Barat, Indonesia",
+            "Kategori: Klinik gigi"
+          ],
+          "known_accuracy_questions": [
+            "Situs resmi menampilkan promo Royal Bleaching dengan tanggal 31 Oktober 2025; status promo saat ini perlu dikonfirmasi.",
+            "Situs menyatakan klinik berdiri sejak 2004 dan menampilkan 21 years of experience; angka tersebut perlu dikonfirmasi sesuai tanggal publikasi."
+          ],
+          "usp": "",
+          "regulated_category_notes": "Layanan kesehatan dan kedokteran gigi merupakan kategori yang memerlukan verifikasi manusia atas dokter, izin, cakupan layanan, harga, dan klaim layanan sebelum dipublikasikan.",
+          "evidence": [
+            {
+              "field": "entity_scope",
+              "value": "Klinik kesehatan umum dan gigi",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Situs menyebut Nirmala Dental sebagai klinik kesehatan modern yang menyediakan layanan kesehatan umum serta perawatan gigi umum dan spesialis."
+            },
+            {
+              "field": "verified_offerings",
+              "value": "Layanan dokter umum; pemeriksaan dan konsultasi gigi; pembersihan karang gigi",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Dicantumkan pada bagian Layanan Umum."
+            },
+            {
+              "field": "verified_offerings",
+              "value": "Konservasi gigi dan estetik; ortodonti; penyakit mulut; bedah mulut dan maksilofasial",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Dicantumkan pada layanan unggulan dan layanan spesialis."
+            },
+            {
+              "field": "verified_offerings",
+              "value": "Implan; perawatan gigi anak; dental spa; pembuatan gigi tiruan",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Dicantumkan pada bagian Tentang Kami."
+            },
+            {
+              "field": "priority_offering",
+              "value": "Reservasi pemeriksaan dan perawatan gigi",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Situs menyediakan ajakan “Reservasi Sekarang” dan “Buat Jadwal Periksa Gigi”."
+            },
+            {
+              "field": "conversion_action",
+              "value": "Reservasi sekarang",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Tombol reservasi tersedia pada halaman utama."
+            },
+            {
+              "field": "known_accuracy_questions",
+              "value": "Promo Royal Bleaching bertanggal 31 Oktober 2025",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Tanggal promo ditampilkan pada bagian Promo Bulan Ini."
+            },
+            {
+              "field": "market_context",
+              "value": "Jl. Margonda No.492A, Pondok Cina, Kecamatan Beji, Kota Depok, Jawa Barat",
+              "source_url": "https://nirmaladental.com/",
+              "note": "Alamat resmi tercantum pada bagian Lokasi Klinik."
+            }
+          ],
+          "warnings": [
+            "Semua nilai merupakan draf untuk konfirmasi manusia, bukan fakta terverifikasi secara independen.",
+            "Klaim seperti “terbaik”, “profesional berpengalaman”, “teknologi mutakhir”, dan “nyaman” tidak digunakan sebagai keunggulan faktual karena memerlukan validasi tambahan."
+          ]
+        },
+        "telemetry_recorded_by_module": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "status": "completed",
+            "started_at": "2026-08-17T15:12:54.572Z",
+            "completed_at": "2026-08-17T15:13:03.619Z",
+            "latency_ms": 9047,
+            "requested_model": "gpt-5.6-luna",
+            "returned_model": "gpt-5.6-luna",
+            "response_id": "resp_017a32bd86c3885a016a8324f6d0f087d09688f218003e3be9",
+            "service_tier": "default",
+            "usage": {
+              "input_tokens": 9500,
+              "cached_input_tokens": 4702,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 1034,
+              "reasoning_output_tokens": 179,
+              "total_tokens": 10534
+            },
+            "web_search_calls": 1,
+            "accounted_cost_usd": 0.01229444,
+            "cost_basis": "provider_usage",
+            "pricing_version": "openai-standard-2026-08-01",
+            "failure_reason": "",
+            "provider_status": "completed",
+            "incomplete_reason": "",
+            "output_text_present": true,
+            "refusal_present": false
+          }
+        ]
       },
       "04-questions-gemini-3.5-flash-lite": {
         "status": "degraded_to_fallback",
         "requested_model": "gemini-3.5-flash-lite",
         "instruction_version": "question-writer-v1",
-        "latency_ms": 354,
+        "latency_ms": 425,
         "http_status": 429,
         "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
         "accounted_cost_usd": 0
       },
       "04-questions-openai-gpt-5.6-luna": {
-        "status": "not_run",
-        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "status": "completed",
+        "pack_source": "model",
+        "warnings": [],
         "requested_model": "gpt-5.6-luna",
-        "instruction_version": "question-writer-v1"
+        "returned_model": "not recorded",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 4491,
+        "http_status": 200,
+        "usage": {
+          "input_tokens": 605,
+          "output_tokens": 408,
+          "total_tokens": 1013,
+          "model_version": "gpt-5.6-luna",
+          "response_id": "resp_025947821362ee09016a83250035bc819ab858dc7a657990ad"
+        },
+        "notional_cost_usd": 0.0006106,
+        "boundary_telemetry": null,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": [],
+          "identity_or_competitor_leaks": [],
+          "unsupported_premises": [],
+          "distinctness_issues": [],
+          "source": "model",
+          "warnings": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Di Depok, di mana saya bisa berobat ke dokter umum sekaligus memeriksakan gigi dalam satu klinik?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 2,
+            "text": "Klinik gigi mana yang cocok untuk perawatan behel anak atau remaja dan bisa menggunakan asuransi kesehatan?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "need_discovery"
+          },
+          {
+            "order": 3,
+            "text": "Apa saja pilihan klinik di sekitar Margonda untuk scaling gigi dan perawatan saluran akar?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 4,
+            "text": "Di mana saya bisa menemukan klinik dengan dokter gigi umum, ortodonti, bedah mulut, dan konservasi?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "solution_discovery"
+          },
+          {
+            "order": 5,
+            "text": "Lebih baik memilih klinik gigi umum atau klinik yang memiliki dokter spesialis untuk perawatan behel dan saluran akar?",
+            "final_classification": "tanpa_menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 6,
+            "text": "Apa kelebihan Nirmala Dental dibandingkan klinik gigi lain di Depok untuk pasien yang membutuhkan dokter umum dan dokter gigi spesialis?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "comparison"
+          },
+          {
+            "order": 7,
+            "text": "Benarkah Nirmala Dental telah melayani pasien sejak 2004?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 8,
+            "text": "Apakah Nirmala Dental di Margonda menerima asuransi kesehatan dan menyediakan dokter gigi spesialis?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "validation"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara melakukan reservasi online di Nirmala Dental?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          },
+          {
+            "order": 10,
+            "text": "Sebelum reservasi ke Nirmala Dental, informasi apa yang perlu saya siapkan untuk konsultasi behel atau perawatan saluran akar?",
+            "final_classification": "menyebut_bisnis_anda",
+            "suggested_category": "action"
+          }
+        ]
       },
       "04-questions-deterministic-fallback": {
         "status": "completed",
-        "latency_ms": 3,
+        "latency_ms": 1,
         "accounted_cost_usd": 0,
         "mechanical": {
           "question_count": 10,
@@ -597,17 +1678,21 @@
     }
   },
   "summary": {
-    "session_started_at": "2026-08-17T14:44:49.124Z",
-    "session_latency_ms": 49234,
+    "session_started_at": "2026-08-17T15:11:16.181Z",
+    "session_latency_ms": 112356,
     "clinics_evaluated": 5,
     "gemini_calls": 0,
     "total_gemini_input_tokens": 0,
     "total_gemini_output_tokens": 0,
+    "openai_calls": 10,
+    "total_openai_input_tokens": 40242,
+    "total_openai_output_tokens": 6085,
     "accounted_cost_usd": 0,
     "notional_paid_tier_cost_usd": 0,
-    "openai_key_present": false,
+    "notional_openai_cost_usd": 0.06535039999999999,
+    "openai_key_present": true,
     "gemini_key_present": true,
     "ceiling_after_run_usd": 4.5643,
-    "note": "No OpenAI spend occurred (OPENAI_API_KEY absent). Gemini calls failed at the provider (prepayment credits depleted, RESOURCE_EXHAUSTED) so no Gemini tokens were consumed and no Gemini spend occurred. Deterministic fallback ran for all five packs. Accounted cost USD 0.00; carryover USD 0.4357 unchanged; USD 4.5643 headroom preserved for the rerun once a provider key is restored."
+    "note": "Gemini candidates run only when GEMINI_API_KEY is present (depleted prepayment credits fail the calls; no Gemini tokens consumed). OpenAI candidates run only when OPENAI_API_KEY is present, with notional cost from real usage at official pricing. Deterministic fallback ran for all five packs. Carryover USD 0.4357 unchanged; ceiling headroom after this run as reported above."
   }
 }

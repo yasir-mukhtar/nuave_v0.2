@@ -26,10 +26,12 @@
  * cost computed from real usageMetadata, so the founder can compare against
  * GPT-5.6 Luna pricing.
  *
- * The OpenAI benchmark (GPT-5.6 Luna) is measured only when OPENAI_API_KEY is
- * present in .env.local. As of this run it is ABSENT, so the OpenAI candidates
- * are recorded as NOT RUN with the missing-key flag (per the task: flag, do
- * not ask).
+ * The OpenAI benchmark (GPT-5.6 Luna) is measured when OPENAI_API_KEY is
+ * present in .env.local (missing key → candidates recorded as NOT RUN with
+ * the missing-key flag, per the task: flag, do not ask). Gemini candidates
+ * run when GEMINI_API_KEY is present; provider-side failures (e.g. depleted
+ * prepayment credits) are recorded, never fabricated. Each clinic runs with
+ * its own fresh audit budget (03 extract stage limit is 1 call per audit).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -69,6 +71,7 @@ loadEnvLocal();
 // ---------------------------------------------------------------------------
 
 import { extractBusinessDraft as geminiExtract } from "../../src/lib/audit/gemini";
+import { extractBusinessDraft as openaiExtract } from "../../src/lib/audit/openai";
 import type { AuditBudget, BusinessBrief } from "../../src/lib/audit/types";
 import {
   buildDeterministicIndonesianPack,
@@ -464,6 +467,40 @@ function extractGeminiUsage(body: unknown): GeminiUsage | null {
   };
 }
 
+type OpenAIUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  model_version: string;
+  response_id: string;
+};
+
+function extractOpenAIUsage(body: unknown): OpenAIUsage | null {
+  if (typeof body !== "object" || body === null) return null;
+  const record = body as Record<string, unknown>;
+  const usage = record.usage as
+    | { input_tokens?: number; output_tokens?: number; total_tokens?: number }
+    | undefined;
+  if (!usage) return null;
+  return {
+    input_tokens: usage.input_tokens ?? 0,
+    output_tokens: usage.output_tokens ?? 0,
+    total_tokens: usage.total_tokens ?? 0,
+    model_version: typeof record.model === "string" ? record.model : "",
+    response_id: typeof record.id === "string" ? record.id : "",
+  };
+}
+
+// Official OpenAI pricing for the notional benchmark figure (repo telemetry
+// AUDIT_PRICING_VERSION "openai-standard-2026-08-01"): short-context input
+// USD 0.20 / 1M, output USD 1.20 / 1M, web search USD 0.01 / call.
+function openaiNotionalCostUsd(usage: OpenAIUsage, hasWebSearch: boolean) {
+  const input = (usage.input_tokens / 1_000_000) * 0.2;
+  const output = (usage.output_tokens / 1_000_000) * 1.2;
+  const search = hasWebSearch ? 0.01 : 0;
+  return Math.round((input + output + search) * 100_000_000) / 100_000_000;
+}
+
 /** Notional paid-tier cost (USD) from real Gemini usage at official pricing. */
 function geminiNotionalCostUsd(usage: GeminiUsage): number {
   return (
@@ -557,9 +594,13 @@ const budget: AuditBudget = {
   calls: [],
 };
 
+// NOTE: the audit budget is created per clinic inside the clinic loop below —
+// each clinic is its own audit and the 03 extract stage limit is 1 call per
+// audit, so a shared budget would block clinics 2-5 on the OpenAI path.
+
 describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", () => {
   it(
-    "runs 03 extraction (Gemini 3.5 Flash-Lite) and 04 question-writer (Gemini + deterministic fallback) on the five clinics",
+    "runs 03 extraction and 04 question-writer (GPT-5.6 Luna + Gemini 3.5 Flash-Lite + deterministic fallback) on the five clinics",
     async () => {
       if (!existsSync(RESULTS_DIR)) mkdirSync(RESULTS_DIR, { recursive: true });
 
@@ -576,6 +617,9 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
       const allResults: Record<string, unknown> = {};
       const totalUsage: GeminiUsage[] = [];
       const totalLatencyMs: number[] = [];
+      const totalOpenAIUsage: OpenAIUsage[] = [];
+      const totalOpenAILatencyMs: number[] = [];
+      const openaiNotionalCostsUsd: number[] = [];
 
       for (const clinic of CLINICS) {
         const clinicRecord: Record<string, unknown> = {
@@ -592,6 +636,14 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
             comparison_note: clinic.comparison_note,
           },
           candidates: {},
+        };
+
+        // Each clinic is its own audit: fresh budget per clinic so the 03
+        // extract stage limit (1 call per audit) never blocks the next clinic.
+        const budget: AuditBudget = {
+          limit_usd: 5,
+          carryover_cost_usd: 0.4357,
+          calls: [],
         };
 
         // ---- 03 extraction via Gemini 3.5 Flash-Lite (wired path) ----
@@ -675,16 +727,102 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
                 accounted_cost_usd: 0,
               },
         };
-        clinicRecord.candidates = {
-          ...(clinicRecord.candidates as Record<string, unknown>),
-          "03-extraction-openai-gpt-5.6-luna": {
-            status: openaiKeyPresent ? "pending" : "not_run",
-            reason: openaiKeyPresent
-              ? "queued"
-              : "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-            requested_model: OPENAI_BENCHMARK_MODEL,
-          },
-        };
+        // ---- 03 extraction via GPT-5.6 Luna (wired path, only when key) ----
+        const openaiExtractionCalls: CapturedCall[] = [];
+        if (openaiKeyPresent) {
+          const previousFetch = globalThis.fetch;
+          globalThis.fetch = captureFetch(openaiExtractionCalls) as typeof fetch;
+          const previousModel = process.env.OPENAI_AUDIT_MODEL;
+          process.env.OPENAI_AUDIT_MODEL = OPENAI_BENCHMARK_MODEL;
+          const openaiExtractionStartedAt = Date.now();
+          let openaiExtractionResult:
+            | {
+                ok: true;
+                draft: unknown;
+                returned_model: string;
+                response_id: string;
+                telemetry: unknown[];
+              }
+            | { ok: false; failure_reason: string };
+          try {
+            const result = await openaiExtract({
+              website_url: clinic.official_url,
+              brand_name: clinic.brief.brand_name,
+              market_context: MARKET_CONTEXT,
+              category: CATEGORY_INPUT,
+              safety_identifier: SAFETY_IDENTIFIER,
+              budget,
+            });
+            openaiExtractionResult = {
+              ok: true,
+              draft: result.draft,
+              returned_model: result.returned_model,
+              response_id: result.response_id,
+              telemetry: result.telemetry,
+            };
+          } catch (error) {
+            openaiExtractionResult = {
+              ok: false,
+              failure_reason:
+                error instanceof Error
+                  ? error.message
+                  : "OpenAI extraction call failed without further details.",
+            };
+          } finally {
+            globalThis.fetch = previousFetch;
+            if (previousModel === undefined) delete process.env.OPENAI_AUDIT_MODEL;
+            else process.env.OPENAI_AUDIT_MODEL = previousModel;
+          }
+          const openaiExtractionLatencyMs = Date.now() - openaiExtractionStartedAt;
+          const openaiExtractionHttp = openaiExtractionCalls.find((c) =>
+            c.url.includes("/v1/responses"),
+          );
+          const openaiExtractionUsage = openaiExtractionHttp
+            ? extractOpenAIUsage(openaiExtractionHttp.body)
+            : null;
+          if (openaiExtractionResult.ok && openaiExtractionUsage) {
+            totalOpenAIUsage.push(openaiExtractionUsage);
+            totalOpenAILatencyMs.push(openaiExtractionLatencyMs);
+            openaiNotionalCostsUsd.push(
+              openaiNotionalCostUsd(openaiExtractionUsage, true),
+            );
+          }
+          clinicRecord.candidates = {
+            ...(clinicRecord.candidates as Record<string, unknown>),
+            "03-extraction-openai-gpt-5.6-luna": openaiExtractionResult.ok
+              ? {
+                  status: "completed",
+                  requested_model: OPENAI_BENCHMARK_MODEL,
+                  returned_model: openaiExtractionResult.returned_model,
+                  response_id: openaiExtractionResult.response_id,
+                  latency_ms: openaiExtractionLatencyMs,
+                  http_status: openaiExtractionHttp?.status ?? null,
+                  usage: openaiExtractionUsage,
+                  notional_cost_usd: openaiExtractionUsage
+                    ? openaiNotionalCostUsd(openaiExtractionUsage, true)
+                    : null,
+                  draft: openaiExtractionResult.draft,
+                  telemetry_recorded_by_module: openaiExtractionResult.telemetry,
+                }
+              : {
+                  status: "failed",
+                  requested_model: OPENAI_BENCHMARK_MODEL,
+                  latency_ms: openaiExtractionLatencyMs,
+                  http_status: openaiExtractionHttp?.status ?? null,
+                  failure_reason: openaiExtractionResult.failure_reason,
+                },
+          };
+        } else {
+          clinicRecord.candidates = {
+            ...(clinicRecord.candidates as Record<string, unknown>),
+            "03-extraction-openai-gpt-5.6-luna": {
+              status: "not_run",
+              reason:
+                "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+              requested_model: OPENAI_BENCHMARK_MODEL,
+            },
+          };
+        }
 
         // ---- 04 question writer: minimized confirmed brief ----
         const minimized = minimizeIndonesianBrief(clinic.brief);
@@ -769,17 +907,117 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
                 accounted_cost_usd: 0,
               },
         };
-        clinicRecord.candidates = {
-          ...(clinicRecord.candidates as Record<string, unknown>),
-          "04-questions-openai-gpt-5.6-luna": {
-            status: openaiKeyPresent ? "pending" : "not_run",
-            reason: openaiKeyPresent
-              ? "queued"
-              : "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
-            requested_model: OPENAI_BENCHMARK_MODEL,
-            instruction_version: "question-writer-v1",
-          },
-        };
+        // GPT-5.6 Luna (wired boundary, no search, real call, only when key)
+        const openaiQuestionCalls: CapturedCall[] = [];
+        if (openaiKeyPresent) {
+          const previousQuestionProvider: string | undefined =
+            process.env.NUAVE_QUESTION_PROVIDER;
+          const previousModel = process.env.OPENAI_AUDIT_MODEL;
+          process.env.NUAVE_QUESTION_PROVIDER = "openai";
+          process.env.OPENAI_AUDIT_MODEL = OPENAI_BENCHMARK_MODEL;
+          const openaiProvider = createIndonesianQuestionProvider(
+            captureFetch(openaiQuestionCalls),
+          );
+          const openaiQuestionStartedAt = Date.now();
+          let openaiPack: IndonesianQuestionPackSuggestion | null = null;
+          let openaiQuestionFailure = "";
+          try {
+            openaiPack = await generateIndonesianQuestionPack(
+              minimized,
+              openaiProvider,
+              { generationMeta: indonesianQuestionGenerationMeta() },
+            );
+          } catch (error) {
+            openaiQuestionFailure =
+              error instanceof Error
+                ? error.message
+                : "OpenAI question generation failed without further details.";
+          }
+          const openaiQuestionLatencyMs = Date.now() - openaiQuestionStartedAt;
+          if (previousQuestionProvider === undefined) {
+            delete process.env.NUAVE_QUESTION_PROVIDER;
+          } else {
+            process.env.NUAVE_QUESTION_PROVIDER = previousQuestionProvider;
+          }
+          if (previousModel === undefined) delete process.env.OPENAI_AUDIT_MODEL;
+          else process.env.OPENAI_AUDIT_MODEL = previousModel;
+          const openaiQuestionHttp = openaiQuestionCalls.find((c) =>
+            c.url.includes("/v1/responses"),
+          );
+          const openaiQuestionUsage = openaiQuestionHttp
+            ? extractOpenAIUsage(openaiQuestionHttp.body)
+            : null;
+          const openaiQuestionProviderError =
+            openaiQuestionHttp &&
+            typeof openaiQuestionHttp.body === "object" &&
+            openaiQuestionHttp.body !== null
+              ? (((openaiQuestionHttp.body as Record<string, unknown>).error as
+                  | { message?: string }
+                  | undefined)?.message ?? "")
+              : "";
+          const openaiDegradedToFallback =
+            openaiPack !== null &&
+            (openaiPack.source === "fallback" ||
+              openaiPack.warnings.includes("fallback_used"));
+          if (openaiPack && openaiQuestionUsage && openaiQuestionUsage.input_tokens > 0) {
+            totalOpenAIUsage.push(openaiQuestionUsage);
+            totalOpenAILatencyMs.push(openaiQuestionLatencyMs);
+            openaiNotionalCostsUsd.push(
+              openaiNotionalCostUsd(openaiQuestionUsage, false),
+            );
+          }
+          clinicRecord.candidates = {
+            ...(clinicRecord.candidates as Record<string, unknown>),
+            "04-questions-openai-gpt-5.6-luna":
+              openaiPack && !openaiDegradedToFallback
+                ? {
+                    status: "completed",
+                    pack_source: openaiPack.source,
+                    warnings: openaiPack.warnings,
+                    requested_model: openaiPack.generation.requested_model,
+                    returned_model: openaiPack.generation.returned_model,
+                    instruction_version: openaiPack.generation.instruction_version,
+                    latency_ms: openaiQuestionLatencyMs,
+                    http_status: openaiQuestionHttp?.status ?? null,
+                    usage: openaiQuestionUsage,
+                    notional_cost_usd: openaiQuestionUsage
+                      ? openaiNotionalCostUsd(openaiQuestionUsage, false)
+                      : null,
+                    boundary_telemetry: openaiPack.generation.telemetry,
+                    mechanical: packMechanicalScore(openaiPack, minimized),
+                    questions: openaiPack.questions.map((q) => ({
+                      order: q.order,
+                      text: q.text,
+                      final_classification: q.final_classification,
+                      suggested_category: q.suggested_category,
+                    })),
+                  }
+                : {
+                    status: openaiDegradedToFallback
+                      ? "degraded_to_fallback"
+                      : "failed",
+                    requested_model: OPENAI_BENCHMARK_MODEL,
+                    instruction_version: "question-writer-v1",
+                    latency_ms: openaiQuestionLatencyMs,
+                    http_status: openaiQuestionHttp?.status ?? null,
+                    failure_reason:
+                      openaiQuestionFailure ||
+                      openaiQuestionProviderError ||
+                      "provider call failed",
+                  },
+          };
+        } else {
+          clinicRecord.candidates = {
+            ...(clinicRecord.candidates as Record<string, unknown>),
+            "04-questions-openai-gpt-5.6-luna": {
+              status: "not_run",
+              reason:
+                "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+              requested_model: OPENAI_BENCHMARK_MODEL,
+              instruction_version: "question-writer-v1",
+            },
+          };
+        }
 
         // Deterministic Indonesian fallback (no provider call)
         const fallbackStartedAt = Date.now();
@@ -813,6 +1051,10 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
         (sum, usage) => sum + geminiNotionalCostUsd(usage),
         0,
       );
+      const openaiTotalUsd = openaiNotionalCostsUsd.reduce(
+        (sum, cost) => sum + cost,
+        0,
+      );
       const summary = {
         session_started_at: new Date(sessionStartedAt).toISOString(),
         session_latency_ms: sessionLatencyMs,
@@ -820,12 +1062,16 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
         gemini_calls: totalUsage.length,
         total_gemini_input_tokens: totalUsage.reduce((s, u) => s + u.input_tokens, 0),
         total_gemini_output_tokens: totalUsage.reduce((s, u) => s + u.output_tokens, 0),
-        accounted_cost_usd: 0, // Gemini free-tier convention; carryover unchanged at USD 0.4357
+        openai_calls: totalOpenAIUsage.length,
+        total_openai_input_tokens: totalOpenAIUsage.reduce((s, u) => s + u.input_tokens, 0),
+        total_openai_output_tokens: totalOpenAIUsage.reduce((s, u) => s + u.output_tokens, 0),
+        accounted_cost_usd: 0, // repo free-tier/accounting convention; real spend is reported notional
         notional_paid_tier_cost_usd: notionalTotalUsd,
+        notional_openai_cost_usd: openaiTotalUsd,
         openai_key_present: openaiKeyPresent,
         gemini_key_present: geminiKeyPresent,
         ceiling_after_run_usd: 5 - 0.4357,
-        note: "No OpenAI spend occurred (OPENAI_API_KEY absent). Gemini calls failed at the provider (prepayment credits depleted, RESOURCE_EXHAUSTED) so no Gemini tokens were consumed and no Gemini spend occurred. Deterministic fallback ran for all five packs. Accounted cost USD 0.00; carryover USD 0.4357 unchanged; USD 4.5643 headroom preserved for the rerun once a provider key is restored.",
+        note: "Gemini candidates run only when GEMINI_API_KEY is present (depleted prepayment credits fail the calls; no Gemini tokens consumed). OpenAI candidates run only when OPENAI_API_KEY is present, with notional cost from real usage at official pricing. Deterministic fallback ran for all five packs. Carryover USD 0.4357 unchanged; ceiling headroom after this run as reported above.",
       };
       allResults.summary = summary;
 
@@ -891,16 +1137,63 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
           expect(geminiCandidate.failure_reason.length, `${clinic.id} gemini failure reason`).toBeGreaterThan(0);
         }
 
+        // Same mechanical gate for the OpenAI benchmark candidate when it ran.
+        const openaiCandidate = (record.candidates as Record<string, unknown>)[
+          "04-questions-openai-gpt-5.6-luna"
+        ] as
+          | { status: "not_run"; reason: string }
+          | { status: "failed" | "degraded_to_fallback"; failure_reason: string }
+          | {
+              status: "completed";
+              mechanical: ReturnType<typeof packMechanicalScore>;
+            };
+        if (openaiCandidate.status === "completed") {
+          expect(
+            openaiCandidate.mechanical.question_count,
+            `${clinic.id} openai pack count`,
+          ).toBe(10);
+          expect(
+            openaiCandidate.mechanical.blockers,
+            `${clinic.id} openai blockers`,
+          ).toEqual([]);
+          expect(
+            openaiCandidate.mechanical.identity_or_competitor_leaks,
+            `${clinic.id} openai identity/competitor leaks`,
+          ).toEqual([]);
+          expect(
+            openaiCandidate.mechanical.unsupported_premises,
+            `${clinic.id} openai unsupported premises`,
+          ).toEqual([]);
+          expect(
+            openaiCandidate.mechanical.issues.filter(
+              (i) => i.rule === "empty" || i.rule === "unexecutable",
+            ),
+            `${clinic.id} openai empty/unexecutable`,
+          ).toEqual([]);
+        } else if (openaiCandidate.status === "not_run") {
+          expect(
+            openaiCandidate.reason.length,
+            `${clinic.id} openai not-run reason`,
+          ).toBeGreaterThan(0);
+        } else {
+          expect(
+            openaiCandidate.failure_reason.length,
+            `${clinic.id} openai failure reason`,
+          ).toBeGreaterThan(0);
+        }
+
         // The deterministic fallback must always recover ten executable
         // questions (its core guarantee) with no narrow blockers.
         expect(fallbackCandidate.mechanical.question_count, `${clinic.id} fallback pack count`).toBe(10);
         expect(fallbackCandidate.mechanical.blockers, `${clinic.id} fallback blockers`).toEqual([]);
       }
 
-      // Ceiling guard: notional paid-tier cost of the whole session must be
-      // far inside the USD 5 ceiling (real Gemini spend is USD 0.00 on the
-      // free tier; this guard keeps the run bounded even on a paid key).
+      // Ceiling guard: total notional cost of the whole session (Gemini
+      // paid-tier estimate + OpenAI benchmark estimate from real usage) must
+      // stay far inside the USD 5 ceiling; this guard keeps the run bounded
+      // even on a paid key.
       expect(notionalTotalUsd).toBeLessThan(1);
+      expect(openaiTotalUsd).toBeLessThan(5 - 0.4357);
 
       // Keep the summary in the console for the run record.
       console.log(JSON.stringify(summary, null, 2));
