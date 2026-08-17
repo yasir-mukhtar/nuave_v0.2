@@ -1,0 +1,613 @@
+{
+  "sozo-depok": {
+    "clinic": {
+      "id": "sozo-depok",
+      "name": "Sozo Dental Depok",
+      "branch": "Margonda, Beji, Kota Depok",
+      "address": "Jl. Margonda No.267, RT.1/RW.12, Kemiri Muka, Kec. Beji, Kota Depok",
+      "official_url": "https://www.sozodental.com/lokasi/depok/",
+      "maps_url": "https://maps.app.goo.gl/7FkoFyipTPspnVjM9",
+      "category_label": "Klinik gigi (jaringan 60+ cabang nasional)",
+      "priority_services": [
+        "Pemeriksaan gigi",
+        "Scaling (pembersihan karang gigi)",
+        "Tambal gigi",
+        "Perawatan saluran akar",
+        "Cabut gigi",
+        "Behel gigi (metal & spesialis ortho)",
+        "Aligner",
+        "Veneer",
+        "Bleaching",
+        "Gigi palsu",
+        "Implan"
+      ],
+      "customer_context": "Warga Depok dan Jabodetabek yang mencari klinik gigi terdekat dengan harga terjangkau; reservasi dan promo via WhatsApp; keluarga dan karyawan.",
+      "comparison_note": "SATU Dental Margonda — jaringan klinik gigi serupa di koridor Margonda yang sama (sumber publik: satudental.com)."
+    },
+    "candidates": {
+      "03-extraction-gemini-3.5-flash-lite": {
+        "status": "failed",
+        "requested_model": "gemini-3.5-flash-lite",
+        "latency_ms": 9721,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "03-extraction-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna"
+      },
+      "04-questions-gemini-3.5-flash-lite": {
+        "status": "degraded_to_fallback",
+        "requested_model": "gemini-3.5-flash-lite",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 535,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "04-questions-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna",
+        "instruction_version": "question-writer-v1"
+      },
+      "04-questions-deterministic-fallback": {
+        "status": "completed",
+        "latency_ms": 6,
+        "accounted_cost_usd": 0,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Ada rekomendasi Klinik gigi di Margonda, Beji, Kota Depok untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 2,
+            "text": "Saya cari menemukan klinik gigi terdekat di Margonda, Beji, Kota Depok untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 3,
+            "text": "Klinik gigi apa saja yang tersedia di Margonda, Beji, Kota Depok untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 4,
+            "text": "Di mana ada scaling gigi di Margonda, Beji, Kota Depok untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 5,
+            "text": "Bandingkan pilihan Klinik gigi di Margonda, Beji, Kota Depok untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 6,
+            "text": "Bandingkan Sozo Dental Depok dengan SATU Dental Margonda untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan di Margonda, Beji, Kota Depok.",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 7,
+            "text": "Apa saja yang disediakan Sozo Dental Depok untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 8,
+            "text": "Di mana alamat Sozo Dental Depok di Margonda, Beji, Kota Depok? Buka jam berapa?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara reservasi via WhatsApp dengan Sozo Dental Depok?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 10,
+            "text": "Sozo Dental Depok menyediakan behel gigi untuk Warga Depok dan sekitarnya yang mencari klinik gigi terdekat dengan harga terjangkau, termasuk keluarga dan karyawan?",
+            "final_classification": "menyebut_bisnis_anda"
+          }
+        ]
+      }
+    }
+  },
+  "satu-margonda": {
+    "clinic": {
+      "id": "satu-margonda",
+      "name": "SATU Dental Margonda",
+      "branch": "Margonda, Beji, Kota Depok",
+      "address": "Jl. Margonda Raya No.529, Pondok Cina, Beji, Kota Depok",
+      "official_url": "https://www.satudental.com/lokasi/klinik-gigi-margonda/",
+      "maps_url": "https://maps.google.com/maps/dir//Satu+Dental+Depok+Margonda+%7C+Klinik+Gigi+Dekat+dan+Terpercaya+Jl.+Margonda+Raya+No.529+RT.1%2FRW.007,+Pondok+Cina+Kecamatan+Beji,+Kota+Depok,+Jawa+Barat+16424/@-6.3593327,106.8327358,18z",
+      "category_label": "Klinik gigi (jaringan 56 cabang, 500+ dokter)",
+      "priority_services": [
+        "Behel",
+        "Veneer",
+        "Scaling",
+        "Perawatan gigi umum & spesialis",
+        "Perawatan gigi anak (SATU 4 Kids)",
+        "Laboratorium gigi in-house"
+      ],
+      "customer_context": "Warga Depok dan Jabodetabek, termasuk mahasiswa sekitar Universitas Indonesia dan karyawan; jam buka panjang 09.00-21.00; booking online via patients.satudental.com.",
+      "comparison_note": "Sozo Dental Depok — jaringan klinik gigi terdekat di koridor Margonda yang sama (sumber publik: sozodental.com)."
+    },
+    "candidates": {
+      "03-extraction-gemini-3.5-flash-lite": {
+        "status": "failed",
+        "requested_model": "gemini-3.5-flash-lite",
+        "latency_ms": 9424,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "03-extraction-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna"
+      },
+      "04-questions-gemini-3.5-flash-lite": {
+        "status": "degraded_to_fallback",
+        "requested_model": "gemini-3.5-flash-lite",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 335,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "04-questions-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna",
+        "instruction_version": "question-writer-v1"
+      },
+      "04-questions-deterministic-fallback": {
+        "status": "completed",
+        "latency_ms": 4,
+        "accounted_cost_usd": 0,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Ada rekomendasi Klinik gigi di Margonda, Beji, Kota Depok untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 2,
+            "text": "Saya cari merapikan gigi dengan behel di Margonda, Beji, Kota Depok untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 3,
+            "text": "Klinik gigi apa saja yang tersedia di Margonda, Beji, Kota Depok untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 4,
+            "text": "Di mana ada behel gigi di Margonda, Beji, Kota Depok untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 5,
+            "text": "Bandingkan pilihan Klinik gigi di Margonda, Beji, Kota Depok untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 6,
+            "text": "Bandingkan SATU Dental Margonda dengan Sozo Dental Depok untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online di Margonda, Beji, Kota Depok.",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 7,
+            "text": "Apa saja yang disediakan SATU Dental Margonda untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 8,
+            "text": "Di mana alamat SATU Dental Margonda di Margonda, Beji, Kota Depok? Buka jam berapa?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara menghubungi SATU Dental Margonda?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 10,
+            "text": "SATU Dental Margonda menyediakan veneer untuk Warga Depok dan Jabodetabek, termasuk mahasiswa dan karyawan, yang mencari klinik gigi dengan jam buka panjang dan booking online?",
+            "final_classification": "menyebut_bisnis_anda"
+          }
+        ]
+      }
+    }
+  },
+  "fdc-margonda": {
+    "clinic": {
+      "id": "fdc-margonda",
+      "name": "FDC Dental Clinic Margonda",
+      "branch": "Margonda, Beji, Kota Depok",
+      "address": "Jl. Raya Margonda No.333, Kec. Beji, Kota Depok, Jawa Barat",
+      "official_url": "https://fdcdentalclinic.co.id/lokasi/fdc-margonda",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=FDC+Dental+Clinic+Margonda+Depok",
+      "category_label": "Klinik gigi (jaringan 68+ klinik di 25+ kota)",
+      "priority_services": [
+        "Reservasi dokter gigi online",
+        "Scaling (promo rutin)",
+        "Behel (termasuk Damon, Clear)",
+        "Perawatan gigi umum",
+        "Pricelist & promo via aplikasi"
+      ],
+      "customer_context": "Warga Depok yang mencari reservasi dokter gigi mudah dan murah; promo scaling dan behel; pengguna aplikasi FDC; asuransi & membership.",
+      "comparison_note": "OMDC Dental Margonda — klinik gigi jaringan di koridor Margonda yang sama (sumber publik: omdc.co.id)."
+    },
+    "candidates": {
+      "03-extraction-gemini-3.5-flash-lite": {
+        "status": "failed",
+        "requested_model": "gemini-3.5-flash-lite",
+        "latency_ms": 9414,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "03-extraction-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna"
+      },
+      "04-questions-gemini-3.5-flash-lite": {
+        "status": "degraded_to_fallback",
+        "requested_model": "gemini-3.5-flash-lite",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 349,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "04-questions-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna",
+        "instruction_version": "question-writer-v1"
+      },
+      "04-questions-deterministic-fallback": {
+        "status": "completed",
+        "latency_ms": 11,
+        "accounted_cost_usd": 0,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Ada rekomendasi Klinik gigi di Margonda, Beji, Kota Depok untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 2,
+            "text": "Saya cari reservasi dokter gigi yang mudah di Margonda, Beji, Kota Depok untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 3,
+            "text": "Klinik gigi apa saja yang tersedia di Margonda, Beji, Kota Depok untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 4,
+            "text": "Di mana ada scaling gigi di Margonda, Beji, Kota Depok untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 5,
+            "text": "Bandingkan pilihan Klinik gigi di Margonda, Beji, Kota Depok untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 6,
+            "text": "Bandingkan FDC Dental Clinic Margonda dengan OMDC Dental Margonda untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel di Margonda, Beji, Kota Depok.",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 7,
+            "text": "Apa saja yang disediakan FDC Dental Clinic Margonda untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 8,
+            "text": "Di mana alamat FDC Dental Clinic Margonda di Margonda, Beji, Kota Depok? Buka jam berapa?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara reservasi online dengan FDC Dental Clinic Margonda?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 10,
+            "text": "FDC Dental Clinic Margonda menyediakan behel gigi untuk Warga Depok yang mencari reservasi dokter gigi mudah dan murah, termasuk pengguna promo scaling dan behel?",
+            "final_classification": "menyebut_bisnis_anda"
+          }
+        ]
+      }
+    }
+  },
+  "omdc-margonda": {
+    "clinic": {
+      "id": "omdc-margonda",
+      "name": "OMDC Dental Margonda",
+      "branch": "Margonda, Pondok Cina, Kota Depok",
+      "address": "Jl. Margonda Raya No.414, RT.01/RW.03, Pondok Cina, Kec. Beji, Kota Depok 16424",
+      "official_url": "https://www.omdc.co.id/location/omdc-margonda",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=OMDC+Dental+Margonda+Depok",
+      "category_label": "Klinik gigi (OMDC Group; dental & healthcare)",
+      "priority_services": [
+        "Scaling",
+        "Pencabutan gigi",
+        "Penambalan (tambal) gigi",
+        "Ortodonti (behel)",
+        "Bleaching",
+        "Prostodontik (gigi tiruan)",
+        "Perawatan gigi anak"
+      ],
+      "customer_context": "Warga Depok dan Jabodetabek yang mencari perawatan gigi nyaman dengan harga terjangkau; keluarga dengan anak (playground dan movie theater di klinik); reservasi terjadwal via WhatsApp atau booking.omdc.co.id.",
+      "comparison_note": "FDC Dental Clinic Margonda — klinik gigi jaringan di koridor Margonda yang sama (sumber publik: fdcdentalclinic.co.id)."
+    },
+    "candidates": {
+      "03-extraction-gemini-3.5-flash-lite": {
+        "status": "failed",
+        "requested_model": "gemini-3.5-flash-lite",
+        "latency_ms": 9414,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "03-extraction-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna"
+      },
+      "04-questions-gemini-3.5-flash-lite": {
+        "status": "degraded_to_fallback",
+        "requested_model": "gemini-3.5-flash-lite",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 335,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "04-questions-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna",
+        "instruction_version": "question-writer-v1"
+      },
+      "04-questions-deterministic-fallback": {
+        "status": "completed",
+        "latency_ms": 2,
+        "accounted_cost_usd": 0,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Ada rekomendasi Klinik gigi di Margonda, Pondok Cina, Kota Depok untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 2,
+            "text": "Saya cari perawatan gigi dengan harga terjangkau di Margonda, Pondok Cina, Kota Depok untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 3,
+            "text": "Klinik gigi apa saja yang tersedia di Margonda, Pondok Cina, Kota Depok untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 4,
+            "text": "Di mana ada scaling gigi di Margonda, Pondok Cina, Kota Depok untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 5,
+            "text": "Bandingkan pilihan Klinik gigi di Margonda, Pondok Cina, Kota Depok untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 6,
+            "text": "Bandingkan OMDC Dental Margonda dengan FDC Dental Clinic Margonda untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak di Margonda, Pondok Cina, Kota Depok.",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 7,
+            "text": "Apa saja yang disediakan OMDC Dental Margonda untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 8,
+            "text": "Di mana alamat OMDC Dental Margonda di Margonda, Pondok Cina, Kota Depok? Buka jam berapa?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara menghubungi OMDC Dental Margonda?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 10,
+            "text": "OMDC Dental Margonda menyediakan behel gigi untuk Warga Depok dan Jabodetabek yang mencari pengalaman perawatan gigi nyaman dengan harga terjangkau, termasuk keluarga dengan anak?",
+            "final_classification": "menyebut_bisnis_anda"
+          }
+        ]
+      }
+    }
+  },
+  "nirmala-depok": {
+    "clinic": {
+      "id": "nirmala-depok",
+      "name": "Nirmala Dental",
+      "branch": "Margonda, Pondok Cina, Kota Depok",
+      "address": "Jl. Margonda No.492A, Pondok Cina, Kec. Beji, Kota Depok",
+      "official_url": "https://nirmaladental.com/",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Klinik+Gigi+Nirmala+Depok+Margonda",
+      "category_label": "Klinik gigi dan kesehatan umum (mandiri, sejak 2004)",
+      "priority_services": [
+        "Pemeriksaan & konsultasi gigi",
+        "Scaling (pembersihan karang gigi)",
+        "Behel / ortodonti (anak, remaja, dewasa)",
+        "Perawatan saluran akar (konservasi)",
+        "Bedah mulut",
+        "Perawatan penyakit mulut",
+        "Gigi tiruan & implan",
+        "Pemeriksaan dokter umum"
+      ],
+      "customer_context": "Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi kesehatan; klinik berdiri sejak 2004 di Margonda.",
+      "comparison_note": "Tanpa pembanding bernama yang kredibel (klinik campuran gigi + umum): menguji fallback pembanding tanpa nama sesuai User Flow/04."
+    },
+    "candidates": {
+      "03-extraction-gemini-3.5-flash-lite": {
+        "status": "failed",
+        "requested_model": "gemini-3.5-flash-lite",
+        "latency_ms": 9324,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "03-extraction-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna"
+      },
+      "04-questions-gemini-3.5-flash-lite": {
+        "status": "degraded_to_fallback",
+        "requested_model": "gemini-3.5-flash-lite",
+        "instruction_version": "question-writer-v1",
+        "latency_ms": 354,
+        "http_status": 429,
+        "failure_reason": "Your prepayment credits are depleted. Please go to AI Studio at https://ai.studio/projects to manage your project and billing. Learn more at https://ai.google.dev/gemini-api/docs/billing#prepay. ",
+        "accounted_cost_usd": 0
+      },
+      "04-questions-openai-gpt-5.6-luna": {
+        "status": "not_run",
+        "reason": "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
+        "requested_model": "gpt-5.6-luna",
+        "instruction_version": "question-writer-v1"
+      },
+      "04-questions-deterministic-fallback": {
+        "status": "completed",
+        "latency_ms": 3,
+        "accounted_cost_usd": 0,
+        "mechanical": {
+          "question_count": 10,
+          "classification": {
+            "total": 10,
+            "tanpa_menyebut_bisnis_anda": 5,
+            "menyebut_bisnis_anda": 5
+          },
+          "issues": [],
+          "blockers": []
+        },
+        "questions": [
+          {
+            "order": 1,
+            "text": "Ada rekomendasi Klinik gigi dan kesehatan umum di Margonda, Pondok Cina, Kota Depok untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 2,
+            "text": "Saya cari perawatan gigi umum dan spesialis di satu tempat di Margonda, Pondok Cina, Kota Depok untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 3,
+            "text": "Klinik gigi dan kesehatan umum apa saja yang tersedia di Margonda, Pondok Cina, Kota Depok untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 4,
+            "text": "Di mana ada scaling gigi di Margonda, Pondok Cina, Kota Depok untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi?",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 5,
+            "text": "Bandingkan pilihan Klinik gigi dan kesehatan umum di Margonda, Pondok Cina, Kota Depok untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi.",
+            "final_classification": "tanpa_menyebut_bisnis_anda"
+          },
+          {
+            "order": 6,
+            "text": "Bandingkan Nirmala Dental dengan pilihan lain yang serupa di Margonda, Pondok Cina, Kota Depok.",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 7,
+            "text": "Apa saja yang disediakan Nirmala Dental untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 8,
+            "text": "Di mana alamat Nirmala Dental di Margonda, Pondok Cina, Kota Depok? Buka jam berapa?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 9,
+            "text": "Bagaimana cara reservasi online dengan Nirmala Dental?",
+            "final_classification": "menyebut_bisnis_anda"
+          },
+          {
+            "order": 10,
+            "text": "Nirmala Dental menyediakan behel gigi untuk Warga Depok yang mencari layanan dokter umum sekaligus dokter gigi umum dan spesialis dalam satu klinik, termasuk pasien pengguna asuransi?",
+            "final_classification": "menyebut_bisnis_anda"
+          }
+        ]
+      }
+    }
+  },
+  "summary": {
+    "session_started_at": "2026-08-17T14:44:49.124Z",
+    "session_latency_ms": 49234,
+    "clinics_evaluated": 5,
+    "gemini_calls": 0,
+    "total_gemini_input_tokens": 0,
+    "total_gemini_output_tokens": 0,
+    "accounted_cost_usd": 0,
+    "notional_paid_tier_cost_usd": 0,
+    "openai_key_present": false,
+    "gemini_key_present": true,
+    "ceiling_after_run_usd": 4.5643,
+    "note": "No OpenAI spend occurred (OPENAI_API_KEY absent). Gemini calls failed at the provider (prepayment credits depleted, RESOURCE_EXHAUSTED) so no Gemini tokens were consumed and no Gemini spend occurred. Deterministic fallback ran for all five packs. Accounted cost USD 0.00; carryover USD 0.4357 unchanged; USD 4.5643 headroom preserved for the rerun once a provider key is restored."
+  }
+}
