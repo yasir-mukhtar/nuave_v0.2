@@ -752,6 +752,16 @@ draft and no answer is invented here.
    Flash-Lite (or another candidate) should become the default 03/04
    provider instead of the current OpenAI default; the evaluation verdict
    (R-10) requires explicit founder approval before any default changes.
+   **RESOLVED 2026-08-17:** the evaluation measured **GPT-5.6 Luna** on five
+   real Depok dental clinics (the only candidate that ran — Gemini's
+   prepayment credits were depleted) and Luna **cleared the practical quality
+   gate** (50/50 questions relevant & natural; 49 accepted unchanged / 1 light
+   / 0 replaced; 0 leaks/premises/blockers; 03 drafts resolve the exact branch
+   with official-source-only evidence). Founder **approved the lock: GPT-5.6
+   Luna for 03 and 04** (both already the wired defaults; no code change
+   needed) — recorded in `docs/DECISION_LOG.md` (2026-08-17). A Gemini
+   comparison rerun remains possible when its credits are restored; the
+   runner and five confirmed briefs are frozen.
 5. **Named AI execution surface customer wording (founder review; carried
    from Spec 002 open question 1).** The final customer-facing wording of the
    named execution surface in the report method section (R-27) needs founder
