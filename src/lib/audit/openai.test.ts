@@ -325,7 +325,33 @@ describe("versioned neutral observation instruction (Spec 003 R-14)", () => {
       model: "gpt-5.6-luna",
       id: "resp_live_instruction_test",
       created_at: 1_752_000_000,
-      output: [],
+      output: [
+        {
+          type: "web_search_call",
+          id: "ws_call_1",
+          action: {
+            type: "search",
+            sources: [
+              {
+                type: "url",
+                url: "https://klinikgigisehat.example/jadwal",
+                title: "Klinik Gigi Sehat — Jadwal",
+              },
+            ],
+          },
+        },
+        {
+          type: "message",
+          role: "assistant",
+          content: [
+            {
+              type: "output_text",
+              text: "Klinik Gigi Sehat di Depok buka pada akhir pekan mulai pukul 09.00.",
+              annotations: [],
+            },
+          ],
+        },
+      ],
       status: "completed",
       service_tier: "default",
       usage: {
@@ -386,6 +412,52 @@ describe("versioned neutral observation instruction (Spec 003 R-14)", () => {
     expect(observation.instruction_version).toBe(
       OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
     );
+    expect(auditObservationSchema.safeParse(observation).success).toBe(true);
+  });
+
+  it("treats a completed response without executed web search as a retryable technical failure", async () => {
+    // Spec 003 R-16/R-18: web search is required for every observation. A
+    // response that never executed the search tool is NOT an evaluable
+    // non-appearance — it is a technical failure the 1+2 retry policy reruns.
+    mockResponsesCreate.mockResolvedValue({
+      output_text: "Klinik Gigi Sehat buka di Depok pada akhir pekan.",
+      model: "gpt-5.6-luna",
+      id: "resp_no_search",
+      created_at: 1_752_000_000,
+      output: [
+        {
+          type: "message",
+          role: "assistant",
+          content: [
+            {
+              type: "output_text",
+              text: "Klinik Gigi Sehat buka di Depok pada akhir pekan.",
+              annotations: [],
+            },
+          ],
+        },
+      ],
+      status: "completed",
+      service_tier: "default",
+      usage: {
+        input_tokens: 120,
+        input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+        output_tokens: 40,
+        output_tokens_details: { reasoning_tokens: 0 },
+        total_tokens: 160,
+      },
+    });
+
+    const observation = await executeAuditPrompt({
+      prompt,
+      brief,
+      safety_identifier: "fixture-user-123",
+      budget: fixtureBudget,
+    });
+
+    expect(observation.run_status).toBe("failed");
+    expect(observation.failure_reason).toContain("web search did not execute");
+    expect(observation.sources).toEqual([]);
     expect(auditObservationSchema.safeParse(observation).success).toBe(true);
   });
 });

@@ -11,7 +11,7 @@ import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
 import { summarizeAuditTelemetry } from "./telemetry";
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
-export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v3";
+export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v4";
 
 /**
  * Versioned neutral observation instructions (Spec 003 R-14).

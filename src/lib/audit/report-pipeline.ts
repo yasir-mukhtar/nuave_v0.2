@@ -3,7 +3,7 @@ import {
   normalizeReportEvidence,
   validateReportContent,
 } from "./contracts";
-import { generateReportContent } from "./provider";
+import { liveGenerateReportContent } from "./provider";
 import {
   validateReportLanguage,
   validateReportLanguageRevision,
@@ -31,7 +31,66 @@ export type ReportPipelineInput = {
   budget: AuditBudget;
 };
 
-export type ReportGenerator = typeof generateReportContent;
+/**
+ * Spec 003 R-19 ten-of-ten gate, enforced on the protected live path BEFORE
+ * any provider call: report generation begins only when all ten locked
+ * questions (unique prompt ids) each have exactly one evaluable, structurally
+ * valid observation (run_status completed, non-empty answer, attempt
+ * telemetry). No partial report exists. The Phase-1 golden fixture (9
+ * completed + 1 failed) is a protected pre-gate record; this gate is applied
+ * at the live route boundary, not inside the pipeline, so the golden tests
+ * keep passing unchanged.
+ */
+export function assertReportGenerationGate(input: ReportPipelineInput): void {
+  const { prompts, observations } = input;
+  const errors: string[] = [];
+
+  const lockedIds = prompts.map((prompt) => prompt.prompt_id);
+  if (lockedIds.length !== 10) {
+    errors.push("A report requires exactly ten locked questions.");
+  } else if (new Set(lockedIds).size !== lockedIds.length) {
+    errors.push("The locked questions must be unique.");
+  }
+
+  if (observations.length !== 10) {
+    errors.push("A report requires exactly ten observations.");
+  }
+
+  const observationIds = observations.map(
+    (observation) => observation.prompt_id,
+  );
+  const missing = lockedIds.filter((id) => !observationIds.includes(id));
+  if (missing.length) {
+    errors.push(
+      `Missing evaluable observations for questions: ${missing.join(", ")}.`,
+    );
+  }
+  const extra = observationIds.filter((id) => !lockedIds.includes(id));
+  if (extra.length) {
+    errors.push(
+      `Observations do not match the locked questions: ${extra.join(", ")}.`,
+    );
+  }
+
+  const notEvaluable = observations.filter(
+    (observation) =>
+      observation.run_status !== "completed" ||
+      !observation.raw_answer.trim() ||
+      observation.telemetry.length === 0,
+  );
+  if (notEvaluable.length) {
+    errors.push(
+      `${notEvaluable.length} observation(s) are not evaluable: each must be completed, carry a usable answer, and retain attempt telemetry.`,
+    );
+  }
+
+  if (errors.length) {
+    // No provider call has been made: the rejection carries no telemetry.
+    throw new ReportPipelineError(errors.join(" "), 422, []);
+  }
+}
+
+export type ReportGenerator = typeof liveGenerateReportContent;
 
 export class ReportPipelineError extends Error {
   readonly status: number;
@@ -51,7 +110,7 @@ export class ReportPipelineError extends Error {
 
 export async function createValidatedAuditReport(
   input: ReportPipelineInput,
-  generate: ReportGenerator = generateReportContent,
+  generate: ReportGenerator = liveGenerateReportContent,
 ): Promise<AuditReport> {
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];

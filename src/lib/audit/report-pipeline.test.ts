@@ -7,6 +7,7 @@ import {
 } from "./fixtures/report-golden";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import {
+  assertReportGenerationGate,
   createValidatedAuditReport,
   type ReportGenerator,
 } from "./report-pipeline";
@@ -192,11 +193,132 @@ describe("validated report pipeline", () => {
         observation.sources.map((source) => source.url),
       ),
     );
-    expect(report.priorities.map((priority) => priority.evidence_prompt_ids)).toEqual(
-      goldenReportContent().priorities.map((priority) => priority.evidence_prompt_ids),
+    expect(
+      report.priorities.map((priority) => priority.evidence_prompt_ids),
+    ).toEqual(
+      goldenReportContent().priorities.map(
+        (priority) => priority.evidence_prompt_ids,
+      ),
     );
     expect(report.details.map((detail) => detail.recommendation)).toEqual(
       goldenReportContent().details.map((detail) => detail.recommendation),
     );
+  });
+});
+
+describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any provider call)", () => {
+  it("rejects a partial record (golden: 9 completed + 1 failed) with no provider call", () => {
+    const generate = vi.fn();
+    expect(() => assertReportGenerationGate(input)).toThrow(/not evaluable/);
+    // The gate throws before generation: the provider is never called.
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("passes only when every locked prompt has one evaluable observation", () => {
+    const allEvaluable = goldenObservations.map((observation) => ({
+      ...observation,
+      run_status: "completed" as const,
+      raw_answer: observation.raw_answer || "Usable answer.",
+      telemetry:
+        observation.telemetry.length > 0
+          ? observation.telemetry
+          : [fixtureCallTelemetry({ stage: "observation" })],
+    }));
+    expect(() =>
+      assertReportGenerationGate({ ...input, observations: allEvaluable }),
+    ).not.toThrow();
+  });
+
+  it("rejects duplicate locked prompts", () => {
+    const duplicatePrompts = goldenPrompts.map((prompt, index) =>
+      index === 9
+        ? { ...prompt, prompt_id: goldenPrompts[0].prompt_id }
+        : prompt,
+    );
+    expect(() =>
+      assertReportGenerationGate({ ...input, prompts: duplicatePrompts }),
+    ).toThrow(/unique/);
+  });
+
+  it("rejects observations that do not match the locked questions", () => {
+    const mismatched = goldenObservations.map((observation, index) =>
+      index === 0
+        ? { ...observation, prompt_id: "NUAVE-NOT-LOCKED-99" }
+        : observation,
+    );
+    expect(() =>
+      assertReportGenerationGate({ ...input, observations: mismatched }),
+    ).toThrow(/Missing evaluable observations/);
+  });
+});
+
+describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 R-19/R-37)", () => {
+  const allCompletedInput = {
+    ...input,
+    observations: goldenObservations.map((observation, index) =>
+      index === 4
+        ? {
+            ...observation,
+            run_status: "completed" as const,
+            raw_answer:
+              "Local advisers differ by focus: some handle logistics, others readiness reviews.",
+            failure_reason: "",
+            sources: [
+              {
+                url: "https://northstar.example/evidence-5",
+                title: "Fictional source 5",
+              },
+            ],
+            telemetry: [fixtureCallTelemetry({ stage: "observation" })],
+          }
+        : observation,
+    ),
+  };
+
+  it("rejects a synthesis that marks a completed, mentioned observation not_assessed (the Sozo defect)", async () => {
+    const defective = goldenReportContent();
+    // Question 3 is completed and the raw answer names the brand, so the code
+    // keeps the model's recommendation — not_assessed here is exactly what the
+    // Sozo run produced and the integrity gate must reject it.
+    defective.details[2] = {
+      ...defective.details[2],
+      recommendation: "not_assessed",
+    };
+    const generate = vi.fn(async () =>
+      result(defective, "response-defective"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport(allCompletedInput, generate),
+    ).rejects.toThrow(
+      /completed, so appearance and recommendation must be assessed/,
+    );
+  });
+
+  it("passes the automatic pipeline end-to-end with a correct synthesis for a 10/10 completed run", async () => {
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "response-correct"),
+    ) as unknown as ReportGenerator;
+
+    const report = await createValidatedAuditReport(
+      allCompletedInput,
+      generate,
+    );
+
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(report.details).toHaveLength(10);
+    expect(report.details.every((detail) => detail.run === "completed")).toBe(
+      true,
+    );
+    // The formerly failed question is now assessed (absent → not_recommended),
+    // and every completed detail carries an assessed appearance+recommendation.
+    expect(
+      report.details.some((detail) => detail.recommendation === "not_assessed"),
+    ).toBe(false);
+    expect(
+      report.priorities.every(
+        (priority) => priority.evidence_prompt_ids.length > 0,
+      ),
+    ).toBe(true);
   });
 });
