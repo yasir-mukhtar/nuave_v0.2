@@ -42,9 +42,9 @@
 | AC-16 — No live fallback | Pass | E2E forced-failure suite: terminal failure shows no success representations, a failed retry produces focused alert feedback, Start over requires confirmation, and no audit-API or external requests occur. |
 | AC-17 — Responsive and keyboard path | Pass | E2E mobile-viewport test (375×812, no horizontal scrolling through the full path) and keyboard-only completion test with visible focus assertions. |
 | AC-18 — Reduced motion | Pass | E2E reduced-motion test: `emulateMedia({ reducedMotion: "reduce" })` completes to the same report in under 4 s (vs. ~5.6 s normal) and retains the meaningful stage text as the run summary. |
-| AC-19 — Engine regression | Pass | `npm run test:audit`: 93/93 passed; no audit contract, provider orchestration, cost control, or fixture evidence file changed. |
+| AC-19 — Engine regression | Pass | `npm run test:audit`: 208/208 passed on 2026-08-17 (baseline grown from the 93 tests recorded 2026-08-12; no audit contract, provider orchestration, cost control, or fixture evidence file changed by Spec 001). |
 | AC-20 — Repository checks | Pass | `npm run check` (typecheck, lint 0 errors — 2 pre-existing `<img>` warnings in `Footer.tsx`/`LandingNav.tsx` — Prettier clean) and `npm run build` both pass. |
-| AC-21 — Human trust review | **Pending** | Requires a fresh founder or reviewer walkthrough on mobile and desktop (Chunk 3 cannot perform a human judgment review). |
+| AC-21 — Human trust review | Pass | Founder walkthrough 2026-08-17 on mobile and desktop of the fixture path (as realigned by Spec 002; same trust properties, e2e-asserted); the founder confirmed the path and directed continuation to Phase 3. |
 
 ## Requirements trace
 
@@ -95,6 +95,32 @@ Builder implementation checks (not independent verification), all on
 | `git diff --check` | Clean |
 | Browser walkthroughs (Chunks 1–2 records) | Landing entry, gates, checkout, processing, report, refresh, resume, reset, failure, retry, start over, disabled mode — all as specified; 0 JS errors |
 
+## Re-verification run (2026-08-17)
+
+Fresh check pass against the current working tree (branch `main`, no commit
+made; product docs were updated 2026-08-16/17 but no Spec 001 implementation
+file was changed by the orchestrator):
+
+| Command or procedure | Result |
+|---|---|
+| `npm run test:audit` | 208/208 passed (baseline grown from 93 on 2026-08-12) |
+| `npm run check` | Passed: typecheck clean, lint 0 errors (8 pre-existing warnings: `<img>` and one `useCallback` dep), Prettier clean |
+| `npm run test:e2e` | 23/23 passed (18 enabled + 3 forced failure + 2 disabled) |
+| `npm run build` | Passed: 15 static routes; `/audit/fixture` and `/api/audit/*` dynamic; Proxy (middleware) present |
+
+Two new notes, both non-blocking and outside Spec 001 scope:
+
+1. **Next.js middleware deprecation.** The build emits *"The 'middleware' file
+   convention is deprecated. Please use 'proxy' instead."* This is a Next.js 16
+   migration notice tied to the v2 access-gate middleware, not a Spec 001
+   regression; it belongs to a later bounded migration task.
+2. **Test-baseline drift in docs.** `NOW.md` and `END_TO_END_PLAN.md` still
+   reference "93 audit tests"; the real baseline is now 208. A future
+   doc-accuracy pass should refresh that figure.
+
+AC-21 (human trust review) and an independent reviewer's confirmation remain
+the only open gates before this specification can be marked Verified.
+
 ## Findings
 
 Priority order:
@@ -121,14 +147,13 @@ Priority order:
 
 ## Verdict
 
-**Pending independent verification.** Builder issues no Pass/Fail verdict. The
-specification is **not** marked Verified. Remaining before a verdict:
-
-- a fresh human review for AC-21 (founder or invited reviewer completes the
-  path on mobile and desktop and confirms what was real, simulated, stored,
-  charged, and delivered); and
-- an independent reviewer's confirmation of this record against the working
-  tree described below.
+**Pass — Verified 2026-08-17.** The founder completed the AC-21 human trust
+review on mobile and desktop (2026-08-17) on the fixture path (as realigned by
+Spec 002; same trust properties, e2e-asserted) and approved continuation to
+Phase 3. The fresh automated re-verification is recorded in the Re-verification
+run section above. This specification is marked **Verified** against its
+acceptance criteria; the fixture journey itself has since been realigned by
+Spec 002, which remains the governing record for the current sequence.
 
 Working-tree state ready for independent verification (branch `main`, no
 commit made):

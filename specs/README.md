@@ -44,12 +44,24 @@ verification is against its acceptance criteria.
   explicit reviewed change.
 - The specification package records evidence, not a diary of agent activity.
 
-## Active specification
+## Active specifications
 
-[`001-simulated-journey-shell/SPEC.md`](./001-simulated-journey-shell/SPEC.md)
-is the only active specification. Its status is **Implementing**. Implementation
-proceeds against the approved spec in bounded chunks; independent verification
-is recorded in the spec package's `VERIFICATION.md`.
+- [`001-simulated-journey-shell/SPEC.md`](./001-simulated-journey-shell/SPEC.md)
+  — status **Verified** (2026-08-17; founder completed the AC-21 human trust
+  review). Its fixture journey was later realigned by Spec 002; this package
+  remains the verified implementation record of the earlier sequence.
+- [`002-indonesian-audit-contract/SPEC.md`](./002-indonesian-audit-contract/SPEC.md)
+  — status **Verified** (2026-08-17; founder walkthrough + language sign-off
+  completed). Implements Phase 2 of `docs/END_TO_END_PLAN.md`: fixture-journey
+  realignment to Order Preview → simulated payment → Business Facts → Questions
+  → Audit Run → Report, plus the Indonesian audit and report contracts. The
+  next capability is `003-live-report-quality-gate` (Phase 3).
+- [`003-live-report-quality-gate/SPEC.md`](./003-live-report-quality-gate/SPEC.md)
+  — status **Approved** (founder-approved 2026-08-17); implementation in
+  progress. Implements Phase 3 of `docs/END_TO_END_PLAN.md`: connect the live
+  engine behind the journey states (03 → 06), five-business provider
+  evaluation (dental clinics, Depok), first live audit (Sozo Dental
+  Depok/Margonda), and the report-quality gate verdict.
 
 [`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
 no active spec is named, the next task is to prepare or approve one rather than

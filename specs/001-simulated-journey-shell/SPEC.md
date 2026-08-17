@@ -6,6 +6,15 @@
 > Implements: Phase 1 of `docs/END_TO_END_PLAN.md` — one reviewable,
 > fixture-backed landing-to-report journey
 
+> **Post-approval target change, 2026-08-17:** The founder later changed the
+> target customer sequence to Order Preview → Payment → Business Facts →
+> Questions. This specification retains the earlier approved fixture sequence
+> as an implementation and verification record. Finish Chunk 3 against this
+> record; align the protected fixture to the new sequence in the next approved
+> specification before connecting live behavior. The fixture's failed
+> observation remains evidence-test data and is not permission to deliver a
+> partial paid report.
+
 ## Required context
 
 Read in order:
