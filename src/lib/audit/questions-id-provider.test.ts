@@ -272,7 +272,7 @@ describe("OpenAI question-generation request builder", () => {
       input: [
         {
           role: "developer",
-          content: [INDONESIAN_QUESTION_WRITER_INSTRUCTION],
+          content: INDONESIAN_QUESTION_WRITER_INSTRUCTION,
         },
         { role: "user", content: JSON.stringify(brief) },
       ],
@@ -351,6 +351,34 @@ describe("OpenAI provider over a stubbed HTTP layer", () => {
     await expect(provider.generate(brief)).resolves.toEqual({
       kind: "text",
       text: ten.join("\n"),
+    });
+  });
+
+  it("parses JSON-encoded structured output from text when parsed is absent", async () => {
+    // Observed live 2026-08-17: gpt-5.6-luna returned the schema object as a
+    // JSON string in output_text.text with NO parsed field. The parser must
+    // accept that form instead of degrading to the numbered-list text path.
+    process.env.OPENAI_API_KEY = "test-key";
+    const { stub } = stubFetch(() =>
+      jsonResponse({
+        status: "completed",
+        output: [
+          {
+            type: "message",
+            content: [
+              {
+                type: "output_text",
+                text: JSON.stringify({ questions: ten }),
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const provider = createIndonesianQuestionProvider(stub);
+    await expect(provider.generate(brief)).resolves.toEqual({
+      kind: "structured",
+      questions: ten,
     });
   });
 

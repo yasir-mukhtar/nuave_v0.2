@@ -225,7 +225,11 @@ export function buildOpenAIIndonesianQuestionRequest(
     input: [
       {
         role: "developer" as const,
-        content: [INDONESIAN_QUESTION_WRITER_INSTRUCTION],
+        // Responses API: content is a string or an array of content-part
+        // objects — a bare string inside an array is rejected
+        // ("Invalid type for input[0].content[0]"). The extraction path in
+        // openai.ts uses the same joined-string form.
+        content: INDONESIAN_QUESTION_WRITER_INSTRUCTION,
       },
       { role: "user" as const, content: JSON.stringify(brief) },
     ],
@@ -327,6 +331,28 @@ export function parseOpenAIIndonesianResponse(
         };
       }
       if (typeof content.text === "string" && content.text.trim()) {
+        // Some Responses API deployments return the structured output as a
+        // JSON string inside `text` without populating `parsed` (observed live
+        // 2026-08-17 on gpt-5.6-luna with json_schema format). Accept the JSON
+        // form when it matches the schema — mirrors parseGeminiIndonesianResponse.
+        if (content.parsed == null) {
+          try {
+            const fromText: unknown = JSON.parse(content.text);
+            if (
+              fromText !== null &&
+              typeof fromText === "object" &&
+              !Array.isArray(fromText) &&
+              isTenQuestionStrings((fromText as { questions?: unknown }).questions)
+            ) {
+              return {
+                kind: "structured",
+                questions: (fromText as { questions: string[] }).questions,
+              };
+            }
+          } catch {
+            // Fall through to the text representation for deterministic parsing.
+          }
+        }
         return { kind: "text", text: content.text };
       }
     }
