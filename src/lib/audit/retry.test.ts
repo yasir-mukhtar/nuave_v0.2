@@ -346,6 +346,31 @@ describe("retry policy (Spec 003 R-17/R-18)", () => {
       category: "empty_or_unusable",
     });
   });
+
+  it("classifies a missing required web search as a retryable technical failure (R-16/R-18)", () => {
+    // A completed provider call that never executed the required web search
+    // is NOT an evaluable non-appearance: it is a temporary technical failure
+    // the 1+2 retry policy reruns.
+    const noSearch = observation("p1", {
+      run_status: "failed",
+      raw_answer: "",
+      sources: [],
+      failure_reason:
+        "Required web search did not execute for this observation; the observation is not grounded and will be retried.",
+      telemetry: [
+        fixtureCallTelemetry({
+          stage: "observation",
+          status: "failed",
+          failure_reason:
+            "Required web search did not execute for this observation; the observation is not grounded and will be retried.",
+        }),
+      ],
+    });
+    expect(classifyObservationFailure(noSearch)).toEqual({
+      evaluable: false,
+      category: "temporary",
+    });
+  });
 });
 
 describe("retry-aware observation stage ceiling (Spec 003 R-36)", () => {

@@ -137,7 +137,9 @@ export const promptSchema = z.object({
 export const promptPackSchema = z.object({
   status: z.literal("draft_for_review"),
   prompt_pack_version: z.string(),
-  language: z.literal("en-US"),
+  // Spec 002/003: the live path generates the Indonesian pack (id-ID); the
+  // deterministic English pack (en-US) remains for legacy/fixture callers.
+  language: z.enum(["en-US", "id-ID"]),
   target_product: z.literal("ChatGPT"),
   brand: z.object({
     brand_name: z.string(),
@@ -149,8 +151,8 @@ export const promptPackSchema = z.object({
   }),
   summary: z.object({
     total_prompts: z.literal(10),
-    unbranded_prompts: z.literal(5),
-    branded_prompts: z.literal(5),
+    unbranded_prompts: z.number().int().min(0).max(10),
+    branded_prompts: z.number().int().min(0).max(10),
   }),
   prompts: z.array(promptSchema).length(10),
   self_check: z.object({
@@ -222,6 +224,11 @@ export const auditObservationSchema = z.object({
       incomplete_reason: z.string().max(60).default(""),
       output_text_present: z.boolean().default(false),
       refusal_present: z.boolean().default(false),
+      // Spec 003 R-20 attempt provenance: whether this telemetry entry is an
+      // automatic retry and the safe failure category of a failed attempt.
+      // Optional so pre-R-20 records and testing-only providers stay parseable.
+      automatic: z.boolean().optional(),
+      safe_failure_category: z.string().max(40).optional(),
     }),
   ),
 });

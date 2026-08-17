@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   auditBudgetSchema,
+  auditObservationSchema,
   businessBriefSchema,
   promptSchema,
 } from "@/lib/audit/types";
-import { validatePromptPack } from "@/lib/audit/contracts";
-import { executeAuditPrompt } from "@/lib/audit/provider";
+import { liveExecuteAuditPrompt } from "@/lib/audit/provider";
+import {
+  indonesianPackBlockers,
+  minimizeIndonesianBrief,
+  validateIndonesianQuestionPack,
+} from "@/lib/audit/questions-id";
 import { runAuditObservations } from "@/lib/audit/run-orchestrator";
 import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
 
@@ -17,14 +22,87 @@ const requestSchema = z.object({
   prompts: z.array(promptSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
   budget: auditBudgetSchema,
+  // Spec 003 R-19 (failure-and-recovery): completed observations from an
+  // interrupted run are preserved and resumed; they are never rerun. The
+  // route folds their telemetry into the server-side budget (deduped).
+  resume_observations: z.array(auditObservationSchema).max(10).optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
-    const errors = validatePromptPack(input.prompts, input.brief);
-    if (errors.length)
-      return NextResponse.json({ error: errors.join(" ") }, { status: 422 });
+
+    // The live run path validates the LOCKED INDONESIAN question pack (Spec
+    // 002/003): leakage, unsupported premises, distinctness, and executable
+    // questions. The English matrix validator (`validatePromptPack`) is for
+    // the deterministic English pack only.
+    const minimized = minimizeIndonesianBrief(input.brief);
+    const questionErrors = validateIndonesianQuestionPack(
+      input.prompts.map((prompt) => prompt.question),
+      minimized,
+    );
+    const blockers = indonesianPackBlockers(
+      input.prompts.map((prompt) => prompt.question),
+      minimized,
+    );
+    if (questionErrors.length || blockers.length) {
+      return NextResponse.json(
+        {
+          error: [
+            ...questionErrors.map((issue) => issue.message),
+            ...blockers,
+          ].join(" "),
+        },
+        { status: 422 },
+      );
+    }
+
+    // Resume validation: only completed observations for locked questions,
+    // one per question, never duplicated.
+    const resume = input.resume_observations ?? [];
+    const lockedIds = new Set(input.prompts.map((prompt) => prompt.prompt_id));
+    const resumeErrors: string[] = [];
+    const resumedIds = new Set<string>();
+    for (const observation of resume) {
+      if (observation.run_status !== "completed") {
+        resumeErrors.push(
+          `${observation.prompt_id}: only completed observations can be resumed.`,
+        );
+      }
+      if (!lockedIds.has(observation.prompt_id)) {
+        resumeErrors.push(
+          `${observation.prompt_id}: not one of the locked questions.`,
+        );
+      }
+      if (resumedIds.has(observation.prompt_id)) {
+        resumeErrors.push(
+          `${observation.prompt_id}: duplicate resume observation.`,
+        );
+      }
+      resumedIds.add(observation.prompt_id);
+    }
+    if (resumeErrors.length) {
+      return NextResponse.json(
+        { error: resumeErrors.join(" ") },
+        { status: 422 },
+      );
+    }
+
+    // Server-side cost accounting: fold the resumed observations' telemetry
+    // into the session budget (deduped by response id) so no call is counted
+    // twice and the ceiling guard sees the true spend.
+    const seenCalls = new Set<string>();
+    const foldedCalls = [
+      ...input.budget.calls,
+      ...resume.flatMap((o) => o.telemetry),
+    ].filter((call) => {
+      const key =
+        call.response_id || `${call.stage}:${call.attempt}:${call.started_at}`;
+      if (seenCalls.has(key)) return false;
+      seenCalls.add(key);
+      return true;
+    });
+    const budget = { ...input.budget, calls: foldedCalls };
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({
@@ -34,14 +112,17 @@ export async function POST(request: Request) {
         try {
           // Spec 003 R-17/R-19: targeted 1+2 retry per question under the same
           // locked configuration; every attempt is persisted; a valid result
-          // is never rerun; the ten-of-ten gate decides the terminal event.
+          // is never rerun (resumed observations are preserved); the ten-of-ten
+          // gate decides the terminal event, which carries the complete
+          // per-attempt provenance (R-20).
           await runAuditObservations({
             prompts: input.prompts,
             brief: input.brief,
             safety_identifier: input.safety_identifier,
-            budget: input.budget,
-            execute: executeAuditPrompt,
+            budget,
+            execute: liveExecuteAuditPrompt,
             emit: send,
+            resume: { observations: resume },
           });
         } catch (error) {
           send({

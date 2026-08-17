@@ -16,8 +16,13 @@ import {
   type ExtractionDraft,
   type PromptPack,
 } from "@/lib/audit/types";
-import { makeEvidenceExport, validatePromptPack } from "@/lib/audit/contracts";
+import { makeEvidenceExport } from "@/lib/audit/contracts";
 import { summarizeAuditTelemetry } from "@/lib/audit/telemetry";
+import {
+  indonesianPackBlockers,
+  minimizeIndonesianBrief,
+  validateIndonesianQuestionPack,
+} from "@/lib/audit/questions-id";
 import {
   AuditRunEventParser,
   deriveAuditStep,
@@ -397,15 +402,20 @@ export default function AuditWorkflow() {
     }
     setBusy("prompts");
     try {
-      // Questions are built from the verified brief in code, so this request
-      // makes no API call and cannot change accounted audit spend.
-      const result = await postJson<{ pack: PromptPack }>(
-        "/api/audit/prompts",
-        { brief },
-      );
+      // The ten Indonesian questions come from the live generation boundary
+      // (Spec 003 work package A): one bounded no-search provider call,
+      // server-side accounting, deterministic fallback on any failure. The
+      // returned telemetry is folded into the session budget (R-36).
+      const result = await postJson<{
+        pack: PromptPack;
+        telemetry?: AuditCallTelemetry[];
+      }>("/api/audit/prompts", { brief });
       const pack = result.pack;
       setPromptPack(pack);
       setPromptStatuses(initialStatuses(pack, []));
+      if (result.telemetry?.length) {
+        setSetupTelemetry((calls) => [...calls, ...(result.telemetry ?? [])]);
+      }
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -520,15 +530,34 @@ export default function AuditWorkflow() {
       setError("Tunggu pengendali biaya privat sebelum menjalankan audit.");
       return;
     }
-    const promptErrors = validatePromptPack(promptPack.prompts, brief);
-    if (promptErrors.length) {
-      setError(promptErrors.join(" "));
+    // The locked pack is validated with the Indonesian question rules (Spec
+    // 002/003): leakage, unsupported premises, distinctness, executability.
+    const minimized = minimizeIndonesianBrief(brief);
+    const questionErrors = validateIndonesianQuestionPack(
+      promptPack.prompts.map((prompt) => prompt.question),
+      minimized,
+    );
+    const blockers = indonesianPackBlockers(
+      promptPack.prompts.map((prompt) => prompt.question),
+      minimized,
+    );
+    if (questionErrors.length || blockers.length) {
+      setError(
+        [...questionErrors.map((issue) => issue.message), ...blockers].join(
+          " ",
+        ),
+      );
       return;
     }
 
     setExecutionStarted(true);
     setReport(null);
     setRunUnfinished(null);
+    // Interrupted-run resume (Spec 003 R-19): completed observations are
+    // preserved and sent back to the run route, which never reruns them.
+    const resumeObservations = observations.filter(
+      (observation) => observation.run_status === "completed",
+    );
     const runPriorCalls = [
       ...setupTelemetry,
       ...observations.flatMap((observation) => observation.telemetry || []),
@@ -554,6 +583,7 @@ export default function AuditWorkflow() {
             carryover_cost_usd: carryoverCostUsd,
             calls: runPriorCalls,
           },
+          resume_observations: resumeObservations,
         }),
       });
       if (!response.ok) {

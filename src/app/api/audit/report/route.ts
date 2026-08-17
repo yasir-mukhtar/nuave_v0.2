@@ -8,6 +8,7 @@ import {
 } from "@/lib/audit/types";
 import {
   ReportPipelineError,
+  assertReportGenerationGate,
   createValidatedAuditReport,
 } from "@/lib/audit/report-pipeline";
 import {
@@ -28,6 +29,10 @@ const requestSchema = z.object({
 export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
+    // Spec 003 R-19: the ten-of-ten gate runs BEFORE any provider call — no
+    // report synthesis begins unless all ten unique locked prompts have one
+    // evaluable, structurally valid observation. No partial report exists.
+    assertReportGenerationGate(input);
     return NextResponse.json({
       report: await createValidatedAuditReport(input),
     });

@@ -241,4 +241,111 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
       }),
     ).rejects.toThrow("exactly ten questions");
   });
+
+  it("resumes completed observations without rerunning them (R-19)", async () => {
+    const executed: string[] = [];
+    const resumedThree = [
+      observation("p1"),
+      observation("p2"),
+      observation("p3"),
+    ];
+    const events: AuditRunEvent[] = [];
+    const summary = await runAuditObservations({
+      prompts: prompts(),
+      brief,
+      safety_identifier: safetyIdentifier,
+      budget: fixtureBudget,
+      execute: async (input) => {
+        executed.push(input.prompt.prompt_id);
+        return observation(input.prompt.prompt_id);
+      },
+      emit: (event) => events.push(event),
+      sleep: async () => {},
+      resume: { observations: resumedThree },
+    });
+
+    // Only the seven uncompleted questions execute; the resumed three are
+    // preserved verbatim and never rerun.
+    expect(executed).toHaveLength(7);
+    expect(executed).not.toContain("p1");
+    expect(executed).not.toContain("p2");
+    expect(executed).not.toContain("p3");
+    expect(summary.observations).toHaveLength(10);
+    expect(
+      events.filter((event) => event.type === "prompt_completed"),
+    ).toHaveLength(10);
+    // The resumed observations are the ORIGINAL records (same response ids),
+    // not fresh executions.
+    const resumed = summary.observations
+      .filter((item) => ["p1", "p2", "p3"].includes(item.prompt_id))
+      .map((item) => item.response_id);
+    expect(resumed).toEqual(["resp_p1", "resp_p2", "resp_p3"]);
+    const terminal = events[events.length - 1];
+    expect(terminal.type).toBe("run_completed");
+  });
+
+  it("carries the complete per-attempt provenance on the terminal event (R-20)", async () => {
+    const attemptCounts = new Map<string, number>();
+    const { events, summaryPromise } = run(async (input) => {
+      const promptId = input.prompt.prompt_id;
+      const count = (attemptCounts.get(promptId) ?? 0) + 1;
+      attemptCounts.set(promptId, count);
+      if (promptId === "p5" && count === 1) {
+        return failedObservation(promptId, "Temporary provider failure");
+      }
+      return observation(promptId);
+    });
+    const summary = await summaryPromise;
+
+    const terminal = events[events.length - 1];
+    expect(terminal.type).toBe("run_completed");
+    if (terminal.type !== "run_completed")
+      throw new Error("expected run_completed");
+    const p5Attempts = terminal.attempts_by_prompt?.["p5"] ?? [];
+    expect(p5Attempts).toHaveLength(2);
+    expect(p5Attempts[0]).toMatchObject({
+      attempt: 1,
+      automatic: false,
+      status: "failed",
+    });
+    expect(p5Attempts[0].failure_reason).toContain("Temporary");
+    expect(p5Attempts[1]).toMatchObject({
+      attempt: 2,
+      automatic: true,
+      status: "completed",
+    });
+    expect(Object.keys(terminal.attempts_by_prompt ?? {})).toHaveLength(10);
+
+    // The final observation's telemetry carries the per-attempt stamps
+    // (attempt order, automatic flag, safe failure category).
+    const p5 = summary.observations.find((item) => item.prompt_id === "p5");
+    expect(p5?.telemetry.map((call) => call.attempt)).toEqual([1, 2]);
+    expect(p5?.telemetry.map((call) => call.automatic)).toEqual([false, true]);
+    expect(p5?.telemetry[0].safe_failure_category).toBe("temporary");
+    expect(p5?.telemetry[1].safe_failure_category).toBeUndefined();
+  });
+
+  it("preserves the partial record on run_unfinished (R-19/R-20)", async () => {
+    const { events, summaryPromise } = run(async (input) =>
+      input.prompt.prompt_id === "p4"
+        ? failedObservation("p4", "Temporary provider failure")
+        : observation(input.prompt.prompt_id),
+    );
+    const summary = await summaryPromise;
+
+    const terminal = events[events.length - 1];
+    expect(terminal.type).toBe("run_unfinished");
+    if (terminal.type !== "run_unfinished")
+      throw new Error("expected run_unfinished");
+    // The interrupted state carries the completed observations so no
+    // evidence is lost, plus the attempt provenance for every prompt.
+    expect(terminal.observations).toHaveLength(10);
+    expect(
+      (terminal.observations ?? []).filter(
+        (item) => item.run_status === "completed",
+      ),
+    ).toHaveLength(9);
+    expect(terminal.attempts_by_prompt?.["p4"]).toHaveLength(3);
+    expect(summary.observations).toHaveLength(10);
+  });
 });

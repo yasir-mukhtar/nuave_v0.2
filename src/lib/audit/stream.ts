@@ -1,6 +1,23 @@
 import { z } from "zod";
 import { auditObservationSchema, type AuditObservation } from "./types";
 
+/** Compact per-attempt provenance record (Spec 003 R-20) carried on the
+ * terminal run events so the browser session and the evidence export reflect
+ * exactly what occurred, including failed attempts. */
+export const runAttemptRecordSchema = z.object({
+  attempt: z.number().int().min(1).max(3),
+  automatic: z.boolean(),
+  started_at: z.string(),
+  status: z.enum(["completed", "failed"]),
+  failure_reason: z.string().optional(),
+  accounted_cost_usd: z.number().nonnegative().optional(),
+});
+
+export const runAttemptsByPromptSchema = z.record(
+  z.string(),
+  z.array(runAttemptRecordSchema),
+);
+
 export const auditRunEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("run_started"),
@@ -52,12 +69,21 @@ export const auditRunEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("run_completed"),
     observations: z.array(auditObservationSchema).length(10),
+    // R-20: the complete per-attempt provenance trail, one entry per attempt
+    // per prompt (including automatic retries and failed attempts).
+    attempts_by_prompt: runAttemptsByPromptSchema.optional(),
+    stop_message: z.string().optional(),
   }),
   z.object({
     type: z.literal("run_unfinished"),
     completed: z.number().int().min(0).max(9),
     failed_prompt_ids: z.array(z.string()),
     message: z.string().min(1),
+    // R-19/R-20: the preserved partial record — all completed observations and
+    // the complete attempt provenance — so no evidence is lost on interruption.
+    observations: z.array(auditObservationSchema).optional(),
+    attempts_by_prompt: runAttemptsByPromptSchema.optional(),
+    stop_message: z.string().optional(),
   }),
   z.object({ type: z.literal("fatal_error"), message: z.string().min(1) }),
 ]);

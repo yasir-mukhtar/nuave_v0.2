@@ -181,7 +181,26 @@ function stampTelemetryAttempt(
 ): AuditObservation {
   return {
     ...observation,
-    telemetry: observation.telemetry.map((call) => ({ ...call, attempt })),
+    telemetry: observation.telemetry.map((call) => ({
+      ...call,
+      attempt,
+      automatic: attempt > 1,
+    })),
+  };
+}
+
+/** Records the safe failure category on a failed attempt's telemetry (R-20). */
+function stampTelemetryFailureCategory(
+  observation: AuditObservation,
+  category: SafeFailureCategory,
+): AuditObservation {
+  if (observation.run_status !== "failed") return observation;
+  return {
+    ...observation,
+    telemetry: observation.telemetry.map((call) => ({
+      ...call,
+      safe_failure_category: category,
+    })),
   };
 }
 
@@ -250,14 +269,17 @@ export async function runQuestionWithRetry(input: {
       budget,
     });
     const classification = classifyObservationFailure(rawObservation);
-    const persisted = stampTelemetryAttempt(
-      classification.evaluable || rawObservation.run_status === "failed"
-        ? rawObservation
-        : markObservationFailed(
-            rawObservation,
-            failedTestReason(rawObservation),
-          ),
-      attempt,
+    const persisted = stampTelemetryFailureCategory(
+      stampTelemetryAttempt(
+        classification.evaluable || rawObservation.run_status === "failed"
+          ? rawObservation
+          : markObservationFailed(
+              rawObservation,
+              failedTestReason(rawObservation),
+            ),
+        attempt,
+      ),
+      classification.category,
     );
     attempts.push({
       attempt,

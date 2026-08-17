@@ -44,8 +44,12 @@ export async function runAuditObservations(input: {
   emit: RunEmit;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
+  /** Completed observations from an interrupted run (R-19): preserved and
+   * never rerun; only uncompleted questions are executed. */
+  resume?: { observations: AuditObservation[] };
 }): Promise<AuditRunSummary> {
-  const { prompts, brief, safety_identifier, budget, execute, emit } = input;
+  const { prompts, brief, safety_identifier, budget, execute, emit, resume } =
+    input;
   if (prompts.length !== 10) {
     throw new Error(
       `A live audit runs exactly ten questions; received ${prompts.length}.`,
@@ -66,8 +70,39 @@ export async function runAuditObservations(input: {
   let runCalls: AuditCallTelemetry[] = [...budget.calls];
   let stopMessage = "";
 
+  // Completed observations from a resumed run are preserved verbatim and are
+  // never rerun (Spec 003 R-19 / failure-and-recovery table). Their attempt
+  // trail is reconstructed from the persisted telemetry (one entry per
+  // attempt, stamped by retry.ts).
+  const resumedByPromptId = new Map<string, AuditObservation>();
+  for (const observation of resume?.observations ?? []) {
+    if (observation.run_status === "completed") {
+      resumedByPromptId.set(observation.prompt_id, observation);
+    }
+  }
+
   for (let index = 0; index < prompts.length; index += 1) {
     const prompt = prompts[index];
+    const resumed = resumedByPromptId.get(prompt.prompt_id);
+
+    if (resumed) {
+      const attempts = resumed.telemetry.map((call, attemptIndex) => ({
+        attempt: call.attempt ?? attemptIndex + 1,
+        automatic: call.automatic ?? (call.attempt ?? attemptIndex + 1) > 1,
+        started_at: call.started_at,
+        observation: { ...resumed, telemetry: [call] },
+      }));
+      attemptsByPrompt[prompt.prompt_id] = attempts;
+      observations.push(resumed);
+      emit({
+        type: "prompt_completed",
+        index,
+        attempt: Math.max(1, attempts.length),
+        observation: resumed,
+      });
+      continue;
+    }
+
     emit({
       type: "prompt_started",
       index,
@@ -139,8 +174,46 @@ export async function runAuditObservations(input: {
     (observation) => observation.run_status === "completed",
   ).length;
 
+  // R-20: compact per-attempt provenance for the terminal events.
+  const attemptsByPromptRecord: Record<
+    string,
+    Array<{
+      attempt: number;
+      automatic: boolean;
+      started_at: string;
+      status: "completed" | "failed";
+      failure_reason?: string;
+      accounted_cost_usd?: number;
+    }>
+  > = {};
+  for (const [promptId, attempts] of Object.entries(attemptsByPrompt)) {
+    attemptsByPromptRecord[promptId] = attempts.map((attempt) => ({
+      attempt: attempt.attempt,
+      automatic: attempt.automatic,
+      started_at: attempt.started_at,
+      status: attempt.observation.run_status,
+      failure_reason: attempt.observation.failure_reason || undefined,
+      accounted_cost_usd:
+        attempt.observation.telemetry.length > 0
+          ? attempt.observation.telemetry.reduce(
+              (sum, call) => sum + call.accounted_cost_usd,
+              0,
+            )
+          : undefined,
+    }));
+  }
+  const attemptsPayload =
+    Object.keys(attemptsByPromptRecord).length > 0
+      ? attemptsByPromptRecord
+      : undefined;
+
   if (completed === 10) {
-    emit({ type: "run_completed", observations });
+    emit({
+      type: "run_completed",
+      observations,
+      attempts_by_prompt: attemptsPayload,
+      stop_message: stopMessage || undefined,
+    });
   } else {
     emit({
       type: "run_unfinished",
@@ -149,6 +222,9 @@ export async function runAuditObservations(input: {
       message:
         stopMessage ||
         "Ten evaluable observations could not be reached within the automatic recovery allowance.",
+      observations,
+      attempts_by_prompt: attemptsPayload,
+      stop_message: stopMessage || undefined,
     });
   }
 

@@ -153,6 +153,22 @@ export function indonesianQuestionProviderName(): IndonesianQuestionProviderName
   );
 }
 
+/**
+ * Question-writer provider for the PROTECTED LIVE path (`/api/audit/prompts`).
+ * Fails closed to the founder-approved OpenAI provider (DECISION_LOG
+ * 2026-08-17): a non-OpenAI `NUAVE_QUESTION_PROVIDER` is rejected unless
+ * `NUAVE_LIVE_PROVIDER_TESTING=1` is explicitly set (tests and local runners
+ * only; never in production).
+ */
+export function liveIndonesianQuestionProviderName(): IndonesianQuestionProviderName {
+  const name = indonesianQuestionProviderName();
+  if (name === "openai") return "openai";
+  if (process.env.NUAVE_LIVE_PROVIDER_TESTING === "1") return name;
+  throw new Error(
+    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners.`,
+  );
+}
+
 export type IndonesianQuestionProviderConfig = {
   name: IndonesianQuestionProviderName;
   system: string;
@@ -342,7 +358,9 @@ export function parseOpenAIIndonesianResponse(
               fromText !== null &&
               typeof fromText === "object" &&
               !Array.isArray(fromText) &&
-              isTenQuestionStrings((fromText as { questions?: unknown }).questions)
+              isTenQuestionStrings(
+                (fromText as { questions?: unknown }).questions,
+              )
             ) {
               return {
                 kind: "structured",

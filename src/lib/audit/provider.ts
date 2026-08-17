@@ -37,6 +37,23 @@ export function activeAuditProvider(): AuditProviderName {
   );
 }
 
+/**
+ * Provider selection for the PROTECTED LIVE path (the `/api/audit/*` routes
+ * and the report pipeline). Fails closed to the founder-approved production
+ * provider (OpenAI, gpt-5.6-luna — DECISION_LOG 2026-08-17). Gemini and Groq
+ * remain available for testing only: a non-OpenAI `NUAVE_PROVIDER` is
+ * rejected on the live path unless `NUAVE_LIVE_PROVIDER_TESTING=1` is
+ * explicitly set (tests and local runner scripts only; never in production).
+ */
+export function liveAuditProvider(): AuditProviderName {
+  const name = activeAuditProvider();
+  if (name === "openai") return "openai";
+  if (process.env.NUAVE_LIVE_PROVIDER_TESTING === "1") return name;
+  throw new Error(
+    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners.`,
+  );
+}
+
 export const extractBusinessDraft =
   activeAuditProvider() === "gemini"
     ? geminiExtract
@@ -55,3 +72,27 @@ export const generateReportContent =
     : activeAuditProvider() === "groq"
       ? groqGenerate
       : openaiGenerate;
+
+// Protected live path: fail-closed to OpenAI (gpt-5.6-luna) — DECISION_LOG
+// 2026-08-17. These are the only bindings the API routes and the report
+// pipeline may use; the env-selectable bindings above stay for tests and
+// local runners only.
+function resolveLive<K extends AuditProviderName>(live: K) {
+  return live === "gemini"
+    ? {
+        extract: geminiExtract,
+        execute: geminiExecute,
+        generate: geminiGenerate,
+      }
+    : live === "groq"
+      ? { extract: groqExtract, execute: groqExecute, generate: groqGenerate }
+      : {
+          extract: openaiExtract,
+          execute: openaiExecute,
+          generate: openaiGenerate,
+        };
+}
+const live = resolveLive(liveAuditProvider());
+export const liveExtractBusinessDraft = live.extract;
+export const liveExecuteAuditPrompt = live.execute;
+export const liveGenerateReportContent = live.generate;

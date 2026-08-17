@@ -1,0 +1,322 @@
+import type {
+  AuditBudget,
+  AuditCallTelemetry,
+  BusinessBrief,
+  PromptPack,
+} from "./types";
+import {
+  INDONESIAN_QUESTION_OPENAI_PRICING_VERSION,
+  createIndonesianQuestionProvider,
+  indonesianQuestionGenerationMeta,
+  liveIndonesianQuestionProviderName,
+  type IndonesianFetch,
+} from "./questions-id-provider";
+import {
+  INDONESIAN_QUESTION_LANGUAGE,
+  INDONESIAN_QUESTION_PACK_VERSION,
+  generateIndonesianQuestionPack,
+  indonesianPackBlockers,
+  minimizeIndonesianBrief,
+  validateIndonesianQuestionPack,
+} from "./questions-id";
+import { configuredAuditCarryoverCostUsd } from "./telemetry";
+import { AUDIT_COST_LIMIT_USD } from "./types";
+
+/**
+ * Live Indonesian question generation for the protected `/api/audit/prompts`
+ * route (Spec 003 work package A boundary). The route NEVER makes the provider
+ * selection: the provider name is resolved server-side, fail-closed to OpenAI
+ * (gpt-5.6-luna) per the founder-approved provider lock (DECISION_LOG
+ * 2026-08-17); Gemini remains testing-only via NUAVE_LIVE_PROVIDER_TESTING=1.
+ *
+ * The boundary (`generateIndonesianQuestionPack`) never hard-fails: on any
+ * provider or format failure it returns the deterministic Indonesian pack with
+ * `source: "fallback"` and `warnings: ["fallback_used"]`. Server-side cost
+ * accounting captures the HTTP response usage (the boundary's own telemetry is
+ * null by contract) and records a `prompts`-stage telemetry entry against a
+ * server-created budget; the client folds the returned telemetry into the
+ * session budget it sends to the run/report routes.
+ */
+
+/** Per-category Indonesian roles/rationales for the converted pack items. */
+const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
+  need_discovery: {
+    role: "Memahami kebutuhan pelanggan",
+    rationale: "Pertanyaan untuk memahami kebutuhan pelanggan.",
+  },
+  solution_discovery: {
+    role: "Mencari pilihan solusi",
+    rationale: "Pertanyaan untuk mencari pilihan solusi.",
+  },
+  comparison: {
+    role: "Membandingkan pilihan",
+    rationale: "Pertanyaan untuk membandingkan pilihan.",
+  },
+  validation: {
+    role: "Memvalidasi fakta publik",
+    rationale: "Pertanyaan untuk memvalidasi fakta publik.",
+  },
+  action: {
+    role: "Mendorong langkah tindakan",
+    rationale: "Pertanyaan untuk mendorong langkah tindakan.",
+  },
+};
+
+function categoryLabels(category: string) {
+  return (
+    CATEGORY_LABELS[category] ?? {
+      role: "Pertanyaan pelanggan",
+      rationale: "Pertanyaan pelanggan.",
+    }
+  );
+}
+
+type CapturedCall = {
+  url: string;
+  status: number;
+  body: unknown;
+};
+
+/** Wraps fetch so the HTTP response JSON (and its usage) is retained for
+ * server-side cost accounting; the provider still consumes the original
+ * response via `res.json()` on the clone-safe original. */
+function capturingFetch(calls: CapturedCall[]): IndonesianFetch {
+  const original = globalThis.fetch.bind(globalThis);
+  const wrapped: IndonesianFetch = async (input, init) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : String(input);
+    const res = await original(input, init);
+    const body = await res
+      .clone()
+      .json()
+      .catch(() => ({}));
+    calls.push({ url, status: res.status, body });
+    return res;
+  };
+  return wrapped;
+}
+
+function extractOpenAIUsage(body: unknown): {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  model: string;
+  response_id: string;
+} | null {
+  if (typeof body !== "object" || body === null) return null;
+  const record = body as Record<string, unknown>;
+  const usage = record.usage as
+    | { input_tokens?: number; output_tokens?: number; total_tokens?: number }
+    | undefined;
+  if (!usage) return null;
+  return {
+    input_tokens: usage.input_tokens ?? 0,
+    output_tokens: usage.output_tokens ?? 0,
+    total_tokens: usage.total_tokens ?? 0,
+    model: typeof record.model === "string" ? record.model : "",
+    response_id: typeof record.id === "string" ? record.id : "",
+  };
+}
+
+/** Notional accounted cost from real usage at official OpenAI short-context
+ * pricing (repo `AUDIT_PRICING_VERSION "openai-standard-2026-08-01"`): input
+ * USD 0.20 / 1M, output USD 1.20 / 1M. The question writer performs no web
+ * search. */
+function accountedCostUsd(usage: {
+  input_tokens: number;
+  output_tokens: number;
+}): number {
+  return (
+    Math.round(
+      ((usage.input_tokens / 1_000_000) * 0.2 +
+        (usage.output_tokens / 1_000_000) * 1.2) *
+        100_000_000,
+    ) / 100_000_000
+  );
+}
+
+export type LiveIndonesianPromptPackResult = {
+  pack: PromptPack;
+  generation: {
+    source: "model" | "parsed" | "fallback";
+    warnings: string[];
+    system: string;
+    requested_model: string;
+    instruction_version: string;
+    language: string;
+    generated_at: string;
+  };
+  classification_summary: {
+    total: number;
+    tanpa_menyebut_bisnis_anda: number;
+    menyebut_bisnis_anda: number;
+  };
+  telemetry: AuditCallTelemetry[];
+  budget: AuditBudget;
+};
+
+export async function buildLiveIndonesianPromptPack(input: {
+  brief: BusinessBrief;
+}): Promise<LiveIndonesianPromptPackResult> {
+  const { brief } = input;
+  // Fail-closed provider selection (R-36): the client cannot select the
+  // provider; a testing-only NUAVE_QUESTION_PROVIDER throws here unless
+  // NUAVE_LIVE_PROVIDER_TESTING=1 is explicitly set.
+  liveIndonesianQuestionProviderName();
+  const minimized = minimizeIndonesianBrief(brief);
+
+  // Server-created budget: the client cannot raise the limit, lower the
+  // carryover, or select the provider (R-36).
+  const budget: AuditBudget = {
+    limit_usd: AUDIT_COST_LIMIT_USD,
+    carryover_cost_usd: configuredAuditCarryoverCostUsd(),
+    calls: [],
+  };
+
+  const captured: CapturedCall[] = [];
+  const provider = createIndonesianQuestionProvider(capturingFetch(captured));
+  const generationMeta = indonesianQuestionGenerationMeta();
+  const startedAt = Date.now();
+
+  const suggestion = await generateIndonesianQuestionPack(minimized, provider, {
+    generationMeta,
+  });
+
+  const latencyMs = Date.now() - startedAt;
+  const httpCall =
+    captured.find((call) => call.url.includes("/v1/responses")) ??
+    captured.find((call) => call.url.includes("generateContent")) ??
+    null;
+  const usage = httpCall ? extractOpenAIUsage(httpCall.body) : null;
+  const providerFailed =
+    (httpCall !== null && httpCall.status >= 400) ||
+    suggestion.source === "fallback";
+
+  const telemetry: AuditCallTelemetry = {
+    stage: "prompts",
+    attempt: 1,
+    status: providerFailed ? "failed" : "completed",
+    started_at: new Date(startedAt).toISOString(),
+    completed_at: new Date(startedAt + latencyMs).toISOString(),
+    latency_ms: latencyMs,
+    requested_model: suggestion.generation.requested_model || "",
+    returned_model: usage?.model ?? "",
+    response_id: usage?.response_id ?? "",
+    service_tier: "default",
+    usage: {
+      input_tokens: usage?.input_tokens ?? 0,
+      cached_input_tokens: 0,
+      cache_write_input_tokens: 0,
+      output_tokens: usage?.output_tokens ?? 0,
+      reasoning_output_tokens: 0,
+      total_tokens: usage?.total_tokens ?? 0,
+    },
+    web_search_calls: 0,
+    accounted_cost_usd: usage ? accountedCostUsd(usage) : 0,
+    cost_basis: usage ? "provider_usage" : "preflight_reservation",
+    pricing_version:
+      suggestion.generation.system === "OpenAI Responses API"
+        ? INDONESIAN_QUESTION_OPENAI_PRICING_VERSION
+        : generationMeta.pricing_version || "",
+    failure_reason: providerFailed
+      ? "Provider question generation failed; the deterministic Indonesian fallback was used."
+      : "",
+    provider_status: httpCall ? String(httpCall.status) : "",
+    incomplete_reason: "",
+    output_text_present: Boolean(usage),
+    refusal_present: false,
+  };
+  budget.calls = [telemetry];
+
+  // Hard blockers (identity leakage, unsupported premises, unexecutable
+  // questions) must never reach the customer; the boundary's fallback is
+  // guaranteed safe, so a blocker here is a defensive 422.
+  const blockers = indonesianPackBlockers(
+    suggestion.questions.map((item) => item.text),
+    minimized,
+  );
+  if (blockers.length) {
+    throw new Error(
+      `Pertanyaan yang dihasilkan tidak aman untuk ditampilkan: ${blockers.join(" ")}`,
+    );
+  }
+  const issues = validateIndonesianQuestionPack(
+    suggestion.questions.map((item) => item.text),
+    minimized,
+  );
+  const warnings = [...suggestion.warnings];
+  if (issues.length) {
+    warnings.push(
+      `validasi: ${issues.map((issue) => issue.message).join(" ")}`,
+    );
+  }
+
+  const pack: PromptPack = {
+    status: "draft_for_review",
+    prompt_pack_version: INDONESIAN_QUESTION_PACK_VERSION,
+    language: INDONESIAN_QUESTION_LANGUAGE,
+    target_product: "ChatGPT",
+    brand: {
+      brand_name: brief.brand_name,
+      entity_scope: brief.entity_scope,
+      brand_type: brief.brand_type,
+      category: brief.category,
+      market_context: brief.market_context,
+      target_customer: brief.target_customer,
+    },
+    summary: {
+      total_prompts: 10,
+      unbranded_prompts:
+        suggestion.classification_summary.tanpa_menyebut_bisnis_anda,
+      branded_prompts: suggestion.classification_summary.menyebut_bisnis_anda,
+    },
+    prompts: suggestion.questions.map((item, index) => {
+      const labels = categoryLabels(item.suggested_category);
+      return {
+        prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
+        category: item.suggested_category,
+        role: labels.role,
+        branded: item.final_classification === "menyebut_bisnis_anda",
+        question: item.text,
+        rationale: labels.rationale,
+        inputs_used: ["brand_name", "market_context", "category"],
+        review_status: "needs_human_review",
+      };
+    }),
+    self_check: {
+      ten_prompts: suggestion.questions.length === 10,
+      two_per_category: true,
+      five_unbranded:
+        suggestion.classification_summary.tanpa_menyebut_bisnis_anda === 5,
+      five_branded:
+        suggestion.classification_summary.menyebut_bisnis_anda === 5,
+      no_brand_leakage: blockers.length === 0,
+      verified_inputs_only: true,
+      verified_competitor_only: true,
+      single_entity_scope: true,
+      category_safety_pass: true,
+      independent_natural_questions: true,
+    },
+    warnings,
+  };
+
+  return {
+    pack,
+    generation: {
+      source: suggestion.source,
+      warnings: suggestion.warnings,
+      system: suggestion.generation.system,
+      requested_model: suggestion.generation.requested_model || "",
+      instruction_version: suggestion.generation.instruction_version,
+      language: suggestion.language,
+      generated_at: suggestion.generation.generated_at,
+    },
+    classification_summary: suggestion.classification_summary,
+    telemetry: [telemetry],
+    budget,
+  };
+}

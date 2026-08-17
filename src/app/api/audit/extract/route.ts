@@ -4,7 +4,7 @@ import {
   auditBudgetSchema,
   extractionRequestSchema,
 } from "@/lib/audit/types";
-import { extractBusinessDraft } from "@/lib/audit/provider";
+import { liveExtractBusinessDraft } from "@/lib/audit/provider";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const input = extractionRequestSchema
       .extend({ budget: auditBudgetSchema })
       .parse(await request.json());
-    return NextResponse.json(await extractBusinessDraft(input));
+    return NextResponse.json(await liveExtractBusinessDraft(input));
   } catch (error) {
     return NextResponse.json(
       {
