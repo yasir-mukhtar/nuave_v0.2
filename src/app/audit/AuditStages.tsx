@@ -32,6 +32,7 @@ import type {
   PromptPack,
 } from "@/lib/audit/types";
 import type { PromptRunStatus } from "@/lib/audit/stream";
+import { INDONESIAN_RUN_STATUS_LABELS } from "@/lib/audit/report-labels";
 import styles from "./audit.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
@@ -747,13 +748,19 @@ export function QuestionsStep({
   );
 }
 
+export type RunUnfinishedState = {
+  completed: number;
+  failedPromptIds: string[];
+  message: string;
+};
+
 export function RunStep({
   pack,
   statuses,
   observations,
   busy,
   interrupted,
-  onRerun,
+  runUnfinished,
   onRetryReport,
 }: {
   pack: PromptPack;
@@ -761,10 +768,12 @@ export function RunStep({
   observations: AuditObservation[];
   busy: Busy;
   interrupted: boolean;
-  onRerun: () => void;
+  runUnfinished: RunUnfinishedState | null;
   onRetryReport: () => void;
 }) {
-  const completed = observations.length;
+  const completed = observations.filter(
+    (item) => item.run_status === "completed",
+  ).length;
   const reporting = busy === "report";
   return (
     <section className={`${styles.workspace} ${styles.workspaceFocused}`}>
@@ -776,16 +785,38 @@ export function RunStep({
             ? "All observations are complete. Creating the report…"
             : "Collecting ten independent observations."
         }
-        description="This progress comes from live server responses. Failed observations remain in the evidence and are clearly labeled."
+        description="This progress comes from live server responses. Technical failures retry automatically up to two more times per question under the same locked method; completed observations are never rerun, and failed attempts remain in the evidence."
       />
-      {interrupted ? (
+      {runUnfinished ? (
+        <Alert status="danger">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>The audit could not be completed</Alert.Title>
+            <Alert.Description>
+              {runUnfinished.completed} of 10 questions were evaluated.{" "}
+              {runUnfinished.failedPromptIds.length} question
+              {runUnfinished.failedPromptIds.length === 1 ? "" : "s"} exhausted
+              automatic technical recovery and is marked Belum berhasil diuji
+              below. Nuave delivers ten tests and ten tests only, so no report
+              is created before 10/10 evaluable observations and no partial
+              report exists. Every completed observation and every attempt
+              remains preserved and is not rerun. Minta bantuan: founder-
+              assisted recovery may retry only the affected questions under the
+              locked method.
+            </Alert.Description>
+          </Alert.Content>
+        </Alert>
+      ) : interrupted ? (
         <Alert status="danger">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>The audit was interrupted</Alert.Title>
             <Alert.Description>
-              {completed} of 10 observations were saved. A disconnected server
-              session cannot be resumed.
+              The audit runs while this page stays open: the browser must remain
+              open during the run, and closing the tab stops it. {completed} of
+              10 observations were saved and are preserved in this session; they
+              are not rerun. This phase does not continue in the background, and
+              no report is created before 10/10 evaluable observations.
             </Alert.Description>
           </Alert.Content>
         </Alert>
@@ -816,7 +847,7 @@ export function RunStep({
                 ? "danger"
                 : status === "completed"
                   ? "success"
-                  : status === "running"
+                  : status === "running" || status === "retrying"
                     ? "accent"
                     : "default";
             return (
@@ -832,30 +863,15 @@ export function RunStep({
                   ) : null}
                 </div>
                 <Chip color={color} variant="soft" size="sm">
-                  {status === "running" ? <Spinner size="sm" /> : null}
-                  {status === "pending"
-                    ? "Waiting"
-                    : status === "running"
-                      ? "Running"
-                      : status === "failed"
-                        ? "Failed"
-                        : "Complete"}
+                  {status === "running" || status === "retrying" ? (
+                    <Spinner size="sm" />
+                  ) : null}
+                  {INDONESIAN_RUN_STATUS_LABELS[status]}
                 </Chip>
               </div>
             );
           })}
         </div>
-        {interrupted ? (
-          <div className={`${styles.actionRow} ${styles.runRecovery}`}>
-            <p>
-              Running again replaces the partial evidence with ten new
-              observations.
-            </p>
-            <Button variant="primary" onPress={onRerun}>
-              <IconRefresh /> Run all 10 again
-            </Button>
-          </div>
-        ) : null}
         {!busy && completed === 10 ? (
           <div className={`${styles.actionRow} ${styles.runRecovery}`}>
             <p>All observations are saved, but the report was not created.</p>

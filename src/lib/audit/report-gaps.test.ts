@@ -200,13 +200,30 @@ describe("structured result dimensions", () => {
     expect(reportContentSchema.safeParse(content).success).toBe(true);
   });
 
-  it("limits the structured report to three immediate priorities", () => {
+  it("accepts up to five immediate priorities (Spec 003 R-25)", () => {
     const content = goldenReportContent();
-    content.priorities.push({
-      ...content.priorities[2],
-      order: 4,
-      action: "A fourth synthetic action",
-    });
+    content.priorities.push(
+      { ...content.priorities[2], order: 4, action: "A fourth synthetic action" },
+      { ...content.priorities[2], order: 5, action: "A fifth synthetic action" },
+    );
+
+    expect(reportContentSchema.safeParse(content).success).toBe(true);
+  });
+
+  it("rejects more than five immediate priorities", () => {
+    const content = goldenReportContent();
+    content.priorities.push(
+      { ...content.priorities[2], order: 4, action: "A fourth synthetic action" },
+      { ...content.priorities[2], order: 5, action: "A fifth synthetic action" },
+      { ...content.priorities[2], order: 6, action: "A sixth synthetic action" },
+    );
+
+    expect(reportContentSchema.safeParse(content).success).toBe(false);
+  });
+
+  it("rejects a report with zero priorities", () => {
+    const content = goldenReportContent();
+    content.priorities = [];
 
     expect(reportContentSchema.safeParse(content).success).toBe(false);
   });

@@ -13,6 +13,32 @@ import { summarizeAuditTelemetry } from "./telemetry";
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
 export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v3";
 
+/**
+ * Versioned neutral observation instructions (Spec 003 R-14).
+ *
+ * The live observation path (OpenAI Responses API) sends the settled
+ * Indonesian instruction (`neutral-response-v1`, matching the frozen fixture's
+ * method record) and records the version on every observation. The legacy
+ * English instruction (`observation-instruction-en-v1`) stays available for
+ * the paths and tests that pin it; it is not used for live observations.
+ */
+export const OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN =
+  "observation-instruction-en-v1" as const;
+export const OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID =
+  "neutral-response-v1" as const;
+
+export const OBSERVATION_INSTRUCTION_VERSIONS = [
+  OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN,
+  OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
+] as const;
+
+export type ObservationInstructionVersion =
+  (typeof OBSERVATION_INSTRUCTION_VERSIONS)[number];
+
+/** The instruction the live observation path sends and records by default. */
+export const DEFAULT_OBSERVATION_INSTRUCTION_VERSION: ObservationInstructionVersion =
+  OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID;
+
 export type ReportCallProvenance = {
   requested_model: string;
   returned_model: string;

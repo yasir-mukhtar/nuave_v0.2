@@ -18,8 +18,12 @@ import {
   type Source,
 } from "./types";
 import {
+  DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
+  OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN,
+  OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
   REPORT_SYNTHESIS_PROMPT_VERSION,
   assembleReportContent,
+  type ObservationInstructionVersion,
 } from "./contracts";
 import { reportWritingInstructions } from "./report-language";
 import {
@@ -86,6 +90,37 @@ export function hashSafetyIdentifier(value: string) {
 
 function hostnameFromUrl(value: string) {
   return new URL(value).hostname.replace(/^www\./, "");
+}
+
+/**
+ * Versioned neutral observation instruction texts (Spec 003 R-14). The live
+ * observation request carries exactly one of these as its developer
+ * instruction, the exact locked question, and verified location context only
+ * when the question itself does not already carry it — never the business
+ * brief (R-15).
+ */
+export const OBSERVATION_INSTRUCTION_TEXTS: Record<
+  ObservationInstructionVersion,
+  string
+> = {
+  [OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN]: [
+    "Answer the user's question naturally in English as a standalone customer query.",
+    "Use live web search. Do not discuss this audit, prompt engineering, scoring, or Nuave.",
+    "Do not favor the audited brand. State uncertainty when public information is incomplete or conflicting.",
+  ].join("\n"),
+  [OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID]: [
+    "Jawab pertanyaan pengguna secara alami dalam Bahasa Indonesia.",
+    "Gunakan pencarian web.",
+    "Jangan membahas Nuave, audit, skor, metodologi, atau cara pertanyaan dibuat.",
+    "Jangan mengutamakan bisnis tertentu.",
+    "Jika informasi publik tidak lengkap atau berbeda, jelaskan ketidakpastiannya.",
+  ].join("\n"),
+};
+
+export function observationInstructionText(
+  version: ObservationInstructionVersion,
+) {
+  return OBSERVATION_INSTRUCTION_TEXTS[version];
 }
 
 export function structuredOutputOrThrow<T>(
@@ -335,11 +370,9 @@ export async function executeAuditPrompt(input: {
     input: [
       {
         role: "developer" as const,
-        content: [
-          "Answer the user's question naturally in English as a standalone customer query.",
-          "Use live web search. Do not discuss this audit, prompt engineering, scoring, or Nuave.",
-          "Do not favor the audited brand. State uncertainty when public information is incomplete or conflicting.",
-        ].join("\n"),
+        content: observationInstructionText(
+          DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
+        ),
       },
       { role: "user" as const, content: input.prompt.question },
     ],
@@ -359,6 +392,7 @@ export async function executeAuditPrompt(input: {
       category: input.prompt.category,
       branded: input.prompt.branded,
       question: input.prompt.question,
+      instruction_version: DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
       system: "OpenAI Responses API",
       requested_model: requestedModel,
       returned_model: response.model,
@@ -390,6 +424,7 @@ export async function executeAuditPrompt(input: {
       category: input.prompt.category,
       branded: input.prompt.branded,
       question: input.prompt.question,
+      instruction_version: DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
       system: "OpenAI Responses API",
       requested_model: requestedModel,
       returned_model: "",
@@ -452,7 +487,7 @@ export async function generateReportContent(
           "Use information confirmed, incomplete, or conflicting only when the answer assesses a public fact about the audited brand; otherwise use not_assessed.",
           "Use needs_confirmation when a supplied claim still needs verification. Use needs_correction only when the answers show a specific conflict or error. Use no_clear_issues only when no specific issue appears; it does not prove all public information is correct.",
           "Every finding and priority must cite one or more supplied prompt IDs. Every action needs an observable completion check.",
-          "Return no more than three priorities. Each priority must address a supplied failed, absent, not-recommended discovery, incomplete, conflicting, or competitor-preferred result.",
+          "Return no more than five priorities. Each priority must address a supplied failed, absent, not-recommended discovery, incomplete, conflicting, or competitor-preferred result.",
           "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
           "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
           "Return exactly one assessment for each of the ten prompt IDs.",

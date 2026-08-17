@@ -166,4 +166,37 @@ describe("validated report pipeline", () => {
     );
     expect(generate).toHaveBeenCalledTimes(2);
   });
+
+  it("keeps evidence-protected fields unchanged across a language-only retry (Spec 003 R-28)", async () => {
+    const longDraft = goldenReportContent();
+    longDraft.conclusion = `${Array.from({ length: 61 }, () => "clear").join(" ")}.`;
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce(result(longDraft, "response-initial"))
+      .mockResolvedValueOnce(result(goldenReportContent(), "response-retry"));
+
+    const report = await createValidatedAuditReport(
+      input,
+      generate as unknown as ReportGenerator,
+    );
+
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(report.provenance.language_retry_performed).toBe(true);
+    // Answer excerpts, attached sources, evidence prompt IDs, and
+    // classifications are identical after a retry that only rewrote language.
+    expect(report.details.map((detail) => detail.answer_excerpt)).toEqual(
+      goldenObservations.map((observation) => observation.raw_answer),
+    );
+    expect(report.details.map((detail) => detail.source_urls)).toEqual(
+      goldenObservations.map((observation) =>
+        observation.sources.map((source) => source.url),
+      ),
+    );
+    expect(report.priorities.map((priority) => priority.evidence_prompt_ids)).toEqual(
+      goldenReportContent().priorities.map((priority) => priority.evidence_prompt_ids),
+    );
+    expect(report.details.map((detail) => detail.recommendation)).toEqual(
+      goldenReportContent().details.map((detail) => detail.recommendation),
+    );
+  });
 });

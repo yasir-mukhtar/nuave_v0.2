@@ -12,11 +12,14 @@ import {
 } from "@/lib/fixture-journey/state";
 import {
   fixtureJourneyContext,
+  provenanceLabelText,
   questionClassExplanations,
 } from "@/lib/fixture-journey/adapter";
 import {
   FIXTURE_PROCESSING_WORK_STAGE_COUNT,
   fixtureProcessingStages,
+  fixtureRunStatusLabelOrder,
+  fixtureRunStatusLabels,
   processingStageDurationMs,
 } from "@/lib/fixture-journey/processing";
 import {
@@ -25,34 +28,32 @@ import {
   constructFixtureReport,
 } from "@/lib/fixture-journey/report";
 import {
-  GOLDEN_REPORT_SECTIONS,
-  goldenBrief,
-  goldenObservations,
-} from "@/lib/audit/fixtures/report-golden";
+  kopiTamanSenjaBrief,
+  kopiTamanSenjaObservations,
+} from "@/lib/fixture-journey/adapter";
 import type { AuditReport } from "@/lib/audit/types";
-import ReportView from "../ReportView";
+import FixtureReportView from "./FixtureReportView";
 import styles from "./fixture.module.css";
 
-const { business, contact, questions, summary } = fixtureJourneyContext;
+const { business, offer, questions } = fixtureJourneyContext;
 
 type HeadingRef = React.RefObject<HTMLHeadingElement | null>;
 
 /**
  * Persistent fixture-preview disclosure. Rendered on every journey screen so
  * the fictional business, simulated processing, and no-payment facts are
- * visible without opening any secondary help.
+ * visible without opening any secondary help (R-04, AC-13).
  */
 function PreviewNotice() {
   return (
     <aside
       className={styles.previewNotice}
-      aria-label="Fictional preview notice"
+      aria-label="Pemberitahuan pratinjau fiktif"
     >
-      <strong>Fictional preview.</strong>
+      <strong>Pratinjau fiktif.</strong>
       <span>
-        {business.name} and its results are fictional. The AI processing is
-        simulated, no payment is taken, and this is not a delivered customer
-        audit.
+        {business.name} dan hasilnya fiktif. Proses AI disimulasikan. Tidak ada
+        pembayaran yang diproses. Ini bukan audit pelanggan yang dikirimkan.
       </span>
     </aside>
   );
@@ -60,120 +61,427 @@ function PreviewNotice() {
 
 /**
  * The same disclosure rendered inside the report article so printed and
- * saved PDF output retains it.
+ * saved PDF output retains it (R-12, AC-12).
  */
 function ReportPreviewNotice() {
   return (
     <div
       className={styles.reportPreviewNotice}
       role="note"
-      aria-label="Fictional preview notice"
+      aria-label="Pemberitahuan pratinjau fiktif"
     >
-      <strong>Fictional preview.</strong>
+      <strong>Pratinjau fiktif.</strong>
       <span>
-        {business.name} and its results are fictional, the AI processing is
-        simulated, no payment is taken, and this is not a delivered customer
-        audit. This example report exists only in this tab&apos;s session.
+        {business.name} dan hasilnya fiktif. Proses AI disimulasikan. Tidak ada
+        pembayaran yang diproses. Ini bukan audit pelanggan yang dikirimkan.
+        Laporan contoh ini hanya ada di sesi tab ini.
       </span>
     </div>
   );
 }
 
-function DraftScreen({
+function ProvenanceTag({ label }: { label: string }) {
+  return <span className={styles.provenanceTag}>{label}</span>;
+}
+
+/**
+ * The explicit run confirmation dialog (R-22: the "Mulai audit sekarang"
+ * confirmation opened by "Jalankan audit"). Shared by the questions screen
+ * and the defensive run-screen pre-start branch.
+ */
+function RunStartDialog({
+  open,
+  onClose,
+  onConfirm,
+  returnRef,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  returnRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  const dialogHeadingRef = useRef<HTMLHeadingElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      const timer = window.setTimeout(
+        () => dialogHeadingRef.current?.focus(),
+        0,
+      );
+      return () => window.clearTimeout(timer);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className={styles.dialogOverlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="run-dialog-heading"
+    >
+      <div className={styles.dialog}>
+        <h2 id="run-dialog-heading" tabIndex={-1} ref={dialogHeadingRef}>
+          Mulai audit sekarang?
+        </h2>
+        <p>
+          Nuave akan menjalankan 10 pertanyaan ini satu per satu. Setelah
+          dimulai, informasi bisnis dan pertanyaan tidak dapat diubah.
+        </p>
+        <p className={styles.note}>
+          Ini adalah simulasi. Tidak ada penyedia atau layanan yang dihubungkan,
+          dan tidak ada audit nyata yang dijalankan.
+        </p>
+        <div className={styles.dialogActions}>
+          <button
+            type="button"
+            className={styles.secondaryAction}
+            onClick={() => {
+              onClose();
+              window.setTimeout(() => returnRef.current?.focus(), 0);
+            }}
+          >
+            Kembali periksa
+          </button>
+          <button
+            type="button"
+            className={styles.primaryAction}
+            onClick={onConfirm}
+          >
+            Mulai audit sekarang
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 01 — Order Preview (fixture intake + priced offer)
+// ---------------------------------------------------------------------------
+
+function PreviewScreen({
   headingRef,
-  onStart,
+  offerRevealed,
+  onRevealOffer,
+  onPay,
+  offerRef,
 }: {
   headingRef: HeadingRef;
-  onStart: () => void;
+  offerRevealed: boolean;
+  onRevealOffer: () => void;
+  onPay: () => void;
+  offerRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <section aria-labelledby="fixture-intake-heading">
-      <p className={styles.eyebrow}>Example intake · Step 1 of 6</p>
+    <section aria-labelledby="fixture-preview-heading">
+      <p className={styles.eyebrow}>01 Pratinjau pesanan · Langkah 1 dari 6</p>
       <h1
-        id="fixture-intake-heading"
+        id="fixture-preview-heading"
         className={styles.heading}
         tabIndex={-1}
         ref={headingRef}
       >
-        Start with the fixed example business
+        Pratinjau pesanan untuk {business.name}
       </h1>
       <p className={styles.lede}>
-        In the real journey, a customer would enter their official website,
-        business name, location or service area, a delivery email, and consent
-        to use their public sources. This preview uses one fixed fictional
-        business instead, so nothing is submitted and no data is collected.
+        Pratinjau ini menampilkan satu pesanan contoh untuk satu AI Visibility
+        Report. Tidak ada hasil, temuan, atau skor audit yang ditampilkan
+        sebelum pembayaran. Bisnis dan seluruh datanya fiktif.
       </p>
 
       <section
         className={styles.card}
-        aria-labelledby="example-business-heading"
+        aria-labelledby="preview-business-heading"
       >
-        <h2 id="example-business-heading" className={styles.cardTitle}>
-          The example business
+        <h2 id="preview-business-heading" className={styles.cardTitle}>
+          Bisnis yang akan diaudit
         </h2>
         <dl className={styles.factList}>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Business name</dt>
+            <dt className={styles.factLabel}>Nama bisnis</dt>
             <dd className={styles.factValue}>{business.name}</dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Business scope</dt>
-            <dd className={styles.factValue}>{business.entityScope}</dd>
+            <dt className={styles.factLabel}>
+              Cabang, kota, atau area layanan
+            </dt>
+            <dd className={styles.factValue}>{business.scope}</dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Category</dt>
+            <dt className={styles.factLabel}>Kategori</dt>
             <dd className={styles.factValue}>{business.category}</dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Market or location</dt>
-            <dd className={styles.factValue}>{business.marketContext}</dd>
+            <dt className={styles.factLabel}>Deskripsi singkat</dt>
+            <dd className={styles.factValue}>{business.shortDescription}</dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Official website</dt>
+            <dt className={styles.factLabel}>Sumber resmi</dt>
             <dd className={styles.factValue}>
-              <code>{contact.website}</code>
-            </dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Example contact</dt>
-            <dd className={styles.factValue}>
-              <code>{contact.email}</code>
-              <span className={styles.factSub}>
-                Fictional contact context on the reserved .example domain.
-              </span>
+              <ul className={styles.sourceList}>
+                {business.officialSources.map((source) => (
+                  <li key={source.url}>
+                    <code>{source.url}</code>
+                  </li>
+                ))}
+              </ul>
             </dd>
           </div>
         </dl>
       </section>
 
-      <section className={styles.card} aria-labelledby="future-intake-heading">
-        <h2 id="future-intake-heading" className={styles.cardTitle}>
-          What a real intake will collect
+      <section className={styles.card} aria-labelledby="preview-scope-heading">
+        <h2 id="preview-scope-heading" className={styles.cardTitle}>
+          Yang akan diperiksa
         </h2>
         <p className={styles.note}>
-          Official website or authoritative public profile · business name ·
-          city, branch, or service area · delivery email · consent to use the
-          submitted public sources. None of these are accepted in this preview.
+          Satu audit menguji 10 pertanyaan ala calon pelanggan:{" "}
+          {questions.counts.tanpa_menyebut_bisnis_anda} Tanpa menyebut bisnis
+          Anda dan {questions.counts.menyebut_bisnis_anda} Menyebut bisnis Anda,
+          sesuai contoh yang dibekukan.
+        </p>
+        <p className={styles.note}>
+          Pada contoh ini, pertanyaan disusun melalui{" "}
+          {questions.generation.system} (model {questions.generation.model}) dan
+          diuji melalui OpenAI Responses API dengan model gpt-5.6-luna serta
+          pencarian web. Semua nama penyedia dan model tercatat di berkas contoh
+          dan tidak dijalankan secara langsung.
         </p>
       </section>
 
-      <div className={styles.actionArea}>
-        <div className={styles.actionsRow}>
-          <p className={styles.actionHint}>
-            No arbitrary URL, business name, or email can be entered here.
-          </p>
-          <button
-            type="button"
-            className={styles.primaryAction}
-            onClick={onStart}
-          >
-            Start the example preview
-          </button>
+      <section className={styles.card} aria-labelledby="preview-report-heading">
+        <h2 id="preview-report-heading" className={styles.cardTitle}>
+          Isi laporan
+        </h2>
+        <p className={styles.note}>
+          Satu AI Visibility Report berisi jawaban dan kutipan persis dari
+          pengujian, analisis, bisnis lain yang disebut, temuan, saran yang
+          dapat dilakukan, dan cara audit bekerja. Laporan dapat disimpan
+          sebagai PDF melalui aksi Download PDF.
+        </p>
+      </section>
+
+      <section className={styles.card} aria-labelledby="preview-limits-heading">
+        <h2 id="preview-limits-heading" className={styles.cardTitle}>
+          Batasan laporan
+        </h2>
+        <p className={styles.note}>
+          Laporan adalah cuplikan pada waktu tertentu dan dapat berubah
+          berdasarkan model, tanggal, lokasi, bahasa, dan percakapan. Laporan
+          bukan jaminan hasil. Laporan contoh hanya ada di sesi tab ini dan
+          tidak dikirimkan kepada siapa pun.
+        </p>
+      </section>
+
+      {!offerRevealed ? (
+        <div className={styles.actionArea}>
+          <div className={styles.actionsRow}>
+            <p className={styles.actionHint}>
+              Pratinjau ini memakai satu bisnis contoh fiktif. Tidak ada data
+              bisnis nyata yang dimasukkan atau dikumpulkan.
+            </p>
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={onRevealOffer}
+            >
+              Cek bisnis saya di AI
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {offerRevealed ? (
+        <div ref={offerRef} className={styles.offerPanel}>
+          <h2 className={styles.offerHeading}>Ringkasan pesanan</h2>
+          <dl className={styles.factList}>
+            <div className={styles.factRow}>
+              <dt className={styles.factLabel}>Audit</dt>
+              <dd className={styles.factValue}>
+                Satu AI Visibility Report untuk {business.name} ·{" "}
+                {business.scope}
+              </dd>
+            </div>
+            <div className={styles.factRow}>
+              <dt className={styles.factLabel}>Ruang lingkup</dt>
+              <dd className={styles.factValue}>
+                {offer.scopeLabel} dengan 10 pertanyaan
+              </dd>
+            </div>
+            <div className={styles.factRow}>
+              <dt className={styles.factLabel}>Total</dt>
+              <dd className={styles.factValue}>
+                <strong>{offer.totalLabel}</strong>
+                <span className={styles.factSub}>
+                  Tidak ada pajak atau biaya tambahan.
+                </span>
+              </dd>
+            </div>
+            <div className={styles.factRow}>
+              <dt className={styles.factLabel}>Penawaran</dt>
+              <dd className={styles.factValue}>
+                Berlaku {offer.quoteDays} hari selama belum dibayar.
+              </dd>
+            </div>
+          </dl>
+          <div className={styles.actionArea}>
+            <div className={styles.actionsRow}>
+              <p className={styles.actionHint}>
+                Tombol ini membuka simulasi pembayaran. Tidak ada tagihan nyata
+                yang dibuat.
+              </p>
+              <button
+                type="button"
+                className={styles.primaryAction}
+                onClick={onPay}
+              >
+                Bayar {offer.totalLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
+
+// ---------------------------------------------------------------------------
+// 02 — Payment (simulated)
+// ---------------------------------------------------------------------------
+
+function PaymentScreen({
+  headingRef,
+  simulatedPaid,
+  onSimulatePayment,
+  onContinue,
+  onBack,
+}: {
+  headingRef: HeadingRef;
+  simulatedPaid: boolean;
+  onSimulatePayment: () => void;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <section aria-labelledby="fixture-payment-heading">
+      <div className={styles.backRow}>
+        <button type="button" className={styles.ghostAction} onClick={onBack}>
+          ← Kembali ke pratinjau pesanan
+        </button>
+      </div>
+      <p className={styles.eyebrow}>
+        02 Pembayaran (simulasi) · Langkah 2 dari 6
+      </p>
+      <h1
+        id="fixture-payment-heading"
+        className={styles.heading}
+        tabIndex={-1}
+        ref={headingRef}
+      >
+        Simulasi pembayaran
+      </h1>
+
+      <div
+        className={styles.checkoutPanel}
+        aria-labelledby="payment-total-heading"
+      >
+        <h2 id="payment-total-heading" className={styles.checkoutHeading}>
+          Pesanan contoh
+        </h2>
+        <dl className={styles.factList}>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>Bisnis</dt>
+            <dd className={styles.factValue}>
+              {business.name} · {business.scope}
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>Audit</dt>
+            <dd className={styles.factValue}>
+              Satu AI Visibility Report dengan 10 pertanyaan
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>Total</dt>
+            <dd className={styles.factValue}>
+              <strong>{offer.totalLabel}</strong>
+              <span className={styles.factSub}>
+                Tidak ada pajak atau biaya tambahan.
+              </span>
+            </dd>
+          </div>
+        </dl>
+        <p className={styles.checkoutPhrase}>
+          Simulasi pembayaran — tidak ada tagihan
+        </p>
+        <p className={styles.checkoutExplanation}>
+          Tidak ada kartu, e-wallet, transfer bank, atau metode pembayaran lain
+          di pratinjau ini. Tidak ada widget penyedia pembayaran, struk, atau
+          nomor transaksi.
+        </p>
+      </div>
+
+      {!simulatedPaid ? (
+        <div className={styles.actionArea}>
+          <div className={styles.actionsRow}>
+            <p className={styles.actionHint}>
+              Menyelesaikan langkah ini hanya menandai pembayaran sebagai
+              simulasi di sesi tab ini. Tidak ada yang ditagih dan tidak ada
+              yang dibuat.
+            </p>
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={onSimulatePayment}
+            >
+              Selesaikan simulasi pembayaran
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className={styles.approvedPanel} role="status">
+            <strong>Pembayaran simulasi selesai. Tidak ada tagihan.</strong>
+            <span>
+              Tidak ada biaya, struk, pesanan, atau hak audit yang dibuat.
+              Status ini hanya tersimpan di sesi tab ini.
+            </span>
+          </div>
+          <div className={styles.actionArea}>
+            <div className={styles.actionsRow}>
+              <p className={styles.actionHint}>
+                Pembayaran ini tidak memulai audit. Audit hanya dimulai lewat
+                aksi Jalankan audit di langkah 4.
+              </p>
+              <button
+                type="button"
+                className={styles.primaryAction}
+                onClick={onContinue}
+              >
+                Lanjut ke fakta bisnis
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 03 — Business Facts (read-only fixture facts, explicit confirmation)
+// ---------------------------------------------------------------------------
 
 function FactsScreen({
   headingRef,
@@ -186,32 +494,27 @@ function FactsScreen({
   onContinue: (checked: boolean) => void;
   onBack: () => void;
 }) {
-  // Local UI state only: the box starts checked when the facts were already
-  // confirmed earlier in this preview (backward navigation keeps the
-  // confirmation). The persisted confirmation itself lives in the journey
-  // state, not here.
   const [checked, setChecked] = useState(factsConfirmed);
 
   return (
     <section aria-labelledby="fixture-facts-heading">
       <div className={styles.backRow}>
         <button type="button" className={styles.ghostAction} onClick={onBack}>
-          ← Back to example intake
+          ← Kembali ke pembayaran
         </button>
       </div>
-      <p className={styles.eyebrow}>Facts ready · Step 2 of 6</p>
+      <p className={styles.eyebrow}>03 Fakta bisnis · Langkah 3 dari 6</p>
       <h1
         id="fixture-facts-heading"
         className={styles.heading}
         tabIndex={-1}
         ref={headingRef}
       >
-        Review the example facts before continuing
+        Periksa informasi bisnis Anda
       </h1>
       <p className={styles.lede}>
-        These facts come from the fictional fixture and are read-only in this
-        preview. In the real journey, the customer would confirm or correct them
-        before the audit runs.
+        Kami menyiapkan informasi ini dari sumber publik. Pada pratinjau ini,
+        fakta hanya dapat dibaca dan tidak dapat diubah.
       </p>
 
       <section
@@ -219,66 +522,134 @@ function FactsScreen({
         aria-labelledby="fixture-facts-list-heading"
       >
         <h2 id="fixture-facts-list-heading" className={styles.cardTitle}>
-          {business.name} — fixture facts
+          Bisnis yang akan diaudit
         </h2>
         <dl className={styles.factList}>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Business name</dt>
-            <dd className={styles.factValue}>{business.name}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Exact business scope</dt>
-            <dd className={styles.factValue}>{business.entityScope}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Category</dt>
-            <dd className={styles.factValue}>{business.category}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Target customer</dt>
-            <dd className={styles.factValue}>{business.targetCustomer}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Priority service</dt>
-            <dd className={styles.factValue}>{business.priorityOffering}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Market or location</dt>
-            <dd className={styles.factValue}>{business.marketContext}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Official source</dt>
+            <dt className={styles.factLabel}>Nama bisnis</dt>
             <dd className={styles.factValue}>
-              <code>{contact.website}</code>
+              {business.name}{" "}
+              <ProvenanceTag label={provenanceLabelText.found_website} />
             </dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Known name variant</dt>
+            <dt className={styles.factLabel}>
+              Cabang, kota, atau area layanan
+            </dt>
             <dd className={styles.factValue}>
-              {business.nameVariants.length
-                ? business.nameVariants.join(", ")
-                : "None listed"}
+              {business.scope}{" "}
+              <ProvenanceTag label={provenanceLabelText.needs_review} />
             </dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Verified competitor</dt>
+            <dt className={styles.factLabel}>Kategori bisnis</dt>
             <dd className={styles.factValue}>
-              {business.competitor.name} ({business.competitor.scope})
+              {business.category}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
               <span className={styles.factSub}>
-                Source: <code>{business.competitor.sourceUrl}</code>
+                Saran lain: {business.categorySuggestions.join(", ")}
               </span>
             </dd>
           </div>
           <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Accuracy question</dt>
+            <dt className={styles.factLabel}>Deskripsi singkat</dt>
             <dd className={styles.factValue}>
-              {business.accuracyQuestions.length
-                ? business.accuracyQuestions.join(" · ")
-                : "None listed"}
+              {business.shortDescription}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>Produk atau layanan utama</dt>
+            <dd className={styles.factValue}>
+              {business.productsServices.map((item) => item.value).join(", ")}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>
+              Siapa yang biasanya mencari bisnis Anda?
+            </dt>
+            <dd className={styles.factValue}>
+              {business.customerContext.who}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>
+              Apa yang biasanya mereka butuhkan?
+            </dt>
+            <dd className={styles.factValue}>
+              {business.customerContext.needs}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>
+              Apa yang biasanya mereka pertimbangkan?
+            </dt>
+            <dd className={styles.factValue}>
+              {business.customerContext.considerations}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
+            </dd>
+          </div>
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>
+              Apa yang membuat bisnis Anda berbeda?
+            </dt>
+            <dd className={styles.factValue}>
+              {business.differentiator?.value ?? ""}{" "}
+              <ProvenanceTag label={provenanceLabelText.suggestion_nuave} />
+            </dd>
+          </div>
+          {business.comparisonBusiness ? (
+            <div className={styles.factRow}>
+              <dt className={styles.factLabel}>Bisnis pembanding</dt>
+              <dd className={styles.factValue}>
+                {business.comparisonBusiness.name} ·{" "}
+                {business.comparisonBusiness.category} ·{" "}
+                {business.comparisonBusiness.scope}
+                <span className={styles.factSub}>
+                  {business.comparisonBusiness.reason} Sumber:{" "}
+                  <code>{business.comparisonBusiness.source_url}</code>
+                </span>
+              </dd>
+            </div>
+          ) : null}
+          <div className={styles.factRow}>
+            <dt className={styles.factLabel}>Sumber resmi</dt>
+            <dd className={styles.factValue}>
+              <ul className={styles.sourceList}>
+                {business.officialSources.map((source) => (
+                  <li key={source.url}>
+                    <code>{source.url}</code> ·{" "}
+                    {source.type === "website"
+                      ? "Website"
+                      : source.type === "google_maps"
+                        ? "Simulasi Google Maps"
+                        : "Simulasi Instagram"}
+                  </li>
+                ))}
+              </ul>
             </dd>
           </div>
         </dl>
       </section>
+
+      {business.warnings.length ? (
+        <section
+          className={styles.warningPanel}
+          aria-labelledby="facts-warning-heading"
+        >
+          <h2 id="facts-warning-heading" className={styles.warningHeading}>
+            Kami menemukan informasi yang berbeda
+          </h2>
+          {business.warnings.map((warning) => (
+            <p key={`${warning.kind}-${warning.field}`} className={styles.note}>
+              {warning.message}
+            </p>
+          ))}
+        </section>
+      ) : null}
 
       <div className={styles.actionArea}>
         <label className={styles.confirmRow}>
@@ -287,41 +658,58 @@ function FactsScreen({
             checked={checked}
             onChange={(event) => setChecked(event.target.checked)}
           />
-          <span>I have reviewed the example facts shown above.</span>
+          <span>
+            Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan
+            dalam pertanyaan audit.
+          </span>
         </label>
         <div className={styles.actionsRow}>
           <p className={styles.actionHint}>
-            Facts are read-only in this preview. Confirming them locks the
-            example business for the ten questions that follow.
+            Anda masih dapat memeriksa pertanyaan di langkah berikutnya sebelum
+            audit dijalankan. Fakta bersifat hanya-baca pada pratinjau ini.
           </p>
           <button
             type="button"
             className={styles.primaryAction}
             onClick={() => onContinue(checked)}
           >
-            Continue to the ten questions
+            Buat pertanyaan audit
           </button>
         </div>
       </div>
       {factsConfirmed ? (
         <p className={styles.note}>
-          ✓ Example facts confirmed earlier in this preview.
+          ✓ Fakta contoh sudah dikonfirmasi sebelumnya di pratinjau ini.
         </p>
       ) : null}
     </section>
   );
 }
 
+// ---------------------------------------------------------------------------
+// 04 — Questions (frozen ten-question pack, explicit approval, run start)
+// ---------------------------------------------------------------------------
+
 function QuestionsScreen({
   headingRef,
   questionsApproved,
   onApprove,
+  onOpenRunDialog,
+  onCloseRunDialog,
+  runDialogOpen,
+  onConfirmRun,
   onBack,
+  dialogReturnRef,
 }: {
   headingRef: HeadingRef;
   questionsApproved: boolean;
   onApprove: (checked: boolean) => void;
+  onOpenRunDialog: () => void;
+  onCloseRunDialog: () => void;
+  runDialogOpen: boolean;
+  onConfirmRun: () => void;
   onBack: () => void;
+  dialogReturnRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   const [checked, setChecked] = useState(false);
 
@@ -329,63 +717,62 @@ function QuestionsScreen({
     <section aria-labelledby="fixture-questions-heading">
       <div className={styles.backRow}>
         <button type="button" className={styles.ghostAction} onClick={onBack}>
-          ← Back to example facts
+          ← Kembali ke fakta bisnis
         </button>
       </div>
-      <p className={styles.eyebrow}>Questions ready · Step 3 of 6</p>
+      <p className={styles.eyebrow}>04 Pertanyaan · Langkah 4 dari 6</p>
       <h1
         id="fixture-questions-heading"
         className={styles.heading}
         tabIndex={-1}
         ref={headingRef}
       >
-        Review the ten example questions
+        Periksa pertanyaan audit
       </h1>
       <p className={styles.lede}>
-        These are the fictional fixture&apos;s ten questions in their original
-        order. In the real journey, the customer would review and approve the
-        pack before the audit runs. The questions are read-only in this preview.
+        Nuave menyiapkan 10 pertanyaan sebagai titik awal. Pada pratinjau ini,
+        pertanyaan hanya dapat dibaca dan tidak dapat diubah.
+      </p>
+      <p className={styles.lede}>
+        <strong>Audit belum dimulai.</strong>
       </p>
 
       <div className={styles.classCards}>
         <section className={styles.classCard}>
-          <h2>{questionClassExplanations.unbranded.label} · 5</h2>
+          <h2>
+            {questionClassExplanations.unbranded.label} ·{" "}
+            {questions.counts.tanpa_menyebut_bisnis_anda}
+          </h2>
           <p>{questionClassExplanations.unbranded.detail}</p>
         </section>
         <section className={styles.classCard}>
-          <h2>{questionClassExplanations.branded.label} · 5</h2>
+          <h2>
+            {questionClassExplanations.branded.label} ·{" "}
+            {questions.counts.menyebut_bisnis_anda}
+          </h2>
           <p>{questionClassExplanations.branded.detail}</p>
         </section>
       </div>
 
       <ol className={styles.questionList}>
-        {questions.all.map((prompt, index) => (
-          <li key={prompt.prompt_id} className={styles.questionItem}>
+        {questions.all.map((question) => (
+          <li key={question.order} className={styles.questionItem}>
             <span className={styles.questionNumber} aria-hidden="true">
-              {index + 1}
+              {question.order}
             </span>
             <div className={styles.questionBody}>
-              <p className={styles.questionText}>{prompt.question}</p>
+              <p className={styles.questionText}>{question.text}</p>
               <span className={styles.questionChip}>
-                {prompt.branded
-                  ? "Named business — with the business name"
-                  : "Discovery — without the business name"}
+                {question.final_classification === "menyebut_bisnis_anda"
+                  ? "Menyebut bisnis Anda"
+                  : "Tanpa menyebut bisnis Anda"}
               </span>
             </div>
           </li>
         ))}
       </ol>
 
-      {questionsApproved ? (
-        <div className={styles.approvedPanel} role="status">
-          <strong>Pack approved.</strong>
-          <span>
-            The ten example questions are now locked for the simulated run. The
-            scope summary and simulated checkout come next; nothing has been
-            processed and no payment is involved.
-          </span>
-        </div>
-      ) : (
+      {!questionsApproved ? (
         <div className={styles.actionArea}>
           <label className={styles.confirmRow}>
             <input
@@ -393,273 +780,177 @@ function QuestionsScreen({
               checked={checked}
               onChange={(event) => setChecked(event.target.checked)}
             />
-            <span>I approve these ten questions for the simulated run.</span>
+            <span>Saya menyetujui sepuluh pertanyaan ini untuk audit.</span>
           </label>
           <div className={styles.actionsRow}>
             <p className={styles.actionHint}>
-              Approving locks the pack for the simulated run. The questions stay
-              exactly as shown above.
+              Menyetujui mengunci paket pertanyaan untuk simulasi audit.
+              Pertanyaan tetap persis seperti yang ditampilkan di atas.
             </p>
             <button
               type="button"
               className={styles.primaryAction}
               onClick={() => onApprove(checked)}
             >
-              Approve the question pack
+              Setujui pertanyaan
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.runReadyPanel}>
+          <strong>10 pertanyaan siap dijalankan</strong>
+          <span>
+            Setelah audit dimulai, informasi bisnis dan pertanyaan tidak dapat
+            diubah.
+          </span>
+          <div className={styles.actionsRow}>
+            <p className={styles.actionHint}>
+              Audit hanya dimulai setelah Anda mengonfirmasi melalui dialog
+              Mulai audit sekarang.
+            </p>
+            <button
+              type="button"
+              ref={dialogReturnRef}
+              className={styles.primaryAction}
+              onClick={onOpenRunDialog}
+            >
+              Jalankan audit
             </button>
           </div>
         </div>
       )}
+
+      {runDialogOpen ? (
+        <RunStartDialog
+          open={runDialogOpen}
+          onClose={onCloseRunDialog}
+          onConfirm={onConfirmRun}
+          returnRef={dialogReturnRef}
+        />
+      ) : null}
     </section>
   );
 }
 
-function SummaryScreen({
+// ---------------------------------------------------------------------------
+// 05 — Audit Run (explicit run action + deterministic simulated processing)
+// ---------------------------------------------------------------------------
+
+function RunScreen({
   headingRef,
-  checkoutComplete,
-  onSimulatePayment,
-  onContinueAfterPayment,
-  onBack,
-}: {
-  headingRef: HeadingRef;
-  checkoutComplete: boolean;
-  onSimulatePayment: () => void;
-  onContinueAfterPayment: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <section aria-labelledby="fixture-summary-heading">
-      <div className={styles.backRow}>
-        <button type="button" className={styles.ghostAction} onClick={onBack}>
-          ← Back to the ten questions
-        </button>
-      </div>
-      <p className={styles.eyebrow}>Scope review · Step 4 of 6</p>
-      <h1
-        id="fixture-summary-heading"
-        className={styles.heading}
-        tabIndex={-1}
-        ref={headingRef}
-      >
-        Review the example scope
-      </h1>
-      <p className={styles.lede}>
-        This summary repeats exactly what the preview locked in: the fictional
-        business, the ten approved questions, and what the example run would do.
-        Nothing here is a real order.
-      </p>
-
-      <section className={styles.card} aria-labelledby="order-summary-heading">
-        <h2 id="order-summary-heading" className={styles.cardTitle}>
-          Example scope
-        </h2>
-        <dl className={styles.factList}>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Business</dt>
-            <dd className={styles.factValue}>{business.entityScope}</dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Questions</dt>
-            <dd className={styles.factValue}>
-              {summary.questionCount} approved questions —{" "}
-              {questions.unbranded.length} discovery and{" "}
-              {questions.branded.length} named-business
-            </dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Execution surface</dt>
-            <dd className={styles.factValue}>
-              The {summary.questionCount} fixture questions, run one at a time
-              through the {summary.executionSurface.system} surface recorded in
-              the golden fixture, with fictional model names (
-              {summary.executionSurface.models.join(", ")}) and responses.
-              Nothing executes live.
-            </dd>
-          </div>
-          <div className={styles.factRow}>
-            <dt className={styles.factLabel}>Example report</dt>
-            <dd className={styles.factValue}>
-              One five-section example report:{" "}
-              {GOLDEN_REPORT_SECTIONS.join(", ")}. It keeps the fixture&apos;s
-              exact evidence and one failed test.
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className={styles.card} aria-labelledby="limitation-heading">
-        <h2 id="limitation-heading" className={styles.cardTitle}>
-          Preview limitation
-        </h2>
-        <p className={styles.note}>
-          The example report is not a real audit result, is not private, and is
-          not hosted. It exists only in this browser tab&apos;s session and is
-          not delivered to anyone. This preview makes no delivery, privacy,
-          remedy, or commercial promise.
-        </p>
-      </section>
-
-      <div className={styles.checkoutPanel} aria-labelledby="checkout-heading">
-        <h2 id="checkout-heading" className={styles.checkoutHeading}>
-          Simulated checkout
-        </h2>
-        <p className={styles.checkoutPhrase}>
-          Simulasi pembayaran — tidak ada tagihan.
-        </p>
-        <p className={styles.checkoutExplanation}>
-          Simulated payment — no charge. No card, no amount, no receipt, and no
-          real order are involved. This preview shows no price.
-        </p>
-      </div>
-
-      <div className={styles.actionArea}>
-        {checkoutComplete ? (
-          <>
-            <p className={styles.note}>
-              ✓ Simulated payment completed earlier in this preview. No charge
-              was made.
-            </p>
-            <div className={styles.actionsRow}>
-              <p className={styles.actionHint}>
-                The simulated checkout is already done; continue to the
-                simulated run.
-              </p>
-              <button
-                type="button"
-                className={styles.primaryAction}
-                onClick={onContinueAfterPayment}
-              >
-                Continue to the simulated run
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className={styles.actionsRow}>
-            <p className={styles.actionHint}>
-              Completing this step only marks the checkout as simulated in this
-              tab&apos;s session. Nothing is charged and nothing is created.
-            </p>
-            <button
-              type="button"
-              className={styles.primaryAction}
-              onClick={onSimulatePayment}
-            >
-              Simulate payment — no charge
-            </button>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function PaidScreen({
-  headingRef,
-  onStartProcessing,
-  onBack,
-}: {
-  headingRef: HeadingRef;
-  onStartProcessing: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <section aria-labelledby="fixture-paid-heading">
-      <div className={styles.backRow}>
-        <button type="button" className={styles.ghostAction} onClick={onBack}>
-          ← Back to the scope review
-        </button>
-      </div>
-      <p className={styles.eyebrow}>Simulated payment · Step 5 of 6</p>
-      <h1
-        id="fixture-paid-heading"
-        className={styles.heading}
-        tabIndex={-1}
-        ref={headingRef}
-      >
-        Simulated payment complete
-      </h1>
-      <div className={styles.approvedPanel} role="status">
-        <strong>No charge, no receipt, no order.</strong>
-        <span>
-          This preview only marked the checkout as simulated in this tab&apos;s
-          session. No payment was taken, no receipt was created, and no real
-          order or entitlement exists.
-        </span>
-      </div>
-      <p className={styles.lede}>
-        The simulated run advances through five bounded stages and builds the
-        example report from the fixture. Nothing runs in the background until
-        you start it, and nothing continues after this tab closes.
-      </p>
-      <div className={styles.actionArea}>
-        <div className={styles.actionsRow}>
-          <p className={styles.actionHint}>
-            Starting the run never contacts a provider or the live audit API. It
-            is a local simulation.
-          </p>
-          <button
-            type="button"
-            className={styles.primaryAction}
-            onClick={onStartProcessing}
-          >
-            Start the simulated run
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProcessingScreen({
-  headingRef,
+  runStarted,
   processingStage,
   interrupted,
+  onStartRun,
+  onCloseRunDialog,
+  runDialogOpen,
+  onConfirmRun,
+  returnRef,
   onResume,
   onStartOver,
 }: {
   headingRef: HeadingRef;
+  runStarted: boolean;
   processingStage: number;
   interrupted: boolean;
+  onStartRun: () => void;
+  onCloseRunDialog: () => void;
+  runDialogOpen: boolean;
+  onConfirmRun: () => void;
+  returnRef: React.RefObject<HTMLButtonElement | null>;
   onResume: () => void;
   onStartOver: () => void;
 }) {
+  // Defensive pre-start branch: the run screen is normally entered only by
+  // the explicit run action (which sets runStarted atomically), but a
+  // restored state is validated, so show the explicit run action if it is
+  // ever missing.
+  if (!runStarted) {
+    return (
+      <section aria-labelledby="fixture-run-heading">
+        <p className={styles.eyebrow}>05 Audit berjalan · Langkah 5 dari 6</p>
+        <h1
+          id="fixture-run-heading"
+          className={styles.heading}
+          tabIndex={-1}
+          ref={headingRef}
+        >
+          Audit siap dijalankan
+        </h1>
+        <div className={styles.simulationNotice} role="status">
+          <strong>Ini adalah simulasi.</strong>
+          <span>
+            Tidak ada penyedia, model, pencarian, atau layanan pembayaran yang
+            dihubungkan.
+          </span>
+        </div>
+        <div className={styles.actionArea}>
+          <div className={styles.actionsRow}>
+            <p className={styles.actionHint}>
+              Jalankan audit hanya dimulai setelah Anda mengonfirmasi dialog
+              Mulai audit sekarang.
+            </p>
+            <button
+              type="button"
+              ref={returnRef}
+              className={styles.primaryAction}
+              onClick={onStartRun}
+            >
+              Jalankan audit
+            </button>
+          </div>
+        </div>
+        <RunStartDialog
+          open={runDialogOpen}
+          onClose={onCloseRunDialog}
+          onConfirm={onConfirmRun}
+          returnRef={returnRef}
+        />
+      </section>
+    );
+  }
+
   const current = fixtureProcessingStages[processingStage];
+  const statusText = interrupted
+    ? `Simulasi berhenti pada tahap ${current.label.toLowerCase()}.`
+    : `Simulasi berjalan: ${current.label.toLowerCase()}.`;
+
   return (
-    <section aria-labelledby="fixture-processing-heading">
-      <p className={styles.eyebrow}>Simulated run · Step 6 of 6</p>
+    <section aria-labelledby="fixture-run-heading">
+      <p className={styles.eyebrow}>05 Audit berjalan · Langkah 5 dari 6</p>
       <h1
-        id="fixture-processing-heading"
+        id="fixture-run-heading"
         className={styles.heading}
         tabIndex={-1}
         ref={headingRef}
       >
-        Simulated processing
+        Simulasi audit berjalan
       </h1>
       <div className={styles.simulationNotice} role="status">
-        <strong>This is a simulation.</strong>
+        <strong>Ini adalah simulasi.</strong>
         <span>
-          No provider, model, search, or payment service is contacted. The run
-          advances only while this tab is open; closing the tab stops it and
-          nothing continues in the background.
+          Tidak ada penyedia, model, pencarian, atau layanan pembayaran yang
+          dihubungi. Seluruh urutan ini disimulasikan di tab ini.
         </span>
       </div>
       {interrupted ? (
         <div className={styles.interruptedNotice} role="status">
-          <strong>The simulation stopped.</strong>
+          <strong>Simulasi berhenti.</strong>
           <span>
-            It stopped when the page was closed or refreshed. No background work
-            continued, and nothing runs while you are away. Choose Resume to
-            continue from the stage shown, or start over.
+            Simulasi berhenti saat halaman ditutup atau dimuat ulang. Tidak ada
+            pekerjaan yang berlanjut di latar belakang. Pilih Lanjutkan simulasi
+            untuk meneruskan dari tahap yang ditampilkan, atau mulai ulang.
           </span>
         </div>
       ) : null}
       <p className={styles.lede} aria-live="polite">
-        Simulation status:{" "}
-        {interrupted
-          ? `paused at ${current.label.toLowerCase()}`
-          : current.label.toLowerCase()}
-        .
+        Nuave sedang menjalankan 10 pertanyaan yang Anda setujui. Setiap
+        pertanyaan diuji secara terpisah.
       </p>
+      <p className={styles.lede} aria-live="polite">
+        Status: {statusText}
+      </p>
+
       <ol className={styles.processingList}>
         {fixtureProcessingStages.map((stage, index) => {
           const done = index < processingStage;
@@ -682,19 +973,45 @@ function ProcessingScreen({
                     interrupted ? styles.processingPaused : styles.processingNow
                   }
                 >
-                  {interrupted ? "paused" : "in progress"}
+                  {interrupted ? "berhenti" : "berjalan"}
                 </span>
               ) : null}
             </li>
           );
         })}
       </ol>
+
+      <section className={styles.card} aria-labelledby="run-questions-heading">
+        <h2 id="run-questions-heading" className={styles.cardTitle}>
+          Sepuluh pertanyaan
+        </h2>
+        <ol className={styles.runQuestionList}>
+          {questions.all.map((question) => (
+            <li key={question.order} className={styles.runQuestionRow}>
+              <span className={styles.questionNumber} aria-hidden="true">
+                {question.order}
+              </span>
+              <span className={styles.runQuestionText}>{question.text}</span>
+              <span className={styles.runStatusChip}>
+                {fixtureRunStatusLabels.waiting}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className={styles.note}>
+          Label status: {fixtureRunStatusLabelOrder.join(" · ")}. Selama
+          simulasi, setiap pertanyaan tetap berlabel Menunggu karena tidak ada
+          penyelesaian langsung per pertanyaan yang diklaim. Laporan akhir
+          menampilkan status Selesai dari bukti contoh yang sudah dibekukan.
+        </p>
+      </section>
+
       {interrupted ? (
         <div className={styles.actionArea}>
           <div className={styles.actionsRow}>
             <p className={styles.actionHint}>
-              Resuming continues the simulation from the stage shown. Nothing
-              was executed while you were away.
+              Melanjutkan meneruskan simulasi dari tahap yang ditampilkan. Tidak
+              ada yang dijalankan saat Anda pergi.
             </p>
             <span className={styles.actionsRow}>
               <button
@@ -702,28 +1019,31 @@ function ProcessingScreen({
                 className={styles.primaryAction}
                 onClick={onResume}
               >
-                Resume simulated run
+                Lanjutkan simulasi
               </button>
               <button
                 type="button"
                 className={styles.secondaryAction}
                 onClick={onStartOver}
               >
-                Start over
+                Mulai ulang
               </button>
             </span>
           </div>
         </div>
       ) : (
         <p className={styles.note}>
-          This preview shows honest, bounded progress. It does not claim to show
-          live per-question answers, and it does not pretend a provider is
-          responding.
+          Simulasi hanya berjalan saat tab ini terbuka. Menutup tab menghentikan
+          simulasi dan tidak ada pekerjaan yang berlanjut di latar belakang.
         </p>
       )}
     </section>
   );
 }
+
+// ---------------------------------------------------------------------------
+// 06 — Report (frozen evidence, Indonesian report view)
+// ---------------------------------------------------------------------------
 
 function ReadyScreen({
   headingRef,
@@ -734,6 +1054,7 @@ function ReadyScreen({
   onRetryReport,
   onStartOver,
   onDownloadJson,
+  onDownloadPdf,
 }: {
   headingRef: HeadingRef;
   report: AuditReport | null;
@@ -743,27 +1064,27 @@ function ReadyScreen({
   onRetryReport: () => void;
   onStartOver: () => void;
   onDownloadJson: () => void;
+  onDownloadPdf: () => void;
 }) {
-  // The construction-failure state is terminal and truthful: no run summary,
-  // no "Report ready" check, and no claim that an example report exists.
   if (reportConstructionFailed) {
     return (
       <section aria-labelledby="fixture-failure-heading">
-        <p className={styles.eyebrow}>Example report · Step 6 of 6</p>
+        <p className={styles.eyebrow}>Laporan contoh · Langkah 6 dari 6</p>
         <h1
           id="fixture-failure-heading"
           className={styles.heading}
           tabIndex={-1}
           ref={headingRef}
         >
-          The example report could not be built
+          Laporan contoh tidak dapat dibuat
         </h1>
         <div className={styles.terminalError} role="alert">
-          <h2>Example report construction failed</h2>
+          <h2>Pembuatan laporan contoh gagal</h2>
           <p>
-            The local fixture construction failed, so no example report became
-            ready. No live audit call was made, and none will be made as part of
-            this preview. You can retry the local construction or start over.
+            Pembuatan laporan lokal gagal, sehingga tidak ada laporan contoh
+            yang siap. Tidak ada panggilan audit langsung yang dilakukan, dan
+            tidak akan ada sebagai bagian dari pratinjau ini. Anda dapat mencoba
+            lagi pembuatan lokal atau mulai ulang.
           </p>
           {retryError ? (
             <p
@@ -782,14 +1103,14 @@ function ReadyScreen({
               className={styles.primaryAction}
               onClick={onRetryReport}
             >
-              Retry building the example report
+              Coba buat laporan contoh lagi
             </button>
             <button
               type="button"
               className={styles.secondaryAction}
               onClick={onStartOver}
             >
-              Start over
+              Mulai ulang
             </button>
           </div>
         </div>
@@ -799,41 +1120,29 @@ function ReadyScreen({
 
   return (
     <section aria-labelledby="fixture-ready-heading">
-      <p className={styles.eyebrow}>Example report · Step 6 of 6</p>
+      <p className={styles.eyebrow}>06 Laporan · Langkah 6 dari 6</p>
       <h1
         id="fixture-ready-heading"
         className={styles.heading}
         tabIndex={-1}
         ref={headingRef}
       >
-        Example report — fictional preview
+        AI Visibility Report (contoh fiktif)
       </h1>
-      <div className={styles.runSummary} aria-labelledby="run-summary-heading">
-        <h2 id="run-summary-heading" className={styles.cardTitle}>
-          Simulated run completed
-        </h2>
-        <ol className={styles.runSummaryList}>
-          {fixtureProcessingStages.map((stage) => (
-            <li key={stage.id}>
-              <span aria-hidden="true">✓</span>
-              {stage.label}
-            </li>
-          ))}
-        </ol>
-      </div>
-      <p className={styles.note}>
-        This example report exists only in this browser tab&apos;s session. It
-        is not hosted, private, or delivered. Refresh keeps this preview&apos;s
-        progress; closing the tab removes it.
+      <p className={styles.lede}>
+        Laporan ini dibangun dari bukti contoh yang sudah dibekukan untuk
+        {business.name}. Laporan ini hanya ada di sesi tab ini, tidak dihosting
+        secara privat, dan tidak dikirimkan kepada siapa pun.
       </p>
 
       {report ? (
         <div className={styles.reportWorkspace}>
-          <ReportView
+          <FixtureReportView
             report={report}
-            brief={goldenBrief}
-            observations={goldenObservations}
+            brief={kopiTamanSenjaBrief}
+            observations={kopiTamanSenjaObservations}
             onDownloadJson={onDownloadJson}
+            onDownloadPdf={onDownloadPdf}
             previewNotice={<ReportPreviewNotice />}
           />
         </div>
@@ -841,6 +1150,10 @@ function ReadyScreen({
     </section>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Journey shell
+// ---------------------------------------------------------------------------
 
 export default function FixtureJourney({
   forceReportFailure = false,
@@ -856,6 +1169,8 @@ export default function FixtureJourney({
   const [gateError, setGateError] = useState("");
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [interruptedRestore, setInterruptedRestore] = useState(false);
+  const [offerRevealed, setOfferRevealed] = useState(false);
+  const [runDialogOpen, setRunDialogOpen] = useState(false);
   // Read once during first render; the subscription below keeps it current.
   // Not rendered into JSX, so the SSR fallback never causes a hydration gap.
   const [reducedMotion, setReducedMotion] = useState(
@@ -868,20 +1183,27 @@ export default function FixtureJourney({
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const errorRef = useRef<HTMLDivElement | null>(null);
   const retryErrorRef = useRef<HTMLParagraphElement | null>(null);
+  const offerRef = useRef<HTMLDivElement | null>(null);
+  const dialogReturnRef = useRef<HTMLButtonElement | null>(null);
 
   // Restore the furthest valid fixture state from session storage. Invalid
-  // or version-incompatible state is cleared and the journey starts over
-  // with a visible explanation. A restored mid-processing state is paused:
-  // the simulation stops when the page closes or refreshes and resumes only
-  // after the reviewer explicitly chooses Resume. At the ready destination,
-  // the example report is reconstructed locally from the same fixture
-  // (deterministic except for the generated timestamp).
+  // or version-incompatible state (including stored v1/v2 Spec 001 shapes)
+  // is cleared and the journey starts over with a visible explanation. A
+  // restored mid-run state is paused: the simulation stops when the page
+  // closes or refreshes and resumes only after the reviewer explicitly
+  // chooses Lanjutkan simulasi. At the ready destination, the example report
+  // is reconstructed locally from the same fixture (deterministic except for
+  // the generated timestamp).
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const { state, reset } = loadFixtureJourneyState();
       setJourney(state);
       setResetNotice(reset);
-      if (state.stage === "processing") {
+      if (
+        state.stage === "run" &&
+        state.runStarted &&
+        !state.processingCompleted
+      ) {
         setInterruptedRestore(true);
       }
       if (state.stage === "ready" && !state.reportConstructionFailed) {
@@ -936,10 +1258,11 @@ export default function FixtureJourney({
   // Deterministic, bounded simulated processing. Each work stage advances on
   // a fixed timer; the final stage builds the example report locally. The
   // run never calls a provider and never continues after this component
-  // unmounts (tab closed or journey reset). A restored mid-processing state
-  // stays paused until the reviewer explicitly resumes it.
+  // unmounts (tab closed or journey reset). A restored mid-run state stays
+  // paused until the reviewer explicitly resumes it.
   useEffect(() => {
-    if (journey.stage !== "processing") return;
+    if (journey.stage !== "run") return;
+    if (!journey.runStarted) return;
     if (interruptedRestore) return;
     const duration = processingStageDurationMs(reducedMotion);
     const timer = window.setTimeout(() => {
@@ -976,6 +1299,7 @@ export default function FixtureJourney({
     return () => window.clearTimeout(timer);
   }, [
     journey.stage,
+    journey.runStarted,
     journey.processingStage,
     reducedMotion,
     forceReportFailure,
@@ -993,14 +1317,27 @@ export default function FixtureJourney({
     setJourney((current) => ({ ...current, stage }));
   }
 
-  function startExample() {
-    goToStage("facts");
+  function revealOffer() {
+    setOfferRevealed(true);
+    window.setTimeout(
+      () =>
+        offerRef.current?.scrollIntoView({
+          behavior: reducedMotion ? "auto" : "smooth",
+          block: "start",
+        }),
+      0,
+    );
+  }
+
+  function simulatePayment() {
+    setJourney((current) => ({ ...current, simulatedPaid: true }));
+    setGateError("");
   }
 
   function continueAfterFacts(checked: boolean) {
     if (!checked) {
       showGateError(
-        "Review the example facts above and confirm them before continuing.",
+        "Periksa fakta bisnis di atas dan konfirmasi sebelum melanjutkan.",
       );
       return;
     }
@@ -1014,33 +1351,32 @@ export default function FixtureJourney({
 
   function approveQuestionPack(checked: boolean) {
     if (!checked) {
-      showGateError(
-        "Approve the ten example questions before locking the pack.",
-      );
+      showGateError("Setujui sepuluh pertanyaan sebelum menjalankan audit.");
       return;
     }
     setJourney((current) => ({
       ...current,
       questionsApproved: true,
-      stage: "summary",
     }));
     setGateError("");
   }
 
-  function simulatePayment() {
-    setJourney((current) => ({
-      ...current,
-      checkoutComplete: true,
-      stage: "paid",
-    }));
-    setGateError("");
+  function openRunDialog() {
+    setRunDialogOpen(true);
   }
 
-  function startProcessing() {
+  function closeRunDialog() {
+    setRunDialogOpen(false);
+    window.setTimeout(() => dialogReturnRef.current?.focus(), 0);
+  }
+
+  function confirmRun() {
+    setRunDialogOpen(false);
     setJourney((current) => ({
       ...current,
+      runStarted: true,
       processingStage: 0,
-      stage: "processing",
+      stage: "run",
     }));
     setGateError("");
   }
@@ -1061,7 +1397,7 @@ export default function FixtureJourney({
         // Perceivable feedback: the retry failed and construction is still
         // unavailable; the reviewer can retry again or start over.
         setRetryError(
-          "The retry failed: the local fixture construction still cannot build the example report. You can retry again or start over.",
+          "Percobaan ulang gagal: pembuatan lokal masih belum dapat membuat laporan contoh. Anda dapat mencoba lagi atau mulai ulang.",
         );
         window.setTimeout(() => retryErrorRef.current?.focus(), 0);
         return;
@@ -1084,17 +1420,22 @@ export default function FixtureJourney({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "northstar-advisory-nuave-example-evidence.json";
+    link.download = "kopi-taman-senja-nuave-fixture-evidence.json";
     link.click();
     URL.revokeObjectURL(url);
   }
 
+  function downloadPdf() {
+    window.print();
+  }
+
   function beginStartOver() {
     const hasProgress =
-      journey.stage !== "draft" ||
+      journey.stage !== "preview" ||
+      journey.simulatedPaid ||
       journey.factsConfirmed ||
       journey.questionsApproved ||
-      journey.checkoutComplete ||
+      journey.runStarted ||
       journey.processingCompleted;
     if (hasProgress) {
       setConfirmingReset(true);
@@ -1112,18 +1453,20 @@ export default function FixtureJourney({
     setConfirmingReset(false);
     setResetNotice(false);
     setInterruptedRestore(false);
+    setOfferRevealed(false);
+    setRunDialogOpen(false);
   }
 
   const stage = journey.stage;
 
   return (
-    <main className={styles.shell} lang="en" data-theme="light">
+    <main className={styles.shell} lang="id" data-theme="light">
       <header className={styles.topbar}>
         <Link href="/" className={styles.brand}>
           <span className={styles.brandMark} aria-hidden="true">
             N
           </span>
-          Nuave — fictional preview
+          Nuave · pratinjau fiktif
         </Link>
         <div className={styles.topActions}>
           {stage === "ready" &&
@@ -1132,7 +1475,7 @@ export default function FixtureJourney({
             <button
               type="button"
               className={styles.secondaryAction}
-              onClick={() => window.print()}
+              onClick={downloadPdf}
             >
               Download PDF
             </button>
@@ -1142,7 +1485,7 @@ export default function FixtureJourney({
             className={styles.ghostAction}
             onClick={beginStartOver}
           >
-            Start over
+            Mulai ulang
           </button>
         </div>
       </header>
@@ -1150,8 +1493,8 @@ export default function FixtureJourney({
       {confirmingReset ? (
         <div className={styles.confirmBar} role="alert">
           <span>
-            Start over returns the preview to the example intake and clears only
-            this preview&apos;s saved progress.
+            Mulai ulang mengembalikan pratinjau ke langkah 01 dan hanya
+            menghapus progres pratinjau yang tersimpan di tab ini.
           </span>
           <span className={styles.topActions}>
             <button
@@ -1159,14 +1502,14 @@ export default function FixtureJourney({
               className={styles.secondaryAction}
               onClick={startOver}
             >
-              Confirm start over
+              Konfirmasi mulai ulang
             </button>
             <button
               type="button"
               className={styles.ghostAction}
               onClick={() => setConfirmingReset(false)}
             >
-              Keep preview
+              Tetap di pratinjau
             </button>
           </span>
         </div>
@@ -1176,10 +1519,11 @@ export default function FixtureJourney({
 
       {resetNotice ? (
         <div className={styles.resetNotice} role="status">
-          <strong>Preview reset.</strong>
+          <strong>Pratinjau diatur ulang.</strong>
           <span>
-            The saved preview state was missing, stale, or invalid, so it was
-            cleared. You are at the start of the example preview.
+            Status yang tersimpan hilang, kedaluwarsa, atau tidak sesuai dengan
+            urutan pratinjau saat ini, sehingga dihapus. Anda berada di awal
+            pratinjau, yaitu langkah 01.
           </span>
         </div>
       ) : null}
@@ -1197,15 +1541,30 @@ export default function FixtureJourney({
       ) : null}
 
       <div className={styles.workspace}>
-        {stage === "draft" ? (
-          <DraftScreen headingRef={headingRef} onStart={startExample} />
+        {stage === "preview" ? (
+          <PreviewScreen
+            headingRef={headingRef}
+            offerRevealed={offerRevealed}
+            onRevealOffer={revealOffer}
+            onPay={() => goToStage("payment")}
+            offerRef={offerRef}
+          />
+        ) : null}
+        {stage === "payment" ? (
+          <PaymentScreen
+            headingRef={headingRef}
+            simulatedPaid={journey.simulatedPaid}
+            onSimulatePayment={simulatePayment}
+            onContinue={() => goToStage("facts")}
+            onBack={() => goToStage("preview")}
+          />
         ) : null}
         {stage === "facts" ? (
           <FactsScreen
             headingRef={headingRef}
             factsConfirmed={journey.factsConfirmed}
             onContinue={continueAfterFacts}
-            onBack={() => goToStage("draft")}
+            onBack={() => goToStage("payment")}
           />
         ) : null}
         {stage === "questions" ? (
@@ -1213,30 +1572,25 @@ export default function FixtureJourney({
             headingRef={headingRef}
             questionsApproved={journey.questionsApproved}
             onApprove={approveQuestionPack}
+            onOpenRunDialog={openRunDialog}
+            onCloseRunDialog={closeRunDialog}
+            runDialogOpen={runDialogOpen}
+            onConfirmRun={confirmRun}
             onBack={() => goToStage("facts")}
+            dialogReturnRef={dialogReturnRef}
           />
         ) : null}
-        {stage === "summary" ? (
-          <SummaryScreen
+        {stage === "run" ? (
+          <RunScreen
             headingRef={headingRef}
-            checkoutComplete={journey.checkoutComplete}
-            onSimulatePayment={simulatePayment}
-            onContinueAfterPayment={() => goToStage("paid")}
-            onBack={() => goToStage("questions")}
-          />
-        ) : null}
-        {stage === "paid" ? (
-          <PaidScreen
-            headingRef={headingRef}
-            onStartProcessing={startProcessing}
-            onBack={() => goToStage("summary")}
-          />
-        ) : null}
-        {stage === "processing" ? (
-          <ProcessingScreen
-            headingRef={headingRef}
+            runStarted={journey.runStarted}
             processingStage={journey.processingStage}
             interrupted={interruptedRestore}
+            onStartRun={openRunDialog}
+            onCloseRunDialog={closeRunDialog}
+            runDialogOpen={runDialogOpen}
+            onConfirmRun={confirmRun}
+            returnRef={dialogReturnRef}
             onResume={resumeSimulatedRun}
             onStartOver={beginStartOver}
           />
@@ -1251,6 +1605,7 @@ export default function FixtureJourney({
             onRetryReport={retryReportConstruction}
             onStartOver={beginStartOver}
             onDownloadJson={downloadExampleEvidenceJson}
+            onDownloadPdf={downloadPdf}
           />
         ) : null}
       </div>

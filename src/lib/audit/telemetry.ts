@@ -4,6 +4,7 @@ import {
   type AuditBudget,
   type AuditCallTelemetry,
 } from "./types";
+import { OBSERVATION_STAGE_MAX_CALLS } from "./retry";
 
 export const AUDIT_PRICING_VERSION = "openai-standard-2026-08-01";
 export const AUDIT_MODEL = "gpt-5.6-luna";
@@ -43,7 +44,11 @@ export const AUDIT_CALL_LIMITS = {
 export const AUDIT_STAGE_CALL_LIMITS = {
   extract: 1,
   prompts: 0,
-  observation: 10,
+  // Spec 003 R-17/R-36: the observation stage must absorb the targeted 1+2
+  // retry policy — 10 questions x 3 attempts (one initial + up to two
+  // automatic technical retries per question) = 30. The USD 5 per-session
+  // ceiling remains the binding cap; this ceiling only bounds call count.
+  observation: OBSERVATION_STAGE_MAX_CALLS,
   report: 3,
 } as const;
 

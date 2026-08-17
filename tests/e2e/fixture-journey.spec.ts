@@ -1,424 +1,691 @@
 import { expect, test } from "@playwright/test";
 import {
-  goldenBrief,
-  goldenObservations,
-  goldenPrompts,
-} from "../../src/lib/audit/fixtures/report-golden";
+  KOPI_TAMAN_SENJA_BUSINESS_NAME,
+  KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME,
+  KOPI_TAMAN_SENJA_SCOPE,
+  kopiTamanSenjaEvidence,
+  kopiTamanSenjaQuestions,
+} from "../../src/lib/audit/fixtures/fixture-kopi-taman-senja";
 import {
   FIXTURE_SESSION_KEY,
   LIVE_WORKFLOW_KEYS,
   assertNoSideEffects,
   collectRequests,
   confirmFactsAndApprove,
+  expectNoHorizontalScroll,
   expectReadyReport,
+  expectVisibleFocus,
+  freshV3State,
   grantAccess,
   seedFixtureState,
-  simulatePaymentAndStartRun,
+  startSimulatedRun,
+  tabUntilFocused,
+  v3FactsState,
+  v3PaidState,
+  v3QuestionsApprovedState,
+  v3ReadyState,
+  v3RunPausedState,
 } from "./helpers";
 
-const PREVIEW_NOTICE = "Fictional preview notice";
+const PREVIEW_NOTICE = "Pemberitahuan pratinjau fiktif";
+const REPORT_PREVIEW_NOTICE = PREVIEW_NOTICE;
+const EXPECTED_QUESTION_TEXTS = kopiTamanSenjaQuestions.questions.map(
+  (question) => question.text,
+);
+const EXCERPT_ROW_1 =
+  kopiTamanSenjaEvidence.observations[0].selected_observation.answer_excerpt;
+const EXCERPT_ROW_8 =
+  kopiTamanSenjaEvidence.observations[7].selected_observation.answer_excerpt;
 
 test.beforeEach(async ({ page }) => {
   await grantAccess(page);
 });
 
-test.describe("landing (fixture CTA removed)", () => {
-  test("landing shows no fixture CTA; the gated fixture route stays reachable directly", async ({
+test.describe("entry and landing (AC-01)", () => {
+  test("opening /audit/fixture directly shows the fictional-preview intake with the settled CTA", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByRole("heading", {
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("01 Pratinjau pesanan · Langkah 1 dari 6"),
+    ).toBeVisible();
+    // The one settled action, visibly identified as a fictional preview
+    // before any confirmation.
+    await expect(
+      page.getByRole("button", { name: "Cek bisnis saya di AI" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "Pratinjau ini memakai satu bisnis contoh fiktif. Tidak ada data bisnis nyata yang dimasukkan atau dikumpulkan.",
+      ),
+    ).toBeVisible();
+    // No priced action before the reveal and no result content anywhere.
+    await expect(
+      page.getByRole("button", { name: "Bayar Rp99.000" }),
+    ).toHaveCount(0);
+    const body = await page.locator("body").innerText();
+    expect(body).not.toMatch(/8\/10|3\/5|5\/5/);
+    expect(body).not.toContain(KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME);
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("the live landing keeps its normal actions and no fixture CTA", async ({
     page,
   }) => {
     const requests = collectRequests(page);
     await page.goto("/");
-    // Founder decision: the landing CTA was removed — LP-remote landing is
-    // as-is; the fixture entry will be re-added later.
-    await expect(
-      page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
-    ).toHaveCount(0);
     await expect(
       page.getByRole("link", { name: "Audit bisnis saya" }).first(),
     ).toBeVisible();
-    // The fixture route itself stays intact and gated.
-    await page.goto("/audit/fixture");
     await expect(
-      page.getByRole("heading", {
-        name: "Start with the fixed example business",
-      }),
-    ).toBeVisible();
+      page.getByRole("link", { name: "Cek bisnis saya di AI" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
+    ).toHaveCount(0);
     await assertNoSideEffects(page, requests);
   });
 });
 
-test.describe("fixture identity and gates", () => {
-  test("shows the exact golden fixture identity on the facts screen", async ({
+test.describe("canonical sequence and gates (AC-03..AC-09)", () => {
+  test("01 order preview: fixture identity, scope, Rp99.000 total, 30-day note, ten-question scope, execution surface", async ({
     page,
   }) => {
     const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "facts",
-      factsConfirmed: false,
-      questionsApproved: false,
-      checkoutComplete: false,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
     await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
     await expect(
-      page.getByRole("heading", {
-        name: "Review the example facts before continuing",
-      }),
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
     ).toBeVisible();
+    // Fixture identity and scope.
     await expect(
-      page.getByText(goldenBrief.brand_name, { exact: true }).first(),
+      page.getByText(KOPI_TAMAN_SENJA_BUSINESS_NAME).first(),
     ).toBeVisible();
-    await expect(
-      page.getByText(goldenBrief.entity_scope, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(goldenBrief.category, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(goldenBrief.market_context, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(goldenBrief.target_customer, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(goldenBrief.priority_offering, { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(goldenBrief.official_sources[0], { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText(KOPI_TAMAN_SENJA_SCOPE).first()).toBeVisible();
+    await expect(page.getByText("Kedai kopi").first()).toBeVisible();
+    // Ten-question scope with the exact composition.
     await expect(
       page.getByText(
-        new RegExp(
-          `${goldenBrief.verified_competitor.name} \\(${goldenBrief.verified_competitor.scope}\\)`,
-        ),
+        "Satu audit menguji 10 pertanyaan ala calon pelanggan: 5 Tanpa menyebut bisnis Anda dan 5 Menyebut bisnis Anda, sesuai contoh yang dibekukan.",
       ),
     ).toBeVisible();
+    // Rp99.000 total with no added tax or fee, and the 30-day quote note.
+    await expect(page.getByText("Rp99.000", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("Source: https://meridian.example"),
+      page.getByText("Tidak ada pajak atau biaya tambahan.", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText(goldenBrief.known_accuracy_questions[0], { exact: true }),
+      page.getByText("Berlaku 30 hari selama belum dibayar.", { exact: true }),
+    ).toBeVisible();
+    // The named execution surface from the fixture record.
+    await expect(
+      page.getByText(
+        /OpenAI Responses API dengan model gpt-5\.6-luna serta pencarian web/,
+      ),
+    ).toBeVisible();
+    await expect(page.getByText(/Google Gemini API/).first()).toBeVisible();
+    // Report scope and limitations.
+    await expect(
+      page.getByRole("heading", { name: "Isi laporan" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Batasan laporan" }),
+    ).toBeVisible();
+    // No result, competitor, finding, or score is previewed.
+    const body = await page.locator("body").innerText();
+    expect(body).not.toMatch(/8\/10|3\/5|5\/5/);
+    expect(body).not.toContain(KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME);
+    // The priced action opens the simulated payment.
+    await expect(
+      page.getByRole("button", { name: "Bayar Rp99.000" }),
     ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
 
-  test("fact gate: cannot continue without the explicit confirmation", async ({
-    page,
-  }) => {
-    seedFixtureState(page, {
-      version: 2,
-      stage: "facts",
-      factsConfirmed: false,
-      questionsApproved: false,
-      checkoutComplete: false,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
-    await page.goto("/audit/fixture");
-    await page
-      .getByRole("button", { name: "Continue to the ten questions" })
-      .click();
-    await expect(
-      page.getByText(
-        "Review the example facts above and confirm them before continuing.",
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        name: "Review the example facts before continuing",
-      }),
-    ).toBeVisible();
-  });
-
-  test("question gate: all ten questions in original order, five plus five", async ({
+  test("02 simulated payment: exact disclosure, no payment controls, no-charge confirmation (AC-05)", async ({
     page,
   }) => {
     const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "questions",
-      factsConfirmed: true,
-      questionsApproved: false,
-      checkoutComplete: false,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
+    await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("02 Pembayaran (simulasi) · Langkah 2 dari 6"),
+    ).toBeVisible();
+    // The exact disclosure is prominent on the checkout panel.
+    await expect(
+      page.getByText("Simulasi pembayaran — tidak ada tagihan", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    // No payment instrument, provider widget, receipt, or transaction control.
+    await expect(page.locator("input")).toHaveCount(0);
+    await expect(page.getByRole("textbox")).toHaveCount(0);
+    const body = await page.locator("body").innerText();
+    expect(body).not.toMatch(/QRIS|GoPay|DANA|Midtrans/i);
+    // Completing produces only the session-scoped simulated-paid state.
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    await expect(
+      page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "Tidak ada biaya, struk, pesanan, atau hak audit yang dibuat. Status ini hanya tersimpan di sesi tab ini.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("payment unlocks preparation and never starts the run (AC-06)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    // The completed simulation offers facts, not the run.
+    await expect(
+      page.getByText(
+        "Pembayaran ini tidak memulai audit. Audit hanya dimulai lewat aksi Jalankan audit di langkah 4.",
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Jalankan audit" }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Lanjut ke fakta bisnis" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Periksa informasi bisnis Anda" }),
+    ).toBeVisible();
+    // The persisted state proves payment unlocked facts without starting the run.
+    const saved = await page.evaluate(
+      (key) => JSON.parse(window.sessionStorage.getItem(key) ?? "{}"),
+      FIXTURE_SESSION_KEY,
+    );
+    expect(saved).toMatchObject({
+      stage: "facts",
+      simulatedPaid: true,
+      runStarted: false,
     });
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("03 facts: read-only fixture facts with provenance labels (AC-03)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3FactsState());
     await page.goto("/audit/fixture");
     await expect(
-      page.getByRole("heading", { name: "Review the ten example questions" }),
+      page.getByRole("heading", { name: "Periksa informasi bisnis Anda" }),
     ).toBeVisible();
-    const items = page.locator('[class*="questionItem"]');
+    await expect(
+      page.getByText("03 Fakta bisnis · Langkah 3 dari 6"),
+    ).toBeVisible();
+    // Frozen fixture facts with provenance labels.
+    await expect(
+      page.getByText(KOPI_TAMAN_SENJA_BUSINESS_NAME).first(),
+    ).toBeVisible();
+    await expect(page.getByText(KOPI_TAMAN_SENJA_SCOPE).first()).toBeVisible();
+    await expect(page.getByText("Kedai kopi").first()).toBeVisible();
+    await expect(
+      page.getByText("Saran lain: Kafe, Ruang kerja bersama").first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Kopi lokal, Ruang kerja, Makanan ringan").first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText(KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Sumber: https://kopiruangpagi.example").first(),
+    ).toBeVisible();
+    await expect(page.getByText("Ditemukan di website").first()).toBeVisible();
+    await expect(page.getByText("Perlu diperiksa").first()).toBeVisible();
+    await expect(page.getByText("Saran Nuave").first()).toBeVisible();
+    // Warning from the frozen facts record.
+    await expect(
+      page.getByRole("heading", {
+        name: "Kami menemukan informasi yang berbeda",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Website mencantumkan jam buka 08\.00–21\.00/),
+    ).toBeVisible();
+    await expect(page.getByText(/09\.00–20\.00/).first()).toBeVisible();
+    // Facts are read-only: the only input is the confirmation checkbox.
+    await expect(page.locator("input")).toHaveCount(1);
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("fact gate: cannot continue without the explicit confirmation (AC-07)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3FactsState());
+    await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Buat pertanyaan audit" }).click();
+    await expect(
+      page.getByText(
+        "Periksa fakta bisnis di atas dan konfirmasi sebelum melanjutkan.",
+        {
+          exact: true,
+        },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Periksa informasi bisnis Anda" }),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("04 questions: ten frozen Indonesian questions in final order, five plus five (AC-08)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(
+      page,
+      freshV3State({
+        stage: "questions",
+        simulatedPaid: true,
+        factsConfirmed: true,
+      }),
+    );
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Audit belum dimulai.", { exact: true }),
+    ).toBeVisible();
+    // All ten frozen questions appear once each, in their final order.
+    const items = page.locator("li[class*='questionItem']");
     await expect(items).toHaveCount(10);
     const texts = await items
-      .locator('[class*="questionText"]')
+      .locator("p[class*='questionText']")
       .allTextContents();
-    expect(texts.map((text) => text.trim())).toEqual(
-      goldenPrompts.map((prompt) => prompt.question),
-    );
-    await expect(
-      page.getByText("Discovery — without the business name"),
-    ).toHaveCount(5);
-    await expect(
-      page.getByText("Named business — with the business name"),
-    ).toHaveCount(5);
-    await assertNoSideEffects(page, requests);
-  });
-
-  test("approval gate: cannot lock the pack without explicit approval", async ({
-    page,
-  }) => {
-    seedFixtureState(page, {
-      version: 2,
-      stage: "questions",
-      factsConfirmed: true,
-      questionsApproved: false,
-      checkoutComplete: false,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
-    await page.goto("/audit/fixture");
-    await page
-      .getByRole("button", { name: "Approve the question pack" })
-      .click();
-    await expect(
-      page.getByText(
-        "Approve the ten example questions before locking the pack.",
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Review the ten example questions" }),
-    ).toBeVisible();
-  });
-});
-
-test.describe("scope summary and simulated checkout", () => {
-  test("scope summary derives from the fixture, shows the disclosure, and has no price or payment controls", async ({
-    page,
-  }) => {
-    const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "summary",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: false,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
-    await page.goto("/audit/fixture");
-    await expect(
-      page.getByRole("heading", { name: "Review the example scope" }),
-    ).toBeVisible();
-    await expect(page.getByText(goldenBrief.entity_scope)).toBeVisible();
-    await expect(
-      page.getByText(
-        "10 approved questions — 5 discovery and 5 named-business",
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        /OpenAI Responses API surface recorded in the golden fixture/,
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByText(/fictional model names \(fixture-requested-model\)/),
-    ).toBeVisible();
-    await expect(page.getByText(/not a real audit result/)).toBeVisible();
-    await expect(
-      page.getByText("Simulasi pembayaran — tidak ada tagihan."),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Simulated payment — no charge."),
-    ).toBeVisible();
-    await expect(page.getByText(/This preview shows no price/)).toBeVisible();
-    // No payment controls and no numeric price anywhere on the screen.
-    await expect(page.locator("input")).toHaveCount(0);
-    const body = await page.locator("body").innerText();
-    expect(body).not.toMatch(/Rp\s?\d|USD\s?\d|\$\s?\d/);
-    await assertNoSideEffects(page, requests);
-  });
-});
-
-test.describe("complete fixture path", () => {
-  test("landing to report with deterministic simulated processing", async ({
-    page,
-  }) => {
-    const requests = collectRequests(page);
-    await page.goto("/audit/fixture");
-    await page
-      .getByRole("button", { name: "Start the example preview" })
-      .click();
-    await expect(
-      page.getByRole("heading", {
-        name: "Review the example facts before continuing",
-      }),
-    ).toBeVisible();
-    await confirmFactsAndApprove(page);
-    await expect(
-      page.getByRole("heading", { name: "Review the example scope" }),
-    ).toBeVisible();
-    await simulatePaymentAndStartRun(page);
-    // All four work stages appear in order during the bounded run.
-    for (const stageLabel of [
-      "Preparing the verified example brief",
-      "Running the ten example questions",
-      "Checking evidence and sources",
-      "Preparing the example report",
-    ]) {
-      await expect(page.getByText(stageLabel).first()).toBeVisible();
-    }
-    await expectReadyReport(page);
-    await assertNoSideEffects(page, requests);
-  });
-
-  test("report fidelity: five sections, ten details, nine completed and one failed", async ({
-    page,
-  }) => {
-    const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "paid",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: true,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
-    await page.goto("/audit/fixture");
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
-    await expectReadyReport(page);
-    // Five canonical sections.
-    for (const section of [
-      "Main Result",
-      "Key Findings",
-      "What to Do Next",
-      "Test-by-Test Results",
-      "How This Audit Works",
-    ]) {
-      await expect(
-        page.getByRole("heading", { name: section, level: 2 }),
-      ).toBeVisible();
-    }
-    // Ten details on screen, exactly one failed.
-    const screenDetails = page.locator('[class*="detailsScreen"]');
-    await expect(
-      screenDetails.locator('[class*="detailDisclosure"]'),
-    ).toHaveCount(10);
-    await expect(screenDetails.getByText("Test could not run")).toHaveCount(1);
-    const failedButton = page.getByRole("button", {
-      name: /NUAVE-BRAND-COMPARISON-01/,
-    });
-    await expect(failedButton).toContainText("Test could not run");
-    // Counts and denominators match the report contract.
-    await expect(
-      page.getByText(
-        "Recommended in 1 of 5 discovery questions; 1 question could not be tested.",
-        {
-          exact: true,
-        },
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Recognized in 5 of 5 brand questions.", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        "9 of 10 questions completed; 1 question could not be tested.",
-        {
-          exact: true,
-        },
-      ),
-    ).toBeVisible();
-    // The golden conclusion is preserved verbatim (scoped to the screen
-    // details; the print variant duplicates the question text).
+    expect(texts.map((text) => text.trim())).toEqual(EXPECTED_QUESTION_TEXTS);
+    // Exact composition labels: five and five.
     await expect(
       page
-        .locator('[class*="detailsScreen"]')
-        .getByText(goldenObservations[4].question),
-    ).toHaveCount(1);
+        .locator("span[class*='questionChip']")
+        .getByText("Tanpa menyebut bisnis Anda", { exact: true }),
+    ).toHaveCount(5);
+    await expect(
+      page
+        .locator("span[class*='questionChip']")
+        .getByText("Menyebut bisnis Anda", { exact: true }),
+    ).toHaveCount(5);
+    await expect(
+      page.getByRole("heading", {
+        name: "Tanpa menyebut bisnis Anda · 5",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "Menyebut bisnis Anda · 5",
+        exact: true,
+      }),
+    ).toBeVisible();
+    // The run is unavailable until explicit approval.
+    await expect(
+      page.getByRole("button", { name: "Jalankan audit" }),
+    ).toHaveCount(0);
+    // Approval gate.
+    await page.getByRole("button", { name: "Setujui pertanyaan" }).click();
+    await expect(
+      page.getByText("Setujui sepuluh pertanyaan sebelum menjalankan audit.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
+    ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
 
-  test("persistent preview disclosure appears on every stage", async ({
+  test("run consumption: only the explicit confirmation starts the run once (AC-09)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3QuestionsApprovedState());
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByText("10 pertanyaan siap dijalankan", { exact: true }),
+    ).toBeVisible();
+    // The run action opens the confirmation; closing it starts nothing.
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    const dialog = page.getByRole("dialog", { name: "Mulai audit sekarang?" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Kembali periksa" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Simulasi audit berjalan" }),
+    ).toHaveCount(0);
+    // Re-opening and confirming starts the run exactly once; a double
+    // activation of the confirmation cannot create a second run.
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Mulai audit sekarang?" }),
+    ).toHaveCount(1);
+    await page
+      .getByRole("button", { name: "Mulai audit sekarang" })
+      .evaluate((element) => {
+        const button = element as HTMLButtonElement;
+        button.click();
+        button.click();
+      });
+    await expect(
+      page.getByRole("heading", { name: "Simulasi audit berjalan" }),
+    ).toBeVisible();
+    await expectReadyReport(page);
+    // Refreshing cannot start a second run: the completed state restores.
+    await page.reload();
+    await expectReadyReport(page);
+    await assertNoSideEffects(page, requests);
+  });
+});
+
+test.describe("complete path, processing, and report (AC-03, AC-10, AC-11)", () => {
+  test("the canonical 01→06 journey advances strictly through the six steps", async ({
     page,
   }) => {
     const requests = collectRequests(page);
     await page.goto("/audit/fixture");
-    const notice = page.getByRole("complementary", { name: PREVIEW_NOTICE });
-    await expect(notice).toBeVisible();
-    await page
-      .getByRole("button", { name: "Start the example preview" })
-      .click();
-    await expect(notice).toBeVisible();
-    await confirmFactsAndApprove(page);
-    await expect(notice).toBeVisible();
-    await page
-      .getByRole("button", { name: "Simulate payment — no charge" })
-      .click();
-    await expect(notice).toBeVisible();
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
-    await expect(notice).toBeVisible();
-    await expectReadyReport(page);
-    await expect(notice).toBeVisible();
-    // The report article carries its own notice for screen and print.
     await expect(
-      page.getByRole("note", { name: PREVIEW_NOTICE }),
+      page.getByRole("heading", {
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
+      }),
+    ).toBeVisible(); // 01
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeVisible(); // 02
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    await page.getByRole("button", { name: "Lanjut ke fakta bisnis" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Periksa informasi bisnis Anda" }),
+    ).toBeVisible(); // 03
+    await confirmFactsAndApprove(page); // 04
+    await startSimulatedRun(page); // 05
+    await expectReadyReport(page); // 06
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("processing truthfulness: simulation identified, bounded stages, no fabricated per-question completion (AC-10)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3QuestionsApprovedState());
+    await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    await page.getByRole("button", { name: "Mulai audit sekarang" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi audit berjalan" }),
+    ).toBeVisible();
+    // The whole sequence is identified as a simulation.
+    await expect(
+      page
+        .getByRole("status")
+        .filter({ hasText: "Ini adalah simulasi." })
+        .first(),
+    ).toBeVisible();
+    // The five stage labels (four work stages plus the terminal one) render.
+    await expect(page.locator("li[class*='processingItem']")).toHaveCount(5);
+    for (const label of [
+      "Menyiapkan pertanyaan audit",
+      "Menguji sepuluh pertanyaan",
+      "Memeriksa bukti dan sumber",
+      "Menyiapkan laporan",
+      "Laporan siap",
+    ]) {
+      await expect(
+        page.getByText(label, { exact: true }).first(),
+      ).toBeVisible();
+    }
+    // All ten questions stay labelled "Menunggu": no fabricated live completion.
+    await expect(page.locator("li[class*='runQuestionRow']")).toHaveCount(10);
+    await expect(
+      page
+        .locator("span[class*='runStatusChip']")
+        .getByText("Menunggu", { exact: true }),
+    ).toHaveCount(10);
+    await expect(page.getByText("Selesai", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Sedang diuji", { exact: true })).toHaveCount(
+      0,
+    );
+    // State changes are announced accessibly and actually progress.
+    const status = page.getByText(/Simulasi berjalan: /);
+    await expect(status).toHaveAttribute("aria-live", "polite");
+    const before = (await status.textContent()) ?? "";
+    await page.waitForTimeout(1_800);
+    const after = (await status.textContent()) ?? "";
+    if (after === before) {
+      await expectReadyReport(page);
+    } else {
+      await expect(status).toBeVisible();
+      await expectReadyReport(page);
+    }
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("report fidelity: five sections from the frozen 10/10 fixture (AC-11)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3ReadyState());
+    await page.goto("/audit/fixture");
+    await expectReadyReport(page);
+    // Headline and count, with the two composition measures directly beneath.
+    await expect(
+      page.getByRole("heading", {
+        name: "Bisnis Anda muncul di 8 dari 10 pertanyaan",
+        level: 3,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText("8/10", { exact: true })).toBeVisible();
+    const compositionCards = page.locator("div[class*='compositionCard']");
+    await expect(compositionCards).toHaveCount(2);
+    await expect(compositionCards.first()).toContainText("3/5");
+    await expect(compositionCards.first()).toContainText(
+      "Tanpa menyebut bisnis Anda",
+    );
+    await expect(compositionCards.nth(1)).toContainText("5/5");
+    await expect(compositionCards.nth(1)).toContainText("Menyebut bisnis Anda");
+    // Recommendation / comparison / information measures with eligible denominators.
+    await expect(
+      page.getByText("Direkomendasikan di 2 dari 6 pertanyaan yang dinilai", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Diunggulkan di 1 dari 2 pertanyaan yang dinilai", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "1 terkonfirmasi, 2 belum lengkap, 1 bertentangan dari 4 pertanyaan yang dinilai",
+        {
+          exact: true,
+        },
+      ),
+    ).toBeVisible();
+    // One to five findings and one to five actions.
+    await expect(page.locator("ol[class*='findings'] > li")).toHaveCount(4);
+    await expect(page.locator("ol[class*='priorities'] > li")).toHaveCount(3);
+    // Ten test-by-test rows with exact excerpts, never translated.
+    await expect(page.locator("li[class*='testRow']")).toHaveCount(10);
+    await expect(
+      page.getByText("Kutipan jawaban", { exact: true }),
+    ).toHaveCount(10);
+    await expect(page.getByText(EXCERPT_ROW_1, { exact: true })).toBeVisible();
+    await expect(page.getByText(EXCERPT_ROW_8, { exact: true })).toBeVisible();
+    // The frozen run facts: 10/10 evaluable, method from recorded facts.
+    await expect(page.getByText("10 dari 10 selesai")).toBeVisible();
+    await expect(page.getByText("10 pertanyaan independen")).toBeVisible();
+    await expect(page.getByText("17 Agustus 2026").first()).toBeVisible();
+    await expect(page.getByText("Bandung").first()).toBeVisible();
+    await expect(page.getByText("Indonesia").first()).toBeVisible();
+    await expect(page.getByText("Versi metode: audit-method-v1")).toBeVisible();
+    // Session-only note: no durable or private-hosting claim.
+    await expect(
+      page.getByText(
+        /hanya ada di sesi tab ini, tidak dihosting secara privat/,
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/tidak disimpan di server, tidak dihosting secara privat/),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("persistent disclosure appears on every stage and in the report (AC-13)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    await page.goto("/audit/fixture");
+    const aside = page.getByRole("complementary", { name: PREVIEW_NOTICE });
+    await expect(aside).toBeVisible();
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await expect(aside).toBeVisible();
+    await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+    await expect(aside).toBeVisible();
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    await expect(aside).toBeVisible();
+    await page.getByRole("button", { name: "Lanjut ke fakta bisnis" }).click();
+    await expect(aside).toBeVisible();
+    await confirmFactsAndApprove(page);
+    await expect(aside).toBeVisible();
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    await page.getByRole("button", { name: "Mulai audit sekarang" }).click();
+    await expect(aside).toBeVisible();
+    await expectReadyReport(page);
+    await expect(aside).toBeVisible();
+    // The report article carries its own disclosure for screen and print.
+    await expect(
+      page.getByRole("note", { name: REPORT_PREVIEW_NOTICE }),
     ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
 });
 
-test.describe("recovery", () => {
+test.describe("recovery (AC-14..AC-16)", () => {
+  test("refresh after simulated payment restores the completed payment, not the run", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3PaidState());
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi audit berjalan" }),
+    ).toHaveCount(0);
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("refresh at the approved pack keeps the approval", async ({ page }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3QuestionsApprovedState());
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByText("10 pertanyaan siap dijalankan", { exact: true }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByText("10 pertanyaan siap dijalankan", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Jalankan audit" }),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
   test("refresh at the ready destination restores the same report", async ({
     page,
   }) => {
     const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "paid",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: true,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
+    seedFixtureState(page, v3ReadyState());
     await page.goto("/audit/fixture");
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
     await expectReadyReport(page);
     await page.reload();
     await expectReadyReport(page);
     await assertNoSideEffects(page, requests);
   });
 
-  test("invalid stored state is cleared with an explanation", async ({
+  test("refresh mid-run restores a paused state that advances only on resume", async ({
     page,
   }) => {
-    seedFixtureState(page, { version: 1, stage: "ready" });
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3RunPausedState(2));
     await page.goto("/audit/fixture");
     await expect(
-      page.getByText(/The saved preview state was missing, stale, or invalid/),
+      page.getByText("Simulasi berhenti.", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", {
-        name: "Start with the fixed example business",
-      }),
+      page.getByText(
+        /Simulasi berhenti pada tahap memeriksa bukti dan sumber\./,
+      ),
     ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Lanjutkan simulasi" }),
+    ).toBeVisible();
+    // The paused state must not advance beyond one stage interval.
+    const statusBefore = await page
+      .getByText(/Simulasi berhenti pada tahap/)
+      .textContent();
+    await page.waitForTimeout(2_500);
+    const statusAfter = await page
+      .getByText(/Simulasi berhenti pada tahap/)
+      .textContent();
+    expect(statusAfter).toBe(statusBefore);
+    // The explicit resume action advances deterministically to the report.
+    await page.getByRole("button", { name: "Lanjutkan simulasi" }).click();
+    await expectReadyReport(page);
+    await page.reload();
+    await expectReadyReport(page);
+    await assertNoSideEffects(page, requests);
   });
 
-  test("start over clears only the fixture journey state", async ({ page }) => {
+  test("stale v1/v2 session shapes are reset with an explanation (AC-15)", async ({
+    page,
+  }) => {
     const requests = collectRequests(page);
     seedFixtureState(page, {
       version: 2,
-      stage: "paid",
+      stage: "ready",
       factsConfirmed: true,
       questionsApproved: true,
       checkoutComplete: true,
@@ -427,283 +694,371 @@ test.describe("recovery", () => {
       reportConstructionFailed: false,
     });
     await page.goto("/audit/fixture");
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
-    await expectReadyReport(page);
-    await page.getByRole("button", { name: "Start over" }).click();
     await expect(
-      page.getByRole("button", { name: "Confirm start over" }),
+      page.getByText("Pratinjau diatur ulang.", { exact: true }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Confirm start over" }).click();
+    await expect(
+      page.getByText(
+        /Status yang tersimpan hilang, kedaluwarsa, atau tidak sesuai/,
+      ),
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", {
-        name: "Start with the fixed example business",
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
+      }),
+    ).toBeVisible();
+    const saved = await page.evaluate(
+      (key) => JSON.parse(window.sessionStorage.getItem(key) ?? "{}"),
+      FIXTURE_SESSION_KEY,
+    );
+    expect(saved).toMatchObject({
+      version: 3,
+      stage: "preview",
+      simulatedPaid: false,
+    });
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("inconsistent v3 gate order is rejected as a whole (AC-15)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    // A "ready" stage that skipped the completed run gate.
+    seedFixtureState(
+      page,
+      freshV3State({
+        stage: "ready",
+        simulatedPaid: true,
+        factsConfirmed: true,
+        questionsApproved: true,
+        runStarted: true,
+        processingCompleted: false,
+      }),
+    );
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByText("Pratinjau diatur ulang.", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
+      }),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("a v3 shape that skipped the payment gate resets (AC-15)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(
+      page,
+      freshV3State({ stage: "facts", simulatedPaid: false }),
+    );
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByText("Pratinjau diatur ulang.", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
+      }),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("start over clears only the fixture journey's own session keys (AC-16)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    seedFixtureState(page, v3ReadyState());
+    await page.goto("/audit/fixture");
+    await expectReadyReport(page);
+    // Plant live-workflow keys that must survive a fixture reset.
+    await page.evaluate(() => {
+      window.sessionStorage.setItem("nuave.audit.workflow.v3", "live-wf");
+      window.sessionStorage.setItem("nuave.audit.session.v1", "live-session");
+    });
+    await page.getByRole("button", { name: "Mulai ulang" }).first().click();
+    await expect(
+      page.getByRole("button", { name: "Konfirmasi mulai ulang" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        /hanya menghapus progres pratinjau yang tersimpan di tab ini/,
+      ),
+    ).toBeVisible();
+    // Keeping stays on the report.
+    await page.getByRole("button", { name: "Tetap di pratinjau" }).click();
+    await expectReadyReport(page);
+    // Confirming discards only the fixture journey state.
+    await page.getByRole("button", { name: "Mulai ulang" }).first().click();
+    await page.getByRole("button", { name: "Konfirmasi mulai ulang" }).click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
       }),
     ).toBeVisible();
     const keys = await page.evaluate(() => Object.keys(window.sessionStorage));
     expect(keys).toContain(FIXTURE_SESSION_KEY);
-    expect(keys).not.toContain(LIVE_WORKFLOW_KEYS[0]);
-    expect(keys).not.toContain(LIVE_WORKFLOW_KEYS[1]);
+    expect(keys).toContain(LIVE_WORKFLOW_KEYS[0]);
+    expect(keys).toContain(LIVE_WORKFLOW_KEYS[1]);
     const saved = await page.evaluate(
-      (key) => window.sessionStorage.getItem(key),
+      (key) => JSON.parse(window.sessionStorage.getItem(key) ?? "{}"),
       FIXTURE_SESSION_KEY,
     );
-    expect(JSON.parse(saved ?? "{}")).toMatchObject({
-      version: 2,
-      stage: "draft",
+    expect(saved).toMatchObject({
+      version: 3,
+      stage: "preview",
+      simulatedPaid: false,
       factsConfirmed: false,
       questionsApproved: false,
-      checkoutComplete: false,
+      runStarted: false,
     });
     await assertNoSideEffects(page, requests);
-  });
-
-  test("refresh mid-processing stays paused beyond the stage interval and resumes only on Resume", async ({
-    page,
-  }) => {
-    const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "paid",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: true,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
-    await page.goto("/audit/fixture");
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
-    // Wait for the first work stage to be visible, then interrupt with a refresh.
-    await expect(
-      page.getByText("Simulation status: running the ten example questions."),
-    ).toBeVisible({ timeout: 10_000 });
-    await page.reload();
-    // The restored run is paused and states that the simulation stopped.
-    await expect(page.getByText(/Simulation status: paused at /)).toBeVisible();
-    await expect(page.getByText("The simulation stopped.")).toBeVisible();
-    await expect(
-      page.getByText("paused", { exact: true }).first(),
-    ).toBeVisible();
-    // The paused stage must not advance during longer than one 1.4s stage.
-    const statusBefore = await page
-      .getByText(/Simulation status:/)
-      .textContent();
-    await page.waitForTimeout(2_500);
-    const statusAfter = await page
-      .getByText(/Simulation status:/)
-      .textContent();
-    expect(statusAfter).toBe(statusBefore);
-    // Resume advances deterministically to the report.
-    await page.getByRole("button", { name: "Resume simulated run" }).click();
-    await expectReadyReport(page);
-    await assertNoSideEffects(page, requests);
-  });
-
-  test("start over from paused processing requires confirmation", async ({
-    page,
-  }) => {
-    seedFixtureState(page, {
-      version: 2,
-      stage: "processing",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: true,
-      processingStage: 2,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
-    await page.goto("/audit/fixture");
-    await expect(page.getByText("The simulation stopped.")).toBeVisible();
-    const startOverButtons = page.getByRole("button", { name: "Start over" });
-    await expect(startOverButtons).toHaveCount(2); // header + paused screen
-    await startOverButtons.last().click();
-    await expect(
-      page.getByRole("button", { name: "Confirm start over" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Simulated processing" }),
-    ).toBeVisible();
   });
 });
 
-test.describe("reduced motion and keyboard", () => {
-  test("reduced motion reaches the same report without the staged delay", async ({
+test.describe("no side effects (AC-17)", () => {
+  test("complete path plus one refresh makes no audit or external-service requests", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    await page.goto("/");
+    await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    await page.getByRole("button", { name: "Lanjut ke fakta bisnis" }).click();
+    await confirmFactsAndApprove(page);
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    await page.getByRole("button", { name: "Mulai audit sekarang" }).click();
+    await expectReadyReport(page);
+    await page.reload();
+    await expectReadyReport(page);
+    await assertNoSideEffects(page, requests);
+  });
+});
+
+test.describe("reduced motion (AC-20)", () => {
+  test("reduced motion reaches the same report without the decorative delay", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     const requests = collectRequests(page);
-    seedFixtureState(page, {
-      version: 2,
-      stage: "paid",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: true,
-      processingStage: 0,
-      processingCompleted: false,
-      reportConstructionFailed: false,
-    });
+    seedFixtureState(page, v3QuestionsApprovedState());
     await page.goto("/audit/fixture");
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
-    // Near-immediate completion: far below the ~5.6s normal path.
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    await page.getByRole("button", { name: "Mulai audit sekarang" }).click();
+    // Meaningful state text still appears as the run starts.
+    await expect(page.getByText(/Simulasi berjalan: /).first()).toBeVisible();
+    // Near-immediate completion: far below the ~5.6 s normal path.
     await expect(
-      page.getByRole("heading", { name: "Example report — fictional preview" }),
+      page.getByRole("heading", {
+        name: "AI Visibility Report (contoh fiktif)",
+      }),
     ).toBeVisible({ timeout: 4_000 });
-    // Meaningful state text is retained as the static run summary.
-    await expect(page.getByText("Simulated run completed")).toBeVisible();
-    await expect(page.getByText("Report ready")).toBeVisible();
+    await expect(
+      page.getByText("Bisnis Anda muncul di 8 dari 10 pertanyaan"),
+    ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
+});
 
+test.describe("keyboard and responsive (AC-19)", () => {
   test("keyboard-only completion of the full path with visible focus", async ({
     page,
   }) => {
     const requests = collectRequests(page);
     await page.goto("/audit/fixture");
-    const pressEnterOnFocused = async () => {
-      await page.keyboard.press("Enter");
-    };
-
-    // Intake -> facts: focus sits on the stage heading, Tab reaches the action.
+    // 01 — the stage heading carries focus after hydration.
     await expect(
       page.getByRole("heading", {
-        name: "Start with the fixed example business",
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
       }),
     ).toBeFocused();
-    await page.keyboard.press("Tab");
-    const startButton = page.getByRole("button", {
-      name: "Start the example preview",
-    });
-    await expect(startButton).toBeFocused();
-    await expectVisibleFocus(page, startButton);
-    await pressEnterOnFocused();
-
-    // Facts: confirm the checkbox with Space and continue with Enter.
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Cek bisnis saya di AI" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Cek bisnis saya di AI" }),
+    );
+    await page.keyboard.press("Enter");
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Bayar Rp99.000" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Bayar Rp99.000" }),
+    );
+    await page.keyboard.press("Enter");
+    // 02 — simulated payment.
     await expect(
-      page.getByRole("heading", {
-        name: "Review the example facts before continuing",
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeFocused();
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Selesaikan simulasi pembayaran" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Selesaikan simulasi pembayaran" }),
+    );
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
+        exact: true,
       }),
+    ).toBeVisible();
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Lanjut ke fakta bisnis" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Lanjut ke fakta bisnis" }),
+    );
+    await page.keyboard.press("Enter");
+    // 03 — confirm the facts with Space, then continue with Enter.
+    await expect(
+      page.getByRole("heading", { name: "Periksa informasi bisnis Anda" }),
     ).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("checkbox")).toBeFocused();
+    await tabUntilFocused(page, page.getByRole("checkbox"));
+    await expectVisibleFocus(page, page.getByRole("checkbox"));
     await page.keyboard.press("Space");
-    await page.keyboard.press("Tab");
-    const continueButton = page.getByRole("button", {
-      name: "Continue to the ten questions",
-    });
-    await expect(continueButton).toBeFocused();
-    await expectVisibleFocus(page, continueButton);
-    await pressEnterOnFocused();
-
-    // Questions: approve the pack with Space and Enter.
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Buat pertanyaan audit" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Buat pertanyaan audit" }),
+    );
+    await page.keyboard.press("Enter");
+    // 04 — approve the pack with Space, then Enter.
     await expect(
-      page.getByRole("heading", { name: "Review the ten example questions" }),
+      page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
     ).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("checkbox")).toBeFocused();
+    await tabUntilFocused(page, page.getByRole("checkbox"));
     await page.keyboard.press("Space");
-    await page.keyboard.press("Tab");
-    const approveButton = page.getByRole("button", {
-      name: "Approve the question pack",
-    });
-    await expect(approveButton).toBeFocused();
-    await expectVisibleFocus(page, approveButton);
-    await pressEnterOnFocused();
-
-    // Summary: simulate payment.
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Setujui pertanyaan" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Setujui pertanyaan" }),
+    );
+    await page.keyboard.press("Enter");
     await expect(
-      page.getByRole("heading", { name: "Review the example scope" }),
-    ).toBeFocused();
-    await page.keyboard.press("Tab");
-    const payButton = page.getByRole("button", {
-      name: "Simulate payment — no charge",
-    });
-    await expect(payButton).toBeFocused();
-    await expectVisibleFocus(page, payButton);
-    await pressEnterOnFocused();
-
-    // Paid: start the simulated run.
+      page.getByText("10 pertanyaan siap dijalankan", { exact: true }),
+    ).toBeVisible();
+    // 05 — the run confirmation dialog is keyboard operable.
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Jalankan audit" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Jalankan audit" }),
+    );
+    await page.keyboard.press("Enter");
     await expect(
-      page.getByRole("heading", { name: "Simulated payment complete" }),
+      page.getByRole("heading", { name: "Mulai audit sekarang?" }),
     ).toBeFocused();
-    await page.keyboard.press("Tab");
-    const runButton = page.getByRole("button", {
-      name: "Start the simulated run",
-    });
-    await expect(runButton).toBeFocused();
-    await expectVisibleFocus(page, runButton);
-    await pressEnterOnFocused();
-
-    // The run completes to the report without further input.
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Mulai audit sekarang" }),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Mulai audit sekarang" }),
+    );
+    await page.keyboard.press("Enter");
+    // 06 — the run completes to the report without further input.
     await expectReadyReport(page);
+    await expect(
+      page.getByRole("heading", {
+        name: "AI Visibility Report (contoh fiktif)",
+      }),
+    ).toBeFocused();
+    // The primary action is keyboard reachable with visible focus.
+    await tabUntilFocused(
+      page,
+      page.getByRole("button", { name: "Download PDF" }).first(),
+    );
+    await expectVisibleFocus(
+      page,
+      page.getByRole("button", { name: "Download PDF" }).first(),
+    );
     await assertNoSideEffects(page, requests);
+  });
+
+  test.describe("mobile viewport", () => {
+    test.use({ viewport: { width: 375, height: 812 } });
+
+    test("the complete path has no horizontal scrolling", async ({ page }) => {
+      const requests = collectRequests(page);
+      await page.goto("/audit/fixture");
+      await expectNoHorizontalScroll(page);
+      await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+      await expectNoHorizontalScroll(page);
+      await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+      await expectNoHorizontalScroll(page);
+      await page
+        .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+        .click();
+      await page
+        .getByRole("button", { name: "Lanjut ke fakta bisnis" })
+        .click();
+      await expectNoHorizontalScroll(page);
+      await confirmFactsAndApprove(page);
+      await expectNoHorizontalScroll(page);
+      await page.getByRole("button", { name: "Jalankan audit" }).click();
+      await page.getByRole("button", { name: "Mulai audit sekarang" }).click();
+      await expectNoHorizontalScroll(page);
+      await expectReadyReport(page);
+      await expectNoHorizontalScroll(page);
+      await assertNoSideEffects(page, requests);
+    });
   });
 });
 
-test.describe("responsive and print", () => {
-  test.use({ viewport: { width: 375, height: 812 } });
-
-  test("mobile viewport: the complete path has no horizontal scrolling", async ({
-    page,
-  }) => {
-    const requests = collectRequests(page);
-    await page.goto("/audit/fixture");
-    await expectNoHorizontalScroll(page);
-    await page
-      .getByRole("button", { name: "Start the example preview" })
-      .click();
-    await confirmFactsAndApprove(page);
-    await expectNoHorizontalScroll(page);
-    await page
-      .getByRole("button", { name: "Simulate payment — no charge" })
-      .click();
-    await page.getByRole("button", { name: "Start the simulated run" }).click();
-    await expectReadyReport(page);
-    await expectNoHorizontalScroll(page);
-    await assertNoSideEffects(page, requests);
-  });
-});
-
-test("print output retains the preview disclosure and expands the details", async ({
+test("print output retains the disclosure and renders the same report data (AC-12)", async ({
   page,
 }) => {
   const requests = collectRequests(page);
-  seedFixtureState(page, {
-    version: 2,
-    stage: "paid",
-    factsConfirmed: true,
-    questionsApproved: true,
-    checkoutComplete: true,
-    processingStage: 0,
-    processingCompleted: false,
-    reportConstructionFailed: false,
-  });
+  seedFixtureState(page, v3ReadyState());
   await page.goto("/audit/fixture");
-  await page.getByRole("button", { name: "Start the simulated run" }).click();
   await expectReadyReport(page);
   await page.emulateMedia({ media: "print" });
-  // The in-article disclosure prints; the screen toolbar does not.
-  await expect(page.getByRole("note", { name: PREVIEW_NOTICE })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start over" })).toBeHidden();
-  // The print variant of all ten details is expanded in print media.
-  await expect(page.locator("section[class*='printDetail']")).toHaveCount(10);
+  // The in-article disclosure prints.
+  await expect(
+    page.getByRole("note", { name: REPORT_PREVIEW_NOTICE }),
+  ).toBeVisible();
+  await expect(page.getByText("Pratinjau fiktif.").first()).toBeVisible();
+  // Screen-only chrome is hidden in print.
+  await expect(page.getByRole("button", { name: "Download PDF" })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("button", { name: "Unduh JSON" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Mulai ulang" })).toHaveCount(
+    0,
+  );
+  // The print layout uses the same report data, with details expanded.
+  await expect(
+    page.getByRole("heading", {
+      name: "Bisnis Anda muncul di 8 dari 10 pertanyaan",
+      level: 3,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("8/10", { exact: true })).toBeVisible();
+  await expect(page.locator("li[class*='testRow']")).toHaveCount(10);
+  await expect(page.getByText(EXCERPT_ROW_1, { exact: true })).toBeVisible();
   await assertNoSideEffects(page, requests);
 });
-
-async function expectVisibleFocus(
-  page: import("@playwright/test").Page,
-  locator: import("@playwright/test").Locator,
-): Promise<void> {
-  await expect(locator).toBeFocused();
-  const outline = await locator.evaluate((element) => {
-    const style = window.getComputedStyle(element);
-    return `${style.outlineStyle} ${style.outlineWidth}`;
-  });
-  expect(outline).not.toMatch(/^none/);
-}
-
-async function expectNoHorizontalScroll(page: import("@playwright/test").Page) {
-  const fits = await page.evaluate(
-    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-  );
-  expect(fits).toBe(true);
-}

@@ -4,15 +4,11 @@ import {
   auditBudgetSchema,
   businessBriefSchema,
   promptSchema,
-  type AuditCallTelemetry,
 } from "@/lib/audit/types";
 import { validatePromptPack } from "@/lib/audit/contracts";
 import { executeAuditPrompt } from "@/lib/audit/provider";
-import {
-  encodeAuditRunEvent,
-  runWithConcurrency,
-  type AuditRunEvent,
-} from "@/lib/audit/stream";
+import { runAuditObservations } from "@/lib/audit/run-orchestrator";
+import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
 
 export const runtime = "nodejs";
 
@@ -36,34 +32,17 @@ export async function POST(request: Request) {
         const send = (event: AuditRunEvent) =>
           controller.enqueue(encoder.encode(encodeAuditRunEvent(event)));
         try {
-          send({ type: "run_started", total: 10 });
-          const runCalls: AuditCallTelemetry[] = [];
-          const observations = await runWithConcurrency({
-            items: input.prompts,
-            limit: 1,
-            onStart(prompt, index) {
-              send({
-                type: "prompt_started",
-                index,
-                prompt_id: prompt.prompt_id,
-              });
-            },
-            work: (prompt) =>
-              executeAuditPrompt({
-                prompt,
-                brief: input.brief,
-                safety_identifier: input.safety_identifier,
-                budget: {
-                  ...input.budget,
-                  calls: [...input.budget.calls, ...runCalls],
-                },
-              }),
-            onComplete(observation, index) {
-              runCalls.push(...observation.telemetry);
-              send({ type: "prompt_completed", index, observation });
-            },
+          // Spec 003 R-17/R-19: targeted 1+2 retry per question under the same
+          // locked configuration; every attempt is persisted; a valid result
+          // is never rerun; the ten-of-ten gate decides the terminal event.
+          await runAuditObservations({
+            prompts: input.prompts,
+            brief: input.brief,
+            safety_identifier: input.safety_identifier,
+            budget: input.budget,
+            execute: executeAuditPrompt,
+            emit: send,
           });
-          send({ type: "run_completed", observations });
         } catch (error) {
           send({
             type: "fatal_error",

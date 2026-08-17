@@ -7,9 +7,9 @@ import styles from "./fixture.module.css";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Fictional preview | Nuave",
+  title: "Pratinjau fiktif | Nuave",
   description:
-    "Protected fictional preview of the Nuave audit journey using the Northstar Advisory example. No real audit, no payment.",
+    "Pratinjau fiktif yang dilindungi dari perjalanan audit Nuave menggunakan contoh bisnis Kopi Taman Senja. Bukan audit nyata dan tidak ada pembayaran.",
   robots: {
     index: false,
     follow: false,
@@ -29,16 +29,16 @@ function fixtureReportFailureForced(): boolean {
 
 function PreviewUnavailable() {
   return (
-    <main className={styles.shell} lang="en">
+    <main className={styles.shell} lang="id">
       <section className={styles.unavailable}>
-        <p className={styles.eyebrow}>Fictional product preview</p>
-        <h1>The example preview is not available right now.</h1>
+        <p className={styles.eyebrow}>Pratinjau produk fiktif</p>
+        <h1>Pratinjau contoh tidak tersedia saat ini.</h1>
         <p>
-          The fixture preview is switched off on this server. Return to the
-          landing page to see the normal Nuave experience.
+          Pratinjau fiktif dimatikan di server ini. Kembali ke halaman utama
+          Nuave untuk melihat pengalaman normal.
         </p>
         <Link href="/" className={styles.primaryAction}>
-          Back to the Nuave landing page
+          Kembali ke halaman utama Nuave
         </Link>
       </section>
     </main>

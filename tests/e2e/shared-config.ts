@@ -1,5 +1,5 @@
 /**
- * Shared web-server configuration for the Spec 001 browser harness.
+ * Shared web-server configuration for the Spec 002 browser harness.
  *
  * Each Playwright config boots its own `next dev` server with the server-side
  * fixture-preview environment it needs. Ports are distinct so the three modes

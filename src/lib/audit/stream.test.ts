@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AuditObservation } from "./types";
 import {
   AuditRunEventParser,
+  auditRunEventSchema,
   deriveAuditStep,
   encodeAuditRunEvent,
   mergeObservation,
@@ -34,11 +35,24 @@ function observation(
 describe("audit NDJSON stream", () => {
   it("parses events when JSON lines are split across arbitrary chunks", () => {
     const events: AuditRunEvent[] = [
-      { type: "run_started", total: 10 },
-      { type: "prompt_started", index: 0, prompt_id: "prompt-1" },
+      {
+        type: "run_started",
+        total: 10,
+        max_attempts_per_question: 3,
+        max_automatic_retries: 2,
+        observation_stage_max_calls: 30,
+      },
+      {
+        type: "prompt_started",
+        index: 0,
+        prompt_id: "prompt-1",
+        attempt: 1,
+        is_retry: false,
+      },
       {
         type: "prompt_completed",
         index: 0,
+        attempt: 1,
         observation: observation("prompt-1"),
       },
     ];
@@ -82,6 +96,77 @@ describe("audit NDJSON stream", () => {
     const first = observation("prompt-1");
     const failed = observation("prompt-1", "failed");
     expect(mergeObservation([first], failed)).toEqual([failed]);
+  });
+
+  it("parses the retry lifecycle events additively", () => {
+    const events: AuditRunEvent[] = [
+      {
+        type: "attempt_started",
+        index: 0,
+        prompt_id: "prompt-1",
+        attempt: 2,
+        automatic: true,
+      },
+      {
+        type: "prompt_retrying",
+        index: 0,
+        prompt_id: "prompt-1",
+        attempt: 1,
+        next_attempt: 2,
+        backoff_ms: 2_000,
+        failure_reason: "Temporary provider failure",
+      },
+      {
+        type: "prompt_failed",
+        index: 0,
+        prompt_id: "prompt-1",
+        attempts: 3,
+        failure_reason: "Temporary provider failure",
+      },
+      {
+        type: "run_unfinished",
+        completed: 9,
+        failed_prompt_ids: ["prompt-1"],
+        message: "Ten evaluable observations could not be reached.",
+      },
+    ];
+    const payload = events.map(encodeAuditRunEvent).join("");
+    const parser = new AuditRunEventParser();
+    expect([...parser.push(payload), ...parser.finish()]).toEqual(events);
+  });
+
+  it("records the retry policy and retry-aware ceiling on the run record", () => {
+    const parsed = auditRunEventSchema.parse({
+      type: "run_started",
+      total: 10,
+    });
+    expect(parsed).toMatchObject({
+      type: "run_started",
+      total: 10,
+      max_attempts_per_question: 3,
+      max_automatic_retries: 2,
+      observation_stage_max_calls: 30,
+    });
+  });
+
+  it("rejects a run_completed event with fewer than ten observations (no partial report)", () => {
+    const nine = Array.from({ length: 9 }, (_, index) =>
+      observation(`prompt-${index}`),
+    );
+    expect(() =>
+      auditRunEventSchema.parse({ type: "run_completed", observations: nine }),
+    ).toThrow();
+  });
+
+  it("rejects a run_unfinished event that claims ten completed observations", () => {
+    expect(() =>
+      auditRunEventSchema.parse({
+        type: "run_unfinished",
+        completed: 10,
+        failed_prompt_ids: [],
+        message: "invalid",
+      }),
+    ).toThrow();
   });
 });
 

@@ -203,10 +203,13 @@ describe("private audit cost telemetry", () => {
   });
 
   it("enforces per-stage call ceilings before another provider call", () => {
+    // Spec 003 R-36: the observation stage ceiling is retry-aware (10
+    // questions x 3 attempts = 30) while the USD 5 per-session ceiling stays
+    // the binding cap.
     expect(AUDIT_STAGE_CALL_LIMITS).toEqual({
       extract: 1,
       prompts: 0,
-      observation: 10,
+      observation: 30,
       report: 3,
     });
     expect(() =>
@@ -223,6 +226,50 @@ describe("private audit cost telemetry", () => {
         has_web_search: false,
       }),
     ).toThrow("reached its 3-call private audit limit");
+  });
+
+  it("lets the observation stage absorb the 1+2 retry policy before the ceiling binds", () => {
+    // 29 observation calls (within the 30-call retry-aware allowance) plus a
+    // fresh reservation must be accepted; the 31st observation call must hit
+    // the stage ceiling. The USD 5 ceiling remains the binding cap and is
+    // checked separately in the accounting tests above.
+    const nearFull = {
+      ...fixtureBudget,
+      calls: Array.from({ length: 29 }, (_, index) =>
+        fixtureCallTelemetry({
+          stage: "observation",
+          response_id: `observation-${index + 1}`,
+        }),
+      ),
+    };
+    expect(() =>
+      reserveAuditCall({
+        budget: nearFull,
+        stage: "observation",
+        request: { input: "short customer question" },
+        requested_model: AUDIT_MODEL,
+        has_web_search: true,
+      }),
+    ).not.toThrow();
+
+    const full = {
+      ...fixtureBudget,
+      calls: Array.from({ length: 30 }, (_, index) =>
+        fixtureCallTelemetry({
+          stage: "observation",
+          response_id: `observation-${index + 1}`,
+        }),
+      ),
+    };
+    expect(() =>
+      reserveAuditCall({
+        budget: full,
+        stage: "observation",
+        request: { input: "short customer question" },
+        requested_model: AUDIT_MODEL,
+        has_web_search: true,
+      }),
+    ).toThrow("reached its 30-call private audit limit");
   });
 
   it("prices long-context provider usage without double-counting cached or cache-write tokens", () => {

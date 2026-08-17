@@ -8,16 +8,6 @@ import {
   validateFixtureJourneyState,
   type FixtureJourneyState,
 } from "./state";
-import {
-  fixtureJourneyContext,
-  questionClassExplanations,
-  questionPackIsBalanced,
-} from "./adapter";
-import {
-  goldenBrief,
-  goldenObservations,
-  goldenPrompts,
-} from "../audit/fixtures/report-golden";
 
 function stateAt(
   overrides: Partial<FixtureJourneyState> = {},
@@ -26,70 +16,103 @@ function stateAt(
 }
 
 describe("fixture journey storage key", () => {
-  it("is versioned and separate from the live audit workflow keys", () => {
-    expect(FIXTURE_JOURNEY_STORAGE_KEY).toBe("nuave.fixtureJourney.v2");
+  it("is versioned, separate from the live audit workflow keys, and v3", () => {
+    expect(FIXTURE_JOURNEY_STORAGE_KEY).toBe("nuave.fixtureJourney.v3");
     expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.workflow.v3");
     expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.session.v1");
   });
 
-  it("declares the full phase-1 path in order", () => {
+  it("declares the canonical six-step path in order (R-20)", () => {
     expect(fixtureJourneyStages).toEqual([
-      "draft",
+      "preview",
+      "payment",
       "facts",
       "questions",
-      "summary",
-      "paid",
-      "processing",
+      "run",
       "ready",
     ]);
   });
 });
 
-describe("validateFixtureJourneyState — forward progression", () => {
-  it("accepts a fresh valid state", () => {
+describe("validateFixtureJourneyState — forward progression (R-23 gates)", () => {
+  it("accepts a fresh valid state at the order preview", () => {
     const state = freshFixtureJourneyState();
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
-  it("accepts confirmed facts before questions", () => {
-    const state = stateAt({ stage: "facts", factsConfirmed: true });
+  it("accepts the simulated-payment screen before completion", () => {
+    const state = stateAt({ stage: "payment" });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
-  it("accepts the approved-question state before the summary", () => {
+  it("accepts the simulated-paid confirmation state", () => {
+    const state = stateAt({ stage: "payment", simulatedPaid: true });
+    expect(validateFixtureJourneyState(state)).toEqual(state);
+  });
+
+  it("accepts facts after the simulated payment", () => {
+    const state = stateAt({ stage: "facts", simulatedPaid: true });
+    expect(validateFixtureJourneyState(state)).toEqual(state);
+  });
+
+  it("accepts confirmed facts before the questions screen", () => {
+    const state = stateAt({
+      stage: "facts",
+      simulatedPaid: true,
+      factsConfirmed: true,
+    });
+    expect(validateFixtureJourneyState(state)).toEqual(state);
+  });
+
+  it("accepts the questions screen after fact confirmation", () => {
     const state = stateAt({
       stage: "questions",
+      simulatedPaid: true,
+      factsConfirmed: true,
+    });
+    expect(validateFixtureJourneyState(state)).toEqual(state);
+  });
+
+  it("accepts an approved question pack before the run", () => {
+    const state = stateAt({
+      stage: "questions",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
     });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
-  it("accepts the scope summary after approval", () => {
+  it("accepts the run screen before the explicit run action", () => {
     const state = stateAt({
-      stage: "summary",
+      stage: "run",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
+      runStarted: false,
     });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
-  it("accepts the simulated-paid state after checkout", () => {
+  it("accepts a just-started run at stage zero", () => {
     const state = stateAt({
-      stage: "paid",
+      stage: "run",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
+      runStarted: true,
+      processingStage: 0,
     });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
   it("accepts a persisted mid-run processing state", () => {
     const state = stateAt({
-      stage: "processing",
+      stage: "run",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
+      runStarted: true,
       processingStage: 2,
     });
     expect(validateFixtureJourneyState(state)).toEqual(state);
@@ -98,9 +121,10 @@ describe("validateFixtureJourneyState — forward progression", () => {
   it("accepts the terminal ready state", () => {
     const state = stateAt({
       stage: "ready",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
+      runStarted: true,
       processingStage: 3,
       processingCompleted: true,
     });
@@ -110,9 +134,10 @@ describe("validateFixtureJourneyState — forward progression", () => {
   it("accepts the terminal ready state with a failed fixture construction", () => {
     const state = stateAt({
       stage: "ready",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
+      runStarted: true,
       processingStage: 3,
       processingCompleted: true,
       reportConstructionFailed: true,
@@ -120,14 +145,26 @@ describe("validateFixtureJourneyState — forward progression", () => {
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
-  it("accepts backward navigation that preserves confirmations", () => {
-    const state = stateAt({
-      stage: "draft",
+  it("accepts backward navigation before the run that preserves confirmations", () => {
+    // Back to the preview after payment and fact confirmation.
+    const backToPreview = stateAt({
+      stage: "preview",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
     });
-    expect(validateFixtureJourneyState(state)).toEqual(state);
+    expect(validateFixtureJourneyState(backToPreview)).toEqual(backToPreview);
+    // Back to the simulated payment after it completed.
+    const backToPayment = stateAt({ stage: "payment", simulatedPaid: true });
+    expect(validateFixtureJourneyState(backToPayment)).toEqual(backToPayment);
+    // Back to facts after the question pack was approved.
+    const backToFacts = stateAt({
+      stage: "facts",
+      simulatedPaid: true,
+      factsConfirmed: true,
+      questionsApproved: true,
+    });
+    expect(validateFixtureJourneyState(backToFacts)).toEqual(backToFacts);
   });
 });
 
@@ -135,7 +172,7 @@ describe("validateFixtureJourneyState — rejection", () => {
   it("rejects a missing state", () => {
     expect(validateFixtureJourneyState(null)).toBeNull();
     expect(validateFixtureJourneyState(undefined)).toBeNull();
-    expect(validateFixtureJourneyState("draft")).toBeNull();
+    expect(validateFixtureJourneyState("preview")).toBeNull();
   });
 
   it("rejects a stale or incompatible version", () => {
@@ -146,18 +183,34 @@ describe("validateFixtureJourneyState — rejection", () => {
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
 
-  it("rejects a Chunk-1 state shape (missing new flags)", () => {
-    const chunk1Shape = {
+  it("rejects a stored v2 shape (Spec 001 order) as stale", () => {
+    // The v2 state used draft/facts/questions/summary/paid/processing/ready
+    // with checkoutComplete; it must be rejected as a whole and reset.
+    const v2Shape = {
+      version: 2,
+      stage: "summary",
+      factsConfirmed: true,
+      questionsApproved: true,
+      checkoutComplete: true,
+      processingStage: 0,
+      processingCompleted: false,
+      reportConstructionFailed: false,
+    };
+    expect(validateFixtureJourneyState(v2Shape)).toBeNull();
+  });
+
+  it("rejects a stored v1 shape as stale", () => {
+    const v1Shape = {
       version: 1,
       stage: "questions",
       factsConfirmed: true,
       questionsApproved: true,
     };
-    expect(validateFixtureJourneyState(chunk1Shape)).toBeNull();
+    expect(validateFixtureJourneyState(v1Shape)).toBeNull();
   });
 
   it("rejects an unknown stage", () => {
-    const state = { ...freshFixtureJourneyState(), stage: "paid" };
+    const state = { ...freshFixtureJourneyState(), stage: "summary" };
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
 
@@ -165,48 +218,33 @@ describe("validateFixtureJourneyState — rejection", () => {
     expect(
       validateFixtureJourneyState({
         ...freshFixtureJourneyState(),
-        factsConfirmed: "yes",
+        simulatedPaid: "yes",
       }),
     ).toBeNull();
     expect(
       validateFixtureJourneyState({
         ...freshFixtureJourneyState(),
-        checkoutComplete: 1,
+        factsConfirmed: 1,
       }),
     ).toBeNull();
     expect(
       validateFixtureJourneyState({
         ...freshFixtureJourneyState(),
-        processingCompleted: "done",
+        runStarted: "done",
       }),
     ).toBeNull();
   });
 
-  it("rejects a question approval without confirmed facts", () => {
+  it("rejects facts before the simulated payment", () => {
+    const state = stateAt({ stage: "facts", simulatedPaid: false });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
+  it("rejects the questions screen before the simulated payment", () => {
     const state = stateAt({
       stage: "questions",
-      factsConfirmed: false,
-      questionsApproved: true,
-    });
-    expect(validateFixtureJourneyState(state)).toBeNull();
-  });
-
-  it("rejects checkout without confirmed facts", () => {
-    const state = stateAt({
-      stage: "paid",
-      factsConfirmed: false,
-      questionsApproved: true,
-      checkoutComplete: true,
-    });
-    expect(validateFixtureJourneyState(state)).toBeNull();
-  });
-
-  it("rejects checkout without an approved question pack", () => {
-    const state = stateAt({
-      stage: "paid",
+      simulatedPaid: false,
       factsConfirmed: true,
-      questionsApproved: false,
-      checkoutComplete: true,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
@@ -214,37 +252,48 @@ describe("validateFixtureJourneyState — rejection", () => {
   it("rejects the questions screen before facts are confirmed", () => {
     const state = stateAt({
       stage: "questions",
+      simulatedPaid: true,
       factsConfirmed: false,
+    });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
+  it("rejects a question approval without confirmed facts", () => {
+    const state = stateAt({
+      stage: "questions",
+      simulatedPaid: true,
+      factsConfirmed: false,
+      questionsApproved: true,
+    });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
+  it("rejects the run screen without an approved question pack", () => {
+    const state = stateAt({
+      stage: "run",
+      simulatedPaid: true,
+      factsConfirmed: true,
       questionsApproved: false,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
 
-  it("rejects the summary without an approved question pack", () => {
+  it("rejects the run screen without confirmed facts", () => {
     const state = stateAt({
-      stage: "summary",
-      factsConfirmed: true,
-      questionsApproved: false,
+      stage: "run",
+      simulatedPaid: true,
+      factsConfirmed: false,
+      questionsApproved: true,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
 
-  it("rejects the simulated-paid stage without checkout", () => {
+  it("rejects the run screen without the simulated payment", () => {
     const state = stateAt({
-      stage: "paid",
+      stage: "run",
+      simulatedPaid: false,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: false,
-    });
-    expect(validateFixtureJourneyState(state)).toBeNull();
-  });
-
-  it("rejects processing without checkout", () => {
-    const state = stateAt({
-      stage: "processing",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: false,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
@@ -252,9 +301,9 @@ describe("validateFixtureJourneyState — rejection", () => {
   it("rejects the ready stage without a completed run", () => {
     const state = stateAt({
       stage: "ready",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
       processingCompleted: false,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
@@ -262,10 +311,11 @@ describe("validateFixtureJourneyState — rejection", () => {
 
   it("rejects a completed run that has not landed on ready", () => {
     const state = stateAt({
-      stage: "processing",
+      stage: "run",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: true,
+      runStarted: true,
       processingCompleted: true,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
@@ -274,56 +324,73 @@ describe("validateFixtureJourneyState — rejection", () => {
   it("rejects an out-of-range processing stage", () => {
     for (const processingStage of [-1, 4, 1.5, Number.NaN]) {
       const state = stateAt({
-        stage: "processing",
+        stage: "run",
+        simulatedPaid: true,
         factsConfirmed: true,
         questionsApproved: true,
-        checkoutComplete: true,
+        runStarted: true,
         processingStage,
       });
       expect(validateFixtureJourneyState(state)).toBeNull();
     }
   });
 
-  it("rejects a started run without completed simulated checkout", () => {
+  it("rejects a started run without the explicit run action", () => {
     const state = stateAt({
-      stage: "processing",
+      stage: "run",
+      simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
-      checkoutComplete: false,
+      runStarted: false,
       processingStage: 2,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
   });
 
-  it("rejects a started run outside processing or the ready destination", () => {
-    for (const stage of ["summary", "paid", "questions", "facts", "draft"]) {
+  it("rejects a started run without the simulated payment", () => {
+    const state = stateAt({
+      stage: "run",
+      simulatedPaid: false,
+      factsConfirmed: true,
+      questionsApproved: true,
+      runStarted: true,
+      processingStage: 2,
+    });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
+  it("rejects the run action away from the run and ready destinations", () => {
+    for (const stage of ["preview", "payment", "facts", "questions"]) {
       const state = stateAt({
         stage: stage as FixtureJourneyState["stage"],
+        simulatedPaid: true,
         factsConfirmed: true,
         questionsApproved: true,
-        checkoutComplete: true,
+        runStarted: true,
+      });
+      expect(validateFixtureJourneyState(state)).toBeNull();
+    }
+  });
+
+  it("rejects a started run outside the run and ready destinations", () => {
+    for (const stage of ["preview", "payment", "facts", "questions"]) {
+      const state = stateAt({
+        stage: stage as FixtureJourneyState["stage"],
+        simulatedPaid: true,
+        factsConfirmed: true,
+        questionsApproved: true,
+        runStarted: true,
         processingStage: 1,
       });
       expect(validateFixtureJourneyState(state)).toBeNull();
     }
   });
 
-  it("accepts a fresh run at stage zero after checkout", () => {
-    const state = stateAt({
-      stage: "processing",
-      factsConfirmed: true,
-      questionsApproved: true,
-      checkoutComplete: true,
-      processingStage: 0,
-    });
-    expect(validateFixtureJourneyState(state)).toEqual(state);
-  });
-
   it("rejects a construction failure away from the ready destination", () => {
     const state = stateAt({
-      stage: "summary",
+      stage: "questions",
+      simulatedPaid: true,
       factsConfirmed: true,
-      questionsApproved: true,
       reportConstructionFailed: true,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();
@@ -337,128 +404,14 @@ describe("validateFixtureJourneyState — rejection", () => {
     expect(validateFixtureJourneyState(missingVersion)).toBeNull();
     const partial = {
       version: FIXTURE_JOURNEY_STATE_VERSION,
-      stage: "draft",
+      stage: "preview",
     };
     expect(validateFixtureJourneyState(partial)).toBeNull();
-  });
-});
-
-describe("fixture journey adapter", () => {
-  it("derives business identity from goldenBrief without a second fixture", () => {
-    expect(fixtureJourneyContext.business.name).toBe(goldenBrief.brand_name);
-    expect(fixtureJourneyContext.business.entityScope).toBe(
-      goldenBrief.entity_scope,
-    );
-    expect(fixtureJourneyContext.business.category).toBe(goldenBrief.category);
-    expect(fixtureJourneyContext.business.marketContext).toBe(
-      goldenBrief.market_context,
-    );
-    expect(fixtureJourneyContext.business.targetCustomer).toBe(
-      goldenBrief.target_customer,
-    );
-    expect(fixtureJourneyContext.business.priorityOffering).toBe(
-      goldenBrief.priority_offering,
-    );
-    expect(fixtureJourneyContext.business.officialSources).toEqual(
-      goldenBrief.official_sources,
-    );
-    expect(fixtureJourneyContext.business.nameVariants).toEqual(
-      goldenBrief.brand_name_variants,
-    );
-    expect(fixtureJourneyContext.business.competitor.name).toBe(
-      goldenBrief.verified_competitor.name,
-    );
-    expect(fixtureJourneyContext.business.competitor.scope).toBe(
-      goldenBrief.verified_competitor.scope,
-    );
-    expect(fixtureJourneyContext.business.accuracyQuestions).toEqual(
-      goldenBrief.known_accuracy_questions,
-    );
-  });
-
-  it("keeps all ten questions in the fixture's original order", () => {
-    expect(fixtureJourneyContext.questions.all.map((q) => q.prompt_id)).toEqual(
-      goldenPrompts.map((q) => q.prompt_id),
-    );
-    expect(fixtureJourneyContext.questions.all.map((q) => q.question)).toEqual(
-      goldenPrompts.map((q) => q.question),
-    );
-    expect(fixtureJourneyContext.questions.all).toHaveLength(10);
-  });
-
-  it("splits exactly five unbranded and five branded questions", () => {
-    expect(questionPackIsBalanced()).toBe(true);
-    expect(fixtureJourneyContext.questions.unbranded).toHaveLength(5);
-    expect(fixtureJourneyContext.questions.branded).toHaveLength(5);
-    expect(
-      fixtureJourneyContext.questions.unbranded.every((q) => !q.branded),
-    ).toBe(true);
-    expect(
-      fixtureJourneyContext.questions.branded.every((q) => q.branded),
-    ).toBe(true);
-  });
-
-  it("explains both question classes in plain language", () => {
-    expect(questionClassExplanations.unbranded.label).toBe(
-      "Discovery questions",
-    );
-    expect(questionClassExplanations.branded.label).toBe(
-      "Named-business questions",
-    );
-    expect(
-      questionClassExplanations.unbranded.detail.includes(
-        goldenBrief.brand_name,
-      ),
-    ).toBe(true);
-    expect(
-      questionClassExplanations.branded.detail.includes(goldenBrief.brand_name),
-    ).toBe(true);
-  });
-
-  it("keeps the fictional contact context on the reserved .example domain", () => {
-    expect(fixtureJourneyContext.contact.email.endsWith(".example")).toBe(true);
-    expect(fixtureJourneyContext.contact.website).toBe(
-      goldenBrief.official_sources[0],
-    );
-  });
-
-  it("derives the order-summary question count from the golden prompts", () => {
-    expect(fixtureJourneyContext.summary.questionCount).toBe(
-      goldenPrompts.length,
-    );
-    expect(fixtureJourneyContext.summary.questionCount).toBe(10);
-    expect(fixtureJourneyContext.summary.questionCount).toBe(
-      fixtureJourneyContext.questions.all.length,
-    );
-  });
-
-  it("derives the order-summary execution surface from the golden observations", () => {
-    const systems = new Set(
-      goldenObservations.map((observation) => observation.system),
-    );
-    expect(systems.size).toBe(1);
-    expect(fixtureJourneyContext.summary.executionSurface.system).toBe(
-      goldenObservations[0]?.system,
-    );
-    expect(fixtureJourneyContext.summary.executionSurface.system).toBe(
-      "OpenAI Responses API",
-    );
-  });
-
-  it("derives the order-summary model names from the golden observations", () => {
-    const expectedModels = [
-      ...new Set(
-        goldenObservations
-          .map((observation) => observation.requested_model)
-          .filter(Boolean),
-      ),
-    ];
-    expect(fixtureJourneyContext.summary.executionSurface.models).toEqual(
-      expectedModels,
-    );
-    expect(fixtureJourneyContext.summary.executionSurface.models).toContain(
-      "fixture-requested-model",
-    );
+    const missingRunStarted = {
+      ...freshFixtureJourneyState(),
+    } as Partial<FixtureJourneyState>;
+    delete missingRunStarted.runStarted;
+    expect(validateFixtureJourneyState(missingRunStarted)).toBeNull();
   });
 });
 
@@ -472,6 +425,10 @@ describe("fixture journey side-effect boundary", () => {
     new URL("../../../src/app/audit/fixture/page.tsx", import.meta.url),
     new URL(
       "../../../src/app/audit/fixture/FixtureJourney.tsx",
+      import.meta.url,
+    ),
+    new URL(
+      "../../../src/app/audit/fixture/FixtureReportView.tsx",
       import.meta.url,
     ),
   ];

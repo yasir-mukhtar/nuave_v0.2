@@ -816,3 +816,839 @@
     width: 100%;
   }
 }
+
+/* ── Provenance tags (VOICE.md §7.2) ── */
+.provenanceTag {
+  display: inline-block;
+  margin-left: 0.375rem;
+  border-radius: 9999px;
+  background: var(--fixture-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--fixture-accent) 30%, transparent);
+  color: var(--fixture-accent-dark);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  vertical-align: middle;
+}
+
+.sourceList {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sourceList li {
+  overflow-wrap: anywhere;
+}
+
+/* ── Order offer panel (01) ── */
+.offerPanel {
+  margin-top: 1.5rem;
+  border: 2px solid var(--fixture-accent);
+  border-radius: 12px;
+  background: var(--fixture-bg);
+  padding: 1.25rem 1.5rem;
+}
+
+.offerHeading {
+  margin: 0 0 0.875rem;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ── Fact warning panel (03) ── */
+.warningPanel {
+  margin-top: 1.5rem;
+  border: 1px solid var(--fixture-amber-border);
+  border-radius: 12px;
+  background: var(--fixture-amber-soft);
+  padding: 1.25rem 1.5rem;
+}
+
+.warningHeading {
+  margin: 0 0 0.5rem;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* ── Run-ready panel (04) ── */
+.runReadyPanel {
+  display: flex;
+  margin-top: 1.5rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--fixture-green-border);
+  border-radius: 12px;
+  background: var(--fixture-green-soft);
+  color: var(--fixture-text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  padding: 1.25rem 1.5rem;
+}
+
+.runReadyPanel strong {
+  font-weight: 600;
+}
+
+/* ── Run-start confirmation dialog (04 → 05) ── */
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(17 24 39 / 0.5);
+  padding: 1rem;
+}
+
+.dialog {
+  width: min(30rem, 100%);
+  border-radius: 12px;
+  background: var(--fixture-bg);
+  color: var(--fixture-text);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.25);
+  padding: 1.5rem;
+}
+
+.dialog h2 {
+  margin: 0 0 0.75rem;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.dialog p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.dialogActions {
+  display: flex;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+/* ── Run screen: ten-question rows with status labels (05) ── */
+.runQuestionList {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runQuestionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--fixture-border);
+  border-radius: 10px;
+  background: var(--fixture-bg);
+  padding: 0.625rem 0.875rem;
+}
+
+.runQuestionText {
+  flex: 1;
+  min-width: 0;
+  color: var(--fixture-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.runStatusChip {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--fixture-surface);
+  border: 1px solid var(--fixture-border);
+  color: var(--fixture-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1875rem 0.5rem;
+  text-transform: uppercase;
+}
+
+/* ── Report view (06) ── */
+.reportWrap {
+  margin-top: 1.5rem;
+  border: 1px solid var(--fixture-border);
+  border-radius: 16px;
+  background: var(--fixture-bg);
+}
+
+.reportToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  border-bottom: 1px solid var(--fixture-border);
+  padding: 0.875rem 1.25rem;
+}
+
+.report {
+  padding: 2rem max(1.5rem, calc((100% - 52rem) / 2));
+}
+
+.reportHero {
+  border-bottom: 1px solid var(--fixture-border);
+  padding-bottom: 1.5rem;
+}
+
+.reportTitleBlock {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.reportEyebrow {
+  margin: 0;
+  color: var(--fixture-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.reportTitleBlock h1 {
+  margin: 0;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.reportSubtitle {
+  margin: 0;
+  color: var(--fixture-text-body);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.reportFictionalBadge {
+  justify-self: start;
+  margin-top: 0.5rem;
+  border-radius: 9999px;
+  background: var(--fixture-amber-soft);
+  border: 1px solid var(--fixture-amber-border);
+  color: var(--fixture-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+}
+
+.reportScopeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1.25rem 0 0;
+}
+
+.reportScopeGrid dt {
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reportScopeGrid dd {
+  margin: 0.25rem 0 0;
+  color: var(--fixture-text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.reportContents {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--fixture-border);
+  padding-top: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.reportContents > span {
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reportContents ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reportContents a {
+  color: var(--fixture-accent-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.reportSection {
+  margin-top: 2.25rem;
+}
+
+.reportSectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--fixture-border);
+  padding-bottom: 0.625rem;
+}
+
+.reportSectionHeading span {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--fixture-accent);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.reportSectionHeading h2 {
+  margin: 0;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.resultGrid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.mainResult {
+  border: 1px solid var(--fixture-border);
+  border-radius: 12px;
+  background: var(--fixture-surface);
+  padding: 1.25rem 1.5rem;
+}
+
+.mainResult strong {
+  display: block;
+  color: var(--fixture-accent-dark);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mainResult h3 {
+  margin: 0.5rem 0 0;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.resultNote {
+  margin: 0.5rem 0 0;
+  color: var(--fixture-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.compositionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+.compositionCard {
+  border: 1px solid var(--fixture-border);
+  border-radius: 12px;
+  background: var(--fixture-bg);
+  padding: 1rem 1.25rem;
+}
+
+.compositionCard strong {
+  display: block;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.compositionCard span {
+  display: block;
+  margin-top: 0.375rem;
+  color: var(--fixture-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.dimensionList {
+  display: grid;
+  gap: 0.625rem;
+  margin: 1.25rem 0 0;
+}
+
+.dimensionList > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  border: 1px solid var(--fixture-border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.dimensionList dt {
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dimensionList dd {
+  margin: 0;
+  color: var(--fixture-text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.executiveTakeaway {
+  margin-top: 1.5rem;
+  border-left: 3px solid var(--fixture-accent);
+  padding-left: 1rem;
+}
+
+.executiveTakeaway > p {
+  margin: 0;
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.executiveTakeaway > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 1.25rem;
+}
+
+.conclusion {
+  margin: 0.375rem 0 0;
+  color: var(--fixture-text);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 44rem;
+}
+
+.accuracyChip {
+  flex-shrink: 0;
+  margin-top: 0.375rem;
+  border-radius: 9999px;
+  background: var(--fixture-amber-soft);
+  border: 1px solid var(--fixture-amber-border);
+  color: var(--fixture-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+}
+
+.snapshotAlert {
+  margin-top: 1.25rem;
+  border: 1px solid var(--fixture-border);
+  border-radius: 10px;
+  background: var(--fixture-surface);
+  padding: 0.875rem 1rem;
+}
+
+.snapshotAlert strong {
+  color: var(--fixture-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.snapshotAlert p {
+  margin: 0.25rem 0 0;
+  color: var(--fixture-text-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.findings {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.findings li {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem 1rem;
+  border: 1px solid var(--fixture-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.findings li > span {
+  color: var(--fixture-accent);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.findings h3 {
+  margin: 0;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.findings p {
+  margin: 0.375rem 0 0;
+  color: var(--fixture-text-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.findings small {
+  grid-column: 2;
+  color: var(--fixture-text-muted);
+  font-size: 0.8125rem;
+}
+
+.otherBusinesses {
+  margin-top: 1.5rem;
+}
+
+.otherBusinesses h3 {
+  margin: 0 0 0.625rem;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.otherBusinesses table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.otherBusinesses th,
+.otherBusinesses td {
+  border: 1px solid var(--fixture-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.otherBusinesses th {
+  background: var(--fixture-surface);
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.priorities {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.priorities li {
+  border: 1px solid var(--fixture-border);
+  border-radius: 12px;
+  padding: 1.125rem 1.25rem;
+}
+
+.priorityTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.priorityNumber {
+  color: var(--fixture-accent);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.priorityTiming {
+  border-radius: 9999px;
+  background: var(--fixture-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--fixture-accent) 30%, transparent);
+  color: var(--fixture-accent-dark);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1875rem 0.5rem;
+  text-transform: uppercase;
+}
+
+.priorities h3 {
+  margin: 0.625rem 0 0;
+  color: var(--fixture-text);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.priorityDetails {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+}
+
+.priorityDetails > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 10rem) 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.priorityDetails dt {
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.priorityDetails dd {
+  margin: 0;
+  color: var(--fixture-text-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.caveat {
+  margin: 0.625rem 0 0;
+  color: var(--fixture-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.sectionLead {
+  margin: 0.75rem 0 0;
+  color: var(--fixture-text-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.testList {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.testRow {
+  border: 1px solid var(--fixture-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.testRowTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.testNumber {
+  color: var(--fixture-accent);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.testComposition {
+  border-radius: 9999px;
+  background: var(--fixture-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--fixture-accent) 30%, transparent);
+  color: var(--fixture-accent-dark);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1875rem 0.5rem;
+  text-transform: uppercase;
+}
+
+.testStatus {
+  border-radius: 9999px;
+  background: var(--fixture-green-soft);
+  border: 1px solid var(--fixture-green-border);
+  color: var(--fixture-text);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1875rem 0.5rem;
+  text-transform: uppercase;
+}
+
+.testRowBody {
+  display: grid;
+  gap: 0.875rem;
+  margin-top: 0.875rem;
+}
+
+.testRowBody h4 {
+  margin: 0 0 0.25rem;
+  color: var(--fixture-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.testRowBody blockquote {
+  margin: 0;
+  border-left: 3px solid var(--fixture-border);
+  color: var(--fixture-text);
+  font-size: 0.9375rem;
+  font-style: normal;
+  line-height: 1.6;
+  padding-left: 0.875rem;
+}
+
+.evidenceNote {
+  margin: 0;
+  color: var(--fixture-text-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+}
+
+.sources a {
+  color: var(--fixture-accent-dark);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.testRowBody small {
+  color: var(--fixture-text-muted);
+  font-size: 0.8125rem;
+}
+
+.methodGrid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.methodGrid > p {
+  margin: 0;
+  color: var(--fixture-text-body);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.methodList {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--fixture-text-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.reportFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 2.25rem;
+  border-top: 1px solid var(--fixture-border);
+  color: var(--fixture-text-muted);
+  font-size: 0.8125rem;
+  padding-top: 1rem;
+}
+
+/* ── Print: same report data, expanded, disclosure retained (AC-12) ── */
+@media print {
+  .noPrint {
+    display: none !important;
+  }
+
+  .reportWrap {
+    border: none;
+  }
+
+  .report {
+    padding: 0;
+  }
+
+  .reportSection {
+    break-inside: auto;
+  }
+
+  .testRow,
+  .findings li,
+  .priorities li,
+  .compositionCard,
+  .mainResult,
+  .snapshotAlert {
+    break-inside: avoid;
+  }
+}
+
+/* ── Mobile overrides for the report and dialog additions ── */
+@media (max-width: 640px) {
+  .compositionGrid,
+  .reportScopeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .priorityDetails > div {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .dialogActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .dialogActions .primaryAction,
+  .dialogActions .secondaryAction {
+    width: 100%;
+  }
+}

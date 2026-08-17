@@ -173,6 +173,11 @@ export const auditObservationSchema = z.object({
   category: z.enum(promptCategories),
   branded: z.boolean(),
   question: z.string(),
+  // Spec 003 R-14/R-20: the versioned neutral instruction used for this
+  // observation. Recorded on the live path (OpenAI Responses API); optional so
+  // legacy observations and testing-only providers that predate the versioned
+  // instruction remain parseable.
+  instruction_version: z.string().optional(),
   system: z.enum([
     "OpenAI Responses API",
     "Google Gemini API",
@@ -229,7 +234,11 @@ export const auditCallTelemetrySchema =
 export const auditBudgetSchema = z.object({
   limit_usd: z.literal(AUDIT_COST_LIMIT_USD),
   carryover_cost_usd: z.number().nonnegative().max(AUDIT_COST_LIMIT_USD),
-  calls: z.array(auditCallTelemetrySchema).max(20),
+  // Retry-aware accounting (Spec 003 R-36): one extract + one prompt
+  // generation + ten initial observations + up to two automatic retries per
+  // question (max 30 observation attempts) + up to three report attempts.
+  // 40 provides headroom above the theoretical 36-call maximum.
+  calls: z.array(auditCallTelemetrySchema).max(40),
 });
 
 export const reportDetailSchema = z.object({
@@ -278,7 +287,7 @@ export const reportContentSchema = z.object({
   priorities: z
     .array(
       z.object({
-        order: z.number().int().min(1).max(3),
+        order: z.number().int().min(1).max(5),
         timing: z.enum(["do_first", "do_next"]),
         action: z.string(),
         why: z.string(),
@@ -295,7 +304,7 @@ export const reportContentSchema = z.object({
       }),
     )
     .min(1)
-    .max(3),
+    .max(5),
   details: z.array(reportDetailSchema).length(10),
 });
 
@@ -334,7 +343,12 @@ export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
 
 export type AuditReport = ReportContent & {
   report_version: "nuave-report-v3";
-  writing_standard_version: "plain-en-v1";
+  // Additive widening for Spec 002 R-38: the Indonesian calibration
+  // (plain-id-v1) is a candidate second writing standard. plain-en-v1 stays
+  // the live runtime default; buildAuditReport still writes
+  // REPORT_WRITING_STANDARD_VERSION (plain-en-v1) until an Indonesian report
+  // path is connected in Phase 3.
+  writing_standard_version: "plain-en-v1" | "plain-id-v1";
   generated_at: string;
   system_label: string;
   provenance: {

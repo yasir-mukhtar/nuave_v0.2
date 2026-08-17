@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { E2E_ACCESS_CODE } from "./shared-config";
 
 /**
@@ -16,8 +16,9 @@ export async function grantAccess(page: Page): Promise<void> {
   ]);
 }
 
-/** Fixture-journey session key and the live workflow keys it must never touch. */
-export const FIXTURE_SESSION_KEY = "nuave.fixtureJourney.v2";
+/** Fixture-journey session key (Spec 002 v3) and the live keys it never touches. */
+export const FIXTURE_SESSION_KEY = "nuave.fixtureJourney.v3";
+export const FIXTURE_STATE_VERSION = 3;
 export const LIVE_WORKFLOW_KEYS = [
   "nuave.audit.workflow.v3",
   "nuave.audit.session.v1",
@@ -74,49 +75,70 @@ export async function assertNoSideEffects(
   await expect(page).toHaveURL(/http/);
 }
 
-/** Completes the shared confirmation steps: facts checkbox then approve. */
-export async function confirmFactsAndApprove(page: Page): Promise<void> {
-  await page.getByRole("checkbox").check();
-  await page
-    .getByRole("button", { name: "Continue to the ten questions" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Review the ten example questions" }),
-  ).toBeVisible();
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Approve the question pack" }).click();
+// ---------------------------------------------------------------------------
+// v3 fixture-journey state factories (Spec 002 R-23 gate order)
+// ---------------------------------------------------------------------------
+
+export function freshV3State(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    version: FIXTURE_STATE_VERSION,
+    stage: "preview",
+    simulatedPaid: false,
+    factsConfirmed: false,
+    questionsApproved: false,
+    runStarted: false,
+    processingStage: 0,
+    processingCompleted: false,
+    reportConstructionFailed: false,
+    ...overrides,
+  };
 }
 
-/** Simulates payment and starts the deterministic simulated run. */
-export async function simulatePaymentAndStartRun(page: Page): Promise<void> {
-  await page
-    .getByRole("button", { name: "Simulate payment — no charge" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Simulated payment complete" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Start the simulated run" }).click();
+/** Simulated payment completed; the facts and question screens are unlocked. */
+export function v3PaidState(): Record<string, unknown> {
+  return freshV3State({ stage: "payment", simulatedPaid: true });
 }
 
-/** Asserts the ready destination: truthful report with all five sections. */
-export async function expectReadyReport(page: Page): Promise<void> {
-  await expect(
-    page.getByRole("heading", { name: "Example report — fictional preview" }),
-  ).toBeVisible({ timeout: 20_000 });
-  await expect(
-    page.getByRole("heading", { name: "Northstar Advisory" }),
-  ).toBeVisible();
-  for (const section of [
-    "Main Result",
-    "Key Findings",
-    "What to Do Next",
-    "Test-by-Test Results",
-    "How This Audit Works",
-  ]) {
-    await expect(
-      page.getByRole("heading", { name: section, level: 2 }),
-    ).toBeVisible();
-  }
+/** Facts screen before the explicit confirmation. */
+export function v3FactsState(): Record<string, unknown> {
+  return freshV3State({ stage: "facts", simulatedPaid: true });
+}
+
+/** Ten-question pack approved; the run is available via its explicit action. */
+export function v3QuestionsApprovedState(): Record<string, unknown> {
+  return freshV3State({
+    stage: "questions",
+    simulatedPaid: true,
+    factsConfirmed: true,
+    questionsApproved: true,
+  });
+}
+
+/** The report destination with a completed simulated run. */
+export function v3ReadyState(): Record<string, unknown> {
+  return freshV3State({
+    stage: "ready",
+    simulatedPaid: true,
+    factsConfirmed: true,
+    questionsApproved: true,
+    runStarted: true,
+    processingStage: 3,
+    processingCompleted: true,
+  });
+}
+
+/** A restored mid-run state that must be paused and resumed explicitly. */
+export function v3RunPausedState(processingStage = 2): Record<string, unknown> {
+  return freshV3State({
+    stage: "run",
+    simulatedPaid: true,
+    factsConfirmed: true,
+    questionsApproved: true,
+    runStarted: true,
+    processingStage,
+  });
 }
 
 /**
@@ -138,15 +160,116 @@ export function seedFixtureState(
   );
 }
 
-export function freshPaidState(): Record<string, unknown> {
-  return {
-    version: 2,
-    stage: "paid",
-    factsConfirmed: true,
-    questionsApproved: true,
-    checkoutComplete: true,
-    processingStage: 0,
-    processingCompleted: false,
-    reportConstructionFailed: false,
-  };
+// ---------------------------------------------------------------------------
+// Journey steps (exact labels from the realigned implementation)
+// ---------------------------------------------------------------------------
+
+/** 02 — completes the simulated payment from the revealed Order Preview. */
+export async function completeSimulatedPayment(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Bayar Rp99.000" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Simulasi pembayaran" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Simulasi pembayaran — tidak ada tagihan", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+    .click();
+  await expect(
+    page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+}
+
+/** 03 → 04 — confirms the fixture facts and approves the ten-question pack. */
+export async function confirmFactsAndApprove(page: Page): Promise<void> {
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Buat pertanyaan audit" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
+  ).toBeVisible();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Setujui pertanyaan" }).click();
+  await expect(
+    page.getByText("10 pertanyaan siap dijalankan", { exact: true }),
+  ).toBeVisible();
+}
+
+/** 05 — starts the simulated run through the explicit confirmation dialog. */
+export async function startSimulatedRun(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Jalankan audit" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Mulai audit sekarang?" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Mulai audit sekarang" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Simulasi audit berjalan" }),
+  ).toBeVisible();
+}
+
+/** 06 — asserts the ready destination with all five canonical report sections. */
+export async function expectReadyReport(page: Page): Promise<void> {
+  await expect(
+    page.getByRole("heading", { name: "AI Visibility Report (contoh fiktif)" }),
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    page.getByRole("heading", { name: "Kopi Taman Senja", level: 1 }),
+  ).toBeVisible();
+  for (const section of [
+    "Hasil Utama",
+    "Temuan",
+    "Yang Dapat Dilakukan",
+    "Hasil Tes per Pertanyaan",
+    "Cara Audit Ini Bekerja",
+  ]) {
+    await expect(
+      page.getByRole("heading", { name: section, level: 2 }),
+    ).toBeVisible();
+  }
+  await expect(
+    page.getByRole("button", { name: "Download PDF" }).first(),
+  ).toBeVisible();
+}
+
+/** Asserts the page fits the viewport width (no horizontal scrolling). */
+export async function expectNoHorizontalScroll(page: Page): Promise<void> {
+  const fits = await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+  );
+  expect(fits).toBe(true);
+}
+
+/**
+ * Drives focus with the keyboard alone (repeated Tab) until the target
+ * locator is focused, within a bounded walk.
+ */
+export async function tabUntilFocused(
+  page: Page,
+  locator: Locator,
+  maxTabs = 30,
+): Promise<void> {
+  for (let i = 0; i < maxTabs; i += 1) {
+    const focused = await locator.evaluate(
+      (element) => element === document.activeElement,
+    );
+    if (focused) return;
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(25);
+  }
+  await expect(locator).toBeFocused();
+}
+
+/** Asserts the element is focused and carries a visible focus outline. */
+export async function expectVisibleFocus(
+  page: Page,
+  locator: Locator,
+): Promise<void> {
+  await expect(locator).toBeFocused();
+  const outline = await locator.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    return `${style.outlineStyle} ${style.outlineWidth}`;
+  });
+  expect(outline).not.toMatch(/^none/);
 }

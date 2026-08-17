@@ -25,7 +25,13 @@ import {
   type AuditRunEvent,
   type PromptRunStatus,
 } from "@/lib/audit/stream";
-import { BriefStep, QuestionsStep, RunStep, SourceStep } from "./AuditStages";
+import {
+  BriefStep,
+  QuestionsStep,
+  RunStep,
+  SourceStep,
+  type RunUnfinishedState,
+} from "./AuditStages";
 import ReportView from "./ReportView";
 import styles from "./audit.module.css";
 
@@ -72,10 +78,10 @@ const emptyBrief: BusinessBrief = {
 };
 
 const stepLabels = [
-  "Client brief",
-  "Verify facts",
-  "Review questions",
-  "Run audit",
+  "Fakta bisnis",
+  "Periksa fakta",
+  "Periksa pertanyaan",
+  "Jalankan audit",
 ];
 
 class AuditRequestError extends Error {
@@ -100,7 +106,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   };
   if (!response.ok) {
     throw new AuditRequestError(
-      data.error || "We couldn't complete that request.",
+      data.error || "Kami tidak dapat menyelesaikan permintaan ini.",
       data.telemetry || [],
     );
   }
@@ -114,7 +120,7 @@ function friendlyBriefError(brief: BusinessBrief) {
   const field = first.path
     .join(".")
     .replace("verified_competitor.", "competitor.");
-  return `Complete ${field || "the client brief"}: ${first.message}`;
+  return `Lengkapi ${field || "informasi bisnis"}: ${first.message}`;
 }
 
 function initialStatuses(
@@ -147,6 +153,9 @@ export default function AuditWorkflow() {
   const [promptStatuses, setPromptStatuses] = useState<
     Record<string, PromptRunStatus>
   >({});
+  const [runUnfinished, setRunUnfinished] = useState<RunUnfinishedState | null>(
+    null,
+  );
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState("");
   const [restored, setRestored] = useState(false);
@@ -214,7 +223,7 @@ export default function AuditWorkflow() {
           data.carryover_cost_usd > AUDIT_COST_LIMIT_USD
         ) {
           throw new Error(
-            data.error || "The private cost guard returned invalid settings.",
+            data.error || "Pengaturan pengendali biaya privat tidak valid.",
           );
         }
         if (!cancelled) {
@@ -227,7 +236,7 @@ export default function AuditWorkflow() {
           setError(
             cause instanceof Error
               ? cause.message
-              : "The private cost guard is unavailable.",
+              : "Pengendali biaya privat tidak tersedia.",
           );
         }
       }
@@ -293,6 +302,7 @@ export default function AuditWorkflow() {
     setReport(null);
     setExecutionStarted(false);
     setPromptStatuses({});
+    setRunUnfinished(null);
   }
 
   function updateBrief<K extends keyof BusinessBrief>(
@@ -307,11 +317,11 @@ export default function AuditWorkflow() {
   async function extractWebsite() {
     setError("");
     if (!budgetReady) {
-      setError("Wait for the private cost guard before starting the audit.");
+      setError("Tunggu pengendali biaya privat sebelum memulai audit.");
       return;
     }
     if (!websiteUrl.trim()) {
-      setError("Enter the client's official website URL first.");
+      setError("Masukkan URL situs resmi brand Anda terlebih dahulu.");
       return;
     }
     setBusy("extract");
@@ -365,7 +375,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "We couldn't analyze this website.",
+          : "Kami tidak dapat menganalisis situs web ini.",
       );
     } finally {
       setBusy(null);
@@ -380,7 +390,9 @@ export default function AuditWorkflow() {
       return;
     }
     if (!factsConfirmed) {
-      setError("Confirm that you have checked every fact before continuing.");
+      setError(
+        "Periksa fakta bisnis di atas dan konfirmasi sebelum melanjutkan.",
+      );
       return;
     }
     setBusy("prompts");
@@ -398,7 +410,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "We couldn't create the audit questions.",
+          : "Kami tidak dapat membuat pertanyaan audit.",
       );
     } finally {
       setBusy(null);
@@ -427,7 +439,7 @@ export default function AuditWorkflow() {
   ) {
     if (!promptPack) return;
     if (!budgetReady) {
-      throw new Error("The private cost guard is unavailable.");
+      throw new Error("Pengendali biaya privat tidak tersedia.");
     }
     setBusy("report");
     try {
@@ -460,10 +472,16 @@ export default function AuditWorkflow() {
   }
 
   function handleRunEvent(event: AuditRunEvent, current: AuditObservation[]) {
-    if (event.type === "prompt_started") {
+    if (event.type === "prompt_started" || event.type === "attempt_started") {
       setPromptStatuses((statuses) => ({
         ...statuses,
         [event.prompt_id]: "running",
+      }));
+    }
+    if (event.type === "prompt_retrying") {
+      setPromptStatuses((statuses) => ({
+        ...statuses,
+        [event.prompt_id]: "retrying",
       }));
     }
     if (event.type === "prompt_completed") {
@@ -474,9 +492,22 @@ export default function AuditWorkflow() {
         [event.observation.prompt_id]: event.observation.run_status,
       }));
     }
+    if (event.type === "prompt_failed") {
+      setPromptStatuses((statuses) => ({
+        ...statuses,
+        [event.prompt_id]: "failed",
+      }));
+    }
     if (event.type === "run_completed") {
       current = event.observations;
       setObservations(current);
+    }
+    if (event.type === "run_unfinished") {
+      setRunUnfinished({
+        completed: event.completed,
+        failedPromptIds: event.failed_prompt_ids,
+        message: event.message,
+      });
     }
     if (event.type === "fatal_error") throw new Error(event.message);
     return current;
@@ -486,7 +517,7 @@ export default function AuditWorkflow() {
     if (!promptPack) return;
     setError("");
     if (!budgetReady) {
-      setError("Wait for the private cost guard before running the audit.");
+      setError("Tunggu pengendali biaya privat sebelum menjalankan audit.");
       return;
     }
     const promptErrors = validatePromptPack(promptPack.prompts, brief);
@@ -497,6 +528,7 @@ export default function AuditWorkflow() {
 
     setExecutionStarted(true);
     setReport(null);
+    setRunUnfinished(null);
     const runPriorCalls = [
       ...setupTelemetry,
       ...observations.flatMap((observation) => observation.telemetry || []),
@@ -507,6 +539,7 @@ export default function AuditWorkflow() {
     setBusy("run");
     let finalObservations: AuditObservation[] = [];
     let runCompleted = false;
+    let runUnfinishedReceived = false;
 
     try {
       const response = await fetch("/api/audit/run", {
@@ -525,10 +558,10 @@ export default function AuditWorkflow() {
       });
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        throw new Error(data.error || "We couldn't run the audit.");
+        throw new Error(data.error || "Kami tidak dapat menjalankan audit.");
       }
       if (!response.body)
-        throw new Error("The server did not return an audit stream.");
+        throw new Error("Server tidak mengembalikan aliran audit.");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -541,24 +574,36 @@ export default function AuditWorkflow() {
         )) {
           finalObservations = handleRunEvent(event, finalObservations);
           if (event.type === "run_completed") runCompleted = true;
+          if (event.type === "run_unfinished") runUnfinishedReceived = true;
         }
         if (done) break;
       }
       for (const event of parser.finish()) {
         finalObservations = handleRunEvent(event, finalObservations);
         if (event.type === "run_completed") runCompleted = true;
+        if (event.type === "run_unfinished") runUnfinishedReceived = true;
       }
-      if (!runCompleted || finalObservations.length !== 10) {
+      if (!runCompleted && !runUnfinishedReceived) {
+        // The stream ended without a terminal run event: the browser-bound
+        // connection dropped. Completed observations are preserved and never
+        // rerun; no background continuation exists in this phase.
+        throw new Error("Koneksi terputus sebelum 10 observasi selesai.");
+      }
+      if (runCompleted && finalObservations.length !== 10) {
         throw new Error(
-          "The connection closed before all ten observations finished.",
+          "Aliran audit berakhir dengan kumpulan observasi tidak valid.",
         );
       }
-      await createReport(finalObservations, runPriorCalls);
+      if (runCompleted) {
+        await createReport(finalObservations, runPriorCalls);
+      }
+      // run_unfinished already recorded the terminal state: no report is
+      // created before 10/10 evaluable observations (no partial report).
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "We couldn't complete the audit.",
+          : "Kami tidak dapat menyelesaikan audit.",
       );
     } finally {
       setBusy(null);
@@ -566,7 +611,12 @@ export default function AuditWorkflow() {
   }
 
   async function retryReport() {
-    if (!promptPack || observations.length !== 10) return;
+    if (
+      !promptPack ||
+      observations.filter((item) => item.run_status === "completed").length !==
+        10
+    )
+      return;
     setError("");
     try {
       await createReport(observations);
@@ -574,7 +624,7 @@ export default function AuditWorkflow() {
       setError(
         cause instanceof Error
           ? cause.message
-          : "We couldn't create the report again.",
+          : "Kami tidak dapat membuat laporan lagi.",
       );
     } finally {
       setBusy(null);
@@ -594,6 +644,7 @@ export default function AuditWorkflow() {
     setSetupTelemetry([]);
     setExecutionStarted(false);
     setPromptStatuses({});
+    setRunUnfinished(null);
     setError("");
   }
 
@@ -603,7 +654,7 @@ export default function AuditWorkflow() {
       return;
     }
     if (!file.type.match(/^image\/(png|jpeg)$/) || file.size > 1_000_000) {
-      setError("Upload a PNG or JPG logo no larger than 1 MB.");
+      setError("Unggah logo PNG atau JPG berukuran maksimal 1 MB.");
       return;
     }
     const reader = new FileReader();
@@ -640,7 +691,10 @@ export default function AuditWorkflow() {
   }
 
   const interrupted =
-    executionStarted && !busy && !report && observations.length < 10;
+    executionStarted &&
+    !busy &&
+    !report &&
+    observations.filter((item) => item.run_status === "completed").length < 10;
   const telemetrySummary =
     report?.operational_telemetry ??
     summarizeAuditTelemetry(
@@ -666,7 +720,7 @@ export default function AuditWorkflow() {
         </Link>
         <div className={styles.topActions}>
           <Button variant="secondary" size="sm" onPress={startOver}>
-            New Audit
+            Mulai ulang
           </Button>
           {report ? (
             <Button variant="primary" size="sm" onPress={() => window.print()}>
@@ -679,12 +733,12 @@ export default function AuditWorkflow() {
       {!report ? (
         <nav
           className={`${styles.stepper} ${styles.noPrint}`}
-          aria-label="Audit stages"
+          aria-label="Tahapan audit"
         >
           <div className={styles.stepContext}>
-            <span>Audit setup</span>
+            <span>Pengaturan audit</span>
             <strong>
-              Step {step + 1} of {stepLabels.length}
+              Langkah {step + 1} dari {stepLabels.length}
             </strong>
           </div>
           <ol className={styles.stepList}>
@@ -712,7 +766,7 @@ export default function AuditWorkflow() {
           <Alert status="danger" role="alert">
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Check this before continuing</Alert.Title>
+              <Alert.Title>Periksa ini sebelum melanjutkan</Alert.Title>
               <Alert.Description>{error}</Alert.Description>
             </Alert.Content>
           </Alert>
@@ -724,18 +778,18 @@ export default function AuditWorkflow() {
           <Alert status="default">
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Private run cost control</Alert.Title>
+              <Alert.Title>Kendali biaya sesi privat</Alert.Title>
               <Alert.Description>
-                {telemetrySummary.call_count} API calls · USD{" "}
-                {telemetrySummary.accounted_cost_usd.toFixed(4)} accounted of
+                {telemetrySummary.call_count} panggilan API · USD{" "}
+                {telemetrySummary.accounted_cost_usd.toFixed(4)} tercatat dari
                 USD {telemetrySummary.cost_limit_usd.toFixed(2)}
-                {` · USD ${Math.max(
+                {` · sisa USD ${Math.max(
                   0,
                   telemetrySummary.cost_limit_usd -
                     telemetrySummary.accounted_cost_usd,
-                ).toFixed(4)} remaining`}
+                ).toFixed(4)}`}
                 {telemetrySummary.carryover_cost_usd
-                  ? ` · USD ${telemetrySummary.carryover_cost_usd.toFixed(4)} carried over`
+                  ? ` · USD ${telemetrySummary.carryover_cost_usd.toFixed(4)} dibawa dari sesi sebelumnya`
                   : ""}
               </Alert.Description>
             </Alert.Content>
@@ -786,8 +840,8 @@ export default function AuditWorkflow() {
           statuses={promptStatuses}
           observations={observations}
           busy={busy}
-          interrupted={interrupted}
-          onRerun={runAudit}
+          interrupted={interrupted && !runUnfinished}
+          runUnfinished={runUnfinished}
           onRetryReport={retryReport}
         />
       ) : null}

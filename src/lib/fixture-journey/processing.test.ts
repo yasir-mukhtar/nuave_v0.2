@@ -4,25 +4,27 @@ import {
   FIXTURE_PROCESSING_STAGE_MS,
   FIXTURE_PROCESSING_WORK_STAGE_COUNT,
   fixtureProcessingStages,
+  fixtureRunStatusLabelOrder,
+  fixtureRunStatusLabels,
   isWorkStage,
   processingStageDurationMs,
 } from "./processing";
 
 describe("fixture processing simulation", () => {
-  it("defines the five customer-meaningful stages in the required order", () => {
+  it("defines the customer-meaningful Indonesian stages in the required order", () => {
     expect(fixtureProcessingStages.map((stage) => stage.label)).toEqual([
-      "Preparing the verified example brief",
-      "Running the ten example questions",
-      "Checking evidence and sources",
-      "Preparing the example report",
-      "Report ready",
+      "Menyiapkan pertanyaan audit",
+      "Menguji sepuluh pertanyaan",
+      "Memeriksa bukti dan sumber",
+      "Menyiapkan laporan",
+      "Laporan siap",
     ]);
   });
 
   it("keeps the terminal stage last and the four work stages first", () => {
     expect(fixtureProcessingStages).toHaveLength(5);
     expect(fixtureProcessingStages[4].id).toBe("ready");
-    expect(fixtureProcessingStages[4].label).toBe("Report ready");
+    expect(fixtureProcessingStages[4].label).toBe("Laporan siap");
     expect(FIXTURE_PROCESSING_WORK_STAGE_COUNT).toBe(4);
     expect(
       fixtureProcessingStages
@@ -54,5 +56,27 @@ describe("fixture processing simulation", () => {
     expect(
       FIXTURE_PROCESSING_STAGE_MS * FIXTURE_PROCESSING_WORK_STAGE_COUNT,
     ).toBeLessThan(6_000);
+  });
+});
+
+describe("run-status labels (R-40)", () => {
+  it("carries the settled Indonesian run-status set exactly", () => {
+    expect(fixtureRunStatusLabels).toEqual({
+      waiting: "Menunggu",
+      testing: "Sedang diuji",
+      retrying: "Mencoba kembali",
+      done: "Selesai",
+      notTested: "Belum berhasil diuji",
+    });
+  });
+
+  it("lists the five labels in the settled order", () => {
+    expect(fixtureRunStatusLabelOrder).toEqual([
+      "Menunggu",
+      "Sedang diuji",
+      "Mencoba kembali",
+      "Selesai",
+      "Belum berhasil diuji",
+    ]);
   });
 });
