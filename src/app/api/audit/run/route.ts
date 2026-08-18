@@ -6,7 +6,10 @@ import {
   businessBriefSchema,
   promptSchema,
 } from "@/lib/audit/types";
-import { liveExecuteAuditPrompt } from "@/lib/audit/provider";
+import {
+  assertLiveProviderCredentialsConfigured,
+  liveExecuteAuditPrompt,
+} from "@/lib/audit/provider";
 import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
@@ -21,6 +24,11 @@ const requestSchema = z.object({
   brief: businessBriefSchema,
   prompts: z.array(promptSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
+  // `budget.calls` (this session's running spend ledger) is client-supplied
+  // and not independently verified against any server-side store — see
+  // `effectiveAuditCarryoverCostUsd` in telemetry.ts for why (O-7, Phase 3
+  // fix-round-2 adversarial review). Only `resume_observations`' telemetry
+  // below is folded in from a source the route itself validated.
   budget: auditBudgetSchema,
   // Spec 003 R-19 (failure-and-recovery): completed observations from an
   // interrupted run are preserved and resumed; they are never rerun. The
@@ -30,6 +38,7 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    assertLiveProviderCredentialsConfigured();
     const input = requestSchema.parse(await request.json());
 
     // The live run path validates the LOCKED INDONESIAN question pack (Spec

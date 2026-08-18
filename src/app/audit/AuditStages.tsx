@@ -785,7 +785,7 @@ export function RunStep({
             ? "All observations are complete. Creating the report…"
             : "Collecting ten independent observations."
         }
-        description="This progress comes from live server responses. Technical failures retry automatically up to two more times per question under the same locked method; completed observations are never rerun, and failed attempts remain in the evidence. Browser tetap harus terbuka: menutup tab menghentikan proses, tanpa kelanjutan di latar belakang."
+        description="This progress comes from live server responses. Technical failures retry automatically up to two more times per question under the same locked method; completed observations are never rerun, and failed attempts remain in the evidence. The browser must stay open: closing the tab stops the run, with no continuation in the background."
       />
       {runUnfinished ? (
         <Alert status="danger">
@@ -796,13 +796,13 @@ export function RunStep({
               {runUnfinished.completed} of 10 questions were evaluated.{" "}
               {runUnfinished.failedPromptIds.length} question
               {runUnfinished.failedPromptIds.length === 1 ? "" : "s"} exhausted
-              automatic technical recovery and is marked Belum berhasil diuji
-              below. Nuave delivers ten tests and ten tests only, so no report
-              is created before 10/10 evaluable observations and no partial
-              report exists. Every completed observation and every attempt
-              remains preserved and is not rerun. Minta bantuan: founder-
-              assisted recovery may retry only the affected questions under the
-              locked method.
+              automatic technical recovery and is marked &ldquo;not yet tested
+              successfully&rdquo; below. Nuave delivers ten tests and ten tests
+              only, so no report is created before 10/10 evaluable observations
+              and no partial report exists. Every completed observation and
+              every attempt remains preserved and is not rerun. Ask for help:
+              founder-assisted recovery may retry only the affected questions
+              under the locked method.
             </Alert.Description>
           </Alert.Content>
         </Alert>

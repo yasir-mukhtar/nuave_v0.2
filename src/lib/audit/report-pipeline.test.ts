@@ -7,6 +7,11 @@ import {
 } from "./fixtures/report-golden";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import {
+  INDONESIAN_PROMPT_CONTRACT_VERSION,
+  INDONESIAN_REPORT_WRITING_STANDARD_VERSION,
+  REPORT_WRITING_STANDARD_VERSION,
+} from "./report-language";
+import {
   assertReportGenerationGate,
   createValidatedAuditReport,
   type ReportGenerator,
@@ -338,6 +343,41 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
         (priority) => priority.evidence_prompt_ids.length > 0,
       ),
     ).toBe(true);
+  });
+
+  it("stamps the Indonesian writing standard and produces Indonesian facts/method copy for language: id (O-2/O-9)", async () => {
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "response-id"),
+    ) as unknown as ReportGenerator;
+    // The Indonesian path enforces the ten-of-ten gate (R-19), which requires
+    // attempt telemetry on every observation — not only the one
+    // `allCompletedInput` backfills for the English-path regression test.
+    const gateReadyInput = {
+      ...allCompletedInput,
+      observations: allCompletedInput.observations.map((observation) => ({
+        ...observation,
+        telemetry: observation.telemetry.length
+          ? observation.telemetry
+          : [fixtureCallTelemetry({ stage: "observation" })],
+      })),
+      language: "id" as const,
+    };
+
+    const report = await createValidatedAuditReport(gateReadyInput, generate);
+
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(report.writing_standard_version).toBe(
+      INDONESIAN_REPORT_WRITING_STANDARD_VERSION,
+    );
+    expect(report.writing_standard_version).not.toBe(
+      REPORT_WRITING_STANDARD_VERSION,
+    );
+    expect(report.provenance.prompt_contract_version).toBe(
+      INDONESIAN_PROMPT_CONTRACT_VERSION,
+    );
+    expect(report.method_summary).toContain("Kami menguji");
+    expect(report.facts.coverage.label).toContain("pertanyaan selesai diuji");
+    expect(report.facts.recognition.label).toContain("Dikenali di");
   });
 
   it("accepts not_assessed on a completed validation observation's recommendation (the permissive branch)", async () => {

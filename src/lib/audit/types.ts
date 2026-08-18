@@ -412,6 +412,25 @@ export type AuditReport = ReportContent & {
     branded_total: number;
     failed: number;
   };
+  /**
+   * Appeared/assessed-denominator measures (AC-17): "appeared" counts
+   * appearance === "mentioned" regardless of recommendation status;
+   * "assessed" counts exclude "not_assessed" (and, for comparison,
+   * "not_observed") rather than using the raw question total.
+   */
+  measures: {
+    overall: { appeared: number; total: number };
+    unbranded: { appeared: number; total: number };
+    branded: { appeared: number; total: number };
+    recommendation: { recommended: number; assessed: number };
+    comparison: { client_preferred: number; assessed: number };
+    information: {
+      confirmed: number;
+      incomplete: number;
+      conflicting: number;
+      assessed: number;
+    };
+  };
   operational_telemetry: {
     pricing_version: string;
     cost_limit_usd: number;

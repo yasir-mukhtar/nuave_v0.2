@@ -299,6 +299,14 @@ describe("report evidence guardrails", () => {
       branded_total: 5,
       failed: 0,
     });
+    expect(report.measures).toEqual({
+      overall: { appeared: 1, total: 10 },
+      unbranded: { appeared: 1, total: 5 },
+      branded: { appeared: 0, total: 5 },
+      recommendation: { recommended: 0, assessed: 10 },
+      comparison: { client_preferred: 0, assessed: 0 },
+      information: { confirmed: 0, incomplete: 0, conflicting: 0, assessed: 0 },
+    });
     expect(report.system_label).toContain("gpt-5.6-sol");
     expect(report.facts.discovery.recommendation_label).toBe(
       "Recommended in 0 of 5 discovery questions.",

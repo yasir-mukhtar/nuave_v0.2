@@ -11,6 +11,7 @@ import {
   assertReportGenerationGate,
   createValidatedAuditReport,
 } from "@/lib/audit/report-pipeline";
+import { assertLiveProviderCredentialsConfigured } from "@/lib/audit/provider";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
@@ -28,6 +29,7 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    assertLiveProviderCredentialsConfigured();
     const input = requestSchema.parse(await request.json());
     // Spec 003 R-19: the ten-of-ten gate runs BEFORE any provider call — no
     // report synthesis begins unless all ten unique locked prompts have one

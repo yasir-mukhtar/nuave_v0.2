@@ -34,6 +34,18 @@ const PRICING = {
 // Question generation is built in code from the verified brief, so the prompts
 // stage has no provider call and no output allowance. The stage is retained so
 // telemetry recorded before that correction still validates and prices.
+//
+// `max_tool_calls` is a REQUESTED cap sent to the OpenAI Responses API
+// (`openai.ts`'s `max_tool_calls` request field); it is not a guaranteed
+// server-side enforcement. A live run recorded `NUAVE-BRAND-VALIDATION-02`
+// with 2 `web_search_call` items on a single attempt despite
+// `observation.max_tool_calls: 1` (O-8, Phase 3 fix-round-2 adversarial
+// review, 2026-08-18) — treat this as an advisory hint to the provider, not a
+// hard ceiling. `recordCompletedAuditCall` (below) always counts the actual
+// `web_search_call` items the provider returned and prices from that real
+// count, so the cost ledger is correct even when the request-level cap is
+// exceeded; only `reserveAuditCall`'s pre-call reservation assumes the cap
+// held, which can very slightly under-reserve headroom for that one call.
 export const AUDIT_CALL_LIMITS = {
   extract: { max_output_tokens: 4_000, max_tool_calls: 1 },
   prompts: { max_output_tokens: 0, max_tool_calls: 0 },
@@ -90,6 +102,20 @@ export function configuredAuditCarryoverCostUsd() {
   return roundedUsd(value);
 }
 
+/**
+ * This is a floor on the carryover only. `budget.calls` — the running ledger
+ * of this session's own calls, which `reserveAuditCall` sums to compute
+ * `accounted` — is entirely client-supplied with no server-side session
+ * store: a client that posts `calls: []` restores full session headroom, so
+ * the USD 5 ceiling is enforced per-request, not truly per-session, unless
+ * the caller (e.g. `run/route.ts`) independently reconstructs `calls` from a
+ * trusted source. A real server-owned session ledger is out of this phase's
+ * scope (`specs/003-live-report-quality-gate/SPEC.md` Non-scope: "server-owned
+ * order/run state ... Phase 4") and is an accepted gap while the live path is
+ * founder-operated only (R-05). Do not treat this function as closing that
+ * gap — it only stops the carryover from being reported below a configured
+ * minimum (O-7, Phase 3 fix-round-2 adversarial review, 2026-08-18).
+ */
 export function effectiveAuditCarryoverCostUsd(budget: AuditBudget) {
   return Math.max(budget.carryover_cost_usd, configuredAuditCarryoverCostUsd());
 }

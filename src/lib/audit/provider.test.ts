@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { activeAuditProvider, liveAuditProvider } from "./provider";
+import {
+  activeAuditProvider,
+  assertLiveProviderCredentialsConfigured,
+  liveAuditProvider,
+} from "./provider";
 import { liveIndonesianQuestionProviderName } from "./questions-id-provider";
 
 describe("protected live path fails closed to the founder-approved provider (Spec 003 lock, DECISION_LOG 2026-08-17)", () => {
@@ -27,6 +31,15 @@ describe("protected live path fails closed to the founder-approved provider (Spe
     expect(liveAuditProvider()).toBe("gemini");
   });
 
+  it("ignores the testing flag and fails closed when NODE_ENV=production (O-10)", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "gemini");
+    vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(() => liveAuditProvider()).toThrow(/testing-only/);
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "gemini");
+    expect(() => liveIndonesianQuestionProviderName()).toThrow(/testing-only/);
+  });
+
   it("keeps activeAuditProvider env-selectable for tests and local runners", () => {
     vi.stubEnv("NUAVE_PROVIDER", "gemini");
     expect(activeAuditProvider()).toBe("gemini");
@@ -45,5 +58,19 @@ describe("protected live path fails closed to the founder-approved provider (Spe
   it("defaults the live question path to openai when NUAVE_QUESTION_PROVIDER is unset", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
     expect(liveIndonesianQuestionProviderName()).toBe("openai");
+  });
+
+  it("fails closed before any provider call when OPENAI_API_KEY is missing on the live path (O-10)", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    expect(() => assertLiveProviderCredentialsConfigured()).toThrow(
+      /OPENAI_API_KEY is not configured/,
+    );
+  });
+
+  it("does not fail closed once OPENAI_API_KEY is configured", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
+    expect(() => assertLiveProviderCredentialsConfigured()).not.toThrow();
   });
 });

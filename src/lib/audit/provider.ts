@@ -48,9 +48,20 @@ export function activeAuditProvider(): AuditProviderName {
 export function liveAuditProvider(): AuditProviderName {
   const name = activeAuditProvider();
   if (name === "openai") return "openai";
-  if (process.env.NUAVE_LIVE_PROVIDER_TESTING === "1") return name;
+  // R-13 (O-10, Phase 3 fix-round-2 adversarial review): a testing-only
+  // provider "cannot be selected for a live protected run" — full stop. The
+  // NODE_ENV check below closes the gap the review found: previously this
+  // escape hatch trusted NUAVE_LIVE_PROVIDER_TESTING=1 alone, with nothing
+  // stopping it from being set (by mistake or misconfiguration) in a real
+  // production deployment.
+  if (
+    process.env.NUAVE_LIVE_PROVIDER_TESTING === "1" &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    return name;
+  }
   throw new Error(
-    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners.`,
+    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 
@@ -96,3 +107,22 @@ const live = resolveLive(liveAuditProvider());
 export const liveExtractBusinessDraft = live.extract;
 export const liveExecuteAuditPrompt = live.execute;
 export const liveGenerateReportContent = live.generate;
+
+/**
+ * Fails fast, once, before any provider call (O-10, Phase 3 fix-round-2
+ * adversarial review; R-13 "startup or deployment fails closed when the
+ * intended production credential is missing"). Call this at the top of a
+ * live route's handler. Without it, a missing `OPENAI_API_KEY` was only
+ * discovered deep inside `executeAuditPrompt`'s per-attempt try/catch
+ * (`openai.ts`'s `client()`), where a generic `Error` gets the same targeted
+ * retry treatment as a transient provider failure — burning the full 1+2
+ * retry policy across all ten questions (up to 30 guaranteed-failing
+ * attempts) before the run ever surfaces the real, unrecoverable cause.
+ */
+export function assertLiveProviderCredentialsConfigured(): void {
+  if (liveAuditProvider() === "openai" && !process.env.OPENAI_API_KEY) {
+    throw new Error(
+      "OPENAI_API_KEY is not configured on the Nuave server; the protected live path fails closed before making any provider call.",
+    );
+  }
+}

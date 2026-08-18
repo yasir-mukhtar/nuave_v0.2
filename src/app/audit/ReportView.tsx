@@ -52,6 +52,18 @@ function testReferences(ids: string[], testNumberById: Map<string, string>) {
   return ids.map((id) => testNumberById.get(id) ?? id).join(", ");
 }
 
+/**
+ * Eligible-denominator measure label (AC-17): an empty assessed denominator
+ * renders "Tidak diuji", never a zero performance claim (R-28).
+ */
+function measureLabel(
+  assessed: number,
+  ready: (assessed: number) => string,
+): string {
+  if (assessed === 0) return INDONESIAN_REPORT_LABELS.not_tested;
+  return ready(assessed);
+}
+
 function sourceTitle(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -159,9 +171,6 @@ export default function ReportView({
         : report.accuracy_status === "needs_correction"
           ? "Perlu diperbaiki"
           : "Tidak dapat dinilai";
-  const appearanceCount = report.details.filter(
-    (detail) => detail.appearance === "mentioned",
-  ).length;
 
   return (
     <div className={styles.reportWrap}>
@@ -240,16 +249,21 @@ export default function ReportView({
           <SectionHeading number="01">Hasil utama</SectionHeading>
           <div className={styles.resultGrid}>
             <div className={styles.mainResult}>
-              <strong>{indonesianHeadline(appearanceCount)}</strong>
+              <strong>
+                {indonesianCountLabel(
+                  report.measures.overall.appeared,
+                  report.measures.overall.total,
+                )}
+              </strong>
               <span>
-                {indonesianCountLabel(appearanceCount, observations.length)}
+                {indonesianHeadline(report.measures.overall.appeared)}
               </span>
             </div>
             <div>
               <strong>
                 {indonesianCountLabel(
-                  report.counts.unbranded_mentioned,
-                  report.counts.unbranded_total,
+                  report.measures.unbranded.appeared,
+                  report.measures.unbranded.total,
                 )}
               </strong>
               <span>{INDONESIAN_REPORT_LABELS.without_business_name}</span>
@@ -257,8 +271,8 @@ export default function ReportView({
             <div>
               <strong>
                 {indonesianCountLabel(
-                  report.counts.branded_recognized,
-                  report.counts.branded_total,
+                  report.measures.branded.appeared,
+                  report.measures.branded.total,
                 )}
               </strong>
               <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
@@ -268,6 +282,38 @@ export default function ReportView({
               <span>{report.facts.coverage.label}</span>
             </div>
           </div>
+          <dl className={styles.dimensionList}>
+            <div>
+              <dt>Rekomendasi</dt>
+              <dd>
+                {measureLabel(
+                  report.measures.recommendation.assessed,
+                  () =>
+                    `Direkomendasikan di ${report.measures.recommendation.recommended} dari ${report.measures.recommendation.assessed} pertanyaan yang dinilai`,
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Perbandingan</dt>
+              <dd>
+                {measureLabel(
+                  report.measures.comparison.assessed,
+                  () =>
+                    `Diunggulkan di ${report.measures.comparison.client_preferred} dari ${report.measures.comparison.assessed} pertanyaan yang dinilai`,
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Informasi publik</dt>
+              <dd>
+                {measureLabel(
+                  report.measures.information.assessed,
+                  () =>
+                    `${report.measures.information.confirmed} terkonfirmasi, ${report.measures.information.incomplete} belum lengkap, ${report.measures.information.conflicting} bertentangan dari ${report.measures.information.assessed} pertanyaan yang dinilai`,
+                )}
+              </dd>
+            </div>
+          </dl>
           <div className={styles.executiveTakeaway}>
             <p>Artinya</p>
             <div>

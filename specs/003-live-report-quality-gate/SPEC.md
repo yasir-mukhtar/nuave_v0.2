@@ -40,7 +40,8 @@ Read in order:
 7. `specs/002-indonesian-audit-contract/SPEC.md` and its `VERIFICATION.md` —
    the implemented state this phase connects (Indonesian generation boundary,
    `plain-id-v1` writing contract, settled labels, fixture chain, test
-   baseline 276 + 126 + 31)
+   baseline 276 + 82 + 33 — see the baseline correction note under "Observed
+   evidence")
 8. `specs/README.md` (spec lifecycle) and `docs/templates/SPEC.md` (structure)
 9. `User Flow/05 - Audit Run.md` — settled production decisions (one provider
    per audit; OpenAI Responses API GPT-5.6 Luna web search low reasoning;
@@ -76,11 +77,20 @@ repository and unpublished unless a later decision changes that.
 
 ### Observed evidence
 
-- Specs 001 and 002 are verified (2026-08-17): 276 audit unit tests, 126
-  fixture-journey unit tests, 31 e2e tests, check and build all pass. The
+- Specs 001 and 002 are verified (2026-08-17): 276 audit unit tests, 82
+  fixture-journey unit tests, 33 e2e tests, check and build all pass. The
   fixture journey is Indonesian, canonical 01 → 06, and makes no
   `/api/audit/*` call. The live engine is untouched and separate
   (`specs/002-indonesian-audit-contract/VERIFICATION.md`).
+  **Baseline correction (Phase 3 fix-round-2 adversarial review, 2026-08-18):**
+  this section and R-33/AC-02 originally read "126 fixture-journey unit tests,
+  31 e2e tests" — figures that do not match Spec 002's own `VERIFICATION.md`
+  (which recorded **82/82 fixture-journey tests, 4 files** at its verified
+  commit) and were never reproducible from committed history. The e2e count
+  also drifted from 31 to 33 as tests were added after Spec 002 verified. The
+  numbers here are corrected to the measured, reproducible baseline: **276
+  audit unit tests (18 files), 82 fixture-journey unit tests (4 files), 33 e2e
+  tests (28 enabled + 3 forced-failure + 2 disabled)**.
 - The live engine has never produced a real Indonesian report. The live
   workflow (`src/app/audit/*`) remains English, and the observation and
   extraction instructions ask the provider for **English** output
@@ -520,7 +530,7 @@ during review rather than claimed in this phase.
 ### Exit gates and regression
 
 - **R-33 — Fixture regression:** The existing baseline stays green: 276 audit
-  unit tests, 126 fixture-journey unit tests, and 31 e2e tests (enabled,
+  unit tests, 82 fixture-journey unit tests, and 33 e2e tests (enabled,
   forced-failure, and disabled configurations), plus `npm run check` and
   `npm run build`, with no change to live audit contracts that existing tests
   pin.
@@ -604,8 +614,8 @@ create an order or entitlement, or imply that a customer remedy is owed.
   provider call; and no client input can enable or disable live or fixture
   mode.
 - **AC-02 — Fixture regression:** Given the implementation is complete, when
-  the full test baseline runs, then 276 audit unit tests, 126 fixture-journey
-  unit tests, and 31 e2e tests pass, `npm run check` and `npm run build`
+  the full test baseline runs, then 276 audit unit tests, 82 fixture-journey
+  unit tests, and 33 e2e tests pass, `npm run check` and `npm run build`
   pass, and the fixture journey still makes zero `/api/audit/*` calls.
 - **AC-03 — Shared journey states:** Given a fresh live run, when the founder
   proceeds, then the path advances 03 Business Facts → 04 Questions →
@@ -808,6 +818,9 @@ draft and no answer is invented here.
 ## Verification record
 
 - Verification artifact: `specs/003-live-report-quality-gate/VERIFICATION.md`
-- Result: Pending
-- Date: Pending
-- Verified commit or working-tree state: Pending
+- Result: Pending — automated regression and the code-level defects from the
+  fix-round-2 adversarial review are fixed and tested; the live run through
+  the actual product interface and the founder quality-gate review it unlocks
+  (R-31/R-32, AC-24/AC-26) have not occurred
+- Date: 2026-08-18
+- Verified commit or working-tree state: working tree, parent `c18fe8e`

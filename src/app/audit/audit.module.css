@@ -780,6 +780,41 @@
   color: var(--accent);
 }
 
+.dimensionList {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dimensionList > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 1.5rem;
+  border-top: 1px solid #d8d8d3;
+  padding-top: 0.65rem;
+}
+
+.dimensionList dt {
+  flex: 0 0 auto;
+  margin: 0;
+  color: #696969;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dimensionList dd {
+  flex: 1 1 16rem;
+  margin: 0;
+  color: #242424;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .executiveTakeaway {
   display: grid;
   grid-template-columns: minmax(8rem, 0.7fr) minmax(0, 2.3fr);
@@ -1387,6 +1422,8 @@
   .scopeGrid dd,
   .priorities dt,
   .priorities dd,
+  .dimensionList dt,
+  .dimensionList dd,
   .reportHero p,
   .resultGrid span,
   .caveat,

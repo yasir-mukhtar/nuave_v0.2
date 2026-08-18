@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { buildAuditReport } from "./contracts";
 import {
+  INDONESIAN_AUDIT_REPORT_LABELS,
   INDONESIAN_CALIBRATION_FOUNDER_REVIEW_PENDING,
   INDONESIAN_REPORT_LANGUAGE_CALIBRATION,
   INDONESIAN_REPORT_WRITING_STANDARD_VERSION,
@@ -10,12 +12,31 @@ import {
   validateIndonesianReportLanguageRevision,
   validateReportLanguage,
 } from "./report-language";
-import type { ReportContent } from "./types";
+import type { AuditObservation, ReportContent } from "./types";
 
 const PROMPT_IDS = Array.from(
   { length: 10 },
   (_, index) => `prompt-${index + 1}`,
 );
+
+function observations(): AuditObservation[] {
+  return PROMPT_IDS.map((prompt_id) => ({
+    prompt_id,
+    category: "validation",
+    branded: false,
+    question: "Pertanyaan uji.",
+    system: "OpenAI Responses API",
+    requested_model: "gpt-5.6",
+    returned_model: "gpt-5.6-sol",
+    response_id: `resp_${prompt_id}`,
+    observed_at: "2026-08-18T10:00:00.000Z",
+    raw_answer: "Jawaban yang tersimpan tidak menyebutkan bisnis Anda.",
+    sources: [],
+    run_status: "completed",
+    failure_reason: "",
+    telemetry: [],
+  }));
+}
 
 function reportContent(): ReportContent {
   return {
@@ -65,7 +86,21 @@ function sentenceOf(length: number, word = "jelas") {
 
 describe("Indonesian report-language calibration (plain-id-v1, founder-approved)", () => {
   it("is a versioned standard settled by founder approval (R-38 gate cleared)", () => {
-    expect(INDONESIAN_REPORT_WRITING_STANDARD_VERSION).toBe("plain-id-v1");
+    // Behavioral assertion, not a constant-equals-itself check (O-2 / O-9):
+    // an Indonesian-language report must actually stamp the Indonesian
+    // writing standard through its production consumer, `buildAuditReport`.
+    const report = buildAuditReport(
+      reportContent(),
+      observations(),
+      undefined,
+      INDONESIAN_AUDIT_REPORT_LABELS,
+    );
+    expect(report.writing_standard_version).toBe(
+      INDONESIAN_REPORT_WRITING_STANDARD_VERSION,
+    );
+    expect(report.writing_standard_version).not.toBe(
+      REPORT_WRITING_STANDARD_VERSION,
+    );
     expect(REPORT_WRITING_STANDARD_VERSIONS).toEqual([
       "plain-en-v1",
       "plain-id-v1",
@@ -85,7 +120,12 @@ describe("Indonesian report-language calibration (plain-id-v1, founder-approved)
   });
 
   it("keeps the plain-en-v1 standard untouched", () => {
-    expect(REPORT_WRITING_STANDARD_VERSION).toBe("plain-en-v1");
+    // The default (English) label pack must still stamp plain-en-v1 — the
+    // Indonesian pack must not have become the runtime default.
+    const report = buildAuditReport(reportContent(), observations());
+    expect(report.writing_standard_version).toBe(
+      REPORT_WRITING_STANDARD_VERSION,
+    );
     expect(validateReportLanguage(reportContent())).toEqual([]);
   });
 

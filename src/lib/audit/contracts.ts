@@ -65,6 +65,15 @@ export type ReportCallProvenance = {
  * default to English prose (adversarial review Finding 2 / AC-21 / R-26).
  */
 export type AuditReportLabelPack = {
+  /** Stamped onto `AuditReport.writing_standard_version`. Each pack owns its
+   * own version so the stamp always matches the language it actually wrote
+   * (adversarial review Finding O-2: the live route stamped `plain-en-v1` on
+   * Indonesian reports because this used to be a single module-level
+   * constant instead of a per-pack value). */
+  writingStandardVersion: AuditReport["writing_standard_version"];
+  /** Default for `AuditReport.provenance.prompt_contract_version`, unless a
+   * caller overrides it via `ReportCallProvenance.prompt_contract_version`. */
+  promptContractVersion: string;
   /** `failed` is the raw could-not-be-tested count for this subset — each
    * pack renders its own "N could not be tested" suffix so that context can
    * never leak through in the wrong language (adversarial review Finding 2). */
@@ -114,6 +123,8 @@ function englishFailedContext(failed: number) {
 }
 
 export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
+  writingStandardVersion: REPORT_WRITING_STANDARD_VERSION,
+  promptContractVersion: PROMPT_CONTRACT_VERSION,
   discoveryRecommendedLabel: (recommended, total, failed) =>
     `Recommended in ${recommended} of ${total} discovery questions${englishFailedContext(failed)}`,
   discoveryMentionLabel: (mentioned, total, failed) =>
@@ -1103,6 +1114,60 @@ export function buildAuditReport(
   const countInformation = (
     value: ReportContent["details"][number]["information"],
   ) => detailValues.filter((detail) => detail.information === value).length;
+  const recommendationAssessed = detailValues.filter((detail) =>
+    (["recommended", "not_recommended"] as const).includes(
+      detail.recommendation as "recommended" | "not_recommended",
+    ),
+  );
+  const comparisonAssessed = detailValues.filter((detail) =>
+    (
+      [
+        "client_preferred",
+        "competitor_preferred",
+        "compared_no_preference",
+      ] as const
+    ).includes(
+      detail.comparison as
+        "client_preferred" | "competitor_preferred" | "compared_no_preference",
+    ),
+  );
+  const informationAssessed = detailValues.filter((detail) =>
+    (["confirmed", "incomplete", "conflicting"] as const).includes(
+      detail.information as "confirmed" | "incomplete" | "conflicting",
+    ),
+  );
+  const measures: AuditReport["measures"] = {
+    overall: {
+      appeared: unbrandedRecommended + unbrandedMentioned + brandedRecognized,
+      total: observations.length,
+    },
+    unbranded: {
+      appeared: unbrandedRecommended + unbrandedMentioned,
+      total: unbranded.length,
+    },
+    branded: {
+      appeared: brandedRecognized,
+      total: branded.length,
+    },
+    recommendation: {
+      recommended: recommendationAssessed.filter(
+        (detail) => detail.recommendation === "recommended",
+      ).length,
+      assessed: recommendationAssessed.length,
+    },
+    comparison: {
+      client_preferred: comparisonAssessed.filter(
+        (detail) => detail.comparison === "client_preferred",
+      ).length,
+      assessed: comparisonAssessed.length,
+    },
+    information: {
+      confirmed: countInformation("confirmed"),
+      incomplete: countInformation("incomplete"),
+      conflicting: countInformation("conflicting"),
+      assessed: informationAssessed.length,
+    },
+  };
   const { systemPart, modelPart } = deriveSystemParts(observations);
   const systemLabel = deriveSystemLabel(observations);
   const facts: AuditReport["facts"] = {
@@ -1178,13 +1243,13 @@ export function buildAuditReport(
   return {
     ...content,
     report_version: "nuave-report-v3",
-    writing_standard_version: REPORT_WRITING_STANDARD_VERSION,
+    writing_standard_version: labels.writingStandardVersion,
     generated_at: new Date().toISOString(),
     system_label: systemLabel,
     provenance: {
       report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
       prompt_contract_version:
-        reportCall.prompt_contract_version ?? PROMPT_CONTRACT_VERSION,
+        reportCall.prompt_contract_version ?? labels.promptContractVersion,
       requested_report_model: reportCall.requested_model,
       returned_report_model: reportCall.returned_model,
       report_response_id: reportCall.response_id,
@@ -1204,6 +1269,7 @@ export function buildAuditReport(
       branded_total: branded.length,
       failed,
     },
+    measures,
     operational_telemetry:
       reportCall.operational_telemetry ?? summarizeAuditTelemetry([]),
   };

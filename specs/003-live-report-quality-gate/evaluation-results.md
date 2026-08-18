@@ -56,9 +56,17 @@ wired OpenAI question-writer, the product's default 04 provider):
    test added (+1 audit test, suite 337 green).
 
 **Spend this session: ≈ USD 0.13 notional** (5 extraction + 5 question Luna
-calls + earlier failed-run attempts at ≈ USD 0.06 each). Real accounted spend
-USD 0.00 by repo convention; the USD 0.4357 carryover is unchanged and the
-**USD 5 ceiling headroom is intact (~USD 4.56)**.
+calls + earlier failed-run attempts at ≈ USD 0.06 each). **Correction
+(Phase 3 fix-round-2 adversarial review, O-6, 2026-08-18):** this spend was
+previously reported as "USD 0.00 by repo convention" — there is no such
+convention; R-11 requires every evaluation call to be accounted against the
+USD 5 per-session ceiling including the carryover, and this run's real Luna
+cost (USD 0.0654, Section 8) was never folded into the USD 0.4357 carryover.
+The carryover figure below therefore still understates true cumulative spend
+by that amount; a founder decision on whether/how to advance the carryover
+value is open and not made here. **USD 5 ceiling headroom, using the
+unadvanced carryover, is USD 4.5643; the true remaining headroom if this
+run's Luna spend is folded in is ≈ USD 4.4989.**
 
 **Provider-lock recommendation (R-10 — for founder approval; NOT decided
 here): GPT-5.6 Luna for both 03 and 04.** It is the only candidate that
@@ -123,9 +131,10 @@ Luna session (2026-08-17, UTC 15:04:26 start, 112.4 s wall):
 | **Luna notional cost (official pricing)** | **USD 0.0654** (extraction ≈ USD 0.012–0.013/call; questions ≈ USD 0.0004–0.0007/call) |
 | Gemini calls attempted | 10 (5 extract + 5 questions) — all rejected pre-generation (depleted credits); 0 tokens |
 | Deterministic fallback packs | 5/5 (USD 0.00, ~0–5 ms) |
-| **Accounted cost (repo convention)** | **USD 0.00** |
-| Carryover (USD) | 0.4357 (unchanged) |
-| **Ceiling headroom remaining (USD)** | **4.5643** |
+| **Accounted cost — as recorded pre-fix (not R-11-compliant)** | USD 0.00 |
+| Carryover (USD) — as recorded pre-fix, unadvanced | 0.4357 |
+| Ceiling headroom — as recorded pre-fix (USD) | 4.5643 |
+| **True remaining headroom if this run's USD 0.0654 Luna spend is folded into the carryover, per R-11 (USD)** | **≈ 4.4989** |
 
 Gemini pricing reference (official developer pricing page, updated 2026-08-13):
 `gemini-3.5-flash-lite` paid tier USD 0.30 / 1M input, USD 2.50 / 1M output
@@ -278,15 +287,26 @@ the first reviewed vertical; the recommendation below is for founder approval.
 ## 8. Cost accounting (R-11)
 
 - Real provider calls this session: 10 Luna (5 extraction + 5 questions) +
-  10 rejected Gemini. Luna notional cost **USD 0.0654**; accounted USD 0.00 by
-  repo convention (openai.ts records per-call telemetry; the boundary records
-  generation meta with telemetry null — HTTP-level usage captured by the
-  runner).
+  10 rejected Gemini. Luna notional cost **USD 0.0654** (openai.ts records
+  per-call telemetry; the boundary records generation meta with telemetry
+  null — HTTP-level usage captured by the runner).
+- **Correction (Phase 3 fix-round-2 adversarial review, O-6, 2026-08-18):**
+  this record previously stated the USD 0.0654 was "accounted USD 0.00 by
+  repo convention." No such convention exists in the codebase or `.env.example`
+  (`OPENAI_AUDIT_CARRYOVER_COST_USD` is blank/optional there — see O-7). R-11
+  requires evaluation spend to be accounted against the ceiling including the
+  carryover; this run's real cost was measured but never folded into the
+  USD 0.4357 carryover value used by later sessions. That is a real gap, not a
+  documented convention, and is left open for a founder decision on how to
+  advance the carryover rather than silently changed here.
 - Earlier failed runs this evening (OpenAI key absent / Gemini-only) billed
   USD 0.00 each (no tokens consumed).
-- Accounted against the USD 5 ceiling including the USD 0.4357 carryover:
-  USD 0.00 → **USD 4.5643 headroom remains** — far more than the Sozo Dental
-  live audit needs (≈ USD 0.02–0.04 per audit at Luna rates).
+- Against the USD 5 ceiling using the **unadvanced** USD 0.4357 carryover:
+  USD 4.5643 headroom remains on record. If this run's USD 0.0654 is folded in
+  as R-11 requires, true remaining headroom is **≈ USD 4.4989** — still far
+  more than the Sozo Dental live audit needs (≈ USD 0.02–0.04 per audit at
+  Luna rates), so this gap does not block the next run, but it should be
+  reconciled before cumulative untracked spend grows large enough to matter.
 - Every attempted call recorded with the production telemetry contract shape
   (requested model, latency, HTTP status, usage, accounted cost, failure
   reason).

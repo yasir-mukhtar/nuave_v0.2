@@ -163,9 +163,16 @@ export function indonesianQuestionProviderName(): IndonesianQuestionProviderName
 export function liveIndonesianQuestionProviderName(): IndonesianQuestionProviderName {
   const name = indonesianQuestionProviderName();
   if (name === "openai") return "openai";
-  if (process.env.NUAVE_LIVE_PROVIDER_TESTING === "1") return name;
+  // R-13 (O-10, Phase 3 fix-round-2 adversarial review): see the identical
+  // guard and rationale in `provider.ts`'s `liveAuditProvider`.
+  if (
+    process.env.NUAVE_LIVE_PROVIDER_TESTING === "1" &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    return name;
+  }
   throw new Error(
-    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners.`,
+    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 

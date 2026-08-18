@@ -4,7 +4,10 @@ import {
   auditBudgetSchema,
   extractionRequestSchema,
 } from "@/lib/audit/types";
-import { liveExtractBusinessDraft } from "@/lib/audit/provider";
+import {
+  assertLiveProviderCredentialsConfigured,
+  liveExtractBusinessDraft,
+} from "@/lib/audit/provider";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
@@ -34,6 +37,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    assertLiveProviderCredentialsConfigured();
     const input = extractionRequestSchema
       .extend({ budget: auditBudgetSchema })
       .parse(await request.json());
