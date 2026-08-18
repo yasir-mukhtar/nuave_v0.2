@@ -350,11 +350,8 @@ export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
 
 export type AuditReport = ReportContent & {
   report_version: "nuave-report-v3";
-  // Additive widening for Spec 002 R-38: the Indonesian calibration
-  // (plain-id-v1) is a candidate second writing standard. plain-en-v1 stays
-  // the live runtime default; buildAuditReport still writes
-  // REPORT_WRITING_STANDARD_VERSION (plain-en-v1) until an Indonesian report
-  // path is connected in Phase 3.
+  // The live route uses plain-id-v1; plain-en-v1 remains supported for the
+  // legacy English contract and its tests.
   writing_standard_version: "plain-en-v1" | "plain-id-v1";
   generated_at: string;
   system_label: string;

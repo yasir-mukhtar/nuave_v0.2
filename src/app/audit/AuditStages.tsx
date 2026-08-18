@@ -785,7 +785,7 @@ export function RunStep({
             ? "All observations are complete. Creating the report…"
             : "Collecting ten independent observations."
         }
-        description="This progress comes from live server responses. Technical failures retry automatically up to two more times per question under the same locked method; completed observations are never rerun, and failed attempts remain in the evidence."
+        description="This progress comes from live server responses. Technical failures retry automatically up to two more times per question under the same locked method; completed observations are never rerun, and failed attempts remain in the evidence. Browser tetap harus terbuka: menutup tab menghentikan proses, tanpa kelanjutan di latar belakang."
       />
       {runUnfinished ? (
         <Alert status="danger">

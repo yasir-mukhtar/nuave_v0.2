@@ -9,38 +9,43 @@ import type {
   BusinessBrief,
   ReportDetail,
 } from "@/lib/audit/types";
+import {
+  indonesianCountLabel,
+  indonesianHeadline,
+  INDONESIAN_REPORT_LABELS,
+} from "@/lib/audit/report-labels";
 import styles from "./audit.module.css";
 
 function resultLabel(detail: ReportDetail) {
-  if (detail.run === "failed") return "Test could not run";
-  if (detail.appearance === "absent") return "Not named";
+  if (detail.run === "failed") return "Belum berhasil diuji";
+  if (detail.appearance === "absent") return "Tidak disebut";
   if (detail.comparison === "client_preferred")
-    return "Preferred in this comparison";
+    return "Diunggulkan dalam perbandingan ini";
   if (detail.comparison === "competitor_preferred")
-    return "Another provider was preferred";
+    return "Bisnis lain diunggulkan";
   if (detail.comparison === "compared_no_preference")
-    return "Compared without a preference";
-  if (detail.recommendation === "recommended") return "Recommended";
-  if (detail.information === "conflicting") return "Conflicting information";
-  if (detail.information === "incomplete") return "Missing information";
+    return "Dibandingkan tanpa pilihan unggulan";
+  if (detail.recommendation === "recommended") return "Direkomendasikan";
+  if (detail.information === "conflicting") return "Informasi bertentangan";
+  if (detail.information === "incomplete") return "Informasi belum lengkap";
   if (detail.recommendation === "not_assessed")
-    return "Named, no recommendation judgment";
-  return "Named, not recommended";
+    return "Disebut, tanpa penilaian rekomendasi";
+  return "Disebut, tidak direkomendasikan";
 }
 
 const reportCategoryLabels: Record<string, string> = {
-  need_discovery: "Customer need",
-  solution_discovery: "Provider options",
-  comparison: "Comparison",
-  validation: "Business facts",
-  action: "Next step",
+  need_discovery: "Kebutuhan pelanggan",
+  solution_discovery: "Pilihan layanan",
+  comparison: "Perbandingan",
+  validation: "Fakta bisnis",
+  action: "Langkah berikutnya",
 };
 
 const ownerLabels: Record<string, string> = {
-  business_owner: "Business owner",
+  business_owner: "Pemilik bisnis",
   admin: "Admin",
-  marketing: "Marketing",
-  web_developer: "Web developer",
+  marketing: "Pemasaran",
+  web_developer: "Pengembang web",
 };
 
 function testReferences(ids: string[], testNumberById: Map<string, string>) {
@@ -65,21 +70,21 @@ function DetailContent({
   return (
     <div className={styles.detailContent}>
       <div>
-        <h4>What happened</h4>
+        <h4>Yang terjadi</h4>
         <p>{detail.finding}</p>
       </div>
       <div>
-        <h4>Question asked</h4>
+        <h4>Pertanyaan</h4>
         <blockquote>{observation?.question}</blockquote>
       </div>
       <div>
-        <h4>What the AI said</h4>
+        <h4>Jawaban AI</h4>
         <blockquote>
-          {detail.answer_excerpt || "No answer was available."}
+          {detail.answer_excerpt || "Tidak ada jawaban yang tersedia."}
         </blockquote>
       </div>
       <div>
-        <h4>What it means</h4>
+        <h4>Artinya</h4>
         <p className={styles.evidenceNote}>{detail.evidence_note}</p>
       </div>
       {detail.source_urls.length ? (
@@ -92,13 +97,13 @@ function DetailContent({
         </div>
       ) : null}
       <small>
-        Checked{" "}
+        Diperiksa{" "}
         {observation
-          ? new Intl.DateTimeFormat("en-US", {
+          ? new Intl.DateTimeFormat("id-ID", {
               dateStyle: "medium",
               timeStyle: "short",
             }).format(new Date(observation.observed_at))
-          : "at an unknown time"}
+          : "pada waktu yang tidak diketahui"}
       </small>
     </div>
   );
@@ -148,25 +153,31 @@ export default function ReportView({
   );
   const accuracyLabel =
     report.accuracy_status === "no_clear_issues"
-      ? "No clear issues found"
+      ? "Tidak ada masalah yang jelas"
       : report.accuracy_status === "needs_confirmation"
-        ? "Needs confirmation"
+        ? "Perlu dikonfirmasi"
         : report.accuracy_status === "needs_correction"
-          ? "Needs correction"
-          : "Could not assess";
+          ? "Perlu diperbaiki"
+          : "Tidak dapat dinilai";
+  const appearanceCount = report.details.filter(
+    (detail) => detail.appearance === "mentioned",
+  ).length;
 
   return (
     <div className={styles.reportWrap}>
       <div className={`${styles.reportToolbar} ${styles.noPrint}`}>
+        <Button variant="primary" size="sm" onPress={() => window.print()}>
+          <IconDownload /> {INDONESIAN_REPORT_LABELS.download_pdf}
+        </Button>
         <Button variant="ghost" size="sm" onPress={onDownloadJson}>
-          <IconDownload /> Download JSON
+          <IconDownload /> Unduh bukti JSON
         </Button>
       </div>
       <article className={styles.report}>
         {previewNotice ? previewNotice : null}
         <header className={styles.reportHero} id="stage-5" tabIndex={-1}>
           <div className={styles.reportTitleBlock}>
-            <p className={styles.reportEyebrow}>AI Visibility Report</p>
+            <p className={styles.reportEyebrow}>Laporan visibilitas AI</p>
             <h1>{brief.brand_name}</h1>
             <p className={styles.reportSubtitle}>
               {brief.entity_scope} · {brief.market_context}
@@ -183,64 +194,74 @@ export default function ReportView({
               />
             ) : null}
             <div>
-              <small>Prepared by</small>
+              <small>Dibuat oleh</small>
               <strong>{brief.agency_name || "Nuave"}</strong>
             </div>
           </div>
           <Separator className={styles.heroRule} />
           <dl className={styles.scopeGrid}>
             <div>
-              <dt>Audit date</dt>
+              <dt>Tanggal audit</dt>
               <dd>
-                {new Intl.DateTimeFormat("en-US", {
+                {new Intl.DateTimeFormat("id-ID", {
                   dateStyle: "long",
                   timeStyle: "short",
                 }).format(new Date(report.generated_at))}
               </dd>
             </div>
             <div>
-              <dt>Questions checked</dt>
-              <dd>{observations.length} independent questions</dd>
+              <dt>Pertanyaan yang diperiksa</dt>
+              <dd>{observations.length} pertanyaan independen</dd>
             </div>
           </dl>
           <nav className={styles.reportContents} aria-label="Report contents">
-            <span>In this report</span>
+            <span>Isi laporan</span>
             <ol>
               <li>
-                <a href="#summary">Main result</a>
+                <a href="#summary">Hasil utama</a>
               </li>
               <li>
-                <a href="#findings">Key findings</a>
+                <a href="#findings">Temuan utama</a>
               </li>
               <li>
-                <a href="#priorities">What to do next</a>
+                <a href="#priorities">Langkah berikutnya</a>
               </li>
               <li>
-                <a href="#detail">Test-by-test results</a>
+                <a href="#detail">Hasil tiap pertanyaan</a>
               </li>
               <li>
-                <a href="#method">How this audit works</a>
+                <a href="#method">Cara kerja audit</a>
               </li>
             </ol>
           </nav>
         </header>
 
         <section className={styles.reportSection} id="summary">
-          <SectionHeading number="01">Main Result</SectionHeading>
+          <SectionHeading number="01">Hasil utama</SectionHeading>
           <div className={styles.resultGrid}>
             <div className={styles.mainResult}>
-              <strong>{report.counts.unbranded_recommended}</strong>
-              <span>{report.facts.discovery.recommendation_label}</span>
-            </div>
-            <div>
-              <strong>{report.counts.unbranded_mentioned}</strong>
-              <span>{report.facts.discovery.mention_label}</span>
+              <strong>{indonesianHeadline(appearanceCount)}</strong>
+              <span>
+                {indonesianCountLabel(appearanceCount, observations.length)}
+              </span>
             </div>
             <div>
               <strong>
-                {report.counts.branded_recognized}/{report.counts.branded_total}
+                {indonesianCountLabel(
+                  report.counts.unbranded_mentioned,
+                  report.counts.unbranded_total,
+                )}
               </strong>
-              <span>{report.facts.recognition.label}</span>
+              <span>{INDONESIAN_REPORT_LABELS.without_business_name}</span>
+            </div>
+            <div>
+              <strong>
+                {indonesianCountLabel(
+                  report.counts.branded_recognized,
+                  report.counts.branded_total,
+                )}
+              </strong>
+              <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
             </div>
             <div>
               <strong>{report.counts.failed}</strong>
@@ -248,7 +269,7 @@ export default function ReportView({
             </div>
           </div>
           <div className={styles.executiveTakeaway}>
-            <p>What this means</p>
+            <p>Artinya</p>
             <div>
               <p className={styles.conclusion}>{report.conclusion}</p>
               <Chip
@@ -259,7 +280,7 @@ export default function ReportView({
                 }
                 variant="soft"
               >
-                Public information: {accuracyLabel}
+                Informasi publik: {accuracyLabel}
               </Chip>
             </div>
           </div>
@@ -269,18 +290,18 @@ export default function ReportView({
           >
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>This result can change</Alert.Title>
+              <Alert.Title>Hasil ini dapat berubah</Alert.Title>
               <Alert.Description>
-                This report shows ten AI answers from the date above. A
-                different model, date, location, or conversation may return
-                different answers.
+                Laporan ini menunjukkan sepuluh jawaban AI pada tanggal di atas.
+                Model, tanggal, lokasi, atau percakapan berbeda dapat memberi
+                jawaban berbeda.
               </Alert.Description>
             </Alert.Content>
           </Alert>
         </section>
 
         <section className={styles.reportSection} id="findings">
-          <SectionHeading number="02">Key Findings</SectionHeading>
+          <SectionHeading number="02">Temuan utama</SectionHeading>
           <ol className={styles.findings}>
             {report.key_findings.map((finding, index) => (
               <li key={finding.title}>
@@ -290,7 +311,7 @@ export default function ReportView({
                   <p>{finding.explanation}</p>
                 </div>
                 <small>
-                  Based on tests:{" "}
+                  Berdasarkan pertanyaan:{" "}
                   {testReferences(finding.evidence_prompt_ids, testNumberById)}
                 </small>
               </li>
@@ -299,7 +320,7 @@ export default function ReportView({
         </section>
 
         <section className={styles.reportSection} id="priorities">
-          <SectionHeading number="03">What to Do Next</SectionHeading>
+          <SectionHeading number="03">Langkah berikutnya</SectionHeading>
           <ol className={styles.priorities}>
             {[...report.priorities]
               .sort((a, b) => a.order - b.order)
@@ -318,19 +339,21 @@ export default function ReportView({
                       }
                       variant="soft"
                     >
-                      {priority.timing === "do_first" ? "Do first" : "Do next"}
+                      {priority.timing === "do_first"
+                        ? "Kerjakan dulu"
+                        : "Kerjakan berikutnya"}
                     </Chip>
                   </div>
                   <h3>{priority.action}</h3>
                   <dl>
                     <div>
-                      <dt>Why</dt>
+                      <dt>Mengapa</dt>
                       <dd>{priority.why}</dd>
                     </div>
                     <div>
-                      <dt>Based on</dt>
+                      <dt>Berdasarkan</dt>
                       <dd>
-                        {priority.basis} Tests{" "}
+                        {priority.basis} Pertanyaan{" "}
                         {testReferences(
                           priority.evidence_prompt_ids,
                           testNumberById,
@@ -339,11 +362,11 @@ export default function ReportView({
                       </dd>
                     </div>
                     <div>
-                      <dt>Who should do this</dt>
+                      <dt>Penanggung jawab</dt>
                       <dd>{ownerLabels[priority.owner]}</dd>
                     </div>
                     <div>
-                      <dt>You’re done when</dt>
+                      <dt>Selesai ketika</dt>
                       <dd>{priority.done_when}</dd>
                     </div>
                   </dl>
@@ -356,10 +379,10 @@ export default function ReportView({
         </section>
 
         <section className={styles.reportSection} id="detail">
-          <SectionHeading number="04">Test-by-Test Results</SectionHeading>
+          <SectionHeading number="04">Hasil tiap pertanyaan</SectionHeading>
           <p className={styles.sectionLead}>
-            Open a test to see the question, exact answer excerpt, sources, and
-            time checked.
+            Buka satu pertanyaan untuk melihat pertanyaan, kutipan jawaban,
+            sumber, dan waktu pemeriksaan.
           </p>
           <div className={`${styles.detailsScreen} ${styles.noPrint}`}>
             {report.details.map((detail, index) => {
@@ -378,7 +401,7 @@ export default function ReportView({
                         <small>
                           {observation
                             ? reportCategoryLabels[observation.category]
-                            : "Test"}
+                            : "Pertanyaan"}
                         </small>
                         <strong>{resultLabel(detail)}</strong>
                       </span>
@@ -409,7 +432,7 @@ export default function ReportView({
                       <small>
                         {observation
                           ? reportCategoryLabels[observation.category]
-                          : "Test"}
+                          : "Pertanyaan"}
                       </small>
                       <h3>{resultLabel(detail)}</h3>
                     </div>
@@ -423,35 +446,37 @@ export default function ReportView({
         </section>
 
         <section className={styles.reportSection} id="method">
-          <SectionHeading number="05">How This Audit Works</SectionHeading>
+          <SectionHeading number="05">Cara kerja audit</SectionHeading>
           <div className={styles.methodGrid}>
             <p>{report.method_summary}</p>
             <ul className={styles.methodList}>
               <li>
-                The evidence export keeps each question, full answer, source,
-                time, model, and result.
+                Ekspor bukti menyimpan setiap pertanyaan, jawaban lengkap,
+                sumber, waktu, model, dan hasil.
               </li>
               <li>
-                The API is not the consumer ChatGPT app. Answers can change by
-                model, time, location, and conversation.
+                API ini bukan aplikasi ChatGPT konsumen. Jawaban dapat berubah
+                menurut model, waktu, lokasi, dan percakapan.
               </li>
               <li>
-                A mention is not a recommendation. A failed test is not a
-                negative result.
+                Disebut bukan berarti direkomendasikan. Pertanyaan yang gagal
+                diuji bukan hasil negatif.
               </li>
               <li>
-                This report shows what happened in this test. It does not prove
-                cause or guarantee future recommendations.
+                Laporan ini menunjukkan hasil pengujian ini. Laporan ini tidak
+                membuktikan sebab atau menjamin rekomendasi di masa depan.
               </li>
             </ul>
           </div>
           <Alert status="accent" className={styles.editorialAlert}>
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Use this report to choose one next step</Alert.Title>
+              <Alert.Title>
+                Gunakan laporan ini untuk memilih satu langkah
+              </Alert.Title>
               <Alert.Description>
-                Check the public information first. Then make one useful change
-                and repeat the same test.
+                Periksa informasi publik terlebih dahulu. Buat satu perubahan
+                yang berguna, lalu ulangi pengujian yang sama.
               </Alert.Description>
             </Alert.Content>
           </Alert>
@@ -459,9 +484,9 @@ export default function ReportView({
 
         <footer className={styles.reportFooter}>
           <span>{brief.brand_name}</span>
-          <span>Nuave AI Visibility Audit</span>
+          <span>Audit visibilitas AI Nuave</span>
           <span>
-            {new Intl.DateTimeFormat("en-US", { year: "numeric" }).format(
+            {new Intl.DateTimeFormat("id-ID", { year: "numeric" }).format(
               new Date(report.generated_at),
             )}
           </span>

@@ -215,6 +215,7 @@ async function main() {
       observations,
       safety_identifier: "sozo-rerun-2026-08-17",
       budget,
+      language: "id",
     });
     const elapsedMs = Date.now() - startedAt;
     writeFileSync(

@@ -6,7 +6,11 @@ import {
 import { liveGenerateReportContent } from "./provider";
 import {
   validateReportLanguage,
+  validateIndonesianReportLanguage,
+  indonesianReportBuiltFieldErrors,
+  INDONESIAN_AUDIT_REPORT_LABELS,
   validateReportLanguageRevision,
+  validateIndonesianReportLanguageRevision,
 } from "./report-language";
 import type {
   AuditBudget,
@@ -29,6 +33,7 @@ export type ReportPipelineInput = {
   observations: AuditObservation[];
   safety_identifier: string;
   budget: AuditBudget;
+  language?: "en" | "id";
 };
 
 /**
@@ -112,6 +117,12 @@ export async function createValidatedAuditReport(
   input: ReportPipelineInput,
   generate: ReportGenerator = liveGenerateReportContent,
 ): Promise<AuditReport> {
+  // Keep this invariant at the pipeline boundary as well as the HTTP route.
+  // Scripts and future callers must not be able to spend on synthesis for a
+  // partial evidence set.
+  if (input.language === "id") {
+    assertReportGenerationGate(input);
+  }
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
@@ -132,7 +143,10 @@ export async function createValidatedAuditReport(
     throw new ReportPipelineError(evidenceErrors.join(" "), 422, reportCalls);
   }
 
-  const languageErrors = validateReportLanguage(content);
+  const isIndonesian = input.language === "id";
+  const languageErrors = isIndonesian
+    ? validateIndonesianReportLanguage(content).errors
+    : validateReportLanguage(content);
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
@@ -170,27 +184,47 @@ export async function createValidatedAuditReport(
       input.brief,
     );
     const retryErrors = [
-      ...validateReportLanguageRevision(original, content),
+      ...(isIndonesian
+        ? validateIndonesianReportLanguageRevision(original, content)
+        : validateReportLanguageRevision(original, content)),
       ...validateReportContent(content, input.observations, input.brief),
-      ...validateReportLanguage(content),
+      ...(isIndonesian
+        ? validateIndonesianReportLanguage(content).errors
+        : validateReportLanguage(content)),
     ];
     if (retryErrors.length) {
       throw new ReportPipelineError(retryErrors.join(" "), 422, reportCalls);
     }
   }
 
-  return buildAuditReport(content, input.observations, {
-    requested_model: final.requested_model,
-    returned_model: final.returned_model,
-    response_id: final.response_id,
-    initial_response_id: initial.response_id,
-    call_count: callCount,
-    language_retry_performed: callCount === 2,
-    language_retry_violations: retryViolations,
-    operational_telemetry: summarizeAuditTelemetry(
-      [...input.budget.calls, ...reportCalls],
-      input.budget.limit_usd,
-      effectiveAuditCarryoverCostUsd(input.budget),
-    ),
-  });
+  const report = buildAuditReport(
+    content,
+    input.observations,
+    {
+      requested_model: final.requested_model,
+      returned_model: final.returned_model,
+      response_id: final.response_id,
+      initial_response_id: initial.response_id,
+      call_count: callCount,
+      language_retry_performed: callCount === 2,
+      language_retry_violations: retryViolations,
+      operational_telemetry: summarizeAuditTelemetry(
+        [...input.budget.calls, ...reportCalls],
+        input.budget.limit_usd,
+        effectiveAuditCarryoverCostUsd(input.budget),
+      ),
+    },
+    isIndonesian ? INDONESIAN_AUDIT_REPORT_LABELS : undefined,
+  );
+  if (isIndonesian) {
+    const builtFieldErrors = indonesianReportBuiltFieldErrors(report);
+    if (builtFieldErrors.length) {
+      throw new ReportPipelineError(
+        builtFieldErrors.join(" "),
+        422,
+        reportCalls,
+      );
+    }
+  }
+  return report;
 }

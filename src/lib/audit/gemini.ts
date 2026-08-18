@@ -153,7 +153,9 @@ async function geminiGenerate(params: {
     const message =
       data.error?.message || `Gemini request failed with status ${status}.`;
     lastError = new Error(message);
-    if (status === 429 || status >= 500) {
+    // A depleted quota is not made available by waiting. Retrying it four
+    // times only delays the bounded run and obscures the real failure.
+    if (status >= 500) {
       const delayMs = 800 * attempt;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
       continue;

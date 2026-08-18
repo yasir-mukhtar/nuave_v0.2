@@ -105,7 +105,8 @@ import {
 
 const RUN_ID = "sozo-live-run-2026-08-17";
 const ARTIFACTS_DIR = join(process.cwd(), ".secrets", RUN_ID);
-const SAFETY_IDENTIFIER = "nuave-private-live-run-2026-08-17-sozo-depok-margonda";
+const SAFETY_IDENTIFIER =
+  "nuave-private-live-run-2026-08-17-sozo-depok-margonda";
 const CARRYOVER_COST_USD = 0.4357;
 const LIMIT_USD = 5;
 
@@ -118,7 +119,11 @@ const LIMIT_USD = 5;
  */
 const SOZO_BRIEF: BusinessBrief = {
   brand_name: "Sozo Dental Depok",
-  brand_name_variants: ["SOZO Dental", "Sozo Dental Margonda", "Sozo Dental Clinic"],
+  brand_name_variants: [
+    "SOZO Dental",
+    "Sozo Dental Margonda",
+    "Sozo Dental Clinic",
+  ],
   entity_scope: "Margonda, Beji, Kota Depok",
   brand_type: "Jaringan klinik gigi",
   category: "Klinik gigi",
@@ -274,7 +279,10 @@ function competitorIdentitySignals(brief: BusinessBrief) {
 // 6. Question-pack validation
 // ---------------------------------------------------------------------------
 
-function validatePack(pack: IndonesianQuestionPackSuggestion, minimized: MinimizedIndonesianBrief) {
+function validatePack(
+  pack: IndonesianQuestionPackSuggestion,
+  minimized: MinimizedIndonesianBrief,
+) {
   const questions = pack.questions.map((q) => q.text);
   const issues = validateIndonesianQuestionPack(questions, minimized);
   const blockers = indonesianPackBlockers(questions, minimized);
@@ -333,7 +341,10 @@ function pickVariancePromptIds(
   const competitorSignals = competitorIdentitySignals(brief);
   const scored = observations.map((observation) => {
     let score = 0;
-    if (!observation.branded && containsIdentity(observation.raw_answer, brandSignals)) {
+    if (
+      !observation.branded &&
+      containsIdentity(observation.raw_answer, brandSignals)
+    ) {
       score += 3; // discovery question revealed the brand: highest variance risk
     }
     if (containsIdentity(observation.raw_answer, competitorSignals)) {
@@ -341,15 +352,22 @@ function pickVariancePromptIds(
     }
     if (observation.sources.length === 0) score += 2; // low evidence
     if (observation.raw_answer.trim().length < 200) score += 1; // short answer
-    return { prompt_id: observation.prompt_id, branded: observation.branded, score };
+    return {
+      prompt_id: observation.prompt_id,
+      branded: observation.branded,
+      score,
+    };
   });
-  scored.sort((a, b) => b.score - a.score || Number(a.branded) - Number(b.branded));
+  scored.sort(
+    (a, b) => b.score - a.score || Number(a.branded) - Number(b.branded),
+  );
   const picks = scored.slice(0, 3).filter((item) => item.score > 0);
   if (picks.length < 2) {
     // Fall back to the two lowest-evidence unbranded questions.
     const unbranded = scored.filter((item) => !item.branded).slice(0, 2);
     for (const item of unbranded) {
-      if (!picks.some((pick) => pick.prompt_id === item.prompt_id)) picks.push(item);
+      if (!picks.some((pick) => pick.prompt_id === item.prompt_id))
+        picks.push(item);
     }
   }
   return picks.slice(0, 3).map((item) => item.prompt_id);
@@ -360,158 +378,169 @@ function pickVariancePromptIds(
 // ---------------------------------------------------------------------------
 
 describe("Sozo Dental Depok/Margonda — first live private audit (Spec 003)", () => {
-  it(
-    "generates the confirmed pack, runs 10/10 evaluable observations with 1+2 retries, records variance re-asks, and produces the private report facts",
-    async () => {
-      // ---- Provider lock (founder-approved 2026-08-17) ----
-      process.env.NUAVE_PROVIDER = "openai";
-      process.env.NUAVE_QUESTION_PROVIDER = "openai";
-      process.env.OPENAI_AUDIT_MODEL = "gpt-5.6-luna";
-      process.env.OPENAI_AUDIT_CARRYOVER_COST_USD = String(CARRYOVER_COST_USD);
+  it("generates the confirmed pack, runs 10/10 evaluable observations with 1+2 retries, records variance re-asks, and produces the private report facts", async () => {
+    // ---- Provider lock (founder-approved 2026-08-17) ----
+    process.env.NUAVE_PROVIDER = "openai";
+    process.env.NUAVE_QUESTION_PROVIDER = "openai";
+    process.env.OPENAI_AUDIT_MODEL = "gpt-5.6-luna";
+    process.env.OPENAI_AUDIT_CARRYOVER_COST_USD = String(CARRYOVER_COST_USD);
 
-      mkdirSync(ARTIFACTS_DIR, { recursive: true });
+    mkdirSync(ARTIFACTS_DIR, { recursive: true });
 
-      const httpCalls: CapturedCall[] = [];
-      const previousFetch = globalThis.fetch;
-      globalThis.fetch = captureFetch(httpCalls) as typeof fetch;
+    const httpCalls: CapturedCall[] = [];
+    const previousFetch = globalThis.fetch;
+    globalThis.fetch = captureFetch(httpCalls) as typeof fetch;
 
-      const runStartedAt = new Date().toISOString();
-      const mainBudget: AuditBudget = {
-        limit_usd: LIMIT_USD,
-        carryover_cost_usd: CARRYOVER_COST_USD,
-        calls: [],
-      };
+    const runStartedAt = new Date().toISOString();
+    const mainBudget: AuditBudget = {
+      limit_usd: LIMIT_USD,
+      carryover_cost_usd: CARRYOVER_COST_USD,
+      calls: [],
+    };
 
-      const record: Record<string, unknown> = {
-        run_id: RUN_ID,
-        business: {
-          name: SOZO_BRIEF.brand_name,
-          branch: SOZO_BRIEF.entity_scope,
-          market_context: SOZO_BRIEF.market_context,
-        },
-        provider_lock: {
-          observation_and_extraction: "openai / gpt-5.6-luna",
-          question_generation: "openai / gpt-5.6-luna",
-          instruction_version: OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
-        },
-        started_at: runStartedAt,
-      };
+    const record: Record<string, unknown> = {
+      run_id: RUN_ID,
+      business: {
+        name: SOZO_BRIEF.brand_name,
+        branch: SOZO_BRIEF.entity_scope,
+        market_context: SOZO_BRIEF.market_context,
+      },
+      provider_lock: {
+        observation_and_extraction: "openai / gpt-5.6-luna",
+        question_generation: "openai / gpt-5.6-luna",
+        instruction_version: OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
+      },
+      started_at: runStartedAt,
+    };
 
-      try {
-        // ================= 04 — Question pack (one real paid call) =========
-        const minimized = minimizeIndonesianBrief(SOZO_BRIEF);
-        const questionStartedAt = Date.now();
-        const pack = await generateLiveIndonesianQuestionPack(minimized, {
-          generationMeta: indonesianQuestionGenerationMeta(),
-        });
-        const questionLatencyMs = Date.now() - questionStartedAt;
-        const questionHttp = httpCalls.find(
-          (call) => call.url.includes("/v1/responses") && call.started_at_ms >= questionStartedAt - 5_000,
-        );
+    try {
+      // ================= 04 — Question pack (one real paid call) =========
+      const minimized = minimizeIndonesianBrief(SOZO_BRIEF);
+      const questionStartedAt = Date.now();
+      const pack = await generateLiveIndonesianQuestionPack(minimized, {
+        generationMeta: indonesianQuestionGenerationMeta(),
+      });
+      const questionLatencyMs = Date.now() - questionStartedAt;
+      const questionHttp = httpCalls.find(
+        (call) =>
+          call.url.includes("/v1/responses") &&
+          call.started_at_ms >= questionStartedAt - 5_000,
+      );
 
-        const packValidation = validatePack(pack, minimized);
-        expect(packValidation.count, "pack count").toBe(10);
-        expect(
-          packValidation.classification.tanpa_menyebut_bisnis_anda,
-          "no-name questions",
-        ).toBe(5);
-        expect(
-          packValidation.classification.menyebut_bisnis_anda,
-          "name questions",
-        ).toBe(5);
-        expect(packValidation.blockers, "pack blockers").toEqual([]);
-        expect(
-          packValidation.issues.filter(
-            (issue) =>
-              issue.rule === "identity_leakage" ||
-              issue.rule === "competitor_leakage" ||
-              issue.rule === "unsupported_premise" ||
-              issue.rule === "empty" ||
-              issue.rule === "unexecutable",
-          ),
-          "pack safety issues",
-        ).toEqual([]);
-        expect(pack.source, "pack source").not.toBe("fallback");
+      const packValidation = validatePack(pack, minimized);
+      expect(packValidation.count, "pack count").toBe(10);
+      expect(
+        packValidation.classification.tanpa_menyebut_bisnis_anda,
+        "no-name questions",
+      ).toBe(5);
+      expect(
+        packValidation.classification.menyebut_bisnis_anda,
+        "name questions",
+      ).toBe(5);
+      expect(packValidation.blockers, "pack blockers").toEqual([]);
+      expect(
+        packValidation.issues.filter(
+          (issue) =>
+            issue.rule === "identity_leakage" ||
+            issue.rule === "competitor_leakage" ||
+            issue.rule === "unsupported_premise" ||
+            issue.rule === "empty" ||
+            issue.rule === "unexecutable",
+        ),
+        "pack safety issues",
+      ).toEqual([]);
+      expect(pack.source, "pack source").not.toBe("fallback");
 
-        const questionsArtifact = {
-          pack_version: pack.pack_version,
-          language: pack.language,
-          instruction_version: pack.generation.instruction_version,
-          generation: {
-            system: pack.generation.system,
-            requested_model: pack.generation.requested_model,
-            returned_model: pack.generation.returned_model,
-            generated_at: pack.generation.generated_at,
-            fallback_used: pack.generation.fallback_used,
-            source: pack.source,
-            warnings: pack.warnings,
-            latency_ms: questionLatencyMs,
-            http_status: questionHttp?.status ?? null,
-            http_usage: questionHttp ? sanitizeHttpBody(questionHttp.body).usage : null,
-          },
-          classification_summary: pack.classification_summary,
-          validation: packValidation,
-          questions: pack.questions.map((q) => ({
-            order: q.order,
-            text: q.text,
-            final_classification: q.final_classification,
-            suggested_category: q.suggested_category,
-          })),
-        };
-        writeFileSync(
-          join(ARTIFACTS_DIR, "questions.json"),
-          JSON.stringify(questionsArtifact, null, 2),
-          "utf8",
-        );
-        record.question_generation = {
+      const questionsArtifact = {
+        pack_version: pack.pack_version,
+        language: pack.language,
+        instruction_version: pack.generation.instruction_version,
+        generation: {
+          system: pack.generation.system,
+          requested_model: pack.generation.requested_model,
+          returned_model: pack.generation.returned_model,
+          generated_at: pack.generation.generated_at,
+          fallback_used: pack.generation.fallback_used,
           source: pack.source,
           warnings: pack.warnings,
           latency_ms: questionLatencyMs,
           http_status: questionHttp?.status ?? null,
-        };
+          http_usage: questionHttp
+            ? sanitizeHttpBody(questionHttp.body).usage
+            : null,
+        },
+        classification_summary: pack.classification_summary,
+        validation: packValidation,
+        questions: pack.questions.map((q) => ({
+          order: q.order,
+          text: q.text,
+          final_classification: q.final_classification,
+          suggested_category: q.suggested_category,
+        })),
+      };
+      writeFileSync(
+        join(ARTIFACTS_DIR, "questions.json"),
+        JSON.stringify(questionsArtifact, null, 2),
+        "utf8",
+      );
+      record.question_generation = {
+        source: pack.source,
+        warnings: pack.warnings,
+        latency_ms: questionLatencyMs,
+        http_status: questionHttp?.status ?? null,
+      };
 
-        // ================= 05 — Ten observations (1+2 retry orchestrator) ==
-        const prompts = buildLockedPrompts(pack, SOZO_BRIEF);
-        const events: AuditRunEvent[] = [];
-        const summary = await runAuditObservations({
-          prompts,
-          brief: SOZO_BRIEF,
-          safety_identifier: SAFETY_IDENTIFIER,
-          budget: mainBudget,
-          execute: executeAuditPrompt,
-          emit: (event) => {
-            events.push(event);
-          },
-        });
+      // ================= 05 — Ten observations (1+2 retry orchestrator) ==
+      const prompts = buildLockedPrompts(pack, SOZO_BRIEF);
+      const events: AuditRunEvent[] = [];
+      const summary = await runAuditObservations({
+        prompts,
+        brief: SOZO_BRIEF,
+        safety_identifier: SAFETY_IDENTIFIER,
+        budget: mainBudget,
+        execute: executeAuditPrompt,
+        emit: (event) => {
+          events.push(event);
+        },
+      });
 
-        // ---- 10/10 evaluable gate (R-19) ----
-        expect(summary.observations.length, "observation count").toBe(10);
-        expect(summary.failed_prompt_ids, "failed prompt ids").toEqual([]);
-        expect(summary.stop_message, "stop message").toBe("");
-        for (const observation of summary.observations) {
-          expect(observation.run_status, `${observation.prompt_id} run status`).toBe("completed");
-          expect(
-            observation.raw_answer.trim().length,
-            `${observation.prompt_id} usable answer`,
-          ).toBeGreaterThan(0);
-          const classification = classifyObservationFailure(observation);
-          expect(classification.evaluable, `${observation.prompt_id} evaluable`).toBe(true);
-          expect(
-            observation.instruction_version,
-            `${observation.prompt_id} instruction version`,
-          ).toBe(OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID);
-          expect(observation.system, `${observation.prompt_id} system`).toBe(
-            "OpenAI Responses API",
-          );
-          expect(observation.returned_model, `${observation.prompt_id} returned model`).toBe(
-            "gpt-5.6-luna",
-          );
-        }
+      // ---- 10/10 evaluable gate (R-19) ----
+      expect(summary.observations.length, "observation count").toBe(10);
+      expect(summary.failed_prompt_ids, "failed prompt ids").toEqual([]);
+      expect(summary.stop_message, "stop message").toBe("");
+      for (const observation of summary.observations) {
+        expect(
+          observation.run_status,
+          `${observation.prompt_id} run status`,
+        ).toBe("completed");
+        expect(
+          observation.raw_answer.trim().length,
+          `${observation.prompt_id} usable answer`,
+        ).toBeGreaterThan(0);
+        const classification = classifyObservationFailure(observation);
+        expect(
+          classification.evaluable,
+          `${observation.prompt_id} evaluable`,
+        ).toBe(true);
+        expect(
+          observation.instruction_version,
+          `${observation.prompt_id} instruction version`,
+        ).toBe(OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID);
+        expect(observation.system, `${observation.prompt_id} system`).toBe(
+          "OpenAI Responses API",
+        );
+        expect(
+          observation.returned_model,
+          `${observation.prompt_id} returned model`,
+        ).toBe("gpt-5.6-luna");
+      }
 
-        // Per-question verdicts (deterministic appearance + retry counts)
-        const brandSignals = brandIdentitySignals(SOZO_BRIEF);
-        const observationsArtifact = summary.observations.map((observation, index) => {
-          const attempts = summary.attemptsByPrompt[observation.prompt_id] ?? [];
+      // Per-question verdicts (deterministic appearance + retry counts)
+      const brandSignals = brandIdentitySignals(SOZO_BRIEF);
+      const observationsArtifact = summary.observations.map(
+        (observation, index) => {
+          const attempts =
+            summary.attemptsByPrompt[observation.prompt_id] ?? [];
           return {
             order: index + 1,
             prompt_id: observation.prompt_id,
@@ -536,228 +565,256 @@ describe("Sozo Dental Depok/Margonda — first live private audit (Spec 003)", (
             sources: observation.sources,
             telemetry: observation.telemetry,
           };
+        },
+      );
+      writeFileSync(
+        join(ARTIFACTS_DIR, "observations.json"),
+        JSON.stringify(observationsArtifact, null, 2),
+        "utf8",
+      );
+
+      const totalObservationTelemetry = summary.observations.flatMap(
+        (observation) => observation.telemetry,
+      );
+      record.observations = {
+        completed: summary.observations.filter(
+          (o) => o.run_status === "completed",
+        ).length,
+        total: summary.observations.length,
+        evaluable_gate: "10/10 PASS",
+        attempts: totalObservationTelemetry.length,
+        retries_used: totalObservationTelemetry.filter(
+          (call) => (call.attempt ?? 1) > 1,
+        ).length,
+        headline_appearance_count: summary.observations.filter((o) =>
+          containsIdentity(o.raw_answer, brandSignals),
+        ).length,
+        events: events.map((event) => event.type),
+      };
+
+      // ================= Variance re-asks (R-22, separate measurement) ===
+      const variancePromptIds = pickVariancePromptIds(
+        summary.observations,
+        SOZO_BRIEF,
+      );
+      expect(
+        variancePromptIds.length,
+        "variance re-ask count",
+      ).toBeGreaterThanOrEqual(2);
+      expect(
+        variancePromptIds.length,
+        "variance re-ask count",
+      ).toBeLessThanOrEqual(3);
+
+      const varianceBudget: AuditBudget = {
+        limit_usd: LIMIT_USD,
+        carryover_cost_usd: CARRYOVER_COST_USD,
+        calls: [],
+      };
+      const varianceResults: Array<{
+        prompt_id: string;
+        question: string;
+        branded: boolean;
+        reasked_at: string;
+        attempts: number;
+        run_status: string;
+        appearance: "mentioned" | "absent";
+        raw_answer: string;
+        sources: { url: string; title: string }[];
+        telemetry: unknown[];
+      }> = [];
+      for (const promptId of variancePromptIds) {
+        const prompt = prompts.find((item) => item.prompt_id === promptId);
+        if (!prompt) continue;
+        const observation = await executeAuditPrompt({
+          prompt,
+          brief: SOZO_BRIEF,
+          safety_identifier: SAFETY_IDENTIFIER,
+          budget: varianceBudget,
         });
-        writeFileSync(
-          join(ARTIFACTS_DIR, "observations.json"),
-          JSON.stringify(observationsArtifact, null, 2),
-          "utf8",
-        );
-
-        const totalObservationTelemetry = summary.observations.flatMap(
-          (observation) => observation.telemetry,
-        );
-        record.observations = {
-          completed: summary.observations.filter((o) => o.run_status === "completed").length,
-          total: summary.observations.length,
-          evaluable_gate: "10/10 PASS",
-          attempts: totalObservationTelemetry.length,
-          retries_used: totalObservationTelemetry.filter((call) => (call.attempt ?? 1) > 1).length,
-          headline_appearance_count: summary.observations.filter((o) =>
-            containsIdentity(o.raw_answer, brandSignals),
-          ).length,
-          events: events.map((event) => event.type),
-        };
-
-        // ================= Variance re-asks (R-22, separate measurement) ===
-        const variancePromptIds = pickVariancePromptIds(summary.observations, SOZO_BRIEF);
-        expect(variancePromptIds.length, "variance re-ask count").toBeGreaterThanOrEqual(2);
-        expect(variancePromptIds.length, "variance re-ask count").toBeLessThanOrEqual(3);
-
-        const varianceBudget: AuditBudget = {
-          limit_usd: LIMIT_USD,
-          carryover_cost_usd: CARRYOVER_COST_USD,
-          calls: [],
-        };
-        const varianceResults: Array<{
-          prompt_id: string;
-          question: string;
-          branded: boolean;
-          reasked_at: string;
-          attempts: number;
-          run_status: string;
-          appearance: "mentioned" | "absent";
-          raw_answer: string;
-          sources: { url: string; title: string }[];
-          telemetry: unknown[];
-        }> = [];
-        for (const promptId of variancePromptIds) {
-          const prompt = prompts.find((item) => item.prompt_id === promptId);
-          if (!prompt) continue;
-          const observation = await executeAuditPrompt({
-            prompt,
-            brief: SOZO_BRIEF,
-            safety_identifier: SAFETY_IDENTIFIER,
-            budget: varianceBudget,
-          });
-          varianceBudget.calls.push(...observation.telemetry);
-          varianceResults.push({
-            prompt_id: observation.prompt_id,
-            question: observation.question,
-            branded: observation.branded,
-            reasked_at: observation.observed_at,
-            attempts: observation.telemetry.length,
-            run_status: observation.run_status,
-            appearance: containsIdentity(observation.raw_answer, brandSignals)
-              ? "mentioned"
-              : "absent",
-            raw_answer: observation.raw_answer,
-            sources: observation.sources,
-            telemetry: observation.telemetry,
-          });
-        }
-        writeFileSync(
-          join(ARTIFACTS_DIR, "variance.json"),
-          JSON.stringify(
-            {
-              note: "Variance measurement only (Spec 003 R-22). Never feeds the reported count, denominators, findings, or actions.",
-              reasked_prompt_ids: variancePromptIds,
-              main_run_headline_count: record.observations,
-              results: varianceResults,
-            },
-            null,
-          2,
-          ),
-          "utf8",
-        );
-        record.variance = {
-          reasked_prompt_ids: variancePromptIds,
-          results: varianceResults.map((result) => ({
-            prompt_id: result.prompt_id,
-            run_status: result.run_status,
-            appearance: result.appearance,
-            attempts: result.attempts,
-          })),
-        };
-
-        // ================= 06 — Report pipeline (real synthesis call) ======
-        const budgetWithObservations: AuditBudget = {
-          ...mainBudget,
-          calls: [...mainBudget.calls, ...totalObservationTelemetry],
-        };
-        let pipelineOutput: unknown = null;
-        let pipelineError = "";
-        try {
-          const { createValidatedAuditReport } = await import(
-            "../../src/lib/audit/report-pipeline"
-          );
-          pipelineOutput = await createValidatedAuditReport({
-            brief: SOZO_BRIEF,
-            prompts,
-            observations: summary.observations,
-            safety_identifier: SAFETY_IDENTIFIER,
-            budget: budgetWithObservations,
-          });
-        } catch (error) {
-          pipelineError =
-            error instanceof Error ? error.message : "Report pipeline failed without details.";
-        }
-        if (pipelineOutput !== null) {
-          writeFileSync(
-            join(ARTIFACTS_DIR, "report-pipeline-output.json"),
-            JSON.stringify(pipelineOutput, null, 2),
-            "utf8",
-          );
-        }
-        record.report_pipeline = pipelineError ? { status: "failed", error: pipelineError } : { status: "completed" };
-
-        // ================= Telemetry summary ===============================
-        const allCalls = [
-          ...totalObservationTelemetry,
-          ...(pipelineOutput && typeof pipelineOutput === "object" && "operational_telemetry" in pipelineOutput
-            ? ((pipelineOutput as { operational_telemetry: { calls: unknown[] } }).operational_telemetry.calls as unknown[])
-            : []),
-        ];
-        const telemetryArtifact = {
-          pricing_version: "openai-standard-2026-08-01",
-          cost_limit_usd: LIMIT_USD,
-          carryover_cost_usd: CARRYOVER_COST_USD,
-          main_run: {
-            observation_calls: totalObservationTelemetry.length,
-            summary: summarizeAuditTelemetry(
-              totalObservationTelemetry,
-              LIMIT_USD,
-              CARRYOVER_COST_USD,
-            ),
-          },
-          variance_measurement: {
-            calls: varianceBudget.calls.length,
-            summary: summarizeAuditTelemetry(
-              varianceBudget.calls,
-              LIMIT_USD,
-              CARRYOVER_COST_USD,
-            ),
-          },
-          report_pipeline: pipelineOutput
-            ? {
-                call_count: (pipelineOutput as { provenance: { report_call_count: number } }).provenance.report_call_count,
-                language_retry_performed: (pipelineOutput as { provenance: { language_retry_performed: boolean } }).provenance.language_retry_performed,
-              }
-            : { status: "failed" },
-          http_calls: httpCalls.map((call) => ({
-            url: call.url.replace(/\/v1\/responses.*/, "/v1/responses"),
-            status: call.status,
-            latency_ms: call.latency_ms,
-            started_at: new Date(call.started_at_ms).toISOString(),
-            body: sanitizeHttpBody(call.body),
-          })),
-          all_calls_recorded: allCalls.length,
-        };
-        writeFileSync(
-          join(ARTIFACTS_DIR, "telemetry.json"),
-          JSON.stringify(telemetryArtifact, null, 2),
-          "utf8",
-        );
-        record.telemetry = {
-          main_run_calls: totalObservationTelemetry.length,
-          main_run_accounted_cost_usd:
-            telemetryArtifact.main_run.summary.accounted_cost_usd,
-          variance_calls: varianceBudget.calls.length,
-          variance_accounted_cost_usd:
-            telemetryArtifact.variance_measurement.summary.accounted_cost_usd,
-          total_accounted_cost_usd:
-            telemetryArtifact.main_run.summary.accounted_cost_usd +
-            telemetryArtifact.variance_measurement.summary.accounted_cost_usd,
-          ceiling_headroom_after_run_usd:
-            LIMIT_USD - CARRYOVER_COST_USD - (telemetryArtifact.main_run.summary.accounted_cost_usd + telemetryArtifact.variance_measurement.summary.accounted_cost_usd),
-        };
-
-        // Ceiling guard: total accounted cost stays far inside the USD 5 ceiling.
-        expect(
-          telemetryArtifact.main_run.summary.accounted_cost_usd +
-            telemetryArtifact.variance_measurement.summary.accounted_cost_usd,
-          "total accounted cost",
-        ).toBeLessThan(LIMIT_USD - CARRYOVER_COST_USD);
-
-        record.completed_at = new Date().toISOString();
-        writeFileSync(
-          join(ARTIFACTS_DIR, "run-record.json"),
-          JSON.stringify(record, null, 2),
-          "utf8",
-        );
-
-        console.log(
-          JSON.stringify(
-            {
-              run_id: RUN_ID,
-              pack: {
-                source: pack.source,
-                count: packValidation.count,
-                classification: packValidation.classification,
-                blockers: packValidation.blockers,
-              },
-              observations: record.observations,
-              variance: record.variance,
-              report_pipeline: record.report_pipeline,
-              telemetry: record.telemetry,
-            },
-            null,
-            2,
-          ),
-        );
-      } finally {
-        globalThis.fetch = previousFetch;
+        varianceBudget.calls.push(...observation.telemetry);
+        varianceResults.push({
+          prompt_id: observation.prompt_id,
+          question: observation.question,
+          branded: observation.branded,
+          reasked_at: observation.observed_at,
+          attempts: observation.telemetry.length,
+          run_status: observation.run_status,
+          appearance: containsIdentity(observation.raw_answer, brandSignals)
+            ? "mentioned"
+            : "absent",
+          raw_answer: observation.raw_answer,
+          sources: observation.sources,
+          telemetry: observation.telemetry,
+        });
       }
-    },
-    900_000,
-  );
+      writeFileSync(
+        join(ARTIFACTS_DIR, "variance.json"),
+        JSON.stringify(
+          {
+            note: "Variance measurement only (Spec 003 R-22). Never feeds the reported count, denominators, findings, or actions.",
+            reasked_prompt_ids: variancePromptIds,
+            main_run_headline_count: record.observations,
+            results: varianceResults,
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      record.variance = {
+        reasked_prompt_ids: variancePromptIds,
+        results: varianceResults.map((result) => ({
+          prompt_id: result.prompt_id,
+          run_status: result.run_status,
+          appearance: result.appearance,
+          attempts: result.attempts,
+        })),
+      };
+
+      // ================= 06 — Report pipeline (real synthesis call) ======
+      const budgetWithObservations: AuditBudget = {
+        ...mainBudget,
+        calls: [...mainBudget.calls, ...totalObservationTelemetry],
+      };
+      let pipelineOutput: unknown = null;
+      let pipelineError = "";
+      try {
+        const { createValidatedAuditReport } =
+          await import("../../src/lib/audit/report-pipeline");
+        pipelineOutput = await createValidatedAuditReport({
+          brief: SOZO_BRIEF,
+          prompts,
+          observations: summary.observations,
+          safety_identifier: SAFETY_IDENTIFIER,
+          budget: budgetWithObservations,
+          language: "id",
+        });
+      } catch (error) {
+        pipelineError =
+          error instanceof Error
+            ? error.message
+            : "Report pipeline failed without details.";
+      }
+      if (pipelineOutput !== null) {
+        writeFileSync(
+          join(ARTIFACTS_DIR, "report-pipeline-output.json"),
+          JSON.stringify(pipelineOutput, null, 2),
+          "utf8",
+        );
+      }
+      record.report_pipeline = pipelineError
+        ? { status: "failed", error: pipelineError }
+        : { status: "completed" };
+
+      // ================= Telemetry summary ===============================
+      const allCalls = [
+        ...totalObservationTelemetry,
+        ...(pipelineOutput &&
+        typeof pipelineOutput === "object" &&
+        "operational_telemetry" in pipelineOutput
+          ? ((pipelineOutput as { operational_telemetry: { calls: unknown[] } })
+              .operational_telemetry.calls as unknown[])
+          : []),
+      ];
+      const telemetryArtifact = {
+        pricing_version: "openai-standard-2026-08-01",
+        cost_limit_usd: LIMIT_USD,
+        carryover_cost_usd: CARRYOVER_COST_USD,
+        main_run: {
+          observation_calls: totalObservationTelemetry.length,
+          summary: summarizeAuditTelemetry(
+            totalObservationTelemetry,
+            LIMIT_USD,
+            CARRYOVER_COST_USD,
+          ),
+        },
+        variance_measurement: {
+          calls: varianceBudget.calls.length,
+          summary: summarizeAuditTelemetry(
+            varianceBudget.calls,
+            LIMIT_USD,
+            CARRYOVER_COST_USD,
+          ),
+        },
+        report_pipeline: pipelineOutput
+          ? {
+              call_count: (
+                pipelineOutput as { provenance: { report_call_count: number } }
+              ).provenance.report_call_count,
+              language_retry_performed: (
+                pipelineOutput as {
+                  provenance: { language_retry_performed: boolean };
+                }
+              ).provenance.language_retry_performed,
+            }
+          : { status: "failed" },
+        http_calls: httpCalls.map((call) => ({
+          url: call.url.replace(/\/v1\/responses.*/, "/v1/responses"),
+          status: call.status,
+          latency_ms: call.latency_ms,
+          started_at: new Date(call.started_at_ms).toISOString(),
+          body: sanitizeHttpBody(call.body),
+        })),
+        all_calls_recorded: allCalls.length,
+      };
+      writeFileSync(
+        join(ARTIFACTS_DIR, "telemetry.json"),
+        JSON.stringify(telemetryArtifact, null, 2),
+        "utf8",
+      );
+      record.telemetry = {
+        main_run_calls: totalObservationTelemetry.length,
+        main_run_accounted_cost_usd:
+          telemetryArtifact.main_run.summary.accounted_cost_usd,
+        variance_calls: varianceBudget.calls.length,
+        variance_accounted_cost_usd:
+          telemetryArtifact.variance_measurement.summary.accounted_cost_usd,
+        total_accounted_cost_usd:
+          telemetryArtifact.main_run.summary.accounted_cost_usd +
+          telemetryArtifact.variance_measurement.summary.accounted_cost_usd,
+        ceiling_headroom_after_run_usd:
+          LIMIT_USD -
+          CARRYOVER_COST_USD -
+          (telemetryArtifact.main_run.summary.accounted_cost_usd +
+            telemetryArtifact.variance_measurement.summary.accounted_cost_usd),
+      };
+
+      // Ceiling guard: total accounted cost stays far inside the USD 5 ceiling.
+      expect(
+        telemetryArtifact.main_run.summary.accounted_cost_usd +
+          telemetryArtifact.variance_measurement.summary.accounted_cost_usd,
+        "total accounted cost",
+      ).toBeLessThan(LIMIT_USD - CARRYOVER_COST_USD);
+
+      record.completed_at = new Date().toISOString();
+      writeFileSync(
+        join(ARTIFACTS_DIR, "run-record.json"),
+        JSON.stringify(record, null, 2),
+        "utf8",
+      );
+
+      console.log(
+        JSON.stringify(
+          {
+            run_id: RUN_ID,
+            pack: {
+              source: pack.source,
+              count: packValidation.count,
+              classification: packValidation.classification,
+              blockers: packValidation.blockers,
+            },
+            observations: record.observations,
+            variance: record.variance,
+            report_pipeline: record.report_pipeline,
+            telemetry: record.telemetry,
+          },
+          null,
+          2,
+        ),
+      );
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  }, 900_000);
 });

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     // evaluable, structurally valid observation. No partial report exists.
     assertReportGenerationGate(input);
     return NextResponse.json({
-      report: await createValidatedAuditReport(input),
+      report: await createValidatedAuditReport({ ...input, language: "id" }),
     });
   } catch (error) {
     return NextResponse.json(

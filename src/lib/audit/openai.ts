@@ -464,6 +464,7 @@ export async function generateReportContent(
     observations: AuditObservation[];
     safety_identifier: string;
     budget: AuditBudget;
+    language?: "en" | "id";
   },
   revision?: {
     draft: ReportContent;
@@ -492,7 +493,9 @@ export async function generateReportContent(
       {
         role: "developer" as const,
         content: [
-          "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
+          input.language === "id"
+            ? "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari brief terverifikasi dan jawaban pengujian yang diberikan."
+            : "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
           `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION}.`,
           ...reportWritingInstructions(),
           "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",

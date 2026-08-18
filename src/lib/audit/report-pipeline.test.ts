@@ -32,6 +32,24 @@ function result(content: ReportContent, id: string) {
 }
 
 describe("validated report pipeline", () => {
+  it("blocks Indonesian synthesis before the provider on incomplete evidence", async () => {
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "should-not-run"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport(
+        {
+          ...input,
+          language: "id",
+          observations: goldenObservations.slice(0, 9),
+        },
+        generate,
+      ),
+    ).rejects.toThrow("requires exactly ten observations");
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it("uses one call when evidence and language pass", async () => {
     const generate = vi.fn(async () =>
       result(goldenReportContent(), "response-initial"),
