@@ -181,12 +181,12 @@ describe("Indonesian report-language calibration (plain-id-v1, founder-approved)
     const findingMessages = [...result.errors, ...result.warnings].filter(
       (message) => message.startsWith("Finding 1 explanation"),
     );
-    expect(findingMessages.some((message) => message.includes("sentence 2"))).toBe(
-      false,
-    );
-    expect(findingMessages.some((message) => message.includes("sentence 3"))).toBe(
-      false,
-    );
+    expect(
+      findingMessages.some((message) => message.includes("sentence 2")),
+    ).toBe(false);
+    expect(
+      findingMessages.some((message) => message.includes("sentence 3")),
+    ).toBe(false);
   });
 
   it("carries the customer-facing jargon check over from plain-en-v1 (adversarial review Finding 7)", () => {

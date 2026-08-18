@@ -78,7 +78,11 @@ export type AuditReportLabelPack = {
     total: number,
     failed: number,
   ) => string;
-  recognitionLabel: (recognized: number, total: number, failed: number) => string;
+  recognitionLabel: (
+    recognized: number,
+    total: number,
+    failed: number,
+  ) => string;
   comparisonLabel: (
     clientPreferred: number,
     total: number,
@@ -104,7 +108,9 @@ export type AuditReportLabelPack = {
 };
 
 function englishFailedContext(failed: number) {
-  return failed ? `; ${failed} ${plural(failed, "question")} could not be tested.` : ".";
+  return failed
+    ? `; ${failed} ${plural(failed, "question")} could not be tested.`
+    : ".";
 }
 
 export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
@@ -1153,7 +1159,11 @@ export function buildAuditReport(
       completed: completed.length,
       total: observations.length,
       failed,
-      label: labels.coverageLabel(completed.length, observations.length, failed),
+      label: labels.coverageLabel(
+        completed.length,
+        observations.length,
+        failed,
+      ),
     },
   };
   const methodSummary = labels.methodSummary({

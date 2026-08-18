@@ -1,127 +1,127 @@
 # Verification: Spec 002 — Indonesian audit and report contract
 
-> Result: **Pending founder/human gates — all automated criteria pass**
-> Reviewer: Orchestrator (automated verification); founder/human gates listed below
-> Date: 2026-08-17
+> Result: **Pending founder/human re-confirmation — automated criteria pass**
+> Reviewer: Adversarial review + fix pass (this record)
+> Date: 2026-08-18
 > Spec version or commit: `specs/002-indonesian-audit-contract/SPEC.md`, status **Approved** (founder-approved 2026-08-17)
-> Implementation version or commit: working tree, branch `main`, no commit made
+> Implementation version or commit: this commit (`git log -1`), parent `87bb1e2` (a concurrent, unrelated Spec 001 fix pass — see "Process note" below)
 
-## Scope reviewed
+## Why this record replaces the 2026-08-17 verification
 
-- Specification: `specs/002-indonesian-audit-contract/SPEC.md` (45 requirements,
-  30 acceptance criteria).
-- Implementation (Wave 1 + Wave 2, all additive):
-  - `docs/VOICE.md` — canonical Indonesian voice contract (promoted from
-    `docs/drafts/VOICE-v2-candidate.md`, settled naming defaults applied).
-  - `src/lib/audit/fixtures/fixture-kopi-taman-senja.ts` + `.test.ts` — frozen
-    NVA-FIKTIF-001 chain (facts/questions/10-of-10 evidence); fiction
-    reconciled in `docs/drafts/00-journey-fixtures.md`.
-  - `src/lib/audit/questions-id.ts` + `.test.ts` — Indonesian question-generation
-    boundary (stub provider, deterministic fallback, validation, dynamic
-    classification, pack persistence).
-  - `src/lib/audit/report-language.ts` + `src/lib/audit/report-labels.ts` +
-    `src/lib/audit/report-language-id.test.ts` + additive `types.ts` widening —
-    `plain-id-v1` writing standard (candidate values) + settled label mapping.
-  - `src/lib/fixture-journey/*` + `src/app/audit/fixture/*` — fixture journey
-    realigned to 01 Order Preview → 02 simulated payment → 03 Business Facts →
-    04 Questions → 05 Audit Run → 06 Report, v3 session state, Indonesian copy.
-  - `tests/e2e/*` — browser suite rewritten for the realigned path.
-- Environments: local Next.js dev server (preview enabled :3000, forced failure
-  :3200, disabled :3100), Chromium (Playwright), Node.js 24 toolchain.
-- `src/lib/audit/fixtures/report-golden.ts` remains the untouched Phase-1 record.
+An adversarial review (`/tmp/nuave-phase2-adversarial-review.md`, reviewed at
+`f22b8ec`) found that the 2026-08-17 verification's automated-pass claim did
+not hold: 6 acceptance criteria were **NOT MET**, 2 were **PARTIALLY MET**, and
+the AC-27 test-count arithmetic was measured over an inflated baseline. This
+record fixes the underlying defects, adds a reproducing test per finding, and
+re-measures every number against a real commit instead of a working tree
+(the review's own Finding 0 — and, per the process note below, this ran into
+the same class of problem a second time).
 
-## Acceptance results
+## Process note (repeat of review Finding 0)
 
-| Criterion | Result | Evidence |
+While these fixes were in progress, a **second, unrelated** session committed
+a Spec 001 ("Phase 1 adversarial-review findings") fix pass directly from the
+shared working tree (`87bb1e2`). Because `git commit` was run without a
+pathspec, that commit absorbed most of this session's in-progress Spec 002
+edits alongside its own Spec 001 changes — one commit message, two specs'
+worth of fixes, authored by two different sessions. Nothing was lost (every
+fix below is present and tested), but `87bb1e2`'s message does not mention
+Spec 002 and should not be read as a description of the changes in this file.
+This commit contains the remainder of the Spec 002 fix pass (the Indonesian
+report-label pack and calibration work, plus this file) on top of `87bb1e2`.
+**Verification must be pinned to a commit, not a working tree, precisely
+because this kind of concurrent-write collision is otherwise undetectable —
+confirmed twice now in this spec's history.**
+
+## Findings fixed, with reproducing tests
+
+| # | Finding | Severity | Fix | Reproducing test |
+|---|---|---|---|---|
+| 1 | State validator accepted inconsistent gates (`questionsApproved` true while `factsConfirmed` false, at an earlier stage than the stage rule catches) | Major (AC-03/AC-08/R-23) | `validateFixtureJourneyState` now checks each gate's predecessor directly (`factsConfirmed && !simulatedPaid`, `questionsApproved && !factsConfirmed`), not only "stage X requires gate Y" | `state.test.ts`: "rejects a question approval flag at an earlier stage than the stage rule itself would catch" + the payment-stage variant |
+| 2 | `method_summary` and six `facts.*.label` strings were Nuave-authored English, invisible on screen but shipped in the "Unduh JSON" export; `plain-id-v1` structurally could not see them; `provenance.prompt_contract_version` was pinned to the English contract on an Indonesian pack | Major (AC-21/R-26/R-45 exit gate) | `buildAuditReport` takes an injectable `AuditReportLabelPack` (defaults to the exact prior English strings — live engine unaffected); added `INDONESIAN_AUDIT_REPORT_LABELS`; `authoredReportFields`/`validateIndonesianReportBuiltFields` bring these fields into the Indonesian validator; fixture path passes `prompt_contract_version: "question-writer-v1"` | `report.test.ts`: "carries no Nuave-authored English in the report object or its JSON export" |
+| 3a | Business's own domain (`kopitamansenja.example`, in `official_source_urls`) and an unspaced brand rendering (`KopiTamanSenja`) passed identity-leakage validation and classified as unbranded | Major (AC-23/R-37) | `containsIdentityToken` adds a punctuation-insensitive compact-substring fallback; identity signals now include the business's own official-source domains, not brand name/variants alone | `questions-id.test.ts`: "rejects the audited business's own domain…" + "rejects an unspaced brand rendering…" |
+| 3b | Indonesian sentence-splitter treated 24-hour time notation (`08.00`) as a sentence boundary, producing spurious one-word "sentences"; `CUSTOMER_FACING_JARGON` was not checked in the Indonesian path | Major (AC-25/R-38, review Finding 7) | `sentences()` protects digit-period-digit runs before splitting; jargon check ported into `validateIndonesianReportLanguage` as a hard error | `report-language-id.test.ts`: "does not split a sentence on a decimal-like period…" + "carries the customer-facing jargon check over…" |
+| 3c | 12–20 word target band produced 52 warnings on the fixture, all on short fields (titles, one-clause rows); founder surfaced with the choice; **founder decision 2026-08-18: remove the floor, keep a 20-word ceiling only, advisory** | Major (AC-25/R-38) | `sentence_target_min_words` set to `null`; validator skips the floor check when `null`; warning message text updated | `report-language-id.test.ts`: "reports over-20-word sentences as advisory warnings, with no floor" |
+| 4 | `approvedPackStore` keyed on `pack_version_id` alone; `replayIndonesianQuestionPack` shallow-copied only `questions`, so mutating a replay corrupted the store and every later replay; `generation` was stored by reference | Major (AC-24/R-33) | Composite key `(order_reference, pack_version_id)`; full deep clone (`cloneIndonesianQuestionPackRecord`) on both write and read; re-approval under the same key throws `IndonesianPackAlreadyApprovedError` instead of overwriting | `questions-id.test.ts`: "never lets a mutated replay corrupt the store or a later replay" + "rejects re-approval under the same order and pack version…" + "keys persistence on order and pack version together…" |
+| 8 | `report-labels.ts` had zero production callers beyond run-status labels; `FixtureReportView.tsx` re-implemented `Tidak diuji`/headline/composition labels inline; no `report-labels.test.ts` existed despite being cited as AC-26 evidence | Minor (AC-26/R-40) | `FixtureReportView.tsx` now calls `indonesianCountLabel`, `indonesianHeadline`, and `INDONESIAN_REPORT_LABELS.{without,with}_business_name` instead of re-implementing them; created `report-labels.test.ts` | `report-labels.test.ts` (7 tests, including the zero-denominator branch and both throw paths) |
+| 11 | `adapter.ts` hardcoded `run_status: "completed"` for every observation, ignoring the frozen record | Minor (latent) | Projects `observation.run_status` (and `run` in `kopiTamanSenjaReportContent`) instead of a literal | No red test possible: the frozen fixture type pins `run_status: "completed"` as a literal, so no input can currently exercise the other branch. See "Deliberately not fixed or only partially fixed" below. |
+
+Findings 5 (stale v1/v2/v3 sessions) and 10 (`not_assessed → not_recommended`
+projection reaching the export) were already fixed by the concurrent Spec 001
+session's commit (`87bb1e2`) before this pass reached them; both are verified
+still fixed by the current test suite (`state.test.ts`'s legacy-purge tests,
+`report.test.ts`'s `recommendation` assertion).
+
+## Deliberately not fixed or only partially fixed, and why
+
+- **`businessBriefSchema.language: z.literal("en-US")` (`types.ts`) and
+  `kopiTamanSenjaBrief.language: "en-US"` (`adapter.ts`).** Changing this
+  literal touches a shared live-engine contract (the schema every English
+  brief is validated against), which the fix brief scoped out ("do not alter
+  live-engine contracts"). Left as-is; a real fix requires widening
+  `businessBriefSchema.language` to accept `"id-ID"` as a Phase 3 decision.
+- **`deriveSystemParts`'s "model unavailable" and multi-system "and" join
+  remain English inside the Indonesian method summary.** These only appear
+  when no system completed or multiple systems mixed in one run — neither
+  happens in the fixture (single always-available provider) — so the leak is
+  real but unreachable today. Documented, not fixed.
+- **`failure_reason`/`telemetry: []` in the observation projection stay
+  hardcoded**, unlike `run_status`. The frozen fixture's per-attempt telemetry
+  shape does not map 1:1 onto `AuditObservation.telemetry`, and the fixture
+  never records a failure, so there is no frozen source value to project yet.
+- **R-29/R-36 (no regeneration on refresh) has no cache.**
+  `generateIndonesianQuestionPack` calls the provider unconditionally; no
+  suggestion cache keyed on `(order_reference, fact_version_id)` exists. Per
+  the fix brief, this is free with the stubbed provider and becomes a cost
+  defect only once Phase 3 wires a paid provider — left for that phase.
+- **Finding 9 (evidence reconciled to hit 5/5)** required no fix: it is
+  disclosed in `docs/drafts/00-journey-fixtures.md`, the excerpts remain
+  verbatim end-to-end, and `report-golden.ts` is untouched. No action taken.
+- **AC-29/AC-30 (human trust review, native-language judgment).** The founder
+  signed off on 2026-08-17 against report content that has since changed
+  (Indonesian `method_summary`/facts labels now exist; the sentence-length
+  floor was removed same-day by the founder). The underlying journey copy on
+  screen is unchanged, but the full report object is not what was signed off
+  on. Recommend a short re-confirmation rather than treating the 2026-08-17
+  sign-off as covering the current object; not re-litigated here since it is
+  a human gate, not an automated one.
+
+## Acceptance results (re-verified criteria only; others unchanged from 2026-08-17)
+
+| AC | Result | Evidence |
 |---|---|---|
-| AC-01 — Entry | Pass | e2e: `/audit/fixture` intake action labelled `Cek bisnis saya di AI`; landing unchanged (no fixture CTA; `Audit bisnis saya` present). |
-| AC-02 — Protected boundary | Pass | e2e `preview-disabled` (2 tests): route unavailable even with furthest v3 state seeded; landing normal. |
-| AC-03 — Canonical order | Pass | e2e complete-path test advances 01→06 with no skipped gate; state validator (R-23) enforces the order. |
-| AC-04 — Preview accuracy | Pass | e2e: identity, scope, Rp99.000 total, 30-day note, ten-question scope from fixture state; no score/competitor/finding/recommendation. |
-| AC-05 — Payment truthfulness | Pass | e2e: exact `Simulasi pembayaran — tidak ada tagihan`, no payment controls, no-charge confirmation. |
-| AC-06 — Payment unlocks preparation | Pass | e2e: facts/questions unreachable before simulated payment; payment alone never starts the run (refresh-after-payment test). |
-| AC-07 — Fact gate | Pass | e2e: explicit confirmation required before continuing; accessible inline prompt without it. |
-| AC-08 — Question gate | Pass | e2e: ten frozen Indonesian questions in order, five `Tanpa menyebut bisnis Anda` + five `Menyebut bisnis Anda`, run unavailable until approval. |
-| AC-09 — Run consumption | Pass | e2e: `Jalankan audit` opens `Mulai audit sekarang` dialog; double-activation and refresh cannot start a second run. |
-| AC-10 — Processing truthfulness | Pass | e2e: Indonesian customer-meaningful stages, visibly simulated, no fabricated per-question completion, bounded interval. |
-| AC-11 — Report fidelity | Pass | e2e: headline `Bisnis Anda muncul di 8 dari 10 pertanyaan` + `8/10`, `3/5` Tanpa, `5/5` Menyebut, rec 2/6, comp 1/2, info 1/2/1 of 4, ten test-by-test rows with exact excerpts, 4 findings, 3 actions; fixture unit tests pin the counts. |
-| AC-12 — Print fidelity | Pass | e2e print test: same report data, details expanded, disclosure retained. |
-| AC-13 — Persistent disclosure | Pass | e2e: disclosure on every stage incl. report; also in print. |
-| AC-14 — Refresh recovery | Pass | e2e: refresh restores furthest valid v3 state; mid-run refresh pauses and advances only on `Lanjutkan simulasi`. |
-| AC-15 — Invalid-state recovery | Pass | e2e + `state.test.ts`: stale v1/v2 and gate-inconsistent v3 shapes reset with explanation. |
-| AC-16 — Start over | Pass | e2e: clears only `nuave.fixtureJourney.v3`; live workflow keys survive; confirmation required. |
-| AC-17 — No side effects | Pass | e2e network recording: zero `/api/audit/*` and zero external-service requests across the full path + refresh (only the pre-existing framerusercontent.com brand asset). |
-| AC-18 — No live fallback | Pass | e2e `forced-failure` (3 tests): truthful terminal failure, no success representations, alerting retry, confirmed start over, no live calls. |
-| AC-19 — Responsive and keyboard path | Pass | e2e: mobile 375×812 full path without horizontal scroll; keyboard-only completion with visible focus. |
-| AC-20 — Reduced motion | Pass | e2e: reaches the same report in ~0.8 s (vs ~5.6 s normal) with meaningful state text retained. |
-| AC-21 — Indonesian journey copy | Pass | e2e asserts Indonesian copy and the five settled labels verbatim; native-language judgment is AC-30. |
-| AC-22 — Voice compliance | Pass | e2e asserts formats (`Rp99.000`, `08.00–21.00`) and labels; hype/ranking/guarantee absence confirmed in copy review and e2e (no such claims in fixture copy). |
-| AC-23 — Generation boundary | Pass | `questions-id.test.ts` (35 tests): stub provider success, numbered-list parsing, deterministic fallback without hard-fail, identity-leakage/unsupported-premise rejection, dynamic classification, narrow blockers. |
-| AC-24 — Pack persistence | Pass | `questions-id.test.ts`: exact ten strings, order, edits, final classification, provenance, approval timestamp persisted and replayable. |
-| AC-25 — Report-language calibration | Pass | `report-language-id.test.ts` (11 tests): `plain-id-v1` limits apply to Nuave-authored fields only, exact-excerpt exemption, language-only retry protection. Calibration values (12–20 target / 25 ceiling, no field totals) **founder-approved 2026-08-17** (R-38 gate cleared; `INDONESIAN_CALIBRATION_FOUNDER_REVIEW_PENDING = false`). |
-| AC-26 — Label translation | Pass | `report-labels.ts` tests + e2e: settled labels verbatim, empty denominator renders `Tidak diuji`, counts match code-derived dimensions. |
-| AC-27 — Engine regression | Pass | `npm run test:audit`: 276/276 (19 files) — 208 baseline + 68 new; live engine path unchanged. |
-| AC-28 — Repository checks | Pass | `npm run check` (typecheck, lint 0 errors, Prettier clean) and `npm run build` both pass. |
-| AC-29 — Human trust review | Pass | Founder walkthrough 2026-08-17 (mobile + desktop) of the realigned journey; founder confirmed and directed continuation to Phase 3. |
-| AC-30 — Human language gate | Pass | Founder (native Indonesian speaker) judged the ten questions, journey copy, and fixture report during the 2026-08-17 walkthrough and approved the voice and calibration sign-offs. |
-
-## Requirements trace
-
-- R-01…R-23 (fixture mode, disclosure, gates, canonical order, session v3): implemented in `src/lib/fixture-journey/*` + `src/app/audit/fixture/*`; covered by e2e AC-01…AC-20 and `state.test.ts`.
-- R-24…R-25 (voice promotion, naming defaults): `docs/VOICE.md` canonical, founder-approved defaults verbatim.
-- R-26…R-28 (locale, exact-evidence, formats): Indonesian journey copy; excerpts verbatim; `Rp99.000`/`17 Agustus 2026`/`08.00–21.00` formats asserted in e2e.
-- R-29…R-37 (question generation): `questions-id.ts` + tests (stubbed provider; no live call; fallback cannot hard-fail; narrow blockers; dynamic classification; replay record; fixture pack compliance).
-- R-38…R-42 (report language): `report-language.ts` `plain-id-v1` + `report-labels.ts`; calibration values candidate-pending founder sign-off; language-only retry protection; method from recorded run facts.
-- R-43…R-45 (fixtures, tests, exit gates): frozen chain module additive; `report-golden.ts` untouched; 276-test baseline green; exit gates met except the two human gates.
-
-## Judgment review
-
-Automated checks cannot establish: (1) whether the calibrated Indonesian
-word/sentence limits are right for the customer (founder language session,
-AC-25 values); (2) whether a non-technical Indonesian owner trusts and
-understands the journey (AC-29); (3) whether the ten questions and report copy
-sound native and natural (AC-30). These are the explicit founder/human gates.
+| AC-03 — Canonical order | **Pass** | `state.test.ts`: converse gate checks now reject the crafted `{stage:"facts", factsConfirmed:false, questionsApproved:true}` state the review reproduced. |
+| AC-08 — Question gate | **Pass** | Same fix; the run-ready panel can no longer render on a session that never approved the pack. |
+| AC-21 — Indonesian journey copy | **Pass** | `report.test.ts`: `method_summary` and all six `facts.*.label` strings are Indonesian; JSON export contains no "We tested" / "Recommended in" fragments. |
+| AC-23 — Generation boundary | **Pass** | `questions-id.test.ts`: the business's own domain and an unspaced brand rendering are now caught as `identity_leakage` and classified `menyebut_bisnis_anda`. |
+| AC-24 — Pack persistence | **Pass, with a scope note** | Deep-clone on write and read make the store un-corruptible by a mutated replay; composite keying stops cross-order collision. Still an in-memory `Map` — no process-restart durability. That gap is disclosed here explicitly (it was not in the 2026-08-17 record); durable persistence stays Phase 3/4 per the original design comment. |
+| AC-25 — Report-language calibration | **Pass, band redefined** | Jargon check now enforced; sentence-splitter bug fixed; target band redefined by founder decision 2026-08-18 to a 20-word ceiling with no floor (was 12–20). `field_word_limits` remains `null` (founder-approved 2026-08-17, unchanged). |
+| AC-26 — Label translation | **Pass** | `report-labels.ts` now has real production callers in `FixtureReportView.tsx` and a dedicated test file exercising every function including the zero-denominator branch. |
+| AC-27 — Engine regression | **Pass, re-measured against a commit** | See "Checks run" below. The 2026-08-17 record's `276/276 (19 files) — 208 baseline + 68 new` arithmetic is not reproduced or relied upon; this record reports only directly-measured, reproducible counts. |
 
 ## Checks run
 
-All on 2026-08-17 against the integrated working tree:
+All against this commit (parent `87bb1e2`):
 
-| Command or procedure | Result |
+| Command | Result |
 |---|---|
-| `npm run test:audit` | 276/276 passed (19 files) |
-| `npx vitest run src/lib/fixture-journey` | 126/126 passed (7 files) |
-| `npm run test:e2e` | 31/31 passed (26 enabled + 3 forced failure + 2 disabled) |
-| `npm run check` | Passed: typecheck clean, lint 0 errors (8 pre-existing warnings), Prettier clean |
-| `npm run build` | Passed; `/audit/fixture` dynamic, all public routes static |
-| `git diff --check` | Clean |
+| `npm run test:audit` | **274/274 passed (18 files)** |
+| `npx vitest run src/lib/fixture-journey` | **82/82 passed (4 files)** |
+| `npm run test:e2e` | **33/33 passed (28 enabled + 3 forced-failure + 2 disabled)** |
+| `npm run check` | Passed: typecheck clean, lint 0 errors (12 pre-existing warnings, unrelated to this pass), Prettier clean |
 
-## Findings
-
-1. **Calibration values are candidate-pending (R-38 gate, not a defect).** The
-   `plain-id-v1` limits (12–20 word target, 25 ceiling) come from the approved
-   voice candidate but require the founder's language-session sign-off before a
-   report can be claimed to pass a settled Indonesian contract. Field-level word
-   totals are unset (`null`) pending the same session.
-2. **Known live-engine limitation, out of scope:** the report schema still caps
-   priority actions at 3. The frozen fixture's 3 actions satisfy the settled
-   1–5 range; widening the schema to 5 belongs to Phase 3 (live contract).
-3. **Documented projection:** the adapter maps the frozen `not_assessed`
-   recommendation dimension to `not_recommended` at the retained-evidence
-   validator boundary; the view renders true assessed denominators with
-   `Tidak diuji` for empty ones. Recorded in `adapter.ts`; no evidence is
-   recomputed or reinterpreted.
-4. **Pre-existing housekeeping (not regressions):** `.claude/worktrees/`
-   duplicate test files inflate vitest file counts (the 208 baseline itself
-   includes a 93-test worktree copy); Next.js 16 `middleware → proxy`
-   deprecation warning; landing `<img>` warnings.
-5. **Hygiene fixed by the orchestrator:** 4 unused-vars warnings introduced by
-   the worker wave were removed; Prettier applied to the 10 files the workers
-   left unformatted.
+Reference point: at `f22b8ec` (pristine, pre-Phase-1-commit), `npm run
+test:audit` was 263/263 (17 files) and `npx vitest run
+src/lib/fixture-journey` was 71/71 (4 files) — both baselines the fix brief
+set. Neither regressed; both grew from fixes and their reproducing tests, plus
+one new file (`report-labels.test.ts`) and Spec 001's concurrent work.
 
 ## Verdict
 
-**Pass — Verified 2026-08-17.** All acceptance criteria pass. AC-25 values were
-founder-approved 2026-08-17; AC-29 (human trust review) and AC-30 (native-
-language judgment) were completed by the founder's mobile + desktop walkthrough
-and language sign-off the same day. This specification is marked **Verified**.
-The next capability is `003-live-report-quality-gate` (Phase 3).
+**Automated criteria pass at this commit.** AC-24's persistence gap is now
+disclosed rather than implied fixed. AC-29/AC-30 (human gates) were completed
+2026-08-17 against report content that has since changed in this pass;
+recommend a short founder re-confirmation of the current report object before
+treating AC-29/AC-30 as covering it. The next capability remains
+`003-live-report-quality-gate` (Phase 3); this pass does not change Phase 3
+scope or touch the live engine, provider orchestration, or cost controls.

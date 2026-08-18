@@ -46,9 +46,7 @@ describe("constructFixtureReport", () => {
     expect(report.facts.discovery.mention_label).not.toMatch(/^Named/);
     expect(report.facts.recognition.label).not.toMatch(/^Recognized in/);
     expect(report.facts.comparison.label).not.toMatch(/^Client preferred/);
-    expect(report.facts.information.label).not.toMatch(
-      /^\d+ confirmed,/,
-    );
+    expect(report.facts.information.label).not.toMatch(/^\d+ confirmed,/);
     expect(report.facts.coverage.label).toContain("selesai diuji");
     // The prompt pack came from the Indonesian question-writer contract, not
     // the English deterministic matrix.
