@@ -156,13 +156,13 @@ function HeroSection() {
                 ))}
               </div>
 
-              {/* Dashboard mockup card */}
+              {/* Illustrative preview card: fictional business/report mockup, not a real result */}
               <div className="w-full max-w-[900px] h-[504px] p-4 backdrop-blur-[54px] bg-white/[0.54] rounded-[12px] shadow-[rgba(0,0,0,0.08)_0px_8px_32px_0px] overflow-hidden relative">
                 {DASHBOARD_IMAGES.map((src, i) => (
                   <img
                     key={src}
                     src={src}
-                    alt="Dashboard"
+                    alt={t("landing.heroImageFootnote")}
                     className="object-cover object-top rounded-[6px]"
                     style={{
                       position: i === 0 ? "relative" : "absolute",
@@ -175,6 +175,12 @@ function HeroSection() {
                     }}
                   />
                 ))}
+                <span
+                  className="absolute bottom-3 right-3 z-20 text-[11px] font-medium text-gray-600 bg-white/90 rounded-full px-2.5 py-1 shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
+                  title={t("landing.heroImageFootnote")}
+                >
+                  {t("report.exampleBadge")}
+                </span>
               </div>
             </div>
           </div>

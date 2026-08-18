@@ -16,9 +16,14 @@ export async function grantAccess(page: Page): Promise<void> {
   ]);
 }
 
-/** Fixture-journey session key (Spec 002 v3) and the live keys it never touches. */
-export const FIXTURE_SESSION_KEY = "nuave.fixtureJourney.v3";
-export const FIXTURE_STATE_VERSION = 3;
+/** Fixture-journey session key (v4) and the live keys it never touches. */
+export const FIXTURE_SESSION_KEY = "nuave.fixtureJourney.v4";
+export const FIXTURE_STATE_VERSION = 4;
+export const LEGACY_FIXTURE_SESSION_KEYS = [
+  "nuave.fixtureJourney.v1",
+  "nuave.fixtureJourney.v2",
+  "nuave.fixtureJourney.v3",
+];
 export const LIVE_WORKFLOW_KEYS = [
   "nuave.audit.workflow.v3",
   "nuave.audit.session.v1",
@@ -36,12 +41,19 @@ export function collectRequests(page: Page): string[] {
 
 /**
  * Returns the recorded URLs that violate the fixture journey's no-side-effect
- * boundary: any `/api/audit/*` request and any request to an external
- * service. The only external origins tolerated are the pre-existing landing
- * page's static-asset CDNs (for example the brand-mark SVG in
- * `LandingNav.tsx`/`Footer.tsx`, served from framerusercontent.com) — those
- * are content images, not an AI/search, payment, email, analytics, database,
- * or background-job service, and they predate the fixture journey.
+ * boundary: any `/api/*` request and any request to an external service. The
+ * fixture journey never calls `fetch` at all (enforced separately by the
+ * source-scan in `state.test.ts`), so ANY same-origin API route — not just
+ * `/api/audit/*` — is a violation. This also catches a route the browser
+ * check alone cannot see through, such as a same-origin `/api/proxy` that
+ * calls an external provider server-side: the browser only observes the
+ * request TO that local route, so treating every `/api/*` path as forbidden
+ * (rather than allowlisting `/api/audit` only) closes that gap. The only
+ * external origins tolerated are the pre-existing landing page's static-asset
+ * CDNs (for example the brand-mark SVG in `LandingNav.tsx`/`Footer.tsx`,
+ * served from framerusercontent.com) — those are content images, not an
+ * AI/search, payment, email, analytics, database, or background-job service,
+ * and they predate the fixture journey.
  */
 const STATIC_ASSET_CDN_HOSTS = new Set(["framerusercontent.com"]);
 
@@ -54,12 +66,14 @@ export function sideEffectViolations(urls: string[]): string[] {
     } catch {
       continue;
     }
-    if (parsed.pathname.startsWith("/api/audit")) violations.push(url);
     const host = parsed.hostname;
     const isLocal = host === "localhost" || host === "127.0.0.1";
-    if (!isLocal && !STATIC_ASSET_CDN_HOSTS.has(host)) {
-      violations.push(url);
-    }
+    const isViolation =
+      parsed.pathname.startsWith("/api/") ||
+      (!isLocal && !STATIC_ASSET_CDN_HOSTS.has(host));
+    // A URL can trip both checks at once (an external host under /api/); it
+    // must still be reported only once.
+    if (isViolation) violations.push(url);
   }
   return violations;
 }
@@ -76,7 +90,7 @@ export async function assertNoSideEffects(
 }
 
 // ---------------------------------------------------------------------------
-// v3 fixture-journey state factories (Spec 002 R-23 gate order)
+// v4 fixture-journey state factories (R-23 gate order + offer-reveal gate)
 // ---------------------------------------------------------------------------
 
 export function freshV3State(
@@ -85,6 +99,7 @@ export function freshV3State(
   return {
     version: FIXTURE_STATE_VERSION,
     stage: "preview",
+    offerRevealed: false,
     simulatedPaid: false,
     factsConfirmed: false,
     questionsApproved: false,
@@ -98,18 +113,27 @@ export function freshV3State(
 
 /** Simulated payment completed; the facts and question screens are unlocked. */
 export function v3PaidState(): Record<string, unknown> {
-  return freshV3State({ stage: "payment", simulatedPaid: true });
+  return freshV3State({
+    stage: "payment",
+    offerRevealed: true,
+    simulatedPaid: true,
+  });
 }
 
 /** Facts screen before the explicit confirmation. */
 export function v3FactsState(): Record<string, unknown> {
-  return freshV3State({ stage: "facts", simulatedPaid: true });
+  return freshV3State({
+    stage: "facts",
+    offerRevealed: true,
+    simulatedPaid: true,
+  });
 }
 
 /** Ten-question pack approved; the run is available via its explicit action. */
 export function v3QuestionsApprovedState(): Record<string, unknown> {
   return freshV3State({
     stage: "questions",
+    offerRevealed: true,
     simulatedPaid: true,
     factsConfirmed: true,
     questionsApproved: true,
@@ -120,6 +144,7 @@ export function v3QuestionsApprovedState(): Record<string, unknown> {
 export function v3ReadyState(): Record<string, unknown> {
   return freshV3State({
     stage: "ready",
+    offerRevealed: true,
     simulatedPaid: true,
     factsConfirmed: true,
     questionsApproved: true,
@@ -133,6 +158,7 @@ export function v3ReadyState(): Record<string, unknown> {
 export function v3RunPausedState(processingStage = 2): Record<string, unknown> {
   return freshV3State({
     stage: "run",
+    offerRevealed: true,
     simulatedPaid: true,
     factsConfirmed: true,
     questionsApproved: true,

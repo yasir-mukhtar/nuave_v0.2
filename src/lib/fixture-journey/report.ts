@@ -19,7 +19,12 @@ import {
   normalizeReportEvidence,
   validateReportContent,
 } from "../audit/contracts";
-import { indonesianReportLanguageErrors } from "../audit/report-language";
+import {
+  INDONESIAN_AUDIT_REPORT_LABELS,
+  indonesianReportBuiltFieldErrors,
+  indonesianReportLanguageErrors,
+} from "../audit/report-language";
+import { INDONESIAN_QUESTION_INSTRUCTION_VERSION } from "../audit/questions-id";
 import {
   kopiTamanSenjaBrief,
   kopiTamanSenjaMethod,
@@ -102,13 +107,34 @@ export function constructFixtureReport(
   if (indonesianErrors.length > 0) {
     throw new FixtureJourneyReportError(indonesianErrors.join(" "));
   }
-  const report = buildAuditReport(content, kopiTamanSenjaObservations, {
-    requested_model: kopiTamanSenjaMethod.requestedModel,
-    returned_model: kopiTamanSenjaMethod.returnedModel,
-    response_id: "fixture-report-response",
-  });
+  const report = buildAuditReport(
+    content,
+    kopiTamanSenjaObservations,
+    {
+      requested_model: kopiTamanSenjaMethod.requestedModel,
+      returned_model: kopiTamanSenjaMethod.returnedModel,
+      response_id: "fixture-report-response",
+      // The ten prompts came from the Indonesian question-writer contract,
+      // not the English deterministic matrix (adversarial review Finding 2).
+      prompt_contract_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
+    },
+    // Indonesian labels for the report-computed method summary and facts
+    // labels, so no Nuave-authored English reaches the report object or its
+    // JSON export (adversarial review Finding 2 / AC-21 / R-26 / R-45 exit
+    // gate). Defaulting to English here was the leak the review found: it is
+    // invisible on screen (FixtureReportView builds its own Indonesian
+    // method section) but ships whole through "Unduh JSON".
+    INDONESIAN_AUDIT_REPORT_LABELS,
+  );
+  // These report-computed fields sit outside ReportContent, so the
+  // Indonesian calibration check above never saw them; check them here,
+  // after they exist (Finding 2).
+  const builtFieldErrors = indonesianReportBuiltFieldErrors(report);
+  if (builtFieldErrors.length > 0) {
+    throw new FixtureJourneyReportError(builtFieldErrors.join(" "));
+  }
   // The fixture report's authored fields are Indonesian and are validated
-  // against the candidate Indonesian calibration above, so the report is
+  // against the settled Indonesian calibration above, so the report is
   // labelled with the Indonesian writing standard rather than the English
   // runtime default the live builder writes (additive Spec 002 R-38).
   return { ...report, writing_standard_version: "plain-id-v1" };

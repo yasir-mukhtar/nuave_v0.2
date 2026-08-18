@@ -23,6 +23,8 @@ function resultLabel(detail: ReportDetail) {
   if (detail.recommendation === "recommended") return "Recommended";
   if (detail.information === "conflicting") return "Conflicting information";
   if (detail.information === "incomplete") return "Missing information";
+  if (detail.recommendation === "not_assessed")
+    return "Named, no recommendation judgment";
   return "Named, not recommended";
 }
 

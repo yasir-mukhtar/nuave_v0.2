@@ -230,18 +230,50 @@ function brandIdentitySignals(brief: MinimizedIndonesianBrief) {
     .filter((value) => value.length >= 3);
 }
 
+/**
+ * Official source URLs as identity signals (scheme stripped, host+path
+ * normalized). A bare host is used as the signal for a plain business domain
+ * (e.g. "kopitamansenja.example"); a host with a distinguishing path (e.g. a
+ * social or maps listing) requires the full path too, so a generic mention of
+ * the platform host alone does not false-positive.
+ */
+function domainIdentitySignals(brief: MinimizedIndonesianBrief) {
+  return brief.official_source_urls
+    .map((url) => url.replace(/^https?:\/\//i, "").replace(/\/+$/, ""))
+    .map(normalizeId)
+    .filter((value) => value.length >= 3);
+}
+
+/** Every signal that reveals the audited business's identity: brand names,
+ * known variants, and its own official source domains (adversarial review
+ * Finding 3 / AC-23 / R-37). */
+function identitySignals(brief: MinimizedIndonesianBrief) {
+  return [...brandIdentitySignals(brief), ...domainIdentitySignals(brief)];
+}
+
 function containsIdentityToken(text: string, identity: string) {
   const normalizedIdentity = normalizeId(identity);
   if (!normalizedIdentity) return false;
-  return ` ${normalizeId(text)} `.includes(` ${normalizedIdentity} `);
+  const normalizedText = normalizeId(text);
+  if (` ${normalizedText} `.includes(` ${normalizedIdentity} `)) return true;
+  // Punctuation-insensitive fallback: normalizeId turns punctuation into
+  // spaces, so a spaced multi-word identity (e.g. "kopi taman senja") still
+  // requires a token-boundary match above. This catches renderings with no
+  // separators at all, such as an unspaced brand ("KopiTamanSenja") or a
+  // domain concatenated with its brand prefix, that never produce a matching
+  // token run.
+  const compactIdentity = normalizedIdentity.replace(/\s+/g, "");
+  if (compactIdentity.length < 3) return false;
+  return normalizedText.replace(/\s+/g, "").includes(compactIdentity);
 }
 
-/** True when the question text names the audited business or a known variant. */
+/** True when the question text names the audited business, a known variant,
+ * or one of its own official source domains. */
 export function mentionsIndonesianBrand(
   text: string,
   brief: MinimizedIndonesianBrief,
 ) {
-  return brandIdentitySignals(brief).some((signal) =>
+  return identitySignals(brief).some((signal) =>
     containsIdentityToken(text, signal),
   );
 }
@@ -511,7 +543,7 @@ export function validateIndonesianQuestionPack(
     return issues;
   }
 
-  const brandSignals = brandIdentitySignals(brief);
+  const brandSignals = identitySignals(brief);
   const competitorSignal = brief.comparison_business
     ? normalizeId(brief.comparison_business.name)
     : "";
@@ -1081,10 +1113,55 @@ export type IndonesianQuestionPackRecord = {
 /** In-memory approved-pack store (Phase 2; durable persistence is Phase 3/4). */
 const approvedPackStore = new Map<string, IndonesianQuestionPackRecord>();
 
+/** Composite key: two orders must never collide on a shared pack version id. */
+function packStoreKey(orderReference: string, packVersionId: string) {
+  return `${orderReference} ${packVersionId}`;
+}
+
 /**
- * Approves the exact final pack and persists it. Fails closed (throws) only
- * when a narrow blocker is present — approval is a human step, not a
- * generation call, so failing closed here cannot hard-fail an order.
+ * Deep-clones every mutable part of a persisted record. Used on both write
+ * and read so the store, the value returned from approval, and every replay
+ * are independent copies — mutating one can never corrupt another
+ * (adversarial review Finding 4 / AC-24 / R-33).
+ */
+function cloneIndonesianQuestionPackRecord(
+  record: IndonesianQuestionPackRecord,
+): IndonesianQuestionPackRecord {
+  return {
+    ...record,
+    generation: {
+      ...record.generation,
+      telemetry: record.generation.telemetry
+        ? { ...record.generation.telemetry }
+        : null,
+    },
+    questions: record.questions.map((item) => ({ ...item })),
+    edit_record: record.edit_record.map((entry) => ({ ...entry })),
+    classification_summary: { ...record.classification_summary },
+    warnings_acknowledged: [...record.warnings_acknowledged],
+    approval: { ...record.approval },
+    lock: { ...record.lock },
+  };
+}
+
+export class IndonesianPackAlreadyApprovedError extends Error {
+  constructor(
+    public readonly orderReference: string,
+    public readonly packVersionId: string,
+  ) {
+    super(
+      `A question pack is already approved for order ${orderReference}, pack ${packVersionId}.`,
+    );
+    this.name = "IndonesianPackAlreadyApprovedError";
+  }
+}
+
+/**
+ * Approves the exact final pack and persists it. Fails closed (throws) when
+ * a narrow blocker is present — approval is a human step, not a generation
+ * call, so failing closed here cannot hard-fail an order — or when an
+ * approved record already exists for this order and pack version (approval
+ * never silently overwrites a persisted record).
  */
 export function approveIndonesianQuestionPack(
   suggestion: IndonesianQuestionPackSuggestion,
@@ -1097,6 +1174,13 @@ export function approveIndonesianQuestionPack(
   );
   if (blockers.length > 0) {
     throw new IndonesianApprovalBlockedError(blockers);
+  }
+  const key = packStoreKey(context.order_reference, context.pack_version_id);
+  if (approvedPackStore.has(key)) {
+    throw new IndonesianPackAlreadyApprovedError(
+      context.order_reference,
+      context.pack_version_id,
+    );
   }
   const record: IndonesianQuestionPackRecord = {
     pack_record_version: INDONESIAN_QUESTION_RECORD_VERSION,
@@ -1116,19 +1200,22 @@ export function approveIndonesianQuestionPack(
     },
     lock: { locked: false, consumed: false, started_at: null },
   };
-  approvedPackStore.set(record.pack_version_id, record);
+  approvedPackStore.set(key, cloneIndonesianQuestionPackRecord(record));
   return record;
 }
 
 /**
  * Replays the exact persisted pack verbatim for a comparable re-check (R-33).
- * Returns null when the pack version is unknown.
+ * Keyed on the order and the pack version together, never the pack version
+ * alone, so two orders can never collide on a shared pack version id.
+ * Returns a fresh deep copy every call and null when the pack is unknown.
  */
 export function replayIndonesianQuestionPack(
+  orderReference: string,
   packVersionId: string,
 ): IndonesianQuestionPackRecord | null {
-  const record = approvedPackStore.get(packVersionId);
-  return record
-    ? { ...record, questions: record.questions.map((item) => ({ ...item })) }
-    : null;
+  const record = approvedPackStore.get(
+    packStoreKey(orderReference, packVersionId),
+  );
+  return record ? cloneIndonesianQuestionPackRecord(record) : null;
 }

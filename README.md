@@ -130,7 +130,7 @@ variable is unset or false, the fixture route renders a safe unavailable state
 and the landing page keeps its normal behavior. The flag is read only on the
 server and is not a query parameter or client toggle. The fixture journey
 makes no `/api/audit/*` call and stores only its own versioned state
-(`nuave.fixtureJourney.v2`) in the browser session, separate from the live
+(`nuave.fixtureJourney.v4`) in the browser session, separate from the live
 workflow keys.
 
 Code map:

@@ -251,20 +251,17 @@ describe("fixture journey adapter — derived report content (additive export)",
     });
   });
 
-  it("projects the recommendation dimension only for the validator", () => {
+  it("projects recommendation, information, and comparison verbatim from the frozen evidence", () => {
     // The frozen evidence records recommendation not_assessed for the four
-    // factual checks (orders 7-10); the projection maps them to
-    // not_recommended solely so the retained-evidence validator accepts the
-    // set. Information and comparison keep the frozen values.
+    // factual checks (orders 7-10, validation and action categories); the
+    // projection keeps that value as-is, since validateReportContent only
+    // requires an assessed recommendation for judgment categories
+    // (need_discovery, solution_discovery, comparison).
     content.details.forEach((detail, index) => {
       const frozen = kopiTamanSenjaEvidence.observations[index];
       expect(detail.information).toBe(frozen.dimensions.information);
       expect(detail.comparison).toBe(frozen.dimensions.comparison);
-      if (frozen.dimensions.recommendation === "recommended") {
-        expect(detail.recommendation).toBe("recommended");
-      } else if (detail.appearance === "mentioned") {
-        expect(detail.recommendation).toBe("not_recommended");
-      }
+      expect(detail.recommendation).toBe(frozen.dimensions.recommendation);
     });
   });
 

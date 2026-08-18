@@ -7,6 +7,7 @@ import {
   INDONESIAN_QUESTION_RECORD_VERSION,
   INDONESIAN_SLOT_MATRIX,
   IndonesianApprovalBlockedError,
+  IndonesianPackAlreadyApprovedError,
   applyIndonesianQuestionEdits,
   approveIndonesianQuestionPack,
   buildDeterministicIndonesianPack,
@@ -478,6 +479,33 @@ describe("identity-leakage and unsupported-premise rules", () => {
     });
   });
 
+  it("rejects the audited business's own domain in an unbranded slot (adversarial review Finding 3)", () => {
+    // kopitamansenja.example is the business's own domain, listed in
+    // official_source_urls. Naming it in an unbranded slot reveals identity
+    // just as surely as naming the brand.
+    const leaky = [...frozenTen];
+    leaky[0] = "Apakah kopitamansenja.example cocok untuk kerja di Dago?";
+    const issues = validateIndonesianQuestionPack(leaky, kopiBrief);
+    expect(issues).toEqual([
+      expect.objectContaining({ slot: 1, rule: "identity_leakage" }),
+    ]);
+    expect(classifyIndonesianQuestion(leaky[0], kopiBrief)).toBe(
+      "menyebut_bisnis_anda",
+    );
+  });
+
+  it("rejects an unspaced brand rendering in an unbranded slot (adversarial review Finding 3)", () => {
+    const leaky = [...frozenTen];
+    leaky[0] = "Apakah KopiTamanSenja bagus untuk kerja di Dago?";
+    const issues = validateIndonesianQuestionPack(leaky, kopiBrief);
+    expect(issues).toEqual([
+      expect.objectContaining({ slot: 1, rule: "identity_leakage" }),
+    ]);
+    expect(classifyIndonesianQuestion(leaky[0], kopiBrief)).toBe(
+      "menyebut_bisnis_anda",
+    );
+  });
+
   it("repairs an unsupported-premise slot without touching the rest", () => {
     const assuming = [...frozenTen];
     assuming[4] = "Bandingkan kedai kopi paling populer di Bandung.";
@@ -721,6 +749,7 @@ describe("approved-pack persistence and verbatim replay", () => {
     });
 
     const replayed = replayIndonesianQuestionPack(
+      "NVA-FIKTIF-001",
       "NVA-FIKTIF-001.questions.v1",
     );
     expect(replayed).toEqual(record);
@@ -772,9 +801,99 @@ describe("approved-pack persistence and verbatim replay", () => {
     });
 
     expect(
-      replayIndonesianQuestionPack("NVA-FIKTIF-001.questions.v1.edited"),
+      replayIndonesianQuestionPack(
+        "NVA-FIKTIF-001",
+        "NVA-FIKTIF-001.questions.v1.edited",
+      ),
     ).toEqual(record);
-    expect(replayIndonesianQuestionPack("unknown-pack")).toBeNull();
+    expect(
+      replayIndonesianQuestionPack("NVA-FIKTIF-001", "unknown-pack"),
+    ).toBeNull();
+  });
+
+  it("never lets a mutated replay corrupt the store or a later replay (adversarial review Finding 4)", async () => {
+    const suggestion = await generateIndonesianQuestionPack(
+      kopiBrief,
+      stubProvider({ kind: "structured", questions: frozenTen }),
+    );
+    approveIndonesianQuestionPack(suggestion, kopiBrief, {
+      ...context,
+      pack_version_id: "NVA-FIKTIF-001.questions.v1.attack4",
+    });
+
+    const r1 = replayIndonesianQuestionPack(
+      "NVA-FIKTIF-001",
+      "NVA-FIKTIF-001.questions.v1.attack4",
+    );
+    expect(r1).not.toBeNull();
+    // Mutate every nested part of the replayed record.
+    r1!.lock.consumed = true;
+    r1!.approval.approved = false;
+    r1!.edit_record.push({
+      order: 1,
+      from: "x",
+      to: "y",
+      edited_at: "z",
+    });
+    r1!.classification_summary.total = 0;
+    r1!.warnings_acknowledged.push("tampered");
+    r1!.generation.fallback_used = true;
+
+    const r2 = replayIndonesianQuestionPack(
+      "NVA-FIKTIF-001",
+      "NVA-FIKTIF-001.questions.v1.attack4",
+    );
+    expect(r2?.lock.consumed).toBe(false);
+    expect(r2?.approval.approved).toBe(true);
+    expect(r2?.edit_record).toEqual([]);
+    expect(r2?.classification_summary.total).toBe(10);
+    expect(r2?.warnings_acknowledged).not.toContain("tampered");
+    expect(r2?.generation.fallback_used).toBe(false);
+  });
+
+  it("rejects re-approval under the same order and pack version instead of overwriting silently", async () => {
+    const suggestion = await generateIndonesianQuestionPack(
+      kopiBrief,
+      stubProvider({ kind: "structured", questions: frozenTen }),
+    );
+    const dupeContext = {
+      ...context,
+      pack_version_id: "NVA-FIKTIF-001.questions.v1.dupe",
+    };
+    approveIndonesianQuestionPack(suggestion, kopiBrief, dupeContext);
+    expect(() =>
+      approveIndonesianQuestionPack(suggestion, kopiBrief, dupeContext),
+    ).toThrow(IndonesianPackAlreadyApprovedError);
+  });
+
+  it("keys persistence on order and pack version together, so two orders never collide", async () => {
+    const suggestion = await generateIndonesianQuestionPack(
+      kopiBrief,
+      stubProvider({ kind: "structured", questions: frozenTen }),
+    );
+    const sharedPackVersionId = "NVA-FIKTIF-001.questions.v1.shared";
+    approveIndonesianQuestionPack(suggestion, kopiBrief, {
+      ...context,
+      order_reference: "NVA-FIKTIF-001",
+      pack_version_id: sharedPackVersionId,
+    });
+    const other = approveIndonesianQuestionPack(suggestion, kopiBrief, {
+      ...context,
+      order_reference: "NVA-FIKTIF-002",
+      pack_version_id: sharedPackVersionId,
+    });
+    expect(other.order_reference).toBe("NVA-FIKTIF-002");
+
+    const first = replayIndonesianQuestionPack(
+      "NVA-FIKTIF-001",
+      sharedPackVersionId,
+    );
+    const second = replayIndonesianQuestionPack(
+      "NVA-FIKTIF-002",
+      sharedPackVersionId,
+    );
+    expect(first?.order_reference).toBe("NVA-FIKTIF-001");
+    expect(second?.order_reference).toBe("NVA-FIKTIF-002");
   });
 
   it("fails closed on approval when a narrow blocker is present", async () => {
@@ -798,7 +917,10 @@ describe("approved-pack persistence and verbatim replay", () => {
     const edited = applyIndonesianQuestionEdits(suggestion, kopiBrief, [
       { order: 1, new_text: "Bagaimana harga di Kopi Taman Senja?" },
     ]);
-    const record = approveIndonesianQuestionPack(edited, kopiBrief, context);
+    const record = approveIndonesianQuestionPack(edited, kopiBrief, {
+      ...context,
+      pack_version_id: "NVA-FIKTIF-001.questions.v1.rebalanced",
+    });
     expect(record.classification_summary.menyebut_bisnis_anda).toBe(6);
     expect(record.status).toBe("questions_approved");
   });

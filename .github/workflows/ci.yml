@@ -26,5 +26,14 @@ jobs:
       - name: Run non-mutating checks
         run: npm run check
 
+      - name: Run unit tests (audit engine + fixture journey)
+        run: npm run test:unit
+
       - name: Build application
         run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run fixture-journey browser tests
+        run: npm run test:e2e

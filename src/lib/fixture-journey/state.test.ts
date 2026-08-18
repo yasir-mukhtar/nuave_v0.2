@@ -1,13 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import {
   FIXTURE_JOURNEY_STATE_VERSION,
   FIXTURE_JOURNEY_STORAGE_KEY,
+  LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS,
   fixtureJourneyStages,
   freshFixtureJourneyState,
+  loadFixtureJourneyState,
   validateFixtureJourneyState,
   type FixtureJourneyState,
 } from "./state";
+
+/** Minimal sessionStorage stub; this suite runs with no DOM environment. */
+class FakeSessionStorage {
+  private store = new Map<string, string>();
+  getItem(key: string): string | null {
+    return this.store.has(key) ? this.store.get(key)! : null;
+  }
+  setItem(key: string, value: string): void {
+    this.store.set(key, value);
+  }
+  removeItem(key: string): void {
+    this.store.delete(key);
+  }
+}
+
+function stubWindowWithSessionStorage(): FakeSessionStorage {
+  const storage = new FakeSessionStorage();
+  vi.stubGlobal("window", { sessionStorage: storage });
+  return storage;
+}
 
 function stateAt(
   overrides: Partial<FixtureJourneyState> = {},
@@ -15,11 +37,63 @@ function stateAt(
   return { ...freshFixtureJourneyState(), ...overrides };
 }
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("loadFixtureJourneyState — reset reporting (regression: legacy purge must not silently reset)", () => {
+  it("reports reset:true when only a legacy key was present (nothing valid to restore)", () => {
+    const storage = stubWindowWithSessionStorage();
+    storage.setItem(
+      LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS[2],
+      JSON.stringify({ stale: true }),
+    );
+    const result = loadFixtureJourneyState();
+    expect(result.reset).toBe(true);
+    expect(result.state).toEqual(freshFixtureJourneyState());
+    expect(storage.getItem(LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS[2])).toBeNull();
+  });
+
+  it("reports reset:false when a valid current-version state sits alongside a stray legacy key", () => {
+    const storage = stubWindowWithSessionStorage();
+    storage.setItem(
+      LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS[2],
+      JSON.stringify({ stale: true }),
+    );
+    const validState = { ...freshFixtureJourneyState(), offerRevealed: true };
+    storage.setItem(FIXTURE_JOURNEY_STORAGE_KEY, JSON.stringify(validState));
+    const result = loadFixtureJourneyState();
+    expect(result.reset).toBe(false);
+    expect(result.state).toEqual(validState);
+    expect(storage.getItem(LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS[2])).toBeNull();
+  });
+
+  it("reports reset:true when the current-version value is corrupt, with no legacy key present", () => {
+    const storage = stubWindowWithSessionStorage();
+    storage.setItem(FIXTURE_JOURNEY_STORAGE_KEY, "not json");
+    const result = loadFixtureJourneyState();
+    expect(result.reset).toBe(true);
+    expect(result.state).toEqual(freshFixtureJourneyState());
+  });
+
+  it("reports reset:false when no key of any version is present", () => {
+    stubWindowWithSessionStorage();
+    const result = loadFixtureJourneyState();
+    expect(result.reset).toBe(false);
+    expect(result.state).toEqual(freshFixtureJourneyState());
+  });
+});
+
 describe("fixture journey storage key", () => {
-  it("is versioned, separate from the live audit workflow keys, and v3", () => {
-    expect(FIXTURE_JOURNEY_STORAGE_KEY).toBe("nuave.fixtureJourney.v3");
+  it("is versioned, separate from the live audit workflow keys, and v4", () => {
+    expect(FIXTURE_JOURNEY_STORAGE_KEY).toBe("nuave.fixtureJourney.v4");
     expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.workflow.v3");
     expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.session.v1");
+    expect(LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS).toEqual([
+      "nuave.fixtureJourney.v1",
+      "nuave.fixtureJourney.v2",
+      "nuave.fixtureJourney.v3",
+    ]);
   });
 
   it("declares the canonical six-step path in order (R-20)", () => {
@@ -40,24 +114,38 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
+  it("accepts a revealed offer before the simulated payment", () => {
+    const state = stateAt({ offerRevealed: true });
+    expect(validateFixtureJourneyState(state)).toEqual(state);
+  });
+
   it("accepts the simulated-payment screen before completion", () => {
-    const state = stateAt({ stage: "payment" });
+    const state = stateAt({ stage: "payment", offerRevealed: true });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
   it("accepts the simulated-paid confirmation state", () => {
-    const state = stateAt({ stage: "payment", simulatedPaid: true });
+    const state = stateAt({
+      stage: "payment",
+      offerRevealed: true,
+      simulatedPaid: true,
+    });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
   it("accepts facts after the simulated payment", () => {
-    const state = stateAt({ stage: "facts", simulatedPaid: true });
+    const state = stateAt({
+      stage: "facts",
+      offerRevealed: true,
+      simulatedPaid: true,
+    });
     expect(validateFixtureJourneyState(state)).toEqual(state);
   });
 
   it("accepts confirmed facts before the questions screen", () => {
     const state = stateAt({
       stage: "facts",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
     });
@@ -67,6 +155,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts the questions screen after fact confirmation", () => {
     const state = stateAt({
       stage: "questions",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
     });
@@ -76,6 +165,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts an approved question pack before the run", () => {
     const state = stateAt({
       stage: "questions",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -86,6 +176,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts the run screen before the explicit run action", () => {
     const state = stateAt({
       stage: "run",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -97,6 +188,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts a just-started run at stage zero", () => {
     const state = stateAt({
       stage: "run",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -109,6 +201,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts a persisted mid-run processing state", () => {
     const state = stateAt({
       stage: "run",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -121,6 +214,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts the terminal ready state", () => {
     const state = stateAt({
       stage: "ready",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -134,6 +228,7 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
   it("accepts the terminal ready state with a failed fixture construction", () => {
     const state = stateAt({
       stage: "ready",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -149,17 +244,23 @@ describe("validateFixtureJourneyState — forward progression (R-23 gates)", () 
     // Back to the preview after payment and fact confirmation.
     const backToPreview = stateAt({
       stage: "preview",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
     });
     expect(validateFixtureJourneyState(backToPreview)).toEqual(backToPreview);
     // Back to the simulated payment after it completed.
-    const backToPayment = stateAt({ stage: "payment", simulatedPaid: true });
+    const backToPayment = stateAt({
+      stage: "payment",
+      offerRevealed: true,
+      simulatedPaid: true,
+    });
     expect(validateFixtureJourneyState(backToPayment)).toEqual(backToPayment);
     // Back to facts after the question pack was approved.
     const backToFacts = stateAt({
       stage: "facts",
+      offerRevealed: true,
       simulatedPaid: true,
       factsConfirmed: true,
       questionsApproved: true,
@@ -235,6 +336,32 @@ describe("validateFixtureJourneyState — rejection", () => {
     ).toBeNull();
   });
 
+  it("rejects a non-boolean offerRevealed", () => {
+    expect(
+      validateFixtureJourneyState({
+        ...freshFixtureJourneyState(),
+        offerRevealed: "yes",
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects a missing offerRevealed field", () => {
+    const missingOfferRevealed = {
+      ...freshFixtureJourneyState(),
+    } as Partial<FixtureJourneyState>;
+    delete missingOfferRevealed.offerRevealed;
+    expect(validateFixtureJourneyState(missingOfferRevealed)).toBeNull();
+  });
+
+  it("rejects a simulated payment without a revealed offer", () => {
+    const state = stateAt({
+      stage: "payment",
+      offerRevealed: false,
+      simulatedPaid: true,
+    });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
   it("rejects facts before the simulated payment", () => {
     const state = stateAt({ stage: "facts", simulatedPaid: false });
     expect(validateFixtureJourneyState(state)).toBeNull();
@@ -263,6 +390,32 @@ describe("validateFixtureJourneyState — rejection", () => {
       stage: "questions",
       simulatedPaid: true,
       factsConfirmed: false,
+      questionsApproved: true,
+    });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
+  it("rejects a question approval flag at an earlier stage than the stage rule itself would catch (adversarial review Finding 1)", () => {
+    // The stage rule only requires factsConfirmed once stage reaches
+    // "questions"/"run"/"ready". Without a converse gate check, a crafted
+    // session can carry questionsApproved:true while still on "facts" with
+    // factsConfirmed:false, and the stage-only rule never sees it.
+    const state = stateAt({
+      stage: "facts",
+      offerRevealed: true,
+      simulatedPaid: true,
+      factsConfirmed: false,
+      questionsApproved: true,
+    });
+    expect(validateFixtureJourneyState(state)).toBeNull();
+  });
+
+  it("rejects confirmed facts without the simulated payment, at an earlier stage than the stage rule itself would catch", () => {
+    const state = stateAt({
+      stage: "payment",
+      offerRevealed: true,
+      simulatedPaid: false,
+      factsConfirmed: true,
       questionsApproved: true,
     });
     expect(validateFixtureJourneyState(state)).toBeNull();

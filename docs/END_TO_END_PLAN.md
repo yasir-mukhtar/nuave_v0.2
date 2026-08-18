@@ -469,10 +469,17 @@ model call, database, real email, or real payment.
 
 **Exit gate**
 
-- One automated browser test completes landing to report.
+- One automated browser test completes a full click-through of the fixture
+  journey, order preview to report
+  (`tests/e2e/fixture-journey.spec.ts`, "the canonical 01→06 journey advances
+  strictly through the six steps"). Entry to `/audit/fixture` is by direct URL
+  behind the server-only preview flag, by design — the route is deliberately
+  not linked from the public landing page.
 - A human reviewer can tell what is real and what is simulated.
 - No screen relies on agency, subscription, dashboard, or account concepts.
-- The real audit engine remains unchanged and its 93 tests continue to pass.
+- The real audit engine remains unchanged and its tests continue to pass (93
+  at Phase 0's baseline; 208 at Spec 001's 2026-08-17 verification; the
+  current count is whatever `npm run test:audit` reports).
 
 **Deliberately excluded**
 

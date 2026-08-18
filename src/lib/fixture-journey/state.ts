@@ -14,11 +14,24 @@
  * the facts and question screens (R-21); only the explicit run action starts
  * the simulated run (R-22); and the persisted-state validator enforces
  * preview -> simulated-paid -> facts confirmed -> questions approved ->
- * run started -> report ready (R-23). Stored v1 and v2 shapes (Spec 001
- * order) are treated as stale and reset with an explanation.
+ * run started -> report ready (R-23).
+ *
+ * Version 4 adds `offerRevealed` (the Order Preview's price reveal survives
+ * a refresh instead of silently collapsing back to the pre-reveal panel).
+ * Stored v1, v2, and v3 shapes are all treated as stale: the loader clears
+ * every prior versioned key it finds, not only the current one, so no
+ * fixture-journey key accumulates in session storage across a version
+ * upgrade.
  */
-export const FIXTURE_JOURNEY_STORAGE_KEY = "nuave.fixtureJourney.v3";
-export const FIXTURE_JOURNEY_STATE_VERSION = 3;
+export const FIXTURE_JOURNEY_STORAGE_KEY = "nuave.fixtureJourney.v4";
+export const FIXTURE_JOURNEY_STATE_VERSION = 4;
+
+/** Prior versioned keys, purged whenever the journey loads or resets. */
+export const LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS = [
+  "nuave.fixtureJourney.v1",
+  "nuave.fixtureJourney.v2",
+  "nuave.fixtureJourney.v3",
+] as const;
 
 export const fixtureJourneyStages = [
   "preview",
@@ -34,6 +47,8 @@ export type FixtureJourneyState = {
   version: typeof FIXTURE_JOURNEY_STATE_VERSION;
   /** The screen the reviewer is on. */
   stage: FixtureJourneyStage;
+  /** The Order Preview's priced offer panel was revealed. */
+  offerRevealed: boolean;
   /** The simulated payment was completed. No charge, receipt, or order. */
   simulatedPaid: boolean;
   /** The reviewer explicitly confirmed the fixture facts. */
@@ -61,6 +76,7 @@ export function freshFixtureJourneyState(): FixtureJourneyState {
   return {
     version: FIXTURE_JOURNEY_STATE_VERSION,
     stage: "preview",
+    offerRevealed: false,
     simulatedPaid: false,
     factsConfirmed: false,
     questionsApproved: false,
@@ -90,6 +106,7 @@ export function validateFixtureJourneyState(
   if (!fixtureJourneyStages.includes(record.stage as FixtureJourneyStage)) {
     return null;
   }
+  if (typeof record.offerRevealed !== "boolean") return null;
   if (typeof record.simulatedPaid !== "boolean") return null;
   if (typeof record.factsConfirmed !== "boolean") return null;
   if (typeof record.questionsApproved !== "boolean") return null;
@@ -99,6 +116,7 @@ export function validateFixtureJourneyState(
   if (typeof record.reportConstructionFailed !== "boolean") return null;
 
   const stage = record.stage as FixtureJourneyStage;
+  const offerRevealed = record.offerRevealed;
   const simulatedPaid = record.simulatedPaid;
   const factsConfirmed = record.factsConfirmed;
   const questionsApproved = record.questionsApproved;
@@ -107,6 +125,8 @@ export function validateFixtureJourneyState(
   const processingCompleted = record.processingCompleted;
   const reportConstructionFailed = record.reportConstructionFailed;
 
+  // The offer must be revealed before it can be paid for.
+  if (simulatedPaid && !offerRevealed) return null;
   // Simulated payment gates facts, questions, the run, and the report.
   const paidRequiredStages: readonly FixtureJourneyStage[] = [
     "facts",
@@ -130,6 +150,13 @@ export function validateFixtureJourneyState(
   if (approvedRequiredStages.includes(stage) && !questionsApproved) {
     return null;
   }
+  // Converse gate checks (adversarial review Finding 1 / AC-03 / AC-08):
+  // the stage rules above only require a gate once the stage reaches it, so
+  // a later gate flag can otherwise be set while its predecessor is still
+  // false, at an earlier stage the stage rules never inspect. Each gate
+  // requires its own predecessor regardless of the current stage.
+  if (factsConfirmed && !simulatedPaid) return null;
+  if (questionsApproved && !factsConfirmed) return null;
   // Only the four bounded work stages may be persisted mid-run.
   if (
     !Number.isInteger(processingStage) ||
@@ -161,6 +188,7 @@ export function validateFixtureJourneyState(
   return {
     version: FIXTURE_JOURNEY_STATE_VERSION,
     stage,
+    offerRevealed,
     simulatedPaid,
     factsConfirmed,
     questionsApproved,
@@ -177,12 +205,29 @@ export type LoadedFixtureJourneyState = {
   reset: boolean;
 };
 
+/**
+ * Removes every prior versioned fixture-journey key, if present, and reports
+ * whether any of them actually held a value. A tab that never carried a
+ * legacy key purges nothing; that must not be conflated with a real reset.
+ */
+function purgeLegacyFixtureJourneyKeys(): boolean {
+  let purgedAny = false;
+  for (const key of LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS) {
+    if (window.sessionStorage.getItem(key) !== null) purgedAny = true;
+    window.sessionStorage.removeItem(key);
+  }
+  return purgedAny;
+}
+
 export function loadFixtureJourneyState(): LoadedFixtureJourneyState {
   if (typeof window === "undefined") {
     return { state: freshFixtureJourneyState(), reset: false };
   }
+  const purgedLegacyKey = purgeLegacyFixtureJourneyKeys();
   const raw = window.sessionStorage.getItem(FIXTURE_JOURNEY_STORAGE_KEY);
-  if (raw === null) return { state: freshFixtureJourneyState(), reset: false };
+  if (raw === null) {
+    return { state: freshFixtureJourneyState(), reset: purgedLegacyKey };
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw) as unknown;
@@ -209,10 +254,11 @@ export function saveFixtureJourneyState(state: FixtureJourneyState): void {
 }
 
 /**
- * Clears only the fixture journey's own session key. Never touches live
- * workflow state.
+ * Clears only the fixture journey's own session keys (current and every
+ * prior version). Never touches live workflow state.
  */
 export function clearFixtureJourneySession(): void {
   if (typeof window === "undefined") return;
   window.sessionStorage.removeItem(FIXTURE_JOURNEY_STORAGE_KEY);
+  purgeLegacyFixtureJourneyKeys();
 }

@@ -26,16 +26,19 @@
  *                                     frozen evidence (the additive export;
  *                                     see the note below)
  *
- * PROJECTION NOTE (additive, evidence-faithful): the existing report
- * validator (`validateReportContent`) requires an assessed recommendation on
- * every completed observation. The frozen Indonesian evidence records
+ * PROJECTION NOTE: the frozen Indonesian evidence records
  * `recommendation: "not_assessed"` for observations 07-10 (factual checks
- * that neither recommended nor declined). This adapter projects those to
- * `not_recommended` ONLY so the retained-evidence validator accepts the set.
- * The Indonesian report view renders the true assessed-denominator measures
- * (recommendation 2/6, comparison 1/2, information 1/2/1 of 4) directly from
- * the frozen dimensions via `kopiTamanSenjaMeasures`, never from this
- * projection, and the frozen dimensions themselves are never modified.
+ * that neither recommended nor declined). That value passes through this
+ * projection unchanged; `validateReportContent` only permits `not_assessed`
+ * on a completed observation's recommendation when the observation's
+ * category is `validation` or `action` — those ask for a fact or a next
+ * step, not a judgment. For the other categories (`need_discovery`,
+ * `solution_discovery`, `comparison`) a completed observation must still
+ * carry a real `recommendation` value. The Indonesian report view renders the true
+ * assessed-denominator measures (recommendation 2/6, comparison 1/2,
+ * information 1/2/1 of 4) directly from the frozen dimensions via
+ * `kopiTamanSenjaMeasures`, never from this projection, and the frozen
+ * dimensions themselves are never modified.
  */
 import type {
   AuditObservation,
@@ -364,7 +367,10 @@ export const kopiTamanSenjaObservations: AuditObservation[] =
       observed_at: observation.selected_observation.observed_at,
       raw_answer: observation.selected_observation.raw_answer,
       sources: observation.selected_observation.sources,
-      run_status: "completed",
+      // Projected from the frozen record, not hardcoded, so a future frozen
+      // fixture that records a failed test is never silently converted into
+      // a success (adversarial review Finding 11).
+      run_status: observation.run_status,
       failure_reason: "",
       telemetry: [],
     };
@@ -462,15 +468,9 @@ export function kopiTamanSenjaReportContent(): ReportContent {
       const copy = detailCopyFor(observation);
       return {
         prompt_id: promptIdOf(observation.order),
-        run: "completed",
+        run: observation.run_status,
         appearance: observation.dimensions.appearance,
-        // Projection note above: not_assessed -> not_recommended so the
-        // retained-evidence validator accepts the set. The Indonesian view
-        // renders the true measures from `kopiTamanSenjaMeasures`.
-        recommendation:
-          observation.dimensions.recommendation === "recommended"
-            ? "recommended"
-            : "not_recommended",
+        recommendation: observation.dimensions.recommendation,
         comparison: observation.dimensions.comparison,
         information: observation.dimensions.information,
         finding: copy.finding,

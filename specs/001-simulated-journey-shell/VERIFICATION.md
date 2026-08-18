@@ -1,10 +1,20 @@
 # Verification: Spec 001 — Simulated journey shell
 
-> Result: **Pending independent verification**
-> Reviewer: Builder (implementation checks only); independent reviewer: not yet assigned
-> Date: 2026-08-12
+> Result: **Pass — Verified 2026-08-17** (see Verdict below)
+> Reviewer: Builder (implementation checks, 2026-08-12 and 2026-08-17);
+> independent reviewer: the founder, via the AC-21 human trust review
+> completed 2026-08-17 (see Verdict). This header previously read "Pending
+> independent verification" after the founder's approval was already recorded
+> in the Verdict below; that was a stale header, not a second, later verdict —
+> corrected here to match the Verdict, which is authoritative.
+> Date: 2026-08-12 (Builder checks); re-verified 2026-08-17
 > Spec version or commit: `specs/001-simulated-journey-shell/SPEC.md`, status **Implementing** (founder-approved 2026-08-12)
-> Implementation version or commit: working tree, branch `main`; no commit made
+> Implementation version or commit: verified against commit `127090c` (2026-08-17
+> 21:47:58 +0700, "spec: verify 001, add 002/003"). The Spec 002 realignment
+> landed one second later in `05640e3` ("feat: wire live audit engine +
+> Indonesian journey"); AC-21's founder walkthrough was performed on the
+> realigned (`05640e3`) fixture path, as noted in the AC-21 row and the
+> Verdict below.
 
 ## Scope reviewed
 
@@ -118,8 +128,11 @@ Two new notes, both non-blocking and outside Spec 001 scope:
    reference "93 audit tests"; the real baseline is now 208. A future
    doc-accuracy pass should refresh that figure.
 
-AC-21 (human trust review) and an independent reviewer's confirmation remain
-the only open gates before this specification can be marked Verified.
+At this point in the sequence, AC-21 (human trust review) and an independent
+reviewer's confirmation were the only open gates before this specification
+could be marked Verified. Both closed later the same day: the founder
+performed the AC-21 walkthrough and served as the independent reviewer (see
+the AC-21 row and the Verdict below).
 
 ## Findings
 
@@ -138,9 +151,9 @@ Priority order:
 3. **`/` landing page is `force-dynamic`** (optional improvement, carried from
    Chunk 1). Required so the server-controlled preview flag is evaluated per
    request; the polish phase may revisit caching.
-4. **Session state is versioned at `nuave.fixtureJourney.v2`** (intentional,
-   documented). Stored v1 shapes are treated as stale and reset with an
-   explanation.
+4. **Session state is versioned at `nuave.fixtureJourney.v4`** (intentional,
+   documented). Stored v1, v2, and v3 shapes are all treated as stale and
+   reset with an explanation.
 5. **Browser harness scope is deliberately narrow** (intentional). One spec per
    server mode, Chromium only, `workers: 1`, three configs sharing a
    web-server helper. No general end-to-end framework was built.

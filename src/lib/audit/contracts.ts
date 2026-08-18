@@ -48,6 +48,89 @@ export type ReportCallProvenance = {
   language_retry_performed?: boolean;
   language_retry_violations?: string[];
   operational_telemetry?: AuditReport["operational_telemetry"];
+  /** Overrides PROMPT_CONTRACT_VERSION when the report was built from a
+   * differently versioned prompt pack (e.g. the Indonesian question-writer
+   * contract, additive Spec 002). Defaults to the English deterministic
+   * contract version, unchanged from prior behavior. */
+  prompt_contract_version?: string;
+};
+
+/**
+ * The Nuave-authored sentences `buildAuditReport` computes itself — the
+ * method summary and the six facts labels — as an injectable language pack.
+ * Defaults to `ENGLISH_AUDIT_REPORT_LABELS`, which reproduces the exact
+ * strings this module has always produced, so every existing caller is
+ * unaffected. A caller building a non-English report (e.g. the Indonesian
+ * fixture path) supplies its own pack instead of leaving these fields to
+ * default to English prose (adversarial review Finding 2 / AC-21 / R-26).
+ */
+export type AuditReportLabelPack = {
+  /** `failed` is the raw could-not-be-tested count for this subset — each
+   * pack renders its own "N could not be tested" suffix so that context can
+   * never leak through in the wrong language (adversarial review Finding 2). */
+  discoveryRecommendedLabel: (
+    recommended: number,
+    total: number,
+    failed: number,
+  ) => string;
+  discoveryMentionLabel: (
+    mentioned: number,
+    total: number,
+    failed: number,
+  ) => string;
+  recognitionLabel: (recognized: number, total: number, failed: number) => string;
+  comparisonLabel: (
+    clientPreferred: number,
+    total: number,
+    competitorPreferred: number,
+  ) => string;
+  informationLabel: (
+    confirmed: number,
+    incomplete: number,
+    conflicting: number,
+  ) => string;
+  coverageLabel: (completed: number, total: number, failed: number) => string;
+  methodSummary: (context: {
+    totalQuestions: number;
+    /** Provider/system name(s), e.g. "OpenAI Responses API". Never a full
+     * "with web search" sentence — each pack composes its own phrasing. */
+    systemPart: string;
+    /** " - model, model2" (empty when no model was recorded). */
+    modelPart: string;
+    unbrandedTotal: number;
+    brandedTotal: number;
+    coverageLabel: string;
+  }) => string;
+};
+
+function englishFailedContext(failed: number) {
+  return failed ? `; ${failed} ${plural(failed, "question")} could not be tested.` : ".";
+}
+
+export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
+  discoveryRecommendedLabel: (recommended, total, failed) =>
+    `Recommended in ${recommended} of ${total} discovery questions${englishFailedContext(failed)}`,
+  discoveryMentionLabel: (mentioned, total, failed) =>
+    `Named without recommendation in ${mentioned} of ${total} discovery questions${englishFailedContext(failed)}`,
+  recognitionLabel: (recognized, total, failed) =>
+    `Recognized in ${recognized} of ${total} brand questions${englishFailedContext(failed)}`,
+  comparisonLabel: (clientPreferred, total, competitorPreferred) =>
+    `Client preferred in ${clientPreferred} of ${total} questions; competitor preferred in ${competitorPreferred}.`,
+  informationLabel: (confirmed, incomplete, conflicting) =>
+    `${confirmed} confirmed, ${incomplete} incomplete, and ${conflicting} conflicting information results.`,
+  coverageLabel: (completed, total, failed) =>
+    failed
+      ? `${completed} of ${total} questions completed; ${failed} ${plural(failed, "question")} could not be tested.`
+      : `${completed} of ${total} questions completed.`,
+  methodSummary: ({
+    totalQuestions,
+    systemPart,
+    modelPart,
+    unbrandedTotal,
+    brandedTotal,
+    coverageLabel,
+  }) =>
+    `We tested ${totalQuestions} questions one at a time through ${systemPart}${modelPart} with web search. ${unbrandedTotal} discovery questions did not name the business in the question. ${brandedTotal} direct checks named the business. ${coverageLabel} A mention is not a recommendation, and a failed test is not a negative result.`,
 };
 
 export const PROMPT_MATRIX = [
@@ -727,10 +810,20 @@ export function validateReportContent(
         `${detail.prompt_id} report run status does not match the retained observation.`,
       );
     }
+    // Recommendation is a judgment dimension: need_discovery, solution_discovery,
+    // and comparison questions ask the model to recommend or prefer something,
+    // so a completed, mentioned answer there must carry a real judgment (the
+    // Sozo live-run defect: the model returned not_assessed instead of an
+    // actual recommendation). validation and action questions ask for a fact
+    // or a next step, not a recommendation, so not_assessed is their honest
+    // completed value.
+    const recommendationOptional = ["validation", "action"].includes(
+      observation.category,
+    );
     if (
       observation.run_status === "completed" &&
       (detail.appearance === "not_assessed" ||
-        detail.recommendation === "not_assessed")
+        (detail.recommendation === "not_assessed" && !recommendationOptional))
     ) {
       errors.push(
         `${detail.prompt_id} completed, so appearance and recommendation must be assessed.`,
@@ -920,11 +1013,18 @@ function describeAuditSystem(system: string): string {
   }
 }
 
-// Build a system label from the distinct systems present in the completed
-// observations, in stable order. A run selects one provider per process, so this
-// is normally a single value; if observations ever mix systems we list each
-// rather than silently collapsing the distinction.
-function deriveSystemLabel(observations: AuditObservation[]): string {
+// Derive the system/model parts from the distinct systems present in the
+// completed observations, in stable order. A run selects one provider per
+// process, so this is normally a single value; if observations ever mix
+// systems we list each rather than silently collapsing the distinction.
+// Returned unjoined (not a final "with web search" sentence) so a label pack
+// can compose its own localized phrasing around them (adversarial review
+// Finding 2 / AC-21: the joined English suffix must not leak into a
+// non-English method summary).
+function deriveSystemParts(observations: AuditObservation[]): {
+  systemPart: string;
+  modelPart: string;
+} {
   const completed = observations.filter(
     (item) => item.run_status === "completed",
   );
@@ -936,10 +1036,14 @@ function deriveSystemLabel(observations: AuditObservation[]): string {
   const models = [
     ...new Set(completed.map((item) => item.returned_model).filter(Boolean)),
   ];
-  const systemPart = systems.length
-    ? systems.join(" and ")
-    : "model unavailable";
-  const modelPart = models.length ? ` - ${models.join(", ")}` : "";
+  return {
+    systemPart: systems.length ? systems.join(" and ") : "model unavailable",
+    modelPart: models.length ? ` - ${models.join(", ")}` : "",
+  };
+}
+
+function deriveSystemLabel(observations: AuditObservation[]): string {
+  const { systemPart, modelPart } = deriveSystemParts(observations);
   return `${systemPart}${modelPart} with web search`;
 }
 
@@ -951,6 +1055,7 @@ export function buildAuditReport(
     returned_model: "not recorded",
     response_id: "not recorded",
   },
+  labels: AuditReportLabelPack = ENGLISH_AUDIT_REPORT_LABELS,
 ): AuditReport {
   const details = new Map(
     content.details.map((detail) => [detail.prompt_id, detail]),
@@ -992,13 +1097,8 @@ export function buildAuditReport(
   const countInformation = (
     value: ReportContent["details"][number]["information"],
   ) => detailValues.filter((detail) => detail.information === value).length;
+  const { systemPart, modelPart } = deriveSystemParts(observations);
   const systemLabel = deriveSystemLabel(observations);
-  const failedDiscoveryContext = unbrandedFailed
-    ? `; ${unbrandedFailed} ${plural(unbrandedFailed, "question")} could not be tested.`
-    : ".";
-  const failedRecognitionContext = brandedFailed
-    ? `; ${brandedFailed} ${plural(brandedFailed, "question")} could not be tested.`
-    : ".";
   const facts: AuditReport["facts"] = {
     discovery: {
       recommended: unbrandedRecommended,
@@ -1007,38 +1107,63 @@ export function buildAuditReport(
       completed: completedUnbranded.length,
       total: unbranded.length,
       failed: unbrandedFailed,
-      recommendation_label: `Recommended in ${unbrandedRecommended} of ${unbranded.length} discovery questions${failedDiscoveryContext}`,
-      mention_label: `Named without recommendation in ${unbrandedMentioned} of ${unbranded.length} discovery questions${failedDiscoveryContext}`,
+      recommendation_label: labels.discoveryRecommendedLabel(
+        unbrandedRecommended,
+        unbranded.length,
+        unbrandedFailed,
+      ),
+      mention_label: labels.discoveryMentionLabel(
+        unbrandedMentioned,
+        unbranded.length,
+        unbrandedFailed,
+      ),
     },
     recognition: {
       recognized: brandedRecognized,
       completed: completedBranded.length,
       total: branded.length,
       failed: brandedFailed,
-      label: `Recognized in ${brandedRecognized} of ${branded.length} brand questions${failedRecognitionContext}`,
+      label: labels.recognitionLabel(
+        brandedRecognized,
+        branded.length,
+        brandedFailed,
+      ),
     },
     comparison: {
       client_preferred: countComparison("client_preferred"),
       competitor_preferred: countComparison("competitor_preferred"),
       compared_no_preference: countComparison("compared_no_preference"),
-      label: `Client preferred in ${countComparison("client_preferred")} of ${observations.length} questions; competitor preferred in ${countComparison("competitor_preferred")}.`,
+      label: labels.comparisonLabel(
+        countComparison("client_preferred"),
+        observations.length,
+        countComparison("competitor_preferred"),
+      ),
     },
     information: {
       confirmed: countInformation("confirmed"),
       incomplete: countInformation("incomplete"),
       conflicting: countInformation("conflicting"),
-      label: `${countInformation("confirmed")} confirmed, ${countInformation("incomplete")} incomplete, and ${countInformation("conflicting")} conflicting information results.`,
+      label: labels.informationLabel(
+        countInformation("confirmed"),
+        countInformation("incomplete"),
+        countInformation("conflicting"),
+      ),
     },
     coverage: {
       completed: completed.length,
       total: observations.length,
       failed,
-      label: failed
-        ? `${completed.length} of ${observations.length} questions completed; ${failed} ${plural(failed, "question")} could not be tested.`
-        : `${completed.length} of ${observations.length} questions completed.`,
+      label: labels.coverageLabel(completed.length, observations.length, failed),
     },
   };
-  const methodSummary = `We tested ${observations.length} questions one at a time through ${systemLabel}. ${unbranded.length} discovery questions did not name the business in the question. ${branded.length} direct checks named the business. ${facts.coverage.label} A mention is not a recommendation, and a failed test is not a negative result.`;
+  const methodSummary = labels.methodSummary({
+    totalQuestions: observations.length,
+    systemPart,
+    modelPart,
+    unbrandedTotal: unbranded.length,
+    brandedTotal: branded.length,
+    coverageLabel: facts.coverage.label,
+  });
 
   return {
     ...content,
@@ -1048,7 +1173,8 @@ export function buildAuditReport(
     system_label: systemLabel,
     provenance: {
       report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
-      prompt_contract_version: PROMPT_CONTRACT_VERSION,
+      prompt_contract_version:
+        reportCall.prompt_contract_version ?? PROMPT_CONTRACT_VERSION,
       requested_report_model: reportCall.requested_model,
       returned_report_model: reportCall.returned_model,
       report_response_id: reportCall.response_id,

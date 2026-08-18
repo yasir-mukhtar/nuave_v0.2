@@ -1169,7 +1169,6 @@ export default function FixtureJourney({
   const [gateError, setGateError] = useState("");
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [interruptedRestore, setInterruptedRestore] = useState(false);
-  const [offerRevealed, setOfferRevealed] = useState(false);
   const [runDialogOpen, setRunDialogOpen] = useState(false);
   // Read once during first render; the subscription below keeps it current.
   // Not rendered into JSX, so the SSR fallback never causes a hydration gap.
@@ -1318,7 +1317,7 @@ export default function FixtureJourney({
   }
 
   function revealOffer() {
-    setOfferRevealed(true);
+    setJourney((current) => ({ ...current, offerRevealed: true }));
     window.setTimeout(
       () =>
         offerRef.current?.scrollIntoView({
@@ -1453,7 +1452,6 @@ export default function FixtureJourney({
     setConfirmingReset(false);
     setResetNotice(false);
     setInterruptedRestore(false);
-    setOfferRevealed(false);
     setRunDialogOpen(false);
   }
 
@@ -1544,7 +1542,7 @@ export default function FixtureJourney({
         {stage === "preview" ? (
           <PreviewScreen
             headingRef={headingRef}
-            offerRevealed={offerRevealed}
+            offerRevealed={journey.offerRevealed}
             onRevealOffer={revealOffer}
             onPay={() => goToStage("payment")}
             offerRef={offerRef}

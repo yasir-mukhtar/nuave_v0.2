@@ -8,6 +8,8 @@ import {
 } from "../../src/lib/audit/fixtures/fixture-kopi-taman-senja";
 import {
   FIXTURE_SESSION_KEY,
+  FIXTURE_STATE_VERSION,
+  LEGACY_FIXTURE_SESSION_KEYS,
   LIVE_WORKFLOW_KEYS,
   assertNoSideEffects,
   collectRequests,
@@ -89,6 +91,15 @@ test.describe("entry and landing (AC-01)", () => {
     await expect(
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
+    // The hero preview card shows a fabricated business name and score, so
+    // it must carry a visible disclosure that it is illustrative. Scoped to
+    // the hero section: the same "Ilustrasi" label also appears further down
+    // the page on the "Isi Laporan" example, which is not this card.
+    const hero = page.locator(".lp-hero-section");
+    await expect(hero.getByText("Ilustrasi", { exact: true })).toBeVisible();
+    await expect(
+      hero.getByAltText("Ilustrasi. Tidak ada hasil bisnis sungguhan.").first(),
+    ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
 });
@@ -303,6 +314,7 @@ test.describe("canonical sequence and gates (AC-03..AC-09)", () => {
       page,
       freshV3State({
         stage: "questions",
+        offerRevealed: true,
         simulatedPaid: true,
         factsConfirmed: true,
       }),
@@ -593,6 +605,28 @@ test.describe("complete path, processing, and report (AC-03, AC-10, AC-11)", () 
 });
 
 test.describe("recovery (AC-14..AC-16)", () => {
+  test("refresh after revealing the offer keeps the priced panel and CTA visible", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    await page.goto("/audit/fixture");
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Bayar Rp99.000" }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Bayar Rp99.000" }),
+    ).toBeVisible();
+    await assertNoSideEffects(page, requests);
+  });
+
   test("refresh after simulated payment restores the completed payment, not the run", async ({
     page,
   }) => {
@@ -712,10 +746,51 @@ test.describe("recovery (AC-14..AC-16)", () => {
       FIXTURE_SESSION_KEY,
     );
     expect(saved).toMatchObject({
-      version: 3,
+      version: FIXTURE_STATE_VERSION,
       stage: "preview",
       simulatedPaid: false,
     });
+    await assertNoSideEffects(page, requests);
+  });
+
+  test("literal v1/v2/v3 session keys are purged, not just superseded (AC-15)", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    // Simulates a browser tab that carries genuine leftover keys from an
+    // earlier version of the journey, not just an old-shaped value under the
+    // current key.
+    await page.addInitScript(
+      ({ keys }) => {
+        for (const key of keys) {
+          window.sessionStorage.setItem(key, JSON.stringify({ stale: true }));
+        }
+      },
+      { keys: LEGACY_FIXTURE_SESSION_KEYS },
+    );
+    await page.goto("/audit/fixture");
+    await expect(
+      page.getByRole("heading", {
+        name: "Pratinjau pesanan untuk Kopi Taman Senja",
+      }),
+    ).toBeVisible();
+    // A genuine leftover legacy key must explain the reset, not silently
+    // clear itself — a tab holding only a stale versioned key still had its
+    // state wiped.
+    await expect(
+      page.getByText("Pratinjau diatur ulang.", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        /Status yang tersimpan hilang, kedaluwarsa, atau tidak sesuai/,
+      ),
+    ).toBeVisible();
+    const remainingKeys = await page.evaluate(
+      (keys) =>
+        keys.filter((key) => window.sessionStorage.getItem(key) !== null),
+      LEGACY_FIXTURE_SESSION_KEYS,
+    );
+    expect(remainingKeys).toEqual([]);
     await assertNoSideEffects(page, requests);
   });
 
@@ -808,7 +883,7 @@ test.describe("recovery (AC-14..AC-16)", () => {
       FIXTURE_SESSION_KEY,
     );
     expect(saved).toMatchObject({
-      version: 3,
+      version: FIXTURE_STATE_VERSION,
       stage: "preview",
       simulatedPaid: false,
       factsConfirmed: false,

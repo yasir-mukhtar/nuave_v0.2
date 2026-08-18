@@ -10,15 +10,6 @@ import {
   validateIndonesianReportLanguageRevision,
   validateReportLanguage,
 } from "./report-language";
-import {
-  INDONESIAN_REPORT_LABELS,
-  INDONESIAN_RUN_STATUS_KEYS,
-  INDONESIAN_RUN_STATUS_LABELS,
-  indonesianCountLabel,
-  indonesianHeadline,
-  indonesianObservationRunStatus,
-  indonesianRunStatusLabel,
-} from "./report-labels";
 import type { ReportContent } from "./types";
 
 const PROMPT_IDS = Array.from(
@@ -82,8 +73,11 @@ describe("Indonesian report-language calibration (plain-id-v1, founder-approved)
     expect(INDONESIAN_CALIBRATION_FOUNDER_REVIEW_PENDING).toBe(false);
     expect(INDONESIAN_REPORT_LANGUAGE_CALIBRATION).toMatchObject({
       writing_standard_version: "plain-id-v1",
-      status: "founder-approved-2026-08-17",
-      sentence_target_min_words: 12,
+      status: "founder-approved-2026-08-17; amended 2026-08-18",
+      // Floor removed by founder decision 2026-08-18: the real Indonesian
+      // house style runs shorter than the original 12-word floor even in
+      // explanatory prose, so only the 20-word ceiling is guidance now.
+      sentence_target_min_words: null,
       sentence_target_max_words: 20,
       sentence_hard_ceiling_words: 25,
       field_word_limits: null,
@@ -144,22 +138,24 @@ describe("Indonesian report-language calibration (plain-id-v1, founder-approved)
     );
   });
 
-  it("reports the 12-20 target range as advisory warnings, not failures", () => {
-    // Over target, under ceiling: warning only.
+  it("reports over-20-word sentences as advisory warnings, with no floor (founder decision 2026-08-18)", () => {
+    // Over the 20-word ceiling, under the 25-word hard ceiling: warning only.
     const overTarget = reportContent();
     overTarget.conclusion = sentenceOf(22);
     const overResult = validateIndonesianReportLanguage(overTarget);
     expect(overResult.errors).toEqual([]);
-    expect(overResult.warnings.join(" ")).toContain("target range is 12-20");
+    expect(overResult.warnings.join(" ")).toContain(
+      "target is 20 words or fewer",
+    );
 
-    // Below target: warning only.
-    const belowTarget = reportContent();
-    belowTarget.conclusion = "Terlalu pendek.";
-    const belowResult = validateIndonesianReportLanguage(belowTarget);
-    expect(belowResult.errors).toEqual([]);
-    expect(belowResult.warnings.join(" ")).toContain("target range is 12-20");
+    // A short sentence is no longer flagged at all: the floor was removed.
+    const short = reportContent();
+    short.conclusion = "Terlalu pendek.";
+    const shortResult = validateIndonesianReportLanguage(short);
+    expect(shortResult.errors).toEqual([]);
+    expect(shortResult.warnings).toEqual([]);
 
-    // Inside the target range: the measured sentence is neither error nor warning.
+    // At or under the 20-word ceiling: neither error nor warning.
     const inRange = reportContent();
     inRange.conclusion = sentenceOf(15);
     const inRangeResult = validateIndonesianReportLanguage(inRange);
@@ -169,6 +165,40 @@ describe("Indonesian report-language calibration (plain-id-v1, founder-approved)
         warning.startsWith("Conclusion"),
       ),
     ).toBe(false);
+  });
+
+  it("does not split a sentence on a decimal-like period, such as Indonesian 24-hour time notation (adversarial review Finding 7)", () => {
+    // Before the fix, "Buka pukul 08.00 dan tutup pukul 21.00." shredded
+    // into three fragments ("Buka pukul 08.", "00 dan tutup pukul 21.",
+    // "00."), producing spurious "sentence 2" / "sentence 3" warnings from a
+    // one-word dangling fragment like "00." — the exact defect the review
+    // reproduced ("sentence 5 has 1 words").
+    const content = reportContent();
+    content.key_findings[0].explanation =
+      "Buka pukul 08.00 dan tutup pukul 21.00.";
+    const result = validateIndonesianReportLanguage(content);
+    expect(result.errors).toEqual([]);
+    const findingMessages = [...result.errors, ...result.warnings].filter(
+      (message) => message.startsWith("Finding 1 explanation"),
+    );
+    expect(findingMessages.some((message) => message.includes("sentence 2"))).toBe(
+      false,
+    );
+    expect(findingMessages.some((message) => message.includes("sentence 3"))).toBe(
+      false,
+    );
+  });
+
+  it("carries the customer-facing jargon check over from plain-en-v1 (adversarial review Finding 7)", () => {
+    const content = reportContent();
+    content.conclusion = "Ini adalah execution surface yang perlu diperiksa.";
+    const result = validateIndonesianReportLanguage(content);
+    expect(result.errors.join(" ")).toContain(
+      "technical wording: execution surface",
+    );
+    expect(indonesianReportLanguageErrors(content).join(" ")).toContain(
+      "execution surface",
+    );
   });
 
   it("retains language-only retry protection for the Indonesian calibration", () => {
@@ -207,62 +237,5 @@ describe("Indonesian report-language calibration (plain-id-v1, founder-approved)
     expect(
       validateIndonesianReportLanguageRevision(original, languageOnly),
     ).toEqual([]);
-  });
-});
-
-describe("deterministic Indonesian label translation (R-40, AC-26)", () => {
-  it("returns the settled report labels verbatim", () => {
-    expect(INDONESIAN_REPORT_LABELS.without_business_name).toBe(
-      "Tanpa menyebut bisnis Anda",
-    );
-    expect(INDONESIAN_REPORT_LABELS.with_business_name).toBe(
-      "Menyebut bisnis Anda",
-    );
-    expect(INDONESIAN_REPORT_LABELS.not_tested).toBe("Tidak diuji");
-    expect(INDONESIAN_REPORT_LABELS.download_pdf).toBe("Download PDF");
-  });
-
-  it("formats headline and count from provided counts without recomputing evidence", () => {
-    expect(indonesianHeadline(8)).toBe(
-      "Bisnis Anda muncul di 8 dari 10 pertanyaan",
-    );
-    expect(indonesianCountLabel(8, 10)).toBe("8/10");
-    expect(indonesianCountLabel(3, 5)).toBe("3/5");
-    expect(indonesianCountLabel(0, 5)).toBe("0/5");
-  });
-
-  it("renders an empty denominator as Tidak diuji, never zero performance", () => {
-    expect(indonesianCountLabel(0, 0)).toBe("Tidak diuji");
-    expect(indonesianCountLabel(5, 0)).toBe("Tidak diuji");
-    expect(indonesianCountLabel(2, -1)).toBe("Tidak diuji");
-  });
-
-  it("maps the run-status set to the settled labels", () => {
-    expect(INDONESIAN_RUN_STATUS_KEYS).toEqual([
-      "pending",
-      "running",
-      "retrying",
-      "completed",
-      "failed",
-    ]);
-    expect(INDONESIAN_RUN_STATUS_LABELS).toEqual({
-      pending: "Menunggu",
-      running: "Sedang diuji",
-      retrying: "Mencoba kembali",
-      completed: "Selesai",
-      failed: "Belum berhasil diuji",
-    });
-    expect(indonesianRunStatusLabel("pending")).toBe("Menunggu");
-    expect(indonesianRunStatusLabel("running")).toBe("Sedang diuji");
-    expect(indonesianRunStatusLabel("retrying")).toBe("Mencoba kembali");
-    expect(indonesianRunStatusLabel("completed")).toBe("Selesai");
-    expect(indonesianRunStatusLabel("failed")).toBe("Belum berhasil diuji");
-  });
-
-  it("translates recorded observation run statuses deterministically", () => {
-    expect(indonesianObservationRunStatus("completed")).toBe("Selesai");
-    expect(indonesianObservationRunStatus("failed")).toBe(
-      "Belum berhasil diuji",
-    );
   });
 });

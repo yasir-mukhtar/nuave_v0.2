@@ -12,6 +12,11 @@ import {
   kopiTamanSenjaMeasures,
   kopiTamanSenjaMethod,
 } from "@/lib/fixture-journey/adapter";
+import {
+  INDONESIAN_REPORT_LABELS,
+  indonesianCountLabel,
+  indonesianHeadline,
+} from "@/lib/audit/report-labels";
 import styles from "./fixture.module.css";
 
 function formatDateWib(iso: string): string {
@@ -56,7 +61,7 @@ function measureLabel(
   assessed: number,
   ready: (assessed: number) => string,
 ): string {
-  if (assessed === 0) return "Tidak diuji";
+  if (assessed === 0) return INDONESIAN_REPORT_LABELS.not_tested;
   return ready(assessed);
 }
 
@@ -196,12 +201,12 @@ export default function FixtureReportView({
           <div className={styles.resultGrid}>
             <div className={styles.mainResult}>
               <strong>
-                {measures.overall.appeared}/{measures.overall.total}
+                {indonesianCountLabel(
+                  measures.overall.appeared,
+                  measures.overall.total,
+                )}
               </strong>
-              <h3>
-                Bisnis Anda muncul di {measures.overall.appeared} dari 10
-                pertanyaan
-              </h3>
+              <h3>{indonesianHeadline(measures.overall.appeared)}</h3>
               <p className={styles.resultNote}>
                 Jumlah ini mencakup pertanyaan yang menyebut nama brand Anda.
                 Dua ukuran di bawah menampilkan kemunculan spontan dan
@@ -211,9 +216,12 @@ export default function FixtureReportView({
             <div className={styles.compositionGrid}>
               <div className={styles.compositionCard}>
                 <strong>
-                  {measures.unbranded.appeared}/{measures.unbranded.total}
+                  {indonesianCountLabel(
+                    measures.unbranded.appeared,
+                    measures.unbranded.total,
+                  )}
                 </strong>
-                <span>Tanpa menyebut bisnis Anda</span>
+                <span>{INDONESIAN_REPORT_LABELS.without_business_name}</span>
                 <p className={styles.resultNote}>
                   Bisnis muncul dalam jawaban tanpa nama disebut pada
                   pertanyaan.
@@ -221,9 +229,12 @@ export default function FixtureReportView({
               </div>
               <div className={styles.compositionCard}>
                 <strong>
-                  {measures.branded.appeared}/{measures.branded.total}
+                  {indonesianCountLabel(
+                    measures.branded.appeared,
+                    measures.branded.total,
+                  )}
                 </strong>
-                <span>Menyebut bisnis Anda</span>
+                <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
                 <p className={styles.resultNote}>
                   Bisnis dikenali saat pertanyaan menyebut namanya.
                 </p>

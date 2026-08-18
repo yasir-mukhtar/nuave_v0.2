@@ -321,4 +321,42 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
       ),
     ).toBe(true);
   });
+
+  it("accepts not_assessed on a completed validation observation's recommendation (the permissive branch)", async () => {
+    // goldenPrompts[6] is NUAVE-BRAND-VALIDATION-01: a validation question,
+    // completed and mentioned, asks for a fact rather than a judgment, so
+    // recommendation: not_assessed is its honest completed value.
+    expect(goldenPrompts[6].category).toBe("validation");
+    const content = goldenReportContent();
+    content.details[6] = {
+      ...content.details[6],
+      recommendation: "not_assessed",
+    };
+    const generate = vi.fn(async () =>
+      result(content, "response-validation-not-assessed"),
+    ) as unknown as ReportGenerator;
+
+    const report = await createValidatedAuditReport(input, generate);
+
+    expect(report.details[6].recommendation).toBe("not_assessed");
+  });
+
+  it("still rejects not_assessed on a completed judgment-category observation's recommendation", async () => {
+    // goldenPrompts[3] is NUAVE-BRAND-SOLUTION-02: a solution_discovery
+    // question, completed and mentioned, asks the model to judge a
+    // recommendation, so not_assessed there must still be rejected.
+    expect(goldenPrompts[3].category).toBe("solution_discovery");
+    const content = goldenReportContent();
+    content.details[3] = {
+      ...content.details[3],
+      recommendation: "not_assessed",
+    };
+    const generate = vi.fn(async () =>
+      result(content, "response-judgment-not-assessed"),
+    ) as unknown as ReportGenerator;
+
+    await expect(createValidatedAuditReport(input, generate)).rejects.toThrow(
+      /completed, so appearance and recommendation must be assessed/,
+    );
+  });
 });
