@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>Direction C — Editorial</title>
+<style>
+  /* Reset and base */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Inter", sans-serif;
+    color: #171717;
+    background: #ffffff;
+    line-height: 1.5;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Header strip */
+  .header {
+    border-bottom: 1px solid #e5e5e0;
+    padding: 12px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: #525252;
+  }
+  .watermark {
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
+  }
+  /* Main container */
+  .container {
+    width: 1440px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+  /* Section */
+  .section {
+    padding: 48px 0;
+    border-bottom: 1px solid #e5e5e0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 24px;
+  }
+  .section:last-child {
+    border-bottom: none;
+  }
+  .section-number {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 33.2px;
+    font-weight: 600;
+    color: #525252;
+    line-height: 1;
+  }
+  .section-caption {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 24px;
+    font-style: italic;
+    grid-column: 1 / -1;
+  }
+  .motion-note {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 16px;
+    grid-column: 1 / -1;
+  }
+  /* Typography */
+  h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 33.2px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-bottom: 16px;
+  }
+  h3 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 24.9px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-bottom: 12px;
+  }
+  p {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .text-muted {
+    color: #525252;
+  }
+  /* Card */
+  .card {
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    margin-bottom: 24px;
+    grid-column: 1 / -1;
+  }
+  /* Input field */
+  .input-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .input {
+    width: 100%;
+    height: 56px;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 0 16px;
+    font-size: 16px;
+    background: #ffffff;
+    color: #171717;
+  }
+  .input::placeholder {
+    color: #9ca3af;
+  }
+  .chip {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f9fafb;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #525252;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  /* Button */
+  .btn {
+    display: inline-block;
+    background: #0d1738;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn:hover {
+    background: #1a2750;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid #e5e5e0;
+    color: #171717;
+  }
+  .btn-outline:hover {
+    background: #f9fafb;
+  }
+  /* Example chip */
+  .example-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #525252;
+    margin-bottom: 16px;
+  }
+  /* Reassurance */
+  .reassurance {
+    font-size: 14px;
+    color: #525252;
+    margin-top: 16px;
+  }
+  /* Badge */
+  .badge {
+    display: inline-block;
+    background: #f9fafb;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #525252;
+    margin-bottom: 16px;
+  }
+  /* Order card */
+  .order-card {
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 24px;
+    grid-column: 1 / -1;
+  }
+  .order-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  /* Status states */
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    grid-column: 1 / -1;
+  }
+  .status-box {
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 24px;
+  }
+  .status-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .status-desc {
+    font-size: 14px;
+    color: #525252;
+    margin-bottom: 16px;
+  }
+  /* Eyebrow */
+  .eyebrow {
+    font-size: 12px;
+    color: #525252;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  /* Identity */
+  .identity {
+    font-size: 14px;
+    color: #525252;
+    margin-bottom: 16px;
+  }
+  /* Headline */
+  .headline {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 44.2px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-bottom: 8px;
+  }
+  .count {
+    font-size: 58.9px;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: #171717;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  /* Composition rows */
+  .composition {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .composition-item {
+    font-size: 16px;
+  }
+  /* Snapshot */
+  .snapshot {
+    border-left: 2px solid #e5e5e0;
+    padding-left: 16px;
+    margin-top: 24px;
+  }
+  .snapshot h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .snapshot p {
+    font-size: 14px;
+    color: #525252;
+  }
+  /* Source chip footnote */
+  .source-chip {
+    display: inline-block;
+    background: #f9fafb;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: #525252;
+    margin-top: 8px;
+  }
+  /* Inline SVG */
+  svg {
+    vertical-align: middle;
+  }
+  /* Font note */
+  .font-note {
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
+    margin-top: 48px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>Direction C — Editorial</h1>
+    <div class="watermark">Konsep arah desain — bukan produk, bukan hasil audit.</div>
+  </div>
+  <div class="container">
+
+    <!-- V1 -->
+    <div class="section">
+      <div class="section-caption">V1 — Landing / discovery</div>
+      <div class="section-number">01</div>
+      <div class="card">
+        <h2>Apakah brand Anda muncul di ChatGPT?</h2>
+        <p class="text-muted">Nuave memberi Anda laporan bagaimana AI menyebut brand Anda dan apa yang bisa diperbaiki.</p>
+        <div class="input-wrapper">
+          <input type="text" class="input" placeholder="Tempel link atau nama akun">
+          <div class="chip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            Situs web
+          </div>
+        </div>
+        <button class="btn">Cek bisnis saya di AI</button>
+        <div class="example-chip">
+          <span>Coba contoh:</span>
+          <span>kopitamansenja.example</span>
+        </div>
+        <p class="reassurance">Hanya informasi publik dari situs web atau Instagram resmi.</p>
+      </div>
+      <div class="motion-note">Entrance: 400ms staggered fade-up; intake card gains a thin scan line on submit.</div>
+    </div>
+
+    <!-- V2 -->
+    <div class="section">
+      <div class="section-caption">V2 — Payment status</div>
+      <div class="section-number">02</div>
+      <div class="order-card">
+        <div class="order-row">
+          <strong>Kopi Taman Senja</strong>
+          <span>Dago, Bandung</span>
+        </div>
+        <div class="order-row">
+          <span>Pesanan NVA-FIKTIF-001</span>
+          <span>Rp99.000</span>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="status-box">
+          <div class="status-title">Pembayaran belum selesai</div>
+          <p class="status-desc">Selesaikan pembayaran sebelum waktu yang tertera berakhir. Audit Anda belum dimulai.</p>
+          <button class="btn-outline" style="margin-right: 8px; margin-bottom: 8px;">Saya sudah membayar — cek lagi</button>
+          <button class="btn-outline">Pilih cara pembayaran lain</button>
+        </div>
+        <div class="status-box">
+          <div class="status-title">Pembayaran berhasil</div>
+          <p class="status-desc">Pesanan audit untuk Kopi Taman Senja sudah aktif. Selanjutnya, periksa informasi bisnis yang akan digunakan untuk menyiapkan pertanyaan audit.</p>
+          <button class="btn">Periksa informasi bisnis</button>
+        </div>
+      </div>
+      <div class="motion-note">Transition: 300ms ease-out status change; success state fades in with a subtle upward slide.</div>
+    </div>
+
+    <!-- V3 -->
+    <div class="section">
+      <div class="section-caption">V3 — Report result moment</div>
+      <div class="section-number">03</div>
+      <div class="card">
+        <div class="eyebrow">AI Visibility Report</div>
+        <div class="identity">Kopi Taman Senja · Dago, Bandung · 17 Agustus 2026 · 10 pertanyaan independen</div>
+        <div class="badge">Contoh fiktif, bukan hasil audit pelanggan</div>
+        <h2 class="headline">Bisnis Anda muncul di 4 dari 10 pertanyaan</h2>
+        <div class="count">4/10</div>
+        <div class="composition">
+          <div class="composition-item">Tanpa menyebut bisnis Anda · 2 dari 5</div>
+          <div class="composition-item">Menyebut bisnis Anda · 2 dari 5</div>
+        </div>
+        <div class="snapshot">
+          <h4>Hasil ini dapat berubah</h4>
+          <p>Laporan ini menunjukkan sepuluh jawaban AI pada tanggal di atas. Model, tanggal, lokasi, atau percakapan berbeda dapat memberi jawaban berbeda.</p>
+        </div>
+        <div style="margin-top: 24px;">
+          <button class="btn">Download PDF</button>
+        </div>
+      </div>
+      <div class="motion-note">Reveal: 600ms count-up animation on the numerator, then denominator fades in; composition rows slide up with 200ms stagger.</div>
+    </div>
+
+  </div>
+  <div class="font-note">Type is approximated with system fonts; the product font is Geist Sans.</div>
+</body>
+</html>
