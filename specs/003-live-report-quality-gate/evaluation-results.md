@@ -98,13 +98,13 @@ reservasi mudah & murah, promo-driven, aplikasi; OMDC — keluarga dengan anak,
 harga transparan, konsep nyaman; Nirmala — dokter umum + dokter gigi umum &
 spesialis satu atap, pasien asuransi.
 
-Comparison-business scoping (confirmed-brief input, per User Flow/03
+Comparison-business scoping (confirmed-brief input, per docs/journey/03
 "comparison-business relevance"): Sozo ↔ SATU Dental Margonda; SATU ↔ Sozo
 Dental Depok; FDC ↔ OMDC Dental Margonda; OMDC ↔ FDC Dental Clinic Margonda
 (all credible: same corridor, comparable category, public source each). Nirmala
 was deliberately left **without a named comparator** (mixed dental + general
 clinic; no single credible match) to exercise the unnamed-comparison fallback
-(User Flow/04 required behaviour).
+(docs/journey/04 required behaviour).
 
 ## 3. Candidates and controls (R-07)
 
@@ -116,7 +116,7 @@ clinic; no single credible match) to exercise the unnamed-comparison fallback
 
 Same minimized confirmed brief (`minimizeIndonesianBrief`, one per clinic,
 frozen in the runner) and the same `question-writer-v1` instruction for both
-models. No web search in the question-writer test, per User Flow/04.
+models. No web search in the question-writer test, per docs/journey/04.
 
 ## 4. Session telemetry (real)
 
@@ -161,7 +161,7 @@ the public site; unsupported scalar/array fields are left empty (no flattery,
 no invented facts); `known_accuracy_questions` records honest uncertainty;
 per-field `evidence` cites the source URL. The one known gap (recorded, not
 changed): the wired extraction instruction (`openai.ts`) still asks for
-"clear, natural English" explanatory text — the User Flow/03 "natural
+"clear, natural English" explanatory text — the docs/journey/03 "natural
 Indonesian writing" measure is not satisfiable on the wired path yet (Spec 003
 known gap; see Findings). The draft's evidence notes came out in Indonesian
 regardless.
@@ -281,7 +281,7 @@ Legend: ✅ pass · ❌ fail · ➖ not measurable (candidate did not run)
 | 6. Measured cost and latency fit the paid preparation allowance | ✅ ≈ USD 0.0031 for 5 packs; 2.9–5.7 s | ➖ (0 tokens, USD 0.00) | ✅ (USD 0.00, ~0 ms) |
 | **Overall** | **PASS — quality gate cleared** | **INCONCLUSIVE — not measured** | **FAIL (expected for a continuity path)** |
 
-Per User Flow/04, when a model clears the gate the product may adopt it for
+Per docs/journey/04, when a model clears the gate the product may adopt it for
 the first reviewed vertical; the recommendation below is for founder approval.
 
 ## 8. Cost accounting (R-11)
@@ -333,7 +333,7 @@ the first reviewed vertical; the recommendation below is for founder approval.
    worst patterns (brief tail-clause repetition; slot-2 grammar artifacts) are
    exactly what Luna's output outperforms (100% vs 18%).
 5. **03 extraction instruction remains English** in the wired path
-   (`openai.ts` and `gemini.ts`); the User Flow/03 "natural Indonesian
+   (`openai.ts` and `gemini.ts`); the docs/journey/03 "natural Indonesian
    writing" measure needs the Indonesian 03 contract work before it is
    testable (known Spec 003 gap — separate from the provider lock).
 6. **`gemini.ts` retries the hard quota error** (429 RESOURCE_EXHAUSTED) 4×
@@ -361,7 +361,7 @@ verdict and Spec 003 VERIFICATION.md.
 ## 11. Files read / written
 
 - Read (no changes): `specs/003-live-report-quality-gate/SPEC.md`,
-  `User Flow/04 - Questions.md`, `User Flow/03 - Business Facts.md`,
+  `docs/journey/04-questions.md`, `docs/journey/03-business-facts.md`,
   `src/lib/audit/questions-id-provider.ts`, `questions-id.ts`, `gemini.ts`,
   `openai.ts`, `telemetry.ts`, `provider.ts`, `types.ts`, `.env.local` (key
   presence only), official public pages of the five clinics.

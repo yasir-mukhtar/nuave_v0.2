@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { IconArrowUpRight } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import { SeverityIcon } from "@/app/(dashboard)/findings/_components/severity-badge";
+import { SeverityIcon } from "@/components/dashboard/severity-badge";
 
 type ActionItem = {
   title: string;

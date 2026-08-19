@@ -24,14 +24,14 @@ import { AUDIT_MODEL, AUDIT_PRICING_VERSION } from "./telemetry";
 //     (Spec 003 R-07..R-10). The provider-lock decision can therefore change
 //     the default without code edits.
 //   - the versioned question-writer instruction (question-writer-v1, the
-//     User Flow/04 "Suggested generation instruction" substance) as the one
+//     docs/journey/04 "Suggested generation instruction" substance) as the one
 //     authoritative instruction source;
 //   - the minimal ten-strings output schema for both providers (R-30);
 //   - exact request builders (asserted in tests) that send ONLY the minimized
 //     confirmed brief — no email, payment information, provider metadata, or
 //     sensitive free text (R-29) — and return no predicted answers, findings,
 //     scores, or report content;
-//   - no web search tool on either provider (User Flow/04);
+//   - no web search tool on either provider (docs/journey/04);
 //   - structured-output parsing; when the provider returns plain text instead,
 //     the boundary in questions-id.ts deterministically parses the numbered
 //     list and otherwise falls back to the deterministic Indonesian pack.
@@ -75,12 +75,12 @@ export const INDONESIAN_QUESTION_GEMINI_ENDPOINT_PREFIX =
 // ---------------------------------------------------------------------------
 
 /**
- * The canonical, versioned question-writer instruction (User Flow/04 —
+ * The canonical, versioned question-writer instruction (docs/journey/04 —
  * "Suggested generation instruction", preserved in substance). Paired with
  * `INDONESIAN_QUESTION_INSTRUCTION_VERSION` ("question-writer-v1") exported by
  * questions-id.ts; the frozen fixture record uses the same version. The
  * minimized confirmed brief follows as structured data, not concatenated
- * prose (User Flow/04). The required output language is id-ID.
+ * prose (docs/journey/04). The required output language is id-ID.
  */
 export const INDONESIAN_QUESTION_WRITER_INSTRUCTION = [
   "You write questions that plausible Indonesian prospective customers would ask an AI assistant about one business category and one exact business.",

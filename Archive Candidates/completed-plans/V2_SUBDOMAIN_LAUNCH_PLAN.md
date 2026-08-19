@@ -23,7 +23,7 @@ auth and brief intake get planned separately.
 1. **Do not clone the `nuave.ai` landing page.** Ship the existing
    `src/app/page.tsx` and its components as they are. No copy rewrite, no Framer
    port, no new sections. The landing-copy drafts in the repo root
-   (`Landing Page Copy*.md`, `LP - Claude/`) are out of scope.
+   (`Archive Candidates/landing-copy-drafts/`, `Archive Candidates/lp-claude-static/`) are out of scope.
 2. **Indonesian only.** `src/messages/id.json` already exists. Remove the English
    locale and the language switcher.
 3. **Landing is public; `/audit` and `/api/audit/*` are gated** by a single

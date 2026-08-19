@@ -33,14 +33,14 @@ Read in order:
 7. `specs/001-simulated-journey-shell/SPEC.md` — its post-approval note about
    aligning the fixture to the new sequence, plus its structure as a format
    reference
-8. `docs/drafts/VOICE-v2-candidate.md` — the voice/writing contract candidate
+8. `Archive Candidates/superseded-voice/voice-v2-candidate-2026-08-17.md` — the voice/writing contract candidate
    that `docs/VOICE.md` will be promoted from
 9. `docs/drafts/00-journey-fixtures.md` — the frozen 10/10 fixture set to
    reference (itself a draft pending founder approval; see Open questions)
 10. `docs/AUDIT.md` — **Question rules**, **Plain-language writing standard**,
     **Report acceptance checklist**, and **Data boundaries**
-11. `User Flow/03 - Business Facts.md`, `User Flow/04 - Questions.md`,
-    `User Flow/05 - Audit Run.md`, and `User Flow/06 - Audit Report.md` — the
+11. `docs/journey/03-business-facts.md`, `docs/journey/04-questions.md`,
+    `docs/journey/05-audit-run.md`, and `docs/journey/06-audit-report.md` — the
     language and data contracts this spec finalizes
 12. Code to ground the contract changes (read-only):
     `src/lib/audit/report-language.ts`, `src/lib/audit/questions.ts`,
@@ -85,7 +85,7 @@ superseded plans, or the legacy repository. Do not read `node_modules/`.
 - The audit test baseline is currently **208 passing tests in `src/lib/audit`**
   (verified 2026-08-17). These tests pin English deterministic generation,
   English report copy, evidence, provenance, and cost guardrails.
-- `docs/drafts/VOICE-v2-candidate.md` is a complete, reviewed writing-contract
+- `Archive Candidates/superseded-voice/voice-v2-candidate-2026-08-17.md` is a complete, reviewed writing-contract
   candidate whose terminology table encodes the founder's settled labels and
   naming defaults, but it is not yet promoted to canonical `docs/VOICE.md`,
   and the candidate's findings (F1–F15) document live copy that contradicts
@@ -149,7 +149,7 @@ paid provider call is approved in this phase.
   `src/lib/audit/fixtures/report-golden.ts` stays protected and unmodified.
 - Translate the fixture journey copy to Indonesian per the promoted voice
   contract, with the settled labels verbatim.
-- Promote `docs/VOICE.md` from `docs/drafts/VOICE-v2-candidate.md` applying
+- Promote `docs/VOICE.md` from `Archive Candidates/superseded-voice/voice-v2-candidate-2026-08-17.md` applying
   the settled naming defaults, and gate customer copy on its approval.
 - Change customer-facing locale contracts from `en-US` to `id-ID`; keep
   English only for exact source, provider, model, or official business text
@@ -231,7 +231,7 @@ The fixture journey exists only when the server-controlled preview setting
 customer-selectable query parameter or browser toggle. When disabled, the
 simulated payment, fixture facts, questions, run, and report cannot be reached
 through the public interface. Per the founder's standing decision (recorded in
-`docs/HANDOFF_LP_REPLACE.md` and asserted by the Spec 001 e2e suite), the live
+`Archive Candidates/completed-plans/HANDOFF_LP_REPLACE.md` and asserted by the Spec 001 e2e suite), the live
 landing page carries no fixture CTA; the fixture journey is entered directly at
 `/audit/fixture`. The fixture intake presents the settled CTA label
 **Cek bisnis saya di AI** on its own fictional-preview-identified action, and
@@ -426,11 +426,11 @@ decorative progress animation.
 ### Voice and locale contract
 
 - **R-24 — Voice promotion:** `docs/VOICE.md` is created from
-  `docs/drafts/VOICE-v2-candidate.md` applying the settled naming defaults
+  `Archive Candidates/superseded-voice/voice-v2-candidate-2026-08-17.md` applying the settled naming defaults
   (R-25), and is founder-approved before any customer copy is implemented from
   it. It governs customer vocabulary, tone, numerals, dates, currency,
   sentence-length rules, and prohibited patterns across questions, report,
-  and journey copy. It supersedes `docs/drafts/VOICE.md` (v1) as the canonical
+  and journey copy. It supersedes `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md` (v1) as the canonical
   customer-facing writing guide.
 - **R-25 — Naming defaults:** Use **brand Anda** everywhere except the five
   settled labels that keep **bisnis Anda**: **Tanpa menyebut bisnis Anda**,
@@ -778,7 +778,7 @@ draft and no answer is invented here.
    Indonesian handoff records (facts/questions/evidence) replace or sit beside
    the current English `BusinessBrief` / `PromptPack` / `AuditObservation`
    types is an orchestrator decision left open by `docs/drafts/00-journey-
-   fixtures.md` and `User Flow/04`. This spec requires the resolution to be
+   fixtures.md` and `docs/journey/04`. This spec requires the resolution to be
    additive and versioned so the 208-test baseline stays green.
 
 ## Implementation notes

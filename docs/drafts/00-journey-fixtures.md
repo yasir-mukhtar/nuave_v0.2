@@ -64,12 +64,12 @@ NVA-FIKTIF-001.facts.v1    (03 → 04)
 
 The canonical default for these fixtures is a **5 / 5** composition — five
 **Tanpa menyebut bisnis Anda** questions and five **Menyebut bisnis Anda**
-questions — even though the fictional sample report in `User Flow/06 - Audit
-Report.md` demonstrates a **6 / 4** composition.
+questions — even though the fictional sample report in
+`docs/journey/06-audit-report.md` demonstrates a **6 / 4** composition.
 
 Rationale (documented so no later module "corrects" it back):
 
-1. `User Flow/04 - Questions.md`, settled product decision **#4**, states the
+1. `docs/journey/04-questions.md`, settled product decision **#4**, states the
    suggested pack "starts with five questions that do not name the business and
    five that do." This is the canonical *default suggestion*.
 2. `docs/JOURNEY_CONTRACT.md` cross-module invariant **#8** and the report
@@ -90,7 +90,7 @@ they are deliberately out of scope for the frozen default fixtures (see
 
 ## Fixture A — 03 → 04 business facts
 
-Matching `User Flow/03 - Business Facts.md` required fields and the
+Matching `docs/journey/03-business-facts.md` required fields and the
 `03 → 04` handoff fields (confirmed fact version, exact business and scope,
 source/provenance status, customer confirmation, warnings).
 
@@ -215,7 +215,7 @@ Provenance label enum (from `03`): `found_website`, `found_google_maps`,
 
 ## Fixture B — 04 → 05 question pack
 
-Matching `User Flow/04 - Questions.md` and the `04 → 05` handoff fields
+Matching `docs/journey/04-questions.md` and the `04 → 05` handoff fields
 (approved question-pack version, exact ordered ten strings, final name/no-name
 classification, edit record, approval timestamp).
 
@@ -314,7 +314,7 @@ from the final text, never from the original suggestion.
 
 ## Fixture C — 05 → 06 evidence set (10/10 evaluable)
 
-Matching `User Flow/05 - Audit Run.md` and the `05 → 06` handoff fields (frozen
+Matching `docs/journey/05-audit-run.md` and the `05 → 06` handoff fields (frozen
 evidence-set version, ten selected evaluable observations, every attempt,
 method/version record, sources, completion timestamp, recorded support recovery
 when used). **All ten observations are evaluable — there is no failed test** —
@@ -679,7 +679,7 @@ pertanyaan**, **Tanpa menyebut bisnis Anda** 3/5, **Menyebut bisnis Anda**
 ## Reconciliation against current code (not a code change)
 
 These fixtures define the **new Indonesian contract** fields from the
-`User Flow` plans. They do **not** conform one-to-one to the current English
+`docs/journey` plans. They do **not** conform one-to-one to the current English
 schema in `src/lib/audit/types.ts`:
 
 - Current `BusinessBrief` requires `verified_competitor` (non-optional) and

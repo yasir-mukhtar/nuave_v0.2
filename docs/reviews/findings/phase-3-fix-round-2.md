@@ -7,7 +7,7 @@ pipeline"), working tree clean, branch `fix/phase-1-adversarial-review`.
 **Reviewed:** 2026-08-18.
 **Verdict: Phase 3 is NOT done.** The Indonesian report path is genuinely
 connected and a fresh live run succeeded — real progress. But two of the four
-Critical findings from `Adversary Review/Phase 3.md` are still open, four
+Critical findings from `docs/reviews/findings/phase-3-adversarial-review.md` are still open, four
 Majors are untouched, and the new `ReportView.tsx` prints a wrong number on the
 report's headline grid.
 

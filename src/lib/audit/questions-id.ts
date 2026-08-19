@@ -60,7 +60,7 @@ export const INDONESIAN_CLASSIFICATION_LABELS: Record<
 
 /**
  * Light disclosure used only when the fallback materially affects the
- * customer's task (User Flow/04 — Resilient fallback). Provider errors, JSON
+ * customer's task (docs/journey/04 — Resilient fallback). Provider errors, JSON
  * terminology, retry counts, and internal model names never reach the
  * customer; they stay in operational telemetry.
  */
@@ -351,7 +351,7 @@ export type IndonesianSlotCategory =
 
 /** Code-owned slot semantics: the ten slot ids, their coverage role, and the
  * default suggestion's name/no-name posture. The model authors only the ten
- * strings; code owns this metadata (User Flow/04 — Minimal model-output
+ * strings; code owns this metadata (docs/journey/04 — Minimal model-output
  * contract). */
 export const INDONESIAN_SLOT_MATRIX: readonly {
   order: number;

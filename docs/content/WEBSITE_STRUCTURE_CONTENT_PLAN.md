@@ -41,9 +41,9 @@ the order action once those facts are approved. Private audit, checkout, and
 report routes are product surfaces, not additional marketing pages. Keep them
 out of the public sitemap where appropriate and protect reports from indexing.
 
-The current V2 landing implementation under `LP-remote` has only `/`. Its footer
+The current V2 landing implementation under `Archive Candidates/lp-remote` has only `/`. Its footer
 already anticipates `/terms`, `/privacy`, and `/support`, but those destinations
-do not exist there yet. `LP-remote/src/app/sitemap.ts` currently lists only the
+do not exist there yet. `Archive Candidates/lp-remote/src/app/sitemap.ts` currently lists only the
 root page. Implementation should add the approved public pages to the sitemap
 and should not expose private order or report URLs.
 
@@ -80,7 +80,7 @@ underlying assessment is complete and the wording is approved.
 
 ## Landing page content order
 
-`Landing Page Copy.md` is the working copy source and is being revised
+`docs/content/landing-copy.md` is the working copy source and is being revised
 separately. Use it as the copy input; do not rewrite it as part of this plan.
 The page assembly should give each section one responsibility:
 
@@ -125,10 +125,10 @@ implementation agent:
 
 | Agent scope | Handoff and content file |
 |---|---|
-| FAQ | [`website-content/FAQ.md`](./website-content/FAQ.md) |
-| Terms | [`website-content/TERMS.md`](./website-content/TERMS.md) |
-| Privacy/data | [`website-content/PRIVACY.md`](./website-content/PRIVACY.md) |
-| Contact/support | [`website-content/SUPPORT.md`](./website-content/SUPPORT.md) |
+| FAQ | [`website/FAQ.md`](./website/FAQ.md) |
+| Terms | [`website/TERMS.md`](./website/TERMS.md) |
+| Privacy/data | [`website/PRIVACY.md`](./website/PRIVACY.md) |
+| Contact/support | [`website/SUPPORT.md`](./website/SUPPORT.md) |
 
 The FAQ, terms, and privacy files contain full founder drafts, not just outlines.
 The support file also contains a small finished draft so its implementation agent
@@ -181,7 +181,7 @@ page. The page should cover:
 10. **Correction/failure/cancellation/refund:** material nonconformity,
     correction window, incomplete run, rerun, cancellation cutoff, duplicate
     payment, refund amount/timing/method, and buyer error. Avoid “all sales final”;
-    use the narrow, fair remedy proposed in `website-content/TERMS.md`.
+    use the narrow, fair remedy proposed in `website/TERMS.md`.
 11. **Method limits:** recorded-time observations, answer variability, source
     limits, no permanent ranking, causal claim, forecast, or guaranteed outcome.
 12. **Report use/IP:** buyer use, Nuave's pre-existing method/materials, source

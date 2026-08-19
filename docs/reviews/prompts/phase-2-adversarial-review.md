@@ -58,8 +58,8 @@ contract" (also read §4 touchpoints, §5 state model, §8 language quality):
      `nuave.fixtureJourney.v3`, Indonesian copy.
    - `tests/e2e/**` — rewritten browser suite.
 5. Plan context: `docs/END_TO_END_PLAN.md`, `docs/JOURNEY_CONTRACT.md`,
-   `docs/AUDIT.md`, `User Flow/04 - Questions.md`, `User Flow/06 - Audit
-   Report.md` (only as context for what the spec must satisfy).
+   `docs/AUDIT.md`, `docs/journey/04-questions.md`,
+   `docs/journey/06-audit-report.md` (only as context for what the spec must satisfy).
 
 ## Known tensions to scrutinize (not a closed list)
 

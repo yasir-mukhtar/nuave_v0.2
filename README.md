@@ -9,10 +9,12 @@ The audited business is the customer's own business, not a client's. Nuave is
 one automated path from intake form to downloadable report, not a monitoring
 dashboard or subscription platform.
 
-The current objective in [`docs/NOW.md`](./docs/NOW.md) is to make the complete
-journey reviewable with deterministic fixtures and a clearly simulated checkout,
-then replace its boundaries one at a time. Real payment, durable delivery, and
-design polish remain gated later in the build order.
+The complete journey is reviewable end to end with deterministic fixtures and a
+clearly simulated checkout, and `https://v2.nuave.ai` is live behind an access
+code. The current objective in [`docs/NOW.md`](./docs/NOW.md) is to connect the
+live engine, produce one real Indonesian report, and put it through the
+report-quality gate. Real payment, durable delivery, and design polish remain
+gated later in the build order.
 
 ## Start here
 
@@ -23,13 +25,16 @@ design polish remain gated later in the build order.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Active fixture-journey specification | [`specs/001-simulated-journey-shell/SPEC.md`](./specs/001-simulated-journey-shell/SPEC.md) |
+| Active specification | [`specs/003-live-report-quality-gate/SPEC.md`](./specs/003-live-report-quality-gate/SPEC.md) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
 | Specification lifecycle and active packages | [`specs/README.md`](./specs/README.md) |
 | How to generate a prompt pack for one business | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
 | Dated product decisions | [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) |
+| Indonesian writing contract for customer copy | [`docs/VOICE.md`](./docs/VOICE.md) |
+| What each customer touchpoint must do | [`docs/journey/`](./docs/journey/) |
+| Landing, Order Preview, and website page copy | [`docs/content/`](./docs/content/) |
 
 Earlier vertical-specific material and experiments are retained as
 non-authoritative history under [`archive/`](./archive/), including the former
@@ -37,6 +42,12 @@ dental prompt context in
 [`archive/prompt-contexts/`](./archive/prompt-contexts/) and `EXP-001` in
 [`archive/experiments/`](./archive/experiments/). They are not part of the
 current direction and should not be loaded for current work.
+
+[`Archive Candidates/`](./Archive%20Candidates/) is a staging area for material
+that looks superseded or completed but has not yet been folded into `archive/`.
+Its [`README.md`](./Archive%20Candidates/README.md) records where each item came
+from and which decision it is waiting on. Nothing there is authoritative or
+active either.
 
 ## Authority chain
 

@@ -539,7 +539,7 @@ function captureFetch(calls: CapturedCall[]): typeof fetch {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Scoring helpers (mechanical parts of the User Flow/04 rubric)
+// 5. Scoring helpers (mechanical parts of the docs/journey/04-questions.md rubric)
 // ---------------------------------------------------------------------------
 
 function packMechanicalScore(pack: IndonesianQuestionPackSuggestion, brief: MinimizedIndonesianBrief) {

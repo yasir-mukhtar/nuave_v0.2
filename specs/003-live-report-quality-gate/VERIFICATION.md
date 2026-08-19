@@ -4,9 +4,9 @@
 > the fix-round-2 and fix-round-3 adversarial reviews are fixed and tested; the
 > live run driven through the actual product interface, and the founder
 > quality-gate review it unlocks (R-31/R-32, AC-24/AC-26), have not occurred.**
-> Reviewer: Adversarial review (`Adversary Review/Phase 3.md`,
-> `Adversary Review/Phase 3 - Fix Round 2.md`,
-> `Adversary Review/Phase 3 - Fix Round 3.md`) + this fix pass
+> Reviewer: Adversarial review (`docs/reviews/findings/phase-3-adversarial-review.md`,
+> `docs/reviews/findings/phase-3-fix-round-2.md`,
+> `docs/reviews/findings/phase-3-fix-round-3.md`) + this fix pass
 > Date: 2026-08-19 (round-3 fix pass; round-2 pass recorded 2026-08-18)
 > Spec version or commit: `specs/003-live-report-quality-gate/SPEC.md`, status
 > **Approved — implementation in progress** (founder-approved 2026-08-17)
@@ -32,7 +32,7 @@ report the product itself rendered.
 
 ## Findings fixed in this pass, with reproducing tests
 
-All findings below are from `Adversary Review/Phase 3 - Fix Round 2.md`,
+All findings below are from `docs/reviews/findings/phase-3-fix-round-2.md`,
 reviewed at `c18fe8e`.
 
 | # | Finding | Severity | Fix | Reproducing test |
@@ -52,7 +52,7 @@ reviewed at `c18fe8e`.
 
 ## Round-3 findings fixed in this pass, with reproducing tests
 
-All findings below are from `Adversary Review/Phase 3 - Fix Round 3.md`,
+All findings below are from `docs/reviews/findings/phase-3-fix-round-3.md`,
 reviewed at `6c5b8dd`. Every reproducing test was checked to **fail** against
 the reverted code before being kept; the specific revert is named in each row.
 

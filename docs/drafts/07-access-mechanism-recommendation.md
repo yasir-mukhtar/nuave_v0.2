@@ -3,7 +3,7 @@
 > Status: **Draft recommendation for founder decision — not approved, not implemented**
 > Owner: Founder (through the orchestrator)
 > Prepared: 2026-08-17 · from [`../briefs/REPORT_ACCESS_RECOVERY.md`](../briefs/REPORT_ACCESS_RECOVERY.md)
-> Reads: AGENTS.md, README.md, NOW.md, PRODUCT.md, JOURNEY_CONTRACT.md, END_TO_END_PLAN.md (delivery / return-recovery / private-access / durable-delivery), User Flow/06 - Audit Report.md (delivery + ownership)
+> Reads: AGENTS.md, README.md, NOW.md, PRODUCT.md, JOURNEY_CONTRACT.md, END_TO_END_PLAN.md (delivery / return-recovery / private-access / durable-delivery), docs/journey/06-audit-report.md (delivery + ownership)
 
 This document recommends the smallest private-access mechanism for one paying
 customer to reliably reach one audit report. It makes **no** implementation,

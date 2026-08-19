@@ -37,3 +37,6 @@ blob-report/
 
 # Local-only access codes (never commit)
 .secrets/
+
+# Next.js generated type shim (regenerated on every build)
+next-env.d.ts

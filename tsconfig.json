@@ -28,5 +28,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "archive"]
+  "exclude": ["node_modules", "archive", "Archive Candidates"]
 }

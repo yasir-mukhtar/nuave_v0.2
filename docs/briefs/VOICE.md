@@ -2,7 +2,7 @@
 
 > Status: **Approved brief**
 > Owner: Orchestrator
-> Output: `docs/drafts/VOICE.md`
+> Output: `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md`
 
 ## Objective
 
@@ -128,7 +128,7 @@ The candidate must be:
 
 ## Deliverable
 
-Write one complete candidate to `docs/drafts/VOICE.md`. Do not modify canonical
+Write one complete candidate to `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md`. Do not modify canonical
 documents, application copy, or runtime language rules. End with no unresolved
 strategic question; surface only issues that genuinely require founder review.
 

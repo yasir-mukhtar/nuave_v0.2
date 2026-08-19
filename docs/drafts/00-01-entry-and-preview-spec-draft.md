@@ -19,15 +19,15 @@ implemented, committed, or promoted until it is reviewed, revised, and marked
 Read in order:
 
 1. `AGENTS.md`
-2. `User Flow/01 - Order Preview.md` (working product plan for the preview touchpoint)
-3. `Preview.md` (customer-facing page copy and section order)
-4. `Landing Page Copy.md` (landing copy source)
-5. `docs/WEBSITE_STRUCTURE_CONTENT_PLAN.md`
-6. `docs/HANDOFF_LP_REPLACE.md`
-7. `docs/website-content/FAQ.md`, `docs/website-content/TERMS.md`,
-   `docs/website-content/PRIVACY.md`, `docs/website-content/SUPPORT.md`
+2. `docs/journey/01-order-preview.md` (working product plan for the preview touchpoint)
+3. `docs/content/order-preview-copy.md` (customer-facing page copy and section order)
+4. `docs/content/landing-copy.md` (landing copy source)
+5. `docs/content/WEBSITE_STRUCTURE_CONTENT_PLAN.md`
+6. `Archive Candidates/completed-plans/HANDOFF_LP_REPLACE.md`
+7. `docs/content/website/FAQ.md`, `docs/content/website/TERMS.md`,
+   `docs/content/website/PRIVACY.md`, `docs/content/website/SUPPORT.md`
 8. `docs/JOURNEY_CONTRACT.md` (module ownership, 00/01 rows, and the 01→02 handoff fields)
-9. `src/app/page.tsx` and `LP-remote/src/app/page.tsx` (current landing implementation state, read-only)
+9. `src/app/page.tsx` and `Archive Candidates/lp-remote/src/app/page.tsx` (current landing implementation state, read-only)
 
 Do not load: `archive/`, `node_modules/`, or the later-module plans (02–07)
 beyond the handoff fields named in `JOURNEY_CONTRACT.md`.
@@ -41,7 +41,7 @@ found **the correct** business, (b) understand what one paid audit includes,
 and (c) decide whether to pay — without Nuave running a personalized AI audit
 or incurring avoidable language-model cost **before** verified payment.
 
-The current landing (`LP-remote` / `src/app/page.tsx`) explains the offer but
+The current landing (`Archive Candidates/lp-remote` / `src/app/page.tsx`) explains the offer but
 does not yet collect a business source, render a preview, or form an order
 summary. There is no bounded implementation contract for the entry and preview
 touchpoints.
@@ -141,7 +141,7 @@ Recovery states owned by this touchpoint: `preview_attention` (ambiguous or
 unreadable identity) and `quote_expired` (the 30-day quote lapsed before
 payment).
 
-### Page structure (in `Preview.md` order)
+### Page structure (in `docs/content/order-preview-copy.md` order)
 
 1. **Business identity** — “Kami menemukan bisnis Anda,” then logo, name, short
    description, source, and a “Bukan bisnis Anda?” correction path.
@@ -288,13 +288,13 @@ mutate only the state it owns.
 - Cost boundary: only metadata resolution (website/Maps/Instagram) is permitted;
   no language-model or audit-model spend occurs before verified payment.
 - Retention defaults for abandoned intake and order inputs are governed by
-  `docs/website-content/PRIVACY.md`; this touchpoint does not invent a value.
+  `docs/content/website/PRIVACY.md`; this touchpoint does not invent a value.
 
 ---
 
 ## Acceptance criteria
 
-Mirrors the 12 criteria in `User Flow/01 - Order Preview.md`:
+Mirrors the 12 criteria in `docs/journey/01-order-preview.md`:
 
 - **AC-01:** Given a supported business link, when the visitor submits it, then a
   best-effort identity preview renders without any language-model or audit call.
@@ -350,7 +350,7 @@ checkout (already recorded in the source docs, listed here for completeness):
 - Whether wrong content in an already-delivered report needs a separate
   correction-submission and corrected-report notification workflow.
 - **Reconcile the entry CTA wording**: the Module 01 plan accepts “Cek bisnis
-  saya di AI,” while `Landing Page Copy.md` and the website plan still say
+  saya di AI,” while `docs/content/landing-copy.md` and the website plan still say
   “Audit bisnis saya.” One canonical label should be chosen.
 
 ---

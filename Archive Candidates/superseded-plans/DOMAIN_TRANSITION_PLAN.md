@@ -213,7 +213,7 @@ v1 lives at `monitor.nuave.ai`.
 
 Do not do these as part of this task:
 
-- rewriting landing copy, or merging any `Landing Page Copy*.md` draft
+- rewriting landing copy, or merging any `Archive Candidates/landing-copy-drafts/` draft
 - public rate limiting, accounts, payment, or checkout
 - changing v1 features, database, or design
 - deleting the v1 repo, project, or data

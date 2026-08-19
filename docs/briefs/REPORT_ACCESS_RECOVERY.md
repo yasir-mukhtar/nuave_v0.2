@@ -22,7 +22,7 @@ Start by reading:
 5. `docs/JOURNEY_CONTRACT.md`
 6. `docs/END_TO_END_PLAN.md`, only the report delivery, return/recovery,
    private-access, and durable-delivery sections
-7. `User Flow/06 - Audit Report.md`, only the delivery and ownership sections
+7. `docs/journey/06-audit-report.md`, only the delivery and ownership sections
 
 Do not read `archive/` or the full historical planning set unless the founder
 names a specific file.

@@ -43,17 +43,17 @@ Read in order:
    baseline 274 + 82 + 33 — see the baseline correction note under "Observed
    evidence")
 8. `specs/README.md` (spec lifecycle) and `docs/templates/SPEC.md` (structure)
-9. `User Flow/05 - Audit Run.md` — settled production decisions (one provider
+9. `docs/journey/05-audit-run.md` — settled production decisions (one provider
    per audit; OpenAI Responses API GPT-5.6 Luna web search low reasoning;
    neutral Indonesian instruction; retry contract 1+2; ten-of-ten gate;
    discovery contamination; evidence record; sequential prototype) and the
    acceptance criteria
-10. `User Flow/06 - Audit Report.md` — report content hierarchy, result and
+10. `docs/journey/06-audit-report.md` — report content hierarchy, result and
     denominator contract, and the acceptance criteria (settled-decision and
     acceptance sections)
-11. `User Flow/04 - Questions.md` — **Provider and prompt-instruction
+11. `docs/journey/04-questions.md` — **Provider and prompt-instruction
     evaluation** and **Practical quality gate** (the five-business evaluation)
-12. `User Flow/03 - Business Facts.md` — **Recommended engine and evaluation
+12. `docs/journey/03-business-facts.md` — **Recommended engine and evaluation
     gate** (Gemini 3.5 Flash-Lite candidate, GPT-5.6 Luna benchmark, five-
     business evaluation)
 13. `docs/AUDIT.md` — Measurement statement, Question rules, Capture, Verify
@@ -108,12 +108,12 @@ repository and unpublished unless a later decision changes that.
   one streaming HTTP request with sequential concurrency 1 and one attempt per
   question. `AuditStages.tsx` offers to rerun all ten after an interruption
   rather than retrying only failed questions. There is no retry policy.
-- The settled retry contract (decision log 2026-08-17; User Flow/05) is one
+- The settled retry contract (decision log 2026-08-17; docs/journey/05) is one
   initial attempt plus up to two automatic technical retries per question,
   targeted, never rerunning a valid result. The current observation stage
   ceiling of ten calls (`AUDIT_STAGE_CALL_LIMITS.observation = 10` in
   `telemetry.ts`) cannot absorb any retry without an explicit revision, and
-  User Flow/05 records this as a known conflict.
+  docs/journey/05 records this as a known conflict.
 - The settled report requires one to five evidence-backed actions; the report
   synthesis contract still caps priorities at three (`openai.ts`: "Return no
   more than three priorities"), and Spec 002's verification records this as a
@@ -121,7 +121,7 @@ repository and unpublished unless a later decision changes that.
 - The Indonesian question-generation boundary (`questions-id.ts`) is built and
   tested with a stubbed provider (Spec 002 R-29…R-37) but is not wired to a
   live call. The 03 extraction provider and the 04 generation provider are not
-  locked; User Flow/03 and /04 require a five-business evaluation before
+  locked; docs/journey/03 and /04 require a five-business evaluation before
   locking them.
 - Cumulative accounted private-run spend is USD 0.4357, leaving USD 4.5643
   under the USD 5 per-session ceiling (`docs/NOW.md`). No additional paid
@@ -190,7 +190,7 @@ shown to any customer outside this repository.
 - Keep explicit live/fixture separation: live behavior is selected by
   server-controlled configuration only; there is never a public live/fixture
   switch, query parameter, or client toggle.
-- Run the five-business provider evaluation defined by User Flow/03 and /04
+- Run the five-business provider evaluation defined by docs/journey/03 and /04
   (candidates Gemini 3.5 Flash-Lite vs GPT-5.6 Luna vs the deterministic
   Indonesian fallback) as the prerequisite for locking the 03/04 providers.
 - Make the live run browser-bound truthfully: state the browser-close caveat;
@@ -363,8 +363,8 @@ during review rather than claimed in this phase.
   implementation candidate), GPT-5.6 Luna (quality benchmark), and the
   deterministic Indonesian fallback (04 only), using the same minimized
   inputs and the same versioned generation guidance for both models, with no
-  web search in the question-writer test (User Flow/04).
-- **R-08 — Review rubric:** Score every pack record against the User Flow/04
+  web search in the question-writer test (docs/journey/04).
+- **R-08 — Review rubric:** Score every pack record against the docs/journey/04
   rubric: ten questions returned and parsed; default five/five name/no-name
   composition; category and location relevance; plausible customer decision;
   Indonesian naturalness; meaningful distinctness; unsupported premises;
@@ -372,7 +372,7 @@ during review rather than claimed in this phase.
   fallback; accepted unchanged / light edit / substantive replacement counts;
   latency; and total provider cost.
 - **R-09 — Practical quality gate:** A candidate is acceptable only when the
-  User Flow/04 practical quality gate passes: all five packs recover to ten
+  docs/journey/04 practical quality gate passes: all five packs recover to ten
   executable questions without manual technical repair; no discovery question
   leaks audited or comparison identity; no material unsupported premise or
   prohibited request; at least eight of ten questions in at least four of five
@@ -405,7 +405,7 @@ during review rather than claimed in this phase.
   as recovery, and cannot appear in the run record as production. Startup or
   deployment fails closed when the intended production credential is missing.
 - **R-14 — Neutral Indonesian instruction:** The observation request carries
-  the neutral Indonesian instruction (User Flow/05 substance): answer
+  the neutral Indonesian instruction (docs/journey/05 substance): answer
   naturally in Indonesian, use web search, do not discuss Nuave/audit/scoring,
   do not favor any business, state uncertainty when public information is
   incomplete or conflicting. The current English observation instruction is
@@ -451,7 +451,7 @@ during review rather than claimed in this phase.
   and whether the attempt was automatic. The evidence export and method record
   reflect exactly what occurred.
 - **R-21 — Sequential execution:** The private prototype stays sequential
-  (concurrency one) in this phase, per User Flow/05; concurrency two arrives
+  (concurrency one) in this phase, per docs/journey/05; concurrency two arrives
   with durable jobs in Phase 4.
 
 ### Variance re-ask
@@ -652,7 +652,7 @@ create an order or entitlement, or imply that a customer remedy is owed.
   same versioned generation guidance with no web search in the question-writer
   test, and the deterministic Indonesian fallback is scored alongside them.
 - **AC-08 — Practical quality gate verdict:** Given the evaluation completes,
-  then each pack record is scored against the User Flow/04 rubric and the
+  then each pack record is scored against the docs/journey/04 rubric and the
   practical quality gate verdict (pass/fail per candidate, with counts) is
   recorded; if neither model clears the gate, the recorded next step is to
   keep the product to the first reviewed vertical and rerun after improving

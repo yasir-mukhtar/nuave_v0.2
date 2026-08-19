@@ -74,9 +74,9 @@ verification, §10 failure/recovery, §11 risks, §13 founder decisions):
    `docs/AUDIT.md`, `docs/DECISION_LOG.md` (2026-08-17 rows: durable
    one-provider run with 1+2 retry policy; one to five actions; canonical
    journey order; direct appearance count; 10/10 evaluable with
-   substantive-refusal rules), `User Flow/03 - Business Facts.md`,
-   `User Flow/04 - Questions.md`, `User Flow/05 - Audit Run.md`,
-   `User Flow/06 - Audit Report.md`.
+   substantive-refusal rules), `docs/journey/03-business-facts.md`,
+   `docs/journey/04-questions.md`, `docs/journey/05-audit-run.md`,
+   `docs/journey/06-audit-report.md`.
 
 ## Known tensions to scrutinize (not a closed list)
 
@@ -95,7 +95,7 @@ verification, §10 failure/recovery, §11 risks, §13 founder decisions):
   is the comparison design fair (same minimized inputs, same versioned
   guidance, no web search in the question-writer test, fallback scored
   alongside)? Is the "practical quality gate cleared" claim fully supported
-  by the rubric in `User Flow/04`?
+  by the rubric in `docs/journey/04`?
 - **Live-path wiring vs the spec's own gaps.** The evaluation record itself
   lists: 03 extraction instruction still English (`openai.ts`/`gemini.ts`);
   `gemini.ts` retries hard quota errors 4× with backoff; the wired

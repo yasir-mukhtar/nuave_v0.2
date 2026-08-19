@@ -65,7 +65,7 @@ Preview -> Payment -> Business Facts -> Questions -> Audit -> Report
   `06 — Audit Report`. Do not celebrate processing completion because the
   report may contain unfavorable evidence.
 ### Audit report page
-- Governed by [`User Flow/06 - Audit Report.md`](./User%20Flow/06%20-%20Audit%20Report.md).
+- Governed by [`06-audit-report.md`](./06-audit-report.md).
 - Shows the direct overall appearance count and score out of ten, for example
   **4/10**, then separates **Tanpa menyebut bisnis Anda** from **Menyebut bisnis
   Anda** so the overall count is not mistaken for spontaneous discovery.

@@ -4,13 +4,13 @@
 > Approved: 2026-08-17 (founder, via Spec 002 R-24/R-25)
 > Version: writing-standard-v2 (Indonesian) · Created: 2026-08-17
 > Owner: Orchestrator
-> Supersedes: `docs/drafts/VOICE.md` (v1 draft)
+> Supersedes: `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md` (v1 draft)
 >
 > This document is the canonical Indonesian writing contract for
 > customer-facing copy. It encodes the founder's settled terminology and
 > naming defaults (Spec 002 R-24/R-25) and the mechanical resolutions from
-> [`docs/reviews/002-voice-candidate-review.md`](reviews/002-voice-candidate-review.md).
-> It supersedes `docs/drafts/VOICE.md` (v1, the general voice guide) as the
+> [`docs/reviews/findings/voice-candidate-review.md`](reviews/findings/voice-candidate-review.md).
+> It supersedes `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md` (v1, the general voice guide) as the
 > customer-facing writing guide. It is the source a future runtime
 > `report-language` Indonesian contract (writing-standard version +
 > `nuave-report-v3`) should compile from.

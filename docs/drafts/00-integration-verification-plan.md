@@ -23,7 +23,7 @@ The product contract is split across [`docs/END_TO_END_PLAN.md`](../END_TO_END_P
 (verification strategy, failure-and-recovery matrix, cross-cutting quality
 requirements), [`docs/JOURNEY_CONTRACT.md`](../JOURNEY_CONTRACT.md) (12
 cross-module invariants, module ownership and handoffs), and six touchpoint
-plans under `User Flow/01`–`06`, each with numbered acceptance criteria (ACs).
+plans under `docs/journey/01`–`06`, each with numbered acceptance criteria (ACs).
 This plan maps **every AC** and the **18 integration checks** to concrete test
 layers and names the human gates where judgment is the only valid gate.
 
@@ -407,7 +407,7 @@ checks are ordered by where a customer meets them, not by build phase.
 - `docs/END_TO_END_PLAN.md` (verification strategy §9, failure/recovery matrix
   §10, cross-cutting quality §8, plus phases/delivery §7 and decisions)
 - `docs/JOURNEY_CONTRACT.md` (full: invariants, ownership/handoff, states)
-- `User Flow/01 - Order Preview.md` through `User Flow/06 - Audit Report.md`
+- `docs/journey/01-order-preview.md` through `docs/journey/06-audit-report.md`
   (objectives, acceptance criteria)
 - `specs/001-simulated-journey-shell/VERIFICATION.md`
 - `tests/e2e/fixture-journey.spec.ts`, `forced-failure.spec.ts`,

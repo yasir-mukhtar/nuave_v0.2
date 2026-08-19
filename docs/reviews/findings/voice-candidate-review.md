@@ -1,4 +1,4 @@
-# Review: Voice and Language candidate (`docs/drafts/VOICE.md`)
+# Review: Voice and Language candidate (`Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md`)
 
 Reviewer: independent review session · 2026-08-10
 Reference read in order: `AGENTS.md`, `docs/briefs/VOICE.md`, `docs/VISION.md`, `docs/PRODUCT.md`, `docs/AUDIT.md`, `docs/PROMPT_GENERATION_CONTEXT.md`, `src/lib/audit/report-language.ts`.
@@ -89,7 +89,7 @@ The ban on "improvement or decline" without comparable runs is correct, but no p
 
 ## Compliance report
 
-- Review file created: `docs/reviews/002-voice-candidate-review.md`.
+- Review file created: `docs/reviews/findings/voice-candidate-review.md`.
 - Findings by priority: 1 high (F-01) · 6 medium (F-02–F-07) · 6 low (F-08–F-13); 13 total.
 - Approval recommendation: approve after mechanical revision; one founder decision (F-02) before the first Indonesian report ships.
 - Blocker: none.

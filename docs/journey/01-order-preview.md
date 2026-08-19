@@ -1,7 +1,7 @@
 # 01 — Order Preview
 
 > Status: Working product plan
-> Source copy: [`../Preview.md`](../Preview.md)
+> Source copy: [`../content/order-preview-copy.md`](../content/order-preview-copy.md)
 > Updated: 2026-08-17
 
 ## Objective
@@ -77,7 +77,7 @@ branches or similarly named businesses.
 
 ## Page structure and content
 
-The customer-facing copy follows [`Preview.md`](../Preview.md), in this order:
+The customer-facing copy follows [`order-preview-copy.md`](../content/order-preview-copy.md), in this order:
 
 1. **Business identity** — “Kami menemukan bisnis Anda,” followed by the logo,
    name, short description, source, and “Bukan bisnis Anda?” correction path.

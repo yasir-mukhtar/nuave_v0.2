@@ -1,7 +1,7 @@
 # 03 — Business Facts
 
 > Status: Working product plan
-> Depends on: [`02 - Payment.md`](./02%20-%20Payment.md)
+> Depends on: [`02-payment.md`](./02-payment.md)
 > Updated: 2026-08-17
 
 ## Objective

@@ -2,7 +2,7 @@
 
 > Status: Working product plan
 > Payment provider: Midtrans
-> Depends on: [`01 - Order Preview.md`](./01%20-%20Order%20Preview.md)
+> Depends on: [`01-order-preview.md`](./01-order-preview.md)
 > Updated: 2026-08-17
 
 ## Objective

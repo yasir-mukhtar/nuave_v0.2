@@ -2,7 +2,7 @@
  * Deterministic, bounded processing simulation for the fixture journey.
  *
  * The four customer-meaningful work stages mirror the canonical audit run in
- * `User Flow/05 - Audit Run.md` (Spec 002 R-10, AC-10). The simulation is
+ * `docs/journey/05-audit-run.md` (Spec 002 R-10, AC-10). The simulation is
  * pure local state: it never contacts a provider, never animates fabricated
  * live per-question completion, and never implies that background work
  * continues after the tab is closed. The whole sequence is always labelled

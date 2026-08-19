@@ -7,7 +7,7 @@
 
 You are fixing a specific, verified list of defects in the Nuave v0.2 repo
 (`/Users/hy4-mac-006/nuave_v0.2`, branch `main`). A previous agent fixed the
-Phase 1 adversarial review (`Adversary Review/Phase 1.md`); its work is in the
+Phase 1 adversarial review (`docs/reviews/findings/phase-1-adversarial-review.md`); its work is in the
 uncommitted working tree and is mostly correct. A verification pass then found
 one regression that fix introduced, plus several loose ends. Those are your
 scope. Do not re-do the parts that already work.

@@ -1,7 +1,7 @@
 # 05 — Audit Run
 
 > Status: Working product plan
-> Depends on: [`04 - Questions.md`](./04%20-%20Questions.md)
+> Depends on: [`04-questions.md`](./04-questions.md)
 > Updated: 2026-08-17
 
 ## Objective

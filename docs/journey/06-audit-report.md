@@ -1,8 +1,8 @@
 # 06 — Audit Report
 
 > Status: Working product plan and content sample
-> Depends on: [`04 - Questions.md`](./04%20-%20Questions.md) and
-> [`05 - Audit Run.md`](./05%20-%20Audit%20Run.md)
+> Depends on: [`04-questions.md`](./04-questions.md) and
+> [`05-audit-run.md`](./05-audit-run.md)
 > Updated: 2026-08-17
 
 ## Objective
@@ -539,7 +539,7 @@ dashboard.
 
 Define the complete Indonesian report and report-ready email language in one
 dedicated session. The later private access-and-recovery mechanism starts from
-[`../docs/briefs/REPORT_ACCESS_RECOVERY.md`](../docs/briefs/REPORT_ACCESS_RECOVERY.md).
+[`../briefs/REPORT_ACCESS_RECOVERY.md`](../briefs/REPORT_ACCESS_RECOVERY.md).
 An objectively wrong delivered report may still need a separate authenticated
 correction-and-new-version workflow; a customer wrong-business mistake instead
 uses the founder-granted replacement-audit remedy and is not a report correction.

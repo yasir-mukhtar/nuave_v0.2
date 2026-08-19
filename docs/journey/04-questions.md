@@ -1,7 +1,7 @@
 # 04 — Questions
 
 > Status: Working product plan
-> Depends on: [`03 - Business Facts.md`](./03%20-%20Business%20Facts.md)
+> Depends on: [`03-business-facts.md`](./03-business-facts.md)
 > Updated: 2026-08-17
 
 ## Objective

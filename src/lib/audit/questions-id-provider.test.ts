@@ -222,7 +222,7 @@ describe("versioned question-writer instruction", () => {
     expect(INDONESIAN_QUESTION_LANGUAGE).toBe("id-ID");
   });
 
-  it("preserves the User Flow/04 generation substance", () => {
+  it("preserves the docs/journey/04 generation substance", () => {
     expect(INDONESIAN_QUESTION_WRITER_INSTRUCTION).toContain(
       "Write exactly ten independent questions in the assigned order",
     );

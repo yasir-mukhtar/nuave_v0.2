@@ -1,7 +1,7 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-08-17
+> Updated: 2026-08-19
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
@@ -70,6 +70,7 @@ old rows to make history cleaner; add a superseding row.
 | 2026-08-17 | Use Resend for Nuave transactional and support email. Send as **Tim Nuave <support@nuave.ai>** and use `support@nuave.ai` as the monitored help address. Module 06 owns report-ready email, delivery failure, and resend; founder-support alerts may use the same service. | SETTLED | Reusing the service and identity already operated in v1 minimizes delivery setup and gives customers one consistent reply and support address. | Deliverability, domain configuration, support load, or provider reliability requires a different service or sender identity. |
 | 2026-08-17 | Select **dental clinics in Depok (Jabodetabek)** as the Phase 3 launch wedge: the five-business provider evaluation and the first live audit run target dental clinics in that area. This supersedes the open initial-city/vertical question for the current phase; the wedge remains provisional until stranger response validates it. | SETTLED | The founder selected the wedge matching the earlier dental experiments; one vertical in one city until it works. | Strong evidence that another wedge validates better before the first paid cohort, or the dental wedge fails the report-quality gate. |
 | 2026-08-17 | Lock the production providers for 03 extraction and 04 question generation to **GPT-5.6 Luna** (`NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`) — the only candidate that cleared the practical quality gate in the five-business evaluation (50/50 questions relevant and natural, 49 accepted unchanged / 1 light / 0 replaced, 0 leaks/premises/blockers; 03 drafts resolve the exact branch with official-source-only evidence; ≈ USD 0.003/audit). Gemini 3.5 Flash-Lite could not be measured (prepayment credits depleted); a comparison rerun remains possible when credits are restored — the runner and five frozen confirmed briefs are unchanged. | SETTLED | Founder-approved 2026-08-17 after the scored evaluation record; Luna is already the wired default for both stages, so no code change is required. | Gemini credits restored and a comparison rerun changes the verdict, or a cheaper provider clears the gate at equal quality. |
+| 2026-08-19 | Retire the two standing domain plans. The **v2 subdomain launch is complete** (`https://v2.nuave.ai` live on Cloudflare Workers, access gate and CI verified); its plan moves to `Archive Candidates/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md` and the facts it established now live in `docs/NOW.md`. The **apex domain transition plan is superseded** — it targeted moving `nuave.ai` to this repository with the v1 SaaS relocated to `monitor.nuave.ai`, which the `v2.` subdomain route replaced; it moves to `Archive Candidates/superseded-plans/DOMAIN_TRANSITION_PLAN.md`. | SETTLED | A completed plan and an unexecuted alternative route both read as active work and compete with the real current objective, which is the Phase 3 live report and quality gate. | The founder decides to serve the apex `nuave.ai` from this repository, which requires reopening or rewriting the transition plan. |
 
 ## Superseded directions
 
@@ -88,6 +89,7 @@ old rows to make history cleaner; add a superseding row.
 | Rp149,000 clinic-owner offer as the active launch price      | SUPERSEDED | One agency-facing per-audit pilot price remains open                                  |
 | Founder-assisted clinic-owner acquisition before cold ads    | SUPERSEDED | Sample-led agency validation with targeted outreach and an optional bounded paid test |
 | Agency, freelancer, or marketing-consultant buyer | SUPERSEDED | Indonesian small or medium business owner, ordering an audit of their own business |
+| Apex `nuave.ai` transition with v1 SaaS moved to `monitor.nuave.ai` | SUPERSEDED | `v2.nuave.ai` subdomain launch, with `nuave.ai` left untouched |
 | English throughout the `/audit` workflow | SUPERSEDED | Indonesian across every customer-facing touchpoint |
 | No composite score in the first ten reports | SUPERSEDED | Counts with denominators as the headline, plus a banded score beneath |
 | Counts with denominators plus a banded AI Visibility Score | SUPERSEDED | One direct appearance count out of ten, with name/no-name components kept separate |
