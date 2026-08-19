@@ -184,6 +184,7 @@ export const auditObservationSchema = z.object({
     "OpenAI Responses API",
     "Google Gemini API",
     "Groq + Tavily",
+    "OpenRouter",
   ]),
   requested_model: z.string(),
   returned_model: z.string(),

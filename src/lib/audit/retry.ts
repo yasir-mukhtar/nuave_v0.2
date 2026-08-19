@@ -67,6 +67,12 @@ const NON_RETRYABLE_FAILURE_PATTERNS = [
   /only standard default pricing is allowed/,
   /no longer makes a paid provider call/,
   /Unrecognized NUAVE_PROVIDER/,
+  // A free-tier PER-DAY cap (Groq TPD, OpenRouter free-models-per-day) cannot
+  // clear inside a run. Without this it matched the generic /quota/ rule below
+  // and every one of the ten questions burned its full backoff schedule before
+  // failing anyway. Both provider modules already fail fast on it; this makes
+  // the orchestrator stop re-asking too.
+  /cannot be retried within this request/,
 ];
 
 export type ObservationClassification = {

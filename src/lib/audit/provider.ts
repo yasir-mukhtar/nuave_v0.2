@@ -13,6 +13,11 @@ import {
   executeAuditPrompt as groqExecute,
   generateReportContent as groqGenerate,
 } from "./groq";
+import {
+  extractBusinessDraft as openrouterExtract,
+  executeAuditPrompt as openrouterExecute,
+  generateReportContent as openrouterGenerate,
+} from "./openrouter";
 
 // Provider selection for the audit pipeline.
 //
@@ -20,29 +25,62 @@ import {
 // Local free testing (no credit card):
 //   NUAVE_PROVIDER=gemini -> Google Gemini free tier (web search grounding)
 //   NUAVE_PROVIDER=groq   -> Groq (LLM) + Tavily (search), both free tiers
+//   NUAVE_PROVIDER=openrouter -> OpenRouter `:free` models, NO web search
+//                            (pipeline testing only; observations are
+//                            ungrounded — see the header of openrouter.ts)
 // All implementations share the same function signatures and Zod contracts, so
 // flipping the env variable is the only change needed and there is no code path
 // that mixes providers mid-run.
 
-export type AuditProviderName = "openai" | "gemini" | "groq";
+export type AuditProviderName = "openai" | "gemini" | "groq" | "openrouter";
+
+/**
+ * The three audit-stage functions for one provider. Every provider module
+ * implements the same signatures and Zod contracts, so a provider is a whole
+ * row of this table and no code path can mix providers mid-run.
+ */
+const PROVIDER_BINDINGS = {
+  openai: {
+    extract: openaiExtract,
+    execute: openaiExecute,
+    generate: openaiGenerate,
+  },
+  gemini: {
+    extract: geminiExtract,
+    execute: geminiExecute,
+    generate: geminiGenerate,
+  },
+  groq: { extract: groqExtract, execute: groqExecute, generate: groqGenerate },
+  openrouter: {
+    extract: openrouterExtract,
+    execute: openrouterExecute,
+    generate: openrouterGenerate,
+  },
+} as const satisfies Record<
+  AuditProviderName,
+  { extract: unknown; execute: unknown; generate: unknown }
+>;
+
+const PROVIDER_NAMES = Object.keys(
+  PROVIDER_BINDINGS,
+) as readonly AuditProviderName[];
 
 export function activeAuditProvider(): AuditProviderName {
   const value = process.env.NUAVE_PROVIDER?.trim().toLocaleLowerCase("en-US");
-  if (value === "gemini") return "gemini";
-  if (value === "groq") return "groq";
-  if (value === undefined || value === "" || value === "openai")
-    return "openai";
+  if (value === undefined || value === "") return "openai";
+  const match = PROVIDER_NAMES.find((name) => name === value);
+  if (match) return match;
   throw new Error(
-    `Unrecognized NUAVE_PROVIDER="${process.env.NUAVE_PROVIDER}". Valid values are "openai", "gemini", or "groq".`,
+    `Unrecognized NUAVE_PROVIDER="${process.env.NUAVE_PROVIDER}". Valid values are ${PROVIDER_NAMES.map((name) => `"${name}"`).join(", ")}.`,
   );
 }
 
 /**
  * Provider selection for the PROTECTED LIVE path (the `/api/audit/*` routes
  * and the report pipeline). Fails closed to the founder-approved production
- * provider (OpenAI, gpt-5.6-luna — DECISION_LOG 2026-08-17). Gemini and Groq
- * remain available for testing only: a non-OpenAI `NUAVE_PROVIDER` is
- * rejected on the live path unless `NUAVE_LIVE_PROVIDER_TESTING=1` is
+ * provider (OpenAI, gpt-5.6-luna — DECISION_LOG 2026-08-17). Gemini, Groq and
+ * OpenRouter remain available for testing only: a non-OpenAI `NUAVE_PROVIDER`
+ * is rejected on the live path unless `NUAVE_LIVE_PROVIDER_TESTING=1` is
  * explicitly set (tests and local runner scripts only; never in production).
  */
 export function liveAuditProvider(): AuditProviderName {
@@ -65,45 +103,16 @@ export function liveAuditProvider(): AuditProviderName {
   );
 }
 
-export const extractBusinessDraft =
-  activeAuditProvider() === "gemini"
-    ? geminiExtract
-    : activeAuditProvider() === "groq"
-      ? groqExtract
-      : openaiExtract;
-export const executeAuditPrompt =
-  activeAuditProvider() === "gemini"
-    ? geminiExecute
-    : activeAuditProvider() === "groq"
-      ? groqExecute
-      : openaiExecute;
-export const generateReportContent =
-  activeAuditProvider() === "gemini"
-    ? geminiGenerate
-    : activeAuditProvider() === "groq"
-      ? groqGenerate
-      : openaiGenerate;
+const active = PROVIDER_BINDINGS[activeAuditProvider()];
+export const extractBusinessDraft = active.extract;
+export const executeAuditPrompt = active.execute;
+export const generateReportContent = active.generate;
 
 // Protected live path: fail-closed to OpenAI (gpt-5.6-luna) — DECISION_LOG
 // 2026-08-17. These are the only bindings the API routes and the report
 // pipeline may use; the env-selectable bindings above stay for tests and
 // local runners only.
-function resolveLive<K extends AuditProviderName>(live: K) {
-  return live === "gemini"
-    ? {
-        extract: geminiExtract,
-        execute: geminiExecute,
-        generate: geminiGenerate,
-      }
-    : live === "groq"
-      ? { extract: groqExtract, execute: groqExecute, generate: groqGenerate }
-      : {
-          extract: openaiExtract,
-          execute: openaiExecute,
-          generate: openaiGenerate,
-        };
-}
-const live = resolveLive(liveAuditProvider());
+const live = PROVIDER_BINDINGS[liveAuditProvider()];
 export const liveExtractBusinessDraft = live.extract;
 export const liveExecuteAuditPrompt = live.execute;
 export const liveGenerateReportContent = live.generate;
@@ -132,20 +141,31 @@ export const liveGenerateReportContent = live.generate;
  * own `execute`/`generate` make no provider call and need no credential.
  */
 export function isLiveProviderCall(fn: unknown): boolean {
-  return (
-    fn === openaiExecute ||
-    fn === geminiExecute ||
-    fn === groqExecute ||
-    fn === openaiGenerate ||
-    fn === geminiGenerate ||
-    fn === groqGenerate
+  return PROVIDER_NAMES.some(
+    (name) =>
+      fn === PROVIDER_BINDINGS[name].execute ||
+      fn === PROVIDER_BINDINGS[name].generate,
   );
 }
 
+/**
+ * The credential each provider's audit-stage calls read. Keeping this beside
+ * PROVIDER_BINDINGS means a new provider cannot be added without deciding what
+ * its missing-key failure looks like — the whole point of the guard.
+ */
+const PROVIDER_CREDENTIAL_ENV: Record<AuditProviderName, string> = {
+  openai: "OPENAI_API_KEY",
+  gemini: "GEMINI_API_KEY",
+  groq: "GROQ_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+};
+
 export function assertLiveProviderCredentialsConfigured(): void {
-  if (liveAuditProvider() === "openai" && !process.env.OPENAI_API_KEY) {
+  const name = liveAuditProvider();
+  const variable = PROVIDER_CREDENTIAL_ENV[name];
+  if (!process.env[variable]) {
     throw new Error(
-      "OPENAI_API_KEY is not configured on the Nuave server; the protected live path fails closed before making any provider call.",
+      `${variable} is not configured on the Nuave server; the protected live path fails closed before making any provider call.`,
     );
   }
 }
