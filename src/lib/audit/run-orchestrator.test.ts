@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 import { runAuditObservations } from "./run-orchestrator";
 import type { AuditRunEvent } from "./stream";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
+import { executeAuditPrompt, liveExecuteAuditPrompt } from "./provider";
 
 const brief = {} as BusinessBrief;
 const safetyIdentifier = "test-user-123";
@@ -87,6 +88,71 @@ function run(
   });
   return { events, summaryPromise };
 }
+
+// ---------------------------------------------------------------------------
+// R3-5 (Phase 3 fix-round-3 adversarial review): the credential guard used to
+// live only in the three HTTP handlers, and the live run has never gone
+// through them. `scripts/sozo/sozo-live-run.spec.ts` drives this orchestrator
+// directly with the env-selected `executeAuditPrompt`, so a missing
+// OPENAI_API_KEY burned the full 1+2 retry policy across all ten questions
+// (up to 30 guaranteed-failing attempts) before the real cause surfaced.
+// ---------------------------------------------------------------------------
+describe("live provider credential guard on the script path (R3-5)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("fails before the first question when OPENAI_API_KEY is missing and a real provider binding is passed", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const events: AuditRunEvent[] = [];
+
+    await expect(
+      runAuditObservations({
+        prompts: prompts(),
+        brief,
+        safety_identifier: safetyIdentifier,
+        budget: fixtureBudget,
+        execute: liveExecuteAuditPrompt,
+        emit: (event) => events.push(event),
+        sleep: async () => {},
+      }),
+    ).rejects.toThrow(/OPENAI_API_KEY is not configured/);
+    // Nothing was emitted: the run never started, so no attempt was spent.
+    expect(events).toEqual([]);
+  });
+
+  it("covers the env-selected binding the Sozo runner actually uses", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const events: AuditRunEvent[] = [];
+
+    await expect(
+      runAuditObservations({
+        prompts: prompts(),
+        brief,
+        safety_identifier: safetyIdentifier,
+        budget: fixtureBudget,
+        execute: executeAuditPrompt,
+        emit: (event) => events.push(event),
+        sleep: async () => {},
+      }),
+    ).rejects.toThrow(/OPENAI_API_KEY is not configured/);
+    expect(events).toEqual([]);
+  });
+
+  it("leaves an injected test double alone — no provider call, no credential needed", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const { summaryPromise } = run(async (input) =>
+      observation(input.prompt.prompt_id),
+    );
+
+    await expect(summaryPromise).resolves.toMatchObject({
+      failed_prompt_ids: [],
+    });
+  });
+});
 
 describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
   it("emits run_completed with exactly ten evaluable observations on a clean run", async () => {

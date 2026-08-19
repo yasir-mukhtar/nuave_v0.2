@@ -87,7 +87,7 @@ describe("loadFixtureJourneyState — reset reporting (regression: legacy purge 
 describe("fixture journey storage key", () => {
   it("is versioned, separate from the live audit workflow keys, and v4", () => {
     expect(FIXTURE_JOURNEY_STORAGE_KEY).toBe("nuave.fixtureJourney.v4");
-    expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.workflow.v3");
+    expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.workflow.v4");
     expect(FIXTURE_JOURNEY_STORAGE_KEY).not.toBe("nuave.audit.session.v1");
     expect(LEGACY_FIXTURE_JOURNEY_STORAGE_KEYS).toEqual([
       "nuave.fixtureJourney.v1",

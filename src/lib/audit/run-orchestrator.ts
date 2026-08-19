@@ -7,6 +7,10 @@ import type {
 } from "./types";
 import type { AuditRunEvent } from "./stream";
 import {
+  assertLiveProviderCredentialsConfigured,
+  isLiveProviderCall,
+} from "./provider";
+import {
   MAX_ATTEMPTS_PER_QUESTION,
   MAX_AUTOMATIC_RETRIES_PER_QUESTION,
   OBSERVATION_STAGE_MAX_CALLS,
@@ -50,6 +54,13 @@ export async function runAuditObservations(input: {
 }): Promise<AuditRunSummary> {
   const { prompts, brief, safety_identifier, budget, execute, emit, resume } =
     input;
+  // R3-5: fail closed on a missing production credential BEFORE the first
+  // question, on the script path as well as the route path. Without this the
+  // orchestrator burns the full 1+2 retry policy across all ten questions (up
+  // to 30 guaranteed-failing attempts) before the real cause surfaces.
+  if (isLiveProviderCall(execute)) {
+    assertLiveProviderCredentialsConfigured();
+  }
   if (prompts.length !== 10) {
     throw new Error(
       `A live audit runs exactly ten questions; received ${prompts.length}.`,

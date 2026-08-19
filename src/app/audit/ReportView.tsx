@@ -12,6 +12,7 @@ import type {
 import {
   indonesianCountLabel,
   indonesianHeadline,
+  indonesianMeasureLabel,
   INDONESIAN_REPORT_LABELS,
 } from "@/lib/audit/report-labels";
 import styles from "./audit.module.css";
@@ -50,18 +51,6 @@ const ownerLabels: Record<string, string> = {
 
 function testReferences(ids: string[], testNumberById: Map<string, string>) {
   return ids.map((id) => testNumberById.get(id) ?? id).join(", ");
-}
-
-/**
- * Eligible-denominator measure label (AC-17): an empty assessed denominator
- * renders "Tidak diuji", never a zero performance claim (R-28).
- */
-function measureLabel(
-  assessed: number,
-  ready: (assessed: number) => string,
-): string {
-  if (assessed === 0) return INDONESIAN_REPORT_LABELS.not_tested;
-  return ready(assessed);
 }
 
 function sourceTitle(url: string) {
@@ -286,7 +275,7 @@ export default function ReportView({
             <div>
               <dt>Rekomendasi</dt>
               <dd>
-                {measureLabel(
+                {indonesianMeasureLabel(
                   report.measures.recommendation.assessed,
                   () =>
                     `Direkomendasikan di ${report.measures.recommendation.recommended} dari ${report.measures.recommendation.assessed} pertanyaan yang dinilai`,
@@ -296,7 +285,7 @@ export default function ReportView({
             <div>
               <dt>Perbandingan</dt>
               <dd>
-                {measureLabel(
+                {indonesianMeasureLabel(
                   report.measures.comparison.assessed,
                   () =>
                     `Diunggulkan di ${report.measures.comparison.client_preferred} dari ${report.measures.comparison.assessed} pertanyaan yang dinilai`,
@@ -306,7 +295,7 @@ export default function ReportView({
             <div>
               <dt>Informasi publik</dt>
               <dd>
-                {measureLabel(
+                {indonesianMeasureLabel(
                   report.measures.information.assessed,
                   () =>
                     `${report.measures.information.confirmed} terkonfirmasi, ${report.measures.information.incomplete} belum lengkap, ${report.measures.information.conflicting} bertentangan dari ${report.measures.information.assessed} pertanyaan yang dinilai`,

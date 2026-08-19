@@ -2,7 +2,7 @@
  * Versioned fixture-journey state model.
  *
  * The fixture journey keeps its own small state in session storage, separate
- * from the live audit workflow keys (`nuave.audit.workflow.v3` and
+ * from the live audit workflow keys (`nuave.audit.workflow.v4` and
  * `nuave.audit.session.v1`). The full canonical path is reachable: order
  * preview (`preview`), simulated payment (`payment`), fixture fact review
  * (`facts`), ten-question review (`questions`), the simulated audit run

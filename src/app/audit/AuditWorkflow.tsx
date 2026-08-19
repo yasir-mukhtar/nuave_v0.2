@@ -19,6 +19,11 @@ import {
 import { makeEvidenceExport } from "@/lib/audit/contracts";
 import { summarizeAuditTelemetry } from "@/lib/audit/telemetry";
 import {
+  AUDIT_SESSION_STORAGE_KEY,
+  AUDIT_WORKFLOW_STORAGE_KEY,
+  restorableAuditReport,
+} from "@/lib/audit/workflow-storage";
+import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
@@ -55,8 +60,13 @@ type SavedState = {
   executionStarted?: boolean;
 };
 
-const STORAGE_KEY = "nuave.audit.workflow.v3";
-const SESSION_KEY = "nuave.audit.session.v1";
+// R3-4 (Phase 3 fix-round-3 adversarial review): the key and the restore
+// guard live in `@/lib/audit/workflow-storage`, where they are pure logic and
+// tested. `AuditReport.measures` is a new required field, so the key is
+// bumped v3 -> v4 AND a restored report is dropped if it does not carry the
+// fields the report screen reads.
+const STORAGE_KEY = AUDIT_WORKFLOW_STORAGE_KEY;
+const SESSION_KEY = AUDIT_SESSION_STORAGE_KEY;
 
 const emptyBrief: BusinessBrief = {
   brand_name: "",
@@ -191,7 +201,7 @@ export default function AuditWorkflow() {
           setExtraction(state.extraction || null);
           setPromptPack(restoredPack);
           setObservations(restoredObservations);
-          setReport(state.report || null);
+          setReport(restorableAuditReport(state.report));
           setSetupTelemetry(state.setupTelemetry || []);
           setExecutionStarted(
             Boolean(state.executionStarted || restoredObservations.length),

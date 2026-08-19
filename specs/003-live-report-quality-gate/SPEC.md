@@ -40,7 +40,7 @@ Read in order:
 7. `specs/002-indonesian-audit-contract/SPEC.md` and its `VERIFICATION.md` —
    the implemented state this phase connects (Indonesian generation boundary,
    `plain-id-v1` writing contract, settled labels, fixture chain, test
-   baseline 276 + 82 + 33 — see the baseline correction note under "Observed
+   baseline 274 + 82 + 33 — see the baseline correction note under "Observed
    evidence")
 8. `specs/README.md` (spec lifecycle) and `docs/templates/SPEC.md` (structure)
 9. `User Flow/05 - Audit Run.md` — settled production decisions (one provider
@@ -77,7 +77,7 @@ repository and unpublished unless a later decision changes that.
 
 ### Observed evidence
 
-- Specs 001 and 002 are verified (2026-08-17): 276 audit unit tests, 82
+- Specs 001 and 002 are verified (2026-08-17): 274 audit unit tests, 82
   fixture-journey unit tests, 33 e2e tests, check and build all pass. The
   fixture journey is Indonesian, canonical 01 → 06, and makes no
   `/api/audit/*` call. The live engine is untouched and separate
@@ -87,10 +87,17 @@ repository and unpublished unless a later decision changes that.
   31 e2e tests" — figures that do not match Spec 002's own `VERIFICATION.md`
   (which recorded **82/82 fixture-journey tests, 4 files** at its verified
   commit) and were never reproducible from committed history. The e2e count
-  also drifted from 31 to 33 as tests were added after Spec 002 verified. The
-  numbers here are corrected to the measured, reproducible baseline: **276
-  audit unit tests (18 files), 82 fixture-journey unit tests (4 files), 33 e2e
-  tests (28 enabled + 3 forced-failure + 2 disabled)**.
+  also drifted from 31 to 33 as tests were added after Spec 002 verified.
+  **Second baseline correction (fix-round-3, 2026-08-19):** round 2 then wrote
+  **276** audit unit tests, which was never measured anywhere — Spec 002's
+  `VERIFICATION.md` records **274/274 (18 files)** at its verified commit
+  (`83ad34c`), and 276 does not reconcile with any run since. The baseline is
+  Spec 002's directly-measured figure: **274 audit unit tests (18 files), 82
+  fixture-journey unit tests (4 files), 33 e2e tests (28 enabled + 3
+  forced-failure + 2 disabled)**. This is a floor, not a target: every fix in
+  this phase adds its reproducing tests, so the audit-unit count grows above
+  it (see VERIFICATION.md's measured progression). No count is carried
+  forward here that was not produced by a run at a named commit.
 - The live engine has never produced a real Indonesian report. The live
   workflow (`src/app/audit/*`) remains English, and the observation and
   extraction instructions ask the provider for **English** output
@@ -529,11 +536,13 @@ during review rather than claimed in this phase.
 
 ### Exit gates and regression
 
-- **R-33 — Fixture regression:** The existing baseline stays green: 276 audit
-  unit tests, 82 fixture-journey unit tests, and 33 e2e tests (enabled,
-  forced-failure, and disabled configurations), plus `npm run check` and
-  `npm run build`, with no change to live audit contracts that existing tests
-  pin.
+- **R-33 — Fixture regression:** The existing baseline stays green and never
+  shrinks: at least 274 audit unit tests, 82 fixture-journey unit tests, and
+  33 e2e tests (enabled, forced-failure, and disabled configurations), plus
+  `npm run check` and `npm run build`, with no change to live audit contracts
+  that existing tests pin. The audit-unit figure is a floor measured at Spec
+  002's verified commit; the current count is recorded in VERIFICATION.md at
+  the commit it was run on.
 - **R-34 — Live/fixture separation enforcement:** A live run can never
   produce a fixture-stamped result and a fixture journey can never produce a
   live result; automated coverage proves the separation (no `/api/audit/*`
@@ -614,9 +623,12 @@ create an order or entitlement, or imply that a customer remedy is owed.
   provider call; and no client input can enable or disable live or fixture
   mode.
 - **AC-02 — Fixture regression:** Given the implementation is complete, when
-  the full test baseline runs, then 276 audit unit tests, 82 fixture-journey
-  unit tests, and 33 e2e tests pass, `npm run check` and `npm run build`
-  pass, and the fixture journey still makes zero `/api/audit/*` calls.
+  the full test baseline runs, then at least 274 audit unit tests, exactly 82
+  fixture-journey unit tests, and 33 e2e tests pass with zero failures,
+  `npm run check` and `npm run build` pass, and the fixture journey still
+  makes zero `/api/audit/*` calls. The audit-unit floor is Spec 002's measured
+  274/274 (18 files); the count as run must be recorded in VERIFICATION.md
+  against the commit it was measured at.
 - **AC-03 — Shared journey states:** Given a fresh live run, when the founder
   proceeds, then the path advances 03 Business Facts → 04 Questions →
   05 Audit Run → 06 Report with the same customer-meaningful vocabulary, and

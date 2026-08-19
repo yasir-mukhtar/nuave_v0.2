@@ -119,6 +119,29 @@ export const liveGenerateReportContent = live.generate;
  * retry policy across all ten questions (up to 30 guaranteed-failing
  * attempts) before the run ever surfaces the real, unrecoverable cause.
  */
+/**
+ * True when `fn` is a real provider binding rather than a caller-injected
+ * test double. R3-5 (Phase 3 fix-round-3 adversarial review): the credential
+ * guard was reachable only from the three HTTP handlers, and the live run has
+ * never gone through them — `scripts/sozo/sozo-live-run.spec.ts` and
+ * `scripts/sozo/report-rerun.ts` call `runAuditObservations` /
+ * `createValidatedAuditReport` directly, so the 30-guaranteed-failing-attempt
+ * burn on a missing `OPENAI_API_KEY` was still reachable there. The
+ * orchestrator and the pipeline now assert too, but only when the work they
+ * are about to do actually reaches a provider: unit tests that inject their
+ * own `execute`/`generate` make no provider call and need no credential.
+ */
+export function isLiveProviderCall(fn: unknown): boolean {
+  return (
+    fn === openaiExecute ||
+    fn === geminiExecute ||
+    fn === groqExecute ||
+    fn === openaiGenerate ||
+    fn === geminiGenerate ||
+    fn === groqGenerate
+  );
+}
+
 export function assertLiveProviderCredentialsConfigured(): void {
   if (liveAuditProvider() === "openai" && !process.env.OPENAI_API_KEY) {
     throw new Error(

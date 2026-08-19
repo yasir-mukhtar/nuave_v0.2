@@ -414,9 +414,11 @@ export type AuditReport = ReportContent & {
   };
   /**
    * Appeared/assessed-denominator measures (AC-17): "appeared" counts
-   * appearance === "mentioned" regardless of recommendation status;
-   * "assessed" counts exclude "not_assessed" (and, for comparison,
-   * "not_observed") rather than using the raw question total.
+   * appearance === "mentioned" regardless of recommendation status.
+   * "assessed" applies one rule to all three dimensions — the brand
+   * appeared AND the dimension was judged — so a question the brand was
+   * absent from is outside every assessed denominator, not inside
+   * recommendation's and outside the other two.
    */
   measures: {
     overall: { appeared: number; total: number };

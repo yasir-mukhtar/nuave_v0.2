@@ -303,7 +303,10 @@ describe("report evidence guardrails", () => {
       overall: { appeared: 1, total: 10 },
       unbranded: { appeared: 1, total: 5 },
       branded: { appeared: 0, total: 5 },
-      recommendation: { recommended: 0, assessed: 10 },
+      // One question the brand appeared in, judged not_recommended: the nine
+      // absent questions are outside every assessed denominator, not inside
+      // recommendation's and outside the other two (R3-3).
+      recommendation: { recommended: 0, assessed: 1 },
       comparison: { client_preferred: 0, assessed: 0 },
       information: { confirmed: 0, incomplete: 0, conflicting: 0, assessed: 0 },
     });
@@ -336,6 +339,158 @@ describe("report evidence guardrails", () => {
     expect(
       makeEvidenceExport(brief, prompts, observations, report).export_version,
     ).toBe("nuave-evidence-v4");
+  });
+
+  // -------------------------------------------------------------------------
+  // R3-1 / R3-3 / R3-7 (Phase 3 fix-round-3 adversarial review).
+  //
+  // The round-2 regression test used a fixture with
+  // `unbranded_recommended: 0, unbranded_mentioned: 1`, under which the buggy
+  // numerator and the fixed one are the same number — reverting the fix left
+  // the suite green. This fixture is the shape the live Sozo run actually
+  // produced: recommended unbranded questions AND a mentioned-but-not-
+  // recommended one, plus one deliberately un-normalized detail
+  // (absent + recommended) that `buildAuditReport` must not count as an
+  // appearance, since it is exported and callable without
+  // `normalizeReportEvidence`.
+  // -------------------------------------------------------------------------
+  const mixedObservations: AuditObservation[] = observations.map(
+    (observation, index) => ({
+      ...observation,
+      raw_answer: [0, 1, 2, 5].includes(index)
+        ? "Nuave Test is one option worth considering."
+        : "The response does not name the audit brand.",
+    }),
+  );
+
+  function mixedReportContent(): ReportContent {
+    const dimensions = [
+      // Unbranded 0-4.
+      {
+        appearance: "mentioned",
+        recommendation: "recommended",
+        comparison: "client_preferred",
+        information: "confirmed",
+      },
+      {
+        appearance: "mentioned",
+        recommendation: "recommended",
+        comparison: "not_observed",
+        information: "incomplete",
+      },
+      {
+        appearance: "mentioned",
+        recommendation: "not_recommended",
+        comparison: "competitor_preferred",
+        information: "not_assessed",
+      },
+      // Absent, yet carrying judged dimensions: only reachable when
+      // buildAuditReport is called without normalizeReportEvidence.
+      {
+        appearance: "absent",
+        recommendation: "recommended",
+        comparison: "client_preferred",
+        information: "confirmed",
+      },
+      {
+        appearance: "absent",
+        recommendation: "not_recommended",
+        comparison: "not_observed",
+        information: "not_assessed",
+      },
+      // Branded 5-9.
+      {
+        appearance: "mentioned",
+        recommendation: "not_assessed",
+        comparison: "not_observed",
+        information: "conflicting",
+      },
+      {
+        appearance: "absent",
+        recommendation: "not_recommended",
+        comparison: "not_observed",
+        information: "not_assessed",
+      },
+      {
+        appearance: "absent",
+        recommendation: "not_recommended",
+        comparison: "not_observed",
+        information: "not_assessed",
+      },
+      {
+        appearance: "absent",
+        recommendation: "not_recommended",
+        comparison: "not_observed",
+        information: "not_assessed",
+      },
+      {
+        appearance: "absent",
+        recommendation: "not_recommended",
+        comparison: "not_observed",
+        information: "not_assessed",
+      },
+    ] as const;
+    const base = reportContent();
+    return {
+      ...base,
+      details: base.details.map((detail, index) => ({
+        ...detail,
+        ...dimensions[index],
+        answer_excerpt: mixedObservations[index].raw_answer,
+      })),
+    };
+  }
+
+  it("counts appearances, not recommendation status, in measures.*.appeared (N-1/R3-7)", () => {
+    const report = buildAuditReport(mixedReportContent(), mixedObservations);
+
+    // The two numbers the buggy derivations produced, pinned so a revert
+    // fails: `appeared: unbranded_mentioned` would give 1, and
+    // `unbrandedRecommended + unbrandedMentioned` would give 4 by counting
+    // the absent-but-recommended detail.
+    expect(report.counts.unbranded_recommended).toBe(3);
+    expect(report.counts.unbranded_mentioned).toBe(1);
+    expect(report.measures.unbranded.appeared).toBe(3);
+    expect(report.measures.unbranded.appeared).not.toBe(
+      report.counts.unbranded_mentioned,
+    );
+    expect(report.measures.unbranded.appeared).not.toBe(
+      report.counts.unbranded_recommended + report.counts.unbranded_mentioned,
+    );
+    expect(report.measures.branded.appeared).toBe(1);
+    expect(report.measures.overall.appeared).toBe(4);
+    expect(report.measures.overall.total).toBe(10);
+  });
+
+  it("applies one eligibility rule — appeared and judged — to all three assessed denominators (R3-3)", () => {
+    const report = buildAuditReport(mixedReportContent(), mixedObservations);
+
+    // Four details have appearance "mentioned" (0, 1, 2, 5). Nothing else is
+    // eligible for any dimension, so the absent-but-judged detail 3 is
+    // outside all three denominators rather than inside recommendation's.
+    expect(report.measures.recommendation).toEqual({
+      recommended: 2,
+      assessed: 3,
+    });
+    expect(report.measures.comparison).toEqual({
+      client_preferred: 1,
+      assessed: 2,
+    });
+    expect(report.measures.information).toEqual({
+      confirmed: 1,
+      incomplete: 1,
+      conflicting: 1,
+      assessed: 3,
+    });
+    // Every assessed denominator is at most the appeared count; none of them
+    // can exceed it, which is what "0 dari 10 yang dinilai" next to "Tidak
+    // diuji" meant before the fix.
+    const appeared = report.measures.overall.appeared;
+    expect(report.measures.recommendation.assessed).toBeLessThanOrEqual(
+      appeared,
+    );
+    expect(report.measures.comparison.assessed).toBeLessThanOrEqual(appeared);
+    expect(report.measures.information.assessed).toBeLessThanOrEqual(appeared);
   });
 
   it("produces identical facts and method copy from identical evidence", () => {

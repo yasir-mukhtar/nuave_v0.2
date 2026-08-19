@@ -5,6 +5,7 @@ import {
   INDONESIAN_RUN_STATUS_LABELS,
   indonesianCountLabel,
   indonesianHeadline,
+  indonesianMeasureLabel,
   indonesianObservationRunStatus,
   indonesianRunStatusLabel,
 } from "./report-labels";
@@ -55,6 +56,32 @@ describe("deterministic Indonesian label translation (R-40, AC-26)", () => {
     expect(indonesianCountLabel(0, 0)).toBe("Tidak diuji");
     expect(indonesianCountLabel(5, 0)).toBe("Tidak diuji");
     expect(indonesianCountLabel(2, -1)).toBe("Tidak diuji");
+  });
+
+  // R3-8 (Phase 3 fix-round-3 adversarial review): `measureLabel` was a
+  // verbatim copy in ReportView.tsx and FixtureReportView.tsx with no test on
+  // either. It is pure logic, so the "no component-test framework" deferral
+  // did not cover it. Both views now import this one.
+  it("renders an empty assessed denominator as Tidak diuji without calling the sentence builder", () => {
+    let called = 0;
+    const ready = (assessed: number) => {
+      called += 1;
+      return `Direkomendasikan di 0 dari ${assessed} pertanyaan yang dinilai`;
+    };
+
+    expect(indonesianMeasureLabel(0, ready)).toBe("Tidak diuji");
+    expect(indonesianMeasureLabel(-1, ready)).toBe("Tidak diuji");
+    expect(called).toBe(0);
+  });
+
+  it("builds the measure sentence from a non-empty assessed denominator", () => {
+    expect(
+      indonesianMeasureLabel(
+        4,
+        (assessed) =>
+          `Direkomendasikan di 2 dari ${assessed} pertanyaan yang dinilai`,
+      ),
+    ).toBe("Direkomendasikan di 2 dari 4 pertanyaan yang dinilai");
   });
 
   it("maps the run-status set to the settled labels", () => {

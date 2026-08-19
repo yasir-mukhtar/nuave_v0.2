@@ -1,0 +1,94 @@
+import { describe, expect, it } from "vitest";
+import {
+  goldenBrief,
+  goldenObservations,
+  goldenReportContent,
+} from "./fixtures/report-golden";
+import { buildAuditReport, normalizeReportEvidence } from "./contracts";
+import {
+  AUDIT_SESSION_STORAGE_KEY,
+  AUDIT_WORKFLOW_STORAGE_KEY,
+  restorableAuditReport,
+} from "./workflow-storage";
+
+// ---------------------------------------------------------------------------
+// R3-4 (Phase 3 fix-round-3 adversarial review): restoring a session written
+// by the previous build used to crash the report screen. `measures` is a new
+// required field; `AuditWorkflow` restores with an unchecked
+// `JSON.parse(saved) as SavedState`, and `ReportView` reads
+// `report.measures.overall.appeared` with no guard, so the TypeError happened
+// during render — outside the try/catch that wraps the parse.
+// ---------------------------------------------------------------------------
+
+function currentReport() {
+  return buildAuditReport(
+    normalizeReportEvidence(
+      goldenReportContent(),
+      goldenObservations,
+      goldenBrief,
+    ),
+    goldenObservations,
+  );
+}
+
+describe("live audit workflow session storage (R3-4)", () => {
+  it("versions the workflow key with the saved shape and keeps it separate from the session key", () => {
+    // The saved `SavedState` gained a required `AuditReport.measures`, so the
+    // key moved with it: a v3 payload is never read back by this build.
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v4");
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v3");
+    expect(AUDIT_SESSION_STORAGE_KEY).toBe("nuave.audit.session.v1");
+  });
+
+  it("restores a report produced by this build", () => {
+    const report = currentReport();
+    const restored = restorableAuditReport(
+      JSON.parse(JSON.stringify(report)) as unknown,
+    );
+
+    expect(restored).not.toBeNull();
+    expect(restored?.measures.overall.appeared).toBe(
+      report.measures.overall.appeared,
+    );
+  });
+
+  it("drops a report written before measures existed instead of crashing the report screen", () => {
+    const previousBuildReport = JSON.parse(
+      JSON.stringify(currentReport()),
+    ) as Record<string, unknown>;
+    delete previousBuildReport.measures;
+
+    expect(restorableAuditReport(previousBuildReport)).toBeNull();
+    // The unguarded read the report screen performs on a restored report.
+    expect(
+      () =>
+        (
+          previousBuildReport as unknown as {
+            measures: { overall: { appeared: number } };
+          }
+        ).measures.overall.appeared,
+    ).toThrow(TypeError);
+  });
+
+  it("drops a partially shaped measures block rather than rendering missing numbers", () => {
+    const report = JSON.parse(JSON.stringify(currentReport())) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    delete report.measures.comparison;
+    expect(restorableAuditReport(report)).toBeNull();
+
+    const missingInformationField = JSON.parse(
+      JSON.stringify(currentReport()),
+    ) as Record<string, Record<string, Record<string, unknown>>>;
+    delete missingInformationField.measures.information.assessed;
+    expect(restorableAuditReport(missingInformationField)).toBeNull();
+  });
+
+  it("drops anything that is not a report at all", () => {
+    expect(restorableAuditReport(null)).toBeNull();
+    expect(restorableAuditReport(undefined)).toBeNull();
+    expect(restorableAuditReport("a report")).toBeNull();
+    expect(restorableAuditReport({})).toBeNull();
+  });
+});

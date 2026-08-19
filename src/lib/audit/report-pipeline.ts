@@ -3,7 +3,11 @@ import {
   normalizeReportEvidence,
   validateReportContent,
 } from "./contracts";
-import { liveGenerateReportContent } from "./provider";
+import {
+  assertLiveProviderCredentialsConfigured,
+  isLiveProviderCall,
+  liveGenerateReportContent,
+} from "./provider";
 import {
   validateReportLanguage,
   validateIndonesianReportLanguage,
@@ -41,10 +45,13 @@ export type ReportPipelineInput = {
  * any provider call: report generation begins only when all ten locked
  * questions (unique prompt ids) each have exactly one evaluable, structurally
  * valid observation (run_status completed, non-empty answer, attempt
- * telemetry). No partial report exists. The Phase-1 golden fixture (9
- * completed + 1 failed) is a protected pre-gate record; this gate is applied
- * at the live route boundary, not inside the pipeline, so the golden tests
- * keep passing unchanged.
+ * telemetry). No partial report exists. It is applied at the live route
+ * boundary AND unconditionally inside `createValidatedAuditReport`, so the
+ * script and direct-library callers cannot buy synthesis for a partial
+ * evidence set either (R3-6). The Phase-1 golden fixture (9 completed + 1
+ * failed) stays a protected pre-gate record for `buildAuditReport` and the
+ * gate's own rejection tests; anything driven through the pipeline supplies
+ * a ten-of-ten evidence set.
  */
 export function assertReportGenerationGate(input: ReportPipelineInput): void {
   const { prompts, observations } = input;
@@ -117,12 +124,18 @@ export async function createValidatedAuditReport(
   input: ReportPipelineInput,
   generate: ReportGenerator = liveGenerateReportContent,
 ): Promise<AuditReport> {
+  // R3-5: fail closed on a missing production credential before synthesis,
+  // on the script path as well as the route path.
+  if (isLiveProviderCall(generate)) {
+    assertLiveProviderCredentialsConfigured();
+  }
   // Keep this invariant at the pipeline boundary as well as the HTTP route.
   // Scripts and future callers must not be able to spend on synthesis for a
-  // partial evidence set.
-  if (input.language === "id") {
-    assertReportGenerationGate(input);
-  }
+  // partial evidence set. R3-6 (Phase 3 fix-round-3 adversarial review): this
+  // was conditional on `language === "id"`, which left direct library callers
+  // on the English path able to buy a report from partial evidence — the
+  // comment above claimed otherwise. It is unconditional now.
+  assertReportGenerationGate(input);
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;

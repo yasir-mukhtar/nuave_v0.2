@@ -84,6 +84,24 @@ export function indonesianCountLabel(
     .replace("{denominator}", String(denominator));
 }
 
+/**
+ * Settled label for an eligible-denominator measure (AC-17, AC-26). An
+ * empty assessed denominator renders "Tidak diuji", never a zero
+ * performance claim (R-28). `ready` builds the sentence only when the
+ * denominator is non-empty.
+ *
+ * Shared by ReportView and FixtureReportView (R3-8, Phase 3 fix-round-3
+ * adversarial review): the two views previously carried verbatim copies of
+ * this function with no test on either.
+ */
+export function indonesianMeasureLabel(
+  assessed: number,
+  ready: (assessed: number) => string,
+): string {
+  if (assessed <= 0) return INDONESIAN_REPORT_LABELS.not_tested;
+  return ready(assessed);
+}
+
 /** Settled label for a run-status key; throws on an unknown key rather than inventing a label. */
 export function indonesianRunStatusLabel(
   status: IndonesianRunStatusKey,

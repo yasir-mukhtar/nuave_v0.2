@@ -1107,6 +1107,18 @@ export function buildAuditReport(
   const brandedRecognized = completedBranded.filter(
     (item) => detailFor(item.prompt_id)?.appearance === "mentioned",
   ).length;
+  // R3-7 (Phase 3 fix-round-3 adversarial review): "appeared" is
+  // appearance === "mentioned", read directly, exactly as the fixture
+  // reference does (`fixture-journey/adapter.ts`). Deriving it as
+  // `unbrandedRecommended + unbrandedMentioned` only matched that definition
+  // because `normalizeReportEvidence` forces absent → not_recommended two
+  // files away; `buildAuditReport` is exported and is called with
+  // un-normalized content by tests, where a detail carrying
+  // { appearance: "absent", recommendation: "recommended" } would have
+  // overstated the headline.
+  const unbrandedAppeared = completedUnbranded.filter(
+    (item) => detailFor(item.prompt_id)?.appearance === "mentioned",
+  ).length;
   const detailValues = [...details.values()];
   const countComparison = (
     value: ReportContent["details"][number]["comparison"],
@@ -1114,12 +1126,23 @@ export function buildAuditReport(
   const countInformation = (
     value: ReportContent["details"][number]["information"],
   ) => detailValues.filter((detail) => detail.information === value).length;
-  const recommendationAssessed = detailValues.filter((detail) =>
+  // AC-17 eligibility (R3-3, Phase 3 fix-round-3 adversarial review): a
+  // dimension is "assessed" only when the brand APPEARED and the dimension
+  // was judged. The same rule applies to all three dimensions. Before this,
+  // recommendation alone counted `not_recommended` as assessed, which swept
+  // in every absent question (`normalizeReportEvidence` forces absent →
+  // not_recommended / not_observed / not_assessed) and produced a report
+  // that read "0 of 10 pertanyaan yang dinilai" on one line and "Tidak
+  // diuji" on the next two for the same nine questions.
+  const assessableDetails = detailValues.filter(
+    (detail) => detail.appearance === "mentioned",
+  );
+  const recommendationAssessed = assessableDetails.filter((detail) =>
     (["recommended", "not_recommended"] as const).includes(
       detail.recommendation as "recommended" | "not_recommended",
     ),
   );
-  const comparisonAssessed = detailValues.filter((detail) =>
+  const comparisonAssessed = assessableDetails.filter((detail) =>
     (
       [
         "client_preferred",
@@ -1131,18 +1154,18 @@ export function buildAuditReport(
         "client_preferred" | "competitor_preferred" | "compared_no_preference",
     ),
   );
-  const informationAssessed = detailValues.filter((detail) =>
+  const informationAssessed = assessableDetails.filter((detail) =>
     (["confirmed", "incomplete", "conflicting"] as const).includes(
       detail.information as "confirmed" | "incomplete" | "conflicting",
     ),
   );
   const measures: AuditReport["measures"] = {
     overall: {
-      appeared: unbrandedRecommended + unbrandedMentioned + brandedRecognized,
+      appeared: unbrandedAppeared + brandedRecognized,
       total: observations.length,
     },
     unbranded: {
-      appeared: unbrandedRecommended + unbrandedMentioned,
+      appeared: unbrandedAppeared,
       total: unbranded.length,
     },
     branded: {
@@ -1162,9 +1185,17 @@ export function buildAuditReport(
       assessed: comparisonAssessed.length,
     },
     information: {
-      confirmed: countInformation("confirmed"),
-      incomplete: countInformation("incomplete"),
-      conflicting: countInformation("conflicting"),
+      // Numerators read from the same eligible set as the denominator, as
+      // recommendation and comparison above already do (R3-3).
+      confirmed: informationAssessed.filter(
+        (detail) => detail.information === "confirmed",
+      ).length,
+      incomplete: informationAssessed.filter(
+        (detail) => detail.information === "incomplete",
+      ).length,
+      conflicting: informationAssessed.filter(
+        (detail) => detail.information === "conflicting",
+      ).length,
       assessed: informationAssessed.length,
     },
   };

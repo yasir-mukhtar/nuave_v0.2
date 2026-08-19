@@ -16,6 +16,7 @@ import {
   INDONESIAN_REPORT_LABELS,
   indonesianCountLabel,
   indonesianHeadline,
+  indonesianMeasureLabel,
 } from "@/lib/audit/report-labels";
 import styles from "./fixture.module.css";
 
@@ -51,19 +52,6 @@ const ownerLabels: Record<string, string> = {
   marketing: "Marketing",
   web_developer: "Pengembang web",
 };
-
-/**
- * The fixture report's summary measure labels use only eligible
- * denominators (AC-26). An empty denominator renders "Tidak diuji", never
- * zero performance (R-28).
- */
-function measureLabel(
-  assessed: number,
-  ready: (assessed: number) => string,
-): string {
-  if (assessed === 0) return INDONESIAN_REPORT_LABELS.not_tested;
-  return ready(assessed);
-}
 
 function SectionHeading({
   number,
@@ -245,7 +233,7 @@ export default function FixtureReportView({
             <div>
               <dt>Rekomendasi</dt>
               <dd>
-                {measureLabel(
+                {indonesianMeasureLabel(
                   measures.recommendation.assessed,
                   () =>
                     `Direkomendasikan di ${measures.recommendation.recommended} dari ${measures.recommendation.assessed} pertanyaan yang dinilai`,
@@ -255,7 +243,7 @@ export default function FixtureReportView({
             <div>
               <dt>Perbandingan</dt>
               <dd>
-                {measureLabel(
+                {indonesianMeasureLabel(
                   measures.comparison.assessed,
                   () =>
                     `Diunggulkan di ${measures.comparison.clientPreferred} dari ${measures.comparison.assessed} pertanyaan yang dinilai`,
@@ -265,7 +253,7 @@ export default function FixtureReportView({
             <div>
               <dt>Informasi publik</dt>
               <dd>
-                {measureLabel(
+                {indonesianMeasureLabel(
                   measures.information.assessed,
                   () =>
                     `${measures.information.confirmed} terkonfirmasi, ${measures.information.incomplete} belum lengkap, ${measures.information.conflicting} bertentangan dari ${measures.information.assessed} pertanyaan yang dinilai`,

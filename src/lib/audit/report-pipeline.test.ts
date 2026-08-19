@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   goldenBrief,
   goldenObservations,
@@ -16,14 +16,52 @@ import {
   createValidatedAuditReport,
   type ReportGenerator,
 } from "./report-pipeline";
+import { liveGenerateReportContent } from "./provider";
 import type { ReportContent } from "./types";
 
-const input = {
+// The Phase-1 golden record: 9 completed + 1 failed, no attempt telemetry. It
+// is the ten-of-ten gate's rejection fixture, and it is what `buildAuditReport`
+// is exercised against elsewhere. Since R3-6 made the gate unconditional
+// inside `createValidatedAuditReport`, it can no longer be driven through the
+// pipeline on either language — use `input` for that.
+const partialInput = {
   brief: goldenBrief,
   prompts: goldenPrompts,
   observations: goldenObservations,
   safety_identifier: "fixture-user-123",
   budget: fixtureBudget,
+};
+
+// The gate-ready evidence set: ten completed observations, each with a usable
+// answer and attempt telemetry. Question 5 (the golden failure) is backfilled
+// with an answer that does not name the brand, so it normalizes to
+// absent / not_recommended.
+const goldenCompletedObservations = goldenObservations.map(
+  (observation, index) => ({
+    ...observation,
+    ...(index === 4
+      ? {
+          run_status: "completed" as const,
+          raw_answer:
+            "Local advisers differ by focus: some handle logistics, others readiness reviews.",
+          failure_reason: "",
+          sources: [
+            {
+              url: "https://northstar.example/evidence-5",
+              title: "Fictional source 5",
+            },
+          ],
+        }
+      : {}),
+    telemetry: observation.telemetry.length
+      ? observation.telemetry
+      : [fixtureCallTelemetry({ stage: "observation" })],
+  }),
+);
+
+const input = {
+  ...partialInput,
+  observations: goldenCompletedObservations,
 };
 
 function result(content: ReportContent, id: string) {
@@ -47,11 +85,40 @@ describe("validated report pipeline", () => {
         {
           ...input,
           language: "id",
-          observations: goldenObservations.slice(0, 9),
+          observations: goldenCompletedObservations.slice(0, 9),
         },
         generate,
       ),
     ).rejects.toThrow("requires exactly ten observations");
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  // R3-6 (Phase 3 fix-round-3 adversarial review): the same gate on the
+  // English path. It used to run only for `language: "id"`, so a direct
+  // library caller could buy synthesis for a partial evidence set in English
+  // — the code comment claimed otherwise.
+  it("blocks English synthesis before the provider on incomplete evidence", async () => {
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "should-not-run"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport(
+        { ...input, observations: goldenCompletedObservations.slice(0, 9) },
+        generate,
+      ),
+    ).rejects.toThrow("requires exactly ten observations");
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("blocks English synthesis on the partial golden record (9 completed + 1 failed)", async () => {
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "should-not-run"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport(partialInput, generate),
+    ).rejects.toThrow(/not evaluable/);
     expect(generate).not.toHaveBeenCalled();
   });
 
@@ -209,12 +276,13 @@ describe("validated report pipeline", () => {
     // Answer excerpts, attached sources, evidence prompt IDs, and
     // classifications are identical after a retry that only rewrote language.
     expect(report.details.map((detail) => detail.answer_excerpt)).toEqual(
-      goldenObservations.map((observation) => observation.raw_answer),
+      goldenCompletedObservations.map((observation) => observation.raw_answer),
     );
     expect(report.details.map((detail) => detail.source_urls)).toEqual(
-      goldenObservations.map((observation) =>
-        observation.sources.map((source) => source.url),
-      ),
+      // Normalization only drops sources the observation did not return; it
+      // never adds one. Question 5's synthesis cites none, so it stays empty
+      // even though its backfilled observation carries a source.
+      goldenReportContent().details.map((detail) => detail.source_urls),
     );
     expect(
       report.priorities.map((priority) => priority.evidence_prompt_ids),
@@ -224,7 +292,12 @@ describe("validated report pipeline", () => {
       ),
     );
     expect(report.details.map((detail) => detail.recommendation)).toEqual(
-      goldenReportContent().details.map((detail) => detail.recommendation),
+      // Question 5 is the golden failure, backfilled to completed with an
+      // answer that does not name the brand, so it normalizes from the
+      // content's not_assessed to not_recommended before and after the retry.
+      goldenReportContent().details.map((detail, index) =>
+        index === 4 ? "not_recommended" : detail.recommendation,
+      ),
     );
   });
 });
@@ -232,7 +305,9 @@ describe("validated report pipeline", () => {
 describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any provider call)", () => {
   it("rejects a partial record (golden: 9 completed + 1 failed) with no provider call", () => {
     const generate = vi.fn();
-    expect(() => assertReportGenerationGate(input)).toThrow(/not evaluable/);
+    expect(() => assertReportGenerationGate(partialInput)).toThrow(
+      /not evaluable/,
+    );
     // The gate throws before generation: the provider is never called.
     expect(generate).not.toHaveBeenCalled();
   });
@@ -248,7 +323,10 @@ describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any 
           : [fixtureCallTelemetry({ stage: "observation" })],
     }));
     expect(() =>
-      assertReportGenerationGate({ ...input, observations: allEvaluable }),
+      assertReportGenerationGate({
+        ...partialInput,
+        observations: allEvaluable,
+      }),
     ).not.toThrow();
   });
 
@@ -259,7 +337,10 @@ describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any 
         : prompt,
     );
     expect(() =>
-      assertReportGenerationGate({ ...input, prompts: duplicatePrompts }),
+      assertReportGenerationGate({
+        ...partialInput,
+        prompts: duplicatePrompts,
+      }),
     ).toThrow(/unique/);
   });
 
@@ -270,33 +351,48 @@ describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any 
         : observation,
     );
     expect(() =>
-      assertReportGenerationGate({ ...input, observations: mismatched }),
+      assertReportGenerationGate({ ...partialInput, observations: mismatched }),
     ).toThrow(/Missing evaluable observations/);
   });
 });
 
+// R3-5: `scripts/sozo/report-rerun.ts` and the Sozo runner call this pipeline
+// directly with the default live generator, never through /api/audit/report,
+// so the credential guard has to be here too.
+describe("live provider credential guard on the script path (R3-5)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("fails before synthesis when OPENAI_API_KEY is missing and the live generator is used", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+
+    // The guard's own message, not openai.ts's per-call one: the point is
+    // that no provider call was attempted at all.
+    await expect(
+      createValidatedAuditReport(input, liveGenerateReportContent),
+    ).rejects.toThrow(/fails closed before making any provider call/);
+  });
+
+  it("leaves an injected generator alone — no provider call, no credential needed", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "response-injected"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport(input, generate),
+    ).resolves.toMatchObject({ report_version: "nuave-report-v3" });
+  });
+});
+
 describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 R-19/R-37)", () => {
-  const allCompletedInput = {
-    ...input,
-    observations: goldenObservations.map((observation, index) =>
-      index === 4
-        ? {
-            ...observation,
-            run_status: "completed" as const,
-            raw_answer:
-              "Local advisers differ by focus: some handle logistics, others readiness reviews.",
-            failure_reason: "",
-            sources: [
-              {
-                url: "https://northstar.example/evidence-5",
-                title: "Fictional source 5",
-              },
-            ],
-            telemetry: [fixtureCallTelemetry({ stage: "observation" })],
-          }
-        : observation,
-    ),
-  };
+  // Since R3-6 the pipeline gate is unconditional, so every input that
+  // reaches synthesis is a ten-of-ten evidence set: the shared `input` is
+  // already the all-completed record this describe block used to build.
+  const allCompletedInput = input;
 
   it("rejects a synthesis that marks a completed, mentioned observation not_assessed (the Sozo defect)", async () => {
     const defective = goldenReportContent();
@@ -349,19 +445,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     const generate = vi.fn(async () =>
       result(goldenReportContent(), "response-id"),
     ) as unknown as ReportGenerator;
-    // The Indonesian path enforces the ten-of-ten gate (R-19), which requires
-    // attempt telemetry on every observation — not only the one
-    // `allCompletedInput` backfills for the English-path regression test.
-    const gateReadyInput = {
-      ...allCompletedInput,
-      observations: allCompletedInput.observations.map((observation) => ({
-        ...observation,
-        telemetry: observation.telemetry.length
-          ? observation.telemetry
-          : [fixtureCallTelemetry({ stage: "observation" })],
-      })),
-      language: "id" as const,
-    };
+    const gateReadyInput = { ...input, language: "id" as const };
 
     const report = await createValidatedAuditReport(gateReadyInput, generate);
 
