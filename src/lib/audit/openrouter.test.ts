@@ -239,11 +239,33 @@ describe("openrouter provider wiring", () => {
     vi.unstubAllEnvs();
   });
 
-  it("fails the protected live path closed without the explicit testing flag", async () => {
+  it("fails the protected live path closed on the call, not on the import", async () => {
     vi.stubEnv("NUAVE_PROVIDER", "openrouter");
     vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "");
+    vi.stubEnv("OPENROUTER_API_KEY", "test-key");
     vi.resetModules();
-    await expect(import("./provider")).rejects.toThrow(/testing-only/);
+    const provider = await import("./provider");
+
+    // Importing must NOT throw: `next build` imports every route module to
+    // collect page data, so a throw here fails the whole build instead of the
+    // one request that should be refused.
+    expect(typeof provider.liveExecuteAuditPrompt).toBe("function");
+
+    // Every way of actually reaching a provider still fails closed.
+    expect(() => provider.liveAuditProvider()).toThrow(/testing-only/);
+    expect(() => provider.assertLiveProviderCredentialsConfigured()).toThrow(
+      /testing-only/,
+    );
+    await expect(
+      provider.liveExtractBusinessDraft({
+        website_url: "https://example.com",
+        brand_name: "x",
+        market_context: "x",
+        category: "x",
+        safety_identifier: "x",
+        budget: { limit_usd: 5, carryover_cost_usd: 0, calls: [] },
+      }),
+    ).rejects.toThrow(/testing-only/);
     vi.unstubAllEnvs();
   });
 

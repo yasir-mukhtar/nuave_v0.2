@@ -35,6 +35,19 @@ import {
 export type AuditProviderName = "openai" | "gemini" | "groq" | "openrouter";
 
 /**
+ * The three audit-stage functions for one provider, typed against the OpenAI
+ * module because that is the contract every provider implements. Declaring it
+ * (rather than the previous `unknown`) makes the `satisfies` below a real
+ * check: a provider whose signature drifts from the shared contract now fails
+ * to compile instead of failing at runtime on the live path.
+ */
+type LiveProviderBindings = {
+  extract: typeof openaiExtract;
+  execute: typeof openaiExecute;
+  generate: typeof openaiGenerate;
+};
+
+/**
  * The three audit-stage functions for one provider. Every provider module
  * implements the same signatures and Zod contracts, so a provider is a whole
  * row of this table and no code path can mix providers mid-run.
@@ -56,10 +69,7 @@ const PROVIDER_BINDINGS = {
     execute: openrouterExecute,
     generate: openrouterGenerate,
   },
-} as const satisfies Record<
-  AuditProviderName,
-  { extract: unknown; execute: unknown; generate: unknown }
->;
+} as const satisfies Record<AuditProviderName, LiveProviderBindings>;
 
 const PROVIDER_NAMES = Object.keys(
   PROVIDER_BINDINGS,
@@ -112,10 +122,31 @@ export const generateReportContent = active.generate;
 // 2026-08-17. These are the only bindings the API routes and the report
 // pipeline may use; the env-selectable bindings above stay for tests and
 // local runners only.
-const live = PROVIDER_BINDINGS[liveAuditProvider()];
-export const liveExtractBusinessDraft = live.extract;
-export const liveExecuteAuditPrompt = live.execute;
-export const liveGenerateReportContent = live.generate;
+//
+// They resolve LAZILY, on the call. Resolving at module load meant a
+// deployment whose NUAVE_PROVIDER was a testing-only value could not be built
+// at all: `next build` imports every route module to collect page data, so the
+// fail-closed throw came out of module evaluation and failed the whole build
+// ("Failed to collect page data for /api/audit/extract") instead of failing
+// the one request that should be refused. Checking on the call is also
+// strictly stronger than checking at import — the policy is re-evaluated for
+// every live call rather than once per process.
+function liveBindings(): LiveProviderBindings {
+  return PROVIDER_BINDINGS[liveAuditProvider()];
+}
+
+// `async` is load-bearing, not decoration: these are typed as returning a
+// promise, so a fail-closed rejection must arrive as a REJECTION. A plain
+// arrow would throw synchronously out of `liveBindings()`, before any promise
+// exists, and blow past a caller's `.catch()`.
+export const liveExtractBusinessDraft: LiveProviderBindings["extract"] = async (
+  input,
+) => liveBindings().extract(input);
+export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
+  input,
+) => liveBindings().execute(input);
+export const liveGenerateReportContent: LiveProviderBindings["generate"] =
+  async (input, revision) => liveBindings().generate(input, revision);
 
 /**
  * Fails fast, once, before any provider call (O-10, Phase 3 fix-round-2
@@ -141,6 +172,13 @@ export const liveGenerateReportContent = live.generate;
  * own `execute`/`generate` make no provider call and need no credential.
  */
 export function isLiveProviderCall(fn: unknown): boolean {
+  // The lazy live wrappers must match too: `run/route.ts` and
+  // `report-pipeline.ts` hand THOSE to the orchestrator, so omitting them
+  // would silently skip the credential assert on the one path that most needs
+  // it.
+  if (fn === liveExecuteAuditPrompt || fn === liveGenerateReportContent) {
+    return true;
+  }
   return PROVIDER_NAMES.some(
     (name) =>
       fn === PROVIDER_BINDINGS[name].execute ||
