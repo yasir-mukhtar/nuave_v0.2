@@ -115,6 +115,7 @@ context an agent must read. Do not implement a draft specification.
 | [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md) | Fixture-backed landing-to-report preview with unmistakably simulated checkout | Verified (2026-08-17); realigned by Spec 002 |
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md) | Indonesian audit and report contracts, journey realigned to the canonical sequence | Verified (2026-08-17) |
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Approved; implementing — **the current objective** |
+| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Approved; implementing |
 
 ## Reference and history
 

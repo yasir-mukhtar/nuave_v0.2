@@ -340,6 +340,8 @@
   padding-top: 1.25rem;
 }
 
+/* Hero input (step 0) — see new hero CSS at end of file */
+
 .stickyAction {
   position: sticky;
   bottom: 0;
@@ -1302,6 +1304,265 @@
   .reportFooter span:nth-child(2) {
     display: none;
   }
+}
+
+/* ── Hero input (step 0) ── */
+
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroPlaceholderCycle {
+  0%,
+  28% {
+    opacity: 1;
+  }
+  33%,
+  61% {
+    opacity: 0;
+  }
+  66%,
+  94% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes heroGlowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(83, 58, 253, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(83, 58, 253, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(83, 58, 253, 0.12);
+  }
+}
+
+@keyframes heroExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+}
+
+@keyframes heroSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.heroStage {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.heroExiting {
+  animation: heroExit 0.4s ease forwards;
+  pointer-events: none;
+}
+
+.heroGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  will-change: background;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 0 1.25rem;
+}
+
+.heroLogo {
+  height: 32px;
+  width: auto;
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0s forwards;
+}
+
+.heroHeading {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 5vw, var(--text-heading-lg));
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--foreground);
+  text-wrap: balance;
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0.1s forwards;
+}
+
+.heroInputBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(36rem, 90vw);
+  height: 56px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-light);
+  padding: 0 1.25rem;
+  background: var(--background);
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0.25s forwards;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.heroInputBar:focus-within {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(83, 58, 253, 0.12);
+}
+
+.heroInputBarGlow {
+  box-shadow: 0 0 0 3px rgba(83, 58, 253, 0.12);
+}
+
+.heroInputLoading {
+  pointer-events: none;
+}
+
+.heroInput {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--foreground);
+  caret-color: var(--purple);
+}
+
+.heroInput::placeholder {
+  color: transparent;
+}
+
+.heroInputLoading .heroInput {
+  color: transparent;
+  caret-color: transparent;
+}
+
+.heroPlaceholderGroup {
+  position: absolute;
+  left: 1.25rem;
+  right: 3rem;
+  top: 0;
+  bottom: 0;
+  display: grid;
+  pointer-events: none;
+}
+
+.heroPlaceholder {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--text-placeholder);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1;
+  animation: heroPlaceholderCycle 9s ease infinite;
+}
+
+.heroPlaceholder:nth-child(2) {
+  animation-delay: 3s;
+}
+
+.heroPlaceholder:nth-child(3) {
+  animation-delay: 6s;
+}
+
+.heroArrow {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--purple);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  animation: heroFadeUp 0.25s ease forwards;
+}
+
+.heroLoadingContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  opacity: 0;
+  animation: heroFadeUp 0.25s ease forwards;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+}
+
+.heroSpinner {
+  color: var(--purple);
+  flex-shrink: 0;
+}
+
+.heroHint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0.5s forwards;
+}
+
+.heroHintHidden {
+  opacity: 0 !important;
+  animation: none !important;
+  transition: opacity var(--transition-base);
+}
+
+.heroHintError {
+  color: var(--red);
+  opacity: 1;
+  animation: none;
+}
+
+.heroForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.stageEnter {
+  animation: heroFadeUp 0.4s ease both;
 }
 
 @page {

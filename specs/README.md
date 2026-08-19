@@ -62,6 +62,11 @@ verification is against its acceptance criteria.
   engine behind the journey states (03 → 06), five-business provider
   evaluation (dental clinics, Depok), first live audit (Sozo Dental
   Depok/Margonda), and the report-quality gate verdict.
+- [`004-source-hero-intake/SPEC.md`](./004-source-hero-intake/SPEC.md)
+  — status **Approved** (founder-approved 2026-08-19; implementation in
+  progress). Replaces the audit tool's step-0 intake form with one focused hero
+  field that accepts a website or Instagram account, auto-detects the type, and
+  scans into the existing facts screen. UI-only; no backend contract change.
 
 [`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
 no active spec is named, the next task is to prepare or approve one rather than

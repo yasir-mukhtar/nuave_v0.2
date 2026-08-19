@@ -42,6 +42,7 @@ import {
   SourceStep,
   type RunUnfinishedState,
 } from "./AuditStages";
+import SourceHero from "./SourceHero";
 import ReportView from "./ReportView";
 import styles from "./audit.module.css";
 
@@ -176,6 +177,7 @@ export default function AuditWorkflow() {
   const [restored, setRestored] = useState(false);
   const [carryoverCostUsd, setCarryoverCostUsd] = useState(0);
   const [budgetReady, setBudgetReady] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
   const safetyIdentifier = useMemo(() => {
     if (typeof window === "undefined") return "nuave-server-placeholder";
@@ -310,6 +312,14 @@ export default function AuditWorkflow() {
     return () => window.clearTimeout(timer);
   }, [restored, step]);
 
+  useEffect(() => {
+    if (factsExtracted && !busy && step === 0 && !exiting) {
+      setExiting(true);
+      const timer = setTimeout(() => setExiting(false), 450);
+      return () => clearTimeout(timer);
+    }
+  }, [factsExtracted, busy, step, exiting]);
+
   function clearAfterBriefChange() {
     setFactsConfirmed(false);
     setPromptPack(null);
@@ -329,23 +339,25 @@ export default function AuditWorkflow() {
     clearAfterBriefChange();
   }
 
-  async function extractWebsite() {
+  async function extractWebsite(url?: string) {
     setError("");
+    const resolvedUrl = url?.trim() || websiteUrl.trim();
     if (!budgetReady) {
       setError("Tunggu pengendali biaya privat sebelum memulai audit.");
       return;
     }
-    if (!websiteUrl.trim()) {
+    if (!resolvedUrl) {
       setError("Masukkan URL situs resmi brand Anda terlebih dahulu.");
       return;
     }
+    if (url) setWebsiteUrl(url.trim());
     setBusy("extract");
     try {
       const result = await postJson<{
         draft: ExtractionDraft;
         telemetry: AuditCallTelemetry[];
       }>("/api/audit/extract", {
-        website_url: websiteUrl.trim(),
+        website_url: resolvedUrl,
         brand_name: brief.brand_name,
         market_context: brief.market_context,
         category: brief.category,
@@ -367,7 +379,7 @@ export default function AuditWorkflow() {
         market_context: draft.market_context || current.market_context,
         target_customer: draft.target_customer || current.target_customer,
         official_sources: [
-          ...new Set([websiteUrl.trim(), ...draft.official_sources]),
+          ...new Set([resolvedUrl, ...draft.official_sources]),
         ],
         verified_offerings: draft.verified_offerings,
         verified_customer_needs: draft.verified_customer_needs,
@@ -748,7 +760,10 @@ export default function AuditWorkflow() {
 
   return (
     <main className={styles.shell} lang="en" data-theme="light">
-      <header className={`${styles.topbar} ${styles.noPrint}`}>
+      <header
+        className={`${styles.topbar} ${styles.noPrint}`}
+        style={step === 0 && !exiting ? { position: "absolute", opacity: 0, pointerEvents: "none" } : undefined}
+      >
         <Link href="/" className={styles.brand}>
           <Image
             src="/logo-nuave-horizontal.png"
@@ -770,7 +785,7 @@ export default function AuditWorkflow() {
         </div>
       </header>
 
-      {!report ? (
+      {step > 0 && !report ? (
         <nav
           className={`${styles.stepper} ${styles.noPrint}`}
           aria-label="Tahapan audit"
@@ -837,15 +852,13 @@ export default function AuditWorkflow() {
         </div>
       ) : null}
 
-      {step === 0 ? (
-        <SourceStep
-          websiteUrl={websiteUrl}
-          setWebsiteUrl={setWebsiteUrl}
-          brief={brief}
-          updateBrief={updateBrief}
-          busy={busy}
-          factsExtracted={factsExtracted}
+      {(step === 0 || exiting) ? (
+        <SourceHero
+          initialValue={websiteUrl}
+          extracting={busy === "extract"}
+          error={error}
           onExtract={extractWebsite}
+          exiting={exiting}
         />
       ) : null}
 
