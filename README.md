@@ -116,8 +116,21 @@ npm ci
 npm run dev
 ```
 
+When you change dependencies, regenerate the lockfile with
+`npm install --package-lock-only`, never a plain `npm install`. A plain install
+on macOS prunes the `wasm32` optional-platform packages (`@emnapi/*`,
+`@napi-rs/wasm-runtime`) out of `package-lock.json`, which still leaves the
+tree valid locally but makes `npm ci` fail the in-sync check on every machine,
+including CI — a failure that has already been fixed and reintroduced twice.
+Confirm with `npm ci --dry-run` before committing a lockfile change.
+
 Copy `.env.example` to `.env.local`, add `OPENAI_API_KEY`, and open
-<http://localhost:3000/audit>. The optional `OPENAI_AUDIT_MODEL` defaults to
+<http://localhost:3000/audit>. `NUAVE_PROVIDER` selects a free provider
+instead for local testing — `groq` (Groq + Tavily, web search on) or
+`openrouter` (free models, no web search, so observations carry no sources).
+Both are testing-only: the protected live path fails closed to OpenAI unless
+`NUAVE_LIVE_PROVIDER_TESTING=1` is also set, and that flag is always ignored
+when `NODE_ENV=production`. See `.env.example` for each provider's limits. The optional `OPENAI_AUDIT_MODEL` defaults to
 `gpt-5.6-luna`; every completed observation records the exact returned model. Set
 `OPENAI_AUDIT_REASONING_EFFORT` to override reasoning effort for every audit
 stage with one supported value: `none`, `low`, `medium`, `high`, `xhigh`, or
