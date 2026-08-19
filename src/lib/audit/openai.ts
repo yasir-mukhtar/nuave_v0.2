@@ -146,10 +146,12 @@ type ExtractionResponseResult = Pick<
   output_parsed: ExtractionDraft | null;
 };
 
-type ExtractionFallbackInput = Pick<
-  Parameters<typeof extractBusinessDraft>[0],
-  "website_url" | "brand_name" | "market_context" | "category"
->;
+type ExtractionFallbackInput = {
+  website_url: string;
+  brand_name: string;
+  market_context: string;
+  category: string;
+};
 
 function missingExtractionWarning(response: ExtractionResponseResult) {
   if (response.incomplete_details?.reason === "max_output_tokens") {
@@ -175,10 +177,11 @@ function missingExtractionWarning(response: ExtractionResponseResult) {
 export function extractionDraftOrManualFallback(
   input: ExtractionFallbackInput,
   response: ExtractionResponseResult,
+  attempts = 1,
 ): ExtractionDraft {
   if (response.output_parsed) return response.output_parsed;
 
-  // The private audit allows one extraction call. Keep the paid telemetry, but
+  // The private audit allows one extraction retry. Keep the paid telemetry, but
   // discard unparsed content and let the founder finish the brief manually.
   return {
     brand_name: input.brand_name,
@@ -201,6 +204,11 @@ export function extractionDraftOrManualFallback(
     evidence: [],
     warnings: [
       missingExtractionWarning(response),
+      ...(attempts > 1
+        ? [
+            "Nuave retried the automatic extraction once and the retry did not produce a structured draft either.",
+          ]
+        : []),
       "No extracted business facts were retained. Complete and verify every required field manually using the official website before approving the brief.",
     ],
   };
@@ -218,22 +226,38 @@ export function normalizeSourceTitle(title: string | undefined, url: string) {
   return `${shortened}…`;
 }
 
-export async function extractBusinessDraft(input: {
+type ExtractionInput = {
   website_url: string;
   brand_name: string;
   market_context: string;
   category: string;
   safety_identifier: string;
   budget: AuditBudget;
-}): Promise<{
-  draft: ExtractionDraft;
-  returned_model: string;
-  response_id: string;
-  telemetry: AuditCallTelemetry[];
-}> {
+};
+
+/**
+ * Bounds on the drafted object. `extractionDraftSchema` has no array ceiling
+ * (OpenAI structured outputs ignores `maxItems`), so the only place the draft
+ * length can be constrained is the instruction itself. Without these the
+ * evidence array grows with the size of the website and can run the response
+ * past its output allowance, which discards the whole paid draft.
+ */
+const EXTRACTION_LENGTH_INSTRUCTIONS = [
+  "Return at most eight items in any list.",
+  "Return at most twelve evidence records, covering the most material values only.",
+  "Keep every evidence note to one short clause.",
+];
+
+const EXTRACTION_RETRY_BREVITY_INSTRUCTION =
+  "The previous attempt ran past its output limit. Return a shorter draft: at most four items per list, at most six evidence records, and no note longer than eight words.";
+
+function extractionRequest(
+  input: Omit<ExtractionInput, "budget">,
+  requestedModel: string,
+  extraInstructions: string[],
+) {
   const websiteDomain = hostnameFromUrl(input.website_url);
-  const requestedModel = auditModel();
-  const request = {
+  return {
     model: requestedModel,
     reasoning: { effort: auditReasoningEffort("low") },
     store: false,
@@ -263,6 +287,8 @@ export async function extractBusinessDraft(input: {
           "Write all explanatory text in clear, natural English. Preserve official brand names, product names, and place names as published.",
           "Leave unsupported scalar fields empty and unsupported arrays empty.",
           "For each material extracted value add an evidence record with the exact field, value, source URL, and a short note.",
+          ...EXTRACTION_LENGTH_INSTRUCTIONS,
+          ...extraInstructions,
           "The values are suggestions for human confirmation, not verified facts.",
         ].join("\n"),
       },
@@ -277,44 +303,94 @@ export async function extractBusinessDraft(input: {
       },
     ],
   } satisfies CostControlledResponseParams;
-  const reservedCost = reserveAuditCall({
-    budget: input.budget,
-    stage: "extract",
-    request,
-    requested_model: requestedModel,
-    has_web_search: true,
-  });
-  const startedAt = Date.now();
-  let telemetry: AuditCallTelemetry | undefined;
-  try {
-    const response = await client().responses.parse(request);
-    telemetry = completedCallTelemetry({
+}
+
+export async function extractBusinessDraft(input: ExtractionInput): Promise<{
+  draft: ExtractionDraft;
+  returned_model: string;
+  response_id: string;
+  telemetry: AuditCallTelemetry[];
+}> {
+  const requestedModel = auditModel();
+  const calls: AuditCallTelemetry[] = [];
+
+  // Each attempt reserves against the running ledger — the caller's budget plus
+  // this call's own earlier attempt — so the retry cannot spend headroom the
+  // first attempt already consumed.
+  async function attempt(attemptNumber: number, extraInstructions: string[]) {
+    const request = extractionRequest(input, requestedModel, extraInstructions);
+    const reservedCost = reserveAuditCall({
+      budget: { ...input.budget, calls: [...input.budget.calls, ...calls] },
       stage: "extract",
-      started_at_ms: startedAt,
+      request,
       requested_model: requestedModel,
-      response,
+      has_web_search: true,
     });
-    return {
-      draft: extractionDraftOrManualFallback(input, response),
-      returned_model: response.model,
-      response_id: response.id,
-      telemetry: [telemetry],
-    };
+    const startedAt = Date.now();
+    try {
+      const response = await client().responses.parse(request);
+      calls.push(
+        completedCallTelemetry({
+          stage: "extract",
+          attempt: attemptNumber,
+          started_at_ms: startedAt,
+          requested_model: requestedModel,
+          response,
+        }),
+      );
+      return response;
+    } catch (error) {
+      calls.push(
+        failedCallTelemetry({
+          stage: "extract",
+          attempt: attemptNumber,
+          started_at_ms: startedAt,
+          requested_model: requestedModel,
+          reserved_cost_usd: reservedCost,
+          error,
+        }),
+      );
+      throw error;
+    }
+  }
+
+  let response;
+  try {
+    response = await attempt(1, []);
   } catch (error) {
-    const retained =
-      telemetry ??
-      failedCallTelemetry({
-        stage: "extract",
-        started_at_ms: startedAt,
-        requested_model: requestedModel,
-        reserved_cost_usd: reservedCost,
-        error,
-      });
     throw new AuditCallExecutionError(
       error instanceof Error ? error.message : "Website extraction failed.",
-      [retained],
+      calls,
     );
   }
+
+  // `docs/journey/03-business-facts.md`: an invalid or empty structured output
+  // is retried once when the cost and method stay within the preparation
+  // allowance, and only then falls back to manual entry. A truncated response
+  // parses to nothing, so without this one retry a single overlong draft costs
+  // the founder every extracted field.
+  if (!response.output_parsed) {
+    try {
+      const retried = await attempt(
+        2,
+        response.incomplete_details?.reason === "max_output_tokens"
+          ? [EXTRACTION_RETRY_BREVITY_INSTRUCTION]
+          : [],
+      );
+      response = retried;
+    } catch {
+      // Best effort. The retry's own telemetry is already retained in `calls`;
+      // the founder gets the manual brief with the first attempt's diagnosis
+      // rather than an error banner and no draft at all.
+    }
+  }
+
+  return {
+    draft: extractionDraftOrManualFallback(input, response, calls.length),
+    returned_model: response.model,
+    response_id: response.id,
+    telemetry: calls,
+  };
 }
 
 // Question generation makes no provider call. See `questions.ts` for the

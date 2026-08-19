@@ -46,15 +46,30 @@ const PRICING = {
 // count, so the cost ledger is correct even when the request-level cap is
 // exceeded; only `reserveAuditCall`'s pre-call reservation assumes the cap
 // held, which can very slightly under-reserve headroom for that one call.
+//
+// `extract.max_output_tokens` covers reasoning tokens, the web-search call, and
+// the whole `extractionDraftSchema` object, which OpenAI structured outputs
+// makes fully required — a truncated response parses to nothing and costs the
+// founder the entire draft. The first live extraction against a real Indonesian
+// business site ended `incomplete_details.reason: "max_output_tokens"` at the
+// original 4,000 allowance, so it now matches the report stage at 16,000. The
+// ceiling only bounds a runaway response (16,000 output tokens is USD 0.0288 at
+// Luna long-context output pricing); every recorded call is still priced from
+// real provider usage.
 export const AUDIT_CALL_LIMITS = {
-  extract: { max_output_tokens: 4_000, max_tool_calls: 1 },
+  extract: { max_output_tokens: 16_000, max_tool_calls: 1 },
   prompts: { max_output_tokens: 0, max_tool_calls: 0 },
   observation: { max_output_tokens: 3_000, max_tool_calls: 1 },
   report: { max_output_tokens: 16_000, max_tool_calls: 0 },
 } as const;
 
 export const AUDIT_STAGE_CALL_LIMITS = {
-  extract: 1,
+  // `docs/journey/03-business-facts.md` ("Model returns invalid or empty
+  // structured output"): retry once when the cost and method stay within the
+  // preparation allowance, then fall back to manual entry. Two is the ceiling
+  // for that one retry, not an allowance for repeated extraction; the USD 5
+  // per-session cap and `reserveAuditCall` still gate the second call.
+  extract: 2,
   prompts: 0,
   // Spec 003 R-17/R-36: the observation stage must absorb the targeted 1+2
   // retry policy — 10 questions x 3 attempts (one initial + up to two

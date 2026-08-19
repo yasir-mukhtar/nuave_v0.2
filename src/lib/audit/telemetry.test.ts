@@ -133,6 +133,12 @@ describe("private audit cost telemetry", () => {
       max_output_tokens: 3_000,
       max_tool_calls: 1,
     });
+    // The whole required draft object plus reasoning has to fit in one
+    // response; a truncated extraction parses to nothing and is discarded.
+    expect(AUDIT_CALL_LIMITS.extract).toEqual({
+      max_output_tokens: 16_000,
+      max_tool_calls: 1,
+    });
     expect(AUDIT_CALL_LIMITS.report).toEqual({
       max_output_tokens: 16_000,
       max_tool_calls: 0,
@@ -207,7 +213,9 @@ describe("private audit cost telemetry", () => {
     // questions x 3 attempts = 30) while the USD 5 per-session ceiling stays
     // the binding cap.
     expect(AUDIT_STAGE_CALL_LIMITS).toEqual({
-      extract: 1,
+      // `docs/journey/03-business-facts.md`: one extraction call plus the single
+      // allowed retry when the structured output comes back empty.
+      extract: 2,
       prompts: 0,
       observation: 30,
       report: 3,

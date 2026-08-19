@@ -4,6 +4,7 @@ import {
   auditModel,
   auditReasoningEffort,
   executeAuditPrompt,
+  extractBusinessDraft,
   extractionDraftOrManualFallback,
   normalizeSourceTitle,
   observationInstructionText,
@@ -22,23 +23,25 @@ import {
   type AuditPrompt,
   type BusinessBrief,
 } from "./types";
-import { fixtureBudget } from "./fixtures/telemetry";
+import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 
 // Mock the OpenAI SDK so the live observation path can be exercised without a
 // network call. vi.hoisted keeps the mocks reachable from the hoisted factory.
-const { mockOpenAIClient, mockResponsesCreate } = vi.hoisted(() => {
-  const mockResponsesCreate = vi.fn();
-  // Regular function (not an arrow) so `new OpenAI(...)` can construct it.
-  const mockOpenAIClient = vi.fn(function () {
-    return {
-      responses: {
-        create: mockResponsesCreate,
-        parse: vi.fn(),
-      },
-    };
+const { mockOpenAIClient, mockResponsesCreate, mockResponsesParse } =
+  vi.hoisted(() => {
+    const mockResponsesCreate = vi.fn();
+    const mockResponsesParse = vi.fn();
+    // Regular function (not an arrow) so `new OpenAI(...)` can construct it.
+    const mockOpenAIClient = vi.fn(function () {
+      return {
+        responses: {
+          create: mockResponsesCreate,
+          parse: mockResponsesParse,
+        },
+      };
+    });
+    return { mockOpenAIClient, mockResponsesCreate, mockResponsesParse };
   });
-  return { mockOpenAIClient, mockResponsesCreate };
-});
 
 vi.mock("openai", async (importOriginal) => {
   const actual = await importOriginal<typeof import("openai")>();
@@ -177,6 +180,194 @@ describe("website extraction fallback", () => {
     expect(parsed.brand_name).toBe("Extracted brand");
     expect(parsed.verified_offerings).toEqual(["Extracted offer"]);
     expect(parsed.warnings).toEqual([]);
+  });
+});
+
+describe("live website extraction", () => {
+  const input = {
+    website_url: "https://klinikgigisehat.example",
+    brand_name: "Klinik Gigi Sehat",
+    market_context: "Depok, Jawa Barat",
+    category: "klinik gigi",
+    safety_identifier: "fixture-user-123",
+    budget: fixtureBudget,
+  };
+
+  function extractionResponse(
+    overrides: Record<string, unknown> = {},
+  ): Record<string, unknown> {
+    return {
+      model: "gpt-5.6-luna",
+      id: "resp_extract",
+      status: "completed",
+      service_tier: "default",
+      incomplete_details: null,
+      output: [],
+      output_parsed: null,
+      usage: {
+        input_tokens: 900,
+        input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+        output_tokens: 1_200,
+        output_tokens_details: { reasoning_tokens: 200 },
+        total_tokens: 2_100,
+      },
+      ...overrides,
+    };
+  }
+
+  const parsedDraft = {
+    brand_name: "Klinik Gigi Sehat",
+    entity_scope: "Klinik Gigi Sehat di Depok",
+    brand_type: "klinik gigi",
+    category: "klinik gigi",
+    market_context: "Depok, Jawa Barat",
+    target_customer: "Keluarga di Depok",
+    official_sources: ["https://klinikgigisehat.example"],
+    verified_offerings: ["Perawatan gigi umum"],
+    verified_customer_needs: [],
+    verified_decision_criteria: [],
+    brand_name_variants: [],
+    priority_offering: "",
+    conversion_action: "",
+    customer_supplied_facts: [],
+    known_accuracy_questions: [],
+    usp: "",
+    regulated_category_notes: "",
+    evidence: [],
+    warnings: [],
+  };
+
+  beforeEach(() => {
+    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
+    delete process.env.OPENAI_AUDIT_MODEL;
+    mockResponsesParse.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("bounds the drafted lists so a rich website cannot overrun the allowance", async () => {
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: parsedDraft }),
+    );
+
+    await extractBusinessDraft(input);
+
+    const request = mockResponsesParse.mock.calls[0][0];
+    expect(request.max_output_tokens).toBe(16_000);
+    expect(request.input[0].content).toContain(
+      "Return at most eight items in any list.",
+    );
+    expect(request.input[0].content).toContain(
+      "Return at most twelve evidence records",
+    );
+    expect(request.input[0].content).not.toContain("previous attempt");
+  });
+
+  it("retries once with a stricter brevity instruction after an output-limit truncation", async () => {
+    // `docs/journey/03-business-facts.md`: an empty structured output is retried
+    // once within the preparation allowance before manual entry.
+    mockResponsesParse
+      .mockResolvedValueOnce(
+        extractionResponse({
+          status: "incomplete",
+          incomplete_details: { reason: "max_output_tokens" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        extractionResponse({
+          id: "resp_extract_retry",
+          output_parsed: parsedDraft,
+        }),
+      );
+
+    const result = await extractBusinessDraft(input);
+
+    expect(mockResponsesParse).toHaveBeenCalledTimes(2);
+    expect(mockResponsesParse.mock.calls[1][0].input[0].content).toContain(
+      "The previous attempt ran past its output limit.",
+    );
+    expect(result.draft.warnings).toEqual([]);
+    expect(result.draft.entity_scope).toBe("Klinik Gigi Sehat di Depok");
+    expect(result.response_id).toBe("resp_extract_retry");
+    expect(result.telemetry).toHaveLength(2);
+    expect(result.telemetry.map((call) => call.attempt)).toEqual([1, 2]);
+  });
+
+  it("opens the manual brief when the single retry also returns nothing usable", async () => {
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+      }),
+    );
+
+    const result = await extractBusinessDraft(input);
+
+    expect(mockResponsesParse).toHaveBeenCalledTimes(2);
+    expect(result.draft.warnings[0]).toContain("reached its output limit");
+    expect(result.draft.warnings[1]).toContain("retried the automatic");
+    expect(result.draft.warnings[2]).toContain(
+      "No extracted business facts were retained",
+    );
+    expect(extractionDraftSchema.parse(result.draft)).toEqual(result.draft);
+  });
+
+  it("keeps the first attempt's diagnosis when the retry itself fails", async () => {
+    mockResponsesParse
+      .mockResolvedValueOnce(extractionResponse())
+      .mockRejectedValueOnce(new Error("simulated provider timeout"));
+
+    const result = await extractBusinessDraft(input);
+
+    expect(result.draft.warnings[0]).toContain(
+      "completed without a usable structured draft",
+    );
+    expect(result.telemetry).toHaveLength(2);
+    expect(result.telemetry[1].status).toBe("failed");
+    expect(result.telemetry[1].failure_reason).toBe(
+      "simulated provider timeout",
+    );
+  });
+
+  it("does not retry a first attempt that failed outright", async () => {
+    mockResponsesParse.mockRejectedValue(new Error("simulated provider 500"));
+
+    await expect(extractBusinessDraft(input)).rejects.toThrow(
+      "simulated provider 500",
+    );
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to the manual brief instead of retrying past the cost ceiling", async () => {
+    // The first attempt fits the remaining headroom; its own recorded spend
+    // then leaves too little for the ~USD 0.41 a second extract call reserves.
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({
+        usage: {
+          input_tokens: 300_000,
+          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+          output_tokens: 16_000,
+          output_tokens_details: { reasoning_tokens: 2_000 },
+          total_tokens: 316_000,
+        },
+      }),
+    );
+
+    const result = await extractBusinessDraft({
+      ...input,
+      budget: {
+        ...fixtureBudget,
+        calls: [fixtureCallTelemetry({ accounted_cost_usd: 4.45 })],
+      },
+    });
+
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+    expect(result.draft.warnings.join(" ")).not.toContain(
+      "retried the automatic",
+    );
+    expect(result.telemetry).toHaveLength(1);
   });
 });
 
