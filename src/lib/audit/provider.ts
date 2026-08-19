@@ -32,7 +32,8 @@ import {
 // flipping the env variable is the only change needed and there is no code path
 // that mixes providers mid-run.
 
-export type AuditProviderName = "openai" | "gemini" | "groq" | "openrouter";
+export type AuditProviderName =
+  "openai" | "gemini" | "groq" | "openrouter" | "opencodego";
 
 /**
  * The three audit-stage functions for one provider, typed against the OpenAI
@@ -68,6 +69,11 @@ const PROVIDER_BINDINGS = {
     extract: openrouterExtract,
     execute: openrouterExecute,
     generate: openrouterGenerate,
+  },
+  opencodego: {
+    extract: openaiExtract,
+    execute: openaiExecute,
+    generate: openaiGenerate,
   },
 } as const satisfies Record<AuditProviderName, LiveProviderBindings>;
 
@@ -196,6 +202,7 @@ const PROVIDER_CREDENTIAL_ENV: Record<AuditProviderName, string> = {
   gemini: "GEMINI_API_KEY",
   groq: "GROQ_API_KEY",
   openrouter: "OPENROUTER_API_KEY",
+  opencodego: "OPENCODEGO_API_KEY",
 };
 
 export function assertLiveProviderCredentialsConfigured(): void {

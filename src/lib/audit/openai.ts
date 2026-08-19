@@ -53,10 +53,12 @@ type CostControlledResponseParams = ResponseCreateParamsWithTools & {
 };
 
 function client() {
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not configured on the Nuave server.");
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const baseURL = process.env.OPENAI_BASE_URL?.trim() || undefined;
+  return new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
 }
 
 export function auditModel() {
