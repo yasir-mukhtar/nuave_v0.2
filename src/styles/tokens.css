@@ -1,28 +1,59 @@
 :root {
-  /* Colors */
+  /* ── Colors: Canvas & Surfaces ── */
   --bg-page: #ffffff;
   --bg-surface: #f9fafb;
   --bg-surface-raised: #f3f4f6;
   --bg-neutral: #f5f5f5;
+  --bg-muted: #f5f5f5;
+  --surface-muted: #f5f5f5;
+
+  /* ── Colors: Hairlines & Borders ── */
   --border-default: #e5e7eb;
   --border-light: #ececec;
   --border-strong: #d1d5db;
+
+  /* ── Colors: Typography (AC-02: text-muted meets >=4.5:1 contrast) ── */
   --text-heading: #111827;
   --text-body: #374151;
-  --text-muted: #6b7280;
+  --text-muted: #5b5b5b; /* 6.25:1 on #ffffff, 5.8:1 on #f9fafb */
   --text-placeholder: #9ca3af;
+
+  /* ── Colors: Single Accent (#533afd actions & active states only, R-04) ── */
   --purple: #533afd;
   --purple-dark: #3d2bc7;
   --purple-light: #ece8ff;
-  --green: #22c55e;
+  --accent: #533afd;
+  --accent-hover: #3d2bc7;
+  --accent-soft: #ece8ff;
+  --accent-foreground: #ffffff;
+
+  /* ── Colors: Semantic Muted (Status only, R-04) ── */
+  --green: #16a34a;
   --green-light: #dcfce7;
-  --red: #ef4444;
+  --green-border: #86efac;
+  --red: #dc2626;
   --red-light: #fee2e2;
+  --red-border: #fca5a5;
   --amber: #f59e0b;
   --amber-light: #fef3c7;
+  --amber-border: #fde68a;
 
-  /* Typography — fixed perfect-fourth scale (14px base, ratio 1.333) */
-  /* @link https://utopia.fyi/type/calculator?c=375,14,1.333,1440,14,1.333,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
+  /* ── Typography Stacks (R-03) ── */
+  --font-sans:
+    var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-heading:
+    var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-body:
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  --font-serif:
+    "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+
+  /* ── Typography Scale: Fixed perfect-fourth scale (14px base, ratio 1.333) ── */
   --step--2: 0.4924rem; /*  ~7.9px */
   --step--1: 0.6564rem; /* ~10.5px */
   --step-0: 0.875rem; /*    14px */
@@ -32,24 +63,18 @@
   --step-4: 2.7627rem; /* ~44.2px */
   --step-5: 3.6826rem; /* ~58.9px */
 
-  /* Semantic aliases — use these in components */
-  --text-caption: 0.75rem; /*    12px — timestamps, meta, micro labels */
-  --text-body: var(--step-0); /*    14px — default body, descriptions     */
-  --text-subtitle: 1rem; /*    16px — bar titles, secondary headings */
-  --text-page-title: 1.125rem; /*    18px — page titles, primary headings  */
-  --text-body-lg: var(--step-1); /* ~18.7px — intro text, card subtitles     */
-  --text-heading-sm: var(
-    --step-2
-  ); /* ~24.9px — h3, section subheads           */
-  --text-heading-md: var(
-    --step-3
-  ); /* ~33.2px — h2, page section titles        */
-  --text-heading-lg: var(
-    --step-4
-  ); /* ~44.2px — h1, page titles               */
-  --text-display: var(--step-5); /* ~58.9px — hero/display                  */
+  /* ── Semantic Type Aliases ── */
+  --text-caption: 0.75rem; /* 12px — timestamps, meta, micro labels */
+  --text-body-size: var(--step-0); /* 14px — default body text */
+  --text-subtitle: 1rem; /* 16px — bar titles, secondary headings */
+  --text-page-title: 1.125rem; /* 18px — page titles, primary headings */
+  --text-body-lg: var(--step-1); /* ~18.7px — intro text, card subtitles */
+  --text-heading-sm: var(--step-2); /* ~24.9px — h3, section subheads */
+  --text-heading-md: var(--step-3); /* ~33.2px — h2, section titles */
+  --text-heading-lg: var(--step-4); /* ~44.2px — h1, page titles */
+  --text-display: var(--step-5); /* ~58.9px — hero display */
 
-  /* Spacing */
+  /* ── Spacing ── */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -58,7 +83,7 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
-  /* Radius */
+  /* ── Radius ── */
   --radius-xs: 3px;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -68,35 +93,48 @@
   --radius-3xl: 24px;
   --radius-full: 9999px;
 
-  /* Icons */
+  /* ── Icons ── */
   --icon-stroke: 1.6;
 
-  /* Transitions */
-  --transition-fast: 100ms ease;
-  --transition-base: 180ms ease;
-  --transition-slow: 300ms ease;
+  /* ── Motion & Transitions (R-05) ── */
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Shadows */
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-base: var(--duration-base) var(--ease-out);
+  --transition-slow: var(--duration-slow) var(--ease-out);
+
+  /* ── Shadows ── */
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-focus: 0 0 0 3px #533afd1f;
+  --shadow-focus: 0 0 0 3px rgba(83, 58, 253, 0.24);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
 
-  /* ── Buttons ── */
+  /* ── Accessibility Foundations (R-07) ── */
+  --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--purple);
+  --focus-ring-color: var(--purple);
+  --focus-ring-offset: 2px;
+  --focus-ring-width: 2px;
+  --target-min-size: 44px;
+
+  /* ── Buttons (Foundation Language, R-08) ── */
   --btn-radius: var(--radius-sm); /* 6px */
-  --btn-font-size: var(--text-body); /* 14px */
+  --btn-font-size: var(--step-0); /* 14px */
   --btn-font-weight: 500;
   --btn-transition: var(--transition-base);
 
-  /* Sizes — height / horizontal padding */
-  --btn-h-sm: 30px;
+  /* Sizes */
+  --btn-h-sm: 32px;
   --btn-px-sm: 10px;
-  --btn-h-default: 36px;
-  --btn-px-default: 14px;
-  --btn-h-lg: 44px;
-  --btn-px-lg: 20px;
+  --btn-h-default: 40px;
+  --btn-px-default: 16px;
+  --btn-h-lg: 48px;
+  --btn-px-lg: 24px;
 
-  /* Default / Outline — stroked, white bg */
+  /* Default / Outline */
   --btn-default-bg: var(--bg-page);
   --btn-default-border: var(--border-default);
   --btn-default-text: var(--text-body);
@@ -104,17 +142,17 @@
   --btn-default-border-hover: var(--border-strong);
   --btn-default-text-hover: var(--text-heading);
 
-  /* Brand — CTA only */
+  /* Brand — Primary CTA */
   --btn-brand-bg: var(--purple);
   --btn-brand-text: #ffffff;
   --btn-brand-bg-hover: var(--purple-dark);
 
-  /* Ghost — no border, hover bg */
+  /* Ghost */
   --btn-ghost-text: var(--text-muted);
-  --btn-ghost-text-hover: var(--text-body);
+  --btn-ghost-text-hover: var(--text-heading);
   --btn-ghost-bg-hover: var(--bg-surface);
 
-  /* Secondary — subtle filled */
+  /* Secondary */
   --btn-secondary-bg: var(--bg-surface-raised);
   --btn-secondary-text: var(--text-body);
   --btn-secondary-bg-hover: var(--bg-neutral);
@@ -123,17 +161,17 @@
   /* Destructive */
   --btn-destructive-bg: var(--red);
   --btn-destructive-text: #ffffff;
-  --btn-destructive-bg-hover: #dc2626;
+  --btn-destructive-bg-hover: #b91c1c;
 
-  /* Landing page (Framer design) */
-  --lp-bg: #f7f7f5;
-  --lp-text-primary: #0a0a0a;
-  --lp-text-secondary: #5b5b5b;
-  --lp-purple: #533afd;
-  --lp-purple-dark: #3d2bc7;
+  /* ── Landing page aliases (mapped to foundation) ── */
+  --lp-bg: var(--bg-surface);
+  --lp-text-primary: var(--text-heading);
+  --lp-text-secondary: var(--text-muted);
+  --lp-purple: var(--purple);
+  --lp-purple-dark: var(--purple-dark);
   --black-hover: #1f2937;
-  --lp-border: rgba(59, 59, 59, 0.12);
+  --lp-border: var(--border-light);
   --lp-nav-glass: rgba(255, 255, 255, 0.9);
-  --lp-nav-border: rgba(117, 115, 114, 0.15);
-  --lp-card-glass: rgba(255, 255, 255, 0.54);
+  --lp-nav-border: var(--border-light);
+  --lp-card-glass: rgba(255, 255, 255, 0.85);
 }

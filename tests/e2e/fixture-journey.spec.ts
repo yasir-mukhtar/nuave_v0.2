@@ -83,23 +83,24 @@ test.describe("entry and landing (AC-01)", () => {
     const requests = collectRequests(page);
     await page.goto("/");
     await expect(
-      page.getByRole("link", { name: "Audit bisnis saya" }).first(),
+      page.getByRole("link", { name: "Cek bisnis saya di AI" }).first(),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Cek bisnis saya di AI" }),
+      page.getByRole("link", { name: "Audit bisnis saya" }),
     ).toHaveCount(0);
     await expect(
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
-    // The hero preview card shows a fabricated business name and score, so
-    // it must carry a visible disclosure that it is illustrative. Scoped to
-    // the hero section: the same "Ilustrasi" label also appears further down
-    // the page on the "Isi Laporan" example, which is not this card.
+    // Hero is the one-question/one-input intake (P1) — verify intake is present
+    // and the illustrative preview disclosure appears in the report section.
     const hero = page.locator(".lp-hero-section");
-    await expect(hero.getByText("Ilustrasi", { exact: true })).toBeVisible();
     await expect(
-      hero.getByAltText("Ilustrasi. Tidak ada hasil bisnis sungguhan.").first(),
+      hero.getByPlaceholder("tokosepatu.example atau instagram.com/tokosepatu.example"),
     ).toBeVisible();
+    await expect(
+      hero.getByText("Hanya informasi publik dari situs web atau Instagram resmi."),
+    ).toBeVisible();
+    await expect(page.getByText("Ilustrasi", { exact: true }).first()).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
 });

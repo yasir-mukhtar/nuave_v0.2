@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-08-19
+> Updated: 2026-08-20
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -10,43 +10,51 @@ Phase 3 of [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), specified by
 connect the live engine behind the journey states, produce one real Indonesian
 report, and apply the report-quality gate to it.
 
+Wave 1 of the Phase 6 design pass
+([`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)) shipped
+alongside it on 2026-08-20: P0 foundation and P1 landing are verified (see its
+`VERIFICATION.md`). Wave 2 (P2–P7) waits for the report-quality gate.
+
 ## Deployment state
 
 **`https://v2.nuave.ai` is live** on Cloudflare Workers, serving the Indonesian
-landing with the audit tool behind an access code. `nuave.ai` and `www.nuave.ai`
-are untouched.
+landing. `nuave.ai` and `www.nuave.ai` are untouched.
 
 The v2 subdomain launch is **complete**. Its plan is retired to
 [`Archive Candidates/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md`](../Archive%20Candidates/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md)
 as a record of how the deployment was built. It is no longer an active
 objective; the facts it established are recorded here instead.
 
-Verified on the final domain: `/` public 200; `/audit` redirects to `/access`
-without the cookie; `/api/audit/*` returns 401 before any handler; a correct
-`nuave_access` cookie passes; assets and `robots` noindex OK. The custom domain
-is attached to worker `nuave-v2` (Cloudflare manages the proxied AAAA record).
+**The access gate is removed in code** (2026-08-20, spec 006 P1): the
+middleware rule and `/access` page are deleted, and `/audit` and `/api/audit/*`
+ship ungated under the founder's recorded interim-exposure acceptance
+(`docs/DECISION_LOG.md`, 2026-08-20) — the site remains noindex and
+direct-link only, and a minimal server-side rate/cost guard is a prerequisite
+before any public link sharing. **The live deployment still serves the
+previous gated build** until the next redeploy; deleting the now-unused
+`NUAVE_ACCESS_CODE` GitHub secret is a founder action. The custom domain is
+attached to worker `nuave-v2` (Cloudflare manages the proxied AAAA record).
 The deployment URL `https://nuave-v2.mail-yasirmukhtar.workers.dev` remains as a
 fallback.
 
 **CI is live**: GitHub Actions (`.github/workflows/deploy-pages.yml`) builds with
 `@opennextjs/cloudflare` and deploys to the `nuave-v2` worker on every push to
 `main`, verified end to end. All GitHub secrets are set (`CLOUDFLARE_API_TOKEN`,
-`CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ACCESS_CODE`, `NUAVE_PROVIDER=gemini`,
-`GEMINI_API_KEY`, `NUAVE_FIXTURE_PREVIEW_ENABLED=true`,
+`CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ACCESS_CODE` — unused since the gate removal,
+pending deletion, `NUAVE_PROVIDER=gemini`, `GEMINI_API_KEY`,
+`NUAVE_FIXTURE_PREVIEW_ENABLED=true`,
 `OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357`).
 
 Deploy target note: Next.js 16 via OpenNext officially targets **Workers with
 static assets**, not Pages — Pages advanced mode (`_worker.js`) ran the gate but
-could not serve static assets. **Middleware env is inlined at build time**, so
-`NUAVE_ACCESS_CODE` and all runtime envs must be set as build-time envs in CI;
-changing the access code requires a redeploy. The production access code is
-stored locally at `.secrets/v2-access-code.txt` (gitignored) and in
-`.env.production.local`.
+could not serve static assets. Runtime envs are inlined at build time in CI, so
+env changes require a redeploy.
 
-Known gap carried over from the launch, not yet fixed: `/audit` and
-`/audit/fixture` remain mostly English in hardcoded JSX, and the landing copy is
-still agency-facing by explicit founder decision. Both close in the later
-product-wide polish pass.
+Known gap carried over from the launch, partially closed: `/audit` and
+`/audit/fixture` remain mostly English in hardcoded JSX (closes in the
+product-wide polish pass, spec 006 P2–P7). The landing's prohibited claims
+were excised and replaced with the approved interim copy on 2026-08-20 (spec
+006 P1); final landing copywriting remains a separate approved copy task.
 
 ## Build order and sequencing
 

@@ -2,7 +2,7 @@
 
 import { IconCircleCheckFilled } from "@tabler/icons-react";
 
-const PAYMENT_METHODS = ["QRIS", "Transfer bank", "Kartu kredit", "Gopay"];
+const PAYMENT_METHODS = ["QRIS", "Transfer bank", "GoPay", "DANA"];
 
 export default function PaymentPreview() {
   return (

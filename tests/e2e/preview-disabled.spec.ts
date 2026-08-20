@@ -49,10 +49,10 @@ test.describe("preview disabled", () => {
     const requests = collectRequests(page);
     await page.goto("/");
     await expect(
-      page.getByRole("link", { name: "Audit bisnis saya" }).first(),
+      page.getByRole("link", { name: "Cek bisnis saya di AI" }).first(),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Cek bisnis saya di AI" }),
+      page.getByRole("link", { name: "Audit bisnis saya" }),
     ).toHaveCount(0);
     await expect(
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),

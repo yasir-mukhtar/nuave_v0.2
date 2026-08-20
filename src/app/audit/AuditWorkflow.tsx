@@ -762,7 +762,11 @@ export default function AuditWorkflow() {
     <main className={styles.shell} lang="en" data-theme="light">
       <header
         className={`${styles.topbar} ${styles.noPrint}`}
-        style={step === 0 && !exiting ? { position: "absolute", opacity: 0, pointerEvents: "none" } : undefined}
+        style={
+          step === 0 && !exiting
+            ? { position: "absolute", opacity: 0, pointerEvents: "none" }
+            : undefined
+        }
       >
         <Link href="/" className={styles.brand}>
           <Image
@@ -852,7 +856,7 @@ export default function AuditWorkflow() {
         </div>
       ) : null}
 
-      {(step === 0 || exiting) ? (
+      {step === 0 || exiting ? (
         <SourceHero
           initialValue={websiteUrl}
           extracting={busy === "extract"}

@@ -179,7 +179,7 @@ Use when Midtrans has created the payment attempt but has not confirmed funds.
 Possible actions:
 
 - **Lihat petunjuk pembayaran**
-- **Saya sudah membayar — cek lagi**
+- **Saya sudah membayar. Cek lagi.**
 - **Pilih cara pembayaran lain**
 
 The third action first cancels or expires the replaceable pending attempt when

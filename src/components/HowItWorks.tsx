@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { IconCheck } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
@@ -22,67 +22,19 @@ const ReportPagePreview = dynamic(
   { ssr: false },
 );
 
-/* ── Interactive gradient panel ── */
-function InteractiveGradientPanel({
+/* ── Static gradient panel (R-12: no perpetual cursor-glow) ── */
+function StaticGradientPanel({
   children,
   className,
 }: {
   children: React.ReactNode;
   className?: string;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const posRef = useRef({ x: 50, y: 50 });
-  const targetRef = useRef({ x: 50, y: 50 });
-  const rafRef = useRef<number>(0);
-  const [pos, setPos] = useState({ x: 50, y: 50 });
-
-  useEffect(() => {
-    let running = true;
-    const lerp = () => {
-      const cur = posRef.current;
-      const tgt = targetRef.current;
-      const nx = cur.x + (tgt.x - cur.x) * 0.06;
-      const ny = cur.y + (tgt.y - cur.y) * 0.06;
-      if (Math.abs(nx - cur.x) > 0.05 || Math.abs(ny - cur.y) > 0.05) {
-        posRef.current = { x: nx, y: ny };
-        setPos(posRef.current);
-      }
-      if (running) rafRef.current = requestAnimationFrame(lerp);
-    };
-    rafRef.current = requestAnimationFrame(lerp);
-    return () => {
-      running = false;
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
-  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = ref.current?.getBoundingClientRect();
-    if (!rect) return;
-    targetRef.current = {
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    };
-  }, []);
-
-  const handleLeave = useCallback(() => {
-    targetRef.current = { x: 50, y: 50 };
-  }, []);
-
-  const { x, y } = pos;
-
   return (
     <div
-      ref={ref}
       className={cn("relative overflow-hidden", className)}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
       style={{
-        background: `
-          radial-gradient(500px circle at ${x}% ${y}%, rgba(129,140,248,0.3) 0%, rgba(196,181,253,0.15) 35%, transparent 70%),
-          radial-gradient(350px circle at ${100 - x * 0.5}% ${100 - y * 0.5}%, rgba(147,197,253,0.22) 0%, transparent 60%),
-          linear-gradient(135deg, #e0e7ff, #dbeafe, #ede9fe, #e0f2fe, #f3e8ff)
-        `,
+        background: `linear-gradient(135deg, #e0e7ff, #dbeafe, #ede9fe, #e0f2fe, #f3e8ff)`,
       }}
     >
       {children}
@@ -233,8 +185,8 @@ export default function HowItWorks() {
                 </div>
               </div>
 
-              {/* Right panel — interactive preview (desktop) */}
-              <InteractiveGradientPanel
+              {/* Right panel — static preview (desktop) */}
+              <StaticGradientPanel
                 className={cn(
                   "lp-hiw-right-panel flex items-center justify-center",
                   card.flip ? "order-1" : "order-2",
@@ -244,16 +196,16 @@ export default function HowItWorks() {
                 {card.step === "2" && <PaymentPreview />}
                 {card.step === "3" && <QuestionsPreview />}
                 {card.step === "4" && <ReportPagePreview />}
-              </InteractiveGradientPanel>
+              </StaticGradientPanel>
 
               {/* Mobile preview */}
               <div className="lp-hiw-mobile-preview p-3 order-3">
-                <InteractiveGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
+                <StaticGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
                   {card.step === "1" && <ConfirmBusinessPreview />}
                   {card.step === "2" && <PaymentPreview />}
                   {card.step === "3" && <QuestionsPreview />}
                   {card.step === "4" && <ReportPagePreview />}
-                </InteractiveGradientPanel>
+                </StaticGradientPanel>
               </div>
             </div>
           </div>

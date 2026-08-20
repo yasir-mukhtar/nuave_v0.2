@@ -13,17 +13,18 @@ export default function ReportPagePreview() {
 
       {/* Report body */}
       <div className="flex-1 min-h-0 overflow-y-auto scroll-subtle px-4 py-3 flex flex-col gap-3">
-        {/* Score */}
+        {/* Direct count — ink, no band, no percentage bar */}
         <div className="rounded-md border border-border-light bg-gray-50 px-3 py-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-gray-500">
-              Skor AI Visibility
-            </span>
-            <span className="text-[13px] font-bold text-gray-900">Sedang</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-gray-200 mt-2 overflow-hidden">
-            <div className="h-full w-[55%] rounded-full bg-brand" />
-          </div>
+          <p className="text-[11px] text-gray-500 m-0">Hasil langsung</p>
+          <p className="text-[12px] font-semibold text-[#111827] m-0 mt-1">
+            Bisnis Anda muncul di 4 dari 10 pertanyaan
+          </p>
+          <p className="text-[20px] font-bold tracking-[-0.5px] text-[#111827] m-0 leading-none mt-1">
+            4/10
+          </p>
+          <p className="text-[11px] text-gray-500 m-0 mt-1">
+            Tanpa menyebut bisnis Anda: 1/5 · Menyebut bisnis Anda: 3/5
+          </p>
         </div>
 
         {/* AI response */}

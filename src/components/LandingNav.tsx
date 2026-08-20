@@ -55,13 +55,6 @@ function MobileMenu({
             "opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
-        <Link
-          href="/pricing"
-          onClick={onClose}
-          className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
-        >
-          {t("nav.pricing")}
-        </Link>
         <a
           href="/support"
           onClick={onClose}
@@ -72,7 +65,7 @@ function MobileMenu({
         <div className="h-px bg-[#E5E7EB] mx-4 self-stretch" />
         <div className="px-4 py-3 w-full box-border">
           <Link
-            href="#cta"
+            href="/audit"
             onClick={onClose}
             className="btn-lp-black flex items-center justify-center px-5 py-3 text-white text-[15px] font-medium rounded-[8px] no-underline cursor-pointer w-full"
           >
@@ -160,12 +153,6 @@ export default function LandingNav() {
 
           {/* Links (desktop) */}
           <div className="lp-nav-links flex items-center gap-8">
-            <Link
-              href="/pricing"
-              className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
-            >
-              {t("nav.pricing")}
-            </Link>
             <a
               href="/support"
               className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
@@ -177,7 +164,7 @@ export default function LandingNav() {
           {/* CTA button (desktop) */}
           <div className="lp-nav-masuk flex items-center gap-3">
             <Link
-              href="#cta"
+              href="/audit"
               className="btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
             >
               {t("cta.auditBrandFreeNoExclaim")}

@@ -20,7 +20,6 @@ export default function SourceHero({
 }) {
   const [draft, setDraft] = useState(initialValue);
   const [focusGlow, setFocusGlow] = useState(false);
-  const [hintVisible, setHintVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
@@ -31,21 +30,17 @@ export default function SourceHero({
   const timeRef = useRef(0);
   const opacityRef = useRef(0.35);
   const targetOpacity = useRef(0.35);
-  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const getAmbientPos = useCallback(
-    (t: number, w: number, h: number) => {
-      const cx = w / 2;
-      const cy = h / 2;
-      const rx = w * 0.4;
-      const ry = h * 0.35;
-      return {
-        x: cx + Math.sin(t * 0.4) * rx,
-        y: cy + Math.cos(t * 0.6) * ry,
-      };
-    },
-    [],
-  );
+  const getAmbientPos = useCallback((t: number, w: number, h: number) => {
+    const cx = w / 2;
+    const cy = h / 2;
+    const rx = w * 0.4;
+    const ry = h * 0.35;
+    return {
+      x: cx + Math.sin(t * 0.4) * rx,
+      y: cy + Math.cos(t * 0.6) * ry,
+    };
+  }, []);
 
   useEffect(() => {
     const glow = glowRef.current;
@@ -61,14 +56,9 @@ export default function SourceHero({
 
       if (!isHovering.current) {
         timeRef.current += dt;
-        const ambient = getAmbientPos(
-          timeRef.current,
-          rect.width,
-          rect.height,
-        );
+        const ambient = getAmbientPos(timeRef.current, rect.width, rect.height);
         targetPos.current = ambient;
-        targetOpacity.current =
-          0.3 + Math.sin(timeRef.current * 1.2) * 0.1;
+        targetOpacity.current = 0.3 + Math.sin(timeRef.current * 1.2) * 0.1;
       } else {
         targetOpacity.current = 0.5;
       }
@@ -97,17 +87,14 @@ export default function SourceHero({
     inputRef.current?.focus();
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      targetPos.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-    },
-    [],
-  );
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    targetPos.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  }, []);
 
   const handleMouseEnter = useCallback(() => {
     isHovering.current = true;
@@ -119,26 +106,10 @@ export default function SourceHero({
 
   const handleFocus = useCallback(() => {
     setFocusGlow(true);
-    if (hintTimer.current) clearTimeout(hintTimer.current);
-    hintTimer.current = setTimeout(() => setHintVisible(true), 800);
   }, []);
 
   const handleBlur = useCallback(() => {
     setFocusGlow(false);
-    if (hintTimer.current) clearTimeout(hintTimer.current);
-    if (!draft) {
-      setHintVisible(false);
-    }
-  }, [draft]);
-
-  useEffect(() => {
-    if (!draft) setHintVisible(false);
-  }, [draft]);
-
-  useEffect(() => {
-    return () => {
-      if (hintTimer.current) clearTimeout(hintTimer.current);
-    };
   }, []);
 
   function handleSubmit(e: React.FormEvent) {
@@ -165,9 +136,7 @@ export default function SourceHero({
           height={32}
         />
 
-        <h1 className={styles.heroHeading}>
-          Ayo mulai audit brand Anda
-        </h1>
+        <h1 className={styles.heroHeading}>Ayo mulai audit brand Anda</h1>
 
         <form onSubmit={handleSubmit} className={styles.heroForm}>
           <div

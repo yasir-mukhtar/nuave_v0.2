@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1440">
-<title>Direction C — Editorial</title>
+<title>Direction B — Warm Craft</title>
 <style>
   /* Reset and base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "Segoe UI", "Inter", sans-serif;
-    color: #171717;
-    background: #ffffff;
+    color: #1c1917;
+    background: #faf7f1;
     line-height: 1.5;
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
   }
   /* Header strip */
   .header {
-    border-bottom: 1px solid #e5e5e0;
+    border-bottom: 1px solid #e7ded2;
     padding: 12px 48px;
     display: flex;
     justify-content: space-between;
@@ -27,7 +27,7 @@
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0;
-    color: #525252;
+    color: #6f655c;
   }
   .watermark {
     font-size: 12px;
@@ -43,44 +43,36 @@
   /* Section */
   .section {
     padding: 48px 0;
-    border-bottom: 1px solid #e5e5e0;
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 24px;
+    border-bottom: 1px solid #e7ded2;
   }
   .section:last-child {
     border-bottom: none;
-  }
-  .section-number {
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-    font-size: 33.2px;
-    font-weight: 600;
-    color: #525252;
-    line-height: 1;
   }
   .section-caption {
     font-size: 12px;
     color: #9ca3af;
     margin-bottom: 24px;
     font-style: italic;
-    grid-column: 1 / -1;
   }
   .motion-note {
     font-size: 12px;
     color: #9ca3af;
     margin-top: 16px;
-    grid-column: 1 / -1;
+  }
+  /* Divider with dot grid */
+  .dot-divider {
+    height: 1px;
+    background: repeating-linear-gradient(90deg, #e7ded2 0, #e7ded2 4px, transparent 4px, transparent 8px);
+    margin: 24px 0;
   }
   /* Typography */
   h2 {
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     font-size: 33.2px;
     font-weight: 600;
     letter-spacing: 0;
     margin-bottom: 16px;
   }
   h3 {
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     font-size: 24.9px;
     font-weight: 600;
     letter-spacing: 0;
@@ -91,16 +83,16 @@
     margin-bottom: 12px;
   }
   .text-muted {
-    color: #525252;
+    color: #6f655c;
   }
   /* Card */
   .card {
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    border: 1px solid #e7ded2;
+    border-radius: 16px;
     padding: 32px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     margin-bottom: 24px;
-    grid-column: 1 / -1;
+    background: #ffffff;
   }
   /* Input field */
   .input-wrapper {
@@ -110,12 +102,12 @@
   .input {
     width: 100%;
     height: 56px;
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    border: 1px solid #e7ded2;
+    border-radius: 12px;
     padding: 0 16px;
     font-size: 16px;
     background: #ffffff;
-    color: #171717;
+    color: #1c1917;
   }
   .input::placeholder {
     color: #9ca3af;
@@ -125,12 +117,12 @@
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    background: #f9fafb;
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    background: #faf7f1;
+    border: 1px solid #e7ded2;
+    border-radius: 8px;
     padding: 4px 8px;
     font-size: 12px;
-    color: #525252;
+    color: #6f655c;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -138,10 +130,10 @@
   /* Button */
   .btn {
     display: inline-block;
-    background: #0d1738;
+    background: #b45309;
     color: #ffffff;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 12px 24px;
     font-size: 16px;
     font-weight: 500;
@@ -149,53 +141,53 @@
     text-decoration: none;
   }
   .btn:hover {
-    background: #1a2750;
+    background: #c2410c;
   }
   .btn-outline {
     background: transparent;
-    border: 1px solid #e5e5e0;
-    color: #171717;
+    border: 1px solid #e7ded2;
+    color: #1c1917;
   }
   .btn-outline:hover {
-    background: #f9fafb;
+    background: #faf7f1;
   }
   /* Example chip */
   .example-chip {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #f9fafb;
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    background: #faf7f1;
+    border: 1px solid #e7ded2;
+    border-radius: 8px;
     padding: 8px 12px;
     font-size: 14px;
-    color: #525252;
+    color: #6f655c;
     margin-bottom: 16px;
   }
   /* Reassurance */
   .reassurance {
     font-size: 14px;
-    color: #525252;
+    color: #6f655c;
     margin-top: 16px;
   }
   /* Badge */
   .badge {
     display: inline-block;
-    background: #f9fafb;
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    background: #faf7f1;
+    border: 1px solid #e7ded2;
+    border-radius: 8px;
     padding: 4px 8px;
     font-size: 12px;
-    color: #525252;
+    color: #6f655c;
     margin-bottom: 16px;
   }
   /* Order card */
   .order-card {
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    border: 1px solid #e7ded2;
+    border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
-    grid-column: 1 / -1;
+    background: #ffffff;
   }
   .order-row {
     display: flex;
@@ -207,12 +199,12 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    grid-column: 1 / -1;
   }
   .status-box {
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
+    border: 1px solid #e7ded2;
+    border-radius: 16px;
     padding: 24px;
+    background: #ffffff;
   }
   .status-title {
     font-size: 18px;
@@ -221,13 +213,13 @@
   }
   .status-desc {
     font-size: 14px;
-    color: #525252;
+    color: #6f655c;
     margin-bottom: 16px;
   }
   /* Eyebrow */
   .eyebrow {
     font-size: 12px;
-    color: #525252;
+    color: #6f655c;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 8px;
@@ -235,12 +227,11 @@
   /* Identity */
   .identity {
     font-size: 14px;
-    color: #525252;
+    color: #6f655c;
     margin-bottom: 16px;
   }
   /* Headline */
   .headline {
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     font-size: 44.2px;
     font-weight: 600;
     letter-spacing: 0;
@@ -250,7 +241,7 @@
     font-size: 58.9px;
     font-weight: 700;
     letter-spacing: 0;
-    color: #171717;
+    color: #1c1917;
     line-height: 1;
     margin-bottom: 16px;
   }
@@ -265,7 +256,7 @@
   }
   /* Snapshot */
   .snapshot {
-    border-left: 2px solid #e5e5e0;
+    border-left: 2px solid #e7ded2;
     padding-left: 16px;
     margin-top: 24px;
   }
@@ -276,18 +267,7 @@
   }
   .snapshot p {
     font-size: 14px;
-    color: #525252;
-  }
-  /* Source chip footnote */
-  .source-chip {
-    display: inline-block;
-    background: #f9fafb;
-    border: 1px solid #e5e5e0;
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-size: 11px;
-    color: #525252;
-    margin-top: 8px;
+    color: #6f655c;
   }
   /* Inline SVG */
   svg {
@@ -305,7 +285,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>Direction C — Editorial</h1>
+    <h1>Direction B — Warm Craft</h1>
     <div class="watermark">Konsep arah desain — bukan produk, bukan hasil audit.</div>
   </div>
   <div class="container">
@@ -313,7 +293,7 @@
     <!-- V1 -->
     <div class="section">
       <div class="section-caption">V1 — Landing / discovery</div>
-      <div class="section-number">01</div>
+      <div class="dot-divider"></div>
       <div class="card">
         <h2>Apakah brand Anda muncul di ChatGPT?</h2>
         <p class="text-muted">Nuave memberi Anda laporan bagaimana AI menyebut brand Anda dan apa yang bisa diperbaiki.</p>
@@ -337,7 +317,6 @@
     <!-- V2 -->
     <div class="section">
       <div class="section-caption">V2 — Payment status</div>
-      <div class="section-number">02</div>
       <div class="order-card">
         <div class="order-row">
           <strong>Kopi Taman Senja</strong>
@@ -352,7 +331,7 @@
         <div class="status-box">
           <div class="status-title">Pembayaran belum selesai</div>
           <p class="status-desc">Selesaikan pembayaran sebelum waktu yang tertera berakhir. Audit Anda belum dimulai.</p>
-          <button class="btn-outline" style="margin-right: 8px; margin-bottom: 8px;">Saya sudah membayar — cek lagi</button>
+          <button class="btn-outline" style="margin-right: 8px; margin-bottom: 8px;">Saya sudah membayar. Cek lagi.</button>
           <button class="btn-outline">Pilih cara pembayaran lain</button>
         </div>
         <div class="status-box">
@@ -367,7 +346,7 @@
     <!-- V3 -->
     <div class="section">
       <div class="section-caption">V3 — Report result moment</div>
-      <div class="section-number">03</div>
+      <div class="dot-divider"></div>
       <div class="card">
         <div class="eyebrow">AI Visibility Report</div>
         <div class="identity">Kopi Taman Senja · Dago, Bandung · 17 Agustus 2026 · 10 pertanyaan independen</div>

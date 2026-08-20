@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Lora } from "next/font/google";
+import { Inter } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -9,12 +9,6 @@ import { getLocale, getMessages } from "next-intl/server";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-lora",
   display: "swap",
 });
 
@@ -43,10 +37,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html
-      lang={locale}
-      className={`${GeistSans.variable} ${inter.variable} ${lora.variable}`}
-    >
+    <html lang={locale} className={`${GeistSans.variable} ${inter.variable}`}>
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
           <SmoothScroll />

@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IronGrid - Factory & Industry Template Replica</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0A0A0A;
+  --surface:#111111;
+  --surface-2:#1A1A1A;
+  --border:rgba(255,255,255,0.08);
+  --border-light:rgba(255,255,255,0.12);
+  --text:#FFFFFF;
+  --text-secondary:#A8A8A8;
+  --text-muted:#6B6B6B;
+  --orange:#FF6A00;
+  --orange-hover:#FF7A1A;
+  --radius:4px;
+  --radius-lg:8px;
+  --radius-xl:12px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;line-height:1.5}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+
+/* ── NAV ── */
+.nav{position:absolute;top:0;left:0;right:0;z-index:100;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;max-width:1440px;margin:0 auto}
+.nav-left{display:flex;align-items:center;gap:0}
+.logo{font-weight:800;letter-spacing:0.04em;font-size:13px;display:flex;align-items:center;gap:8px;color:#fff}
+.logo-mark{width:18px;height:18px;background:#fff;display:grid;place-items:center;color:#000;font-size:10px;font-weight:900;border-radius:2px}
+.nav-divider{width:1px;height:20px;background:rgba(255,255,255,0.15);margin:0 24px}
+.nav-links{display:flex;gap:20px;font-size:13px;color:rgba(255,255,255,0.7);font-weight:500}
+.nav-links a{transition:color .2s;display:flex;align-items:center;gap:4px}
+.nav-links a:hover{color:#fff}
+.nav-links .dropdown::after{content:'▾';font-size:10px;opacity:0.6}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-cta{background:rgba(255,255,255,0.08);color:#fff;padding:10px 18px;font-size:13px;font-weight:600;border-radius:var(--radius);display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.1);transition:all .2s;cursor:pointer}
+.nav-cta:hover{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2)}
+
+/* ── HERO ── */
+.hero{position:relative;background:var(--surface);height:100vh;min-height:600px;max-height:900px;display:flex;isolation:isolate;margin-top:0}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg img{width:100%;height:100%;object-fit:cover;filter:brightness(0.6) contrast(1.1)}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0.8) 0%,rgba(0,0,0,0.5) 40%,rgba(0,0,0,0.2) 70%,rgba(0,0,0,0.1) 100%),linear-gradient(180deg,rgba(0,0,0,0.2) 0%,rgba(0,0,0,0.5) 60%,rgba(0,0,0,0.8) 100%)}
+.hero-content{position:relative;z-index:1;display:flex;width:100%;height:100%;padding:0 48px 60px 48px;align-items:flex-end;justify-content:space-between;gap:40px}
+.hero-left{max-width:520px}
+.hero-left h1{font-family:'Space Grotesk',sans-serif;font-size:56px;line-height:1.0;letter-spacing:-0.04em;font-weight:700;color:#fff}
+.hero-left p{margin-top:16px;font-size:14px;line-height:1.7;color:rgba(255,255,255,0.75);max-width:380px;font-weight:400}
+.hero-btn{margin-top:24px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.1);color:#fff;padding:12px 20px;font-size:13px;font-weight:700;letter-spacing:0.02em;border-radius:var(--radius);transition:all .2s;border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(8px)}
+.hero-btn:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.25)}
+.hero-btn svg{width:12px;height:12px}
+
+/* ── STATS CARD ── */
+.stats-card{width:220px;background:rgba(18,18,18,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-lg);padding:18px;backdrop-filter:blur(16px);align-self:flex-end;margin-bottom:0}
+.stats-card .label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--orange);font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.stats-card .label::before{content:'';width:6px;height:6px;background:var(--orange);border-radius:50%}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,0.06)}
+.stat-row:first-of-type{border-top:none;padding-top:0}
+.stat-val{font-size:15px;font-weight:800;letter-spacing:-0.02em;color:#fff}
+.stat-val.orange{color:var(--orange)}
+.stat-name{font-size:11px;color:rgba(255,255,255,0.5);font-weight:500;text-align:right;line-height:1.2}
+
+/* ── TRUSTED ── */
+.trusted{max-width:1280px;margin:0 auto;text-align:center;padding:24px 24px}
+.trusted-label{font-size:11px;letter-spacing:0.06em;color:var(--text-muted);font-weight:600}
+.trusted-logos{display:flex;justify-content:center;gap:48px;margin-top:20px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:20px;max-width:900px;margin-left:auto;margin-right:auto}
+.trusted-logos span{font-size:12px;color:var(--text-muted);font-weight:600;letter-spacing:0.02em;display:flex;align-items:center;gap:8px;opacity:0.8}
+.trusted-logos i{font-style:normal;font-size:11px;border:1px solid #2A2A2A;width:16px;height:16px;display:grid;place-items:center;border-radius:2px}
+
+/* ── SECTION COMMON ── */
+.section{max-width:1280px;margin:0 auto;padding:80px 24px}
+.section-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--orange);font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-label::before{content:'';width:6px;height:6px;background:var(--orange);border-radius:50%}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-0.03em;line-height:1.1}
+.section-subtitle{font-size:14px;color:var(--text-secondary);margin-top:12px;max-width:500px;line-height:1.7}
+
+/* ── CAPABILITIES ── */
+.capabilities-header{text-align:center;margin-bottom:48px}
+.capabilities-header .section-subtitle{margin-left:auto;margin-right:auto}
+.capabilities-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.cap-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden}
+.cap-card:hover{border-color:var(--orange);transform:translateY(-2px)}
+.cap-card-icon{width:48px;height:48px;background:var(--surface-2);border-radius:var(--radius);display:grid;place-items:center;margin-bottom:20px;border:1px solid var(--border)}
+.cap-card-icon svg{width:24px;height:24px;color:var(--orange)}
+.cap-card h3{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px}
+.cap-card p{font-size:13px;color:var(--text-secondary);line-height:1.6}
+
+/* ── PROCESS ── */
+.process-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.process-step{padding:40px 32px;position:relative;border-right:1px solid var(--border)}
+.process-step:last-child{border-right:none}
+.process-num{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:700;letter-spacing:-0.04em;color:var(--surface-2);line-height:1;margin-bottom:20px}
+.process-step:hover .process-num{color:rgba(255,106,0,0.15)}
+.process-step h3{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;letter-spacing:-0.02em;margin-bottom:12px;transition:color .2s}
+.process-step:hover h3{color:var(--orange)}
+.process-step p{font-size:13px;color:var(--text-secondary);line-height:1.7}
+.process-step .step-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);font-weight:600;margin-bottom:8px}
+
+/* ── COMPARISON ── */
+.comparison-section{background:var(--bg)}
+.comparison-header{text-align:center;margin-bottom:48px}
+.comparison-header .section-subtitle{margin-left:auto;margin-right:auto;max-width:600px}
+.comparison-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.comparison-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px}
+.comparison-col.old{border-color:rgba(255,255,255,0.04)}
+.comparison-col.new{border-color:var(--orange);position:relative}
+.comparison-col.new::before{content:'THE IRONGRID WAY';position:absolute;top:-10px;left:24px;background:var(--orange);color:#000;font-size:9px;font-weight:800;letter-spacing:0.1em;padding:3px 10px;border-radius:2px}
+.comparison-col h3{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:24px;display:flex;align-items:center;gap:8px}
+.comparison-col.old h3{color:var(--text-muted)}
+.comparison-col.new h3{color:var(--orange)}
+.comparison-list{list-style:none;display:flex;flex-direction:column;gap:12px}
+.comparison-list li{font-size:13px;color:var(--text-secondary);line-height:1.6;padding-left:20px;position:relative}
+.comparison-col.old .comparison-list li::before{content:'✕';position:absolute;left:0;color:#FF4444;font-weight:700;font-size:12px}
+.comparison-col.new .comparison-list li::before{content:'✓';position:absolute;left:0;color:var(--orange);font-weight:700;font-size:12px}
+
+/* ── CASE STUDIES ── */
+.cases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px}
+.case-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;transition:all .25s}
+.case-card:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.case-img{width:100%;height:200px;background:var(--surface-2);overflow:hidden;position:relative}
+.case-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(0.3)}
+.case-body{padding:24px}
+.case-body h3{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;line-height:1.3}
+.case-body p{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px}
+.case-link{font-size:12px;font-weight:600;color:var(--orange);display:inline-flex;align-items:center;gap:6px;transition:gap .2s}
+.case-link:hover{gap:10px}
+.case-link svg{width:12px;height:12px}
+
+/* ── CERTIFICATIONS ── */
+.cert-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cert-content{display:flex;align-items:center;gap:60px}
+.cert-text{flex:1}
+.cert-text .section-subtitle{margin-top:12px;max-width:480px}
+.cert-badges{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cert-badge{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;text-align:center;transition:all .2s}
+.cert-badge:hover{border-color:var(--orange)}
+.cert-badge-icon{width:48px;height:48px;margin:0 auto 12px;background:var(--surface-2);border-radius:var(--radius);display:grid;place-items:center;border:1px solid var(--border)}
+.cert-badge h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.cert-badge p{font-size:11px;color:var(--text-muted)}
+
+/* ── TESTIMONIALS ── */
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px}
+.testimonial-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px}
+.testimonial-metrics{display:flex;gap:24px;margin-bottom:20px}
+.testimonial-metric{display:flex;flex-direction:column}
+.testimonial-metric .val{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.03em;color:var(--orange)}
+.testimonial-metric .label{font-size:11px;color:var(--text-muted);margin-top:2px}
+.testimonial-card blockquote{font-size:14px;color:var(--text-secondary);line-height:1.7;font-style:italic;margin-bottom:20px;position:relative;padding-left:16px;border-left:2px solid var(--orange)}
+.testimonial-author{display:flex;align-items:center;gap:12px}
+.testimonial-avatar{width:40px;height:40px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:14px;font-weight:700;color:var(--orange)}
+.testimonial-info .name{font-size:13px;font-weight:600}
+.testimonial-info .role{font-size:11px;color:var(--text-muted)}
+
+/* ── QUOTE FORM ── */
+.quote-section{background:var(--bg)}
+.quote-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.quote-left h2{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-0.03em;line-height:1.1}
+.quote-left p{font-size:14px;color:var(--text-secondary);margin-top:16px;line-height:1.7;max-width:400px}
+.quote-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;letter-spacing:0.02em}
+.form-group input,.form-group textarea,.form-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--orange)}
+.form-group textarea{min-height:100px;resize:vertical}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--text-muted)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-submit{width:100%;background:var(--orange);color:#000;padding:14px;font-size:14px;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;transition:background .2s;letter-spacing:0.02em}
+.form-submit:hover{background:var(--orange-hover)}
+
+/* ── FOOTER ── */
+.footer{border-top:1px solid var(--border);padding:60px 24px 40px}
+.footer-inner{max-width:1280px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand .logo{margin-bottom:16px}
+.footer-brand p{font-size:13px;color:var(--text-muted);max-width:280px;line-height:1.7}
+.footer-col h4{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:16px}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.footer-col ul li a{font-size:13px;color:var(--text-muted);transition:color .2s}
+.footer-col ul li a:hover{color:var(--text)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center}
+.footer-bottom p{font-size:12px;color:var(--text-muted)}
+.footer-social{display:flex;gap:16px}
+.footer-social a{width:32px;height:32px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;transition:all .2s}
+.footer-social a:hover{border-color:var(--orange);background:var(--surface-2)}
+.footer-social a svg{width:14px;height:14px;color:var(--text-muted)}
+
+/* ── CTA BANNER ── */
+.cta-banner{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;padding:80px 24px}
+.cta-banner h2{font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;letter-spacing:-0.03em;margin-bottom:24px}
+.cta-banner .hero-btn{margin:0 auto}
+
+/* ── MARQUEE ── */
+.marquee-wrap{overflow:hidden;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.marquee{display:flex;gap:48px;animation:marquee 20s linear infinite}
+.marquee span{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--text-muted);white-space:nowrap;letter-spacing:0.02em}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .hero{min-height:500px}
+  .hero-content{flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:32px 24px 48px 24px}
+  .stats-card{width:100%;max-width:300px}
+  .hero-left h1{font-size:40px}
+  .capabilities-grid{grid-template-columns:repeat(2,1fr)}
+  .process-grid{grid-template-columns:repeat(2,1fr)}
+  .process-step{border-right:none;border-bottom:1px solid var(--border)}
+  .process-step:last-child{border-bottom:none}
+  .comparison-grid{grid-template-columns:1fr}
+  .cases-grid{grid-template-columns:1fr}
+  .cert-content{flex-direction:column}
+  .testimonials-grid{grid-template-columns:1fr}
+  .quote-wrapper{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .nav-divider{display:none}
+}
+@media(max-width:640px){
+  .capabilities-grid{grid-template-columns:1fr}
+  .process-grid{grid-template-columns:1fr}
+  .cert-badges{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr}
+  .hero-left h1{font-size:32px}
+  .section-title{font-size:28px}
+  .hero-content{padding:24px 16px 40px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO (full-bleed with nav inside) ═══════════ -->
+<div class="hero" id="hero">
+  <div class="hero-bg">
+    <img src="https://images.unsplash.com/photo-1565043666747-69f6646db940?q=80&w=2070&auto=format&fit=crop" alt="Factory floor - dark industrial with orange glow">
+  </div>
+  <div class="hero-overlay"></div>
+
+  <!-- NAV inside hero, absolutely positioned over image -->
+  <nav class="nav" id="nav">
+    <div class="nav-left">
+      <a href="#" class="logo"><span class="logo-mark">⬢</span> IRONGRID</a>
+      <div class="nav-divider"></div>
+      <div class="nav-links">
+        <a href="#" class="dropdown">All Pages</a>
+        <a href="#about">Company</a>
+        <a href="#capabilities" class="dropdown">Serving Industry</a>
+        <a href="#cases">Project</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <a href="#quote" class="nav-cta">Request A Quote <span>→</span></a>
+    </div>
+  </nav>
+
+  <div class="hero-content">
+    <div class="hero-left">
+      <h1>Made for your<br>supply chain needs!</h1>
+      <p>We expertly manage DFM reviews, tooling, and samples, delivering traceable and reliable parts.</p>
+      <a href="#quote" class="hero-btn">
+        Request A Quote
+        <svg viewBox="0 0 12 12" fill="none"><path d="M2 6H10M10 6L6 2M10 6L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="stats-card">
+      <div class="label">This Month</div>
+      <div class="stat-row"><div class="stat-val">04</div><div class="stat-name">New orders</div></div>
+      <div class="stat-row"><div class="stat-val">340,000</div><div class="stat-name">Units shipped</div></div>
+      <div class="stat-row"><div class="stat-val orange">99.1%</div><div class="stat-name">on-time rate</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TRUSTED ═══════════ -->
+<div class="trusted">
+  <div class="trusted-label">Trusted by 340+ manufacturers worldwide</div>
+  <div class="trusted-logos">
+    <span><i>◇</i> Patrick</span>
+    <span><i>⬔</i> Quantum</span>
+    <span><i>✕</i> Vector</span>
+    <span><i>◫</i> Horizon</span>
+    <span><i>✦</i> Nebula</span>
+  </div>
+</div>
+
+<!-- ═══════════ CAPABILITIES ═══════════ -->
+<div class="section" id="capabilities">
+  <div class="capabilities-header">
+    <div class="section-label">WHAT WE DO</div>
+    <h2 class="section-title">Our production capabilities</h2>
+    <p class="section-subtitle">From raw material to finished product — all conveniently under one roof, ensuring quality and efficiency.</p>
+  </div>
+  <div class="capabilities-grid">
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <h3>Automotive CNC Machining</h3>
+      <p>Precision parts, tight tolerances.</p>
+    </div>
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>
+      </div>
+      <h3>Aerospace Sheet Metal Fabrication</h3>
+      <p>Cut, bent, and welded to spec.</p>
+    </div>
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v6M12 16v6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M16 12h6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>
+      </div>
+      <h3>Electronics Assembly & Integration</h3>
+      <p>From parts to the final product.</p>
+    </div>
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <h3>Industrial Surface Treatment</h3>
+      <p>Finished, coated, and protected.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROCESS ═══════════ -->
+<div class="process-section" id="process">
+  <div class="section">
+    <div class="section-label">HOW IT WORKS</div>
+    <h2 class="section-title">From quote to delivery</h2>
+    <p class="section-subtitle" style="margin-bottom:48px">Changing manufacturers is key! We'll keep you in the loop about when your order arrives.</p>
+    <div class="process-grid">
+      <div class="process-step">
+        <div class="process-num">01</div>
+        <div class="step-label">Step 01</div>
+        <h3>Submit Your Spec</h3>
+        <p>Upload your drawings, dimensions, and target volume. The more detail you share, the faster we quote.</p>
+        <ul style="margin-top:16px;list-style:none;display:flex;flex-direction:column;gap:8px">
+          <li style="font-size:12px;color:var(--text-muted);padding-left:16px;position:relative"><span style="position:absolute;left:0;color:var(--orange)">→</span> Drawings & CAD files accepted</li>
+          <li style="font-size:12px;color:var(--text-muted);padding-left:16px;position:relative"><span style="position:absolute;left:0;color:var(--orange)">→</span> No automated pricing</li>
+          <li style="font-size:12px;color:var(--text-muted);padding-left:16px;position:relative"><span style="position:absolute;left:0;color:var(--orange)">→</span> Engineer reviews personally</li>
+        </ul>
+      </div>
+      <div class="process-step">
+        <div class="process-num">02</div>
+        <div class="step-label">Step 02</div>
+        <h3>DFM Review & Sampling</h3>
+        <p>Our engineers review your design for manufacturability and produce samples for your approval.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">03</div>
+        <div class="step-label">Step 03</div>
+        <h3>Tooling & Production</h3>
+        <p>Once approved, we set up tooling and begin full-scale production with real-time quality monitoring.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">04</div>
+        <div class="step-label">Step 04</div>
+        <h3>Quality Assurance & Delivery</h3>
+        <p>Every part passes final inspection before packaging and shipment with full traceability documentation.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ COMPARISON ═══════════ -->
+<div class="section comparison-section" id="about">
+  <div class="comparison-header">
+    <div class="section-label">WHY IRONGRID</div>
+    <h2 class="section-title">Most fall short! we don't</h2>
+    <p class="section-subtitle">B2B buyers want reliable factories that can meet deadlines and scale with their needs, not just the lowest prices.</p>
+  </div>
+  <div class="comparison-grid">
+    <div class="comparison-col old">
+      <h3>The Old Way</h3>
+      <ul class="comparison-list">
+        <li>Vague delivery promises</li>
+        <li>No documentation provided</li>
+        <li>Hidden costs after sampling</li>
+        <li>Slow quote turnaround</li>
+        <li>Subcontracted without notice</li>
+        <li>No certification for your industry</li>
+      </ul>
+    </div>
+    <div class="comparison-col new">
+      <h3>The IronGrid Way</h3>
+      <ul class="comparison-list">
+        <li>Guaranteed lead times, in writing</li>
+        <li>Full documentation at every stage</li>
+        <li>Itemised quote upfront, no surprises</li>
+        <li>Response within 24–72 hours</li>
+        <li>100% in-house production</li>
+        <li>ISO, IATF & RoHS certified</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CASE STUDIES ═══════════ -->
+<div class="section" id="cases">
+  <div class="section-label">PORTFOLIO</div>
+  <h2 class="section-title">Recent case studies</h2>
+  <div class="cases-grid">
+    <div class="case-card">
+      <div class="case-img">
+        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop" alt="Manufacturing facility">
+      </div>
+      <div class="case-body">
+        <h3>1.2M units delivered across 14 months. Zero line-stops recorded.</h3>
+        <p>Complete supply chain management for a major automotive OEM, from initial prototyping through mass production.</p>
+        <a href="#" class="case-link">Read Full Story <svg viewBox="0 0 12 12" fill="none"><path d="M2 6H10M10 6L6 2M10 6L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </div>
+    <div class="case-card">
+      <div class="case-img">
+        <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=800&auto=format&fit=crop" alt="Steel enclosures production">
+      </div>
+      <div class="case-body">
+        <h3>8,400 custom steel enclosures. IP66 rated. Export packed.</h3>
+        <p>Custom fabrication project requiring precise tolerances and international shipping compliance.</p>
+        <a href="#" class="case-link">Read Full Story <svg viewBox="0 0 12 12" fill="none"><path d="M2 6H10M10 6L6 2M10 6L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </div>
+    <div class="case-card">
+      <div class="case-img">
+        <img src="https://images.unsplash.com/photo-1537462715315-e65f00a243b1?q=80&w=800&auto=format&fit=crop" alt="Precision titanium parts">
+      </div>
+      <div class="case-body">
+        <h3>Titanium & aluminium parts. ±0.005mm tolerance. Full traceability.</h3>
+        <p>Aerospace-grade precision machining with complete material certifications and process documentation.</p>
+        <a href="#" class="case-link">Read Full Story <svg viewBox="0 0 12 12" fill="none"><path d="M2 6H10M10 6L6 2M10 6L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CERTIFICATIONS ═══════════ -->
+<div class="cert-section">
+  <div class="section">
+    <div class="cert-content">
+      <div class="cert-text">
+        <div class="section-label">TRUST & COMPLIANCE</div>
+        <h2 class="section-title">Every certification is current, third-party audited, and available for download.</h2>
+        <p class="section-subtitle">Our compliance team handles documentation for regulated industries — so your procurement process stays on track.</p>
+      </div>
+      <div class="cert-badges">
+        <div class="cert-badge">
+          <div class="cert-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.5"><path d="M12 2L3 7v6c0 5.25 3.75 10.05 9 11 5.25-.95 9-5.75 9-11V7l-9-5z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h4>ISO 9001</h4>
+          <p>Quality Management</p>
+        </div>
+        <div class="cert-badge">
+          <div class="cert-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h4>IATF 16949</h4>
+          <p>Automotive Standard</p>
+        </div>
+        <div class="cert-badge">
+          <div class="cert-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h4>RoHS</h4>
+          <p>Hazardous Substances</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TESTIMONIALS ═══════════ -->
+<div class="section">
+  <div class="section-label">CLIENT VOICES</div>
+  <h2 class="section-title">Trusted by 340+ business</h2>
+  <p class="section-subtitle" style="margin-bottom:0">From start to finish, our clients consistently say we're incredibly dependable and trustworthy!</p>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="testimonial-metrics">
+        <div class="testimonial-metric"><span class="val">0%</span><span class="label">Defect rate</span></div>
+      </div>
+      <blockquote>"We switched suppliers halfway through, and they had us up and running in just 3 short weeks. Since then, we've had zero quality issues, which has been awesome for our operations!"</blockquote>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">JW</div>
+        <div class="testimonial-info">
+          <div class="name">James Whitfield</div>
+          <div class="role">Operations Director</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-metrics">
+        <div class="testimonial-metric"><span class="val">2M</span><span class="label">Units delivered</span></div>
+      </div>
+      <blockquote>"Their team absolutely crushed our entire bracket program! The docs were on point every single time, making everything run super smoothly from beginning to end without a hitch."</blockquote>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">MA</div>
+        <div class="testimonial-info">
+          <div class="name">Marcus Aldren</div>
+          <div class="role">Supply Chain Director</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-metrics">
+        <div class="testimonial-metric"><span class="val">80K</span><span class="label">Saved on rework</span></div>
+      </div>
+      <blockquote>"Their thorough sample approval process identified a significant design issue before we entered full production — it ultimately saved us from incurring a potentially costly reorder!"</blockquote>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">DR</div>
+        <div class="testimonial-info">
+          <div class="name">Daniel Royce</div>
+          <div class="role">Head of Sourcing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MARQUEE ═══════════ -->
+<div class="marquee-wrap">
+  <div class="marquee">
+    <span>Precision Engineering</span>
+    <span>●</span>
+    <span>ISO Certified</span>
+    <span>●</span>
+    <span>In-House Production</span>
+    <span>●</span>
+    <span>24-72 Hour Response</span>
+    <span>●</span>
+    <span>Full Traceability</span>
+    <span>●</span>
+    <span>340+ Manufacturers</span>
+    <span>●</span>
+    <span>Precision Engineering</span>
+    <span>●</span>
+    <span>ISO Certified</span>
+    <span>●</span>
+    <span>In-House Production</span>
+    <span>●</span>
+    <span>24-72 Hour Response</span>
+    <span>●</span>
+    <span>Full Traceability</span>
+    <span>●</span>
+    <span>340+ Manufacturers</span>
+    <span>●</span>
+  </div>
+</div>
+
+<!-- ═══════════ QUOTE FORM ═══════════ -->
+<div class="section quote-section" id="quote">
+  <div class="quote-wrapper">
+    <div class="quote-left">
+      <div class="section-label">GET STARTED</div>
+      <h2 class="section-title">Request a free quote</h2>
+      <p class="section-subtitle">We would absolutely love to hear from you! Please feel free to reach out and get in touch with us anytime you wish.</p>
+    </div>
+    <form class="quote-form" onsubmit="event.preventDefault()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" placeholder="John">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" placeholder="Doe">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" placeholder="john@company.com">
+      </div>
+      <div class="form-group">
+        <label>Company</label>
+        <input type="text" placeholder="Company name">
+      </div>
+      <div class="form-group">
+        <label>Project Details</label>
+        <textarea placeholder="Tell us about your project, quantities, and timeline..."></textarea>
+      </div>
+      <button type="submit" class="form-submit">Submit Request →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════ CTA BANNER ═══════════ -->
+<div class="cta-banner">
+  <h2>Let's build something great together</h2>
+  <a href="#quote" class="hero-btn">
+    Start Your Project
+    <svg viewBox="0 0 12 12" fill="none"><path d="M2 6H10M10 6L6 2M10 6L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+</div>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo"><span class="logo-mark">⬢</span> IRONGRID</div>
+        <p>Precision manufacturing for automotive, aerospace, and electronics industries. ISO, IATF & RoHS certified.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Services</a></li>
+          <li><a href="#">Case Studies</a></li>
+          <li><a href="#">Careers</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Certifications</a></li>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="tel:+4033949940">+403-394-9940</a></li>
+          <li><a href="mailto:info@example.com">info@example.com</a></li>
+          <li><a href="#">Request A Quote</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 IronGrid. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <a href="#" aria-label="Twitter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>

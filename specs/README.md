@@ -67,6 +67,11 @@ verification is against its acceptance criteria.
   progress). Replaces the audit tool's step-0 intake form with one focused hero
   field that accepts a website or Instagram account, auto-detects the type, and
   scans into the existing facts screen. UI-only; no backend contract change.
+- [`006-product-wide-polish/SPEC.md`](./006-product-wide-polish/SPEC.md)
+  — status **Implementing** (founder-approved 2026-08-20). Phase 6 design and
+  copy pass (calm instrument). Wave 1 verified 2026-08-20: P0 foundation and
+  P1 landing (see its `VERIFICATION.md`). Wave 2 (P2–P7) is gated on the
+  report-quality gate per the package's `EXECUTION_PLAN.md`.
 
 [`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
 no active spec is named, the next task is to prepare or approve one rather than

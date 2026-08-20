@@ -116,6 +116,7 @@ context an agent must read. Do not implement a draft specification.
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md) | Indonesian audit and report contracts, journey realigned to the canonical sequence | Verified (2026-08-17) |
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Approved; implementing — **the current objective** |
 | [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Approved; implementing |
+| [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Implementing; Wave 1 (P0 foundation, P1 landing) verified 2026-08-20; Wave 2 gated on the report-quality gate |
 
 ## Reference and history
 

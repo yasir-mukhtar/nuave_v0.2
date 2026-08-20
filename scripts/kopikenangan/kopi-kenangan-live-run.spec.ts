@@ -67,6 +67,7 @@ process.env.OPENAI_BASE_URL = "";
 
 import type {
   AuditBudget,
+  AuditCallTelemetry,
   AuditObservation,
   AuditPrompt,
   BusinessBrief,
@@ -446,7 +447,7 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
     // ================= Telemetry summary ================================
     const pipelineOutputObj = pipelineOutput as
       | {
-          operational_telemetry: { calls: unknown[] };
+          operational_telemetry: { calls: AuditCallTelemetry[] };
           provenance: { report_call_count: number };
         }
       | null;

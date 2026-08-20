@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1440">
-<title>Direction A — Calm Instrument</title>
+<title>Direction C — Editorial</title>
 <style>
   /* Reset and base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "Segoe UI", "Inter", sans-serif;
-    color: #0a0a0a;
+    color: #171717;
     background: #ffffff;
     line-height: 1.5;
     font-size: 16px;
@@ -17,7 +17,7 @@
   }
   /* Header strip */
   .header {
-    border-bottom: 1px solid #ececec;
+    border-bottom: 1px solid #e5e5e0;
     padding: 12px 48px;
     display: flex;
     justify-content: space-between;
@@ -26,8 +26,8 @@
   .header h1 {
     font-size: 14px;
     font-weight: 500;
-    letter-spacing: -0.03em;
-    color: #5b5b5b;
+    letter-spacing: 0;
+    color: #525252;
   }
   .watermark {
     font-size: 12px;
@@ -43,33 +43,47 @@
   /* Section */
   .section {
     padding: 48px 0;
-    border-bottom: 1px solid #ececec;
+    border-bottom: 1px solid #e5e5e0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 24px;
   }
   .section:last-child {
     border-bottom: none;
+  }
+  .section-number {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 33.2px;
+    font-weight: 600;
+    color: #525252;
+    line-height: 1;
   }
   .section-caption {
     font-size: 12px;
     color: #9ca3af;
     margin-bottom: 24px;
     font-style: italic;
+    grid-column: 1 / -1;
   }
   .motion-note {
     font-size: 12px;
     color: #9ca3af;
     margin-top: 16px;
+    grid-column: 1 / -1;
   }
   /* Typography */
   h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     font-size: 33.2px;
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
     margin-bottom: 16px;
   }
   h3 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     font-size: 24.9px;
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
     margin-bottom: 12px;
   }
   p {
@@ -77,15 +91,16 @@
     margin-bottom: 12px;
   }
   .text-muted {
-    color: #5b5b5b;
+    color: #525252;
   }
   /* Card */
   .card {
-    border: 1px solid #ececec;
-    border-radius: 8px;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
     padding: 32px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     margin-bottom: 24px;
+    grid-column: 1 / -1;
   }
   /* Input field */
   .input-wrapper {
@@ -95,12 +110,12 @@
   .input {
     width: 100%;
     height: 56px;
-    border: 1px solid #ececec;
-    border-radius: 8px;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
     padding: 0 16px;
     font-size: 16px;
     background: #ffffff;
-    color: #0a0a0a;
+    color: #171717;
   }
   .input::placeholder {
     color: #9ca3af;
@@ -111,11 +126,11 @@
     top: 50%;
     transform: translateY(-50%);
     background: #f9fafb;
-    border: 1px solid #ececec;
+    border: 1px solid #e5e5e0;
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 12px;
-    color: #5b5b5b;
+    color: #525252;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -123,7 +138,7 @@
   /* Button */
   .btn {
     display: inline-block;
-    background: #533afd;
+    background: #0d1738;
     color: #ffffff;
     border: none;
     border-radius: 6px;
@@ -134,12 +149,12 @@
     text-decoration: none;
   }
   .btn:hover {
-    background: #3d2bc7;
+    background: #1a2750;
   }
   .btn-outline {
     background: transparent;
-    border: 1px solid #ececec;
-    color: #0a0a0a;
+    border: 1px solid #e5e5e0;
+    color: #171717;
   }
   .btn-outline:hover {
     background: #f9fafb;
@@ -150,36 +165,37 @@
     align-items: center;
     gap: 8px;
     background: #f9fafb;
-    border: 1px solid #ececec;
+    border: 1px solid #e5e5e0;
     border-radius: 6px;
     padding: 8px 12px;
     font-size: 14px;
-    color: #5b5b5b;
+    color: #525252;
     margin-bottom: 16px;
   }
   /* Reassurance */
   .reassurance {
     font-size: 14px;
-    color: #5b5b5b;
+    color: #525252;
     margin-top: 16px;
   }
   /* Badge */
   .badge {
     display: inline-block;
     background: #f9fafb;
-    border: 1px solid #ececec;
+    border: 1px solid #e5e5e0;
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 12px;
-    color: #5b5b5b;
+    color: #525252;
     margin-bottom: 16px;
   }
   /* Order card */
   .order-card {
-    border: 1px solid #ececec;
-    border-radius: 8px;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
     padding: 24px;
     margin-bottom: 24px;
+    grid-column: 1 / -1;
   }
   .order-row {
     display: flex;
@@ -191,10 +207,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
+    grid-column: 1 / -1;
   }
   .status-box {
-    border: 1px solid #ececec;
-    border-radius: 8px;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
     padding: 24px;
   }
   .status-title {
@@ -204,13 +221,13 @@
   }
   .status-desc {
     font-size: 14px;
-    color: #5b5b5b;
+    color: #525252;
     margin-bottom: 16px;
   }
   /* Eyebrow */
   .eyebrow {
     font-size: 12px;
-    color: #5b5b5b;
+    color: #525252;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 8px;
@@ -218,21 +235,22 @@
   /* Identity */
   .identity {
     font-size: 14px;
-    color: #5b5b5b;
+    color: #525252;
     margin-bottom: 16px;
   }
   /* Headline */
   .headline {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     font-size: 44.2px;
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
     margin-bottom: 8px;
   }
   .count {
     font-size: 58.9px;
     font-weight: 700;
-    letter-spacing: -0.03em;
-    color: #0a0a0a;
+    letter-spacing: 0;
+    color: #171717;
     line-height: 1;
     margin-bottom: 16px;
   }
@@ -247,7 +265,7 @@
   }
   /* Snapshot */
   .snapshot {
-    border-left: 2px solid #ececec;
+    border-left: 2px solid #e5e5e0;
     padding-left: 16px;
     margin-top: 24px;
   }
@@ -258,7 +276,18 @@
   }
   .snapshot p {
     font-size: 14px;
-    color: #5b5b5b;
+    color: #525252;
+  }
+  /* Source chip footnote */
+  .source-chip {
+    display: inline-block;
+    background: #f9fafb;
+    border: 1px solid #e5e5e0;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: #525252;
+    margin-top: 8px;
   }
   /* Inline SVG */
   svg {
@@ -276,7 +305,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>Direction A — Calm Instrument</h1>
+    <h1>Direction C — Editorial</h1>
     <div class="watermark">Konsep arah desain — bukan produk, bukan hasil audit.</div>
   </div>
   <div class="container">
@@ -284,6 +313,7 @@
     <!-- V1 -->
     <div class="section">
       <div class="section-caption">V1 — Landing / discovery</div>
+      <div class="section-number">01</div>
       <div class="card">
         <h2>Apakah brand Anda muncul di ChatGPT?</h2>
         <p class="text-muted">Nuave memberi Anda laporan bagaimana AI menyebut brand Anda dan apa yang bisa diperbaiki.</p>
@@ -307,6 +337,7 @@
     <!-- V2 -->
     <div class="section">
       <div class="section-caption">V2 — Payment status</div>
+      <div class="section-number">02</div>
       <div class="order-card">
         <div class="order-row">
           <strong>Kopi Taman Senja</strong>
@@ -321,7 +352,7 @@
         <div class="status-box">
           <div class="status-title">Pembayaran belum selesai</div>
           <p class="status-desc">Selesaikan pembayaran sebelum waktu yang tertera berakhir. Audit Anda belum dimulai.</p>
-          <button class="btn-outline" style="margin-right: 8px; margin-bottom: 8px;">Saya sudah membayar — cek lagi</button>
+          <button class="btn-outline" style="margin-right: 8px; margin-bottom: 8px;">Saya sudah membayar. Cek lagi.</button>
           <button class="btn-outline">Pilih cara pembayaran lain</button>
         </div>
         <div class="status-box">
@@ -336,6 +367,7 @@
     <!-- V3 -->
     <div class="section">
       <div class="section-caption">V3 — Report result moment</div>
+      <div class="section-number">03</div>
       <div class="card">
         <div class="eyebrow">AI Visibility Report</div>
         <div class="identity">Kopi Taman Senja · Dago, Bandung · 17 Agustus 2026 · 10 pertanyaan independen</div>

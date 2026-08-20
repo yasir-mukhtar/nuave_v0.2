@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   IconChevronDown,
   IconCheck,
@@ -14,177 +15,155 @@ import HowItWorks from "@/components/HowItWorks";
 import LandingNav from "@/components/LandingNav";
 import ExampleReportPreview from "@/components/ExampleReportPreview";
 
-/* ───── Data ───── */
-
-/* ───── Hero Asset URLs (local) ───── */
-/* LOGO_SVG removed — brand logo lives at /logo-nuave.svg (see LandingNav/Footer). */
-const DASHBOARD_IMAGES = [
-  "/preview-step-1.png",
-  "/preview-step-2.png",
-  "/preview-step-3.png",
-];
-/* HERO_STEPS moved inside HeroSection for i18n access */
-
-const AI_LOGOS = [
-  { src: "/ai-logos/claude.svg", alt: "Claude", w: 98, h: 24 },
-  { src: "/ai-logos/gemini.svg", alt: "Gemini", w: 110, h: 24 },
-  { src: "/ai-logos/perplexity.svg", alt: "Perplexity", w: 94, h: 24 },
-  { src: "/ai-logos/meta-ai.svg", alt: "Meta AI", w: 89, h: 24 },
-  { src: "/ai-logos/chatgpt.svg", alt: "ChatGPT", w: 110, h: 24 },
-];
-
-/* Nav component extracted to src/components/LandingNav.tsx */
-
-/* ───── Hero Section (Framer design) ───── */
+/* ───── Hero Intake (one-question / one-input) ───── */
 function HeroSection() {
   const t = useTranslations();
-  const HERO_STEPS = [
-    t("landing.heroStep1"),
-    t("landing.heroStep2"),
-    t("landing.heroStep3"),
-  ];
-  const [activeStep, setActiveStep] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const router = useRouter();
+  const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
 
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % HERO_STEPS.length);
-    }, 3000);
-  }, []);
+  const trimmed = value.trim();
+  const isInstagram =
+    trimmed.includes("instagram.com") || trimmed.startsWith("@");
+  const detectionLabel = isInstagram
+    ? t("landing.intakeChipInstagram")
+    : t("landing.intakeChipWebsite");
 
-  useEffect(() => {
-    startTimer();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [startTimer]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = value.trim();
+    if (!v || v.length < 3) {
+      setError(t("landing.intakeInvalidHint"));
+      return;
+    }
+    // Very light validation: require dot or instagram pattern
+    if (!v.includes(".") && !v.startsWith("@")) {
+      setError(t("landing.intakeInvalidHint"));
+      return;
+    }
+    setError(null);
+    setIsScanning(true);
+    // Scan-line motif then handoff to /audit
+    const q = encodeURIComponent(v);
+    setTimeout(() => {
+      router.push(`/audit?source=${q}`);
+    }, 450);
+  };
 
-  const handleStepClick = (i: number) => {
-    setActiveStep(i);
-    startTimer();
+  const handleExampleClick = (example: string) => {
+    setValue(example);
+    setError(null);
   };
 
   return (
     <section className="lp-root lp-hero-section relative w-full pt-[120px] px-[30px] flex justify-center overflow-hidden">
-      <div className="max-w-[1200px] w-full flex flex-col items-center">
-        {/* Text content */}
-        <div className="flex flex-col items-center gap-6">
-          {/* Headline */}
-          <h1 className="lp-hero-heading max-w-[800px] text-center m-0">
-            {t("landing.heroHeading")}
-          </h1>
+      <div className="max-w-[720px] w-full flex flex-col items-center text-center">
+        {/* Headline — stagger 1 */}
+        <h1 className="lp-hero-heading lp-entrance lp-entrance-1 max-w-[640px] m-0">
+          {t("landing.heroHeading")}
+        </h1>
 
-          {/* Subtitle */}
-          <p className="lp-hero-subtitle max-w-[740px] text-[18px] font-normal leading-[1.7em] tracking-[-0.5px] text-[var(--lp-text-secondary)] text-center m-0">
-            {t("landing.heroSubtitle")}
-          </p>
+        {/* Subline — stagger 2 */}
+        <p className="lp-hero-subtitle lp-entrance lp-entrance-2 max-w-[560px] text-[18px] font-normal leading-[1.7em] tracking-[-0.5px] text-[var(--lp-text-secondary)] text-center m-0 mt-4">
+          {t("landing.heroSubtitle")}
+        </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="#cta"
-              className="btn-lp-purple inline-flex items-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] no-underline cursor-pointer"
-            >
-              {t("cta.auditBrandFree")}
-            </Link>
-            <Link
-              href="#contoh-laporan"
-              className="inline-flex items-center px-[22px] py-3 text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] bg-white text-[var(--lp-text-primary)] no-underline cursor-pointer hover:bg-[#fafafa] transition-colors duration-150"
-            >
-              {t("cta.seeExampleReport")}
-            </Link>
+        {/* Intake card — stagger 3 */}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="lp-entrance lp-entrance-3 w-full mt-8 rounded-[16px] border border-[#E5E7EB] bg-white p-4 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.06)] text-left relative overflow-hidden"
+        >
+          {/* scan-line motif */}
+          {isScanning && (
+            <div
+              className="lp-scan-line absolute left-0 right-0 h-px bg-[var(--lp-purple)] pointer-events-none"
+              aria-hidden="true"
+            />
+          )}
+          <label
+            htmlFor="landing-intake"
+            className="block text-[13px] font-medium text-[#6B7280] mb-2"
+          >
+            {t("landing.intakeChipWebsite")} /{" "}
+            {t("landing.intakeChipInstagram")}
+          </label>
+          <div className="relative flex items-center">
+            <input
+              id="landing-intake"
+              type="text"
+              value={value}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder={t("landing.intakePlaceholder")}
+              autoComplete="off"
+              spellCheck={false}
+              className="h-[52px] w-full rounded-[10px] border border-[#E5E7EB] bg-white pl-4 pr-[140px] text-[15px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--lp-purple)] focus:ring-2 focus:ring-[rgba(83,58,253,0.15)] transition-colors"
+              aria-label={t("landing.intakePlaceholder")}
+              aria-invalid={!!error}
+              aria-describedby={
+                error ? "landing-intake-error" : "landing-intake-hint"
+              }
+            />
+            {/* detection chip inside field */}
+            <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center rounded-full bg-[#F3F4F6] border border-[#E5E7EB] px-3 py-1 text-[12px] font-medium text-[#374151]">
+              {detectionLabel}
+            </span>
           </div>
-        </div>
 
-        {/* Preview area */}
-        <div className="lp-hero-preview mt-16 w-full relative">
-          {/* Purple gradient background */}
-          <div className="relative w-full aspect-[1.82094] rounded-[12px] border border-[var(--lp-border)] overflow-hidden">
-            {/* Animated gradient background */}
-            <div className="lp-hero-bg-base" aria-hidden="true" />
-            <div className="lp-hero-overlay-1" aria-hidden="true" />
-            <div className="lp-hero-overlay-2" aria-hidden="true" />
-            <div className="lp-hero-overlay-3" aria-hidden="true" />
-
-            {/* Overlay content */}
-            <div className="absolute inset-0 z-10 flex flex-col items-center pt-10 px-10 gap-6">
-              {/* Stepper bar */}
-              <div className="flex items-center gap-0 px-3.5 py-2 bg-white rounded-[10px] border border-[var(--lp-border)] shadow-[rgba(0,0,0,0.04)_0px_1px_4px_0px] h-[43px]">
-                {HERO_STEPS.map((step, i) => (
-                  <button
-                    key={step}
-                    onClick={() => handleStepClick(i)}
-                    className="flex items-center gap-3.5 pr-3.5 bg-transparent border-none cursor-pointer text-[16px] font-medium leading-[1.7em] whitespace-nowrap"
-                    style={{
-                      color:
-                        activeStep === i
-                          ? "var(--lp-text-primary)"
-                          : "var(--lp-text-secondary)",
-                    }}
-                  >
-                    {/* Fixed 20px indicator box */}
-                    <div className="w-5 h-5 shrink-0 flex items-center justify-center">
-                      {activeStep === i ? (
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                        >
-                          <circle cx="10" cy="10" r="10" fill="#0a0a0a" />
-                          <text
-                            x="10"
-                            y="10"
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fill="#fff"
-                            fontFamily="Inter, sans-serif"
-                            fontWeight="600"
-                            fontSize="14"
-                            letterSpacing="0em"
-                          >
-                            {i + 1}
-                          </text>
-                        </svg>
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-[var(--lp-border)]" />
-                      )}
-                    </div>
-                    {step}
-                  </button>
-                ))}
-              </div>
-
-              {/* Illustrative preview card: fictional business/report mockup, not a real result */}
-              <div className="w-full max-w-[900px] h-[504px] p-4 backdrop-blur-[54px] bg-white/[0.54] rounded-[12px] shadow-[rgba(0,0,0,0.08)_0px_8px_32px_0px] overflow-hidden relative">
-                {DASHBOARD_IMAGES.map((src, i) => (
-                  <img
-                    key={src}
-                    src={src}
-                    alt={t("landing.heroImageFootnote")}
-                    className="object-cover object-top rounded-[6px]"
-                    style={{
-                      position: i === 0 ? "relative" : "absolute",
-                      top: i === 0 ? 0 : 16,
-                      left: i === 0 ? 0 : 16,
-                      width: i === 0 ? "100%" : "calc(100% - 32px)",
-                      height: i === 0 ? "100%" : "calc(100% - 32px)",
-                      opacity: activeStep === i ? 1 : 0,
-                      transition: "opacity 0.5s ease",
-                    }}
-                  />
-                ))}
-                <span
-                  className="absolute bottom-3 right-3 z-20 text-[11px] font-medium text-gray-600 bg-white/90 rounded-full px-2.5 py-1 shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
-                  title={t("landing.heroImageFootnote")}
+          {/* example chips */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[t("landing.intakeExample1"), t("landing.intakeExample2")].map(
+              (ex) => (
+                <button
+                  key={ex}
+                  type="button"
+                  onClick={() => handleExampleClick(ex)}
+                  className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-[#374151] hover:bg-white hover:border-[#D1D5DB] transition-colors cursor-pointer"
                 >
-                  {t("report.exampleBadge")}
-                </span>
-              </div>
-            </div>
+                  {ex}
+                </button>
+              ),
+            )}
           </div>
-        </div>
+
+          {/* reassurance + error */}
+          <p
+            id="landing-intake-hint"
+            className="mt-3 text-[13px] leading-[1.5] text-[#6B7280] m-0"
+          >
+            {t("landing.intakeReassurance")}
+          </p>
+          {error && (
+            <p
+              id="landing-intake-error"
+              role="alert"
+              className="mt-2 text-[13px] text-[#DC2626] m-0"
+            >
+              {error}
+            </p>
+          )}
+
+          {/* primary CTA */}
+          <button
+            type="submit"
+            disabled={isScanning}
+            className="btn-lp-purple mt-4 inline-flex w-full items-center justify-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[10px] border border-[var(--lp-border)] no-underline cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {t("cta.auditBrandFree")}
+          </button>
+        </form>
+
+        {/* secondary link to example */}
+        <Link
+          href="#contoh-laporan"
+          className="lp-entrance lp-entrance-3 mt-4 text-[14px] font-medium text-[var(--lp-text-secondary)] underline underline-offset-4 hover:text-[var(--lp-text-primary)] transition-colors"
+        >
+          {t("cta.seeExampleReport")}
+        </Link>
       </div>
     </section>
   );
@@ -201,7 +180,7 @@ function IsilaporanSection() {
   return (
     <section
       id="isi-laporan"
-      className="lp-report-section bg-white px-8 py-[120px]"
+      className="lp-report-section bg-white px-8 py-[120px] border-t border-[#E5E7EB]"
     >
       <div className="max-w-[1044px] mx-auto">
         <h2 className="lp-report-heading text-center m-0 mb-6">
@@ -233,9 +212,12 @@ function IsilaporanSection() {
         </div>
 
         {/* Example report */}
-        <div className="mt-16 flex flex-col items-center gap-5">
+        <div
+          id="contoh-laporan"
+          className="mt-16 flex flex-col items-center gap-5"
+        >
           <Link
-            href="#contoh-laporan"
+            href="/audit"
             className="btn-lp-purple inline-flex items-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] border border-[var(--lp-border)] no-underline cursor-pointer"
           >
             {t("report.cta")}
@@ -262,7 +244,7 @@ function BatasanSection() {
   return (
     <section
       id="batasan"
-      className="lp-batasan-section bg-white px-8 py-[120px]"
+      className="lp-batasan-section bg-white px-8 py-[120px] border-t border-[#E5E7EB]"
     >
       <div className="max-w-[1044px] mx-auto">
         <h2 className="lp-batasan-heading text-center m-0 mb-14">
@@ -295,9 +277,9 @@ function KebijakanDataSection() {
   return (
     <section
       id="kebijakan-data"
-      className="lp-data-section bg-white px-8 pb-[120px]"
+      className="lp-data-section bg-white px-8 pb-[120px] border-t border-[#E5E7EB]"
     >
-      <div className="max-w-[1044px] mx-auto">
+      <div className="max-w-[1044px] mx-auto pt-[80px]">
         <div className="rounded-[16px] bg-[#0d1738] px-8 py-14 flex flex-col items-center text-center gap-5">
           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
             <IconShieldLock size={22} color="#fff" stroke={1.6} />
@@ -326,7 +308,7 @@ function FAQSection() {
   return (
     <section
       id="faq"
-      className="lp-faq-section bg-[#F9FAFB] px-8 pt-[72px] pb-20"
+      className="lp-faq-section bg-[#F9FAFB] px-8 pt-[72px] pb-20 border-t border-[#E5E7EB]"
     >
       <div className="max-w-[740px] mx-auto">
         <h2 className="lp-faq-heading text-center mb-12">
@@ -373,131 +355,68 @@ function FAQSection() {
   );
 }
 
-/* ───── Problem Card with cursor-following glow ───── */
+/* ───── Educate Section (masalah) — calm, no glow ───── */
 
-function ProblemCard({
-  color,
-  number,
-  desc,
-  chips,
-  phase = 0,
-}: {
-  color: string;
-  number: string;
-  desc: string;
-  chips: string[];
-  phase?: number;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const glowPos = useRef({ x: 250, y: 240 });
-  const targetPos = useRef({ x: 250, y: 240 });
-  const isHovering = useRef(false);
-  const rafId = useRef<number>(0);
-  const timeRef = useRef(phase);
-  const opacityRef = useRef(0.35);
-  const targetOpacity = useRef(0.35);
-  const glowEl = useRef<HTMLDivElement>(null);
-
-  const getAmbientPos = useCallback((t: number, w: number, h: number) => {
-    // Figure-8 / lissajous path that hugs corners and edges
-    const cx = w / 2;
-    const cy = h / 2;
-    const rx = w * 0.4;
-    const ry = h * 0.35;
-    return {
-      x: cx + Math.sin(t * 0.4) * rx,
-      y: cy + Math.cos(t * 0.6) * ry,
-    };
-  }, []);
-
-  useEffect(() => {
-    const card = cardRef.current;
-    const glow = glowEl.current;
-    if (!card || !glow) return;
-
-    let lastTime = performance.now();
-
-    const tick = (now: number) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-      const rect = card.getBoundingClientRect();
-
-      if (!isHovering.current) {
-        // Ambient mode: advance time, compute drift target
-        timeRef.current += dt;
-        const ambient = getAmbientPos(timeRef.current, rect.width, rect.height);
-        targetPos.current = ambient;
-        targetOpacity.current = 0.3 + Math.sin(timeRef.current * 1.2) * 0.1; // breathe 0.2–0.4
-      } else {
-        targetOpacity.current = 1;
-      }
-
-      // Lerp position — faster when hovering, slower for ambient/leaving
-      const lerpSpeed = isHovering.current ? 0.15 : 0.03;
-      glowPos.current.x +=
-        (targetPos.current.x - glowPos.current.x) * lerpSpeed;
-      glowPos.current.y +=
-        (targetPos.current.y - glowPos.current.y) * lerpSpeed;
-
-      // Lerp opacity
-      const opacitySpeed = isHovering.current ? 0.1 : 0.04;
-      opacityRef.current +=
-        (targetOpacity.current - opacityRef.current) * opacitySpeed;
-
-      // Direct DOM update — no React re-renders
-      glow.style.opacity = String(opacityRef.current);
-      glow.style.background = `radial-gradient(600px circle at ${glowPos.current.x}px ${glowPos.current.y}px, ${color}, transparent 60%)`;
-
-      rafId.current = requestAnimationFrame(tick);
-    };
-
-    rafId.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId.current);
-  }, [color, getAmbientPos]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = cardRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    targetPos.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  }, []);
-
-  const handleMouseEnter = useCallback(() => {
-    isHovering.current = true;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    isHovering.current = false;
-    // Glow stays at last cursor position, ambient drift will gradually take over via lerp
-  }, []);
-
+function EducateSection() {
+  const t = useTranslations();
+  const CARDS = [
+    {
+      number: t("landing.problemCard1Number"),
+      desc: t("landing.problemCard1Desc"),
+      chips: [
+        t("landing.problemCard1Chip1"),
+        t("landing.problemCard1Chip2"),
+        t("landing.problemCard1Chip3"),
+      ],
+    },
+    {
+      number: t("landing.problemCard2Number"),
+      desc: t("landing.problemCard2Desc"),
+      chips: [
+        t("landing.problemCard2Chip1"),
+        t("landing.problemCard2Chip2"),
+        t("landing.problemCard2Chip3"),
+      ],
+    },
+  ];
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="lp-problem-card relative rounded-[12px] border border-[#E5E7EB] overflow-hidden flex flex-col justify-between min-h-[440px] bg-white"
-    >
-      <div ref={glowEl} className="pointer-events-none absolute inset-0" />
-      <div className="relative pt-10 px-10">
-        <p className="text-[48px] font-medium tracking-[-2px] leading-[1.2em] text-[#111827] m-0 mb-5">
-          {number}
+    <section className="lp-problem-section bg-white px-8 py-[120px] border-t border-[#E5E7EB]">
+      <div className="max-w-[1044px] mx-auto">
+        <h2 className="lp-problem-heading text-center m-0 mb-5">
+          {t("landing.educateHeading")}
+        </h2>
+        <p className="lp-problem-subtitle text-center text-[18px] font-normal leading-[1.7em] tracking-[-0.5px] text-[var(--lp-text-secondary)] m-0 mb-14">
+          {t("landing.educateSubtitle")}
         </p>
-        <p className="text-[22px] font-medium tracking-[-0.5px] leading-[1.4em] text-[#111827] m-0 max-w-[340px]">
-          {desc}
-        </p>
+        <div className="lp-problem-grid grid grid-cols-2 gap-6">
+          {CARDS.map((card) => (
+            <div
+              key={card.number}
+              className="lp-problem-card relative rounded-[12px] border border-[#E5E7EB] overflow-hidden flex flex-col justify-between min-h-[440px] bg-white p-10"
+            >
+              <div>
+                <p className="text-[28px] font-semibold tracking-[-0.5px] leading-[1.2em] text-[#111827] m-0 mb-5">
+                  {card.number}
+                </p>
+                <p className="text-[20px] font-medium tracking-[-0.5px] leading-[1.4em] text-[#111827] m-0 max-w-[340px]">
+                  {card.desc}
+                </p>
+              </div>
+              <div className="pt-[80px] flex flex-col gap-2.5">
+                {card.chips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="inline-block self-start text-[14px] font-normal text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] rounded-full px-4 py-2"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="relative pt-[80px] px-10 pb-10 flex flex-col gap-2.5">
-        {chips.map((chip) => (
-          <span
-            key={chip}
-            className="inline-block self-start text-[14px] font-normal text-[#111827] bg-white/85 border border-black/[0.08] rounded-full px-4 py-2 backdrop-blur-[4px]"
-          >
-            {chip}
-          </span>
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -508,183 +427,20 @@ export default function Home() {
 
   return (
     <div className="lp-page min-h-screen bg-white">
-      {/* ──── Nav + Hero + AI Logos (Framer design) ──── */}
+      {/* ──── Nav + Hero ──── */}
       <div style={{ background: "var(--lp-bg, #f7f7f5)" }}>
         <LandingNav />
         <HeroSection />
-
-        {/* ──── AI Logos Marquee ──── */}
-        <style>{`
-        @keyframes marquee-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-      `}</style>
-        <section className="lp-marquee-section w-full pt-[120px] pb-24 flex flex-col items-center gap-8 overflow-hidden">
-          <p className="lp-marquee-text text-[18px] font-normal leading-[1.5em] text-[#0A0A0A] text-center m-0 px-[30px]">
-            {t("landing.marqueeText")}
-          </p>
-          <div
-            className="w-full max-w-[1045px] mx-auto overflow-hidden"
-            style={{
-              maskImage:
-                "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
-              WebkitMaskImage:
-                "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
-            }}
-          >
-            <div
-              className="flex items-center gap-24 w-max"
-              style={{ animation: "marquee-scroll 60s linear infinite" }}
-            >
-              {[...AI_LOGOS, ...AI_LOGOS, ...AI_LOGOS, ...AI_LOGOS].map(
-                (logo, i) => (
-                  <img
-                    key={`${logo.alt}-${i}`}
-                    src={logo.src}
-                    alt={logo.alt}
-                    className="block shrink-0 h-7 w-auto"
-                  />
-                ),
-              )}
-            </div>
-          </div>
-        </section>
       </div>
-      {/* end Framer hero+marquee wrapper */}
 
       {/* ──── Educate Section (masalah) ──── */}
-      <section className="lp-problem-section bg-white px-8 py-[120px]">
-        <div className="max-w-[1044px] mx-auto">
-          <h2 className="lp-problem-heading text-center m-0 mb-5">
-            {t("landing.educateHeading")}
-          </h2>
-          <p className="lp-problem-subtitle text-center text-[18px] font-normal leading-[1.7em] tracking-[-0.5px] text-[var(--lp-text-secondary)] m-0 mb-14">
-            {t("landing.educateSubtitle")}
-          </p>
-          <div className="lp-problem-grid grid grid-cols-2 gap-6">
-            {[
-              {
-                color: "rgba(168, 130, 255, 0.45)",
-                number: t("landing.problemCard1Number"),
-                desc: t("landing.problemCard1Desc"),
-                chips: [
-                  t("landing.problemCard1Chip1"),
-                  t("landing.problemCard1Chip2"),
-                  t("landing.problemCard1Chip3"),
-                ],
-              },
-              {
-                color: "rgba(255, 175, 120, 0.45)",
-                number: t("landing.problemCard2Number"),
-                desc: t("landing.problemCard2Desc"),
-                chips: [
-                  t("landing.problemCard2Chip1"),
-                  t("landing.problemCard2Chip2"),
-                  t("landing.problemCard2Chip3"),
-                ],
-              },
-            ].map((card, i) => (
-              <ProblemCard
-                key={card.number}
-                color={card.color}
-                number={card.number}
-                desc={card.desc}
-                chips={card.chips}
-                phase={i * 3.5}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+      <EducateSection />
 
       {/* ──── How it works ──── */}
       <HowItWorks />
 
       {/* ──── Isi Laporan (what you receive) ──── */}
       <IsilaporanSection />
-
-      {/* ──── Stats ──── */}
-      <section className="lp-stats-section bg-[#F9FAFB] pt-[120px] pb-[120px]">
-        <div className="px-8 text-center mb-6">
-          <h2
-            className="lp-stats-heading m-0 mb-5"
-            dangerouslySetInnerHTML={{
-              __html: t
-                .raw("landing.statsHeading")
-                .replace(/\n/g, '<br class="lp-stats-br" />'),
-            }}
-          />
-          <p
-            className="lp-stats-subtitle text-[20px] font-normal tracking-[-0.5px] leading-[1.7em] text-[#6B7280] m-0"
-            dangerouslySetInnerHTML={{
-              __html: t("landing.statsSubtitle").replace(
-                /\n/g,
-                '<br class="lp-stats-br" />',
-              ),
-            }}
-          />
-        </div>
-        <div className="h-px bg-[#E5E7EB]" />
-        <div className="lp-stats-grid-inner grid grid-cols-3 max-w-[1044px] mx-auto">
-          {[
-            {
-              number: t("landing.stat1Number"),
-              title: t("landing.stat1Title"),
-              body: t("landing.stat1Body"),
-            },
-            {
-              number: t("landing.stat2Number"),
-              title: t("landing.stat2Title"),
-              body: t("landing.stat2Body"),
-            },
-            {
-              number: t("landing.stat3Number"),
-              title: t("landing.stat3Title"),
-              body: t("landing.stat3Body"),
-            },
-          ].map((stat, i) => (
-            <div
-              key={stat.title}
-              className={cn(
-                "lp-stat-item px-10 py-12 border-r border-[#E5E7EB]",
-                i === 0 && "border-l border-[#E5E7EB]",
-              )}
-            >
-              <p className="text-[40px] font-semibold tracking-[-1px] leading-[1.4em] text-[#111827] m-0 mb-2">
-                {stat.number}
-              </p>
-              <p className="text-[24px] font-medium tracking-[-0.5px] leading-[1.4em] text-[#111827] m-0 mb-3">
-                {stat.title}
-              </p>
-              <p className="text-[16px] font-normal leading-[1.7em] text-[#6B7280] m-0">
-                {stat.body}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="h-px bg-[#E5E7EB]" />
-        <p className="text-center mt-6 text-[13px] text-[#9CA3AF]">
-          {t("common.source")}{" "}
-          <a
-            href="https://mybrandi.ai/referrals-from-ai-vs-google/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#9CA3AF] underline"
-          >
-            MyBrandi.ai
-          </a>
-          ,{" "}
-          <a
-            href="https://superprompt.com/blog/ai-search-traffic-conversion-rates-5x-higher-than-google-2025-data"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#9CA3AF] underline"
-          >
-            Superprompt
-          </a>
-        </p>
-      </section>
 
       {/* ──── Batasan (honest boundaries) ──── */}
       <BatasanSection />
@@ -698,7 +454,7 @@ export default function Home() {
       {/* ──── Final CTA ──── */}
       <section
         id="cta"
-        className="lp-cta-section w-full min-h-[516px] px-8 py-[144px] flex items-center justify-center relative overflow-hidden bg-cover bg-center"
+        className="lp-cta-section w-full min-h-[516px] px-8 py-[144px] flex items-center justify-center relative overflow-hidden bg-cover bg-center border-t border-[#E5E7EB]"
         style={{ backgroundImage: "url('/bg-cta.png')" }}
       >
         <div className="flex flex-col items-center gap-10 text-center">
@@ -706,7 +462,7 @@ export default function Home() {
             {t("landing.ctaHeading")}
           </h2>
           <Link
-            href="#cta"
+            href="/audit"
             className="btn-lp-black inline-flex items-center px-7 py-3.5 text-white text-[14px] font-medium rounded-[8px] no-underline cursor-pointer"
           >
             {t("cta.auditBrandFreeNoExclaim")}

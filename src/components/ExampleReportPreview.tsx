@@ -15,15 +15,23 @@ export default function ExampleReportPreview() {
       </div>
 
       <div className="p-6 flex flex-col gap-5">
-        {/* Score band */}
-        <div className="flex items-center justify-between rounded-[8px] bg-[#F9FAFB] border border-[#E5E7EB] px-4 py-3">
-          <span className="text-[13px] text-gray-500">Skor visibilitas</span>
-          <span className="text-[15px] font-semibold text-gray-900">
-            Sedang
-          </span>
+        {/* Direct count — ink, with denominator, no band or percentage */}
+        <div className="rounded-[8px] bg-[#F9FAFB] border border-[#E5E7EB] px-4 py-3">
+          <p className="text-[12px] font-medium text-gray-500 m-0">
+            Hasil langsung
+          </p>
+          <p className="text-[14px] font-semibold text-[#111827] m-0 mt-1">
+            Bisnis Anda muncul di 4 dari 10 pertanyaan
+          </p>
+          <p className="text-[28px] font-bold tracking-[-1px] text-[#111827] m-0 leading-none mt-1">
+            4/10
+          </p>
+          <p className="text-[12px] text-gray-500 m-0 mt-1">
+            Tanpa menyebut bisnis Anda: 1/5 · Menyebut bisnis Anda: 3/5
+          </p>
         </div>
 
-        {/* ChatGPT answer quote */}
+        {/* ChatGPT answer quote — fictional-only product names */}
         <div>
           <p className="text-[12px] font-medium text-gray-500 m-0 mb-2">
             Jawaban ChatGPT
@@ -31,13 +39,13 @@ export default function ExampleReportPreview() {
           <div className="rounded-[8px] border border-[#E5E7EB] p-4">
             <p className="text-[13px] leading-[1.6] text-gray-900 m-0">
               <span className="font-bold">1.</span> Toko Sepatu Jaya, salah satu
-              brand lokal yang dikenal untuk sepatu lari dan futsal. Contoh
-              model: Radiance (daily trainer), Hyperfuse (ringan).
+              brand lokal untuk sepatu lari dan futsal. Contoh model: Seri Ceria
+              (daily trainer), Lincah Ringan (ringan).
             </p>
             <p className="text-[12px] text-gray-400 m-0 mt-2">
               Sumber:{" "}
               <span className="text-brand underline underline-offset-2">
-                tokosepatujaya.com
+                tokosepatujaya.example
               </span>
             </p>
           </div>

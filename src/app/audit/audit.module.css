@@ -1,12 +1,12 @@
 .shell {
-  --accent: #533afd;
+  --accent: var(--purple);
   --accent-foreground: #ffffff;
-  --accent-hover: #4931e8;
-  --accent-soft: color-mix(in srgb, #533afd 13%, transparent);
-  --accent-soft-foreground: #3f28cf;
-  --accent-soft-hover: color-mix(in srgb, #533afd 19%, transparent);
-  --focus: #533afd;
-  --link: #533afd;
+  --accent-hover: var(--purple-dark);
+  --accent-soft: var(--purple-light);
+  --accent-soft-foreground: var(--purple-dark);
+  --accent-soft-hover: color-mix(in srgb, var(--purple) 19%, transparent);
+  --focus: var(--purple);
+  --link: var(--purple);
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
@@ -60,7 +60,7 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.75rem;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1.4;
 }
@@ -84,7 +84,7 @@
   min-width: 0;
   flex-direction: column;
   gap: 0.65rem;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .stepBar {
@@ -179,7 +179,7 @@
   align-items: center;
   gap: 0.4rem;
   margin: 0 0 1rem;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.4;
@@ -200,7 +200,7 @@
 .sectionLead {
   max-width: 68ch;
   margin: 0;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -253,7 +253,7 @@
 .stageSectionHeader p {
   max-width: 28ch;
   margin: 0.65rem 0 0;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.8rem;
   line-height: 1.55;
 }
@@ -281,7 +281,7 @@
 }
 
 .workspace [data-slot="description"] {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1.5;
 }
@@ -329,7 +329,7 @@
 .stickyAction span,
 .stickyAction > div > span {
   max-width: 38rem;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.875rem;
   line-height: 1.5;
 }
@@ -467,7 +467,7 @@
 .promptMeta code,
 .detailDisclosure code,
 .printDetailTitle code {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.65rem;
   overflow-wrap: anywhere;
 }
@@ -482,7 +482,7 @@
 }
 
 .runRow > span {
-  color: var(--muted);
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.8rem;
 }
@@ -495,7 +495,7 @@
 }
 
 .runRow small {
-  color: var(--muted);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -1522,7 +1522,7 @@
   gap: 0.625rem;
   opacity: 0;
   animation: heroFadeUp 0.25s ease forwards;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.875rem;
   font-family: var(--font-body);
 }
