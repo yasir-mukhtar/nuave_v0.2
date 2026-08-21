@@ -425,10 +425,10 @@ describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any 
   });
 });
 
-// R3-5: `scripts/sozo/report-rerun.ts` and the Sozo runner call this pipeline
-// directly with the default live generator, never through /api/audit/report,
-// so the credential guard has to be here too.
-describe("live provider credential guard on the script path (R3-5)", () => {
+// R3-5: direct-library callers can invoke this pipeline with the default live
+// generator without going through /api/audit/report, so the credential guard
+// has to be here too.
+describe("live provider credential guard on the direct-library path (R3-5)", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
