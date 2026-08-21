@@ -14,10 +14,10 @@ clearly simulated checkout, and `https://v2.nuave.ai` is live as a noindex,
 direct-link-only deployment. The former access-code gate has been removed under
 the founder's recorded interim-exposure acceptance; a minimal server-side
 rate/cost guard is still required before any public link sharing. The current
-objective in [`docs/NOW.md`](./docs/NOW.md) is to connect the live engine,
-produce one real Indonesian report, and put it through the report-quality gate.
-Real payment, durable delivery, and later polish remain gated by the build
-order.
+objective in [`docs/NOW.md`](./docs/NOW.md) is to run the first
+founder-supervised real Indonesian report through the integrated live engine
+and put it through the report-quality gate. Real payment, durable delivery, and
+later polish remain gated by the build order.
 
 ## Start here
 
@@ -86,9 +86,10 @@ run a few unbranded questions on a prospect before any contact
 ```
 
 The current build starts with a fixture-backed version of this whole journey,
-including an unmistakably simulated checkout and report destination. The live
-report and its quality gate come next. Durable private delivery and real
-checkout are added only after that report proves worth paying for.
+including an unmistakably simulated checkout and report destination. The first
+founder-supervised live report and its quality gate come next. Durable private
+delivery and real checkout are added only after that report proves worth paying
+for.
 
 The settled commercial direction does not make the current fixture a real
 checkout: production payment still requires its approved implementation
@@ -128,12 +129,22 @@ including CI — a failure that has already been fixed and reintroduced twice.
 Confirm with `npm ci --dry-run` before committing a lockfile change.
 
 Copy `.env.example` to `.env.local`, add `OPENCODEGO_API_KEY`, and open
-<http://localhost:3000/audit>. The current production/live configuration is
+<http://localhost:3000/audit>. The protected production configuration is
 `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
-`OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`, and
-`OPENAI_AUDIT_MODEL=gpt-5.6-luna`. Nuave uses the existing OpenAI SDK against
-that Responses-compatible endpoint; the server bridges the OpenCode Go key to
-the SDK internally after the production credential guard passes.
+`OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
+`OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
+`OPENAI_AUDIT_REASONING_EFFORT=low`. Nuave uses the existing OpenAI SDK as the
+Responses-compatible adapter for OpenCode Go. `OPENCODEGO_API_KEY` is the
+canonical production credential; `OPENAI_API_KEY` is populated only
+internally or at build time as the SDK compatibility alias and is not a second
+production credential.
+
+The protected method uses one bounded no-search call for Indonesian question
+generation; official-domain-restricted web search for business extraction;
+required web search for every audit observation; and no web search for report
+synthesis. Questions, audit observations, and the final report use the
+Indonesian contracts required by Spec 003, while exact evidence excerpts and
+technical provenance remain faithful to the recorded run.
 
 Direct OpenAI, Gemini, Groq + Tavily, and OpenRouter remain available for
 explicit local pipeline testing. They are testing-only on the protected live
@@ -143,17 +154,20 @@ path: set the corresponding provider credential and
 cannot be used to judge real visibility or report quality. See `.env.example`
 for the current provider variables and limits.
 
-Every completed observation records the exact returned model. Set
-`OPENAI_AUDIT_REASONING_EFFORT` to override reasoning effort for every audit
-stage with one supported value: `none`, `low`, `medium`, `high`, `xhigh`, or
-`max`. For a resumed private run, set `OPENAI_AUDIT_CARRYOVER_COST_USD` to the
+Every completed observation records the exact returned model. The protected
+OpenCode Go production path is locked to `low` reasoning and fails closed if
+`OPENAI_AUDIT_REASONING_EFFORT` is set to another value. The broader
+`none`/`low`/`medium`/`high`/`xhigh`/`max` setting remains available only for
+explicit local or test-provider work outside that protected production path.
+For a resumed private run, set `OPENAI_AUDIT_CARRYOVER_COST_USD` to the
 already-accounted cost before starting the server. The server treats that value
 as a minimum, shows it in the UI, and subtracts it from the USD 5 run ceiling.
 
-Run the non-mutating engineering checks and production build with:
+Run the non-mutating engineering checks, unit tests, and production build with:
 
 ```bash
 npm run check
+npm run test:unit
 npm run build
 ```
 
