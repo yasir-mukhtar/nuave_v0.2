@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-08-20
+> Updated: 2026-08-21
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -39,11 +39,18 @@ fallback.
 
 **CI is live**: GitHub Actions (`.github/workflows/deploy-pages.yml`) builds with
 `@opennextjs/cloudflare` and deploys to the `nuave-v2` worker on every push to
-`main`, verified end to end. All GitHub secrets are set (`CLOUDFLARE_API_TOKEN`,
-`CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ACCESS_CODE` — unused since the gate removal,
-pending deletion, `NUAVE_PROVIDER=gemini`, `GEMINI_API_KEY`,
-`NUAVE_FIXTURE_PREVIEW_ENABLED=true`,
-`OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357`).
+`main`, verified end to end. The production provider configuration is now
+pinned in that workflow to `NUAVE_PROVIDER=opencodego`,
+`NUAVE_QUESTION_PROVIDER=opencodego`,
+`OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`, and
+`OPENAI_AUDIT_MODEL=gpt-5.6-luna`. The server credential is
+`OPENCODEGO_API_KEY`; because the audit implementation uses the OpenAI SDK
+against OpenCode Go's Responses-compatible endpoint, CI also aliases the same
+secret to `OPENAI_API_KEY` inside the gitignored build env. The founder reports
+the required GitHub configuration is set. Other required deployment values
+remain `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
+`NUAVE_FIXTURE_PREVIEW_ENABLED=true`, and
+`OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357`. Credential values are never committed.
 
 Deploy target note: Next.js 16 via OpenNext officially targets **Workers with
 static assets**, not Pages — Pages advanced mode (`_worker.js`) ran the gate but
@@ -137,9 +144,14 @@ absence of audit API calls.
   the owner-facing walkthrough coherent. The full landing rewrite remains in
   the later product-wide polish pass.
 - A local `/audit` workflow covers official-website extraction, human fact
-  confirmation, ten-question prompt review, independent OpenAI Responses API
-  execution with web search, final-format report generation, A4 print/PDF, and
-  complete JSON evidence export.
+  confirmation, ten-question prompt review, independent OpenCode Go
+  Responses-compatible execution with GPT-5.6 Luna and web search, final-format
+  report generation, A4 print/PDF, and complete JSON evidence export.
+- The production provider lock is OpenCode Go end to end for Phase 3:
+  extraction, Indonesian question generation, ten observations, and report
+  synthesis all use GPT-5.6 Luna through the Responses-compatible endpoint.
+  Direct OpenAI, Gemini, Groq/Tavily, and OpenRouter are testing-only on the
+  protected live path and are always rejected in production.
 - The unlisted workflow uses a route-scoped HeroUI five-stage interface, locks
   verified inputs after execution starts, streams real per-prompt status,
   preserves interrupted observations in the browser session, and expands all ten
@@ -239,18 +251,13 @@ absence of audit API calls.
   the official URL, discards unparsed model content and extracted evidence,
   explains the provider state when safely available, and requires verification
   before the brief can be approved.
-- Model-authored question generation failed four consecutive live attempts on
-  structured output, most recently on a ten-strings-only schema with no default
-  reasoning and a 3,000-token ceiling. Whether those calls exhausted their output
-  allowance is an inference, not a confirmed provider diagnosis. Audit call
-  telemetry now retains provider status, incomplete reason, and whether output
-  text or a refusal was returned, so the remaining structured-output stages can
-  be attributed next time.
-- Question generation currently uses `deterministic-v4-en` and makes no API
-  call. Code builds the ten ordered questions from the verified brief and the
-  fixed matrix, keeps five branded and five unbranded questions, two per
-  category, records the brief fields each question used, and keeps every
-  question in human review. Ninety-three audit tests pass offline.
+- Model-authored question generation previously failed four consecutive live
+  attempts on structured output. The current live path uses one bounded,
+  no-search OpenCode Go/GPT-5.6 Luna question-writer call from the minimized
+  confirmed brief, preserves provider telemetry/provenance, and falls back to a
+  deterministic Indonesian pack when the provider or format fails. Every one of
+  the ten resulting questions remains subject to human review before audit
+  start.
 
 ## What is not known
 
