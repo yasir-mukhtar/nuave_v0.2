@@ -18,9 +18,12 @@ import {
   executeAuditPrompt as openrouterExecute,
   generateReportContent as openrouterGenerate,
 } from "./openrouter";
-import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
+import {
+  assertOpenCodeGoProductionMethodConfigured,
+  OPENCODEGO_SYSTEM,
+} from "./opencodego";
 
-export { OPENCODEGO_BASE_URL } from "./opencodego";
+export { OPENCODEGO_BASE_URL, OPENCODEGO_SYSTEM } from "./opencodego";
 
 // Provider selection for the audit pipeline.
 //
@@ -39,8 +42,6 @@ export { OPENCODEGO_BASE_URL } from "./opencodego";
 
 export type AuditProviderName =
   "openai" | "gemini" | "groq" | "openrouter" | "opencodego";
-
-export const OPENCODEGO_SYSTEM = "OpenCode Go Responses API" as const;
 
 /**
  * The three audit-stage functions for one provider, typed against the OpenAI

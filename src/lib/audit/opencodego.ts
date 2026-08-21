@@ -1,6 +1,7 @@
 export const OPENCODEGO_BASE_URL = "https://opencode.ai/zen/go/v1" as const;
 export const OPENCODEGO_AUDIT_MODEL = "gpt-5.6-luna" as const;
 export const OPENCODEGO_REASONING_EFFORT = "low" as const;
+export const OPENCODEGO_SYSTEM = "OpenCode Go Responses API" as const;
 
 function normalizedBaseUrl(value: string): string {
   return value.replace(/\/+$/, "");

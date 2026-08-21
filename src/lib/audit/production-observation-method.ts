@@ -1,5 +1,7 @@
-import { OPENCODEGO_SYSTEM } from "./provider";
-import { AUDIT_MODEL } from "./telemetry";
+import {
+  OPENCODEGO_AUDIT_MODEL,
+  OPENCODEGO_SYSTEM,
+} from "./opencodego";
 import type { AuditObservation } from "./types";
 
 /**
@@ -9,7 +11,7 @@ import type { AuditObservation } from "./types";
  * to agree with the completed observation telemetry.
  */
 export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
-export const PRODUCTION_OBSERVATION_REQUESTED_MODEL = AUDIT_MODEL;
+export const PRODUCTION_OBSERVATION_REQUESTED_MODEL = OPENCODEGO_AUDIT_MODEL;
 
 export function productionObservationMethodErrors(
   observations: AuditObservation[],
