@@ -278,9 +278,7 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
       jsonResponse(responsesStructuredBody),
     );
     await createIndonesianQuestionProvider(stub).generate(brief);
-    expect(calls[0].url).toBe(
-      "https://opencode.ai/zen/go/v1/responses",
-    );
+    expect(calls[0].url).toBe("https://opencode.ai/zen/go/v1/responses");
   });
 
   it("fails before fetching when OPENCODEGO_API_KEY is missing", async () => {
