@@ -87,6 +87,10 @@ const PROVIDER_NAMES = Object.keys(
   PROVIDER_BINDINGS,
 ) as readonly AuditProviderName[];
 
+function providerBindings(name: AuditProviderName): LiveProviderBindings {
+  return PROVIDER_BINDINGS[name];
+}
+
 export function activeAuditProvider(): AuditProviderName {
   const value = process.env.NUAVE_PROVIDER?.trim().toLocaleLowerCase("en-US");
   if (value === undefined || value === "") return "openai";
@@ -119,7 +123,7 @@ export function liveAuditProvider(): AuditProviderName {
   );
 }
 
-const active = PROVIDER_BINDINGS[activeAuditProvider()];
+const active = providerBindings(activeAuditProvider());
 export const extractBusinessDraft = active.extract;
 export const executeAuditPrompt = active.execute;
 export const generateReportContent = active.generate;
@@ -181,7 +185,7 @@ export const liveExtractBusinessDraft: LiveProviderBindings["extract"] = async (
 ) => {
   const name = liveAuditProvider();
   assertLiveProviderCredentialsConfigured();
-  return PROVIDER_BINDINGS[name].extract(input);
+  return providerBindings(name).extract(input);
 };
 
 export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
@@ -189,7 +193,7 @@ export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
 ) => {
   const name = liveAuditProvider();
   assertLiveProviderCredentialsConfigured();
-  const observation = await PROVIDER_BINDINGS[name].execute(input);
+  const observation = await providerBindings(name).execute(input);
   // The OpenAI module is intentionally reused as the protocol adapter for
   // OpenCode Go. Correct its transport provenance at the protected boundary so
   // evidence never claims a direct OpenAI API call when OpenCode Go carried it.
@@ -202,7 +206,7 @@ export const liveGenerateReportContent: LiveProviderBindings["generate"] =
   async (input, revision) => {
     const name = liveAuditProvider();
     assertLiveProviderCredentialsConfigured();
-    return PROVIDER_BINDINGS[name].generate(input, revision);
+    return providerBindings(name).generate(input, revision);
   };
 
 /**
@@ -217,7 +221,6 @@ export function isLiveProviderCall(fn: unknown): boolean {
   }
   return PROVIDER_NAMES.some(
     (name) =>
-      fn === PROVIDER_BINDINGS[name].execute ||
-      fn === PROVIDER_BINDINGS[name].generate,
+      fn === providerBindings(name).execute || fn === providerBindings(name).generate,
   );
 }
