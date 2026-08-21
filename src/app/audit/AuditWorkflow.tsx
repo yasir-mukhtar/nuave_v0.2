@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Alert, Button } from "@heroui/react";
@@ -309,7 +303,8 @@ export default function AuditWorkflow() {
           varianceInFlightRunKey.current = null;
         }
       }
-    }, [brief, carryoverCostUsd, promptPack, safetyIdentifier],
+    },
+    [brief, carryoverCostUsd, promptPack, safetyIdentifier],
   );
 
   useEffect(() => {
@@ -485,7 +480,9 @@ export default function AuditWorkflow() {
     }
 
     setBusy("report");
-    void runVariance(report, postReportBudgetCalls).finally(() => setBusy(null));
+    void runVariance(report, postReportBudgetCalls).finally(() =>
+      setBusy(null),
+    );
   }, [
     budgetReady,
     busy,
