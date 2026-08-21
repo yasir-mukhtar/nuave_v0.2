@@ -26,7 +26,6 @@ jobs:
         run: npm ci
 
       - name: Apply exact Prettier output and restore normal CI
-        if: github.event_name == 'push'
         run: |
           npx prettier --write \
             src/app/audit/AuditWorkflow.tsx \
@@ -106,5 +105,4 @@ jobs:
           git push origin HEAD:spec-003-finish-live-quality-gate
 
       - name: Stop after formatter handoff
-        if: github.event_name == 'push'
         run: echo "Formatter output pushed; final normal CI will run on the new head."
