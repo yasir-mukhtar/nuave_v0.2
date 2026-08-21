@@ -18,6 +18,9 @@ import {
   executeAuditPrompt as openrouterExecute,
   generateReportContent as openrouterGenerate,
 } from "./openrouter";
+import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
+
+export { OPENCODEGO_BASE_URL } from "./opencodego";
 
 // Provider selection for the audit pipeline.
 //
@@ -37,8 +40,6 @@ import {
 export type AuditProviderName =
   "openai" | "gemini" | "groq" | "openrouter" | "opencodego";
 
-/** OpenCode Go's OpenAI-compatible Responses API base URL. */
-export const OPENCODEGO_BASE_URL = "https://opencode.ai/zen/go/v1" as const;
 export const OPENCODEGO_SYSTEM = "OpenCode Go Responses API" as const;
 
 /**
@@ -141,32 +142,19 @@ const PROVIDER_CREDENTIAL_ENV: Record<AuditProviderName, string> = {
   opencodego: "OPENCODEGO_API_KEY",
 };
 
-/**
- * OpenCode Go implements the Responses API behind the OpenAI SDK. The SDK
- * itself still reads `OPENAI_API_KEY`, while Nuave deliberately names the real
- * server credential `OPENCODEGO_API_KEY`. Bridge those variables only after
- * the live provider has been selected and its own credential has passed the
- * fail-closed check. The deploy workflow also writes the alias at build time
- * because OpenNext inlines server env from `.env.production.local`.
- */
-function configureOpenCodeGoCompatibility(apiKey: string): void {
-  process.env.OPENAI_API_KEY = apiKey;
-  if (!process.env.OPENAI_BASE_URL?.trim()) {
-    process.env.OPENAI_BASE_URL = OPENCODEGO_BASE_URL;
-  }
-}
-
 export function assertLiveProviderCredentialsConfigured(): void {
   const name = liveAuditProvider();
+  if (name === "opencodego") {
+    assertOpenCodeGoProductionMethodConfigured();
+    return;
+  }
+
   const variable = PROVIDER_CREDENTIAL_ENV[name];
   const apiKey = process.env[variable]?.trim();
   if (!apiKey) {
     throw new Error(
       `${variable} is not configured on the Nuave server; the protected live path fails closed before making any provider call.`,
     );
-  }
-  if (name === "opencodego") {
-    configureOpenCodeGoCompatibility(apiKey);
   }
 }
 
@@ -178,8 +166,8 @@ export function assertLiveProviderCredentialsConfigured(): void {
 //
 // Every wrapper also performs the credential assertion itself. Route-level and
 // orchestrator guards remain intentionally redundant: no future call site can
-// invoke a protected provider wrapper without first establishing the OpenCode
-// Go credential/base-URL compatibility layer.
+// invoke a protected provider wrapper without first establishing the complete
+// OpenCode Go production method and SDK compatibility alias.
 export const liveExtractBusinessDraft: LiveProviderBindings["extract"] = async (
   input,
 ) => {
