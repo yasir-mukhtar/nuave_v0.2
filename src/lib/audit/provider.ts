@@ -221,6 +221,7 @@ export function isLiveProviderCall(fn: unknown): boolean {
   }
   return PROVIDER_NAMES.some(
     (name) =>
-      fn === providerBindings(name).execute || fn === providerBindings(name).generate,
+      fn === providerBindings(name).execute ||
+      fn === providerBindings(name).generate,
   );
 }

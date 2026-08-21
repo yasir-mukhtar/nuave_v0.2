@@ -228,7 +228,9 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
     vi.stubEnv("OPENAI_BASE_URL", INDONESIAN_QUESTION_OPENCODEGO_BASE_URL);
-    const { stub, calls } = stubFetch(() => jsonResponse(responsesStructuredBody));
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(responsesStructuredBody),
+    );
     const provider = createIndonesianQuestionProvider(stub);
 
     await expect(provider.generate(brief)).resolves.toEqual({
@@ -250,7 +252,9 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
     vi.stubEnv("OPENAI_BASE_URL", "");
-    const { stub, calls } = stubFetch(() => jsonResponse(responsesStructuredBody));
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(responsesStructuredBody),
+    );
     await createIndonesianQuestionProvider(stub).generate(brief);
     expect(calls[0].url).toBe(
       `${INDONESIAN_QUESTION_OPENCODEGO_BASE_URL}/responses`,
@@ -260,10 +264,12 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
   it("fails before fetching when OPENCODEGO_API_KEY is missing", async () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "");
-    const { stub, calls } = stubFetch(() => jsonResponse(responsesStructuredBody));
-    await expect(createIndonesianQuestionProvider(stub).generate(brief)).rejects.toThrow(
-      "OPENCODEGO_API_KEY is not configured",
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(responsesStructuredBody),
     );
+    await expect(
+      createIndonesianQuestionProvider(stub).generate(brief),
+    ).rejects.toThrow("OPENCODEGO_API_KEY is not configured");
     expect(calls).toHaveLength(0);
   });
 
@@ -273,7 +279,9 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
     const { stub } = stubFetch(() =>
       jsonResponse({ error: { message: "Rate limit exceeded" } }, 429),
     );
-    await expect(createIndonesianQuestionProvider(stub).generate(brief)).rejects.toThrow(
+    await expect(
+      createIndonesianQuestionProvider(stub).generate(brief),
+    ).rejects.toThrow(
       "OpenCode Go question generation failed: Rate limit exceeded",
     );
   });
@@ -283,7 +291,9 @@ describe("direct OpenAI testing provider", () => {
   it("uses api.openai.com and OPENAI_API_KEY when explicitly selected", async () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "openai");
     vi.stubEnv("OPENAI_API_KEY", "test-openai-key");
-    const { stub, calls } = stubFetch(() => jsonResponse(responsesStructuredBody));
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(responsesStructuredBody),
+    );
     await createIndonesianQuestionProvider(stub).generate(brief);
     expect(calls[0].url).toBe(INDONESIAN_QUESTION_OPENAI_ENDPOINT);
     const headers = calls[0].init.headers as Record<string, string>;
@@ -309,7 +319,9 @@ describe("direct OpenAI testing provider", () => {
         ],
       }),
     );
-    await expect(createIndonesianQuestionProvider(stub).generate(brief)).resolves.toEqual({
+    await expect(
+      createIndonesianQuestionProvider(stub).generate(brief),
+    ).resolves.toEqual({
       kind: "structured",
       questions: ten,
     });
@@ -358,7 +370,9 @@ describe("Gemini testing provider", () => {
         ],
       }),
     );
-    await expect(createIndonesianQuestionProvider(stub).generate(brief)).resolves.toEqual({
+    await expect(
+      createIndonesianQuestionProvider(stub).generate(brief),
+    ).resolves.toEqual({
       kind: "structured",
       questions: ten,
     });
@@ -371,9 +385,9 @@ describe("Gemini testing provider", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "gemini");
     vi.stubEnv("GEMINI_API_KEY", "");
     const { stub, calls } = stubFetch(() => jsonResponse({}));
-    await expect(createIndonesianQuestionProvider(stub).generate(brief)).rejects.toThrow(
-      "GEMINI_API_KEY is not configured",
-    );
+    await expect(
+      createIndonesianQuestionProvider(stub).generate(brief),
+    ).rejects.toThrow("GEMINI_API_KEY is not configured");
     expect(calls).toHaveLength(0);
   });
 });

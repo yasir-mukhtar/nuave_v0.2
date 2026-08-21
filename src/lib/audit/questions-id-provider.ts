@@ -346,7 +346,9 @@ export function parseOpenAIIndonesianResponse(
   json: OpenAIResponseBody,
 ): IndonesianProviderOutput {
   if (json.error?.message) {
-    throw new Error(`Responses API question generation failed: ${json.error.message}`);
+    throw new Error(
+      `Responses API question generation failed: ${json.error.message}`,
+    );
   }
   if (json.status && json.status !== "completed") {
     throw new Error(
@@ -357,7 +359,9 @@ export function parseOpenAIIndonesianResponse(
     if (item.type !== "message") continue;
     for (const content of item.content ?? []) {
       if (content.type === "refusal") {
-        throw new Error("Responses API refused the question-generation request.");
+        throw new Error(
+          "Responses API refused the question-generation request.",
+        );
       }
       if (content.type !== "output_text") continue;
       const parsed = content.parsed;
@@ -401,7 +405,9 @@ export function parseOpenAIIndonesianResponse(
       }
     }
   }
-  throw new Error("Responses API question generation returned no usable output.");
+  throw new Error(
+    "Responses API question generation returned no usable output.",
+  );
 }
 
 type GeminiResponseBody = {
@@ -548,7 +554,12 @@ export function createIndonesianQuestionProvider(
     generate: (brief) =>
       config.name === "gemini"
         ? geminiGenerate(brief, config.requested_model, fetcher)
-        : responsesGenerate(config.name, brief, config.requested_model, fetcher),
+        : responsesGenerate(
+            config.name,
+            brief,
+            config.requested_model,
+            fetcher,
+          ),
   };
 }
 
