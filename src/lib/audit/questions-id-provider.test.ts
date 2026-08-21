@@ -106,6 +106,15 @@ const responsesStructuredBody = {
   ],
 };
 
+function stubLiveOpenCodeGoMethod() {
+  vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
+  vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
+  vi.stubEnv("OPENAI_API_KEY", "");
+  vi.stubEnv("OPENAI_BASE_URL", INDONESIAN_QUESTION_OPENCODEGO_BASE_URL);
+  vi.stubEnv("OPENAI_AUDIT_MODEL", "gpt-5.6-luna");
+  vi.stubEnv("OPENAI_AUDIT_REASONING_EFFORT", "low");
+}
+
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
@@ -261,6 +270,19 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
     );
   });
 
+  it("pins the OpenCode Go endpoint even when OPENAI_BASE_URL is stale", async () => {
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
+    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com/v1");
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(responsesStructuredBody),
+    );
+    await createIndonesianQuestionProvider(stub).generate(brief);
+    expect(calls[0].url).toBe(
+      "https://opencode.ai/zen/go/v1/responses",
+    );
+  });
+
   it("fails before fetching when OPENCODEGO_API_KEY is missing", async () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "");
@@ -394,9 +416,7 @@ describe("Gemini testing provider", () => {
 
 describe("live wiring through the Indonesian generation boundary", () => {
   it("produces a model-sourced OpenCode Go pack with provenance", async () => {
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
-    vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
-    vi.stubEnv("OPENAI_AUDIT_MODEL", "");
+    stubLiveOpenCodeGoMethod();
     const { stub } = stubFetch(() => jsonResponse(responsesStructuredBody));
 
     const suggestion = await generateLiveIndonesianQuestionPack(brief, {
@@ -421,9 +441,24 @@ describe("live wiring through the Indonesian generation boundary", () => {
     });
   });
 
+  it("fails closed before fetching when the live OpenCode Go endpoint configuration conflicts", async () => {
+    stubLiveOpenCodeGoMethod();
+    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com/v1");
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(responsesStructuredBody),
+    );
+
+    await expect(
+      generateLiveIndonesianQuestionPack(brief, { fetch: stub }),
+    ).rejects.toThrow(
+      /OPENAI_BASE_URL must be https:\/\/opencode\.ai\/zen\/go\/v1/,
+    );
+    expect(calls).toHaveLength(0);
+    expect(process.env.OPENAI_API_KEY).toBe("");
+  });
+
   it("falls back deterministically when OpenCode Go fails", async () => {
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
-    vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
+    stubLiveOpenCodeGoMethod();
     const { stub } = stubFetch(() => {
       throw new Error("network down");
     });
