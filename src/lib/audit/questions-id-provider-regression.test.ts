@@ -351,9 +351,7 @@ describe("Gemini testing-provider regressions", () => {
         systemInstruction: {
           parts: [{ text: INDONESIAN_QUESTION_WRITER_INSTRUCTION }],
         },
-        contents: [
-          { role: "user", parts: [{ text: JSON.stringify(brief) }] },
-        ],
+        contents: [{ role: "user", parts: [{ text: JSON.stringify(brief) }] }],
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens: 2_048,
