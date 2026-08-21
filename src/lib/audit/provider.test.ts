@@ -1,24 +1,27 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  OPENCODEGO_BASE_URL,
   activeAuditProvider,
   assertLiveProviderCredentialsConfigured,
   liveAuditProvider,
 } from "./provider";
 import { liveIndonesianQuestionProviderName } from "./questions-id-provider";
 
-describe("protected live path fails closed to the founder-approved provider (Spec 003 lock, DECISION_LOG 2026-08-17)", () => {
+describe("protected live path fails closed to the founder-approved provider (Spec 003 lock, DECISION_LOG 2026-08-21)", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("defaults the live audit path to openai when NUAVE_PROVIDER is unset or openai", () => {
-    vi.stubEnv("NUAVE_PROVIDER", "");
-    expect(liveAuditProvider()).toBe("openai");
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    expect(liveAuditProvider()).toBe("openai");
+  it("locks the live audit path to OpenCode Go", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    expect(liveAuditProvider()).toBe("opencodego");
   });
 
-  it("fails closed when a testing-only provider is selected on the live path", () => {
+  it("fails closed when the production provider is missing or a testing-only provider is selected", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "");
+    expect(() => liveAuditProvider()).toThrow(/testing-only/);
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    expect(() => liveAuditProvider()).toThrow(/testing-only/);
     vi.stubEnv("NUAVE_PROVIDER", "gemini");
     expect(() => liveAuditProvider()).toThrow(/testing-only/);
     vi.stubEnv("NUAVE_PROVIDER", "groq");
@@ -26,8 +29,10 @@ describe("protected live path fails closed to the founder-approved provider (Spe
   });
 
   it("allows testing-only providers on the live path only with the explicit testing flag", () => {
-    vi.stubEnv("NUAVE_PROVIDER", "gemini");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
     vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
+    expect(liveAuditProvider()).toBe("openai");
+    vi.stubEnv("NUAVE_PROVIDER", "gemini");
     expect(liveAuditProvider()).toBe("gemini");
   });
 
@@ -47,30 +52,38 @@ describe("protected live path fails closed to the founder-approved provider (Spe
     expect(activeAuditProvider()).toBe("groq");
   });
 
+  it("locks the live question path to OpenCode Go", () => {
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
+    expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
+  });
+
   it("fails the live question path closed when NUAVE_QUESTION_PROVIDER selects Gemini", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "gemini");
     expect(() => liveIndonesianQuestionProviderName()).toThrow(/testing-only/);
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "gemini");
     vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
     expect(liveIndonesianQuestionProviderName()).toBe("gemini");
   });
 
-  it("defaults the live question path to openai when NUAVE_QUESTION_PROVIDER is unset", () => {
+  it("defaults the live question path to OpenCode Go when NUAVE_QUESTION_PROVIDER is unset", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
-    expect(liveIndonesianQuestionProviderName()).toBe("openai");
+    expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
   });
 
-  it("fails closed before any provider call when OPENAI_API_KEY is missing on the live path (O-10)", () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "");
+  it("fails closed before any provider call when OPENCODEGO_API_KEY is missing on the live path (O-10)", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "");
     expect(() => assertLiveProviderCredentialsConfigured()).toThrow(
-      /OPENAI_API_KEY is not configured/,
+      /OPENCODEGO_API_KEY is not configured/,
     );
   });
 
-  it("does not fail closed once OPENAI_API_KEY is configured", () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
+  it("bridges the configured OpenCode Go credential and endpoint to the OpenAI-compatible SDK", () => {
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("OPENAI_BASE_URL", "");
     expect(() => assertLiveProviderCredentialsConfigured()).not.toThrow();
+    expect(process.env.OPENAI_API_KEY).toBe("test-opencode-key");
+    expect(process.env.OPENAI_BASE_URL).toBe(OPENCODEGO_BASE_URL);
   });
 });
