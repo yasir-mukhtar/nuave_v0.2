@@ -25,84 +25,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Apply exact Prettier output and restore normal CI
+      - name: Apply exact Prettier output
         run: |
           npx prettier --write \
             src/app/audit/AuditWorkflow.tsx \
             src/lib/audit/variance-workflow.test.ts
 
-          cat > .github/workflows/ci.yml <<'CI_EOF'
-          name: CI
-
-          on:
-            push:
-            pull_request:
-
-          permissions:
-            contents: read
-
-          jobs:
-            validate:
-              runs-on: ubuntu-latest
-              steps:
-                - name: Check out repository
-                  uses: actions/checkout@v4
-
-                - name: Use Node.js 22
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version: 22
-                    cache: npm
-
-                - name: Install dependencies
-                  run: npm ci
-
-                - name: Run non-mutating checks
-                  run: npm run check
-
-                - name: Run unit tests (audit engine + fixture journey)
-                  run: npm run test:unit
-
-                - name: Build application
-                  run: npm run build
-
-                - name: Build Cloudflare worker (build-only)
-                  env:
-                    NUAVE_PROVIDER: opencodego
-                    NUAVE_QUESTION_PROVIDER: opencodego
-                    OPENCODEGO_API_KEY: dummy-build-only-key
-                    OPENAI_API_KEY: dummy-build-only-key
-                    OPENAI_BASE_URL: https://opencode.ai/zen/go/v1
-                    OPENAI_AUDIT_MODEL: gpt-5.6-luna
-                    OPENAI_AUDIT_REASONING_EFFORT: low
-                  run: |
-                    trap 'rm -f .env.production.local' EXIT
-                    cat > .env.production.local <<EOF
-                    NUAVE_PROVIDER=${NUAVE_PROVIDER}
-                    NUAVE_QUESTION_PROVIDER=${NUAVE_QUESTION_PROVIDER}
-                    OPENCODEGO_API_KEY=${OPENCODEGO_API_KEY}
-                    OPENAI_API_KEY=${OPENAI_API_KEY}
-                    OPENAI_BASE_URL=${OPENAI_BASE_URL}
-                    OPENAI_AUDIT_MODEL=${OPENAI_AUDIT_MODEL}
-                    OPENAI_AUDIT_REASONING_EFFORT=${OPENAI_AUDIT_REASONING_EFFORT}
-                    EOF
-                    npm run build:cf
-
-                - name: Install Playwright browsers
-                  run: npx playwright install --with-deps chromium
-
-                - name: Run fixture-journey browser tests
-                  run: npm run test:e2e
-          CI_EOF
+          if git diff --quiet -- \
+            src/app/audit/AuditWorkflow.tsx \
+            src/lib/audit/variance-workflow.test.ts; then
+            echo "Exact formatter output already committed."
+            exit 0
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- \
             src/app/audit/AuditWorkflow.tsx \
-            src/lib/audit/variance-workflow.test.ts \
-            .github/workflows/ci.yml
+            src/lib/audit/variance-workflow.test.ts
           git commit -m "style: apply exact Prettier output"
           git push origin HEAD:spec-003-finish-live-quality-gate
 
       - name: Stop after formatter handoff
-        run: echo "Formatter output pushed; final normal CI will run on the new head."
+        run: echo "Exact formatter output is on the branch; normal CI will be restored separately."
