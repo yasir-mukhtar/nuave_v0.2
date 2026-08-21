@@ -229,9 +229,8 @@ export default function AuditWorkflow() {
       const runKey = varianceRunKeyForReport(auditReport);
       if (varianceInFlightRunKey.current === runKey) return;
 
-      const storedVariance = readStoredRunRecord<VarianceRecord>(
-        VARIANCE_STORAGE_KEY,
-      );
+      const storedVariance =
+        readStoredRunRecord<VarianceRecord>(VARIANCE_STORAGE_KEY);
       if (storedVariance?.run_key === runKey) {
         setVarianceRecord(storedVariance);
         setVarianceFailure(null);
@@ -436,8 +435,8 @@ export default function AuditWorkflow() {
   }, [report]);
   const varianceSettled = Boolean(
     reportRunKey &&
-      (varianceRecord?.run_key === reportRunKey ||
-        varianceFailure?.run_key === reportRunKey),
+    (varianceRecord?.run_key === reportRunKey ||
+      varianceFailure?.run_key === reportRunKey),
   );
 
   useEffect(() => {

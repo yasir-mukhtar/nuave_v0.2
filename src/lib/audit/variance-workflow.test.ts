@@ -29,10 +29,7 @@ describe("variance workflow helpers", () => {
       /ten unique questions/,
     );
     expect(() =>
-      selectVariancePrompts([
-        ...goldenPrompts.slice(0, 9),
-        goldenPrompts[0],
-      ]),
+      selectVariancePrompts([...goldenPrompts.slice(0, 9), goldenPrompts[0]]),
     ).toThrow(/ten unique questions/);
   });
 
@@ -44,24 +41,21 @@ describe("variance workflow helpers", () => {
     expect(varianceRunKeyForReport(report)).toBe("resp_stable_report_123");
   });
 
-  it(
-    "records browser-level variance failure separately without observations",
-    () => {
-      const record = createVarianceFailureRecord({
-        run_key: "resp_report_123",
-        prompt_ids: [goldenPrompts[0].prompt_id, goldenPrompts[5].prompt_id],
-        incomplete_reason: "Synthetic variance route failure.",
-        now: () => "2026-08-21T00:00:00.000Z",
-      });
+  it("records browser-level variance failure separately without observations", () => {
+    const record = createVarianceFailureRecord({
+      run_key: "resp_report_123",
+      prompt_ids: [goldenPrompts[0].prompt_id, goldenPrompts[5].prompt_id],
+      incomplete_reason: "Synthetic variance route failure.",
+      now: () => "2026-08-21T00:00:00.000Z",
+    });
 
-      expect(record).toEqual({
-        run_key: "resp_report_123",
-        created_at: "2026-08-21T00:00:00.000Z",
-        prompt_ids: [goldenPrompts[0].prompt_id, goldenPrompts[5].prompt_id],
-        complete: false,
-        incomplete_reason: "Synthetic variance route failure.",
-      });
-      expect(record).not.toHaveProperty("observations");
-    },
-  );
+    expect(record).toEqual({
+      run_key: "resp_report_123",
+      created_at: "2026-08-21T00:00:00.000Z",
+      prompt_ids: [goldenPrompts[0].prompt_id, goldenPrompts[5].prompt_id],
+      complete: false,
+      incomplete_reason: "Synthetic variance route failure.",
+    });
+    expect(record).not.toHaveProperty("observations");
+  });
 });
