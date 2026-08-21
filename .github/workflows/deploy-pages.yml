@@ -30,11 +30,15 @@ jobs:
       - name: Prepare build env
         run: |
           cat > .env.production.local <<'EOF'
-          NUAVE_ACCESS_CODE=${{ secrets.NUAVE_ACCESS_CODE }}
-          NUAVE_PROVIDER=${{ secrets.NUAVE_PROVIDER }}
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          OPENAI_AUDIT_MODEL=${{ secrets.OPENAI_AUDIT_MODEL }}
+          NUAVE_PROVIDER=opencodego
+          NUAVE_QUESTION_PROVIDER=opencodego
+          OPENCODEGO_API_KEY=${{ secrets.OPENCODEGO_API_KEY }}
+          # The audit implementation uses the OpenAI SDK against OpenCode Go's
+          # Responses-compatible endpoint. Keep this server-only compatibility
+          # alias so OpenNext can inline the credential at build time.
+          OPENAI_API_KEY=${{ secrets.OPENCODEGO_API_KEY }}
+          OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
+          OPENAI_AUDIT_MODEL=gpt-5.6-luna
           NUAVE_FIXTURE_PREVIEW_ENABLED=${{ secrets.NUAVE_FIXTURE_PREVIEW_ENABLED }}
           NUAVE_FIXTURE_FORCE_REPORT_FAILURE=${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
           OPENAI_AUDIT_CARRYOVER_COST_USD=${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
