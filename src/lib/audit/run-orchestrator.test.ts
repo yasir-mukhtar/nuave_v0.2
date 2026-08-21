@@ -95,11 +95,12 @@ function run(
 
 // ---------------------------------------------------------------------------
 // R3-5 (Phase 3 fix-round-3 adversarial review): the credential guard used to
-// live only in the three HTTP handlers. Direct-library callers can drive this
-// orchestrator with a real provider binding, so a missing production credential
-// must fail before the retry loop starts.
+// live only in the three HTTP handlers, and the live run has never gone
+// through them. `scripts/sozo/sozo-live-run.spec.ts` drives this orchestrator
+// directly with the env-selected `executeAuditPrompt`, so a missing production
+// credential must fail before the retry loop starts.
 // ---------------------------------------------------------------------------
-describe("live provider credential guard on the direct-library path (R3-5)", () => {
+describe("live provider credential guard on the script path (R3-5)", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -124,7 +125,7 @@ describe("live provider credential guard on the direct-library path (R3-5)", () 
     expect(events).toEqual([]);
   });
 
-  it("covers an env-selected real provider binding without making a provider call", async () => {
+  it("covers the env-selected binding the Sozo runner actually uses", async () => {
     vi.stubEnv("NUAVE_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "");
     const events: AuditRunEvent[] = [];
