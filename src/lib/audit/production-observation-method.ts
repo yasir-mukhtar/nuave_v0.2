@@ -1,7 +1,4 @@
-import {
-  OPENCODEGO_AUDIT_MODEL,
-  OPENCODEGO_SYSTEM,
-} from "./opencodego";
+import { OPENCODEGO_AUDIT_MODEL, OPENCODEGO_SYSTEM } from "./opencodego";
 import type { AuditObservation } from "./types";
 
 /**
