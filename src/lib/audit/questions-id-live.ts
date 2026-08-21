@@ -19,6 +19,7 @@ import {
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
 } from "./questions-id";
+import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
 
@@ -161,10 +162,13 @@ export async function buildLiveIndonesianPromptPack(input: {
   brief: BusinessBrief;
 }): Promise<LiveIndonesianPromptPackResult> {
   const { brief } = input;
-  // Fail-closed provider selection (R-36): the client cannot select the
-  // provider; a testing-only NUAVE_QUESTION_PROVIDER throws here unless
-  // NUAVE_LIVE_PROVIDER_TESTING=1 is explicitly set outside production.
-  liveIndonesianQuestionProviderName();
+  // Fail closed before provider construction: alternate providers remain
+  // testing-only, while OpenCode Go must satisfy the complete protected method
+  // (credential, endpoint, model, and reasoning) before any provider work.
+  const providerName = liveIndonesianQuestionProviderName();
+  if (providerName === "opencodego") {
+    assertOpenCodeGoProductionMethodConfigured();
+  }
   const minimized = minimizeIndonesianBrief(brief);
 
   const budget: AuditBudget = {

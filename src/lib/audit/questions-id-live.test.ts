@@ -55,6 +55,15 @@ function tenQuestions(): string[] {
   ];
 }
 
+function stubValidOpenCodeGoMethod() {
+  vi.stubEnv("OPENCODEGO_API_KEY", "test-dummy-key");
+  vi.stubEnv("OPENAI_API_KEY", "test-compatibility-key");
+  vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
+  vi.stubEnv("OPENAI_BASE_URL", "https://opencode.ai/zen/go/v1");
+  vi.stubEnv("OPENAI_AUDIT_MODEL", "gpt-5.6-luna");
+  vi.stubEnv("OPENAI_AUDIT_REASONING_EFFORT", "low");
+}
+
 const responsesBody = {
   id: "resp_live_prompts",
   model: "gpt-5.6-luna",
@@ -79,10 +88,66 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     vi.unstubAllGlobals();
   });
 
+  it("fails before provider execution when the OpenCode Go base URL conflicts with the protected method", async () => {
+    stubValidOpenCodeGoMethod();
+    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com/v1");
+    const fetchMock = vi.fn(async () => jsonResponse(responsesBody));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      buildLiveIndonesianPromptPack({ brief: dentalBrief }),
+    ).rejects.toThrow(
+      "OPENAI_BASE_URL must be https://opencode.ai/zen/go/v1 for the protected OpenCode Go live path",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("fails before provider execution when the OpenCode Go model conflicts with the protected method", async () => {
+    stubValidOpenCodeGoMethod();
+    vi.stubEnv("OPENAI_AUDIT_MODEL", "gpt-5.6-luna-other");
+    const fetchMock = vi.fn(async () => jsonResponse(responsesBody));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      buildLiveIndonesianPromptPack({ brief: dentalBrief }),
+    ).rejects.toThrow(
+      "OPENAI_AUDIT_MODEL must be gpt-5.6-luna for the protected OpenCode Go live path",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("fails before provider execution when OpenCode Go reasoning conflicts with the protected method", async () => {
+    stubValidOpenCodeGoMethod();
+    vi.stubEnv("OPENAI_AUDIT_REASONING_EFFORT", "high");
+    const fetchMock = vi.fn(async () => jsonResponse(responsesBody));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      buildLiveIndonesianPromptPack({ brief: dentalBrief }),
+    ).rejects.toThrow(
+      "OPENAI_AUDIT_REASONING_EFFORT must be low for the protected OpenCode Go live path",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(0);
+  });
+
+  it("ignores the testing escape in production and rejects an alternate question provider before fetch", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
+    const fetchMock = vi.fn(async () => jsonResponse(responsesBody));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      buildLiveIndonesianPromptPack({ brief: dentalBrief }),
+    ).rejects.toThrow(
+      'NUAVE_QUESTION_PROVIDER="openai" is testing-only; the protected live question path fails closed to OpenCode Go',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(0);
+  });
+
   it("generates through OpenCode Go with server-side accounting and provenance", async () => {
-    vi.stubEnv("OPENCODEGO_API_KEY", "test-dummy-key");
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
-    vi.stubEnv("OPENAI_BASE_URL", "https://opencode.ai/zen/go/v1");
+    stubValidOpenCodeGoMethod();
     const fetchMock = vi.fn(
       async (_input: RequestInfo | URL, _init?: RequestInit) =>
         jsonResponse(responsesBody),
@@ -124,8 +189,7 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
   });
 
   it("falls back to the deterministic Indonesian pack on provider failure and records a failed call", async () => {
-    vi.stubEnv("OPENCODEGO_API_KEY", "test-dummy-key");
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
+    stubValidOpenCodeGoMethod();
     const fetchMock = vi.fn(async () =>
       jsonResponse({ error: { message: "provider boom" } }, 500),
     );
