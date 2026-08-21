@@ -5,9 +5,6 @@ import { promptPackSchema } from "./types";
 
 const BRAND = "Klinik Gigi Sehat";
 
-// A dental brief matching the Phase 3 wedge (klinik gigi, Depok/Margonda) so
-// the blocker relevance rules and the 5/5 name/no-name classification are
-// exercised with grounded, natural Indonesian questions.
 const dentalBrief: BusinessBrief = {
   brand_name: BRAND,
   entity_scope: "Cabang Margonda, Kota Depok",
@@ -58,7 +55,7 @@ function tenQuestions(): string[] {
   ];
 }
 
-const openAIBody = {
+const responsesBody = {
   id: "resp_live_prompts",
   model: "gpt-5.6-luna",
   status: "completed",
@@ -82,28 +79,27 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     vi.unstubAllGlobals();
   });
 
-  it("generates the Indonesian pack through the live provider with server-side accounting and provenance", async () => {
-    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
+  it("generates through OpenCode Go with server-side accounting and provenance", async () => {
+    vi.stubEnv("OPENCODEGO_API_KEY", "test-dummy-key");
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
+    vi.stubEnv("OPENAI_BASE_URL", "https://opencode.ai/zen/go/v1");
     const fetchMock = vi.fn(
       async (_input: RequestInfo | URL, _init?: RequestInit) =>
-        jsonResponse(openAIBody),
+        jsonResponse(responsesBody),
     );
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await buildLiveIndonesianPromptPack({ brief: dentalBrief });
 
-    // The live provider was actually called (one bounded no-search call).
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const requestUrl = String(fetchMock.mock.calls[0][0]);
-    expect(requestUrl).toContain("/v1/responses");
+    expect(requestUrl).toBe("https://opencode.ai/zen/go/v1/responses");
     const requestBody = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
-    expect(requestBody.tools).toBeUndefined(); // no search on the question path
+    expect(requestBody.tools).toBeUndefined();
 
-    // Indonesian pack shape, unique ids, real 5/5 composition.
     expect(result.generation.source).toBe("model");
     expect(result.generation.language).toBe("id-ID");
-    expect(result.generation.system).toBe("OpenAI Responses API");
+    expect(result.generation.system).toBe("OpenCode Go Responses API");
     expect(result.pack.language).toBe("id-ID");
     expect(result.pack.prompts).toHaveLength(10);
     expect(new Set(result.pack.prompts.map((p) => p.prompt_id)).size).toBe(10);
@@ -115,8 +111,6 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     });
     expect(promptPackSchema.safeParse(result.pack).success).toBe(true);
 
-    // Server-side cost accounting: a prompts-stage telemetry entry with real
-    // usage and a server-created budget carrying the call (R-36).
     expect(result.telemetry).toHaveLength(1);
     const call = result.telemetry[0];
     expect(call.stage).toBe("prompts");
@@ -130,8 +124,8 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
   });
 
   it("falls back to the deterministic Indonesian pack on provider failure and records a failed call", async () => {
-    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
+    vi.stubEnv("OPENCODEGO_API_KEY", "test-dummy-key");
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     const fetchMock = vi.fn(async () =>
       jsonResponse({ error: { message: "provider boom" } }, 500),
     );
@@ -139,8 +133,6 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
 
     const result = await buildLiveIndonesianPromptPack({ brief: dentalBrief });
 
-    // The boundary never hard-fails: the deterministic Indonesian fallback
-    // is returned, still 10/10 with safe composition and zero spend.
     expect(result.generation.source).toBe("fallback");
     expect(result.generation.warnings).toContain("fallback_used");
     expect(result.pack.prompts).toHaveLength(10);
