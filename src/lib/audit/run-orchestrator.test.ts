@@ -374,9 +374,7 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
         emit: (event) => events.push(event),
         sleep: async () => {},
         resume: {
-          observations: [
-            observation("p1", { system: "OpenAI Responses API" }),
-          ],
+          observations: [observation("p1", { system: "OpenAI Responses API" })],
         },
       }),
     ).rejects.toThrow(/current protected production observation method/);
