@@ -11,6 +11,10 @@ import {
   generateIndonesianQuestionPack,
 } from "./questions-id";
 import { AUDIT_MODEL, AUDIT_PRICING_VERSION } from "./telemetry";
+import {
+  OPENCODEGO_BASE_URL,
+  assertOpenCodeGoProductionMethodConfigured,
+} from "./opencodego";
 
 // Live provider for the Indonesian question-generation boundary (Spec 003,
 // work package A). `questions-id.ts` owns the boundary contract, deterministic
@@ -74,8 +78,7 @@ export const INDONESIAN_QUESTION_MAX_OUTPUT_TOKENS = 2_048 as const;
 
 export const INDONESIAN_QUESTION_OPENAI_ENDPOINT =
   "https://api.openai.com/v1/responses" as const;
-export const INDONESIAN_QUESTION_OPENCODEGO_BASE_URL =
-  "https://opencode.ai/zen/go/v1" as const;
+export const INDONESIAN_QUESTION_OPENCODEGO_BASE_URL = OPENCODEGO_BASE_URL;
 
 export const INDONESIAN_QUESTION_GEMINI_ENDPOINT_PREFIX =
   "https://generativelanguage.googleapis.com/v1beta/models" as const;
@@ -467,10 +470,7 @@ export type IndonesianFetch = typeof fetch;
 
 function responsesEndpoint(provider: "opencodego" | "openai"): string {
   if (provider === "openai") return INDONESIAN_QUESTION_OPENAI_ENDPOINT;
-  const base =
-    process.env.OPENAI_BASE_URL?.trim().replace(/\/$/, "") ||
-    INDONESIAN_QUESTION_OPENCODEGO_BASE_URL;
-  return `${base}/responses`;
+  return `${INDONESIAN_QUESTION_OPENCODEGO_BASE_URL}/responses`;
 }
 
 async function responsesGenerate(
@@ -578,10 +578,13 @@ export async function generateLiveIndonesianQuestionPack(
     fetch?: IndonesianFetch;
   } = {},
 ): Promise<IndonesianQuestionPackSuggestion> {
-  // Enforce the same production provider lock used by the route before the
-  // provider factory resolves configuration. Tests can opt into alternatives
-  // with the explicit non-production testing flag.
-  liveIndonesianQuestionProviderName();
+  // Enforce the same production provider and method lock used by the audit
+  // path before the provider factory resolves configuration. Tests can opt
+  // into alternative providers with the explicit non-production testing flag.
+  const name = liveIndonesianQuestionProviderName();
+  if (name === "opencodego") {
+    assertOpenCodeGoProductionMethodConfigured();
+  }
   const generationMeta =
     options.generationMeta ?? indonesianQuestionGenerationMeta();
   return generateIndonesianQuestionPack(
