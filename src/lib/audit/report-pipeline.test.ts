@@ -17,13 +17,16 @@ import {
   type ReportGenerator,
 } from "./report-pipeline";
 import { liveGenerateReportContent } from "./provider";
-import type { ReportContent } from "./types";
+import {
+  PRODUCTION_OBSERVATION_REQUESTED_MODEL,
+  PRODUCTION_OBSERVATION_SYSTEM,
+} from "./production-observation-method";
+import type { AuditObservation, ReportContent } from "./types";
 
 // The Phase-1 golden record: 9 completed + 1 failed, no attempt telemetry. It
-// is the ten-of-ten gate's rejection fixture, and it is what `buildAuditReport`
-// is exercised against elsewhere. Since R3-6 made the gate unconditional
-// inside `createValidatedAuditReport`, it can no longer be driven through the
-// pipeline on either language — use `input` for that.
+// remains a historical direct-OpenAI fixture and is intentionally NOT mutated
+// into current production evidence. Pipeline-pass tests use the transformed
+// gate-ready record below.
 const partialInput = {
   brief: goldenBrief,
   prompts: goldenPrompts,
@@ -33,12 +36,14 @@ const partialInput = {
 };
 
 // The gate-ready evidence set: ten completed observations, each with a usable
-// answer and attempt telemetry. Question 5 (the golden failure) is backfilled
-// with an answer that does not name the brand, so it normalizes to
-// absent / not_recommended.
-const goldenCompletedObservations = goldenObservations.map(
+// answer and attempt telemetry, stamped as current OpenCode Go observations.
+// The exact returned-model provenance stays whatever the fixture/provider
+// returned; only the requested production model is locked.
+const goldenCompletedObservations: AuditObservation[] = goldenObservations.map(
   (observation, index) => ({
     ...observation,
+    system: PRODUCTION_OBSERVATION_SYSTEM,
+    requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
     ...(index === 4
       ? {
           run_status: "completed" as const,
@@ -55,7 +60,14 @@ const goldenCompletedObservations = goldenObservations.map(
       : {}),
     telemetry: observation.telemetry.length
       ? observation.telemetry
-      : [fixtureCallTelemetry({ stage: "observation" })],
+      : [
+          fixtureCallTelemetry({
+            stage: "observation",
+            requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
+            returned_model: observation.returned_model,
+            response_id: observation.response_id,
+          }),
+        ],
   }),
 );
 
@@ -122,7 +134,7 @@ describe("validated report pipeline", () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
-  it("uses one call when evidence and language pass", async () => {
+  it("uses one call when current OpenCode evidence and language pass", async () => {
     const generate = vi.fn(async () =>
       result(goldenReportContent(), "response-initial"),
     ) as unknown as ReportGenerator;
@@ -141,6 +153,55 @@ describe("validated report pipeline", () => {
       call_count: 1,
       accounted_cost_usd: 0.0008,
     });
+  });
+
+  it("rejects a mixed OpenAI + OpenCode observation set before synthesis", async () => {
+    const mixed = goldenCompletedObservations.map((observation, index) =>
+      index === 0
+        ? { ...observation, system: "OpenAI Responses API" as const }
+        : observation,
+    );
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "should-not-run"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport({ ...input, observations: mixed }, generate),
+    ).rejects.toThrow(/observation system must be OpenCode Go Responses API/);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("rejects ten old direct-OpenAI observations before synthesis", async () => {
+    const oldDirectOpenAI = goldenCompletedObservations.map((observation) => ({
+      ...observation,
+      system: "OpenAI Responses API" as const,
+    }));
+    const generate = vi.fn(async () =>
+      result(goldenReportContent(), "should-not-run"),
+    ) as unknown as ReportGenerator;
+
+    await expect(
+      createValidatedAuditReport(
+        { ...input, observations: oldDirectOpenAI },
+        generate,
+      ),
+    ).rejects.toThrow(/observation system must be OpenCode Go Responses API/);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("preserves provider-returned canonical model provenance instead of requiring equality with the requested model", () => {
+    const canonical = goldenCompletedObservations.map((observation, index) => ({
+      ...observation,
+      returned_model: `gpt-5.6-luna-provider-${index + 1}`,
+      telemetry: observation.telemetry.map((call) => ({
+        ...call,
+        returned_model: `gpt-5.6-luna-provider-${index + 1}`,
+      })),
+    }));
+
+    expect(() =>
+      assertReportGenerationGate({ ...input, observations: canonical }),
+    ).not.toThrow();
   });
 
   it("blocks evidence errors without a retry", async () => {
@@ -312,16 +373,24 @@ describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any 
     expect(generate).not.toHaveBeenCalled();
   });
 
-  it("passes only when every locked prompt has one evaluable observation", () => {
-    const allEvaluable = goldenObservations.map((observation) => ({
-      ...observation,
-      run_status: "completed" as const,
-      raw_answer: observation.raw_answer || "Usable answer.",
-      telemetry:
-        observation.telemetry.length > 0
-          ? observation.telemetry
-          : [fixtureCallTelemetry({ stage: "observation" })],
-    }));
+  it("passes only when every locked prompt has one current-method evaluable observation", () => {
+    const allEvaluable: AuditObservation[] = goldenObservations.map(
+      (observation) => ({
+        ...observation,
+        system: PRODUCTION_OBSERVATION_SYSTEM,
+        requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
+        run_status: "completed" as const,
+        raw_answer: observation.raw_answer || "Usable answer.",
+        telemetry: [
+          fixtureCallTelemetry({
+            stage: "observation",
+            requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
+            returned_model: observation.returned_model,
+            response_id: observation.response_id,
+          }),
+        ],
+      }),
+    );
     expect(() =>
       assertReportGenerationGate({
         ...partialInput,
@@ -364,20 +433,20 @@ describe("live provider credential guard on the script path (R3-5)", () => {
     vi.unstubAllEnvs();
   });
 
-  it("fails before synthesis when OPENAI_API_KEY is missing and the live generator is used", async () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "");
+  it("fails before synthesis when OPENCODEGO_API_KEY is missing and the live generator is used", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "");
 
-    // The guard's own message, not openai.ts's per-call one: the point is
-    // that no provider call was attempted at all.
+    // The guard's own message, not the protocol adapter's per-call one: the
+    // point is that no provider call was attempted at all.
     await expect(
       createValidatedAuditReport(input, liveGenerateReportContent),
-    ).rejects.toThrow(/fails closed before making any provider call/);
+    ).rejects.toThrow(/OPENCODEGO_API_KEY is not configured/);
   });
 
   it("leaves an injected generator alone — no provider call, no credential needed", async () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "");
     const generate = vi.fn(async () =>
       result(goldenReportContent(), "response-injected"),
     ) as unknown as ReportGenerator;

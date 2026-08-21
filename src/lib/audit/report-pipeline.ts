@@ -8,6 +8,7 @@ import {
   isLiveProviderCall,
   liveGenerateReportContent,
 } from "./provider";
+import { productionObservationMethodErrors } from "./production-observation-method";
 import {
   validateReportLanguage,
   validateIndonesianReportLanguage,
@@ -45,13 +46,10 @@ export type ReportPipelineInput = {
  * any provider call: report generation begins only when all ten locked
  * questions (unique prompt ids) each have exactly one evaluable, structurally
  * valid observation (run_status completed, non-empty answer, attempt
- * telemetry). No partial report exists. It is applied at the live route
- * boundary AND unconditionally inside `createValidatedAuditReport`, so the
- * script and direct-library callers cannot buy synthesis for a partial
- * evidence set either (R3-6). The Phase-1 golden fixture (9 completed + 1
- * failed) stays a protected pre-gate record for `buildAuditReport` and the
- * gate's own rejection tests; anything driven through the pipeline supplies
- * a ten-of-ten evidence set.
+ * telemetry), all produced by the current protected production observation
+ * method. No partial or mixed-method report exists. It is applied at the live
+ * route boundary AND unconditionally inside `createValidatedAuditReport`, so
+ * script and direct-library callers cannot bypass it either.
  */
 export function assertReportGenerationGate(input: ReportPipelineInput): void {
   const { prompts, observations } = input;
@@ -96,6 +94,8 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
     );
   }
 
+  errors.push(...productionObservationMethodErrors(observations));
+
   if (errors.length) {
     // No provider call has been made: the rejection carries no telemetry.
     throw new ReportPipelineError(errors.join(" "), 422, []);
@@ -131,10 +131,7 @@ export async function createValidatedAuditReport(
   }
   // Keep this invariant at the pipeline boundary as well as the HTTP route.
   // Scripts and future callers must not be able to spend on synthesis for a
-  // partial evidence set. R3-6 (Phase 3 fix-round-3 adversarial review): this
-  // was conditional on `language === "id"`, which left direct library callers
-  // on the English path able to buy a report from partial evidence — the
-  // comment above claimed otherwise. It is unconditional now.
+  // partial or mixed-method evidence set.
   assertReportGenerationGate(input);
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];

@@ -10,6 +10,7 @@ import {
   assertLiveProviderCredentialsConfigured,
   isLiveProviderCall,
 } from "./provider";
+import { productionObservationMethodErrors } from "./production-observation-method";
 import {
   MAX_ATTEMPTS_PER_QUESTION,
   MAX_AUTOMATIC_RETRIES_PER_QUESTION,
@@ -54,6 +55,17 @@ export async function runAuditObservations(input: {
 }): Promise<AuditRunSummary> {
   const { prompts, brief, safety_identifier, budget, execute, emit, resume } =
     input;
+  const resumedObservations = resume?.observations ?? [];
+  const resumeMethodErrors = productionObservationMethodErrors(
+    resumedObservations.filter(
+      (observation) => observation.run_status === "completed",
+    ),
+  );
+  if (resumeMethodErrors.length) {
+    throw new Error(
+      `Resume observations do not match the current protected production observation method. ${resumeMethodErrors.join(" ")}`,
+    );
+  }
   // R3-5: fail closed on a missing production credential BEFORE the first
   // question, on the script path as well as the route path. Without this the
   // orchestrator burns the full 1+2 retry policy across all ten questions (up
@@ -86,7 +98,7 @@ export async function runAuditObservations(input: {
   // trail is reconstructed from the persisted telemetry (one entry per
   // attempt, stamped by retry.ts).
   const resumedByPromptId = new Map<string, AuditObservation>();
-  for (const observation of resume?.observations ?? []) {
+  for (const observation of resumedObservations) {
     if (observation.run_status === "completed") {
       resumedByPromptId.set(observation.prompt_id, observation);
     }
