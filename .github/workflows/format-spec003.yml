@@ -1,0 +1,41 @@
+name: One-shot Spec 003 formatter
+
+on:
+  push:
+    branches: [spec-003-finish-live-quality-gate]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: spec-003-finish-live-quality-gate
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format CI-reported files
+        run: npx prettier --write src/lib/audit/provider.ts src/lib/audit/questions-id-provider.ts src/lib/audit/questions-id-provider.test.ts
+
+      - name: Commit formatting only
+        run: |
+          if git diff --quiet -- src/lib/audit/provider.ts src/lib/audit/questions-id-provider.ts src/lib/audit/questions-id-provider.test.ts; then
+            echo "No formatting changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/audit/provider.ts src/lib/audit/questions-id-provider.ts src/lib/audit/questions-id-provider.test.ts
+          git commit -m "chore: format Spec 003 provider wiring"
+          git push origin HEAD:spec-003-finish-live-quality-gate
