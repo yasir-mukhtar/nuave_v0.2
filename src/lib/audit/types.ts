@@ -176,7 +176,7 @@ export const auditObservationSchema = z.object({
   branded: z.boolean(),
   question: z.string(),
   // Spec 003 R-14/R-20: the versioned neutral instruction used for this
-  // observation. Recorded on protected live observations; optional so legacy
+  // observation. Recorded on the protected live path; optional so legacy
   // observations and testing-only providers that predate the versioned
   // instruction remain parseable.
   instruction_version: z.string().optional(),
@@ -259,140 +259,85 @@ export const reportDetailSchema = z.object({
   information: z.enum(informationStatuses),
   finding: z.string(),
   answer_excerpt: z.string(),
-  source_urls: z.array(sourceUrl),
-  competitor_mentions: z.array(
-    z.object({
-      name: z.string(),
-      evidence_excerpt: z.string(),
-    }),
-  ),
+  evidence_note: z.string(),
+  source_urls: z.array(z.string()),
 });
 
-export const reportSynthesisAssessmentSchema = z.object({
-  prompt_id: z.string(),
-  recommendation: z.enum(recommendationStatuses),
-  comparison: z.enum(comparisonStatuses),
-  information: z.enum(informationStatuses),
-});
-
-export const reportSynthesisSchema = z.object({
-  conclusion: z.string(),
-  accuracy_status: z.enum([
-    "needs_correction",
-    "needs_confirmation",
-    "no_clear_issues",
+export const observedCompetitorSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  relationship: z.enum([
+    "client_preferred",
+    "competitor_preferred",
+    "compared_no_preference",
+    "mentioned",
   ]),
-  key_findings: z.array(
-    z.object({
-      finding: z.string(),
-      why_it_matters: z.string(),
-      evidence_prompt_ids: z.array(z.string()).min(1),
-    }),
-  ),
-  priorities: z.array(
-    z.object({
-      priority: z.string(),
-      why: z.string(),
-      action: z.string(),
-      owner: z.string(),
-      timing: z.string(),
-      evidence_prompt_ids: z.array(z.string()).min(1),
-      success_check: z.string(),
-    }),
-  ),
-  assessments: z.array(reportSynthesisAssessmentSchema),
+  evidence_prompt_ids: z.array(z.string()).min(1).max(10),
 });
 
 export const reportContentSchema = z.object({
   conclusion: z.string(),
   accuracy_status: z.enum([
-    "needs_correction",
-    "needs_confirmation",
     "no_clear_issues",
+    "needs_confirmation",
+    "needs_correction",
+    "could_not_assess",
   ]),
-  key_findings: z.array(
-    z.object({
-      finding: z.string(),
-      why_it_matters: z.string(),
-      evidence_prompt_ids: z.array(z.string()).min(1),
-    }),
-  ),
-  priorities: z.array(
-    z.object({
-      priority: z.string(),
-      why: z.string(),
-      action: z.string(),
-      owner: z.string(),
-      timing: z.string(),
-      evidence_prompt_ids: z.array(z.string()).min(1),
-      success_check: z.string(),
-    }),
-  ),
-  assessments: z.array(reportSynthesisAssessmentSchema),
-});
-
-export const reportSchema = z.object({
-  report_version: z.string(),
-  synthesis_prompt_version: z.string(),
-  report_language_contract_version: z.string(),
-  buyer: z.object({
-    name: z.string(),
-    organization: z.string(),
-    email: z.string(),
-  }),
-  business: businessBriefSchema,
-  prompts: z.array(promptSchema).length(10),
-  observations: z.array(auditObservationSchema).length(10),
-  score: z.object({
-    appearances: z.number().int().min(0).max(10),
-    total: z.literal(10),
-  }),
-  unbranded_score: z.object({
-    appearances: z.number().int().nonnegative(),
-    eligible: z.number().int().nonnegative(),
-  }),
-  branded_score: z.object({
-    appearances: z.number().int().nonnegative(),
-    eligible: z.number().int().nonnegative(),
-  }),
-  recommendation_score: z.object({
-    recommended: z.number().int().nonnegative(),
-    eligible: z.number().int().nonnegative(),
-  }),
-  comparison_score: z.object({
-    favorable: z.number().int().nonnegative(),
-    eligible: z.number().int().nonnegative(),
-  }),
-  information_score: z.object({
-    confirmed: z.number().int().nonnegative(),
-    eligible: z.number().int().nonnegative(),
-  }),
-  content: reportContentSchema,
+  observed_competitors: z.array(observedCompetitorSchema).max(20),
+  key_findings: z
+    .array(
+      z.object({
+        title: z.string(),
+        explanation: z.string(),
+        evidence_prompt_ids: z.array(z.string()).min(1),
+      }),
+    )
+    .min(1)
+    .max(5),
+  priorities: z
+    .array(
+      z.object({
+        order: z.number().int().min(1).max(5),
+        timing: z.enum(["do_first", "do_next"]),
+        action: z.string(),
+        why: z.string(),
+        basis: z.string(),
+        owner: z.enum([
+          "business_owner",
+          "admin",
+          "marketing",
+          "web_developer",
+        ]),
+        done_when: z.string(),
+        evidence_prompt_ids: z.array(z.string()).min(1),
+        caveat: z.string(),
+      }),
+    )
+    .min(1)
+    .max(5),
   details: z.array(reportDetailSchema).length(10),
-  method: z.object({
-    system: z.string(),
-    requested_model: z.string(),
-    returned_models: z.array(z.string()),
-    instruction_version: z.string(),
-    observation_count: z.literal(10),
-    completed_observation_count: z.number().int().min(0).max(10),
-    failed_observation_count: z.number().int().min(0).max(10),
-    created_at: z.string(),
-    limitations: z.array(z.string()),
-  }),
-  telemetry: z.array(auditCallTelemetrySchema),
-  cost: z.object({
-    limit_usd: z.literal(AUDIT_COST_LIMIT_USD),
-    accounted_cost_usd: z.number().nonnegative(),
-    remaining_usd: z.number(),
-  }),
 });
 
-export const evidenceExportSchema = z.object({
-  evidence_version: z.string(),
-  report: reportSchema,
-});
+export const reportSynthesisSchema = reportContentSchema
+  .pick({
+    conclusion: true,
+    accuracy_status: true,
+    key_findings: true,
+    priorities: true,
+  })
+  .extend({
+    assessments: z
+      .array(
+        z.object({
+          prompt_id: z.string(),
+          recommendation: z.enum(recommendationStatuses),
+          comparison: z.enum(comparisonStatuses),
+          information: z.enum(informationStatuses),
+        }),
+      )
+      .length(10),
+  });
 
+export type Source = z.infer<typeof sourceSchema>;
 export type BusinessBrief = z.infer<typeof businessBriefSchema>;
 export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;
 export type AuditPrompt = z.infer<typeof promptSchema>;
@@ -401,7 +346,110 @@ export type AuditObservation = z.infer<typeof auditObservationSchema>;
 export type AuditCallTelemetry = z.infer<typeof auditCallTelemetrySchema>;
 export type AuditBudget = z.infer<typeof auditBudgetSchema>;
 export type ReportDetail = z.infer<typeof reportDetailSchema>;
-export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
+export type ObservedCompetitor = z.infer<typeof observedCompetitorSchema>;
 export type ReportContent = z.infer<typeof reportContentSchema>;
-export type AuditReport = z.infer<typeof reportSchema>;
-export type EvidenceExport = z.infer<typeof evidenceExportSchema>;
+export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
+
+export type AuditReport = ReportContent & {
+  report_version: "nuave-report-v3";
+  // The live route uses plain-id-v1; plain-en-v1 remains supported for the
+  // legacy English contract and its tests.
+  writing_standard_version: "plain-en-v1" | "plain-id-v1";
+  generated_at: string;
+  system_label: string;
+  provenance: {
+    report_prompt_version: string;
+    prompt_contract_version: string;
+    requested_report_model: string;
+    returned_report_model: string;
+    report_response_id: string;
+    initial_report_response_id: string;
+    report_call_count: number;
+    language_retry_performed: boolean;
+    language_retry_violations: string[];
+  };
+  method_summary: string;
+  facts: {
+    discovery: {
+      recommended: number;
+      mentioned_not_recommended: number;
+      absent: number;
+      completed: number;
+      total: number;
+      failed: number;
+      recommendation_label: string;
+      mention_label: string;
+    };
+    recognition: {
+      recognized: number;
+      completed: number;
+      total: number;
+      failed: number;
+      label: string;
+    };
+    comparison: {
+      client_preferred: number;
+      competitor_preferred: number;
+      compared_no_preference: number;
+      label: string;
+    };
+    information: {
+      confirmed: number;
+      incomplete: number;
+      conflicting: number;
+      label: string;
+    };
+    coverage: {
+      completed: number;
+      total: number;
+      failed: number;
+      label: string;
+    };
+  };
+  counts: {
+    unbranded_recommended: number;
+    unbranded_mentioned: number;
+    unbranded_total: number;
+    branded_recognized: number;
+    branded_total: number;
+    failed: number;
+  };
+  /**
+   * Appeared/assessed-denominator measures (AC-17): "appeared" counts
+   * appearance === "mentioned" regardless of recommendation status.
+   * "assessed" applies one rule to all three dimensions — the brand
+   * appeared AND the dimension was judged — so a question the brand was
+   * absent from is outside every assessed denominator, not inside
+   * recommendation's and outside the other two.
+   */
+  measures: {
+    overall: { appeared: number; total: number };
+    unbranded: { appeared: number; total: number };
+    branded: { appeared: number; total: number };
+    recommendation: { recommended: number; assessed: number };
+    comparison: { client_preferred: number; assessed: number };
+    information: {
+      confirmed: number;
+      incomplete: number;
+      conflicting: number;
+      assessed: number;
+    };
+  };
+  operational_telemetry: {
+    pricing_version: string;
+    cost_limit_usd: number;
+    carryover_cost_usd: number;
+    call_count: number;
+    failed_call_count: number;
+    latency_ms: number;
+    input_tokens: number;
+    cached_input_tokens: number;
+    cache_write_input_tokens: number;
+    output_tokens: number;
+    reasoning_output_tokens: number;
+    total_tokens: number;
+    web_search_calls: number;
+    accounted_cost_usd: number;
+    calls: AuditCallTelemetry[];
+  };
+};
