@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run Agent C focused question-provider tests
+        run: npx vitest run src/lib/audit/questions-id-provider.test.ts src/lib/audit/questions-id-provider-regression.test.ts
+
       - name: Run non-mutating checks
         run: npm run check
 
