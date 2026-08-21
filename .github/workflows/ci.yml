@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Print Agent C Prettier output
-        run: npx prettier src/lib/audit/questions-id-provider-regression.test.ts
-
       - name: Run non-mutating checks
         run: npm run check
 
