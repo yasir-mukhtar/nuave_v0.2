@@ -5,7 +5,7 @@ import type {
   PromptPack,
 } from "./types";
 import {
-  INDONESIAN_QUESTION_OPENAI_PRICING_VERSION,
+  INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
   createIndonesianQuestionProvider,
   indonesianQuestionGenerationMeta,
   liveIndonesianQuestionProviderName,
@@ -24,10 +24,10 @@ import { AUDIT_COST_LIMIT_USD } from "./types";
 
 /**
  * Live Indonesian question generation for the protected `/api/audit/prompts`
- * route (Spec 003 work package A boundary). The route NEVER makes the provider
- * selection: the provider name is resolved server-side, fail-closed to OpenAI
- * (gpt-5.6-luna) per the founder-approved provider lock (DECISION_LOG
- * 2026-08-17); Gemini remains testing-only via NUAVE_LIVE_PROVIDER_TESTING=1.
+ * route (Spec 003 work package A boundary). Provider selection is server-side
+ * and fails closed to OpenCode Go serving GPT-5.6 Luna per the founder-approved
+ * 2026-08-21 provider lock; direct OpenAI and Gemini remain testing-only via
+ * NUAVE_LIVE_PROVIDER_TESTING=1 outside production.
  *
  * The boundary (`generateIndonesianQuestionPack`) never hard-fails: on any
  * provider or format failure it returns the deterministic Indonesian pack with
@@ -38,7 +38,6 @@ import { AUDIT_COST_LIMIT_USD } from "./types";
  * session budget it sends to the run/report routes.
  */
 
-/** Per-category Indonesian roles/rationales for the converted pack items. */
 const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
   need_discovery: {
     role: "Memahami kebutuhan pelanggan",
@@ -77,9 +76,6 @@ type CapturedCall = {
   body: unknown;
 };
 
-/** Wraps fetch so the HTTP response JSON (and its usage) is retained for
- * server-side cost accounting; the provider still consumes the original
- * response via `res.json()` on the clone-safe original. */
 function capturingFetch(calls: CapturedCall[]): IndonesianFetch {
   const original = globalThis.fetch.bind(globalThis);
   const wrapped: IndonesianFetch = async (input, init) => {
@@ -100,7 +96,7 @@ function capturingFetch(calls: CapturedCall[]): IndonesianFetch {
   return wrapped;
 }
 
-function extractOpenAIUsage(body: unknown): {
+function extractResponsesUsage(body: unknown): {
   input_tokens: number;
   output_tokens: number;
   total_tokens: number;
@@ -122,10 +118,12 @@ function extractOpenAIUsage(body: unknown): {
   };
 }
 
-/** Notional accounted cost from real usage at official OpenAI short-context
- * pricing (repo `AUDIT_PRICING_VERSION "openai-standard-2026-08-01"`): input
- * USD 0.20 / 1M, output USD 1.20 / 1M. The question writer performs no web
- * search. */
+/**
+ * Conservative notional accounting from provider-reported token usage using
+ * the repository's Luna pricing basis. The question writer performs no web
+ * search. This preserves the existing USD 5 safety ledger even when OpenCode
+ * Go's commercial billing is not token-identical to direct OpenAI pricing.
+ */
 function accountedCostUsd(usage: {
   input_tokens: number;
   output_tokens: number;
@@ -165,12 +163,10 @@ export async function buildLiveIndonesianPromptPack(input: {
   const { brief } = input;
   // Fail-closed provider selection (R-36): the client cannot select the
   // provider; a testing-only NUAVE_QUESTION_PROVIDER throws here unless
-  // NUAVE_LIVE_PROVIDER_TESTING=1 is explicitly set.
+  // NUAVE_LIVE_PROVIDER_TESTING=1 is explicitly set outside production.
   liveIndonesianQuestionProviderName();
   const minimized = minimizeIndonesianBrief(brief);
 
-  // Server-created budget: the client cannot raise the limit, lower the
-  // carryover, or select the provider (R-36).
   const budget: AuditBudget = {
     limit_usd: AUDIT_COST_LIMIT_USD,
     carryover_cost_usd: configuredAuditCarryoverCostUsd(),
@@ -191,7 +187,7 @@ export async function buildLiveIndonesianPromptPack(input: {
     captured.find((call) => call.url.includes("/v1/responses")) ??
     captured.find((call) => call.url.includes("generateContent")) ??
     null;
-  const usage = httpCall ? extractOpenAIUsage(httpCall.body) : null;
+  const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
   const providerFailed =
     (httpCall !== null && httpCall.status >= 400) ||
     suggestion.source === "fallback";
@@ -219,9 +215,8 @@ export async function buildLiveIndonesianPromptPack(input: {
     accounted_cost_usd: usage ? accountedCostUsd(usage) : 0,
     cost_basis: usage ? "provider_usage" : "preflight_reservation",
     pricing_version:
-      suggestion.generation.system === "OpenAI Responses API"
-        ? INDONESIAN_QUESTION_OPENAI_PRICING_VERSION
-        : generationMeta.pricing_version || "",
+      generationMeta.pricing_version ||
+      INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
     failure_reason: providerFailed
       ? "Provider question generation failed; the deterministic Indonesian fallback was used."
       : "",
@@ -232,9 +227,6 @@ export async function buildLiveIndonesianPromptPack(input: {
   };
   budget.calls = [telemetry];
 
-  // Hard blockers (identity leakage, unsupported premises, unexecutable
-  // questions) must never reach the customer; the boundary's fallback is
-  // guaranteed safe, so a blocker here is a defensive 422.
   const blockers = indonesianPackBlockers(
     suggestion.questions.map((item) => item.text),
     minimized,
