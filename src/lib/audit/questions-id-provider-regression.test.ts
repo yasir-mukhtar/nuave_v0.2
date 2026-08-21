@@ -147,9 +147,7 @@ describe("question-writer contract regressions", () => {
     expect(instruction).toContain(
       "Write natural Indonesian appropriate to the category and audience",
     );
-    expect(instruction).toContain(
-      "without the audited business name",
-    );
+    expect(instruction).toContain("without the audited business name");
     expect(instruction).toContain(
       "compare the audited business with the supplied comparison business",
     );
@@ -195,7 +193,9 @@ describe("shared Responses-compatible parser regressions", () => {
   });
 
   it("returns ordinary output_text for deterministic downstream parsing", () => {
-    const text = ten.map((question, index) => `${index + 1}. ${question}`).join("\n");
+    const text = ten
+      .map((question, index) => `${index + 1}. ${question}`)
+      .join("\n");
 
     expect(
       parseOpenAIIndonesianResponse(
@@ -251,7 +251,9 @@ describe("Responses-compatible HTTP regressions", () => {
     vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
     vi.stubEnv("OPENAI_BASE_URL", "https://opencode.ai/zen/go/v1");
     vi.stubEnv("OPENAI_AUDIT_MODEL", "gpt-5.6-luna");
-    const { stub, calls } = stubFetch(() => jsonResponse(structuredResponsesBody));
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(structuredResponsesBody),
+    );
 
     await expect(
       createIndonesianQuestionProvider(stub).generate(brief),
@@ -290,7 +292,9 @@ describe("Responses-compatible HTTP regressions", () => {
   it("does not fetch when the Responses-compatible credential is missing", async () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "");
-    const { stub, calls } = stubFetch(() => jsonResponse(structuredResponsesBody));
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(structuredResponsesBody),
+    );
 
     await expect(
       createIndonesianQuestionProvider(stub).generate(brief),
@@ -301,7 +305,9 @@ describe("Responses-compatible HTTP regressions", () => {
   it("uses global fetch when no HTTP implementation is injected", async () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "test-opencode-key");
-    const { stub, calls } = stubFetch(() => jsonResponse(structuredResponsesBody));
+    const { stub, calls } = stubFetch(() =>
+      jsonResponse(structuredResponsesBody),
+    );
     vi.stubGlobal("fetch", stub);
 
     await expect(
@@ -319,7 +325,11 @@ describe("Gemini testing-provider regressions", () => {
     const { stub, calls } = stubFetch(() =>
       jsonResponse({
         candidates: [
-          { content: { parts: [{ text: JSON.stringify({ questions: ten }) }] } },
+          {
+            content: {
+              parts: [{ text: JSON.stringify({ questions: ten }) }],
+            },
+          },
         ],
       }),
     );
@@ -369,7 +379,11 @@ describe("Gemini testing-provider regressions", () => {
     const { stub, calls } = stubFetch(() =>
       jsonResponse({
         candidates: [
-          { content: { parts: [{ text: JSON.stringify({ questions: ten }) }] } },
+          {
+            content: {
+              parts: [{ text: JSON.stringify({ questions: ten }) }],
+            },
+          },
         ],
       }),
     );
@@ -386,7 +400,9 @@ describe("Gemini testing-provider regressions", () => {
         },
       },
     });
-    expect(JSON.parse(String(calls[0].init.body))).toEqual(expectedRequest.body);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual(
+      expectedRequest.body,
+    );
   });
 
   it("returns unparseable Gemini text for deterministic fallback parsing", async () => {
