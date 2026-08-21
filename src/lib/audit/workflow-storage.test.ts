@@ -11,15 +11,6 @@ import {
   restorableAuditReport,
 } from "./workflow-storage";
 
-// ---------------------------------------------------------------------------
-// R3-4 (Phase 3 fix-round-3 adversarial review): restoring a session written
-// by the previous build used to crash the report screen. `measures` is a new
-// required field; `AuditWorkflow` restores with an unchecked
-// `JSON.parse(saved) as SavedState`, and `ReportView` reads
-// `report.measures.overall.appeared` with no guard, so the TypeError happened
-// during render — outside the try/catch that wraps the parse.
-// ---------------------------------------------------------------------------
-
 function currentReport() {
   return buildAuditReport(
     normalizeReportEvidence(
@@ -31,12 +22,13 @@ function currentReport() {
   );
 }
 
-describe("live audit workflow session storage (R3-4)", () => {
-  it("versions the workflow key with the saved shape and keeps it separate from the session key", () => {
-    // The saved `SavedState` gained a required `AuditReport.measures`, so the
-    // key moved with it: a v3 payload is never read back by this build.
-    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v4");
-    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v3");
+describe("live audit workflow session storage", () => {
+  it("invalidates the pre-OpenCode workflow key while keeping the browser session identity stable", () => {
+    // v4 may contain resumable observations produced by direct OpenAI. The
+    // OpenCode Go migration changes the resumable method even though the saved
+    // TypeScript shape is otherwise compatible, so this build reads only v5.
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v5");
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v4");
     expect(AUDIT_SESSION_STORAGE_KEY).toBe("nuave.audit.session.v1");
   });
 

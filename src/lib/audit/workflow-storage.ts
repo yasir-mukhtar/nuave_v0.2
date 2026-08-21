@@ -1,27 +1,19 @@
 /**
  * Session-storage keys and the restore guard for the live audit workflow.
  *
- * R3-4 (Phase 3 fix-round-3 adversarial review): `AuditReport.measures` is a
- * required field added in this phase. `AuditWorkflow` restores its saved
- * state with an unchecked `JSON.parse(saved) as SavedState`, so a report
- * written by the previous build — which has no `measures` — used to restore
- * cleanly and then throw during render
- * (`report.measures.overall.appeared` on `undefined`), taking out the report
- * screen for a completed audit. The `try/catch` around the restore does not
- * help: the crash happens later, during render.
+ * The workflow key is versioned for persisted-state compatibility. Spec 003's
+ * OpenCode Go migration changes the meaning of a resumable observation even
+ * though its TypeScript shape is unchanged: pre-migration v4 state may contain
+ * direct-OpenAI observations, and silently restoring those would allow a mixed
+ * provider audit. v5 therefore invalidates all pre-migration workflow state.
  *
- * Two things close it, and both are here because both are pure logic:
- *  1. the storage key is versioned with the saved shape (v3 -> v4), and
- *  2. a restored report is structurally checked and dropped if it does not
- *     carry the fields the report screen reads.
- *
- * Optional chaining at the render call sites was rejected deliberately: it
- * would silently render a report with missing numbers.
+ * The report-shape guard remains as a second line of defense for required
+ * fields read without optional chaining by the report screen.
  */
 import type { AuditReport } from "./types";
 
-/** Bump whenever the persisted `SavedState` shape changes. */
-export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v4";
+/** Bump whenever the persisted `SavedState` shape or resumable method changes. */
+export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v5";
 export const AUDIT_SESSION_STORAGE_KEY = "nuave.audit.session.v1";
 
 function isCount(value: unknown): boolean {
