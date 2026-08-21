@@ -5,6 +5,7 @@ import {
   auditBudgetSchema,
   businessBriefSchema,
   promptSchema,
+  type AuditCallTelemetry,
 } from "@/lib/audit/types";
 import {
   ReportPipelineError,
@@ -35,9 +36,13 @@ export async function POST(request: Request) {
     // report synthesis begins unless all ten unique locked prompts have one
     // evaluable, structurally valid observation. No partial report exists.
     assertReportGenerationGate(input);
-    return NextResponse.json({
-      report: await createValidatedAuditReport({ ...input, language: "id" }),
-    });
+    const telemetry: AuditCallTelemetry[] = [];
+    const report = await createValidatedAuditReport(
+      { ...input, language: "id" },
+      undefined,
+      (calls) => telemetry.push(...calls),
+    );
+    return NextResponse.json({ report, telemetry });
   } catch (error) {
     return NextResponse.json(
       {

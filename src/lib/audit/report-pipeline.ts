@@ -103,6 +103,7 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
 }
 
 export type ReportGenerator = typeof liveGenerateReportContent;
+export type ReportTelemetrySink = (calls: AuditCallTelemetry[]) => void;
 
 export class ReportPipelineError extends Error {
   readonly status: number;
@@ -123,6 +124,7 @@ export class ReportPipelineError extends Error {
 export async function createValidatedAuditReport(
   input: ReportPipelineInput,
   generate: ReportGenerator = liveGenerateReportContent,
+  onSuccessTelemetry?: ReportTelemetrySink,
 ): Promise<AuditReport> {
   // R3-5: fail closed on a missing production credential before synthesis,
   // on the script path as well as the route path.
@@ -236,5 +238,9 @@ export async function createValidatedAuditReport(
       );
     }
   }
+  // The report route needs the exact successful synthesis calls so the
+  // immediately-following variance request can continue the same server-side
+  // budget ledger. Expose them only after the report has passed every gate.
+  onSuccessTelemetry?.([...reportCalls]);
   return report;
 }
