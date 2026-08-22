@@ -63,6 +63,7 @@ export default function LandingAuditHero() {
         showLogo={false}
         autoFocus={false}
         consumeHandoff={false}
+        contentClassName="mt-20 md:mt-0"
       />
     </section>
   );
