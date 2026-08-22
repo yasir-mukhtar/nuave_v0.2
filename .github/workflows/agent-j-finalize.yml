@@ -1,16 +1,13 @@
 name: Agent J Finalize Branch
 
 on:
-  push:
-    branches:
-      - fix/spec-003-live-audit-reliability
+  pull_request:
 
 permissions:
   contents: write
 
 jobs:
   finalize:
-    if: github.event.head_commit.message == 'fix: implement Phase 3 live audit reliability'
     runs-on: ubuntu-latest
     steps:
       - name: Check out branch
@@ -18,19 +15,32 @@ jobs:
         with:
           ref: fix/spec-003-live-audit-reliability
 
+      - name: Guard finalization request
+        id: guard
+        run: |
+          if [ "$(git log -1 --pretty=%s)" = "fix: request branch finalization" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Use Node.js 22
+        if: steps.guard.outputs.run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
+        if: steps.guard.outputs.run == 'true'
         run: npm ci
 
       - name: Apply narrow source transforms
+        if: steps.guard.outputs.run == 'true'
         run: node scripts/agent-j-finalize.mjs
 
       - name: Format changed sources
+        if: steps.guard.outputs.run == 'true'
         run: >-
           npx prettier --write
           src/app/audit/AuditWorkflow.tsx
@@ -54,15 +64,16 @@ jobs:
           src/lib/audit/report-prompt-contract.test.ts
 
       - name: Verify checks and unit tests before committing
+        if: steps.guard.outputs.run == 'true'
         run: |
           npm run check
           npm run test:unit
 
       - name: Commit finalized sources
+        if: steps.guard.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src scripts/agent-j-finalize.mjs
-          git reset scripts/agent-j-finalize.mjs
+          git add src
           git commit -m "fix: finalize Phase 3 live audit reliability"
           git push origin HEAD:fix/spec-003-live-audit-reliability
