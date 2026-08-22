@@ -20,35 +20,35 @@
   }
 }
 
-@keyframes fieldDriftOne {
+@keyframes cloudDriftLeft {
   0%,
   100% {
-    transform: translate3d(-4%, -2%, 0) scale(1);
+    transform: translate3d(-2%, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(8%, 6%, 0) scale(1.08);
+    transform: translate3d(4%, 1.5%, 0) scale(1.025);
   }
 }
 
-@keyframes fieldDriftTwo {
+@keyframes cloudDriftRight {
   0%,
   100% {
-    transform: translate3d(5%, 4%, 0) scale(1.02);
+    transform: translate3d(2%, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(-8%, -5%, 0) scale(1.1);
+    transform: translate3d(-4%, 1%, 0) scale(1.02);
   }
 }
 
-@keyframes ringBreathe {
+@keyframes wispDrift {
   0%,
   100% {
-    opacity: 0.28;
-    transform: translate(-50%, -50%) scale(0.97);
+    transform: translate3d(-3%, 0, 0);
+    opacity: 0.58;
   }
   50% {
-    opacity: 0.48;
-    transform: translate(-50%, -50%) scale(1.035);
+    transform: translate3d(5%, -1%, 0);
+    opacity: 0.78;
   }
 }
 
@@ -60,8 +60,11 @@
   justify-content: center;
   overflow: hidden;
   isolation: isolate;
-  background:
-    linear-gradient(180deg, #fbfbff 0%, #f9fbff 46%, #ffffff 100%);
+  background: #ffffff;
+  color: var(--foreground);
+  font-family:
+    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
 .heroExiting {
@@ -69,98 +72,179 @@
   pointer-events: none;
 }
 
-.signalField {
+.skyField {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      #46a8ed 0%,
+      #63b7ee 18%,
+      #80c8f3 36%,
+      #acdff7 50%,
+      #dff3fb 60%,
+      #ffffff 77%,
+      #ffffff 100%
+    );
 }
 
-.signalOrbOne,
-.signalOrbTwo,
-.signalOrbThree,
-.signalGrid,
-.signalRing {
+.skyField::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(
+      ellipse at 52% 7%,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(255, 255, 255, 0.08) 34%,
+      transparent 62%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(38, 139, 218, 0.1),
+      transparent 28%,
+      rgba(255, 255, 255, 0.08) 58%,
+      rgba(31, 126, 208, 0.08)
+    );
+  mix-blend-mode: soft-light;
+}
+
+.cloudBankLeft,
+.cloudBankRight,
+.cloudWisp,
+.skyGlow,
+.skyFade {
   position: absolute;
   display: block;
   pointer-events: none;
 }
 
-.signalOrbOne {
-  width: min(76vw, 68rem);
-  aspect-ratio: 1.45;
-  top: 15%;
-  left: 4%;
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(83, 58, 253, 0.2) 0%,
-    rgba(112, 93, 255, 0.1) 38%,
-    rgba(83, 58, 253, 0) 72%
-  );
-  filter: blur(26px);
-  animation: fieldDriftOne 18s ease-in-out infinite;
+.cloudBankLeft {
+  width: 76vw;
+  height: 37vw;
+  min-width: 58rem;
+  min-height: 28rem;
+  top: 2%;
+  left: -27%;
+  background:
+    radial-gradient(
+      ellipse at 20% 48%,
+      rgba(255, 255, 255, 0.96) 0 14%,
+      rgba(255, 255, 255, 0.72) 24%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 44% 30%,
+      rgba(255, 255, 255, 0.92) 0 13%,
+      rgba(255, 255, 255, 0.62) 25%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 61% 57%,
+      rgba(255, 255, 255, 0.84) 0 11%,
+      rgba(255, 255, 255, 0.48) 25%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse at 79% 37%,
+      rgba(255, 255, 255, 0.72) 0 10%,
+      rgba(255, 255, 255, 0.34) 25%,
+      transparent 50%
+    );
+  filter: blur(10px);
+  opacity: 0.9;
+  animation: cloudDriftLeft 24s ease-in-out infinite;
 }
 
-.signalOrbTwo {
-  width: min(66vw, 58rem);
-  aspect-ratio: 1.5;
-  top: 31%;
-  right: 1%;
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(80, 193, 255, 0.24) 0%,
-    rgba(90, 211, 234, 0.1) 42%,
-    rgba(80, 193, 255, 0) 72%
-  );
-  filter: blur(30px);
-  animation: fieldDriftTwo 21s ease-in-out infinite;
+.cloudBankRight {
+  width: 70vw;
+  height: 36vw;
+  min-width: 54rem;
+  min-height: 27rem;
+  top: 12%;
+  right: -28%;
+  background:
+    radial-gradient(
+      ellipse at 22% 43%,
+      rgba(255, 255, 255, 0.76) 0 10%,
+      rgba(255, 255, 255, 0.38) 24%,
+      transparent 49%
+    ),
+    radial-gradient(
+      ellipse at 42% 31%,
+      rgba(255, 255, 255, 0.94) 0 13%,
+      rgba(255, 255, 255, 0.58) 26%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 65% 54%,
+      rgba(255, 255, 255, 0.92) 0 15%,
+      rgba(255, 255, 255, 0.52) 27%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 83% 28%,
+      rgba(255, 255, 255, 0.72) 0 10%,
+      rgba(255, 255, 255, 0.3) 25%,
+      transparent 50%
+    );
+  filter: blur(11px);
+  opacity: 0.86;
+  animation: cloudDriftRight 27s ease-in-out infinite;
 }
 
-.signalOrbThree {
-  width: min(54vw, 48rem);
-  aspect-ratio: 1.55;
-  left: 32%;
-  bottom: 10%;
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 183, 111, 0.15) 0%,
-    rgba(193, 235, 194, 0.11) 44%,
-    rgba(255, 183, 111, 0) 74%
-  );
-  filter: blur(34px);
+.cloudWisp {
+  width: 56vw;
+  height: 16vw;
+  min-width: 42rem;
+  min-height: 12rem;
+  top: 18%;
+  left: 25%;
+  background:
+    radial-gradient(
+      ellipse at 28% 55%,
+      rgba(255, 255, 255, 0.4) 0 8%,
+      rgba(255, 255, 255, 0.18) 27%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse at 67% 44%,
+      rgba(255, 255, 255, 0.34) 0 7%,
+      rgba(255, 255, 255, 0.14) 28%,
+      transparent 58%
+    );
+  filter: blur(8px);
+  animation: wispDrift 21s ease-in-out infinite;
 }
 
-.signalGrid {
-  inset: 14% 12% 9%;
-  background-image: radial-gradient(
-    circle,
-    rgba(66, 74, 105, 0.14) 0.8px,
-    transparent 0.9px
-  );
-  background-size: 24px 24px;
-  mask-image: radial-gradient(
-    ellipse at center,
-    rgba(0, 0, 0, 0.68) 0%,
-    rgba(0, 0, 0, 0.28) 48%,
-    transparent 76%
-  );
-  opacity: 0.32;
-}
-
-.signalRing {
-  width: min(68vw, 58rem);
-  aspect-ratio: 1;
+.skyGlow {
+  width: min(64vw, 62rem);
+  aspect-ratio: 2.1;
   left: 50%;
-  top: 49%;
-  border: 1px solid rgba(83, 58, 253, 0.16);
+  top: 31%;
+  transform: translateX(-50%);
   border-radius: 50%;
-  box-shadow:
-    0 0 0 7rem rgba(83, 58, 253, 0.025),
-    0 0 0 14rem rgba(83, 58, 253, 0.018);
-  animation: ringBreathe 11s ease-in-out infinite;
+  background: radial-gradient(
+    ellipse,
+    rgba(230, 249, 255, 0.52) 0%,
+    rgba(212, 244, 255, 0.24) 42%,
+    transparent 72%
+  );
+  filter: blur(18px);
+}
+
+.skyFade {
+  inset: 42% 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.18) 14%,
+    rgba(255, 255, 255, 0.72) 42%,
+    rgba(255, 255, 255, 0.96) 64%,
+    #ffffff 82%
+  );
 }
 
 .heroContent {
@@ -170,7 +254,7 @@
   width: min(48rem, calc(100% - 2.5rem));
   flex-direction: column;
   align-items: center;
-  transform: translateY(-1.5vh);
+  transform: translateY(-5.5vh);
 }
 
 .heroLogo {
@@ -184,8 +268,10 @@
 .heroHeading {
   max-width: 17ch;
   margin: 0;
-  color: var(--foreground);
-  font-family: var(--font-heading);
+  color: #151821;
+  font-family:
+    var(--font-geist-sans), Geist, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   font-size: clamp(2.3rem, 5vw, 4rem);
   font-weight: 600;
   letter-spacing: -0.055em;
@@ -211,15 +297,15 @@
   min-height: 66px;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid rgba(34, 34, 40, 0.12);
+  border: 1px solid rgba(27, 40, 56, 0.12);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   padding: 8px 8px 8px 1.25rem;
   box-shadow:
-    0 18px 60px rgba(55, 64, 104, 0.09),
-    0 2px 10px rgba(55, 64, 104, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(18px);
+    0 18px 55px rgba(50, 92, 126, 0.14),
+    0 3px 12px rgba(43, 75, 102, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
   opacity: 0;
   animation: heroFadeUp 0.5s ease 0.18s forwards;
   transition:
@@ -234,9 +320,9 @@
 
 .heroInputBar:focus-within {
   border-color: rgba(83, 58, 253, 0.52);
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   box-shadow:
-    0 20px 70px rgba(55, 64, 104, 0.12),
+    0 20px 62px rgba(49, 88, 119, 0.16),
     0 0 0 4px rgba(83, 58, 253, 0.08);
 }
 
@@ -252,14 +338,16 @@
   outline: 0;
   background: transparent;
   color: var(--foreground);
-  font-family: var(--font-body);
+  font-family:
+    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   font-size: 1rem;
   line-height: 1.2;
   caret-color: var(--purple);
 }
 
 .heroInput::placeholder {
-  color: #9ca0aa;
+  color: #9299a4;
   opacity: 1;
 }
 
@@ -314,8 +402,10 @@
 .heroHint {
   max-width: 40rem;
   margin: 1rem 0 0;
-  color: #666b77;
-  font-family: var(--font-body);
+  color: #626a74;
+  font-family:
+    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   font-size: 0.875rem;
   line-height: 1.55;
   text-align: center;
@@ -328,7 +418,9 @@
   max-width: 40rem;
   margin: 0.55rem 0 0;
   color: var(--red);
-  font-family: var(--font-body);
+  font-family:
+    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   font-size: 0.8125rem;
   line-height: 1.5;
   text-align: center;
@@ -343,7 +435,7 @@
 @media (max-width: 640px) {
   .heroContent {
     width: min(100% - 1.5rem, 38rem);
-    transform: translateY(-3vh);
+    transform: translateY(-6vh);
   }
 
   .heroLogo {
@@ -381,26 +473,48 @@
     font-size: 0.82rem;
   }
 
-  .signalGrid {
-    inset: 10% 0 7%;
-    background-size: 21px 21px;
+  .skyField {
+    background:
+      linear-gradient(
+        180deg,
+        #49aaed 0%,
+        #69bcef 25%,
+        #94d2f4 42%,
+        #d5eef9 56%,
+        #ffffff 76%,
+        #ffffff 100%
+      );
   }
 
-  .signalRing {
-    width: 118vw;
-    top: 47%;
+  .cloudBankLeft {
+    width: 148vw;
+    min-width: 0;
+    height: 66vw;
+    min-height: 0;
+    top: 6%;
+    left: -76%;
   }
 
-  .signalOrbOne {
-    width: 120vw;
-    left: -44%;
-    top: 18%;
+  .cloudBankRight {
+    width: 145vw;
+    min-width: 0;
+    height: 70vw;
+    min-height: 0;
+    top: 20%;
+    right: -78%;
   }
 
-  .signalOrbTwo {
-    width: 116vw;
-    right: -48%;
-    top: 38%;
+  .cloudWisp {
+    width: 125vw;
+    min-width: 0;
+    height: 38vw;
+    min-height: 0;
+    top: 25%;
+    left: -13%;
+  }
+
+  .skyFade {
+    inset: 44% 0 0;
   }
 }
 
@@ -410,9 +524,9 @@
   .heroHeading,
   .heroInputBar,
   .heroHint,
-  .signalOrbOne,
-  .signalOrbTwo,
-  .signalRing {
+  .cloudBankLeft,
+  .cloudBankRight,
+  .cloudWisp {
     animation: none;
   }
 
