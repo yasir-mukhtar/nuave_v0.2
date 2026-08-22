@@ -160,7 +160,14 @@ export default function SourceHero({
             </button>
           </div>
 
-          <p id="source-hint" className={styles.heroHint}>
+          <p
+            id="source-hint"
+            className={styles.heroHint}
+            style={{
+              color: "#ffffff",
+              textShadow: "0 1px 6px rgba(0, 30, 80, 0.2)",
+            }}
+          >
             Masukkan URL website, akun instagram, atau Google Business Profile
             bisnis Anda.
           </p>
