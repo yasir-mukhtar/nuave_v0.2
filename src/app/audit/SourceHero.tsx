@@ -99,7 +99,11 @@ export default function SourceHero({
 
   return (
     <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
-      <div className={styles.skyField} aria-hidden="true">
+      <div
+        className={styles.skyField}
+        aria-hidden="true"
+        style={{ backgroundImage: "url('/nuave-beach-hero.webp')" }}
+      >
         <span className={styles.skyFade} />
       </div>
 
