@@ -91,14 +91,19 @@ test.describe("entry and landing (AC-01)", () => {
     await expect(
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
-    // Hero is the one-question/one-input intake (P1) — verify intake is present
-    // and the illustrative preview disclosure appears in the report section.
-    const hero = page.locator(".lp-hero-section");
+    // The landing reuses the live /audit source hero while remaining inert
+    // until the visitor explicitly submits a source.
+    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
     await expect(
-      hero.getByPlaceholder("tokosepatu.example atau instagram.com/tokosepatu.example"),
+      hero.getByRole("heading", {
+        name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
+      }),
     ).toBeVisible();
+    await expect(hero.getByPlaceholder("https://bisnisanda.com")).toBeVisible();
     await expect(
-      hero.getByText("Hanya informasi publik dari situs web atau Instagram resmi."),
+      hero.getByText(
+        "Masukkan URL website, akun instagram, atau Google Business Profile bisnis Anda.",
+      ),
     ).toBeVisible();
     await expect(page.getByText("Ilustrasi", { exact: true }).first()).toBeVisible();
     await assertNoSideEffects(page, requests);
