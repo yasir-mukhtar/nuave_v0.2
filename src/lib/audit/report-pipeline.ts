@@ -9,6 +9,8 @@ import {
   liveGenerateReportContent,
 } from "./provider";
 import { productionObservationMethodErrors } from "./production-observation-method";
+import { sanitizeUnsupportedReportPriorities } from "./report-priority";
+import type { ReportFailureCode } from "./report-recovery";
 import {
   validateReportLanguage,
   validateIndonesianReportLanguage,
@@ -24,6 +26,7 @@ import type {
   AuditPrompt,
   AuditReport,
   BusinessBrief,
+  ReportContent,
 } from "./types";
 import {
   AuditBudgetError,
@@ -97,7 +100,6 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
   errors.push(...productionObservationMethodErrors(observations));
 
   if (errors.length) {
-    // No provider call has been made: the rejection carries no telemetry.
     throw new ReportPipelineError(errors.join(" "), 422, []);
   }
 }
@@ -108,17 +110,45 @@ export type ReportTelemetrySink = (calls: AuditCallTelemetry[]) => void;
 export class ReportPipelineError extends Error {
   readonly status: number;
   readonly telemetry: AuditCallTelemetry[];
+  readonly code: ReportFailureCode;
 
   constructor(
     message: string,
     status = 422,
     telemetry: AuditCallTelemetry[] = [],
+    code: ReportFailureCode = "REPORT_INTEGRITY_FAILURE",
   ) {
     super(message);
     this.name = "ReportPipelineError";
     this.status = status;
     this.telemetry = telemetry;
+    this.code = code;
   }
+}
+
+function normalizeAndContainPriorities(
+  rawContent: ReportContent,
+  input: ReportPipelineInput,
+  reportCalls: AuditCallTelemetry[],
+) {
+  const normalized = normalizeReportEvidence(
+    rawContent,
+    input.observations,
+    input.brief,
+  );
+  const sanitized = sanitizeUnsupportedReportPriorities(
+    normalized,
+    input.observations,
+    input.brief,
+  );
+  if (!sanitized.content.priorities.length) {
+    throw new ReportPipelineError(
+      "Report evidence review found no supported corrective priority. No action was fabricated and no automatic reroll was attempted.",
+      422,
+      reportCalls,
+    );
+  }
+  return sanitized.content;
 }
 
 export async function createValidatedAuditReport(
@@ -126,23 +156,14 @@ export async function createValidatedAuditReport(
   generate: ReportGenerator = liveGenerateReportContent,
   onSuccessTelemetry?: ReportTelemetrySink,
 ): Promise<AuditReport> {
-  // R3-5: fail closed on a missing production credential before synthesis,
-  // on the script path as well as the route path.
   if (isLiveProviderCall(generate)) {
     assertLiveProviderCredentialsConfigured();
   }
-  // Keep this invariant at the pipeline boundary as well as the HTTP route.
-  // Scripts and future callers must not be able to spend on synthesis for a
-  // partial or mixed-method evidence set.
   assertReportGenerationGate(input);
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
-  let content = normalizeReportEvidence(
-    initial.content,
-    input.observations,
-    input.brief,
-  );
+  let content = normalizeAndContainPriorities(initial.content, input, reportCalls);
   let callCount = 1;
   let retryViolations: string[] = [];
 
@@ -178,23 +199,26 @@ export async function createValidatedAuditReport(
       );
     } catch (error) {
       if (error instanceof AuditCallExecutionError) {
-        throw new ReportPipelineError(error.message, error.status, [
-          ...reportCalls,
-          ...error.telemetry,
-        ]);
+        throw new ReportPipelineError(
+          error.message,
+          error.status,
+          [...reportCalls, ...error.telemetry],
+          "REPORT_TRANSIENT_FAILURE",
+        );
       }
       if (error instanceof AuditBudgetError) {
-        throw new ReportPipelineError(error.message, error.status, reportCalls);
+        throw new ReportPipelineError(
+          error.message,
+          error.status,
+          reportCalls,
+          "REPORT_LIMIT_EXHAUSTED",
+        );
       }
       throw error;
     }
     reportCalls.push(...final.telemetry);
     callCount += 1;
-    content = normalizeReportEvidence(
-      final.content,
-      input.observations,
-      input.brief,
-    );
+    content = normalizeAndContainPriorities(final.content, input, reportCalls);
     const retryErrors = [
       ...(isIndonesian
         ? validateIndonesianReportLanguageRevision(original, content)
@@ -238,9 +262,6 @@ export async function createValidatedAuditReport(
       );
     }
   }
-  // The report route needs the exact successful synthesis calls so the
-  // immediately-following variance request can continue the same server-side
-  // budget ledger. Expose them only after the report has passed every gate.
   onSuccessTelemetry?.([...reportCalls]);
   return report;
 }

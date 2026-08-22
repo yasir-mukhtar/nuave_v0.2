@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowRight } from "@tabler/icons-react";
+import { normalizeWebsiteInput } from "@/lib/audit/website-input";
 import styles from "./audit.module.css";
 
 export default function SourceHero({
@@ -19,6 +20,7 @@ export default function SourceHero({
   exiting: boolean;
 }) {
   const [draft, setDraft] = useState(initialValue);
+  const [validationError, setValidationError] = useState("");
   const [focusGlow, setFocusGlow] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,8 +116,17 @@ export default function SourceHero({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (draft.trim()) onExtract(draft.trim());
+    const normalized = normalizeWebsiteInput(draft);
+    if (!normalized.ok) {
+      setValidationError(normalized.error);
+      return;
+    }
+    setValidationError("");
+    setDraft(normalized.url);
+    onExtract(normalized.url);
   }
+
+  const effectiveError = validationError || error;
 
   return (
     <div
@@ -149,11 +160,14 @@ export default function SourceHero({
               inputMode="url"
               className={styles.heroInput}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                setValidationError("");
+              }}
               onFocus={handleFocus}
               onBlur={handleBlur}
               placeholder=" "
-              aria-label="Situs web atau nama Instagram"
+              aria-label="Situs web resmi"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -162,14 +176,12 @@ export default function SourceHero({
 
             {!draft && !extracting && (
               <span className={styles.heroPlaceholderGroup} aria-hidden="true">
+                <span className={styles.heroPlaceholder}>example.com</span>
                 <span className={styles.heroPlaceholder}>
-                  https://example.com
+                  www.yourbrand.co.id
                 </span>
                 <span className={styles.heroPlaceholder}>
                   https://yourbrand.co.id
-                </span>
-                <span className={styles.heroPlaceholder}>
-                  @instagram_handle
                 </span>
               </span>
             )}
@@ -194,9 +206,9 @@ export default function SourceHero({
             Tekan Enter untuk melanjutkan
           </p>
 
-          {error && (
+          {effectiveError && (
             <p className={`${styles.heroHint} ${styles.heroHintError}`}>
-              {error}
+              {effectiveError}
             </p>
           )}
         </form>

@@ -14,6 +14,8 @@ import {
 import {
   INDONESIAN_QUESTION_LANGUAGE,
   INDONESIAN_QUESTION_PACK_VERSION,
+  buildDeterministicIndonesianPack,
+  classifyIndonesianQuestion,
   generateIndonesianQuestionPack,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
@@ -30,13 +32,11 @@ import { AUDIT_COST_LIMIT_USD } from "./types";
  * 2026-08-21 provider lock; direct OpenAI and Gemini remain testing-only via
  * NUAVE_LIVE_PROVIDER_TESTING=1 outside production.
  *
- * The boundary (`generateIndonesianQuestionPack`) never hard-fails: on any
- * provider or format failure it returns the deterministic Indonesian pack with
- * `source: "fallback"` and `warnings: ["fallback_used"]`. Server-side cost
- * accounting captures the HTTP response usage (the boundary's own telemetry is
- * null by contract) and records a `prompts`-stage telemetry entry against a
- * server-created budget; the client folds the returned telemetry into the
- * session budget it sends to the run/report routes.
+ * Exactly one provider attempt is made. Provider/format failures and candidate
+ * packs that fail the narrow semantic/mechanical safety contract are discarded
+ * in favor of the deterministic Indonesian fallback. The original provider
+ * telemetry and cost remain accounted. Only a broken deterministic fallback is
+ * allowed to hard-fail because that indicates a programming/contract defect.
  */
 
 const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
@@ -162,9 +162,6 @@ export async function buildLiveIndonesianPromptPack(input: {
   brief: BusinessBrief;
 }): Promise<LiveIndonesianPromptPackResult> {
   const { brief } = input;
-  // Fail closed before provider construction: alternate providers remain
-  // testing-only, while OpenCode Go must satisfy the complete protected method
-  // (credential, endpoint, model, and reasoning) before any provider work.
   const providerName = liveIndonesianQuestionProviderName();
   if (providerName === "opencodego") {
     assertOpenCodeGoProductionMethodConfigured();
@@ -186,6 +183,60 @@ export async function buildLiveIndonesianPromptPack(input: {
     generationMeta,
   });
 
+  let selectedQuestions = suggestion.questions.map((item) => ({ ...item }));
+  let selectedSource = suggestion.source;
+  const selectedWarnings = [...suggestion.warnings];
+  let semanticFallbackUsed = false;
+
+  const candidateTexts = selectedQuestions.map((item) => item.text);
+  const candidateBlockers = indonesianPackBlockers(candidateTexts, minimized);
+  const candidateIssues = validateIndonesianQuestionPack(
+    candidateTexts,
+    minimized,
+  );
+
+  if (candidateBlockers.length || candidateIssues.length) {
+    if (selectedSource === "fallback") {
+      throw new Error(
+        "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
+      );
+    }
+
+    const fallbackTexts = buildDeterministicIndonesianPack(minimized);
+    const fallbackBlockers = indonesianPackBlockers(fallbackTexts, minimized);
+    const fallbackIssues = validateIndonesianQuestionPack(
+      fallbackTexts,
+      minimized,
+    );
+    if (fallbackBlockers.length || fallbackIssues.length) {
+      throw new Error(
+        "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
+      );
+    }
+
+    selectedQuestions = selectedQuestions.map((item, index) => ({
+      ...item,
+      text: fallbackTexts[index],
+      final_classification: classifyIndonesianQuestion(
+        fallbackTexts[index],
+        minimized,
+      ),
+    }));
+    selectedSource = "fallback";
+    semanticFallbackUsed = true;
+    selectedWarnings.push("fallback_used");
+  }
+
+  const warnings = [...new Set(selectedWarnings)];
+  const unbranded = selectedQuestions.filter(
+    (item) => item.final_classification === "tanpa_menyebut_bisnis_anda",
+  ).length;
+  const classificationSummary = {
+    total: selectedQuestions.length,
+    tanpa_menyebut_bisnis_anda: unbranded,
+    menyebut_bisnis_anda: selectedQuestions.length - unbranded,
+  };
+
   const latencyMs = Date.now() - startedAt;
   const httpCall =
     captured.find((call) => call.url.includes("/v1/responses")) ??
@@ -193,8 +244,7 @@ export async function buildLiveIndonesianPromptPack(input: {
     null;
   const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
   const providerFailed =
-    (httpCall !== null && httpCall.status >= 400) ||
-    suggestion.source === "fallback";
+    (httpCall !== null && httpCall.status >= 400) || selectedSource === "fallback";
 
   const telemetry: AuditCallTelemetry = {
     stage: "prompts",
@@ -222,7 +272,9 @@ export async function buildLiveIndonesianPromptPack(input: {
       generationMeta.pricing_version ||
       INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
     failure_reason: providerFailed
-      ? "Provider question generation failed; the deterministic Indonesian fallback was used."
+      ? semanticFallbackUsed
+        ? "Provider question generation returned an unsafe candidate; the deterministic Indonesian fallback was used."
+        : "Provider question generation failed; the deterministic Indonesian fallback was used."
       : "",
     provider_status: httpCall ? String(httpCall.status) : "",
     incomplete_reason: "",
@@ -231,25 +283,10 @@ export async function buildLiveIndonesianPromptPack(input: {
   };
   budget.calls = [telemetry];
 
-  const blockers = indonesianPackBlockers(
-    suggestion.questions.map((item) => item.text),
+  const selectedBlockers = indonesianPackBlockers(
+    selectedQuestions.map((item) => item.text),
     minimized,
   );
-  if (blockers.length) {
-    throw new Error(
-      `Pertanyaan yang dihasilkan tidak aman untuk ditampilkan: ${blockers.join(" ")}`,
-    );
-  }
-  const issues = validateIndonesianQuestionPack(
-    suggestion.questions.map((item) => item.text),
-    minimized,
-  );
-  const warnings = [...suggestion.warnings];
-  if (issues.length) {
-    warnings.push(
-      `validasi: ${issues.map((issue) => issue.message).join(" ")}`,
-    );
-  }
 
   const pack: PromptPack = {
     status: "draft_for_review",
@@ -266,11 +303,10 @@ export async function buildLiveIndonesianPromptPack(input: {
     },
     summary: {
       total_prompts: 10,
-      unbranded_prompts:
-        suggestion.classification_summary.tanpa_menyebut_bisnis_anda,
-      branded_prompts: suggestion.classification_summary.menyebut_bisnis_anda,
+      unbranded_prompts: classificationSummary.tanpa_menyebut_bisnis_anda,
+      branded_prompts: classificationSummary.menyebut_bisnis_anda,
     },
-    prompts: suggestion.questions.map((item, index) => {
+    prompts: selectedQuestions.map((item, index) => {
       const labels = categoryLabels(item.suggested_category);
       return {
         prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
@@ -284,13 +320,12 @@ export async function buildLiveIndonesianPromptPack(input: {
       };
     }),
     self_check: {
-      ten_prompts: suggestion.questions.length === 10,
+      ten_prompts: selectedQuestions.length === 10,
       two_per_category: true,
       five_unbranded:
-        suggestion.classification_summary.tanpa_menyebut_bisnis_anda === 5,
-      five_branded:
-        suggestion.classification_summary.menyebut_bisnis_anda === 5,
-      no_brand_leakage: blockers.length === 0,
+        classificationSummary.tanpa_menyebut_bisnis_anda === 5,
+      five_branded: classificationSummary.menyebut_bisnis_anda === 5,
+      no_brand_leakage: selectedBlockers.length === 0,
       verified_inputs_only: true,
       verified_competitor_only: true,
       single_entity_scope: true,
@@ -303,15 +338,15 @@ export async function buildLiveIndonesianPromptPack(input: {
   return {
     pack,
     generation: {
-      source: suggestion.source,
-      warnings: suggestion.warnings,
+      source: selectedSource,
+      warnings,
       system: suggestion.generation.system,
       requested_model: suggestion.generation.requested_model || "",
       instruction_version: suggestion.generation.instruction_version,
       language: suggestion.language,
       generated_at: suggestion.generation.generated_at,
     },
-    classification_summary: suggestion.classification_summary,
+    classification_summary: classificationSummary,
     telemetry: [telemetry],
     budget,
   };

@@ -1,0 +1,68 @@
+name: Agent J Finalize Branch
+
+on:
+  push:
+    branches:
+      - fix/spec-003-live-audit-reliability
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'fix: implement Phase 3 live audit reliability'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/spec-003-live-audit-reliability
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply narrow source transforms
+        run: node scripts/agent-j-finalize.mjs
+
+      - name: Format changed sources
+        run: >-
+          npx prettier --write
+          src/app/audit/AuditWorkflow.tsx
+          src/app/audit/SourceHero.tsx
+          src/app/audit/AuditRunStep.tsx
+          src/app/audit/AuditStages.tsx
+          src/app/api/audit/extract/route.ts
+          src/app/api/audit/report/route.ts
+          src/lib/audit/website-input.ts
+          src/lib/audit/report-recovery.ts
+          src/lib/audit/questions-id-live.ts
+          src/lib/audit/report-priority.ts
+          src/lib/audit/report-pipeline.ts
+          src/lib/audit/openai.ts
+          src/lib/audit/report-pipeline.test.ts
+          src/lib/audit/live-reliability-regression.test.ts
+          src/lib/audit/website-input.test.ts
+          src/lib/audit/report-priority.test.ts
+          src/lib/audit/report-recovery.test.ts
+          src/lib/audit/report-prompt-contract.ts
+          src/lib/audit/report-prompt-contract.test.ts
+
+      - name: Verify checks and unit tests before committing
+        run: |
+          npm run check
+          npm run test:unit
+
+      - name: Commit finalized sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src scripts/agent-j-finalize.mjs
+          git reset scripts/agent-j-finalize.mjs
+          git commit -m "fix: finalize Phase 3 live audit reliability"
+          git push origin HEAD:fix/spec-003-live-audit-reliability
