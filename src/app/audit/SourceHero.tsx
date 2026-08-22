@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
-import { IconArrowRight } from "@tabler/icons-react";
-import styles from "./audit.module.css";
+import { IconArrowUp } from "@tabler/icons-react";
+import { parseSourceInput } from "@/lib/audit/source-input";
+import styles from "./SourceHero.module.css";
 
 export default function SourceHero({
   initialValue,
@@ -19,113 +20,46 @@ export default function SourceHero({
   exiting: boolean;
 }) {
   const [draft, setDraft] = useState(initialValue);
-  const [focusGlow, setFocusGlow] = useState(false);
+  const [localError, setLocalError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
-  const glowPos = useRef({ x: 0, y: 0 });
-  const targetPos = useRef({ x: 0, y: 0 });
-  const isHovering = useRef(false);
-  const rafId = useRef(0);
-  const timeRef = useRef(0);
-  const opacityRef = useRef(0.35);
-  const targetOpacity = useRef(0.35);
-
-  const getAmbientPos = useCallback((t: number, w: number, h: number) => {
-    const cx = w / 2;
-    const cy = h / 2;
-    const rx = w * 0.4;
-    const ry = h * 0.35;
-    return {
-      x: cx + Math.sin(t * 0.4) * rx,
-      y: cy + Math.cos(t * 0.6) * ry,
-    };
-  }, []);
-
-  useEffect(() => {
-    const glow = glowRef.current;
-    const container = containerRef.current;
-    if (!glow || !container) return;
-
-    let lastTime = performance.now();
-
-    const tick = (now: number) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-      const rect = container.getBoundingClientRect();
-
-      if (!isHovering.current) {
-        timeRef.current += dt;
-        const ambient = getAmbientPos(timeRef.current, rect.width, rect.height);
-        targetPos.current = ambient;
-        targetOpacity.current = 0.3 + Math.sin(timeRef.current * 1.2) * 0.1;
-      } else {
-        targetOpacity.current = 0.5;
-      }
-
-      const lerpSpeed = isHovering.current ? 0.12 : 0.025;
-      glowPos.current.x +=
-        (targetPos.current.x - glowPos.current.x) * lerpSpeed;
-      glowPos.current.y +=
-        (targetPos.current.y - glowPos.current.y) * lerpSpeed;
-
-      const opacitySpeed = isHovering.current ? 0.08 : 0.03;
-      opacityRef.current +=
-        (targetOpacity.current - opacityRef.current) * opacitySpeed;
-
-      glow.style.opacity = String(opacityRef.current);
-      glow.style.background = `radial-gradient(600px circle at ${glowPos.current.x}px ${glowPos.current.y}px, rgba(83, 58, 253, 0.12), transparent 60%)`;
-
-      rafId.current = requestAnimationFrame(tick);
-    };
-
-    rafId.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId.current);
-  }, [getAmbientPos]);
+  const parsed = useMemo(() => parseSourceInput(draft), [draft]);
+  const hasValue = Boolean(draft.trim());
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    targetPos.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
-  }, []);
+  useEffect(() => {
+    if (!draft && initialValue) setDraft(initialValue);
+  }, [draft, initialValue]);
 
-  const handleMouseEnter = useCallback(() => {
-    isHovering.current = true;
-  }, []);
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!hasValue || extracting) return;
 
-  const handleMouseLeave = useCallback(() => {
-    isHovering.current = false;
-  }, []);
+    if (!parsed) {
+      setLocalError(
+        "Masukkan link website, akun Instagram, atau Google Business Profile yang valid.",
+      );
+      inputRef.current?.focus();
+      return;
+    }
 
-  const handleFocus = useCallback(() => {
-    setFocusGlow(true);
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    setFocusGlow(false);
-  }, []);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (draft.trim()) onExtract(draft.trim());
+    setLocalError("");
+    onExtract(parsed.normalizedUrl);
   }
 
   return (
     <div
-      ref={containerRef}
       className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      <div ref={glowRef} className={styles.heroGlow} />
+      <div className={styles.signalField} aria-hidden="true">
+        <span className={styles.signalOrbOne} />
+        <span className={styles.signalOrbTwo} />
+        <span className={styles.signalOrbThree} />
+        <span className={styles.signalGrid} />
+        <span className={styles.signalRing} />
+      </div>
 
       <div className={styles.heroContent}>
         <img
@@ -138,9 +72,9 @@ export default function SourceHero({
 
         <h1 className={styles.heroHeading}>Ayo mulai audit brand Anda</h1>
 
-        <form onSubmit={handleSubmit} className={styles.heroForm}>
+        <form onSubmit={handleSubmit} className={styles.heroForm} noValidate>
           <div
-            className={`${styles.heroInputBar} ${focusGlow ? styles.heroInputBarGlow : ""} ${extracting ? styles.heroInputLoading : ""}`}
+            className={`${styles.heroInputBar} ${extracting ? styles.heroInputLoading : ""}`}
             onClick={() => inputRef.current?.focus()}
           >
             <input
@@ -149,56 +83,45 @@ export default function SourceHero({
               inputMode="url"
               className={styles.heroInput}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder=" "
-              aria-label="Situs web atau nama Instagram"
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setLocalError("");
+              }}
+              placeholder="https://bisnisanda.com"
+              aria-label="Website, akun Instagram, atau Google Business Profile"
+              aria-describedby="source-hint source-error"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
               disabled={extracting}
             />
 
-            {!draft && !extracting && (
-              <span className={styles.heroPlaceholderGroup} aria-hidden="true">
-                <span className={styles.heroPlaceholder}>
-                  https://example.com
-                </span>
-                <span className={styles.heroPlaceholder}>
-                  https://yourbrand.co.id
-                </span>
-                <span className={styles.heroPlaceholder}>
-                  @instagram_handle
-                </span>
-              </span>
-            )}
-
-            {draft && !extracting && (
-              <span className={styles.heroArrow}>
-                <IconArrowRight size={20} stroke={2} />
-              </span>
-            )}
-
-            {extracting && (
-              <span className={styles.heroLoadingContent}>
+            <button
+              type="submit"
+              className={styles.heroSubmit}
+              disabled={!hasValue || extracting}
+              aria-label="Lanjutkan audit"
+            >
+              {extracting ? (
                 <Spinner size="sm" className={styles.heroSpinner} />
-                Mengambil detail brand…
-              </span>
-            )}
+              ) : (
+                <IconArrowUp size={20} stroke={2.25} />
+              )}
+            </button>
           </div>
 
-          <p
-            className={`${styles.heroHint} ${draft || extracting ? styles.heroHintHidden : ""}`}
-          >
-            Tekan Enter untuk melanjutkan
+          <p id="source-hint" className={styles.heroHint}>
+            Masukkan URL website, akun instagram, atau Google Business Profile
+            bisnis Anda.
           </p>
 
-          {error && (
-            <p className={`${styles.heroHint} ${styles.heroHintError}`}>
-              {error}
-            </p>
-          )}
+          <p
+            id="source-error"
+            className={`${styles.heroError} ${localError || error ? styles.heroErrorVisible : ""}`}
+            role={localError || error ? "alert" : undefined}
+          >
+            {localError || error || " "}
+          </p>
         </form>
       </div>
     </div>
