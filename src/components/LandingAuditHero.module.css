@@ -3,7 +3,7 @@
 }
 
 .root > div > div[aria-hidden="true"] {
-  background-image: url("/nuave-ocean-hero.webp") !important;
+  background-image: url("/nuave-beach-hero.webp") !important;
   background-position: center top !important;
 }
 
@@ -12,6 +12,6 @@
 }
 
 :global(.lp-cta-section) {
-  background-image: url("/nuave-ocean-hero.webp") !important;
+  background-image: url("/nuave-beach-hero.webp") !important;
   background-position: center bottom !important;
 }
