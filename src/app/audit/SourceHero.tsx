@@ -54,10 +54,6 @@ export default function SourceHero({
       className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
     >
       <div className={styles.skyField} aria-hidden="true">
-        <span className={styles.cloudBankLeft} />
-        <span className={styles.cloudBankRight} />
-        <span className={styles.cloudWisp} />
-        <span className={styles.skyGlow} />
         <span className={styles.skyFade} />
       </div>
 
@@ -105,7 +101,7 @@ export default function SourceHero({
               {extracting ? (
                 <Spinner size="sm" className={styles.heroSpinner} />
               ) : (
-                <IconArrowUp size={20} stroke={2.25} />
+                <IconArrowUp size={18} stroke={2.25} />
               )}
             </button>
           </div>
