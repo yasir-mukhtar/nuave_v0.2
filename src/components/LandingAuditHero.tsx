@@ -9,6 +9,7 @@ import {
   VARIANCE_FAILURE_STORAGE_KEY,
   VARIANCE_STORAGE_KEY,
 } from "@/lib/audit/variance";
+import styles from "./LandingAuditHero.module.css";
 
 export default function LandingAuditHero() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function LandingAuditHero() {
 
   return (
     <section
-      className="landing-audit-hero"
+      className={`${styles.root} landing-audit-hero`}
       aria-label="Mulai audit visibilitas AI"
     >
       <SourceHero
