@@ -24,6 +24,7 @@
   position: relative;
   display: flex;
   min-height: 100vh;
+  min-height: 100svh;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -305,35 +306,115 @@
   opacity: 1;
 }
 
-@media (max-width: 768px) {
+/* High-resolution desktop */
+@media (min-width: 1440px) {
   .heroContent {
-    width: min(100% - 1.5rem, 38rem);
-    transform: translateY(-6vh);
+    width: min(60rem, calc(100% - 4rem));
+    transform: translateY(-4.5vh);
   }
 
   .heroLogo {
-    height: 27px;
-    margin-bottom: 1.75rem;
+    height: 32px;
+    margin-bottom: 2.5rem;
   }
 
   .heroHeading {
-    max-width: min(327px, 100%);
-    font-size: 36px;
+    max-width: 18ch;
+    font-size: 64px;
     line-height: 1em;
   }
 
   .heroSubheading {
-    max-width: min(327px, 100%);
-    margin-top: 1.5rem;
-    font-size: 19px;
-    line-height: 1.45em;
+    max-width: 600px;
+    margin-top: 1rem;
+    font-size: 20px;
   }
 
   .heroForm {
-    margin-top: 1.6rem;
+    margin-top: 2.25rem;
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .heroContent {
+    width: min(44rem, calc(100% - 3rem));
+    transform: translateY(-3vh);
+  }
+
+  .heroLogo {
+    height: 28px;
+    margin-bottom: 1.8rem;
+  }
+
+  .heroHeading {
+    max-width: 640px;
+    font-size: 48px;
+    letter-spacing: -0.024em;
+    line-height: 1.02em;
+  }
+
+  .heroSubheading {
+    max-width: 520px;
+    margin-top: 1.1rem;
+    font-size: 19px;
+    line-height: 1.42em;
+  }
+
+  .heroForm {
+    margin-top: 1.75rem;
   }
 
   .heroInputBar {
+    width: min(520px, 100%);
+  }
+
+  .skyFade {
+    inset: 44% 0 0;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .heroStage {
+    min-height: 100vh;
+    min-height: 100svh;
+    align-items: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .heroContent {
+    width: min(100% - 2rem, 36rem);
+    padding: clamp(2.25rem, 7vh, 4rem) 0 2rem;
+    transform: none;
+  }
+
+  .heroLogo {
+    height: 26px;
+    margin-bottom: 1.5rem;
+  }
+
+  .heroHeading {
+    max-width: min(520px, 100%);
+    font-size: clamp(32px, 8.25vw, 36px);
+    letter-spacing: -0.024em;
+    line-height: 1.03em;
+  }
+
+  .heroSubheading {
+    max-width: min(420px, 100%);
+    margin-top: 1.2rem;
+    font-size: clamp(17px, 4.5vw, 19px);
+    line-height: 1.4em;
+  }
+
+  .heroForm {
+    margin-top: 1.5rem;
+  }
+
+  .heroInputBar {
+    width: 100%;
     height: 52px;
     padding: 9px 9px 9px 16px;
   }
@@ -350,6 +431,7 @@
   }
 
   .heroHint {
+    max-width: 420px;
     padding: 0 0.35rem;
     font-size: 0.82rem;
   }
@@ -359,7 +441,33 @@
   }
 
   .skyFade {
-    inset: 44% 0 0;
+    inset: 48% 0 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .heroContent {
+    width: calc(100% - 1.5rem);
+    padding-top: clamp(1.75rem, 5vh, 2.75rem);
+  }
+
+  .heroLogo {
+    height: 24px;
+    margin-bottom: 1.25rem;
+  }
+
+  .heroHeading {
+    font-size: 32px;
+    line-height: 1.04em;
+  }
+
+  .heroSubheading {
+    margin-top: 1rem;
+    font-size: 17px;
+  }
+
+  .heroForm {
+    margin-top: 1.25rem;
   }
 }
 
