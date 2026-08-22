@@ -1,9 +1,7 @@
 name: Phase 3 Fail-First Regression Proof
 
 on:
-  push:
-    branches:
-      - fix/spec-003-live-audit-reliability
+  pull_request:
 
 permissions:
   contents: read
