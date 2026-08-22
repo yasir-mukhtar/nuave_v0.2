@@ -52,6 +52,14 @@ export const sourceSchema = z.object({
   title: z.string().trim().max(SOURCE_TITLE_MAX_LENGTH),
 });
 
+const optionalSourceUrl = z.union([sourceUrl, z.literal("")]);
+
+export const similarBusinessSchema = z.object({
+  name: z.string().trim().max(160).optional(),
+  source_url: optionalSourceUrl,
+  origin: z.enum(["ai", "user"]).optional(),
+});
+
 export const businessBriefSchema = z.object({
   brand_name: requiredText.max(160),
   entity_scope: requiredText.max(300),
@@ -64,10 +72,11 @@ export const businessBriefSchema = z.object({
   verified_customer_needs: z.array(requiredText.max(300)).max(12),
   verified_decision_criteria: z.array(requiredText.max(300)).max(12),
   verified_competitor: z.object({
-    name: requiredText.max(160),
-    scope: requiredText.max(300),
-    source_url: sourceUrl,
+    name: z.string().trim().max(160),
+    scope: z.string().trim().max(300),
+    source_url: optionalSourceUrl,
   }),
+  similar_businesses: z.array(similarBusinessSchema).max(5).optional(),
   brand_name_variants: z.array(requiredText.max(160)).max(12),
   priority_offering: z.string().trim().max(300),
   conversion_action: z.string().trim().max(300),
@@ -105,6 +114,7 @@ export const extractionDraftSchema = z.object({
   verified_offerings: z.array(z.string()),
   verified_customer_needs: z.array(z.string()),
   verified_decision_criteria: z.array(z.string()),
+  similar_businesses: z.array(similarBusinessSchema).max(3).optional(),
   brand_name_variants: z.array(z.string()),
   priority_offering: z.string(),
   conversion_action: z.string(),
@@ -338,6 +348,7 @@ export const reportSynthesisSchema = reportContentSchema
   });
 
 export type Source = z.infer<typeof sourceSchema>;
+export type SimilarBusiness = z.infer<typeof similarBusinessSchema>;
 export type BusinessBrief = z.infer<typeof businessBriefSchema>;
 export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;
 export type AuditPrompt = z.infer<typeof promptSchema>;

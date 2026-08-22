@@ -27,9 +27,9 @@ describe("live audit workflow session storage", () => {
     // v4 may contain direct-OpenAI observations; v5 may contain a live run from
     // a browser bundle that predates the explicit stream-contract guard. This
     // build reads only v6 so neither stale resumable state can be mixed in.
-    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v6");
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v7");
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v6");
     expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v5");
-    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v4");
     expect(AUDIT_SESSION_STORAGE_KEY).toBe("nuave.audit.session.v1");
   });
 

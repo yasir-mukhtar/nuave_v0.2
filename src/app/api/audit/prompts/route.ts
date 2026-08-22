@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { businessBriefSchema } from "@/lib/audit/types";
 import { buildLiveIndonesianPromptPack } from "@/lib/audit/questions-id-live";
+import { withPrimarySimilarBusiness } from "@/lib/audit/similar-businesses";
 
 export const runtime = "nodejs";
 
@@ -20,7 +21,9 @@ const requestSchema = z.object({
 export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
-    const result = await buildLiveIndonesianPromptPack(input);
+    const result = await buildLiveIndonesianPromptPack({
+      brief: withPrimarySimilarBusiness(input.brief),
+    });
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
