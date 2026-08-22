@@ -10,9 +10,7 @@ export type WebsiteInputNormalization =
  * fix: surrounding whitespace is trimmed, but a bare domain is not normalized.
  * The fail-first regression commit replaces this behavior in the fix commit.
  */
-export function normalizeWebsiteInput(
-  value: string,
-): WebsiteInputNormalization {
+export function normalizeWebsiteInput(value: string): WebsiteInputNormalization {
   const trimmed = value.trim();
   if (!trimmed) return { ok: false, error: INVALID_WEBSITE_INPUT_MESSAGE };
   return { ok: true, url: trimmed };

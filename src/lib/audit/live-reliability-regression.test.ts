@@ -130,7 +130,9 @@ function reportResult(content: ReportContent) {
     requested_model: "fixture-requested-model",
     returned_model: "fixture-returned-model",
     response_id: "response-founder-failure",
-    telemetry: [fixtureCallTelemetry({ response_id: "response-founder-failure" })],
+    telemetry: [
+      fixtureCallTelemetry({ response_id: "response-founder-failure" }),
+    ],
   };
 }
 
@@ -182,16 +184,17 @@ describe("founder-observed Phase 3 failures — fail-first regression pins", () 
     expect(result.generation.source).toBe("fallback");
     expect(result.generation.warnings).toContain("fallback_used");
     expect(result.pack.warnings).toContain("fallback_used");
-    expect(result.pack.prompts.map((prompt) => prompt.question).join(" ")).not.toContain(
-      "monstera",
-    );
+    expect(
+      result.pack.prompts.map((prompt) => prompt.question).join(" "),
+    ).not.toContain("monstera");
     expect(result.telemetry).toHaveLength(1);
   });
 
   it("contains one positive-only report priority instead of rejecting the whole report", async () => {
     const draft = goldenReportContent();
     draft.priorities[0].evidence_prompt_ids = [goldenPrompts[6].prompt_id];
-    const generate = vi.fn(async () => reportResult(draft)) as unknown as ReportGenerator;
+    const generate = vi.fn(async () => reportResult(draft)) as unknown as
+      | ReportGenerator;
 
     const report = await createValidatedAuditReport(reportInput, generate);
 
