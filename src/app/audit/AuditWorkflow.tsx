@@ -17,6 +17,7 @@ import {
   type PromptPack,
 } from "@/lib/audit/types";
 import { makeEvidenceExport } from "@/lib/audit/contracts";
+import { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";
 import {
   AUDIT_STAGE_CALL_LIMITS,
   summarizeAuditTelemetry,
@@ -850,6 +851,7 @@ export default function AuditWorkflow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
           brief,
           prompts: promptPack.prompts,
           safety_identifier: safetyIdentifier,

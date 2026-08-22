@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
+  AUDIT_CLIENT_CONTRACT_VERSION,
+  AUDIT_CLIENT_UPDATE_REQUIRED_CODE,
+  AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,
+  isCurrentAuditClientContract,
+} from "@/lib/audit/client-contract";
+import {
   auditBudgetSchema,
   auditObservationSchema,
   businessBriefSchema,
@@ -22,6 +28,7 @@ import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
 export const runtime = "nodejs";
 
 const requestSchema = z.object({
+  client_contract_version: z.literal(AUDIT_CLIENT_CONTRACT_VERSION),
   brief: businessBriefSchema,
   prompts: z.array(promptSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
@@ -39,8 +46,23 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const rawInput = (await request.json()) as unknown;
+    const clientContractVersion =
+      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
+        ? (rawInput as Record<string, unknown>).client_contract_version
+        : undefined;
+    if (!isCurrentAuditClientContract(clientContractVersion)) {
+      return NextResponse.json(
+        {
+          error: AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,
+          code: AUDIT_CLIENT_UPDATE_REQUIRED_CODE,
+        },
+        { status: 409 },
+      );
+    }
+
     assertLiveProviderCredentialsConfigured();
-    const input = requestSchema.parse(await request.json());
+    const input = requestSchema.parse(rawInput);
 
     // The live run path validates the LOCKED INDONESIAN question pack (Spec
     // 002/003): leakage, unsupported premises, distinctness, and executable

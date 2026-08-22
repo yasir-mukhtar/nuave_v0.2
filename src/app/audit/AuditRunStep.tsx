@@ -75,7 +75,7 @@ export default function AuditRunStep({
             </Alert.Description>
           </Alert.Content>
         </Alert>
-      ) : interrupted ? (
+      ) : interrupted && completed > 0 ? (
         <Alert status="danger">
           <Alert.Indicator />
           <Alert.Content>
