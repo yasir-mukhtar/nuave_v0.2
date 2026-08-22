@@ -317,7 +317,16 @@
   }
 
   .heroHeading {
-    font-size: clamp(2.1rem, 11vw, 3.2rem);
+    max-width: min(327px, 100%);
+    font-size: 36px;
+    line-height: 1em;
+  }
+
+  .heroSubheading {
+    max-width: min(327px, 100%);
+    margin-top: 1.5rem;
+    font-size: 19px;
+    line-height: 1.45em;
   }
 
   .heroForm {
