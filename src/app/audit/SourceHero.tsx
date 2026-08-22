@@ -20,6 +20,7 @@ export default function SourceHero({
   showLogo = true,
   autoFocus = true,
   consumeHandoff = true,
+  contentClassName = "",
 }: {
   initialValue: string;
   extracting: boolean;
@@ -29,6 +30,7 @@ export default function SourceHero({
   showLogo?: boolean;
   autoFocus?: boolean;
   consumeHandoff?: boolean;
+  contentClassName?: string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -101,7 +103,7 @@ export default function SourceHero({
         <span className={styles.skyFade} />
       </div>
 
-      <div className={styles.heroContent}>
+      <div className={`${styles.heroContent} ${contentClassName}`}>
         {showLogo ? (
           <Image
             src="/logo-nuave-horizontal.png"
