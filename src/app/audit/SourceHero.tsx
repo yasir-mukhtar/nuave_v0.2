@@ -64,7 +64,6 @@ export default function SourceHero({
       return;
     }
 
-    setDraft(handoffSource.normalizedUrl);
     const timer = window.setTimeout(() => {
       onExtract(handoffSource.normalizedUrl);
     }, 0);
