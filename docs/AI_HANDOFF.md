@@ -117,15 +117,27 @@ later launch work. Exact phase boundaries remain governed by
 Do not assume `main`, the reviewed Spec 003 branch, and the currently deployed
 release are the same commit.
 
-### Current `main`
+### Moving `main`
 
-At the time this continuity file was prepared:
+`main` is actively receiving UI/reliability work independently of the reviewed
+Spec 003 release line. During preparation of this continuity package it moved
+from:
 
 ```text
-main = 18936b9d0faed8b0dc826797f587aee85c828bfd
+18936b9d0faed8b0dc826797f587aee85c828bfd
+style(landing): apply hero boundary cleanup
 ```
 
-The commit message was `style(landing): apply hero boundary cleanup`.
+to:
+
+```text
+f1ee248dc877a56f8f45f642fa39f689fe9ea9ae
+style(hero): make source hint white with subtitle shadow
+```
+
+Treat those SHAs as a dated topology snapshot, not a permanent definition of
+`main`. A fresh agent must resolve the current remote `main` SHA before any
+release, merge, or comparison work.
 
 ### Reviewed Spec 003 release candidate
 
