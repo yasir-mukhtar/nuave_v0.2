@@ -152,7 +152,9 @@ test.describe("landing audit hero handoff", () => {
     await expect.poll(calls.extractCalls).toBe(1);
     expect(calls.requestedSource()).toBe(SOURCE);
     await expect(
-      page.getByRole("heading", { name: "Periksa fakta bisnis" }),
+      page.getByRole("heading", {
+        name: "Check the client brief before it shapes the audit.",
+      }),
     ).toBeVisible();
 
     const handoff = await page.evaluate(
@@ -181,7 +183,9 @@ test.describe("landing audit hero handoff", () => {
       await expectNoHorizontalScroll(page);
       await page.getByRole("heading", { name: /ChatGPT/ }).scrollIntoViewIfNeeded();
       await expectNoHorizontalScroll(page);
-      await page.getByRole("heading", { name: "FAQ" }).scrollIntoViewIfNeeded();
+      await page
+        .getByRole("heading", { name: "Pertanyaan umum" })
+        .scrollIntoViewIfNeeded();
       await expectNoHorizontalScroll(page);
     });
   }
