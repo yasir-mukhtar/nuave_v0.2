@@ -66,7 +66,9 @@ export default function SourceHero({
         <h1 className={styles.heroHeading}>
           Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?
         </h1>
-        <p className={styles.heroHint}>Cek brand Anda di AI sekarang</p>
+        <p className={styles.heroSubheading}>
+          Cek brand Anda di hasil pencarian AI sekarang.
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.heroForm} noValidate>
           <div
