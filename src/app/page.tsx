@@ -255,38 +255,40 @@ export default function Home() {
   const t = useTranslations();
 
   return (
-    <div className="lp-page min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="relative">
         <LandingNav overlayHero />
         <LandingAuditHero />
       </div>
 
-      <EducateSection />
-      <HowItWorks />
-      <IsilaporanSection />
-      <BatasanSection />
-      <KebijakanDataSection />
-      <FAQSection />
+      <div className="lp-page">
+        <EducateSection />
+        <HowItWorks />
+        <IsilaporanSection />
+        <BatasanSection />
+        <KebijakanDataSection />
+        <FAQSection />
 
-      <section
-        id="cta"
-        className="lp-cta-section w-full min-h-[516px] px-8 py-[144px] flex items-center justify-center relative overflow-hidden bg-cover bg-center border-t border-[#E5E7EB]"
-        style={{ backgroundImage: "url('/bg-cta.png')" }}
-      >
-        <div className="flex flex-col items-center gap-10 text-center">
-          <h2 className="lp-cta-heading m-0 max-w-[720px]">
-            {t("landing.ctaHeading")}
-          </h2>
-          <Link
-            href="/audit"
-            className="btn-lp-black inline-flex items-center px-7 py-3.5 text-white text-[14px] font-medium rounded-[8px] no-underline cursor-pointer"
-          >
-            {t("cta.auditBrandFreeNoExclaim")}
-          </Link>
-        </div>
-      </section>
+        <section
+          id="cta"
+          className="lp-cta-section w-full min-h-[516px] px-8 py-[144px] flex items-center justify-center relative overflow-hidden bg-cover bg-center border-t border-[#E5E7EB]"
+          style={{ backgroundImage: "url('/bg-cta.png')" }}
+        >
+          <div className="flex flex-col items-center gap-10 text-center">
+            <h2 className="lp-cta-heading m-0 max-w-[720px]">
+              {t("landing.ctaHeading")}
+            </h2>
+            <Link
+              href="/audit"
+              className="btn-lp-black inline-flex items-center px-7 py-3.5 text-white text-[14px] font-medium rounded-[8px] no-underline cursor-pointer"
+            >
+              {t("cta.auditBrandFreeNoExclaim")}
+            </Link>
+          </div>
+        </section>
 
-      <Footer />
+        <Footer />
+      </div>
     </div>
   );
 }
