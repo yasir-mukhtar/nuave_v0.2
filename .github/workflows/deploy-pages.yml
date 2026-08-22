@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Workers
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/spec-003-live-audit-reliability]
   workflow_dispatch:
 
 permissions:
