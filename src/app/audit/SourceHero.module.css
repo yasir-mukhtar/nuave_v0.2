@@ -31,7 +31,11 @@
   background: #ffffff;
   color: var(--foreground);
   font-family:
-    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    var(--font-inter),
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
 }
 
@@ -100,7 +104,11 @@
   margin: 0;
   color: #151821;
   font-family:
-    var(--font-geist-sans), Geist, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    var(--font-geist-sans),
+    Geist,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   font-size: clamp(2.3rem, 5vw, 4rem);
   font-weight: 600;
@@ -169,7 +177,11 @@
   background: transparent;
   color: var(--foreground);
   font-family:
-    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    var(--font-inter),
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   font-size: 1rem;
   line-height: 1.2;
@@ -234,7 +246,11 @@
   margin: 1rem 0 0;
   color: #626a74;
   font-family:
-    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    var(--font-inter),
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   font-size: 0.875rem;
   line-height: 1.55;
@@ -249,7 +265,11 @@
   margin: 0.55rem 0 0;
   color: var(--red);
   font-family:
-    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    var(--font-inter),
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   font-size: 0.8125rem;
   line-height: 1.5;
