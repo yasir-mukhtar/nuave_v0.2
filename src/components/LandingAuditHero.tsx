@@ -50,7 +50,10 @@ export default function LandingAuditHero() {
   }
 
   return (
-    <section aria-label="Mulai audit visibilitas AI">
+    <section
+      className="landing-audit-hero"
+      aria-label="Mulai audit visibilitas AI"
+    >
       <SourceHero
         initialValue=""
         extracting={navigating}
