@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   IconChevronDown,
   IconCheck,
@@ -13,163 +12,8 @@ import { cn } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import HowItWorks from "@/components/HowItWorks";
 import LandingNav from "@/components/LandingNav";
+import LandingAuditHero from "@/components/LandingAuditHero";
 import ExampleReportPreview from "@/components/ExampleReportPreview";
-
-/* ───── Hero Intake (one-question / one-input) ───── */
-function HeroSection() {
-  const t = useTranslations();
-  const router = useRouter();
-  const [value, setValue] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-
-  const trimmed = value.trim();
-  const isInstagram =
-    trimmed.includes("instagram.com") || trimmed.startsWith("@");
-  const detectionLabel = isInstagram
-    ? t("landing.intakeChipInstagram")
-    : t("landing.intakeChipWebsite");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const v = value.trim();
-    if (!v || v.length < 3) {
-      setError(t("landing.intakeInvalidHint"));
-      return;
-    }
-    // Very light validation: require dot or instagram pattern
-    if (!v.includes(".") && !v.startsWith("@")) {
-      setError(t("landing.intakeInvalidHint"));
-      return;
-    }
-    setError(null);
-    setIsScanning(true);
-    // Scan-line motif then handoff to /audit
-    const q = encodeURIComponent(v);
-    setTimeout(() => {
-      router.push(`/audit?source=${q}`);
-    }, 450);
-  };
-
-  const handleExampleClick = (example: string) => {
-    setValue(example);
-    setError(null);
-  };
-
-  return (
-    <section className="lp-root lp-hero-section relative w-full pt-[120px] px-[30px] flex justify-center overflow-hidden">
-      <div className="max-w-[720px] w-full flex flex-col items-center text-center">
-        {/* Headline — stagger 1 */}
-        <h1 className="lp-hero-heading lp-entrance lp-entrance-1 max-w-[640px] m-0">
-          {t("landing.heroHeading")}
-        </h1>
-
-        {/* Subline — stagger 2 */}
-        <p className="lp-hero-subtitle lp-entrance lp-entrance-2 max-w-[560px] text-[18px] font-normal leading-[1.7em] tracking-[-0.5px] text-[var(--lp-text-secondary)] text-center m-0 mt-4">
-          {t("landing.heroSubtitle")}
-        </p>
-
-        {/* Intake card — stagger 3 */}
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="lp-entrance lp-entrance-3 w-full mt-8 rounded-[16px] border border-[#E5E7EB] bg-white p-4 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.06)] text-left relative overflow-hidden"
-        >
-          {/* scan-line motif */}
-          {isScanning && (
-            <div
-              className="lp-scan-line absolute left-0 right-0 h-px bg-[var(--lp-purple)] pointer-events-none"
-              aria-hidden="true"
-            />
-          )}
-          <label
-            htmlFor="landing-intake"
-            className="block text-[13px] font-medium text-[#6B7280] mb-2"
-          >
-            {t("landing.intakeChipWebsite")} /{" "}
-            {t("landing.intakeChipInstagram")}
-          </label>
-          <div className="relative flex items-center">
-            <input
-              id="landing-intake"
-              type="text"
-              value={value}
-              onChange={(e) => {
-                setValue(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder={t("landing.intakePlaceholder")}
-              autoComplete="off"
-              spellCheck={false}
-              className="h-[52px] w-full rounded-[10px] border border-[#E5E7EB] bg-white pl-4 pr-[140px] text-[15px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[var(--lp-purple)] focus:ring-2 focus:ring-[rgba(83,58,253,0.15)] transition-colors"
-              aria-label={t("landing.intakePlaceholder")}
-              aria-invalid={!!error}
-              aria-describedby={
-                error ? "landing-intake-error" : "landing-intake-hint"
-              }
-            />
-            {/* detection chip inside field */}
-            <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center rounded-full bg-[#F3F4F6] border border-[#E5E7EB] px-3 py-1 text-[12px] font-medium text-[#374151]">
-              {detectionLabel}
-            </span>
-          </div>
-
-          {/* example chips */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[t("landing.intakeExample1"), t("landing.intakeExample2")].map(
-              (ex) => (
-                <button
-                  key={ex}
-                  type="button"
-                  onClick={() => handleExampleClick(ex)}
-                  className="inline-flex items-center rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-[#374151] hover:bg-white hover:border-[#D1D5DB] transition-colors cursor-pointer"
-                >
-                  {ex}
-                </button>
-              ),
-            )}
-          </div>
-
-          {/* reassurance + error */}
-          <p
-            id="landing-intake-hint"
-            className="mt-3 text-[13px] leading-[1.5] text-[#6B7280] m-0"
-          >
-            {t("landing.intakeReassurance")}
-          </p>
-          {error && (
-            <p
-              id="landing-intake-error"
-              role="alert"
-              className="mt-2 text-[13px] text-[#DC2626] m-0"
-            >
-              {error}
-            </p>
-          )}
-
-          {/* primary CTA */}
-          <button
-            type="submit"
-            disabled={isScanning}
-            className="btn-lp-purple mt-4 inline-flex w-full items-center justify-center px-[22px] py-3 text-white text-[14px] font-medium leading-[1.7em] rounded-[10px] border border-[var(--lp-border)] no-underline cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {t("cta.auditBrandFree")}
-          </button>
-        </form>
-
-        {/* secondary link to example */}
-        <Link
-          href="#contoh-laporan"
-          className="lp-entrance lp-entrance-3 mt-4 text-[14px] font-medium text-[var(--lp-text-secondary)] underline underline-offset-4 hover:text-[var(--lp-text-primary)] transition-colors"
-        >
-          {t("cta.seeExampleReport")}
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-/* ───── What you receive (Isi Laporan) ───── */
 
 function IsilaporanSection() {
   const t = useTranslations();
@@ -211,7 +55,6 @@ function IsilaporanSection() {
           ))}
         </div>
 
-        {/* Example report */}
         <div
           id="contoh-laporan"
           className="mt-16 flex flex-col items-center gap-5"
@@ -231,8 +74,6 @@ function IsilaporanSection() {
     </section>
   );
 }
-
-/* ───── Boundaries (Batasan) ───── */
 
 function BatasanSection() {
   const t = useTranslations();
@@ -270,8 +111,6 @@ function BatasanSection() {
   );
 }
 
-/* ───── Data policy (Kebijakan Data) ───── */
-
 function KebijakanDataSection() {
   const t = useTranslations();
   return (
@@ -295,8 +134,6 @@ function KebijakanDataSection() {
     </section>
   );
 }
-
-/* ───── FAQ Section ───── */
 
 function FAQSection() {
   const t = useTranslations();
@@ -354,8 +191,6 @@ function FAQSection() {
     </section>
   );
 }
-
-/* ───── Educate Section (masalah) — calm, no glow ───── */
 
 function EducateSection() {
   const t = useTranslations();
@@ -420,58 +255,44 @@ function EducateSection() {
   );
 }
 
-/* ───── Page ───── */
-
 export default function Home() {
   const t = useTranslations();
 
   return (
-    <div className="lp-page min-h-screen bg-white">
-      {/* ──── Nav + Hero ──── */}
-      <div style={{ background: "var(--lp-bg, #f7f7f5)" }}>
-        <LandingNav />
-        <HeroSection />
+    <div className="min-h-screen bg-white">
+      <div className="relative">
+        <LandingNav overlayHero />
+        <LandingAuditHero />
       </div>
 
-      {/* ──── Educate Section (masalah) ──── */}
-      <EducateSection />
+      <div className="lp-page">
+        <EducateSection />
+        <HowItWorks />
+        <IsilaporanSection />
+        <BatasanSection />
+        <KebijakanDataSection />
+        <FAQSection />
 
-      {/* ──── How it works ──── */}
-      <HowItWorks />
+        <section
+          id="cta"
+          className="lp-cta-section w-full min-h-[516px] px-8 py-[144px] flex items-center justify-center relative overflow-hidden bg-cover bg-center border-t border-[#E5E7EB]"
+          style={{ backgroundImage: "url('/bg-cta.png')" }}
+        >
+          <div className="flex flex-col items-center gap-10 text-center">
+            <h2 className="lp-cta-heading m-0 max-w-[720px]">
+              {t("landing.ctaHeading")}
+            </h2>
+            <Link
+              href="/audit"
+              className="btn-lp-black inline-flex items-center px-7 py-3.5 text-white text-[14px] font-medium rounded-[8px] no-underline cursor-pointer"
+            >
+              {t("cta.auditBrandFreeNoExclaim")}
+            </Link>
+          </div>
+        </section>
 
-      {/* ──── Isi Laporan (what you receive) ──── */}
-      <IsilaporanSection />
-
-      {/* ──── Batasan (honest boundaries) ──── */}
-      <BatasanSection />
-
-      {/* ──── Kebijakan Data ──── */}
-      <KebijakanDataSection />
-
-      {/* ──── FAQ ──── */}
-      <FAQSection />
-
-      {/* ──── Final CTA ──── */}
-      <section
-        id="cta"
-        className="lp-cta-section w-full min-h-[516px] px-8 py-[144px] flex items-center justify-center relative overflow-hidden bg-cover bg-center border-t border-[#E5E7EB]"
-        style={{ backgroundImage: "url('/bg-cta.png')" }}
-      >
-        <div className="flex flex-col items-center gap-10 text-center">
-          <h2 className="lp-cta-heading m-0 max-w-[720px]">
-            {t("landing.ctaHeading")}
-          </h2>
-          <Link
-            href="/audit"
-            className="btn-lp-black inline-flex items-center px-7 py-3.5 text-white text-[14px] font-medium rounded-[8px] no-underline cursor-pointer"
-          >
-            {t("cta.auditBrandFreeNoExclaim")}
-          </Link>
-        </div>
-      </section>
-
-      {/* ──── Footer ──── */}
-      <Footer />
+        <Footer />
+      </div>
     </div>
   );
 }

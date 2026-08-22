@@ -4,8 +4,12 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowUp } from "@tabler/icons-react";
+import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "@/lib/audit/source-handoff";
 import { parseSourceInput } from "@/lib/audit/source-input";
 import styles from "./SourceHero.module.css";
+
+const AUDIT_BUDGET_WAIT_ERROR =
+  "Tunggu pengendali biaya privat sebelum memulai audit.";
 
 export default function SourceHero({
   initialValue,
@@ -13,12 +17,18 @@ export default function SourceHero({
   error,
   onExtract,
   exiting,
+  showLogo = true,
+  autoFocus = true,
+  consumeHandoff = true,
 }: {
   initialValue: string;
   extracting: boolean;
   error: string;
   onExtract: (normalizedUrl: string) => void;
   exiting: boolean;
+  showLogo?: boolean;
+  autoFocus?: boolean;
+  consumeHandoff?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -28,8 +38,46 @@ export default function SourceHero({
   const hasValue = Boolean(value.trim());
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
+
+  useEffect(() => {
+    if (!consumeHandoff || typeof window === "undefined") return;
+
+    const handoff = window.sessionStorage.getItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+    );
+    if (!handoff) return;
+
+    const handoffSource = parseSourceInput(handoff);
+    if (!handoffSource) {
+      window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+      return;
+    }
+
+    // Once extraction really starts, consume the handoff immediately. A later
+    // provider/network failure therefore cannot replay automatically on refresh;
+    // the visible URL remains available for an explicit manual retry.
+    if (extracting) {
+      window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+      return;
+    }
+
+    // The audit workflow may mount before its server-side budget bootstrap has
+    // completed. Retry only that known non-provider state; any other error stays
+    // manual and cannot trigger a hidden repeat request.
+    if (error && error !== AUDIT_BUDGET_WAIT_ERROR) return;
+
+    // Defer the handoff-driven React updates out of the effect body. This keeps
+    // the effect focused on synchronizing session storage while preserving the
+    // submitted source in the input during the budget-readiness handoff.
+    const timer = window.setTimeout(() => {
+      setDraft((current) => current ?? handoffSource.normalizedUrl);
+      onExtract(handoffSource.normalizedUrl);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [consumeHandoff, error, extracting, onExtract]);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -54,14 +102,16 @@ export default function SourceHero({
       </div>
 
       <div className={styles.heroContent}>
-        <Image
-          src="/logo-nuave-horizontal.png"
-          className={styles.heroLogo}
-          alt="Nuave"
-          width={152}
-          height={48}
-          priority
-        />
+        {showLogo ? (
+          <Image
+            src="/logo-nuave-horizontal.png"
+            className={styles.heroLogo}
+            alt="Nuave"
+            width={152}
+            height={48}
+            priority
+          />
+        ) : null}
 
         <h1 className={styles.heroHeading}>
           Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?
