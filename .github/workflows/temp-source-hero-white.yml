@@ -1,0 +1,51 @@
+name: Temporary SourceHero white styling
+
+on:
+  push:
+    branches:
+      - style/source-hero-white-focus-logo
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: style/source-hero-white-focus-logo
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Update SourceHero CSS
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/app/audit/SourceHero.module.css')
+          text = path.read_text()
+          text = text.replace(
+              '  animation: heroFadeUp 0.5s ease forwards;\n}',
+              '  filter: brightness(0) invert(1);\n  animation: heroFadeUp 0.5s ease forwards;\n}',
+              1,
+          )
+          text = text.replace(
+              '  border-color: rgba(83, 58, 253, 0.52);\n  background: rgba(255, 255, 255, 0.98);\n  box-shadow:\n    0 20px 62px rgba(49, 88, 119, 0.16),\n    0 0 0 4px rgba(83, 58, 253, 0.08);',
+              '  border-color: rgba(255, 255, 255, 0.95);\n  background: rgba(255, 255, 255, 0.98);\n  box-shadow:\n    0 20px 62px rgba(49, 88, 119, 0.16),\n    0 0 0 4px rgba(255, 255, 255, 0.32);',
+          )
+          path.write_text(text)
+          PY
+          npx prettier --write src/app/audit/SourceHero.module.css
+      - name: Commit styling change
+        run: |
+          if git diff --quiet -- src/app/audit/SourceHero.module.css; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/app/audit/SourceHero.module.css
+          git commit -m "style(audit): use white focus and logo"
+          git push
