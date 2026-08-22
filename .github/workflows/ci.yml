@@ -1,4 +1,4 @@
-name: Sync current main into similar-businesses feature
+name: Stage current-main sync for similar-businesses
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
           ref: feature/similar-businesses-intake
           fetch-depth: 0
 
-      - name: Merge current main and preserve reviewed UI behavior
+      - name: Build resolved integration branch
         shell: bash
         run: |
           set -euo pipefail
@@ -32,4 +32,4 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore: preserve current main behavior"
           fi
-          git push origin HEAD:feature/similar-businesses-intake
+          git push --force origin HEAD:refs/heads/tmp/pr9-sync-result
