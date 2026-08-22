@@ -1,11 +1,17 @@
 name: CI
 
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   validate:
@@ -59,3 +65,77 @@ jobs:
 
       - name: Run fixture-journey browser tests
         run: npm run test:e2e
+
+  verify-main-origin:
+    name: Verify main came from merged PR
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject direct pushes to main from deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          merged_pr_number="$(
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "/repos/${GH_REPO}/commits/${COMMIT_SHA}/pulls" \
+              --jq 'map(select(.merged_at != null and .base.ref == "main")) | first | .number // empty'
+          )"
+
+          if [ -z "${merged_pr_number}" ]; then
+            echo "::error::Deployment blocked: ${COMMIT_SHA} reached main without an associated merged pull request."
+            exit 1
+          fi
+
+          echo "Main commit ${COMMIT_SHA} is associated with merged PR #${merged_pr_number}."
+
+  deploy:
+    name: Deploy to Cloudflare Workers
+    needs: [validate, verify-main-origin]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out validated commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare production build env
+        run: |
+          cat > .env.production.local <<'EOF'
+          NUAVE_PROVIDER=opencodego
+          NUAVE_QUESTION_PROVIDER=opencodego
+          OPENCODEGO_API_KEY=${{ secrets.OPENCODEGO_API_KEY }}
+          OPENAI_API_KEY=${{ secrets.OPENCODEGO_API_KEY }}
+          OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
+          OPENAI_AUDIT_MODEL=gpt-5.6-luna
+          OPENAI_AUDIT_REASONING_EFFORT=low
+          NUAVE_FIXTURE_PREVIEW_ENABLED=${{ secrets.NUAVE_FIXTURE_PREVIEW_ENABLED }}
+          NUAVE_FIXTURE_FORCE_REPORT_FAILURE=${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
+          OPENAI_AUDIT_CARRYOVER_COST_USD=${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
+          EOF
+
+      - name: Build validated OpenNext worker
+        run: npm run build:cf
+
+      - name: Deploy validated commit to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          workingDirectory: .
