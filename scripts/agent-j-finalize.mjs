@@ -61,6 +61,42 @@ replaceOrThrow(
   });`,
 );
 
+replaceOrThrow(
+  "src/lib/audit/report-priority.test.ts",
+  ").rejects.toMatchObject<Partial<ReportPipelineError>>({",
+  ").rejects.toMatchObject({",
+);
+
+replaceOrThrow(
+  "src/lib/audit/questions-id-live.ts",
+  `  const providerFailed =
+    (httpCall !== null && httpCall.status >= 400) || selectedSource === "fallback";`,
+  `  const providerFailed =
+    (httpCall !== null && httpCall.status >= 400) ||
+    (suggestion.source === "fallback" && !semanticFallbackUsed);`,
+);
+
+replaceOrThrow(
+  "src/lib/audit/questions-id-live.ts",
+  `    failure_reason: providerFailed
+      ? semanticFallbackUsed
+        ? "Provider question generation returned an unsafe candidate; the deterministic Indonesian fallback was used."
+        : "Provider question generation failed; the deterministic Indonesian fallback was used."
+      : "",`,
+  `    failure_reason: providerFailed
+      ? "Provider question generation failed; the deterministic Indonesian fallback was used."
+      : "",`,
+);
+
+replaceOrThrow(
+  "src/lib/audit/live-reliability-regression.test.ts",
+  `    expect(result.telemetry).toHaveLength(1);`,
+  `    expect(result.telemetry).toHaveLength(1);
+    expect(result.telemetry[0].status).toBe("completed");
+    expect(result.telemetry[0].accounted_cost_usd).toBeGreaterThan(0);
+    expect(result.budget.calls).toHaveLength(1);`,
+);
+
 const stagesPath = "src/app/audit/AuditStages.tsx";
 const stages = fs.readFileSync(stagesPath, "utf8");
 const runStepStart = stages.indexOf("\nexport function RunStep({");
