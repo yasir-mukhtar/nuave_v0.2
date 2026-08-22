@@ -11,7 +11,9 @@ export type ReportRecoveryState = {
   can_retry: boolean;
 };
 
-export function isReportFailureCode(value: unknown): value is ReportFailureCode {
+export function isReportFailureCode(
+  value: unknown,
+): value is ReportFailureCode {
   return REPORT_FAILURE_CODES.some((code) => code === value);
 }
 

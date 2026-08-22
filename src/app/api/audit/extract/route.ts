@@ -42,7 +42,10 @@ export async function POST(request: Request) {
     const body = (await request.json()) as unknown;
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
-        { error: "Periksa data audit yang dikirim dan coba lagi.", code: "INVALID_REQUEST" },
+        {
+          error: "Periksa data audit yang dikirim dan coba lagi.",
+          code: "INVALID_REQUEST",
+        },
         { status: 400 },
       );
     }

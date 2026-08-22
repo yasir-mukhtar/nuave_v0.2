@@ -17,11 +17,7 @@ import {
   PRODUCTION_OBSERVATION_REQUESTED_MODEL,
   PRODUCTION_OBSERVATION_SYSTEM,
 } from "./production-observation-method";
-import type {
-  AuditObservation,
-  BusinessBrief,
-  ReportContent,
-} from "./types";
+import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 
 const BRAND = "Klinik Gigi Sehat";
 
@@ -188,13 +184,17 @@ describe("founder-observed Phase 3 failures — fail-first regression pins", () 
       result.pack.prompts.map((prompt) => prompt.question).join(" "),
     ).not.toContain("monstera");
     expect(result.telemetry).toHaveLength(1);
+    expect(result.telemetry[0].status).toBe("completed");
+    expect(result.telemetry[0].accounted_cost_usd).toBeGreaterThan(0);
+    expect(result.budget.calls).toHaveLength(1);
   });
 
   it("contains one positive-only report priority instead of rejecting the whole report", async () => {
     const draft = goldenReportContent();
     draft.priorities[0].evidence_prompt_ids = [goldenPrompts[6].prompt_id];
-    const generate = vi.fn(async () => reportResult(draft)) as unknown as
-      | ReportGenerator;
+    const generate = vi.fn(async () =>
+      reportResult(draft),
+    ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(reportInput, generate);
 

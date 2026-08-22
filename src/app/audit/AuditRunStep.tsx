@@ -147,9 +147,9 @@ export default function AuditRunStep({
         {reportMissing && reportRecovery?.kind === "retryable" ? (
           <div className={`${styles.actionRow} ${styles.runRecovery}`}>
             <p>
-              Semua 10 observasi tersimpan. Pembuatan laporan mengalami
-              gangguan sementara dan masih memiliki jatah panggilan untuk satu
-              percobaan lagi.
+              Semua 10 observasi tersimpan. Pembuatan laporan mengalami gangguan
+              sementara dan masih memiliki jatah panggilan untuk satu percobaan
+              lagi.
             </p>
             <Button
               variant="primary"

@@ -1,9 +1,5 @@
 import { validateReportContent } from "./contracts";
-import type {
-  AuditObservation,
-  BusinessBrief,
-  ReportContent,
-} from "./types";
+import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 
 function observedGapError(order: number) {
   return `Priority ${order} is not tied to an observed gap.`;
@@ -49,7 +45,12 @@ export function sanitizeUnsupportedReportPriorities(
 ): ReportPrioritySanitization {
   const removedOrders: number[] = [];
   const surviving = content.priorities.filter((priority) => {
-    const supported = priorityIsSupported(priority, content, observations, brief);
+    const supported = priorityIsSupported(
+      priority,
+      content,
+      observations,
+      brief,
+    );
     if (!supported) removedOrders.push(priority.order);
     return supported;
   });

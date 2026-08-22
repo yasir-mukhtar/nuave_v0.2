@@ -163,7 +163,11 @@ export async function createValidatedAuditReport(
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
-  let content = normalizeAndContainPriorities(initial.content, input, reportCalls);
+  let content = normalizeAndContainPriorities(
+    initial.content,
+    input,
+    reportCalls,
+  );
   let callCount = 1;
   let retryViolations: string[] = [];
 

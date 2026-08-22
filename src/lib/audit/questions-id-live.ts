@@ -244,7 +244,8 @@ export async function buildLiveIndonesianPromptPack(input: {
     null;
   const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
   const providerFailed =
-    (httpCall !== null && httpCall.status >= 400) || selectedSource === "fallback";
+    (httpCall !== null && httpCall.status >= 400) ||
+    (suggestion.source === "fallback" && !semanticFallbackUsed);
 
   const telemetry: AuditCallTelemetry = {
     stage: "prompts",
@@ -272,9 +273,7 @@ export async function buildLiveIndonesianPromptPack(input: {
       generationMeta.pricing_version ||
       INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
     failure_reason: providerFailed
-      ? semanticFallbackUsed
-        ? "Provider question generation returned an unsafe candidate; the deterministic Indonesian fallback was used."
-        : "Provider question generation failed; the deterministic Indonesian fallback was used."
+      ? "Provider question generation failed; the deterministic Indonesian fallback was used."
       : "",
     provider_status: httpCall ? String(httpCall.status) : "",
     incomplete_reason: "",
@@ -322,8 +321,7 @@ export async function buildLiveIndonesianPromptPack(input: {
     self_check: {
       ten_prompts: selectedQuestions.length === 10,
       two_per_category: true,
-      five_unbranded:
-        classificationSummary.tanpa_menyebut_bisnis_anda === 5,
+      five_unbranded: classificationSummary.tanpa_menyebut_bisnis_anda === 5,
       five_branded: classificationSummary.menyebut_bisnis_anda === 5,
       no_brand_leakage: selectedBlockers.length === 0,
       verified_inputs_only: true,

@@ -204,16 +204,28 @@ describe("validated report pipeline", () => {
     ).not.toThrow();
   });
 
-  it("blocks evidence errors without a retry", async () => {
-    const invalid = goldenReportContent();
-    invalid.priorities[0].evidence_prompt_ids = [goldenPrompts[6].prompt_id];
+  it("contains an unsupported priority without a retry", async () => {
+    const draft = goldenReportContent();
+    const removedEvidenceId = goldenPrompts[6].prompt_id;
+    draft.priorities[0].evidence_prompt_ids = [removedEvidenceId];
+    const expectedSurvivors = draft.priorities
+      .slice(1)
+      .map((priority, index) => ({
+        ...priority,
+        order: index + 1,
+      }));
     const generate = vi.fn(async () =>
-      result(invalid, "response-invalid"),
+      result(draft, "response-contained"),
     ) as unknown as ReportGenerator;
 
-    await expect(
-      createValidatedAuditReport(input, generate),
-    ).rejects.toMatchObject({ status: 422, telemetry: expect.any(Array) });
+    const report = await createValidatedAuditReport(input, generate);
+
+    expect(report.priorities).toEqual(expectedSurvivors);
+    expect(
+      report.priorities.some((priority) =>
+        priority.evidence_prompt_ids.includes(removedEvidenceId),
+      ),
+    ).toBe(false);
     expect(generate).toHaveBeenCalledTimes(1);
   });
 

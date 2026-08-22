@@ -741,7 +741,10 @@ export default function AuditWorkflow() {
       if (cause instanceof AuditRequestError && cause.telemetry.length) {
         setSetupTelemetry((calls) => [...calls, ...cause.telemetry]);
       }
-      if (cause instanceof AuditRequestError && isReportFailureCode(cause.code)) {
+      if (
+        cause instanceof AuditRequestError &&
+        isReportFailureCode(cause.code)
+      ) {
         setReportFailureCode(cause.code);
       } else {
         setReportFailureCode("REPORT_TRANSIENT_FAILURE");

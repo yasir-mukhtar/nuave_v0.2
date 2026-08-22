@@ -59,7 +59,9 @@ function reportResult(content: ReportContent) {
     requested_model: "fixture-requested-model",
     returned_model: "fixture-returned-model",
     response_id: "response-priority-test",
-    telemetry: [fixtureCallTelemetry({ response_id: "response-priority-test" })],
+    telemetry: [
+      fixtureCallTelemetry({ response_id: "response-priority-test" }),
+    ],
   };
 }
 
@@ -164,7 +166,9 @@ describe("unsupported report priority containment", () => {
     draft.priorities.forEach((priority) => {
       priority.evidence_prompt_ids = [POSITIVE_ONLY_PROMPT_ID];
     });
-    const generate = vi.fn(async () => reportResult(draft)) as unknown as ReportGenerator;
+    const generate = vi.fn(async () =>
+      reportResult(draft),
+    ) as unknown as ReportGenerator;
 
     await expect(
       createValidatedAuditReport(
@@ -177,7 +181,7 @@ describe("unsupported report priority containment", () => {
         },
         generate,
       ),
-    ).rejects.toMatchObject<Partial<ReportPipelineError>>({
+    ).rejects.toMatchObject({
       code: "REPORT_INTEGRITY_FAILURE",
       status: 422,
     });

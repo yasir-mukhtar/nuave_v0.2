@@ -5,7 +5,9 @@ describe("report assessment prompt contract", () => {
   const instructions = reportAssessmentInstructions().join("\n");
 
   it("matches the validator's category-specific recommendation contract", () => {
-    expect(instructions).toContain("need_discovery, solution_discovery, or comparison");
+    expect(instructions).toContain(
+      "need_discovery, solution_discovery, or comparison",
+    );
     expect(instructions).toContain("validation or action");
     expect(instructions).toContain("recommendation may be not_assessed");
   });
@@ -25,6 +27,8 @@ describe("report assessment prompt contract", () => {
     expect(instructions).not.toContain(
       "For every COMPLETED observation all three dimensions must be assessed",
     );
-    expect(instructions).not.toContain("not_assessed is reserved for FAILED tests only");
+    expect(instructions).not.toContain(
+      "not_assessed is reserved for FAILED tests only",
+    );
   });
 });
