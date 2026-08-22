@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SourceHero, {
-  AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
-} from "@/app/audit/SourceHero";
+import SourceHero from "@/app/audit/SourceHero";
+import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "@/lib/audit/source-handoff";
 import { AUDIT_WORKFLOW_STORAGE_KEY } from "@/lib/audit/workflow-storage";
 import {
   VARIANCE_FAILURE_STORAGE_KEY,
