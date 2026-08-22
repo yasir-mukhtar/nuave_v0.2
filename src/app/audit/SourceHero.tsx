@@ -35,9 +35,15 @@ export default function SourceHero({
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const handoffInProgressRef = useRef(false);
   const value = draft ?? initialValue;
   const parsed = useMemo(() => parseSourceInput(value), [value]);
   const hasValue = Boolean(value.trim());
+  const visibleError =
+    localError ||
+    (handoffInProgressRef.current && error === AUDIT_BUDGET_WAIT_ERROR
+      ? ""
+      : error);
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus();
@@ -56,6 +62,10 @@ export default function SourceHero({
       window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
       return;
     }
+
+    // The handoff itself is a valid pending state. Track it separately so the
+    // known budget-bootstrap retry never leaks into the UI as an error.
+    handoffInProgressRef.current = true;
 
     // Once extraction really starts, consume the handoff immediately. A later
     // provider/network failure therefore cannot replay automatically on refresh;
@@ -174,10 +184,10 @@ export default function SourceHero({
 
           <p
             id="source-error"
-            className={`${styles.heroError} ${localError || error ? styles.heroErrorVisible : ""}`}
-            role={localError || error ? "alert" : undefined}
+            className={`${styles.heroError} ${visibleError ? styles.heroErrorVisible : ""}`}
+            role={visibleError ? "alert" : undefined}
           >
-            {localError || error || " "}
+            {visibleError || " "}
           </p>
         </form>
       </div>
