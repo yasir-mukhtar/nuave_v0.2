@@ -305,7 +305,7 @@
   opacity: 1;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .heroContent {
     width: min(100% - 1.5rem, 38rem);
     transform: translateY(-6vh);
