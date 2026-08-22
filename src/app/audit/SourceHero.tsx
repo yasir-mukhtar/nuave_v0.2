@@ -10,9 +10,6 @@ import styles from "./SourceHero.module.css";
 export const AUDIT_SOURCE_HANDOFF_STORAGE_KEY =
   "nuave:audit-source-handoff-v1";
 
-const AUDIT_BUDGET_WAIT_ERROR =
-  "Tunggu pengendali biaya privat sebelum memulai audit.";
-
 export default function SourceHero({
   initialValue,
   extracting,
@@ -22,6 +19,7 @@ export default function SourceHero({
   showLogo = true,
   autoFocus = true,
   consumeHandoff = true,
+  handoffReady = true,
 }: {
   initialValue: string;
   extracting: boolean;
@@ -31,6 +29,7 @@ export default function SourceHero({
   showLogo?: boolean;
   autoFocus?: boolean;
   consumeHandoff?: boolean;
+  handoffReady?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -51,25 +50,26 @@ export default function SourceHero({
     );
     if (!handoff) return;
 
-    if (extracting) {
-      window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
-      return;
-    }
-
-    if (error && error !== AUDIT_BUDGET_WAIT_ERROR) return;
-
     const handoffSource = parseSourceInput(handoff);
     if (!handoffSource) {
       window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
       return;
     }
 
+    setDraft((current) => current ?? handoffSource.normalizedUrl);
+
+    if (!handoffReady || extracting) return;
+
+    // Consume immediately before starting extraction so a provider/network
+    // failure cannot silently replay a paid request after refresh. The URL
+    // remains in the input, allowing an explicit manual retry instead.
+    window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
     const timer = window.setTimeout(() => {
       onExtract(handoffSource.normalizedUrl);
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [consumeHandoff, error, extracting, onExtract]);
+  }, [consumeHandoff, extracting, handoffReady, onExtract]);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
