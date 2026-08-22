@@ -7,18 +7,27 @@ import { IconArrowUp } from "@tabler/icons-react";
 import { parseSourceInput } from "@/lib/audit/source-input";
 import styles from "./SourceHero.module.css";
 
+export const AUDIT_SOURCE_HANDOFF_STORAGE_KEY =
+  "nuave:audit-source-handoff-v1";
+
 export default function SourceHero({
   initialValue,
   extracting,
   error,
   onExtract,
   exiting,
+  showLogo = true,
+  autoFocus = true,
+  consumeHandoff = true,
 }: {
   initialValue: string;
   extracting: boolean;
   error: string;
   onExtract: (normalizedUrl: string) => void;
   exiting: boolean;
+  showLogo?: boolean;
+  autoFocus?: boolean;
+  consumeHandoff?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -28,8 +37,35 @@ export default function SourceHero({
   const hasValue = Boolean(value.trim());
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
+
+  useEffect(() => {
+    if (!consumeHandoff || typeof window === "undefined") return;
+
+    const handoff = window.sessionStorage.getItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+    );
+    if (!handoff) return;
+
+    if (extracting) {
+      window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+      return;
+    }
+
+    const handoffSource = parseSourceInput(handoff);
+    if (!handoffSource) {
+      window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+      return;
+    }
+
+    setDraft(handoffSource.normalizedUrl);
+    const timer = window.setTimeout(() => {
+      onExtract(handoffSource.normalizedUrl);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [consumeHandoff, extracting, onExtract]);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -54,14 +90,16 @@ export default function SourceHero({
       </div>
 
       <div className={styles.heroContent}>
-        <Image
-          src="/logo-nuave-horizontal.png"
-          className={styles.heroLogo}
-          alt="Nuave"
-          width={152}
-          height={48}
-          priority
-        />
+        {showLogo ? (
+          <Image
+            src="/logo-nuave-horizontal.png"
+            className={styles.heroLogo}
+            alt="Nuave"
+            width={152}
+            height={48}
+            priority
+          />
+        ) : null}
 
         <h1 className={styles.heroHeading}>
           Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?
