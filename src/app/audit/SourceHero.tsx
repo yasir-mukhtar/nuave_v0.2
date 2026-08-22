@@ -55,9 +55,6 @@ export default function SourceHero({
       return;
     }
 
-    // Show the incoming source while the audit budget bootstrap completes.
-    setDraft((current) => current ?? handoffSource.normalizedUrl);
-
     // Once extraction really starts, consume the handoff immediately. A later
     // provider/network failure therefore cannot replay automatically on refresh;
     // the visible URL remains available for an explicit manual retry.
@@ -71,7 +68,11 @@ export default function SourceHero({
     // manual and cannot trigger a hidden repeat request.
     if (error && error !== AUDIT_BUDGET_WAIT_ERROR) return;
 
+    // Defer the handoff-driven React updates out of the effect body. This keeps
+    // the effect focused on synchronizing session storage while preserving the
+    // submitted source in the input during the budget-readiness handoff.
     const timer = window.setTimeout(() => {
+      setDraft((current) => current ?? handoffSource.normalizedUrl);
       onExtract(handoffSource.normalizedUrl);
     }, 0);
 
