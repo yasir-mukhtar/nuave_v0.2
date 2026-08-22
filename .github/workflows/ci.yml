@@ -1,4 +1,4 @@
-name: Sync latest main into similar-businesses feature
+name: Sync current main into similar-businesses feature
 
 on:
   push:
@@ -17,17 +17,19 @@ jobs:
           ref: feature/similar-businesses-intake
           fetch-depth: 0
 
-      - name: Merge reviewed main tip and clean temporary scaffolding
+      - name: Merge current main and preserve reviewed UI behavior
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
-          git merge -X ours --no-edit 9591c7ac39c6c51f92c1368cedfeb7c041c3ce25
+          git merge -X ours --no-edit origin/main
           python scripts/sync-similar-businesses-main.py
-          git checkout 786e6e29fd4c717cf14e3087b9b0e913d63e5033 -- .github/workflows/ci.yml
+          git checkout origin/main -- .github/workflows/ci.yml .github/workflows/deploy-pages.yml
           git rm scripts/sync-similar-businesses-main.py
-          git add src/app/audit/AuditWorkflow.tsx .github/workflows/ci.yml
-          git commit -m "chore: preserve latest main UI fixes"
+          git add src/app/audit/AuditWorkflow.tsx .github/workflows/ci.yml .github/workflows/deploy-pages.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: preserve current main behavior"
+          fi
           git push origin HEAD:feature/similar-businesses-intake
