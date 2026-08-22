@@ -63,15 +63,7 @@ export default function SourceHero({
           priority
         />
 
-        <h1
-          className={styles.heroHeading}
-          style={{
-            fontSize: "60px",
-            lineHeight: "60px",
-            fontWeight: 500,
-            letterSpacing: "-1.5px",
-          }}
-        >
+        <h1 className={styles.heroHeading}>
           Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?
         </h1>
         <p className={styles.heroSubheading}>
