@@ -33,6 +33,7 @@ import type {
 } from "@/lib/audit/types";
 import type { PromptRunStatus } from "@/lib/audit/stream";
 import { INDONESIAN_RUN_STATUS_LABELS } from "@/lib/audit/report-labels";
+import SimilarBusinessesEditor from "./SimilarBusinessesEditor";
 import styles from "./audit.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
@@ -476,47 +477,15 @@ export function BriefStep({
       </StageSection>
 
       <StageSection
-        id="competitor-heading"
-        title="Verified competitor"
-        description="Use one real comparison business with enough scope to avoid a name-only match."
+        id="similar-businesses-heading"
+        title="Bisnis lain yang serupa"
+        description="Opsional. Tambahkan bisnis yang serupa atau sering dibandingkan dengan bisnis Anda. Saran dari Nuave tetap dapat Anda hapus atau ubah."
       >
-        <Fieldset aria-labelledby="competitor-heading">
-          <Fieldset.Group className={styles.gridThree}>
-            <TextInput
-              label="Name"
-              required
-              value={brief.verified_competitor.name}
-              onChange={(value) =>
-                updateBrief("verified_competitor", {
-                  ...brief.verified_competitor,
-                  name: value,
-                })
-              }
-            />
-            <TextInput
-              label="Scope"
-              required
-              value={brief.verified_competitor.scope}
-              onChange={(value) =>
-                updateBrief("verified_competitor", {
-                  ...brief.verified_competitor,
-                  scope: value,
-                })
-              }
-            />
-            <TextInput
-              label="Source URL"
-              type="url"
-              required
-              value={brief.verified_competitor.source_url}
-              onChange={(value) =>
-                updateBrief("verified_competitor", {
-                  ...brief.verified_competitor,
-                  source_url: value,
-                })
-              }
-            />
-          </Fieldset.Group>
+        <Fieldset aria-labelledby="similar-businesses-heading">
+          <SimilarBusinessesEditor
+            businesses={brief.similar_businesses ?? []}
+            onChange={(value) => updateBrief("similar_businesses", value)}
+          />
         </Fieldset>
       </StageSection>
 

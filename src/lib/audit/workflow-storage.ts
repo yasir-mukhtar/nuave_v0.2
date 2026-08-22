@@ -13,7 +13,7 @@
 import type { AuditReport } from "./types";
 
 /** Bump whenever the persisted `SavedState` shape or resumable method changes. */
-export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v6";
+export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v7";
 export const AUDIT_SESSION_STORAGE_KEY = "nuave.audit.session.v1";
 
 function isCount(value: unknown): boolean {

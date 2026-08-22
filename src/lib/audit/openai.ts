@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import OpenAI from "openai";
+import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import type { ResponseCreateParamsWithTools } from "openai/lib/ResponsesParser";
 import type { Response } from "openai/resources/responses/responses";
@@ -142,6 +143,17 @@ export function structuredOutputOrThrow<T>(
   return value;
 }
 
+export const extractionModelDraftSchema = extractionDraftSchema.extend({
+  similar_businesses: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(160),
+        source_url: z.string().trim().min(1).max(2_000),
+      }),
+    )
+    .max(3),
+});
+
 type ExtractionResponseResult = Pick<
   Response,
   "status" | "incomplete_details" | "output"
@@ -197,6 +209,7 @@ export function extractionDraftOrManualFallback(
     verified_offerings: [],
     verified_customer_needs: [],
     verified_decision_criteria: [],
+    similar_businesses: [],
     brand_name_variants: [],
     priority_offering: "",
     conversion_action: "",
@@ -247,6 +260,7 @@ type ExtractionInput = {
  */
 const EXTRACTION_LENGTH_INSTRUCTIONS = [
   "Return at most eight items in any list.",
+  "Return at most three similar_businesses suggestions.",
   "Return at most twelve evidence records, covering the most material values only.",
   "Keep every evidence note to one short clause.",
 ];
@@ -278,7 +292,7 @@ function extractionRequest(
     tool_choice: "required" as const,
     include: ["web_search_call.action.sources"] as const,
     text: {
-      format: zodTextFormat(extractionDraftSchema, "nuave_business_draft"),
+      format: zodTextFormat(extractionModelDraftSchema, "nuave_business_draft"),
       verbosity: "low" as const,
     },
     input: [
@@ -286,7 +300,11 @@ function extractionRequest(
         role: "developer" as const,
         content: [
           "Extract a review draft using only public facts supported by the supplied official website.",
-          "Do not infer praise, reputation, quality, target demographics, outcomes, or competitor facts.",
+          "Do not infer praise, reputation, quality, target demographics, or outcomes.",
+          "All ordinary business facts must be supported by the official website. similar_businesses is the only exception: it is an optional suggestion list for human review, not a verified fact.",
+          "Suggest at most three genuinely comparable businesses only when you can supply a specific public website, Instagram profile, or Google Business Profile URL with high confidence from existing model knowledge. Never include the audited business itself. Never guess or fabricate a business or URL; return an empty list when uncertain.",
+          "Do not add similar_businesses items to evidence, and do not claim they were found on the official website unless the website actually supports that.",
+          "Web search remains restricted to the supplied official domain; do not imply that competitor URLs were web-verified by this extraction call.",
           "Write all explanatory text in clear, natural English. Preserve official brand names, product names, and place names as published.",
           "Leave unsupported scalar fields empty and unsupported arrays empty.",
           "For each material extracted value add an evidence record with the exact field, value, source URL, and a short note.",

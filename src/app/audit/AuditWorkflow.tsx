@@ -18,6 +18,10 @@ import {
 } from "@/lib/audit/types";
 import { makeEvidenceExport } from "@/lib/audit/contracts";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";
+import {
+  sanitizeAiSimilarBusinesses,
+  withPrimarySimilarBusiness,
+} from "@/lib/audit/similar-businesses";
 import { AUDIT_STAGE_CALL_LIMITS } from "@/lib/audit/telemetry";
 import {
   classifyReportRecovery,
@@ -93,6 +97,7 @@ const emptyBrief: BusinessBrief = {
   verified_customer_needs: [],
   verified_decision_criteria: [],
   verified_competitor: { name: "", scope: "", source_url: "" },
+  similar_businesses: [],
   brand_name_variants: [],
   priority_offering: "",
   conversion_action: "",
@@ -599,29 +604,38 @@ export default function AuditWorkflow() {
         },
       });
       const draft = result.draft;
-      setExtraction(draft);
-      setBrief((current) => ({
-        ...current,
-        brand_name: draft.brand_name || current.brand_name,
-        entity_scope: draft.entity_scope || current.entity_scope,
-        brand_type: draft.brand_type || current.brand_type,
-        category: draft.category || current.category,
-        market_context: draft.market_context || current.market_context,
-        target_customer: draft.target_customer || current.target_customer,
-        official_sources: [
-          ...new Set([resolvedUrl, ...draft.official_sources]),
-        ],
-        verified_offerings: draft.verified_offerings,
-        verified_customer_needs: draft.verified_customer_needs,
-        verified_decision_criteria: draft.verified_decision_criteria,
-        brand_name_variants: draft.brand_name_variants,
-        priority_offering: draft.priority_offering,
-        conversion_action: draft.conversion_action,
-        customer_supplied_facts: draft.customer_supplied_facts,
-        known_accuracy_questions: draft.known_accuracy_questions,
-        usp: draft.usp,
-        regulated_category_notes: draft.regulated_category_notes,
-      }));
+      const similarBusinesses = sanitizeAiSimilarBusinesses(
+        draft.similar_businesses ?? [],
+      );
+      setExtraction({
+        ...draft,
+        similar_businesses: similarBusinesses,
+      });
+      setBrief((current) =>
+        withPrimarySimilarBusiness({
+          ...current,
+          brand_name: draft.brand_name || current.brand_name,
+          entity_scope: draft.entity_scope || current.entity_scope,
+          brand_type: draft.brand_type || current.brand_type,
+          category: draft.category || current.category,
+          market_context: draft.market_context || current.market_context,
+          target_customer: draft.target_customer || current.target_customer,
+          official_sources: [
+            ...new Set([resolvedUrl, ...draft.official_sources]),
+          ],
+          verified_offerings: draft.verified_offerings,
+          verified_customer_needs: draft.verified_customer_needs,
+          verified_decision_criteria: draft.verified_decision_criteria,
+          similar_businesses: similarBusinesses,
+          brand_name_variants: draft.brand_name_variants,
+          priority_offering: draft.priority_offering,
+          conversion_action: draft.conversion_action,
+          customer_supplied_facts: draft.customer_supplied_facts,
+          known_accuracy_questions: draft.known_accuracy_questions,
+          usp: draft.usp,
+          regulated_category_notes: draft.regulated_category_notes,
+        }),
+      );
       setFactsExtracted(true);
       setFactsConfirmed(false);
       setSetupTelemetry((calls) => [...calls, ...result.telemetry]);
@@ -641,7 +655,8 @@ export default function AuditWorkflow() {
 
   async function generatePrompts() {
     setError("");
-    const validationError = friendlyBriefError(brief);
+    const preparedBrief = withPrimarySimilarBusiness(brief);
+    const validationError = friendlyBriefError(preparedBrief);
     if (validationError) {
       setError(validationError);
       return;
@@ -652,12 +667,13 @@ export default function AuditWorkflow() {
       );
       return;
     }
+    setBrief(preparedBrief);
     setBusy("prompts");
     try {
       const result = await postJson<{
         pack: PromptPack;
         telemetry?: AuditCallTelemetry[];
-      }>("/api/audit/prompts", { brief });
+      }>("/api/audit/prompts", { brief: preparedBrief });
       const pack = result.pack;
       setPromptPack(pack);
       setPromptStatuses(initialStatuses(pack, []));
