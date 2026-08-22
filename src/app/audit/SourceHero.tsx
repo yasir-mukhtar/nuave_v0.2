@@ -48,9 +48,7 @@ export default function SourceHero({
   }
 
   return (
-    <div
-      className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
-    >
+    <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
       <div className={styles.skyField} aria-hidden="true">
         <span className={styles.skyFade} />
       </div>
