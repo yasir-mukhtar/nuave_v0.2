@@ -50,6 +50,30 @@ spec is active, prepare or review the spec before broad implementation.
     path for historical comparison or evidence. Archived material is not
     authoritative or active.
 
+## Engineering guardrails
+
+For implementation work:
+
+1. Start from current `origin/main` and work on a dedicated branch. Never
+   implement directly on `main`.
+2. Before declaring a branch ready, run `npm run verify`. This is the canonical
+   offline verification gate and must not make live provider calls.
+3. Do not push known-failing changes merely to use GitHub CI as a debugger.
+4. A red required CI check means the implementation is not complete.
+5. For bug fixes, reproduce the failure and add or preserve a regression test
+   when practical before applying the smallest effective fix.
+6. Inspect the complete diff before handoff and remove temporary workflows,
+   diagnostic scripts, debug logging, bypasses, and test-only switches that are
+   not permanent protections.
+7. Do not merge, deploy, or make live provider calls unless the founder
+   explicitly authorizes that action.
+8. This private repository currently cannot use GitHub branch protection on its
+   Free plan. Direct pushes to `main` are therefore prohibited by convention.
+   CI must keep the `verify-main-origin` deployment gate: a `main` commit without
+   an associated merged pull request must fail that gate and must not deploy.
+   This fallback protects production, but it does not prevent the direct push
+   from changing the `main` branch itself.
+
 Material product decisions belong in `docs/DECISION_LOG.md`. Current status
 and the next action belong in `docs/NOW.md`. Update them only when the work
 actually changes those facts.
