@@ -1,15 +1,13 @@
 name: Agent J Live Compatibility Fix
 
 on:
-  push:
-    branches: [fix/spec-003-live-audit-reliability]
+  pull_request:
 
 permissions:
   contents: write
 
 jobs:
   finalize:
-    if: github.event.head_commit.message == 'fix: request live audit compatibility finalization'
     runs-on: ubuntu-latest
     steps:
       - name: Check out branch
@@ -17,16 +15,28 @@ jobs:
         with:
           ref: fix/spec-003-live-audit-reliability
 
+      - name: Guard finalization request
+        id: guard
+        run: |
+          if [ "$(git log -1 --pretty=%s)" = "fix: request live audit compatibility finalization" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Use Node.js 22
+        if: steps.guard.outputs.run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
+        if: steps.guard.outputs.run == 'true'
         run: npm ci
 
       - name: Apply narrow live compatibility fix
+        if: steps.guard.outputs.run == 'true'
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -38,7 +48,7 @@ jobs:
           contract_test.write_text('''import { describe, expect, it } from "vitest";\nimport {\n  AUDIT_CLIENT_CONTRACT_VERSION,\n  isCurrentAuditClientContract,\n} from "./client-contract";\n\ndescribe("live audit client contract", () => {\n  it("accepts only the current stream contract version", () => {\n    expect(isCurrentAuditClientContract(AUDIT_CLIENT_CONTRACT_VERSION)).toBe(true);\n    expect(isCurrentAuditClientContract(undefined)).toBe(false);\n    expect(isCurrentAuditClientContract("older-live-audit-stream")).toBe(false);\n  });\n});\n''')
 
           route_test = Path('src/lib/audit/run-route-client-contract.test.ts')
-          route_test.write_text('''import { beforeEach, describe, expect, it, vi } from "vitest";\nimport {\n  AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n  AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n} from "./client-contract";\n\nconst providerMocks = vi.hoisted(() => ({\n  assertLiveProviderCredentialsConfigured: vi.fn(),\n  liveExecuteAuditPrompt: vi.fn(),\n  isLiveProviderCall: vi.fn(() => false),\n}));\n\nvi.mock("@/lib/audit/provider", () => providerMocks);\n\nimport { POST } from "../../app/api/audit/run/route";\n\ndescribe("POST /api/audit/run client contract guard", () => {\n  beforeEach(() => {\n    vi.clearAllMocks();\n  });\n\n  it.each([undefined, "older-live-audit-stream"])\n    ("rejects stale client contract %s before provider setup", async (clientContractVersion) => {\n      const body = clientContractVersion\n        ? { client_contract_version: clientContractVersion }\n        : {};\n      const response = await POST(\n        new Request("https://nuave.test/api/audit/run", {\n          method: "POST",\n          headers: { "Content-Type": "application/json" },\n          body: JSON.stringify(body),\n        }),\n      );\n      const payload = (await response.json()) as { error?: string; code?: string };\n\n      expect(response.status).toBe(409);\n      expect(payload).toEqual({\n        error: AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n        code: AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n      });\n      expect(providerMocks.assertLiveProviderCredentialsConfigured).not.toHaveBeenCalled();\n      expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();\n    });\n});\n''')
+          route_test.write_text('''import { beforeEach, describe, expect, it, vi } from "vitest";\nimport {\n  AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n  AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n} from "./client-contract";\n\nconst providerMocks = vi.hoisted(() => ({\n  assertLiveProviderCredentialsConfigured: vi.fn(),\n  liveExecuteAuditPrompt: vi.fn(),\n  isLiveProviderCall: vi.fn(() => false),\n}));\n\nvi.mock("@/lib/audit/provider", () => providerMocks);\n\nimport { POST } from "../../app/api/audit/run/route";\n\ndescribe("POST /api/audit/run client contract guard", () => {\n  beforeEach(() => {\n    vi.clearAllMocks();\n  });\n\n  it.each([undefined, "older-live-audit-stream"])(\n    "rejects stale client contract %s before provider setup",\n    async (clientContractVersion) => {\n      const body = clientContractVersion\n        ? { client_contract_version: clientContractVersion }\n        : {};\n      const response = await POST(\n        new Request("https://nuave.test/api/audit/run", {\n          method: "POST",\n          headers: { "Content-Type": "application/json" },\n          body: JSON.stringify(body),\n        }),\n      );\n      const payload = (await response.json()) as { error?: string; code?: string };\n\n      expect(response.status).toBe(409);\n      expect(payload).toEqual({\n        error: AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n        code: AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n      });\n      expect(providerMocks.assertLiveProviderCredentialsConfigured).not.toHaveBeenCalled();\n      expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();\n    },\n  );\n});\n''')
 
           route = Path('src/app/api/audit/run/route.ts')
           text = route.read_text()
@@ -90,14 +100,17 @@ jobs:
           PY
 
       - name: Format changed files
+        if: steps.guard.outputs.run == 'true'
         run: npx prettier --write src/app/api/audit/run/route.ts src/app/audit/AuditWorkflow.tsx src/app/audit/AuditRunStep.tsx src/lib/audit/workflow-storage.ts src/lib/audit/client-contract.ts src/lib/audit/client-contract.test.ts src/lib/audit/run-route-client-contract.test.ts
 
       - name: Verify checks and unit tests
+        if: steps.guard.outputs.run == 'true'
         run: |
           npm run check
           npm run test:unit
 
       - name: Commit finalized source fix
+        if: steps.guard.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
