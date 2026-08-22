@@ -14,7 +14,7 @@ const inter = Inter({
 
 const gelasio = Gelasio({
   subsets: ["latin"],
-  weight: "600",
+  weight: "500",
   variable: "--font-gelasio",
   display: "swap",
 });
