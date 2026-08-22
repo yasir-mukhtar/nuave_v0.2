@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Gelasio, Inter } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -9,6 +9,13 @@ import { getLocale, getMessages } from "next-intl/server";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const gelasio = Gelasio({
+  subsets: ["latin"],
+  weight: "500",
+  variable: "--font-gelasio",
   display: "swap",
 });
 
@@ -37,7 +44,10 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${GeistSans.variable} ${inter.variable}`}>
+    <html
+      lang={locale}
+      className={`${GeistSans.variable} ${inter.variable} ${gelasio.variable}`}
+    >
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
           <SmoothScroll />
