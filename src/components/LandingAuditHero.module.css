@@ -5,3 +5,10 @@
 :global(.lp-problem-section) {
   border-top: 0 !important;
 }
+
+:global(#cta) {
+  background-image: url("/nuave-beach-hero.webp") !important;
+  background-position: center bottom !important;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
