@@ -10,6 +10,9 @@ import styles from "./SourceHero.module.css";
 export const AUDIT_SOURCE_HANDOFF_STORAGE_KEY =
   "nuave:audit-source-handoff-v1";
 
+const AUDIT_BUDGET_WAIT_ERROR =
+  "Tunggu pengendali biaya privat sebelum memulai audit.";
+
 export default function SourceHero({
   initialValue,
   extracting,
@@ -19,7 +22,6 @@ export default function SourceHero({
   showLogo = true,
   autoFocus = true,
   consumeHandoff = true,
-  handoffReady = true,
 }: {
   initialValue: string;
   extracting: boolean;
@@ -29,7 +31,6 @@ export default function SourceHero({
   showLogo?: boolean;
   autoFocus?: boolean;
   consumeHandoff?: boolean;
-  handoffReady?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -56,20 +57,28 @@ export default function SourceHero({
       return;
     }
 
+    // Show the incoming source while the audit budget bootstrap completes.
     setDraft((current) => current ?? handoffSource.normalizedUrl);
 
-    if (!handoffReady || extracting) return;
+    // Once extraction really starts, consume the handoff immediately. A later
+    // provider/network failure therefore cannot replay automatically on refresh;
+    // the visible URL remains available for an explicit manual retry.
+    if (extracting) {
+      window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+      return;
+    }
 
-    // Consume immediately before starting extraction so a provider/network
-    // failure cannot silently replay a paid request after refresh. The URL
-    // remains in the input, allowing an explicit manual retry instead.
-    window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+    // The audit workflow may mount before its server-side budget bootstrap has
+    // completed. Retry only that known non-provider state; any other error stays
+    // manual and cannot trigger a hidden repeat request.
+    if (error && error !== AUDIT_BUDGET_WAIT_ERROR) return;
+
     const timer = window.setTimeout(() => {
       onExtract(handoffSource.normalizedUrl);
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [consumeHandoff, extracting, handoffReady, onExtract]);
+  }, [consumeHandoff, error, extracting, onExtract]);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
