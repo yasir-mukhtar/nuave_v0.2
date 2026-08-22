@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { IconChevronDown, IconCheck, IconShieldLock } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconCheck,
+  IconShieldLock,
+} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import Footer from "@/components/Footer";
