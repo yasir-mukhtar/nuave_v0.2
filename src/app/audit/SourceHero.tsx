@@ -99,7 +99,11 @@ export default function SourceHero({
 
   return (
     <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
-      <div className={styles.skyField} aria-hidden="true">
+      <div
+        className={styles.skyField}
+        aria-hidden="true"
+        style={{ backgroundImage: 'url("/hero-sky.svg")' }}
+      >
         <span className={styles.skyFade} />
       </div>
 
