@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowUp } from "@tabler/icons-react";
@@ -58,12 +59,13 @@ export default function SourceHero({
       </div>
 
       <div className={styles.heroContent}>
-        <img
+        <Image
           src="/logo-nuave-horizontal.png"
           className={styles.heroLogo}
           alt="Nuave"
           width={152}
-          height={32}
+          height={48}
+          priority
         />
 
         <h1 className={styles.heroHeading}>Ayo mulai audit brand Anda</h1>
