@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { auditBudgetSchema, reportRequestSchema } from "@/lib/audit/types";
+import { z } from "zod";
+import {
+  auditObservationSchema,
+  auditBudgetSchema,
+  businessBriefSchema,
+  promptSchema,
+  type AuditCallTelemetry,
+} from "@/lib/audit/types";
 import {
   assertReportGenerationGate,
   createValidatedAuditReport,
@@ -13,22 +20,27 @@ import {
   AuditBudgetError,
   AuditCallExecutionError,
 } from "@/lib/audit/telemetry";
-import type { AuditCallTelemetry } from "@/lib/audit/types";
 
 export const runtime = "nodejs";
+
+const requestSchema = z.object({
+  brief: businessBriefSchema,
+  prompts: z.array(promptSchema).length(10),
+  observations: z.array(auditObservationSchema).length(10),
+  safety_identifier: z.string().min(8).max(64),
+  budget: auditBudgetSchema,
+});
 
 export async function POST(request: Request) {
   let successfulReportCalls: AuditCallTelemetry[] = [];
   try {
-    const input = reportRequestSchema
-      .extend({ budget: auditBudgetSchema })
-      .parse(await request.json());
+    const input = requestSchema.parse(await request.json());
     assertLiveProviderCredentialsConfigured();
     // R-19 is enforced here before synthesis and again inside the pipeline so
     // direct library/script callers cannot bypass the ten-of-ten gate.
-    assertReportGenerationGate(input);
+    assertReportGenerationGate({ ...input, language: "id" });
     const report = await createValidatedAuditReport(
-      input,
+      { ...input, language: "id" },
       liveGenerateReportContent,
       (calls) => {
         successfulReportCalls = calls;
