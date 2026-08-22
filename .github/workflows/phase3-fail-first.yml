@@ -1,0 +1,28 @@
+name: Phase 3 Fail-First Regression Proof
+
+on:
+  push:
+    branches:
+      - fix/spec-003-live-audit-reliability
+
+permissions:
+  contents: read
+
+jobs:
+  fail-first:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run founder-observed regression pins
+        run: npx vitest run src/lib/audit/live-reliability-regression.test.ts
