@@ -53,12 +53,12 @@ export default function SourceHero({
     <div
       className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
     >
-      <div className={styles.signalField} aria-hidden="true">
-        <span className={styles.signalOrbOne} />
-        <span className={styles.signalOrbTwo} />
-        <span className={styles.signalOrbThree} />
-        <span className={styles.signalGrid} />
-        <span className={styles.signalRing} />
+      <div className={styles.skyField} aria-hidden="true">
+        <span className={styles.cloudBankLeft} />
+        <span className={styles.cloudBankRight} />
+        <span className={styles.cloudWisp} />
+        <span className={styles.skyGlow} />
+        <span className={styles.skyFade} />
       </div>
 
       <div className={styles.heroContent}>
