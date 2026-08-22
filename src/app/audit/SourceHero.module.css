@@ -1,0 +1,429 @@
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.985);
+  }
+}
+
+@keyframes fieldDriftOne {
+  0%,
+  100% {
+    transform: translate3d(-4%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8%, 6%, 0) scale(1.08);
+  }
+}
+
+@keyframes fieldDriftTwo {
+  0%,
+  100% {
+    transform: translate3d(5%, 4%, 0) scale(1.02);
+  }
+  50% {
+    transform: translate3d(-8%, -5%, 0) scale(1.1);
+  }
+}
+
+@keyframes ringBreathe {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  50% {
+    opacity: 0.48;
+    transform: translate(-50%, -50%) scale(1.035);
+  }
+}
+
+.heroStage {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, #fbfbff 0%, #f9fbff 46%, #ffffff 100%);
+}
+
+.heroExiting {
+  animation: heroExit 0.38s ease forwards;
+  pointer-events: none;
+}
+
+.signalField {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.signalOrbOne,
+.signalOrbTwo,
+.signalOrbThree,
+.signalGrid,
+.signalRing {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.signalOrbOne {
+  width: min(76vw, 68rem);
+  aspect-ratio: 1.45;
+  top: 15%;
+  left: 4%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(83, 58, 253, 0.2) 0%,
+    rgba(112, 93, 255, 0.1) 38%,
+    rgba(83, 58, 253, 0) 72%
+  );
+  filter: blur(26px);
+  animation: fieldDriftOne 18s ease-in-out infinite;
+}
+
+.signalOrbTwo {
+  width: min(66vw, 58rem);
+  aspect-ratio: 1.5;
+  top: 31%;
+  right: 1%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(80, 193, 255, 0.24) 0%,
+    rgba(90, 211, 234, 0.1) 42%,
+    rgba(80, 193, 255, 0) 72%
+  );
+  filter: blur(30px);
+  animation: fieldDriftTwo 21s ease-in-out infinite;
+}
+
+.signalOrbThree {
+  width: min(54vw, 48rem);
+  aspect-ratio: 1.55;
+  left: 32%;
+  bottom: 10%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 183, 111, 0.15) 0%,
+    rgba(193, 235, 194, 0.11) 44%,
+    rgba(255, 183, 111, 0) 74%
+  );
+  filter: blur(34px);
+}
+
+.signalGrid {
+  inset: 14% 12% 9%;
+  background-image: radial-gradient(
+    circle,
+    rgba(66, 74, 105, 0.14) 0.8px,
+    transparent 0.9px
+  );
+  background-size: 24px 24px;
+  mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.68) 0%,
+    rgba(0, 0, 0, 0.28) 48%,
+    transparent 76%
+  );
+  opacity: 0.32;
+}
+
+.signalRing {
+  width: min(68vw, 58rem);
+  aspect-ratio: 1;
+  left: 50%;
+  top: 49%;
+  border: 1px solid rgba(83, 58, 253, 0.16);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 7rem rgba(83, 58, 253, 0.025),
+    0 0 0 14rem rgba(83, 58, 253, 0.018);
+  animation: ringBreathe 11s ease-in-out infinite;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(48rem, calc(100% - 2.5rem));
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-1.5vh);
+}
+
+.heroLogo {
+  width: auto;
+  height: 30px;
+  margin-bottom: 2.25rem;
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease forwards;
+}
+
+.heroHeading {
+  max-width: 17ch;
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: clamp(2.3rem, 5vw, 4rem);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 1.03;
+  text-align: center;
+  text-wrap: balance;
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0.08s forwards;
+}
+
+.heroForm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.heroInputBar {
+  position: relative;
+  display: flex;
+  width: min(42rem, 100%);
+  min-height: 66px;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid rgba(34, 34, 40, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 8px 8px 1.25rem;
+  box-shadow:
+    0 18px 60px rgba(55, 64, 104, 0.09),
+    0 2px 10px rgba(55, 64, 104, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(18px);
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0.18s forwards;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background var(--transition-base);
+}
+
+.heroInputBar:hover {
+  border-color: rgba(83, 58, 253, 0.24);
+}
+
+.heroInputBar:focus-within {
+  border-color: rgba(83, 58, 253, 0.52);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 20px 70px rgba(55, 64, 104, 0.12),
+    0 0 0 4px rgba(83, 58, 253, 0.08);
+}
+
+.heroInputLoading {
+  pointer-events: none;
+}
+
+.heroInput {
+  min-width: 0;
+  height: 48px;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.2;
+  caret-color: var(--purple);
+}
+
+.heroInput::placeholder {
+  color: #9ca0aa;
+  opacity: 1;
+}
+
+.heroInput:disabled {
+  cursor: wait;
+}
+
+.heroSubmit {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  border: 0;
+  border-radius: 16px;
+  background: #17151d;
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    opacity 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.heroSubmit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--purple);
+  box-shadow: 0 8px 20px rgba(83, 58, 253, 0.24);
+}
+
+.heroSubmit:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.heroSubmit:focus-visible {
+  outline: 3px solid rgba(83, 58, 253, 0.26);
+  outline-offset: 2px;
+}
+
+.heroSubmit:disabled {
+  background: #ececf1;
+  color: #aeb0ba;
+  cursor: default;
+  box-shadow: none;
+}
+
+.heroSubmit svg {
+  transform: rotate(45deg);
+}
+
+.heroSpinner {
+  color: currentColor;
+}
+
+.heroHint {
+  max-width: 40rem;
+  margin: 1rem 0 0;
+  color: #666b77;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  text-align: center;
+  opacity: 0;
+  animation: heroFadeUp 0.5s ease 0.32s forwards;
+}
+
+.heroError {
+  min-height: 1.3rem;
+  max-width: 40rem;
+  margin: 0.55rem 0 0;
+  color: var(--red);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.heroErrorVisible {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .heroContent {
+    width: min(100% - 1.5rem, 38rem);
+    transform: translateY(-3vh);
+  }
+
+  .heroLogo {
+    height: 27px;
+    margin-bottom: 1.75rem;
+  }
+
+  .heroHeading {
+    font-size: clamp(2.1rem, 11vw, 3.2rem);
+  }
+
+  .heroForm {
+    margin-top: 1.6rem;
+  }
+
+  .heroInputBar {
+    min-height: 62px;
+    border-radius: 20px;
+    padding-left: 1rem;
+  }
+
+  .heroInput {
+    font-size: 0.95rem;
+  }
+
+  .heroSubmit {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 15px;
+  }
+
+  .heroHint {
+    padding: 0 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .signalGrid {
+    inset: 10% 0 7%;
+    background-size: 21px 21px;
+  }
+
+  .signalRing {
+    width: 118vw;
+    top: 47%;
+  }
+
+  .signalOrbOne {
+    width: 120vw;
+    left: -44%;
+    top: 18%;
+  }
+
+  .signalOrbTwo {
+    width: 116vw;
+    right: -48%;
+    top: 38%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroExiting,
+  .heroLogo,
+  .heroHeading,
+  .heroInputBar,
+  .heroHint,
+  .signalOrbOne,
+  .signalOrbTwo,
+  .signalRing {
+    animation: none;
+  }
+
+  .heroLogo,
+  .heroHeading,
+  .heroInputBar,
+  .heroHint {
+    opacity: 1;
+  }
+}
