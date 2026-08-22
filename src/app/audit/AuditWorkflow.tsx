@@ -18,10 +18,7 @@ import {
 } from "@/lib/audit/types";
 import { makeEvidenceExport } from "@/lib/audit/contracts";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";
-import {
-  AUDIT_STAGE_CALL_LIMITS,
-  summarizeAuditTelemetry,
-} from "@/lib/audit/telemetry";
+import { AUDIT_STAGE_CALL_LIMITS } from "@/lib/audit/telemetry";
 import {
   classifyReportRecovery,
   isReportFailureCode,
@@ -1006,16 +1003,6 @@ export default function AuditWorkflow() {
     !busy &&
     !report &&
     observations.filter((item) => item.run_status === "completed").length < 10;
-  const telemetrySummary =
-    report?.operational_telemetry ??
-    summarizeAuditTelemetry(
-      [
-        ...setupTelemetry,
-        ...observations.flatMap((observation) => observation.telemetry || []),
-      ],
-      AUDIT_COST_LIMIT_USD,
-      carryoverCostUsd,
-    );
 
   return (
     <main className={styles.shell} lang="en" data-theme="light">
@@ -1079,37 +1066,13 @@ export default function AuditWorkflow() {
         </nav>
       ) : null}
 
-      {error ? (
+      {error && step > 0 ? (
         <div className={`${styles.globalAlert} ${styles.noPrint}`}>
           <Alert status="danger" role="alert">
             <Alert.Indicator />
             <Alert.Content>
               <Alert.Title>Periksa ini sebelum melanjutkan</Alert.Title>
               <Alert.Description>{error}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      ) : null}
-
-      {telemetrySummary.call_count || telemetrySummary.carryover_cost_usd ? (
-        <div className={`${styles.globalAlert} ${styles.noPrint}`}>
-          <Alert status="default">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Kendali biaya sesi privat</Alert.Title>
-              <Alert.Description>
-                {telemetrySummary.call_count} panggilan API · USD{" "}
-                {telemetrySummary.accounted_cost_usd.toFixed(4)} tercatat dari
-                USD {telemetrySummary.cost_limit_usd.toFixed(2)}
-                {` · sisa USD ${Math.max(
-                  0,
-                  telemetrySummary.cost_limit_usd -
-                    telemetrySummary.accounted_cost_usd,
-                ).toFixed(4)}`}
-                {telemetrySummary.carryover_cost_usd
-                  ? ` · USD ${telemetrySummary.carryover_cost_usd.toFixed(4)} dibawa dari sesi sebelumnya`
-                  : ""}
-              </Alert.Description>
             </Alert.Content>
           </Alert>
         </div>
