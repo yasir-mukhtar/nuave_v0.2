@@ -20,38 +20,6 @@
   }
 }
 
-@keyframes cloudDriftLeft {
-  0%,
-  100% {
-    transform: translate3d(-2%, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(4%, 1.5%, 0) scale(1.025);
-  }
-}
-
-@keyframes cloudDriftRight {
-  0%,
-  100% {
-    transform: translate3d(2%, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(-4%, 1%, 0) scale(1.02);
-  }
-}
-
-@keyframes wispDrift {
-  0%,
-  100% {
-    transform: translate3d(-3%, 0, 0);
-    opacity: 0.58;
-  }
-  50% {
-    transform: translate3d(5%, -1%, 0);
-    opacity: 0.78;
-  }
-}
-
 .heroStage {
   position: relative;
   display: flex;
@@ -77,173 +45,35 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  background:
-    linear-gradient(
-      180deg,
-      #46a8ed 0%,
-      #63b7ee 18%,
-      #80c8f3 36%,
-      #acdff7 50%,
-      #dff3fb 60%,
-      #ffffff 77%,
-      #ffffff 100%
-    );
+  background-image: url("https://blume.codes/images/hero/fireflower/ff-0-sky-valley-new-standard-2x.webp");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .skyField::before {
   position: absolute;
   inset: 0;
   content: "";
-  background:
-    radial-gradient(
-      ellipse at 52% 7%,
-      rgba(255, 255, 255, 0.24) 0%,
-      rgba(255, 255, 255, 0.08) 34%,
-      transparent 62%
-    ),
-    linear-gradient(
-      90deg,
-      rgba(38, 139, 218, 0.1),
-      transparent 28%,
-      rgba(255, 255, 255, 0.08) 58%,
-      rgba(31, 126, 208, 0.08)
-    );
-  mix-blend-mode: soft-light;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    rgba(255, 255, 255, 0.08),
+    transparent 42%
+  );
 }
 
-.cloudBankLeft,
-.cloudBankRight,
-.cloudWisp,
-.skyGlow,
 .skyFade {
   position: absolute;
-  display: block;
-  pointer-events: none;
-}
-
-.cloudBankLeft {
-  width: 76vw;
-  height: 37vw;
-  min-width: 58rem;
-  min-height: 28rem;
-  top: 2%;
-  left: -27%;
-  background:
-    radial-gradient(
-      ellipse at 20% 48%,
-      rgba(255, 255, 255, 0.96) 0 14%,
-      rgba(255, 255, 255, 0.72) 24%,
-      transparent 48%
-    ),
-    radial-gradient(
-      ellipse at 44% 30%,
-      rgba(255, 255, 255, 0.92) 0 13%,
-      rgba(255, 255, 255, 0.62) 25%,
-      transparent 48%
-    ),
-    radial-gradient(
-      ellipse at 61% 57%,
-      rgba(255, 255, 255, 0.84) 0 11%,
-      rgba(255, 255, 255, 0.48) 25%,
-      transparent 49%
-    ),
-    radial-gradient(
-      ellipse at 79% 37%,
-      rgba(255, 255, 255, 0.72) 0 10%,
-      rgba(255, 255, 255, 0.34) 25%,
-      transparent 50%
-    );
-  filter: blur(10px);
-  opacity: 0.9;
-  animation: cloudDriftLeft 24s ease-in-out infinite;
-}
-
-.cloudBankRight {
-  width: 70vw;
-  height: 36vw;
-  min-width: 54rem;
-  min-height: 27rem;
-  top: 12%;
-  right: -28%;
-  background:
-    radial-gradient(
-      ellipse at 22% 43%,
-      rgba(255, 255, 255, 0.76) 0 10%,
-      rgba(255, 255, 255, 0.38) 24%,
-      transparent 49%
-    ),
-    radial-gradient(
-      ellipse at 42% 31%,
-      rgba(255, 255, 255, 0.94) 0 13%,
-      rgba(255, 255, 255, 0.58) 26%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at 65% 54%,
-      rgba(255, 255, 255, 0.92) 0 15%,
-      rgba(255, 255, 255, 0.52) 27%,
-      transparent 52%
-    ),
-    radial-gradient(
-      ellipse at 83% 28%,
-      rgba(255, 255, 255, 0.72) 0 10%,
-      rgba(255, 255, 255, 0.3) 25%,
-      transparent 50%
-    );
-  filter: blur(11px);
-  opacity: 0.86;
-  animation: cloudDriftRight 27s ease-in-out infinite;
-}
-
-.cloudWisp {
-  width: 56vw;
-  height: 16vw;
-  min-width: 42rem;
-  min-height: 12rem;
-  top: 18%;
-  left: 25%;
-  background:
-    radial-gradient(
-      ellipse at 28% 55%,
-      rgba(255, 255, 255, 0.4) 0 8%,
-      rgba(255, 255, 255, 0.18) 27%,
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse at 67% 44%,
-      rgba(255, 255, 255, 0.34) 0 7%,
-      rgba(255, 255, 255, 0.14) 28%,
-      transparent 58%
-    );
-  filter: blur(8px);
-  animation: wispDrift 21s ease-in-out infinite;
-}
-
-.skyGlow {
-  width: min(64vw, 62rem);
-  aspect-ratio: 2.1;
-  left: 50%;
-  top: 31%;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse,
-    rgba(230, 249, 255, 0.52) 0%,
-    rgba(212, 244, 255, 0.24) 42%,
-    transparent 72%
-  );
-  filter: blur(18px);
-}
-
-.skyFade {
   inset: 42% 0 0;
+  display: block;
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.18) 14%,
-    rgba(255, 255, 255, 0.72) 42%,
-    rgba(255, 255, 255, 0.96) 64%,
-    #ffffff 82%
+    rgba(255, 255, 255, 0.12) 14%,
+    rgba(255, 255, 255, 0.55) 42%,
+    rgba(255, 255, 255, 0.86) 64%,
+    #ffffff 82%,
+    #ffffff 100%
   );
 }
 
@@ -296,11 +126,11 @@
   width: min(42rem, 100%);
   min-height: 66px;
   align-items: center;
-  gap: 0.75rem;
+  gap: 6px;
   border: 1px solid rgba(27, 40, 56, 0.12);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.94);
-  padding: 8px 8px 8px 1.25rem;
+  padding: 16px;
   box-shadow:
     0 18px 55px rgba(50, 92, 126, 0.14),
     0 3px 12px rgba(43, 75, 102, 0.055),
@@ -332,7 +162,7 @@
 
 .heroInput {
   min-width: 0;
-  height: 48px;
+  height: 32px;
   flex: 1;
   border: 0;
   outline: 0;
@@ -357,12 +187,12 @@
 
 .heroSubmit {
   display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
   border: 0;
-  border-radius: 16px;
+  border-radius: 6px;
   background: #17151d;
   color: #ffffff;
   cursor: pointer;
@@ -376,7 +206,7 @@
 .heroSubmit:hover:not(:disabled) {
   transform: translateY(-1px);
   background: var(--purple);
-  box-shadow: 0 8px 20px rgba(83, 58, 253, 0.24);
+  box-shadow: 0 6px 16px rgba(83, 58, 253, 0.22);
 }
 
 .heroSubmit:active:not(:disabled) {
@@ -452,20 +282,19 @@
   }
 
   .heroInputBar {
-    min-height: 62px;
-    border-radius: 20px;
-    padding-left: 1rem;
+    min-height: 66px;
+    padding: 16px;
   }
 
   .heroInput {
+    height: 32px;
     font-size: 0.95rem;
   }
 
   .heroSubmit {
-    width: 46px;
-    height: 46px;
-    flex-basis: 46px;
-    border-radius: 15px;
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 
   .heroHint {
@@ -474,43 +303,7 @@
   }
 
   .skyField {
-    background:
-      linear-gradient(
-        180deg,
-        #49aaed 0%,
-        #69bcef 25%,
-        #94d2f4 42%,
-        #d5eef9 56%,
-        #ffffff 76%,
-        #ffffff 100%
-      );
-  }
-
-  .cloudBankLeft {
-    width: 148vw;
-    min-width: 0;
-    height: 66vw;
-    min-height: 0;
-    top: 6%;
-    left: -76%;
-  }
-
-  .cloudBankRight {
-    width: 145vw;
-    min-width: 0;
-    height: 70vw;
-    min-height: 0;
-    top: 20%;
-    right: -78%;
-  }
-
-  .cloudWisp {
-    width: 125vw;
-    min-width: 0;
-    height: 38vw;
-    min-height: 0;
-    top: 25%;
-    left: -13%;
+    background-position: center top;
   }
 
   .skyFade {
@@ -523,10 +316,7 @@
   .heroLogo,
   .heroHeading,
   .heroInputBar,
-  .heroHint,
-  .cloudBankLeft,
-  .cloudBankRight,
-  .cloudWisp {
+  .heroHint {
     animation: none;
   }
 
