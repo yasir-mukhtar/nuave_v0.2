@@ -177,11 +177,14 @@ test.describe("landing audit hero handoff", () => {
     }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto("/");
-      await expect(
-        page.getByRole("region", { name: "Mulai audit visibilitas AI" }),
-      ).toBeVisible();
+      const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+      await expect(hero).toBeVisible();
       await expectNoHorizontalScroll(page);
-      await page.getByRole("heading", { name: /ChatGPT/ }).scrollIntoViewIfNeeded();
+      await hero
+        .getByRole("heading", {
+          name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
+        })
+        .scrollIntoViewIfNeeded();
       await expectNoHorizontalScroll(page);
       await page
         .getByRole("heading", { name: "Pertanyaan umum" })
