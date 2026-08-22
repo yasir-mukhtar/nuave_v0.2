@@ -20,19 +20,16 @@ export default function SourceHero({
   onExtract: (normalizedUrl: string) => void;
   exiting: boolean;
 }) {
-  const [draft, setDraft] = useState(initialValue);
+  const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const parsed = useMemo(() => parseSourceInput(draft), [draft]);
-  const hasValue = Boolean(draft.trim());
+  const value = draft ?? initialValue;
+  const parsed = useMemo(() => parseSourceInput(value), [value]);
+  const hasValue = Boolean(value.trim());
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
-  useEffect(() => {
-    if (!draft && initialValue) setDraft(initialValue);
-  }, [draft, initialValue]);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -80,7 +77,7 @@ export default function SourceHero({
               type="text"
               inputMode="url"
               className={styles.heroInput}
-              value={draft}
+              value={value}
               onChange={(event) => {
                 setDraft(event.target.value);
                 setLocalError("");
