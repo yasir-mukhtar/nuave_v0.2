@@ -34,6 +34,31 @@ jobs:
           Path('/tmp/implement_similar_businesses.py').write_text(script)
           PY
           python /tmp/implement_similar_businesses.py
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/lib/audit/types.ts')
+          text = path.read_text()
+          old = '''  verified_decision_criteria: z.array(z.string()),
+            brand_name_variants: z.array(z.string()),'''
+          new = '''  verified_decision_criteria: z.array(z.string()),
+            similar_businesses: z.array(similarBusinessSchema).max(3).optional(),
+            brand_name_variants: z.array(z.string()),'''
+          if text.count(old) != 1:
+              raise SystemExit('Could not add similar_businesses to extractionDraftSchema')
+          text = text.replace(old, new, 1)
+          old_type = '''export type ExtractionDraft = z.infer<typeof extractionDraftSchema> & {
+            similar_businesses?: SimilarBusiness[];
+          };'''
+          if text.count(old_type) != 1:
+              raise SystemExit('Could not simplify ExtractionDraft type')
+          text = text.replace(
+              old_type,
+              'export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;',
+              1,
+          )
+          path.write_text(text)
+          PY
 
       - name: Use Node.js 22
         uses: actions/setup-node@v4
