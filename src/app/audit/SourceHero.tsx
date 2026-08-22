@@ -10,6 +10,9 @@ import styles from "./SourceHero.module.css";
 export const AUDIT_SOURCE_HANDOFF_STORAGE_KEY =
   "nuave:audit-source-handoff-v1";
 
+const AUDIT_BUDGET_WAIT_ERROR =
+  "Tunggu pengendali biaya privat sebelum memulai audit.";
+
 export default function SourceHero({
   initialValue,
   extracting,
@@ -53,6 +56,8 @@ export default function SourceHero({
       return;
     }
 
+    if (error && error !== AUDIT_BUDGET_WAIT_ERROR) return;
+
     const handoffSource = parseSourceInput(handoff);
     if (!handoffSource) {
       window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
@@ -65,7 +70,7 @@ export default function SourceHero({
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [consumeHandoff, extracting, onExtract]);
+  }, [consumeHandoff, error, extracting, onExtract]);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
