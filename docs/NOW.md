@@ -52,12 +52,12 @@ E2E         36/36
 PR #3 (`spec-003-finish-live-quality-gate`) is currently **closed and
 unmerged**. Its reviewed head remains the SHA above.
 
-Current `main` is on a separate line of development. At the time this document
-was refreshed:
-
-```text
-main = 18936b9d0faed8b0dc826797f587aee85c828bfd
-```
+Current `main` is on a separate, actively moving line of development. During
+this documentation refresh it advanced from
+`18936b9d0faed8b0dc826797f587aee85c828bfd` to
+`f1ee248dc877a56f8f45f642fa39f689fe9ea9ae` through landing/hero style work.
+A fresh agent must resolve the remote `main` SHA again before release or merge
+work; these SHAs are a dated snapshot, not a permanent definition of `main`.
 
 The reviewed Spec 003 release branch and current `main` have diverged. Do not
 assume that `main` is identical to the deployed founder-run release.
