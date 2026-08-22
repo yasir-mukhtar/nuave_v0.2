@@ -5,13 +5,17 @@ import {
   auditBudgetSchema,
   businessBriefSchema,
   promptSchema,
+  type AuditCallTelemetry,
 } from "@/lib/audit/types";
 import {
-  ReportPipelineError,
   assertReportGenerationGate,
   createValidatedAuditReport,
+  ReportPipelineError,
 } from "@/lib/audit/report-pipeline";
-import { assertLiveProviderCredentialsConfigured } from "@/lib/audit/provider";
+import {
+  assertLiveProviderCredentialsConfigured,
+  liveGenerateReportContent,
+} from "@/lib/audit/provider";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
@@ -28,37 +32,69 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let successfulReportCalls: AuditCallTelemetry[] = [];
   try {
-    assertLiveProviderCredentialsConfigured();
     const input = requestSchema.parse(await request.json());
-    // Spec 003 R-19: the ten-of-ten gate runs BEFORE any provider call — no
-    // report synthesis begins unless all ten unique locked prompts have one
-    // evaluable, structurally valid observation. No partial report exists.
-    assertReportGenerationGate(input);
+    assertLiveProviderCredentialsConfigured();
+    // R-19 is enforced here before synthesis and again inside the pipeline so
+    // direct library/script callers cannot bypass the ten-of-ten gate.
+    assertReportGenerationGate({ ...input, language: "id" });
+    const report = await createValidatedAuditReport(
+      { ...input, language: "id" },
+      liveGenerateReportContent,
+      (calls) => {
+        successfulReportCalls = calls;
+      },
+    );
     return NextResponse.json({
-      report: await createValidatedAuditReport({ ...input, language: "id" }),
+      report,
+      // The real /audit client carries this exact server-produced report
+      // telemetry into the immediately following variance request. It is not
+      // trusted for method assertions, but it preserves the same-session cost
+      // ledger without rerunning completed observations.
+      telemetry: successfulReportCalls,
     });
   } catch (error) {
+    if (error instanceof ReportPipelineError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+          telemetry: error.telemetry,
+        },
+        { status: error.status },
+      );
+    }
+    if (error instanceof AuditCallExecutionError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: "REPORT_TRANSIENT_FAILURE",
+          telemetry: error.telemetry,
+        },
+        { status: error.status },
+      );
+    }
+    if (error instanceof AuditBudgetError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: "REPORT_LIMIT_EXHAUSTED",
+          telemetry: [],
+        },
+        { status: error.status },
+      );
+    }
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "We couldn't create the report.",
-        telemetry:
-          error instanceof ReportPipelineError ||
-          error instanceof AuditCallExecutionError
-            ? error.telemetry
-            : [],
+            : "Kami tidak dapat membuat laporan audit.",
+        code: "REPORT_INTEGRITY_FAILURE",
+        telemetry: [],
       },
-      {
-        status:
-          error instanceof ReportPipelineError ||
-          error instanceof AuditBudgetError ||
-          error instanceof AuditCallExecutionError
-            ? error.status
-            : 400,
-      },
+      { status: 400 },
     );
   }
 }

@@ -5,7 +5,7 @@ import type {
   PromptPack,
 } from "./types";
 import {
-  INDONESIAN_QUESTION_OPENAI_PRICING_VERSION,
+  INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
   createIndonesianQuestionProvider,
   indonesianQuestionGenerationMeta,
   liveIndonesianQuestionProviderName,
@@ -14,31 +14,31 @@ import {
 import {
   INDONESIAN_QUESTION_LANGUAGE,
   INDONESIAN_QUESTION_PACK_VERSION,
+  buildDeterministicIndonesianPack,
+  classifyIndonesianQuestion,
   generateIndonesianQuestionPack,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
 } from "./questions-id";
+import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
 
 /**
  * Live Indonesian question generation for the protected `/api/audit/prompts`
- * route (Spec 003 work package A boundary). The route NEVER makes the provider
- * selection: the provider name is resolved server-side, fail-closed to OpenAI
- * (gpt-5.6-luna) per the founder-approved provider lock (DECISION_LOG
- * 2026-08-17); Gemini remains testing-only via NUAVE_LIVE_PROVIDER_TESTING=1.
+ * route (Spec 003 work package A boundary). Provider selection is server-side
+ * and fails closed to OpenCode Go serving GPT-5.6 Luna per the founder-approved
+ * 2026-08-21 provider lock; direct OpenAI and Gemini remain testing-only via
+ * NUAVE_LIVE_PROVIDER_TESTING=1 outside production.
  *
- * The boundary (`generateIndonesianQuestionPack`) never hard-fails: on any
- * provider or format failure it returns the deterministic Indonesian pack with
- * `source: "fallback"` and `warnings: ["fallback_used"]`. Server-side cost
- * accounting captures the HTTP response usage (the boundary's own telemetry is
- * null by contract) and records a `prompts`-stage telemetry entry against a
- * server-created budget; the client folds the returned telemetry into the
- * session budget it sends to the run/report routes.
+ * Exactly one provider attempt is made. Provider/format failures and candidate
+ * packs that fail the narrow semantic/mechanical safety contract are discarded
+ * in favor of the deterministic Indonesian fallback. The original provider
+ * telemetry and cost remain accounted. Only a broken deterministic fallback is
+ * allowed to hard-fail because that indicates a programming/contract defect.
  */
 
-/** Per-category Indonesian roles/rationales for the converted pack items. */
 const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
   need_discovery: {
     role: "Memahami kebutuhan pelanggan",
@@ -77,9 +77,6 @@ type CapturedCall = {
   body: unknown;
 };
 
-/** Wraps fetch so the HTTP response JSON (and its usage) is retained for
- * server-side cost accounting; the provider still consumes the original
- * response via `res.json()` on the clone-safe original. */
 function capturingFetch(calls: CapturedCall[]): IndonesianFetch {
   const original = globalThis.fetch.bind(globalThis);
   const wrapped: IndonesianFetch = async (input, init) => {
@@ -100,7 +97,7 @@ function capturingFetch(calls: CapturedCall[]): IndonesianFetch {
   return wrapped;
 }
 
-function extractOpenAIUsage(body: unknown): {
+function extractResponsesUsage(body: unknown): {
   input_tokens: number;
   output_tokens: number;
   total_tokens: number;
@@ -122,10 +119,12 @@ function extractOpenAIUsage(body: unknown): {
   };
 }
 
-/** Notional accounted cost from real usage at official OpenAI short-context
- * pricing (repo `AUDIT_PRICING_VERSION "openai-standard-2026-08-01"`): input
- * USD 0.20 / 1M, output USD 1.20 / 1M. The question writer performs no web
- * search. */
+/**
+ * Conservative notional accounting from provider-reported token usage using
+ * the repository's Luna pricing basis. The question writer performs no web
+ * search. This preserves the existing USD 5 safety ledger even when OpenCode
+ * Go's commercial billing is not token-identical to direct OpenAI pricing.
+ */
 function accountedCostUsd(usage: {
   input_tokens: number;
   output_tokens: number;
@@ -163,14 +162,12 @@ export async function buildLiveIndonesianPromptPack(input: {
   brief: BusinessBrief;
 }): Promise<LiveIndonesianPromptPackResult> {
   const { brief } = input;
-  // Fail-closed provider selection (R-36): the client cannot select the
-  // provider; a testing-only NUAVE_QUESTION_PROVIDER throws here unless
-  // NUAVE_LIVE_PROVIDER_TESTING=1 is explicitly set.
-  liveIndonesianQuestionProviderName();
+  const providerName = liveIndonesianQuestionProviderName();
+  if (providerName === "opencodego") {
+    assertOpenCodeGoProductionMethodConfigured();
+  }
   const minimized = minimizeIndonesianBrief(brief);
 
-  // Server-created budget: the client cannot raise the limit, lower the
-  // carryover, or select the provider (R-36).
   const budget: AuditBudget = {
     limit_usd: AUDIT_COST_LIMIT_USD,
     carryover_cost_usd: configuredAuditCarryoverCostUsd(),
@@ -186,15 +183,69 @@ export async function buildLiveIndonesianPromptPack(input: {
     generationMeta,
   });
 
+  let selectedQuestions = suggestion.questions.map((item) => ({ ...item }));
+  let selectedSource = suggestion.source;
+  const selectedWarnings = [...suggestion.warnings];
+  let semanticFallbackUsed = false;
+
+  const candidateTexts = selectedQuestions.map((item) => item.text);
+  const candidateBlockers = indonesianPackBlockers(candidateTexts, minimized);
+  const candidateIssues = validateIndonesianQuestionPack(
+    candidateTexts,
+    minimized,
+  );
+
+  if (candidateBlockers.length || candidateIssues.length) {
+    if (selectedSource === "fallback") {
+      throw new Error(
+        "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
+      );
+    }
+
+    const fallbackTexts = buildDeterministicIndonesianPack(minimized);
+    const fallbackBlockers = indonesianPackBlockers(fallbackTexts, minimized);
+    const fallbackIssues = validateIndonesianQuestionPack(
+      fallbackTexts,
+      minimized,
+    );
+    if (fallbackBlockers.length || fallbackIssues.length) {
+      throw new Error(
+        "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
+      );
+    }
+
+    selectedQuestions = selectedQuestions.map((item, index) => ({
+      ...item,
+      text: fallbackTexts[index],
+      final_classification: classifyIndonesianQuestion(
+        fallbackTexts[index],
+        minimized,
+      ),
+    }));
+    selectedSource = "fallback";
+    semanticFallbackUsed = true;
+    selectedWarnings.push("fallback_used");
+  }
+
+  const warnings = [...new Set(selectedWarnings)];
+  const unbranded = selectedQuestions.filter(
+    (item) => item.final_classification === "tanpa_menyebut_bisnis_anda",
+  ).length;
+  const classificationSummary = {
+    total: selectedQuestions.length,
+    tanpa_menyebut_bisnis_anda: unbranded,
+    menyebut_bisnis_anda: selectedQuestions.length - unbranded,
+  };
+
   const latencyMs = Date.now() - startedAt;
   const httpCall =
     captured.find((call) => call.url.includes("/v1/responses")) ??
     captured.find((call) => call.url.includes("generateContent")) ??
     null;
-  const usage = httpCall ? extractOpenAIUsage(httpCall.body) : null;
+  const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
   const providerFailed =
     (httpCall !== null && httpCall.status >= 400) ||
-    suggestion.source === "fallback";
+    (suggestion.source === "fallback" && !semanticFallbackUsed);
 
   const telemetry: AuditCallTelemetry = {
     stage: "prompts",
@@ -219,9 +270,8 @@ export async function buildLiveIndonesianPromptPack(input: {
     accounted_cost_usd: usage ? accountedCostUsd(usage) : 0,
     cost_basis: usage ? "provider_usage" : "preflight_reservation",
     pricing_version:
-      suggestion.generation.system === "OpenAI Responses API"
-        ? INDONESIAN_QUESTION_OPENAI_PRICING_VERSION
-        : generationMeta.pricing_version || "",
+      generationMeta.pricing_version ||
+      INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
     failure_reason: providerFailed
       ? "Provider question generation failed; the deterministic Indonesian fallback was used."
       : "",
@@ -232,28 +282,10 @@ export async function buildLiveIndonesianPromptPack(input: {
   };
   budget.calls = [telemetry];
 
-  // Hard blockers (identity leakage, unsupported premises, unexecutable
-  // questions) must never reach the customer; the boundary's fallback is
-  // guaranteed safe, so a blocker here is a defensive 422.
-  const blockers = indonesianPackBlockers(
-    suggestion.questions.map((item) => item.text),
+  const selectedBlockers = indonesianPackBlockers(
+    selectedQuestions.map((item) => item.text),
     minimized,
   );
-  if (blockers.length) {
-    throw new Error(
-      `Pertanyaan yang dihasilkan tidak aman untuk ditampilkan: ${blockers.join(" ")}`,
-    );
-  }
-  const issues = validateIndonesianQuestionPack(
-    suggestion.questions.map((item) => item.text),
-    minimized,
-  );
-  const warnings = [...suggestion.warnings];
-  if (issues.length) {
-    warnings.push(
-      `validasi: ${issues.map((issue) => issue.message).join(" ")}`,
-    );
-  }
 
   const pack: PromptPack = {
     status: "draft_for_review",
@@ -270,11 +302,10 @@ export async function buildLiveIndonesianPromptPack(input: {
     },
     summary: {
       total_prompts: 10,
-      unbranded_prompts:
-        suggestion.classification_summary.tanpa_menyebut_bisnis_anda,
-      branded_prompts: suggestion.classification_summary.menyebut_bisnis_anda,
+      unbranded_prompts: classificationSummary.tanpa_menyebut_bisnis_anda,
+      branded_prompts: classificationSummary.menyebut_bisnis_anda,
     },
-    prompts: suggestion.questions.map((item, index) => {
+    prompts: selectedQuestions.map((item, index) => {
       const labels = categoryLabels(item.suggested_category);
       return {
         prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
@@ -288,13 +319,11 @@ export async function buildLiveIndonesianPromptPack(input: {
       };
     }),
     self_check: {
-      ten_prompts: suggestion.questions.length === 10,
+      ten_prompts: selectedQuestions.length === 10,
       two_per_category: true,
-      five_unbranded:
-        suggestion.classification_summary.tanpa_menyebut_bisnis_anda === 5,
-      five_branded:
-        suggestion.classification_summary.menyebut_bisnis_anda === 5,
-      no_brand_leakage: blockers.length === 0,
+      five_unbranded: classificationSummary.tanpa_menyebut_bisnis_anda === 5,
+      five_branded: classificationSummary.menyebut_bisnis_anda === 5,
+      no_brand_leakage: selectedBlockers.length === 0,
       verified_inputs_only: true,
       verified_competitor_only: true,
       single_entity_scope: true,
@@ -307,15 +336,15 @@ export async function buildLiveIndonesianPromptPack(input: {
   return {
     pack,
     generation: {
-      source: suggestion.source,
-      warnings: suggestion.warnings,
+      source: selectedSource,
+      warnings,
       system: suggestion.generation.system,
       requested_model: suggestion.generation.requested_model || "",
       instruction_version: suggestion.generation.instruction_version,
       language: suggestion.language,
       generated_at: suggestion.generation.generated_at,
     },
-    classification_summary: suggestion.classification_summary,
+    classification_summary: classificationSummary,
     telemetry: [telemetry],
     budget,
   };

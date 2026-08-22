@@ -1,14 +1,16 @@
 # Nuave now
 
-> Updated: 2026-08-20
+> Updated: 2026-08-21
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
 
 Phase 3 of [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), specified by
 [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md):
-connect the live engine behind the journey states, produce one real Indonesian
-report, and apply the report-quality gate to it.
+the protected live engine is now integrated on the OpenCode Go production
+method. The remaining Phase 3 gate is to produce the first founder-supervised
+real Indonesian report through the actual product path and judge whether it
+contains a finding worth paying for.
 
 Wave 1 of the Phase 6 design pass
 ([`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)) shipped
@@ -39,22 +41,32 @@ fallback.
 
 **CI is live**: GitHub Actions (`.github/workflows/deploy-pages.yml`) builds with
 `@opennextjs/cloudflare` and deploys to the `nuave-v2` worker on every push to
-`main`, verified end to end. All GitHub secrets are set (`CLOUDFLARE_API_TOKEN`,
-`CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ACCESS_CODE` — unused since the gate removal,
-pending deletion, `NUAVE_PROVIDER=gemini`, `GEMINI_API_KEY`,
-`NUAVE_FIXTURE_PREVIEW_ENABLED=true`,
-`OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357`).
+`main`, verified end to end. The production provider configuration is pinned to
+`NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
+`OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
+`OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
+`OPENAI_AUDIT_REASONING_EFFORT=low`. The canonical server credential is
+`OPENCODEGO_API_KEY`; because the implementation reuses the OpenAI SDK as a
+Responses-compatible adapter, CI also aliases the same secret to
+`OPENAI_API_KEY` inside the gitignored build env. That alias is an SDK/build
+compatibility detail, not a second production credential. The founder reports
+the required GitHub configuration is set. Other required deployment values
+remain `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
+`NUAVE_FIXTURE_PREVIEW_ENABLED=true`, and
+`OPENAI_AUDIT_CARRYOVER_COST_USD=0.4357`. Credential values are never committed.
 
 Deploy target note: Next.js 16 via OpenNext officially targets **Workers with
 static assets**, not Pages — Pages advanced mode (`_worker.js`) ran the gate but
 could not serve static assets. Runtime envs are inlined at build time in CI, so
 env changes require a redeploy.
 
-Known gap carried over from the launch, partially closed: `/audit` and
-`/audit/fixture` remain mostly English in hardcoded JSX (closes in the
-product-wide polish pass, spec 006 P2–P7). The landing's prohibited claims
-were excised and replaced with the approved interim copy on 2026-08-20 (spec
-006 P1); final landing copywriting remains a separate approved copy task.
+Known gap carried over from the launch, partially closed: the surrounding
+`/audit` and `/audit/fixture` interface still contains English hardcoded JSX in
+places (closes in the product-wide polish pass, spec 006 P2–P7). This does not
+change the protected Spec 003 method contract: generated questions, audit
+observations, and the final report are Indonesian. The landing's prohibited
+claims were excised and replaced with the approved interim copy on 2026-08-20
+(spec 006 P1); final landing copywriting remains a separate approved copy task.
 
 ## Build order and sequencing
 
@@ -63,20 +75,13 @@ After the shell passes, replace boundaries in the order defined by
 and quality gate, durable private delivery, real checkout and remedies, polish,
 pilot, launch, then re-check. Cumulative accounted private-run spend remains USD
 0.4357, leaving USD 4.5643 under the USD 5 ceiling. No additional paid
-observation is approved by this planning change.
+observation is approved by this documentation reconciliation.
 
-For the immediate task, the end-to-end plan governs sequencing, while
-[`VISION.md`](./VISION.md), [`PRODUCT.md`](./PRODUCT.md), and
-[`AUDIT.md`](./AUDIT.md) govern product and evidence behavior. The [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)
-specification is founder-approved and now **Implementing**. Chunk 1 built the
-protected landing entry, example intake, fact confirmation, and ten-question
-approval. Chunk 2 added the order summary, unmistakably simulated checkout,
-deterministic simulated processing, and the evidence-faithful example report
-destination with backward navigation, refresh recovery, start over, and a
-testable construction-failure path. The next bounded action is Chunk 3:
-small browser automation proving the complete fixture path, refresh
-restoration, reset behavior, the persistent simulation disclosure, and the
-absence of audit API calls.
+Specs 001 and 002 provide the verified fixture and Indonesian-contract
+baselines. The current bounded work is Spec 003 only: the OpenCode Go migration
+and production-method lock are implemented and automated checks are green; the
+first founder-supervised paid product-path report and its quality-gate judgment
+remain intentionally pending.
 
 ## What is known
 
@@ -137,23 +142,36 @@ absence of audit API calls.
   the owner-facing walkthrough coherent. The full landing rewrite remains in
   the later product-wide polish pass.
 - A local `/audit` workflow covers official-website extraction, human fact
-  confirmation, ten-question prompt review, independent OpenAI Responses API
-  execution with web search, final-format report generation, A4 print/PDF, and
-  complete JSON evidence export.
+  confirmation, ten-question prompt review, independent OpenCode Go
+  Responses-compatible execution with GPT-5.6 Luna and web search, final-format
+  report generation, A4 print/PDF, and complete JSON evidence export.
+- The protected Phase 3 production path is OpenCode Go end to end:
+  `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`, endpoint
+  `https://opencode.ai/zen/go/v1`, model `gpt-5.6-luna`, and reasoning `low`.
+  `OPENCODEGO_API_KEY` is the canonical credential. `OPENAI_API_KEY` may be
+  populated internally/build-time only for the existing OpenAI SDK adapter.
+  Direct OpenAI, Gemini, Groq/Tavily, and OpenRouter are testing-only and are
+  rejected by the protected path in production.
+- The production method uses no web search for Indonesian question generation;
+  web search restricted to the submitted official website/domain for
+  extraction; required web search for every audit observation; and no web
+  search for report synthesis. Missing observation search is a technical
+  failure, not a valid visibility result.
 - The unlisted workflow uses a route-scoped HeroUI five-stage interface, locks
   verified inputs after execution starts, streams real per-prompt status,
   preserves interrupted observations in the browser session, and expands all ten
   detailed findings in print from the same report data shown on screen.
-- The `/audit` workflow currently uses English from intake through prompt
-  generation, API observations, the final report, and the evidence export. That
-  is a known gap against the Indonesian requirement above and must close in the
-  current pipeline build, because an English report cannot pass the
-  report-quality gate.
-- New reports use the versioned `plain-en-v1` writing contract: short
-  customer-facing explanations, result-first wording, exact evidence excerpts,
-  technical run details in the method section, and one protected language-only
-  retry when the first draft misses a writing limit. An Indonesian contract
-  version is required before an Indonesian report can be checked properly.
+- The live question-generation boundary writes ten natural Indonesian
+  questions from the minimized confirmed brief with no search, then keeps human
+  review before audit start. The live observation path uses the versioned
+  Indonesian `neutral-response-v1` instruction with required web search. The
+  report route synthesizes in Indonesian and applies the Indonesian report
+  language checks. Exact evidence excerpts and technical provenance remain
+  faithful to the recorded run rather than being translated or rewritten.
+- Protected Indonesian reports use the versioned `plain-id-v1` writing
+  contract: concise customer-facing explanations, result-first wording, exact
+  evidence excerpts, technical run details in the method section, and one
+  protected language-only retry when the first draft misses a writing limit.
 - The workflow stores state only in the browser session. It has no account,
   database, payment, public rate limit, or hosted report access. The shell may
   simulate checkout and a private destination, but durable persistence and real
@@ -181,14 +199,12 @@ absence of audit API calls.
   computed in code with direct denominators and failed-test context. Method copy
   is deterministic, and unsupported ranking, equivalence, guarantee, revenue,
   and causal claims are blocked before rendering.
-- The current single report synthesis returns at most three priorities, each
-  tied to an observed gap. This is now a known implementation gap: the approved
-  report requires one to five evidence-backed actions and must not invent a
-  deficiency to meet the minimum. When no corrective gap is supported, it may
-  recommend preserving a strength, improving its public evidence, or checking
-  an explicitly untested aspect. The report retains
-  synthesis/prompt versions and requested/returned model provenance, and the
-  existing audit contract tests pass normally.
+- Report synthesis allows at most five priorities. A delivered report still
+  requires one to five evidence-backed actions and must not invent a deficiency
+  to meet the minimum. When no corrective gap is supported, an action may
+  preserve a strength, improve its public evidence, or check an explicitly
+  untested aspect. The report retains synthesis/prompt versions and exact
+  requested/returned model provenance.
 - A delivered paid report requires 10/10 evaluable observations, one to five
   material findings, and one to five evidence-backed actions. One or two strong
   findings are sufficient. A substantive refusal is evaluable; a provider or
@@ -211,25 +227,27 @@ absence of audit API calls.
   ten expanded print details, buyer attribution, direct denominators, and v3
   export. The temporary QA route was removed before the final build.
 - Private audit calls retain usage, latency, response IDs, web-search calls,
-  failures, retries, and accounted cost. The workflow is pinned to
-  `gpt-5.6-luna`, standard service tier, a USD 5 per-session ceiling, and stage
-  ceilings of 1 extraction, 1 prompt generation, 10 observations, and 3 report
-  calls.
+  failures, retries, and accounted cost. The protected method is pinned to
+  `gpt-5.6-luna`, low reasoning, standard service tier, a USD 5 per-session
+  ceiling, and stage ceilings of 1 extraction, 1 prompt generation, 10
+  observations, and 3 report calls.
 - A private batch run completed extraction, human fact review, ten question
   review, and all ten observations. It stopped at 19 calls and USD 0.3483
   because no report cleared both structured-output and integrity gates. No
   report, PDF, export, sample, or business finding was published or stored in
   this repository.
-- Live report failures showed that a monolithic schema is unstable: medium
-  reasoning exhausted 10,000, 20,000, and sometimes 40,000 output-token
+- Earlier live report failures showed that a monolithic schema was unstable:
+  medium reasoning exhausted 10,000, 20,000, and sometimes 40,000 output-token
   allowances, while completed drafts still varied on protected evidence fields.
+  Those runs predate the current protected low-reasoning OpenCode Go method.
   Observable run, appearance, exact excerpts, allowed sources, and competitor
   links are now normalized in code.
 - The corrected report call asks the model only for compact narrative,
   priorities, and recommendation/comparison/information assessments. Code owns
   the ten run states, visible appearances, exact excerpts, source links, detail
-  wording, and verified-competitor links. The compact path passes 65 audit tests
-  but has not yet passed a live report.
+  wording, and verified-competitor links. Automated coverage is green on the
+  integrated migration, but the first founder-supervised paid report through
+  the current product path has not yet occurred.
 - A fresh private session can bootstrap a server-enforced carry-over before any
   paid action. With `OPENAI_AUDIT_CARRYOVER_COST_USD=0.3483`, the local UI shows
   zero new calls, USD 0.3483 accounted, and USD 4.6517 remaining. A client
@@ -239,18 +257,13 @@ absence of audit API calls.
   the official URL, discards unparsed model content and extracted evidence,
   explains the provider state when safely available, and requires verification
   before the brief can be approved.
-- Model-authored question generation failed four consecutive live attempts on
-  structured output, most recently on a ten-strings-only schema with no default
-  reasoning and a 3,000-token ceiling. Whether those calls exhausted their output
-  allowance is an inference, not a confirmed provider diagnosis. Audit call
-  telemetry now retains provider status, incomplete reason, and whether output
-  text or a refusal was returned, so the remaining structured-output stages can
-  be attributed next time.
-- Question generation currently uses `deterministic-v4-en` and makes no API
-  call. Code builds the ten ordered questions from the verified brief and the
-  fixed matrix, keeps five branded and five unbranded questions, two per
-  category, records the brief fields each question used, and keeps every
-  question in human review. Ninety-three audit tests pass offline.
+- Model-authored question generation previously failed four consecutive live
+  attempts on structured output. The current live path uses one bounded,
+  no-search OpenCode Go/GPT-5.6 Luna question-writer call from the minimized
+  confirmed brief, preserves provider telemetry/provenance, and falls back to a
+  deterministic Indonesian pack when the provider or format fails. Every one of
+  the ten resulting questions remains subject to human review before audit
+  start.
 
 ## What is not known
 
@@ -281,44 +294,30 @@ absence of audit API calls.
 Follow the phase gates in [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md). The
 current bounded sequence is:
 
-1. Chunk 1 of the founder-approved
-   [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)
-   is complete: the protected landing entry, example intake, fact
-   confirmation, and ten-question approval now exist.
-2. Chunk 2 is complete: the order summary, simulated checkout, deterministic
-   simulated processing, and fixture-backed example report now exist, with the
-   review corrections applied (truthful construction-failure state, explicit
-   resume after interruption, confirmed start over everywhere, tighter
-   persisted-state validation, and a fixture-derived order summary).
-3. Chunk 3 (browser automation) is implemented and re-verified 2026-08-17:
-   23/23 e2e across three server modes, 208 audit unit tests, check and build
-   pass (recorded in
-   [`specs/001-simulated-journey-shell/VERIFICATION.md`](../specs/001-simulated-journey-shell/VERIFICATION.md)).
-   The only remaining gate for Spec 001 is AC-21, the founder's human trust
-   review of the fixture path.
-4. [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md)
-   is founder-approved (2026-08-17) and implemented: the fixture journey is
-   realigned to Order Preview → simulated payment → Business Facts → Questions
-   → Audit Run → Report with Indonesian copy per the canonical `docs/VOICE.md`,
-   the frozen 10/10 Kopi Taman Senja fixture chain, the Indonesian
-   question-generation boundary, and the Indonesian report-language calibration
-   (values founder-approved 2026-08-17). Verified 2026-08-17: 276 audit unit
-   tests, 126 fixture-journey unit tests, 31 e2e tests, check and build all
-   pass. **Verified 2026-08-17** (founder walkthrough completed AC-29; native-
-   language judgment completed AC-30).
-5. Connect the live engine and produce one real Indonesian report.
-6. Apply the report-quality gate. Stop and fix the method if the report holds no
-   finding worth paying for.
-7. Only after the gate, add durable private delivery, real payment and remedies,
-   product-wide polish, and customer exposure in the planned order.
+1. Treat Specs 001 and 002 as the verified fixture/Indonesian-contract
+   baselines. Spec 002's verified baseline at `83ad34c` is 274/274 audit unit
+   tests (18 files), 82/82 fixture-journey unit tests (4 files), and 33/33 e2e
+   tests; check and build passed.
+2. Treat the 2026-08-21 OpenCode Go migration as implemented but not as the
+   Spec 003 quality-gate pass. The protected path is locked to OpenCode Go,
+   GPT-5.6 Luna, low reasoning, the method-specific search rules, and the
+   Indonesian question/observation/report contracts; current automated
+   verification is recorded in Spec 003 `VERIFICATION.md`.
+3. Run the first founder-supervised paid real audit through the actual `/audit`
+   product path without changing the production method mid-run. Do not replace
+   this with a script-only provider exercise.
+4. Apply the report-quality gate to that rendered Indonesian report and its
+   evidence. Stop and fix the method if it holds no finding worth paying for.
+5. Only after the gate, add durable private delivery, real payment and remedies,
+   the remaining product-wide polish, and customer exposure in the planned
+   order.
 
 ## Not now
 
 - real payment, durable jobs, and durable report persistence — after the
   report-quality gate; an explicitly simulated checkout and destination are in
   scope for the fixture journey;
-- design polish, final copy, and the landing-page rewrite — after checkout and
-  persistence;
+- the remaining design polish and final copy — after the report-quality gate;
 - showing the product to any target customer — after the product-wide polish
   pass;
 - outreach, pricing conversations, and selling — after known-customer review;

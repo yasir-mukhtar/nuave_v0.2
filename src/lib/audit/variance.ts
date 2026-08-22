@@ -20,9 +20,10 @@
  *   variance record marked incomplete, quality-gate review notes it.
  */
 
-import type { AuditObservation } from "./types";
+import type { AuditObservation, AuditPrompt, AuditReport } from "./types";
 
 export const VARIANCE_STORAGE_KEY = "nuave.audit.variance.v1";
+export const VARIANCE_FAILURE_STORAGE_KEY = "nuave.audit.variance.failure.v1";
 
 export const VARIANCE_MIN_QUESTIONS = 2;
 export const VARIANCE_MAX_QUESTIONS = 3;
@@ -41,6 +42,21 @@ export type VarianceRecord = {
   incomplete_reason?: string;
 };
 
+/**
+ * A browser-level variance request can fail before the route can construct a
+ * VarianceRecord (for example a network error or a rejected request). Keep that
+ * terminal state separate from both the main workflow record and successful or
+ * server-completed variance records. It prevents silent automatic reruns after
+ * refresh while preserving the already-created report.
+ */
+export type VarianceFailureRecord = {
+  run_key: string;
+  created_at: string;
+  prompt_ids: string[];
+  complete: false;
+  incomplete_reason: string;
+};
+
 export function validateVarianceRequest(input: {
   prompt_ids: string[];
 }): string[] {
@@ -57,6 +73,77 @@ export function validateVarianceRequest(input: {
     errors.push("Variance prompt_ids must be unique.");
   }
   return errors;
+}
+
+/**
+ * The product does not currently persist an explicit founder-selected variance
+ * designation. Use the smallest stable rule over the already-locked pack:
+ * re-ask the first unbranded question and the first branded question in locked
+ * order. This always returns exactly two prompts, never regenerates text, and
+ * cannot select outside the ten supplied prompts.
+ */
+export function selectVariancePrompts(prompts: AuditPrompt[]): AuditPrompt[] {
+  const lockedIds = prompts.map((prompt) => prompt.prompt_id);
+  if (prompts.length !== 10 || new Set(lockedIds).size !== prompts.length) {
+    throw new Error(
+      "Variance selection requires the ten unique questions from the locked prompt pack.",
+    );
+  }
+
+  const selected: AuditPrompt[] = [];
+  const firstUnbranded = prompts.find((prompt) => !prompt.branded);
+  const firstBranded = prompts.find((prompt) => prompt.branded);
+  if (firstUnbranded) selected.push(firstUnbranded);
+  if (
+    firstBranded &&
+    !selected.some((prompt) => prompt.prompt_id === firstBranded.prompt_id)
+  ) {
+    selected.push(firstBranded);
+  }
+  for (const prompt of prompts) {
+    if (selected.length >= VARIANCE_MIN_QUESTIONS) break;
+    if (!selected.some((item) => item.prompt_id === prompt.prompt_id)) {
+      selected.push(prompt);
+    }
+  }
+
+  const errors = validateVarianceRequest({
+    prompt_ids: selected.map((prompt) => prompt.prompt_id),
+  });
+  if (errors.length) throw new Error(errors.join(" "));
+  return selected;
+}
+
+/** Stable per-report key used by the browser and route persistence contract. */
+export function varianceRunKeyForReport(
+  report: Pick<AuditReport, "provenance">,
+): string {
+  const runKey = report.provenance.report_response_id.trim();
+  if (!runKey || runKey.length > 200) {
+    throw new Error("The report does not contain a valid variance run key.");
+  }
+  return runKey;
+}
+
+export function createVarianceFailureRecord(input: {
+  run_key: string;
+  prompt_ids: string[];
+  incomplete_reason: string;
+  now?: () => string;
+}): VarianceFailureRecord {
+  const errors = validateVarianceRequest({ prompt_ids: input.prompt_ids });
+  if (errors.length) throw new Error(errors.join(" "));
+  const incompleteReason = input.incomplete_reason.trim();
+  if (!incompleteReason) {
+    throw new Error("A failed variance re-ask requires an incomplete reason.");
+  }
+  return {
+    run_key: input.run_key,
+    created_at: (input.now ?? (() => new Date().toISOString()))(),
+    prompt_ids: [...input.prompt_ids],
+    complete: false,
+    incomplete_reason: incompleteReason,
+  };
 }
 
 export function createVarianceRecord(input: {

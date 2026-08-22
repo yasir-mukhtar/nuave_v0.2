@@ -176,12 +176,13 @@ export const auditObservationSchema = z.object({
   branded: z.boolean(),
   question: z.string(),
   // Spec 003 R-14/R-20: the versioned neutral instruction used for this
-  // observation. Recorded on the live path (OpenAI Responses API); optional so
-  // legacy observations and testing-only providers that predate the versioned
+  // observation. Recorded on the protected live path; optional so legacy
+  // observations and testing-only providers that predate the versioned
   // instruction remain parseable.
   instruction_version: z.string().optional(),
   system: z.enum([
     "OpenAI Responses API",
+    "OpenCode Go Responses API",
     "Google Gemini API",
     "Groq + Tavily",
     "OpenRouter",

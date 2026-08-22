@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Alert, Button } from "@heroui/react";
@@ -17,11 +17,30 @@ import {
   type PromptPack,
 } from "@/lib/audit/types";
 import { makeEvidenceExport } from "@/lib/audit/contracts";
+import { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";
+import {
+  AUDIT_STAGE_CALL_LIMITS,
+  summarizeAuditTelemetry,
+} from "@/lib/audit/telemetry";
+import {
+  classifyReportRecovery,
+  isReportFailureCode,
+  type ReportFailureCode,
+} from "@/lib/audit/report-recovery";
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
   restorableAuditReport,
 } from "@/lib/audit/workflow-storage";
+import {
+  VARIANCE_FAILURE_STORAGE_KEY,
+  VARIANCE_STORAGE_KEY,
+  createVarianceFailureRecord,
+  selectVariancePrompts,
+  varianceRunKeyForReport,
+  type VarianceFailureRecord,
+  type VarianceRecord,
+} from "@/lib/audit/variance";
 import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
@@ -37,11 +56,10 @@ import {
 import {
   BriefStep,
   QuestionsStep,
-  RunStep,
-  SourceStep,
   type RunUnfinishedState,
 } from "./AuditStages";
 import SourceHero from "./SourceHero";
+import AuditRunStep from "./AuditRunStep";
 import ReportView from "./ReportView";
 import styles from "./audit.module.css";
 
@@ -58,13 +76,11 @@ type SavedState = {
   report: AuditReport | null;
   setupTelemetry?: AuditCallTelemetry[];
   executionStarted?: boolean;
+  /** Exact post-report call ledger used to resume a variance request safely. */
+  postReportBudgetCalls?: AuditCallTelemetry[];
+  reportFailureCode?: ReportFailureCode | null;
 };
 
-// R3-4 (Phase 3 fix-round-3 adversarial review): the key and the restore
-// guard live in `@/lib/audit/workflow-storage`, where they are pure logic and
-// tested. `AuditReport.measures` is a new required field, so the key is
-// bumped v3 -> v4 AND a restored report is dropped if it does not carry the
-// fields the report screen reads.
 const STORAGE_KEY = AUDIT_WORKFLOW_STORAGE_KEY;
 const SESSION_KEY = AUDIT_SESSION_STORAGE_KEY;
 
@@ -101,11 +117,17 @@ const stepLabels = [
 
 class AuditRequestError extends Error {
   readonly telemetry: AuditCallTelemetry[];
+  readonly code?: string;
 
-  constructor(message: string, telemetry: AuditCallTelemetry[] = []) {
+  constructor(
+    message: string,
+    telemetry: AuditCallTelemetry[] = [],
+    code?: string,
+  ) {
     super(message);
     this.name = "AuditRequestError";
     this.telemetry = telemetry;
+    this.code = code;
   }
 }
 
@@ -117,15 +139,32 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   });
   const data = (await response.json()) as T & {
     error?: string;
+    code?: string;
     telemetry?: AuditCallTelemetry[];
   };
   if (!response.ok) {
     throw new AuditRequestError(
       data.error || "Kami tidak dapat menyelesaikan permintaan ini.",
       data.telemetry || [],
+      data.code,
     );
   }
   return data;
+}
+
+function readStoredRunRecord<T extends { run_key: string }>(
+  key: string,
+): T | null {
+  if (typeof window === "undefined") return null;
+  const saved = window.sessionStorage.getItem(key);
+  if (!saved) return null;
+  try {
+    const record = JSON.parse(saved) as Partial<T>;
+    return typeof record.run_key === "string" ? (record as T) : null;
+  } catch {
+    window.sessionStorage.removeItem(key);
+    return null;
+  }
 }
 
 function friendlyBriefError(brief: BusinessBrief) {
@@ -164,6 +203,15 @@ export default function AuditWorkflow() {
   const [setupTelemetry, setSetupTelemetry] = useState<AuditCallTelemetry[]>(
     [],
   );
+  const [postReportBudgetCalls, setPostReportBudgetCalls] = useState<
+    AuditCallTelemetry[]
+  >([]);
+  const [varianceRecord, setVarianceRecord] = useState<VarianceRecord | null>(
+    null,
+  );
+  const [varianceFailure, setVarianceFailure] =
+    useState<VarianceFailureRecord | null>(null);
+  const varianceInFlightRunKey = useRef<string | null>(null);
   const [executionStarted, setExecutionStarted] = useState(false);
   const [promptStatuses, setPromptStatuses] = useState<
     Record<string, PromptRunStatus>
@@ -171,6 +219,8 @@ export default function AuditWorkflow() {
   const [runUnfinished, setRunUnfinished] = useState<RunUnfinishedState | null>(
     null,
   );
+  const [reportFailureCode, setReportFailureCode] =
+    useState<ReportFailureCode | null>(null);
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState("");
   const [restored, setRestored] = useState(false);
@@ -186,6 +236,100 @@ export default function AuditWorkflow() {
     window.sessionStorage.setItem(SESSION_KEY, value);
     return value;
   }, []);
+
+  const reportCallCount = setupTelemetry.filter(
+    (call) => call.stage === "report",
+  ).length;
+  const reportRecovery = reportFailureCode
+    ? classifyReportRecovery(
+        reportFailureCode,
+        reportCallCount,
+        AUDIT_STAGE_CALL_LIMITS.report,
+      )
+    : null;
+
+  const runVariance = useCallback(
+    async (auditReport: AuditReport, budgetCalls: AuditCallTelemetry[]) => {
+      if (!promptPack) return;
+      const runKey = varianceRunKeyForReport(auditReport);
+      if (varianceInFlightRunKey.current === runKey) return;
+
+      const storedVariance =
+        readStoredRunRecord<VarianceRecord>(VARIANCE_STORAGE_KEY);
+      if (storedVariance?.run_key === runKey) {
+        setVarianceRecord(storedVariance);
+        setVarianceFailure(null);
+        return;
+      }
+      const storedFailure = readStoredRunRecord<VarianceFailureRecord>(
+        VARIANCE_FAILURE_STORAGE_KEY,
+      );
+      if (storedFailure?.run_key === runKey) {
+        setVarianceFailure(storedFailure);
+        return;
+      }
+
+      const selectedPrompts = selectVariancePrompts(promptPack.prompts);
+      const selectedIds = selectedPrompts.map((prompt) => prompt.prompt_id);
+      varianceInFlightRunKey.current = runKey;
+      try {
+        const result = await postJson<{
+          variance: VarianceRecord;
+          budget: AuditBudget;
+        }>("/api/audit/variance", {
+          brief,
+          prompts: selectedPrompts,
+          safety_identifier: safetyIdentifier,
+          budget: {
+            limit_usd: AUDIT_COST_LIMIT_USD,
+            carryover_cost_usd: carryoverCostUsd,
+            calls: budgetCalls,
+          },
+          run_key: runKey,
+        });
+
+        window.sessionStorage.setItem(
+          VARIANCE_STORAGE_KEY,
+          JSON.stringify(result.variance),
+        );
+        window.sessionStorage.removeItem(VARIANCE_FAILURE_STORAGE_KEY);
+        setVarianceRecord(result.variance);
+        setVarianceFailure(null);
+        if (!result.variance.complete) {
+          setError(
+            `Laporan selesai, tetapi pengukuran variasi belum lengkap: ${result.variance.incomplete_reason || "sebagian pertanyaan tidak berhasil diuji ulang."}`,
+          );
+        }
+      } catch (cause) {
+        const reason =
+          cause instanceof Error
+            ? cause.message
+            : "Pengukuran variasi tidak dapat diselesaikan.";
+        const failure = createVarianceFailureRecord({
+          run_key: runKey,
+          prompt_ids: selectedIds,
+          incomplete_reason: reason,
+        });
+        try {
+          window.sessionStorage.setItem(
+            VARIANCE_FAILURE_STORAGE_KEY,
+            JSON.stringify(failure),
+          );
+        } catch {
+          // Keep the terminal failure in memory if session storage is unavailable.
+        }
+        setVarianceFailure(failure);
+        setError(
+          `Laporan sudah selesai dan tetap valid, tetapi pengukuran variasi gagal: ${reason}`,
+        );
+      } finally {
+        if (varianceInFlightRunKey.current === runKey) {
+          varianceInFlightRunKey.current = null;
+        }
+      }
+    },
+    [brief, carryoverCostUsd, promptPack, safetyIdentifier],
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -204,6 +348,12 @@ export default function AuditWorkflow() {
           setObservations(restoredObservations);
           setReport(restorableAuditReport(state.report));
           setSetupTelemetry(state.setupTelemetry || []);
+          setPostReportBudgetCalls(state.postReportBudgetCalls || []);
+          setReportFailureCode(
+            isReportFailureCode(state.reportFailureCode)
+              ? state.reportFailureCode
+              : null,
+          );
           setExecutionStarted(
             Boolean(state.executionStarted || restoredObservations.length),
           );
@@ -211,6 +361,14 @@ export default function AuditWorkflow() {
             initialStatuses(restoredPack, restoredObservations),
           );
         }
+        setVarianceRecord(
+          readStoredRunRecord<VarianceRecord>(VARIANCE_STORAGE_KEY),
+        );
+        setVarianceFailure(
+          readStoredRunRecord<VarianceFailureRecord>(
+            VARIANCE_FAILURE_STORAGE_KEY,
+          ),
+        );
       } catch {
         window.sessionStorage.removeItem(STORAGE_KEY);
       } finally {
@@ -275,6 +433,8 @@ export default function AuditWorkflow() {
       report,
       setupTelemetry,
       executionStarted,
+      postReportBudgetCalls,
+      reportFailureCode,
     };
     try {
       window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -288,15 +448,85 @@ export default function AuditWorkflow() {
     factsConfirmed,
     factsExtracted,
     observations,
+    postReportBudgetCalls,
     promptPack,
     report,
+    reportFailureCode,
     setupTelemetry,
     restored,
     websiteUrl,
   ]);
 
+  const reportRunKey = useMemo(() => {
+    if (!report) return "";
+    try {
+      return varianceRunKeyForReport(report);
+    } catch {
+      return "";
+    }
+  }, [report]);
+  const varianceSettled = Boolean(
+    reportRunKey &&
+    (varianceRecord?.run_key === reportRunKey ||
+      varianceFailure?.run_key === reportRunKey),
+  );
+
+  useEffect(() => {
+    if (
+      !restored ||
+      !budgetReady ||
+      busy ||
+      !report ||
+      !promptPack ||
+      varianceSettled
+    ) {
+      return;
+    }
+
+    if (!postReportBudgetCalls.length) {
+      try {
+        const selected = selectVariancePrompts(promptPack.prompts);
+        const failure = createVarianceFailureRecord({
+          run_key: varianceRunKeyForReport(report),
+          prompt_ids: selected.map((prompt) => prompt.prompt_id),
+          incomplete_reason:
+            "Variansi tidak dijalankan ulang setelah pemulihan karena ledger biaya pasca-laporan tidak tersedia.",
+        });
+        window.sessionStorage.setItem(
+          VARIANCE_FAILURE_STORAGE_KEY,
+          JSON.stringify(failure),
+        );
+        setVarianceFailure(failure);
+        setError(
+          "Laporan yang dipulihkan tetap valid, tetapi pengukuran variasi tidak dapat dilanjutkan dengan aman karena ledger biaya pasca-laporan tidak tersedia.",
+        );
+      } catch (cause) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Pengukuran variasi pada laporan yang dipulihkan tidak dapat diselesaikan.",
+        );
+      }
+      return;
+    }
+
+    setBusy("report");
+    void runVariance(report, postReportBudgetCalls).finally(() =>
+      setBusy(null),
+    );
+  }, [
+    budgetReady,
+    busy,
+    postReportBudgetCalls,
+    promptPack,
+    report,
+    restored,
+    runVariance,
+    varianceSettled,
+  ]);
+
   const step = deriveAuditStep({
-    hasReport: Boolean(report),
+    hasReport: Boolean(report && varianceSettled),
     executionStarted,
     hasPromptPack: Boolean(promptPack),
     factsExtracted,
@@ -324,6 +554,10 @@ export default function AuditWorkflow() {
     setPromptPack(null);
     setObservations([]);
     setReport(null);
+    setReportFailureCode(null);
+    setPostReportBudgetCalls([]);
+    setVarianceRecord(null);
+    setVarianceFailure(null);
     setExecutionStarted(false);
     setPromptStatuses({});
     setRunUnfinished(null);
@@ -423,10 +657,6 @@ export default function AuditWorkflow() {
     }
     setBusy("prompts");
     try {
-      // The ten Indonesian questions come from the live generation boundary
-      // (Spec 003 work package A): one bounded no-search provider call,
-      // server-side accounting, deterministic fallback on any failure. The
-      // returned telemetry is folded into the session budget (R-36).
       const result = await postJson<{
         pack: PromptPack;
         telemetry?: AuditCallTelemetry[];
@@ -462,6 +692,10 @@ export default function AuditWorkflow() {
     );
     setObservations([]);
     setReport(null);
+    setReportFailureCode(null);
+    setPostReportBudgetCalls([]);
+    setVarianceRecord(null);
+    setVarianceFailure(null);
   }
 
   async function createReport(
@@ -472,31 +706,49 @@ export default function AuditWorkflow() {
     if (!budgetReady) {
       throw new Error("Pengendali biaya privat tidak tersedia.");
     }
+    setReportFailureCode(null);
     setBusy("report");
     try {
-      const reportResult = await postJson<{ report: AuditReport }>(
-        "/api/audit/report",
-        {
-          brief,
-          prompts: promptPack.prompts,
-          observations: finalObservations,
-          safety_identifier: safetyIdentifier,
-          budget: {
-            limit_usd: AUDIT_COST_LIMIT_USD,
-            carryover_cost_usd: carryoverCostUsd,
-            calls: [
-              ...priorCalls,
-              ...finalObservations.flatMap(
-                (observation) => observation.telemetry || [],
-              ),
-            ],
-          },
+      const reportInputCalls = [
+        ...priorCalls,
+        ...finalObservations.flatMap(
+          (observation) => observation.telemetry || [],
+        ),
+      ];
+      const reportResult = await postJson<{
+        report: AuditReport;
+        telemetry?: AuditCallTelemetry[];
+      }>("/api/audit/report", {
+        brief,
+        prompts: promptPack.prompts,
+        observations: finalObservations,
+        safety_identifier: safetyIdentifier,
+        budget: {
+          limit_usd: AUDIT_COST_LIMIT_USD,
+          carryover_cost_usd: carryoverCostUsd,
+          calls: reportInputCalls,
         },
-      );
+      });
+      const reportCalls = reportResult.telemetry || [];
+      const varianceBudgetCalls = [...reportInputCalls, ...reportCalls];
+      setPostReportBudgetCalls(varianceBudgetCalls);
+      if (reportCalls.length) {
+        setSetupTelemetry((calls) => [...calls, ...reportCalls]);
+      }
       setReport(reportResult.report);
+      setReportFailureCode(null);
+      await runVariance(reportResult.report, varianceBudgetCalls);
     } catch (cause) {
       if (cause instanceof AuditRequestError && cause.telemetry.length) {
         setSetupTelemetry((calls) => [...calls, ...cause.telemetry]);
+      }
+      if (
+        cause instanceof AuditRequestError &&
+        isReportFailureCode(cause.code)
+      ) {
+        setReportFailureCode(cause.code);
+      } else {
+        setReportFailureCode("REPORT_TRANSIENT_FAILURE");
       }
       throw cause;
     }
@@ -551,8 +803,6 @@ export default function AuditWorkflow() {
       setError("Tunggu pengendali biaya privat sebelum menjalankan audit.");
       return;
     }
-    // The locked pack is validated with the Indonesian question rules (Spec
-    // 002/003): leakage, unsupported premises, distinctness, executability.
     const minimized = minimizeIndonesianBrief(brief);
     const questionErrors = validateIndonesianQuestionPack(
       promptPack.prompts.map((prompt) => prompt.question),
@@ -571,11 +821,16 @@ export default function AuditWorkflow() {
       return;
     }
 
+    window.sessionStorage.removeItem(VARIANCE_STORAGE_KEY);
+    window.sessionStorage.removeItem(VARIANCE_FAILURE_STORAGE_KEY);
+    setVarianceRecord(null);
+    setVarianceFailure(null);
+    setPostReportBudgetCalls([]);
+    varianceInFlightRunKey.current = null;
     setExecutionStarted(true);
     setReport(null);
+    setReportFailureCode(null);
     setRunUnfinished(null);
-    // Interrupted-run resume (Spec 003 R-19): completed observations are
-    // preserved and sent back to the run route, which never reruns them.
     const resumeObservations = observations.filter(
       (observation) => observation.run_status === "completed",
     );
@@ -596,6 +851,7 @@ export default function AuditWorkflow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
           brief,
           prompts: promptPack.prompts,
           safety_identifier: safetyIdentifier,
@@ -635,9 +891,6 @@ export default function AuditWorkflow() {
         if (event.type === "run_unfinished") runUnfinishedReceived = true;
       }
       if (!runCompleted && !runUnfinishedReceived) {
-        // The stream ended without a terminal run event: the browser-bound
-        // connection dropped. Completed observations are preserved and never
-        // rerun; no background continuation exists in this phase.
         throw new Error("Koneksi terputus sebelum 10 observasi selesai.");
       }
       if (runCompleted && finalObservations.length !== 10) {
@@ -648,8 +901,6 @@ export default function AuditWorkflow() {
       if (runCompleted) {
         await createReport(finalObservations, runPriorCalls);
       }
-      // run_unfinished already recorded the terminal state: no report is
-      // created before 10/10 evaluable observations (no partial report).
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -663,11 +914,13 @@ export default function AuditWorkflow() {
 
   async function retryReport() {
     if (
+      !reportRecovery?.can_retry ||
       !promptPack ||
       observations.filter((item) => item.run_status === "completed").length !==
         10
-    )
+    ) {
       return;
+    }
     setError("");
     try {
       await createReport(observations);
@@ -684,6 +937,8 @@ export default function AuditWorkflow() {
 
   function startOver() {
     window.sessionStorage.removeItem(STORAGE_KEY);
+    window.sessionStorage.removeItem(VARIANCE_STORAGE_KEY);
+    window.sessionStorage.removeItem(VARIANCE_FAILURE_STORAGE_KEY);
     setWebsiteUrl("");
     setBrief(emptyBrief);
     setFactsExtracted(false);
@@ -692,7 +947,12 @@ export default function AuditWorkflow() {
     setPromptPack(null);
     setObservations([]);
     setReport(null);
+    setReportFailureCode(null);
     setSetupTelemetry([]);
+    setPostReportBudgetCalls([]);
+    setVarianceRecord(null);
+    setVarianceFailure(null);
+    varianceInFlightRunKey.current = null;
     setExecutionStarted(false);
     setPromptStatuses({});
     setRunUnfinished(null);
@@ -746,6 +1006,16 @@ export default function AuditWorkflow() {
     !busy &&
     !report &&
     observations.filter((item) => item.run_status === "completed").length < 10;
+  const telemetrySummary =
+    report?.operational_telemetry ??
+    summarizeAuditTelemetry(
+      [
+        ...setupTelemetry,
+        ...observations.flatMap((observation) => observation.telemetry || []),
+      ],
+      AUDIT_COST_LIMIT_USD,
+      carryoverCostUsd,
+    );
 
   return (
     <main className={styles.shell} lang="en" data-theme="light">
@@ -770,7 +1040,7 @@ export default function AuditWorkflow() {
           <Button variant="secondary" size="sm" onPress={startOver}>
             Mulai ulang
           </Button>
-          {report ? (
+          {report && varianceSettled ? (
             <Button variant="primary" size="sm" onPress={() => window.print()}>
               <IconDownload /> Download PDF
             </Button>
@@ -778,7 +1048,7 @@ export default function AuditWorkflow() {
         </div>
       </header>
 
-      {step > 0 && !report ? (
+      {step > 0 && step < 4 ? (
         <nav
           className={`${styles.stepper} ${styles.noPrint}`}
           aria-label="Tahapan audit"
@@ -809,13 +1079,37 @@ export default function AuditWorkflow() {
         </nav>
       ) : null}
 
-      {error && step > 0 ? (
+      {error ? (
         <div className={`${styles.globalAlert} ${styles.noPrint}`}>
           <Alert status="danger" role="alert">
             <Alert.Indicator />
             <Alert.Content>
               <Alert.Title>Periksa ini sebelum melanjutkan</Alert.Title>
               <Alert.Description>{error}</Alert.Description>
+            </Alert.Content>
+          </Alert>
+        </div>
+      ) : null}
+
+      {telemetrySummary.call_count || telemetrySummary.carryover_cost_usd ? (
+        <div className={`${styles.globalAlert} ${styles.noPrint}`}>
+          <Alert status="default">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Kendali biaya sesi privat</Alert.Title>
+              <Alert.Description>
+                {telemetrySummary.call_count} panggilan API · USD{" "}
+                {telemetrySummary.accounted_cost_usd.toFixed(4)} tercatat dari
+                USD {telemetrySummary.cost_limit_usd.toFixed(2)}
+                {` · sisa USD ${Math.max(
+                  0,
+                  telemetrySummary.cost_limit_usd -
+                    telemetrySummary.accounted_cost_usd,
+                ).toFixed(4)}`}
+                {telemetrySummary.carryover_cost_usd
+                  ? ` · USD ${telemetrySummary.carryover_cost_usd.toFixed(4)} dibawa dari sesi sebelumnya`
+                  : ""}
+              </Alert.Description>
             </Alert.Content>
           </Alert>
         </div>
@@ -857,13 +1151,14 @@ export default function AuditWorkflow() {
       ) : null}
 
       {step === 3 && promptPack ? (
-        <RunStep
+        <AuditRunStep
           pack={promptPack}
           statuses={promptStatuses}
           observations={observations}
           busy={busy}
           interrupted={interrupted && !runUnfinished}
           runUnfinished={runUnfinished}
+          reportRecovery={reportRecovery}
           onRetryReport={retryReport}
         />
       ) : null}
