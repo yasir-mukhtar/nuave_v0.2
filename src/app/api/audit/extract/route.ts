@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  AUDIT_COST_LIMIT_USD,
-  auditBudgetSchema,
-  extractionRequestSchema,
-} from "@/lib/audit/types";
+import { z } from "zod";
+import { extractionRequestSchema, auditBudgetSchema } from "@/lib/audit/types";
 import {
   assertLiveProviderCredentialsConfigured,
   liveExtractBusinessDraft,
@@ -13,14 +10,19 @@ import {
   AuditCallExecutionError,
   configuredAuditCarryoverCostUsd,
 } from "@/lib/audit/telemetry";
+import {
+  INVALID_WEBSITE_INPUT_MESSAGE,
+  normalizeWebsiteInput,
+} from "@/lib/audit/website-input";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
     return NextResponse.json({
-      limit_usd: AUDIT_COST_LIMIT_USD,
+      limit_usd: 5,
       carryover_cost_usd: configuredAuditCarryoverCostUsd(),
+      calls: [],
     });
   } catch (error) {
     return NextResponse.json(
@@ -28,37 +30,81 @@ export async function GET() {
         error:
           error instanceof Error
             ? error.message
-            : "The private cost guard is unavailable.",
+            : "Pengendali biaya privat tidak tersedia.",
       },
-      { status: error instanceof AuditBudgetError ? error.status : 500 },
+      { status: 500 },
     );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    assertLiveProviderCredentialsConfigured();
+    const body = (await request.json()) as unknown;
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        {
+          error: "Periksa data audit yang dikirim dan coba lagi.",
+          code: "INVALID_REQUEST",
+        },
+        { status: 400 },
+      );
+    }
+
+    const record = body as Record<string, unknown>;
+    const normalizedWebsite = normalizeWebsiteInput(
+      typeof record.website_url === "string" ? record.website_url : "",
+    );
+    if (!normalizedWebsite.ok) {
+      return NextResponse.json(
+        {
+          error: INVALID_WEBSITE_INPUT_MESSAGE,
+          code: "INVALID_WEBSITE_INPUT",
+          telemetry: [],
+        },
+        { status: 400 },
+      );
+    }
+
     const input = extractionRequestSchema
       .extend({ budget: auditBudgetSchema })
-      .parse(await request.json());
+      .parse({ ...record, website_url: normalizedWebsite.url });
+
+    // Validate the complete request before touching the protected provider
+    // boundary. Invalid website/input requests therefore make zero calls.
+    assertLiveProviderCredentialsConfigured();
     return NextResponse.json(await liveExtractBusinessDraft(input));
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: "Periksa data audit yang dikirim dan coba lagi.",
+          code: "INVALID_REQUEST",
+          telemetry: [],
+        },
+        { status: 400 },
+      );
+    }
+    if (error instanceof AuditCallExecutionError) {
+      return NextResponse.json(
+        { error: error.message, telemetry: error.telemetry },
+        { status: error.status },
+      );
+    }
+    if (error instanceof AuditBudgetError) {
+      return NextResponse.json(
+        { error: error.message, telemetry: [] },
+        { status: error.status },
+      );
+    }
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "We couldn't analyze this website.",
-        telemetry:
-          error instanceof AuditCallExecutionError ? error.telemetry : [],
+            : "Kami tidak dapat menganalisis situs web ini.",
+        telemetry: [],
       },
-      {
-        status:
-          error instanceof AuditBudgetError ||
-          error instanceof AuditCallExecutionError
-            ? error.status
-            : 400,
-      },
+      { status: 400 },
     );
   }
 }

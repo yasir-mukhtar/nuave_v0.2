@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
+  AUDIT_CLIENT_CONTRACT_VERSION,
+  AUDIT_CLIENT_UPDATE_REQUIRED_CODE,
+  AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,
+  isCurrentAuditClientContract,
+} from "@/lib/audit/client-contract";
+import {
   auditBudgetSchema,
   auditObservationSchema,
   businessBriefSchema,
@@ -15,12 +21,14 @@ import {
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
 } from "@/lib/audit/questions-id";
+import { productionObservationMethodErrors } from "@/lib/audit/production-observation-method";
 import { runAuditObservations } from "@/lib/audit/run-orchestrator";
 import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
 
 export const runtime = "nodejs";
 
 const requestSchema = z.object({
+  client_contract_version: z.literal(AUDIT_CLIENT_CONTRACT_VERSION),
   brief: businessBriefSchema,
   prompts: z.array(promptSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
@@ -38,8 +46,23 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const rawInput = (await request.json()) as unknown;
+    const clientContractVersion =
+      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
+        ? (rawInput as Record<string, unknown>).client_contract_version
+        : undefined;
+    if (!isCurrentAuditClientContract(clientContractVersion)) {
+      return NextResponse.json(
+        {
+          error: AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,
+          code: AUDIT_CLIENT_UPDATE_REQUIRED_CODE,
+        },
+        { status: 409 },
+      );
+    }
+
     assertLiveProviderCredentialsConfigured();
-    const input = requestSchema.parse(await request.json());
+    const input = requestSchema.parse(rawInput);
 
     // The live run path validates the LOCKED INDONESIAN question pack (Spec
     // 002/003): leakage, unsupported premises, distinctness, and executable
@@ -67,7 +90,8 @@ export async function POST(request: Request) {
     }
 
     // Resume validation: only completed observations for locked questions,
-    // one per question, never duplicated.
+    // one per question, never duplicated, and only evidence produced by the
+    // currently protected OpenCode Go + GPT-5.6 Luna observation method.
     const resume = input.resume_observations ?? [];
     const lockedIds = new Set(input.prompts.map((prompt) => prompt.prompt_id));
     const resumeErrors: string[] = [];
@@ -90,6 +114,11 @@ export async function POST(request: Request) {
       }
       resumedIds.add(observation.prompt_id);
     }
+    resumeErrors.push(
+      ...productionObservationMethodErrors(
+        resume.filter((observation) => observation.run_status === "completed"),
+      ),
+    );
     if (resumeErrors.length) {
       return NextResponse.json(
         { error: resumeErrors.join(" ") },

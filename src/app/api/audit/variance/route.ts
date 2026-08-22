@@ -7,6 +7,7 @@ import {
   promptSchema,
 } from "@/lib/audit/types";
 import {
+  OPENCODEGO_SYSTEM,
   assertLiveProviderCredentialsConfigured,
   liveExecuteAuditPrompt,
 } from "@/lib/audit/provider";
@@ -58,8 +59,6 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
-    // Uniqueness is already checked by validateVarianceRequest, but also ensure
-    // the supplied prompts themselves have unique ids.
     if (new Set(prompt_ids).size !== prompt_ids.length) {
       return NextResponse.json(
         { error: "Variance prompts must have unique prompt_id." },
@@ -67,10 +66,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Run each designated question separately under the same locked method.
-    // Reuses the 1+2 retry contract (runQuestionWithRetry) so every attempt is
-    // persisted with full telemetry and the USD 5 ceiling is enforced server-side
-    // via the budget that is carried forward attempt by attempt.
     let budget = input.budget;
     const observations: z.infer<typeof auditObservationSchema>[] = [];
     let incomplete_reason: string | undefined;
@@ -89,17 +84,10 @@ export async function POST(request: Request) {
       };
       observations.push(outcome.observation);
       if (outcome.status === "exhausted") {
-        // Failure matrix: variance re-ask fails → main run unchanged, variance
-        // record marked incomplete, never blended. We continue to produce a
-        // record for the other designated questions rather than failing the
-        // whole request, so the caller gets the completed re-asks plus the
-        // failure reason.
         incomplete_reason =
           incomplete_reason ||
           `Variance re-ask for ${prompt.prompt_id} did not produce an evaluable observation after automatic retries: ${outcome.failure_reason}`;
       }
-      // Non-retryable category (e.g. cost ceiling) would have exhausted with
-      // category non_retryable — stop further variance calls safely.
       if (
         outcome.status === "exhausted" &&
         outcome.failure_category === "non_retryable"
@@ -112,24 +100,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // If fewer observations than prompts due to non_retryable early stop, the
-    // variance record must reflect the gap explicitly so the quality-gate review
-    // can note it. We pad with a synthetic incomplete marker via incomplete_reason
-    // and let createVarianceRecord validate the expected prompt_ids; to avoid
-    // throwing on the length mismatch we only create the record for the
-    // questions that actually produced an observation.
-    // Instead: if we stopped early, report the partial set with incomplete flag.
     const expectedIds = input.prompts.map((p) => p.prompt_id);
     const producedIds = observations.map((o) => o.prompt_id);
     const missingAfterStop = expectedIds.filter(
       (id) => !producedIds.includes(id),
     );
 
-    // Build the variance record. If we stopped early, we treat missing prompts
-    // as failed variance questions and include them as incomplete entries via
-    // the incomplete_reason, but we still need observations for each designated
-    // prompt to satisfy the 1:1 check. So synthesize failed observations for
-    // the missing ids only to satisfy the record shape, marking them as failed.
+    // Missing variance observations are synthetic failure markers only; they
+    // never enter the main report. Preserve the production transport honestly
+    // even though no provider response exists for the marker itself.
     if (missingAfterStop.length) {
       for (const missingId of missingAfterStop) {
         const prompt = input.prompts.find((p) => p.prompt_id === missingId)!;
@@ -139,7 +118,7 @@ export async function POST(request: Request) {
           branded: prompt.branded,
           question: prompt.question,
           instruction_version: "neutral-id-v1",
-          system: "OpenAI Responses API",
+          system: OPENCODEGO_SYSTEM,
           requested_model: "gpt-5.6-luna",
           returned_model: "",
           response_id: "",

@@ -32,6 +32,28 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Build Cloudflare worker (build-only)
+        env:
+          NUAVE_PROVIDER: opencodego
+          NUAVE_QUESTION_PROVIDER: opencodego
+          OPENCODEGO_API_KEY: dummy-build-only-key
+          OPENAI_API_KEY: dummy-build-only-key
+          OPENAI_BASE_URL: https://opencode.ai/zen/go/v1
+          OPENAI_AUDIT_MODEL: gpt-5.6-luna
+          OPENAI_AUDIT_REASONING_EFFORT: low
+        run: |
+          trap 'rm -f .env.production.local' EXIT
+          cat > .env.production.local <<EOF
+          NUAVE_PROVIDER=${NUAVE_PROVIDER}
+          NUAVE_QUESTION_PROVIDER=${NUAVE_QUESTION_PROVIDER}
+          OPENCODEGO_API_KEY=${OPENCODEGO_API_KEY}
+          OPENAI_API_KEY=${OPENAI_API_KEY}
+          OPENAI_BASE_URL=${OPENAI_BASE_URL}
+          OPENAI_AUDIT_MODEL=${OPENAI_AUDIT_MODEL}
+          OPENAI_AUDIT_REASONING_EFFORT=${OPENAI_AUDIT_REASONING_EFFORT}
+          EOF
+          npm run build:cf
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

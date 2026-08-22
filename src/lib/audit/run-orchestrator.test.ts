@@ -4,6 +4,10 @@ import { runAuditObservations } from "./run-orchestrator";
 import type { AuditRunEvent } from "./stream";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import { executeAuditPrompt, liveExecuteAuditPrompt } from "./provider";
+import {
+  PRODUCTION_OBSERVATION_REQUESTED_MODEL,
+  PRODUCTION_OBSERVATION_SYSTEM,
+} from "./production-observation-method";
 
 const brief = {} as BusinessBrief;
 const safetyIdentifier = "test-user-123";
@@ -30,8 +34,8 @@ function observation(
     category: "need_discovery",
     branded: false,
     question: "Question?",
-    system: "OpenAI Responses API",
-    requested_model: "gpt-5.6-luna",
+    system: PRODUCTION_OBSERVATION_SYSTEM,
+    requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
     returned_model: "gpt-5.6-luna",
     response_id: `resp_${promptId}`,
     observed_at: "2026-08-17T00:00:00.000Z",
@@ -93,18 +97,17 @@ function run(
 // R3-5 (Phase 3 fix-round-3 adversarial review): the credential guard used to
 // live only in the three HTTP handlers, and the live run has never gone
 // through them. `scripts/sozo/sozo-live-run.spec.ts` drives this orchestrator
-// directly with the env-selected `executeAuditPrompt`, so a missing
-// OPENAI_API_KEY burned the full 1+2 retry policy across all ten questions
-// (up to 30 guaranteed-failing attempts) before the real cause surfaced.
+// directly with the env-selected `executeAuditPrompt`, so a missing production
+// credential must fail before the retry loop starts.
 // ---------------------------------------------------------------------------
 describe("live provider credential guard on the script path (R3-5)", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("fails before the first question when OPENAI_API_KEY is missing and a real provider binding is passed", async () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "");
+  it("fails before the first question when OPENCODEGO_API_KEY is missing and a real provider binding is passed", async () => {
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "");
     const events: AuditRunEvent[] = [];
 
     await expect(
@@ -117,14 +120,14 @@ describe("live provider credential guard on the script path (R3-5)", () => {
         emit: (event) => events.push(event),
         sleep: async () => {},
       }),
-    ).rejects.toThrow(/OPENAI_API_KEY is not configured/);
+    ).rejects.toThrow(/OPENCODEGO_API_KEY is not configured/);
     // Nothing was emitted: the run never started, so no attempt was spent.
     expect(events).toEqual([]);
   });
 
   it("covers the env-selected binding the Sozo runner actually uses", async () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "");
     const events: AuditRunEvent[] = [];
 
     await expect(
@@ -137,13 +140,13 @@ describe("live provider credential guard on the script path (R3-5)", () => {
         emit: (event) => events.push(event),
         sleep: async () => {},
       }),
-    ).rejects.toThrow(/OPENAI_API_KEY is not configured/);
+    ).rejects.toThrow(/OPENCODEGO_API_KEY is not configured/);
     expect(events).toEqual([]);
   });
 
   it("leaves an injected test double alone — no provider call, no credential needed", async () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("NUAVE_PROVIDER", "opencodego");
+    vi.stubEnv("OPENCODEGO_API_KEY", "");
     const { summaryPromise } = run(async (input) =>
       observation(input.prompt.prompt_id),
     );
@@ -155,7 +158,7 @@ describe("live provider credential guard on the script path (R3-5)", () => {
 });
 
 describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
-  it("emits run_completed with exactly ten evaluable observations on a clean run", async () => {
+  it("accepts ten fresh OpenCode Go observations and emits run_completed", async () => {
     const { events, summaryPromise } = run(async (input) =>
       observation(input.prompt.prompt_id),
     );
@@ -178,6 +181,11 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     const terminal = events[events.length - 1];
     expect(terminal.type).toBe("run_completed");
     expect(summary.observations).toHaveLength(10);
+    expect(
+      summary.observations.every(
+        (item) => item.system === PRODUCTION_OBSERVATION_SYSTEM,
+      ),
+    ).toBe(true);
     expect(summary.failed_prompt_ids).toEqual([]);
     expect(summary.stop_message).toBe("");
   });
@@ -308,7 +316,7 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     ).rejects.toThrow("exactly ten questions");
   });
 
-  it("resumes completed observations without rerunning them (R-19)", async () => {
+  it("resumes completed OpenCode Go observations without rerunning them (R-19)", async () => {
     const executed: string[] = [];
     const resumedThree = [
       observation("p1"),
@@ -348,6 +356,67 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     expect(resumed).toEqual(["resp_p1", "resp_p2", "resp_p3"]);
     const terminal = events[events.length - 1];
     expect(terminal.type).toBe("run_completed");
+  });
+
+  it("rejects a resumed direct-OpenAI observation before any new observation executes", async () => {
+    const execute = vi.fn(async (input: { prompt: AuditPrompt }) =>
+      observation(input.prompt.prompt_id),
+    );
+    const events: AuditRunEvent[] = [];
+
+    await expect(
+      runAuditObservations({
+        prompts: prompts(),
+        brief,
+        safety_identifier: safetyIdentifier,
+        budget: fixtureBudget,
+        execute: execute as never,
+        emit: (event) => events.push(event),
+        sleep: async () => {},
+        resume: {
+          observations: [observation("p1", { system: "OpenAI Responses API" })],
+        },
+      }),
+    ).rejects.toThrow(/current protected production observation method/);
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(events).toEqual([]);
+  });
+
+  it("rejects a resumed OpenCode observation with the wrong requested model", async () => {
+    const execute = vi.fn(async (input: { prompt: AuditPrompt }) =>
+      observation(input.prompt.prompt_id),
+    );
+    const events: AuditRunEvent[] = [];
+
+    await expect(
+      runAuditObservations({
+        prompts: prompts(),
+        brief,
+        safety_identifier: safetyIdentifier,
+        budget: fixtureBudget,
+        execute: execute as never,
+        emit: (event) => events.push(event),
+        sleep: async () => {},
+        resume: {
+          observations: [
+            observation("p1", {
+              requested_model: "gpt-5.5",
+              telemetry: [
+                fixtureCallTelemetry({
+                  stage: "observation",
+                  requested_model: "gpt-5.5",
+                  response_id: "resp_p1",
+                }),
+              ],
+            }),
+          ],
+        },
+      }),
+    ).rejects.toThrow(/requested observation model must be gpt-5.6-luna/);
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(events).toEqual([]);
   });
 
   it("carries the complete per-attempt provenance on the terminal event (R-20)", async () => {

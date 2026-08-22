@@ -11,6 +11,10 @@ import {
   generateIndonesianQuestionPack,
 } from "./questions-id";
 import { AUDIT_MODEL, AUDIT_PRICING_VERSION } from "./telemetry";
+import {
+  OPENCODEGO_BASE_URL,
+  assertOpenCodeGoProductionMethodConfigured,
+} from "./opencodego";
 
 // Live provider for the Indonesian question-generation boundary (Spec 003,
 // work package A). `questions-id.ts` owns the boundary contract, deterministic
@@ -18,44 +22,52 @@ import { AUDIT_MODEL, AUDIT_PRICING_VERSION } from "./telemetry";
 // Indonesian fallback; THIS module owns the real bounded no-search provider
 // call that the boundary is wired to:
 //
-//   - provider selection via NUAVE_QUESTION_PROVIDER ("openai" default |
-//     "gemini"), independent from NUAVE_PROVIDER so the 03/04 provider
-//     defaults can differ until the five-business evaluation locks them
-//     (Spec 003 R-07..R-10). The provider-lock decision can therefore change
-//     the default without code edits.
+//   - provider selection via NUAVE_QUESTION_PROVIDER ("opencodego" default |
+//     "openai" | "gemini"), independent from NUAVE_PROVIDER so tests can
+//     exercise alternatives while the protected live path remains locked to
+//     OpenCode Go (founder decision 2026-08-21);
 //   - the versioned question-writer instruction (question-writer-v1, the
 //     docs/journey/04 "Suggested generation instruction" substance) as the one
 //     authoritative instruction source;
-//   - the minimal ten-strings output schema for both providers (R-30);
+//   - the minimal ten-strings output schema for all Responses-compatible
+//     providers and Gemini (R-30);
 //   - exact request builders (asserted in tests) that send ONLY the minimized
 //     confirmed brief — no email, payment information, provider metadata, or
 //     sensitive free text (R-29) — and return no predicted answers, findings,
 //     scores, or report content;
-//   - no web search tool on either provider (docs/journey/04);
+//   - no web search tool on the question-writer call (docs/journey/04);
 //   - structured-output parsing; when the provider returns plain text instead,
 //     the boundary in questions-id.ts deterministically parses the numbered
 //     list and otherwise falls back to the deterministic Indonesian pack.
 //
 // Tests stub the HTTP layer (injected fetch); no test performs a live call.
 
-export const INDONESIAN_QUESTION_PROVIDER_DEFAULT = "openai" as const;
+export const INDONESIAN_QUESTION_PROVIDER_DEFAULT = "opencodego" as const;
 
-export const INDONESIAN_QUESTION_PROVIDER_NAMES = ["openai", "gemini"] as const;
+export const INDONESIAN_QUESTION_PROVIDER_NAMES = [
+  "opencodego",
+  "openai",
+  "gemini",
+] as const;
 export type IndonesianQuestionProviderName =
   (typeof INDONESIAN_QUESTION_PROVIDER_NAMES)[number];
 
+export const INDONESIAN_QUESTION_OPENCODEGO_SYSTEM =
+  "OpenCode Go Responses API" as const;
 export const INDONESIAN_QUESTION_OPENAI_SYSTEM =
   "OpenAI Responses API" as const;
 export const INDONESIAN_QUESTION_GEMINI_SYSTEM = "Google Gemini API" as const;
 
 /**
  * Gemini default for the question writer: the five-business evaluation
- * candidate (Spec 003 R-07). Override with GEMINI_AUDIT_MODEL. The OpenAI
- * default reuses AUDIT_MODEL (gpt-5.6-luna) via OPENAI_AUDIT_MODEL.
+ * candidate (Spec 003 R-07). Override with GEMINI_AUDIT_MODEL. OpenCode Go and
+ * direct OpenAI both reuse AUDIT_MODEL (gpt-5.6-luna) via OPENAI_AUDIT_MODEL.
  */
 export const INDONESIAN_QUESTION_GEMINI_DEFAULT_MODEL =
   "gemini-3.5-flash-lite" as const;
 
+export const INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION =
+  AUDIT_PRICING_VERSION;
 export const INDONESIAN_QUESTION_OPENAI_PRICING_VERSION = AUDIT_PRICING_VERSION;
 export const INDONESIAN_QUESTION_GEMINI_PRICING_VERSION =
   "gemini-flash-lite-v1" as const;
@@ -66,6 +78,7 @@ export const INDONESIAN_QUESTION_MAX_OUTPUT_TOKENS = 2_048 as const;
 
 export const INDONESIAN_QUESTION_OPENAI_ENDPOINT =
   "https://api.openai.com/v1/responses" as const;
+export const INDONESIAN_QUESTION_OPENCODEGO_BASE_URL = OPENCODEGO_BASE_URL;
 
 export const INDONESIAN_QUESTION_GEMINI_ENDPOINT_PREFIX =
   "https://generativelanguage.googleapis.com/v1beta/models" as const;
@@ -101,7 +114,7 @@ export const INDONESIAN_QUESTION_WRITER_INSTRUCTION = [
 // Minimal ten-strings output schema (R-30)
 // ---------------------------------------------------------------------------
 
-/** OpenAI Responses API strict JSON schema: `{ "questions": [10 strings] }`. */
+/** Responses API strict JSON schema: `{ "questions": [10 strings] }`. */
 export const INDONESIAN_QUESTION_STRINGS_JSON_SCHEMA = {
   type: "object",
   properties: {
@@ -138,7 +151,7 @@ export const INDONESIAN_QUESTION_STRUCTURED_OUTPUT_NAME =
 
 /**
  * The question-writer provider name from NUAVE_QUESTION_PROVIDER. Defaults to
- * "openai" when unset or empty; fails closed on any other value (mirroring
+ * "opencodego" when unset or empty; fails closed on any other value (mirroring
  * activeAuditProvider in provider.ts).
  */
 export function indonesianQuestionProviderName(): IndonesianQuestionProviderName {
@@ -147,22 +160,23 @@ export function indonesianQuestionProviderName(): IndonesianQuestionProviderName
   if (value === undefined || value === "") {
     return INDONESIAN_QUESTION_PROVIDER_DEFAULT;
   }
-  if (value === "openai" || value === "gemini") return value;
+  if (INDONESIAN_QUESTION_PROVIDER_NAMES.some((name) => name === value)) {
+    return value as IndonesianQuestionProviderName;
+  }
   throw new Error(
-    `Unrecognized NUAVE_QUESTION_PROVIDER="${process.env.NUAVE_QUESTION_PROVIDER}". Valid values are "openai" or "gemini".`,
+    `Unrecognized NUAVE_QUESTION_PROVIDER="${process.env.NUAVE_QUESTION_PROVIDER}". Valid values are ${INDONESIAN_QUESTION_PROVIDER_NAMES.map((name) => `"${name}"`).join(", ")}.`,
   );
 }
 
 /**
- * Question-writer provider for the PROTECTED LIVE path (`/api/audit/prompts`).
- * Fails closed to the founder-approved OpenAI provider (DECISION_LOG
- * 2026-08-17): a non-OpenAI `NUAVE_QUESTION_PROVIDER` is rejected unless
- * `NUAVE_LIVE_PROVIDER_TESTING=1` is explicitly set (tests and local runners
- * only; never in production).
+ * Question-writer provider for the protected live path (`/api/audit/prompts`).
+ * Fails closed to the founder-approved OpenCode Go transport serving
+ * GPT-5.6 Luna (DECISION_LOG 2026-08-21). Other providers are testing-only and
+ * require `NUAVE_LIVE_PROVIDER_TESTING=1` outside production.
  */
 export function liveIndonesianQuestionProviderName(): IndonesianQuestionProviderName {
   const name = indonesianQuestionProviderName();
-  if (name === "openai") return "openai";
+  if (name === "opencodego") return "opencodego";
   // R-13 (O-10, Phase 3 fix-round-2 adversarial review): see the identical
   // guard and rationale in `provider.ts`'s `liveAuditProvider`.
   if (
@@ -172,7 +186,7 @@ export function liveIndonesianQuestionProviderName(): IndonesianQuestionProvider
     return name;
   }
   throw new Error(
-    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
+    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenCode Go (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 
@@ -187,6 +201,14 @@ export type IndonesianQuestionProviderConfig = {
  * version for the generation record (provenance, R-33). */
 export function indonesianQuestionProviderConfig(): IndonesianQuestionProviderConfig {
   const name = indonesianQuestionProviderName();
+  if (name === "opencodego") {
+    return {
+      name,
+      system: INDONESIAN_QUESTION_OPENCODEGO_SYSTEM,
+      requested_model: process.env.OPENAI_AUDIT_MODEL?.trim() || AUDIT_MODEL,
+      pricing_version: INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
+    };
+  }
   if (name === "openai") {
     return {
       name,
@@ -221,7 +243,7 @@ export function indonesianQuestionGenerationMeta(): IndonesianGenerationMeta {
 // ---------------------------------------------------------------------------
 
 /**
- * The exact OpenAI Responses API payload for one bounded no-search question
+ * The exact Responses API payload for one bounded no-search question
  * generation call: low reasoning, no tools (no web search), the minimal
  * ten-strings structured-output schema, the versioned developer instruction,
  * and the minimized confirmed brief as the only user content (R-29).
@@ -327,18 +349,22 @@ export function parseOpenAIIndonesianResponse(
   json: OpenAIResponseBody,
 ): IndonesianProviderOutput {
   if (json.error?.message) {
-    throw new Error(`OpenAI question generation failed: ${json.error.message}`);
+    throw new Error(
+      `Responses API question generation failed: ${json.error.message}`,
+    );
   }
   if (json.status && json.status !== "completed") {
     throw new Error(
-      `OpenAI question generation ended with provider status ${json.status}.`,
+      `Responses API question generation ended with provider status ${json.status}.`,
     );
   }
   for (const item of json.output ?? []) {
     if (item.type !== "message") continue;
     for (const content of item.content ?? []) {
       if (content.type === "refusal") {
-        throw new Error("OpenAI refused the question-generation request.");
+        throw new Error(
+          "Responses API refused the question-generation request.",
+        );
       }
       if (content.type !== "output_text") continue;
       const parsed = content.parsed;
@@ -382,7 +408,9 @@ export function parseOpenAIIndonesianResponse(
       }
     }
   }
-  throw new Error("OpenAI question generation returned no usable output.");
+  throw new Error(
+    "Responses API question generation returned no usable output.",
+  );
 }
 
 type GeminiResponseBody = {
@@ -440,17 +468,25 @@ export function parseGeminiIndonesianResponse(
 
 export type IndonesianFetch = typeof fetch;
 
-async function openaiGenerate(
+function responsesEndpoint(provider: "opencodego" | "openai"): string {
+  if (provider === "openai") return INDONESIAN_QUESTION_OPENAI_ENDPOINT;
+  return `${INDONESIAN_QUESTION_OPENCODEGO_BASE_URL}/responses`;
+}
+
+async function responsesGenerate(
+  provider: "opencodego" | "openai",
   brief: MinimizedIndonesianBrief,
   model: string,
   fetcher: IndonesianFetch,
 ): Promise<IndonesianProviderOutput> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const variable =
+    provider === "opencodego" ? "OPENCODEGO_API_KEY" : "OPENAI_API_KEY";
+  const apiKey = process.env[variable]?.trim();
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured on the Nuave server.");
+    throw new Error(`${variable} is not configured on the Nuave server.`);
   }
   const request = buildOpenAIIndonesianQuestionRequest(brief, model);
-  const res = await fetcher(INDONESIAN_QUESTION_OPENAI_ENDPOINT, {
+  const res = await fetcher(responsesEndpoint(provider), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -460,8 +496,9 @@ async function openaiGenerate(
   });
   const json = (await res.json().catch(() => ({}))) as OpenAIResponseBody;
   if (!res.ok) {
+    const label = provider === "opencodego" ? "OpenCode Go" : "OpenAI";
     throw new Error(
-      `OpenAI question generation failed: ${
+      `${label} question generation failed: ${
         json.error?.message || `provider returned status ${res.status}.`
       }`,
     );
@@ -515,9 +552,14 @@ export function createIndonesianQuestionProvider(
   const fetcher: IndonesianFetch = fetchImpl ?? globalThis.fetch;
   return {
     generate: (brief) =>
-      config.name === "openai"
-        ? openaiGenerate(brief, config.requested_model, fetcher)
-        : geminiGenerate(brief, config.requested_model, fetcher),
+      config.name === "gemini"
+        ? geminiGenerate(brief, config.requested_model, fetcher)
+        : responsesGenerate(
+            config.name,
+            brief,
+            config.requested_model,
+            fetcher,
+          ),
   };
 }
 
@@ -536,6 +578,13 @@ export async function generateLiveIndonesianQuestionPack(
     fetch?: IndonesianFetch;
   } = {},
 ): Promise<IndonesianQuestionPackSuggestion> {
+  // Enforce the same production provider and method lock used by the audit
+  // path before the provider factory resolves configuration. Tests can opt
+  // into alternative providers with the explicit non-production testing flag.
+  const name = liveIndonesianQuestionProviderName();
+  if (name === "opencodego") {
+    assertOpenCodeGoProductionMethodConfigured();
+  }
   const generationMeta =
     options.generationMeta ?? indonesianQuestionGenerationMeta();
   return generateIndonesianQuestionPack(

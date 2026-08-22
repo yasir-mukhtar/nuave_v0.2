@@ -8,6 +8,9 @@ import {
   isLiveProviderCall,
   liveGenerateReportContent,
 } from "./provider";
+import { productionObservationMethodErrors } from "./production-observation-method";
+import { sanitizeUnsupportedReportPriorities } from "./report-priority";
+import type { ReportFailureCode } from "./report-recovery";
 import {
   validateReportLanguage,
   validateIndonesianReportLanguage,
@@ -23,6 +26,7 @@ import type {
   AuditPrompt,
   AuditReport,
   BusinessBrief,
+  ReportContent,
 } from "./types";
 import {
   AuditBudgetError,
@@ -45,13 +49,10 @@ export type ReportPipelineInput = {
  * any provider call: report generation begins only when all ten locked
  * questions (unique prompt ids) each have exactly one evaluable, structurally
  * valid observation (run_status completed, non-empty answer, attempt
- * telemetry). No partial report exists. It is applied at the live route
- * boundary AND unconditionally inside `createValidatedAuditReport`, so the
- * script and direct-library callers cannot buy synthesis for a partial
- * evidence set either (R3-6). The Phase-1 golden fixture (9 completed + 1
- * failed) stays a protected pre-gate record for `buildAuditReport` and the
- * gate's own rejection tests; anything driven through the pipeline supplies
- * a ten-of-ten evidence set.
+ * telemetry), all produced by the current protected production observation
+ * method. No partial or mixed-method report exists. It is applied at the live
+ * route boundary AND unconditionally inside `createValidatedAuditReport`, so
+ * script and direct-library callers cannot bypass it either.
  */
 export function assertReportGenerationGate(input: ReportPipelineInput): void {
   const { prompts, observations } = input;
@@ -96,53 +97,76 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
     );
   }
 
+  errors.push(...productionObservationMethodErrors(observations));
+
   if (errors.length) {
-    // No provider call has been made: the rejection carries no telemetry.
     throw new ReportPipelineError(errors.join(" "), 422, []);
   }
 }
 
 export type ReportGenerator = typeof liveGenerateReportContent;
+export type ReportTelemetrySink = (calls: AuditCallTelemetry[]) => void;
 
 export class ReportPipelineError extends Error {
   readonly status: number;
   readonly telemetry: AuditCallTelemetry[];
+  readonly code: ReportFailureCode;
 
   constructor(
     message: string,
     status = 422,
     telemetry: AuditCallTelemetry[] = [],
+    code: ReportFailureCode = "REPORT_INTEGRITY_FAILURE",
   ) {
     super(message);
     this.name = "ReportPipelineError";
     this.status = status;
     this.telemetry = telemetry;
+    this.code = code;
   }
+}
+
+function normalizeAndContainPriorities(
+  rawContent: ReportContent,
+  input: ReportPipelineInput,
+  reportCalls: AuditCallTelemetry[],
+) {
+  const normalized = normalizeReportEvidence(
+    rawContent,
+    input.observations,
+    input.brief,
+  );
+  const sanitized = sanitizeUnsupportedReportPriorities(
+    normalized,
+    input.observations,
+    input.brief,
+  );
+  if (!sanitized.content.priorities.length) {
+    throw new ReportPipelineError(
+      "Report evidence review found no supported corrective priority. No action was fabricated and no automatic reroll was attempted.",
+      422,
+      reportCalls,
+    );
+  }
+  return sanitized.content;
 }
 
 export async function createValidatedAuditReport(
   input: ReportPipelineInput,
   generate: ReportGenerator = liveGenerateReportContent,
+  onSuccessTelemetry?: ReportTelemetrySink,
 ): Promise<AuditReport> {
-  // R3-5: fail closed on a missing production credential before synthesis,
-  // on the script path as well as the route path.
   if (isLiveProviderCall(generate)) {
     assertLiveProviderCredentialsConfigured();
   }
-  // Keep this invariant at the pipeline boundary as well as the HTTP route.
-  // Scripts and future callers must not be able to spend on synthesis for a
-  // partial evidence set. R3-6 (Phase 3 fix-round-3 adversarial review): this
-  // was conditional on `language === "id"`, which left direct library callers
-  // on the English path able to buy a report from partial evidence — the
-  // comment above claimed otherwise. It is unconditional now.
   assertReportGenerationGate(input);
   const initial = await generate(input);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
-  let content = normalizeReportEvidence(
+  let content = normalizeAndContainPriorities(
     initial.content,
-    input.observations,
-    input.brief,
+    input,
+    reportCalls,
   );
   let callCount = 1;
   let retryViolations: string[] = [];
@@ -179,23 +203,26 @@ export async function createValidatedAuditReport(
       );
     } catch (error) {
       if (error instanceof AuditCallExecutionError) {
-        throw new ReportPipelineError(error.message, error.status, [
-          ...reportCalls,
-          ...error.telemetry,
-        ]);
+        throw new ReportPipelineError(
+          error.message,
+          error.status,
+          [...reportCalls, ...error.telemetry],
+          "REPORT_TRANSIENT_FAILURE",
+        );
       }
       if (error instanceof AuditBudgetError) {
-        throw new ReportPipelineError(error.message, error.status, reportCalls);
+        throw new ReportPipelineError(
+          error.message,
+          error.status,
+          reportCalls,
+          "REPORT_LIMIT_EXHAUSTED",
+        );
       }
       throw error;
     }
     reportCalls.push(...final.telemetry);
     callCount += 1;
-    content = normalizeReportEvidence(
-      final.content,
-      input.observations,
-      input.brief,
-    );
+    content = normalizeAndContainPriorities(final.content, input, reportCalls);
     const retryErrors = [
       ...(isIndonesian
         ? validateIndonesianReportLanguageRevision(original, content)
@@ -239,5 +266,6 @@ export async function createValidatedAuditReport(
       );
     }
   }
+  onSuccessTelemetry?.([...reportCalls]);
   return report;
 }

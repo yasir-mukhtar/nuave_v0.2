@@ -25,6 +25,7 @@ import {
   assembleReportContent,
   type ObservationInstructionVersion,
 } from "./contracts";
+import { reportAssessmentInstructions } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
 import {
   AUDIT_CALL_LIMITS,
@@ -580,10 +581,7 @@ export async function generateReportContent(
           "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
           "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
           "Nuave computes run state, visible brand appearance, excerpts, source links, detail copy, and verified-competitor links in code; do not return those fields.",
-          "not_assessed is reserved for FAILED tests only: when an observation's run_status is failed, set recommendation, comparison, and information all to not_assessed. For every COMPLETED observation all three dimensions must be assessed.",
-          "For a COMPLETED observation, set recommendation to recommended only for an explicit suggestion or endorsement in the answer; otherwise set not_recommended (never not_assessed). A factual answer, contact path, or mere mention is not a recommendation.",
-          "For a COMPLETED observation, use comparison client_preferred, competitor_preferred, or compared_no_preference only when the answer compares the audited brand with another named business; when the answer makes no comparison use not_observed (never not_assessed).",
-          "For a COMPLETED observation, use information confirmed, incomplete, or conflicting only when the answer assesses a public fact about the audited brand; otherwise use not_assessed (this applies to the information dimension only).",
+          ...reportAssessmentInstructions(),
           "Use needs_confirmation when a supplied claim still needs verification. Use needs_correction only when the answers show a specific conflict or error. Use no_clear_issues only when no specific issue appears; it does not prove all public information is correct.",
           "Every finding and priority must cite one or more supplied prompt IDs. Every action needs an observable completion check.",
           "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",

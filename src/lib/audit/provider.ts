@@ -18,11 +18,19 @@ import {
   executeAuditPrompt as openrouterExecute,
   generateReportContent as openrouterGenerate,
 } from "./openrouter";
+import {
+  assertOpenCodeGoProductionMethodConfigured,
+  OPENCODEGO_SYSTEM,
+} from "./opencodego";
+
+export { OPENCODEGO_BASE_URL, OPENCODEGO_SYSTEM } from "./opencodego";
 
 // Provider selection for the audit pipeline.
 //
-// Default: OpenAI Responses API (paid, gpt-5.6-luna with hosted web search).
-// Local free testing (no credit card):
+// Production lock: OpenCode Go's OpenAI-compatible Responses API serving
+// gpt-5.6-luna with web search (founder decision 2026-08-21).
+// Local/testing alternatives:
+//   NUAVE_PROVIDER=openai -> direct OpenAI Responses API
 //   NUAVE_PROVIDER=gemini -> Google Gemini free tier (web search grounding)
 //   NUAVE_PROVIDER=groq   -> Groq (LLM) + Tavily (search), both free tiers
 //   NUAVE_PROVIDER=openrouter -> OpenRouter `:free` models, NO web search
@@ -81,6 +89,10 @@ const PROVIDER_NAMES = Object.keys(
   PROVIDER_BINDINGS,
 ) as readonly AuditProviderName[];
 
+function providerBindings(name: AuditProviderName): LiveProviderBindings {
+  return PROVIDER_BINDINGS[name];
+}
+
 export function activeAuditProvider(): AuditProviderName {
   const value = process.env.NUAVE_PROVIDER?.trim().toLocaleLowerCase("en-US");
   if (value === undefined || value === "") return "openai";
@@ -92,22 +104,16 @@ export function activeAuditProvider(): AuditProviderName {
 }
 
 /**
- * Provider selection for the PROTECTED LIVE path (the `/api/audit/*` routes
+ * Provider selection for the protected live path (the `/api/audit/*` routes
  * and the report pipeline). Fails closed to the founder-approved production
- * provider (OpenAI, gpt-5.6-luna — DECISION_LOG 2026-08-17). Gemini, Groq and
- * OpenRouter remain available for testing only: a non-OpenAI `NUAVE_PROVIDER`
- * is rejected on the live path unless `NUAVE_LIVE_PROVIDER_TESTING=1` is
- * explicitly set (tests and local runner scripts only; never in production).
+ * transport: OpenCode Go serving GPT-5.6 Luna (DECISION_LOG 2026-08-21).
+ * Direct OpenAI, Gemini, Groq and OpenRouter remain available for tests and
+ * local runners only; they require `NUAVE_LIVE_PROVIDER_TESTING=1` and are
+ * always rejected when NODE_ENV=production.
  */
 export function liveAuditProvider(): AuditProviderName {
   const name = activeAuditProvider();
-  if (name === "openai") return "openai";
-  // R-13 (O-10, Phase 3 fix-round-2 adversarial review): a testing-only
-  // provider "cannot be selected for a live protected run" — full stop. The
-  // NODE_ENV check below closes the gap the review found: previously this
-  // escape hatch trusted NUAVE_LIVE_PROVIDER_TESTING=1 alone, with nothing
-  // stopping it from being set (by mistake or misconfiguration) in a real
-  // production deployment.
+  if (name === "opencodego") return "opencodego";
   if (
     process.env.NUAVE_LIVE_PROVIDER_TESTING === "1" &&
     process.env.NODE_ENV !== "production"
@@ -115,82 +121,14 @@ export function liveAuditProvider(): AuditProviderName {
     return name;
   }
   throw new Error(
-    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to OpenAI (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
+    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to OpenCode Go (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 
-const active = PROVIDER_BINDINGS[activeAuditProvider()];
+const active = providerBindings(activeAuditProvider());
 export const extractBusinessDraft = active.extract;
 export const executeAuditPrompt = active.execute;
 export const generateReportContent = active.generate;
-
-// Protected live path: fail-closed to OpenAI (gpt-5.6-luna) — DECISION_LOG
-// 2026-08-17. These are the only bindings the API routes and the report
-// pipeline may use; the env-selectable bindings above stay for tests and
-// local runners only.
-//
-// They resolve LAZILY, on the call. Resolving at module load meant a
-// deployment whose NUAVE_PROVIDER was a testing-only value could not be built
-// at all: `next build` imports every route module to collect page data, so the
-// fail-closed throw came out of module evaluation and failed the whole build
-// ("Failed to collect page data for /api/audit/extract") instead of failing
-// the one request that should be refused. Checking on the call is also
-// strictly stronger than checking at import — the policy is re-evaluated for
-// every live call rather than once per process.
-function liveBindings(): LiveProviderBindings {
-  return PROVIDER_BINDINGS[liveAuditProvider()];
-}
-
-// `async` is load-bearing, not decoration: these are typed as returning a
-// promise, so a fail-closed rejection must arrive as a REJECTION. A plain
-// arrow would throw synchronously out of `liveBindings()`, before any promise
-// exists, and blow past a caller's `.catch()`.
-export const liveExtractBusinessDraft: LiveProviderBindings["extract"] = async (
-  input,
-) => liveBindings().extract(input);
-export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
-  input,
-) => liveBindings().execute(input);
-export const liveGenerateReportContent: LiveProviderBindings["generate"] =
-  async (input, revision) => liveBindings().generate(input, revision);
-
-/**
- * Fails fast, once, before any provider call (O-10, Phase 3 fix-round-2
- * adversarial review; R-13 "startup or deployment fails closed when the
- * intended production credential is missing"). Call this at the top of a
- * live route's handler. Without it, a missing `OPENAI_API_KEY` was only
- * discovered deep inside `executeAuditPrompt`'s per-attempt try/catch
- * (`openai.ts`'s `client()`), where a generic `Error` gets the same targeted
- * retry treatment as a transient provider failure — burning the full 1+2
- * retry policy across all ten questions (up to 30 guaranteed-failing
- * attempts) before the run ever surfaces the real, unrecoverable cause.
- */
-/**
- * True when `fn` is a real provider binding rather than a caller-injected
- * test double. R3-5 (Phase 3 fix-round-3 adversarial review): the credential
- * guard was reachable only from the three HTTP handlers, and the live run has
- * never gone through them — `scripts/sozo/sozo-live-run.spec.ts` and
- * `scripts/sozo/report-rerun.ts` call `runAuditObservations` /
- * `createValidatedAuditReport` directly, so the 30-guaranteed-failing-attempt
- * burn on a missing `OPENAI_API_KEY` was still reachable there. The
- * orchestrator and the pipeline now assert too, but only when the work they
- * are about to do actually reaches a provider: unit tests that inject their
- * own `execute`/`generate` make no provider call and need no credential.
- */
-export function isLiveProviderCall(fn: unknown): boolean {
-  // The lazy live wrappers must match too: `run/route.ts` and
-  // `report-pipeline.ts` hand THOSE to the orchestrator, so omitting them
-  // would silently skip the credential assert on the one path that most needs
-  // it.
-  if (fn === liveExecuteAuditPrompt || fn === liveGenerateReportContent) {
-    return true;
-  }
-  return PROVIDER_NAMES.some(
-    (name) =>
-      fn === PROVIDER_BINDINGS[name].execute ||
-      fn === PROVIDER_BINDINGS[name].generate,
-  );
-}
 
 /**
  * The credential each provider's audit-stage calls read. Keeping this beside
@@ -207,10 +145,72 @@ const PROVIDER_CREDENTIAL_ENV: Record<AuditProviderName, string> = {
 
 export function assertLiveProviderCredentialsConfigured(): void {
   const name = liveAuditProvider();
+  if (name === "opencodego") {
+    assertOpenCodeGoProductionMethodConfigured();
+    return;
+  }
+
   const variable = PROVIDER_CREDENTIAL_ENV[name];
-  if (!process.env[variable]) {
+  const apiKey = process.env[variable]?.trim();
+  if (!apiKey) {
     throw new Error(
       `${variable} is not configured on the Nuave server; the protected live path fails closed before making any provider call.`,
     );
   }
+}
+
+// Protected live path: fail-closed to OpenCode Go (gpt-5.6-luna) —
+// DECISION_LOG 2026-08-21. These are the only bindings the API routes and the
+// report pipeline may use; the env-selectable bindings above stay for tests and
+// local runners only. They resolve lazily so `next build` can import route
+// modules without executing the provider lock.
+//
+// Every wrapper also performs the credential assertion itself. Route-level and
+// orchestrator guards remain intentionally redundant: no future call site can
+// invoke a protected provider wrapper without first establishing the complete
+// OpenCode Go production method and SDK compatibility alias.
+export const liveExtractBusinessDraft: LiveProviderBindings["extract"] = async (
+  input,
+) => {
+  const name = liveAuditProvider();
+  assertLiveProviderCredentialsConfigured();
+  return providerBindings(name).extract(input);
+};
+
+export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
+  input,
+) => {
+  const name = liveAuditProvider();
+  assertLiveProviderCredentialsConfigured();
+  const observation = await providerBindings(name).execute(input);
+  // The OpenAI module is intentionally reused as the protocol adapter for
+  // OpenCode Go. Correct its transport provenance at the protected boundary so
+  // evidence never claims a direct OpenAI API call when OpenCode Go carried it.
+  return name === "opencodego"
+    ? { ...observation, system: OPENCODEGO_SYSTEM }
+    : observation;
+};
+
+export const liveGenerateReportContent: LiveProviderBindings["generate"] =
+  async (input, revision) => {
+    const name = liveAuditProvider();
+    assertLiveProviderCredentialsConfigured();
+    return providerBindings(name).generate(input, revision);
+  };
+
+/**
+ * True when `fn` is a real provider binding rather than a caller-injected
+ * test double. The orchestrator and report pipeline use this to assert live
+ * credentials before provider work while unit tests with injected doubles stay
+ * offline.
+ */
+export function isLiveProviderCall(fn: unknown): boolean {
+  if (fn === liveExecuteAuditPrompt || fn === liveGenerateReportContent) {
+    return true;
+  }
+  return PROVIDER_NAMES.some(
+    (name) =>
+      fn === providerBindings(name).execute ||
+      fn === providerBindings(name).generate,
+  );
 }
