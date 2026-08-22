@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-08-19
+> Updated: 2026-08-22
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -25,6 +25,10 @@ not override product truth. A new settled decision should be reflected in the
 affected canonical document in the same change whenever practical, so the
 decision log does not become a permanent hidden override.
 
+[`AI_HANDOFF.md`](./AI_HANDOFF.md) is a cross-session continuity aid only. It
+summarizes chronology, release topology, and settled implementation context for
+a fresh AI session, but it has no authority over the sources above.
+
 ## Canonical product documents
 
 | Document | Governs | Status |
@@ -36,6 +40,12 @@ decision log does not become a permanent hidden override.
 | [`NOW.md`](./NOW.md) | Current objective, deployment state, facts, blockers, and next action | Current operating state |
 | [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions | Canonical history |
 | [`WORKFLOW.md`](./WORKFLOW.md) | Document creation, specifications, worker handoffs, and verification | Canonical working method |
+
+## Continuity
+
+| Document | Purpose | Status |
+|---|---|---|
+| [`AI_HANDOFF.md`](./AI_HANDOFF.md) | Durable context for fresh AI sessions: product snapshot, phase status, reviewed/deployed SHA topology, Spec 003 invariants, review history, and next closeout steps | Working continuity reference; non-authoritative |
 
 ## Current development plan
 
@@ -114,8 +124,8 @@ context an agent must read. Do not implement a draft specification.
 |---|---|---|
 | [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md) | Fixture-backed landing-to-report preview with unmistakably simulated checkout | Verified (2026-08-17); realigned by Spec 002 |
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md) | Indonesian audit and report contracts, journey realigned to the canonical sequence | Verified (2026-08-17) |
-| [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Approved; implementing — **the current objective** |
-| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Approved; implementing |
+| [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Implementation and founder-run product path completed; formal R-31/R-32 evidence closeout pending — **the current objective** |
+| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Approved; implementation present/in progress pending its own verification record |
 | [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Implementing; Wave 1 (P0 foundation, P1 landing) verified 2026-08-20; Wave 2 gated on the report-quality gate |
 
 ## Reference and history
@@ -135,7 +145,7 @@ context an agent must read. Do not implement a draft specification.
 
 | Task | Read first | Then read |
 |---|---|---|
-| Orient to current work | `AGENTS.md`, `README.md`, `docs/NOW.md` | The active spec named by `NOW.md` |
+| Orient to current work | `AGENTS.md`, `README.md`, `docs/NOW.md` | `docs/AI_HANDOFF.md` for continuity, then the active spec named by `NOW.md` |
 | Draft a canonical document | `AGENTS.md`, its document brief | Only the sources listed in the brief |
 | Implement a capability | `AGENTS.md`, approved `SPEC.md` | Only the spec's required context and relevant code |
 | Verify implementation | `AGENTS.md`, approved `SPEC.md`, verification template | The diff, relevant code, and test output |
