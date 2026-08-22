@@ -17,7 +17,6 @@ function useScrolled() {
   return scrolled;
 }
 
-/* ───── Mobile Menu ───── */
 function MobileMenu({
   open,
   onClose,
@@ -77,8 +76,11 @@ function MobileMenu({
   );
 }
 
-/* ───── LandingNav ───── */
-export default function LandingNav() {
+export default function LandingNav({
+  overlayHero = false,
+}: {
+  overlayHero?: boolean;
+}) {
   const scrolled = useScrolled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useTranslations();
@@ -104,6 +106,8 @@ export default function LandingNav() {
     <>
       <nav
         className="lp-nav-bar"
+        data-overlay-hero={overlayHero ? "true" : "false"}
+        data-scrolled={scrolled ? "true" : "false"}
         style={{
           position: "fixed",
           top: 0,
@@ -137,41 +141,37 @@ export default function LandingNav() {
               "background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
           }}
         >
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 no-underline">
             <img
               src={LOGO_SVG}
               alt="Nuave logo"
               width={28}
               height={28}
-              className="object-contain"
+              className="lp-nav-brand-logo object-contain"
             />
-            <span className="text-[20px] font-semibold text-[#0d0d0d]">
+            <span className="lp-nav-brand-text text-[20px] font-semibold text-[#0d0d0d]">
               Nuave
             </span>
           </Link>
 
-          {/* Links (desktop) */}
           <div className="lp-nav-links flex items-center gap-8">
             <a
               href="/support"
-              className="text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
+              className="lp-nav-contact text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
             >
               {t("nav.contact")}
             </a>
           </div>
 
-          {/* CTA button (desktop) */}
           <div className="lp-nav-masuk flex items-center gap-3">
             <Link
               href="/audit"
-              className="btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
+              className="lp-nav-hero-cta btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
             >
               {t("cta.auditBrandFreeNoExclaim")}
             </Link>
           </div>
 
-          {/* Hamburger button (mobile) */}
           <button
             className="lp-nav-hamburger hidden bg-transparent border-none cursor-pointer p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
