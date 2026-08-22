@@ -10,8 +10,9 @@
 - **Parallel proof:** one batch delegation, `deleg_f2ea202d`, started all four lanes at `2026-08-22 21:16:09`; all four genuinely overlapped and completed by `21:19:56`
 - **Per-lane runtime:** A 225.59s; B 152.44s; C 144.74s; D 188.66s
 - **Slowest lane:** 225.59s
-- **Parallel wall clock:** approximately 227s (3m 47s)
-- **Exposed worker tool calls:** A 34; B 28; C 18; D 39; total 119. Provider/API-call counts were not separately exposed.
+- **Parallel wall clock:** 226.18s (about 3m 46s)
+- **Exposed reviewer API calls:** A 16; B 11; C 11; D 22; total 60
+- **Exposed worker tool calls:** A 34; B 28; C 18; D 39; total 119
 - **Token counts:** not available
 - **Nuave live/provider calls:** none. No OpenCode Go, OpenAI, Gemini, Groq, OpenRouter, or Tavily call was made.
 - **Application baseline check:** before review and again before report writing, `git diff --quiet 028aaa72149c81d71b940adfcb16bd144f0df047..HEAD -- src tests package.json package-lock.json next.config.* playwright.config.* tsconfig.json` returned exit 0. Before this report, the branch differed from baseline only by the orchestrator prompt. Reviewers created no repository changes.
@@ -265,6 +266,7 @@ Deterministic route steps:
 - **Full server-owned run state/idempotency:** Rejected as a current defect. Spec 003 explicitly defers durable jobs and server-owned run state to Phase 4. RVP-004 is narrower: the current route can validate a supplied frozen pack/subset without building durable ownership.
 - **Report shown before variance settles:** Rejected. `deriveAuditStep` receives `hasReport: Boolean(report && varianceSettled)` at `AuditWorkflow.tsx:530-535`, and PDF is also gated by `report && varianceSettled` at `1046-1050`.
 - **Report retries lose prior report telemetry:** Rejected for the ordinary fresh-run path. Failed report telemetry is appended to `setupTelemetry` and carried into the retry. The distinct resumed-observation duplication survives as RVP-006.
+- **B-05 — initial report budget failure returns `telemetry: []`:** Rejected as an active real-client ledger-loss defect. The route does not echo the supplied ledger, but the real client does not replace `setupTelemetry` with the error response; it only appends returned telemetry when present (`AuditWorkflow.tsx:754-757`). The already-held setup ledger and observation telemetry therefore remain available for a later retry. The asymmetric response contract is worth tightening, but the proposed loss sequence does not occur on the current client path.
 - **Failed-only telemetry, zero-search telemetry, and missing positive response provenance:** Merged into RVP-002 as one positive completed-attempt invariant rather than three inflated findings.
 - **Variance arbitrary-prompt acceptance and missing variance output validation:** Kept separate as RVP-004 and RVP-007. The first is an active request-boundary integrity defect; the second is a narrower fail-closed postcondition defect.
 - **Reset during report versus reset during variance:** Merged into RVP-003 because the root cause is the same missing workflow identity/abort boundary.
@@ -282,16 +284,16 @@ Deterministic route steps:
 
 ## 7. Orchestration evaluation
 
-- **Raw worker claims:** Hermes did not preserve an exact untruncated candidate count in the cache; completed reviewer payloads were stored as truncated transcript previews. The recoverable themes were immutable binding, positive completed-attempt provenance, arbitrary variance prompt acceptance, variance postcondition validation, variance false completeness, reset/stale async work, resumed-ledger duplication, plus concrete route/client coverage gaps.
+- **Raw worker findings:** 13 (A 4, B 5, C 2, D 2)
 - **Verified findings after synthesis:** 7
-- **Duplicates merged:** failed-only/zero-search/response-provenance claims merged into RVP-002; report-reset and variance-reset claims merged into RVP-003; test-lane copies were treated as corroboration, not new findings.
-- **Claims rejected:** 3 themes (full server-owned idempotency as Phase-3 requirement, early report display, ordinary fresh-path report telemetry loss).
-- **Severity downgrades:** variance output validation was kept at P2 because the current protected executor is correctly wired; route-coverage gaps were not promoted to implementation P1s.
+- **Duplicates merged:** 5 raw duplicates. A-01/B-02/D-01 merged into RVP-001; A-02/B-01/D-02 merged into RVP-002; A-03/B-04 merged into RVP-004. Report-reset and variance-reset scenarios remained one root-cause finding, RVP-003.
+- **Worker claims rejected:** 1 (B-05, because the real client preserves rather than replaces its existing ledger). Three additional review questions were inspected and rejected before becoming findings: full server-owned idempotency as a Phase-3 requirement, early report display, and ordinary fresh-path report telemetry loss.
+- **Severity downgrades:** B-03 was downgraded P1 → RVP-005 P2 because the current route supplies `incomplete_reason` for exhausted real outcomes; the helper remains unsafe for direct/future callers but the normal route does not currently produce the claimed false-complete state. A-04 remained P2 as RVP-007 because the current protected executor is correctly wired. Route-coverage gaps were not promoted to implementation P1s.
 - **Unique-value lanes:** A uniquely established route binding and arbitrary variance acceptance; B uniquely established false variance completeness; C uniquely established reset races and resumed-ledger duplication; D added independent adversarial reproduction and coverage precision.
 - **Four lanes sufficient:** yes. Independent corroboration remained strong for the two report-integrity findings while each implementation lane still produced unique value.
 - **Redundancy/breadth:** A and D overlapped intentionally on report acceptance; B also touched the same gate. D remained useful because it reproduced the claims and prevented test gaps from being mistaken for extra defects. A was slowest partly because one broad search timed out.
 - **Slowest reviewer:** 225.59s
-- **Exposed worker calls:** 119 tool invocations; provider/API-call count not separately exposed
+- **Exposed worker calls:** 60 reviewer API calls and 119 tool invocations
 - **Token count:** not available
 - **Comparison with previous five-agent pilot:** Four lanes preserved independent corroboration while reducing one dedicated provider/method lane. The combined route/method lane was sufficient, and the test lane still challenged it independently. Overlap was lower and every lane produced unique value.
 - **Overnight whole-repo structure:** keep four role types per bounded subsystem—request/method boundary, pure core/integrity, client/recovery, and adversarial tests—then run several subsystem batches with disjoint file ownership and one Sol synthesis pass. Do not add a fifth reviewer unless a subsystem has a genuinely separate security/provider boundary.
@@ -301,7 +303,7 @@ Deterministic route steps:
 
 - **platform-reported quota before:** not available
 - **platform-reported quota after:** not available
-- **model/tool metrics:** four GPT-5.6 Luna reviewers; per-lane runtimes above; 119 exposed tool invocations; token and provider/API-call counts not available
+- **model/tool metrics:** four GPT-5.6 Luna reviewers; per-lane runtimes above; 60 reviewer API calls; 119 exposed tool invocations; token counts not available
 - **founder-reported meter before:** pending
 - **founder-reported meter after:** pending
 - **founder-reported delta:** pending
