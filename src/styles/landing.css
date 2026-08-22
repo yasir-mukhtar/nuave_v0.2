@@ -94,7 +94,6 @@ body:has(.lp-root) {
   display: none;
 }
 
-/* ── Entrance stagger (R-12: one 400ms stagger, simple fades) ── */
 @keyframes lp-entrance-fade {
   from {
     opacity: 0;
@@ -121,7 +120,6 @@ body:has(.lp-root) {
   animation-delay: 180ms;
 }
 
-/* ── Scan line motif (plays once on submit) ── */
 @keyframes lp-scan-line {
   0% {
     top: 0;
@@ -143,7 +141,6 @@ body:has(.lp-root) {
   animation: lp-scan-line 450ms var(--ease-out) forwards;
 }
 
-/* Reduced-motion fallback: entrance becomes simple fade without translate, scan line still shows state */
 @media (prefers-reduced-motion: reduce) {
   .lp-entrance {
     animation: none !important;
@@ -155,6 +152,36 @@ body:has(.lp-root) {
     top: 0 !important;
     height: 2px;
     opacity: 1 !important;
+  }
+}
+
+/* The landing nav sits directly on the photographic audit hero until scroll. */
+@media (min-width: 769px) {
+  .lp-nav-bar[data-overlay-hero="true"][data-scrolled="false"]
+    .lp-nav-brand-logo {
+    filter: brightness(0) invert(1);
+  }
+
+  .lp-nav-bar[data-overlay-hero="true"][data-scrolled="false"]
+    .lp-nav-brand-text,
+  .lp-nav-bar[data-overlay-hero="true"][data-scrolled="false"]
+    .lp-nav-contact {
+    color: #ffffff !important;
+    text-shadow: 0 1px 6px rgba(0, 30, 80, 0.2);
+  }
+
+  .lp-nav-bar[data-overlay-hero="true"][data-scrolled="false"]
+    .lp-nav-hero-cta {
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    background: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .lp-nav-bar[data-overlay-hero="true"][data-scrolled="false"]
+    .lp-nav-hero-cta:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
   }
 }
 
@@ -204,8 +231,18 @@ body:has(.lp-root) {
     padding: 120px 20px 0 !important;
   }
 
-  .lp-problem-section {
+  .lp-problem-section,
+  .lp-report-section,
+  .lp-batasan-section {
     padding: 60px 16px !important;
+  }
+
+  .lp-data-section {
+    padding: 0 16px 60px !important;
+  }
+
+  .lp-data-section > div {
+    padding-top: 60px !important;
   }
 
   .lp-problem-grid,
