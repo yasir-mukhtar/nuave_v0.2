@@ -2,6 +2,16 @@
   display: block;
 }
 
+.root > div > div[aria-hidden="true"] {
+  background-image: url("/nuave-ocean-hero.webp") !important;
+  background-position: center top !important;
+}
+
 :global(.lp-problem-section) {
   border-top: 0 !important;
+}
+
+:global(.lp-cta-section) {
+  background-image: url("/nuave-ocean-hero.webp") !important;
+  background-position: center bottom !important;
 }
