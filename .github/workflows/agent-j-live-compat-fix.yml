@@ -1,0 +1,106 @@
+name: Agent J Live Compatibility Fix
+
+on:
+  push:
+    branches: [fix/spec-003-live-audit-reliability]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.head_commit.message == 'fix: request live audit compatibility finalization'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/spec-003-live-audit-reliability
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply narrow live compatibility fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          contract = Path('src/lib/audit/client-contract.ts')
+          contract.write_text('''export const AUDIT_CLIENT_CONTRACT_VERSION = "live-audit-stream-v1" as const;\n\nexport const AUDIT_CLIENT_UPDATE_REQUIRED_CODE =\n  "AUDIT_CLIENT_UPDATE_REQUIRED" as const;\n\nexport const AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE =\n  "Versi halaman audit ini sudah lama. Muat ulang halaman sebelum menjalankan audit." as const;\n\n/**\n * Browser/server wire-contract guard for the live NDJSON audit stream. Bump\n * this value whenever a deployed client could no longer parse a new live-run\n * payload. The server rejects stale clients before any observation call.\n */\nexport function isCurrentAuditClientContract(value: unknown): boolean {\n  return value === AUDIT_CLIENT_CONTRACT_VERSION;\n}\n''')
+
+          contract_test = Path('src/lib/audit/client-contract.test.ts')
+          contract_test.write_text('''import { describe, expect, it } from "vitest";\nimport {\n  AUDIT_CLIENT_CONTRACT_VERSION,\n  isCurrentAuditClientContract,\n} from "./client-contract";\n\ndescribe("live audit client contract", () => {\n  it("accepts only the current stream contract version", () => {\n    expect(isCurrentAuditClientContract(AUDIT_CLIENT_CONTRACT_VERSION)).toBe(true);\n    expect(isCurrentAuditClientContract(undefined)).toBe(false);\n    expect(isCurrentAuditClientContract("older-live-audit-stream")).toBe(false);\n  });\n});\n''')
+
+          route_test = Path('src/lib/audit/run-route-client-contract.test.ts')
+          route_test.write_text('''import { beforeEach, describe, expect, it, vi } from "vitest";\nimport {\n  AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n  AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n} from "./client-contract";\n\nconst providerMocks = vi.hoisted(() => ({\n  assertLiveProviderCredentialsConfigured: vi.fn(),\n  liveExecuteAuditPrompt: vi.fn(),\n  isLiveProviderCall: vi.fn(() => false),\n}));\n\nvi.mock("@/lib/audit/provider", () => providerMocks);\n\nimport { POST } from "../../app/api/audit/run/route";\n\ndescribe("POST /api/audit/run client contract guard", () => {\n  beforeEach(() => {\n    vi.clearAllMocks();\n  });\n\n  it.each([undefined, "older-live-audit-stream"])\n    ("rejects stale client contract %s before provider setup", async (clientContractVersion) => {\n      const body = clientContractVersion\n        ? { client_contract_version: clientContractVersion }\n        : {};\n      const response = await POST(\n        new Request("https://nuave.test/api/audit/run", {\n          method: "POST",\n          headers: { "Content-Type": "application/json" },\n          body: JSON.stringify(body),\n        }),\n      );\n      const payload = (await response.json()) as { error?: string; code?: string };\n\n      expect(response.status).toBe(409);\n      expect(payload).toEqual({\n        error: AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n        code: AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n      });\n      expect(providerMocks.assertLiveProviderCredentialsConfigured).not.toHaveBeenCalled();\n      expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();\n    });\n});\n''')
+
+          route = Path('src/app/api/audit/run/route.ts')
+          text = route.read_text()
+          anchor = 'import { NextResponse } from "next/server";\nimport { z } from "zod";\n'
+          replacement = '''import { NextResponse } from "next/server";\nimport { z } from "zod";\nimport {\n  AUDIT_CLIENT_CONTRACT_VERSION,\n  AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n  AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n  isCurrentAuditClientContract,\n} from "@/lib/audit/client-contract";\n'''
+          if anchor not in text:
+            raise SystemExit('run route import anchor not found')
+          text = text.replace(anchor, replacement, 1)
+          anchor = 'const requestSchema = z.object({\n  brief: businessBriefSchema,\n'
+          replacement = '''const requestSchema = z.object({\n  client_contract_version: z.literal(AUDIT_CLIENT_CONTRACT_VERSION),\n  brief: businessBriefSchema,\n'''
+          if anchor not in text:
+            raise SystemExit('run route schema anchor not found')
+          text = text.replace(anchor, replacement, 1)
+          anchor = '''export async function POST(request: Request) {\n  try {\n    assertLiveProviderCredentialsConfigured();\n    const input = requestSchema.parse(await request.json());\n'''
+          replacement = '''export async function POST(request: Request) {\n  try {\n    const rawInput = (await request.json()) as unknown;\n    const clientContractVersion =\n      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)\n        ? (rawInput as Record<string, unknown>).client_contract_version\n        : undefined;\n    if (!isCurrentAuditClientContract(clientContractVersion)) {\n      return NextResponse.json(\n        {\n          error: AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,\n          code: AUDIT_CLIENT_UPDATE_REQUIRED_CODE,\n        },\n        { status: 409 },\n      );\n    }\n\n    assertLiveProviderCredentialsConfigured();\n    const input = requestSchema.parse(rawInput);\n'''
+          if anchor not in text:
+            raise SystemExit('run route POST anchor not found')
+          route.write_text(text.replace(anchor, replacement, 1))
+
+          workflow = Path('src/app/audit/AuditWorkflow.tsx')
+          text = workflow.read_text()
+          anchor = 'import { makeEvidenceExport } from "@/lib/audit/contracts";\n'
+          replacement = '''import { makeEvidenceExport } from "@/lib/audit/contracts";\nimport { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";\n'''
+          if anchor not in text:
+            raise SystemExit('AuditWorkflow import anchor not found')
+          text = text.replace(anchor, replacement, 1)
+          anchor = '''        body: JSON.stringify({\n          brief,\n          prompts: promptPack.prompts,\n'''
+          replacement = '''        body: JSON.stringify({\n          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,\n          brief,\n          prompts: promptPack.prompts,\n'''
+          if anchor not in text:
+            raise SystemExit('AuditWorkflow run body anchor not found')
+          workflow.write_text(text.replace(anchor, replacement, 1))
+
+          run_step = Path('src/app/audit/AuditRunStep.tsx')
+          text = run_step.read_text()
+          anchor = ') : interrupted ? (\n'
+          if anchor not in text:
+            raise SystemExit('AuditRunStep interrupted anchor not found')
+          run_step.write_text(text.replace(anchor, ') : interrupted && completed > 0 ? (\n', 1))
+
+          storage = Path('src/lib/audit/workflow-storage.ts')
+          text = storage.read_text()
+          if 'nuave.audit.workflow.v5' not in text:
+            raise SystemExit('workflow storage v5 key not found')
+          text = text.replace('nuave.audit.workflow.v5', 'nuave.audit.workflow.v6', 1)
+          marker = ' * instruction remain parseable.\n *\n'
+          if marker in text:
+            text = text.replace(marker, ' * instruction remain parseable.\n *\n * v6 invalidates v5 after adding an explicit browser/server live-stream contract\n * guard, so a stale pre-deploy tab cannot restore a failed incompatible run.\n *\n', 1)
+          storage.write_text(text)
+          PY
+
+      - name: Format changed files
+        run: npx prettier --write src/app/api/audit/run/route.ts src/app/audit/AuditWorkflow.tsx src/app/audit/AuditRunStep.tsx src/lib/audit/workflow-storage.ts src/lib/audit/client-contract.ts src/lib/audit/client-contract.test.ts src/lib/audit/run-route-client-contract.test.ts
+
+      - name: Verify checks and unit tests
+        run: |
+          npm run check
+          npm run test:unit
+
+      - name: Commit finalized source fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/app/api/audit/run/route.ts src/app/audit/AuditWorkflow.tsx src/app/audit/AuditRunStep.tsx src/lib/audit/workflow-storage.ts src/lib/audit/client-contract.ts src/lib/audit/client-contract.test.ts src/lib/audit/run-route-client-contract.test.ts
+          git commit -m "fix: guard stale audit clients during live runs"
+          git push origin HEAD:fix/spec-003-live-audit-reliability
