@@ -78,6 +78,7 @@ type SavedState = {
   brief: BusinessBrief;
   factsExtracted: boolean;
   factsConfirmed: boolean;
+  factsCustomerOwned?: boolean;
   extraction: ExtractionDraft | null;
   promptPack: PromptPack | null;
   observations: AuditObservation[];
@@ -90,6 +91,8 @@ type SavedState = {
 
 const STORAGE_KEY = AUDIT_WORKFLOW_STORAGE_KEY;
 const SESSION_KEY = AUDIT_SESSION_STORAGE_KEY;
+const PRESERVED_FACTS_WARNING =
+  "Fakta yang sudah Anda edit atau konfirmasi dipertahankan. Hasil pemindaian baru tidak menggantinya; periksa kembali sebelum membuat pertanyaan.";
 
 const emptyBrief: BusinessBrief = {
   brand_name: "",
@@ -220,6 +223,7 @@ export default function AuditWorkflow() {
   const [brief, setBrief] = useState<BusinessBrief>(emptyBrief);
   const [factsExtracted, setFactsExtracted] = useState(false);
   const [factsConfirmed, setFactsConfirmed] = useState(false);
+  const [factsCustomerOwned, setFactsCustomerOwned] = useState(false);
   const [extraction, setExtraction] = useState<ExtractionDraft | null>(null);
   const [promptPack, setPromptPack] = useState<PromptPack | null>(null);
   const [observations, setObservations] = useState<AuditObservation[]>([]);
@@ -431,6 +435,9 @@ export default function AuditWorkflow() {
           setBrief(state.brief || emptyBrief);
           setFactsExtracted(Boolean(state.factsExtracted));
           setFactsConfirmed(Boolean(state.factsConfirmed));
+          setFactsCustomerOwned(
+            Boolean(state.factsCustomerOwned || state.factsConfirmed),
+          );
           setExtraction(state.extraction || null);
           setPromptPack(restoredPack);
           setObservations(restoredObservations);
@@ -515,6 +522,7 @@ export default function AuditWorkflow() {
       brief,
       factsExtracted,
       factsConfirmed,
+      factsCustomerOwned,
       extraction,
       promptPack,
       observations,
@@ -534,6 +542,7 @@ export default function AuditWorkflow() {
     executionStarted,
     extraction,
     factsConfirmed,
+    factsCustomerOwned,
     factsExtracted,
     observations,
     postReportBudgetCalls,
@@ -668,6 +677,7 @@ export default function AuditWorkflow() {
   ) {
     if (executionStarted) return;
     setBrief((current) => ({ ...current, [key]: value }));
+    setFactsCustomerOwned(true);
     clearAfterBriefChange();
   }
 
@@ -683,6 +693,7 @@ export default function AuditWorkflow() {
       return;
     }
     if (url) setWebsiteUrl(url.trim());
+    const preserveCustomerFacts = factsCustomerOwned;
     setBusy("extract");
     try {
       const result = await postJson<{
@@ -707,32 +718,38 @@ export default function AuditWorkflow() {
       setExtraction({
         ...draft,
         similar_businesses: similarBusinesses,
+        warnings: preserveCustomerFacts
+          ? [...new Set([...draft.warnings, PRESERVED_FACTS_WARNING])]
+          : draft.warnings,
       });
-      setBrief((current) =>
-        withPrimarySimilarBusiness({
-          ...current,
-          brand_name: draft.brand_name || current.brand_name,
-          entity_scope: draft.entity_scope || current.entity_scope,
-          brand_type: draft.brand_type || current.brand_type,
-          category: draft.category || current.category,
-          market_context: draft.market_context || current.market_context,
-          target_customer: draft.target_customer || current.target_customer,
-          official_sources: [
-            ...new Set([resolvedUrl, ...draft.official_sources]),
-          ],
-          verified_offerings: draft.verified_offerings,
-          verified_customer_needs: draft.verified_customer_needs,
-          verified_decision_criteria: draft.verified_decision_criteria,
-          similar_businesses: similarBusinesses,
-          brand_name_variants: draft.brand_name_variants,
-          priority_offering: draft.priority_offering,
-          conversion_action: draft.conversion_action,
-          customer_supplied_facts: draft.customer_supplied_facts,
-          known_accuracy_questions: draft.known_accuracy_questions,
-          usp: draft.usp,
-          regulated_category_notes: draft.regulated_category_notes,
-        }),
-      );
+      if (!preserveCustomerFacts) {
+        setBrief((current) =>
+          withPrimarySimilarBusiness({
+            ...current,
+            brand_name: draft.brand_name || current.brand_name,
+            entity_scope: draft.entity_scope || current.entity_scope,
+            brand_type: draft.brand_type || current.brand_type,
+            category: draft.category || current.category,
+            market_context: draft.market_context || current.market_context,
+            target_customer: draft.target_customer || current.target_customer,
+            official_sources: [
+              ...new Set([resolvedUrl, ...draft.official_sources]),
+            ],
+            verified_offerings: draft.verified_offerings,
+            verified_customer_needs: draft.verified_customer_needs,
+            verified_decision_criteria: draft.verified_decision_criteria,
+            similar_businesses: similarBusinesses,
+            brand_name_variants: draft.brand_name_variants,
+            priority_offering: draft.priority_offering,
+            conversion_action: draft.conversion_action,
+            customer_supplied_facts: draft.customer_supplied_facts,
+            known_accuracy_questions: draft.known_accuracy_questions,
+            usp: draft.usp,
+            regulated_category_notes: draft.regulated_category_notes,
+          }),
+        );
+        setFactsCustomerOwned(false);
+      }
       setFactsExtracted(true);
       setFactsConfirmed(false);
       setSetupTelemetry((calls) => [...calls, ...result.telemetry]);
@@ -1115,6 +1132,7 @@ export default function AuditWorkflow() {
     setBrief(emptyBrief);
     setFactsExtracted(false);
     setFactsConfirmed(false);
+    setFactsCustomerOwned(false);
     setExtraction(null);
     setPromptPack(null);
     setObservations([]);
@@ -1281,7 +1299,10 @@ export default function AuditWorkflow() {
           updateBrief={updateBrief}
           extraction={extraction}
           factsConfirmed={factsConfirmed}
-          setFactsConfirmed={setFactsConfirmed}
+          setFactsConfirmed={(value) => {
+            setFactsConfirmed(value);
+            if (value) setFactsCustomerOwned(true);
+          }}
           busy={busy}
           onGenerate={generatePrompts}
           onBack={backToSource}
