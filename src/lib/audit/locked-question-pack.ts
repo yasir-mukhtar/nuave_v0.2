@@ -1,8 +1,4 @@
-import type {
-  AuditObservation,
-  AuditPrompt,
-  BusinessBrief,
-} from "./types";
+import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 import {
   classifyIndonesianQuestion,
   minimizeIndonesianBrief,
@@ -150,7 +146,9 @@ export function completedLockedObservationSetErrors(input: {
       (observation) => observation.run_status !== "completed",
     )
   ) {
-    errors.push("Every observation in the completed locked proof must be completed.");
+    errors.push(
+      "Every observation in the completed locked proof must be completed.",
+    );
   }
 
   return errors;
