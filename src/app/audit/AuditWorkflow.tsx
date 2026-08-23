@@ -47,6 +47,7 @@ import {
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
 } from "@/lib/audit/questions-id";
+import { completedLockedObservationSetErrors } from "@/lib/audit/locked-question-pack";
 import {
   AuditOperationGeneration,
   isAbortError,
@@ -225,7 +226,9 @@ export default function AuditWorkflow() {
   const [postReportBudgetCalls, setPostReportBudgetCalls] = useState<
     AuditCallTelemetry[]
   >([]);
-  const [varianceRecord, setVarianceRecord] = useState<VarianceRecord | null>(null);
+  const [varianceRecord, setVarianceRecord] = useState<VarianceRecord | null>(
+    null,
+  );
   const [varianceFailure, setVarianceFailure] =
     useState<VarianceFailureRecord | null>(null);
   const varianceInFlightRunKey = useRef<string | null>(null);
@@ -238,7 +241,9 @@ export default function AuditWorkflow() {
   const [promptStatuses, setPromptStatuses] = useState<
     Record<string, PromptRunStatus>
   >({});
-  const [runUnfinished, setRunUnfinished] = useState<RunUnfinishedState | null>(null);
+  const [runUnfinished, setRunUnfinished] = useState<RunUnfinishedState | null>(
+    null,
+  );
   const [reportFailureCode, setReportFailureCode] =
     useState<ReportFailureCode | null>(null);
   const [busy, setBusy] = useState<Busy>(null);
@@ -269,7 +274,11 @@ export default function AuditWorkflow() {
     : null;
 
   const runVariance = useCallback(
-    async (auditReport: AuditReport, budgetCalls: AuditCallTelemetry[]) => {
+    async (
+      auditReport: AuditReport,
+      budgetCalls: AuditCallTelemetry[],
+      completedObservations: AuditObservation[],
+    ) => {
       if (!promptPack) return;
       const runKey = varianceRunKeyForReport(auditReport);
       if (varianceInFlightRunKey.current === runKey) return;
@@ -292,6 +301,33 @@ export default function AuditWorkflow() {
 
       const selectedPrompts = selectVariancePrompts(promptPack.prompts);
       const selectedIds = selectedPrompts.map((prompt) => prompt.prompt_id);
+      const proofErrors = completedLockedObservationSetErrors({
+        prompts: promptPack.prompts,
+        observations: completedObservations,
+        brief,
+      });
+      if (proofErrors.length) {
+        const reason = `Variansi tidak dimulai karena bukti observasi 10/10 tidak valid: ${proofErrors.join(" ")}`;
+        const failure = createVarianceFailureRecord({
+          run_key: runKey,
+          prompt_ids: selectedIds,
+          incomplete_reason: reason,
+        });
+        try {
+          window.sessionStorage.setItem(
+            VARIANCE_FAILURE_STORAGE_KEY,
+            JSON.stringify(failure),
+          );
+        } catch {
+          // Keep the terminal failure in memory if session storage is unavailable.
+        }
+        setVarianceFailure(failure);
+        setError(
+          "Laporan tetap valid, tetapi pengukuran variasi tidak dijalankan karena bukti lengkap 10 observasi tidak tersedia.",
+        );
+        return;
+      }
+
       const operation = operationGeneration.begin("variance");
       varianceInFlightRunKey.current = runKey;
       try {
@@ -303,6 +339,7 @@ export default function AuditWorkflow() {
           {
             brief,
             locked_prompts: promptPack.prompts,
+            completed_observations: completedObservations,
             prompts: selectedPrompts,
             safety_identifier: safetyIdentifier,
             budget: {
@@ -402,7 +439,9 @@ export default function AuditWorkflow() {
           setExecutionStarted(
             Boolean(state.executionStarted || restoredObservations.length),
           );
-          setPromptStatuses(initialStatuses(restoredPack, restoredObservations));
+          setPromptStatuses(
+            initialStatuses(restoredPack, restoredObservations),
+          );
         }
         setVarianceRecord(
           readStoredRunRecord<VarianceRecord>(VARIANCE_STORAGE_KEY),
@@ -555,7 +594,7 @@ export default function AuditWorkflow() {
 
     const generation = operationGeneration.currentGeneration();
     setBusy("report");
-    void runVariance(report, postReportBudgetCalls).finally(() => {
+    void runVariance(report, postReportBudgetCalls, observations).finally(() => {
       if (operationGeneration.currentGeneration() === generation) {
         setBusy((current) => (current === "report" ? null : current));
       }
@@ -563,6 +602,7 @@ export default function AuditWorkflow() {
   }, [
     budgetReady,
     busy,
+    observations,
     operationGeneration,
     postReportBudgetCalls,
     promptPack,
@@ -818,11 +858,17 @@ export default function AuditWorkflow() {
       ]);
       setPostReportBudgetCalls(varianceBudgetCalls);
       if (reportCalls.length) {
-        setSetupTelemetry((calls) => dedupeAuditCalls([...calls, ...reportCalls]));
+        setSetupTelemetry((calls) =>
+          dedupeAuditCalls([...calls, ...reportCalls]),
+        );
       }
       setReport(reportResult.report);
       setReportFailureCode(null);
-      await runVariance(reportResult.report, varianceBudgetCalls);
+      await runVariance(
+        reportResult.report,
+        varianceBudgetCalls,
+        finalObservations,
+      );
     } catch (cause) {
       if (isAbortError(cause) || !operationGeneration.isCurrent(operation)) {
         return;
@@ -832,7 +878,10 @@ export default function AuditWorkflow() {
           dedupeAuditCalls([...calls, ...cause.telemetry]),
         );
       }
-      if (cause instanceof AuditRequestError && isReportFailureCode(cause.code)) {
+      if (
+        cause instanceof AuditRequestError &&
+        isReportFailureCode(cause.code)
+      ) {
         setReportFailureCode(cause.code);
       } else {
         setReportFailureCode("REPORT_TRANSIENT_FAILURE");
@@ -908,7 +957,9 @@ export default function AuditWorkflow() {
     );
     if (questionErrors.length || blockers.length) {
       setError(
-        [...questionErrors.map((issue) => issue.message), ...blockers].join(" "),
+        [...questionErrors.map((issue) => issue.message), ...blockers].join(
+          " ",
+        ),
       );
       return;
     }
@@ -1030,7 +1081,8 @@ export default function AuditWorkflow() {
     if (
       !reportRecovery?.can_retry ||
       !promptPack ||
-      observations.filter((item) => item.run_status === "completed").length !== 10
+      observations.filter((item) => item.run_status === "completed").length !==
+        10
     ) {
       return;
     }
@@ -1158,7 +1210,11 @@ export default function AuditWorkflow() {
             Mulai ulang
           </Button>
           {report && varianceSettled ? (
-            <Button variant="primary" size="sm" onPress={() => window.print()}>
+            <Button
+              variant="primary"
+              size="sm"
+              onPress={() => window.print()}
+            >
               <IconDownload /> Download PDF
             </Button>
           ) : null}
