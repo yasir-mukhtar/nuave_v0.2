@@ -51,7 +51,8 @@ export function fixtureProtectedObservation(
     returned_model: returnedModel,
     response_id: responseId,
     observed_at: overrides.observed_at ?? "2026-08-23T00:00:00.000Z",
-    raw_answer: overrides.raw_answer ?? `Usable answer for ${prompt.prompt_id}.`,
+    raw_answer:
+      overrides.raw_answer ?? `Usable answer for ${prompt.prompt_id}.`,
     sources: overrides.sources ?? [
       {
         url: `https://example.com/${prompt.prompt_id}`,
