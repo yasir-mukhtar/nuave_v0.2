@@ -26,19 +26,24 @@ export function isCredentialBearingHttpUrl(value: string) {
   return Boolean(parsed && (parsed.username || parsed.password));
 }
 
+/**
+ * Normalize safe valid URLs, but preserve malformed/unsafe USER text so the
+ * editor can display it and let the user correct it. Provider-bound code must
+ * call assertSafeComparisonBusinessUrls before using these values.
+ */
 export function normalizeSimilarBusinessUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
   const parsed = parsedHttpUrl(trimmed);
-  if (!parsed || parsed.username || parsed.password) return "";
+  if (!parsed || parsed.username || parsed.password) return trimmed;
   parsed.hash = "";
   return parsed.toString();
 }
 
 export function isValidSimilarBusinessUrl(value: string) {
-  const normalized = normalizeSimilarBusinessUrl(value);
-  if (!normalized) return false;
-  const parsed = parsedHttpUrl(normalized);
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const parsed = parsedHttpUrl(trimmed);
   return Boolean(parsed && !parsed.username && !parsed.password);
 }
 
@@ -84,9 +89,15 @@ export function assertSafeComparisonBusinessUrls(brief: BusinessBrief): void {
     brief.verified_competitor.source_url,
     ...(brief.similar_businesses ?? []).map((business) => business.source_url),
   ].filter(Boolean);
+
   if (urls.some(isCredentialBearingHttpUrl)) {
     throw new Error(
       "Comparison-business URLs must not contain embedded username or password credentials.",
+    );
+  }
+  if (urls.some((url) => !isValidSimilarBusinessUrl(url))) {
+    throw new Error(
+      "Comparison-business URLs must be valid HTTP or HTTPS URLs before provider execution.",
     );
   }
 }
