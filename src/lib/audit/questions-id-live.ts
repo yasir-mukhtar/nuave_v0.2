@@ -211,11 +211,7 @@ export async function buildLiveIndonesianPromptPack(input: {
   // Missing/wrong returned-model provenance on the protected transport is a
   // provider-contract failure, not permission to use the apparent model
   // output. Fail closed to the deterministic pack without a second paid call.
-  if (
-    provenanceError ||
-    candidateBlockers.length ||
-    candidateIssues.length
-  ) {
+  if (provenanceError || candidateBlockers.length || candidateIssues.length) {
     if (selectedSource === "fallback" && !provenanceError) {
       throw new Error(
         "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
