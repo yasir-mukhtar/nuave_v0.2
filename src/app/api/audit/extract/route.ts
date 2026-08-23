@@ -11,9 +11,9 @@ import {
   configuredAuditCarryoverCostUsd,
 } from "@/lib/audit/telemetry";
 import {
-  INVALID_WEBSITE_INPUT_MESSAGE,
-  normalizeWebsiteInput,
-} from "@/lib/audit/website-input";
+  INVALID_SOURCE_INPUT_MESSAGE,
+  parseSourceInput,
+} from "@/lib/audit/source-input";
 
 export const runtime = "nodejs";
 
@@ -51,14 +51,14 @@ export async function POST(request: Request) {
     }
 
     const record = body as Record<string, unknown>;
-    const normalizedWebsite = normalizeWebsiteInput(
+    const normalizedSource = parseSourceInput(
       typeof record.website_url === "string" ? record.website_url : "",
     );
-    if (!normalizedWebsite.ok) {
+    if (!normalizedSource) {
       return NextResponse.json(
         {
-          error: INVALID_WEBSITE_INPUT_MESSAGE,
-          code: "INVALID_WEBSITE_INPUT",
+          error: INVALID_SOURCE_INPUT_MESSAGE,
+          code: "INVALID_SOURCE_INPUT",
           telemetry: [],
         },
         { status: 400 },
@@ -67,10 +67,10 @@ export async function POST(request: Request) {
 
     const input = extractionRequestSchema
       .extend({ budget: auditBudgetSchema })
-      .parse({ ...record, website_url: normalizedWebsite.url });
+      .parse({ ...record, website_url: normalizedSource.normalizedUrl });
 
     // Validate the complete request before touching the protected provider
-    // boundary. Invalid website/input requests therefore make zero calls.
+    // boundary. Invalid source/input requests therefore make zero calls.
     assertLiveProviderCredentialsConfigured();
     return NextResponse.json(await liveExtractBusinessDraft(input));
   } catch (error) {
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Kami tidak dapat menganalisis situs web ini.",
+            : "Kami tidak dapat menganalisis sumber ini.",
         telemetry: [],
       },
       { status: 400 },
