@@ -106,6 +106,7 @@ export async function POST(request: Request) {
         safety_identifier: input.safety_identifier,
         budget,
         execute: liveExecuteAuditPrompt,
+        signal: request.signal,
       });
       budget = {
         ...budget,
