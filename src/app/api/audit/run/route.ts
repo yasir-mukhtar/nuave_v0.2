@@ -61,8 +61,7 @@ export async function POST(request: Request) {
     const input = requestSchema.parse(rawInput);
     assertSafeComparisonBusinessUrls(input.brief);
 
-    // Validate and canonicalize the complete lock before credentials or paid
-    // work are touched. Duplicate identity therefore fails before execution.
+    // Lock identity and exact text before credentials or any paid provider work.
     const lockedPack = canonicalLockedQuestionPack(input.prompts, input.brief);
     const lockedPrompts = lockedPack.prompts;
     const minimized = minimizeIndonesianBrief(input.brief);
@@ -124,7 +123,7 @@ export async function POST(request: Request) {
     const seenCalls = new Set<string>();
     const foldedCalls = [
       ...input.budget.calls,
-      ...resume.flatMap((o) => o.telemetry),
+      ...resume.flatMap((observation) => observation.telemetry),
     ].filter((call) => {
       const key =
         call.response_id || `${call.stage}:${call.attempt}:${call.started_at}`;
@@ -137,8 +136,10 @@ export async function POST(request: Request) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
-        const send = (event: AuditRunEvent) =>
+        const send = (event: AuditRunEvent) => {
+          if (request.signal.aborted) return;
           controller.enqueue(encoder.encode(encodeAuditRunEvent(event)));
+        };
         try {
           await runAuditObservations({
             prompts: lockedPrompts,
@@ -148,17 +149,24 @@ export async function POST(request: Request) {
             execute: liveExecuteAuditPrompt,
             emit: send,
             resume: { observations: resume },
+            signal: request.signal,
           });
         } catch (error) {
-          send({
-            type: "fatal_error",
-            message:
-              error instanceof Error
-                ? error.message
-                : "We couldn't run the audit.",
-          });
+          if (!request.signal.aborted) {
+            send({
+              type: "fatal_error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "We couldn't run the audit.",
+            });
+          }
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch {
+            // The browser may already have cancelled the response stream.
+          }
         }
       },
     });

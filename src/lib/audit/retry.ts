@@ -5,34 +5,13 @@ import type {
   BusinessBrief,
 } from "./types";
 
-/**
- * Spec 003 R-17 retry contract: one initial attempt plus up to two automatic
- * technical retries per question, targeted to the failed question, using the
- * same locked configuration (exact question, provider, model, instruction
- * version, language, location, search configuration, method version), with
- * bounded backoff appropriate to the safe failure category. A valid result is
- * never rerun; retrying stops as soon as one evaluable response is saved.
- * Every attempt is persisted (R-20) on the final observation's telemetry.
- */
-
-/** One initial attempt plus up to two automatic technical retries (R-17). */
 export const MAX_ATTEMPTS_PER_QUESTION = 3;
 export const MAX_AUTOMATIC_RETRIES_PER_QUESTION = 2;
-
-/**
- * Retry-aware observation stage ceiling: 10 questions x 3 attempts = 30.
- * `AUDIT_STAGE_CALL_LIMITS.observation` must equal this value (R-36); the
- * USD 5 per-session ceiling remains the binding cap.
- */
-export const OBSERVATION_STAGE_MAX_CALLS = 10 * MAX_ATTEMPTS_PER_QUESTION; // 30
+export const OBSERVATION_STAGE_MAX_CALLS = 10 * MAX_ATTEMPTS_PER_QUESTION;
 
 export type SafeFailureCategory =
   "rate_limited" | "temporary" | "empty_or_unusable" | "non_retryable";
 
-/**
- * Bounded backoff per safe failure category, indexed by retry number
- * (1 = first automatic retry, 2 = second automatic retry).
- */
 export const RETRY_BACKOFF_MS: Record<
   Exclude<SafeFailureCategory, "non_retryable">,
   readonly [number, number]
@@ -42,7 +21,6 @@ export const RETRY_BACKOFF_MS: Record<
   empty_or_unusable: [1_000, 3_000],
 };
 
-/** Hard upper bound for any single retry backoff. */
 export const MAX_RETRY_BACKOFF_MS = 20_000;
 
 export function retryBackoffMs(
@@ -54,11 +32,6 @@ export function retryBackoffMs(
   return Math.min(schedule[index], MAX_RETRY_BACKOFF_MS);
 }
 
-/**
- * Failures that retrying cannot fix: the private cost guard (R-36), a pinned
- * model or tier mismatch, or missing configuration. Retrying these would
- * repeat the identical pre-flight failure without adding evidence.
- */
 const NON_RETRYABLE_FAILURE_PATTERNS = [
   /audit limit/,
   /private audit limit/,
@@ -67,29 +40,14 @@ const NON_RETRYABLE_FAILURE_PATTERNS = [
   /only standard default pricing is allowed/,
   /no longer makes a paid provider call/,
   /Unrecognized NUAVE_PROVIDER/,
-  // A free-tier PER-DAY cap (Groq TPD, OpenRouter free-models-per-day) cannot
-  // clear inside a run. Without this it matched the generic /quota/ rule below
-  // and every one of the ten questions burned its full backoff schedule before
-  // failing anyway. Both provider modules already fail fast on it; this makes
-  // the orchestrator stop re-asking too.
   /cannot be retried within this request/,
 ];
 
 export type ObservationClassification = {
   evaluable: boolean;
-  /** Meaningful only when `evaluable` is false (R-18 safe failure category). */
   category: SafeFailureCategory;
 };
 
-/**
- * Classifies a returned observation as evaluable or as a failed test with a
- * safe failure category (R-18). A substantive response — including a
- * substantive refusal with a usable answer, uncertainty, conflicting or
- * absent public information — is evaluable and is never retried for a more
- * favorable result. A provider or policy refusal with no usable answer, an
- * empty response, or a truncated response that cannot be evaluated is a
- * failed test that receives targeted same-method recovery.
- */
 export function classifyObservationFailure(
   observation: AuditObservation,
 ): ObservationClassification {
@@ -112,15 +70,9 @@ export function classifyObservationFailure(
     return { evaluable: false, category: "temporary" };
   }
 
-  // run_status "completed" with no usable answer: the provider call finished
-  // but blocked, truncated, or returned nothing usable.
   return { evaluable: false, category: "empty_or_unusable" };
 }
 
-/**
- * Rewrites a provider-level block (completed HTTP call, no usable answer)
- * into a failed test so it is never counted as evaluable (R-18).
- */
 export function markObservationFailed(
   observation: AuditObservation,
   failureReason: string,
@@ -133,7 +85,6 @@ export function markObservationFailed(
   };
 }
 
-/** A short, safe explanation of why a completed provider call had no usable answer. */
 export function failedTestReason(observation: AuditObservation): string {
   const diag = observation.telemetry[observation.telemetry.length - 1] ?? null;
   if (diag?.refusal_present === true) {
@@ -146,9 +97,7 @@ export function failedTestReason(observation: AuditObservation): string {
 }
 
 export type ObservationAttempt = {
-  /** Attempt order within the question (1 = initial, 2-3 = automatic retries). */
   attempt: number;
-  /** Whether the attempt was an automatic retry (attempt > 1). */
   automatic: boolean;
   started_at: string;
   observation: AuditObservation;
@@ -175,12 +124,36 @@ export type QuestionExecuteInput = {
   brief: BusinessBrief;
   safety_identifier: string;
   budget: AuditBudget;
+  signal?: AbortSignal;
 };
 
-const defaultSleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
+function abortReason(signal: AbortSignal): Error {
+  if (signal.reason instanceof Error) return signal.reason;
+  return new DOMException("Audit operation aborted", "AbortError");
+}
 
-/** Records the actual attempt order on the attempt's telemetry (R-20). */
+export function throwIfAuditAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortReason(signal);
+}
+
+const defaultSleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(abortReason(signal));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      reject(abortReason(signal!));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+
 function stampTelemetryAttempt(
   observation: AuditObservation,
   attempt: number,
@@ -195,7 +168,6 @@ function stampTelemetryAttempt(
   };
 }
 
-/** Records the safe failure category on a failed attempt's telemetry (R-20). */
 function stampTelemetryFailureCategory(
   observation: AuditObservation,
   category: SafeFailureCategory,
@@ -210,11 +182,6 @@ function stampTelemetryFailureCategory(
   };
 }
 
-/**
- * The final observation carries the complete attempt trail: every attempt's
- * telemetry (status, timestamps, cost, diagnostics) so the evidence export
- * and the report budget reflect exactly what occurred (R-20, R-30, R-36).
- */
 function combineAttemptTelemetry(
   finalObservation: AuditObservation,
   attempts: ObservationAttempt[],
@@ -225,21 +192,6 @@ function combineAttemptTelemetry(
   };
 }
 
-/**
- * Runs one locked question under the 1+2 retry contract:
- *
- * 1. Persist every attempt (R-20).
- * 2. Retry only technically failed questions under the same locked
- *    configuration (R-17).
- * 3. Use bounded backoff appropriate to the safe failure category.
- * 4. Allow up to two automatic retries after the initial attempt.
- * 5. Stop as soon as one evaluable response is saved; never rerun a valid
- *    result.
- *
- * `budget` is carried forward attempt by attempt so per-attempt cost is
- * accounted server-side (R-36); non-retryable failures (e.g. the USD 5
- * ceiling) exhaust immediately.
- */
 export async function runQuestionWithRetry(input: {
   prompt: AuditPrompt;
   brief: BusinessBrief;
@@ -254,8 +206,9 @@ export async function runQuestionWithRetry(input: {
     failure_reason: string;
     failure_category: SafeFailureCategory;
   }) => void;
-  sleep?: (ms: number) => Promise<void>;
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
   now?: () => number;
+  signal?: AbortSignal;
 }): Promise<QuestionRunOutcome> {
   const sleep = input.sleep ?? defaultSleep;
   const now = input.now ?? Date.now;
@@ -265,6 +218,7 @@ export async function runQuestionWithRetry(input: {
   let lastCategory: SafeFailureCategory = "temporary";
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_QUESTION; attempt += 1) {
+    throwIfAuditAborted(input.signal);
     const automatic = attempt > 1;
     input.onAttemptStarted?.(attempt, automatic);
     const startedAt = now();
@@ -273,7 +227,9 @@ export async function runQuestionWithRetry(input: {
       brief: input.brief,
       safety_identifier: input.safety_identifier,
       budget,
+      signal: input.signal,
     });
+    throwIfAuditAborted(input.signal);
     const classification = classifyObservationFailure(rawObservation);
     const persisted = stampTelemetryFailureCategory(
       stampTelemetryAttempt(
@@ -328,11 +284,9 @@ export async function runQuestionWithRetry(input: {
       failure_reason: persisted.failure_reason,
       failure_category: classification.category,
     });
-    await sleep(backoffMs);
+    await sleep(backoffMs, input.signal);
   }
 
-  // Unreachable: the loop returns on every terminal path. Kept only to
-  // satisfy the type system.
   const finalObservation = combineAttemptTelemetry(
     lastObservation as AuditObservation,
     attempts,

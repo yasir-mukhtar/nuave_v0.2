@@ -23,6 +23,7 @@ import {
   OPENCODEGO_SYSTEM,
 } from "./opencodego";
 import { protectedObservationAttemptErrors } from "./production-observation-method";
+import { executeAbortableProtectedObservation } from "./protected-observation-provider";
 
 export { OPENCODEGO_BASE_URL, OPENCODEGO_SYSTEM } from "./opencodego";
 
@@ -54,7 +55,7 @@ const PROVIDER_BINDINGS = {
   },
   opencodego: {
     extract: openaiExtract,
-    execute: openaiExecute,
+    execute: executeAbortableProtectedObservation,
     generate: openaiGenerate,
   },
 } as const satisfies Record<AuditProviderName, LiveProviderBindings>;
@@ -139,10 +140,10 @@ export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
       ? { ...observation, system: OPENCODEGO_SYSTEM }
       : observation;
 
-  // A transport-level success is not automatically an evaluable protected
-  // observation. Convert apparent successes that fail the one reusable
-  // positive-attempt invariant into technical failures so retry.ts can recover
-  // under the same locked method.
+  // Transport success is not sufficient: the one positive protected-attempt
+  // invariant decides whether this observation is evaluable. Keeping this at
+  // the shared live boundary makes run, resume, report and variance consume the
+  // same evidence semantics while retry.ts retains the original telemetry.
   if (name === "opencodego" && corrected.run_status === "completed") {
     const errors = protectedObservationAttemptErrors(corrected);
     if (errors.length) {
