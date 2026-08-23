@@ -1,8 +1,5 @@
 import { DEFAULT_OBSERVATION_INSTRUCTION_VERSION } from "./contracts";
-import {
-  OPENCODEGO_AUDIT_MODEL,
-  OPENCODEGO_SYSTEM,
-} from "./opencodego";
+import { OPENCODEGO_AUDIT_MODEL, OPENCODEGO_SYSTEM } from "./opencodego";
 import type { AuditObservation } from "./types";
 
 export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
@@ -60,10 +57,14 @@ export function protectedObservationAttemptErrors(
     );
   }
   if (!observation.raw_answer.trim()) {
-    errors.push(prefix(observation, "completed observation has no usable answer."));
+    errors.push(
+      prefix(observation, "completed observation has no usable answer."),
+    );
   }
   if (!observation.response_id.trim()) {
-    errors.push(prefix(observation, "completed observation is missing response_id."));
+    errors.push(
+      prefix(observation, "completed observation is missing response_id."),
+    );
   }
   if (
     observation.returned_model !== PRODUCTION_OBSERVATION_REQUESTED_MODEL
