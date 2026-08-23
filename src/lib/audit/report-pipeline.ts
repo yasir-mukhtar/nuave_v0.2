@@ -8,6 +8,11 @@ import {
   isLiveProviderCall,
   liveGenerateReportContent,
 } from "./provider";
+import {
+  canonicalLockedQuestionPack,
+  lockedObservationBindingErrors,
+} from "./locked-question-pack";
+import { assertSafeComparisonBusinessUrls } from "./similar-businesses";
 import { productionObservationMethodErrors } from "./production-observation-method";
 import { sanitizeUnsupportedReportPriorities } from "./report-priority";
 import type { ReportFailureCode } from "./report-recovery";
@@ -44,27 +49,24 @@ export type ReportPipelineInput = {
   language?: "en" | "id";
 };
 
+function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
+  assertSafeComparisonBusinessUrls(input.brief);
+  return {
+    ...input,
+    prompts: canonicalLockedQuestionPack(input.prompts, input.brief).prompts,
+  };
+}
+
 /**
- * Spec 003 R-19 ten-of-ten gate, enforced on the protected live path BEFORE
- * any provider call: report generation begins only when all ten locked
- * questions (unique prompt ids) each have exactly one evaluable, structurally
- * valid observation (run_status completed, non-empty answer, attempt
- * telemetry), all produced by the current protected production observation
- * method. No partial or mixed-method report exists. It is applied at the live
- * route boundary AND unconditionally inside `createValidatedAuditReport`, so
- * script and direct-library callers cannot bypass it either.
+ * Spec 003 ten-of-ten gate. Evidence must correspond to the exact canonical
+ * locked questions, not merely reuse a positional prompt id.
  */
 export function assertReportGenerationGate(input: ReportPipelineInput): void {
-  const { prompts, observations } = input;
+  const canonical = canonicalReportInput(input);
+  const { prompts, observations } = canonical;
   const errors: string[] = [];
 
   const lockedIds = prompts.map((prompt) => prompt.prompt_id);
-  if (lockedIds.length !== 10) {
-    errors.push("A report requires exactly ten locked questions.");
-  } else if (new Set(lockedIds).size !== lockedIds.length) {
-    errors.push("The locked questions must be unique.");
-  }
-
   if (observations.length !== 10) {
     errors.push("A report requires exactly ten observations.");
   }
@@ -84,6 +86,17 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
       `Observations do not match the locked questions: ${extra.join(", ")}.`,
     );
   }
+  if (new Set(observationIds).size !== observationIds.length) {
+    errors.push("Report observations must contain one unique record per prompt_id.");
+  }
+
+  errors.push(
+    ...lockedObservationBindingErrors({
+      prompts,
+      observations,
+      brief: canonical.brief,
+    }),
+  );
 
   const notEvaluable = observations.filter(
     (observation) =>
@@ -156,16 +169,17 @@ export async function createValidatedAuditReport(
   generate: ReportGenerator = liveGenerateReportContent,
   onSuccessTelemetry?: ReportTelemetrySink,
 ): Promise<AuditReport> {
+  const lockedInput = canonicalReportInput(input);
   if (isLiveProviderCall(generate)) {
     assertLiveProviderCredentialsConfigured();
   }
-  assertReportGenerationGate(input);
-  const initial = await generate(input);
+  assertReportGenerationGate(lockedInput);
+  const initial = await generate(lockedInput);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
   let content = normalizeAndContainPriorities(
     initial.content,
-    input,
+    lockedInput,
     reportCalls,
   );
   let callCount = 1;
@@ -173,14 +187,14 @@ export async function createValidatedAuditReport(
 
   const evidenceErrors = validateReportContent(
     content,
-    input.observations,
-    input.brief,
+    lockedInput.observations,
+    lockedInput.brief,
   );
   if (evidenceErrors.length) {
     throw new ReportPipelineError(evidenceErrors.join(" "), 422, reportCalls);
   }
 
-  const isIndonesian = input.language === "id";
+  const isIndonesian = lockedInput.language === "id";
   const languageErrors = isIndonesian
     ? validateIndonesianReportLanguage(content).errors
     : validateReportLanguage(content);
@@ -190,10 +204,10 @@ export async function createValidatedAuditReport(
     try {
       final = await generate(
         {
-          ...input,
+          ...lockedInput,
           budget: {
-            ...input.budget,
-            calls: [...input.budget.calls, ...reportCalls],
+            ...lockedInput.budget,
+            calls: [...lockedInput.budget.calls, ...reportCalls],
           },
         },
         {
@@ -222,12 +236,20 @@ export async function createValidatedAuditReport(
     }
     reportCalls.push(...final.telemetry);
     callCount += 1;
-    content = normalizeAndContainPriorities(final.content, input, reportCalls);
+    content = normalizeAndContainPriorities(
+      final.content,
+      lockedInput,
+      reportCalls,
+    );
     const retryErrors = [
       ...(isIndonesian
         ? validateIndonesianReportLanguageRevision(original, content)
         : validateReportLanguageRevision(original, content)),
-      ...validateReportContent(content, input.observations, input.brief),
+      ...validateReportContent(
+        content,
+        lockedInput.observations,
+        lockedInput.brief,
+      ),
       ...(isIndonesian
         ? validateIndonesianReportLanguage(content).errors
         : validateReportLanguage(content)),
@@ -239,7 +261,7 @@ export async function createValidatedAuditReport(
 
   const report = buildAuditReport(
     content,
-    input.observations,
+    lockedInput.observations,
     {
       requested_model: final.requested_model,
       returned_model: final.returned_model,
@@ -249,9 +271,9 @@ export async function createValidatedAuditReport(
       language_retry_performed: callCount === 2,
       language_retry_violations: retryViolations,
       operational_telemetry: summarizeAuditTelemetry(
-        [...input.budget.calls, ...reportCalls],
-        input.budget.limit_usd,
-        effectiveAuditCarryoverCostUsd(input.budget),
+        [...lockedInput.budget.calls, ...reportCalls],
+        lockedInput.budget.limit_usd,
+        effectiveAuditCarryoverCostUsd(lockedInput.budget),
       ),
     },
     isIndonesian ? INDONESIAN_AUDIT_REPORT_LABELS : undefined,

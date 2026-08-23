@@ -6,6 +6,7 @@ import {
   MAX_SIMILAR_BUSINESSES,
   normalizeSimilarBusinessUrl,
   normalizeSimilarBusinesses,
+  rebindSimilarBusinessUrl,
 } from "@/lib/audit/similar-businesses";
 import type { SimilarBusiness } from "@/lib/audit/types";
 import styles from "./SimilarBusinessesEditor.module.css";
@@ -21,7 +22,7 @@ export default function SimilarBusinessesEditor({
     onChange(
       businesses.map((business, businessIndex) =>
         businessIndex === index
-          ? { ...business, source_url: sourceUrl, origin: "user" }
+          ? rebindSimilarBusinessUrl(business, sourceUrl)
           : business,
       ),
     );

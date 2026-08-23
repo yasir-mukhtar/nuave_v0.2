@@ -6,31 +6,40 @@ function hasExplicitScheme(value: string) {
   return /^[a-z][a-z0-9+.-]*:\/\//i.test(value);
 }
 
-export function normalizeSimilarBusinessUrl(value: string) {
+function parsedHttpUrl(value: string): URL | null {
   const trimmed = value.trim();
-  if (!trimmed) return "";
+  if (!trimmed) return null;
   const candidate = hasExplicitScheme(trimmed) ? trimmed : `https://${trimmed}`;
   try {
     const parsed = new URL(candidate);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return trimmed;
+      return null;
     }
-    parsed.hash = "";
-    return parsed.toString();
+    return parsed;
   } catch {
-    return trimmed;
+    return null;
   }
+}
+
+export function isCredentialBearingHttpUrl(value: string) {
+  const parsed = parsedHttpUrl(value);
+  return Boolean(parsed && (parsed.username || parsed.password));
+}
+
+export function normalizeSimilarBusinessUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const parsed = parsedHttpUrl(trimmed);
+  if (!parsed || parsed.username || parsed.password) return "";
+  parsed.hash = "";
+  return parsed.toString();
 }
 
 export function isValidSimilarBusinessUrl(value: string) {
   const normalized = normalizeSimilarBusinessUrl(value);
   if (!normalized) return false;
-  try {
-    const parsed = new URL(normalized);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
+  const parsed = parsedHttpUrl(normalized);
+  return Boolean(parsed && !parsed.username && !parsed.password);
 }
 
 export function similarBusinessDisplayName(value: string) {
@@ -51,6 +60,35 @@ export function similarBusinessDisplayName(value: string) {
     return "";
   }
   return hostname;
+}
+
+/**
+ * Editing a suggested URL creates a new user-supplied identity. Never retain
+ * an AI-suggested name from the old URL and silently bind it to the new source.
+ */
+export function rebindSimilarBusinessUrl(
+  business: SimilarBusiness,
+  sourceUrl: string,
+): SimilarBusiness {
+  const current = normalizeSimilarBusinessUrl(business.source_url);
+  const next = normalizeSimilarBusinessUrl(sourceUrl);
+  if (current && next && current === next) return business;
+  return {
+    source_url: sourceUrl,
+    origin: "user",
+  };
+}
+
+export function assertSafeComparisonBusinessUrls(brief: BusinessBrief): void {
+  const urls = [
+    brief.verified_competitor.source_url,
+    ...(brief.similar_businesses ?? []).map((business) => business.source_url),
+  ].filter(Boolean);
+  if (urls.some(isCredentialBearingHttpUrl)) {
+    throw new Error(
+      "Comparison-business URLs must not contain embedded username or password credentials.",
+    );
+  }
 }
 
 export function normalizeSimilarBusinesses(
@@ -88,6 +126,7 @@ export function sanitizeAiSimilarBusinesses(
 export function withPrimarySimilarBusiness(
   brief: BusinessBrief,
 ): BusinessBrief {
+  assertSafeComparisonBusinessUrls(brief);
   if (brief.similar_businesses === undefined) return brief;
   const similarBusinesses = normalizeSimilarBusinesses(
     brief.similar_businesses,
