@@ -87,7 +87,9 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
     );
   }
   if (new Set(observationIds).size !== observationIds.length) {
-    errors.push("Report observations must contain one unique record per prompt_id.");
+    errors.push(
+      "Report observations must contain one unique record per prompt_id.",
+    );
   }
 
   errors.push(
