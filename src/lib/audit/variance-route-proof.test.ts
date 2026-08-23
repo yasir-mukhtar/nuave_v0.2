@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
+import { fixtureProtectedObservation } from "./fixtures/protected-observation";
+import { fixtureBudget } from "./fixtures/telemetry";
 import {
   canonicalLockedQuestionPack,
   designatedVariancePrompts,
 } from "./locked-question-pack";
-import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
+import type { AuditPrompt, BusinessBrief } from "./types";
 
 // Wave 1 route-boundary regressions intentionally use stubs only.
 const routeMocks = vi.hoisted(() => ({
@@ -18,9 +19,13 @@ vi.mock("@/lib/audit/provider", () => ({
   liveExecuteAuditPrompt: vi.fn(),
 }));
 
-vi.mock("@/lib/audit/retry", () => ({
-  runQuestionWithRetry: routeMocks.runQuestion,
-}));
+vi.mock(import("@/lib/audit/retry"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    runQuestionWithRetry: routeMocks.runQuestion,
+  };
+});
 
 import { POST } from "@/app/api/audit/variance/route";
 
@@ -85,32 +90,12 @@ function rawPrompts(): AuditPrompt[] {
 function protectedObservation(
   prompt: AuditPrompt,
   responseId = `resp-${prompt.prompt_id}`,
-): AuditObservation {
-  return {
-    prompt_id: prompt.prompt_id,
-    category: prompt.category,
-    branded: prompt.branded,
-    question: prompt.question,
-    instruction_version: "neutral-response-v1",
-    system: "OpenCode Go Responses API",
-    requested_model: "gpt-5.6-luna",
-    returned_model: "gpt-5.6-luna",
+) {
+  return fixtureProtectedObservation(prompt, {
     response_id: responseId,
-    observed_at: "2026-08-23T00:00:01.000Z",
     raw_answer: "Jawaban yang dapat dievaluasi.",
     sources: [{ url: "https://example.com", title: "Example" }],
-    run_status: "completed",
-    failure_reason: "",
-    telemetry: [
-      fixtureCallTelemetry({
-        stage: "observation",
-        requested_model: "gpt-5.6-luna",
-        returned_model: "gpt-5.6-luna",
-        response_id: responseId,
-        web_search_calls: 1,
-      }),
-    ],
-  };
+  });
 }
 
 function requestBody() {
