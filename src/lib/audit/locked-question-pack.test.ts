@@ -132,9 +132,7 @@ describe("canonical locked question pack", () => {
       };
 
       expect(
-        designatedVariancePrompts(pack, brief()).map(
-          (prompt) => prompt.prompt_id,
-        ),
+        designatedVariancePrompts(pack, brief()).map((prompt) => prompt.prompt_id),
       ).toEqual(["NVA-ID-02", "NVA-ID-01"]);
     },
   );
