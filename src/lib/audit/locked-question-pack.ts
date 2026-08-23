@@ -1,5 +1,7 @@
+import { PROMPT_MATRIX } from "./contracts";
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 import {
+  INDONESIAN_SLOT_CATEGORIES,
   classifyIndonesianQuestion,
   minimizeIndonesianBrief,
 } from "./questions-id";
@@ -10,20 +12,42 @@ export type CanonicalLockedQuestionPack = {
   by_id: ReadonlyMap<string, AuditPrompt>;
 };
 
+const LEGACY_PROMPT_SLOT_INDEX = new Map<string, number>(
+  PROMPT_MATRIX.map(([promptId], index) => [promptId, index]),
+);
+
 function normalizedPromptId(value: string) {
   return value.trim();
+}
+
+function lockedPromptSlotIndex(value: string): number | null {
+  const promptId = normalizedPromptId(value);
+  const indonesianMatch = /^NVA-ID-(\d{2})$/.exec(promptId);
+  if (indonesianMatch) {
+    const slotIndex = Number(indonesianMatch[1]) - 1;
+    return slotIndex >= 0 && slotIndex < INDONESIAN_SLOT_CATEGORIES.length
+      ? slotIndex
+      : null;
+  }
+  return LEGACY_PROMPT_SLOT_INDEX.get(promptId) ?? null;
 }
 
 function canonicalPrompt(
   prompt: AuditPrompt,
   brief: BusinessBrief,
+  slotIndex: number,
 ): AuditPrompt {
+  const category = INDONESIAN_SLOT_CATEGORIES[slotIndex];
+  if (!category) {
+    throw new Error(`Locked question slot ${slotIndex + 1} is not canonical.`);
+  }
   const minimized = minimizeIndonesianBrief(brief);
   const question = prompt.question.trim();
   const classification = classifyIndonesianQuestion(question, minimized);
   return {
     ...prompt,
     prompt_id: normalizedPromptId(prompt.prompt_id),
+    category,
     question,
     branded: classification === "menyebut_bisnis_anda",
   };
@@ -34,8 +58,10 @@ function canonicalPrompt(
  *
  * The browser may carry duplicated convenience metadata, but the server owns
  * the final interpretation of the exact ten strings. Prompt identity must be
- * non-empty and unique before any provider work, and final branded/unbranded
- * classification is always derived from the exact locked question text.
+ * non-empty, unique, and remain in canonical slot order before any provider
+ * work. Category is derived from that code-owned slot, while final
+ * branded/unbranded classification is derived from the exact locked question
+ * text.
  */
 export function canonicalLockedQuestionPack(
   prompts: AuditPrompt[],
@@ -47,8 +73,7 @@ export function canonicalLockedQuestionPack(
     );
   }
 
-  const canonical = prompts.map((prompt) => canonicalPrompt(prompt, brief));
-  const ids = canonical.map((prompt) => prompt.prompt_id);
+  const ids = prompts.map((prompt) => normalizedPromptId(prompt.prompt_id));
   if (ids.some((id) => !id || id.length > 160)) {
     throw new Error("Every locked question requires a valid prompt_id.");
   }
@@ -57,6 +82,18 @@ export function canonicalLockedQuestionPack(
       "Locked prompt_ids must be unique before execution begins.",
     );
   }
+
+  const slotIndexes = ids.map(lockedPromptSlotIndex);
+  if (slotIndexes.some((slotIndex) => slotIndex === null)) {
+    throw new Error("Every locked question must use a canonical slot prompt_id.");
+  }
+  if (slotIndexes.some((slotIndex, index) => slotIndex !== index)) {
+    throw new Error("Locked questions must remain in canonical slot order.");
+  }
+
+  const canonical = prompts.map((prompt, index) =>
+    canonicalPrompt(prompt, brief, index),
+  );
 
   return {
     prompts: canonical,
@@ -168,8 +205,9 @@ export function designatedVariancePrompts(
 
 /**
  * Proves a requested variance subset is exactly the designated subset of the
- * full locked pack, including exact text and category identity. The request's
- * branded booleans are not trusted; they are recomputed from final text first.
+ * full locked pack, including exact text and category identity. Client-owned
+ * category/branded metadata is not trusted; both are re-derived from canonical
+ * slot identity and final text before comparison.
  */
 export function variancePromptBindingErrors(input: {
   locked_prompts: AuditPrompt[];
@@ -180,12 +218,9 @@ export function variancePromptBindingErrors(input: {
     input.locked_prompts,
     input.brief,
   );
-  const requested = input.requested_prompts.map((prompt) =>
-    canonicalPrompt(prompt, input.brief),
-  );
   const errors: string[] = [];
 
-  if (requested.length !== designated.length) {
+  if (input.requested_prompts.length !== designated.length) {
     errors.push(
       `Variance must re-ask exactly the ${designated.length} designated locked questions.`,
     );
@@ -194,7 +229,15 @@ export function variancePromptBindingErrors(input: {
 
   for (let index = 0; index < designated.length; index += 1) {
     const expected = designated[index];
-    const actual = requested[index];
+    const requested = input.requested_prompts[index];
+    const slotIndex = lockedPromptSlotIndex(requested.prompt_id);
+    if (slotIndex === null) {
+      errors.push(
+        `Variance prompt ${index + 1} is not the exact designated locked question ${expected.prompt_id}.`,
+      );
+      continue;
+    }
+    const actual = canonicalPrompt(requested, input.brief, slotIndex);
     if (
       actual.prompt_id !== expected.prompt_id ||
       actual.question !== expected.question ||
