@@ -302,6 +302,7 @@ export default function AuditWorkflow() {
           "/api/audit/variance",
           {
             brief,
+            locked_prompts: promptPack.prompts,
             prompts: selectedPrompts,
             safety_identifier: safetyIdentifier,
             budget: {
@@ -328,10 +329,7 @@ export default function AuditWorkflow() {
           );
         }
       } catch (cause) {
-        if (
-          isAbortError(cause) ||
-          !operationGeneration.isCurrent(operation)
-        ) {
+        if (isAbortError(cause) || !operationGeneration.isCurrent(operation)) {
           return;
         }
         const reason =
@@ -738,10 +736,7 @@ export default function AuditWorkflow() {
         setSetupTelemetry((calls) => [...calls, ...(result.telemetry ?? [])]);
       }
     } catch (cause) {
-      if (
-        !isAbortError(cause) &&
-        operationGeneration.isCurrent(operation)
-      ) {
+      if (!isAbortError(cause) && operationGeneration.isCurrent(operation)) {
         setError(
           cause instanceof Error
             ? cause.message
@@ -829,10 +824,7 @@ export default function AuditWorkflow() {
       setReportFailureCode(null);
       await runVariance(reportResult.report, varianceBudgetCalls);
     } catch (cause) {
-      if (
-        isAbortError(cause) ||
-        !operationGeneration.isCurrent(operation)
-      ) {
+      if (isAbortError(cause) || !operationGeneration.isCurrent(operation)) {
         return;
       }
       if (cause instanceof AuditRequestError && cause.telemetry.length) {
@@ -962,9 +954,6 @@ export default function AuditWorkflow() {
       }
       if (!operationGeneration.isCurrent(operation)) return;
 
-      // Transaction begins only after the run request has been accepted with a
-      // readable stream. A rejected initial POST leaves the reviewed question
-      // pack and completed resume snapshot untouched and immediately retryable.
       window.sessionStorage.removeItem(VARIANCE_STORAGE_KEY);
       window.sessionStorage.removeItem(VARIANCE_FAILURE_STORAGE_KEY);
       setVarianceRecord(null);
@@ -1116,7 +1105,6 @@ export default function AuditWorkflow() {
 
   function downloadEvidenceJson() {
     if (!report || !promptPack) return;
-
     const evidence = makeEvidenceExport(
       brief,
       promptPack.prompts,
@@ -1134,7 +1122,6 @@ export default function AuditWorkflow() {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || "client";
-
     link.href = url;
     link.download = `${brandSlug}-nuave-evidence.json`;
     link.click();
