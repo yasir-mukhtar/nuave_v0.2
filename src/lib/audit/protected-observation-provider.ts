@@ -109,7 +109,8 @@ export async function executeAbortableProtectedObservation(
     );
     throwIfAuditAborted(input.signal);
     const searchExecuted = response.output.some(
-      (item) => item.type === "web_search_call" && item.action?.type === "search",
+      (item) =>
+        item.type === "web_search_call" && item.action?.type === "search",
     );
     if (!searchExecuted) {
       throw new Error(
