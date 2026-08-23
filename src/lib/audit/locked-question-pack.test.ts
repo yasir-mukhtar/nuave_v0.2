@@ -5,25 +5,13 @@ import {
   lockedObservationBindingErrors,
   variancePromptBindingErrors,
 } from "./locked-question-pack";
+import { INDONESIAN_SLOT_CATEGORIES } from "./questions-id";
 import {
   assertSafeComparisonBusinessUrls,
   isValidSimilarBusinessUrl,
   rebindSimilarBusinessUrl,
 } from "./similar-businesses";
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
-
-const categories = [
-  "need_discovery",
-  "need_discovery",
-  "solution_discovery",
-  "solution_discovery",
-  "comparison",
-  "comparison",
-  "validation",
-  "validation",
-  "action",
-  "action",
-] as const;
 
 function brief(): BusinessBrief {
   return {
@@ -53,7 +41,7 @@ function brief(): BusinessBrief {
 }
 
 function prompts(): AuditPrompt[] {
-  return categories.map((category, index) => {
+  return INDONESIAN_SLOT_CATEGORIES.map((category, index) => {
     const branded = index >= 5;
     return {
       prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
@@ -99,21 +87,51 @@ describe("canonical locked question pack", () => {
     );
   });
 
-  it("derives final branded metadata from the exact edited question", () => {
+  it("rejects a pack whose canonical prompt IDs are reordered", () => {
+    const pack = prompts();
+    [pack[0], pack[1]] = [pack[1], pack[0]];
+    expect(() => canonicalLockedQuestionPack(pack, brief())).toThrow(
+      /canonical slot order/i,
+    );
+  });
+
+  it("overrides a tampered slot 1 category from the code-owned slot", () => {
+    const pack = prompts();
+    pack[0] = { ...pack[0], category: "action" };
+    const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
+    expect(canonical[0].category).toBe("need_discovery");
+  });
+
+  it("overrides a tampered slot 7 category from the code-owned slot", () => {
+    const pack = prompts();
+    pack[6] = { ...pack[6], category: "comparison" };
+    const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
+    expect(canonical[6].category).toBe("validation");
+  });
+
+  it("recomputes branded independently of the code-owned slot category", () => {
     const pack = prompts();
     pack[0] = {
       ...pack[0],
+      category: "action",
       branded: false,
       question: "Apakah Kopi Nuave cocok untuk rapat pagi di Jakarta?",
     };
     pack[5] = {
       ...pack[5],
+      category: "need_discovery",
       branded: true,
       question: "Apa pilihan coffee shop dekat kantor di Jakarta?",
     };
     const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
-    expect(canonical[0].branded).toBe(true);
-    expect(canonical[5].branded).toBe(false);
+    expect(canonical[0]).toMatchObject({
+      category: "need_discovery",
+      branded: true,
+    });
+    expect(canonical[5]).toMatchObject({
+      category: "comparison",
+      branded: false,
+    });
   });
 
   it("canonicalizes variance designation after edits", () => {
@@ -134,6 +152,35 @@ describe("canonical locked question pack", () => {
     expect(ids).toEqual(["NVA-ID-02", "NVA-ID-01"]);
   });
 
+  it("canonicalizes tampered categories for variance designation and binding", () => {
+    const pack = prompts();
+    pack[0] = { ...pack[0], category: "action" };
+    pack[5] = { ...pack[5], category: "validation" };
+
+    const designated = designatedVariancePrompts(pack, brief());
+    expect(
+      designated.map((prompt) => ({
+        prompt_id: prompt.prompt_id,
+        category: prompt.category,
+      })),
+    ).toEqual([
+      { prompt_id: "NVA-ID-01", category: "need_discovery" },
+      { prompt_id: "NVA-ID-06", category: "comparison" },
+    ]);
+
+    const requested = designated.map((prompt) => ({
+      ...prompt,
+      category: "action" as const,
+    }));
+    expect(
+      variancePromptBindingErrors({
+        locked_prompts: pack,
+        requested_prompts: requested,
+        brief: brief(),
+      }),
+    ).toEqual([]);
+  });
+
   it("rejects a resumed observation whose ID points at different question text", () => {
     const pack = canonicalLockedQuestionPack(prompts(), brief()).prompts;
     const mismatched = observation(pack[0]);
@@ -147,6 +194,32 @@ describe("canonical locked question pack", () => {
     ).toContain(
       `${pack[0].prompt_id}: observation question does not match the exact locked question.`,
     );
+  });
+
+  it("rejects an observation with a wrong category despite exact ID and text", () => {
+    const pack = canonicalLockedQuestionPack(prompts(), brief()).prompts;
+    const mismatched = observation(pack[0]);
+    mismatched.category = "action";
+    expect(
+      lockedObservationBindingErrors({
+        prompts: pack,
+        observations: [mismatched],
+        brief: brief(),
+      }),
+    ).toContain(
+      `${pack[0].prompt_id}: observation category does not match the locked question.`,
+    );
+  });
+
+  it("accepts an observation using the canonical slot category", () => {
+    const pack = canonicalLockedQuestionPack(prompts(), brief()).prompts;
+    expect(
+      lockedObservationBindingErrors({
+        prompts: pack,
+        observations: [observation(pack[0])],
+        brief: brief(),
+      }),
+    ).toEqual([]);
   });
 
   it("accepts only the exact designated variance subset", () => {
