@@ -72,8 +72,14 @@ describe("positive protected observation attempt", () => {
   });
 
   it("rejects zero completed calls", () => {
-    expect(protectedObservationAttemptErrors(observation("NVA-ID-01", { telemetry: [] }))).toEqual(
-      expect.arrayContaining([expect.stringMatching(/no completed observation-stage provider attempt/i)]),
+    expect(
+      protectedObservationAttemptErrors(
+        observation("NVA-ID-01", { telemetry: [] }),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/no completed observation-stage provider attempt/i),
+      ]),
     );
   });
 
@@ -90,7 +96,9 @@ describe("positive protected observation attempt", () => {
         observation("NVA-ID-01", { telemetry: [failed] }),
       ),
     ).toEqual(
-      expect.arrayContaining([expect.stringMatching(/no completed observation-stage provider attempt/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/no completed observation-stage provider attempt/i),
+      ]),
     );
   });
 
@@ -98,11 +106,15 @@ describe("positive protected observation attempt", () => {
     expect(
       protectedObservationAttemptErrors(
         observation("NVA-ID-01", {
-          telemetry: [telemetry({ stage: "report", response_id: "resp-NVA-ID-01" })],
+          telemetry: [
+            telemetry({ stage: "report", response_id: "resp-NVA-ID-01" }),
+          ],
         }),
       ),
     ).toEqual(
-      expect.arrayContaining([expect.stringMatching(/no completed observation-stage provider attempt/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/no completed observation-stage provider attempt/i),
+      ]),
     );
   });
 
@@ -111,14 +123,22 @@ describe("positive protected observation attempt", () => {
       protectedObservationAttemptErrors(
         observation("NVA-ID-01", { instruction_version: undefined }),
       ),
-    ).toEqual(expect.arrayContaining([expect.stringMatching(/instruction version missing/i)]));
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/instruction version missing/i),
+      ]),
+    );
   });
 
   it("rejects citation evidence without an actual web_search_call", () => {
     const item = observation("NVA-ID-01");
-    item.telemetry = [telemetry({ response_id: item.response_id, web_search_calls: 0 })];
+    item.telemetry = [
+      telemetry({ response_id: item.response_id, web_search_calls: 0 }),
+    ];
     expect(protectedObservationAttemptErrors(item)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/zero actual web_search_call executions/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/zero actual web_search_call executions/i),
+      ]),
     );
   });
 
@@ -131,7 +151,9 @@ describe("positive protected observation attempt", () => {
     const mismatch = observation("NVA-ID-02");
     mismatch.telemetry = [telemetry({ response_id: "different-response" })];
     expect(protectedObservationAttemptErrors(mismatch)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/response_id does not match/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/response_id does not match/i),
+      ]),
     );
   });
 
@@ -144,7 +166,9 @@ describe("positive protected observation attempt", () => {
       }),
     ];
     expect(protectedObservationAttemptErrors(wrong)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/returned model other-model/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/returned model other-model/i),
+      ]),
     );
 
     const missing = observation("NVA-ID-02", { returned_model: "" });
@@ -152,16 +176,22 @@ describe("positive protected observation attempt", () => {
       telemetry({ response_id: missing.response_id, returned_model: "" }),
     ];
     expect(protectedObservationAttemptErrors(missing)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/returned model missing/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/returned model missing/i),
+      ]),
     );
   });
 
   it("rejects one provider response being accepted for two prompts", () => {
     const first = observation("NVA-ID-01");
-    const second = observation("NVA-ID-02", { response_id: first.response_id });
+    const second = observation("NVA-ID-02", {
+      response_id: first.response_id,
+    });
     second.telemetry = [telemetry({ response_id: first.response_id })];
     expect(productionObservationMethodErrors([first, second])).toEqual(
-      expect.arrayContaining([expect.stringMatching(/already bound to NVA-ID-01/i)]),
+      expect.arrayContaining([
+        expect.stringMatching(/already bound to NVA-ID-01/i),
+      ]),
     );
   });
 });
