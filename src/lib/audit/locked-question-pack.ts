@@ -85,7 +85,9 @@ export function canonicalLockedQuestionPack(
 
   const slotIndexes = ids.map(lockedPromptSlotIndex);
   if (slotIndexes.some((slotIndex) => slotIndex === null)) {
-    throw new Error("Every locked question must use a canonical slot prompt_id.");
+    throw new Error(
+      "Every locked question must use a canonical slot prompt_id.",
+    );
   }
   if (slotIndexes.some((slotIndex, index) => slotIndex !== index)) {
     throw new Error("Locked questions must remain in canonical slot order.");
