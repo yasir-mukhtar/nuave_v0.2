@@ -1,18 +1,18 @@
 
 [1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/runner/work/nuave_v0.2/nuave_v0.2[39m
 
- [32m✓[39m src/lib/audit/protected-observation-method.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/lib/audit/protected-observation-method.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 10[2mms[22m[39m
  [31m❯[39m src/lib/audit/variance-route-proof.test.ts [2m([22m[2m0 test[22m[2m)[22m
- [31m❯[39m src/lib/audit/variance.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 16[2mms[22m[39m
-     [32m✓[39m requires 2–3 designated questions[32m 3[2mms[22m[39m
+ [31m❯[39m src/lib/audit/variance.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 19[2mms[22m[39m
+     [32m✓[39m requires 2–3 designated questions[32m 4[2mms[22m[39m
      [32m✓[39m rejects duplicate prompt_ids[32m 1[2mms[22m[39m
-[31m     [31m×[31m creates a variance record with 2 questions, separate from main counts[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m creates a variance record with 2 questions, separate from main counts[39m[32m 8[2mms[22m[39m
 [31m     [31m×[31m creates a variance record with 3 questions[39m[32m 1[2mms[22m[39m
-     [32m✓[39m marks incomplete when a failure reason is supplied (failure matrix row)[32m 0[2mms[22m[39m
+     [32m✓[39m marks incomplete when a failure reason is supplied (failure matrix row)[32m 1[2mms[22m[39m
      [32m✓[39m rejects when observations do not match designated prompt_ids exactly[32m 1[2mms[22m[39m
      [32m✓[39m never blends variance observations into main 10/10 set (separation invariant)[32m 1[2mms[22m[39m
      [32m✓[39m variance observations carry full telemetry (R-20)[32m 0[2mms[22m[39m
- [32m✓[39m src/lib/audit/locked-question-pack.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/lib/audit/locked-question-pack.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
  [32m✓[39m src/lib/audit/workflow-cancellation.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
  [32m✓[39m src/lib/audit/protected-observation-provider.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
  [32m✓[39m src/lib/audit/workflow-operation-generation.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
@@ -87,8 +87,8 @@ vi.mock(import("@/lib/audit/retry"), async (importOriginal) => {
 
 [2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (8)[39m
 [2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m38 passed[39m[22m[90m (40)[39m
-[2m   Start at [22m 00:51:53
-[2m   Duration [22m 2.39s[2m (transform 429ms, setup 0ms, import 1.06s, tests 63ms, environment 1ms)[22m
+[2m   Start at [22m 00:52:58
+[2m   Duration [22m 2.22s[2m (transform 419ms, setup 0ms, import 1.04s, tests 68ms, environment 1ms)[22m
 
 
 ::error file=/home/runner/work/nuave_v0.2/nuave_v0.2/src/lib/audit/telemetry.ts,title=src/lib/audit/variance-route-proof.test.ts,line=78,column=16::Error: [vitest] No "OBSERVATION_STAGE_MAX_CALLS" export is defined on the "@/lib/audit/retry" mock. Did you forget to return it from "vi.mock"?%0AIf you need to partially mock a module, you can use "importOriginal" helper inside:%0A%0Avi.mock(import("@/lib/audit/retry"), async (importOriginal) => {%0A  const actual = await importOriginal()%0A  return {%0A    ...actual,%0A    // your mocked methods%0A  }%0A})%0A%0A ❯ src/lib/audit/telemetry.ts:78:16%0A ❯ src/lib/audit/fixtures/telemetry.ts:6:1%0A%0A
