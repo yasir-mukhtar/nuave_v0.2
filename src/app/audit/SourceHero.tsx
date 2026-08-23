@@ -87,7 +87,7 @@ export default function SourceHero({
 
     if (!parsed) {
       setLocalError(
-        "Masukkan link website, akun Instagram, atau Google Business Profile yang valid.",
+        "Masukkan link website resmi atau akun Instagram yang valid.",
       );
       inputRef.current?.focus();
       return;
@@ -138,7 +138,7 @@ export default function SourceHero({
                 setLocalError("");
               }}
               placeholder="https://bisnisanda.com"
-              aria-label="Website, akun Instagram, atau Google Business Profile"
+              aria-label="Website atau akun Instagram"
               aria-describedby="source-hint source-error"
               autoComplete="off"
               autoCorrect="off"
@@ -168,8 +168,7 @@ export default function SourceHero({
               textShadow: "0 1px 6px rgba(0, 30, 80, 0.2)",
             }}
           >
-            Masukkan URL website, akun instagram, atau Google Business Profile
-            bisnis Anda.
+            Masukkan URL website atau akun Instagram resmi bisnis Anda.
           </p>
 
           <p
