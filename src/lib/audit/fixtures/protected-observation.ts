@@ -10,11 +10,14 @@ import type {
 } from "../types";
 import { fixtureCallTelemetry } from "./telemetry";
 
+type ProtectedObservationIdentityKey =
+  | "prompt_id"
+  | "category"
+  | "branded"
+  | "question";
+
 type ProtectedObservationOverrides = Partial<
-  Omit<
-    AuditObservation,
-    "prompt_id" | "category" | "branded" | "question" | "telemetry"
-  >
+  Omit<AuditObservation, ProtectedObservationIdentityKey | "telemetry">
 > & {
   telemetry?: AuditCallTelemetry[];
 };
@@ -37,6 +40,17 @@ export function fixtureProtectedObservation(
     overrides.requested_model ?? PRODUCTION_OBSERVATION_REQUESTED_MODEL;
   const returnedModel =
     overrides.returned_model ?? PRODUCTION_OBSERVATION_REQUESTED_MODEL;
+  const defaultSource = {
+    url: `https://example.com/${prompt.prompt_id}`,
+    title: "Fixture source",
+  };
+  const defaultTelemetry = fixtureCallTelemetry({
+    stage: "observation",
+    requested_model: requestedModel,
+    returned_model: returnedModel,
+    response_id: responseId,
+    web_search_calls: 1,
+  });
 
   const observationWithoutTelemetry: Omit<AuditObservation, "telemetry"> = {
     prompt_id: prompt.prompt_id,
@@ -53,27 +67,14 @@ export function fixtureProtectedObservation(
     observed_at: overrides.observed_at ?? "2026-08-23T00:00:00.000Z",
     raw_answer:
       overrides.raw_answer ?? `Usable answer for ${prompt.prompt_id}.`,
-    sources: overrides.sources ?? [
-      {
-        url: `https://example.com/${prompt.prompt_id}`,
-        title: "Fixture source",
-      },
-    ],
+    sources: overrides.sources ?? [defaultSource],
     run_status: overrides.run_status ?? "completed",
     failure_reason: overrides.failure_reason ?? "",
   };
 
   return {
     ...observationWithoutTelemetry,
-    telemetry: overrides.telemetry ?? [
-      fixtureCallTelemetry({
-        stage: "observation",
-        requested_model: requestedModel,
-        returned_model: returnedModel,
-        response_id: responseId,
-        web_search_calls: 1,
-      }),
-    ],
+    telemetry: overrides.telemetry ?? [defaultTelemetry],
   };
 }
 
@@ -89,14 +90,7 @@ export function fixtureProtectedObservationSet(
       raw_answer:
         prior?.raw_answer ||
         "Local advisers differ by focus: some handle logistics, others readiness reviews.",
-      sources: prior?.sources?.length
-        ? prior.sources
-        : [
-            {
-              url: `https://example.com/${prompt.prompt_id}`,
-              title: "Fixture source",
-            },
-          ],
+      sources: prior?.sources?.length ? prior.sources : undefined,
     });
   });
 }
