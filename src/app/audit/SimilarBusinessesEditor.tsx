@@ -3,9 +3,10 @@
 import { Button, Input, Label, TextField } from "@heroui/react";
 import { IconPlus, IconX } from "@tabler/icons-react";
 import {
+  INVALID_SIMILAR_BUSINESS_URL_MESSAGE,
   MAX_SIMILAR_BUSINESSES,
+  isValidSimilarBusinessUrl,
   normalizeSimilarBusinessUrl,
-  normalizeSimilarBusinesses,
   rebindSimilarBusinessUrl,
 } from "@/lib/audit/similar-businesses";
 import type { SimilarBusiness } from "@/lib/audit/types";
@@ -29,15 +30,18 @@ export default function SimilarBusinessesEditor({
   }
 
   function commitEntry(index: number) {
-    const next = businesses.map((business, businessIndex) =>
-      businessIndex === index
-        ? {
-            ...business,
-            source_url: normalizeSimilarBusinessUrl(business.source_url),
-          }
-        : business,
+    const business = businesses[index];
+    if (!business || !isValidSimilarBusinessUrl(business.source_url)) return;
+    onChange(
+      businesses.map((item, businessIndex) =>
+        businessIndex === index
+          ? {
+              ...item,
+              source_url: normalizeSimilarBusinessUrl(item.source_url),
+            }
+          : item,
+      ),
     );
-    onChange(normalizeSimilarBusinesses(next));
   }
 
   function removeEntry(index: number) {
@@ -51,34 +55,50 @@ export default function SimilarBusinessesEditor({
 
   return (
     <div className={styles.root}>
-      {businesses.map((business, index) => (
-        <div className={styles.row} key={index}>
-          <TextField fullWidth>
-            <Label className={styles.visuallyHidden}>
-              URL bisnis serupa {index + 1}
-            </Label>
-            <Input
-              type="url"
-              value={business.source_url}
-              placeholder="https://contoh-bisnis.com"
-              onChange={(event) => updateEntry(index, event.target.value)}
-              onBlur={() => commitEntry(index)}
-            />
-          </TextField>
-          {business.origin === "ai" && business.source_url ? (
-            <span className={styles.aiBadge}>Saran Nuave</span>
-          ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            className={styles.removeButton}
-            aria-label={`Hapus bisnis serupa ${index + 1}`}
-            onPress={() => removeEntry(index)}
-          >
-            <IconX />
-          </Button>
-        </div>
-      ))}
+      {businesses.map((business, index) => {
+        const invalid = Boolean(
+          business.source_url.trim() &&
+            !isValidSimilarBusinessUrl(business.source_url),
+        );
+        const validationId = `similar-business-error-${index}`;
+        return (
+          <div className={styles.row} key={index}>
+            <div className={styles.inputGroup}>
+              <TextField fullWidth>
+                <Label className={styles.visuallyHidden}>
+                  URL bisnis serupa {index + 1}
+                </Label>
+                <Input
+                  type="url"
+                  value={business.source_url}
+                  placeholder="https://contoh-bisnis.com"
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? validationId : undefined}
+                  onChange={(event) => updateEntry(index, event.target.value)}
+                  onBlur={() => commitEntry(index)}
+                />
+              </TextField>
+              {invalid ? (
+                <p id={validationId} className={styles.validationError} role="alert">
+                  {INVALID_SIMILAR_BUSINESS_URL_MESSAGE}
+                </p>
+              ) : null}
+            </div>
+            {business.origin === "ai" && business.source_url ? (
+              <span className={styles.aiBadge}>Saran Nuave</span>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              className={styles.removeButton}
+              aria-label={`Hapus bisnis serupa ${index + 1}`}
+              onPress={() => removeEntry(index)}
+            >
+              <IconX />
+            </Button>
+          </div>
+        );
+      })}
 
       <Button
         type="button"
