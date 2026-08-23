@@ -110,9 +110,6 @@ export default function AuditRunStep({
         <div className={styles.runList}>
           {pack.prompts.map((prompt, index) => {
             const status = statuses[prompt.prompt_id] ?? "pending";
-            const observation = observations.find(
-              (item) => item.prompt_id === prompt.prompt_id,
-            );
             const color =
               status === "failed"
                 ? "danger"
@@ -127,11 +124,6 @@ export default function AuditRunStep({
                 <div>
                   <strong>{categoryLabels[prompt.category]}</strong>
                   <small>{prompt.question}</small>
-                  {observation?.failure_reason ? (
-                    <small className={styles.failure}>
-                      {observation.failure_reason}
-                    </small>
-                  ) : null}
                 </div>
                 <Chip color={color} variant="soft" size="sm">
                   {status === "running" || status === "retrying" ? (
