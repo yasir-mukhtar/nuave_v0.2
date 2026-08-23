@@ -126,7 +126,9 @@ export function createVarianceRecord(input: {
     throw new Error(validation.join(" "));
   }
 
-  const observedIds = input.observations.map((observation) => observation.prompt_id);
+  const observedIds = input.observations.map(
+    (observation) => observation.prompt_id,
+  );
   const missing = input.prompt_ids.filter((id) => !observedIds.includes(id));
   const extra = observedIds.filter((id) => !input.prompt_ids.includes(id));
   const duplicates = observedIds.filter(
