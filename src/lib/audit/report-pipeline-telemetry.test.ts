@@ -5,37 +5,17 @@ import {
   goldenPrompts,
   goldenReportContent,
 } from "./fixtures/report-golden";
+import { fixtureProtectedObservationSet } from "./fixtures/protected-observation";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import {
   createValidatedAuditReport,
   type ReportGenerator,
 } from "./report-pipeline";
-import {
-  PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-  PRODUCTION_OBSERVATION_SYSTEM,
-} from "./production-observation-method";
-import type { AuditCallTelemetry, AuditObservation } from "./types";
+import type { AuditCallTelemetry } from "./types";
 
-const completedObservations: AuditObservation[] = goldenObservations.map(
-  (observation, index) => ({
-    ...observation,
-    system: PRODUCTION_OBSERVATION_SYSTEM,
-    requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-    run_status: "completed" as const,
-    raw_answer:
-      observation.raw_answer ||
-      "Local advisers differ by focus: some handle logistics, others readiness reviews.",
-    failure_reason: "",
-    telemetry: [
-      fixtureCallTelemetry({
-        stage: "observation",
-        requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-        returned_model: observation.returned_model,
-        response_id: observation.response_id || `obs-${index + 1}`,
-        web_search_calls: 1,
-      }),
-    ],
-  }),
+const completedObservations = fixtureProtectedObservationSet(
+  goldenPrompts,
+  goldenObservations,
 );
 
 describe("report success telemetry handoff", () => {
