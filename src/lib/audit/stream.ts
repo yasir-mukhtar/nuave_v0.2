@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { auditObservationSchema, type AuditObservation } from "./types";
 
-/** Compact per-attempt provenance record (Spec 003 R-20) carried on the
- * terminal run events so the browser session and the evidence export reflect
- * exactly what occurred, including failed attempts. */
 export const runAttemptRecordSchema = z.object({
   attempt: z.number().int().min(1).max(3),
   automatic: z.boolean(),
@@ -22,10 +19,6 @@ export const auditRunEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("run_started"),
     total: z.literal(10),
-    // Spec 003 R-17/R-36: the retry policy and the retry-aware observation
-    // stage ceiling are recorded on the run record so the method can reflect
-    // exactly what the run was allowed to do. Optional fields keep older
-    // events wire-compatible.
     max_attempts_per_question: z.number().int().min(1).max(3).default(3),
     max_automatic_retries: z.number().int().min(0).max(2).default(2),
     observation_stage_max_calls: z.number().int().min(10).default(30),
@@ -69,8 +62,6 @@ export const auditRunEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("run_completed"),
     observations: z.array(auditObservationSchema).length(10),
-    // R-20: the complete per-attempt provenance trail, one entry per attempt
-    // per prompt (including automatic retries and failed attempts).
     attempts_by_prompt: runAttemptsByPromptSchema.optional(),
     stop_message: z.string().optional(),
   }),
@@ -79,8 +70,6 @@ export const auditRunEventSchema = z.discriminatedUnion("type", [
     completed: z.number().int().min(0).max(9),
     failed_prompt_ids: z.array(z.string()),
     message: z.string().min(1),
-    // R-19/R-20: the preserved partial record — all completed observations and
-    // the complete attempt provenance — so no evidence is lost on interruption.
     observations: z.array(auditObservationSchema).optional(),
     attempts_by_prompt: runAttemptsByPromptSchema.optional(),
     stop_message: z.string().optional(),
@@ -94,30 +83,53 @@ export function encodeAuditRunEvent(event: AuditRunEvent) {
   return `${JSON.stringify(event)}\n`;
 }
 
+/**
+ * Incremental NDJSON parser with transactional delivery.
+ *
+ * A malformed later line must not erase valid events that were already parsed
+ * from the same network chunk. `push` therefore returns the valid prefix and
+ * stores the first parse failure as a terminal error. The next `push` or
+ * `finish` surfaces that error before any later bytes can be accepted.
+ */
 export class AuditRunEventParser {
   private buffer = "";
+  private terminalError: unknown = null;
+
+  private throwTerminalError(): never {
+    const error = this.terminalError;
+    this.terminalError = null;
+    this.buffer = "";
+    throw error;
+  }
 
   push(chunk: string): AuditRunEvent[] {
+    if (this.terminalError) this.throwTerminalError();
     this.buffer += chunk;
     const lines = this.buffer.split("\n");
     this.buffer = lines.pop() ?? "";
-    return lines
-      .filter((line) => line.trim())
-      .map((line) => auditRunEventSchema.parse(JSON.parse(line)));
+    const events: AuditRunEvent[] = [];
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        events.push(auditRunEventSchema.parse(JSON.parse(line)));
+      } catch (error) {
+        this.terminalError = error;
+        this.buffer = "";
+        break;
+      }
+    }
+    return events;
   }
 
   finish(): AuditRunEvent[] {
+    if (this.terminalError) this.throwTerminalError();
     const finalLine = this.buffer.trim();
     this.buffer = "";
     return finalLine ? [auditRunEventSchema.parse(JSON.parse(finalLine))] : [];
   }
 }
 
-/**
- * Settled run-status keys (report-labels.ts): pending -> Menunggu, running ->
- * Sedang diuji, retrying -> Mencoba kembali, completed -> Selesai, failed ->
- * Belum berhasil diuji.
- */
 export type PromptRunStatus =
   "pending" | "running" | "retrying" | "completed" | "failed";
 

@@ -10,6 +10,7 @@ import {
   indonesianQuestionGenerationMeta,
   liveIndonesianQuestionProviderName,
   type IndonesianFetch,
+  type IndonesianQuestionProviderName,
 } from "./questions-id-provider";
 import {
   INDONESIAN_QUESTION_LANGUAGE,
@@ -24,20 +25,6 @@ import {
 import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
-
-/**
- * Live Indonesian question generation for the protected `/api/audit/prompts`
- * route (Spec 003 work package A boundary). Provider selection is server-side
- * and fails closed to OpenCode Go serving GPT-5.6 Luna per the founder-approved
- * 2026-08-21 provider lock; direct OpenAI and Gemini remain testing-only via
- * NUAVE_LIVE_PROVIDER_TESTING=1 outside production.
- *
- * Exactly one provider attempt is made. Provider/format failures and candidate
- * packs that fail the narrow semantic/mechanical safety contract are discarded
- * in favor of the deterministic Indonesian fallback. The original provider
- * telemetry and cost remain accounted. Only a broken deterministic fallback is
- * allowed to hard-fail because that indicates a programming/contract defect.
- */
 
 const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
   need_discovery: {
@@ -119,12 +106,25 @@ function extractResponsesUsage(body: unknown): {
   };
 }
 
-/**
- * Conservative notional accounting from provider-reported token usage using
- * the repository's Luna pricing basis. The question writer performs no web
- * search. This preserves the existing USD 5 safety ledger even when OpenCode
- * Go's commercial billing is not token-identical to direct OpenAI pricing.
- */
+export function protectedQuestionGenerationProvenanceError(input: {
+  provider: IndonesianQuestionProviderName;
+  requested_model: string;
+  returned_model: string;
+  response_id: string;
+}): string {
+  if (input.provider !== "opencodego") return "";
+  if (!input.returned_model) {
+    return "Protected question generation returned no model provenance.";
+  }
+  if (input.returned_model !== input.requested_model) {
+    return `Protected question generation returned ${input.returned_model}; expected ${input.requested_model}.`;
+  }
+  if (!input.response_id) {
+    return "Protected question generation returned no response identity.";
+  }
+  return "";
+}
+
 function accountedCostUsd(usage: {
   input_tokens: number;
   output_tokens: number;
@@ -183,6 +183,19 @@ export async function buildLiveIndonesianPromptPack(input: {
     generationMeta,
   });
 
+  const latencyMs = Date.now() - startedAt;
+  const httpCall =
+    captured.find((call) => call.url.includes("/v1/responses")) ??
+    captured.find((call) => call.url.includes("generateContent")) ??
+    null;
+  const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
+  const provenanceError = protectedQuestionGenerationProvenanceError({
+    provider: providerName,
+    requested_model: generationMeta.requested_model || "",
+    returned_model: usage?.model ?? "",
+    response_id: usage?.response_id ?? "",
+  });
+
   let selectedQuestions = suggestion.questions.map((item) => ({ ...item }));
   let selectedSource = suggestion.source;
   const selectedWarnings = [...suggestion.warnings];
@@ -195,8 +208,11 @@ export async function buildLiveIndonesianPromptPack(input: {
     minimized,
   );
 
-  if (candidateBlockers.length || candidateIssues.length) {
-    if (selectedSource === "fallback") {
+  // Missing/wrong returned-model provenance on the protected transport is a
+  // provider-contract failure, not permission to use the apparent model
+  // output. Fail closed to the deterministic pack without a second paid call.
+  if (provenanceError || candidateBlockers.length || candidateIssues.length) {
+    if (selectedSource === "fallback" && !provenanceError) {
       throw new Error(
         "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
       );
@@ -237,15 +253,14 @@ export async function buildLiveIndonesianPromptPack(input: {
     menyebut_bisnis_anda: selectedQuestions.length - unbranded,
   };
 
-  const latencyMs = Date.now() - startedAt;
-  const httpCall =
-    captured.find((call) => call.url.includes("/v1/responses")) ??
-    captured.find((call) => call.url.includes("generateContent")) ??
-    null;
-  const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
   const providerFailed =
+    Boolean(provenanceError) ||
     (httpCall !== null && httpCall.status >= 400) ||
     (suggestion.source === "fallback" && !semanticFallbackUsed);
+  const fallbackDiagnostic =
+    selectedSource === "fallback"
+      ? "The deterministic Indonesian fallback was used."
+      : "";
 
   const telemetry: AuditCallTelemetry = {
     stage: "prompts",
@@ -273,7 +288,12 @@ export async function buildLiveIndonesianPromptPack(input: {
       generationMeta.pricing_version ||
       INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
     failure_reason: providerFailed
-      ? "Provider question generation failed; the deterministic Indonesian fallback was used."
+      ? [
+          provenanceError || "Provider question generation failed.",
+          fallbackDiagnostic,
+        ]
+          .filter(Boolean)
+          .join(" ")
       : "",
     provider_status: httpCall ? String(httpCall.status) : "",
     incomplete_reason: "",

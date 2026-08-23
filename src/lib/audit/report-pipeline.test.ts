@@ -5,6 +5,7 @@ import {
   goldenPrompts,
   goldenReportContent,
 } from "./fixtures/report-golden";
+import { fixtureProtectedObservationSet } from "./fixtures/protected-observation";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import {
   INDONESIAN_PROMPT_CONTRACT_VERSION,
@@ -17,16 +18,12 @@ import {
   type ReportGenerator,
 } from "./report-pipeline";
 import { liveGenerateReportContent } from "./provider";
-import {
-  PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-  PRODUCTION_OBSERVATION_SYSTEM,
-} from "./production-observation-method";
-import type { AuditObservation, ReportContent } from "./types";
+import type { ReportContent } from "./types";
 
 // The Phase-1 golden record: 9 completed + 1 failed, no attempt telemetry. It
 // remains a historical direct-OpenAI fixture and is intentionally NOT mutated
-// into current production evidence. Pipeline-pass tests use the transformed
-// gate-ready record below.
+// into current production evidence. Pipeline-pass tests use the protected
+// test-only fixture below.
 const partialInput = {
   brief: goldenBrief,
   prompts: goldenPrompts,
@@ -35,40 +32,9 @@ const partialInput = {
   budget: fixtureBudget,
 };
 
-// The gate-ready evidence set: ten completed observations, each with a usable
-// answer and attempt telemetry, stamped as current OpenCode Go observations.
-// The exact returned-model provenance stays whatever the fixture/provider
-// returned; only the requested production model is locked.
-const goldenCompletedObservations: AuditObservation[] = goldenObservations.map(
-  (observation, index) => ({
-    ...observation,
-    system: PRODUCTION_OBSERVATION_SYSTEM,
-    requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-    ...(index === 4
-      ? {
-          run_status: "completed" as const,
-          raw_answer:
-            "Local advisers differ by focus: some handle logistics, others readiness reviews.",
-          failure_reason: "",
-          sources: [
-            {
-              url: "https://northstar.example/evidence-5",
-              title: "Fictional source 5",
-            },
-          ],
-        }
-      : {}),
-    telemetry: observation.telemetry.length
-      ? observation.telemetry
-      : [
-          fixtureCallTelemetry({
-            stage: "observation",
-            requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-            returned_model: observation.returned_model,
-            response_id: observation.response_id,
-          }),
-        ],
-  }),
+const goldenCompletedObservations = fixtureProtectedObservationSet(
+  goldenPrompts,
+  goldenObservations,
 );
 
 const input = {
@@ -167,7 +133,9 @@ describe("validated report pipeline", () => {
 
     await expect(
       createValidatedAuditReport({ ...input, observations: mixed }, generate),
-    ).rejects.toThrow(/observation system must be OpenCode Go Responses API/);
+    ).rejects.toThrow(
+      /recorded system OpenAI Responses API; expected OpenCode Go Responses API/,
+    );
     expect(generate).not.toHaveBeenCalled();
   });
 
@@ -185,23 +153,24 @@ describe("validated report pipeline", () => {
         { ...input, observations: oldDirectOpenAI },
         generate,
       ),
-    ).rejects.toThrow(/observation system must be OpenCode Go Responses API/);
+    ).rejects.toThrow(
+      /recorded system OpenAI Responses API; expected OpenCode Go Responses API/,
+    );
     expect(generate).not.toHaveBeenCalled();
   });
 
-  it("preserves provider-returned canonical model provenance instead of requiring equality with the requested model", () => {
-    const canonical = goldenCompletedObservations.map((observation, index) => ({
-      ...observation,
-      returned_model: `gpt-5.6-luna-provider-${index + 1}`,
-      telemetry: observation.telemetry.map((call) => ({
-        ...call,
-        returned_model: `gpt-5.6-luna-provider-${index + 1}`,
-      })),
-    }));
+  it("rejects returned-model drift from the protected requested model", () => {
+    const mismatched = [...goldenCompletedObservations];
+    mismatched[0] = {
+      ...mismatched[0],
+      returned_model: "gpt-5.6-luna-provider-1",
+    };
 
     expect(() =>
-      assertReportGenerationGate({ ...input, observations: canonical }),
-    ).not.toThrow();
+      assertReportGenerationGate({ ...input, observations: mismatched }),
+    ).toThrow(
+      /returned model gpt-5\.6-luna-provider-1; expected gpt-5\.6-luna/,
+    );
   });
 
   it("contains an unsupported priority without a retry", async () => {
@@ -381,27 +350,13 @@ describe("ten-of-ten report generation gate (Spec 003 R-19, enforced before any 
     expect(() => assertReportGenerationGate(partialInput)).toThrow(
       /not evaluable/,
     );
-    // The gate throws before generation: the provider is never called.
     expect(generate).not.toHaveBeenCalled();
   });
 
   it("passes only when every locked prompt has one current-method evaluable observation", () => {
-    const allEvaluable: AuditObservation[] = goldenObservations.map(
-      (observation) => ({
-        ...observation,
-        system: PRODUCTION_OBSERVATION_SYSTEM,
-        requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-        run_status: "completed" as const,
-        raw_answer: observation.raw_answer || "Usable answer.",
-        telemetry: [
-          fixtureCallTelemetry({
-            stage: "observation",
-            requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-            returned_model: observation.returned_model,
-            response_id: observation.response_id,
-          }),
-        ],
-      }),
+    const allEvaluable = fixtureProtectedObservationSet(
+      goldenPrompts,
+      goldenObservations,
     );
     expect(() =>
       assertReportGenerationGate({
@@ -449,8 +404,6 @@ describe("live provider credential guard on the direct-library path (R3-5)", () 
     vi.stubEnv("NUAVE_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "");
 
-    // The guard's own message, not the protocol adapter's per-call one: the
-    // point is that no provider call was attempted at all.
     await expect(
       createValidatedAuditReport(input, liveGenerateReportContent),
     ).rejects.toThrow(/OPENCODEGO_API_KEY is not configured/);
@@ -470,16 +423,10 @@ describe("live provider credential guard on the direct-library path (R3-5)", () 
 });
 
 describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 R-19/R-37)", () => {
-  // Since R3-6 the pipeline gate is unconditional, so every input that
-  // reaches synthesis is a ten-of-ten evidence set: the shared `input` is
-  // already the all-completed record this describe block used to build.
   const allCompletedInput = input;
 
   it("rejects a synthesis that marks a completed, mentioned observation not_assessed (the Sozo defect)", async () => {
     const defective = goldenReportContent();
-    // Question 3 is completed and the raw answer names the brand, so the code
-    // keeps the model's recommendation — not_assessed here is exactly what the
-    // Sozo run produced and the integrity gate must reject it.
     defective.details[2] = {
       ...defective.details[2],
       recommendation: "not_assessed",
@@ -510,8 +457,6 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     expect(report.details.every((detail) => detail.run === "completed")).toBe(
       true,
     );
-    // The formerly failed question is now assessed (absent → not_recommended),
-    // and every completed detail carries an assessed appearance+recommendation.
     expect(
       report.details.some((detail) => detail.recommendation === "not_assessed"),
     ).toBe(false);
@@ -546,9 +491,6 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
   });
 
   it("accepts not_assessed on a completed validation observation's recommendation (the permissive branch)", async () => {
-    // goldenPrompts[6] is NUAVE-BRAND-VALIDATION-01: a validation question,
-    // completed and mentioned, asks for a fact rather than a judgment, so
-    // recommendation: not_assessed is its honest completed value.
     expect(goldenPrompts[6].category).toBe("validation");
     const content = goldenReportContent();
     content.details[6] = {
@@ -565,9 +507,6 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
   });
 
   it("still rejects not_assessed on a completed judgment-category observation's recommendation", async () => {
-    // goldenPrompts[3] is NUAVE-BRAND-SOLUTION-02: a solution_discovery
-    // question, completed and mentioned, asks the model to judge a
-    // recommendation, so not_assessed there must still be rejected.
     expect(goldenPrompts[3].category).toBe("solution_discovery");
     const content = goldenReportContent();
     content.details[3] = {

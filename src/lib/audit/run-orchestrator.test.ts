@@ -1,13 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
-import { runAuditObservations } from "./run-orchestrator";
-import type { AuditRunEvent } from "./stream";
+import { fixtureProtectedObservation } from "./fixtures/protected-observation";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import { executeAuditPrompt, liveExecuteAuditPrompt } from "./provider";
-import {
-  PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-  PRODUCTION_OBSERVATION_SYSTEM,
-} from "./production-observation-method";
+import { PRODUCTION_OBSERVATION_SYSTEM } from "./production-observation-method";
+import { runAuditObservations } from "./run-orchestrator";
+import type { AuditRunEvent } from "./stream";
+import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 
 const brief = {} as BusinessBrief;
 const safetyIdentifier = "test-user-123";
@@ -25,32 +23,24 @@ function prompts(): AuditPrompt[] {
   }));
 }
 
+function promptFor(promptId: string) {
+  const prompt = prompts().find(
+    (candidate) => candidate.prompt_id === promptId,
+  );
+  if (!prompt) throw new Error(`Unknown test prompt ${promptId}.`);
+  return prompt;
+}
+
 function observation(
   promptId: string,
-  overrides: Partial<AuditObservation> = {},
+  overrides: Parameters<typeof fixtureProtectedObservation>[1] = {},
 ): AuditObservation {
-  return {
-    prompt_id: promptId,
-    category: "need_discovery",
-    branded: false,
-    question: "Question?",
-    system: PRODUCTION_OBSERVATION_SYSTEM,
-    requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-    returned_model: "gpt-5.6-luna",
-    response_id: `resp_${promptId}`,
+  return fixtureProtectedObservation(promptFor(promptId), {
     observed_at: "2026-08-17T00:00:00.000Z",
     raw_answer: "Usable answer.",
     sources: [],
-    run_status: "completed",
-    failure_reason: "",
-    telemetry: [
-      fixtureCallTelemetry({
-        stage: "observation",
-        response_id: `resp_${promptId}`,
-      }),
-    ],
     ...overrides,
-  };
+  });
 }
 
 function failedObservation(promptId: string, reason: string): AuditObservation {
@@ -121,7 +111,6 @@ describe("live provider credential guard on the script path (R3-5)", () => {
         sleep: async () => {},
       }),
     ).rejects.toThrow(/OPENCODEGO_API_KEY is not configured/);
-    // Nothing was emitted: the run never started, so no attempt was spent.
     expect(events).toEqual([]);
   });
 
@@ -197,13 +186,10 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
       const count = (attemptCounts.get(promptId) ?? 0) + 1;
       attemptCounts.set(promptId, count);
       if (promptId === "p2" || promptId === "p7") {
-        // First attempt of these questions fails once, then succeeds.
         if (count === 1)
           return failedObservation(promptId, "Temporary provider failure");
       }
       if (promptId === "p9") {
-        // Fails on the first two attempts and succeeds on the third, so the
-        // run still reaches 10/10 while exercising both automatic retries.
         if (count < 3)
           return failedObservation(promptId, "Temporary provider failure");
       }
@@ -216,12 +202,9 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
         (event) =>
           event.type === "prompt_started" && event.prompt_id === promptId,
       ).length;
-    // Evaluable questions are never rerun; the initial attempt is always one.
     expect(started("p1")).toBe(1);
     expect(started("p2")).toBe(1);
     expect(started("p7")).toBe(1);
-    // Retried questions emit attempt_started and prompt_retrying for each
-    // automatic retry, and a prompt_completed with the final attempt number.
     const p2Attempts = events.filter(
       (event) => event.type === "attempt_started" && event.prompt_id === "p2",
     );
@@ -244,7 +227,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     expect(terminal.type).toBe("run_completed");
     expect(summary.observations).toHaveLength(10);
     expect(summary.failed_prompt_ids).toEqual([]);
-    // Persisted attempt trails are available per prompt (R-20).
     expect(summary.attemptsByPrompt["p9"]).toHaveLength(3);
     expect(summary.attemptsByPrompt["p1"]).toHaveLength(1);
   });
@@ -257,7 +239,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     );
     const summary = await summaryPromise;
 
-    // 9 evaluable questions + 3 attempts for the always-failing question.
     expect(events.some((event) => event.type === "run_completed")).toBe(false);
     const terminal = events[events.length - 1];
     expect(terminal.type).toBe("run_unfinished");
@@ -266,12 +247,9 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     expect(terminal.completed).toBe(9);
     expect(terminal.failed_prompt_ids).toEqual(["p4"]);
     expect(summary.failed_prompt_ids).toEqual(["p4"]);
-    // The failed terminal observation is retained with its full attempt trail.
     const p4 = summary.observations.find((item) => item.prompt_id === "p4");
     expect(p4?.run_status).toBe("failed");
     expect(p4?.telemetry.map((call) => call.attempt)).toEqual([1, 2, 3]);
-    // No report event of any kind exists: run_completed is the only report
-    // trigger and it was never emitted.
     const completedEvents = events.filter(
       (event) => event.type === "run_completed",
     );
@@ -289,8 +267,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     );
     const summary = await summaryPromise;
 
-    // p1 and p2 complete; p3 hits the binding ceiling and stops the run;
-    // p4..p10 are never attempted.
     const started = events.filter((event) => event.type === "prompt_started");
     expect(started).toHaveLength(3);
     expect(summary.failed_prompt_ids).toEqual(["p3"]);
@@ -338,8 +314,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
       resume: { observations: resumedThree },
     });
 
-    // Only the seven uncompleted questions execute; the resumed three are
-    // preserved verbatim and never rerun.
     expect(executed).toHaveLength(7);
     expect(executed).not.toContain("p1");
     expect(executed).not.toContain("p2");
@@ -348,8 +322,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     expect(
       events.filter((event) => event.type === "prompt_completed"),
     ).toHaveLength(10);
-    // The resumed observations are the ORIGINAL records (same response ids),
-    // not fresh executions.
     const resumed = summary.observations
       .filter((item) => ["p1", "p2", "p3"].includes(item.prompt_id))
       .map((item) => item.response_id);
@@ -388,6 +360,10 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
       observation(input.prompt.prompt_id),
     );
     const events: AuditRunEvent[] = [];
+    const wrongModel = {
+      ...observation("p1"),
+      requested_model: "gpt-5.5",
+    };
 
     await expect(
       runAuditObservations({
@@ -398,22 +374,9 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
         execute: execute as never,
         emit: (event) => events.push(event),
         sleep: async () => {},
-        resume: {
-          observations: [
-            observation("p1", {
-              requested_model: "gpt-5.5",
-              telemetry: [
-                fixtureCallTelemetry({
-                  stage: "observation",
-                  requested_model: "gpt-5.5",
-                  response_id: "resp_p1",
-                }),
-              ],
-            }),
-          ],
-        },
+        resume: { observations: [wrongModel] },
       }),
-    ).rejects.toThrow(/requested observation model must be gpt-5.6-luna/);
+    ).rejects.toThrow(/requested model gpt-5\.5; expected gpt-5\.6-luna/);
 
     expect(execute).not.toHaveBeenCalled();
     expect(events).toEqual([]);
@@ -451,8 +414,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     });
     expect(Object.keys(terminal.attempts_by_prompt ?? {})).toHaveLength(10);
 
-    // The final observation's telemetry carries the per-attempt stamps
-    // (attempt order, automatic flag, safe failure category).
     const p5 = summary.observations.find((item) => item.prompt_id === "p5");
     expect(p5?.telemetry.map((call) => call.attempt)).toEqual([1, 2]);
     expect(p5?.telemetry.map((call) => call.automatic)).toEqual([false, true]);
@@ -472,8 +433,6 @@ describe("live run orchestration (Spec 003 R-17/R-19/R-21)", () => {
     expect(terminal.type).toBe("run_unfinished");
     if (terminal.type !== "run_unfinished")
       throw new Error("expected run_unfinished");
-    // The interrupted state carries the completed observations so no
-    // evidence is lost, plus the attempt provenance for every prompt.
     expect(terminal.observations).toHaveLength(10);
     expect(
       (terminal.observations ?? []).filter(

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AuditObservation } from "./types";
+import { fixtureProtectedObservation } from "./fixtures/protected-observation";
+import type { AuditObservation, AuditPrompt } from "./types";
 import {
   VARIANCE_MAX_QUESTIONS,
   VARIANCE_MIN_QUESTIONS,
@@ -8,55 +9,24 @@ import {
   validateVarianceRequest,
 } from "./variance";
 
-function fakeObservation(prompt_id: string): AuditObservation {
+function fakePrompt(prompt_id: string): AuditPrompt {
   return {
     prompt_id,
     category: "need_discovery",
+    role: "test",
     branded: false,
     question: `Question for ${prompt_id}?`,
-    instruction_version: "neutral-id-v1",
-    system: "OpenAI Responses API",
-    requested_model: "gpt-5.6-luna",
-    returned_model: "gpt-5.6-luna",
-    response_id: `resp_${prompt_id}`,
-    observed_at: new Date().toISOString(),
+    rationale: "test",
+    inputs_used: ["category"],
+    review_status: "needs_human_review",
+  };
+}
+
+function fakeObservation(prompt_id: string): AuditObservation {
+  return fixtureProtectedObservation(fakePrompt(prompt_id), {
     raw_answer: `Answer for ${prompt_id} mentions the business.`,
     sources: [],
-    run_status: "completed",
-    failure_reason: "",
-    telemetry: [
-      {
-        stage: "observation",
-        attempt: 1,
-        status: "completed",
-        started_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-        latency_ms: 100,
-        requested_model: "gpt-5.6-luna",
-        returned_model: "gpt-5.6-luna",
-        response_id: `resp_${prompt_id}`,
-        service_tier: "default",
-        usage: {
-          input_tokens: 10,
-          cached_input_tokens: 0,
-          cache_write_input_tokens: 0,
-          output_tokens: 10,
-          reasoning_output_tokens: 0,
-          total_tokens: 20,
-        },
-        web_search_calls: 1,
-        accounted_cost_usd: 0.001,
-        cost_basis: "provider_usage",
-        pricing_version: "openai-standard-2026-08-01",
-        failure_reason: "",
-        provider_status: "completed",
-        incomplete_reason: "",
-        output_text_present: true,
-        refusal_present: false,
-        automatic: false,
-      },
-    ],
-  };
+  });
 }
 
 describe("variance (R-22)", () => {
@@ -173,6 +143,7 @@ describe("variance (R-22)", () => {
     for (const obs of record.observations) {
       expect(obs.telemetry.length).toBeGreaterThan(0);
       expect(obs.telemetry[0].stage).toBe("observation");
+      expect(obs.telemetry[0].web_search_calls).toBeGreaterThan(0);
       expect(obs.telemetry[0].accounted_cost_usd).toBeGreaterThan(0);
     }
   });

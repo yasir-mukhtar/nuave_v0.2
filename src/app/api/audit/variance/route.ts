@@ -13,6 +13,13 @@ import {
 } from "@/lib/audit/provider";
 import { runQuestionWithRetry } from "@/lib/audit/retry";
 import {
+  completedLockedObservationSetErrors,
+  designatedVariancePrompts,
+  variancePromptBindingErrors,
+} from "@/lib/audit/locked-question-pack";
+import { assertSafeComparisonBusinessUrls } from "@/lib/audit/similar-businesses";
+import { productionObservationMethodErrors } from "@/lib/audit/production-observation-method";
+import {
   VARIANCE_MAX_QUESTIONS,
   VARIANCE_MIN_QUESTIONS,
   createVarianceRecord,
@@ -21,22 +28,11 @@ import {
 
 export const runtime = "nodejs";
 
-/**
- * POST /api/audit/variance — Spec 003 R-22 variance re-ask.
- *
- * After the main 10/10 run, 2–3 designated questions are re-asked separately,
- * one independent observation each, under the same locked method (same provider,
- * model, neutral Indonesian instruction, web search, verified location context).
- *
- * Results are stored in a separate variance record keyed to the run and never
- * fed into counts/denominators/findings/actions, full telemetry. The caller is
- * responsible for keeping the variance record separate; this route enforces the
- * 2–3 question bound and the 1+2 retry contract per question, with full
- * per-attempt telemetry (R-20) and server-side budget enforcement (R-36).
- */
-
 const requestSchema = z.object({
   brief: businessBriefSchema,
+  /** Complete locked pack and its completed 10/10 evidence travel together. */
+  locked_prompts: z.array(promptSchema).length(10),
+  completed_observations: z.array(auditObservationSchema).length(10),
   prompts: z
     .array(promptSchema)
     .min(VARIANCE_MIN_QUESTIONS)
@@ -48,10 +44,47 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    assertLiveProviderCredentialsConfigured();
     const input = requestSchema.parse(await request.json());
+    assertSafeComparisonBusinessUrls(input.brief);
 
-    const prompt_ids = input.prompts.map((p) => p.prompt_id);
+    // The request-carried proof must represent the exact completed locked run,
+    // not merely a syntactically valid pack. This stays Phase-3-compatible:
+    // there is no durable server job/state, but stale or arbitrary variance
+    // prompts cannot detach from the ten completed protected observations.
+    const completedRunErrors = [
+      ...completedLockedObservationSetErrors({
+        prompts: input.locked_prompts,
+        observations: input.completed_observations,
+        brief: input.brief,
+      }),
+      ...productionObservationMethodErrors(input.completed_observations),
+    ];
+    if (completedRunErrors.length) {
+      return NextResponse.json(
+        { error: completedRunErrors.join(" ") },
+        { status: 422 },
+      );
+    }
+
+    // Prove designation and exact prompt identity before any credential check
+    // or provider work. The provider receives the server-canonical designated
+    // subset, never arbitrary request prompts.
+    const bindingErrors = variancePromptBindingErrors({
+      locked_prompts: input.locked_prompts,
+      requested_prompts: input.prompts,
+      brief: input.brief,
+    });
+    if (bindingErrors.length) {
+      return NextResponse.json(
+        { error: bindingErrors.join(" ") },
+        { status: 422 },
+      );
+    }
+    const prompts = designatedVariancePrompts(
+      input.locked_prompts,
+      input.brief,
+    );
+    const prompt_ids = prompts.map((prompt) => prompt.prompt_id);
     const varianceErrors = validateVarianceRequest({ prompt_ids });
     if (varianceErrors.length) {
       return NextResponse.json(
@@ -59,24 +92,21 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
-    if (new Set(prompt_ids).size !== prompt_ids.length) {
-      return NextResponse.json(
-        { error: "Variance prompts must have unique prompt_id." },
-        { status: 422 },
-      );
-    }
+
+    assertLiveProviderCredentialsConfigured();
 
     let budget = input.budget;
     const observations: z.infer<typeof auditObservationSchema>[] = [];
     let incomplete_reason: string | undefined;
 
-    for (const prompt of input.prompts) {
+    for (const prompt of prompts) {
       const outcome = await runQuestionWithRetry({
         prompt,
         brief: input.brief,
         safety_identifier: input.safety_identifier,
         budget,
         execute: liveExecuteAuditPrompt,
+        signal: request.signal,
       });
       budget = {
         ...budget,
@@ -100,18 +130,19 @@ export async function POST(request: Request) {
       }
     }
 
-    const expectedIds = input.prompts.map((p) => p.prompt_id);
-    const producedIds = observations.map((o) => o.prompt_id);
+    const expectedIds = prompts.map((prompt) => prompt.prompt_id);
+    const producedIds = observations.map(
+      (observation) => observation.prompt_id,
+    );
     const missingAfterStop = expectedIds.filter(
       (id) => !producedIds.includes(id),
     );
 
-    // Missing variance observations are synthetic failure markers only; they
-    // never enter the main report. Preserve the production transport honestly
-    // even though no provider response exists for the marker itself.
     if (missingAfterStop.length) {
       for (const missingId of missingAfterStop) {
-        const prompt = input.prompts.find((p) => p.prompt_id === missingId)!;
+        const prompt = prompts.find(
+          (candidate) => candidate.prompt_id === missingId,
+        )!;
         observations.push({
           prompt_id: prompt.prompt_id,
           category: prompt.category,

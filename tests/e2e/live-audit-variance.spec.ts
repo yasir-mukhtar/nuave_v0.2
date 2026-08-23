@@ -236,7 +236,10 @@ async function stubReport(
 async function waitForStorage(page: Page, key: string) {
   await expect
     .poll(() =>
-      page.evaluate((storageKey) => window.sessionStorage.getItem(storageKey), key),
+      page.evaluate(
+        (storageKey) => window.sessionStorage.getItem(storageKey),
+        key,
+      ),
     )
     .not.toBeNull();
 }
@@ -261,6 +264,8 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
       varianceCalls += 1;
       sequence.push("variance");
       const request = route.request().postDataJSON() as {
+        locked_prompts: PromptPack["prompts"];
+        completed_observations: AuditObservation[];
         prompts: PromptPack["prompts"];
         run_key: string;
         budget: AuditBudget;
@@ -321,6 +326,8 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
     );
 
     const varianceRequest = varianceCapture.request as {
+      locked_prompts: PromptPack["prompts"];
+      completed_observations: AuditObservation[];
       prompts: PromptPack["prompts"];
       run_key: string;
       budget: AuditBudget;
@@ -328,6 +335,11 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
     const selectedIds = varianceRequest.prompts.map(
       (prompt) => prompt.prompt_id,
     );
+    expect(varianceRequest.locked_prompts).toEqual(lockedPrompts);
+    expect(varianceRequest.completed_observations).toEqual(
+      reportRequest.observations,
+    );
+    expect(varianceRequest.completed_observations).toEqual(mainObservations);
     expect(selectedIds).toHaveLength(2);
     expect(new Set(selectedIds).size).toBe(2);
     const lockedIds = new Set(lockedPrompts.map((prompt) => prompt.prompt_id));
@@ -425,9 +437,48 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
       complete: false,
       incomplete_reason: "Synthetic variance outage.",
     });
-    expect((reportCapture.request as { observations: unknown[] }).observations).toHaveLength(
-      10,
+    expect(
+      (reportCapture.request as { observations: unknown[] }).observations,
+    ).toHaveLength(10);
+  });
+
+  test("restoring a report with incomplete main evidence never launches variance", async ({
+    page,
+  }) => {
+    seedLiveState(
+      page,
+      liveState({
+        observations: mainObservations.slice(0, 9),
+        report,
+        executionStarted: true,
+        postReportBudgetCalls: [
+          ...mainObservations.flatMap((observation) => observation.telemetry),
+          reportTelemetry,
+        ],
+      }),
     );
+    const budgetCalls = await stubBudgetGet(page);
+    let varianceCalls = 0;
+    await page.route("**/api/audit/variance", async (route) => {
+      varianceCalls += 1;
+      await route.abort();
+    });
+
+    await page.goto("/audit");
+    await expect.poll(budgetCalls).toBe(1);
+    await waitForStorage(page, VARIANCE_FAILURE_STORAGE_KEY);
+    await page.waitForTimeout(100);
+
+    expect(varianceCalls).toBe(0);
+    const failure = await page.evaluate(
+      (key) => JSON.parse(window.sessionStorage.getItem(key) || "{}"),
+      VARIANCE_FAILURE_STORAGE_KEY,
+    );
+    expect(failure).toMatchObject({
+      run_key: REPORT_RESPONSE_ID,
+      complete: false,
+      incomplete_reason: expect.stringMatching(/bukti observasi 10\/10 tidak valid/i),
+    });
   });
 
   test("restoring completed variance for the report never posts variance again", async ({
