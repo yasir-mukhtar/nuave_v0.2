@@ -37,7 +37,6 @@ import {
   VARIANCE_FAILURE_STORAGE_KEY,
   VARIANCE_STORAGE_KEY,
   createVarianceFailureRecord,
-  selectVariancePrompts,
   varianceRunKeyForReport,
   type VarianceFailureRecord,
   type VarianceRecord,
@@ -47,7 +46,10 @@ import {
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
 } from "@/lib/audit/questions-id";
-import { completedLockedObservationSetErrors } from "@/lib/audit/locked-question-pack";
+import {
+  completedLockedObservationSetErrors,
+  designatedVariancePrompts,
+} from "@/lib/audit/locked-question-pack";
 import {
   AuditOperationGeneration,
   isAbortError,
@@ -300,7 +302,10 @@ export default function AuditWorkflow() {
         return;
       }
 
-      const selectedPrompts = selectVariancePrompts(promptPack.prompts);
+      const selectedPrompts = designatedVariancePrompts(
+        promptPack.prompts,
+        brief,
+      );
       const selectedIds = selectedPrompts.map((prompt) => prompt.prompt_id);
       const proofErrors = completedLockedObservationSetErrors({
         prompts: promptPack.prompts,
@@ -568,7 +573,7 @@ export default function AuditWorkflow() {
 
     if (!postReportBudgetCalls.length) {
       try {
-        const selected = selectVariancePrompts(promptPack.prompts);
+        const selected = designatedVariancePrompts(promptPack.prompts, brief);
         const failure = createVarianceFailureRecord({
           run_key: varianceRunKeyForReport(report),
           prompt_ids: selected.map((prompt) => prompt.prompt_id),
@@ -613,6 +618,7 @@ export default function AuditWorkflow() {
     restored,
     runVariance,
     varianceSettled,
+    brief,
   ]);
 
   const step = deriveAuditStep({
