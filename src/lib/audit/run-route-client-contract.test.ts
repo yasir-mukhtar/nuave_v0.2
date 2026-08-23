@@ -18,7 +18,9 @@ const providerMocks = vi.hoisted(() => ({
   isLiveProviderCall: vi.fn(() => false),
 }));
 const runMocks = vi.hoisted(() => ({
-  runAuditObservations: vi.fn(async (_input: unknown) => undefined),
+  runAuditObservations: vi.fn(async (input: unknown) => {
+    void input;
+  }),
 }));
 
 vi.mock("@/lib/audit/provider", () => providerMocks);
@@ -55,18 +57,20 @@ function brief(): BusinessBrief {
 
 function promptsWithTamperedCategory(input: BusinessBrief): AuditPrompt[] {
   const minimized = minimizeIndonesianBrief(input);
-  return buildDeterministicIndonesianPack(minimized).map((question, index) => ({
-    prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-    category: index === 0 ? "action" : INDONESIAN_SLOT_CATEGORIES[index],
-    role: "test",
-    branded:
-      classifyIndonesianQuestion(question, minimized) ===
-      "menyebut_bisnis_anda",
-    question,
-    rationale: "test",
-    inputs_used: ["brand_name"],
-    review_status: "needs_human_review",
-  }));
+  return buildDeterministicIndonesianPack(minimized).map(
+    (question, index) => ({
+      prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
+      category: index === 0 ? "action" : INDONESIAN_SLOT_CATEGORIES[index],
+      role: "test",
+      branded:
+        classifyIndonesianQuestion(question, minimized) ===
+        "menyebut_bisnis_anda",
+      question,
+      rationale: "test",
+      inputs_used: ["brand_name"],
+      review_status: "needs_human_review",
+    }),
+  );
 }
 
 describe("POST /api/audit/run client contract guard", () => {
