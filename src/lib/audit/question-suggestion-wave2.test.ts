@@ -78,6 +78,15 @@ describe("Wave 2 generated suggestion guards", () => {
     vi.unstubAllGlobals();
   });
 
+  it("accepts a valid default suggestion without inventing a warning", () => {
+    expect(
+      generatedSuggestionGuardIssues(
+        validQuestions,
+        minimizeIndonesianBrief(brief),
+      ),
+    ).toEqual([]);
+  });
+
   it("detects an advertised default that is not actually 5/5", () => {
     const unbalanced = validQuestions.slice();
     unbalanced[0] = "Apakah Kopi Taman Senja cocok untuk ngopi di Depok?";
@@ -136,9 +145,12 @@ describe("Wave 2 generated suggestion guards", () => {
       tanpa_menyebut_bisnis_anda: 5,
       menyebut_bisnis_anda: 5,
     });
-    expect(result.pack.prompts.every((prompt) =>
-      prompt.inputs_used.length === 1 &&
-      prompt.inputs_used[0] === "confirmed_business_facts"
-    )).toBe(true);
+    expect(
+      result.pack.prompts.every(
+        (prompt) =>
+          prompt.inputs_used.length === 1 &&
+          prompt.inputs_used[0] === "confirmed_business_facts",
+      ),
+    ).toBe(true);
   });
 });
