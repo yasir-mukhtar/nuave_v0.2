@@ -116,26 +116,23 @@ describe("canonical locked question pack", () => {
     expect(canonical[5].branded).toBe(false);
   });
 
-  it(
-    "derives variance designation from edited question text, not stale client booleans",
-    () => {
-      const pack = prompts();
-      pack[0] = {
-        ...pack[0],
-        branded: false,
-        question: "Apakah Kopi Nuave cocok untuk rapat pagi di Jakarta?",
-      };
-      pack[5] = {
-        ...pack[5],
-        branded: true,
-        question: "Apa pilihan coffee shop dekat kantor di Jakarta?",
-      };
-
-      expect(
-        designatedVariancePrompts(pack, brief()).map((prompt) => prompt.prompt_id),
-      ).toEqual(["NVA-ID-02", "NVA-ID-01"]);
-    },
-  );
+  it("canonicalizes variance designation after edits", () => {
+    const pack = prompts();
+    pack[0] = {
+      ...pack[0],
+      branded: false,
+      question: "Apakah Kopi Nuave cocok untuk rapat pagi di Jakarta?",
+    };
+    pack[5] = {
+      ...pack[5],
+      branded: true,
+      question: "Apa pilihan coffee shop dekat kantor di Jakarta?",
+    };
+    const ids = designatedVariancePrompts(pack, brief()).map(
+      (prompt) => prompt.prompt_id,
+    );
+    expect(ids).toEqual(["NVA-ID-02", "NVA-ID-01"]);
+  });
 
   it("rejects a resumed observation whose ID points at different question text", () => {
     const pack = canonicalLockedQuestionPack(prompts(), brief()).prompts;
