@@ -13,8 +13,8 @@ import {
 } from "@/lib/audit/provider";
 import { runQuestionWithRetry } from "@/lib/audit/retry";
 import {
+  completedLockedObservationSetErrors,
   designatedVariancePrompts,
-  lockedObservationBindingErrors,
   variancePromptBindingErrors,
 } from "@/lib/audit/locked-question-pack";
 import { assertSafeComparisonBusinessUrls } from "@/lib/audit/similar-businesses";
@@ -52,22 +52,13 @@ export async function POST(request: Request) {
     // there is no durable server job/state, but stale or arbitrary variance
     // prompts cannot detach from the ten completed protected observations.
     const completedRunErrors = [
-      ...lockedObservationBindingErrors({
+      ...completedLockedObservationSetErrors({
         prompts: input.locked_prompts,
         observations: input.completed_observations,
         brief: input.brief,
       }),
       ...productionObservationMethodErrors(input.completed_observations),
     ];
-    if (
-      input.completed_observations.some(
-        (observation) => observation.run_status !== "completed",
-      )
-    ) {
-      completedRunErrors.push(
-        "Variance requires the completed 10/10 locked observation set.",
-      );
-    }
     if (completedRunErrors.length) {
       return NextResponse.json(
         { error: completedRunErrors.join(" ") },
@@ -139,14 +130,18 @@ export async function POST(request: Request) {
     }
 
     const expectedIds = prompts.map((prompt) => prompt.prompt_id);
-    const producedIds = observations.map((observation) => observation.prompt_id);
+    const producedIds = observations.map(
+      (observation) => observation.prompt_id,
+    );
     const missingAfterStop = expectedIds.filter(
       (id) => !producedIds.includes(id),
     );
 
     if (missingAfterStop.length) {
       for (const missingId of missingAfterStop) {
-        const prompt = prompts.find((candidate) => candidate.prompt_id === missingId)!;
+        const prompt = prompts.find(
+          (candidate) => candidate.prompt_id === missingId,
+        )!;
         observations.push({
           prompt_id: prompt.prompt_id,
           category: prompt.category,
