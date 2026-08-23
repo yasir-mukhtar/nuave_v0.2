@@ -24,7 +24,9 @@ function prompts(): AuditPrompt[] {
 }
 
 function promptFor(promptId: string) {
-  const prompt = prompts().find((candidate) => candidate.prompt_id === promptId);
+  const prompt = prompts().find(
+    (candidate) => candidate.prompt_id === promptId,
+  );
   if (!prompt) throw new Error(`Unknown test prompt ${promptId}.`);
   return prompt;
 }
