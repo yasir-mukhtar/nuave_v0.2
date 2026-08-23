@@ -257,6 +257,10 @@ export async function buildLiveIndonesianPromptPack(input: {
     Boolean(provenanceError) ||
     (httpCall !== null && httpCall.status >= 400) ||
     (suggestion.source === "fallback" && !semanticFallbackUsed);
+  const fallbackDiagnostic =
+    selectedSource === "fallback"
+      ? "The deterministic Indonesian fallback was used."
+      : "";
 
   const telemetry: AuditCallTelemetry = {
     stage: "prompts",
@@ -284,8 +288,12 @@ export async function buildLiveIndonesianPromptPack(input: {
       generationMeta.pricing_version ||
       INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
     failure_reason: providerFailed
-      ? provenanceError ||
-        "Provider question generation failed; the deterministic Indonesian fallback was used."
+      ? [
+          provenanceError || "Provider question generation failed.",
+          fallbackDiagnostic,
+        ]
+          .filter(Boolean)
+          .join(" ")
       : "",
     provider_status: httpCall ? String(httpCall.status) : "",
     incomplete_reason: "",
