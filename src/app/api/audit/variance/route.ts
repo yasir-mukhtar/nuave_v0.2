@@ -14,9 +14,11 @@ import {
 import { runQuestionWithRetry } from "@/lib/audit/retry";
 import {
   designatedVariancePrompts,
+  lockedObservationBindingErrors,
   variancePromptBindingErrors,
 } from "@/lib/audit/locked-question-pack";
 import { assertSafeComparisonBusinessUrls } from "@/lib/audit/similar-businesses";
+import { productionObservationMethodErrors } from "@/lib/audit/production-observation-method";
 import {
   VARIANCE_MAX_QUESTIONS,
   VARIANCE_MIN_QUESTIONS,
@@ -28,8 +30,9 @@ export const runtime = "nodejs";
 
 const requestSchema = z.object({
   brief: businessBriefSchema,
-  /** Complete locked pack proves which 2 questions are actually designated. */
+  /** Complete locked pack and its completed 10/10 evidence travel together. */
   locked_prompts: z.array(promptSchema).length(10),
+  completed_observations: z.array(auditObservationSchema).length(10),
   prompts: z
     .array(promptSchema)
     .min(VARIANCE_MIN_QUESTIONS)
@@ -43,6 +46,34 @@ export async function POST(request: Request) {
   try {
     const input = requestSchema.parse(await request.json());
     assertSafeComparisonBusinessUrls(input.brief);
+
+    // The request-carried proof must represent the exact completed locked run,
+    // not merely a syntactically valid pack. This stays Phase-3-compatible:
+    // there is no durable server job/state, but stale or arbitrary variance
+    // prompts cannot detach from the ten completed protected observations.
+    const completedRunErrors = [
+      ...lockedObservationBindingErrors({
+        prompts: input.locked_prompts,
+        observations: input.completed_observations,
+        brief: input.brief,
+      }),
+      ...productionObservationMethodErrors(input.completed_observations),
+    ];
+    if (
+      input.completed_observations.some(
+        (observation) => observation.run_status !== "completed",
+      )
+    ) {
+      completedRunErrors.push(
+        "Variance requires the completed 10/10 locked observation set.",
+      );
+    }
+    if (completedRunErrors.length) {
+      return NextResponse.json(
+        { error: completedRunErrors.join(" ") },
+        { status: 422 },
+      );
+    }
 
     // Prove designation and exact prompt identity before any credential check
     // or provider work. The provider receives the server-canonical designated
