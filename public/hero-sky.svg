@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d9fe8"/>
+      <stop offset="0.28" stop-color="#63b8ee"/>
+      <stop offset="0.52" stop-color="#9dd7f5"/>
+      <stop offset="0.72" stop-color="#d9eff8"/>
+      <stop offset="1" stop-color="#f8fbfc"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="50%" cy="0%" r="72%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.34"/>
+      <stop offset="0.36" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="farRidge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fc3d1" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#bad8de" stop-opacity="0.38"/>
+    </linearGradient>
+    <linearGradient id="nearRidge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5f9eac" stop-opacity="0.58"/>
+      <stop offset="1" stop-color="#99c3c8" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="valley" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b7d8ce" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#eef7f2" stop-opacity="0.16"/>
+    </linearGradient>
+    <filter id="cloudBlur" x="-30%" y="-50%" width="160%" height="200%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+    <filter id="softBlur" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1200" fill="url(#sky)"/>
+  <rect width="1920" height="780" fill="url(#sunGlow)"/>
+
+  <g filter="url(#cloudBlur)" fill="#fff">
+    <ellipse cx="120" cy="250" rx="360" ry="120" opacity="0.72"/>
+    <ellipse cx="360" cy="205" rx="300" ry="105" opacity="0.82"/>
+    <ellipse cx="610" cy="270" rx="330" ry="118" opacity="0.6"/>
+    <ellipse cx="1530" cy="250" rx="360" ry="118" opacity="0.58"/>
+    <ellipse cx="1780" cy="205" rx="330" ry="110" opacity="0.78"/>
+    <ellipse cx="1030" cy="330" rx="390" ry="72" opacity="0.28"/>
+  </g>
+
+  <g filter="url(#softBlur)" fill="#fff">
+    <ellipse cx="760" cy="190" rx="190" ry="42" opacity="0.22"/>
+    <ellipse cx="1180" cy="170" rx="220" ry="48" opacity="0.18"/>
+    <ellipse cx="1370" cy="390" rx="260" ry="58" opacity="0.2"/>
+  </g>
+
+  <path d="M0 760 C170 690 300 720 455 655 C610 590 710 625 840 585 C970 545 1095 590 1220 550 C1390 495 1515 590 1640 548 C1750 512 1840 535 1920 510 L1920 1200 L0 1200 Z" fill="url(#farRidge)"/>
+  <path d="M0 865 C205 760 385 820 570 725 C705 655 830 705 975 650 C1140 586 1255 700 1410 635 C1600 555 1760 640 1920 590 L1920 1200 L0 1200 Z" fill="url(#nearRidge)"/>
+  <path d="M0 930 C255 850 440 905 650 820 C815 755 935 795 1085 760 C1280 715 1435 815 1600 760 C1730 717 1845 742 1920 720 L1920 1200 L0 1200 Z" fill="url(#valley)"/>
+
+  <path d="M690 1200 C760 1030 845 940 960 900 C1070 938 1160 1028 1230 1200 Z" fill="#f3f8f5" opacity="0.28"/>
+</svg>
