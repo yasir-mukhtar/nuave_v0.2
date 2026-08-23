@@ -6,51 +6,19 @@ import {
   goldenPrompts,
   goldenReportContent,
 } from "./fixtures/report-golden";
+import { fixtureProtectedObservationSet } from "./fixtures/protected-observation";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import {
   createValidatedAuditReport,
-  ReportPipelineError,
   type ReportGenerator,
 } from "./report-pipeline";
 import { sanitizeUnsupportedReportPriorities } from "./report-priority";
-import {
-  PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-  PRODUCTION_OBSERVATION_SYSTEM,
-} from "./production-observation-method";
-import type { AuditObservation, ReportContent } from "./types";
+import type { ReportContent } from "./types";
 
 const POSITIVE_ONLY_PROMPT_ID = goldenPrompts[6].prompt_id;
 
-function completeGoldenObservations(): AuditObservation[] {
-  return goldenObservations.map((observation, index) => ({
-    ...observation,
-    system: PRODUCTION_OBSERVATION_SYSTEM,
-    requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-    ...(index === 4
-      ? {
-          run_status: "completed" as const,
-          raw_answer:
-            "Local advisers differ by focus: some handle logistics, others readiness reviews.",
-          failure_reason: "",
-          sources: [
-            {
-              url: "https://northstar.example/evidence-5",
-              title: "Fictional source 5",
-            },
-          ],
-        }
-      : {}),
-    telemetry: observation.telemetry.length
-      ? observation.telemetry
-      : [
-          fixtureCallTelemetry({
-            stage: "observation",
-            requested_model: PRODUCTION_OBSERVATION_REQUESTED_MODEL,
-            returned_model: observation.returned_model,
-            response_id: observation.response_id,
-          }),
-        ],
-  }));
+function completeGoldenObservations() {
+  return fixtureProtectedObservationSet(goldenPrompts, goldenObservations);
 }
 
 function reportResult(content: ReportContent) {
