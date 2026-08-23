@@ -1,0 +1,98 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/runner/work/nuave_v0.2/nuave_v0.2[39m
+
+ [32m✓[39m src/lib/audit/protected-observation-method.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [31m❯[39m src/lib/audit/variance-route-proof.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m src/lib/audit/variance.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 16[2mms[22m[39m
+     [32m✓[39m requires 2–3 designated questions[32m 3[2mms[22m[39m
+     [32m✓[39m rejects duplicate prompt_ids[32m 1[2mms[22m[39m
+[31m     [31m×[31m creates a variance record with 2 questions, separate from main counts[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m creates a variance record with 3 questions[39m[32m 1[2mms[22m[39m
+     [32m✓[39m marks incomplete when a failure reason is supplied (failure matrix row)[32m 0[2mms[22m[39m
+     [32m✓[39m rejects when observations do not match designated prompt_ids exactly[32m 1[2mms[22m[39m
+     [32m✓[39m never blends variance observations into main 10/10 set (separation invariant)[32m 1[2mms[22m[39m
+     [32m✓[39m variance observations carry full telemetry (R-20)[32m 0[2mms[22m[39m
+ [32m✓[39m src/lib/audit/locked-question-pack.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/lib/audit/workflow-cancellation.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/lib/audit/protected-observation-provider.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/lib/audit/workflow-operation-generation.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/lib/audit/stream-transaction.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/lib/audit/variance-route-proof.test.ts[2m [ src/lib/audit/variance-route-proof.test.ts ][22m
+[31m[1mError[22m: [vitest] No "OBSERVATION_STAGE_MAX_CALLS" export is defined on the "@/lib/audit/retry" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+vi.mock(import("@/lib/audit/retry"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+[36m [2m❯[22m src/lib/audit/telemetry.ts:[2m78:16[22m[39m
+    [90m 76|[39m   // automatic technical retries per question) = 30. The USD 5 per-ses…
+    [90m 77|[39m   // ceiling remains the binding cap; this ceiling only bounds call co…
+    [90m 78|[39m   observation[33m:[39m [33mOBSERVATION_STAGE_MAX_CALLS[39m[33m,[39m
+    [90m   |[39m                [31m^[39m
+    [90m 79|[39m   report[33m:[39m [34m3[39m[33m,[39m
+    [90m 80|[39m } [35mas[39m [35mconst[39m[33m;[39m
+[90m [2m❯[22m src/lib/audit/fixtures/telemetry.ts:[2m6:1[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/lib/audit/variance.test.ts[2m > [22mvariance (R-22)[2m > [22mcreates a variance record with 2 questions, separate from main counts
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m src/lib/audit/variance.test.ts:[2m92:29[22m[39m
+    [90m 90|[39m     [34mexpect[39m(record[33m.[39mprompt_ids)[33m.[39m[34mtoEqual[39m(prompt_ids)[33m;[39m
+    [90m 91|[39m     [34mexpect[39m(record[33m.[39mobservations)[33m.[39m[34mtoHaveLength[39m([34m2[39m)[33m;[39m
+    [90m 92|[39m     [34mexpect[39m(record[33m.[39mcomplete)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 93|[39m     [34mexpect[39m(record[33m.[39mrun_key)[33m.[39m[34mtoBe[39m([32m"test-run-key"[39m)[33m;[39m
+    [90m 94|[39m     // Separate storage: variance observations are not main observatio…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/lib/audit/variance.test.ts[2m > [22mvariance (R-22)[2m > [22mcreates a variance record with 3 questions
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m src/lib/audit/variance.test.ts:[2m107:29[22m[39m
+    [90m105|[39m     })[33m;[39m
+    [90m106|[39m     [34mexpect[39m(record[33m.[39mobservations)[33m.[39m[34mtoHaveLength[39m([34m3[39m)[33m;[39m
+    [90m107|[39m     [34mexpect[39m(record[33m.[39mcomplete)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m108|[39m   })[33m;[39m
+    [90m109|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (8)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m38 passed[39m[22m[90m (40)[39m
+[2m   Start at [22m 00:51:53
+[2m   Duration [22m 2.39s[2m (transform 429ms, setup 0ms, import 1.06s, tests 63ms, environment 1ms)[22m
+
+
+::error file=/home/runner/work/nuave_v0.2/nuave_v0.2/src/lib/audit/telemetry.ts,title=src/lib/audit/variance-route-proof.test.ts,line=78,column=16::Error: [vitest] No "OBSERVATION_STAGE_MAX_CALLS" export is defined on the "@/lib/audit/retry" mock. Did you forget to return it from "vi.mock"?%0AIf you need to partially mock a module, you can use "importOriginal" helper inside:%0A%0Avi.mock(import("@/lib/audit/retry"), async (importOriginal) => {%0A  const actual = await importOriginal()%0A  return {%0A    ...actual,%0A    // your mocked methods%0A  }%0A})%0A%0A ❯ src/lib/audit/telemetry.ts:78:16%0A ❯ src/lib/audit/fixtures/telemetry.ts:6:1%0A%0A
+
+::error file=/home/runner/work/nuave_v0.2/nuave_v0.2/src/lib/audit/variance.test.ts,title=src/lib/audit/variance.test.ts > variance (R-22) > creates a variance record with 2 questions%2C separate from main counts,line=92,column=29::AssertionError: expected false to be true // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- true%0A+ false%0A%0A ❯ src/lib/audit/variance.test.ts:92:29%0A%0A
+
+::error file=/home/runner/work/nuave_v0.2/nuave_v0.2/src/lib/audit/variance.test.ts,title=src/lib/audit/variance.test.ts > variance (R-22) > creates a variance record with 3 questions,line=107,column=29::AssertionError: expected false to be true // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- true%0A+ false%0A%0A ❯ src/lib/audit/variance.test.ts:107:29%0A%0A
