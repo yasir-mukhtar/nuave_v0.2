@@ -1,116 +1,84 @@
 import { describe, expect, it } from "vitest";
 import { parseSourceInput } from "./source-input";
 
-describe("parseSourceInput (Spec 004 R-03, AC-13)", () => {
-  it("returns null for empty and whitespace-only input", () => {
+describe("parseSourceInput canonical source policy", () => {
+  it("returns null for empty, whitespace, and oversized input", () => {
     expect(parseSourceInput("")).toBeNull();
     expect(parseSourceInput("   ")).toBeNull();
-  });
-
-  it("returns null for input over the 2000-char limit", () => {
     expect(parseSourceInput("a".repeat(2001))).toBeNull();
   });
 
-  it("accepts a bare domain as a website and prepends https", () => {
-    expect(parseSourceInput("kopitamansenja.example")).toEqual({
+  it.each([
+    ["kopitamansenja.example", "https://kopitamansenja.example/"],
+    [
+      "kopitamansenja.example/beranda",
+      "https://kopitamansenja.example/beranda",
+    ],
+    ["www.kopitamansenja.example", "https://www.kopitamansenja.example/"],
+    ["http://kopitamansenja.example", "http://kopitamansenja.example/"],
+    [
+      "https://kopitamansenja.example/beranda?ref=1",
+      "https://kopitamansenja.example/beranda?ref=1",
+    ],
+  ])("accepts public website %s", (input, normalizedUrl) => {
+    expect(parseSourceInput(input)).toEqual({
       sourceType: "website",
-      normalizedUrl: "https://kopitamansenja.example/",
+      normalizedUrl,
     });
   });
 
-  it("accepts a bare domain with a path", () => {
-    const result = parseSourceInput("kopitamansenja.example/beranda");
-    expect(result).toEqual({
-      sourceType: "website",
-      normalizedUrl: "https://kopitamansenja.example/beranda",
-    });
-  });
-
-  it("accepts a www-prefixed domain", () => {
-    expect(parseSourceInput("www.kopitamansenja.example")).toEqual({
-      sourceType: "website",
-      normalizedUrl: "https://www.kopitamansenja.example/",
-    });
-  });
-
-  it("accepts a full http URL as a website", () => {
-    expect(parseSourceInput("http://kopitamansenja.example")).toEqual({
-      sourceType: "website",
-      normalizedUrl: "http://kopitamansenja.example/",
-    });
-  });
-
-  it("accepts a full https URL and preserves path and query", () => {
-    expect(
-      parseSourceInput("https://kopitamansenja.example/beranda?ref=1"),
-    ).toEqual({
-      sourceType: "website",
-      normalizedUrl: "https://kopitamansenja.example/beranda?ref=1",
-    });
-  });
-
-  it("detects an @handle as Instagram", () => {
-    expect(parseSourceInput("@kopitamansenja")).toEqual({
+  it.each([
+    ["@kopitamansenja", "https://instagram.com/kopitamansenja"],
+    ["@KopiTamanSenja", "https://instagram.com/KopiTamanSenja"],
+    ["@kopi.taman_senja", "https://instagram.com/kopi.taman_senja"],
+    ["instagram.com/kopitamansenja", "https://instagram.com/kopitamansenja"],
+    [
+      "www.instagram.com/kopitamansenja",
+      "https://instagram.com/kopitamansenja",
+    ],
+    [
+      "https://www.instagram.com/kopitamansenja/?utm=x#f",
+      "https://instagram.com/kopitamansenja",
+    ],
+  ])("accepts Instagram profile %s", (input, normalizedUrl) => {
+    expect(parseSourceInput(input)).toEqual({
       sourceType: "instagram",
-      normalizedUrl: "https://instagram.com/kopitamansenja",
+      normalizedUrl,
     });
   });
 
-  it("preserves an uppercase @handle", () => {
-    expect(parseSourceInput("@KopiTamanSenja")).toEqual({
-      sourceType: "instagram",
-      normalizedUrl: "https://instagram.com/KopiTamanSenja",
-    });
+  it.each([
+    "instagram.com/p/ABC123",
+    "https://instagram.com/reel/ABC123",
+    "https://instagram.com/reels/ABC123",
+    "https://instagram.com/stories/kopitamansenja/123",
+    "https://instagram.com/kopitamansenja/extra",
+    "instagram.com/p",
+    "instagram.com/reel",
+  ])("never turns Instagram content path into an account: %s", (input) => {
+    expect(parseSourceInput(input)).toBeNull();
   });
 
-  it("accepts @handles with dots and underscores", () => {
-    expect(parseSourceInput("@kopi.taman_senja")).toEqual({
-      sourceType: "instagram",
-      normalizedUrl: "https://instagram.com/kopi.taman_senja",
-    });
+  it.each([
+    "https://maps.app.goo.gl/example",
+    "https://g.page/example",
+    "https://www.google.com/maps/place/example",
+    "https://www.google.co.id/maps/place/example",
+  ])("does not advertise unsupported Google Business/Maps intake: %s", (input) => {
+    expect(parseSourceInput(input)).toBeNull();
   });
 
-  it("rejects a bare @ with no handle", () => {
-    expect(parseSourceInput("@")).toBeNull();
-  });
-
-  it("detects a bare instagram.com handle", () => {
-    expect(parseSourceInput("instagram.com/kopitamansenja")).toEqual({
-      sourceType: "instagram",
-      normalizedUrl: "https://instagram.com/kopitamansenja",
-    });
-  });
-
-  it("detects a bare www.instagram.com handle", () => {
-    expect(parseSourceInput("www.instagram.com/kopitamansenja")).toEqual({
-      sourceType: "instagram",
-      normalizedUrl: "https://instagram.com/kopitamansenja",
-    });
-  });
-
-  it("detects a full Instagram URL and drops query and fragment", () => {
-    expect(
-      parseSourceInput("https://www.instagram.com/kopitamansenja/?utm=x#f"),
-    ).toEqual({
-      sourceType: "instagram",
-      normalizedUrl: "https://instagram.com/kopitamansenja",
-    });
-  });
-
-  it("rejects instagram.com with no handle", () => {
-    expect(parseSourceInput("instagram.com")).toBeNull();
-    expect(parseSourceInput("https://www.instagram.com/")).toBeNull();
-  });
-
-  it("rejects a word with no dot", () => {
-    expect(parseSourceInput("kopitamansenja")).toBeNull();
-  });
-
-  it("rejects input containing spaces", () => {
-    expect(parseSourceInput("kopitamansenja .example")).toBeNull();
-  });
-
-  it("rejects an unsupported scheme", () => {
-    expect(parseSourceInput("ftp://kopitamansenja.example")).toBeNull();
+  it.each([
+    "@",
+    "instagram.com",
+    "https://www.instagram.com/",
+    "kopitamansenja",
+    "kopitamansenja .example",
+    "ftp://kopitamansenja.example",
+    "https://user:pass@kopitamansenja.example",
+    "http://127.0.0.1",
+    "http://localhost",
+  ])("rejects unsafe or malformed source %s", (input) => {
+    expect(parseSourceInput(input)).toBeNull();
   });
 });
