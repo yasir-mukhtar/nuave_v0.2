@@ -3,24 +3,10 @@ import {
   PRODUCTION_OBSERVATION_REQUESTED_MODEL,
   PRODUCTION_OBSERVATION_SYSTEM,
 } from "../production-observation-method";
-import type {
-  AuditCallTelemetry,
-  AuditObservation,
-  AuditPrompt,
-} from "../types";
+import type { AuditObservation, AuditPrompt } from "../types";
 import { fixtureCallTelemetry } from "./telemetry";
 
-type ProtectedObservationIdentityKey =
-  | "prompt_id"
-  | "category"
-  | "branded"
-  | "question";
-
-type ProtectedObservationOverrides = Partial<
-  Omit<AuditObservation, ProtectedObservationIdentityKey | "telemetry">
-> & {
-  telemetry?: AuditCallTelemetry[];
-};
+type ProtectedObservationOverrides = Partial<AuditObservation>;
 
 /**
  * Canonical TEST-ONLY protected observation.
@@ -52,7 +38,7 @@ export function fixtureProtectedObservation(
     web_search_calls: 1,
   });
 
-  const observationWithoutTelemetry: Omit<AuditObservation, "telemetry"> = {
+  return {
     prompt_id: prompt.prompt_id,
     category: prompt.category,
     branded: prompt.branded,
@@ -70,10 +56,6 @@ export function fixtureProtectedObservation(
     sources: overrides.sources ?? [defaultSource],
     run_status: overrides.run_status ?? "completed",
     failure_reason: overrides.failure_reason ?? "",
-  };
-
-  return {
-    ...observationWithoutTelemetry,
     telemetry: overrides.telemetry ?? [defaultTelemetry],
   };
 }
