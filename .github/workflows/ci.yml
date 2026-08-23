@@ -33,7 +33,17 @@ jobs:
         run: npm run check
 
       - name: Run unit tests (audit engine + fixture journey)
-        run: npm run test:unit
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:unit 2>&1 | tee wave1-unit.log
+
+      - name: Upload temporary Wave 1 unit diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave1-unit-log
+          path: wave1-unit.log
 
       - name: Build application
         run: npm run build
