@@ -1,4 +1,8 @@
-export type AuditOperationKind = "prompts" | "run" | "report" | "variance";
+export type AuditOperationKind =
+  | "prompts"
+  | "run"
+  | "report"
+  | "variance";
 
 export type AuditOperationToken = {
   kind: AuditOperationKind;
