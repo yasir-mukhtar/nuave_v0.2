@@ -16,6 +16,7 @@ import {
   MAX_AUTOMATIC_RETRIES_PER_QUESTION,
   OBSERVATION_STAGE_MAX_CALLS,
   runQuestionWithRetry,
+  throwIfAuditAborted,
   type ObservationAttempt,
   type QuestionExecuteInput,
 } from "./retry";
@@ -23,23 +24,12 @@ import {
 export type RunEmit = (event: AuditRunEvent) => void;
 
 export type AuditRunSummary = {
-  /** Terminal observations in locked question order (evaluable or exhausted). */
   observations: AuditObservation[];
-  /** Every persisted attempt per prompt, keyed by prompt_id (R-20). */
   attemptsByPrompt: Record<string, ObservationAttempt[]>;
-  /** Questions that exhausted automatic technical recovery (R-19). */
   failed_prompt_ids: string[];
-  /** Set when the run stopped early on a non-retryable failure (e.g. cost ceiling). */
   stop_message: string;
 };
 
-/**
- * Executes the ten locked questions sequentially (R-21) under the 1+2 retry
- * contract (R-17) and applies the ten-of-ten gate (R-19): `run_completed` is
- * emitted only with ten evaluable observations; otherwise `run_unfinished`
- * records the state and no partial report exists. Completed observations are
- * never rerun; every attempt is persisted on the observation's telemetry.
- */
 export async function runAuditObservations(input: {
   prompts: AuditPrompt[];
   brief: BusinessBrief;
@@ -47,14 +37,15 @@ export async function runAuditObservations(input: {
   budget: AuditBudget;
   execute: (input: QuestionExecuteInput) => Promise<AuditObservation>;
   emit: RunEmit;
-  sleep?: (ms: number) => Promise<void>;
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
   now?: () => number;
-  /** Completed observations from an interrupted run (R-19): preserved and
-   * never rerun; only uncompleted questions are executed. */
   resume?: { observations: AuditObservation[] };
+  signal?: AbortSignal;
 }): Promise<AuditRunSummary> {
   const { prompts, brief, safety_identifier, budget, execute, emit, resume } =
     input;
+  throwIfAuditAborted(input.signal);
+
   const resumedObservations = resume?.observations ?? [];
   const resumeMethodErrors = productionObservationMethodErrors(
     resumedObservations.filter(
@@ -66,10 +57,6 @@ export async function runAuditObservations(input: {
       `Resume observations do not match the current protected production observation method. ${resumeMethodErrors.join(" ")}`,
     );
   }
-  // R3-5: fail closed on a missing production credential BEFORE the first
-  // question, on the script path as well as the route path. Without this the
-  // orchestrator burns the full 1+2 retry policy across all ten questions (up
-  // to 30 guaranteed-failing attempts) before the real cause surfaces.
   if (isLiveProviderCall(execute)) {
     assertLiveProviderCredentialsConfigured();
   }
@@ -79,6 +66,7 @@ export async function runAuditObservations(input: {
     );
   }
 
+  throwIfAuditAborted(input.signal);
   emit({
     type: "run_started",
     total: 10,
@@ -93,10 +81,6 @@ export async function runAuditObservations(input: {
   let runCalls: AuditCallTelemetry[] = [...budget.calls];
   let stopMessage = "";
 
-  // Completed observations from a resumed run are preserved verbatim and are
-  // never rerun (Spec 003 R-19 / failure-and-recovery table). Their attempt
-  // trail is reconstructed from the persisted telemetry (one entry per
-  // attempt, stamped by retry.ts).
   const resumedByPromptId = new Map<string, AuditObservation>();
   for (const observation of resumedObservations) {
     if (observation.run_status === "completed") {
@@ -105,6 +89,7 @@ export async function runAuditObservations(input: {
   }
 
   for (let index = 0; index < prompts.length; index += 1) {
+    throwIfAuditAborted(input.signal);
     const prompt = prompts[index];
     const resumed = resumedByPromptId.get(prompt.prompt_id);
 
@@ -117,6 +102,7 @@ export async function runAuditObservations(input: {
       }));
       attemptsByPrompt[prompt.prompt_id] = attempts;
       observations.push(resumed);
+      throwIfAuditAborted(input.signal);
       emit({
         type: "prompt_completed",
         index,
@@ -141,6 +127,7 @@ export async function runAuditObservations(input: {
       budget: { ...budget, calls: runCalls },
       execute,
       onAttemptStarted: (attempt, automatic) => {
+        throwIfAuditAborted(input.signal);
         if (!automatic) return;
         emit({
           type: "attempt_started",
@@ -151,6 +138,7 @@ export async function runAuditObservations(input: {
         });
       },
       onRetryScheduled: (info) => {
+        throwIfAuditAborted(input.signal);
         emit({
           type: "prompt_retrying",
           index,
@@ -163,8 +151,10 @@ export async function runAuditObservations(input: {
       },
       sleep: input.sleep,
       now: input.now,
+      signal: input.signal,
     });
 
+    throwIfAuditAborted(input.signal);
     runCalls = [...runCalls, ...outcome.observation.telemetry];
     attemptsByPrompt[prompt.prompt_id] = outcome.attempts;
     observations.push(outcome.observation);
@@ -185,19 +175,17 @@ export async function runAuditObservations(input: {
         failure_reason: outcome.failure_reason,
       });
       if (outcome.failure_category === "non_retryable") {
-        // Cost ceiling or guard condition: stop safely; further questions
-        // would fail identically without adding evidence (R-36).
         stopMessage = outcome.failure_reason;
         break;
       }
     }
   }
 
+  throwIfAuditAborted(input.signal);
   const completed = observations.filter(
     (observation) => observation.run_status === "completed",
   ).length;
 
-  // R-20: compact per-attempt provenance for the terminal events.
   const attemptsByPromptRecord: Record<
     string,
     Array<{
