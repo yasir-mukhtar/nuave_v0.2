@@ -10,11 +10,7 @@ import {
   isValidSimilarBusinessUrl,
   rebindSimilarBusinessUrl,
 } from "./similar-businesses";
-import type {
-  AuditObservation,
-  AuditPrompt,
-  BusinessBrief,
-} from "./types";
+import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 
 const categories = [
   "need_discovery",
@@ -173,18 +169,21 @@ describe("comparison-business identity boundary", () => {
     });
   });
 
-  it("rejects credential-bearing comparison URLs before provider-bound use", () => {
-    expect(
-      isValidSimilarBusinessUrl("https://user:secret@example.com/path"),
-    ).toBe(false);
-    const unsafe = brief();
-    unsafe.verified_competitor = {
-      name: "Unsafe",
-      scope: "",
-      source_url: "https://user:secret@example.com/path",
-    };
-    expect(() => assertSafeComparisonBusinessUrls(unsafe)).toThrow(
-      /must not contain embedded username or password credentials/i,
-    );
-  });
+  it(
+    "rejects credential-bearing comparison URLs before provider-bound use",
+    () => {
+      expect(
+        isValidSimilarBusinessUrl("https://user:secret@example.com/path"),
+      ).toBe(false);
+      const unsafe = brief();
+      unsafe.verified_competitor = {
+        name: "Unsafe",
+        scope: "",
+        source_url: "https://user:secret@example.com/path",
+      };
+      expect(() => assertSafeComparisonBusinessUrls(unsafe)).toThrow(
+        /must not contain embedded username or password credentials/i,
+      );
+    },
+  );
 });
