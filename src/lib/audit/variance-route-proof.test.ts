@@ -6,6 +6,7 @@ import {
 } from "./locked-question-pack";
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 
+// Wave 1 route-boundary regressions intentionally use stubs only.
 const routeMocks = vi.hoisted(() => ({
   assertCredentials: vi.fn(),
   runQuestion: vi.fn(),
