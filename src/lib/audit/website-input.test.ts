@@ -3,6 +3,7 @@ import {
   INVALID_WEBSITE_INPUT_MESSAGE,
   normalizeWebsiteInput,
 } from "./website-input";
+import { INVALID_SOURCE_INPUT_MESSAGE, parseSourceInput } from "./source-input";
 
 const providerMocks = vi.hoisted(() => ({
   assertConfigured: vi.fn(),
@@ -35,14 +36,14 @@ function extractionRequest(website_url: string) {
   });
 }
 
-describe("website input normalization", () => {
+describe("website-only compatibility adapter", () => {
   it.each([
-    ["masryef.com", "https://masryef.com"],
-    ["www.masryef.com", "https://www.masryef.com"],
-    ["https://masryef.com", "https://masryef.com"],
-    ["http://masryef.com", "http://masryef.com"],
-    ["  masryef.com  ", "https://masryef.com"],
-  ])("normalizes %s safely", (input, expected) => {
+    ["masryef.com", "https://masryef.com/"],
+    ["www.masryef.com", "https://www.masryef.com/"],
+    ["https://masryef.com", "https://masryef.com/"],
+    ["http://masryef.com", "http://masryef.com/"],
+    ["  masryef.com  ", "https://masryef.com/"],
+  ])("normalizes website %s through the canonical policy", (input, expected) => {
     expect(normalizeWebsiteInput(input)).toEqual({ ok: true, url: expected });
   });
 
@@ -53,7 +54,8 @@ describe("website input normalization", () => {
     "localhost",
     "@masryef",
     "https://",
-  ])("rejects malformed or unsupported input %s", (input) => {
+    "https://instagram.com/masryef",
+  ])("rejects non-website input %s", (input) => {
     expect(normalizeWebsiteInput(input)).toEqual({
       ok: false,
       error: INVALID_WEBSITE_INPUT_MESSAGE,
@@ -61,44 +63,46 @@ describe("website input normalization", () => {
   });
 });
 
-describe("website extraction route boundary", () => {
+describe("extraction route uses the same source decision", () => {
   beforeEach(() => {
     providerMocks.assertConfigured.mockReset();
     providerMocks.extract.mockReset();
     providerMocks.extract.mockResolvedValue({ draft: {}, telemetry: [] });
   });
 
-  it("normalizes a bare domain again on the server before provider work", async () => {
-    const response = await POST(extractionRequest("masryef.com"));
+  it.each(["masryef.com", "@masryef", "https://instagram.com/masryef"])(
+    "accepts the same supported source as parseSourceInput: %s",
+    async (input) => {
+      const parsed = parseSourceInput(input);
+      expect(parsed).not.toBeNull();
 
-    expect(response.status).toBe(200);
-    expect(providerMocks.assertConfigured).toHaveBeenCalledTimes(1);
-    expect(providerMocks.extract).toHaveBeenCalledTimes(1);
-    expect(providerMocks.extract).toHaveBeenCalledWith(
-      expect.objectContaining({ website_url: "https://masryef.com" }),
-    );
-  });
+      const response = await POST(extractionRequest(input));
 
-  it("rejects invalid input with zero provider calls and no raw Zod payload", async () => {
-    const response = await POST(extractionRequest("not a website"));
+      expect(response.status).toBe(200);
+      expect(providerMocks.assertConfigured).toHaveBeenCalledTimes(1);
+      expect(providerMocks.extract).toHaveBeenCalledTimes(1);
+      expect(providerMocks.extract).toHaveBeenCalledWith(
+        expect.objectContaining({ website_url: parsed?.normalizedUrl }),
+      );
+    },
+  );
+
+  it.each([
+    "not a website",
+    "https://instagram.com/p/ABC",
+    "https://instagram.com/reel/ABC",
+    "https://maps.app.goo.gl/example",
+  ])("rejects the same unsupported source with zero provider calls: %s", async (input) => {
+    const response = await POST(extractionRequest(input));
     const body = await response.json();
 
+    expect(parseSourceInput(input)).toBeNull();
     expect(response.status).toBe(400);
     expect(body).toEqual({
-      error: INVALID_WEBSITE_INPUT_MESSAGE,
-      code: "INVALID_WEBSITE_INPUT",
+      error: INVALID_SOURCE_INPUT_MESSAGE,
+      code: "INVALID_SOURCE_INPUT",
       telemetry: [],
     });
-    expect(JSON.stringify(body)).not.toContain("issues");
-    expect(JSON.stringify(body)).not.toContain("website_url");
-    expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
-    expect(providerMocks.extract).not.toHaveBeenCalled();
-  });
-
-  it("rejects Instagram handles because Phase 3 supports website extraction only", async () => {
-    const response = await POST(extractionRequest("@masryef"));
-
-    expect(response.status).toBe(400);
     expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
     expect(providerMocks.extract).not.toHaveBeenCalled();
   });
