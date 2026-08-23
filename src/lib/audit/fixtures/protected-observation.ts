@@ -52,26 +52,27 @@ export function fixtureProtectedObservation(
     response_id: responseId,
     observed_at: overrides.observed_at ?? "2026-08-23T00:00:00.000Z",
     raw_answer: overrides.raw_answer ?? `Usable answer for ${prompt.prompt_id}.`,
-    sources:
-      overrides.sources ??
-      [{ url: `https://example.com/${prompt.prompt_id}`, title: "Fixture source" }],
+    sources: overrides.sources ?? [
+      {
+        url: `https://example.com/${prompt.prompt_id}`,
+        title: "Fixture source",
+      },
+    ],
     run_status: overrides.run_status ?? "completed",
     failure_reason: overrides.failure_reason ?? "",
   };
 
   return {
     ...observationWithoutTelemetry,
-    telemetry:
-      overrides.telemetry ??
-      [
-        fixtureCallTelemetry({
-          stage: "observation",
-          requested_model: requestedModel,
-          returned_model: returnedModel,
-          response_id: responseId,
-          web_search_calls: 1,
-        }),
-      ],
+    telemetry: overrides.telemetry ?? [
+      fixtureCallTelemetry({
+        stage: "observation",
+        requested_model: requestedModel,
+        returned_model: returnedModel,
+        response_id: responseId,
+        web_search_calls: 1,
+      }),
+    ],
   };
 }
 
@@ -87,15 +88,14 @@ export function fixtureProtectedObservationSet(
       raw_answer:
         prior?.raw_answer ||
         "Local advisers differ by focus: some handle logistics, others readiness reviews.",
-      sources:
-        prior?.sources?.length
-          ? prior.sources
-          : [
-              {
-                url: `https://example.com/${prompt.prompt_id}`,
-                title: "Fixture source",
-              },
-            ],
+      sources: prior?.sources?.length
+        ? prior.sources
+        : [
+            {
+              url: `https://example.com/${prompt.prompt_id}`,
+              title: "Fixture source",
+            },
+          ],
     });
   });
 }
