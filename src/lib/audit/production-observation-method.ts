@@ -32,9 +32,7 @@ export function protectedObservationAttemptErrors(
       ),
     );
   }
-  if (
-    observation.requested_model !== PRODUCTION_OBSERVATION_REQUESTED_MODEL
-  ) {
+  if (observation.requested_model !== PRODUCTION_OBSERVATION_REQUESTED_MODEL) {
     errors.push(
       prefix(
         observation,
@@ -66,9 +64,7 @@ export function protectedObservationAttemptErrors(
       prefix(observation, "completed observation is missing response_id."),
     );
   }
-  if (
-    observation.returned_model !== PRODUCTION_OBSERVATION_REQUESTED_MODEL
-  ) {
+  if (observation.returned_model !== PRODUCTION_OBSERVATION_REQUESTED_MODEL) {
     errors.push(
       prefix(
         observation,

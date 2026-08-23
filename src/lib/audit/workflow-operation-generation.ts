@@ -1,8 +1,4 @@
-export type AuditOperationKind =
-  | "prompts"
-  | "run"
-  | "report"
-  | "variance";
+export type AuditOperationKind = "prompts" | "run" | "report" | "variance";
 
 export type AuditOperationToken = {
   kind: AuditOperationKind;
@@ -22,9 +18,11 @@ export class AuditOperationGeneration {
   private active = new Map<AuditOperationKind, AuditOperationToken>();
 
   begin(kind: AuditOperationKind): AuditOperationToken {
-    this.active.get(kind)?.controller.abort(
-      new DOMException("Superseded audit operation", "AbortError"),
-    );
+    this.active
+      .get(kind)
+      ?.controller.abort(
+        new DOMException("Superseded audit operation", "AbortError"),
+      );
     const controller = new AbortController();
     const token: AuditOperationToken = {
       kind,

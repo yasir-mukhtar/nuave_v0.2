@@ -222,7 +222,9 @@ export default function AuditWorkflow() {
   const [promptPack, setPromptPack] = useState<PromptPack | null>(null);
   const [observations, setObservations] = useState<AuditObservation[]>([]);
   const [report, setReport] = useState<AuditReport | null>(null);
-  const [setupTelemetry, setSetupTelemetry] = useState<AuditCallTelemetry[]>([]);
+  const [setupTelemetry, setSetupTelemetry] = useState<AuditCallTelemetry[]>(
+    [],
+  );
   const [postReportBudgetCalls, setPostReportBudgetCalls] = useState<
     AuditCallTelemetry[]
   >([]);
@@ -283,9 +285,8 @@ export default function AuditWorkflow() {
       const runKey = varianceRunKeyForReport(auditReport);
       if (varianceInFlightRunKey.current === runKey) return;
 
-      const storedVariance = readStoredRunRecord<VarianceRecord>(
-        VARIANCE_STORAGE_KEY,
-      );
+      const storedVariance =
+        readStoredRunRecord<VarianceRecord>(VARIANCE_STORAGE_KEY);
       if (storedVariance?.run_key === runKey) {
         setVarianceRecord(storedVariance);
         setVarianceFailure(null);
@@ -549,8 +550,8 @@ export default function AuditWorkflow() {
   }, [report]);
   const varianceSettled = Boolean(
     reportRunKey &&
-      (varianceRecord?.run_key === reportRunKey ||
-        varianceFailure?.run_key === reportRunKey),
+    (varianceRecord?.run_key === reportRunKey ||
+      varianceFailure?.run_key === reportRunKey),
   );
 
   useEffect(() => {
@@ -594,11 +595,13 @@ export default function AuditWorkflow() {
 
     const generation = operationGeneration.currentGeneration();
     setBusy("report");
-    void runVariance(report, postReportBudgetCalls, observations).finally(() => {
-      if (operationGeneration.currentGeneration() === generation) {
-        setBusy((current) => (current === "report" ? null : current));
-      }
-    });
+    void runVariance(report, postReportBudgetCalls, observations).finally(
+      () => {
+        if (operationGeneration.currentGeneration() === generation) {
+          setBusy((current) => (current === "report" ? null : current));
+        }
+      },
+    );
   }, [
     budgetReady,
     busy,
@@ -763,11 +766,7 @@ export default function AuditWorkflow() {
       const result = await postJson<{
         pack: PromptPack;
         telemetry?: AuditCallTelemetry[];
-      }>(
-        "/api/audit/prompts",
-        { brief: preparedBrief },
-        operation.signal,
-      );
+      }>("/api/audit/prompts", { brief: preparedBrief }, operation.signal);
       if (!operationGeneration.isCurrent(operation)) return;
       const pack = result.pack;
       setPromptPack(pack);
@@ -1210,11 +1209,7 @@ export default function AuditWorkflow() {
             Mulai ulang
           </Button>
           {report && varianceSettled ? (
-            <Button
-              variant="primary"
-              size="sm"
-              onPress={() => window.print()}
-            >
+            <Button variant="primary" size="sm" onPress={() => window.print()}>
               <IconDownload /> Download PDF
             </Button>
           ) : null}

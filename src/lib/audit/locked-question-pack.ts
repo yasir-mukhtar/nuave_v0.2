@@ -53,7 +53,9 @@ export function canonicalLockedQuestionPack(
     throw new Error("Every locked question requires a valid prompt_id.");
   }
   if (new Set(ids).size !== ids.length) {
-    throw new Error("Locked prompt_ids must be unique before execution begins.");
+    throw new Error(
+      "Locked prompt_ids must be unique before execution begins.",
+    );
   }
 
   return {

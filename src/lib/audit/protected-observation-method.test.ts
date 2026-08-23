@@ -78,7 +78,9 @@ describe("positive protected observation attempt", () => {
       ),
     ).toEqual(
       expect.arrayContaining([
-        expect.stringMatching(/no completed observation-stage provider attempt/i),
+        expect.stringMatching(
+          /no completed observation-stage provider attempt/i,
+        ),
       ]),
     );
   });
@@ -97,7 +99,9 @@ describe("positive protected observation attempt", () => {
       ),
     ).toEqual(
       expect.arrayContaining([
-        expect.stringMatching(/no completed observation-stage provider attempt/i),
+        expect.stringMatching(
+          /no completed observation-stage provider attempt/i,
+        ),
       ]),
     );
   });
@@ -113,7 +117,9 @@ describe("positive protected observation attempt", () => {
       ),
     ).toEqual(
       expect.arrayContaining([
-        expect.stringMatching(/no completed observation-stage provider attempt/i),
+        expect.stringMatching(
+          /no completed observation-stage provider attempt/i,
+        ),
       ]),
     );
   });

@@ -161,55 +161,44 @@ beforeEach(() => {
 });
 
 describe("variance completed-run proof route boundary", () => {
-  it(
-    "rejects a request without completed_observations before provider work",
-    async () => {
-      const body = requestBody() as Record<string, unknown>;
-      delete body.completed_observations;
+  it("rejects a request without completed_observations before provider work", async () => {
+    const body = requestBody() as Record<string, unknown>;
+    delete body.completed_observations;
 
-      const response = await post(body);
+    const response = await post(body);
 
-      expect(response.status).toBe(400);
-      expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
-      expect(routeMocks.runQuestion).not.toHaveBeenCalled();
-    },
-  );
+    expect(response.status).toBe(400);
+    expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
+    expect(routeMocks.runQuestion).not.toHaveBeenCalled();
+  });
 
-  it(
-    "rejects fewer than ten completed observations before provider work",
-    async () => {
-      const body = requestBody();
-      body.completed_observations = body.completed_observations.slice(0, 9);
+  it("rejects fewer than ten completed observations before provider work", async () => {
+    const body = requestBody();
+    body.completed_observations = body.completed_observations.slice(0, 9);
 
-      const response = await post(body);
+    const response = await post(body);
 
-      expect(response.status).toBe(400);
-      expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
-      expect(routeMocks.runQuestion).not.toHaveBeenCalled();
-    },
-  );
+    expect(response.status).toBe(400);
+    expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
+    expect(routeMocks.runQuestion).not.toHaveBeenCalled();
+  });
 
-  it(
-    "rejects an observation whose question does not match the locked pack",
-    async () => {
-      const body = requestBody();
-      body.completed_observations[0] = {
-        ...body.completed_observations[0],
-        question: "Pertanyaan berbeda dengan ID yang sama",
-      };
+  it("rejects an observation whose question does not match the locked pack", async () => {
+    const body = requestBody();
+    body.completed_observations[0] = {
+      ...body.completed_observations[0],
+      question: "Pertanyaan berbeda dengan ID yang sama",
+    };
 
-      const response = await post(body);
+    const response = await post(body);
 
-      expect(response.status).toBe(422);
-      expect(await response.json()).toMatchObject({
-        error: expect.stringMatching(
-          /does not match the exact locked question/i,
-        ),
-      });
-      expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
-      expect(routeMocks.runQuestion).not.toHaveBeenCalled();
-    },
-  );
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      error: expect.stringMatching(/does not match the exact locked question/i),
+    });
+    expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
+    expect(routeMocks.runQuestion).not.toHaveBeenCalled();
+  });
 
   it("rejects failed or wrong-method evidence inside the ten", async () => {
     const failedBody = requestBody();
@@ -248,21 +237,18 @@ describe("variance completed-run proof route boundary", () => {
     expect(routeMocks.runQuestion).not.toHaveBeenCalled();
   });
 
-  it(
-    "accepts exact locked 10/10 proof and the exact designated subset using stubs only",
-    async () => {
-      const response = await post(requestBody());
-      const payload = (await response.json()) as {
-        variance: { complete: boolean; prompt_ids: string[] };
-      };
+  it("accepts exact locked 10/10 proof and the exact designated subset using stubs only", async () => {
+    const response = await post(requestBody());
+    const payload = (await response.json()) as {
+      variance: { complete: boolean; prompt_ids: string[] };
+    };
 
-      expect(response.status).toBe(200);
-      expect(routeMocks.assertCredentials).toHaveBeenCalledTimes(1);
-      expect(routeMocks.runQuestion).toHaveBeenCalledTimes(2);
-      expect(payload.variance.complete).toBe(true);
-      expect(payload.variance.prompt_ids).toEqual(
-        requestBody().prompts.map((prompt) => prompt.prompt_id),
-      );
-    },
-  );
+    expect(response.status).toBe(200);
+    expect(routeMocks.assertCredentials).toHaveBeenCalledTimes(1);
+    expect(routeMocks.runQuestion).toHaveBeenCalledTimes(2);
+    expect(payload.variance.complete).toBe(true);
+    expect(payload.variance.prompt_ids).toEqual(
+      requestBody().prompts.map((prompt) => prompt.prompt_id),
+    );
+  });
 });
