@@ -1,0 +1,58 @@
+name: Wave 1 Targeted Verification
+
+on:
+  push:
+    branches:
+      - fix/wave1-shared-invariants-2026-08-23
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    env:
+      NUAVE_PROVIDER: opencodego
+      NUAVE_QUESTION_PROVIDER: opencodego
+      OPENCODEGO_API_KEY: dummy-build-only-key
+      OPENAI_API_KEY: dummy-build-only-key
+      OPENAI_BASE_URL: https://opencode.ai/zen/go/v1
+      OPENAI_AUDIT_MODEL: gpt-5.6-luna
+      OPENAI_AUDIT_REASONING_EFFORT: low
+      NUAVE_LIVE_PROVIDER_TESTING: "0"
+    steps:
+      - name: Check out integration branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/wave1-shared-invariants-2026-08-23
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run targeted Wave 1 unit regressions
+        shell: bash
+        run: |
+          set -o pipefail
+          npx vitest run \
+            src/lib/audit/locked-question-pack.test.ts \
+            src/lib/audit/protected-observation-method.test.ts \
+            src/lib/audit/protected-observation-provider.test.ts \
+            src/lib/audit/variance-route-proof.test.ts \
+            src/lib/audit/variance.test.ts \
+            src/lib/audit/workflow-operation-generation.test.ts \
+            src/lib/audit/workflow-cancellation.test.ts \
+            src/lib/audit/stream-transaction.test.ts \
+            2>&1 | tee wave1-targeted-unit.log
+
+      - name: Upload targeted unit log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave1-targeted-unit-log
+          path: wave1-targeted-unit.log
