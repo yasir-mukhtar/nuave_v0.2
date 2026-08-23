@@ -117,16 +117,17 @@ function requestBody() {
   };
 }
 
-function requestFrom(body: Record<string, unknown>) {
+function requestFrom(body: Record<string, unknown>, signal?: AbortSignal) {
   return new Request("http://localhost/api/audit/variance", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 }
 
-async function post(body: Record<string, unknown>) {
-  return POST(requestFrom(body));
+async function post(body: Record<string, unknown>, signal?: AbortSignal) {
+  return POST(requestFrom(body, signal));
 }
 
 beforeEach(() => {
@@ -221,6 +222,17 @@ describe("variance completed-run proof route boundary", () => {
     });
     expect(routeMocks.assertCredentials).not.toHaveBeenCalled();
     expect(routeMocks.runQuestion).not.toHaveBeenCalled();
+  });
+
+  it("threads the request cancellation signal into every variance retry call", async () => {
+    const request = requestFrom(requestBody());
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(routeMocks.runQuestion).toHaveBeenCalledTimes(2);
+    for (const [input] of routeMocks.runQuestion.mock.calls) {
+      expect(input.signal).toBe(request.signal);
+    }
   });
 
   it("accepts exact locked 10/10 proof and the exact designated subset using stubs only", async () => {
