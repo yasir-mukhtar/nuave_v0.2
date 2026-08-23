@@ -139,7 +139,9 @@ export function withPrimarySimilarBusiness(
 ): BusinessBrief {
   assertSafeComparisonBusinessUrls(brief);
   if (brief.similar_businesses === undefined) return brief;
-  const similarBusinesses = normalizeSimilarBusinesses(brief.similar_businesses);
+  const similarBusinesses = normalizeSimilarBusinesses(
+    brief.similar_businesses,
+  );
   const primary = similarBusinesses.find((business) =>
     isValidSimilarBusinessUrl(business.source_url),
   );
@@ -158,7 +160,8 @@ export function withPrimarySimilarBusiness(
     ...brief,
     similar_businesses: similarBusinesses,
     verified_competitor: {
-      name: primary.name?.trim() || similarBusinessDisplayName(primary.source_url),
+      name:
+        primary.name?.trim() || similarBusinessDisplayName(primary.source_url),
       scope: "",
       source_url: primary.source_url,
     },
