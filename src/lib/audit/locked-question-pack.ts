@@ -101,12 +101,69 @@ export function lockedObservationBindingErrors(input: {
   return errors;
 }
 
+/**
+ * Client/server-safe proof that a set is the complete locked 10/10 run.
+ * Protected provider-method evidence is intentionally checked separately by
+ * the server with `productionObservationMethodErrors`; this helper contains no
+ * provider configuration so the browser can use it before a restored variance
+ * request without importing server-only environment code.
+ */
+export function completedLockedObservationSetErrors(input: {
+  prompts: AuditPrompt[];
+  observations: AuditObservation[];
+  brief: BusinessBrief;
+}): string[] {
+  const pack = canonicalLockedQuestionPack(input.prompts, input.brief);
+  const errors = lockedObservationBindingErrors(input);
+  const observationIds = input.observations.map((observation) =>
+    normalizedPromptId(observation.prompt_id),
+  );
+
+  if (input.observations.length !== 10) {
+    errors.push(
+      `The completed locked observation proof requires exactly ten observations; received ${input.observations.length}.`,
+    );
+  }
+
+  const duplicateIds = observationIds.filter(
+    (id, index) => observationIds.indexOf(id) !== index,
+  );
+  if (duplicateIds.length) {
+    errors.push(
+      `Completed observation prompt_ids must be unique: ${[
+        ...new Set(duplicateIds),
+      ].join(", ")}.`,
+    );
+  }
+
+  const missingIds = pack.prompts
+    .map((prompt) => prompt.prompt_id)
+    .filter((id) => !observationIds.includes(id));
+  if (missingIds.length) {
+    errors.push(
+      `Completed observations are missing locked questions: ${missingIds.join(", ")}.`,
+    );
+  }
+
+  if (
+    input.observations.some(
+      (observation) => observation.run_status !== "completed",
+    )
+  ) {
+    errors.push("Every observation in the completed locked proof must be completed.");
+  }
+
+  return errors;
+}
+
 /** The only variance designation rule: derive from the canonical full pack. */
 export function designatedVariancePrompts(
   prompts: AuditPrompt[],
   brief: BusinessBrief,
 ): AuditPrompt[] {
-  return selectVariancePrompts(canonicalLockedQuestionPack(prompts, brief).prompts);
+  return selectVariancePrompts(
+    canonicalLockedQuestionPack(prompts, brief).prompts,
+  );
 }
 
 /**
