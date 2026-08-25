@@ -58,6 +58,19 @@ const extractionDraft = {
   warnings: [],
 };
 
+function confirmedBrief(
+  competitor: BusinessBrief["verified_competitor"],
+): BusinessBrief {
+  return {
+    ...extractionDraft,
+    official_sources: [WEBSITE],
+    verified_competitor: competitor,
+    language: "en-US",
+    agency_name: "",
+    agency_logo_data_url: "",
+  };
+}
+
 function jsonResponse(body: unknown) {
   return new Response(JSON.stringify(body), {
     status: 200,
@@ -168,24 +181,17 @@ describe("Wave 2 real route contract (K-09)", () => {
     const extracted = await extractResponse.json();
     expect(extracted.draft.brand_name).toBe(BRAND);
 
-    const confirmedBrief: BusinessBrief = {
-      ...extracted.draft,
-      official_sources: [WEBSITE],
-      verified_competitor: {
-        name: "Klinik Gigi Lain",
-        scope: "Margonda, Depok",
-        source_url: "https://klinikgigilain.example",
-      },
-      language: "en-US",
-      agency_name: "",
-      agency_logo_data_url: "",
-    };
+    const brief = confirmedBrief({
+      name: "Klinik Gigi Lain",
+      scope: "Margonda, Depok",
+      source_url: "https://klinikgigilain.example",
+    });
 
     const promptsResponse = await promptsPOST(
       new Request("http://localhost/api/audit/prompts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brief: confirmedBrief }),
+        body: JSON.stringify({ brief }),
       }),
     );
     expect(promptsResponse.status).toBe(200);
@@ -225,7 +231,7 @@ describe("Wave 2 real route contract (K-09)", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
-          brief: confirmedBrief,
+          brief,
           prompts: reviewedPrompts,
           safety_identifier: "wave2-route-test",
           budget: {
@@ -248,5 +254,55 @@ describe("Wave 2 real route contract (K-09)", () => {
       reviewedPrompts.map((prompt: { question: string }) => prompt.question),
     );
     expect(budgetCallCounts).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it("rejects a compact comparison-business edit before any run provider call", async () => {
+    const brief = confirmedBrief({
+      name: "Kopi Pesaing",
+      scope: "Depok",
+      source_url: "https://kopipesaing.example",
+    });
+    const promptsResponse = await promptsPOST(
+      new Request("http://localhost/api/audit/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief }),
+      }),
+    );
+    expect(promptsResponse.status).toBe(200);
+    const generated = await promptsResponse.json();
+    const editedPrompts = generated.pack.prompts.map(
+      (prompt: Record<string, unknown>) => ({ ...prompt }),
+    );
+    editedPrompts[0].question =
+      "Ada rekomendasi klinik gigi seperti KopiPesaing di Depok?";
+
+    const runResponse = await runPOST(
+      new Request("http://localhost/api/audit/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          brief,
+          prompts: editedPrompts,
+          safety_identifier: "wave3-compact-competitor",
+          budget: {
+            limit_usd: 5,
+            carryover_cost_usd: 0,
+            calls: generated.telemetry,
+          },
+          resume_observations: [],
+        }),
+      }),
+    );
+
+    expect(runResponse.status).toBe(422);
+    expect(await runResponse.json()).toMatchObject({
+      error: expect.stringContaining(
+        "reveals the comparison business outside the designated comparison question",
+      ),
+    });
+    expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
+    expect(providerMocks.execute).not.toHaveBeenCalled();
   });
 });
