@@ -67,9 +67,7 @@ function isGoogleBusinessOrMapsUrl(url: URL): boolean {
     return true;
   }
   if (isMapsGoogleHost(host)) return true;
-  return (
-    isRegionalGoogleHost(host) && /^\/maps(?:\/|$)/i.test(url.pathname)
-  );
+  return isRegionalGoogleHost(host) && /^\/maps(?:\/|$)/i.test(url.pathname);
 }
 
 /**
