@@ -14,7 +14,10 @@ describe("parseSourceInput canonical source policy", () => {
       "kopitamansenja.example/beranda",
       "https://kopitamansenja.example/beranda",
     ],
-    ["www.kopitamansenja.example", "https://www.kopitamansenja.example/"],
+    [
+      "www.kopitamansenja.example",
+      "https://www.kopitamansenja.example/",
+    ],
     ["http://kopitamansenja.example", "http://kopitamansenja.example/"],
     [
       "https://kopitamansenja.example/beranda?ref=1",
@@ -64,9 +67,12 @@ describe("parseSourceInput canonical source policy", () => {
     "https://g.page/example",
     "https://www.google.com/maps/place/example",
     "https://www.google.co.id/maps/place/example",
-  ])("does not advertise unsupported Google Business/Maps intake: %s", (input) => {
-    expect(parseSourceInput(input)).toBeNull();
-  });
+  ])(
+    "does not advertise unsupported Google Business/Maps intake: %s",
+    (input) => {
+      expect(parseSourceInput(input)).toBeNull();
+    },
+  );
 
   it.each([
     "@",
