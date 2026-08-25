@@ -24,6 +24,7 @@ const INSTAGRAM_NON_PROFILE_ROOTS = new Set([
   "stories",
   "tv",
 ]);
+const GOOGLE_REGIONAL_SECOND_LEVELS = new Set(["co", "com"]);
 
 function hasPlausiblePublicHostname(hostname: string): boolean {
   if (!hostname || hostname.length > 253 || !hostname.includes(".")) {
@@ -37,19 +38,38 @@ function hasPlausiblePublicHostname(hostname: string): boolean {
   );
 }
 
+/**
+ * Recognizes Google-owned regional host shapes without treating an arbitrary
+ * hostname that merely contains the word "google" as Google. Supported forms:
+ * google.<tld>, google.co.<cc>, google.com.<cc>, and optional leading www.
+ */
+function isRegionalGoogleHost(hostname: string): boolean {
+  const labels = hostname.toLowerCase().split(".");
+  if (labels[0] === "www") labels.shift();
+  if (labels[0] !== "google") return false;
+  if (labels.length === 2) return true;
+  return (
+    labels.length === 3 &&
+    GOOGLE_REGIONAL_SECOND_LEVELS.has(labels[1]) &&
+    /^[a-z]{2}$/i.test(labels[2])
+  );
+}
+
+function isMapsGoogleHost(hostname: string): boolean {
+  const labels = hostname.toLowerCase().split(".");
+  if (labels[0] !== "maps") return false;
+  return isRegionalGoogleHost(labels.slice(1).join("."));
+}
+
 function isGoogleBusinessOrMapsUrl(url: URL): boolean {
   const host = url.hostname.toLowerCase();
   if (host === "maps.app.goo.gl" || host === "g.page" || host === "goo.gl") {
     return true;
   }
-  const isGoogleHost =
-    host === "google.com" ||
-    host === "www.google.com" ||
-    host.endsWith(".google.com") ||
-    host === "google.co.id" ||
-    host === "www.google.co.id" ||
-    host.endsWith(".google.co.id");
-  return isGoogleHost && /^\/maps(?:\/|$)/i.test(url.pathname);
+  if (isMapsGoogleHost(host)) return true;
+  return (
+    isRegionalGoogleHost(host) && /^\/maps(?:\/|$)/i.test(url.pathname)
+  );
 }
 
 /**
