@@ -7,10 +7,10 @@ import type {
 } from "./types";
 
 /**
- * The runtime report retains legacy `facts`/`counts` for backwards-compatible
- * internal consumers. Customer exports deliberately expose only the validated
- * eligible-denominator `measures` projection so JSON, screen, and print do not
- * present competing answers for the same metric.
+ * The runtime evidence record keeps legacy metrics and operational diagnostics
+ * for internal/debug consumers. Customer exports expose the validated
+ * eligible-denominator report plus the observable evidence itself, without
+ * internal call telemetry or provider failure diagnostics.
  */
 export function makeCustomerEvidenceExport(
   brief: BusinessBrief,
@@ -19,10 +19,20 @@ export function makeCustomerEvidenceExport(
   report: AuditReport,
 ) {
   const evidence = makeEvidenceExport(brief, prompts, observations, report);
-  const { facts: _legacyFacts, counts: _legacyCounts, ...validatedReport } =
-    evidence.report;
+  const {
+    facts: _legacyFacts,
+    counts: _legacyCounts,
+    operational_telemetry: _operationalTelemetry,
+    ...validatedReport
+  } = evidence.report;
+  const customerObservations = evidence.observations.map(
+    ({ failure_reason: _failureReason, telemetry: _telemetry, ...observation }) =>
+      observation,
+  );
+
   return {
     ...evidence,
+    observations: customerObservations,
     report: validatedReport,
   };
 }
