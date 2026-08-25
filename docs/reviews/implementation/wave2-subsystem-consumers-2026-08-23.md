@@ -238,3 +238,22 @@ Build-only credentials were dummy values. Playwright environments explicitly bla
 All 23 Wave 2 target findings are classified **RESOLVED** with permanent implementation/proof in the integrated repository. The real landing→audit regression found by normal E2E was fixed without reverting customer-safe errors. The six remaining browser failures were migrated as stale assertions without restoring unsupported GBP claims, raw customer diagnostics, broad report denominators, or the misleading PDF label.
 
 The final code head is green under the repository's complete normal PR gate and is ready for an independent Wave 3 review after this documentation-only head also passes normal PR CI. Wave 3 has not started.
+
+## Post-certification correction note — Wave 3
+
+Wave 3 independent verification subsequently reopened four P2 findings:
+
+- N-P2-02
+- N-P2-05
+- N-P2-06
+- N-P2-17
+
+and identified a P3 residual for N-P2-14.
+
+Therefore the original Wave 2 statement of 23/23 RESOLVED is historical and was superseded by the Wave 3 verdict at frozen head:
+
+`2a6d847a6ffbb7fd628e3620c1e34b4852c0e6d4`
+
+The subsequent corrective implementation and closure evidence are recorded in:
+
+`docs/reviews/implementation/wave3-blocker-corrections-2026-08-25.md`
