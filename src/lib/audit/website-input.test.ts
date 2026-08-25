@@ -3,7 +3,10 @@ import {
   INVALID_WEBSITE_INPUT_MESSAGE,
   normalizeWebsiteInput,
 } from "./website-input";
-import { INVALID_SOURCE_INPUT_MESSAGE, parseSourceInput } from "./source-input";
+import {
+  INVALID_SOURCE_INPUT_MESSAGE,
+  parseSourceInput,
+} from "./source-input";
 
 const providerMocks = vi.hoisted(() => ({
   assertConfigured: vi.fn(),
@@ -43,9 +46,12 @@ describe("website-only compatibility adapter", () => {
     ["https://masryef.com", "https://masryef.com/"],
     ["http://masryef.com", "http://masryef.com/"],
     ["  masryef.com  ", "https://masryef.com/"],
-  ])("normalizes website %s through the canonical policy", (input, expected) => {
-    expect(normalizeWebsiteInput(input)).toEqual({ ok: true, url: expected });
-  });
+  ])(
+    "normalizes website %s through the canonical policy",
+    (input, expected) => {
+      expect(normalizeWebsiteInput(input)).toEqual({ ok: true, url: expected });
+    },
+  );
 
   it.each([
     "not a website",
@@ -92,18 +98,21 @@ describe("extraction route uses the same source decision", () => {
     "https://instagram.com/p/ABC",
     "https://instagram.com/reel/ABC",
     "https://maps.app.goo.gl/example",
-  ])("rejects the same unsupported source with zero provider calls: %s", async (input) => {
-    const response = await POST(extractionRequest(input));
-    const body = await response.json();
+  ])(
+    "rejects the same unsupported source with zero provider calls: %s",
+    async (input) => {
+      const response = await POST(extractionRequest(input));
+      const body = await response.json();
 
-    expect(parseSourceInput(input)).toBeNull();
-    expect(response.status).toBe(400);
-    expect(body).toEqual({
-      error: INVALID_SOURCE_INPUT_MESSAGE,
-      code: "INVALID_SOURCE_INPUT",
-      telemetry: [],
-    });
-    expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
-    expect(providerMocks.extract).not.toHaveBeenCalled();
-  });
+      expect(parseSourceInput(input)).toBeNull();
+      expect(response.status).toBe(400);
+      expect(body).toEqual({
+        error: INVALID_SOURCE_INPUT_MESSAGE,
+        code: "INVALID_SOURCE_INPUT",
+        telemetry: [],
+      });
+      expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
+      expect(providerMocks.extract).not.toHaveBeenCalled();
+    },
+  );
 });
