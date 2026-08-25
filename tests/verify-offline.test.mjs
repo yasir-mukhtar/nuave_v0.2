@@ -1,4 +1,10 @@
-import { mkdtempSync, readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -6,12 +12,15 @@ import {
   captureFileSnapshot,
   offlineVerifierEnv,
   restoreFileSnapshot,
+  withRestoredFileSnapshot,
 } from "../scripts/verify-offline-helpers.mjs";
 
 const tempDirs = [];
 
 afterEach(() => {
-  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  for (const dir of tempDirs.splice(0)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 function tempPath() {
@@ -38,6 +47,38 @@ describe("offline verifier cleanup", () => {
 
     writeFileSync(path, "TEMPORARY=offline\n", "utf8");
     restoreFileSnapshot(snapshot);
+
+    expect(existsSync(path)).toBe(false);
+  });
+
+  it("restores exact original content when temporary installation partially modifies then throws", async () => {
+    const path = tempPath();
+    const original = "ORIGINAL=keep-me\nSECOND=byte-for-byte\n";
+    writeFileSync(path, original, "utf8");
+    const snapshot = captureFileSnapshot(path);
+
+    await expect(
+      withRestoredFileSnapshot(snapshot, async () => {
+        // Deterministic fault injection: represent a write that changed the
+        // destination before reporting an I/O failure.
+        writeFileSync(path, "PARTIAL=broken\n", "utf8");
+        throw new Error("synthetic temporary env write failure");
+      }),
+    ).rejects.toThrow("synthetic temporary env write failure");
+
+    expect(readFileSync(path, "utf8")).toBe(original);
+  });
+
+  it("removes a partially-created temporary file after a failed operation", async () => {
+    const path = tempPath();
+    const snapshot = captureFileSnapshot(path);
+
+    await expect(
+      withRestoredFileSnapshot(snapshot, async () => {
+        writeFileSync(path, "PARTIAL=broken\n", "utf8");
+        throw new Error("synthetic temporary env write failure");
+      }),
+    ).rejects.toThrow("synthetic temporary env write failure");
 
     expect(existsSync(path)).toBe(false);
   });
