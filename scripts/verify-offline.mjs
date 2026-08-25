@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import {
@@ -42,8 +43,10 @@ function handleSignal(signal) {
   restoreProductionEnv();
 }
 
-process.once("SIGINT", handleSignal);
-process.once("SIGTERM", handleSignal);
+const onSigint = () => handleSignal("SIGINT");
+const onSigterm = () => handleSignal("SIGTERM");
+process.once("SIGINT", onSigint);
+process.once("SIGTERM", onSigterm);
 
 function run(scriptName) {
   if (interruptedSignal) {
@@ -90,9 +93,7 @@ function run(scriptName) {
   });
 }
 
-await import("node:fs").then(({ writeFileSync }) =>
-  writeFileSync(productionEnvPath, buildOnlyEnv, "utf8"),
-);
+writeFileSync(productionEnvPath, buildOnlyEnv, "utf8");
 
 try {
   await run("check");
@@ -108,6 +109,6 @@ try {
 } finally {
   terminateProcessTree(activeChild, "SIGTERM");
   restoreProductionEnv();
-  process.removeListener("SIGINT", handleSignal);
-  process.removeListener("SIGTERM", handleSignal);
+  process.removeListener("SIGINT", onSigint);
+  process.removeListener("SIGTERM", onSigterm);
 }
