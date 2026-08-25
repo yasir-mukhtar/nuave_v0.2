@@ -251,20 +251,35 @@ function identitySignals(brief: MinimizedIndonesianBrief) {
   return [...brandIdentitySignals(brief), ...domainIdentitySignals(brief)];
 }
 
-function containsIdentityToken(text: string, identity: string) {
+function containsNormalizedIdentity(
+  text: string,
+  identity: string,
+  minimumCompactLength = 0,
+) {
   const normalizedIdentity = normalizeId(identity);
   if (!normalizedIdentity) return false;
+  const compactIdentity = normalizedIdentity.replace(/\s+/g, "");
+  if (compactIdentity.length < minimumCompactLength) return false;
   const normalizedText = normalizeId(text);
   if (` ${normalizedText} `.includes(` ${normalizedIdentity} `)) return true;
-  // Punctuation-insensitive fallback: normalizeId turns punctuation into
-  // spaces, so a spaced multi-word identity (e.g. "kopi taman senja") still
-  // requires a token-boundary match above. This catches renderings with no
-  // separators at all, such as an unspaced brand ("KopiTamanSenja") or a
-  // domain concatenated with its brand prefix, that never produce a matching
-  // token run.
-  const compactIdentity = normalizedIdentity.replace(/\s+/g, "");
-  if (compactIdentity.length < 3) return false;
   return normalizedText.replace(/\s+/g, "").includes(compactIdentity);
+}
+
+function containsIdentityToken(text: string, identity: string) {
+  return containsNormalizedIdentity(text, identity, 0);
+}
+
+/**
+ * Shared comparison-business identity semantics for both generated suggestions
+ * and the final customer-edited pack. Punctuation/whitespace variants and a
+ * compact rendering match the same identity; very short identities are
+ * ignored to avoid accidental tiny-substring matches.
+ */
+export function containsIndonesianComparisonIdentity(
+  text: string,
+  identity: string,
+) {
+  return containsNormalizedIdentity(text, identity, 3);
 }
 
 /** True when the question text names the audited business, a known variant,
@@ -544,9 +559,7 @@ export function validateIndonesianQuestionPack(
   }
 
   const brandSignals = identitySignals(brief);
-  const competitorSignal = brief.comparison_business
-    ? normalizeId(brief.comparison_business.name)
-    : "";
+  const competitorSignal = brief.comparison_business?.name ?? "";
 
   questions.forEach((question, index) => {
     const slot = index + 1;
@@ -581,11 +594,10 @@ export function validateIndonesianQuestionPack(
     }
 
     // The comparison business may be named only in the designated comparison
-    // slot (6).
+    // slot (6), including punctuation and compact renderings.
     if (
-      competitorSignal &&
       slot !== 6 &&
-      ` ${normalizeId(question)} `.includes(` ${competitorSignal} `)
+      containsIndonesianComparisonIdentity(question, competitorSignal)
     ) {
       issues.push({
         slot,
@@ -1115,7 +1127,7 @@ const approvedPackStore = new Map<string, IndonesianQuestionPackRecord>();
 
 /** Composite key: two orders must never collide on a shared pack version id. */
 function packStoreKey(orderReference: string, packVersionId: string) {
-  return `${orderReference} ${packVersionId}`;
+  return `${orderReference}\u0000${packVersionId}`;
 }
 
 /**
