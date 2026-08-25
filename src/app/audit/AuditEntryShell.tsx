@@ -10,7 +10,8 @@ export default function AuditEntryShell({
 }: {
   landingExtracted: boolean;
 }) {
-  const [suppressSourceHero, setSuppressSourceHero] = useState(landingExtracted);
+  const [suppressSourceHero, setSuppressSourceHero] =
+    useState(landingExtracted);
 
   useEffect(() => {
     if (!landingExtracted) return;
@@ -45,7 +46,9 @@ export default function AuditEntryShell({
       style={{ display: "contents" }}
     >
       {suppressSourceHero ? (
-        <style>{`.${LANDING_ENTRY_CLASS} .audit-source-hero { visibility: hidden; }`}</style>
+        <style>
+          {`.${LANDING_ENTRY_CLASS} .audit-source-hero { visibility: hidden; }`}
+        </style>
       ) : null}
       <AuditWorkflow />
     </div>
