@@ -56,10 +56,7 @@ export default function LandingAuditHero() {
       safetyIdentifier =
         window.sessionStorage.getItem(AUDIT_SESSION_STORAGE_KEY) ||
         crypto.randomUUID();
-      window.sessionStorage.setItem(
-        AUDIT_SESSION_STORAGE_KEY,
-        safetyIdentifier,
-      );
+      window.sessionStorage.setItem(AUDIT_SESSION_STORAGE_KEY, safetyIdentifier);
     } catch {
       inFlightRef.current = false;
       setNavigating(false);
@@ -124,6 +121,11 @@ export default function LandingAuditHero() {
         ...extractionTelemetryRef.current,
         ...responseTelemetry,
       ];
+      // Account the completed provider attempt before client-side state
+      // construction/storage. If either later step fails, a same-page retry
+      // still carries the already-spent extraction call in its budget ledger.
+      extractionTelemetryRef.current = allTelemetry;
+
       const workflowState = createInitialExtractedAuditWorkflowState({
         websiteUrl: normalizedUrl,
         draft: result.draft,
@@ -144,7 +146,6 @@ export default function LandingAuditHero() {
         return;
       }
 
-      extractionTelemetryRef.current = allTelemetry;
       router.push("/audit?entry=landing-extracted");
     } catch {
       inFlightRef.current = false;
