@@ -157,6 +157,7 @@ export default function SourceHero({
               className={styles.heroSubmit}
               disabled={!hasValue || extracting}
               aria-label="Lanjutkan audit"
+              aria-busy={extracting}
             >
               {extracting ? (
                 <Spinner size="sm" className={styles.heroSpinner} />
