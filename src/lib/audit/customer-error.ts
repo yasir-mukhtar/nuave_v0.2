@@ -23,7 +23,8 @@ const STAGE_MESSAGES: Record<AuditCustomerStage, string> = {
   bootstrap: "Audit belum siap dimulai. Muat ulang halaman dan coba lagi.",
   extract: "Sumber bisnis belum dapat dianalisis. Periksa sumber lalu coba lagi.",
   prompts: "Pertanyaan audit belum dapat dibuat. Coba lagi.",
-  run: "Audit terhenti sebelum selesai. Coba lanjutkan dari hasil yang sudah tersimpan.",
+  run:
+    "Audit terhenti sebelum selesai. Coba lanjutkan dari hasil yang sudah tersimpan.",
   report: "Laporan belum dapat dibuat dari hasil audit ini. Coba lagi.",
   variance:
     "Laporan sudah selesai, tetapi pengukuran variasi belum dapat diselesaikan.",
