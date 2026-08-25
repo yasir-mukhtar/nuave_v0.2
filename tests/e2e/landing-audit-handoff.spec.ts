@@ -150,6 +150,7 @@ test.describe("landing audit hero handoff", () => {
     await expect(hero).toBeVisible();
     await expect(input).toBeDisabled();
     await expect(submit).toBeDisabled();
+    await expect(submit).toHaveAttribute("aria-busy", "true");
     await expect(
       page.getByRole("heading", {
         name: "Check the client brief before it shapes the audit.",
