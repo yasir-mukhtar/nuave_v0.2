@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import {
   applyIndonesianQuestionEdits,
+  containsIndonesianComparisonIdentity,
   generateIndonesianQuestionPack,
   indonesianPackBlockers,
   validateIndonesianQuestionPack,
@@ -27,6 +28,15 @@ const brief: MinimizedIndonesianBrief = {
   known_accuracy_questions: [],
   conversion_action: "datang ke kedai",
   official_source_urls: ["https://kopitamansenja.example"],
+};
+
+const shortComparisonBrief: MinimizedIndonesianBrief = {
+  ...brief,
+  comparison_business: {
+    name: "XO",
+    scope: "Depok",
+    source_url: "https://xo.example",
+  },
 };
 
 const validQuestions = [
@@ -69,8 +79,46 @@ describe("Wave 3 final comparison-business identity boundary", () => {
     );
   });
 
+  it.each([
+    "seperti XO di Depok",
+    "bandingkan dengan XO",
+    "xo cocok tidak?",
+  ])("detects exact short comparison identity token: %s", (text) => {
+    expect(containsIndonesianComparisonIdentity(text, "XO")).toBe(true);
+  });
+
+  it.each(["taxonomi", "exotic", "pixelbox"])(
+    "does not compact-match a short identity inside a longer token: %s",
+    (text) => {
+      expect(containsIndonesianComparisonIdentity(text, "XO")).toBe(false);
+    },
+  );
+
+  it("rejects exact short comparison identity outside slot 6", () => {
+    const questions = validQuestions.slice();
+    questions[0] = "Rekomendasikan tempat seperti XO di Depok?";
+    questions[5] = "Bandingkan Kopi Taman Senja dengan XO di Depok.";
+
+    expect(
+      validateIndonesianQuestionPack(questions, shortComparisonBrief),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          slot: 1,
+          rule: "competitor_leakage",
+        }),
+      ]),
+    );
+  });
+
   it("keeps intended comparison-business use valid in designated slot 6", () => {
     expect(validateIndonesianQuestionPack(validQuestions, brief)).toEqual([]);
+
+    const shortNameQuestions = validQuestions.slice();
+    shortNameQuestions[5] = "Bandingkan Kopi Taman Senja dengan XO di Depok.";
+    expect(
+      validateIndonesianQuestionPack(shortNameQuestions, shortComparisonBrief),
+    ).toEqual([]);
   });
 
   it("rejects compact comparison identity after a customer edit", async () => {

@@ -38,14 +38,18 @@ function hasPlausiblePublicHostname(hostname: string): boolean {
   );
 }
 
+function hostnameLabelsWithoutOptionalWww(hostname: string) {
+  const labels = hostname.toLowerCase().split(".");
+  return labels[0] === "www" ? labels.slice(1) : labels;
+}
+
 /**
  * Recognizes Google-owned regional host shapes without treating an arbitrary
  * hostname that merely contains the word "google" as Google. Supported forms:
  * google.<tld>, google.co.<cc>, google.com.<cc>, and optional leading www.
  */
 function isRegionalGoogleHost(hostname: string): boolean {
-  const labels = hostname.toLowerCase().split(".");
-  if (labels[0] === "www") labels.shift();
+  const labels = hostnameLabelsWithoutOptionalWww(hostname);
   if (labels[0] !== "google") return false;
   if (labels.length === 2) return true;
   return (
@@ -56,7 +60,7 @@ function isRegionalGoogleHost(hostname: string): boolean {
 }
 
 function isMapsGoogleHost(hostname: string): boolean {
-  const labels = hostname.toLowerCase().split(".");
+  const labels = hostnameLabelsWithoutOptionalWww(hostname);
   if (labels[0] !== "maps") return false;
   return isRegionalGoogleHost(labels.slice(1).join("."));
 }

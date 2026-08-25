@@ -305,4 +305,54 @@ describe("Wave 2 real route contract (K-09)", () => {
     expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
     expect(providerMocks.execute).not.toHaveBeenCalled();
   });
+
+  it("rejects an exact short comparison-business edit before any run provider call", async () => {
+    const brief = confirmedBrief({
+      name: "XO",
+      scope: "Depok",
+      source_url: "https://xo.example",
+    });
+    const promptsResponse = await promptsPOST(
+      new Request("http://localhost/api/audit/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief }),
+      }),
+    );
+    expect(promptsResponse.status).toBe(200);
+    const generated = await promptsResponse.json();
+    const editedPrompts = generated.pack.prompts.map(
+      (prompt: Record<string, unknown>) => ({ ...prompt }),
+    );
+    editedPrompts[0].question =
+      "Ada rekomendasi klinik gigi seperti XO di Depok?";
+
+    const runResponse = await runPOST(
+      new Request("http://localhost/api/audit/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          brief,
+          prompts: editedPrompts,
+          safety_identifier: "wave3-short-competitor",
+          budget: {
+            limit_usd: 5,
+            carryover_cost_usd: 0,
+            calls: generated.telemetry,
+          },
+          resume_observations: [],
+        }),
+      }),
+    );
+
+    expect(runResponse.status).toBe(422);
+    expect(await runResponse.json()).toMatchObject({
+      error: expect.stringContaining(
+        "reveals the comparison business outside the designated comparison question",
+      ),
+    });
+    expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
+    expect(providerMocks.execute).not.toHaveBeenCalled();
+  });
 });

@@ -258,10 +258,10 @@ function containsNormalizedIdentity(
 ) {
   const normalizedIdentity = normalizeId(identity);
   if (!normalizedIdentity) return false;
-  const compactIdentity = normalizedIdentity.replace(/\s+/g, "");
-  if (compactIdentity.length < minimumCompactLength) return false;
   const normalizedText = normalizeId(text);
   if (` ${normalizedText} `.includes(` ${normalizedIdentity} `)) return true;
+  const compactIdentity = normalizedIdentity.replace(/\s+/g, "");
+  if (compactIdentity.length < minimumCompactLength) return false;
   return normalizedText.replace(/\s+/g, "").includes(compactIdentity);
 }
 
@@ -271,9 +271,9 @@ function containsIdentityToken(text: string, identity: string) {
 
 /**
  * Shared comparison-business identity semantics for both generated suggestions
- * and the final customer-edited pack. Punctuation/whitespace variants and a
- * compact rendering match the same identity; very short identities are
- * ignored to avoid accidental tiny-substring matches.
+ * and the final customer-edited pack. Exact normalized whole-token matches are
+ * always recognized. Punctuation/whitespace and compact matching is additionally
+ * allowed for identities long enough to avoid accidental tiny-substring matches.
  */
 export function containsIndonesianComparisonIdentity(
   text: string,

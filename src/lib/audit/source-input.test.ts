@@ -22,7 +22,9 @@ describe("parseSourceInput canonical source policy", () => {
     ],
     ["https://example.com/maps", "https://example.com/maps"],
     ["https://maps.example.com/", "https://maps.example.com/"],
+    ["https://www.maps.example.com/", "https://www.maps.example.com/"],
     ["https://www.google.com/about", "https://www.google.com/about"],
+    ["https://google.co.uk/about", "https://google.co.uk/about"],
   ])("accepts public website %s", (input, normalizedUrl) => {
     expect(parseSourceInput(input)).toEqual({
       sourceType: "website",
@@ -64,8 +66,11 @@ describe("parseSourceInput canonical source policy", () => {
 
   it.each([
     "https://maps.google.com/?q=Kopi",
+    "https://www.maps.google.com/?q=Kopi",
     "https://maps.google.co.uk/?q=Kopi",
+    "https://www.maps.google.co.uk/?q=Kopi",
     "https://maps.google.co.id/?q=Kopi",
+    "https://www.maps.google.co.id/?q=Kopi",
     "https://www.google.com/maps/place/Kopi",
     "https://www.google.co.uk/maps/place/Kopi",
     "https://google.co.id/maps/place/Kopi",
