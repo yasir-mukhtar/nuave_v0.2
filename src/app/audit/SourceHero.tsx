@@ -99,7 +99,9 @@ export default function SourceHero({
   }
 
   return (
-    <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
+    <div
+      className={`audit-source-hero ${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
+    >
       <div
         className={`${styles.skyField} ${backdropStyles.localBackdrop}`}
         aria-hidden="true"
