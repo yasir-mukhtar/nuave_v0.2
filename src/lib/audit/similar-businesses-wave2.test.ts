@@ -35,7 +35,9 @@ const brief: BusinessBrief = {
 
 describe("Wave 2 similar-business URL safety", () => {
   it("keeps malformed user text visible instead of silently deleting it", () => {
-    expect(normalizeSimilarBusinessUrl("bukan url bisnis")).toBe("bukan url bisnis");
+    expect(normalizeSimilarBusinessUrl("bukan url bisnis")).toBe(
+      "bukan url bisnis",
+    );
     expect(isValidSimilarBusinessUrl("bukan url bisnis")).toBe(false);
   });
 
@@ -46,7 +48,9 @@ describe("Wave 2 similar-business URL safety", () => {
   });
 
   it("allows Google Maps as a comparison source without making it an intake source", () => {
-    expect(isValidSimilarBusinessUrl("https://maps.app.goo.gl/example")).toBe(true);
+    expect(isValidSimilarBusinessUrl("https://maps.app.goo.gl/example")).toBe(
+      true,
+    );
   });
 
   it("drops invalid AI suggestions", () => {
@@ -67,7 +71,11 @@ describe("Wave 2 similar-business URL safety", () => {
   it("clears stale AI identity when its URL is edited", () => {
     expect(
       rebindSimilarBusinessUrl(
-        { source_url: "https://lama.example", name: "Nama Lama", origin: "ai" },
+        {
+          source_url: "https://lama.example",
+          name: "Nama Lama",
+          origin: "ai",
+        },
         "https://baru.example",
       ),
     ).toEqual({ source_url: "https://baru.example", origin: "user" });
