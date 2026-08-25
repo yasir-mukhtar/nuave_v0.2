@@ -8,6 +8,7 @@ import { buildAuditReport, normalizeReportEvidence } from "./contracts";
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  createInitialExtractedAuditWorkflowState,
   restorableAuditReport,
 } from "./workflow-storage";
 
@@ -26,11 +27,75 @@ describe("live audit workflow session storage", () => {
   it("invalidates stale workflow state while keeping the browser session identity stable", () => {
     // v4 may contain direct-OpenAI observations; v5 may contain a live run from
     // a browser bundle that predates the explicit stream-contract guard. This
-    // build reads only v6 so neither stale resumable state can be mixed in.
+    // build reads only v7 so neither stale resumable state can be mixed in.
     expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v7");
     expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v6");
     expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v5");
     expect(AUDIT_SESSION_STORAGE_KEY).toBe("nuave.audit.session.v1");
+  });
+
+  it("creates a complete extracted initial state for the landing handoff", () => {
+    const state = createInitialExtractedAuditWorkflowState({
+      websiteUrl: "https://example.com/",
+      telemetry: [],
+      draft: {
+        brand_name: "Example Business",
+        entity_scope: "Example Business",
+        brand_type: "Business",
+        category: "Coffee shop",
+        market_context: "Indonesia",
+        target_customer: "Customers",
+        official_sources: ["https://example.com/about"],
+        verified_offerings: ["Coffee"],
+        verified_customer_needs: [],
+        verified_decision_criteria: [],
+        similar_businesses: [
+          {
+            name: "Peer Coffee",
+            source_url: "https://peer.example/",
+            origin: "ai",
+          },
+        ],
+        brand_name_variants: ["Example Business"],
+        priority_offering: "Coffee",
+        conversion_action: "Visit website",
+        customer_supplied_facts: [],
+        known_accuracy_questions: [],
+        usp: "",
+        regulated_category_notes: "",
+        evidence: [],
+        warnings: [],
+      },
+    });
+
+    expect(state).toMatchObject({
+      websiteUrl: "https://example.com/",
+      factsExtracted: true,
+      factsConfirmed: false,
+      factsCustomerOwned: false,
+      promptPack: null,
+      observations: [],
+      report: null,
+      setupTelemetry: [],
+      executionStarted: false,
+      postReportBudgetCalls: [],
+      reportFailureCode: null,
+    });
+    expect(state.brief.brand_name).toBe("Example Business");
+    expect(state.brief.category).toBe("Coffee shop");
+    expect(state.brief.market_context).toBe("Indonesia");
+    expect(state.brief.target_customer).toBe("Customers");
+    expect(state.brief.verified_offerings).toEqual(["Coffee"]);
+    expect(state.brief.official_sources).toEqual([
+      "https://example.com/",
+      "https://example.com/about",
+    ]);
+    expect(state.brief.verified_competitor).toEqual({
+      name: "Peer Coffee",
+      scope: "",
+      source_url: "https://peer.example/",
+    });
+    expect(state.extraction.brand_name).toBe("Example Business");
   });
 
   it("restores a report produced by this build", () => {
