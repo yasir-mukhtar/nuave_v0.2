@@ -56,7 +56,10 @@ export default function LandingAuditHero() {
       safetyIdentifier =
         window.sessionStorage.getItem(AUDIT_SESSION_STORAGE_KEY) ||
         crypto.randomUUID();
-      window.sessionStorage.setItem(AUDIT_SESSION_STORAGE_KEY, safetyIdentifier);
+      window.sessionStorage.setItem(
+        AUDIT_SESSION_STORAGE_KEY,
+        safetyIdentifier,
+      );
     } catch {
       inFlightRef.current = false;
       setNavigating(false);
