@@ -49,6 +49,13 @@ const ownerLabels: Record<string, string> = {
   web_developer: "Pengembang web",
 };
 
+const competitorRelationshipLabels: Record<string, string> = {
+  client_preferred: "Bisnis Anda diunggulkan",
+  competitor_preferred: "Bisnis lain diunggulkan",
+  compared_no_preference: "Dibandingkan tanpa pilihan unggulan",
+  mentioned: "Disebut dalam jawaban",
+};
+
 function testReferences(ids: string[], testNumberById: Map<string, string>) {
   return ids.map((id) => testNumberById.get(id) ?? id).join(", ");
 }
@@ -71,7 +78,7 @@ function DetailContent({
   return (
     <div className={styles.detailContent}>
       <div>
-        <h4>Yang terjadi</h4>
+        <h4>Yang ditemukan</h4>
         <p>{detail.finding}</p>
       </div>
       <div>
@@ -79,13 +86,13 @@ function DetailContent({
         <blockquote>{observation?.question}</blockquote>
       </div>
       <div>
-        <h4>Jawaban AI</h4>
+        <h4>Kutipan jawaban</h4>
         <blockquote>
           {detail.answer_excerpt || "Tidak ada jawaban yang tersedia."}
         </blockquote>
       </div>
       <div>
-        <h4>Artinya</h4>
+        <h4>Artinya bagi Anda</h4>
         <p className={styles.evidenceNote}>{detail.evidence_note}</p>
       </div>
       {detail.source_urls.length ? (
@@ -136,15 +143,13 @@ export default function ReportView({
   brief: BusinessBrief;
   observations: AuditObservation[];
   onDownloadJson: () => void;
-  /**
-   * Optional fixture-preview disclosure rendered inside the report article so
-   * it appears on screen and in printed output. The live workflow never
-   * passes this prop.
-   */
   previewNotice?: React.ReactNode;
 }) {
   const observationById = new Map(
     observations.map((item) => [item.prompt_id, item]),
+  );
+  const detailById = new Map(
+    report.details.map((item) => [item.prompt_id, item]),
   );
   const testNumberById = new Map(
     observations.map((item, index) => [
@@ -165,7 +170,7 @@ export default function ReportView({
     <div className={styles.reportWrap}>
       <div className={`${styles.reportToolbar} ${styles.noPrint}`}>
         <Button variant="primary" size="sm" onPress={() => window.print()}>
-          <IconDownload /> {INDONESIAN_REPORT_LABELS.download_pdf}
+          <IconDownload /> Cetak / simpan PDF
         </Button>
         <Button variant="ghost" size="sm" onPress={onDownloadJson}>
           <IconDownload /> Unduh bukti JSON
@@ -267,8 +272,12 @@ export default function ReportView({
               <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
             </div>
             <div>
-              <strong>{report.counts.failed}</strong>
-              <span>{report.facts.coverage.label}</span>
+              <strong>
+                {report.measures.overall.total - report.counts.failed}
+              </strong>
+              <span>
+                dari {report.measures.overall.total} pertanyaan berhasil diuji
+              </span>
             </div>
           </div>
           <dl className={styles.dimensionList}>
@@ -319,6 +328,27 @@ export default function ReportView({
               </Chip>
             </div>
           </div>
+          {report.observed_competitors.length ? (
+            <div className={styles.executiveTakeaway}>
+              <p>Bisnis lain yang teramati</p>
+              <div>
+                {report.observed_competitors.map((competitor) => (
+                  <p
+                    key={`${competitor.name}-${competitor.evidence_prompt_ids.join("-")}`}
+                  >
+                    <strong>{competitor.name}</strong> —{" "}
+                    {competitorRelationshipLabels[competitor.relationship]}.
+                    Berdasarkan pertanyaan{" "}
+                    {testReferences(
+                      competitor.evidence_prompt_ids,
+                      testNumberById,
+                    )}
+                    .
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <Alert
             status="warning"
             className={`${styles.snapshotAlert} ${styles.editorialAlert}`}
@@ -338,19 +368,45 @@ export default function ReportView({
         <section className={styles.reportSection} id="findings">
           <SectionHeading number="02">Temuan utama</SectionHeading>
           <ol className={styles.findings}>
-            {report.key_findings.map((finding, index) => (
-              <li key={finding.title}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <div>
-                  <h3>{finding.title}</h3>
-                  <p>{finding.explanation}</p>
-                </div>
-                <small>
-                  Berdasarkan pertanyaan:{" "}
-                  {testReferences(finding.evidence_prompt_ids, testNumberById)}
-                </small>
-              </li>
-            ))}
+            {report.key_findings.map((finding, index) => {
+              const evidence = finding.evidence_prompt_ids
+                .map((id) => detailById.get(id))
+                .find((detail) => Boolean(detail?.answer_excerpt));
+              const action = report.priorities.find((priority) =>
+                priority.evidence_prompt_ids.some((id) =>
+                  finding.evidence_prompt_ids.includes(id),
+                ),
+              );
+              return (
+                <li key={finding.title}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div>
+                    <h3>{finding.title}</h3>
+                    {evidence ? (
+                      <>
+                        <h4>Yang ditemukan</h4>
+                        <blockquote>{evidence.answer_excerpt}</blockquote>
+                      </>
+                    ) : null}
+                    <h4>Artinya bagi Anda</h4>
+                    <p>{finding.explanation}</p>
+                    {action ? (
+                      <>
+                        <h4>Yang dapat dilakukan</h4>
+                        <p>{action.action}</p>
+                      </>
+                    ) : null}
+                  </div>
+                  <small>
+                    Berdasarkan pertanyaan:{" "}
+                    {testReferences(
+                      finding.evidence_prompt_ids,
+                      testNumberById,
+                    )}
+                  </small>
+                </li>
+              );
+            })}
           </ol>
         </section>
 

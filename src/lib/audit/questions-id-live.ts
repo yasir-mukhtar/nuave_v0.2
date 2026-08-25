@@ -22,6 +22,7 @@ import {
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
 } from "./questions-id";
+import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
@@ -207,12 +208,25 @@ export async function buildLiveIndonesianPromptPack(input: {
     candidateTexts,
     minimized,
   );
+  const generatedGuardIssues = generatedSuggestionGuardIssues(
+    candidateTexts,
+    minimized,
+  );
 
-  // Missing/wrong returned-model provenance on the protected transport is a
-  // provider-contract failure, not permission to use the apparent model
-  // output. Fail closed to the deterministic pack without a second paid call.
-  if (provenanceError || candidateBlockers.length || candidateIssues.length) {
-    if (selectedSource === "fallback" && !provenanceError) {
+  // The default suggestion must truthfully satisfy the advertised 5/5 and
+  // Indonesian composition before customer editing. Customer edits after this
+  // boundary remain free to change the final balance.
+  if (
+    provenanceError ||
+    candidateBlockers.length ||
+    candidateIssues.length ||
+    generatedGuardIssues.length
+  ) {
+    if (
+      selectedSource === "fallback" &&
+      !provenanceError &&
+      !generatedGuardIssues.length
+    ) {
       throw new Error(
         "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
       );
@@ -224,7 +238,15 @@ export async function buildLiveIndonesianPromptPack(input: {
       fallbackTexts,
       minimized,
     );
-    if (fallbackBlockers.length || fallbackIssues.length) {
+    const fallbackGuardIssues = generatedSuggestionGuardIssues(
+      fallbackTexts,
+      minimized,
+    );
+    if (
+      fallbackBlockers.length ||
+      fallbackIssues.length ||
+      fallbackGuardIssues.length
+    ) {
       throw new Error(
         "Fallback pertanyaan deterministik melanggar kontrak keselamatan internal.",
       );
@@ -240,7 +262,7 @@ export async function buildLiveIndonesianPromptPack(input: {
     }));
     selectedSource = "fallback";
     semanticFallbackUsed = true;
-    selectedWarnings.push("fallback_used");
+    selectedWarnings.push("fallback_used", ...generatedGuardIssues);
   }
 
   const warnings = [...new Set(selectedWarnings)];
@@ -334,7 +356,10 @@ export async function buildLiveIndonesianPromptPack(input: {
         branded: item.final_classification === "menyebut_bisnis_anda",
         question: item.text,
         rationale: labels.rationale,
-        inputs_used: ["brand_name", "market_context", "category"],
+        // The provider receives one minimized confirmed-facts record. Do not
+        // claim three specific fields were used when the authored question may
+        // have been grounded in different confirmed fields.
+        inputs_used: ["confirmed_business_facts"],
         review_status: "needs_human_review",
       };
     }),

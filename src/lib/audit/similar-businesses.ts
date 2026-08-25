@@ -1,28 +1,43 @@
 import type { BusinessBrief, SimilarBusiness } from "./types";
+import { parsePublicHttpUrl, parseSourceInput } from "./source-input";
 
 export const MAX_SIMILAR_BUSINESSES = 5;
+export const INVALID_SIMILAR_BUSINESS_URL_MESSAGE =
+  "Masukkan URL website, profil Instagram, atau Google Maps yang valid.";
 
-function hasExplicitScheme(value: string) {
-  return /^[a-z][a-z0-9+.-]*:\/\//i.test(value);
-}
-
-function parsedHttpUrl(value: string): URL | null {
+function rawHttpUrl(value: string): URL | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  const candidate = hasExplicitScheme(trimmed) ? trimmed : `https://${trimmed}`;
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
   try {
     const parsed = new URL(candidate);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return null;
-    }
-    return parsed;
+    return ["http:", "https:"].includes(parsed.protocol) ? parsed : null;
   } catch {
     return null;
   }
 }
 
+function isInstagramHost(hostname: string) {
+  const host = hostname.toLowerCase();
+  return host === "instagram.com" || host === "www.instagram.com";
+}
+
+function parsedComparisonUrl(value: string): URL | null {
+  const parsed = parsePublicHttpUrl(value);
+  if (!parsed) return null;
+  if (isInstagramHost(parsed.hostname)) {
+    const source = parseSourceInput(value);
+    return source?.sourceType === "instagram"
+      ? new URL(source.normalizedUrl)
+      : null;
+  }
+  return parsed;
+}
+
 export function isCredentialBearingHttpUrl(value: string) {
-  const parsed = parsedHttpUrl(value);
+  const parsed = rawHttpUrl(value);
   return Boolean(parsed && (parsed.username || parsed.password));
 }
 
@@ -34,30 +49,28 @@ export function isCredentialBearingHttpUrl(value: string) {
 export function normalizeSimilarBusinessUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
-  const parsed = parsedHttpUrl(trimmed);
-  if (!parsed || parsed.username || parsed.password) return trimmed;
+  const parsed = parsedComparisonUrl(trimmed);
+  if (!parsed) return trimmed;
   parsed.hash = "";
   return parsed.toString();
 }
 
 export function isValidSimilarBusinessUrl(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  const parsed = parsedHttpUrl(trimmed);
-  return Boolean(parsed && !parsed.username && !parsed.password);
+  return Boolean(parsedComparisonUrl(value));
 }
 
 export function similarBusinessDisplayName(value: string) {
-  if (!isValidSimilarBusinessUrl(value)) return "";
-  const parsed = new URL(normalizeSimilarBusinessUrl(value));
+  const parsed = parsedComparisonUrl(value);
+  if (!parsed) return "";
   const hostname = parsed.hostname.replace(/^www\./, "").toLowerCase();
-  if (hostname === "instagram.com" || hostname.endsWith(".instagram.com")) {
+  if (hostname === "instagram.com") {
     const handle = parsed.pathname.split("/").filter(Boolean)[0];
     return handle ? `@${handle}` : "";
   }
   if (
     hostname === "maps.app.goo.gl" ||
     hostname === "goo.gl" ||
+    hostname === "g.page" ||
     hostname === "google.com" ||
     hostname.endsWith(".google.com") ||
     hostname.endsWith(".google.co.id")
@@ -97,7 +110,7 @@ export function assertSafeComparisonBusinessUrls(brief: BusinessBrief): void {
   }
   if (urls.some((url) => !isValidSimilarBusinessUrl(url))) {
     throw new Error(
-      "Comparison-business URLs must be valid HTTP or HTTPS URLs before provider execution.",
+      "Comparison-business URLs must be valid public HTTP or HTTPS URLs before provider execution.",
     );
   }
 }

@@ -16,8 +16,12 @@ import {
   type ExtractionDraft,
   type PromptPack,
 } from "@/lib/audit/types";
-import { makeEvidenceExport } from "@/lib/audit/contracts";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";
+import {
+  customerAuditErrorMessage,
+  type AuditCustomerStage,
+} from "@/lib/audit/customer-error";
+import { makeCustomerEvidenceExport } from "@/lib/audit/customer-evidence-export";
 import {
   sanitizeAiSimilarBusinesses,
   withPrimarySimilarBusiness,
@@ -78,6 +82,7 @@ type SavedState = {
   brief: BusinessBrief;
   factsExtracted: boolean;
   factsConfirmed: boolean;
+  factsCustomerOwned?: boolean;
   extraction: ExtractionDraft | null;
   promptPack: PromptPack | null;
   observations: AuditObservation[];
@@ -90,6 +95,8 @@ type SavedState = {
 
 const STORAGE_KEY = AUDIT_WORKFLOW_STORAGE_KEY;
 const SESSION_KEY = AUDIT_SESSION_STORAGE_KEY;
+const PRESERVED_FACTS_WARNING =
+  "Fakta yang sudah Anda edit atau konfirmasi dipertahankan. Hasil pemindaian baru tidak menggantinya; periksa kembali sebelum membuat pertanyaan.";
 
 const emptyBrief: BusinessBrief = {
   brand_name: "",
@@ -157,12 +164,19 @@ async function postJson<T>(
   };
   if (!response.ok) {
     throw new AuditRequestError(
-      data.error || "Kami tidak dapat menyelesaikan permintaan ini.",
+      data.error || "Audit request failed.",
       data.telemetry || [],
       data.code,
     );
   }
   return data;
+}
+
+function safeError(stage: AuditCustomerStage, cause: unknown) {
+  return customerAuditErrorMessage(
+    stage,
+    cause instanceof AuditRequestError ? cause.code : undefined,
+  );
 }
 
 function dedupeAuditCalls(calls: AuditCallTelemetry[]) {
@@ -220,6 +234,7 @@ export default function AuditWorkflow() {
   const [brief, setBrief] = useState<BusinessBrief>(emptyBrief);
   const [factsExtracted, setFactsExtracted] = useState(false);
   const [factsConfirmed, setFactsConfirmed] = useState(false);
+  const [factsCustomerOwned, setFactsCustomerOwned] = useState(false);
   const [extraction, setExtraction] = useState<ExtractionDraft | null>(null);
   const [promptPack, setPromptPack] = useState<PromptPack | null>(null);
   const [observations, setObservations] = useState<AuditObservation[]>([]);
@@ -313,7 +328,7 @@ export default function AuditWorkflow() {
         brief,
       });
       if (proofErrors.length) {
-        const reason = `Variansi tidak dimulai karena bukti observasi 10/10 tidak valid: ${proofErrors.join(" ")}`;
+        const reason = `Variance proof rejected: ${proofErrors.join(" ")}`;
         const failure = createVarianceFailureRecord({
           run_key: runKey,
           prompt_ids: selectedIds,
@@ -325,12 +340,10 @@ export default function AuditWorkflow() {
             JSON.stringify(failure),
           );
         } catch {
-          // Keep the terminal failure in memory if session storage is unavailable.
+          // Keep detailed terminal diagnostics in memory if storage is unavailable.
         }
         setVarianceFailure(failure);
-        setError(
-          "Laporan tetap valid, tetapi pengukuran variasi tidak dijalankan karena bukti lengkap 10 observasi tidak tersedia.",
-        );
+        setError(customerAuditErrorMessage("variance"));
         return;
       }
 
@@ -367,18 +380,14 @@ export default function AuditWorkflow() {
         setVarianceRecord(result.variance);
         setVarianceFailure(null);
         if (!result.variance.complete) {
-          setError(
-            `Laporan selesai, tetapi pengukuran variasi belum lengkap: ${result.variance.incomplete_reason || "sebagian pertanyaan tidak berhasil diuji ulang."}`,
-          );
+          setError(customerAuditErrorMessage("variance"));
         }
       } catch (cause) {
         if (isAbortError(cause) || !operationGeneration.isCurrent(operation)) {
           return;
         }
         const reason =
-          cause instanceof Error
-            ? cause.message
-            : "Pengukuran variasi tidak dapat diselesaikan.";
+          cause instanceof Error ? cause.message : "Variance execution failed.";
         const failure = createVarianceFailureRecord({
           run_key: runKey,
           prompt_ids: selectedIds,
@@ -390,12 +399,10 @@ export default function AuditWorkflow() {
             JSON.stringify(failure),
           );
         } catch {
-          // Keep the terminal failure in memory if session storage is unavailable.
+          // Keep detailed terminal diagnostics in memory if storage is unavailable.
         }
         setVarianceFailure(failure);
-        setError(
-          `Laporan sudah selesai dan tetap valid, tetapi pengukuran variasi gagal: ${reason}`,
-        );
+        setError(safeError("variance", cause));
       } finally {
         if (
           operationGeneration.isCurrent(operation) &&
@@ -431,6 +438,9 @@ export default function AuditWorkflow() {
           setBrief(state.brief || emptyBrief);
           setFactsExtracted(Boolean(state.factsExtracted));
           setFactsConfirmed(Boolean(state.factsConfirmed));
+          setFactsCustomerOwned(
+            Boolean(state.factsCustomerOwned || state.factsConfirmed),
+          );
           setExtraction(state.extraction || null);
           setPromptPack(restoredPack);
           setObservations(restoredObservations);
@@ -484,9 +494,7 @@ export default function AuditWorkflow() {
           data.carryover_cost_usd < 0 ||
           data.carryover_cost_usd > AUDIT_COST_LIMIT_USD
         ) {
-          throw new Error(
-            data.error || "Pengaturan pengendali biaya privat tidak valid.",
-          );
+          throw new Error(data.error || "Budget bootstrap failed.");
         }
         if (!cancelled) {
           setCarryoverCostUsd(data.carryover_cost_usd);
@@ -495,11 +503,7 @@ export default function AuditWorkflow() {
       } catch (cause) {
         if (!cancelled) {
           setBudgetReady(false);
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Pengendali biaya privat tidak tersedia.",
-          );
+          setError(safeError("bootstrap", cause));
         }
       }
     })();
@@ -515,6 +519,7 @@ export default function AuditWorkflow() {
       brief,
       factsExtracted,
       factsConfirmed,
+      factsCustomerOwned,
       extraction,
       promptPack,
       observations,
@@ -534,6 +539,7 @@ export default function AuditWorkflow() {
     executionStarted,
     extraction,
     factsConfirmed,
+    factsCustomerOwned,
     factsExtracted,
     observations,
     postReportBudgetCalls,
@@ -585,15 +591,9 @@ export default function AuditWorkflow() {
           JSON.stringify(failure),
         );
         setVarianceFailure(failure);
-        setError(
-          "Laporan yang dipulihkan tetap valid, tetapi pengukuran variasi tidak dapat dilanjutkan dengan aman karena ledger biaya pasca-laporan tidak tersedia.",
-        );
+        setError(customerAuditErrorMessage("variance"));
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Pengukuran variasi pada laporan yang dipulihkan tidak dapat diselesaikan.",
-        );
+        setError(safeError("variance", cause));
       }
       return;
     }
@@ -668,6 +668,7 @@ export default function AuditWorkflow() {
   ) {
     if (executionStarted) return;
     setBrief((current) => ({ ...current, [key]: value }));
+    setFactsCustomerOwned(true);
     clearAfterBriefChange();
   }
 
@@ -675,7 +676,7 @@ export default function AuditWorkflow() {
     setError("");
     const resolvedUrl = url?.trim() || websiteUrl.trim();
     if (!budgetReady) {
-      setError("Tunggu pengendali biaya privat sebelum memulai audit.");
+      setError(customerAuditErrorMessage("bootstrap"));
       return;
     }
     if (!resolvedUrl) {
@@ -683,6 +684,7 @@ export default function AuditWorkflow() {
       return;
     }
     if (url) setWebsiteUrl(url.trim());
+    const preserveCustomerFacts = factsCustomerOwned;
     setBusy("extract");
     try {
       const result = await postJson<{
@@ -707,32 +709,38 @@ export default function AuditWorkflow() {
       setExtraction({
         ...draft,
         similar_businesses: similarBusinesses,
+        warnings: preserveCustomerFacts
+          ? [...new Set([...draft.warnings, PRESERVED_FACTS_WARNING])]
+          : draft.warnings,
       });
-      setBrief((current) =>
-        withPrimarySimilarBusiness({
-          ...current,
-          brand_name: draft.brand_name || current.brand_name,
-          entity_scope: draft.entity_scope || current.entity_scope,
-          brand_type: draft.brand_type || current.brand_type,
-          category: draft.category || current.category,
-          market_context: draft.market_context || current.market_context,
-          target_customer: draft.target_customer || current.target_customer,
-          official_sources: [
-            ...new Set([resolvedUrl, ...draft.official_sources]),
-          ],
-          verified_offerings: draft.verified_offerings,
-          verified_customer_needs: draft.verified_customer_needs,
-          verified_decision_criteria: draft.verified_decision_criteria,
-          similar_businesses: similarBusinesses,
-          brand_name_variants: draft.brand_name_variants,
-          priority_offering: draft.priority_offering,
-          conversion_action: draft.conversion_action,
-          customer_supplied_facts: draft.customer_supplied_facts,
-          known_accuracy_questions: draft.known_accuracy_questions,
-          usp: draft.usp,
-          regulated_category_notes: draft.regulated_category_notes,
-        }),
-      );
+      if (!preserveCustomerFacts) {
+        setBrief((current) =>
+          withPrimarySimilarBusiness({
+            ...current,
+            brand_name: draft.brand_name || current.brand_name,
+            entity_scope: draft.entity_scope || current.entity_scope,
+            brand_type: draft.brand_type || current.brand_type,
+            category: draft.category || current.category,
+            market_context: draft.market_context || current.market_context,
+            target_customer: draft.target_customer || current.target_customer,
+            official_sources: [
+              ...new Set([resolvedUrl, ...draft.official_sources]),
+            ],
+            verified_offerings: draft.verified_offerings,
+            verified_customer_needs: draft.verified_customer_needs,
+            verified_decision_criteria: draft.verified_decision_criteria,
+            similar_businesses: similarBusinesses,
+            brand_name_variants: draft.brand_name_variants,
+            priority_offering: draft.priority_offering,
+            conversion_action: draft.conversion_action,
+            customer_supplied_facts: draft.customer_supplied_facts,
+            known_accuracy_questions: draft.known_accuracy_questions,
+            usp: draft.usp,
+            regulated_category_notes: draft.regulated_category_notes,
+          }),
+        );
+        setFactsCustomerOwned(false);
+      }
       setFactsExtracted(true);
       setFactsConfirmed(false);
       setSetupTelemetry((calls) => [...calls, ...result.telemetry]);
@@ -740,11 +748,7 @@ export default function AuditWorkflow() {
       if (cause instanceof AuditRequestError && cause.telemetry.length) {
         setSetupTelemetry((calls) => [...calls, ...cause.telemetry]);
       }
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Kami tidak dapat menganalisis situs web ini.",
-      );
+      setError(safeError("extract", cause));
     } finally {
       setBusy(null);
     }
@@ -782,11 +786,7 @@ export default function AuditWorkflow() {
       }
     } catch (cause) {
       if (!isAbortError(cause) && operationGeneration.isCurrent(operation)) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Kami tidak dapat membuat pertanyaan audit.",
-        );
+        setError(safeError("prompts", cause));
       }
     } finally {
       if (operationGeneration.isCurrent(operation)) setBusy(null);
@@ -822,9 +822,7 @@ export default function AuditWorkflow() {
     priorCalls = setupTelemetry,
   ) {
     if (!promptPack) return;
-    if (!budgetReady) {
-      throw new Error("Pengendali biaya privat tidak tersedia.");
-    }
+    if (!budgetReady) throw new Error("Budget bootstrap unavailable.");
 
     const operation = operationGeneration.begin("report");
     setReportFailureCode(null);
@@ -948,7 +946,7 @@ export default function AuditWorkflow() {
     if (!promptPack) return;
     setError("");
     if (!budgetReady) {
-      setError("Tunggu pengendali biaya privat sebelum menjalankan audit.");
+      setError(customerAuditErrorMessage("bootstrap"));
       return;
     }
     const minimized = minimizeIndonesianBrief(brief);
@@ -1002,12 +1000,17 @@ export default function AuditWorkflow() {
         }),
       });
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(data.error || "Kami tidak dapat menjalankan audit.");
+        const data = (await response.json()) as {
+          error?: string;
+          code?: string;
+        };
+        throw new AuditRequestError(
+          data.error || "Audit run failed.",
+          [],
+          data.code,
+        );
       }
-      if (!response.body) {
-        throw new Error("Server tidak mengembalikan aliran audit.");
-      }
+      if (!response.body) throw new Error("Audit stream body missing.");
       if (!operationGeneration.isCurrent(operation)) return;
 
       window.sessionStorage.removeItem(VARIANCE_STORAGE_KEY);
@@ -1051,12 +1054,10 @@ export default function AuditWorkflow() {
         if (event.type === "run_unfinished") runUnfinishedReceived = true;
       }
       if (!runCompleted && !runUnfinishedReceived) {
-        throw new Error("Koneksi terputus sebelum 10 observasi selesai.");
+        throw new Error("Audit stream ended early.");
       }
       if (runCompleted && finalObservations.length !== 10) {
-        throw new Error(
-          "Aliran audit berakhir dengan kumpulan observasi tidak valid.",
-        );
+        throw new Error("Invalid completed observation set.");
       }
       if (runCompleted && operationGeneration.isCurrent(operation)) {
         operationGeneration.finish(operation);
@@ -1068,11 +1069,7 @@ export default function AuditWorkflow() {
         !isAbortError(cause) &&
         (handedToReport || operationGeneration.isCurrent(operation))
       ) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Kami tidak dapat menyelesaikan audit.",
-        );
+        setError(safeError(handedToReport ? "report" : "run", cause));
       }
     } finally {
       if (!handedToReport && operationGeneration.isCurrent(operation)) {
@@ -1095,13 +1092,7 @@ export default function AuditWorkflow() {
     try {
       await createReport(observations);
     } catch (cause) {
-      if (!isAbortError(cause)) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Kami tidak dapat membuat laporan lagi.",
-        );
-      }
+      if (!isAbortError(cause)) setError(safeError("report", cause));
     }
   }
 
@@ -1115,6 +1106,7 @@ export default function AuditWorkflow() {
     setBrief(emptyBrief);
     setFactsExtracted(false);
     setFactsConfirmed(false);
+    setFactsCustomerOwned(false);
     setExtraction(null);
     setPromptPack(null);
     setObservations([]);
@@ -1162,7 +1154,7 @@ export default function AuditWorkflow() {
 
   function downloadEvidenceJson() {
     if (!report || !promptPack) return;
-    const evidence = makeEvidenceExport(
+    const evidence = makeCustomerEvidenceExport(
       brief,
       promptPack.prompts,
       observations,
@@ -1216,7 +1208,7 @@ export default function AuditWorkflow() {
           </Button>
           {report && varianceSettled ? (
             <Button variant="primary" size="sm" onPress={() => window.print()}>
-              <IconDownload /> Download PDF
+              <IconDownload /> Cetak / simpan PDF
             </Button>
           ) : null}
         </div>
@@ -1281,7 +1273,10 @@ export default function AuditWorkflow() {
           updateBrief={updateBrief}
           extraction={extraction}
           factsConfirmed={factsConfirmed}
-          setFactsConfirmed={setFactsConfirmed}
+          setFactsConfirmed={(value) => {
+            setFactsConfirmed(value);
+            if (value) setFactsCustomerOwned(true);
+          }}
           busy={busy}
           onGenerate={generatePrompts}
           onBack={backToSource}

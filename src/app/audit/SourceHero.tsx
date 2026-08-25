@@ -4,12 +4,13 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowUp } from "@tabler/icons-react";
+import { customerAuditErrorMessage } from "@/lib/audit/customer-error";
 import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "@/lib/audit/source-handoff";
 import { parseSourceInput } from "@/lib/audit/source-input";
 import styles from "./SourceHero.module.css";
+import backdropStyles from "./SourceHeroBackdrop.module.css";
 
-const AUDIT_BUDGET_WAIT_ERROR =
-  "Tunggu pengendali biaya privat sebelum memulai audit.";
+const AUDIT_BUDGET_WAIT_ERROR = customerAuditErrorMessage("bootstrap");
 
 export default function SourceHero({
   initialValue,
@@ -87,7 +88,7 @@ export default function SourceHero({
 
     if (!parsed) {
       setLocalError(
-        "Masukkan link website, akun Instagram, atau Google Business Profile yang valid.",
+        "Masukkan link website resmi atau akun Instagram yang valid.",
       );
       inputRef.current?.focus();
       return;
@@ -99,7 +100,10 @@ export default function SourceHero({
 
   return (
     <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
-      <div className={styles.skyField} aria-hidden="true">
+      <div
+        className={`${styles.skyField} ${backdropStyles.localBackdrop}`}
+        aria-hidden="true"
+      >
         <span className={styles.skyFade} />
       </div>
 
@@ -138,7 +142,7 @@ export default function SourceHero({
                 setLocalError("");
               }}
               placeholder="https://bisnisanda.com"
-              aria-label="Website, akun Instagram, atau Google Business Profile"
+              aria-label="Website atau akun Instagram"
               aria-describedby="source-hint source-error"
               autoComplete="off"
               autoCorrect="off"
@@ -168,8 +172,7 @@ export default function SourceHero({
               textShadow: "0 1px 6px rgba(0, 30, 80, 0.2)",
             }}
           >
-            Masukkan URL website, akun instagram, atau Google Business Profile
-            bisnis Anda.
+            Masukkan URL website atau akun Instagram resmi bisnis Anda.
           </p>
 
           <p

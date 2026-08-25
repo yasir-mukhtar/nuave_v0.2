@@ -5,12 +5,13 @@ import { journeyWebServer } from "./tests/e2e/shared-config";
  * Main browser suite: the protected fixture preview is ENABLED, the complete
  * fixture journey remains reachable, and the live landing→audit handoff plus
  * variance regressions use fully stubbed `/api/audit/*` responses so no test
- * reaches a paid provider.
+ * reaches a paid provider. The offline-network suite additionally rejects
+ * unexpected third-party browser requests across active customer surfaces.
  */
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch:
-    /(fixture-journey|landing-audit-handoff|live-audit-variance)\.spec\.ts/,
+    /(fixture-journey|landing-audit-handoff|live-audit-variance|offline-network)\.spec\.ts/,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

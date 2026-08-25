@@ -115,7 +115,7 @@ test.describe("landing audit hero handoff", () => {
 
     await expect(
       hero.getByText(
-        "Masukkan link website, akun Instagram, atau Google Business Profile yang valid.",
+        "Masukkan link website resmi atau akun Instagram yang valid.",
       ),
     ).toBeVisible();
     expect(new URL(page.url()).pathname).toBe("/");

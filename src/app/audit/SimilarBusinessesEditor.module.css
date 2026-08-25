@@ -10,6 +10,10 @@
   gap: 0.5rem;
 }
 
+.inputGroup {
+  min-width: 0;
+}
+
 .visuallyHidden {
   position: absolute;
   width: 1px;
@@ -20,6 +24,13 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.validationError {
+  margin: 0.35rem 0 0;
+  color: var(--danger, #b42318);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .aiBadge {

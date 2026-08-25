@@ -90,6 +90,17 @@ const reportInput = {
   budget: fixtureBudget,
 };
 
+function protectedReportContent() {
+  const content = goldenReportContent();
+  return {
+    ...content,
+    details: content.details.map((detail, index) => ({
+      ...detail,
+      answer_excerpt: completedObservations[index].raw_answer,
+    })),
+  };
+}
+
 function reportResult(content: ReportContent) {
   return {
     content,
@@ -111,7 +122,7 @@ describe("founder-observed Phase 3 failures — fail-first regression pins", () 
   it("normalizes a normal bare domain before extraction", () => {
     expect(normalizeWebsiteInput("  masryef.com  ")).toEqual({
       ok: true,
-      url: "https://masryef.com",
+      url: "https://masryef.com/",
     });
   });
 
@@ -160,7 +171,7 @@ describe("founder-observed Phase 3 failures — fail-first regression pins", () 
   });
 
   it("contains one positive-only report priority instead of rejecting the whole report", async () => {
-    const draft = goldenReportContent();
+    const draft = protectedReportContent();
     draft.priorities[0].evidence_prompt_ids = [goldenPrompts[6].prompt_id];
     const generate = vi.fn(async () =>
       reportResult(draft),
