@@ -46,7 +46,7 @@ test("mobile nav exposes aria-controls only while its menu target exists", async
   const menu = page.locator("#nuave-mobile-menu");
   await expect(hamburger).toBeVisible();
   await expect(hamburger).toHaveAttribute("aria-expanded", "false");
-  await expect(hamburger).not.toHaveAttribute("aria-controls");
+  expect(await hamburger.getAttribute("aria-controls")).toBeNull();
   await expect(menu).toHaveCount(0);
 
   await hamburger.click();
@@ -58,6 +58,6 @@ test("mobile nav exposes aria-controls only while its menu target exists", async
   await page.keyboard.press("Escape");
   await expect(menu).toHaveCount(0);
   await expect(hamburger).toHaveAttribute("aria-expanded", "false");
-  await expect(hamburger).not.toHaveAttribute("aria-controls");
+  expect(await hamburger.getAttribute("aria-controls")).toBeNull();
   await expect(hamburger).toBeFocused();
 });
