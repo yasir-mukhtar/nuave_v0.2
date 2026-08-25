@@ -19,8 +19,19 @@ const STYLE =
   ".nuave-privacy ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
   ".nuave-privacy li { margin: 0 0 8px; line-height: 1.7; }";
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="mb-10"><h2>{title}</h2>{children}</section>;
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mb-10">
+      <h2>{title}</h2>
+      {children}
+    </section>
+  );
 }
 
 export default function PrivacyPage() {
@@ -42,10 +53,11 @@ export default function PrivacyPage() {
 
         <Section title="1. Data yang digunakan untuk audit">
           <p>
-            Produk menerima sumber bisnis publik yang Anda masukkan, fakta bisnis
-            yang Anda tinjau atau koreksi, bisnis serupa yang Anda tambahkan,
-            sepuluh pertanyaan audit, jawaban yang diamati, sumber jawaban, dan
-            bukti teknis yang diperlukan untuk menjaga integritas audit.
+            Produk menerima sumber bisnis publik yang Anda masukkan, fakta
+            bisnis yang Anda tinjau atau koreksi, bisnis serupa yang Anda
+            tambahkan, sepuluh pertanyaan audit, jawaban yang diamati, sumber
+            jawaban, dan bukti teknis yang diperlukan untuk menjaga integritas
+            audit.
           </p>
           <p>
             Jangan masukkan kata sandi, data pelanggan, data kesehatan, data
@@ -58,8 +70,14 @@ export default function PrivacyPage() {
           <ul>
             <li>memastikan sumber dan identitas bisnis yang sedang diuji;</li>
             <li>menyusun draf fakta dan pertanyaan untuk Anda periksa;</li>
-            <li>menjalankan sepuluh observasi dengan kontrak metode yang dilindungi;</li>
-            <li>membuat laporan dan bukti yang terikat pada observasi tersebut; dan</li>
+            <li>
+              menjalankan sepuluh observasi dengan kontrak metode yang
+              dilindungi;
+            </li>
+            <li>
+              membuat laporan dan bukti yang terikat pada observasi tersebut;
+              dan
+            </li>
             <li>mendeteksi serta mendiagnosis kegagalan teknis.</li>
           </ul>
         </Section>

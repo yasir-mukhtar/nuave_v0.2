@@ -561,8 +561,8 @@ export default function AuditWorkflow() {
   }, [report]);
   const varianceSettled = Boolean(
     reportRunKey &&
-      (varianceRecord?.run_key === reportRunKey ||
-        varianceFailure?.run_key === reportRunKey),
+    (varianceRecord?.run_key === reportRunKey ||
+      varianceFailure?.run_key === reportRunKey),
   );
 
   useEffect(() => {

@@ -26,8 +26,11 @@ export function makeCustomerEvidenceExport(
     ...validatedReport
   } = evidence.report;
   const customerObservations = evidence.observations.map(
-    ({ failure_reason: _failureReason, telemetry: _telemetry, ...observation }) =>
-      observation,
+    ({
+      failure_reason: _failureReason,
+      telemetry: _telemetry,
+      ...observation
+    }) => observation,
   );
 
   return {

@@ -34,7 +34,10 @@ function MobileMenu({
         type="button"
         aria-label="Tutup menu"
         className="lp-mobile-menu-overlay fixed inset-0 z-[99] bg-black/20"
-        style={{ backdropFilter: "blur(1px)", WebkitBackdropFilter: "blur(1px)" }}
+        style={{
+          backdropFilter: "blur(1px)",
+          WebkitBackdropFilter: "blur(1px)",
+        }}
         onClick={onClose}
       />
       <div
@@ -65,7 +68,11 @@ function MobileMenu({
   );
 }
 
-export default function LandingNav({ overlayHero = false }: { overlayHero?: boolean }) {
+export default function LandingNav({
+  overlayHero = false,
+}: {
+  overlayHero?: boolean;
+}) {
   const scrolled = useScrolled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -132,27 +139,46 @@ export default function LandingNav({ overlayHero = false }: { overlayHero?: bool
             justifyContent: "space-between",
             height: 60,
             padding: "12px 12px 12px 14px",
-            backgroundColor: scrolled ? "rgba(255, 255, 255, 0.9)" : "transparent",
+            backgroundColor: scrolled
+              ? "rgba(255, 255, 255, 0.9)"
+              : "transparent",
             backdropFilter: scrolled ? "blur(10px)" : "none",
             WebkitBackdropFilter: scrolled ? "blur(10px)" : "none",
             borderRadius: 12,
-            border: scrolled ? "1px solid rgba(117, 115, 114, 0.15)" : "1px solid transparent",
-            transition: "background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
+            border: scrolled
+              ? "1px solid rgba(117, 115, 114, 0.15)"
+              : "1px solid transparent",
+            transition:
+              "background-color 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease",
           }}
         >
           <Link href="/" className="flex items-center gap-2 no-underline">
-            <img src={LOGO_SVG} alt="Nuave logo" width={28} height={28} className="lp-nav-brand-logo object-contain" />
-            <span className="lp-nav-brand-text text-[20px] font-semibold text-[#0d0d0d]">Nuave</span>
+            <img
+              src={LOGO_SVG}
+              alt="Nuave logo"
+              width={28}
+              height={28}
+              className="lp-nav-brand-logo object-contain"
+            />
+            <span className="lp-nav-brand-text text-[20px] font-semibold text-[#0d0d0d]">
+              Nuave
+            </span>
           </Link>
 
           <div className="lp-nav-links flex items-center gap-8">
-            <a href="/support" className="lp-nav-contact text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150">
+            <a
+              href="/support"
+              className="lp-nav-contact text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
+            >
               {t("nav.contact")}
             </a>
           </div>
 
           <div className="lp-nav-masuk flex items-center gap-3">
-            <Link href="/audit" className="lp-nav-hero-cta btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer">
+            <Link
+              href="/audit"
+              className="lp-nav-hero-cta btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
+            >
               {t("cta.auditBrandFreeNoExclaim")}
             </Link>
           </div>
@@ -166,16 +192,42 @@ export default function LandingNav({ overlayHero = false }: { overlayHero?: bool
             aria-expanded={mobileMenuOpen}
             aria-controls={MOBILE_MENU_ID}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               {mobileMenuOpen ? (
                 <>
-                  <path d="M6 6L18 18" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M18 6L6 18" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M6 6L18 18"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M18 6L6 18"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </>
               ) : (
                 <>
-                  <path d="M4 8H20" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M4 16H20" stroke="#0d0d0d" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M4 8H20"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M4 16H20"
+                    stroke="#0d0d0d"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </>
               )}
             </svg>

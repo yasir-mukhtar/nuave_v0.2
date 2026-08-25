@@ -14,10 +14,7 @@ describe("parseSourceInput canonical source policy", () => {
       "kopitamansenja.example/beranda",
       "https://kopitamansenja.example/beranda",
     ],
-    [
-      "www.kopitamansenja.example",
-      "https://www.kopitamansenja.example/",
-    ],
+    ["www.kopitamansenja.example", "https://www.kopitamansenja.example/"],
     ["http://kopitamansenja.example", "http://kopitamansenja.example/"],
     [
       "https://kopitamansenja.example/beranda?ref=1",

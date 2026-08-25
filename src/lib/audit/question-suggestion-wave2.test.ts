@@ -64,9 +64,7 @@ function providerBody(questions: string[]) {
     output: [
       {
         type: "message",
-        content: [
-          { type: "output_text", text: JSON.stringify({ questions }) },
-        ],
+        content: [{ type: "output_text", text: JSON.stringify({ questions }) }],
       },
     ],
   };
@@ -91,7 +89,10 @@ describe("Wave 2 generated suggestion guards", () => {
     const unbalanced = validQuestions.slice();
     unbalanced[0] = "Apakah Kopi Taman Senja cocok untuk ngopi di Depok?";
     expect(
-      generatedSuggestionGuardIssues(unbalanced, minimizeIndonesianBrief(brief)),
+      generatedSuggestionGuardIssues(
+        unbalanced,
+        minimizeIndonesianBrief(brief),
+      ),
     ).toContain("default_composition_not_five_five");
   });
 
@@ -115,7 +116,8 @@ describe("Wave 2 generated suggestion guards", () => {
 
   it("detects compact or punctuation-mutated competitor leakage outside slot 6", () => {
     const leaking = validQuestions.slice();
-    leaking[1] = "Ada pilihan seperti Kopi-Pesaing untuk tempat ngopi di Depok?";
+    leaking[1] =
+      "Ada pilihan seperti Kopi-Pesaing untuk tempat ngopi di Depok?";
     expect(
       generatedSuggestionGuardIssues(leaking, minimizeIndonesianBrief(brief)),
     ).toContain("compact_competitor_leakage:2");
@@ -127,11 +129,12 @@ describe("Wave 2 generated suggestion guards", () => {
     unbalanced[0] = "Apakah Kopi Taman Senja cocok untuk ngopi di Depok?";
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        new Response(JSON.stringify(providerBody(unbalanced)), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify(providerBody(unbalanced)), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
       ),
     );
 

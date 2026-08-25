@@ -74,9 +74,7 @@ function questionProviderBody() {
     output: [
       {
         type: "message",
-        content: [
-          { type: "output_text", text: JSON.stringify({ questions }) },
-        ],
+        content: [{ type: "output_text", text: JSON.stringify({ questions }) }],
       },
     ],
   };
@@ -140,7 +138,10 @@ describe("Wave 2 real route contract (K-09)", () => {
       draft: extractionDraft,
       telemetry: [],
     });
-    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(questionProviderBody())));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(questionProviderBody())),
+    );
   });
 
   afterEach(() => {
@@ -201,14 +202,21 @@ describe("Wave 2 real route contract (K-09)", () => {
     const reviewedPrompts = generated.pack.prompts.map(
       (prompt: Record<string, unknown>) => ({ ...prompt }),
     );
-    expect(reviewedPrompts.map((prompt: { question: string }) => prompt.question)).toEqual(
-      generated.pack.prompts.map((prompt: { question: string }) => prompt.question),
+    expect(
+      reviewedPrompts.map((prompt: { question: string }) => prompt.question),
+    ).toEqual(
+      generated.pack.prompts.map(
+        (prompt: { question: string }) => prompt.question,
+      ),
     );
 
     const budgetCallCounts: number[] = [];
     providerMocks.execute.mockImplementation(async (input) => {
       budgetCallCounts.push(input.budget.calls.length);
-      return makeObservation(input.prompt, providerMocks.execute.mock.calls.length - 1);
+      return makeObservation(
+        input.prompt,
+        providerMocks.execute.mock.calls.length - 1,
+      );
     });
 
     const runResponse = await runPOST(
@@ -234,7 +242,9 @@ describe("Wave 2 real route contract (K-09)", () => {
     const stream = await runResponse.text();
     expect(stream).toContain('"type":"run_completed"');
     expect(providerMocks.execute).toHaveBeenCalledTimes(10);
-    expect(providerMocks.execute.mock.calls.map(([input]) => input.prompt.question)).toEqual(
+    expect(
+      providerMocks.execute.mock.calls.map(([input]) => input.prompt.question),
+    ).toEqual(
       reviewedPrompts.map((prompt: { question: string }) => prompt.question),
     );
     expect(budgetCallCounts).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);

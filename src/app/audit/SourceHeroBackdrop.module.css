@@ -10,11 +10,5 @@
       rgba(225, 240, 255, 0.9),
       transparent 34%
     ),
-    linear-gradient(
-      180deg,
-      #6bb8e8 0%,
-      #a8d7ef 42%,
-      #edf7fb 70%,
-      #ffffff 100%
-    ) !important;
+    linear-gradient(180deg, #6bb8e8 0%, #a8d7ef 42%, #edf7fb 70%, #ffffff 100%) !important;
 }

@@ -16,18 +16,27 @@ describe("Wave 2 public truth", () => {
 
   it("does not publish unresolved placeholder tokens", () => {
     for (const file of publicPages) {
-      expect(source(file)).not.toMatch(/\[(?:HARGA|TANGGAL|VERSI|NAMA|KOTA|PENYEDIA|METODE|WAKTU|MASA|ALAMAT|BATAS|PAJAK)/i);
+      expect(source(file)).not.toMatch(
+        /\[(?:HARGA|TANGGAL|VERSI|NAMA|KOTA|PENYEDIA|METODE|WAKTU|MASA|ALAMAT|BATAS|PAJAK)/i,
+      );
     }
   });
 
   it("does not publish the stale GPT-4o claim", () => {
-    for (const file of publicPages) expect(source(file)).not.toContain("GPT-4o");
+    for (const file of publicPages)
+      expect(source(file)).not.toContain("GPT-4o");
   });
 
   it("describes unimplemented payment and email delivery as unavailable", () => {
-    expect(source("src/app/faq/page.tsx")).toContain("Alur pembayaran belum aktif");
-    expect(source("src/app/faq/page.tsx")).toContain("Belum. State audit saat ini bersifat browser/session-based");
-    expect(source("src/app/terms/page.tsx")).toContain("Checkout, pemrosesan pembayaran");
+    expect(source("src/app/faq/page.tsx")).toContain(
+      "Alur pembayaran belum aktif",
+    );
+    expect(source("src/app/faq/page.tsx")).toContain(
+      "Belum. State audit saat ini bersifat browser/session-based",
+    );
+    expect(source("src/app/terms/page.tsx")).toContain(
+      "Checkout, pemrosesan pembayaran",
+    );
   });
 });
 
@@ -42,7 +51,11 @@ describe("Wave 2 public accessibility and asset truth", () => {
   });
 
   it("overrides the former hotlinked hero with a local CSS treatment", () => {
-    expect(source("src/app/audit/SourceHero.tsx")).toContain("backdropStyles.localBackdrop");
-    expect(source("src/app/audit/SourceHeroBackdrop.module.css")).not.toMatch(/https?:\/\//);
+    expect(source("src/app/audit/SourceHero.tsx")).toContain(
+      "backdropStyles.localBackdrop",
+    );
+    expect(source("src/app/audit/SourceHeroBackdrop.module.css")).not.toMatch(
+      /https?:\/\//,
+    );
   });
 });

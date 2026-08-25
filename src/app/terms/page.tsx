@@ -19,8 +19,19 @@ const STYLE =
   ".nuave-terms ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
   ".nuave-terms li { margin: 0 0 8px; line-height: 1.7; }";
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="mb-10"><h2>{title}</h2>{children}</section>;
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mb-10">
+      <h2>{title}</h2>
+      {children}
+    </section>
+  );
 }
 
 export default function TermsPage() {
@@ -49,16 +60,25 @@ export default function TermsPage() {
           <p>
             Produk aktif belum menyediakan akun, langganan, dashboard persisten,
             pembayaran, email delivery, tautan laporan privat yang disimpan di
-            server, atau pekerjaan audit yang terus berjalan setelah tab ditutup.
+            server, atau pekerjaan audit yang terus berjalan setelah tab
+            ditutup.
           </p>
         </Section>
 
         <Section title="2. Tanggung jawab saat menguji">
           <ul>
-            <li>Gunakan sumber resmi untuk bisnis yang memang berhak Anda uji.</li>
+            <li>
+              Gunakan sumber resmi untuk bisnis yang memang berhak Anda uji.
+            </li>
             <li>Periksa dan koreksi fakta sebelum membuat pertanyaan.</li>
-            <li>Jangan kirim kata sandi, data pelanggan, data kesehatan, data keuangan pribadi, atau rahasia privat yang tidak diperlukan.</li>
-            <li>Jangan menganggap hasil sebagai peringkat permanen atau jaminan hasil bisnis.</li>
+            <li>
+              Jangan kirim kata sandi, data pelanggan, data kesehatan, data
+              keuangan pribadi, atau rahasia privat yang tidak diperlukan.
+            </li>
+            <li>
+              Jangan menganggap hasil sebagai peringkat permanen atau jaminan
+              hasil bisnis.
+            </li>
           </ul>
         </Section>
 
@@ -77,9 +97,10 @@ export default function TermsPage() {
         <Section title="4. Penyimpanan dan keberlanjutan sesi">
           <p>
             Fase produk ini menggunakan state browser/session. Tidak ada kontrak
-            penyimpanan server tahan lama atau masa akses laporan yang dijanjikan.
-            Simpan sendiri bukti yang tersedia jika diperlukan. Menutup tab saat
-            audit berjalan menghentikan pekerjaan yang belum selesai.
+            penyimpanan server tahan lama atau masa akses laporan yang
+            dijanjikan. Simpan sendiri bukti yang tersedia jika diperlukan.
+            Menutup tab saat audit berjalan menghentikan pekerjaan yang belum
+            selesai.
           </p>
         </Section>
 

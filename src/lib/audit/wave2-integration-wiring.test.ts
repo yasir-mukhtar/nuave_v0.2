@@ -21,7 +21,9 @@ describe("Wave 2 cross-lane integration wiring", () => {
 
     expect(workflow).toContain("factsCustomerOwned");
     expect(workflow).toContain("PRESERVED_FACTS_WARNING");
-    expect(workflow).toContain('operationGeneration.invalidate("Business facts changed")');
+    expect(workflow).toContain(
+      'operationGeneration.invalidate("Business facts changed")',
+    );
     expect(workflow).toContain('operationGeneration.begin("prompts")');
     expect(workflow).toContain('operationGeneration.begin("run")');
     expect(workflow).toContain('operationGeneration.begin("report")');

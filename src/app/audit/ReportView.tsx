@@ -220,11 +220,21 @@ export default function ReportView({
           <nav className={styles.reportContents} aria-label="Report contents">
             <span>Isi laporan</span>
             <ol>
-              <li><a href="#summary">Hasil utama</a></li>
-              <li><a href="#findings">Temuan utama</a></li>
-              <li><a href="#priorities">Langkah berikutnya</a></li>
-              <li><a href="#detail">Hasil tiap pertanyaan</a></li>
-              <li><a href="#method">Cara kerja audit</a></li>
+              <li>
+                <a href="#summary">Hasil utama</a>
+              </li>
+              <li>
+                <a href="#findings">Temuan utama</a>
+              </li>
+              <li>
+                <a href="#priorities">Langkah berikutnya</a>
+              </li>
+              <li>
+                <a href="#detail">Hasil tiap pertanyaan</a>
+              </li>
+              <li>
+                <a href="#method">Cara kerja audit</a>
+              </li>
             </ol>
           </nav>
         </header>
@@ -239,7 +249,9 @@ export default function ReportView({
                   report.measures.overall.total,
                 )}
               </strong>
-              <span>{indonesianHeadline(report.measures.overall.appeared)}</span>
+              <span>
+                {indonesianHeadline(report.measures.overall.appeared)}
+              </span>
             </div>
             <div>
               <strong>
@@ -260,8 +272,12 @@ export default function ReportView({
               <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
             </div>
             <div>
-              <strong>{report.measures.overall.total - report.counts.failed}</strong>
-              <span>dari {report.measures.overall.total} pertanyaan berhasil diuji</span>
+              <strong>
+                {report.measures.overall.total - report.counts.failed}
+              </strong>
+              <span>
+                dari {report.measures.overall.total} pertanyaan berhasil diuji
+              </span>
             </div>
           </div>
           <dl className={styles.dimensionList}>
@@ -317,14 +333,26 @@ export default function ReportView({
               <p>Bisnis lain yang teramati</p>
               <div>
                 {report.observed_competitors.map((competitor) => (
-                  <p key={`${competitor.name}-${competitor.evidence_prompt_ids.join("-")}`}>
-                    <strong>{competitor.name}</strong> — {competitorRelationshipLabels[competitor.relationship]}. Berdasarkan pertanyaan {testReferences(competitor.evidence_prompt_ids, testNumberById)}.
+                  <p
+                    key={`${competitor.name}-${competitor.evidence_prompt_ids.join("-")}`}
+                  >
+                    <strong>{competitor.name}</strong> —{" "}
+                    {competitorRelationshipLabels[competitor.relationship]}.
+                    Berdasarkan pertanyaan{" "}
+                    {testReferences(
+                      competitor.evidence_prompt_ids,
+                      testNumberById,
+                    )}
+                    .
                   </p>
                 ))}
               </div>
             </div>
           ) : null}
-          <Alert status="warning" className={`${styles.snapshotAlert} ${styles.editorialAlert}`}>
+          <Alert
+            status="warning"
+            className={`${styles.snapshotAlert} ${styles.editorialAlert}`}
+          >
             <Alert.Indicator />
             <Alert.Content>
               <Alert.Title>Hasil ini dapat berubah</Alert.Title>
@@ -370,7 +398,11 @@ export default function ReportView({
                     ) : null}
                   </div>
                   <small>
-                    Berdasarkan pertanyaan: {testReferences(finding.evidence_prompt_ids, testNumberById)}
+                    Berdasarkan pertanyaan:{" "}
+                    {testReferences(
+                      finding.evidence_prompt_ids,
+                      testNumberById,
+                    )}
                   </small>
                 </li>
               );
@@ -384,24 +416,54 @@ export default function ReportView({
             {[...report.priorities]
               .sort((a, b) => a.order - b.order)
               .map((priority) => (
-                <li key={`${priority.order}-${priority.action}`} className={styles.priorityItem}>
+                <li
+                  key={`${priority.order}-${priority.action}`}
+                  className={styles.priorityItem}
+                >
                   <div className={styles.priorityTop}>
-                    <span className={styles.priorityNumber}>{String(priority.order).padStart(2, "0")}</span>
-                    <Chip color={priority.timing === "do_first" ? "accent" : "default"} variant="soft">
-                      {priority.timing === "do_first" ? "Kerjakan dulu" : "Kerjakan berikutnya"}
+                    <span className={styles.priorityNumber}>
+                      {String(priority.order).padStart(2, "0")}
+                    </span>
+                    <Chip
+                      color={
+                        priority.timing === "do_first" ? "accent" : "default"
+                      }
+                      variant="soft"
+                    >
+                      {priority.timing === "do_first"
+                        ? "Kerjakan dulu"
+                        : "Kerjakan berikutnya"}
                     </Chip>
                   </div>
                   <h3>{priority.action}</h3>
                   <dl>
-                    <div><dt>Mengapa</dt><dd>{priority.why}</dd></div>
+                    <div>
+                      <dt>Mengapa</dt>
+                      <dd>{priority.why}</dd>
+                    </div>
                     <div>
                       <dt>Berdasarkan</dt>
-                      <dd>{priority.basis} Pertanyaan {testReferences(priority.evidence_prompt_ids, testNumberById)}.</dd>
+                      <dd>
+                        {priority.basis} Pertanyaan{" "}
+                        {testReferences(
+                          priority.evidence_prompt_ids,
+                          testNumberById,
+                        )}
+                        .
+                      </dd>
                     </div>
-                    <div><dt>Penanggung jawab</dt><dd>{ownerLabels[priority.owner]}</dd></div>
-                    <div><dt>Selesai ketika</dt><dd>{priority.done_when}</dd></div>
+                    <div>
+                      <dt>Penanggung jawab</dt>
+                      <dd>{ownerLabels[priority.owner]}</dd>
+                    </div>
+                    <div>
+                      <dt>Selesai ketika</dt>
+                      <dd>{priority.done_when}</dd>
+                    </div>
                   </dl>
-                  {priority.caveat ? <p className={styles.caveat}>{priority.caveat}</p> : null}
+                  {priority.caveat ? (
+                    <p className={styles.caveat}>{priority.caveat}</p>
+                  ) : null}
                 </li>
               ))}
           </ol>
@@ -417,12 +479,21 @@ export default function ReportView({
             {report.details.map((detail, index) => {
               const observation = observationById.get(detail.prompt_id);
               return (
-                <Disclosure key={detail.prompt_id} className={styles.detailDisclosure}>
+                <Disclosure
+                  key={detail.prompt_id}
+                  className={styles.detailDisclosure}
+                >
                   <Disclosure.Heading>
                     <Disclosure.Trigger>
-                      <span className={styles.detailIndex}>{String(index + 1).padStart(2, "0")}</span>
+                      <span className={styles.detailIndex}>
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
                       <span className={styles.detailTitle}>
-                        <small>{observation ? reportCategoryLabels[observation.category] : "Pertanyaan"}</small>
+                        <small>
+                          {observation
+                            ? reportCategoryLabels[observation.category]
+                            : "Pertanyaan"}
+                        </small>
                         <strong>{resultLabel(detail)}</strong>
                       </span>
                       <code>{detail.prompt_id}</code>
@@ -431,7 +502,10 @@ export default function ReportView({
                   </Disclosure.Heading>
                   <Disclosure.Content>
                     <Disclosure.Body>
-                      <DetailContent detail={detail} observation={observation} />
+                      <DetailContent
+                        detail={detail}
+                        observation={observation}
+                      />
                     </Disclosure.Body>
                   </Disclosure.Content>
                 </Disclosure>
@@ -446,7 +520,11 @@ export default function ReportView({
                   <div className={styles.printDetailTitle}>
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     <div>
-                      <small>{observation ? reportCategoryLabels[observation.category] : "Pertanyaan"}</small>
+                      <small>
+                        {observation
+                          ? reportCategoryLabels[observation.category]
+                          : "Pertanyaan"}
+                      </small>
                       <h3>{resultLabel(detail)}</h3>
                     </div>
                     <code>{detail.prompt_id}</code>
@@ -463,16 +541,30 @@ export default function ReportView({
           <div className={styles.methodGrid}>
             <p>{report.method_summary}</p>
             <ul className={styles.methodList}>
-              <li>Ekspor bukti menyimpan setiap pertanyaan, jawaban lengkap, sumber, waktu, model, dan hasil.</li>
-              <li>API ini bukan aplikasi ChatGPT konsumen. Jawaban dapat berubah menurut model, waktu, lokasi, dan percakapan.</li>
-              <li>Disebut bukan berarti direkomendasikan. Pertanyaan yang gagal diuji bukan hasil negatif.</li>
-              <li>Laporan ini menunjukkan hasil pengujian ini. Laporan ini tidak membuktikan sebab atau menjamin rekomendasi di masa depan.</li>
+              <li>
+                Ekspor bukti menyimpan setiap pertanyaan, jawaban lengkap,
+                sumber, waktu, model, dan hasil.
+              </li>
+              <li>
+                API ini bukan aplikasi ChatGPT konsumen. Jawaban dapat berubah
+                menurut model, waktu, lokasi, dan percakapan.
+              </li>
+              <li>
+                Disebut bukan berarti direkomendasikan. Pertanyaan yang gagal
+                diuji bukan hasil negatif.
+              </li>
+              <li>
+                Laporan ini menunjukkan hasil pengujian ini. Laporan ini tidak
+                membuktikan sebab atau menjamin rekomendasi di masa depan.
+              </li>
             </ul>
           </div>
           <Alert status="accent" className={styles.editorialAlert}>
             <Alert.Indicator />
             <Alert.Content>
-              <Alert.Title>Gunakan laporan ini untuk memilih satu langkah</Alert.Title>
+              <Alert.Title>
+                Gunakan laporan ini untuk memilih satu langkah
+              </Alert.Title>
               <Alert.Description>
                 Periksa informasi publik terlebih dahulu. Buat satu perubahan
                 yang berguna, lalu ulangi pengujian yang sama.
@@ -484,7 +576,11 @@ export default function ReportView({
         <footer className={styles.reportFooter}>
           <span>{brief.brand_name}</span>
           <span>Audit visibilitas AI Nuave</span>
-          <span>{new Intl.DateTimeFormat("id-ID", { year: "numeric" }).format(new Date(report.generated_at))}</span>
+          <span>
+            {new Intl.DateTimeFormat("id-ID", { year: "numeric" }).format(
+              new Date(report.generated_at),
+            )}
+          </span>
         </footer>
       </article>
     </div>

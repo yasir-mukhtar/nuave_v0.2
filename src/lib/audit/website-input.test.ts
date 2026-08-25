@@ -3,10 +3,7 @@ import {
   INVALID_WEBSITE_INPUT_MESSAGE,
   normalizeWebsiteInput,
 } from "./website-input";
-import {
-  INVALID_SOURCE_INPUT_MESSAGE,
-  parseSourceInput,
-} from "./source-input";
+import { INVALID_SOURCE_INPUT_MESSAGE, parseSourceInput } from "./source-input";
 
 const providerMocks = vi.hoisted(() => ({
   assertConfigured: vi.fn(),

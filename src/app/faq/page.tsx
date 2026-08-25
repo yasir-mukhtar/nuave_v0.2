@@ -21,7 +21,13 @@ const FAQ_STYLE =
   ".nuave-faq ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
   ".nuave-faq li { margin: 0 0 8px; line-height: 1.7; }";
 
-function FaqSection({ question, children }: { question: string; children: ReactNode }) {
+function FaqSection({
+  question,
+  children,
+}: {
+  question: string;
+  children: ReactNode;
+}) {
   return (
     <section className="mb-10">
       <h2>{question}</h2>
@@ -66,11 +72,11 @@ export default function FaqPage() {
 
         <FaqSection question="Apa yang diuji?">
           <p>
-            Nuave membuat sepuluh pertanyaan berbahasa Indonesia: lima pertanyaan
-            awal tanpa menyebut bisnis Anda dan lima yang menyebut bisnis Anda.
-            Anda dapat mengubah pertanyaan sebelum audit dimulai. Setelah audit
-            dimulai, identitas dan urutan pertanyaan dikunci untuk menjaga bukti
-            tetap konsisten.
+            Nuave membuat sepuluh pertanyaan berbahasa Indonesia: lima
+            pertanyaan awal tanpa menyebut bisnis Anda dan lima yang menyebut
+            bisnis Anda. Anda dapat mengubah pertanyaan sebelum audit dimulai.
+            Setelah audit dimulai, identitas dan urutan pertanyaan dikunci untuk
+            menjaga bukti tetap konsisten.
           </p>
         </FaqSection>
 
@@ -88,9 +94,14 @@ export default function FaqPage() {
             <li>ringkasan kemunculan bisnis pada sepuluh pertanyaan;</li>
             <li>hasil per pertanyaan dengan kutipan jawaban dan sumber;</li>
             <li>bisnis lain yang benar-benar teramati dalam bukti;</li>
-            <li>temuan, interpretasi, dan tindakan yang terkait dengan bukti;</li>
+            <li>
+              temuan, interpretasi, dan tindakan yang terkait dengan bukti;
+            </li>
             <li>metode serta batasan audit; dan</li>
-            <li>opsi mencetak atau menyimpan tampilan laporan sebagai PDF melalui peramban serta mengunduh bukti JSON.</li>
+            <li>
+              opsi mencetak atau menyimpan tampilan laporan sebagai PDF melalui
+              peramban serta mengunduh bukti JSON.
+            </li>
           </ul>
           <p>
             Versi ini belum menyediakan akun, dashboard persisten, pengiriman
@@ -126,8 +137,8 @@ export default function FaqPage() {
         <FaqSection question="Apakah laporan disimpan atau dikirim lewat email?">
           <p>
             Belum. State audit saat ini bersifat browser/session-based. Menutup
-            tab menghentikan proses yang sedang berjalan, dan belum ada pekerjaan
-            server tahan lama yang meneruskan audit di latar belakang.
+            tab menghentikan proses yang sedang berjalan, dan belum ada
+            pekerjaan server tahan lama yang meneruskan audit di latar belakang.
           </p>
         </FaqSection>
 
@@ -136,8 +147,8 @@ export default function FaqPage() {
             Gunakan informasi bisnis yang memang diperlukan dan sumber publik.
             Jangan masukkan kata sandi, data pelanggan, data kesehatan, data
             keuangan pribadi, atau informasi sensitif lain. Lihat{" "}
-            <Link href="/privacy">Kebijakan Privasi dan Data</Link> untuk keadaan
-            produk saat ini.
+            <Link href="/privacy">Kebijakan Privasi dan Data</Link> untuk
+            keadaan produk saat ini.
           </p>
         </FaqSection>
 

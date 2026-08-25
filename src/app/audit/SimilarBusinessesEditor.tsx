@@ -58,7 +58,7 @@ export default function SimilarBusinessesEditor({
       {businesses.map((business, index) => {
         const invalid = Boolean(
           business.source_url.trim() &&
-            !isValidSimilarBusinessUrl(business.source_url),
+          !isValidSimilarBusinessUrl(business.source_url),
         );
         const validationId = `similar-business-error-${index}`;
         return (
@@ -79,7 +79,11 @@ export default function SimilarBusinessesEditor({
                 />
               </TextField>
               {invalid ? (
-                <p id={validationId} className={styles.validationError} role="alert">
+                <p
+                  id={validationId}
+                  className={styles.validationError}
+                  role="alert"
+                >
                   {INVALID_SIMILAR_BUSINESS_URL_MESSAGE}
                 </p>
               ) : null}

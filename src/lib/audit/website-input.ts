@@ -1,13 +1,9 @@
-import {
-  INVALID_SOURCE_INPUT_MESSAGE,
-  parseSourceInput,
-} from "./source-input";
+import { INVALID_SOURCE_INPUT_MESSAGE, parseSourceInput } from "./source-input";
 
 export const INVALID_WEBSITE_INPUT_MESSAGE = INVALID_SOURCE_INPUT_MESSAGE;
 
 export type WebsiteInputNormalization =
-  | { ok: true; url: string }
-  | { ok: false; error: string };
+  { ok: true; url: string } | { ok: false; error: string };
 
 /**
  * Compatibility adapter for callers that specifically require a website.

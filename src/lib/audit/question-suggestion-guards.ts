@@ -60,7 +60,9 @@ const INDONESIAN_MARKERS = new Set([
 function clearlyEnglishQuestion(question: string) {
   const words = normalizedWords(question);
   const english = words.filter((word) => ENGLISH_MARKERS.has(word)).length;
-  const indonesian = words.filter((word) => INDONESIAN_MARKERS.has(word)).length;
+  const indonesian = words.filter((word) =>
+    INDONESIAN_MARKERS.has(word),
+  ).length;
   return english >= 2 && english > indonesian * 2;
 }
 
