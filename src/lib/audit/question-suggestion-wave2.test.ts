@@ -123,7 +123,7 @@ describe("Wave 2 generated suggestion guards", () => {
     ).toContain("compact_competitor_leakage:2");
   });
 
-  it("falls back before display when model output breaks the default composition and records truthful provenance", async () => {
+  it("repairs the unsafe slot before display and records truthful provenance", async () => {
     stubMethod();
     const unbalanced = validQuestions.slice();
     unbalanced[0] = "Apakah Kopi Taman Senja cocok untuk ngopi di Depok?";
@@ -139,10 +139,8 @@ describe("Wave 2 generated suggestion guards", () => {
     );
 
     const result = await buildLiveIndonesianPromptPack({ brief });
-    expect(result.generation.source).toBe("fallback");
-    expect(result.generation.warnings).toContain(
-      "default_composition_not_five_five",
-    );
+    expect(result.generation.source).toBe("model");
+    expect(result.generation.warnings).toContain("slot_safety_repair:1");
     expect(result.classification_summary).toEqual({
       total: 10,
       tanpa_menyebut_bisnis_anda: 5,

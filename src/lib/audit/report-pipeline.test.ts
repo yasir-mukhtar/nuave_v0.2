@@ -42,6 +42,17 @@ const input = {
   observations: goldenCompletedObservations,
 };
 
+function protectedReportContent(): ReportContent {
+  const content = goldenReportContent();
+  return {
+    ...content,
+    details: content.details.map((detail, index) => ({
+      ...detail,
+      answer_excerpt: goldenCompletedObservations[index].raw_answer,
+    })),
+  };
+}
+
 function result(content: ReportContent, id: string) {
   return {
     content,
@@ -55,7 +66,7 @@ function result(content: ReportContent, id: string) {
 describe("validated report pipeline", () => {
   it("blocks Indonesian synthesis before the provider on incomplete evidence", async () => {
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "should-not-run"),
+      result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
 
     await expect(
@@ -77,7 +88,7 @@ describe("validated report pipeline", () => {
   // — the code comment claimed otherwise.
   it("blocks English synthesis before the provider on incomplete evidence", async () => {
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "should-not-run"),
+      result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
 
     await expect(
@@ -91,7 +102,7 @@ describe("validated report pipeline", () => {
 
   it("blocks English synthesis on the partial golden record (9 completed + 1 failed)", async () => {
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "should-not-run"),
+      result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
 
     await expect(
@@ -102,7 +113,7 @@ describe("validated report pipeline", () => {
 
   it("uses one call when current OpenCode evidence and language pass", async () => {
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "response-initial"),
+      result(protectedReportContent(), "response-initial"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(input, generate);
@@ -128,7 +139,7 @@ describe("validated report pipeline", () => {
         : observation,
     );
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "should-not-run"),
+      result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
 
     await expect(
@@ -145,7 +156,7 @@ describe("validated report pipeline", () => {
       system: "OpenAI Responses API" as const,
     }));
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "should-not-run"),
+      result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
 
     await expect(
@@ -174,7 +185,7 @@ describe("validated report pipeline", () => {
   });
 
   it("contains an unsupported priority without a retry", async () => {
-    const draft = goldenReportContent();
+    const draft = protectedReportContent();
     const removedEvidenceId = goldenPrompts[6].prompt_id;
     draft.priorities[0].evidence_prompt_ids = [removedEvidenceId];
     const expectedSurvivors = draft.priorities
@@ -199,7 +210,7 @@ describe("validated report pipeline", () => {
   });
 
   it("derives competitor evidence links and relationship from retained answers", async () => {
-    const draft = goldenReportContent();
+    const draft = protectedReportContent();
     draft.observed_competitors[0] = {
       name: "Meridian Partners",
       relationship: "competitor_preferred",
@@ -225,14 +236,13 @@ describe("validated report pipeline", () => {
   });
 
   it("derives observable states, exact excerpts, and attached sources", async () => {
-    const draft = goldenReportContent();
+    const draft = protectedReportContent();
     draft.details[0] = {
       ...draft.details[0],
       appearance: "mentioned",
       recommendation: "recommended",
       comparison: "compared_no_preference",
       information: "confirmed",
-      answer_excerpt: "A paraphrase that is not retained evidence.",
       source_urls: ["https://unsupported.example/evidence"],
     };
     const generate = vi.fn(async () =>
@@ -253,12 +263,14 @@ describe("validated report pipeline", () => {
   });
 
   it("uses one protected retry only for writing violations", async () => {
-    const longDraft = goldenReportContent();
+    const longDraft = protectedReportContent();
     longDraft.conclusion = `${Array.from({ length: 61 }, () => "clear").join(" ")}.`;
     const generate = vi
       .fn()
       .mockResolvedValueOnce(result(longDraft, "response-initial"))
-      .mockResolvedValueOnce(result(goldenReportContent(), "response-retry"));
+      .mockResolvedValueOnce(
+        result(protectedReportContent(), "response-retry"),
+      );
 
     const report = await createValidatedAuditReport(
       input,
@@ -283,9 +295,9 @@ describe("validated report pipeline", () => {
   });
 
   it("blocks a protected-field mutation after the retry", async () => {
-    const longDraft = goldenReportContent();
+    const longDraft = protectedReportContent();
     longDraft.conclusion = `${Array.from({ length: 61 }, () => "clear").join(" ")}.`;
-    const mutated = goldenReportContent();
+    const mutated = protectedReportContent();
     mutated.details[2].recommendation = "recommended";
     const generate = vi
       .fn()
@@ -301,12 +313,14 @@ describe("validated report pipeline", () => {
   });
 
   it("keeps evidence-protected fields unchanged across a language-only retry (Spec 003 R-28)", async () => {
-    const longDraft = goldenReportContent();
+    const longDraft = protectedReportContent();
     longDraft.conclusion = `${Array.from({ length: 61 }, () => "clear").join(" ")}.`;
     const generate = vi
       .fn()
       .mockResolvedValueOnce(result(longDraft, "response-initial"))
-      .mockResolvedValueOnce(result(goldenReportContent(), "response-retry"));
+      .mockResolvedValueOnce(
+        result(protectedReportContent(), "response-retry"),
+      );
 
     const report = await createValidatedAuditReport(
       input,
@@ -324,12 +338,12 @@ describe("validated report pipeline", () => {
       // Normalization only drops sources the observation did not return; it
       // never adds one. Question 5's synthesis cites none, so it stays empty
       // even though its backfilled observation carries a source.
-      goldenReportContent().details.map((detail) => detail.source_urls),
+      protectedReportContent().details.map((detail) => detail.source_urls),
     );
     expect(
       report.priorities.map((priority) => priority.evidence_prompt_ids),
     ).toEqual(
-      goldenReportContent().priorities.map(
+      protectedReportContent().priorities.map(
         (priority) => priority.evidence_prompt_ids,
       ),
     );
@@ -337,7 +351,7 @@ describe("validated report pipeline", () => {
       // Question 5 is the golden failure, backfilled to completed with an
       // answer that does not name the brand, so it normalizes from the
       // content's not_assessed to not_recommended before and after the retry.
-      goldenReportContent().details.map((detail, index) =>
+      protectedReportContent().details.map((detail, index) =>
         index === 4 ? "not_recommended" : detail.recommendation,
       ),
     );
@@ -413,7 +427,7 @@ describe("live provider credential guard on the direct-library path (R3-5)", () 
     vi.stubEnv("NUAVE_PROVIDER", "opencodego");
     vi.stubEnv("OPENCODEGO_API_KEY", "");
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "response-injected"),
+      result(protectedReportContent(), "response-injected"),
     ) as unknown as ReportGenerator;
 
     await expect(
@@ -426,7 +440,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
   const allCompletedInput = input;
 
   it("rejects a synthesis that marks a completed, mentioned observation not_assessed (the Sozo defect)", async () => {
-    const defective = goldenReportContent();
+    const defective = protectedReportContent();
     defective.details[2] = {
       ...defective.details[2],
       recommendation: "not_assessed",
@@ -444,7 +458,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
 
   it("passes the automatic pipeline end-to-end with a correct synthesis for a 10/10 completed run", async () => {
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "response-correct"),
+      result(protectedReportContent(), "response-correct"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(
@@ -469,7 +483,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
 
   it("stamps the Indonesian writing standard and produces Indonesian facts/method copy for language: id (O-2/O-9)", async () => {
     const generate = vi.fn(async () =>
-      result(goldenReportContent(), "response-id"),
+      result(protectedReportContent(), "response-id"),
     ) as unknown as ReportGenerator;
     const gateReadyInput = { ...input, language: "id" as const };
 
@@ -492,7 +506,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
 
   it("accepts not_assessed on a completed validation observation's recommendation (the permissive branch)", async () => {
     expect(goldenPrompts[6].category).toBe("validation");
-    const content = goldenReportContent();
+    const content = protectedReportContent();
     content.details[6] = {
       ...content.details[6],
       recommendation: "not_assessed",
@@ -508,7 +522,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
 
   it("still rejects not_assessed on a completed judgment-category observation's recommendation", async () => {
     expect(goldenPrompts[3].category).toBe("solution_discovery");
-    const content = goldenReportContent();
+    const content = protectedReportContent();
     content.details[3] = {
       ...content.details[3],
       recommendation: "not_assessed",
