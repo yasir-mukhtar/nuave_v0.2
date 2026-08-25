@@ -16,6 +16,20 @@ export function restoreFileSnapshot(snapshot) {
   rmSync(snapshot.path, { force: true });
 }
 
+/**
+ * Runs one temporary file mutation/task under an unconditional restoration
+ * boundary. The operation itself is inside the try, so restoration also runs
+ * when installing the temporary file fails after truncating or partially
+ * modifying the destination.
+ */
+export async function withRestoredFileSnapshot(snapshot, operation) {
+  try {
+    return await operation();
+  } finally {
+    restoreFileSnapshot(snapshot);
+  }
+}
+
 export function offlineVerifierEnv(source = process.env) {
   return {
     ...source,
