@@ -31,7 +31,7 @@ describe("deterministic Indonesian label translation (R-40, AC-26)", () => {
       "Menyebut bisnis Anda",
     );
     expect(INDONESIAN_REPORT_LABELS.not_tested).toBe("Tidak diuji");
-    expect(INDONESIAN_REPORT_LABELS.download_pdf).toBe("Download PDF");
+    expect(INDONESIAN_REPORT_LABELS.download_pdf).toBe("Cetak / simpan PDF");
   });
 
   it("formats headline and count from provided counts without recomputing evidence", () => {
