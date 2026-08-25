@@ -6,6 +6,7 @@ import {
   offlineVerifierEnv,
   restoreFileSnapshot,
   terminateProcessTree,
+  withRestoredFileSnapshot,
 } from "./verify-offline-helpers.mjs";
 
 const productionEnvPath = resolve(".env.production.local");
@@ -93,21 +94,26 @@ function run(scriptName) {
   });
 }
 
-writeFileSync(productionEnvPath, buildOnlyEnv, "utf8");
-
 try {
-  await run("check");
-  await run("test:unit");
-  await run("build");
-  await run("build:cf");
-  await run("test:e2e");
-  console.log("\nOffline verification passed.");
+  await withRestoredFileSnapshot(productionEnvSnapshot, async () => {
+    // The mutation itself is inside the restoration boundary. A failed write
+    // cannot bypass restoration of a pre-existing production env file.
+    writeFileSync(productionEnvPath, buildOnlyEnv, "utf8");
+    await run("check");
+    await run("test:unit");
+    await run("build");
+    await run("build:cf");
+    await run("test:e2e");
+    console.log("\nOffline verification passed.");
+  });
 } catch (error) {
   if (!interruptedSignal) process.exitCode = 1;
   console.error("\nOffline verification failed.");
   console.error(error instanceof Error ? error.message : error);
 } finally {
   terminateProcessTree(activeChild, "SIGTERM");
+  // Idempotent defensive restoration also covers signal paths that restore
+  // before the inner restoration boundary unwinds.
   restoreProductionEnv();
   process.removeListener("SIGINT", onSigint);
   process.removeListener("SIGTERM", onSigterm);
