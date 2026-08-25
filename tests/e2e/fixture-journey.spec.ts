@@ -102,9 +102,10 @@ test.describe("entry and landing (AC-01)", () => {
     await expect(hero.getByPlaceholder("https://bisnisanda.com")).toBeVisible();
     await expect(
       hero.getByText(
-        "Masukkan URL website, akun instagram, atau Google Business Profile bisnis Anda.",
+        "Masukkan URL website atau akun Instagram resmi bisnis Anda.",
       ),
     ).toBeVisible();
+    await expect(hero.getByText(/Google Business Profile/i)).toHaveCount(0);
     await expect(page.getByText("Ilustrasi", { exact: true }).first()).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
