@@ -69,12 +69,9 @@ describe("Wave 3 final comparison-business identity boundary", () => {
     );
   });
 
-  it(
-    "keeps intended comparison-business use valid in designated slot 6",
-    () => {
-      expect(validateIndonesianQuestionPack(validQuestions, brief)).toEqual([]);
-    },
-  );
+  it("keeps intended comparison-business use valid in designated slot 6", () => {
+    expect(validateIndonesianQuestionPack(validQuestions, brief)).toEqual([]);
+  });
 
   it("rejects compact comparison identity after a customer edit", async () => {
     const suggestion = await generateIndonesianQuestionPack(
@@ -106,33 +103,30 @@ describe("Wave 3 final comparison-business identity boundary", () => {
 });
 
 describe("Wave 3 default-language guard stays suggestion-only", () => {
-  it(
-    "allows safe customer language edits under the final locked-pack rules",
-    async () => {
-      const suggestion = await generateIndonesianQuestionPack(
-        brief,
-        providerFor(validQuestions),
-      );
-      const englishEdits = [
-        "What coffee shop is recommended near Depok?",
-        "Where can I find coffee near Depok?",
-        "Which coffee shops are available in Depok?",
-        "Where can I get milk coffee near Depok?",
-        "How do I compare coffee shop options in Depok?",
-        "How does Kopi Taman Senja compare with Kopi Pesaing in Depok?",
-      ];
-      const edited = applyIndonesianQuestionEdits(
-        suggestion,
-        brief,
-        englishEdits.map((new_text, index) => ({ order: index + 1, new_text })),
-      );
-      const finalTexts = edited.questions.map((question) => question.text);
+  it("allows safe customer language edits under the final locked-pack rules", async () => {
+    const suggestion = await generateIndonesianQuestionPack(
+      brief,
+      providerFor(validQuestions),
+    );
+    const englishEdits = [
+      "What coffee shop is recommended near Depok?",
+      "Where can I find coffee near Depok?",
+      "Which coffee shops are available in Depok?",
+      "Where can I get milk coffee near Depok?",
+      "How do I compare coffee shop options in Depok?",
+      "How does Kopi Taman Senja compare with Kopi Pesaing in Depok?",
+    ];
+    const edited = applyIndonesianQuestionEdits(
+      suggestion,
+      brief,
+      englishEdits.map((new_text, index) => ({ order: index + 1, new_text })),
+    );
+    const finalTexts = edited.questions.map((question) => question.text);
 
-      expect(generatedSuggestionGuardIssues(finalTexts, brief)).toContain(
-        "clearly_non_indonesian_output",
-      );
-      expect(validateIndonesianQuestionPack(finalTexts, brief)).toEqual([]);
-      expect(indonesianPackBlockers(finalTexts, brief)).toEqual([]);
-    },
-  );
+    expect(generatedSuggestionGuardIssues(finalTexts, brief)).toContain(
+      "clearly_non_indonesian_output",
+    );
+    expect(validateIndonesianQuestionPack(finalTexts, brief)).toEqual([]);
+    expect(indonesianPackBlockers(finalTexts, brief)).toEqual([]);
+  });
 });
