@@ -35,3 +35,29 @@ test("/audit/spec004 is a hard-offline preview with no audit API request", async
   });
   expect(auditApiRequests).toEqual([]);
 });
+
+test("mobile nav exposes aria-controls only while its menu target exists", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  const hamburger = page.locator(".lp-nav-hamburger");
+  const menu = page.locator("#nuave-mobile-menu");
+  await expect(hamburger).toBeVisible();
+  await expect(hamburger).toHaveAttribute("aria-expanded", "false");
+  await expect(hamburger).not.toHaveAttribute("aria-controls");
+  await expect(menu).toHaveCount(0);
+
+  await hamburger.click();
+  await expect(hamburger).toHaveAttribute("aria-expanded", "true");
+  await expect(hamburger).toHaveAttribute("aria-controls", "nuave-mobile-menu");
+  await expect(menu).toBeVisible();
+  await expect(page.locator("#nuave-mobile-menu-first-link")).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(hamburger).toHaveAttribute("aria-expanded", "false");
+  await expect(hamburger).not.toHaveAttribute("aria-controls");
+  await expect(hamburger).toBeFocused();
+});
