@@ -190,7 +190,7 @@ export default function LandingNav({
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
             aria-expanded={mobileMenuOpen}
-            aria-controls={MOBILE_MENU_ID}
+            aria-controls={mobileMenuOpen ? MOBILE_MENU_ID : undefined}
           >
             <svg
               width="24"
