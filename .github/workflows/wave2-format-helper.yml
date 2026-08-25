@@ -1,0 +1,81 @@
+name: Wave 2 format helper
+
+on:
+  push:
+    branches:
+      - fix/wave2-subsystem-consumers-2026-08-23
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format only Wave 2 CI-reported files
+        run: |
+          npx prettier --write \
+            src/app/audit/AuditWorkflow.tsx \
+            src/app/audit/ReportView.tsx \
+            src/app/audit/SimilarBusinessesEditor.tsx \
+            src/app/audit/SourceHeroBackdrop.module.css \
+            src/app/faq/page.tsx \
+            src/app/privacy/page.tsx \
+            src/app/support/page.tsx \
+            src/app/terms/page.tsx \
+            src/components/LandingNav.tsx \
+            src/lib/audit/customer-error.ts \
+            src/lib/audit/customer-evidence-export.ts \
+            src/lib/audit/question-suggestion-guards.ts \
+            src/lib/audit/question-suggestion-wave2.test.ts \
+            src/lib/audit/source-input.test.ts \
+            src/lib/audit/wave2-integration-wiring.test.ts \
+            src/lib/audit/wave2-route-contract.test.ts \
+            src/lib/audit/website-input.test.ts \
+            src/lib/audit/website-input.ts \
+            src/lib/public-truth-wave2.test.ts
+          git diff --check
+          git diff --stat
+          git diff --binary > wave2-format.patch
+          tar -czf wave2-formatted.tgz \
+            src/app/audit/AuditWorkflow.tsx \
+            src/app/audit/ReportView.tsx \
+            src/app/audit/SimilarBusinessesEditor.tsx \
+            src/app/audit/SourceHeroBackdrop.module.css \
+            src/app/faq/page.tsx \
+            src/app/privacy/page.tsx \
+            src/app/support/page.tsx \
+            src/app/terms/page.tsx \
+            src/components/LandingNav.tsx \
+            src/lib/audit/customer-error.ts \
+            src/lib/audit/customer-evidence-export.ts \
+            src/lib/audit/question-suggestion-guards.ts \
+            src/lib/audit/question-suggestion-wave2.test.ts \
+            src/lib/audit/source-input.test.ts \
+            src/lib/audit/wave2-integration-wiring.test.ts \
+            src/lib/audit/wave2-route-contract.test.ts \
+            src/lib/audit/website-input.test.ts \
+            src/lib/audit/website-input.ts \
+            src/lib/public-truth-wave2.test.ts
+
+      - name: Upload formatter output
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave2-format-output
+          path: |
+            wave2-format.patch
+            wave2-formatted.tgz
+          if-no-files-found: error
+          retention-days: 1
