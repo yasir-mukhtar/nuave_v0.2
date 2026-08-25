@@ -20,6 +20,9 @@ describe("parseSourceInput canonical source policy", () => {
       "https://kopitamansenja.example/beranda?ref=1",
       "https://kopitamansenja.example/beranda?ref=1",
     ],
+    ["https://example.com/maps", "https://example.com/maps"],
+    ["https://maps.example.com/", "https://maps.example.com/"],
+    ["https://www.google.com/about", "https://www.google.com/about"],
   ])("accepts public website %s", (input, normalizedUrl) => {
     expect(parseSourceInput(input)).toEqual({
       sourceType: "website",
@@ -60,10 +63,15 @@ describe("parseSourceInput canonical source policy", () => {
   });
 
   it.each([
+    "https://maps.google.com/?q=Kopi",
+    "https://maps.google.co.uk/?q=Kopi",
+    "https://maps.google.co.id/?q=Kopi",
+    "https://www.google.com/maps/place/Kopi",
+    "https://www.google.co.uk/maps/place/Kopi",
+    "https://google.co.id/maps/place/Kopi",
     "https://maps.app.goo.gl/example",
     "https://g.page/example",
-    "https://www.google.com/maps/place/example",
-    "https://www.google.co.id/maps/place/example",
+    "https://goo.gl/maps/example",
   ])(
     "does not advertise unsupported Google Business/Maps intake: %s",
     (input) => {
