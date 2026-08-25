@@ -16,8 +16,12 @@ import {
   type ExtractionDraft,
   type PromptPack,
 } from "@/lib/audit/types";
-import { makeEvidenceExport } from "@/lib/audit/contracts";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "@/lib/audit/client-contract";
+import {
+  customerAuditErrorMessage,
+  type AuditCustomerStage,
+} from "@/lib/audit/customer-error";
+import { makeCustomerEvidenceExport } from "@/lib/audit/customer-evidence-export";
 import {
   sanitizeAiSimilarBusinesses,
   withPrimarySimilarBusiness,
@@ -160,12 +164,19 @@ async function postJson<T>(
   };
   if (!response.ok) {
     throw new AuditRequestError(
-      data.error || "Kami tidak dapat menyelesaikan permintaan ini.",
+      data.error || "Audit request failed.",
       data.telemetry || [],
       data.code,
     );
   }
   return data;
+}
+
+function safeError(stage: AuditCustomerStage, cause: unknown) {
+  return customerAuditErrorMessage(
+    stage,
+    cause instanceof AuditRequestError ? cause.code : undefined,
+  );
 }
 
 function dedupeAuditCalls(calls: AuditCallTelemetry[]) {
@@ -317,7 +328,7 @@ export default function AuditWorkflow() {
         brief,
       });
       if (proofErrors.length) {
-        const reason = `Variansi tidak dimulai karena bukti observasi 10/10 tidak valid: ${proofErrors.join(" ")}`;
+        const reason = `Variance proof rejected: ${proofErrors.join(" ")}`;
         const failure = createVarianceFailureRecord({
           run_key: runKey,
           prompt_ids: selectedIds,
@@ -329,12 +340,10 @@ export default function AuditWorkflow() {
             JSON.stringify(failure),
           );
         } catch {
-          // Keep the terminal failure in memory if session storage is unavailable.
+          // Keep detailed terminal diagnostics in memory if storage is unavailable.
         }
         setVarianceFailure(failure);
-        setError(
-          "Laporan tetap valid, tetapi pengukuran variasi tidak dijalankan karena bukti lengkap 10 observasi tidak tersedia.",
-        );
+        setError(customerAuditErrorMessage("variance"));
         return;
       }
 
@@ -371,18 +380,14 @@ export default function AuditWorkflow() {
         setVarianceRecord(result.variance);
         setVarianceFailure(null);
         if (!result.variance.complete) {
-          setError(
-            `Laporan selesai, tetapi pengukuran variasi belum lengkap: ${result.variance.incomplete_reason || "sebagian pertanyaan tidak berhasil diuji ulang."}`,
-          );
+          setError(customerAuditErrorMessage("variance"));
         }
       } catch (cause) {
         if (isAbortError(cause) || !operationGeneration.isCurrent(operation)) {
           return;
         }
         const reason =
-          cause instanceof Error
-            ? cause.message
-            : "Pengukuran variasi tidak dapat diselesaikan.";
+          cause instanceof Error ? cause.message : "Variance execution failed.";
         const failure = createVarianceFailureRecord({
           run_key: runKey,
           prompt_ids: selectedIds,
@@ -394,12 +399,10 @@ export default function AuditWorkflow() {
             JSON.stringify(failure),
           );
         } catch {
-          // Keep the terminal failure in memory if session storage is unavailable.
+          // Keep detailed terminal diagnostics in memory if storage is unavailable.
         }
         setVarianceFailure(failure);
-        setError(
-          `Laporan sudah selesai dan tetap valid, tetapi pengukuran variasi gagal: ${reason}`,
-        );
+        setError(safeError("variance", cause));
       } finally {
         if (
           operationGeneration.isCurrent(operation) &&
@@ -491,9 +494,7 @@ export default function AuditWorkflow() {
           data.carryover_cost_usd < 0 ||
           data.carryover_cost_usd > AUDIT_COST_LIMIT_USD
         ) {
-          throw new Error(
-            data.error || "Pengaturan pengendali biaya privat tidak valid.",
-          );
+          throw new Error(data.error || "Budget bootstrap failed.");
         }
         if (!cancelled) {
           setCarryoverCostUsd(data.carryover_cost_usd);
@@ -502,11 +503,7 @@ export default function AuditWorkflow() {
       } catch (cause) {
         if (!cancelled) {
           setBudgetReady(false);
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Pengendali biaya privat tidak tersedia.",
-          );
+          setError(safeError("bootstrap", cause));
         }
       }
     })();
@@ -564,8 +561,8 @@ export default function AuditWorkflow() {
   }, [report]);
   const varianceSettled = Boolean(
     reportRunKey &&
-    (varianceRecord?.run_key === reportRunKey ||
-      varianceFailure?.run_key === reportRunKey),
+      (varianceRecord?.run_key === reportRunKey ||
+        varianceFailure?.run_key === reportRunKey),
   );
 
   useEffect(() => {
@@ -594,15 +591,9 @@ export default function AuditWorkflow() {
           JSON.stringify(failure),
         );
         setVarianceFailure(failure);
-        setError(
-          "Laporan yang dipulihkan tetap valid, tetapi pengukuran variasi tidak dapat dilanjutkan dengan aman karena ledger biaya pasca-laporan tidak tersedia.",
-        );
+        setError(customerAuditErrorMessage("variance"));
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Pengukuran variasi pada laporan yang dipulihkan tidak dapat diselesaikan.",
-        );
+        setError(safeError("variance", cause));
       }
       return;
     }
@@ -685,7 +676,7 @@ export default function AuditWorkflow() {
     setError("");
     const resolvedUrl = url?.trim() || websiteUrl.trim();
     if (!budgetReady) {
-      setError("Tunggu pengendali biaya privat sebelum memulai audit.");
+      setError(customerAuditErrorMessage("bootstrap"));
       return;
     }
     if (!resolvedUrl) {
@@ -757,11 +748,7 @@ export default function AuditWorkflow() {
       if (cause instanceof AuditRequestError && cause.telemetry.length) {
         setSetupTelemetry((calls) => [...calls, ...cause.telemetry]);
       }
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Kami tidak dapat menganalisis situs web ini.",
-      );
+      setError(safeError("extract", cause));
     } finally {
       setBusy(null);
     }
@@ -799,11 +786,7 @@ export default function AuditWorkflow() {
       }
     } catch (cause) {
       if (!isAbortError(cause) && operationGeneration.isCurrent(operation)) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Kami tidak dapat membuat pertanyaan audit.",
-        );
+        setError(safeError("prompts", cause));
       }
     } finally {
       if (operationGeneration.isCurrent(operation)) setBusy(null);
@@ -839,9 +822,7 @@ export default function AuditWorkflow() {
     priorCalls = setupTelemetry,
   ) {
     if (!promptPack) return;
-    if (!budgetReady) {
-      throw new Error("Pengendali biaya privat tidak tersedia.");
-    }
+    if (!budgetReady) throw new Error("Budget bootstrap unavailable.");
 
     const operation = operationGeneration.begin("report");
     setReportFailureCode(null);
@@ -965,7 +946,7 @@ export default function AuditWorkflow() {
     if (!promptPack) return;
     setError("");
     if (!budgetReady) {
-      setError("Tunggu pengendali biaya privat sebelum menjalankan audit.");
+      setError(customerAuditErrorMessage("bootstrap"));
       return;
     }
     const minimized = minimizeIndonesianBrief(brief);
@@ -1019,12 +1000,17 @@ export default function AuditWorkflow() {
         }),
       });
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(data.error || "Kami tidak dapat menjalankan audit.");
+        const data = (await response.json()) as {
+          error?: string;
+          code?: string;
+        };
+        throw new AuditRequestError(
+          data.error || "Audit run failed.",
+          [],
+          data.code,
+        );
       }
-      if (!response.body) {
-        throw new Error("Server tidak mengembalikan aliran audit.");
-      }
+      if (!response.body) throw new Error("Audit stream body missing.");
       if (!operationGeneration.isCurrent(operation)) return;
 
       window.sessionStorage.removeItem(VARIANCE_STORAGE_KEY);
@@ -1068,12 +1054,10 @@ export default function AuditWorkflow() {
         if (event.type === "run_unfinished") runUnfinishedReceived = true;
       }
       if (!runCompleted && !runUnfinishedReceived) {
-        throw new Error("Koneksi terputus sebelum 10 observasi selesai.");
+        throw new Error("Audit stream ended early.");
       }
       if (runCompleted && finalObservations.length !== 10) {
-        throw new Error(
-          "Aliran audit berakhir dengan kumpulan observasi tidak valid.",
-        );
+        throw new Error("Invalid completed observation set.");
       }
       if (runCompleted && operationGeneration.isCurrent(operation)) {
         operationGeneration.finish(operation);
@@ -1085,11 +1069,7 @@ export default function AuditWorkflow() {
         !isAbortError(cause) &&
         (handedToReport || operationGeneration.isCurrent(operation))
       ) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Kami tidak dapat menyelesaikan audit.",
-        );
+        setError(safeError(handedToReport ? "report" : "run", cause));
       }
     } finally {
       if (!handedToReport && operationGeneration.isCurrent(operation)) {
@@ -1112,13 +1092,7 @@ export default function AuditWorkflow() {
     try {
       await createReport(observations);
     } catch (cause) {
-      if (!isAbortError(cause)) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Kami tidak dapat membuat laporan lagi.",
-        );
-      }
+      if (!isAbortError(cause)) setError(safeError("report", cause));
     }
   }
 
@@ -1180,7 +1154,7 @@ export default function AuditWorkflow() {
 
   function downloadEvidenceJson() {
     if (!report || !promptPack) return;
-    const evidence = makeEvidenceExport(
+    const evidence = makeCustomerEvidenceExport(
       brief,
       promptPack.prompts,
       observations,
@@ -1234,7 +1208,7 @@ export default function AuditWorkflow() {
           </Button>
           {report && varianceSettled ? (
             <Button variant="primary" size="sm" onPress={() => window.print()}>
-              <IconDownload /> Download PDF
+              <IconDownload /> Cetak / simpan PDF
             </Button>
           ) : null}
         </div>
