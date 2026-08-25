@@ -18,6 +18,17 @@ const completedObservations = fixtureProtectedObservationSet(
   goldenObservations,
 );
 
+function protectedReportContent() {
+  const content = goldenReportContent();
+  return {
+    ...content,
+    details: content.details.map((detail, index) => ({
+      ...detail,
+      answer_excerpt: completedObservations[index].raw_answer,
+    })),
+  };
+}
+
 describe("report success telemetry handoff", () => {
   it("returns the exact successful report calls to the route without changing the report", async () => {
     const reportCall = fixtureCallTelemetry({
@@ -25,7 +36,7 @@ describe("report success telemetry handoff", () => {
       response_id: "report-telemetry-response",
     });
     const generate = vi.fn(async () => ({
-      content: goldenReportContent(),
+      content: protectedReportContent(),
       requested_model: "gpt-5.6-luna",
       returned_model: "gpt-5.6-luna",
       response_id: "report-telemetry-response",
