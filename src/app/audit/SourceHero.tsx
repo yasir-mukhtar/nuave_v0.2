@@ -4,13 +4,13 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowUp } from "@tabler/icons-react";
+import { customerAuditErrorMessage } from "@/lib/audit/customer-error";
 import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "@/lib/audit/source-handoff";
 import { parseSourceInput } from "@/lib/audit/source-input";
 import styles from "./SourceHero.module.css";
 import backdropStyles from "./SourceHeroBackdrop.module.css";
 
-const AUDIT_BUDGET_WAIT_ERROR =
-  "Tunggu pengendali biaya privat sebelum memulai audit.";
+const AUDIT_BUDGET_WAIT_ERROR = customerAuditErrorMessage("bootstrap");
 
 export default function SourceHero({
   initialValue,
