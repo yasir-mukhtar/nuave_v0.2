@@ -309,7 +309,7 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
     await page.getByRole("button", { name: "Run the audit" }).click();
     await waitForStorage(page, VARIANCE_STORAGE_KEY);
     await expect(
-      page.getByRole("button", { name: "Download PDF" }).first(),
+      page.getByRole("button", { name: "Cetak / simpan PDF" }).first(),
     ).toBeVisible();
 
     expect(runCalls()).toBe(1);
@@ -407,10 +407,16 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
     expect(varianceCalls).toBe(1);
     expect(sequence).toEqual(["run", "report", "variance"]);
     await expect(
-      page.getByText(/Laporan sudah selesai dan tetap valid/),
+      page.getByText(
+        "Laporan sudah selesai, tetapi pengukuran variasi belum dapat diselesaikan.",
+        { exact: true },
+      ),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Download PDF" }).first(),
+      page.getByText("Synthetic variance outage.", { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Cetak / simpan PDF" }).first(),
     ).toBeVisible();
 
     const restoredMain = await page.evaluate((key) => {
@@ -477,8 +483,21 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
     expect(failure).toMatchObject({
       run_key: REPORT_RESPONSE_ID,
       complete: false,
-      incomplete_reason: expect.stringMatching(/bukti observasi 10\/10 tidak valid/i),
     });
+    expect(failure.incomplete_reason).toEqual(expect.any(String));
+    expect(failure.incomplete_reason.length).toBeGreaterThan(0);
+    expect(failure.incomplete_reason).toMatch(
+      /completed locked observation proof|exactly ten observations/i,
+    );
+    await expect(
+      page.getByText(
+        "Laporan sudah selesai, tetapi pengukuran variasi belum dapat diselesaikan.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByText(failure.incomplete_reason, { exact: true }),
+    ).toHaveCount(0);
   });
 
   test("restoring completed variance for the report never posts variance again", async ({
@@ -521,7 +540,7 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
     await page.goto("/audit");
     await expect.poll(budgetCalls).toBe(1);
     await expect(
-      page.getByRole("button", { name: "Download PDF" }).first(),
+      page.getByRole("button", { name: "Cetak / simpan PDF" }).first(),
     ).toBeVisible();
     await page.waitForTimeout(250);
 
