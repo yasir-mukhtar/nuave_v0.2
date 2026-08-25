@@ -11,7 +11,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit --incremental false",
     "test:audit": "vitest run src/lib/audit",
-    "test:unit": "vitest run src/lib/audit src/lib/fixture-journey tests/e2e/helpers.test.ts tests/e2e/network-guard.test.ts tests/e2e/shared-config.test.ts tests/verify-offline.test.mjs",
+    "test:unit": "vitest run",
     "test:live-provider": "vitest run --config vitest.live-provider.config.ts",
     "test:e2e": "playwright test && playwright test -c playwright.config.failure.ts && playwright test -c playwright.config.disabled.ts",
     "test:e2e:enabled": "playwright test",
