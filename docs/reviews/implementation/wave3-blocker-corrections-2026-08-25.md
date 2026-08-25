@@ -233,3 +233,11 @@ The diff from frozen blocked head `2a6d847a6ffbb7fd628e3620c1e34b4852c0e6d4` to 
 - `test:live-provider` runs: **0**
 
 The corrective code head is certified by normal PR CI and is ready to be documented for a targeted Wave 3 re-review. The targeted re-review itself is outside this corrective implementation pass.
+
+## Targeted re-review supersession note — 2026-08-25
+
+The first targeted re-review at frozen head `cbe3913b669c020f57b97e830301ff1788d97f63` subsequently reopened W3-A1 and W3-A3. That targeted review remains historical independent evidence and has not been rewritten.
+
+The subsequent narrow implementation and closure evidence are recorded in:
+
+`docs/reviews/implementation/wave3-targeted-rereview-corrections-2026-08-25.md`
