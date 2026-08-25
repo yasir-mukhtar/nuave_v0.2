@@ -46,6 +46,25 @@ const validQuestions = [
   "Apakah Kopi Taman Senja menyediakan manual brew?",
 ];
 
+const clearlyEnglishQuestions = [
+  "What coffee shop is recommended near Depok?",
+  "Where can I find coffee with a quiet place near Depok?",
+  "Which coffee shops are available for customers in Depok?",
+  "Where can I get milk coffee near Depok?",
+  "How do I compare coffee shop options in Depok?",
+  "How does Kopi Taman Senja compare with Kopi Pesaing in Depok?",
+  "What does Kopi Taman Senja offer for customers in Depok?",
+  "Where is Kopi Taman Senja and when is it open in Depok?",
+  "How can I visit Kopi Taman Senja in Depok?",
+  "How does Kopi Taman Senja offer manual brew for customers in Depok?",
+];
+
+function mixedLanguagePack(englishCount: number) {
+  return clearlyEnglishQuestions.map((question, index) =>
+    index < englishCount ? question : validQuestions[index],
+  );
+}
+
 function stubMethod() {
   vi.stubEnv("OPENCODEGO_API_KEY", "test-dummy-key");
   vi.stubEnv("OPENAI_API_KEY", "test-compatibility-key");
@@ -96,22 +115,40 @@ describe("Wave 2 generated suggestion guards", () => {
     ).toContain("default_composition_not_five_five");
   });
 
-  it("detects clearly non-Indonesian model output", () => {
-    const english = [
-      "What coffee shop is recommended near Depok?",
-      "Where can I find coffee with a quiet place?",
-      "Which coffee shops are available for customers in Depok?",
-      "Where can I get milk coffee near Depok?",
-      "How do I compare coffee shop options in Depok?",
-      "How does Kopi Taman Senja compare with Kopi Pesaing?",
-      "What does Kopi Taman Senja offer for customers?",
-      "Where is Kopi Taman Senja and when is it open?",
-      "How can I visit Kopi Taman Senja?",
-      "Does Kopi Taman Senja offer manual brew?",
-    ];
+  it("rejects a fully clearly-English model default", () => {
     expect(
-      generatedSuggestionGuardIssues(english, minimizeIndonesianBrief(brief)),
+      generatedSuggestionGuardIssues(
+        clearlyEnglishQuestions,
+        minimizeIndonesianBrief(brief),
+      ),
     ).toContain("clearly_non_indonesian_output");
+  });
+
+  it("rejects the Wave 3 seven-English / three-Indonesian reproduction", () => {
+    const issues = generatedSuggestionGuardIssues(
+      mixedLanguagePack(7),
+      minimizeIndonesianBrief(brief),
+    );
+    expect(issues).toContain("clearly_non_indonesian_output");
+    expect(issues).not.toContain("default_composition_not_five_five");
+  });
+
+  it("enforces the adopted majority boundary at six clearly-English questions", () => {
+    const issues = generatedSuggestionGuardIssues(
+      mixedLanguagePack(6),
+      minimizeIndonesianBrief(brief),
+    );
+    expect(issues).toContain("clearly_non_indonesian_output");
+    expect(issues).not.toContain("default_composition_not_five_five");
+  });
+
+  it("does not classify a five-English / five-Indonesian default as majority-English", () => {
+    const issues = generatedSuggestionGuardIssues(
+      mixedLanguagePack(5),
+      minimizeIndonesianBrief(brief),
+    );
+    expect(issues).not.toContain("clearly_non_indonesian_output");
+    expect(issues).not.toContain("default_composition_not_five_five");
   });
 
   it("detects compact or punctuation-mutated competitor leakage outside slot 6", () => {
@@ -153,5 +190,30 @@ describe("Wave 2 generated suggestion guards", () => {
           prompt.inputs_used[0] === "confirmed_business_facts",
       ),
     ).toBe(true);
+  });
+
+  it("never returns a majority-English provider pack as successful id-ID model output", async () => {
+    stubMethod();
+    const badGeneratedPack = mixedLanguagePack(7);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify(providerBody(badGeneratedPack)), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    );
+
+    const result = await buildLiveIndonesianPromptPack({ brief });
+    expect(result.pack.language).toBe("id-ID");
+    expect(result.generation.source).toBe("fallback");
+    expect(result.generation.warnings).toContain(
+      "clearly_non_indonesian_output",
+    );
+    expect(result.pack.prompts.map((prompt) => prompt.question)).not.toEqual(
+      badGeneratedPack,
+    );
   });
 });
