@@ -145,7 +145,7 @@ export default function LandingAuditHero() {
       }
 
       extractionTelemetryRef.current = allTelemetry;
-      router.push("/audit");
+      router.push("/audit?entry=landing-extracted");
     } catch {
       inFlightRef.current = false;
       setNavigating(false);
