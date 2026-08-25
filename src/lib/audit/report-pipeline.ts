@@ -14,6 +14,7 @@ import {
 } from "./locked-question-pack";
 import { assertSafeComparisonBusinessUrls } from "./similar-businesses";
 import { productionObservationMethodErrors } from "./production-observation-method";
+import { exactReportExcerptErrors } from "./report-excerpt";
 import { sanitizeUnsupportedReportPriorities } from "./report-priority";
 import type { ReportFailureCode } from "./report-recovery";
 import {
@@ -146,6 +147,18 @@ function normalizeAndContainPriorities(
   input: ReportPipelineInput,
   reportCalls: AuditCallTelemetry[],
 ) {
+  const exactExcerptErrors = exactReportExcerptErrors(
+    rawContent,
+    input.observations,
+  );
+  if (exactExcerptErrors.length) {
+    throw new ReportPipelineError(
+      exactExcerptErrors.join(" "),
+      422,
+      reportCalls,
+      "REPORT_INTEGRITY_FAILURE",
+    );
+  }
   const normalized = normalizeReportEvidence(
     rawContent,
     input.observations,

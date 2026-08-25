@@ -11,26 +11,16 @@
  * claim (R-28, R-41).
  */
 
-/** Settled report labels, verbatim (VOICE-v2-candidate.md §2, §7.4; R-25). */
 export const INDONESIAN_REPORT_LABELS = {
-  /** Composition label for questions that do not name the business. */
   without_business_name: "Tanpa menyebut bisnis Anda",
-  /** Composition label for questions that name the business. */
   with_business_name: "Menyebut bisnis Anda",
-  /**
-   * Headline template: "Bisnis Anda muncul di X dari 10 pertanyaan".
-   * `{count}` is replaced with the provided, already computed mention count.
-   */
   headline_template: "Bisnis Anda muncul di {count} dari 10 pertanyaan",
-  /** Count template: "X/10" (e.g. "4/10"). */
   count_template: "{count}/{denominator}",
-  /** Empty-denominator label; never zero performance. */
   not_tested: "Tidak diuji",
-  /** Primary report action (settled; kept in English). */
-  download_pdf: "Download PDF",
+  /** Browser print dialog; customers may choose Save as PDF there. */
+  download_pdf: "Cetak / simpan PDF",
 } as const;
 
-/** The run-status set (R-40): Menunggu / Sedang diuji / Mencoba kembali / Selesai / Belum berhasil diuji. */
 export const INDONESIAN_RUN_STATUS_KEYS = [
   "pending",
   "running",
@@ -53,10 +43,6 @@ export const INDONESIAN_RUN_STATUS_LABELS: Record<
   failed: "Belum berhasil diuji",
 };
 
-/**
- * Settled headline from a code-derived mention count:
- * "Bisnis Anda muncul di 8 dari 10 pertanyaan".
- */
 export function indonesianHeadline(mentionedCount: number): string {
   if (!Number.isInteger(mentionedCount) || mentionedCount < 0) {
     throw new Error(
@@ -69,11 +55,6 @@ export function indonesianHeadline(mentionedCount: number): string {
   );
 }
 
-/**
- * Settled count label from code-derived dimensions ("8/10", "3/5"). An empty
- * denominator (zero or negative) renders "Tidak diuji", never "0/0" and never
- * a zero performance claim.
- */
 export function indonesianCountLabel(
   count: number,
   denominator: number,
@@ -84,16 +65,6 @@ export function indonesianCountLabel(
     .replace("{denominator}", String(denominator));
 }
 
-/**
- * Settled label for an eligible-denominator measure (AC-17, AC-26). An
- * empty assessed denominator renders "Tidak diuji", never a zero
- * performance claim (R-28). `ready` builds the sentence only when the
- * denominator is non-empty.
- *
- * Shared by ReportView and FixtureReportView (R3-8, Phase 3 fix-round-3
- * adversarial review): the two views previously carried verbatim copies of
- * this function with no test on either.
- */
 export function indonesianMeasureLabel(
   assessed: number,
   ready: (assessed: number) => string,
@@ -102,7 +73,6 @@ export function indonesianMeasureLabel(
   return ready(assessed);
 }
 
-/** Settled label for a run-status key; throws on an unknown key rather than inventing a label. */
 export function indonesianRunStatusLabel(
   status: IndonesianRunStatusKey,
 ): string {
@@ -113,11 +83,6 @@ export function indonesianRunStatusLabel(
   return label;
 }
 
-/**
- * Settled label for a recorded observation run status: "completed" →
- * "Selesai", "failed" → "Belum berhasil diuji". Translates the recorded fact
- * deterministically; it does not recompute anything.
- */
 export function indonesianObservationRunStatus(
   run: "completed" | "failed",
 ): string {
