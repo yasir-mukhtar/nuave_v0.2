@@ -79,13 +79,12 @@ describe("Wave 3 final comparison-business identity boundary", () => {
     );
   });
 
-  it.each([
-    "seperti XO di Depok",
-    "bandingkan dengan XO",
-    "xo cocok tidak?",
-  ])("detects exact short comparison identity token: %s", (text) => {
-    expect(containsIndonesianComparisonIdentity(text, "XO")).toBe(true);
-  });
+  it.each(["seperti XO di Depok", "bandingkan dengan XO", "xo cocok tidak?"])(
+    "detects exact short comparison identity token: %s",
+    (text) => {
+      expect(containsIndonesianComparisonIdentity(text, "XO")).toBe(true);
+    },
+  );
 
   it.each(["taxonomi", "exotic", "pixelbox"])(
     "does not compact-match a short identity inside a longer token: %s",
