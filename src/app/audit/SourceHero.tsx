@@ -7,6 +7,7 @@ import { IconArrowUp } from "@tabler/icons-react";
 import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "@/lib/audit/source-handoff";
 import { parseSourceInput } from "@/lib/audit/source-input";
 import styles from "./SourceHero.module.css";
+import backdropStyles from "./SourceHeroBackdrop.module.css";
 
 const AUDIT_BUDGET_WAIT_ERROR =
   "Tunggu pengendali biaya privat sebelum memulai audit.";
@@ -99,7 +100,10 @@ export default function SourceHero({
 
   return (
     <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
-      <div className={styles.skyField} aria-hidden="true">
+      <div
+        className={`${styles.skyField} ${backdropStyles.localBackdrop}`}
+        aria-hidden="true"
+      >
         <span className={styles.skyFade} />
       </div>
 
