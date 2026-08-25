@@ -45,7 +45,9 @@ describe("Wave 2 public accessibility and asset truth", () => {
     const nav = source("src/components/LandingNav.tsx");
     expect(nav).toContain("if (!open) return null");
     expect(nav).toContain("aria-expanded={mobileMenuOpen}");
-    expect(nav).toContain("aria-controls={MOBILE_MENU_ID}");
+    expect(nav).toContain(
+      "aria-controls={mobileMenuOpen ? MOBILE_MENU_ID : undefined}",
+    );
     expect(nav).toContain('event.key === "Escape"');
     expect(nav).toContain("hamburgerRef.current?.focus()");
   });
