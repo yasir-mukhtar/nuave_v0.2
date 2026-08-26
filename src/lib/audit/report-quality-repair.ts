@@ -145,7 +145,8 @@ export function sanitizeRecoverableReportQuality(
   const details = content.details.map((detail) => {
     const findingUnsafe = hasProhibitedClaim(detail.finding);
     const noteUnsafe = hasProhibitedClaim(detail.evidence_note);
-    if (findingUnsafe || noteUnsafe) diagnostics.add("prohibited_claim_removed");
+    if (findingUnsafe || noteUnsafe)
+      diagnostics.add("prohibited_claim_removed");
     return {
       ...detail,
       finding: findingUnsafe

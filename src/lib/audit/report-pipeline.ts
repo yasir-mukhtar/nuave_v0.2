@@ -363,9 +363,7 @@ export async function createValidatedAuditReport(
         lockedInput,
         reportCalls,
       );
-      repaired.diagnostics.forEach((diagnostic) =>
-        diagnostics.add(diagnostic),
-      );
+      repaired.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
       content = repaired.content;
 
       const retryIntegrityErrors = [
@@ -393,10 +391,9 @@ export async function createValidatedAuditReport(
     }
   }
 
-  const annotatedReportCalls = annotateReportTelemetry(
-    reportCalls,
-    [...diagnostics],
-  );
+  const annotatedReportCalls = annotateReportTelemetry(reportCalls, [
+    ...diagnostics,
+  ]);
   const report = buildAuditReport(
     content,
     lockedInput.observations,
