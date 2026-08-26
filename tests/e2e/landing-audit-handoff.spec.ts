@@ -178,16 +178,15 @@ test.describe("landing audit hero handoff", () => {
         name: "Check the client brief before it shapes the audit.",
       }),
     ).toBeVisible();
-    await expect(page.getByLabel("Brand name")).toHaveValue("Example Business");
+    const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
+    await expect(brandNameInput).toHaveValue("Example Business");
     await expect(page.getByLabel("Category")).toHaveValue("Coffee shop");
     await expect(page.getByLabel("Market or location")).toHaveValue("Indonesia");
     await expect(page.getByLabel("Target customer")).toHaveValue("Customers");
     await expect(page.getByLabel("Products or services")).toHaveValue("Coffee");
 
-    await page.getByLabel("Brand name").fill("Edited Example Business");
-    await expect(page.getByLabel("Brand name")).toHaveValue(
-      "Edited Example Business",
-    );
+    await brandNameInput.fill("Edited Example Business");
+    await expect(brandNameInput).toHaveValue("Edited Example Business");
 
     expect(calls.extractCalls()).toBe(1);
     await page.waitForTimeout(300);
@@ -257,8 +256,9 @@ test.describe("landing audit hero handoff", () => {
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
 
     await expect(page).toHaveURL(/\/audit$/);
-    await expect(page.getByLabel("Brand name")).toHaveValue("Example Business");
-    await expect(page.getByLabel("Brand name")).not.toHaveValue("Stale Business");
+    const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
+    await expect(brandNameInput).toHaveValue("Example Business");
+    await expect(brandNameInput).not.toHaveValue("Stale Business");
     expect(calls.extractCalls()).toBe(1);
 
     const staleVariance = await page.evaluate(
