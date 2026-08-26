@@ -13,7 +13,8 @@ function hasProhibitedClaim(value: string) {
   if (
     /\b(?:does not|do not|cannot|can't|no|without (?:a )?) guarantee\b/i.test(
       value,
-    ) || /\bnot guaranteed\b/i.test(value)
+    ) ||
+    /\bnot guaranteed\b/i.test(value)
   ) {
     return (
       PROHIBITED_REPORT_CLAIMS.slice(0, 2).some((pattern) =>
@@ -150,7 +151,9 @@ export function sanitizeRecoverableReportQuality(
       finding: findingUnsafe
         ? safeDetailFinding(detail, language)
         : detail.finding,
-      evidence_note: noteUnsafe ? safeEvidenceNote(language) : detail.evidence_note,
+      evidence_note: noteUnsafe
+        ? safeEvidenceNote(language)
+        : detail.evidence_note,
     };
   });
 
