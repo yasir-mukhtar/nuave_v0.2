@@ -18,7 +18,9 @@ function priorityIsSupported(
   brief: BusinessBrief,
 ) {
   const knownIds = new Set(observations.map((item) => item.prompt_id));
-  if (priority.evidence_prompt_ids.some((id) => !knownIds.has(id))) return false;
+  if (priority.evidence_prompt_ids.some((id) => !knownIds.has(id))) {
+    return false;
+  }
 
   const errors = validateReportContent(
     { ...content, priorities: [priority] },
