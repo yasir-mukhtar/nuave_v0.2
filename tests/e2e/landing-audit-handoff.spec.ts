@@ -180,7 +180,9 @@ test.describe("landing audit hero handoff", () => {
     ).toBeVisible();
     const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
     await expect(brandNameInput).toHaveValue("Example Business");
-    await expect(page.getByLabel("Category")).toHaveValue("Coffee shop");
+    await expect(page.getByRole("textbox", { name: "Category*" })).toHaveValue(
+      "Coffee shop",
+    );
     await expect(page.getByLabel("Market or location")).toHaveValue("Indonesia");
     await expect(page.getByLabel("Target customer")).toHaveValue("Customers");
     await expect(page.getByLabel("Products or services")).toHaveValue("Coffee");
