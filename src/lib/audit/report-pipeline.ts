@@ -23,9 +23,7 @@ import type {
   ReportDiagnosticCode,
   ReportFailureCode,
 } from "./report-recovery";
-import {
-  sanitizeRecoverableReportQuality,
-} from "./report-quality-repair";
+import { sanitizeRecoverableReportQuality } from "./report-quality-repair";
 import {
   validateReportLanguage,
   validateIndonesianReportLanguage,
@@ -217,7 +215,8 @@ function normalizeAndRepairReport(
     0,
   );
   if (
-    normalized.observed_competitors.length < rawContent.observed_competitors.length ||
+    normalized.observed_competitors.length <
+      rawContent.observed_competitors.length ||
     normalizedCompetitorEvidence < rawCompetitorEvidence
   ) {
     diagnostics.add("unsupported_competitor_removed");
@@ -249,7 +248,9 @@ function normalizeAndRepairReport(
     input.brief,
     input.language,
   );
-  qualityRepair.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
+  qualityRepair.diagnostics.forEach((diagnostic) =>
+    diagnostics.add(diagnostic),
+  );
 
   const exactExcerptErrors = exactReportExcerptErrors(
     qualityRepair.content,
@@ -271,10 +272,7 @@ function normalizeAndRepairReport(
   };
 }
 
-function languageErrorsFor(
-  input: ReportPipelineInput,
-  content: ReportContent,
-) {
+function languageErrorsFor(input: ReportPipelineInput, content: ReportContent) {
   return input.language === "id"
     ? validateIndonesianReportLanguage(content).errors
     : validateReportLanguage(content);
@@ -323,33 +321,39 @@ export async function createValidatedAuditReport(
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
+    const retryShapeIsRepresentable =
+      original.key_findings.length > 0 && original.priorities.length > 0;
     let retrySucceeded = false;
-    try {
-      final = await generate(
-        {
-          ...lockedInput,
-          budget: {
-            ...lockedInput.budget,
-            calls: [...lockedInput.budget.calls, ...reportCalls],
+
+    if (!retryShapeIsRepresentable) {
+      diagnostics.add("language_warning");
+    } else {
+      try {
+        final = await generate(
+          {
+            ...lockedInput,
+            budget: {
+              ...lockedInput.budget,
+              calls: [...lockedInput.budget.calls, ...reportCalls],
+            },
           },
-        },
-        {
-          draft: original,
-          violations: languageErrors,
-        },
-      );
-      reportCalls.push(...final.telemetry);
-      callCount += 1;
-      retrySucceeded = true;
-    } catch (error) {
-      if (error instanceof AuditCallExecutionError) {
-        reportCalls.push(...error.telemetry);
-        if (error.telemetry.length) callCount += 1;
+          {
+            draft: original,
+            violations: languageErrors,
+          },
+        );
+        reportCalls.push(...final.telemetry);
+        callCount += 1;
+        retrySucceeded = true;
+      } catch (error) {
+        if (error instanceof AuditCallExecutionError) {
+          reportCalls.push(...error.telemetry);
+          if (error.telemetry.length) callCount += 1;
+        } else if (!(error instanceof AuditBudgetError)) {
+          // The first draft already passed evidence integrity. A failure in the
+          // optional style-only revision must not erase that paid audit result.
+        }
         diagnostics.add("language_warning");
-      } else if (error instanceof AuditBudgetError) {
-        diagnostics.add("language_warning");
-      } else {
-        throw error;
       }
     }
 
@@ -359,7 +363,9 @@ export async function createValidatedAuditReport(
         lockedInput,
         reportCalls,
       );
-      repaired.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
+      repaired.diagnostics.forEach((diagnostic) =>
+        diagnostics.add(diagnostic),
+      );
       content = repaired.content;
 
       const retryIntegrityErrors = [
