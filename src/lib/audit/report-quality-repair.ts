@@ -1,8 +1,4 @@
-import type {
-  AuditObservation,
-  BusinessBrief,
-  ReportContent,
-} from "./types";
+import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 import type { ReportDiagnosticCode } from "./report-recovery";
 
 const PROHIBITED_REPORT_CLAIMS = [
@@ -19,9 +15,12 @@ function hasProhibitedClaim(value: string) {
       value,
     ) || /\bnot guaranteed\b/i.test(value)
   ) {
-    return PROHIBITED_REPORT_CLAIMS.slice(0, 2).some((pattern) =>
-      pattern.test(value),
-    ) || PROHIBITED_REPORT_CLAIMS.slice(3).some((pattern) => pattern.test(value));
+    return (
+      PROHIBITED_REPORT_CLAIMS.slice(0, 2).some((pattern) =>
+        pattern.test(value),
+      ) ||
+      PROHIBITED_REPORT_CLAIMS.slice(3).some((pattern) => pattern.test(value))
+    );
   }
   return PROHIBITED_REPORT_CLAIMS.some((pattern) => pattern.test(value));
 }
@@ -31,7 +30,9 @@ function neutralConclusion(
   brief: BusinessBrief,
   language: "en" | "id" | undefined,
 ) {
-  const completed = content.details.filter((detail) => detail.run === "completed");
+  const completed = content.details.filter(
+    (detail) => detail.run === "completed",
+  );
   const appeared = completed.filter(
     (detail) => detail.appearance === "mentioned",
   ).length;
@@ -54,8 +55,12 @@ function safeDetailFinding(
     }
     return "Hasil pertanyaan ini tersedia pada bukti yang dipertahankan.";
   }
-  if (detail.appearance === "absent") return "The business did not appear in this answer.";
-  if (detail.appearance === "mentioned") return "The business appeared in this answer.";
+  if (detail.appearance === "absent") {
+    return "The business did not appear in this answer.";
+  }
+  if (detail.appearance === "mentioned") {
+    return "The business appeared in this answer.";
+  }
   return "This question result is available in the retained evidence.";
 }
 
@@ -142,7 +147,9 @@ export function sanitizeRecoverableReportQuality(
     if (findingUnsafe || noteUnsafe) diagnostics.add("prohibited_claim_removed");
     return {
       ...detail,
-      finding: findingUnsafe ? safeDetailFinding(detail, language) : detail.finding,
+      finding: findingUnsafe
+        ? safeDetailFinding(detail, language)
+        : detail.finding,
       evidence_note: noteUnsafe ? safeEvidenceNote(language) : detail.evidence_note,
     };
   });
