@@ -50,11 +50,19 @@ function result(content: ReportContent, id: string) {
   };
 }
 
-function diagnosticsFrom(report: Awaited<ReturnType<typeof createValidatedAuditReport>>) {
+function diagnosticsFrom(
+  report: Awaited<ReturnType<typeof createValidatedAuditReport>>,
+) {
   return report.operational_telemetry.calls.flatMap((call) => {
-    const diagnosticCall = call as typeof call & { report_diagnostics?: string[] };
+    const diagnosticCall = call as typeof call & {
+      report_diagnostics?: string[];
+    };
     return diagnosticCall.report_diagnostics ?? [];
   });
+}
+
+function longSentence(word: string) {
+  return `${Array.from({ length: 61 }, () => word).join(" ")}.`;
 }
 
 describe("literal answer excerpts", () => {
@@ -69,7 +77,7 @@ describe("literal answer excerpts", () => {
     expect(rawAnswer.includes(excerpt)).toBe(true);
   });
 
-  it("keeps long-answer truncation literal and bounded", () => {
+  it("keeps long truncation literal and bounded", () => {
     const rawAnswer = `Pembuka tanpa titik ${Array.from(
       { length: 100 },
       (_, index) => `bagian-${index}`,
@@ -79,7 +87,7 @@ describe("literal answer excerpts", () => {
     expect(rawAnswer.includes(excerpt)).toBe(true);
   });
 
-  it("repairs the production-shaped newline collapse before exact validation", async () => {
+  it("repairs production-shaped newline collapse", async () => {
     const rawAnswer = [
       "Bisa—kalau kantor Anda di AS, pilihan paling praktis biasanya:",
       "",
@@ -107,7 +115,7 @@ describe("literal answer excerpts", () => {
 });
 
 describe("recoverable report quality", () => {
-  it("removes every unsupported priority and still delivers the report", async () => {
+  it("delivers after removing all unsupported priorities", async () => {
     const draft = protectedReportContent();
     const unsupportedPromptId = goldenPrompts[6].prompt_id;
     draft.priorities = draft.priorities.map((priority) => ({
@@ -129,7 +137,7 @@ describe("recoverable report quality", () => {
     );
   });
 
-  it("drops an invalid source and unsupported competitor without denying the report", async () => {
+  it("drops invalid source and unsupported competitor", async () => {
     const draft = protectedReportContent();
     draft.details[0].source_urls = ["https://unsupported.example/evidence"];
     draft.observed_competitors = [
@@ -155,11 +163,11 @@ describe("recoverable report quality", () => {
     );
   });
 
-  it("turns a persistent style violation into a warning after the protected retry", async () => {
+  it("warns on a persistent style violation", async () => {
     const initial = protectedReportContent();
-    initial.conclusion = `${Array.from({ length: 61 }, () => "clear").join(" ")}.`;
+    initial.conclusion = longSentence("clear");
     const retry = protectedReportContent();
-    retry.conclusion = `${Array.from({ length: 61 }, () => "plain").join(" ")}.`;
+    retry.conclusion = longSentence("plain");
     const generate = vi
       .fn()
       .mockResolvedValueOnce(result(initial, "response-style-initial"))
@@ -175,7 +183,7 @@ describe("recoverable report quality", () => {
     expect(diagnosticsFrom(report)).toContain("language_warning");
   });
 
-  it("removes a prohibited model-authored claim and delivers neutral evidence-based copy", async () => {
+  it("removes a prohibited model-authored claim", async () => {
     const draft = protectedReportContent();
     draft.conclusion = "Nuave guarantees this change will increase sales.";
     const generate = vi.fn(async () =>
@@ -191,7 +199,7 @@ describe("recoverable report quality", () => {
 });
 
 describe("protected observation integrity remains hard", () => {
-  it("still blocks incomplete evidence before report synthesis", async () => {
+  it("blocks incomplete evidence before report synthesis", async () => {
     const generate = vi.fn(async () =>
       result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
