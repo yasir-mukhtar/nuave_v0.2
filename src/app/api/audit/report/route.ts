@@ -31,13 +31,15 @@ const requestSchema = z.object({
   budget: auditBudgetSchema,
 });
 
+type DiagnosticAuditCallTelemetry = AuditCallTelemetry & {
+  report_diagnostics?: string[];
+};
+
 function reportDiagnostics(calls: AuditCallTelemetry[]) {
   return [
     ...new Set(
       calls.flatMap((call) => {
-        const value = (call as AuditCallTelemetry & {
-          report_diagnostics?: string[];
-        }).report_diagnostics;
+        const value = (call as DiagnosticAuditCallTelemetry).report_diagnostics;
         return Array.isArray(value) ? value : [];
       }),
     ),
