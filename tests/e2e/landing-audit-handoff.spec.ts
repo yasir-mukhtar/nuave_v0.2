@@ -1,5 +1,4 @@
 import { expect, test, type Page } from "@playwright/test";
-import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "../../src/lib/audit/source-handoff";
 import { AUDIT_WORKFLOW_STORAGE_KEY } from "../../src/lib/audit/workflow-storage";
 import {
   VARIANCE_FAILURE_STORAGE_KEY,
@@ -33,10 +32,19 @@ function extractionDraft() {
   };
 }
 
-async function stubExtraction(page: Page) {
+async function stubExtraction(
+  page: Page,
+  options: { holdPost?: boolean } = {},
+) {
   let budgetCalls = 0;
   let extractCalls = 0;
   let requestedSource = "";
+  let releasePost: (() => void) | null = null;
+  const postGate = options.holdPost
+    ? new Promise<void>((resolve) => {
+        releasePost = resolve;
+      })
+    : null;
 
   await page.route("**/api/audit/extract", async (route) => {
     const method = route.request().method();
@@ -58,6 +66,7 @@ async function stubExtraction(page: Page) {
       extractCalls += 1;
       const request = route.request().postDataJSON() as { website_url?: string };
       requestedSource = request.website_url ?? "";
+      if (postGate) await postGate;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -73,6 +82,7 @@ async function stubExtraction(page: Page) {
     budgetCalls: () => budgetCalls,
     extractCalls: () => extractCalls,
     requestedSource: () => requestedSource,
+    releasePost: () => releasePost?.(),
   };
 }
 
@@ -122,7 +132,70 @@ test.describe("landing audit hero handoff", () => {
     expect(auditRequests).toBe(0);
   });
 
-  test("valid input clears stale audit state and extracts exactly once after navigation", async ({
+  test("valid submission remains on landing while extraction is pending", async ({
+    page,
+  }) => {
+    const calls = await stubExtraction(page, { holdPost: true });
+
+    await page.goto("/");
+    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const input = hero.getByPlaceholder("https://bisnisanda.com");
+    const submit = hero.getByRole("button", { name: "Lanjutkan audit" });
+    await input.fill("example.com");
+    await submit.click();
+
+    await expect.poll(calls.extractCalls).toBe(1);
+    expect(calls.requestedSource()).toBe(SOURCE);
+    expect(new URL(page.url()).pathname).toBe("/");
+    await expect(hero).toBeVisible();
+    await expect(input).toBeDisabled();
+    await expect(submit).toBeDisabled();
+    await expect(submit).toHaveAttribute("aria-busy", "true");
+    await expect(
+      page.getByRole("heading", {
+        name: "Check the client brief before it shapes the audit.",
+      }),
+    ).toHaveCount(0);
+    expect(calls.extractCalls()).toBe(1);
+
+    calls.releasePost();
+    await expect(page).toHaveURL(/\/audit$/);
+  });
+
+  test("successful extraction navigates once to a populated editable brief without re-extracting", async ({
+    page,
+  }) => {
+    const calls = await stubExtraction(page);
+
+    await page.goto("/");
+    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+
+    await expect(page).toHaveURL(/\/audit$/);
+    await expect(
+      page.getByRole("heading", {
+        name: "Check the client brief before it shapes the audit.",
+      }),
+    ).toBeVisible();
+    const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
+    await expect(brandNameInput).toHaveValue("Example Business");
+    await expect(page.getByRole("textbox", { name: "Category*" })).toHaveValue(
+      "Coffee shop",
+    );
+    await expect(page.getByLabel("Market or location")).toHaveValue("Indonesia");
+    await expect(page.getByLabel("Target customer")).toHaveValue("Customers");
+    await expect(page.getByLabel("Products or services")).toHaveValue("Coffee");
+
+    await brandNameInput.fill("Edited Example Business");
+    await expect(brandNameInput).toHaveValue("Edited Example Business");
+
+    expect(calls.extractCalls()).toBe(1);
+    await page.waitForTimeout(300);
+    expect(calls.extractCalls()).toBe(1);
+  });
+
+  test("a stale saved audit cannot win over a new landing extraction", async ({
     page,
   }) => {
     const calls = await stubExtraction(page);
@@ -130,7 +203,44 @@ test.describe("landing audit hero handoff", () => {
       ({ workflowKey, varianceKey, failureKey }) => {
         window.sessionStorage.setItem(
           workflowKey,
-          JSON.stringify({ websiteUrl: "https://stale.example", factsExtracted: true }),
+          JSON.stringify({
+            websiteUrl: "https://stale.example/",
+            brief: {
+              brand_name: "Stale Business",
+              entity_scope: "Stale Business",
+              brand_type: "Business",
+              category: "Old category",
+              market_context: "Old market",
+              target_customer: "Old customers",
+              official_sources: ["https://stale.example/"],
+              verified_offerings: ["Old offering"],
+              verified_customer_needs: [],
+              verified_decision_criteria: [],
+              verified_competitor: { name: "", scope: "", source_url: "" },
+              similar_businesses: [],
+              brand_name_variants: [],
+              priority_offering: "",
+              conversion_action: "",
+              customer_supplied_facts: [],
+              known_accuracy_questions: [],
+              usp: "",
+              regulated_category_notes: "",
+              language: "en-US",
+              agency_name: "",
+              agency_logo_data_url: "",
+            },
+            factsExtracted: true,
+            factsConfirmed: false,
+            factsCustomerOwned: false,
+            extraction: null,
+            promptPack: null,
+            observations: [],
+            report: null,
+            setupTelemetry: [],
+            executionStarted: false,
+            postReportBudgetCalls: [],
+            reportFailureCode: null,
+          }),
         );
         window.sessionStorage.setItem(varianceKey, JSON.stringify({ stale: true }));
         window.sessionStorage.setItem(failureKey, JSON.stringify({ stale: true }));
@@ -148,26 +258,22 @@ test.describe("landing audit hero handoff", () => {
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
 
     await expect(page).toHaveURL(/\/audit$/);
-    // React's development lifecycle can mount the side-effect-free budget
-    // bootstrap more than once. The protected POST below is the operation that
-    // must remain exactly-once.
-    await expect.poll(calls.budgetCalls).toBeGreaterThanOrEqual(1);
-    await expect.poll(calls.extractCalls).toBe(1);
-    expect(calls.requestedSource()).toBe(SOURCE);
-    await expect(
-      page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
-      }),
-    ).toBeVisible();
-
-    const handoff = await page.evaluate(
-      (key) => window.sessionStorage.getItem(key),
-      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
-    );
-    expect(handoff).toBeNull();
-
-    await page.waitForTimeout(250);
+    const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
+    await expect(brandNameInput).toHaveValue("Example Business");
+    await expect(brandNameInput).not.toHaveValue("Stale Business");
     expect(calls.extractCalls()).toBe(1);
+
+    const staleVariance = await page.evaluate(
+      ({ varianceKey, failureKey }) => ({
+        variance: window.sessionStorage.getItem(varianceKey),
+        failure: window.sessionStorage.getItem(failureKey),
+      }),
+      {
+        varianceKey: VARIANCE_STORAGE_KEY,
+        failureKey: VARIANCE_FAILURE_STORAGE_KEY,
+      },
+    );
+    expect(staleVariance).toEqual({ variance: null, failure: null });
   });
 
   for (const viewport of [

@@ -10,11 +10,99 @@
  * The report-shape guard remains as a second line of defense for required
  * fields read without optional chaining by the report screen.
  */
-import type { AuditReport } from "./types";
+import type {
+  AuditCallTelemetry,
+  AuditReport,
+  BusinessBrief,
+  ExtractionDraft,
+} from "./types";
+import {
+  sanitizeAiSimilarBusinesses,
+  withPrimarySimilarBusiness,
+} from "./similar-businesses";
 
 /** Bump whenever the persisted `SavedState` shape or resumable method changes. */
 export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v7";
 export const AUDIT_SESSION_STORAGE_KEY = "nuave.audit.session.v1";
+
+/**
+ * Complete v7 workflow state created after a successful landing-page
+ * extraction. This is intentionally a full initial SavedState-compatible
+ * record, not a partial object. Keeping the constructor next to the versioned
+ * key makes the landing -> /audit transfer explicit while AuditWorkflow
+ * remains the owner of all subsequent persistence.
+ */
+export type InitialExtractedAuditWorkflowState = {
+  websiteUrl: string;
+  brief: BusinessBrief;
+  factsExtracted: true;
+  factsConfirmed: false;
+  factsCustomerOwned: false;
+  extraction: ExtractionDraft;
+  promptPack: null;
+  observations: [];
+  report: null;
+  setupTelemetry: AuditCallTelemetry[];
+  executionStarted: false;
+  postReportBudgetCalls: [];
+  reportFailureCode: null;
+};
+
+export function createInitialExtractedAuditWorkflowState(input: {
+  websiteUrl: string;
+  draft: ExtractionDraft;
+  telemetry: AuditCallTelemetry[];
+}): InitialExtractedAuditWorkflowState {
+  const similarBusinesses = sanitizeAiSimilarBusinesses(
+    input.draft.similar_businesses ?? [],
+  );
+  const extraction: ExtractionDraft = {
+    ...input.draft,
+    similar_businesses: similarBusinesses,
+  };
+  const brief = withPrimarySimilarBusiness({
+    brand_name: input.draft.brand_name,
+    entity_scope: input.draft.entity_scope,
+    brand_type: input.draft.brand_type,
+    category: input.draft.category,
+    market_context: input.draft.market_context,
+    target_customer: input.draft.target_customer,
+    official_sources: [
+      ...new Set([input.websiteUrl, ...input.draft.official_sources]),
+    ],
+    verified_offerings: input.draft.verified_offerings,
+    verified_customer_needs: input.draft.verified_customer_needs,
+    verified_decision_criteria: input.draft.verified_decision_criteria,
+    verified_competitor: { name: "", scope: "", source_url: "" },
+    similar_businesses: similarBusinesses,
+    brand_name_variants: input.draft.brand_name_variants,
+    priority_offering: input.draft.priority_offering,
+    conversion_action: input.draft.conversion_action,
+    customer_supplied_facts: input.draft.customer_supplied_facts,
+    known_accuracy_questions: input.draft.known_accuracy_questions,
+    usp: input.draft.usp,
+    regulated_category_notes: input.draft.regulated_category_notes,
+    language: "en-US",
+    agency_name: "",
+    agency_logo_data_url: "",
+  });
+
+  return {
+    websiteUrl: input.websiteUrl,
+    brief,
+    factsExtracted: true,
+    factsConfirmed: false,
+    factsCustomerOwned: false,
+    extraction,
+    promptPack: null,
+    observations: [],
+    report: null,
+    setupTelemetry: [...input.telemetry],
+    executionStarted: false,
+    postReportBudgetCalls: [],
+    reportFailureCode: null,
+  };
+}
 
 function isCount(value: unknown): boolean {
   return typeof value === "number" && Number.isFinite(value);

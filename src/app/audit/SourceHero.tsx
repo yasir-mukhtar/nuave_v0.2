@@ -99,7 +99,9 @@ export default function SourceHero({
   }
 
   return (
-    <div className={`${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}>
+    <div
+      className={`audit-source-hero ${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
+    >
       <div
         className={`${styles.skyField} ${backdropStyles.localBackdrop}`}
         aria-hidden="true"
@@ -155,6 +157,7 @@ export default function SourceHero({
               className={styles.heroSubmit}
               disabled={!hasValue || extracting}
               aria-label="Lanjutkan audit"
+              aria-busy={extracting}
             >
               {extracting ? (
                 <Spinner size="sm" className={styles.heroSpinner} />
