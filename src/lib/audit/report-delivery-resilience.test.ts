@@ -5,7 +5,9 @@ import {
   goldenPrompts,
   goldenReportContent,
 } from "./fixtures/report-golden";
-import { fixtureProtectedObservationSet } from "./fixtures/protected-observation";
+import {
+  fixtureProtectedObservationSet,
+} from "./fixtures/protected-observation";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
 import {
   createValidatedAuditReport,
@@ -68,7 +70,10 @@ function longSentence(word: string) {
 describe("literal answer excerpts", () => {
   it.each([
     ["newline", "Baris pertama:\n\n- butir satu\n- butir dua"],
-    ["multiple spaces", "Jawaban dengan   beberapa   spasi yang dipertahankan."],
+    [
+      "multiple spaces",
+      "Jawaban dengan   beberapa   spasi yang dipertahankan.",
+    ],
     ["bullet list", "Pilihan:\n- Alpha\n- Beta\n- Gamma"],
     ["CRLF", "Baris pertama:\r\n\r\n- Alpha\r\n- Beta"],
     ["simple line", "Satu kalimat sederhana yang berakhir di sini."],
@@ -99,8 +104,8 @@ describe("literal answer excerpts", () => {
     );
     const draft = protectedReportContent(observations);
     draft.details[0].answer_excerpt = rawAnswer.replace(/\s+/g, " ").trim();
-    const generate = vi.fn(async () =>
-      result(draft, "response-production-shaped"),
+    const generate = vi.fn(
+      async () => result(draft, "response-production-shaped"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(
@@ -122,8 +127,8 @@ describe("recoverable report quality", () => {
       ...priority,
       evidence_prompt_ids: [unsupportedPromptId],
     }));
-    const generate = vi.fn(async () =>
-      result(draft, "response-no-priorities"),
+    const generate = vi.fn(
+      async () => result(draft, "response-no-priorities"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(input, generate);
@@ -147,8 +152,8 @@ describe("recoverable report quality", () => {
         evidence_prompt_ids: [goldenPrompts[0].prompt_id],
       },
     ];
-    const generate = vi.fn(async () =>
-      result(draft, "response-contained-evidence"),
+    const generate = vi.fn(
+      async () => result(draft, "response-contained-evidence"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(input, generate);
@@ -186,8 +191,8 @@ describe("recoverable report quality", () => {
   it("removes a prohibited model-authored claim", async () => {
     const draft = protectedReportContent();
     draft.conclusion = "Nuave guarantees this change will increase sales.";
-    const generate = vi.fn(async () =>
-      result(draft, "response-dangerous-claim"),
+    const generate = vi.fn(
+      async () => result(draft, "response-dangerous-claim"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(input, generate);
@@ -200,8 +205,8 @@ describe("recoverable report quality", () => {
 
 describe("protected observation integrity remains hard", () => {
   it("blocks incomplete evidence before report synthesis", async () => {
-    const generate = vi.fn(async () =>
-      result(protectedReportContent(), "should-not-run"),
+    const generate = vi.fn(
+      async () => result(protectedReportContent(), "should-not-run"),
     ) as unknown as ReportGenerator;
 
     await expect(
