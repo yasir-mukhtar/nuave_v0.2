@@ -14,9 +14,16 @@ import {
 } from "./locked-question-pack";
 import { assertSafeComparisonBusinessUrls } from "./similar-businesses";
 import { productionObservationMethodErrors } from "./production-observation-method";
-import { exactReportExcerptErrors } from "./report-excerpt";
+import {
+  exactReportExcerptErrors,
+  repairExactReportExcerpts,
+} from "./report-excerpt";
 import { sanitizeUnsupportedReportPriorities } from "./report-priority";
-import type { ReportFailureCode } from "./report-recovery";
+import type {
+  ReportDiagnosticCode,
+  ReportFailureCode,
+} from "./report-recovery";
+import { sanitizeRecoverableReportQuality } from "./report-quality-repair";
 import {
   validateReportLanguage,
   validateIndonesianReportLanguage,
@@ -56,6 +63,27 @@ function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
     ...input,
     prompts: canonicalLockedQuestionPack(input.prompts, input.brief).prompts,
   };
+}
+
+function uniqueDiagnostics(values: ReportDiagnosticCode[]) {
+  return [...new Set(values)];
+}
+
+type DiagnosticTelemetry = AuditCallTelemetry & {
+  report_diagnostics?: ReportDiagnosticCode[];
+};
+
+function annotateReportTelemetry(
+  calls: AuditCallTelemetry[],
+  diagnostics: ReportDiagnosticCode[],
+): AuditCallTelemetry[] {
+  const values = uniqueDiagnostics(diagnostics);
+  if (!values.length) return calls;
+  return calls.map((call) =>
+    call.stage === "report"
+      ? ({ ...call, report_diagnostics: values } as DiagnosticTelemetry)
+      : call,
+  );
 }
 
 /**
@@ -116,7 +144,13 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
   errors.push(...productionObservationMethodErrors(observations));
 
   if (errors.length) {
-    throw new ReportPipelineError(errors.join(" "), 422, []);
+    throw new ReportPipelineError(
+      errors.join(" "),
+      422,
+      [],
+      "REPORT_INTEGRITY_FAILURE",
+      ["observation_gate_failure"],
+    );
   }
 }
 
@@ -127,28 +161,99 @@ export class ReportPipelineError extends Error {
   readonly status: number;
   readonly telemetry: AuditCallTelemetry[];
   readonly code: ReportFailureCode;
+  readonly diagnostics: ReportDiagnosticCode[];
 
   constructor(
     message: string,
     status = 422,
     telemetry: AuditCallTelemetry[] = [],
     code: ReportFailureCode = "REPORT_INTEGRITY_FAILURE",
+    diagnostics: ReportDiagnosticCode[] = ["unrecoverable_report_failure"],
   ) {
     super(message);
     this.name = "ReportPipelineError";
     this.status = status;
-    this.telemetry = telemetry;
+    this.diagnostics = uniqueDiagnostics(diagnostics);
+    this.telemetry = annotateReportTelemetry(telemetry, this.diagnostics);
     this.code = code;
   }
 }
 
-function normalizeAndContainPriorities(
+type RepairedReportContent = {
+  content: ReportContent;
+  diagnostics: ReportDiagnosticCode[];
+};
+
+function normalizeAndRepairReport(
   rawContent: ReportContent,
   input: ReportPipelineInput,
   reportCalls: AuditCallTelemetry[],
-) {
-  const exactExcerptErrors = exactReportExcerptErrors(
+): RepairedReportContent {
+  const diagnostics = new Set<ReportDiagnosticCode>();
+  const normalized = normalizeReportEvidence(
     rawContent,
+    input.observations,
+    input.brief,
+  );
+
+  const rawSources = rawContent.details.reduce(
+    (count, detail) => count + detail.source_urls.length,
+    0,
+  );
+  const normalizedSources = normalized.details.reduce(
+    (count, detail) => count + detail.source_urls.length,
+    0,
+  );
+  if (normalizedSources < rawSources) diagnostics.add("invalid_source_removed");
+
+  const rawCompetitorEvidence = rawContent.observed_competitors.reduce(
+    (count, competitor) => count + competitor.evidence_prompt_ids.length,
+    0,
+  );
+  const normalizedCompetitorEvidence = normalized.observed_competitors.reduce(
+    (count, competitor) => count + competitor.evidence_prompt_ids.length,
+    0,
+  );
+  if (
+    normalized.observed_competitors.length <
+      rawContent.observed_competitors.length ||
+    normalizedCompetitorEvidence < rawCompetitorEvidence
+  ) {
+    diagnostics.add("unsupported_competitor_removed");
+  }
+
+  const excerptRepair = repairExactReportExcerpts(
+    normalized,
+    input.observations,
+  );
+  if (excerptRepair.repaired_prompt_ids.length) {
+    diagnostics.add("excerpt_repaired");
+  }
+
+  const priorityRepair = sanitizeUnsupportedReportPriorities(
+    excerptRepair.content,
+    input.observations,
+    input.brief,
+  );
+  if (priorityRepair.removed_orders.length) {
+    diagnostics.add("unsupported_priority_removed");
+    if (!priorityRepair.content.priorities.length) {
+      diagnostics.add("minimum_report_fallback_used");
+    }
+  }
+
+  const qualityRepair = sanitizeRecoverableReportQuality(
+    priorityRepair.content,
+    input.observations,
+    input.brief,
+    input.language,
+  );
+  qualityRepair.diagnostics.forEach((diagnostic) =>
+    diagnostics.add(diagnostic),
+  );
+
+  const exactExcerptErrors = exactReportExcerptErrors(
+    qualityRepair.content,
     input.observations,
   );
   if (exactExcerptErrors.length) {
@@ -157,26 +262,20 @@ function normalizeAndContainPriorities(
       422,
       reportCalls,
       "REPORT_INTEGRITY_FAILURE",
+      [...diagnostics, "unrecoverable_report_failure"],
     );
   }
-  const normalized = normalizeReportEvidence(
-    rawContent,
-    input.observations,
-    input.brief,
-  );
-  const sanitized = sanitizeUnsupportedReportPriorities(
-    normalized,
-    input.observations,
-    input.brief,
-  );
-  if (!sanitized.content.priorities.length) {
-    throw new ReportPipelineError(
-      "Report evidence review found no supported corrective priority. No action was fabricated and no automatic reroll was attempted.",
-      422,
-      reportCalls,
-    );
-  }
-  return sanitized.content;
+
+  return {
+    content: qualityRepair.content,
+    diagnostics: [...diagnostics],
+  };
+}
+
+function languageErrorsFor(input: ReportPipelineInput, content: ReportContent) {
+  return input.language === "id"
+    ? validateIndonesianReportLanguage(content).errors
+    : validateReportLanguage(content);
 }
 
 export async function createValidatedAuditReport(
@@ -192,11 +291,13 @@ export async function createValidatedAuditReport(
   const initial = await generate(lockedInput);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
-  let content = normalizeAndContainPriorities(
+  let repaired = normalizeAndRepairReport(
     initial.content,
     lockedInput,
     reportCalls,
   );
+  let content = repaired.content;
+  const diagnostics = new Set<ReportDiagnosticCode>(repaired.diagnostics);
   let callCount = 1;
   let retryViolations: string[] = [];
 
@@ -206,74 +307,93 @@ export async function createValidatedAuditReport(
     lockedInput.brief,
   );
   if (evidenceErrors.length) {
-    throw new ReportPipelineError(evidenceErrors.join(" "), 422, reportCalls);
+    throw new ReportPipelineError(
+      evidenceErrors.join(" "),
+      422,
+      reportCalls,
+      "REPORT_INTEGRITY_FAILURE",
+      [...diagnostics, "unrecoverable_report_failure"],
+    );
   }
 
   const isIndonesian = lockedInput.language === "id";
-  const languageErrors = isIndonesian
-    ? validateIndonesianReportLanguage(content).errors
-    : validateReportLanguage(content);
+  const languageErrors = languageErrorsFor(lockedInput, content);
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
-    try {
-      final = await generate(
-        {
-          ...lockedInput,
-          budget: {
-            ...lockedInput.budget,
-            calls: [...lockedInput.budget.calls, ...reportCalls],
+    const retryShapeIsRepresentable =
+      original.key_findings.length > 0 && original.priorities.length > 0;
+    let retrySucceeded = false;
+
+    if (!retryShapeIsRepresentable) {
+      diagnostics.add("language_warning");
+    } else {
+      try {
+        final = await generate(
+          {
+            ...lockedInput,
+            budget: {
+              ...lockedInput.budget,
+              calls: [...lockedInput.budget.calls, ...reportCalls],
+            },
           },
-        },
-        {
-          draft: original,
-          violations: languageErrors,
-        },
-      );
-    } catch (error) {
-      if (error instanceof AuditCallExecutionError) {
-        throw new ReportPipelineError(
-          error.message,
-          error.status,
-          [...reportCalls, ...error.telemetry],
-          "REPORT_TRANSIENT_FAILURE",
+          {
+            draft: original,
+            violations: languageErrors,
+          },
         );
+        reportCalls.push(...final.telemetry);
+        callCount += 1;
+        retrySucceeded = true;
+      } catch (error) {
+        if (error instanceof AuditCallExecutionError) {
+          reportCalls.push(...error.telemetry);
+          if (error.telemetry.length) callCount += 1;
+        } else if (!(error instanceof AuditBudgetError)) {
+          // The first draft already passed evidence integrity. A failure in the
+          // optional style-only revision must not erase that paid audit result.
+        }
+        diagnostics.add("language_warning");
       }
-      if (error instanceof AuditBudgetError) {
-        throw new ReportPipelineError(
-          error.message,
-          error.status,
-          reportCalls,
-          "REPORT_LIMIT_EXHAUSTED",
-        );
-      }
-      throw error;
     }
-    reportCalls.push(...final.telemetry);
-    callCount += 1;
-    content = normalizeAndContainPriorities(
-      final.content,
-      lockedInput,
-      reportCalls,
-    );
-    const retryErrors = [
-      ...(isIndonesian
-        ? validateIndonesianReportLanguageRevision(original, content)
-        : validateReportLanguageRevision(original, content)),
-      ...validateReportContent(
-        content,
-        lockedInput.observations,
-        lockedInput.brief,
-      ),
-      ...(isIndonesian
-        ? validateIndonesianReportLanguage(content).errors
-        : validateReportLanguage(content)),
-    ];
-    if (retryErrors.length) {
-      throw new ReportPipelineError(retryErrors.join(" "), 422, reportCalls);
+
+    if (retrySucceeded) {
+      repaired = normalizeAndRepairReport(
+        final.content,
+        lockedInput,
+        reportCalls,
+      );
+      repaired.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
+      content = repaired.content;
+
+      const retryIntegrityErrors = [
+        ...(isIndonesian
+          ? validateIndonesianReportLanguageRevision(original, content)
+          : validateReportLanguageRevision(original, content)),
+        ...validateReportContent(
+          content,
+          lockedInput.observations,
+          lockedInput.brief,
+        ),
+      ];
+      if (retryIntegrityErrors.length) {
+        throw new ReportPipelineError(
+          retryIntegrityErrors.join(" "),
+          422,
+          reportCalls,
+          "REPORT_INTEGRITY_FAILURE",
+          [...diagnostics, "unrecoverable_report_failure"],
+        );
+      }
+
+      const finalLanguageErrors = languageErrorsFor(lockedInput, content);
+      if (finalLanguageErrors.length) diagnostics.add("language_warning");
     }
   }
 
+  const annotatedReportCalls = annotateReportTelemetry(reportCalls, [
+    ...diagnostics,
+  ]);
   const report = buildAuditReport(
     content,
     lockedInput.observations,
@@ -283,10 +403,10 @@ export async function createValidatedAuditReport(
       response_id: final.response_id,
       initial_response_id: initial.response_id,
       call_count: callCount,
-      language_retry_performed: callCount === 2,
+      language_retry_performed: callCount > 1,
       language_retry_violations: retryViolations,
       operational_telemetry: summarizeAuditTelemetry(
-        [...lockedInput.budget.calls, ...reportCalls],
+        [...lockedInput.budget.calls, ...annotatedReportCalls],
         lockedInput.budget.limit_usd,
         effectiveAuditCarryoverCostUsd(lockedInput.budget),
       ),
@@ -299,10 +419,12 @@ export async function createValidatedAuditReport(
       throw new ReportPipelineError(
         builtFieldErrors.join(" "),
         422,
-        reportCalls,
+        annotatedReportCalls,
+        "REPORT_INTEGRITY_FAILURE",
+        [...diagnostics, "unrecoverable_report_failure"],
       );
     }
   }
-  onSuccessTelemetry?.([...reportCalls]);
+  onSuccessTelemetry?.(annotatedReportCalls);
   return report;
 }

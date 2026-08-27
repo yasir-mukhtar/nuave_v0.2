@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { validateReportContent } from "./contracts";
 import {
   goldenBrief,
   goldenObservations,
@@ -82,7 +81,7 @@ describe("unsupported report priority containment", () => {
     ).toBe(false);
   });
 
-  it("does not silently repair an unknown evidence ID", () => {
+  it("drops a priority with an unknown evidence ID", () => {
     const draft = goldenReportContent();
     draft.priorities[0].evidence_prompt_ids = ["UNKNOWN-PROMPT-ID"];
 
@@ -92,12 +91,12 @@ describe("unsupported report priority containment", () => {
       goldenBrief,
     );
 
-    expect(result.content.priorities[0].evidence_prompt_ids).toEqual([
-      "UNKNOWN-PROMPT-ID",
-    ]);
+    expect(result.removed_orders).toEqual([1]);
     expect(
-      validateReportContent(result.content, goldenObservations, goldenBrief),
-    ).toContain("Priority references an unknown question: UNKNOWN-PROMPT-ID.");
+      result.content.priorities.some((priority) =>
+        priority.evidence_prompt_ids.includes("UNKNOWN-PROMPT-ID"),
+      ),
+    ).toBe(false);
   });
 
   it("does not mutate result classifications or retained observations", () => {
@@ -128,7 +127,7 @@ describe("unsupported report priority containment", () => {
     expect(goldenObservations).toEqual(observationsBefore);
   });
 
-  it("returns a typed integrity failure with zero extra provider calls when no priorities survive", async () => {
+  it("delivers without priorities when no supported priorities survive", async () => {
     const observations = completeGoldenObservations();
     const draft = goldenReportContent();
     draft.priorities.forEach((priority) => {
@@ -138,21 +137,18 @@ describe("unsupported report priority containment", () => {
       reportResult(draft),
     ) as unknown as ReportGenerator;
 
-    await expect(
-      createValidatedAuditReport(
-        {
-          brief: goldenBrief,
-          prompts: goldenPrompts,
-          observations,
-          safety_identifier: "fixture-user-123",
-          budget: fixtureBudget,
-        },
-        generate,
-      ),
-    ).rejects.toMatchObject({
-      code: "REPORT_INTEGRITY_FAILURE",
-      status: 422,
-    });
+    const report = await createValidatedAuditReport(
+      {
+        brief: goldenBrief,
+        prompts: goldenPrompts,
+        observations,
+        safety_identifier: "fixture-user-123",
+        budget: fixtureBudget,
+      },
+      generate,
+    );
+
+    expect(report.priorities).toEqual([]);
     expect(generate).toHaveBeenCalledTimes(1);
   });
 });

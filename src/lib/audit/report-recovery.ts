@@ -6,6 +6,20 @@ export const REPORT_FAILURE_CODES = [
 
 export type ReportFailureCode = (typeof REPORT_FAILURE_CODES)[number];
 
+export const REPORT_DIAGNOSTIC_CODES = [
+  "observation_gate_failure",
+  "excerpt_repaired",
+  "invalid_source_removed",
+  "unsupported_competitor_removed",
+  "unsupported_priority_removed",
+  "language_warning",
+  "prohibited_claim_removed",
+  "minimum_report_fallback_used",
+  "unrecoverable_report_failure",
+] as const;
+
+export type ReportDiagnosticCode = (typeof REPORT_DIAGNOSTIC_CODES)[number];
+
 export type ReportRecoveryState = {
   kind: "retryable" | "terminal_integrity" | "terminal_limit";
   can_retry: boolean;
