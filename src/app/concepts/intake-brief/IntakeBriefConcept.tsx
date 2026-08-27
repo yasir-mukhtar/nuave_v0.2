@@ -88,7 +88,9 @@ function TagEditor({
             <button
               type="button"
               aria-label={`Hapus ${item}`}
-              onClick={() => setItems(items.filter((candidate) => candidate !== item))}
+              onClick={() =>
+                setItems(items.filter((candidate) => candidate !== item))
+              }
             >
               <IconX size={14} />
             </button>
@@ -107,7 +109,11 @@ function TagEditor({
             }
           }}
         />
-        <button type="button" className={styles.secondaryButton} onClick={addItem}>
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={addItem}
+        >
           <IconPlus size={18} /> Tambah
         </button>
       </div>
@@ -117,7 +123,9 @@ function TagEditor({
 
 export default function IntakeBriefConcept() {
   const [brandName, setBrandName] = useState("Kopi Kenangan");
-  const [auditScope, setAuditScope] = useState("Kopi Kenangan — brand, Indonesia");
+  const [auditScope, setAuditScope] = useState(
+    "Kopi Kenangan — brand, Indonesia",
+  );
   const [brandType, setBrandType] = useState("Jaringan kopi grab-and-go");
   const [category, setCategory] = useState("Kedai kopi & minuman");
   const [market, setMarket] = useState(
@@ -145,11 +153,13 @@ export default function IntakeBriefConcept() {
     "Pilihan menu",
     "Promo",
   ]);
-  const [similarBusinesses, setSimilarBusinesses] = useState<SimilarBusiness[]>([
-    { name: "Fore Coffee", url: "https://fore.coffee" },
-    { name: "Janji Jiwa", url: "https://kopijanjijiwa.com" },
-    { name: "Tomoro Coffee", url: "https://tomoro-coffee.com" },
-  ]);
+  const [similarBusinesses, setSimilarBusinesses] = useState<SimilarBusiness[]>(
+    [
+      { name: "Fore Coffee", url: "https://fore.coffee" },
+      { name: "Janji Jiwa", url: "https://kopijanjijiwa.com" },
+      { name: "Tomoro Coffee", url: "https://tomoro-coffee.com" },
+    ],
+  );
   const [showBusinessForm, setShowBusinessForm] = useState(false);
   const [newBusinessName, setNewBusinessName] = useState("");
   const [newBusinessUrl, setNewBusinessUrl] = useState("");
@@ -157,7 +167,9 @@ export default function IntakeBriefConcept() {
   const [differentiator, setDifferentiator] = useState(
     "Kopi lokal grab-and-go dengan identitas rasa Indonesia dan akses yang mudah untuk kebutuhan sehari-hari.",
   );
-  const [priority, setPriority] = useState("Kopi susu, minuman signature, dan delivery");
+  const [priority, setPriority] = useState(
+    "Kopi susu, minuman signature, dan delivery",
+  );
   const [goal, setGoal] = useState("");
   const [geoPriority, setGeoPriority] = useState("");
   const [claims, setClaims] = useState("");
@@ -187,7 +199,9 @@ export default function IntakeBriefConcept() {
             alt="Nuave"
           />
         </Link>
-        <span className={styles.prototypeBadge}>Konsep desain · tidak menjalankan audit</span>
+        <span className={styles.prototypeBadge}>
+          Konsep desain · tidak menjalankan audit
+        </span>
       </header>
 
       <nav className={styles.stepper} aria-label="Tahapan audit">
@@ -235,17 +249,22 @@ export default function IntakeBriefConcept() {
             <strong>Fokuskan perhatian pada 3 asumsi Nuave</strong>
             <p>
               Target pelanggan, kebutuhan pelanggan, dan faktor pilihan tidak
-              dinyatakan secara eksplisit di situs. Nuave menyarankan isinya agar
-              Anda tidak mulai dari halaman kosong.
+              dinyatakan secara eksplisit di situs. Nuave menyarankan isinya
+              agar Anda tidak mulai dari halaman kosong.
             </p>
           </div>
         </aside>
 
-        <section className={styles.section} aria-labelledby="business-facts-heading">
+        <section
+          className={styles.section}
+          aria-labelledby="business-facts-heading"
+        >
           <header className={styles.sectionHeader}>
             <div>
               <p className={styles.sectionIndex}>01</p>
-              <h2 id="business-facts-heading">Fakta bisnis yang Nuave temukan</h2>
+              <h2 id="business-facts-heading">
+                Fakta bisnis yang Nuave temukan
+              </h2>
             </div>
             <p>
               Fakta dasar yang menentukan bisnis, kategori, dan pasar yang akan
@@ -260,28 +279,40 @@ export default function IntakeBriefConcept() {
                 badge="found"
                 hint="Nama publik yang digunakan pelanggan untuk mengenali bisnis ini."
               >
-                <input value={brandName} onChange={(event) => setBrandName(event.target.value)} />
+                <input
+                  value={brandName}
+                  onChange={(event) => setBrandName(event.target.value)}
+                />
               </Field>
               <Field
                 label="Cakupan audit"
                 badge="found"
                 hint="Entitas yang akan diuji. Bukan nama badan hukum perusahaan."
               >
-                <input value={auditScope} onChange={(event) => setAuditScope(event.target.value)} />
+                <input
+                  value={auditScope}
+                  onChange={(event) => setAuditScope(event.target.value)}
+                />
               </Field>
               <Field
                 label="Tipe bisnis"
                 badge="found"
                 hint="Bentuk bisnis yang membantu Nuave memahami cara pelanggan mencarinya."
               >
-                <input value={brandType} onChange={(event) => setBrandType(event.target.value)} />
+                <input
+                  value={brandType}
+                  onChange={(event) => setBrandType(event.target.value)}
+                />
               </Field>
               <Field
                 label="Kategori"
                 badge="found"
                 hint="Kategori utama yang akan digunakan saat membandingkan bisnis serupa."
               >
-                <input value={category} onChange={(event) => setCategory(event.target.value)} />
+                <input
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                />
               </Field>
               <div className={styles.fullWidth}>
                 <Field
@@ -309,22 +340,32 @@ export default function IntakeBriefConcept() {
                 Nuave menyimpan sumber di balik layar dan menampilkannya hanya
                 saat membantu verifikasi fakta.
               </p>
-              <a href="https://kopikenangan.com/" target="_blank" rel="noreferrer">
+              <a
+                href="https://kopikenangan.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
                 Lihat sumber <IconExternalLink size={16} />
               </a>
             </div>
           </div>
         </section>
 
-        <section className={styles.section} aria-labelledby="customer-understanding-heading">
+        <section
+          className={styles.section}
+          aria-labelledby="customer-understanding-heading"
+        >
           <header className={styles.sectionHeader}>
             <div>
               <p className={styles.sectionIndex}>02</p>
-              <h2 id="customer-understanding-heading">Pemahaman Nuave tentang pelanggan</h2>
+              <h2 id="customer-understanding-heading">
+                Pemahaman Nuave tentang pelanggan
+              </h2>
             </div>
             <p>
               Ini adalah hipotesis Nuave, bukan fakta absolut. Pertahankan yang
-              masuk akal, hapus yang tidak relevan, atau ubah dengan konteks Anda.
+              masuk akal, hapus yang tidak relevan, atau ubah dengan konteks
+              Anda.
             </p>
           </header>
 
@@ -380,7 +421,10 @@ export default function IntakeBriefConcept() {
           </div>
         </section>
 
-        <section className={styles.section} aria-labelledby="similar-business-heading">
+        <section
+          className={styles.section}
+          aria-labelledby="similar-business-heading"
+        >
           <header className={styles.sectionHeader}>
             <div>
               <p className={styles.sectionIndex}>03</p>
@@ -395,7 +439,10 @@ export default function IntakeBriefConcept() {
           <div className={styles.sectionBody}>
             <div className={styles.similarList}>
               {similarBusinesses.map((business) => (
-                <div className={styles.similarRow} key={`${business.name}-${business.url}`}>
+                <div
+                  className={styles.similarRow}
+                  key={`${business.name}-${business.url}`}
+                >
                   <div className={styles.similarMark} aria-hidden="true">
                     {business.name.slice(0, 1).toUpperCase()}
                   </div>
@@ -412,7 +459,9 @@ export default function IntakeBriefConcept() {
                     aria-label={`Hapus ${business.name}`}
                     onClick={() =>
                       setSimilarBusinesses(
-                        similarBusinesses.filter((candidate) => candidate !== business),
+                        similarBusinesses.filter(
+                          (candidate) => candidate !== business,
+                        ),
                       )
                     }
                   >
@@ -424,7 +473,10 @@ export default function IntakeBriefConcept() {
 
             {showBusinessForm ? (
               <div className={styles.addBusinessForm}>
-                <Field label="Nama bisnis" hint="Nama brand atau bisnis yang ingin dibandingkan.">
+                <Field
+                  label="Nama bisnis"
+                  hint="Nama brand atau bisnis yang ingin dibandingkan."
+                >
                   <input
                     value={newBusinessName}
                     placeholder="Contoh: Starbucks"
@@ -467,14 +519,19 @@ export default function IntakeBriefConcept() {
                 <IconPlus size={18} />
                 <span>
                   <strong>Tambah bisnis serupa</strong>
-                  <small>Website, Instagram, atau Google Business Profile</small>
+                  <small>
+                    Website, Instagram, atau Google Business Profile
+                  </small>
                 </span>
               </button>
             )}
           </div>
         </section>
 
-        <section className={styles.advancedSection} aria-labelledby="advanced-heading">
+        <section
+          className={styles.advancedSection}
+          aria-labelledby="advanced-heading"
+        >
           <button
             type="button"
             className={styles.advancedTrigger}
@@ -486,11 +543,14 @@ export default function IntakeBriefConcept() {
             </span>
             <span className={styles.advancedCopy}>
               <span className={styles.advancedTitleLine}>
-                <strong id="advanced-heading">Tambahkan konteks agar audit lebih relevan</strong>
+                <strong id="advanced-heading">
+                  Tambahkan konteks agar audit lebih relevan
+                </strong>
                 <span>Opsional · meningkatkan relevansi</span>
               </span>
               <small>
-                Berguna jika website tidak menceritakan seluruh konteks bisnis Anda.
+                Berguna jika website tidak menceritakan seluruh konteks bisnis
+                Anda.
               </small>
             </span>
             <IconChevronDown
@@ -502,9 +562,9 @@ export default function IntakeBriefConcept() {
           {advancedOpen ? (
             <div className={styles.advancedBody}>
               <p className={styles.advancedLead}>
-                Isi hanya informasi yang dapat mengubah cara Nuave membaca bisnis
-                atau membuat rekomendasi. Branding laporan dipindahkan dari tahap
-                ini karena tidak memengaruhi kualitas audit.
+                Isi hanya informasi yang dapat mengubah cara Nuave membaca
+                bisnis atau membuat rekomendasi. Branding laporan dipindahkan
+                dari tahap ini karena tidak memengaruhi kualitas audit.
               </p>
               <div className={styles.gridTwo}>
                 <Field
@@ -591,10 +651,12 @@ export default function IntakeBriefConcept() {
         <div className={styles.removedNote}>
           <IconInfoCircle size={18} />
           <p>
-            <strong>Catatan sumber ekstraksi tidak lagi menjadi accordion.</strong>{" "}
-            Provenance tetap disimpan, tetapi ditampilkan dekat fakta yang memang
-            perlu diverifikasi. Branding laporan juga dipindahkan ke tahap setelah
-            laporan tersedia.
+            <strong>
+              Catatan sumber ekstraksi tidak lagi menjadi accordion.
+            </strong>{" "}
+            Provenance tetap disimpan, tetapi ditampilkan dekat fakta yang
+            memang perlu diverifikasi. Branding laporan juga dipindahkan ke
+            tahap setelah laporan tersedia.
           </p>
         </div>
       </div>
@@ -611,14 +673,14 @@ export default function IntakeBriefConcept() {
               }}
             />
             <span>
-              Saya sudah memeriksa brief ini dan setuju Nuave menggunakannya untuk
-              membuat pertanyaan audit.
+              Saya sudah memeriksa brief ini dan setuju Nuave menggunakannya
+              untuk membuat pertanyaan audit.
             </span>
           </label>
           <div className={styles.footerAction}>
             <p>
-              Langkah berikutnya membuat 10 pertanyaan audit dari brief yang sudah
-              Anda periksa.
+              Langkah berikutnya membuat 10 pertanyaan audit dari brief yang
+              sudah Anda periksa.
             </p>
             <button
               type="button"
