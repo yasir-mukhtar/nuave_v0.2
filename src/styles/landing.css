@@ -295,7 +295,16 @@ body:has(.lp-root) {
   }
 
   .lp-hiw-left-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     padding: 24px !important;
+  }
+
+  .lp-hiw-mobile-preview {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .lp-footer {
