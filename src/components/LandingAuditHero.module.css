@@ -9,9 +9,39 @@
   --source-hint-shadow: 0 1px 6px rgba(0, 30, 80, 0.2);
 }
 
-.root > div > div[aria-hidden="true"] {
+.legacyBackdrop {
   background-image: url("../assets/nuave-beach-hero.webp") !important;
   background-position: center top !important;
+}
+
+.experimentalBackdrop {
+  background-image: linear-gradient(
+    180deg,
+    #052e84 0%,
+    #04318b 10%,
+    #043792 20%,
+    #043ea0 30%,
+    #0449af 40%,
+    #2f6cc8 50%,
+    #6d9ce0 60%,
+    #75a8dd 70%,
+    #b8d0ea 78%,
+    #dbe8f5 83%,
+    #f2f7fc 87%,
+    #ffffff 90%,
+    #ffffff 100%
+  ) !important;
+  background-position: center top !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+.experimentalBackdrop::before {
+  background: none !important;
+}
+
+.experimentalBackdrop > span {
+  display: none !important;
 }
 
 :global(.lp-problem-section) {

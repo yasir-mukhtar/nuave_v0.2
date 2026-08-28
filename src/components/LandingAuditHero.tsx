@@ -20,7 +20,10 @@ import {
   VARIANCE_FAILURE_STORAGE_KEY,
   VARIANCE_STORAGE_KEY,
 } from "@/lib/audit/variance";
+import LandingTileReveal from "./LandingTileReveal";
 import styles from "./LandingAuditHero.module.css";
+
+const LANDING_TILE_EXPERIMENT_ENABLED = true;
 
 type ExtractResponse = {
   draft?: ExtractionDraft;
@@ -172,6 +175,14 @@ export default function LandingAuditHero() {
         autoFocus={false}
         consumeHandoff={false}
         contentClassName="mt-20 md:mt-0"
+        backdropClassName={
+          LANDING_TILE_EXPERIMENT_ENABLED
+            ? styles.experimentalBackdrop
+            : styles.legacyBackdrop
+        }
+        backdropOverlay={
+          LANDING_TILE_EXPERIMENT_ENABLED ? <LandingTileReveal /> : null
+        }
       />
     </section>
   );
