@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-08-21
+> Updated: 2026-08-28
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -11,6 +11,16 @@ the protected live engine is now integrated on the OpenCode Go production
 method. The remaining Phase 3 gate is to produce the first founder-supervised
 real Indonesian report through the actual product path and judge whether it
 contains a finding worth paying for.
+
+## Active presentation-layer work
+
+The founder-approved UI-stack migration is active on the dedicated
+`feat/ui-stack-migration` branch from baseline `1f28bdd`. Its canonical design
+authority is [`docs/DESIGN.md`](./DESIGN.md). The migration is presentation-layer
+work: it standardizes generic UI on shadcn/Base UI, uses Tailwind CSS v4 and
+the BeUI light baseline, and preserves the existing intake, audit, report,
+fixture, validation, and provider-call contracts. It must make no live or paid
+AI-provider calls and must not change backend or business logic.
 
 Wave 1 of the Phase 6 design pass
 ([`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)) shipped
