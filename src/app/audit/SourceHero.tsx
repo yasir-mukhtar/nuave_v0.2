@@ -1,13 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowUp } from "@tabler/icons-react";
 import { customerAuditErrorMessage } from "@/lib/audit/customer-error";
