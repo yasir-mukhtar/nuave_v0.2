@@ -7,6 +7,7 @@
   background-position: center top !important;
 }
 
+/* Keep the hero dark behind all white copy, then fade to white near the bottom. */
 .experimentalBackdrop {
   background-image: linear-gradient(
     180deg,
