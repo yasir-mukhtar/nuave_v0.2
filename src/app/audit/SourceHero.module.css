@@ -241,7 +241,7 @@
 
 .heroSubmit:disabled {
   background: var(--bg-surface-raised);
-  color: var(--text-placeholder);
+  color: var(--text-muted);
   cursor: default;
   box-shadow: none;
 }
