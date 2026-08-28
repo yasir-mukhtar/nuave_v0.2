@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Alert, Button } from "@heroui/react";
+import { AuditNotice } from "@/components/product/AuditNotice";
+import { Button } from "@/components/ui/button";
 import { IconCheck, IconDownload } from "@tabler/icons-react";
 import {
   businessBriefSchema,
@@ -1203,11 +1204,11 @@ export default function AuditWorkflow() {
           />
         </Link>
         <div className={styles.topActions}>
-          <Button variant="secondary" size="sm" onPress={startOver}>
+          <Button variant="secondary" size="sm" onClick={startOver}>
             Mulai ulang
           </Button>
           {report && varianceSettled ? (
-            <Button variant="primary" size="sm" onPress={() => window.print()}>
+            <Button variant="default" size="sm" onClick={() => window.print()}>
               <IconDownload /> Cetak / simpan PDF
             </Button>
           ) : null}
@@ -1247,13 +1248,9 @@ export default function AuditWorkflow() {
 
       {error && step > 0 ? (
         <div className={`${styles.globalAlert} ${styles.noPrint}`}>
-          <Alert status="danger" role="alert">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Periksa ini sebelum melanjutkan</Alert.Title>
-              <Alert.Description>{error}</Alert.Description>
-            </Alert.Content>
-          </Alert>
+          <AuditNotice title="Periksa ini sebelum melanjutkan" tone="danger">
+            {error}
+          </AuditNotice>
         </div>
       ) : null}
 
