@@ -113,14 +113,17 @@ export default function SourceHero({
 
       <div className={`${styles.heroContent} ${contentClassName}`}>
         {showLogo ? (
-          <Image
-            src="/logo-nuave-horizontal.png"
-            className={styles.heroLogo}
-            alt="Nuave"
-            width={152}
-            height={48}
-            priority
-          />
+          <div className={styles.heroBrand}>
+            <Image
+              src="/logo-nuave.svg"
+              className={styles.heroLogo}
+              alt="Nuave logo"
+              width={32}
+              height={32}
+              priority
+            />
+            <span className={styles.heroLogoText}>Nuave</span>
+          </div>
         ) : null}
 
         <h1 className={styles.heroHeading}>
@@ -178,14 +181,7 @@ export default function SourceHero({
               </Button>
             </div>
 
-            <FieldDescription
-              id="source-hint"
-              className={styles.heroHint}
-              style={{
-                color: "#ffffff",
-                textShadow: "0 1px 6px rgba(0, 30, 80, 0.2)",
-              }}
-            >
+            <FieldDescription id="source-hint" className={styles.heroHint}>
               Masukkan URL website atau akun Instagram resmi bisnis Anda.
             </FieldDescription>
 
