@@ -22,8 +22,8 @@ const ReportPagePreview = dynamic(
   { ssr: false },
 );
 
-/* ── Static gradient panel (R-12: no perpetual cursor-glow) ── */
-function StaticGradientPanel({
+/* Refero keeps UI surfaces flat and lets the product/content carry the color. */
+function PreviewPanel({
   children,
   className,
 }: {
@@ -32,17 +32,13 @@ function StaticGradientPanel({
 }) {
   return (
     <div
-      className={cn("relative overflow-hidden", className)}
-      style={{
-        background: `linear-gradient(135deg, #e0e7ff, #dbeafe, #ede9fe, #e0f2fe, #f3e8ff)`,
-      }}
+      className={cn("relative overflow-hidden bg-[#F5F5F7]", className)}
     >
       {children}
     </div>
   );
 }
 
-/* ── Main component ── */
 export default function HowItWorks() {
   const t = useTranslations();
 
@@ -107,7 +103,6 @@ export default function HowItWorks() {
       const scrollY = window.scrollY;
       const vh = window.innerHeight;
 
-      // Fade heading as section scrolls off screen
       const fadeStart = sectionBottom - vh - 200;
       const fadeEnd = sectionBottom - vh;
       const alpha =
@@ -125,32 +120,28 @@ export default function HowItWorks() {
     <div
       id="cara-kerja"
       ref={sectionRef}
-      className="lp-hiw-section relative pt-[120px]"
-      style={{ background: "var(--lp-bg)" }}
+      className="lp-hiw-section relative pt-[120px] bg-[#F5F5F7]"
     >
-      {/* Sticky heading */}
       <div
-        className="lp-hiw-sticky-heading sticky top-20 z-10 pb-10 px-8 pointer-events-none"
+        className="lp-hiw-sticky-heading sticky top-20 z-10 pb-12 px-8 pointer-events-none"
         style={{ opacity: headingOpacity, transition: "opacity 0.1s linear" }}
       >
-        <div className="max-w-[868px] mx-auto text-center">
+        <div className="max-w-[1200px] mx-auto text-center">
           <h2 className="lp-hiw-heading">{t("howItWorks.heading")}</h2>
         </div>
       </div>
 
-      {/* Cards scroll area */}
       <div className="pb-[120px]">
         {CARDS.map((card, i) => (
           <div
             key={card.step}
-            className="lp-hiw-card-wrapper sticky px-8 pb-6 mb-6"
+            className="lp-hiw-card-wrapper sticky px-8 pb-5 mb-5"
             style={{ top: 232, zIndex: 20 + i }}
           >
             <div
-              className="lp-hiw-card-grid max-w-[868px] mx-auto grid grid-cols-2 rounded-[12px] overflow-hidden bg-white border border-[#E5E7EB] shadow-[0_8px_40px_rgba(0,0,0,0.10)] min-h-[360px]"
+              className="lp-hiw-card-grid max-w-[1040px] mx-auto grid grid-cols-2 rounded-[28px] overflow-hidden bg-white min-h-[420px]"
               style={{ transformOrigin: "top center" }}
             >
-              {/* Left panel — white */}
               <div
                 className={cn(
                   "lp-hiw-left-panel bg-white p-10 flex flex-col justify-between",
@@ -158,26 +149,26 @@ export default function HowItWorks() {
                 )}
               >
                 <div>
-                  {/* Step circle */}
-                  <div className="w-10 h-10 rounded-full bg-[var(--lp-purple)] text-white text-[24px] font-bold tracking-[-0.5px] leading-[1.4] flex items-center justify-center mb-6">
+                  <div className="w-11 h-11 rounded-full bg-[#1D1D1F] text-white text-[17px] font-semibold flex items-center justify-center mb-8">
                     {card.step}
                   </div>
-                  <h3 className="mb-3">{card.title}</h3>
-                  <p className="text-[16px] leading-[28px] text-[#858585] mb-6">
+                  <h3 className="mb-4 text-[40px] leading-[48px] font-semibold tracking-normal">
+                    {card.title}
+                  </h3>
+                  <p className="text-[17px] leading-[25px] tracking-[-0.374px] text-[#707070] mb-8 max-w-[420px]">
                     {card.desc}
                   </p>
                 </div>
-                {/* Checklist */}
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-3">
                   {card.checks.map((check) => (
-                    <div key={check} className="flex items-center gap-2.5">
+                    <div key={check} className="flex items-center gap-3">
                       <IconCheck
-                        size={16}
+                        size={17}
                         color="var(--lp-text-primary)"
                         stroke={2}
                         className="shrink-0"
                       />
-                      <span className="text-[16px] font-normal leading-[28px] text-[var(--lp-text-primary)]">
+                      <span className="text-[17px] font-normal leading-[25px] tracking-[-0.374px] text-[var(--lp-text-primary)]">
                         {check}
                       </span>
                     </div>
@@ -185,8 +176,7 @@ export default function HowItWorks() {
                 </div>
               </div>
 
-              {/* Right panel — static preview (desktop) */}
-              <StaticGradientPanel
+              <PreviewPanel
                 className={cn(
                   "lp-hiw-right-panel flex items-center justify-center",
                   card.flip ? "order-1" : "order-2",
@@ -196,16 +186,15 @@ export default function HowItWorks() {
                 {card.step === "2" && <PaymentPreview />}
                 {card.step === "3" && <QuestionsPreview />}
                 {card.step === "4" && <ReportPagePreview />}
-              </StaticGradientPanel>
+              </PreviewPanel>
 
-              {/* Mobile preview */}
               <div className="lp-hiw-mobile-preview p-3 order-3">
-                <StaticGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
+                <PreviewPanel className="rounded-[28px] p-6 flex justify-center items-center">
                   {card.step === "1" && <ConfirmBusinessPreview />}
                   {card.step === "2" && <PaymentPreview />}
                   {card.step === "3" && <QuestionsPreview />}
                   {card.step === "4" && <ReportPagePreview />}
-                </StaticGradientPanel>
+                </PreviewPanel>
               </div>
             </div>
           </div>
