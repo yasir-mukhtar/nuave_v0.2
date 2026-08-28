@@ -39,10 +39,14 @@ export default function SourceHero({
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
+  const [handoffInProgress, setHandoffInProgress] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const value = draft ?? initialValue;
   const parsed = useMemo(() => parseSourceInput(value), [value]);
   const hasValue = Boolean(value.trim());
+  const visibleError =
+    localError ||
+    (handoffInProgress && error === AUDIT_BUDGET_WAIT_ERROR ? "" : error);
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus();
@@ -75,10 +79,11 @@ export default function SourceHero({
     // manual and cannot trigger a hidden repeat request.
     if (error && error !== AUDIT_BUDGET_WAIT_ERROR) return;
 
-    // Defer the handoff-driven React updates out of the effect body. This keeps
-    // the effect focused on synchronizing session storage while preserving the
-    // submitted source in the input during the budget-readiness handoff.
+    // Defer the handoff-driven React updates out of the effect body. Mark the
+    // handoff pending in the same batch as extraction so the known budget wait
+    // state never renders as a user-facing error while the bootstrap catches up.
     const timer = window.setTimeout(() => {
+      setHandoffInProgress(true);
       setDraft((current) => current ?? handoffSource.normalizedUrl);
       onExtract(handoffSource.normalizedUrl);
     }, 0);
@@ -186,10 +191,10 @@ export default function SourceHero({
 
           <p
             id="source-error"
-            className={`${styles.heroError} ${localError || error ? styles.heroErrorVisible : ""}`}
-            role={localError || error ? "alert" : undefined}
+            className={`${styles.heroError} ${visibleError ? styles.heroErrorVisible : ""}`}
+            role={visibleError ? "alert" : undefined}
           >
-            {localError || error || " "}
+            {visibleError || " "}
           </p>
         </form>
       </div>
