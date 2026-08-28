@@ -178,7 +178,8 @@ export default function LandingTileReveal() {
     function animateThinkingTiles() {
       if (prefersReducedMotion || !currentPoint) return;
       if (currentPoint.pointerType === "touch" && !touchActive) return;
-      if (performance.now() - lastInteractionAt < THINKING_IDLE_DELAY_MS) return;
+      if (performance.now() - lastInteractionAt < THINKING_IDLE_DELAY_MS)
+        return;
 
       for (const tile of activeTiles.values()) {
         if (
