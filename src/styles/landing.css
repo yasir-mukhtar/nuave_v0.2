@@ -43,7 +43,7 @@ body:has(.lp-root) {
 .lp-page h1,
 .lp-page h2,
 .lp-page h3 {
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-heading), sans-serif;
   color: var(--lp-text-primary);
 }
 

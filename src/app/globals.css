@@ -3,39 +3,41 @@
 @import "tw-animate-css";
 @import "../styles/tokens.css";
 @import "../styles/landing.css";
+@import "shadcn/tailwind.css";
 
 :root {
-  --font-heading: var(--font-heading);
-  --font-body: var(--font-body);
-  --font-serif: var(--font-serif);
-  --font-mono: var(--font-mono);
-  --radius: var(--radius-sm);
+  --radius: var(--radius-token-md);
   --background: var(--bg-page);
   --foreground: var(--text-heading);
   --card: var(--bg-page);
   --card-foreground: var(--text-heading);
   --popover: var(--bg-page);
   --popover-foreground: var(--text-heading);
-  --primary: var(--purple);
-  --primary-foreground: #ffffff;
+  --primary: var(--action);
+  --primary-foreground: var(--action-foreground);
   --secondary: var(--bg-surface-raised);
   --secondary-foreground: var(--text-heading);
   --muted: var(--bg-muted);
   --muted-foreground: var(--text-muted);
-  --accent: var(--purple-light);
-  --accent-foreground: var(--purple-dark);
+  --accent: var(--bg-surface-raised);
+  --accent-foreground: var(--text-heading);
   --destructive: var(--red);
   --border: var(--border-default);
   --input: var(--border-default);
-  --ring: var(--purple);
+  --ring: var(--action);
   --sidebar: var(--bg-page);
   --sidebar-foreground: var(--text-heading);
-  --sidebar-primary: var(--purple);
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: var(--action);
+  --sidebar-primary-foreground: var(--action-foreground);
   --sidebar-accent: var(--bg-surface-raised);
   --sidebar-accent-foreground: var(--text-heading);
   --sidebar-border: var(--border-default);
-  --sidebar-ring: var(--purple);
+  --sidebar-ring: var(--action);
+  --chart-1: var(--text-heading);
+  --chart-2: var(--text-body);
+  --chart-3: var(--text-muted);
+  --chart-4: var(--border-strong);
+  --chart-5: var(--border-light);
 }
 
 /* Element resets and base typography moved to @layer base
@@ -47,7 +49,7 @@
    Source of truth: --step-* tokens in tokens.css (Utopia perfect-fourth scale).
    All new pages must use these classes — never inline font-size values.
 
-   Body/UI text  → Inter 400    (--font-body)
+   Body/UI text  → Geist 400    (--font-body)
    Headings      → Geist 600–700 (--font-heading, weight varies by size)
 
    Placed in @layer components so they win over @layer base element resets
@@ -510,14 +512,16 @@ label.field-label.disabled {
 }
 
 @theme inline {
-  /* ── Radius ── */
-  --radius-xs: var(--radius-xs);
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
-  --radius-2xl: var(--radius-2xl);
-  --radius-3xl: var(--radius-3xl);
+  /* ── Radius bridge ── */
+  --radius: var(--radius-token-md);
+  --radius-xs: var(--radius-token-xs);
+  --radius-sm: var(--radius-token-sm);
+  --radius-md: var(--radius-token-md);
+  --radius-lg: var(--radius-token-lg);
+  --radius-xl: var(--radius-token-xl);
+  --radius-2xl: var(--radius-token-2xl);
+  --radius-3xl: var(--radius-token-3xl);
+  --radius-4xl: var(--radius-token-full);
 
   /* ── shadcn / standard color mappings ── */
   --color-background: var(--background);
@@ -564,10 +568,13 @@ label.field-label.disabled {
   --color-text-muted: var(--text-muted);
   --color-text-placeholder: var(--text-placeholder);
 
-  /* ── App design tokens (brand) ── */
-  --color-brand: var(--purple);
-  --color-brand-dark: var(--purple-dark);
-  --color-brand-light: var(--purple-light);
+  /* ── App design tokens (action) ── */
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-action-soft: var(--action-soft);
+  --color-brand: var(--action);
+  --color-brand-dark: var(--action-hover);
+  --color-brand-light: var(--action-soft);
 
   /* ── App design tokens (semantic) ── */
   --color-success: var(--green);
@@ -584,16 +591,17 @@ label.field-label.disabled {
   --shadow-app-modal: var(--shadow-modal);
 
   /* ── App design tokens (fonts) ── */
-  --font-heading: var(--font-heading);
-  --font-body: var(--font-body);
-  --font-serif: var(--font-serif);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--font-ui);
+  --font-heading: var(--font-ui);
+  --font-body: var(--font-ui);
+  --font-serif: var(--font-report);
+  --font-mono: var(--font-code);
 
-  /* ── Motion Tokens (R-05) ── */
-  --duration-fast: var(--duration-fast);
-  --duration-base: var(--duration-base);
-  --duration-slow: var(--duration-slow);
-  --ease-out: var(--ease-out);
+  /* ── Motion Tokens ── */
+  --duration-fast: var(--motion-duration-fast);
+  --duration-base: var(--motion-duration-base);
+  --duration-slow: var(--motion-duration-slow);
+  --ease-out: var(--motion-ease-out);
 
   /* ── Fluid type steps as Tailwind utilities (text-step-base, text-step-lg, etc.) ── */
   --text-step-2xs: var(--step--2);
@@ -604,6 +612,11 @@ label.field-label.disabled {
   --text-step-2xl: var(--step-3);
   --text-step-3xl: var(--step-4);
   --text-step-4xl: var(--step-5);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
 }
 
 @layer base {
@@ -643,7 +656,7 @@ label.field-label.disabled {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     background: var(--bg-page);
@@ -712,6 +725,9 @@ label.field-label.disabled {
   /* Center sonner toasts over the content area (accounting for 256px sidebar) */
   [data-sonner-toaster][data-x-position="center"] {
     left: calc(50% + 128px);
+  }
+  html {
+    @apply font-sans;
   }
 }
 

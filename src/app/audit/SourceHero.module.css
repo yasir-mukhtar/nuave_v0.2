@@ -32,7 +32,7 @@
   background: #ffffff;
   color: var(--foreground);
   font-family:
-    var(--font-inter),
+    var(--font-body),
     Inter,
     -apple-system,
     BlinkMacSystemFont,
@@ -105,7 +105,7 @@
   max-width: 17ch;
   margin: 0;
   color: #ffffff;
-  font-family: var(--font-gelasio), Gelasio, Georgia, serif;
+  font-family: var(--font-serif), Gelasio, Georgia, serif;
   font-size: 60px;
   font-weight: 500;
   letter-spacing: -0.025em;
@@ -124,7 +124,7 @@
   margin: 0.9rem 0 0;
   color: #ffffffe0;
   font-family:
-    var(--font-inter),
+    var(--font-body),
     Inter,
     -apple-system,
     BlinkMacSystemFont,
@@ -201,7 +201,7 @@
   background: transparent;
   color: var(--foreground);
   font-family:
-    var(--font-inter),
+    var(--font-body),
     Inter,
     -apple-system,
     BlinkMacSystemFont,
@@ -270,7 +270,7 @@
   margin: 1rem 0 0;
   color: #626a74;
   font-family:
-    var(--font-inter),
+    var(--font-body),
     Inter,
     -apple-system,
     BlinkMacSystemFont,
@@ -289,7 +289,7 @@
   margin: 0.55rem 0 0;
   color: var(--red);
   font-family:
-    var(--font-inter),
+    var(--font-body),
     Inter,
     -apple-system,
     BlinkMacSystemFont,

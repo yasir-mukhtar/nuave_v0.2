@@ -1,11 +1,11 @@
 :root {
   /* ── Colors: Canvas & Surfaces ── */
   --bg-page: #ffffff;
-  --bg-surface: #f9fafb;
-  --bg-surface-raised: #f3f4f6;
-  --bg-neutral: #f5f5f5;
-  --bg-muted: #f5f5f5;
-  --surface-muted: #f5f5f5;
+  --bg-surface: #fafafa;
+  --bg-surface-raised: #f4f4f5;
+  --bg-neutral: #f4f4f5;
+  --bg-muted: #f4f4f5;
+  --surface-muted: var(--bg-muted);
 
   /* ── Colors: Hairlines & Borders ── */
   --border-default: #e5e7eb;
@@ -13,19 +13,19 @@
   --border-strong: #d1d5db;
 
   /* ── Colors: Typography (AC-02: text-muted meets >=4.5:1 contrast) ── */
-  --text-heading: #111827;
-  --text-body: #374151;
-  --text-muted: #5b5b5b; /* 6.25:1 on #ffffff, 5.8:1 on #f9fafb */
-  --text-placeholder: #9ca3af;
+  --text-heading: #18181b;
+  --text-body: #3f3f46;
+  --text-muted: #52525b; /* 7.4:1 on #ffffff */
+  --text-placeholder: #a1a1aa;
 
-  /* ── Colors: Single Accent (#533afd actions & active states only, R-04) ── */
-  --purple: #533afd;
-  --purple-dark: #3d2bc7;
-  --purple-light: #ece8ff;
-  --accent: #533afd;
-  --accent-hover: #3d2bc7;
-  --accent-soft: #ece8ff;
-  --accent-foreground: #ffffff;
+  /* ── Colors: BeUI light action accent and compatibility aliases ── */
+  --action: #18181b;
+  --action-hover: #27272a;
+  --action-soft: #f4f4f5;
+  --action-foreground: #ffffff;
+  --purple: var(--action);
+  --purple-dark: var(--action-hover);
+  --purple-light: var(--action-soft);
 
   /* ── Colors: Semantic Muted (Status only, R-04) ── */
   --green: #16a34a;
@@ -38,19 +38,13 @@
   --amber-light: #fef3c7;
   --amber-border: #fde68a;
 
-  /* ── Typography Stacks (R-03) ── */
-  --font-sans:
+  /* ── Typography source values (exposed through globals.css) ── */
+  --font-ui:
     var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, sans-serif;
-  --font-heading:
-    var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
-  --font-body:
-    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  --font-serif:
+  --font-report:
     "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --font-mono:
+  --font-code:
     ui-monospace, "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
 
   /* ── Typography Scale: Fixed perfect-fourth scale (14px base, ratio 1.333) ── */
@@ -83,45 +77,45 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
-  /* ── Radius ── */
-  --radius-xs: 3px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-3xl: 24px;
-  --radius-full: 9999px;
+  /* ── Radius source values (mapped to shadcn names in globals.css) ── */
+  --radius-token-xs: 3px;
+  --radius-token-sm: 6px;
+  --radius-token-md: 8px;
+  --radius-token-lg: 12px;
+  --radius-token-xl: 16px;
+  --radius-token-2xl: 20px;
+  --radius-token-3xl: 24px;
+  --radius-token-full: 9999px;
 
   /* ── Icons ── */
   --icon-stroke: 1.6;
 
-  /* ── Motion & Transitions (R-05) ── */
-  --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 400ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* ── Motion source values (mapped to shadcn names in globals.css) ── */
+  --motion-duration-fast: 150ms;
+  --motion-duration-base: 250ms;
+  --motion-duration-slow: 400ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --transition-fast: var(--duration-fast) var(--ease-out);
-  --transition-base: var(--duration-base) var(--ease-out);
-  --transition-slow: var(--duration-slow) var(--ease-out);
+  --transition-fast: var(--motion-duration-fast) var(--motion-ease-out);
+  --transition-base: var(--motion-duration-base) var(--motion-ease-out);
+  --transition-slow: var(--motion-duration-slow) var(--motion-ease-out);
 
   /* ── Shadows ── */
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-focus: 0 0 0 3px rgba(83, 58, 253, 0.24);
+  --shadow-focus: 0 0 0 3px rgb(24 24 27 / 0.18);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
 
   /* ── Accessibility Foundations (R-07) ── */
-  --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--purple);
-  --focus-ring-color: var(--purple);
+  --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--action);
+  --focus-ring-color: var(--action);
   --focus-ring-offset: 2px;
   --focus-ring-width: 2px;
   --target-min-size: 44px;
 
   /* ── Buttons (Foundation Language, R-08) ── */
-  --btn-radius: var(--radius-sm); /* 6px */
+  --btn-radius: var(--radius-token-sm); /* 6px */
   --btn-font-size: var(--step-0); /* 14px */
   --btn-font-weight: 500;
   --btn-transition: var(--transition-base);
@@ -143,9 +137,9 @@
   --btn-default-text-hover: var(--text-heading);
 
   /* Brand — Primary CTA */
-  --btn-brand-bg: var(--purple);
+  --btn-brand-bg: var(--action);
   --btn-brand-text: #ffffff;
-  --btn-brand-bg-hover: var(--purple-dark);
+  --btn-brand-bg-hover: var(--action-hover);
 
   /* Ghost */
   --btn-ghost-text: var(--text-muted);
@@ -167,9 +161,9 @@
   --lp-bg: var(--bg-surface);
   --lp-text-primary: var(--text-heading);
   --lp-text-secondary: var(--text-muted);
-  --lp-purple: var(--purple);
-  --lp-purple-dark: var(--purple-dark);
-  --black-hover: #1f2937;
+  --lp-purple: var(--action);
+  --lp-purple-dark: var(--action-hover);
+  --black-hover: #27272a;
   --lp-border: var(--border-light);
   --lp-nav-glass: rgba(255, 255, 255, 0.9);
   --lp-nav-border: var(--border-light);
