@@ -1,7 +1,9 @@
-/* Landing-only presentation. Shared resets, utilities, and tokens stay global. */
+/* Landing-only presentation. Shared resets, utilities, and tokens stay global.
+   Visual source: Refero Apple (España) style reference. */
 
 .btn-lp-purple {
   background-color: var(--lp-purple);
+  border-radius: var(--radius-button);
   transition:
     background-color 0.15s ease,
     transform var(--transition-fast);
@@ -18,6 +20,7 @@
 
 .btn-lp-black {
   background-color: var(--lp-text-primary);
+  border-radius: var(--radius-button);
   transition:
     background-color 0.15s ease,
     transform var(--transition-fast);
@@ -37,7 +40,7 @@ body:has(.lp-root) {
 }
 
 .lp-page {
-  background: var(--lp-bg, #f7f7f5);
+  background: var(--lp-bg);
 }
 
 .lp-page h1,
@@ -45,41 +48,44 @@ body:has(.lp-root) {
 .lp-page h3 {
   font-family: var(--font-heading), sans-serif;
   color: var(--lp-text-primary);
+  font-feature-settings: "numr" 1;
 }
 
-.lp-page h1 {
-  font-size: 48px;
-  font-weight: 500;
-  line-height: 58px;
-  letter-spacing: -0.03em;
-}
-
+/* Refero: 56/60 section headline, weight 700, tight tracking. */
+.lp-page h1,
 .lp-page h2 {
-  font-size: 48px;
-  font-weight: 500;
-  line-height: 1.2em;
-  letter-spacing: -2px;
+  font-size: var(--ref-text-heading);
+  font-weight: 700;
+  line-height: var(--ref-leading-heading);
+  letter-spacing: var(--ref-tracking-heading);
 }
 
+/* Refero: mid-size headings loosen slightly and use weight 600. */
 .lp-page h3 {
-  font-family: Inter, sans-serif;
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 34px;
+  font-size: var(--ref-text-body-lg);
+  font-weight: 600;
+  line-height: var(--ref-leading-body-lg);
+  letter-spacing: var(--ref-tracking-body-lg);
 }
 
-.lp-page .lp-hero-heading,
+.lp-page .lp-hero-heading {
+  font-size: var(--ref-text-heading-lg);
+  font-weight: 700;
+  line-height: var(--ref-leading-heading-lg);
+  letter-spacing: var(--ref-tracking-heading-lg);
+}
+
 .lp-page .lp-cta-heading {
-  font-size: 60px;
-  font-weight: 600;
-  line-height: 1em;
-  letter-spacing: -2px;
+  font-size: var(--ref-text-heading);
+  font-weight: 700;
+  line-height: var(--ref-leading-heading);
+  letter-spacing: var(--ref-tracking-heading);
 }
 
 .lp-page .lp-faq-heading {
-  font-size: 36px;
-  line-height: 1.4em;
-  letter-spacing: -1px;
+  font-size: var(--ref-text-heading);
+  line-height: var(--ref-leading-heading);
+  letter-spacing: var(--ref-tracking-heading);
 }
 
 .lp-root p,
@@ -88,6 +94,12 @@ body:has(.lp-root) {
 .lp-root button,
 .lp-root a {
   font-family: inherit;
+}
+
+.lp-root a,
+.lp-root button,
+.lp-root [role="button"] {
+  font-feature-settings: "numr" 1;
 }
 
 .lp-hiw-mobile-preview {
@@ -155,7 +167,7 @@ body:has(.lp-root) {
   }
 }
 
-/* The landing nav sits directly on the photographic audit hero until scroll. */
+/* The landing nav sits directly on Nuave's interactive hero until scroll. */
 @media (min-width: 769px) {
   .lp-nav-bar[data-overlay-hero="true"][data-scrolled="false"]
     .lp-nav-brand-logo {
@@ -173,7 +185,7 @@ body:has(.lp-root) {
     .lp-nav-hero-cta {
     border: 1px solid rgba(255, 255, 255, 0.34);
     background: rgba(255, 255, 255, 0.16) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    box-shadow: none;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
@@ -200,30 +212,30 @@ body:has(.lp-root) {
   }
 
   .lp-nav-inner {
-    background-color: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(117, 115, 114, 0.15) !important;
-    backdrop-filter: blur(10px) !important;
+    background-color: rgba(250, 250, 252, 0.94) !important;
+    border: 0 !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
   }
 
   .lp-hero-heading,
-  .lp-cta-heading {
-    font-size: 36px !important;
-    line-height: 1.1em;
-    letter-spacing: -1px !important;
-  }
-
+  .lp-cta-heading,
   .lp-problem-heading,
   .lp-hiw-heading,
   .lp-faq-heading,
   .lp-report-heading,
   .lp-batasan-heading {
-    font-size: 28px !important;
+    font-size: 40px !important;
+    line-height: 48px !important;
+    letter-spacing: 0 !important;
   }
 
   .lp-hero-subtitle,
   .lp-problem-subtitle,
   .lp-problem-card span {
-    font-size: 16px !important;
+    font-size: 17px !important;
+    line-height: 25px !important;
   }
 
   .lp-hero-section {
@@ -233,15 +245,15 @@ body:has(.lp-root) {
   .lp-problem-section,
   .lp-report-section,
   .lp-batasan-section {
-    padding: 60px 16px !important;
+    padding: 80px 16px !important;
   }
 
   .lp-data-section {
-    padding: 0 16px 60px !important;
+    padding: 0 16px 80px !important;
   }
 
   .lp-data-section > div {
-    padding-top: 60px !important;
+    padding-top: 80px !important;
   }
 
   .lp-problem-grid,
@@ -250,24 +262,25 @@ body:has(.lp-root) {
   }
 
   .lp-problem-card {
-    min-height: 320px !important;
+    min-height: 360px !important;
+    border-radius: 28px !important;
   }
 
   .lp-problem-card > div {
-    padding: 24px !important;
+    padding: 0 !important;
   }
 
   .lp-faq-section {
-    padding: 48px 16px 60px !important;
+    padding: 80px 16px !important;
   }
 
   .lp-cta-section {
     min-height: auto !important;
-    padding: 80px 20px !important;
+    padding: 96px 20px !important;
   }
 
   .lp-hiw-section {
-    padding-top: 60px !important;
+    padding-top: 80px !important;
   }
 
   .lp-hiw-sticky-heading {
@@ -282,7 +295,7 @@ body:has(.lp-root) {
     top: auto !important;
     margin-bottom: 0 !important;
     padding-right: 16px !important;
-    padding-bottom: 16px !important;
+    padding-bottom: 20px !important;
     padding-left: 16px !important;
   }
 
@@ -298,7 +311,7 @@ body:has(.lp-root) {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    padding: 24px !important;
+    padding: 28px !important;
   }
 
   .lp-hiw-mobile-preview {
@@ -308,7 +321,7 @@ body:has(.lp-root) {
   }
 
   .lp-footer {
-    padding: 60px 16px !important;
+    padding: 80px 16px !important;
   }
 
   .lp-footer-row1,
