@@ -26,8 +26,8 @@ export default function LandingTileReveal() {
   const layerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const layer = layerRef.current;
-    if (!layer) return;
+    const layerNode = layerRef.current;
+    if (!layerNode) return;
 
     const activeTiles = new Map<string, ActiveTile>();
     let animationFrame = 0;
@@ -69,7 +69,7 @@ export default function LandingTileReveal() {
     }
 
     function reveal(clientX: number, clientY: number, pointerType: string) {
-      const rect = layer.getBoundingClientRect();
+      const rect = layerNode.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
       const radius = pointerType === "touch" ? 58 : 68;
@@ -84,7 +84,12 @@ export default function LandingTileReveal() {
         for (let gridX = minGridX; gridX <= maxGridX; gridX += 1) {
           const tileX = gridX * GRID_STEP + GRID_STEP / 2;
           const tileY = gridY * GRID_STEP + GRID_STEP / 2;
-          if (tileX < 0 || tileY < 0 || tileX > rect.width || tileY > rect.height) {
+          if (
+            tileX < 0 ||
+            tileY < 0 ||
+            tileX > rect.width ||
+            tileY > rect.height
+          ) {
             continue;
           }
 
@@ -106,9 +111,10 @@ export default function LandingTileReveal() {
             element.className = styles.tile;
             element.style.left = `${tileX}px`;
             element.style.top = `${tileY}px`;
-            element.style.backgroundColor = TILE_COLORS[(hash >>> 8) % TILE_COLORS.length];
+            element.style.backgroundColor =
+              TILE_COLORS[(hash >>> 8) % TILE_COLORS.length];
             element.style.setProperty("--tile-opacity", opacity.toFixed(2));
-            layer.appendChild(element);
+            layerNode.appendChild(element);
             tile = { element, removalTimer: null };
             activeTiles.set(key, tile);
             window.requestAnimationFrame(() => {
@@ -119,7 +125,10 @@ export default function LandingTileReveal() {
               window.clearTimeout(tile.removalTimer);
               tile.removalTimer = null;
             }
-            tile.element.style.setProperty("--tile-opacity", opacity.toFixed(2));
+            tile.element.style.setProperty(
+              "--tile-opacity",
+              opacity.toFixed(2),
+            );
             tile.element.classList.add(styles.visible);
           }
         }
@@ -181,23 +190,25 @@ export default function LandingTileReveal() {
       }
     }
 
-    layer.addEventListener("pointermove", handlePointerMove);
-    layer.addEventListener("pointerdown", handlePointerDown);
-    layer.addEventListener("pointerup", handlePointerUp);
-    layer.addEventListener("pointercancel", handlePointerCancel);
-    layer.addEventListener("pointerleave", handlePointerLeave);
+    layerNode.addEventListener("pointermove", handlePointerMove);
+    layerNode.addEventListener("pointerdown", handlePointerDown);
+    layerNode.addEventListener("pointerup", handlePointerUp);
+    layerNode.addEventListener("pointercancel", handlePointerCancel);
+    layerNode.addEventListener("pointerleave", handlePointerLeave);
 
     return () => {
-      layer.removeEventListener("pointermove", handlePointerMove);
-      layer.removeEventListener("pointerdown", handlePointerDown);
-      layer.removeEventListener("pointerup", handlePointerUp);
-      layer.removeEventListener("pointercancel", handlePointerCancel);
-      layer.removeEventListener("pointerleave", handlePointerLeave);
+      layerNode.removeEventListener("pointermove", handlePointerMove);
+      layerNode.removeEventListener("pointerdown", handlePointerDown);
+      layerNode.removeEventListener("pointerup", handlePointerUp);
+      layerNode.removeEventListener("pointercancel", handlePointerCancel);
+      layerNode.removeEventListener("pointerleave", handlePointerLeave);
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
       if (touchFadeTimer) window.clearTimeout(touchFadeTimer);
       for (const [key, tile] of activeTiles) removeTile(key, tile);
     };
   }, []);
 
-  return <div ref={layerRef} className={styles.interactionLayer} aria-hidden="true" />;
+  return (
+    <div ref={layerRef} className={styles.interactionLayer} aria-hidden="true" />
+  );
 }
