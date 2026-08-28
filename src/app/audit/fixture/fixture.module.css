@@ -812,8 +812,13 @@
   }
 
   .primaryAction,
-  .secondaryAction {
+  .secondaryAction,
+  .ghostAction {
     width: 100%;
+  }
+
+  .ghostAction {
+    min-height: 2.75rem;
   }
 }
 

@@ -522,6 +522,10 @@
     font-size: 1rem;
   }
 
+  .heroExample {
+    min-height: 2.75rem;
+  }
+
   .demoNote {
     display: none;
   }
