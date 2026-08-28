@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Spinner } from "@heroui/react";
 import { IconArrowUp } from "@tabler/icons-react";
 import { customerAuditErrorMessage } from "@/lib/audit/customer-error";
@@ -22,6 +28,8 @@ export default function SourceHero({
   autoFocus = true,
   consumeHandoff = true,
   contentClassName = "",
+  backdropClassName = "",
+  backdropOverlay = null,
 }: {
   initialValue: string;
   extracting: boolean;
@@ -32,6 +40,8 @@ export default function SourceHero({
   autoFocus?: boolean;
   consumeHandoff?: boolean;
   contentClassName?: string;
+  backdropClassName?: string;
+  backdropOverlay?: ReactNode;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -103,11 +113,13 @@ export default function SourceHero({
       className={`audit-source-hero ${styles.heroStage} ${exiting ? styles.heroExiting : ""}`}
     >
       <div
-        className={`${styles.skyField} ${backdropStyles.localBackdrop}`}
+        className={`${styles.skyField} ${backdropStyles.localBackdrop} ${backdropClassName}`}
         aria-hidden="true"
       >
         <span className={styles.skyFade} />
       </div>
+
+      {backdropOverlay}
 
       <div className={`${styles.heroContent} ${contentClassName}`}>
         {showLogo ? (
