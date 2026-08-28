@@ -28,14 +28,14 @@
 
 .validationError {
   margin: 0.35rem 0 0;
-  color: var(--danger, #b42318);
+  color: var(--red);
   font-size: 0.75rem;
   line-height: 1.4;
 }
 
 .aiBadge {
   align-self: center;
-  border: 1px solid var(--separator);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   padding: 0.3rem 0.55rem;
   color: var(--text-muted);

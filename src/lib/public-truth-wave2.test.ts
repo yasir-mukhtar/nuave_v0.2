@@ -41,15 +41,19 @@ describe("Wave 2 public truth", () => {
 });
 
 describe("Wave 2 public accessibility and asset truth", () => {
-  it("removes closed mobile-menu controls from the DOM and exposes disclosure semantics", () => {
+  it("uses the controlled Sheet contract for mobile-menu disclosure semantics", () => {
     const nav = source("src/components/LandingNav.tsx");
-    expect(nav).toContain("if (!open) return null");
+    expect(nav).toContain(
+      "<Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>",
+    );
+    expect(nav).toContain("id={MOBILE_MENU_ID}");
+    expect(nav).toContain('id="nuave-mobile-menu-first-link"');
     expect(nav).toContain("aria-expanded={mobileMenuOpen}");
     expect(nav).toContain(
       "aria-controls={mobileMenuOpen ? MOBILE_MENU_ID : undefined}",
     );
-    expect(nav).toContain('event.key === "Escape"');
-    expect(nav).toContain("hamburgerRef.current?.focus()");
+    expect(nav).not.toContain("document.body.style.overflow");
+    expect(nav).not.toContain('event.key === "Escape"');
   });
 
   it("overrides the former hotlinked hero with a local CSS treatment", () => {

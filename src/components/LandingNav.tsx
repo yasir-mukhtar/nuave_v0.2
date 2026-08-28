@@ -3,6 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { IconMenu2, IconX } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const LOGO_SVG = "/logo-nuave.svg";
 const MOBILE_MENU_ID = "nuave-mobile-menu";
@@ -18,56 +28,6 @@ function useScrolled() {
   return scrolled;
 }
 
-function MobileMenu({
-  open,
-  onClose,
-  t,
-}: Readonly<{
-  open: boolean;
-  onClose: () => void;
-  t: ReturnType<typeof useTranslations>;
-}>) {
-  if (!open) return null;
-  return (
-    <>
-      <button
-        type="button"
-        aria-label="Tutup menu"
-        className="lp-mobile-menu-overlay fixed inset-0 z-[99] bg-black/20"
-        style={{
-          backdropFilter: "blur(1px)",
-          WebkitBackdropFilter: "blur(1px)",
-        }}
-        onClick={onClose}
-      />
-      <div
-        id={MOBILE_MENU_ID}
-        className="lp-mobile-menu fixed left-4 right-4 z-[101] bg-white rounded-[12px] border border-[rgba(117,115,114,0.15)] shadow-[0_8px_32px_rgba(0,0,0,0.12)] py-2 flex flex-col items-center"
-        style={{ top: 92 }}
-      >
-        <a
-          id="nuave-mobile-menu-first-link"
-          href="/support"
-          onClick={onClose}
-          className="px-5 py-3.5 text-[16px] font-medium text-[var(--lp-text-primary)] no-underline text-center block w-full"
-        >
-          {t("nav.contact")}
-        </a>
-        <div className="h-px bg-[#E5E7EB] mx-4 self-stretch" />
-        <div className="px-4 py-3 w-full box-border">
-          <Link
-            href="/audit"
-            onClick={onClose}
-            className="btn-lp-black flex items-center justify-center px-5 py-3 text-white text-[15px] font-medium rounded-[8px] no-underline cursor-pointer w-full"
-          >
-            {t("cta.auditBrandFreeNoExclaim")}
-          </Link>
-        </div>
-      </div>
-    </>
-  );
-}
-
 export default function LandingNav({
   overlayHero = false,
 }: {
@@ -76,7 +36,6 @@ export default function LandingNav({
   const scrolled = useScrolled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
-  const wasOpenRef = useRef(false);
   const t = useTranslations();
 
   useEffect(() => {
@@ -87,34 +46,8 @@ export default function LandingNav({
     return () => globalThis.removeEventListener("resize", onResize);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
-    if (mobileMenuOpen) {
-      globalThis.setTimeout(() => {
-        document.getElementById("nuave-mobile-menu-first-link")?.focus();
-      }, 0);
-    } else if (wasOpenRef.current) {
-      hamburgerRef.current?.focus();
-    }
-    wasOpenRef.current = mobileMenuOpen;
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileMenuOpen]);
-
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileMenuOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [mobileMenuOpen]);
-
-  const closeMobile = () => setMobileMenuOpen(false);
-
   return (
-    <>
+    <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
       <nav
         className="lp-nav-bar"
         data-overlay-hero={overlayHero ? "true" : "false"}
@@ -183,58 +116,53 @@ export default function LandingNav({
             </Link>
           </div>
 
-          <button
-            ref={hamburgerRef}
-            type="button"
-            className="lp-nav-hamburger hidden bg-transparent border-none cursor-pointer p-2"
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
-            aria-expanded={mobileMenuOpen}
-            aria-controls={mobileMenuOpen ? MOBILE_MENU_ID : undefined}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              {mobileMenuOpen ? (
-                <>
-                  <path
-                    d="M6 6L18 18"
-                    stroke="#0d0d0d"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M18 6L6 18"
-                    stroke="#0d0d0d"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </>
-              ) : (
-                <>
-                  <path
-                    d="M4 8H20"
-                    stroke="#0d0d0d"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M4 16H20"
-                    stroke="#0d0d0d"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </>
-              )}
-            </svg>
-          </button>
+          <SheetTrigger
+            render={
+              <Button
+                ref={hamburgerRef}
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="lp-nav-hamburger hidden min-h-11 min-w-11 rounded-lg text-[#0d0d0d]"
+                aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
+                aria-expanded={mobileMenuOpen}
+                aria-controls={mobileMenuOpen ? MOBILE_MENU_ID : undefined}
+              >
+                {mobileMenuOpen ? <IconX /> : <IconMenu2 />}
+              </Button>
+            }
+          />
         </div>
       </nav>
-      <MobileMenu open={mobileMenuOpen} onClose={closeMobile} t={t} />
-    </>
+
+      <SheetContent
+        id={MOBILE_MENU_ID}
+        side="right"
+        className="lp-mobile-menu w-[calc(100%-2rem)] max-w-sm rounded-l-2xl border-l border-border bg-background p-4"
+      >
+        <SheetHeader className="sr-only">
+          <SheetTitle>{t("nav.contact")}</SheetTitle>
+          <SheetDescription>Menu navigasi Nuave</SheetDescription>
+        </SheetHeader>
+        <div className="mt-10 flex flex-col items-stretch gap-2">
+          <a
+            id="nuave-mobile-menu-first-link"
+            href="/support"
+            onClick={() => setMobileMenuOpen(false)}
+            className="rounded-lg px-5 py-3.5 text-center text-base font-medium text-[var(--lp-text-primary)] no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {t("nav.contact")}
+          </a>
+          <div className="mx-4 h-px bg-border" />
+          <Link
+            href="/audit"
+            onClick={() => setMobileMenuOpen(false)}
+            className="btn-lp-black flex min-h-11 w-full items-center justify-center rounded-lg px-5 py-3 text-[15px] font-medium text-white no-underline"
+          >
+            {t("cta.auditBrandFreeNoExclaim")}
+          </Link>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

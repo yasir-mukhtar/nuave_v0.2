@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { IconCheck } from "@tabler/icons-react";
 import Spec004Hero from "./Spec004Hero";
 import styles from "./spec004.module.css";
@@ -73,7 +73,7 @@ export default function Spec004Demo() {
               <dd>{result.marketContext}</dd>
             </dl>
           </div>
-          <Button variant="secondary" onPress={() => setResult(null)}>
+          <Button variant="secondary" onClick={() => setResult(null)}>
             Mulai ulang
           </Button>
         </div>

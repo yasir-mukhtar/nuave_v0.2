@@ -12,6 +12,16 @@
 > `docs/drafts/design-pass-2026-08-19/` to `specs/006-product-wide-polish/`
 > on 2026-08-20 with the `docs/DECISION_LOG.md` and `docs/NOW.md` updates.
 
+> **Visual-stack supersession notice (2026-08-28):** The visual-system and
+> component-stack direction in this specification is retained as historical
+> product and behavior context, but is superseded by the founder-approved
+> migration to shadcn/ui + Base UI + Tailwind CSS v4 + BeUI + Motion + Tabler
+> Icons. The BeUI light baseline and [`docs/DESIGN.md`](../../docs/DESIGN.md)
+> are the current visual authority. Do not implement the obsolete HeroUI or
+> palette-specific guidance below; preserve the behavioral contracts and
+> acceptance intent unless the migration explicitly records a presentation-only
+> adaptation.
+
 ## Required context
 
 Read in order:

@@ -34,6 +34,7 @@ decision log does not become a permanent hidden override.
 | [`AUDIT.md`](./AUDIT.md) | Measurement, evidence, report, and data-handling method | Canonical |
 | [`VOICE.md`](./VOICE.md) | Indonesian writing contract for questions, reports, and customer copy | Canonical (founder-approved 2026-08-17) |
 | [`NOW.md`](./NOW.md) | Current objective, deployment state, facts, blockers, and next action | Current operating state |
+| [`DESIGN.md`](./DESIGN.md) | Current UI stack, visual language, interaction, accessibility, and component boundaries | Canonical current design authority |
 | [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions | Canonical history |
 | [`WORKFLOW.md`](./WORKFLOW.md) | Document creation, specifications, worker handoffs, and verification | Canonical working method |
 
@@ -94,12 +95,7 @@ Create these only when their decisions are needed:
 
 | Document | Purpose | When needed |
 |---|---|---|
-| `docs/DESIGN.md` | Product experience, interaction, accessibility, and visual principles | Before the product-wide design pass |
 | `docs/GTM.md` | Target segment, positioning, acquisition, offer testing, and evidence rules | Before outreach or launch work |
-
-No canonical `docs/DESIGN.md` exists yet. The former root [`DESIGN.md`](../archive/design/DESIGN.md)
-and dated design studies are archived as historical evidence only until a
-founder-approved `docs/DESIGN.md` replaces them as the canonical design guide.
 
 ## Specifications
 
@@ -116,7 +112,7 @@ context an agent must read. Do not implement a draft specification.
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md) | Indonesian audit and report contracts, journey realigned to the canonical sequence | Verified (2026-08-17) |
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Approved; implementing — **the current objective** |
 | [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Approved; implementing |
-| [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Implementing; Wave 1 (P0 foundation, P1 landing) verified 2026-08-20; Wave 2 gated on the report-quality gate |
+| [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md) |
 
 ## Reference and history
 

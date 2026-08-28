@@ -23,7 +23,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid var(--separator);
+  border-bottom: 1px solid var(--border-default);
   background: var(--background);
   padding: 0.75rem max(1.25rem, calc((100vw - 72rem) / 2));
 }
@@ -91,7 +91,7 @@
   width: 100%;
   height: 3px;
   border-radius: 2px;
-  background: var(--separator);
+  background: var(--border-default);
 }
 
 .stepLabel {
@@ -110,7 +110,7 @@
   height: 1.15rem;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid var(--separator);
+  border: 1px solid var(--border-default);
   border-radius: 50%;
   font-size: 0.62rem;
   font-weight: 700;
@@ -126,17 +126,17 @@
 }
 
 .stepActive .stepBar {
-  background: var(--accent);
+  background: var(--action);
 }
 
 .stepActive .stepMarker {
-  border-color: var(--accent);
-  color: var(--accent-soft-foreground);
+  border-color: var(--action);
+  color: var(--action-foreground);
 }
 
 .stepComplete .stepMarker {
-  background: var(--accent);
-  color: var(--accent-foreground);
+  background: var(--action);
+  color: var(--action-foreground);
 }
 
 .globalAlert,
@@ -205,7 +205,7 @@
   line-height: 1.6;
 }
 
-.workspace > [data-slot="alert"] {
+.workspace > .auditAlert {
   margin-bottom: 2rem;
 }
 
@@ -231,7 +231,7 @@
   display: grid;
   grid-template-columns: minmax(10rem, 0.34fr) minmax(0, 1fr);
   gap: clamp(2rem, 5vw, 4rem);
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   padding: clamp(2rem, 4vw, 3rem) 0 clamp(2.5rem, 5vw, 3.75rem);
 }
 
@@ -273,14 +273,14 @@
   gap: 1.5rem;
 }
 
-.workspace [data-slot="label"] {
+.workspace [data-slot="field-label"] {
   color: var(--foreground);
   font-family: var(--font-body);
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
-.workspace [data-slot="description"] {
+.workspace [data-slot="field-description"] {
   color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1.5;
@@ -336,7 +336,7 @@
 
 .inlineAction {
   margin-top: 0.75rem;
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   padding-top: 1.25rem;
 }
 
@@ -360,7 +360,7 @@
 
 .stickyAction .actionRow {
   flex: 1 1 100%;
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   padding-top: 1rem;
 }
 
@@ -382,23 +382,23 @@
 
 .disclosure {
   border: 0;
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   border-radius: 0;
   background: transparent;
 }
 
 .detailDisclosure {
-  border: 1px solid var(--separator);
+  border: 1px solid var(--border-default);
   border-radius: calc(var(--radius) * 1.5);
-  background: var(--surface);
+  background: var(--bg-surface);
 }
 
-.disclosure [data-slot="disclosure-trigger"],
-.detailDisclosure [data-slot="disclosure-trigger"] {
+.disclosure [data-slot="accordion-trigger"],
+.detailDisclosure [data-slot="accordion-trigger"] {
   width: 100%;
 }
 
-.disclosure [data-slot="disclosure-trigger"] {
+.disclosure [data-slot="accordion-trigger"] {
   min-height: 4.5rem;
   padding: 1rem 0;
   color: var(--foreground);
@@ -406,8 +406,50 @@
   font-weight: 600;
 }
 
-.disclosure [data-slot="disclosure-body"] {
+.disclosure [data-slot="accordion-content"] {
   padding: 0 0 3rem;
+}
+
+.disclosureBody {
+  padding: 0 0 3rem;
+}
+
+.auditAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid var(--amber);
+  border-radius: calc(var(--radius) * 1.5);
+  background: var(--amber-light);
+  padding: 1rem 1.1rem;
+  color: var(--foreground);
+}
+
+.auditAlertIcon {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 1.35rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--amber);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.auditAlertTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.auditAlertBody {
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .evidenceList {
@@ -420,7 +462,7 @@
   grid-template-columns: minmax(8rem, 0.65fr) minmax(12rem, 1.5fr) auto;
   gap: 1rem;
   align-items: start;
-  border-bottom: 1px solid var(--separator);
+  border-bottom: 1px solid var(--border-default);
   padding: 1rem 0;
 }
 
@@ -477,7 +519,7 @@
   grid-template-columns: 2rem minmax(0, 1fr) auto;
   align-items: start;
   gap: 1rem;
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   padding: 1.15rem 0;
 }
 
@@ -500,12 +542,12 @@
 }
 
 .runRow .failure {
-  color: var(--danger);
+  color: var(--red);
 }
 
 .runSection {
-  border-top: 1px solid var(--separator);
-  border-bottom: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
   padding-top: 1.75rem;
 }
 
@@ -517,24 +559,21 @@
 }
 
 .runRecovery {
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   padding: 1.25rem 0;
 }
 
 .reportWrap {
-  --report-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --report-serif:
-    "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   width: min(74rem, calc(100% - 3rem));
   padding-top: 1.5rem;
-  font-family: var(--report-sans);
+  font-family: var(--font-body);
 }
 
 .report {
   display: block;
   max-width: none;
   color: #171717;
-  font-family: var(--report-sans);
+  font-family: var(--font-body);
 }
 
 .reportToolbar {
@@ -573,7 +612,7 @@
 .reportHero h1 {
   max-width: 48rem;
   margin: 0;
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: clamp(3.75rem, 8.6vw, 7.25rem);
   font-weight: 400;
   letter-spacing: -0.055em;
@@ -736,7 +775,7 @@
 
 .sectionHeading h2 {
   margin: 0;
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: clamp(2.25rem, 4vw, 3.75rem);
   font-weight: 400;
   letter-spacing: -0.035em;
@@ -764,7 +803,7 @@
 }
 
 .resultGrid strong {
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: clamp(2.5rem, 4vw, 3.6rem);
   font-weight: 400;
   letter-spacing: -0.045em;
@@ -779,7 +818,7 @@
 }
 
 .mainResult strong {
-  color: var(--accent);
+  color: var(--action);
 }
 
 .dimensionList {
@@ -836,7 +875,7 @@
 .conclusion {
   max-width: 43rem;
   margin: 0 0 1.5rem;
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: clamp(1.55rem, 2.6vw, 2.25rem);
   letter-spacing: -0.02em;
   line-height: 1.28;
@@ -887,7 +926,7 @@
 .findings h3,
 .priorities h3 {
   margin: 0 0 0.65rem;
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: clamp(1.35rem, 2vw, 1.75rem);
   font-weight: 400;
   letter-spacing: -0.02em;
@@ -933,7 +972,7 @@
 
 .priorityNumber {
   color: #777;
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: 1.5rem;
   line-height: 1;
 }
@@ -979,7 +1018,8 @@
   background: transparent;
 }
 
-.detailDisclosure [data-slot="disclosure-trigger"] {
+.detailDisclosure [data-slot="accordion-trigger"],
+.detailTrigger {
   display: grid;
   grid-template-columns: 2.25rem minmax(0, 1fr) auto 1.25rem;
   align-items: center;
@@ -990,7 +1030,7 @@
 
 .detailIndex {
   color: #777;
-  font-family: var(--report-sans);
+  font-family: var(--font-body);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1009,12 +1049,13 @@
 }
 
 .detailTitle strong {
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: 1.12rem;
   font-weight: 400;
 }
 
-.detailDisclosure [data-slot="disclosure-body"] {
+.detailDisclosure [data-slot="accordion-content"],
+.detailBody {
   padding: 0 2rem 2.25rem 3.25rem;
 }
 
@@ -1073,7 +1114,7 @@
 
 .methodGrid > p {
   margin: 0;
-  font-family: var(--report-serif);
+  font-family: var(--font-serif);
   font-size: 1.35rem;
   line-height: 1.45;
 }
@@ -1284,7 +1325,8 @@
     gap: 0 1rem;
   }
 
-  .detailDisclosure [data-slot="disclosure-trigger"] {
+  .detailDisclosure [data-slot="accordion-trigger"],
+  .detailTrigger {
     grid-template-columns: 1.5rem minmax(0, 1fr) 1.25rem;
   }
 
@@ -1292,7 +1334,8 @@
     display: none;
   }
 
-  .detailDisclosure [data-slot="disclosure-body"] {
+  .detailDisclosure [data-slot="accordion-content"],
+  .detailBody {
     padding-right: 0;
     padding-left: 0;
   }

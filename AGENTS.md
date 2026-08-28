@@ -74,6 +74,19 @@ For implementation work:
    This fallback protects production, but it does not prevent the direct push
    from changing the `main` branch itself.
 
+## UI stack and presentation rules
+
+1. Use shadcn for generic UI components.
+2. Use Base UI through shadcn for generic behavior and accessibility.
+3. Search BeUI before building custom animated, AI, or disclosure UI.
+4. Use Tabler for generic interface icons.
+5. Do not introduce a second generic UI, primitive, motion, or icon stack.
+6. Global visual decisions belong in `src/styles/tokens.css`.
+7. Product components compose approved generic primitives.
+8. Do not recreate generic primitives that shadcn or Base UI already provides.
+9. Default to BeUI's light visual character.
+10. Preserve product behavior during presentation refactors.
+
 Material product decisions belong in `docs/DECISION_LOG.md`. Current status
 and the next action belong in `docs/NOW.md`. Update them only when the work
 actually changes those facts.

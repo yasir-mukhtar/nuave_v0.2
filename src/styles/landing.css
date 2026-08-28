@@ -43,7 +43,7 @@ body:has(.lp-root) {
 .lp-page h1,
 .lp-page h2,
 .lp-page h3 {
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: var(--font-heading), sans-serif;
   color: var(--lp-text-primary);
 }
 
@@ -295,7 +295,16 @@ body:has(.lp-root) {
   }
 
   .lp-hiw-left-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     padding: 24px !important;
+  }
+
+  .lp-hiw-mobile-preview {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .lp-footer {

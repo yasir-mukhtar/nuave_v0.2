@@ -51,7 +51,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 1rem 0.6rem 1.1rem;
-  border: 1px solid var(--separator);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-2xl);
   background: var(--background);
   box-shadow: var(--shadow-subtle);
@@ -137,7 +137,7 @@
 }
 
 .heroHint[data-kind="error"] {
-  color: var(--danger);
+  color: var(--red);
 }
 
 .heroExamples {
@@ -155,8 +155,8 @@
 }
 
 .heroExample {
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-token-full);
   background: var(--background);
   color: var(--muted-foreground);
   font-family: var(--font-body);
@@ -200,7 +200,7 @@
   justify-content: center;
   gap: 0.6rem;
   overflow: hidden;
-  border: 1px solid var(--separator);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-2xl);
   background: var(--background);
   box-shadow: var(--shadow-card);
@@ -403,14 +403,14 @@
 
 /* Demo harness page (route: /audit/hero) */
 .demo {
-  --accent: #533afd;
-  --accent-foreground: #ffffff;
-  --accent-hover: #4931e8;
-  --accent-soft: color-mix(in srgb, #533afd 13%, transparent);
-  --accent-soft-foreground: #3f28cf;
-  --accent-soft-hover: color-mix(in srgb, #533afd 19%, transparent);
-  --focus: #533afd;
-  --link: #533afd;
+  --accent: var(--action);
+  --accent-foreground: var(--action-foreground);
+  --accent-hover: var(--action-hover);
+  --accent-soft: var(--action-soft);
+  --accent-soft-foreground: var(--action);
+  --accent-soft-hover: color-mix(in srgb, var(--action) 19%, transparent);
+  --focus: var(--action);
+  --link: var(--action);
   min-height: 100svh;
   background: var(--background);
   color: var(--foreground);
@@ -423,7 +423,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid var(--separator);
+  border-bottom: 1px solid var(--border-default);
   background: var(--background);
   padding: 0.75rem max(1.25rem, calc((100vw - 72rem) / 2));
 }
@@ -457,7 +457,7 @@
   width: min(30rem, 100%);
   flex-direction: column;
   gap: 0.75rem;
-  border: 1px solid var(--separator);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-2xl);
   background: var(--background);
   box-shadow: var(--shadow-card);
@@ -476,14 +476,14 @@
 .demoResultHead svg {
   width: 1.3rem;
   height: 1.3rem;
-  color: var(--success, var(--accent));
+  color: var(--green);
 }
 
 .demoResultRow {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  border-top: 1px solid var(--separator);
+  border-top: 1px solid var(--border-default);
   padding-top: 0.75rem;
 }
 
@@ -520,6 +520,10 @@
 
   .heroIntro p {
     font-size: 1rem;
+  }
+
+  .heroExample {
+    min-height: 2.75rem;
   }
 
   .demoNote {

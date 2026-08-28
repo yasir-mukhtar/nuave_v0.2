@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-08-21
+> Updated: 2026-08-28
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -11,6 +11,16 @@ the protected live engine is now integrated on the OpenCode Go production
 method. The remaining Phase 3 gate is to produce the first founder-supervised
 real Indonesian report through the actual product path and judge whether it
 contains a finding worth paying for.
+
+## Active presentation-layer work
+
+The founder-approved UI-stack migration is active on the dedicated
+`feat/ui-stack-migration` branch from baseline `1f28bdd`. Its canonical design
+authority is [`docs/DESIGN.md`](./DESIGN.md). The migration is presentation-layer
+work: it standardizes generic UI on shadcn/Base UI, uses Tailwind CSS v4 and
+the BeUI light baseline, and preserves the existing intake, audit, report,
+fixture, validation, and provider-call contracts. It must make no live or paid
+AI-provider calls and must not change backend or business logic.
 
 Wave 1 of the Phase 6 design pass
 ([`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)) shipped
@@ -157,10 +167,12 @@ remain intentionally pending.
   extraction; required web search for every audit observation; and no web
   search for report synthesis. Missing observation search is a technical
   failure, not a valid visibility result.
-- The unlisted workflow uses a route-scoped HeroUI five-stage interface, locks
-  verified inputs after execution starts, streams real per-prompt status,
-  preserves interrupted observations in the browser session, and expands all ten
-  detailed findings in print from the same report data shown on screen.
+- The unlisted workflow now uses shadcn/ui generic primitives backed by Base UI,
+  Tailwind CSS v4 tokens, BeUI higher-order activity, Motion only for the
+  indeterminate report phase, and Tabler generic icons. It locks verified inputs
+  after execution starts, streams real per-prompt status, preserves interrupted
+  observations in the browser session, and expands all ten detailed findings in
+  print from the same report data shown on screen.
 - The live question-generation boundary writes ten natural Indonesian
   questions from the minimized confirmed brief with no search, then keeps human
   review before audit start. The live observation path uses the versioned

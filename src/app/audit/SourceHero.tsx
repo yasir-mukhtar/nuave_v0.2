@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { Spinner } from "@heroui/react";
-import { IconArrowUp } from "@tabler/icons-react";
+import { IconArrowUp, IconLoader2 } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { customerAuditErrorMessage } from "@/lib/audit/customer-error";
 import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "@/lib/audit/source-handoff";
 import { parseSourceInput } from "@/lib/audit/source-input";
@@ -117,14 +119,17 @@ export default function SourceHero({
 
       <div className={`${styles.heroContent} ${contentClassName}`}>
         {showLogo ? (
-          <Image
-            src="/logo-nuave-horizontal.png"
-            className={styles.heroLogo}
-            alt="Nuave"
-            width={152}
-            height={48}
-            priority
-          />
+          <div className={styles.heroBrand}>
+            <Image
+              src="/logo-nuave.svg"
+              className={styles.heroLogo}
+              alt="Nuave logo"
+              width={32}
+              height={32}
+              priority
+            />
+            <span className={styles.heroLogoText}>Nuave</span>
+          </div>
         ) : null}
 
         <h1 className={styles.heroHeading}>
@@ -135,62 +140,65 @@ export default function SourceHero({
         </p>
 
         <form onSubmit={handleSubmit} className={styles.heroForm} noValidate>
-          <div
-            className={`${styles.heroInputBar} ${extracting ? styles.heroInputLoading : ""}`}
-            onClick={() => inputRef.current?.focus()}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              inputMode="url"
-              className={styles.heroInput}
-              value={value}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                setLocalError("");
-              }}
-              placeholder="https://bisnisanda.com"
-              aria-label="Website atau akun Instagram"
-              aria-describedby="source-hint source-error"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              disabled={extracting}
-            />
-
-            <button
-              type="submit"
-              className={styles.heroSubmit}
-              disabled={!hasValue || extracting}
-              aria-label="Lanjutkan audit"
-              aria-busy={extracting}
+          <Field className="w-full">
+            <div
+              className={`${styles.heroInputBar} ${extracting ? styles.heroInputLoading : ""}`}
+              onClick={() => inputRef.current?.focus()}
             >
-              {extracting ? (
-                <Spinner size="sm" className={styles.heroSpinner} />
-              ) : (
-                <IconArrowUp size={18} stroke={2.25} />
-              )}
-            </button>
-          </div>
+              <Input
+                ref={inputRef}
+                type="text"
+                inputMode="url"
+                className={styles.heroInput}
+                value={value}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                  setLocalError("");
+                }}
+                placeholder="https://bisnisanda.com"
+                aria-label="Website atau akun Instagram"
+                aria-describedby="source-hint source-error"
+                aria-invalid={localError || error ? true : undefined}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                disabled={extracting}
+              />
 
-          <p
-            id="source-hint"
-            className={styles.heroHint}
-            style={{
-              color: "#ffffff",
-              textShadow: "0 1px 6px rgba(0, 30, 80, 0.2)",
-            }}
-          >
-            Masukkan URL website atau akun Instagram resmi bisnis Anda.
-          </p>
+              <Button
+                type="submit"
+                variant="default"
+                size="icon"
+                className={styles.heroSubmit}
+                disabled={!hasValue || extracting}
+                aria-label="Lanjutkan audit"
+                aria-busy={extracting}
+              >
+                {extracting ? (
+                  <IconLoader2
+                    size={18}
+                    stroke={2}
+                    className={`${styles.heroSpinner} animate-spin`}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <IconArrowUp size={18} stroke={2.25} aria-hidden="true" />
+                )}
+              </Button>
+            </div>
 
-          <p
-            id="source-error"
-            className={`${styles.heroError} ${localError || error ? styles.heroErrorVisible : ""}`}
-            role={localError || error ? "alert" : undefined}
-          >
-            {localError || error || " "}
-          </p>
+            <FieldDescription id="source-hint" className={styles.heroHint}>
+              Masukkan URL website atau akun Instagram resmi bisnis Anda.
+            </FieldDescription>
+
+            <p
+              id="source-error"
+              className={`${styles.heroError} ${localError || error ? styles.heroErrorVisible : ""}`}
+              role={localError || error ? "alert" : undefined}
+            >
+              {localError || error || " "}
+            </p>
+          </Field>
         </form>
       </div>
     </div>

@@ -1,23 +1,8 @@
 import type { Metadata } from "next";
-import { Gelasio, Inter } from "next/font/google";
-import { GeistSans } from "geist/font/sans";
 import "./globals.css";
-import SmoothScroll from "@/components/SmoothScroll";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const gelasio = Gelasio({
-  subsets: ["latin"],
-  weight: "500",
-  variable: "--font-gelasio",
-  display: "swap",
-});
+import { geist } from "@/app/fonts";
 
 export const metadata: Metadata = {
   title: "Nuave · Apakah brand Anda muncul di ChatGPT?",
@@ -44,13 +29,9 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html
-      lang={locale}
-      className={`${GeistSans.variable} ${inter.variable} ${gelasio.variable}`}
-    >
+    <html lang={locale} className={geist.variable}>
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
-          <SmoothScroll />
           {children}
         </NextIntlClientProvider>
       </body>

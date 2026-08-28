@@ -1,10 +1,16 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { AUDIT_WORKFLOW_STORAGE_KEY } from "../../src/lib/audit/workflow-storage";
 import {
   VARIANCE_FAILURE_STORAGE_KEY,
   VARIANCE_STORAGE_KEY,
 } from "../../src/lib/audit/variance";
-import { expectNoHorizontalScroll, grantAccess } from "./helpers";
+import {
+  expectNoHorizontalScroll,
+  expectReadyReport,
+  grantAccess,
+  seedFixtureState,
+  v3ReadyState,
+} from "./helpers";
 
 const SOURCE = "https://example.com/";
 
@@ -84,6 +90,13 @@ async function stubExtraction(
     requestedSource: () => requestedSource,
     releasePost: () => releasePost?.(),
   };
+}
+
+async function expectTouchTarget(locator: Locator, label: string) {
+  const box = await locator.boundingBox();
+  expect(box, `${label} should be rendered`).not.toBeNull();
+  expect(Math.round(box?.width ?? 0), `${label} width`).toBeGreaterThanOrEqual(44);
+  expect(Math.round(box?.height ?? 0), `${label} height`).toBeGreaterThanOrEqual(44);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -301,4 +314,77 @@ test.describe("landing audit hero handoff", () => {
       await expectNoHorizontalScroll(page);
     });
   }
+});
+
+test.describe("mobile touch target policy", () => {
+  test("migrated live controls expose approximately 44px hit areas", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const calls = await stubExtraction(page);
+
+    await page.goto("/");
+    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    await expectTouchTarget(
+      hero.getByRole("button", { name: "Lanjutkan audit" }),
+      "source submit",
+    );
+    await expectTouchTarget(
+      page.locator('[data-slot="accordion-trigger"]').first(),
+      "FAQ disclosure",
+    );
+
+    const menuTrigger = page.getByRole("button", { name: "Buka menu" });
+    await expectTouchTarget(menuTrigger, "mobile menu trigger");
+    await menuTrigger.click();
+    const sheetClose = page.getByRole("button", { name: "Close" });
+    await expect(sheetClose).toBeVisible();
+    await expectTouchTarget(sheetClose, "Sheet close");
+    await page.keyboard.press("Escape");
+    await expect(sheetClose).toHaveCount(0);
+
+    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await expect(page).toHaveURL(/audit$/);
+    await expect(
+      page.getByRole("heading", {
+        name: "Check the client brief before it shapes the audit.",
+      }),
+    ).toBeVisible();
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Create 10 audit questions" }),
+      "standard facts action",
+    );
+
+    await page.getByRole("button", { name: "Tambah bisnis serupa" }).click();
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Hapus bisnis serupa 1" }),
+      "similar-business remove",
+    );
+    expect(calls.extractCalls()).toBe(1);
+  });
+
+  test("fixture and report actions remain touch-sized on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    seedFixtureState(page, v3ReadyState());
+    await page.goto("/audit/fixture");
+    await expectReadyReport(page);
+
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Download PDF" }).first(),
+      "fixture PDF action",
+    );
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Unduh JSON" }),
+      "report JSON action",
+    );
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Mulai ulang" }).first(),
+      "fixture restart action",
+    );
+
+    await page.goto("/audit/spec004");
+    await expectTouchTarget(
+      page.getByRole("button", { name: "kopitamansenja.example" }),
+      "Spec004 example action",
+    );
+  });
 });
