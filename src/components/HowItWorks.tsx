@@ -31,9 +31,7 @@ function PreviewPanel({
   className?: string;
 }) {
   return (
-    <div
-      className={cn("relative overflow-hidden bg-[#F5F5F7]", className)}
-    >
+    <div className={cn("relative overflow-hidden bg-[#F5F5F7]", className)}>
       {children}
     </div>
   );
