@@ -32,7 +32,7 @@ decision log does not become a permanent hidden override.
 | [`VISION.md`](./VISION.md) | Why Nuave exists and the principles all downstream work follows | Canonical |
 | [`PRODUCT.md`](./PRODUCT.md) | Current customer, offer, promise, journey, scope, and success signals | Canonical |
 | [`AUDIT.md`](./AUDIT.md) | Measurement, evidence, report, and data-handling method | Canonical |
-| `VOICE.md` | Indonesian writing contract for questions, reports, and customer copy | Canonical (founder-approved 2026-08-17) |
+| [`VOICE.md`](./VOICE.md) | Indonesian writing contract for questions, reports, and customer copy | Canonical (founder-approved 2026-08-17) |
 | [`NOW.md`](./NOW.md) | Current objective, deployment state, facts, blockers, and next action | Current operating state |
 | [`DESIGN.md`](./DESIGN.md) | Current UI stack, visual language, interaction, accessibility, and component boundaries | Canonical current design authority |
 | [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions | Canonical history |

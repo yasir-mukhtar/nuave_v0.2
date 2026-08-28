@@ -72,11 +72,12 @@ add Lucide or another general-purpose icon library.
 
 Motion communicates a meaningful state transition, progressive disclosure, AI
 activity, or visual character; it is not ambient decoration. Prefer named
-`fast`, `base`, and `slow` durations with one ease-out curve. No perpetual
-loops, cursor glows, marquees, drifting gradients, or animated filler. Every
-motion path has a `prefers-reduced-motion` fallback that preserves the state
-and information. Do not retain global Lenis scrolling unless a concrete
-customer experience justifies it here.
+`fast`, `base`, and `slow` durations with one ease-out curve. Do not use
+decorative perpetual loops, cursor glows, marquees, drifting gradients, or
+animated filler. Indeterminate activity indicators may loop only while genuine
+work is in progress. Reduced-motion mode must remove unnecessary spatial motion
+while preserving the state and information. Do not retain global Lenis scrolling
+unless a concrete customer experience justifies it here.
 
 All migrated interactions preserve keyboard operation, visible focus, Escape
 and focus-return behavior where applicable, status announcements, responsive
