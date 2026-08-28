@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import {
-  IconChevronDown,
-  IconCheck,
-  IconShieldLock,
-} from "@tabler/icons-react";
+import { IconCheck, IconShieldLock } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import Footer from "@/components/Footer";
 import HowItWorks from "@/components/HowItWorks";
 import LandingNav from "@/components/LandingNav";
@@ -141,7 +142,6 @@ function FAQSection() {
     q: t(`faqs.q${i + 1}`),
     a: t(`faqs.a${i + 1}`),
   }));
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   return (
     <section
       id="faq"
@@ -151,42 +151,26 @@ function FAQSection() {
         <h2 className="lp-faq-heading text-center mb-12">
           {t("landing.faqHeading")}
         </h2>
-        <div className="flex flex-col gap-4">
+        <Accordion
+          defaultValue={["faq-0"]}
+          className="gap-4"
+          aria-label={t("landing.faqHeading")}
+        >
           {FAQS.map((faq, i) => (
-            <div
+            <AccordionItem
               key={faq.q}
-              className="bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden"
+              value={`faq-${i}`}
+              className="overflow-hidden rounded-xl border border-border bg-card"
             >
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="flex items-center justify-between gap-4 w-full p-6 bg-transparent border-none cursor-pointer text-left"
-              >
-                <span className="text-[18px] font-semibold tracking-[-0.5px] leading-[1.7em] text-[#111827]">
-                  {faq.q}
-                </span>
-                <IconChevronDown
-                  size={20}
-                  stroke={1.5}
-                  className="shrink-0 text-[#6B7280] transition-transform duration-300"
-                  style={{
-                    transform:
-                      openFaq === i ? "rotate(180deg)" : "rotate(0deg)",
-                  }}
-                />
-              </button>
-              <div
-                className="grid transition-[grid-template-rows] duration-300 ease-in-out"
-                style={{ gridTemplateRows: openFaq === i ? "1fr" : "0fr" }}
-              >
-                <div className="overflow-hidden">
-                  <p className="text-[16px] font-normal leading-[1.6em] text-[#6B7280] m-0 px-6 pb-6">
-                    {faq.a}
-                  </p>
-                </div>
-              </div>
-            </div>
+              <AccordionTrigger className="w-full px-6 py-5 text-lg font-semibold tracking-[-0.5px] text-foreground hover:no-underline">
+                {faq.q}
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6 text-base leading-[1.6em] text-muted-foreground">
+                <p className="m-0">{faq.a}</p>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       </div>
     </section>
   );
