@@ -210,6 +210,10 @@ export default function LandingTileReveal() {
   }, []);
 
   return (
-    <div ref={layerRef} className={styles.interactionLayer} aria-hidden="true" />
+    <div
+      ref={layerRef}
+      className={styles.interactionLayer}
+      aria-hidden="true"
+    />
   );
 }
