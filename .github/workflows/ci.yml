@@ -29,8 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run non-mutating checks
-        run: npm run check
+      - name: Print formatted tile reveal
+        run: |
+          npx prettier src/components/LandingTileReveal.tsx
+          exit 1
 
       - name: Run unit tests (audit engine + fixture journey)
         run: npm run test:unit
