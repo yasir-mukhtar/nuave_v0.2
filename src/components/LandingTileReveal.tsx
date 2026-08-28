@@ -6,9 +6,20 @@ import styles from "./LandingTileReveal.module.css";
 type ActiveTile = {
   element: HTMLSpanElement;
   removalTimer: number | null;
+  baseOpacity: number;
+  baseColor: string;
+};
+
+type InteractionPoint = {
+  clientX: number;
+  clientY: number;
+  pointerType: string;
 };
 
 const GRID_STEP = 14;
+const THINKING_IDLE_DELAY_MS = 160;
+const THINKING_INTERVAL_MS = 220;
+const THINKING_MUTATION_RATE = 0.34;
 const TILE_COLORS = [
   "rgba(255, 255, 255, 0.98)",
   "rgba(226, 245, 255, 0.98)",
@@ -29,16 +40,18 @@ export default function LandingTileReveal() {
     const currentLayer = layerRef.current;
     if (!currentLayer) return;
     const layerNode: HTMLDivElement = currentLayer;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     const activeTiles = new Map<string, ActiveTile>();
     let animationFrame = 0;
     let touchActive = false;
     let touchFadeTimer = 0;
-    let pendingPoint: {
-      clientX: number;
-      clientY: number;
-      pointerType: string;
-    } | null = null;
+    let thinkingTimer = 0;
+    let lastInteractionAt = 0;
+    let currentPoint: InteractionPoint | null = null;
+    let pendingPoint: InteractionPoint | null = null;
 
     function removeTile(key: string, tile: ActiveTile) {
       if (tile.removalTimer !== null) {
@@ -79,6 +92,14 @@ export default function LandingTileReveal() {
       );
     }
 
+    function restoreTileAppearance(tile: ActiveTile) {
+      tile.element.style.backgroundColor = tile.baseColor;
+      tile.element.style.setProperty(
+        "--tile-opacity",
+        tile.baseOpacity.toFixed(2),
+      );
+    }
+
     function reveal(clientX: number, clientY: number, pointerType: string) {
       const rect = layerNode.getBoundingClientRect();
       const x = clientX - rect.left;
@@ -115,6 +136,7 @@ export default function LandingTileReveal() {
           const key = `${gridX}:${gridY}`;
           visibleKeys.add(key);
           const opacity = Math.max(0.28, 0.96 - distance * 0.56);
+          const color = TILE_COLORS[(hash >>> 8) % TILE_COLORS.length];
           let tile = activeTiles.get(key);
 
           if (!tile) {
@@ -122,11 +144,15 @@ export default function LandingTileReveal() {
             element.className = styles.tile;
             element.style.left = `${tileX}px`;
             element.style.top = `${tileY}px`;
-            element.style.backgroundColor =
-              TILE_COLORS[(hash >>> 8) % TILE_COLORS.length];
+            element.style.backgroundColor = color;
             element.style.setProperty("--tile-opacity", opacity.toFixed(2));
             layerNode.appendChild(element);
-            tile = { element, removalTimer: null };
+            tile = {
+              element,
+              removalTimer: null,
+              baseOpacity: opacity,
+              baseColor: color,
+            };
             activeTiles.set(key, tile);
             window.requestAnimationFrame(() => {
               if (element.isConnected) element.classList.add(styles.visible);
@@ -136,10 +162,9 @@ export default function LandingTileReveal() {
               window.clearTimeout(tile.removalTimer);
               tile.removalTimer = null;
             }
-            tile.element.style.setProperty(
-              "--tile-opacity",
-              opacity.toFixed(2),
-            );
+            tile.baseOpacity = opacity;
+            tile.baseColor = color;
+            restoreTileAppearance(tile);
             tile.element.classList.add(styles.visible);
           }
         }
@@ -150,8 +175,43 @@ export default function LandingTileReveal() {
       }
     }
 
+    function animateThinkingTiles() {
+      if (prefersReducedMotion || !currentPoint) return;
+      if (currentPoint.pointerType === "touch" && !touchActive) return;
+      if (performance.now() - lastInteractionAt < THINKING_IDLE_DELAY_MS) return;
+
+      for (const tile of activeTiles.values()) {
+        if (
+          tile.removalTimer !== null ||
+          !tile.element.classList.contains(styles.visible) ||
+          Math.random() > THINKING_MUTATION_RATE
+        ) {
+          continue;
+        }
+
+        const state = Math.random();
+        let opacity = tile.baseOpacity;
+
+        if (state < 0.14) {
+          opacity = 0;
+        } else if (state < 0.46) {
+          opacity = tile.baseOpacity * (0.22 + Math.random() * 0.34);
+        } else {
+          opacity = Math.min(
+            1,
+            tile.baseOpacity * (0.72 + Math.random() * 0.42),
+          );
+        }
+
+        tile.element.style.setProperty("--tile-opacity", opacity.toFixed(2));
+        tile.element.style.backgroundColor =
+          TILE_COLORS[Math.floor(Math.random() * TILE_COLORS.length)];
+      }
+    }
+
     function queueReveal(event: PointerEvent) {
       if (!pointInsideLayer(event.clientX, event.clientY)) {
+        currentPoint = null;
         pendingPoint = null;
         if (animationFrame) {
           window.cancelAnimationFrame(animationFrame);
@@ -161,11 +221,13 @@ export default function LandingTileReveal() {
         return;
       }
 
-      pendingPoint = {
+      currentPoint = {
         clientX: event.clientX,
         clientY: event.clientY,
         pointerType: event.pointerType,
       };
+      pendingPoint = currentPoint;
+      lastInteractionAt = performance.now();
 
       if (animationFrame) return;
       animationFrame = window.requestAnimationFrame(() => {
@@ -197,17 +259,27 @@ export default function LandingTileReveal() {
     function handlePointerUp(event: PointerEvent) {
       if (event.pointerType !== "touch") return;
       touchActive = false;
+      currentPoint = null;
       touchFadeTimer = window.setTimeout(fadeAll, 720);
     }
 
     function handlePointerCancel(event: PointerEvent) {
       if (event.pointerType === "touch") touchActive = false;
+      currentPoint = null;
       fadeAll();
     }
 
     function handleWindowBlur() {
       touchActive = false;
+      currentPoint = null;
       fadeAll();
+    }
+
+    if (!prefersReducedMotion) {
+      thinkingTimer = window.setInterval(
+        animateThinkingTiles,
+        THINKING_INTERVAL_MS,
+      );
     }
 
     window.addEventListener("pointermove", handlePointerMove, {
@@ -230,6 +302,7 @@ export default function LandingTileReveal() {
       window.removeEventListener("blur", handleWindowBlur);
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
       if (touchFadeTimer) window.clearTimeout(touchFadeTimer);
+      if (thinkingTimer) window.clearInterval(thinkingTimer);
       for (const [key, tile] of activeTiles) removeTile(key, tile);
     };
   }, []);
