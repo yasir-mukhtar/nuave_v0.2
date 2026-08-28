@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Spinner } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import {
   IconArrowRight,
   IconBrandInstagram,
   IconLink,
+  IconLoader2,
   IconSearch,
 } from "@tabler/icons-react";
 import { parseSourceInput } from "@/lib/audit/source-input";
@@ -145,11 +146,16 @@ export default function Spec004Hero({
               <div className={styles.heroSubmitWrap}>
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant="default"
                   size="lg"
-                  isDisabled={extracting}
+                  disabled={extracting}
+                  aria-busy={extracting}
                 >
-                  {extracting ? <Spinner size="sm" /> : <IconArrowRight />}
+                  {extracting ? (
+                    <IconLoader2 className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <IconArrowRight />
+                  )}
                   {parsed.sourceType === "instagram"
                     ? "Analisis akun ini"
                     : "Analisis situs ini"}

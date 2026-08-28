@@ -1,6 +1,11 @@
 "use client";
 
-import { IconDownload, IconExternalLink } from "@tabler/icons-react";
+import { IconExternalLink } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ReportSectionHeading,
+  ReportToolbar,
+} from "@/components/product/ReportToolbar";
 import type {
   AuditObservation,
   AuditReport,
@@ -61,10 +66,12 @@ function SectionHeading({
   children: React.ReactNode;
 }) {
   return (
-    <div className={styles.reportSectionHeading}>
-      <span aria-hidden="true">{number}</span>
-      <h2>{children}</h2>
-    </div>
+    <ReportSectionHeading
+      number={number}
+      className={styles.reportSectionHeading}
+    >
+      {children}
+    </ReportSectionHeading>
   );
 }
 
@@ -121,22 +128,13 @@ export default function FixtureReportView({
 
   return (
     <div className={styles.reportWrap}>
-      <div className={`${styles.reportToolbar} ${styles.noPrint}`}>
-        <button
-          type="button"
-          className={styles.primaryAction}
-          onClick={onDownloadPdf}
-        >
-          Download PDF
-        </button>
-        <button
-          type="button"
-          className={styles.secondaryAction}
-          onClick={onDownloadJson}
-        >
-          <IconDownload /> Unduh JSON
-        </button>
-      </div>
+      <ReportToolbar
+        className={`${styles.reportToolbar} ${styles.noPrint}`}
+        onDownloadPdf={onDownloadPdf}
+        onDownloadJson={onDownloadJson}
+        pdfLabel="Download PDF"
+        jsonLabel="Unduh JSON"
+      />
       <article className={styles.report}>
         {previewNotice ? previewNotice : null}
         <header className={styles.reportHero} tabIndex={-1}>
@@ -265,9 +263,9 @@ export default function FixtureReportView({
             <p>Kesimpulan</p>
             <div>
               <p className={styles.conclusion}>{report.conclusion}</p>
-              <span className={styles.accuracyChip}>
+              <Badge variant="secondary" className={styles.accuracyChip}>
                 Informasi publik: {accuracyLabel}
-              </span>
+              </Badge>
             </div>
           </div>
           <div className={styles.snapshotAlert} role="note">

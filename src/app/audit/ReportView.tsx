@@ -1,8 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { Alert, Button, Chip, Disclosure, Separator } from "@heroui/react";
-import { IconDownload, IconExternalLink } from "@tabler/icons-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { IconExternalLink } from "@tabler/icons-react";
+import { AuditNotice } from "@/components/product/AuditNotice";
+import {
+  ReportSectionHeading,
+  ReportToolbar,
+} from "@/components/product/ReportToolbar";
 import type {
   AuditObservation,
   AuditReport,
@@ -125,10 +137,9 @@ function SectionHeading({
   children: React.ReactNode;
 }) {
   return (
-    <div className={styles.sectionHeading}>
-      <span aria-hidden="true">{number}</span>
-      <h2>{children}</h2>
-    </div>
+    <ReportSectionHeading number={number} className={styles.sectionHeading}>
+      {children}
+    </ReportSectionHeading>
   );
 }
 
@@ -168,14 +179,11 @@ export default function ReportView({
 
   return (
     <div className={styles.reportWrap}>
-      <div className={`${styles.reportToolbar} ${styles.noPrint}`}>
-        <Button variant="primary" size="sm" onPress={() => window.print()}>
-          <IconDownload /> Cetak / simpan PDF
-        </Button>
-        <Button variant="ghost" size="sm" onPress={onDownloadJson}>
-          <IconDownload /> Unduh bukti JSON
-        </Button>
-      </div>
+      <ReportToolbar
+        className={`${styles.reportToolbar} ${styles.noPrint}`}
+        onDownloadPdf={() => window.print()}
+        onDownloadJson={onDownloadJson}
+      />
       <article className={styles.report}>
         {previewNotice ? previewNotice : null}
         <header className={styles.reportHero} id="stage-5" tabIndex={-1}>
@@ -316,16 +324,20 @@ export default function ReportView({
             <p>Artinya</p>
             <div>
               <p className={styles.conclusion}>{report.conclusion}</p>
-              <Chip
-                color={
+              <Badge
+                variant={
                   report.accuracy_status === "no_clear_issues"
-                    ? "success"
-                    : "warning"
+                    ? "default"
+                    : "secondary"
                 }
-                variant="soft"
+                className={
+                  report.accuracy_status === "no_clear_issues"
+                    ? "border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]"
+                    : "border-[var(--amber)] bg-[var(--amber-light)] text-[var(--amber)]"
+                }
               >
                 Informasi publik: {accuracyLabel}
-              </Chip>
+              </Badge>
             </div>
           </div>
           {report.observed_competitors.length ? (
@@ -349,20 +361,15 @@ export default function ReportView({
               </div>
             </div>
           ) : null}
-          <Alert
-            status="warning"
+          <AuditNotice
+            tone="warning"
+            title="Hasil ini dapat berubah"
             className={`${styles.snapshotAlert} ${styles.editorialAlert}`}
           >
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Hasil ini dapat berubah</Alert.Title>
-              <Alert.Description>
-                Laporan ini menunjukkan sepuluh jawaban AI pada tanggal di atas.
-                Model, tanggal, lokasi, atau percakapan berbeda dapat memberi
-                jawaban berbeda.
-              </Alert.Description>
-            </Alert.Content>
-          </Alert>
+            Laporan ini menunjukkan sepuluh jawaban AI pada tanggal di atas.
+            Model, tanggal, lokasi, atau percakapan berbeda dapat memberi
+            jawaban berbeda.
+          </AuditNotice>
         </section>
 
         <section className={styles.reportSection} id="findings">
@@ -424,16 +431,15 @@ export default function ReportView({
                     <span className={styles.priorityNumber}>
                       {String(priority.order).padStart(2, "0")}
                     </span>
-                    <Chip
-                      color={
-                        priority.timing === "do_first" ? "accent" : "default"
+                    <Badge
+                      variant={
+                        priority.timing === "do_first" ? "default" : "secondary"
                       }
-                      variant="soft"
                     >
                       {priority.timing === "do_first"
                         ? "Kerjakan dulu"
                         : "Kerjakan berikutnya"}
-                    </Chip>
+                    </Badge>
                   </div>
                   <h3>{priority.action}</h3>
                   <dl>
@@ -479,12 +485,12 @@ export default function ReportView({
             {report.details.map((detail, index) => {
               const observation = observationById.get(detail.prompt_id);
               return (
-                <Disclosure
+                <Accordion
                   key={detail.prompt_id}
                   className={styles.detailDisclosure}
                 >
-                  <Disclosure.Heading>
-                    <Disclosure.Trigger>
+                  <AccordionItem value={detail.prompt_id} className="border-0">
+                    <AccordionTrigger className={styles.detailTrigger}>
                       <span className={styles.detailIndex}>
                         {String(index + 1).padStart(2, "0")}
                       </span>
@@ -497,18 +503,15 @@ export default function ReportView({
                         <strong>{resultLabel(detail)}</strong>
                       </span>
                       <code>{detail.prompt_id}</code>
-                      <Disclosure.Indicator />
-                    </Disclosure.Trigger>
-                  </Disclosure.Heading>
-                  <Disclosure.Content>
-                    <Disclosure.Body>
+                    </AccordionTrigger>
+                    <AccordionContent className={styles.detailBody}>
                       <DetailContent
                         detail={detail}
                         observation={observation}
                       />
-                    </Disclosure.Body>
-                  </Disclosure.Content>
-                </Disclosure>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               );
             })}
           </div>
@@ -559,18 +562,14 @@ export default function ReportView({
               </li>
             </ul>
           </div>
-          <Alert status="accent" className={styles.editorialAlert}>
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>
-                Gunakan laporan ini untuk memilih satu langkah
-              </Alert.Title>
-              <Alert.Description>
-                Periksa informasi publik terlebih dahulu. Buat satu perubahan
-                yang berguna, lalu ulangi pengujian yang sama.
-              </Alert.Description>
-            </Alert.Content>
-          </Alert>
+          <AuditNotice
+            tone="info"
+            title="Gunakan laporan ini untuk memilih satu langkah"
+            className={styles.editorialAlert}
+          >
+            Periksa informasi publik terlebih dahulu. Buat satu perubahan yang
+            berguna, lalu ulangi pengujian yang sama.
+          </AuditNotice>
         </section>
 
         <footer className={styles.reportFooter}>

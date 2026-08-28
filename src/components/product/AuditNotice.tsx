@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 type AuditNoticeProps = {
   title: string;
-  tone?: "warning" | "danger";
+  tone?: "info" | "warning" | "danger";
   children: ReactNode;
   className?: string;
 };
@@ -18,6 +18,7 @@ export function AuditNotice({
   className,
 }: AuditNoticeProps) {
   const isDanger = tone === "danger";
+  const isInfo = tone === "info";
 
   return (
     <div
@@ -25,7 +26,9 @@ export function AuditNotice({
         "flex items-start gap-3 rounded-lg border p-4",
         isDanger
           ? "border-[var(--red)] bg-[var(--red-light)]"
-          : "border-[var(--amber)] bg-[var(--amber-light)]",
+          : isInfo
+            ? "border-[var(--action)] bg-[var(--action-soft)]"
+            : "border-[var(--amber)] bg-[var(--amber-light)]",
         className,
       )}
       role="alert"
@@ -35,7 +38,9 @@ export function AuditNotice({
           "grid size-5 shrink-0 place-items-center rounded-full border text-xs font-bold",
           isDanger
             ? "border-[var(--red)] text-[var(--red)]"
-            : "border-[var(--amber)] text-[var(--amber)]",
+            : isInfo
+              ? "border-[var(--action)] text-[var(--action)]"
+              : "border-[var(--amber)] text-[var(--amber)]",
         )}
         aria-hidden="true"
       >
