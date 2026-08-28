@@ -26,8 +26,9 @@ export default function LandingTileReveal() {
   const layerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const layerNode = layerRef.current;
-    if (!layerNode) return;
+    const currentLayer = layerRef.current;
+    if (!currentLayer) return;
+    const layerNode: HTMLDivElement = currentLayer;
 
     const activeTiles = new Map<string, ActiveTile>();
     let animationFrame = 0;
