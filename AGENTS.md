@@ -84,7 +84,9 @@ For implementation work:
 6. Global visual decisions belong in `src/styles/tokens.css`.
 7. Product components compose approved generic primitives.
 8. Do not recreate generic primitives that shadcn or Base UI already provides.
-9. Default to BeUI's light visual character.
+9. Use [`docs/design/REFERO_APPLE_STYLE.md`](./docs/design/REFERO_APPLE_STYLE.md)
+   as the visual styling reference. BeUI remains the preferred interaction and
+   motion source, not the default palette or surface language.
 10. Preserve product behavior during presentation refactors.
 
 Material product decisions belong in `docs/DECISION_LOG.md`. Current status
