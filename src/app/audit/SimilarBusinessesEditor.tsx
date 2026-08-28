@@ -1,7 +1,9 @@
 "use client";
 
-import { Button, Input, Label, TextField } from "@heroui/react";
 import { IconPlus, IconX } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   INVALID_SIMILAR_BUSINESS_URL_MESSAGE,
   MAX_SIMILAR_BUSINESSES,
@@ -61,14 +63,16 @@ export default function SimilarBusinessesEditor({
           !isValidSimilarBusinessUrl(business.source_url),
         );
         const validationId = `similar-business-error-${index}`;
+        const inputId = `similar-business-${index}`;
         return (
           <div className={styles.row} key={index}>
             <div className={styles.inputGroup}>
-              <TextField fullWidth>
-                <Label className={styles.visuallyHidden}>
+              <Field data-invalid={invalid || undefined}>
+                <FieldLabel htmlFor={inputId} className={styles.visuallyHidden}>
                   URL bisnis serupa {index + 1}
-                </Label>
+                </FieldLabel>
                 <Input
+                  id={inputId}
                   type="url"
                   value={business.source_url}
                   placeholder="https://contoh-bisnis.com"
@@ -77,7 +81,7 @@ export default function SimilarBusinessesEditor({
                   onChange={(event) => updateEntry(index, event.target.value)}
                   onBlur={() => commitEntry(index)}
                 />
-              </TextField>
+              </Field>
               {invalid ? (
                 <p
                   id={validationId}
@@ -94,9 +98,10 @@ export default function SimilarBusinessesEditor({
             <Button
               type="button"
               variant="ghost"
+              size="icon"
               className={styles.removeButton}
               aria-label={`Hapus bisnis serupa ${index + 1}`}
-              onPress={() => removeEntry(index)}
+              onClick={() => removeEntry(index)}
             >
               <IconX />
             </Button>
@@ -108,8 +113,8 @@ export default function SimilarBusinessesEditor({
         type="button"
         variant="ghost"
         className={styles.addButton}
-        isDisabled={businesses.length >= MAX_SIMILAR_BUSINESSES}
-        onPress={addEntry}
+        disabled={businesses.length >= MAX_SIMILAR_BUSINESSES}
+        onClick={addEntry}
       >
         <IconPlus />
         <span>Tambah bisnis serupa</span>
