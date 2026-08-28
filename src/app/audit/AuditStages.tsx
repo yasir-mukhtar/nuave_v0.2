@@ -706,7 +706,10 @@ export function QuestionsStep({
             title={categoryLabels[category]}
             className={styles.promptSection}
           >
-            <div className={styles.promptPair}>
+            <FieldGroup
+              className={styles.promptPair}
+              aria-labelledby={`category-${category}`}
+            >
               {pack.prompts.map((prompt, index) => {
                 if (prompt.category !== category) return null;
                 const questionId = `audit-question-${index}`;
@@ -735,7 +738,7 @@ export function QuestionsStep({
                   </Field>
                 );
               })}
-            </div>
+            </FieldGroup>
           </StageSection>
         ))}
       </div>
