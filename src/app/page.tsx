@@ -147,10 +147,7 @@ function FAQSection() {
     a: t(`faqs.a${i + 1}`),
   }));
   return (
-    <section
-      id="faq"
-      className="lp-faq-section bg-[#F5F5F7] px-8 py-[120px]"
-    >
+    <section id="faq" className="lp-faq-section bg-[#F5F5F7] px-8 py-[120px]">
       <div className="max-w-[820px] mx-auto">
         <h2 className="lp-faq-heading text-center mb-14">
           {t("landing.faqHeading")}
