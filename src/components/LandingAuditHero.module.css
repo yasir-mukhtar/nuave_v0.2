@@ -10,12 +10,18 @@
 .experimentalBackdrop {
   background-image: linear-gradient(
     180deg,
-    #076be8 0%,
-    #1189ef 20%,
-    #4fb4f5 36%,
-    #a9daf8 49%,
-    #e7f4fd 56%,
-    #ffffff 61%,
+    #052e84 0%,
+    #04318b 10%,
+    #043792 20%,
+    #043ea0 30%,
+    #0449af 40%,
+    #2f6cc8 50%,
+    #6d9ce0 60%,
+    #75a8dd 70%,
+    #b8d0ea 78%,
+    #dbe8f5 83%,
+    #f2f7fc 87%,
+    #ffffff 90%,
     #ffffff 100%
   ) !important;
   background-position: center top !important;

@@ -69,6 +69,16 @@ export default function LandingTileReveal() {
       }
     }
 
+    function pointInsideLayer(clientX: number, clientY: number) {
+      const rect = layerNode.getBoundingClientRect();
+      return (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      );
+    }
+
     function reveal(clientX: number, clientY: number, pointerType: string) {
       const rect = layerNode.getBoundingClientRect();
       const x = clientX - rect.left;
@@ -141,6 +151,16 @@ export default function LandingTileReveal() {
     }
 
     function queueReveal(event: PointerEvent) {
+      if (!pointInsideLayer(event.clientX, event.clientY)) {
+        pendingPoint = null;
+        if (animationFrame) {
+          window.cancelAnimationFrame(animationFrame);
+          animationFrame = 0;
+        }
+        fadeAll();
+        return;
+      }
+
       pendingPoint = {
         clientX: event.clientX,
         clientY: event.clientY,
@@ -185,24 +205,25 @@ export default function LandingTileReveal() {
       fadeAll();
     }
 
-    function handlePointerLeave(event: PointerEvent) {
-      if (event.pointerType === "mouse" || event.pointerType === "pen") {
-        fadeAll();
-      }
+    function handleWindowBlur() {
+      touchActive = false;
+      fadeAll();
     }
 
-    layerNode.addEventListener("pointermove", handlePointerMove);
-    layerNode.addEventListener("pointerdown", handlePointerDown);
-    layerNode.addEventListener("pointerup", handlePointerUp);
-    layerNode.addEventListener("pointercancel", handlePointerCancel);
-    layerNode.addEventListener("pointerleave", handlePointerLeave);
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    window.addEventListener("pointercancel", handlePointerCancel, {
+      passive: true,
+    });
+    window.addEventListener("blur", handleWindowBlur);
 
     return () => {
-      layerNode.removeEventListener("pointermove", handlePointerMove);
-      layerNode.removeEventListener("pointerdown", handlePointerDown);
-      layerNode.removeEventListener("pointerup", handlePointerUp);
-      layerNode.removeEventListener("pointercancel", handlePointerCancel);
-      layerNode.removeEventListener("pointerleave", handlePointerLeave);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+      window.removeEventListener("blur", handleWindowBlur);
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
       if (touchFadeTimer) window.clearTimeout(touchFadeTimer);
       for (const [key, tile] of activeTiles) removeTile(key, tile);
