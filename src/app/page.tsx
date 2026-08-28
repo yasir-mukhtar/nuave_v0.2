@@ -23,7 +23,10 @@ function IsilaporanSection() {
     body: t(`report.item${i + 1}Body`),
   }));
   return (
-    <section id="isi-laporan" className="lp-report-section bg-white px-8 py-[120px]">
+    <section
+      id="isi-laporan"
+      className="lp-report-section bg-white px-8 py-[120px]"
+    >
       <div className="max-w-[1200px] mx-auto">
         <h2 className="lp-report-heading text-center m-0 mb-6">
           {t("report.heading")}
@@ -39,7 +42,11 @@ function IsilaporanSection() {
               )}
             >
               <div className="w-8 h-8 rounded-full bg-[#E8E8ED] flex items-center justify-center shrink-0 mt-0.5">
-                <IconCheck size={16} stroke={2} color="var(--lp-text-primary)" />
+                <IconCheck
+                  size={16}
+                  stroke={2}
+                  color="var(--lp-text-primary)"
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <p className="text-[21px] font-semibold tracking-[0.011em] leading-[1.38] text-[var(--lp-text-primary)] m-0">
@@ -53,7 +60,10 @@ function IsilaporanSection() {
           ))}
         </div>
 
-        <div id="contoh-laporan" className="mt-20 flex flex-col items-center gap-5">
+        <div
+          id="contoh-laporan"
+          className="mt-20 flex flex-col items-center gap-5"
+        >
           <Link
             href="/audit"
             className="btn-lp-purple inline-flex items-center px-5 py-[11px] text-white text-[17px] font-normal tracking-[-0.022em] leading-[1.47] rounded-full no-underline cursor-pointer"
@@ -78,7 +88,10 @@ function BatasanSection() {
     { title: t("batasan.item3Title"), body: t("batasan.item3Body") },
   ];
   return (
-    <section id="batasan" className="lp-batasan-section bg-[#F5F5F7] px-8 py-[120px]">
+    <section
+      id="batasan"
+      className="lp-batasan-section bg-[#F5F5F7] px-8 py-[120px]"
+    >
       <div className="max-w-[1200px] mx-auto">
         <h2 className="lp-batasan-heading text-center m-0 mb-16">
           {t("batasan.heading")}
@@ -106,7 +119,10 @@ function BatasanSection() {
 function KebijakanDataSection() {
   const t = useTranslations();
   return (
-    <section id="kebijakan-data" className="lp-data-section bg-white px-8 pb-[120px]">
+    <section
+      id="kebijakan-data"
+      className="lp-data-section bg-white px-8 pb-[120px]"
+    >
       <div className="max-w-[1200px] mx-auto pt-[120px]">
         <div className="rounded-[28px] bg-[#1D1D1F] px-8 py-20 flex flex-col items-center text-center gap-6">
           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
@@ -131,7 +147,10 @@ function FAQSection() {
     a: t(`faqs.a${i + 1}`),
   }));
   return (
-    <section id="faq" className="lp-faq-section bg-[#F5F5F7] px-8 py-[120px]">
+    <section
+      id="faq"
+      className="lp-faq-section bg-[#F5F5F7] px-8 py-[120px]"
+    >
       <div className="max-w-[820px] mx-auto">
         <h2 className="lp-faq-heading text-center mb-14">
           {t("landing.faqHeading")}
