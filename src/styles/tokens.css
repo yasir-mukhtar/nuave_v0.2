@@ -1,33 +1,94 @@
 :root {
+  /* ── Refero source palette: Apple (España) ──
+     Source: https://styles.refero.design/style/c9cabb96-32fa-4896-837a-f2497ce1c856
+     These reference values are kept explicit so future agents can distinguish
+     the upstream style language from Nuave semantic aliases below. */
+  --ref-primary-ink: #1d1d1f;
+  --ref-mid-gray: #707070;
+  --ref-deep-gray: #474747;
+  --ref-hairline: #d6d6d6;
+  --ref-canvas: #f5f5f7;
+  --ref-paper: #ffffff;
+  --ref-cool-wash: #e8e8ed;
+  --ref-faded-surface: #fafafc;
+  --ref-quiet-dot: #777779;
+  --ref-electric-blue: #0071e3;
+  --ref-link-blue: #0066cc;
+  --ref-ember: #b64400;
+  --ref-sky: #c8d8e0;
+  --ref-citrus: #dddc8c;
+  --ref-starlight: #f0e4d3;
+  --ref-silver: #e3e4e5;
+  --ref-blush: #e8d0d0;
+  --ref-indigo: #596680;
+  --ref-midnight: #2e3642;
+
+  /* ── Refero source typography ──
+     Nuave keeps the compact app scale below for dense audit/report workflows.
+     Marketing surfaces can opt into this larger reference scale directly. */
+  --ref-text-micro: 12px;
+  --ref-leading-micro: 16px;
+  --ref-tracking-micro: -0.12px;
+  --ref-text-caption: 14px;
+  --ref-leading-caption: 18px;
+  --ref-tracking-caption: -0.224px;
+  --ref-text-body-sm: 17px;
+  --ref-leading-body-sm: 25px;
+  --ref-tracking-body-sm: -0.374px;
+  --ref-text-body: 21px;
+  --ref-leading-body: 29px;
+  --ref-tracking-body: 0.231px;
+  --ref-text-body-lg: 28px;
+  --ref-leading-body-lg: 32px;
+  --ref-tracking-body-lg: 0.196px;
+  --ref-text-subheading: 32px;
+  --ref-leading-subheading: 36px;
+  --ref-tracking-subheading: 0.128px;
+  --ref-text-heading-sm: 40px;
+  --ref-leading-heading-sm: 48px;
+  --ref-text-heading: 56px;
+  --ref-leading-heading: 60px;
+  --ref-tracking-heading: -0.28px;
+  --ref-text-heading-lg: 80px;
+  --ref-leading-heading-lg: 84px;
+  --ref-tracking-heading-lg: -1.2px;
+  --ref-text-display: 96px;
+  --ref-leading-display: 100px;
+  --ref-tracking-display: -1.44px;
+
   /* ── Colors: Canvas & Surfaces ── */
-  --bg-page: #ffffff;
-  --bg-surface: #fafafa;
-  --bg-surface-raised: #f4f4f5;
-  --bg-neutral: #f4f4f5;
-  --bg-muted: #f4f4f5;
+  --bg-page: var(--ref-paper);
+  --bg-surface: var(--ref-canvas);
+  --bg-surface-raised: var(--ref-faded-surface);
+  --bg-neutral: var(--ref-cool-wash);
+  --bg-muted: var(--ref-cool-wash);
   --surface-muted: var(--bg-muted);
 
   /* ── Colors: Hairlines & Borders ── */
-  --border-default: #e5e7eb;
-  --border-light: #ececec;
-  --border-strong: #d1d5db;
+  --border-default: var(--ref-hairline);
+  --border-light: var(--ref-hairline);
+  --border-strong: var(--ref-mid-gray);
 
-  /* ── Colors: Typography (AC-02: text-muted meets >=4.5:1 contrast) ── */
-  --text-heading: #18181b;
-  --text-body: #3f3f46;
-  --text-muted: #52525b; /* 7.4:1 on #ffffff */
-  --text-placeholder: #a1a1aa;
+  /* ── Colors: Typography ── */
+  --text-heading: var(--ref-primary-ink);
+  --text-body: var(--ref-primary-ink);
+  --text-muted: var(--ref-mid-gray);
+  --text-placeholder: var(--ref-quiet-dot);
 
-  /* ── Colors: BeUI light action accent and compatibility aliases ── */
-  --action: #18181b;
-  --action-hover: #27272a;
-  --action-soft: #f4f4f5;
-  --action-foreground: #ffffff;
+  /* ── Colors: Refero action language ──
+     Filled actions use Electric Blue. Link Blue remains text-link only. */
+  --action: var(--ref-electric-blue);
+  --action-hover: var(--ref-link-blue);
+  --action-soft: var(--ref-cool-wash);
+  --action-foreground: var(--ref-paper);
+  --link: var(--ref-link-blue);
   --purple: var(--action);
   --purple-dark: var(--action-hover);
   --purple-light: var(--action-soft);
 
-  /* ── Colors: Semantic Muted (Status only, R-04) ── */
+  /* ── Colors: Semantic status ──
+     Retained as a Nuave functional exception: audit/report states need
+     unambiguous success, warning, and error communication. */
   --green: #16a34a;
   --green-light: #dcfce7;
   --green-border: #86efac;
@@ -38,7 +99,9 @@
   --amber-light: #fef3c7;
   --amber-border: #fde68a;
 
-  /* ── Typography source values (exposed through globals.css) ── */
+  /* ── Typography source values ──
+     Geist remains the licensed cross-platform implementation substitute for
+     Refero's SF Pro Display/Text recommendation. */
   --font-ui:
     var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, sans-serif;
@@ -47,28 +110,27 @@
   --font-code:
     ui-monospace, "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
 
-  /* ── Typography Scale: Fixed perfect-fourth scale (14px base, ratio 1.333) ── */
-  --step--2: 0.4924rem; /*  ~7.9px */
-  --step--1: 0.6564rem; /* ~10.5px */
-  --step-0: 0.875rem; /*    14px */
-  --step-1: 1.1664rem; /* ~18.7px */
-  --step-2: 1.5548rem; /* ~24.9px */
-  --step-3: 2.0725rem; /* ~33.2px */
-  --step-4: 2.7627rem; /* ~44.2px */
-  --step-5: 3.6826rem; /* ~58.9px */
+  /* ── Dense application type scale ── */
+  --step--2: 0.4924rem;
+  --step--1: 0.6564rem;
+  --step-0: 0.875rem;
+  --step-1: 1.1664rem;
+  --step-2: 1.5548rem;
+  --step-3: 2.0725rem;
+  --step-4: 2.7627rem;
+  --step-5: 3.6826rem;
 
-  /* ── Semantic Type Aliases ── */
-  --text-caption: 0.75rem; /* 12px — timestamps, meta, micro labels */
-  --text-body-size: var(--step-0); /* 14px — default body text */
-  --text-subtitle: 1rem; /* 16px — bar titles, secondary headings */
-  --text-page-title: 1.125rem; /* 18px — page titles, primary headings */
-  --text-body-lg: var(--step-1); /* ~18.7px — intro text, card subtitles */
-  --text-heading-sm: var(--step-2); /* ~24.9px — h3, section subheads */
-  --text-heading-md: var(--step-3); /* ~33.2px — h2, section titles */
-  --text-heading-lg: var(--step-4); /* ~44.2px — h1, page titles */
-  --text-display: var(--step-5); /* ~58.9px — hero display */
+  --text-caption: 0.75rem;
+  --text-body-size: var(--step-0);
+  --text-subtitle: 1rem;
+  --text-page-title: 1.125rem;
+  --text-body-lg: var(--step-1);
+  --text-heading-sm: var(--step-2);
+  --text-heading-md: var(--step-3);
+  --text-heading-lg: var(--step-4);
+  --text-display: var(--step-5);
 
-  /* ── Spacing ── */
+  /* ── Spacing: 4px base, aligned to Refero ── */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -76,21 +138,30 @@
   --space-xl: 32px;
   --space-2xl: 48px;
   --space-3xl: 64px;
+  --space-section: 120px;
+  --page-max-width: 1200px;
+  --card-padding: 28px;
 
-  /* ── Radius source values (mapped to shadcn names in globals.css) ── */
-  --radius-token-xs: 3px;
-  --radius-token-sm: 6px;
-  --radius-token-md: 8px;
-  --radius-token-lg: 12px;
-  --radius-token-xl: 16px;
-  --radius-token-2xl: 20px;
-  --radius-token-3xl: 24px;
+  /* ── Radius source values ──
+     Refero's signature cards are 28px and actions are pills. Smaller values
+     exist only for controls where 28px would impede dense workflow usability. */
+  --radius-token-xs: 10px;
+  --radius-token-sm: 12px;
+  --radius-token-md: 16px;
+  --radius-token-lg: 20px;
+  --radius-token-xl: 28px;
+  --radius-token-2xl: 32px;
+  --radius-token-3xl: 36px;
   --radius-token-full: 9999px;
+  --radius-card: 28px;
+  --radius-button: 9999px;
+  --radius-link: 10px;
+  --radius-badge: 36px;
 
   /* ── Icons ── */
   --icon-stroke: 1.6;
 
-  /* ── Motion source values (mapped to shadcn names in globals.css) ── */
+  /* ── Motion ── */
   --motion-duration-fast: 150ms;
   --motion-duration-base: 250ms;
   --motion-duration-slow: 400ms;
@@ -101,71 +172,68 @@
   --transition-base: var(--motion-duration-base) var(--motion-ease-out);
   --transition-slow: var(--motion-duration-slow) var(--motion-ease-out);
 
-  /* ── Shadows ── */
-  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-focus: 0 0 0 3px rgb(24 24 27 / 0.18);
+  /* ── Shadows ──
+     Refero cards are flat. Focus and modal shadows remain functional affordances. */
+  --shadow-subtle: none;
+  --shadow-card: none;
+  --shadow-focus: 0 0 0 3px rgb(0 113 227 / 0.2);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
 
-  /* ── Accessibility Foundations (R-07) ── */
+  /* ── Accessibility Foundations ── */
   --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--action);
   --focus-ring-color: var(--action);
   --focus-ring-offset: 2px;
   --focus-ring-width: 2px;
   --target-min-size: 44px;
 
-  /* ── Buttons (Foundation Language, R-08) ── */
-  --btn-radius: var(--radius-token-sm); /* 6px */
-  --btn-font-size: var(--step-0); /* 14px */
+  /* ── Buttons ── */
+  --btn-radius: var(--radius-button);
+  --btn-font-size: var(--step-0);
   --btn-font-weight: 500;
   --btn-transition: var(--transition-base);
 
-  /* Sizes */
   --btn-h-sm: 32px;
-  --btn-px-sm: 10px;
-  --btn-h-default: 40px;
+  --btn-px-sm: 12px;
+  --btn-h-default: 44px;
   --btn-px-default: 16px;
   --btn-h-lg: 48px;
   --btn-px-lg: 24px;
 
-  /* Default / Outline */
   --btn-default-bg: var(--bg-page);
-  --btn-default-border: var(--border-default);
-  --btn-default-text: var(--text-body);
-  --btn-default-bg-hover: var(--bg-surface);
-  --btn-default-border-hover: var(--border-strong);
-  --btn-default-text-hover: var(--text-heading);
+  --btn-default-border: var(--ref-primary-ink);
+  --btn-default-text: var(--ref-primary-ink);
+  --btn-default-bg-hover: var(--ref-cool-wash);
+  --btn-default-border-hover: var(--ref-primary-ink);
+  --btn-default-text-hover: var(--ref-primary-ink);
 
-  /* Brand — Primary CTA */
   --btn-brand-bg: var(--action);
-  --btn-brand-text: #ffffff;
+  --btn-brand-text: var(--ref-paper);
   --btn-brand-bg-hover: var(--action-hover);
 
-  /* Ghost */
-  --btn-ghost-text: var(--text-muted);
-  --btn-ghost-text-hover: var(--text-heading);
-  --btn-ghost-bg-hover: var(--bg-surface);
+  --btn-ghost-text: var(--ref-deep-gray);
+  --btn-ghost-text-hover: var(--ref-primary-ink);
+  --btn-ghost-bg-hover: var(--ref-cool-wash);
 
-  /* Secondary */
-  --btn-secondary-bg: var(--bg-surface-raised);
-  --btn-secondary-text: var(--text-body);
-  --btn-secondary-bg-hover: var(--bg-neutral);
-  --btn-secondary-text-hover: var(--text-heading);
+  --btn-secondary-bg: var(--ref-cool-wash);
+  --btn-secondary-text: var(--ref-primary-ink);
+  --btn-secondary-bg-hover: var(--ref-hairline);
+  --btn-secondary-text-hover: var(--ref-primary-ink);
 
-  /* Destructive */
   --btn-destructive-bg: var(--red);
-  --btn-destructive-text: #ffffff;
+  --btn-destructive-text: var(--ref-paper);
   --btn-destructive-bg-hover: #b91c1c;
 
-  /* ── Landing page aliases (mapped to foundation) ── */
-  --lp-bg: var(--bg-surface);
-  --lp-text-primary: var(--text-heading);
-  --lp-text-secondary: var(--text-muted);
+  /* ── Landing page aliases ── */
+  --lp-bg: var(--ref-paper);
+  --lp-canvas: var(--ref-canvas);
+  --lp-text-primary: var(--ref-primary-ink);
+  --lp-text-secondary: var(--ref-mid-gray);
   --lp-purple: var(--action);
   --lp-purple-dark: var(--action-hover);
-  --black-hover: #27272a;
-  --lp-border: var(--border-light);
-  --lp-nav-glass: rgba(255, 255, 255, 0.9);
-  --lp-nav-border: var(--border-light);
-  --lp-card-glass: rgba(255, 255, 255, 0.85);
+  --lp-link: var(--ref-link-blue);
+  --black-hover: var(--ref-deep-gray);
+  --lp-border: var(--ref-hairline);
+  --lp-nav-glass: rgba(250, 250, 252, 0.88);
+  --lp-nav-border: transparent;
+  --lp-card-glass: rgba(255, 255, 255, 0.9);
 }
