@@ -167,10 +167,12 @@ remain intentionally pending.
   extraction; required web search for every audit observation; and no web
   search for report synthesis. Missing observation search is a technical
   failure, not a valid visibility result.
-- The unlisted workflow uses a route-scoped HeroUI five-stage interface, locks
-  verified inputs after execution starts, streams real per-prompt status,
-  preserves interrupted observations in the browser session, and expands all ten
-  detailed findings in print from the same report data shown on screen.
+- The unlisted workflow now uses shadcn/ui generic primitives backed by Base UI,
+  Tailwind CSS v4 tokens, BeUI higher-order activity, Motion only for the
+  indeterminate report phase, and Tabler generic icons. It locks verified inputs
+  after execution starts, streams real per-prompt status, preserves interrupted
+  observations in the browser session, and expands all ten detailed findings in
+  print from the same report data shown on screen.
 - The live question-generation boundary writes ten natural Indonesian
   questions from the minimized confirmed brief with no search, then keeps human
   review before audit start. The live observation path uses the versioned
