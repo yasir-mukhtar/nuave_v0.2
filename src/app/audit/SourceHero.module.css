@@ -151,6 +151,7 @@
   position: relative;
   display: flex;
   width: min(560px, 100%);
+  margin-inline: auto;
   height: 60px;
   align-items: center;
   gap: 6px;
@@ -251,7 +252,7 @@
 
 .heroHint {
   max-width: 40rem;
-  margin: 1rem 0 0;
+  margin: 1rem auto 0;
   color: var(--source-hint, var(--text-muted));
   font-family: var(--font-body), sans-serif;
   font-size: 0.875rem;
@@ -265,7 +266,7 @@
 .heroError {
   min-height: 1.3rem;
   max-width: 40rem;
-  margin: 0.55rem 0 0;
+  margin: 0.55rem auto 0;
   color: var(--red);
   font-family: var(--font-body), sans-serif;
   font-size: 0.8125rem;
