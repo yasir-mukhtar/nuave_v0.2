@@ -1,0 +1,56 @@
+name: Typography Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: typography-preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-preview:
+    if: github.event.pull_request.number == 29 && github.head_ref == 'refactor/typography-system'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out preview branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare safe preview build env
+        run: |
+          cat > .env.production.local <<'EOF'
+          NUAVE_PROVIDER=opencodego
+          NUAVE_QUESTION_PROVIDER=opencodego
+          OPENCODEGO_API_KEY=dummy-preview-key
+          OPENAI_API_KEY=dummy-preview-key
+          OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
+          OPENAI_AUDIT_MODEL=gpt-5.6-luna
+          OPENAI_AUDIT_REASONING_EFFORT=low
+          NUAVE_FIXTURE_PREVIEW_ENABLED=true
+          NUAVE_FIXTURE_FORCE_REPORT_FAILURE=false
+          EOF
+
+      - name: Build preview worker
+        run: npm run build:cf
+
+      - name: Deploy isolated preview worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --name nuave-typography-preview
+          workingDirectory: .
