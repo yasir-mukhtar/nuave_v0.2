@@ -149,7 +149,9 @@
   font-size: 1.05rem;
   line-height: 1.5;
   outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .textInput:focus,

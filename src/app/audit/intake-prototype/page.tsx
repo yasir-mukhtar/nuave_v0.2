@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import styles from "./prototype.module.css";
 
@@ -50,7 +51,15 @@ const scopeOptions = [
   "Layanan tertentu",
 ];
 
-const ageOptions = ["<18", "18–24", "25–34", "35–44", "45–54", "55+", "Tidak spesifik"];
+const ageOptions = [
+  "<18",
+  "18–24",
+  "25–34",
+  "35–44",
+  "45–54",
+  "55+",
+  "Tidak spesifik",
+];
 
 const personaOptions = [
   "Pekerja kantoran",
@@ -201,11 +210,23 @@ export default function IntakePrototypePage() {
       ["Cakupan", scope],
       ["Kategori", category || "Belum dipilih"],
       ["Produk / layanan", offerings || "Belum diisi"],
-      ["Pelanggan", personas.length ? personas.join(", ") : "Tidak dispesifikkan"],
+      [
+        "Pelanggan",
+        personas.length ? personas.join(", ") : "Tidak dispesifikkan",
+      ],
       ["Pasar", marketScope + (cities ? ` · ${cities}` : "")],
       ["Kompetitor", competitors || "Belum diisi"],
     ],
-    [brandName, scope, category, offerings, personas, marketScope, cities, competitors],
+    [
+      brandName,
+      scope,
+      category,
+      offerings,
+      personas,
+      marketScope,
+      cities,
+      competitors,
+    ],
   );
 
   function next() {
@@ -220,19 +241,29 @@ export default function IntakePrototypePage() {
     setScreen("intro-brand");
   }
 
-  function toggleMulti(value: string, current: string[], setter: (next: string[]) => void) {
+  function toggleMulti(
+    value: string,
+    current: string[],
+    setter: (next: string[]) => void,
+  ) {
     if (value === "Tidak spesifik") {
       setter(current.includes(value) ? [] : [value]);
       return;
     }
     const withoutGeneric = current.filter((item) => item !== "Tidak spesifik");
-    setter(withoutGeneric.includes(value) ? withoutGeneric.filter((item) => item !== value) : [...withoutGeneric, value]);
+    setter(
+      withoutGeneric.includes(value)
+        ? withoutGeneric.filter((item) => item !== value)
+        : [...withoutGeneric, value],
+    );
   }
 
   return (
     <main className={styles.page} lang="id">
       <header className={styles.topbar}>
-        <a href="/" className={styles.brandMark}>Nuave</a>
+        <Link href="/" className={styles.brandMark}>
+          Nuave
+        </Link>
         <button type="button" className={styles.resetButton} onClick={reset}>
           Mulai ulang
         </button>
@@ -250,9 +281,14 @@ export default function IntakePrototypePage() {
         {screen === "brand-basics" ? (
           <div className={styles.questionBlock}>
             <h1>Brand apa yang akan kita audit?</h1>
-            <p className={styles.helper}>Mulai dari identitas dasarnya. Pilih jawaban yang paling mendekati.</p>
+            <p className={styles.helper}>
+              Mulai dari identitas dasarnya. Pilih jawaban yang paling
+              mendekati.
+            </p>
 
-            <label className={styles.fieldLabel} htmlFor="brand-name">Nama brand</label>
+            <label className={styles.fieldLabel} htmlFor="brand-name">
+              Nama brand
+            </label>
             <input
               id="brand-name"
               className={styles.textInput}
@@ -265,7 +301,11 @@ export default function IntakePrototypePage() {
               <legend>Cakupan yang ingin diaudit</legend>
               <div className={styles.choiceStack}>
                 {scopeOptions.map((option) => (
-                  <ChoiceCard key={option} selected={scope === option} onClick={() => setScope(option)}>
+                  <ChoiceCard
+                    key={option}
+                    selected={scope === option}
+                    onClick={() => setScope(option)}
+                  >
                     {option}
                   </ChoiceCard>
                 ))}
@@ -294,7 +334,10 @@ export default function IntakePrototypePage() {
         {screen === "offerings" ? (
           <div className={styles.questionBlock}>
             <h1>Apa yang Anda tawarkan?</h1>
-            <p className={styles.helper}>Tulis produk atau layanan utama. Tidak perlu membuat deskripsi pemasaran.</p>
+            <p className={styles.helper}>
+              Tulis produk atau layanan utama. Tidak perlu membuat deskripsi
+              pemasaran.
+            </p>
             <textarea
               className={styles.largeTextarea}
               value={offerings}
@@ -315,17 +358,32 @@ export default function IntakePrototypePage() {
         {screen === "customer-profile" ? (
           <div className={styles.questionBlock}>
             <h1>Siapa yang paling sering Anda layani?</h1>
-            <p className={styles.helper}>Pilih bila relevan. Anda tidak perlu membatasi pelanggan berdasarkan demografi.</p>
+            <p className={styles.helper}>
+              Pilih bila relevan. Anda tidak perlu membatasi pelanggan
+              berdasarkan demografi.
+            </p>
 
             <fieldset className={styles.fieldset}>
               <legend>Rentang usia</legend>
-              <MultiChoice options={ageOptions} selected={ages} onToggle={(option) => toggleMulti(option, ages, setAges)} />
+              <MultiChoice
+                options={ageOptions}
+                selected={ages}
+                onToggle={(option) => toggleMulti(option, ages, setAges)}
+              />
             </fieldset>
 
             <fieldset className={styles.fieldset}>
               <legend>Gambaran pelanggan</legend>
-              <MultiChoice options={personaOptions} selected={personas} onToggle={(option) => toggleMulti(option, personas, setPersonas)} />
-              <button type="button" className={styles.addAnother}>+ Tambah gambaran lain</button>
+              <MultiChoice
+                options={personaOptions}
+                selected={personas}
+                onToggle={(option) =>
+                  toggleMulti(option, personas, setPersonas)
+                }
+              />
+              <button type="button" className={styles.addAnother}>
+                + Tambah gambaran lain
+              </button>
             </fieldset>
           </div>
         ) : null}
@@ -333,7 +391,10 @@ export default function IntakePrototypePage() {
         {screen === "customer-needs" ? (
           <div className={styles.questionBlock}>
             <h1>Apa yang biasanya mereka butuhkan?</h1>
-            <p className={styles.helper}>Ceritakan masalah, kebutuhan, atau hasil yang ingin dicapai calon pelanggan.</p>
+            <p className={styles.helper}>
+              Ceritakan masalah, kebutuhan, atau hasil yang ingin dicapai calon
+              pelanggan.
+            </p>
             <textarea
               className={styles.largeTextarea}
               value={needs}
@@ -354,17 +415,26 @@ export default function IntakePrototypePage() {
         {screen === "market-scope" ? (
           <div className={styles.questionBlock}>
             <h1>Di mana brand Anda bersaing?</h1>
-            <p className={styles.helper}>Pilih cakupan yang paling mencerminkan calon pelanggan Anda.</p>
+            <p className={styles.helper}>
+              Pilih cakupan yang paling mencerminkan calon pelanggan Anda.
+            </p>
             <div className={styles.choiceStack}>
               {marketOptions.map((option) => (
-                <ChoiceCard key={option} selected={marketScope === option} onClick={() => setMarketScope(option)}>
+                <ChoiceCard
+                  key={option}
+                  selected={marketScope === option}
+                  onClick={() => setMarketScope(option)}
+                >
                   {option}
                 </ChoiceCard>
               ))}
             </div>
-            {marketScope === "Kota tertentu" || marketScope === "Beberapa kota" ? (
+            {marketScope === "Kota tertentu" ||
+            marketScope === "Beberapa kota" ? (
               <div className={styles.revealField}>
-                <label className={styles.fieldLabel} htmlFor="cities">Sebutkan kota</label>
+                <label className={styles.fieldLabel} htmlFor="cities">
+                  Sebutkan kota
+                </label>
                 <input
                   id="cities"
                   className={styles.textInput}
@@ -380,16 +450,23 @@ export default function IntakePrototypePage() {
         {screen === "competitors" ? (
           <div className={styles.questionBlock}>
             <h1>Siapa yang biasanya dibandingkan dengan Anda?</h1>
-            <p className={styles.helper}>Pada produk akhir, Nuave dapat menyarankan beberapa nama. Anda cukup menghapus yang salah atau menambahkan yang kurang.</p>
+            <p className={styles.helper}>
+              Pada produk akhir, Nuave dapat menyarankan beberapa nama. Anda
+              cukup menghapus yang salah atau menambahkan yang kurang.
+            </p>
             <textarea
               className={styles.mediumTextarea}
               value={competitors}
               onChange={(event) => setCompetitors(event.target.value)}
-              placeholder={"Satu nama per baris\nContoh:\nKompetitor A\nKompetitor B"}
+              placeholder={
+                "Satu nama per baris\nContoh:\nKompetitor A\nKompetitor B"
+              }
             />
             <div className={styles.mockSuggestionRow} aria-hidden="true">
               <span>Saran Nuave</span>
-              <span className={styles.mockChip}>Kompetitor yang ditemukan ×</span>
+              <span className={styles.mockChip}>
+                Kompetitor yang ditemukan ×
+              </span>
             </div>
           </div>
         ) : null}
@@ -405,7 +482,10 @@ export default function IntakePrototypePage() {
         {screen === "details" ? (
           <div className={styles.questionBlock}>
             <h1>Apa lagi yang perlu Nuave ketahui?</h1>
-            <p className={styles.helper}>Opsional. Misalnya diferensiasi brand, fakta unik, klaim yang harus akurat, batasan, atau hal lain yang penting.</p>
+            <p className={styles.helper}>
+              Opsional. Misalnya diferensiasi brand, fakta unik, klaim yang
+              harus akurat, batasan, atau hal lain yang penting.
+            </p>
             <textarea
               className={styles.extraLargeTextarea}
               value={details}
@@ -419,7 +499,10 @@ export default function IntakePrototypePage() {
           <div className={styles.questionBlock}>
             <p className={styles.eyebrow}>Selesai</p>
             <h1>Sudah cukup untuk mulai audit</h1>
-            <p className={styles.helper}>Ini hanya mockup low-fidelity. Pada versi akhir, Anda dapat memeriksa dan mengubah informasi sebelum membuat pertanyaan audit.</p>
+            <p className={styles.helper}>
+              Ini hanya mockup low-fidelity. Pada versi akhir, Anda dapat
+              memeriksa dan mengubah informasi sebelum membuat pertanyaan audit.
+            </p>
             <div className={styles.summaryList}>
               {summary.map(([label, value]) => (
                 <div key={label} className={styles.summaryRow}>
@@ -435,20 +518,38 @@ export default function IntakePrototypePage() {
       <footer className={styles.footer}>
         <div className={styles.progress} aria-label="Kemajuan pengisian">
           {[0, 1, 2, 3].map((part) => {
-            const fill = part < chapter ? 1 : part === chapter ? chapterProgress : 0;
+            const fill =
+              part < chapter ? 1 : part === chapter ? chapterProgress : 0;
             return (
               <span key={part} className={styles.progressSegment}>
-                <span className={styles.progressFill} style={{ width: `${fill * 100}%` }} />
+                <span
+                  className={styles.progressFill}
+                  style={{ width: `${fill * 100}%` }}
+                />
               </span>
             );
           })}
         </div>
         <div className={styles.navRow}>
-          <button type="button" className={styles.backButton} onClick={back} disabled={index === 0}>
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={back}
+            disabled={index === 0}
+          >
             Kembali
           </button>
-          <button type="button" className={styles.nextButton} onClick={next} disabled={index === screens.length - 1}>
-            {screen === "details" ? "Periksa" : screen === "review" ? "Selesai" : "Lanjut"}
+          <button
+            type="button"
+            className={styles.nextButton}
+            onClick={next}
+            disabled={index === screens.length - 1}
+          >
+            {screen === "details"
+              ? "Periksa"
+              : screen === "review"
+                ? "Selesai"
+                : "Lanjut"}
           </button>
         </div>
       </footer>
