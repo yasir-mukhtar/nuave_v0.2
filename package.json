@@ -20,7 +20,9 @@
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"*.{json,mjs}\" \".github/**/*.yml\"",
     "check": "npm run typecheck && npm run lint && npm run format:check",
+    "validate:fast": "npm run check && npm run test:unit",
     "verify": "node scripts/verify-offline.mjs",
+    "validate:full": "npm run verify",
     "build:cf": "opennextjs-cloudflare build",
     "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
