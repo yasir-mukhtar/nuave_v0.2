@@ -18,7 +18,7 @@
     "test:e2e:failure": "playwright test -c playwright.config.failure.ts",
     "test:e2e:disabled": "playwright test -c playwright.config.disabled.ts",
     "lint": "eslint .",
-    "format:check": "prettier --write \"src/app/audit/AuditStages.tsx\" \"src/app/audit/tweakcn-intake.css\" && git diff -- src/app/audit/AuditStages.tsx src/app/audit/tweakcn-intake.css && exit 1",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{js,mjs}\"",
     "check": "npm run typecheck && npm run lint && npm run format:check",
     "verify": "node scripts/verify-offline.mjs",
     "build:cf": "opennextjs-cloudflare build",
