@@ -144,8 +144,7 @@ main[data-theme="light"]:has(section[lang="id"])
 }
 
 /* Labels in Tweakcn's forms use shadcn's text-sm/medium/leading-none recipe. */
-main[data-theme="light"]:has(section[lang="id"])
-  [data-slot="field-label"] {
+main[data-theme="light"]:has(section[lang="id"]) [data-slot="field-label"] {
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 0.875rem;
