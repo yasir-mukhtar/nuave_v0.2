@@ -26,9 +26,7 @@ export default function ConfirmBusinessPreview() {
           </div>
         </div>
         <div className="space-y-1.5">
-          <p className="type-label-sm text-gray-500 m-0">
-            Penjelasan singkat
-          </p>
+          <p className="type-label-sm text-gray-500 m-0">Penjelasan singkat</p>
           <div className="type-copy-sm h-16 rounded-md border border-border-light bg-gray-50 px-3 py-2 text-gray-400">
             Sepatu lari dan futsal lokal untuk pasar Indonesia, dijual di
             marketplace dan toko fisik.
