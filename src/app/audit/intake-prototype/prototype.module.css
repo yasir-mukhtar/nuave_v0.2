@@ -1,0 +1,400 @@
+.page {
+  min-height: 100vh;
+  background: #fff;
+  color: #171717;
+  padding-bottom: 9.5rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100% - 2rem, 45rem);
+  margin: 0 auto;
+  padding: 1.25rem 0 0;
+}
+
+.brandMark {
+  color: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.resetButton {
+  min-height: 2.75rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  background: #fff;
+  color: #171717;
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-weight: 650;
+}
+
+.content {
+  width: min(100% - 2rem, 42rem);
+  margin: 0 auto;
+  padding: clamp(3rem, 9vh, 7rem) 0 3rem;
+}
+
+.introBlock,
+.questionBlock {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.introBlock {
+  align-content: center;
+  min-height: min(68vh, 46rem);
+}
+
+.placeholderArt {
+  display: grid;
+  align-content: center;
+  width: min(100%, 22rem);
+  min-height: 15rem;
+  margin: 0 auto 2rem;
+  border: 1px dashed #d3d3d3;
+  border-radius: 1.5rem;
+  background: #fafafa;
+  padding: 2rem;
+}
+
+.placeholderCircle {
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0 auto 1.5rem;
+  border: 1px solid #c8c8c8;
+  border-radius: 50%;
+  background: #f3f3f3;
+}
+
+.placeholderLine,
+.placeholderLineShort {
+  height: 0.65rem;
+  border-radius: 999px;
+  background: #e6e6e6;
+}
+
+.placeholderLine {
+  width: 80%;
+  margin: 0 auto 0.75rem;
+}
+
+.placeholderLineShort {
+  width: 55%;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #393939;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.introBlock h1,
+.questionBlock h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(2.25rem, 8vw, 3.9rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.questionBlock h1 {
+  max-width: 14ch;
+  font-size: clamp(2rem, 7vw, 3.35rem);
+  line-height: 1.02;
+}
+
+.lede,
+.helper {
+  margin: 0;
+  color: #656565;
+  font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+  line-height: 1.55;
+}
+
+.lede {
+  max-width: 35rem;
+}
+
+.helper {
+  max-width: 38rem;
+  margin-bottom: 0.85rem;
+}
+
+.fieldLabel,
+.fieldset legend {
+  display: block;
+  margin: 0 0 0.75rem;
+  color: #252525;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.textInput,
+.largeTextarea,
+.mediumTextarea,
+.extraLargeTextarea {
+  width: 100%;
+  border: 1px solid #b8b8b8;
+  border-radius: 1rem;
+  background: #fff;
+  color: #171717;
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.textInput:focus,
+.largeTextarea:focus,
+.mediumTextarea:focus,
+.extraLargeTextarea:focus {
+  border-color: #171717;
+  box-shadow: 0 0 0 2px #171717;
+}
+
+.textInput {
+  min-height: 4.35rem;
+  padding: 0 1.15rem;
+}
+
+.largeTextarea,
+.mediumTextarea,
+.extraLargeTextarea {
+  resize: vertical;
+  padding: 1.15rem;
+}
+
+.largeTextarea {
+  min-height: 16rem;
+}
+
+.mediumTextarea {
+  min-height: 12rem;
+}
+
+.extraLargeTextarea {
+  min-height: 22rem;
+}
+
+.fieldset {
+  margin: 1.25rem 0 0;
+  border: 0;
+  padding: 0;
+}
+
+.choiceStack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.choiceCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 4.75rem;
+  width: 100%;
+  border: 1px solid #d2d2d2;
+  border-radius: 1rem;
+  background: #fff;
+  color: #171717;
+  padding: 1rem 1.1rem;
+  text-align: left;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.choiceCardSelected {
+  border: 2px solid #171717;
+  padding: calc(1rem - 1px) calc(1.1rem - 1px);
+}
+
+.choiceIndicator {
+  margin-left: 1rem;
+  font-size: 1.2rem;
+}
+
+.chipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.chip {
+  min-height: 3.2rem;
+  border: 1px solid #cfcfcf;
+  border-radius: 999px;
+  background: #fff;
+  color: #171717;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-weight: 620;
+}
+
+.chipSelected {
+  border-color: #171717;
+  background: #171717;
+  color: #fff;
+}
+
+.addAnother {
+  margin-top: 1rem;
+  border: 0;
+  background: transparent;
+  color: #171717;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.revealField {
+  margin-top: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #ededed;
+}
+
+.mockSuggestionRow {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.mockChip {
+  width: fit-content;
+  border: 1px dashed #bdbdbd;
+  border-radius: 999px;
+  background: #fafafa;
+  padding: 0.55rem 0.8rem;
+}
+
+.summaryList {
+  display: grid;
+  margin-top: 0.75rem;
+  border-top: 1px solid #e2e2e2;
+}
+
+.summaryRow {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.summaryRow span {
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.summaryRow strong {
+  font-size: 1.05rem;
+  font-weight: 680;
+}
+
+.footer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  border-top: 1px solid #ededed;
+  background: rgba(255, 255, 255, 0.97);
+  padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(10px);
+}
+
+.progress {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  width: min(100% - 2rem, 45rem);
+  margin: 0 auto;
+  padding-top: 0.45rem;
+}
+
+.progressSegment {
+  position: relative;
+  display: block;
+  height: 0.28rem;
+  overflow: hidden;
+  background: #ececec;
+}
+
+.progressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: #171717;
+  transition: width 180ms ease;
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(100% - 2rem, 45rem);
+  margin: 0 auto;
+  min-height: 6.8rem;
+}
+
+.backButton,
+.nextButton {
+  min-height: 3.65rem;
+  border-radius: 0.85rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.backButton {
+  border: 0;
+  background: transparent;
+  color: #171717;
+  padding: 0.75rem 0;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.backButton:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nextButton {
+  min-width: 8.5rem;
+  border: 0;
+  background: #171717;
+  color: #fff;
+  padding: 0.8rem 1.4rem;
+}
+
+.nextButton:disabled {
+  background: #e3e3e3;
+  color: #aaa;
+}
+
+@media (min-width: 760px) {
+  .topbar {
+    padding-top: 2rem;
+  }
+
+  .content {
+    padding-top: clamp(4rem, 10vh, 8rem);
+  }
+
+  .questionBlock {
+    gap: 1.55rem;
+  }
+}
