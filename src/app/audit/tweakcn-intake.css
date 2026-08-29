@@ -300,6 +300,13 @@ main[data-theme="light"]:has(#identity-scope-heading)
 }
 
 @media (max-width: 720px) {
+  /* Preserve Nuave's 44px minimum touch target while keeping 36px desktop buttons. */
+  main[data-theme="light"]:has(#identity-scope-heading)
+    [data-slot="button"]:not([aria-label]) {
+    min-height: 2.75rem;
+    height: 2.75rem;
+  }
+
   main[data-theme="light"]:has(#identity-scope-heading)
     section:has(> header > #identity-scope-heading),
   main[data-theme="light"]:has(#identity-scope-heading)
