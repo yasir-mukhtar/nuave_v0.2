@@ -128,7 +128,9 @@ export default function SourceHero({
               height={32}
               priority
             />
-            <span className={`${styles.heroLogoText} type-heading-sm`}>Nuave</span>
+            <span className={`${styles.heroLogoText} type-heading-sm`}>
+              Nuave
+            </span>
           </div>
         ) : null}
 
