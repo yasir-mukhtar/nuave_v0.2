@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { geist } from "@/app/fonts";
+import { geistMono, geistSans } from "@/app/fonts";
 
 export const metadata: Metadata = {
   title: "Nuave · Apakah brand Anda muncul di ChatGPT?",
@@ -29,7 +29,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={geist.variable}>
+    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}
