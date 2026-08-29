@@ -1,138 +1,22 @@
-name: PR Preview
+name: Remove PR 28 preview
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-
-concurrency:
-  group: pr-preview-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  push:
+    branches:
+      - style/tweakcn-intake-preview
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 jobs:
-  preview:
-    name: Deploy PR preview
-    if: >-
-      github.event.action != 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out PR head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Prepare safe preview build env
-        run: |
-          cat > .env.production.local <<'EOF'
-          NUAVE_PROVIDER=opencodego
-          NUAVE_QUESTION_PROVIDER=opencodego
-          OPENCODEGO_API_KEY=dummy-pr-preview-key
-          OPENAI_API_KEY=dummy-pr-preview-key
-          OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
-          OPENAI_AUDIT_MODEL=gpt-5.6-luna
-          OPENAI_AUDIT_REASONING_EFFORT=low
-          NUAVE_FIXTURE_PREVIEW_ENABLED=true
-          NUAVE_FIXTURE_FORCE_REPORT_FAILURE=false
-          EOF
-
-      - name: Build OpenNext worker
-        run: npm run build:cf
-
-      - name: Deploy isolated preview worker
-        id: deploy
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name nuave-pr-${{ github.event.pull_request.number }}
-          workingDirectory: .
-
-      - name: Normalize preview URL
-        id: preview-url
-        env:
-          RAW_DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
-        run: |
-          set -euo pipefail
-          preview_url="$(printf '%s' "${RAW_DEPLOYMENT_URL}" | sed 's/ .*//' | tr -d '\r\n')"
-          if [ -z "${preview_url}" ]; then
-            echo "::error::Cloudflare did not return a preview URL."
-            exit 1
-          fi
-          if [[ "${preview_url}" != http://* && "${preview_url}" != https://* ]]; then
-            preview_url="https://${preview_url}"
-          fi
-          echo "url=${preview_url}" >> "${GITHUB_OUTPUT}"
-
-      - name: Publish review link on the PR
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
-        run: |
-          set -euo pipefail
-          marker='<!-- nuave-pr-preview -->'
-          body="${marker}
-          ### Nuave preview ready
-
-          **Intake theme preview:** ${PREVIEW_URL}/audit/intake-preview
-
-          **Landing page:** ${PREVIEW_URL}
-
-          This preview is isolated from production. Live AI-provider credentials are disabled.
-
-          Updated from commit \`${GITHUB_SHA}\`."
-
-          comment_id="$(
-            gh api "/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \
-              --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- nuave-pr-preview -->"))) | .id' \
-              | tail -n 1
-          )"
-
-          if [ -n "${comment_id}" ]; then
-            gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" -f body="${body}" >/dev/null
-          else
-            gh api --method POST "/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="${body}" >/dev/null
-          fi
-
-      - name: Add preview links to job summary
-        env:
-          PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
-        run: |
-          {
-            echo '## Nuave PR preview'
-            echo
-            echo "- Intake theme preview: ${PREVIEW_URL}/audit/intake-preview"
-            echo "- Landing: ${PREVIEW_URL}"
-            echo
-            echo 'Provider-backed audit calls are intentionally disabled in this preview.'
-          } >> "${GITHUB_STEP_SUMMARY}"
-
   cleanup:
-    name: Remove closed PR preview
-    if: >-
-      github.event.action == 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    name: Remove isolated PR 28 preview worker
     runs-on: ubuntu-latest
     steps:
-      - name: Remove isolated preview worker
+      - name: Delete preview worker
         continue-on-error: true
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: delete --name nuave-pr-${{ github.event.pull_request.number }} --force
+          command: delete --name nuave-pr-28 --force
