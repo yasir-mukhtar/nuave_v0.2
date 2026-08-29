@@ -11,8 +11,7 @@
 main[data-theme="light"]:has(#identity-scope-heading)
   :is([data-slot="input"], [data-slot="textarea"]):focus {
   border-color: color-mix(in srgb, var(--foreground) 38%, transparent);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--foreground) 5%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 5%, transparent);
   outline: none;
   outline-offset: 0;
 }
