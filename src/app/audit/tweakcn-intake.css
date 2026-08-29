@@ -5,9 +5,10 @@
  * The variables below are copied from the light theme supplied by Yasir.
  * The component overrides reproduce the shadcn/New York visual recipes used
  * by Tweakcn's Cards preview while Nuave keeps Base UI underneath.
- * Scope deliberately keys off BriefStep so the rest of Nuave is unchanged.
+ * Scope deliberately keys off the Indonesian Business Facts flow so the rest
+ * of Nuave is unchanged as the intake moves between progressive screens.
  */
-main[data-theme="light"]:has(#identity-scope-heading) {
+main[data-theme="light"]:has(section[lang="id"]) {
   /* Exact supplied Tweakcn light-theme values. */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -121,12 +122,18 @@ main[data-theme="light"]:has(#identity-scope-heading) {
  */
 
 /* Cards demo: rounded-xl, 1px border, 24px content rhythm, shadow-none. */
-main[data-theme="light"]:has(#identity-scope-heading)
-  section:has(> header > #identity-scope-heading),
-main[data-theme="light"]:has(#identity-scope-heading)
-  section:has(> header > #offer-needs-heading),
-main[data-theme="light"]:has(#identity-scope-heading)
-  section:has(> header > #similar-businesses-heading) {
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-brand-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-offer-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-customer-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-market-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-similar-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-details-heading) {
   margin-bottom: 1rem;
   gap: 1.5rem;
   border: 1px solid var(--border);
@@ -137,7 +144,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
 }
 
 /* Labels in Tweakcn's forms use shadcn's text-sm/medium/leading-none recipe. */
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="field-label"] {
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -146,7 +153,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
   line-height: 1;
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="field-description"] {
   color: var(--muted-foreground);
   font-size: 0.875rem;
@@ -155,7 +162,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
 }
 
 /* New York Input: h-9, rounded-md, px-3, py-1, border-input, shadow-xs. */
-main[data-theme="light"]:has(#identity-scope-heading) [data-slot="input"] {
+main[data-theme="light"]:has(section[lang="id"]) [data-slot="input"] {
   height: 2.25rem;
   min-height: 2.25rem;
   border: 1px solid var(--input);
@@ -174,15 +181,15 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="input"] {
     box-shadow 150ms ease;
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="input"]::placeholder,
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="textarea"]::placeholder {
   color: var(--muted-foreground);
 }
 
 /* New York Textarea: rounded-md, px-3/py-2, min-h-16, shadow-xs. */
-main[data-theme="light"]:has(#identity-scope-heading) [data-slot="textarea"] {
+main[data-theme="light"]:has(section[lang="id"]) [data-slot="textarea"] {
   min-height: 4rem;
   border: 1px solid var(--input);
   border-radius: var(--radius-md);
@@ -210,7 +217,7 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="textarea"] {
  * text inputs and textareas. Button, checkbox, and disclosure keyboard focus
  * stay unchanged.
  */
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   :is([data-slot="input"], [data-slot="textarea"]):focus {
   border-color: color-mix(in srgb, var(--foreground) 38%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 5%, transparent);
@@ -219,7 +226,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
 }
 
 /* New York Button default size: h-9, px-4, rounded-md, text-sm/medium. */
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="button"]:not([aria-label]) {
   min-height: 2.25rem;
   height: 2.25rem;
@@ -232,7 +239,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
   outline: none;
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="button"]:focus-visible {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.5);
@@ -241,7 +248,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
 }
 
 /* New York Checkbox: size-4, 4px radius, border-input, shadow-xs. */
-main[data-theme="light"]:has(#identity-scope-heading) [data-slot="checkbox"] {
+main[data-theme="light"]:has(section[lang="id"]) [data-slot="checkbox"] {
   width: 1rem;
   height: 1rem;
   border: 1px solid var(--input);
@@ -250,7 +257,7 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="checkbox"] {
   outline: none;
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="checkbox"]:focus-visible {
   border-color: var(--ring);
   box-shadow:
@@ -261,7 +268,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
 }
 
 /* Keep checked controls on the exact supplied primary/foreground pair. */
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="checkbox"][data-checked] {
   border-color: var(--primary);
   background: var(--primary);
@@ -272,7 +279,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
  * Nuave's disclosure remains product-specific, but use the supplied theme's
  * border/radius/shadow vocabulary instead of the former approximate values.
  */
-main[data-theme="light"]:has(#identity-scope-heading) [data-slot="accordion"] {
+main[data-theme="light"]:has(section[lang="id"]) [data-slot="accordion"] {
   margin-top: 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -281,12 +288,12 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="accordion"] {
   box-shadow: none;
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="accordion-trigger"] {
   border-radius: var(--radius-md);
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="accordion-trigger"]:focus-visible {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px oklch(0.708 0 0 / 0.5);
@@ -294,25 +301,31 @@ main[data-theme="light"]:has(#identity-scope-heading)
   outline-offset: 0;
 }
 
-main[data-theme="light"]:has(#identity-scope-heading)
+main[data-theme="light"]:has(section[lang="id"])
   [data-slot="accordion-content"] {
   padding-bottom: 1.5rem;
 }
 
 @media (max-width: 720px) {
   /* Preserve Nuave's 44px minimum touch target while keeping 36px desktop buttons. */
-  main[data-theme="light"]:has(#identity-scope-heading)
+  main[data-theme="light"]:has(section[lang="id"])
     [data-slot="button"]:not([aria-label]) {
     min-height: 2.75rem;
     height: 2.75rem;
   }
 
-  main[data-theme="light"]:has(#identity-scope-heading)
-    section:has(> header > #identity-scope-heading),
-  main[data-theme="light"]:has(#identity-scope-heading)
-    section:has(> header > #offer-needs-heading),
-  main[data-theme="light"]:has(#identity-scope-heading)
-    section:has(> header > #similar-businesses-heading) {
+  main[data-theme="light"]:has(section[lang="id"])
+    section:has(> header > #business-facts-brand-heading),
+  main[data-theme="light"]:has(section[lang="id"])
+    section:has(> header > #business-facts-offer-heading),
+  main[data-theme="light"]:has(section[lang="id"])
+    section:has(> header > #business-facts-customer-heading),
+  main[data-theme="light"]:has(section[lang="id"])
+    section:has(> header > #business-facts-market-heading),
+  main[data-theme="light"]:has(section[lang="id"])
+    section:has(> header > #business-facts-similar-heading),
+  main[data-theme="light"]:has(section[lang="id"])
+    section:has(> header > #business-facts-details-heading) {
     padding: 1.25rem;
   }
 }
