@@ -93,7 +93,9 @@ export default function SimilarBusinessesEditor({
               ) : null}
             </div>
             {business.origin === "ai" && business.source_url ? (
-              <span className={`${styles.aiBadge} type-label-sm`}>Saran Nuave</span>
+              <span className={`${styles.aiBadge} type-label-sm`}>
+                Saran Nuave
+              </span>
             ) : null}
             <Button
               type="button"
