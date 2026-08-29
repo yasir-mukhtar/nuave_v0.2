@@ -1,0 +1,18 @@
+/*
+ * Intake-only BeUI focus treatment, matched to the supplied reference image.
+ * At Retina scale the screenshot resolves to roughly:
+ * - 1 CSS px darker control stroke
+ * - 2 CSS px very light outer halo
+ *
+ * This intentionally overrides the stronger Tweakcn/shadcn focus ring only for
+ * text inputs and textareas. Button, checkbox, and disclosure keyboard focus
+ * stay unchanged.
+ */
+main[data-theme="light"]:has(#identity-scope-heading)
+  :is([data-slot="input"], [data-slot="textarea"]):focus {
+  border-color: color-mix(in srgb, var(--foreground) 38%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--foreground) 5%, transparent);
+  outline: none;
+  outline-offset: 0;
+}
