@@ -29,7 +29,10 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang={locale}
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}
