@@ -206,15 +206,14 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="textarea"] {
 }
 
 /*
- * Tweakcn/New York focus is the component's 3px ring at 50% ring color.
- * Remove Nuave's additional global 2px offset outline inside this experiment.
+ * BeUI Input focus: border-foreground/40 + ring-2 ring-ring/40.
+ * Apply the same visual treatment to Nuave's text inputs and textareas while
+ * keeping the Tweakcn resting geometry and tokens.
  */
 main[data-theme="light"]:has(#identity-scope-heading)
-  :is([data-slot="input"], [data-slot="textarea"]):focus-visible {
-  border-color: var(--ring);
-  box-shadow:
-    var(--shadow-xs),
-    0 0 0 3px oklch(0.708 0 0 / 0.5);
+  :is([data-slot="input"], [data-slot="textarea"]):focus {
+  border-color: color-mix(in oklch, var(--foreground) 40%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 40%, transparent);
   outline: none;
   outline-offset: 0;
 }
