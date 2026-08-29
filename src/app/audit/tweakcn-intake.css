@@ -1,5 +1,5 @@
 /*
- * Experimental intake-only application of Yasir's shared Tweakcn theme.
+ * Intake-only styling based on Yasir's approved Tweakcn theme.
  * Source: https://tweakcn.com/themes/cmtdoxltw000004kzd4sg8vvl
  *
  * The variables below are copied from the light theme supplied by Yasir.
@@ -201,14 +201,19 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="textarea"] {
 }
 
 /*
- * BeUI Input focus: border-foreground/40 + ring-2 ring-ring/40.
- * Apply the same visual treatment to Nuave's text inputs and textareas while
- * keeping the Tweakcn resting geometry and tokens.
+ * Intake-only BeUI focus treatment, matched to the supplied reference image.
+ * At Retina scale the screenshot resolves to roughly:
+ * - 1 CSS px darker control stroke
+ * - 2 CSS px very light outer halo
+ *
+ * This intentionally overrides the stronger Tweakcn/shadcn focus ring only for
+ * text inputs and textareas. Button, checkbox, and disclosure keyboard focus
+ * stay unchanged.
  */
 main[data-theme="light"]:has(#identity-scope-heading)
   :is([data-slot="input"], [data-slot="textarea"]):focus {
-  border-color: color-mix(in oklch, var(--foreground) 40%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 40%, transparent);
+  border-color: color-mix(in srgb, var(--foreground) 38%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground) 5%, transparent);
   outline: none;
   outline-offset: 0;
 }
