@@ -22,7 +22,6 @@ const ReportPagePreview = dynamic(
   { ssr: false },
 );
 
-/* ── Static gradient panel (R-12: no perpetual cursor-glow) ── */
 function StaticGradientPanel({
   children,
   className,
@@ -42,7 +41,6 @@ function StaticGradientPanel({
   );
 }
 
-/* ── Main component ── */
 export default function HowItWorks() {
   const t = useTranslations();
 
@@ -107,7 +105,6 @@ export default function HowItWorks() {
       const scrollY = window.scrollY;
       const vh = window.innerHeight;
 
-      // Fade heading as section scrolls off screen
       const fadeStart = sectionBottom - vh - 200;
       const fadeEnd = sectionBottom - vh;
       const alpha =
@@ -128,17 +125,17 @@ export default function HowItWorks() {
       className="lp-hiw-section relative pt-[120px]"
       style={{ background: "var(--lp-bg)" }}
     >
-      {/* Sticky heading */}
       <div
         className="lp-hiw-sticky-heading sticky top-20 z-10 pb-10 px-8 pointer-events-none"
         style={{ opacity: headingOpacity, transition: "opacity 0.1s linear" }}
       >
         <div className="max-w-[868px] mx-auto text-center">
-          <h2 className="lp-hiw-heading">{t("howItWorks.heading")}</h2>
+          <h2 className="lp-hiw-heading type-heading-xl">
+            {t("howItWorks.heading")}
+          </h2>
         </div>
       </div>
 
-      {/* Cards scroll area */}
       <div className="pb-[120px]">
         {CARDS.map((card, i) => (
           <div
@@ -150,7 +147,6 @@ export default function HowItWorks() {
               className="lp-hiw-card-grid max-w-[868px] mx-auto grid grid-cols-2 rounded-[12px] overflow-hidden bg-white border border-[#E5E7EB] shadow-[0_8px_40px_rgba(0,0,0,0.10)] min-h-[360px]"
               style={{ transformOrigin: "top center" }}
             >
-              {/* Left panel — white */}
               <div
                 className={cn(
                   "lp-hiw-left-panel bg-white p-10 flex flex-col justify-between",
@@ -158,16 +154,12 @@ export default function HowItWorks() {
                 )}
               >
                 <div>
-                  {/* Step circle */}
-                  <div className="w-10 h-10 rounded-full bg-[var(--lp-purple)] text-white text-[24px] font-bold tracking-[-0.5px] leading-[1.4] flex items-center justify-center mb-6">
+                  <div className="type-heading-md w-10 h-10 rounded-full bg-[var(--lp-purple)] text-white flex items-center justify-center mb-6">
                     {card.step}
                   </div>
-                  <h3 className="mb-3">{card.title}</h3>
-                  <p className="text-[16px] leading-[28px] text-[#858585] mb-6">
-                    {card.desc}
-                  </p>
+                  <h3 className="type-heading-md mb-3">{card.title}</h3>
+                  <p className="type-copy text-[#858585] mb-6">{card.desc}</p>
                 </div>
-                {/* Checklist */}
                 <div className="flex flex-col gap-2.5">
                   {card.checks.map((check) => (
                     <div key={check} className="flex items-center gap-2.5">
@@ -177,7 +169,7 @@ export default function HowItWorks() {
                         stroke={2}
                         className="shrink-0"
                       />
-                      <span className="text-[16px] font-normal leading-[28px] text-[var(--lp-text-primary)]">
+                      <span className="type-copy text-[var(--lp-text-primary)]">
                         {check}
                       </span>
                     </div>
@@ -185,7 +177,6 @@ export default function HowItWorks() {
                 </div>
               </div>
 
-              {/* Right panel — static preview (desktop) */}
               <StaticGradientPanel
                 className={cn(
                   "lp-hiw-right-panel flex items-center justify-center",
@@ -198,7 +189,6 @@ export default function HowItWorks() {
                 {card.step === "4" && <ReportPagePreview />}
               </StaticGradientPanel>
 
-              {/* Mobile preview */}
               <div className="lp-hiw-mobile-preview p-3 order-3">
                 <StaticGradientPanel className="rounded-[var(--radius-sm)] p-6 flex justify-center items-center">
                   {card.step === "1" && <ConfirmBusinessPreview />}
