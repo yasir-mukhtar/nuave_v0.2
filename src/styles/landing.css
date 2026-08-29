@@ -1,4 +1,4 @@
-/* Landing-only presentation. Shared resets, utilities, and tokens stay global. */
+/* Landing-only presentation. Shared resets, typography, utilities, and tokens stay global. */
 
 .btn-lp-purple {
   background-color: var(--lp-purple);
@@ -43,43 +43,7 @@ body:has(.lp-root) {
 .lp-page h1,
 .lp-page h2,
 .lp-page h3 {
-  font-family: var(--font-heading), sans-serif;
   color: var(--lp-text-primary);
-}
-
-.lp-page h1 {
-  font-size: 48px;
-  font-weight: 500;
-  line-height: 58px;
-  letter-spacing: -0.03em;
-}
-
-.lp-page h2 {
-  font-size: 48px;
-  font-weight: 500;
-  line-height: 1.2em;
-  letter-spacing: -2px;
-}
-
-.lp-page h3 {
-  font-family: Inter, sans-serif;
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 34px;
-}
-
-.lp-page .lp-hero-heading,
-.lp-page .lp-cta-heading {
-  font-size: 60px;
-  font-weight: 600;
-  line-height: 1em;
-  letter-spacing: -2px;
-}
-
-.lp-page .lp-faq-heading {
-  font-size: 36px;
-  line-height: 1.4em;
-  letter-spacing: -1px;
 }
 
 .lp-root p,
@@ -203,27 +167,6 @@ body:has(.lp-root) {
     background-color: rgba(255, 255, 255, 0.95) !important;
     border: 1px solid rgba(117, 115, 114, 0.15) !important;
     backdrop-filter: blur(10px) !important;
-  }
-
-  .lp-hero-heading,
-  .lp-cta-heading {
-    font-size: 36px !important;
-    line-height: 1.1em;
-    letter-spacing: -1px !important;
-  }
-
-  .lp-problem-heading,
-  .lp-hiw-heading,
-  .lp-faq-heading,
-  .lp-report-heading,
-  .lp-batasan-heading {
-    font-size: 28px !important;
-  }
-
-  .lp-hero-subtitle,
-  .lp-problem-subtitle,
-  .lp-problem-card span {
-    font-size: 16px !important;
   }
 
   .lp-hero-section {

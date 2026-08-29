@@ -86,6 +86,8 @@ For implementation work:
 8. Do not recreate generic primitives that shadcn or Base UI already provides.
 9. Default to BeUI's light visual character.
 10. Preserve product behavior during presentation refactors.
+11. Follow [`docs/DESIGN.md`](./docs/DESIGN.md) for the canonical typography
+    families, scale, semantic roles, responsive rules, and report exception.
 
 Material product decisions belong in `docs/DECISION_LOG.md`. Current status
 and the next action belong in `docs/NOW.md`. Update them only when the work

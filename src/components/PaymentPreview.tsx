@@ -9,10 +9,8 @@ export default function PaymentPreview() {
     <div className="w-[340px] h-[310px] rounded-[6px] border border-border-light bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3 shrink-0">
-        <p className="type-title text-gray-900 m-0">Pembayaran</p>
-        <span className="text-[11px] font-medium text-gray-400">
-          Sekali bayar
-        </span>
+        <p className="type-label text-gray-900 m-0">Pembayaran</p>
+        <span className="type-label-sm text-gray-400">Sekali bayar</span>
       </div>
 
       <div className="h-px bg-border-light shrink-0" />
@@ -20,10 +18,8 @@ export default function PaymentPreview() {
       <div className="flex-1 min-h-0 px-4 py-3 flex flex-col gap-3 overflow-hidden">
         {/* Price */}
         <div>
-          <p className="text-[28px] font-bold text-gray-900 m-0 leading-none">
-            Rp99.000
-          </p>
-          <p className="text-[12px] text-gray-500 m-0 mt-1">
+          <p className="type-heading-md text-gray-900 m-0">Rp99.000</p>
+          <p className="type-label-sm text-gray-500 m-0 mt-1">
             Tanpa langganan, tanpa biaya tersembunyi
           </p>
         </div>
@@ -33,7 +29,7 @@ export default function PaymentPreview() {
           {PAYMENT_METHODS.map((method, i) => (
             <div
               key={method}
-              className="flex items-center justify-between h-9 px-3 rounded-md border border-border-light bg-white text-[13px] font-medium text-gray-700"
+              className="type-label-sm flex items-center justify-between h-9 px-3 rounded-md border border-border-light bg-white text-gray-700"
             >
               {method}
               {i === 0 && (
