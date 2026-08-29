@@ -1,0 +1,155 @@
+/*
+ * Experimental intake-only application of Yasir's shared Tweakcn theme.
+ * Source: https://tweakcn.com/themes/cmtdoxltw000004kzd4sg8vvl
+ *
+ * Scope deliberately keys off BriefStep's identity section so the landing,
+ * question review, audit run, and report keep their current visual language.
+ */
+main[data-theme="light"]:has(#identity-scope-heading) {
+  --font-sans: Geist, ui-sans-serif, sans-serif, system-ui;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --radius: 0.5rem;
+  --tracking-normal: 0em;
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+
+  --background: oklch(0.9881 0 0);
+  --foreground: oklch(0.2789 0.0091 285.7942);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2789 0.0091 285.7942);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2789 0.0091 285.7942);
+  --primary: oklch(0.2789 0.0091 285.7942);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9614 0.0013 286.375);
+  --secondary-foreground: oklch(0.2789 0.0091 285.7942);
+  --muted: oklch(0.9731 0 0);
+  --muted-foreground: oklch(0.537 0.014 280.8555);
+  --accent: oklch(0.9497 0.0027 286.349);
+  --accent-foreground: oklch(0.5211 0.2679 277.4312);
+  --destructive: oklch(0.5156 0.181 22.5393);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9042 0.0027 286.3457);
+  --input: oklch(0.9614 0.0013 286.375);
+  --ring: oklch(0.2789 0.0091 285.7942);
+
+  --chart-1: oklch(0.8092 0.1122 345.1956);
+  --chart-2: oklch(0.8757 0.0979 83.6546);
+  --chart-3: oklch(0.9075 0.0946 165.054);
+  --chart-4: oklch(0.8406 0.0699 242.1914);
+  --chart-5: oklch(0.7865 0.1232 309.4396);
+
+  --shadow-color: oklch(0 0 0);
+  --shadow-opacity: 0.1;
+  --shadow-blur: 3px;
+  --shadow-spread: 0px;
+  --shadow-offset-x: 0;
+  --shadow-offset-y: 1px;
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1),
+    0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1),
+    0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1),
+    0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1),
+    0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1),
+    0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+  /* Map the existing Nuave semantic aliases to the shared shadcn theme. */
+  --font-body: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --bg-page: var(--background);
+  --bg-surface: var(--card);
+  --bg-surface-raised: var(--secondary);
+  --bg-neutral: var(--secondary);
+  --bg-muted: var(--muted);
+  --surface-muted: var(--muted);
+  --border-default: var(--border);
+  --border-light: var(--border);
+  --border-strong: color-mix(in oklch, var(--border) 78%, var(--foreground));
+  --text-heading: var(--foreground);
+  --text-body: var(--foreground);
+  --text-muted: var(--muted-foreground);
+  --text-placeholder: color-mix(
+    in oklch,
+    var(--muted-foreground) 70%,
+    var(--background)
+  );
+  --action: var(--primary);
+  --action-hover: color-mix(in oklch, var(--primary) 88%, black);
+  --action-soft: var(--accent);
+  --action-foreground: var(--primary-foreground);
+  --purple: var(--primary);
+  --purple-dark: var(--action-hover);
+  --purple-light: var(--accent);
+  --focus: var(--ring);
+  --link: var(--accent-foreground);
+  --focus-ring: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+  --focus-ring-color: var(--ring);
+
+  background: var(--background);
+  color: var(--foreground);
+  letter-spacing: var(--tracking-normal);
+}
+
+/* Use the theme's own card, border, radius, and shadow semantics for intake groups. */
+main[data-theme="light"]:has(#identity-scope-heading)
+  section:has(> header > #identity-scope-heading),
+main[data-theme="light"]:has(#identity-scope-heading)
+  section:has(> header > #offer-needs-heading),
+main[data-theme="light"]:has(#identity-scope-heading)
+  section:has(> header > #similar-businesses-heading) {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  box-shadow: var(--shadow-sm);
+}
+
+main[data-theme="light"]:has(#identity-scope-heading) [data-slot="input"],
+main[data-theme="light"]:has(#identity-scope-heading) [data-slot="textarea"] {
+  background: var(--card);
+}
+
+main[data-theme="light"]:has(#identity-scope-heading)
+  [data-slot="accordion"] {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding-inline: 1.25rem;
+  box-shadow: var(--shadow-xs);
+}
+
+main[data-theme="light"]:has(#identity-scope-heading)
+  [data-slot="accordion"]
+  [data-slot="accordion-content"] {
+  padding-bottom: 1.5rem;
+}
+
+@media (max-width: 720px) {
+  main[data-theme="light"]:has(#identity-scope-heading)
+    section:has(> header > #identity-scope-heading),
+  main[data-theme="light"]:has(#identity-scope-heading)
+    section:has(> header > #offer-needs-heading),
+  main[data-theme="light"]:has(#identity-scope-heading)
+    section:has(> header > #similar-businesses-heading) {
+    padding: 1.25rem;
+  }
+}
