@@ -12,7 +12,7 @@
   --border-light: #ececec;
   --border-strong: #d1d5db;
 
-  /* ── Colors: Typography (AC-02: text-muted meets >=4.5:1 contrast) ── */
+  /* ── Colors: Typography ── */
   --text-heading: #18181b;
   --text-body: #3f3f46;
   --text-muted: #52525b; /* 7.4:1 on #ffffff */
@@ -38,35 +38,108 @@
   --amber-light: #fef3c7;
   --amber-border: #fde68a;
 
-  /* ── Typography source values (exposed through globals.css) ── */
+  /* ── Typography families ── */
   --font-ui:
     var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, sans-serif;
   --font-report:
     "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --font-code:
-    ui-monospace, "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+    var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Monaco, Consolas,
+    monospace;
 
-  /* ── Typography Scale: Fixed perfect-fourth scale (14px base, ratio 1.333) ── */
-  --step--2: 0.4924rem; /*  ~7.9px */
-  --step--1: 0.6564rem; /* ~10.5px */
-  --step-0: 0.875rem; /*    14px */
-  --step-1: 1.1664rem; /* ~18.7px */
-  --step-2: 1.5548rem; /* ~24.9px */
-  --step-3: 2.0725rem; /* ~33.2px */
-  --step-4: 2.7627rem; /* ~44.2px */
-  --step-5: 3.6826rem; /* ~58.9px */
+  /* ── Canonical type scale ── */
+  --type-size-xs: 0.75rem; /* 12px */
+  --type-size-sm: 0.875rem; /* 14px */
+  --type-size-base: 1rem; /* 16px */
+  --type-size-lg: 1.125rem; /* 18px */
+  --type-size-xl: 1.25rem; /* 20px */
+  --type-size-2xl: 1.5rem; /* 24px */
+  --type-size-3xl: 2rem; /* 32px */
+  --type-size-4xl: 3rem; /* 48px */
+  --type-size-5xl: 4rem; /* 64px */
 
-  /* ── Semantic Type Aliases ── */
-  --text-caption: 0.75rem; /* 12px — timestamps, meta, micro labels */
-  --text-body-size: var(--step-0); /* 14px — default body text */
-  --text-subtitle: 1rem; /* 16px — bar titles, secondary headings */
-  --text-page-title: 1.125rem; /* 18px — page titles, primary headings */
-  --text-body-lg: var(--step-1); /* ~18.7px — intro text, card subtitles */
-  --text-heading-sm: var(--step-2); /* ~24.9px — h3, section subheads */
-  --text-heading-md: var(--step-3); /* ~33.2px — h2, section titles */
-  --text-heading-lg: var(--step-4); /* ~44.2px — h1, page titles */
-  --text-display: var(--step-5); /* ~58.9px — hero display */
+  /* ── Productive and expressive semantic roles ── */
+  --type-display-size: clamp(2.25rem, 5vw, 4rem);
+  --type-display-weight: 600;
+  --type-display-leading: 1;
+  --type-display-tracking: -0.04em;
+
+  --type-heading-xl-size: clamp(2rem, 4vw, 3rem);
+  --type-heading-xl-weight: 600;
+  --type-heading-xl-leading: 1.08;
+  --type-heading-xl-tracking: -0.035em;
+
+  --type-heading-lg-size: var(--type-size-3xl);
+  --type-heading-lg-weight: 600;
+  --type-heading-lg-leading: 1.15;
+  --type-heading-lg-tracking: -0.03em;
+
+  --type-heading-md-size: var(--type-size-2xl);
+  --type-heading-md-weight: 600;
+  --type-heading-md-leading: 1.25;
+  --type-heading-md-tracking: -0.025em;
+
+  --type-heading-sm-size: var(--type-size-xl);
+  --type-heading-sm-weight: 600;
+  --type-heading-sm-leading: 1.3;
+  --type-heading-sm-tracking: -0.02em;
+
+  --type-copy-lg-size: var(--type-size-lg);
+  --type-copy-lg-weight: 400;
+  --type-copy-lg-leading: 1.5;
+  --type-copy-lg-tracking: -0.01em;
+
+  --type-copy-size: var(--type-size-base);
+  --type-copy-weight: 400;
+  --type-copy-leading: 1.5;
+  --type-copy-tracking: normal;
+
+  --type-copy-sm-size: var(--type-size-sm);
+  --type-copy-sm-weight: 400;
+  --type-copy-sm-leading: 1.5;
+  --type-copy-sm-tracking: normal;
+
+  --type-label-size: var(--type-size-sm);
+  --type-label-weight: 500;
+  --type-label-leading: 1.4;
+  --type-label-tracking: normal;
+
+  --type-label-sm-size: var(--type-size-xs);
+  --type-label-sm-weight: 500;
+  --type-label-sm-leading: 1.35;
+  --type-label-sm-tracking: normal;
+
+  --type-mono-size: var(--type-size-sm);
+  --type-mono-weight: 400;
+  --type-mono-leading: 1.5;
+  --type-mono-tracking: normal;
+
+  --type-mono-sm-size: var(--type-size-xs);
+  --type-mono-sm-weight: 400;
+  --type-mono-sm-leading: 1.4;
+  --type-mono-sm-tracking: normal;
+
+  /* ── Bounded report-display roles ── */
+  --type-report-display-size: clamp(3.25rem, 8.6vw, 7.25rem);
+  --type-report-display-weight: 400;
+  --type-report-display-leading: 0.91;
+  --type-report-display-tracking: -0.055em;
+
+  --type-report-heading-size: clamp(2.25rem, 4vw, 3.75rem);
+  --type-report-heading-weight: 400;
+  --type-report-heading-leading: 1.05;
+  --type-report-heading-tracking: -0.035em;
+
+  --type-report-title-size: clamp(1.35rem, 2vw, 1.75rem);
+  --type-report-title-weight: 400;
+  --type-report-title-leading: 1.25;
+  --type-report-title-tracking: -0.02em;
+
+  --type-report-metric-size: clamp(2.5rem, 4vw, 3.6rem);
+  --type-report-metric-weight: 400;
+  --type-report-metric-leading: 1;
+  --type-report-metric-tracking: -0.045em;
 
   /* ── Spacing ── */
   --space-xs: 4px;
@@ -115,9 +188,9 @@
   --target-min-size: 44px;
 
   /* ── Buttons (Foundation Language, R-08) ── */
-  --btn-radius: var(--radius-token-sm); /* 6px */
-  --btn-font-size: var(--step-0); /* 14px */
-  --btn-font-weight: 500;
+  --btn-radius: var(--radius-token-sm);
+  --btn-font-size: var(--type-label-size);
+  --btn-font-weight: var(--type-label-weight);
   --btn-transition: var(--transition-base);
 
   /* Sizes */

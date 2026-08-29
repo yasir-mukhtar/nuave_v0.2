@@ -128,14 +128,16 @@ export default function SourceHero({
               height={32}
               priority
             />
-            <span className={styles.heroLogoText}>Nuave</span>
+            <span className={`${styles.heroLogoText} type-heading-sm`}>
+              Nuave
+            </span>
           </div>
         ) : null}
 
-        <h1 className={styles.heroHeading}>
+        <h1 className={`${styles.heroHeading} type-display`}>
           Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?
         </h1>
-        <p className={styles.heroSubheading}>
+        <p className={`${styles.heroSubheading} type-copy-lg`}>
           Cek brand Anda di hasil pencarian AI sekarang.
         </p>
 
@@ -149,7 +151,7 @@ export default function SourceHero({
                 ref={inputRef}
                 type="text"
                 inputMode="url"
-                className={styles.heroInput}
+                className={`${styles.heroInput} type-copy`}
                 value={value}
                 onChange={(event) => {
                   setDraft(event.target.value);
@@ -187,13 +189,16 @@ export default function SourceHero({
               </Button>
             </div>
 
-            <FieldDescription id="source-hint" className={styles.heroHint}>
+            <FieldDescription
+              id="source-hint"
+              className={`${styles.heroHint} type-copy-sm`}
+            >
               Masukkan URL website atau akun Instagram resmi bisnis Anda.
             </FieldDescription>
 
             <p
               id="source-error"
-              className={`${styles.heroError} ${localError || error ? styles.heroErrorVisible : ""}`}
+              className={`${styles.heroError} type-copy-sm ${localError || error ? styles.heroErrorVisible : ""}`}
               role={localError || error ? "alert" : undefined}
             >
               {localError || error || " "}

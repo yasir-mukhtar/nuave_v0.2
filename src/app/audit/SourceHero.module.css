@@ -31,7 +31,6 @@
   isolation: isolate;
   background: var(--source-stage-background, var(--bg-page));
   color: var(--source-foreground, var(--text-heading));
-  font-family: var(--font-body), sans-serif;
 }
 
 .heroExiting {
@@ -102,21 +101,12 @@
 
 .heroLogoText {
   color: var(--source-foreground, var(--text-heading));
-  font-family: var(--font-heading), sans-serif;
-  font-size: 1.15rem;
-  font-weight: 650;
-  letter-spacing: -0.03em;
 }
 
 .heroHeading {
   max-width: 17ch;
   margin: 0;
   color: var(--source-foreground, var(--text-heading));
-  font-family: var(--font-heading), sans-serif;
-  font-size: 60px;
-  font-weight: 500;
-  letter-spacing: -0.025em;
-  line-height: 1em;
   text-align: center;
   text-shadow: var(--source-heading-shadow, none);
   text-wrap: balance;
@@ -125,14 +115,9 @@
 }
 
 .heroSubheading {
-  max-width: 560px;
+  max-width: 35rem;
   margin: 0.9rem 0 0;
   color: var(--source-subtle, var(--text-body));
-  font-family: var(--font-body), sans-serif;
-  font-size: 19px;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 1.45em;
   text-align: center;
   text-shadow: var(--source-subheading-shadow, none);
   opacity: 0;
@@ -150,7 +135,7 @@
 .heroInputBar {
   position: relative;
   display: flex;
-  width: min(560px, 100%);
+  width: min(35rem, 100%);
   margin-inline: auto;
   height: 60px;
   align-items: center;
@@ -191,9 +176,6 @@
   outline: 0;
   background: transparent;
   color: var(--text-body);
-  font-family: var(--font-body), sans-serif;
-  font-size: 1rem;
-  line-height: 1.2;
   caret-color: var(--action);
 }
 
@@ -254,9 +236,6 @@
   max-width: 40rem;
   margin: 1rem auto 0;
   color: var(--source-hint, var(--text-muted));
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.875rem;
-  line-height: 1.55;
   text-align: center;
   text-shadow: var(--source-hint-shadow, none);
   opacity: 0;
@@ -268,9 +247,6 @@
   max-width: 40rem;
   margin: 0.55rem auto 0;
   color: var(--red);
-  font-family: var(--font-body), sans-serif;
-  font-size: 0.8125rem;
-  line-height: 1.5;
   text-align: center;
   opacity: 0;
   transition: opacity 150ms ease;
@@ -280,7 +256,6 @@
   opacity: 1;
 }
 
-/* High-resolution desktop */
 @media (min-width: 1440px) {
   .heroContent {
     width: min(60rem, calc(100% - 4rem));
@@ -293,14 +268,11 @@
 
   .heroHeading {
     max-width: 18ch;
-    font-size: 64px;
-    line-height: 1em;
   }
 
   .heroSubheading {
-    max-width: 600px;
+    max-width: 37.5rem;
     margin-top: 1rem;
-    font-size: 20px;
   }
 
   .heroForm {
@@ -308,7 +280,6 @@
   }
 }
 
-/* Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
   .heroContent {
     width: min(44rem, calc(100% - 3rem));
@@ -320,17 +291,12 @@
   }
 
   .heroHeading {
-    max-width: 640px;
-    font-size: 48px;
-    letter-spacing: -0.024em;
-    line-height: 1.02em;
+    max-width: 40rem;
   }
 
   .heroSubheading {
-    max-width: 520px;
+    max-width: 32.5rem;
     margin-top: 1.1rem;
-    font-size: 19px;
-    line-height: 1.42em;
   }
 
   .heroForm {
@@ -338,7 +304,7 @@
   }
 
   .heroInputBar {
-    width: min(520px, 100%);
+    width: min(32.5rem, 100%);
   }
 
   .skyFade {
@@ -346,7 +312,6 @@
   }
 }
 
-/* Mobile */
 @media (max-width: 767px) {
   .heroStage {
     min-height: 100vh;
@@ -367,17 +332,12 @@
   }
 
   .heroHeading {
-    max-width: min(520px, 100%);
-    font-size: clamp(32px, 8.25vw, 36px);
-    letter-spacing: -0.024em;
-    line-height: 1.03em;
+    max-width: min(32.5rem, 100%);
   }
 
   .heroSubheading {
-    max-width: min(420px, 100%);
+    max-width: min(26.25rem, 100%);
     margin-top: 1.2rem;
-    font-size: clamp(17px, 4.5vw, 19px);
-    line-height: 1.4em;
   }
 
   .heroForm {
@@ -392,7 +352,6 @@
 
   .heroInput {
     height: 44px;
-    font-size: 0.95rem;
   }
 
   .heroSubmit {
@@ -402,9 +361,8 @@
   }
 
   .heroHint {
-    max-width: 420px;
+    max-width: 26.25rem;
     padding: 0 0.35rem;
-    font-size: 0.82rem;
   }
 
   .skyField {
@@ -426,14 +384,8 @@
     margin-bottom: 1.25rem;
   }
 
-  .heroHeading {
-    font-size: 32px;
-    line-height: 1.04em;
-  }
-
   .heroSubheading {
     margin-top: 1rem;
-    font-size: 17px;
   }
 
   .heroForm {

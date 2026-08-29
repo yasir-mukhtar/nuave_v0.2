@@ -93,7 +93,7 @@ export default function LandingNav({
               height={28}
               className="lp-nav-brand-logo object-contain"
             />
-            <span className="lp-nav-brand-text text-[20px] font-semibold text-[#0d0d0d]">
+            <span className="lp-nav-brand-text type-heading-sm text-[#0d0d0d]">
               Nuave
             </span>
           </Link>
@@ -101,7 +101,7 @@ export default function LandingNav({
           <div className="lp-nav-links flex items-center gap-8">
             <a
               href="/support"
-              className="lp-nav-contact text-[14px] font-medium leading-[24px] text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
+              className="lp-nav-contact type-label text-[var(--lp-text-primary)] no-underline hover:text-brand transition-colors duration-150"
             >
               {t("nav.contact")}
             </a>
@@ -110,7 +110,7 @@ export default function LandingNav({
           <div className="lp-nav-masuk flex items-center gap-3">
             <Link
               href="/audit"
-              className="lp-nav-hero-cta btn-lp-black flex items-center justify-center px-5 py-2 text-white text-[14px] font-medium leading-[1.7em] rounded-[6px] no-underline cursor-pointer"
+              className="lp-nav-hero-cta btn-lp-black type-label flex items-center justify-center px-5 py-2 text-white rounded-[6px] no-underline cursor-pointer"
             >
               {t("cta.auditBrandFreeNoExclaim")}
             </Link>
@@ -149,7 +149,7 @@ export default function LandingNav({
             id="nuave-mobile-menu-first-link"
             href="/support"
             onClick={() => setMobileMenuOpen(false)}
-            className="rounded-lg px-5 py-3.5 text-center text-base font-medium text-[var(--lp-text-primary)] no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="type-label rounded-lg px-5 py-3.5 text-center text-[var(--lp-text-primary)] no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             {t("nav.contact")}
           </a>
@@ -157,7 +157,7 @@ export default function LandingNav({
           <Link
             href="/audit"
             onClick={() => setMobileMenuOpen(false)}
-            className="btn-lp-black flex min-h-11 w-full items-center justify-center rounded-lg px-5 py-3 text-[15px] font-medium text-white no-underline"
+            className="btn-lp-black type-label flex min-h-11 w-full items-center justify-center rounded-lg px-5 py-3 text-white no-underline"
           >
             {t("cta.auditBrandFreeNoExclaim")}
           </Link>

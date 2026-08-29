@@ -12,15 +12,6 @@ export const metadata: Metadata = {
 
 const EMAIL = "hello@nuave.ai";
 
-const FAQ_STYLE =
-  ".nuave-faq { font-family: var(--font-inter), sans-serif; color: #374151; }" +
-  ".nuave-faq h1 { font-family: var(--font-geist-sans), sans-serif; font-size: 40px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.15; color: #111827; margin: 0 0 8px; }" +
-  ".nuave-faq h2 { font-family: var(--font-geist-sans), sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; line-height: 1.35; color: #111827; margin: 0 0 12px; }" +
-  ".nuave-faq main a { color: var(--lp-purple, #533AFD); text-decoration: underline; text-underline-offset: 3px; }" +
-  ".nuave-faq p { margin: 0 0 16px; }" +
-  ".nuave-faq ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
-  ".nuave-faq li { margin: 0 0 8px; line-height: 1.7; }";
-
 function FaqSection({
   question,
   children,
@@ -30,7 +21,7 @@ function FaqSection({
 }) {
   return (
     <section className="mb-10">
-      <h2>{question}</h2>
+      <h2 className="type-heading-sm m-0 mb-3 text-[#111827]">{question}</h2>
       {children}
     </section>
   );
@@ -38,11 +29,12 @@ function FaqSection({
 
 export default function FaqPage() {
   return (
-    <div className="nuave-faq min-h-screen bg-white">
-      <style>{FAQ_STYLE}</style>
+    <div className="min-h-screen bg-white">
       <LandingNav />
-      <main className="max-w-[760px] mx-auto px-8 pt-[150px] pb-[120px] text-[15px] leading-[1.7]">
-        <h1>Pertanyaan yang sering diajukan</h1>
+      <main className="type-copy mx-auto max-w-[760px] px-8 pt-[150px] pb-[120px] text-[#374151] [&_a]:text-[var(--lp-purple)] [&_a]:underline [&_a]:underline-offset-[3px] [&_li]:mb-2 [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-5">
+        <h1 className="type-heading-xl m-0 mb-2 text-[#111827]">
+          Pertanyaan yang sering diajukan
+        </h1>
         <p>
           Nuave saat ini berada dalam pengujian privat. Halaman ini menjelaskan
           kemampuan produk yang aktif sekarang, bukan fitur komersial yang masih

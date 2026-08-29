@@ -39,235 +39,138 @@
   --chart-5: var(--border-light);
 }
 
-/* Element resets and base typography moved to @layer base
-   so Tailwind utilities (@layer utilities) can override them.
-   Unlayered styles beat ALL layered styles in CSS cascade layers,
-   which would make Tailwind margin/padding/font utilities ineffective. */
-
-/* ── Fluid typescale semantic utilities ──
-   Source of truth: --step-* tokens in tokens.css (Utopia perfect-fourth scale).
-   All new pages must use these classes — never inline font-size values.
-
-   Body/UI text  → Geist 400    (--font-body)
-   Headings      → Geist 600–700 (--font-heading, weight varies by size)
-
-   Placed in @layer components so they win over @layer base element resets
-   (specifically the `span, div, p { font-family: var(--font-body) }` rule).
-   ─────────────────────────────────────────────────────────────── */
-
+/* Semantic typography. These classes own family, size, weight, leading, and
+   tracking only. Color stays a separate semantic concern. */
 @layer components {
-  /* Body & UI text (Inter) */
-  .type-caption {
-    font-family: var(--font-body);
-    font-size: var(--text-caption);
-    line-height: 1.4;
-    font-weight: 400;
-  } /* ~10.5px */
-  .type-body {
-    font-family: var(--font-body);
-    font-size: var(--text-body);
-    line-height: 1.5;
-    font-weight: 400;
-  } /*    14px */
-  .type-body-lg {
-    font-family: var(--font-body);
-    font-size: var(--text-body-lg);
-    line-height: 1.4;
-    font-weight: 400;
-  } /* ~18.7px */
-
-  /* Panel/section title — Geist 600 at body size, hierarchy without a size jump */
-  .type-title {
-    font-family: var(--font-heading);
-    font-size: var(--text-body);
-    line-height: 1.5;
-    font-weight: 600;
-  } /*    14px */
-  .type-subtitle {
-    font-family: var(--font-heading);
-    font-size: var(--text-subtitle);
-    line-height: 1.4;
-    font-weight: 600;
-  } /*    16px */
-  .type-page-title {
-    font-family: var(--font-heading);
-    font-size: var(--text-page-title);
-    line-height: 1.4;
-    font-weight: 600;
-  } /*    18px */
-
-  /* Landing page hero — Geist 500 48px / 58px */
-  .type-lp-title {
-    font-family: var(--font-heading);
-    font-size: 48px;
-    line-height: 58px;
-    font-weight: 500;
-    letter-spacing: -0.03em;
-  }
-  /* Landing page subtitle — Inter 500 16px */
-  .type-lp-subtitle {
-    font-family: var(--font-body);
-    font-size: 1rem;
-    line-height: 1.5;
-    font-weight: 500;
-  }
-
-  /* Headings (Geist) */
-  .type-heading-sm {
-    font-family: var(--font-heading);
-    font-size: var(--text-heading-sm);
-    line-height: 1.3;
-    font-weight: 600;
-  } /* ~24.9px */
-  .type-heading-md {
-    font-family: var(--font-heading);
-    font-size: var(--text-heading-md);
-    line-height: 1.2;
-    font-weight: 700;
-  } /* ~33.2px */
-  .type-heading-lg {
-    font-family: var(--font-heading);
-    font-size: var(--text-heading-lg);
-    line-height: 1.1;
-    font-weight: 700;
-  } /* ~44.2px */
   .type-display {
-    font-family: var(--font-heading);
-    font-size: var(--text-display);
-    line-height: 1;
-    font-weight: 700;
-  } /* ~58.9px */
-
-  /* Table column header — Inter 600 12px */
-  .type-col-header {
-    font-family: var(--font-body);
-    font-size: var(--text-caption);
-    font-weight: 600;
-    line-height: normal;
-    color: var(--text-muted);
-    text-decoration: none !important;
+    font-family: var(--font-ui);
+    font-size: var(--type-display-size);
+    font-weight: var(--type-display-weight);
+    line-height: var(--type-display-leading);
+    letter-spacing: var(--type-display-tracking);
   }
 
-  /* Dotted underline modifier — signals hover/tooltip affordance */
-  .type-col-header--hint {
-    -webkit-text-decoration: underline dotted !important;
-    text-decoration: underline dotted !important;
-    text-decoration-skip-ink: auto;
-    text-underline-position: from-font;
+  .type-heading-xl {
+    font-family: var(--font-ui);
+    font-size: var(--type-heading-xl-size);
+    font-weight: var(--type-heading-xl-weight);
+    line-height: var(--type-heading-xl-leading);
+    letter-spacing: var(--type-heading-xl-tracking);
   }
 
-  /* Nav item — exposes --_nav-weight so child .type-nav inherits it */
-  .nav-item {
-    --_nav-weight: 400;
+  .type-heading-lg {
+    font-family: var(--font-ui);
+    font-size: var(--type-heading-lg-size);
+    font-weight: var(--type-heading-lg-weight);
+    line-height: var(--type-heading-lg-leading);
+    letter-spacing: var(--type-heading-lg-tracking);
   }
-  .nav-item:hover,
-  .nav-item[data-active="true"] {
-    --_nav-weight: 500;
+
+  .type-heading-md {
+    font-family: var(--font-ui);
+    font-size: var(--type-heading-md-size);
+    font-weight: var(--type-heading-md-weight);
+    line-height: var(--type-heading-md-leading);
+    letter-spacing: var(--type-heading-md-tracking);
   }
 
-  /* Nav item label — reads weight from parent via custom property */
-  .type-nav {
-    font-family: var(--font-body);
-    font-size: var(--text-body);
-    line-height: 1.5;
-    font-weight: var(--_nav-weight, 400);
+  .type-heading-sm {
+    font-family: var(--font-ui);
+    font-size: var(--type-heading-sm-size);
+    font-weight: var(--type-heading-sm-weight);
+    line-height: var(--type-heading-sm-leading);
+    letter-spacing: var(--type-heading-sm-tracking);
   }
-}
 
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-}
+  .type-copy-lg {
+    font-family: var(--font-ui);
+    font-size: var(--type-copy-lg-size);
+    font-weight: var(--type-copy-lg-weight);
+    line-height: var(--type-copy-lg-leading);
+    letter-spacing: var(--type-copy-lg-tracking);
+  }
 
-.form-field label,
-label.field-label {
-  display: flex;
-  align-items: center;
-  color: #212126;
-  font-family: var(--font-body);
-  letter-spacing: normal;
-  font-weight: 500;
-  font-size: 0.8125rem;
-  line-height: 1.38462;
-  cursor: default;
-}
+  .type-copy {
+    font-family: var(--font-ui);
+    font-size: var(--type-copy-size);
+    font-weight: var(--type-copy-weight);
+    line-height: var(--type-copy-leading);
+    letter-spacing: var(--type-copy-tracking);
+  }
 
-/* Disabled label state */
-.form-field label.disabled,
-label.field-label.disabled {
-  cursor: not-allowed;
-  pointer-events: none;
-  opacity: 0.5;
-}
+  .type-copy-sm {
+    font-family: var(--font-ui);
+    font-size: var(--type-copy-sm-size);
+    font-weight: var(--type-copy-sm-weight);
+    line-height: var(--type-copy-sm-leading);
+    letter-spacing: var(--type-copy-sm-tracking);
+  }
 
-.form-field input,
-.form-field textarea,
-.form-field select {
-  box-sizing: border-box;
-  margin: 0px;
-  padding: 0.625rem 0.75rem;
-  height: 44px !important;
-  max-height: 44px !important;
-  width: 100%;
-  background-color: #ffffff;
-  color: rgba(33, 33, 38, 0.65);
-  font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  line-height: 1.38462;
-  letter-spacing: normal;
-  border-radius: var(--radius-sm);
-  border-width: 0px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.11);
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.11),
-    0px 0px 1px 0px rgba(0, 0, 0, 0.07);
-  outline: transparent solid 2px;
-  outline-offset: 2px;
-  appearance: none;
-  transition-property:
-    background-color, border-color, color, fill, stroke, opacity, box-shadow,
-    transform;
-  transition-timing-function: ease;
-  transition-duration: 200ms;
-}
+  .type-label {
+    font-family: var(--font-ui);
+    font-size: var(--type-label-size);
+    font-weight: var(--type-label-weight);
+    line-height: var(--type-label-leading);
+    letter-spacing: var(--type-label-tracking);
+  }
 
-.form-field input:hover,
-.form-field textarea:hover,
-.form-field select:hover {
-  border-color: rgba(0, 0, 0, 0.28);
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.28),
-    0px 0px 1px 0px rgba(0, 0, 0, 0.11);
-}
+  .type-label-sm {
+    font-family: var(--font-ui);
+    font-size: var(--type-label-sm-size);
+    font-weight: var(--type-label-sm-weight);
+    line-height: var(--type-label-sm-leading);
+    letter-spacing: var(--type-label-sm-tracking);
+  }
 
-.form-field input:focus,
-.form-field textarea:focus,
-.form-field select:focus {
-  border-color: rgba(0, 0, 0, 0.28);
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.28),
-    0px 0px 1px 0px rgba(0, 0, 0, 0.11),
-    0px 0px 0px 4px rgba(0, 0, 0, 0.15);
-  outline: none;
-}
+  .type-mono {
+    font-family: var(--font-code);
+    font-size: var(--type-mono-size);
+    font-weight: var(--type-mono-weight);
+    line-height: var(--type-mono-leading);
+    letter-spacing: var(--type-mono-tracking);
+  }
 
-.form-field input:disabled,
-.form-field textarea:disabled,
-.form-field select:disabled {
-  cursor: not-allowed;
-  pointer-events: none;
-  opacity: 0.5;
-}
+  .type-mono-sm {
+    font-family: var(--font-code);
+    font-size: var(--type-mono-sm-size);
+    font-weight: var(--type-mono-sm-weight);
+    line-height: var(--type-mono-sm-leading);
+    letter-spacing: var(--type-mono-sm-tracking);
+  }
 
-.form-field textarea {
-  height: auto;
-  min-height: 80px;
-  max-height: unset;
-  resize: vertical;
+  /* Report display typography is intentionally unavailable outside a report
+     subtree. Normal report copy still uses the core roles above. */
+  .report-typography .type-report-display {
+    font-family: var(--font-report);
+    font-size: var(--type-report-display-size);
+    font-weight: var(--type-report-display-weight);
+    line-height: var(--type-report-display-leading);
+    letter-spacing: var(--type-report-display-tracking);
+  }
+
+  .report-typography .type-report-heading {
+    font-family: var(--font-report);
+    font-size: var(--type-report-heading-size);
+    font-weight: var(--type-report-heading-weight);
+    line-height: var(--type-report-heading-leading);
+    letter-spacing: var(--type-report-heading-tracking);
+  }
+
+  .report-typography .type-report-title {
+    font-family: var(--font-report);
+    font-size: var(--type-report-title-size);
+    font-weight: var(--type-report-title-weight);
+    line-height: var(--type-report-title-leading);
+    letter-spacing: var(--type-report-title-tracking);
+  }
+
+  .report-typography .type-report-metric {
+    font-family: var(--font-report);
+    font-size: var(--type-report-metric-size);
+    font-weight: var(--type-report-metric-weight);
+    line-height: var(--type-report-metric-leading);
+    letter-spacing: var(--type-report-metric-tracking);
+  }
 }
 
 /* Scrollbar — only visible on hover */
@@ -550,51 +453,61 @@ label.field-label.disabled {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* ── App design tokens (backgrounds) ── */
+  /* ── App design tokens ── */
   --color-page: var(--bg-page);
   --color-surface: var(--bg-surface);
   --color-surface-raised: var(--bg-surface-raised);
   --color-surface-muted: var(--bg-muted);
-
-  /* ── App design tokens (borders) ── */
   --color-border-default: var(--border-default);
   --color-border-light: var(--border-light);
   --color-border-strong: var(--border-strong);
-
-  /* ── App design tokens (text) ── */
   --color-text-heading: var(--text-heading);
   --color-text-body: var(--text-body);
   --color-text-muted: var(--text-muted);
   --color-text-placeholder: var(--text-placeholder);
-
-  /* ── App design tokens (action) ── */
   --color-action: var(--action);
   --color-action-hover: var(--action-hover);
   --color-action-soft: var(--action-soft);
   --color-brand: var(--action);
   --color-brand-dark: var(--action-hover);
   --color-brand-light: var(--action-soft);
-
-  /* ── App design tokens (semantic) ── */
   --color-success: var(--green);
   --color-success-light: var(--green-light);
   --color-error: var(--red);
   --color-error-light: var(--red-light);
   --color-warning: var(--amber);
   --color-warning-light: var(--amber-light);
-
-  /* ── App design tokens (shadows) ── */
   --shadow-app-subtle: var(--shadow-subtle);
   --shadow-app-card: var(--shadow-card);
   --shadow-app-focus: var(--shadow-focus);
   --shadow-app-modal: var(--shadow-modal);
 
-  /* ── App design tokens (fonts) ── */
+  /* ── Font bridge ── */
   --font-sans: var(--font-ui);
   --font-heading: var(--font-ui);
   --font-body: var(--font-ui);
   --font-serif: var(--font-report);
   --font-mono: var(--font-code);
+
+  /* ── Canonical Tailwind type scale ── */
+  --text-xs: var(--type-size-xs);
+  --text-xs--line-height: var(--type-label-sm-leading);
+  --text-sm: var(--type-size-sm);
+  --text-sm--line-height: var(--type-copy-sm-leading);
+  --text-base: var(--type-size-base);
+  --text-base--line-height: var(--type-copy-leading);
+  --text-lg: var(--type-size-lg);
+  --text-lg--line-height: var(--type-copy-lg-leading);
+  --text-xl: var(--type-size-xl);
+  --text-xl--line-height: var(--type-heading-sm-leading);
+  --text-2xl: var(--type-size-2xl);
+  --text-2xl--line-height: var(--type-heading-md-leading);
+  --text-3xl: var(--type-size-3xl);
+  --text-3xl--line-height: var(--type-heading-lg-leading);
+  --text-4xl: var(--type-size-4xl);
+  --text-4xl--line-height: var(--type-heading-xl-leading);
+  --text-5xl: var(--type-size-5xl);
+  --text-5xl--line-height: var(--type-display-leading);
 
   /* ── Motion Tokens ── */
   --duration-fast: var(--motion-duration-fast);
@@ -602,15 +515,6 @@ label.field-label.disabled {
   --duration-slow: var(--motion-duration-slow);
   --ease-out: var(--motion-ease-out);
 
-  /* ── Fluid type steps as Tailwind utilities (text-step-base, text-step-lg, etc.) ── */
-  --text-step-2xs: var(--step--2);
-  --text-step-xs: var(--step--1);
-  --text-step-base: var(--step-0);
-  --text-step-lg: var(--step-1);
-  --text-step-xl: var(--step-2);
-  --text-step-2xl: var(--step-3);
-  --text-step-3xl: var(--step-4);
-  --text-step-4xl: var(--step-5);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -619,7 +523,6 @@ label.field-label.disabled {
 }
 
 @layer base {
-  /* Reduced motion foundation (R-06) */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -631,18 +534,15 @@ label.field-label.disabled {
     }
   }
 
-  /* Accessible focus-visible ring (R-07) */
   :focus-visible {
     outline: 2px solid var(--purple);
     outline-offset: 2px;
   }
 
-  /* Tabler icon stroke — controlled by --icon-stroke token */
   .tabler-icon {
     stroke-width: var(--icon-stroke);
   }
 
-  /* Fix cmdk list scroll — ensure list is scrollable and inner sizer doesn't block */
   [cmdk-list] {
     overflow-y: auto !important;
     overscroll-behavior: contain;
@@ -657,118 +557,41 @@ label.field-label.disabled {
     padding: 0;
     @apply border-border outline-ring/50;
   }
+
+  html {
+    @apply font-sans;
+  }
+
   body {
     background: var(--bg-page);
     color: var(--text-body);
-    font-family: var(--font-body);
-    font-size: var(--step-0);
-    line-height: 1.5;
+    font-family: var(--font-ui);
+    font-size: var(--type-copy-size);
+    line-height: var(--type-copy-leading);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply bg-background text-foreground;
   }
+
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--font-heading);
+    font-family: var(--font-ui);
     color: var(--text-heading);
-    letter-spacing: -0.03em;
   }
-  h1 {
-    font-size: var(--step-4);
-    font-weight: 700;
-    line-height: 1.1;
-  }
-  h2 {
-    font-size: var(--step-3);
-    font-weight: 700;
-    line-height: 1.2;
-  }
-  h3 {
-    font-size: var(--step-2);
-    font-weight: 600;
-    line-height: 1.3;
-  }
-  h4 {
-    font-size: var(--step-1);
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: -0.02em;
-  }
-  h5 {
-    font-size: var(--step-0);
-    font-weight: 600;
-    line-height: 1.5;
-    letter-spacing: normal;
-  }
-  h6 {
-    font-size: var(--step--1);
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: normal;
-  }
-  p,
-  span,
-  div,
-  input,
-  textarea,
-  select,
-  button,
-  label {
-    font-family: var(--font-body);
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-code);
   }
 
   /* Center sonner toasts over the content area (accounting for 256px sidebar) */
   [data-sonner-toaster][data-x-position="center"] {
     left: calc(50% + 128px);
   }
-  html {
-    @apply font-sans;
-  }
-}
-
-/* ── Plan upgrade banner ── */
-.plan-upgrade-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  background-color: var(--bg-page);
-  border-bottom: 1px solid var(--border-light);
-  padding: var(--space-sm) var(--space-xl);
-}
-
-.plan-upgrade-banner p {
-  margin: 0;
-  font-size: var(--text-body);
-  color: var(--text-heading);
-}
-
-.plan-upgrade-banner-link {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-sm);
-  text-decoration: none;
-  color: var(--text-heading);
-}
-
-.plan-upgrade-banner-link p {
-  white-space: nowrap;
-}
-
-.plan-upgrade-banner .plan-upgrade-banner-dismiss {
-  margin-left: auto;
-  flex-shrink: 0;
-  border: none;
-  background: transparent;
-  padding: var(--space-xs);
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.plan-upgrade-banner .plan-upgrade-banner-dismiss:hover {
-  color: var(--text-heading);
 }

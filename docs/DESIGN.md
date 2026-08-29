@@ -1,7 +1,7 @@
 # Nuave design guide
 
 > Status: **Canonical current UI/design authority**
-> Updated: 2026-08-28
+> Updated: 2026-08-29
 
 This guide governs Nuave's presentation layer. Product, audit, voice, privacy,
 and journey contracts remain governed by their canonical documents in
@@ -59,10 +59,86 @@ is the application adapter and Tailwind/shadcn bridge; do not create a second
 `theme.css` or duplicate semantic ownership. Components consume semantic tokens,
 not ad hoc raw values.
 
-`src/app/fonts.ts` is the only font-loading owner. Geist is the default product
-UI font. A system serif stack may be used only for report display surfaces
-such as the cover business name or display result. Do not add per-component
-font loaders or retain unused webfonts.
+### Typography families
+
+`src/app/fonts.ts` is the only font-loading owner.
+
+- **Geist Sans** is the canonical interface and marketing font.
+- **Geist Mono** is the canonical technical/code font.
+- A system serif stack is allowed only inside bounded report-display surfaces
+  such as the report cover name, editorial section headings, and result metrics.
+
+Do not add per-component font loaders, introduce Inter or another UI font, or
+use the report serif as a second application-wide type system.
+
+### Canonical scale
+
+The only general text sizes are:
+
+| Token | Size |
+| --- | ---: |
+| `--type-size-xs` | 12px |
+| `--type-size-sm` | 14px |
+| `--type-size-base` | 16px |
+| `--type-size-lg` | 18px |
+| `--type-size-xl` | 20px |
+| `--type-size-2xl` | 24px |
+| `--type-size-3xl` | 32px |
+| `--type-size-4xl` | 48px |
+| `--type-size-5xl` | 64px |
+
+Tailwind's standard `text-*` utilities map to these same values. Do not create a
+parallel mathematical scale or arbitrary one-off sizes for normal UI copy.
+
+### Semantic roles
+
+Prefer semantic role classes for product and marketing copy:
+
+- `type-display` — major hero/display text; the only strongly fluid role.
+- `type-heading-xl` — expressive section/page heading; fluid 32–48px.
+- `type-heading-lg` — 32px heading.
+- `type-heading-md` — 24px heading.
+- `type-heading-sm` — 20px heading.
+- `type-copy-lg` — 18px intro/emphasized copy.
+- `type-copy` — 16px default reading copy.
+- `type-copy-sm` — 14px supporting copy.
+- `type-label` — 14px labels and controls.
+- `type-label-sm` — 12px metadata and compact labels.
+- `type-mono` — 14px technical/code text.
+- `type-mono-sm` — 12px compact technical identifiers.
+
+Each role owns font family, size, weight, line-height, and tracking. Color is a
+separate semantic concern. Do not mix a role with competing local font-size,
+font-weight, line-height, tracking, or font-family declarations.
+
+Native `h1`–`h6` elements provide semantics only. They intentionally do not
+impose visual sizes. Choose visual hierarchy explicitly with a semantic role or,
+where attaching a global class is impractical, the corresponding canonical
+`--type-*` tokens.
+
+### Responsive typography
+
+Keep responsive behavior intentional and scarce:
+
+- `type-display` uses `clamp()` for large display moments.
+- `type-heading-xl` uses `clamp()` for expressive section headings.
+- normal copy, labels, controls, and ordinary headings stay stable across
+  breakpoints;
+- do not create page-specific mobile/desktop typography systems.
+
+### Report exception
+
+Report display typography is a bounded editorial exception. Its serif display,
+heading, title, and metric values live in `tokens.css` and may only be used
+inside the report subtree. Report body copy, labels, controls, metadata, and
+technical identifiers still use the core Geist roles.
+
+### Drift guard
+
+`npm run check:typography` rejects legacy perfect-fourth tokens, Inter, the old
+text-color/font-size collision, arbitrary Tailwind typography, non-canonical
+650 weights, and raw CSS font sizes outside the canonical owner. It runs as
+part of `npm run check` and therefore `npm run verify`.
 
 Use Tabler for generic interface icons. A different icon is allowed only for a
 specific non-generic product asset or a documented compatibility reason. Do not

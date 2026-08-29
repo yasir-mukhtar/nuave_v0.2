@@ -10,14 +10,6 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = "hello@nuave.ai";
-const STYLE =
-  ".nuave-terms { font-family: var(--font-inter), sans-serif; color: #374151; }" +
-  ".nuave-terms h1 { font-family: var(--font-geist-sans), sans-serif; font-size: 40px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.15; color: #111827; margin: 0 0 8px; }" +
-  ".nuave-terms h2 { font-family: var(--font-geist-sans), sans-serif; font-size: 22px; font-weight: 600; color: #111827; margin: 0 0 12px; }" +
-  ".nuave-terms main a { color: var(--lp-purple, #533AFD); text-decoration: underline; text-underline-offset: 3px; }" +
-  ".nuave-terms p { margin: 0 0 16px; }" +
-  ".nuave-terms ul { margin: 0 0 16px; padding-left: 20px; list-style: disc; }" +
-  ".nuave-terms li { margin: 0 0 8px; line-height: 1.7; }";
 
 function Section({
   title,
@@ -28,7 +20,7 @@ function Section({
 }) {
   return (
     <section className="mb-10">
-      <h2>{title}</h2>
+      <h2 className="type-heading-sm m-0 mb-3 text-[#111827]">{title}</h2>
       {children}
     </section>
   );
@@ -36,12 +28,13 @@ function Section({
 
 export default function TermsPage() {
   return (
-    <div className="nuave-terms min-h-screen bg-white">
-      <style>{STYLE}</style>
+    <div className="min-h-screen bg-white">
       <LandingNav />
-      <main className="max-w-[760px] mx-auto px-8 pt-[150px] pb-[120px] text-[15px] leading-[1.7]">
-        <h1>Syarat penggunaan saat ini</h1>
-        <div className="rounded-[12px] border border-[#E5E7EB] bg-[#F9FAFB] px-6 py-4 mb-10">
+      <main className="type-copy mx-auto max-w-[760px] px-8 pt-[150px] pb-[120px] text-[#374151] [&_a]:text-[var(--lp-purple)] [&_a]:underline [&_a]:underline-offset-[3px] [&_li]:mb-2 [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-5">
+        <h1 className="type-heading-xl m-0 mb-2 text-[#111827]">
+          Syarat penggunaan saat ini
+        </h1>
+        <div className="mb-10 rounded-[12px] border border-[#E5E7EB] bg-[#F9FAFB] px-6 py-4">
           <strong>Pengujian privat</strong>
           <p className="mb-0 mt-2">
             Nuave belum membuka alur komersial. Halaman ini menjelaskan batas

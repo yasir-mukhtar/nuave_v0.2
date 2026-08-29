@@ -35,14 +35,13 @@ export default function Footer() {
   return (
     <footer className="lp-footer px-8 py-[110px] bg-white">
       <div className="max-w-[1045px] mx-auto">
-        {/* Row 1: Footer menu + Social icons */}
         <div className="lp-footer-row1 flex items-center justify-between mb-[72px]">
           <div className="lp-footer-nav flex items-center gap-8">
             {NAV_LINK_KEYS.map((link) => (
               <Link
                 key={link.key}
                 href={link.href}
-                className="text-[14px] font-normal leading-[20px] text-[#6B7280] no-underline hover:text-brand transition-colors duration-150"
+                className="type-copy-sm text-[#6B7280] no-underline hover:text-brand transition-colors duration-150"
               >
                 {t(link.key)}
               </Link>
@@ -50,7 +49,7 @@ export default function Footer() {
           </div>
 
           <div className="lp-footer-social flex items-center gap-3">
-            <span className="lp-footer-social-label text-[14px] font-normal leading-[20px] text-[#6B7280] mr-1">
+            <span className="lp-footer-social-label type-copy-sm text-[#6B7280] mr-1">
               {t("followUs")}
             </span>
             <div className="lp-footer-social-icons flex items-center gap-3">
@@ -70,10 +69,8 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-px bg-[#E5E7EB]" />
 
-        {/* Row 2: Logo + tagline + copyright */}
         <div className="lp-footer-row2 mt-14 flex items-center gap-8">
           <div className="flex items-center gap-2">
             <img
@@ -83,16 +80,12 @@ export default function Footer() {
               height={28}
               className="object-contain"
             />
-            <span className="text-[18px] font-semibold text-[#111827]">
-              Nuave
-            </span>
+            <span className="type-heading-sm text-[#111827]">Nuave</span>
           </div>
 
-          <p className="text-[14px] font-normal leading-[20px] text-[#6B7280] m-0">
-            {t("tagline")}
-          </p>
+          <p className="type-copy-sm text-[#6B7280] m-0">{t("tagline")}</p>
 
-          <p className="lp-footer-copyright text-[14px] font-normal leading-[20px] text-[#6B7280] m-0 ml-auto">
+          <p className="lp-footer-copyright type-copy-sm text-[#6B7280] m-0 ml-auto">
             {t("copyright", { year: new Date().getFullYear() })}
           </p>
         </div>

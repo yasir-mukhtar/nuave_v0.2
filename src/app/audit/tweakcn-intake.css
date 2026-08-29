@@ -141,7 +141,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
   [data-slot="field-label"] {
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.875rem;
+  font-size: var(--type-size-sm);
   font-weight: 500;
   line-height: 1;
 }
@@ -149,7 +149,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
 main[data-theme="light"]:has(#identity-scope-heading)
   [data-slot="field-description"] {
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--type-size-sm);
   font-weight: 400;
   line-height: 1.5;
 }
@@ -164,7 +164,7 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="input"] {
   padding: 0.25rem 0.75rem;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.875rem;
+  font-size: var(--type-size-sm);
   line-height: 1.25rem;
   box-shadow: var(--shadow-xs);
   outline: none;
@@ -190,7 +190,7 @@ main[data-theme="light"]:has(#identity-scope-heading) [data-slot="textarea"] {
   padding: 0.5rem 0.75rem;
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: 0.875rem;
+  font-size: var(--type-size-sm);
   line-height: 1.5;
   box-shadow: var(--shadow-xs);
   outline: none;
@@ -226,7 +226,7 @@ main[data-theme="light"]:has(#identity-scope-heading)
   border-radius: var(--radius-md);
   padding-right: 1rem;
   padding-left: 1rem;
-  font-size: 0.875rem;
+  font-size: var(--type-size-sm);
   font-weight: 500;
   line-height: 1.25rem;
   outline: none;

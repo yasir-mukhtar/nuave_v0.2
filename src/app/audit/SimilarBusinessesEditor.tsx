@@ -85,7 +85,7 @@ export default function SimilarBusinessesEditor({
               {invalid ? (
                 <p
                   id={validationId}
-                  className={styles.validationError}
+                  className={`${styles.validationError} type-copy-sm`}
                   role="alert"
                 >
                   {INVALID_SIMILAR_BUSINESS_URL_MESSAGE}
@@ -93,7 +93,9 @@ export default function SimilarBusinessesEditor({
               ) : null}
             </div>
             {business.origin === "ai" && business.source_url ? (
-              <span className={styles.aiBadge}>Saran Nuave</span>
+              <span className={`${styles.aiBadge} type-label-sm`}>
+                Saran Nuave
+              </span>
             ) : null}
             <Button
               type="button"
@@ -119,7 +121,7 @@ export default function SimilarBusinessesEditor({
         <IconPlus />
         <span>Tambah bisnis serupa</span>
       </Button>
-      <p className={styles.hint}>
+      <p className={`${styles.hint} type-copy-sm`}>
         Website, profil Instagram, atau Google Business Profile. Opsional,
         maksimal {MAX_SIMILAR_BUSINESSES} bisnis.
       </p>
