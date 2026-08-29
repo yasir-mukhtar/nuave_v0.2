@@ -702,7 +702,6 @@ export function BriefStep({
   setFactsConfirmed,
   busy,
   onGenerate,
-  onBack,
   onLogo,
 }: {
   brief: BusinessBrief;
@@ -712,7 +711,6 @@ export function BriefStep({
   setFactsConfirmed: (value: boolean) => void;
   busy: Busy;
   onGenerate: () => void;
-  onBack: () => void;
   onLogo: (file: File | undefined) => void;
 }) {
   const [screen, setScreen] = useState<BusinessFactsScreen>("brand");
@@ -1042,15 +1040,6 @@ export function BriefStep({
       className={`${styles.workspace} ${styles.workspaceFocused} max-w-[45rem] px-1 sm:px-0`}
       lang="id"
     >
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={onBack}
-        className={styles.backButton}
-      >
-        <IconArrowLeft /> Ganti website
-      </Button>
-
       {screen === "milestone" ? (
         <header className={`${styles.stageIntro} mb-8`}>
           <p className={styles.stageMeta}>Jeda singkat</p>
@@ -1085,16 +1074,6 @@ export function BriefStep({
           <p>{meta?.description}</p>
         </header>
       )}
-
-      {extraction?.warnings.length ? (
-        <WarningAlert title="Periksa informasi ini">
-          <ul className={styles.compactList}>
-            {extraction.warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        </WarningAlert>
-      ) : null}
 
       {screen === "brand" ? (
         <StageSection
@@ -1582,8 +1561,8 @@ export function BriefStep({
       ) : null}
 
       {screen !== "review" ? (
-        <div className={`${styles.stickyAction} flex-wrap`}>
-          <div className="flex w-full items-center justify-between gap-3">
+        <div className={`${styles.stickyAction} flex-nowrap`}>
+          <div className="flex w-full flex-nowrap items-center gap-3">
             {screen === "brand" ? (
               <span aria-hidden="true" />
             ) : (
@@ -1591,6 +1570,7 @@ export function BriefStep({
                 type="button"
                 variant="ghost"
                 onClick={() => goBack(screen)}
+                className="min-w-0 flex-1"
               >
                 <IconArrowLeft /> Kembali
               </Button>
@@ -1600,6 +1580,7 @@ export function BriefStep({
                 type="button"
                 variant="default"
                 onClick={() => navigate("details")}
+                className="min-w-0 flex-1"
               >
                 Lanjutkan <IconArrowRight />
               </Button>
@@ -1608,6 +1589,7 @@ export function BriefStep({
                 type="button"
                 variant="default"
                 onClick={() => advance(screen)}
+                className="min-w-0 flex-1"
               >
                 Lanjut <IconArrowRight />
               </Button>

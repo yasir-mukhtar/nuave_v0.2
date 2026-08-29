@@ -15,9 +15,7 @@
 }
 
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
+  position: static;
   display: flex;
   min-height: 4rem;
   align-items: center;

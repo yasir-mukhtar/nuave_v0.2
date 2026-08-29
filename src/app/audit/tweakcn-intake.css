@@ -328,3 +328,46 @@ main[data-theme="light"]:has(section[lang="id"])
     padding: 1.25rem;
   }
 }
+
+/* Progressive intake iteration: flatten Business Facts form sections. */
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-brand-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-offer-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-customer-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-market-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-similar-heading),
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-details-heading) {
+  margin-bottom: 0;
+  gap: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-brand-heading)
+  > header,
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-offer-heading)
+  > header,
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-customer-heading)
+  > header,
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-market-heading)
+  > header,
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-similar-heading)
+  > header,
+main[data-theme="light"]:has(section[lang="id"])
+  section:has(> header > #business-facts-details-heading)
+  > header {
+  display: none;
+}
