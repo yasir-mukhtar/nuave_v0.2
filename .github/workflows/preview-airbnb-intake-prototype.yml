@@ -1,0 +1,43 @@
+name: Preview low fidelity intake prototype
+
+on:
+  push:
+    branches:
+      - design/airbnb-intake-prototype
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    if: github.event.head_commit.message == 'Run low fidelity intake prototype preview'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: design/airbnb-intake-prototype
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Format prototype files
+        run: npx prettier --write src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css
+      - name: Check repository
+        run: npm run check
+      - name: Commit formatting if needed
+        run: |
+          if ! git diff --quiet -- src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css; then
+            git config user.name "Yasir Mukhtar"
+            git config user.email "yasir.mukhtar@yahoo.com"
+            git add -- src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css
+            git commit -m "Format low fidelity intake prototype"
+            git push origin HEAD:design/airbnb-intake-prototype
+          fi
+      - name: Build and upload branch preview
+        run: |
+          npx opennextjs-cloudflare build
+          npx opennextjs-cloudflare upload --preview-alias intake-airbnb
