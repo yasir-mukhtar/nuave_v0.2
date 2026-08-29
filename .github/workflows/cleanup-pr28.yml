@@ -1,0 +1,72 @@
+name: Consolidate PR 28 intake styles
+
+on:
+  push:
+    branches:
+      - style/tweakcn-intake-preview
+
+permissions:
+  contents: write
+
+jobs:
+  consolidate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: style/tweakcn-intake-preview
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Consolidate approved intake focus style
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          theme_path = Path("src/app/audit/tweakcn-intake.css")
+          focus_path = Path("src/app/audit/beui-focus.css")
+          layout_path = Path("src/app/audit/layout.tsx")
+
+          theme = theme_path.read_text()
+          focus = focus_path.read_text().strip()
+
+          pattern = re.compile(
+              r'/\*\n \* BeUI Input focus:.*?\n\}\n\n(?=/\* New York Button)',
+              re.S,
+          )
+          if not pattern.search(theme):
+              raise SystemExit("Expected old focus block not found")
+
+          theme = pattern.sub(focus + "\n\n", theme, count=1)
+          theme = theme.replace(
+              "Experimental intake-only application of Yasir's shared Tweakcn theme.",
+              "Intake-only styling based on Yasir's approved Tweakcn theme.",
+              1,
+          )
+          theme_path.write_text(theme)
+
+          layout = layout_path.read_text().replace('import "./beui-focus.css";\n', "")
+          layout_path.write_text(layout)
+          focus_path.unlink()
+          PY
+
+      - name: Format production files
+        run: npx prettier --write src/app/audit/tweakcn-intake.css src/app/audit/layout.tsx
+
+      - name: Commit consolidated production styles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: consolidate approved intake theme"
+          git push origin HEAD:style/tweakcn-intake-preview
