@@ -171,6 +171,26 @@ npm run test:unit
 npm run build
 ```
 
+### Local-first validation
+
+Use the fast gate while iterating and the full offline gate before declaring a
+branch ready to push:
+
+```bash
+# Repeat after bounded changes while iterating.
+npm run validate:fast
+
+# Run before pushing or reporting the implementation complete.
+npm run validate:full
+```
+
+`validate:fast` runs `check` and the complete unit-test suite. `validate:full`
+delegates to `verify`, which runs the same checks plus the Next.js build,
+Cloudflare/OpenNext build, and all three Playwright configurations. The full
+gate uses dummy provider settings and does not make live provider calls. It is
+the local equivalent of the repository's offline integration gate; GitHub CI
+remains the authoritative PR and `main` validation gate.
+
 To review the fixture-preview journey, set
 `NUAVE_FIXTURE_PREVIEW_ENABLED=true` (in `.env.local` or the shell
 environment) before starting the server, then open
