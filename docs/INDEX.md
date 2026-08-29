@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-08-19
+> Updated: 2026-08-29
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -43,6 +43,7 @@ decision log does not become a permanent hidden override.
 | Document | Governs | Status |
 |---|---|---|
 | [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) | Thin v2 journey, integration sequence, quality gates, and launch readiness | Founder-approved direction; each implementation phase still requires an approved spec |
+| [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md) | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); conflicts with shipped 5/5 question pack are listed in its appendix |
 | [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md) | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries | Current founder-approved product contract; implementation still requires an approved spec |
 | [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack | Working product context |
 
