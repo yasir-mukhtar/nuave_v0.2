@@ -48,7 +48,9 @@ export function AuditNotice({
       </span>
       <div className="min-w-0">
         <h2 className="type-label m-0 text-foreground">{title}</h2>
-        <div className="type-copy-sm mt-1 text-muted-foreground">{children}</div>
+        <div className="type-copy-sm mt-1 text-muted-foreground">
+          {children}
+        </div>
       </div>
     </div>
   );
