@@ -36,6 +36,7 @@ import {
 } from "@/lib/audit/types";
 import {
   INVALID_SIMILAR_BUSINESS_URL_MESSAGE,
+  isValidSimilarBusinessUrl,
   withPrimarySimilarBusiness,
 } from "@/lib/audit/similar-businesses";
 import SimilarBusinessesEditor from "./SimilarBusinessesEditor";
@@ -496,6 +497,31 @@ function LineListInput(props: Parameters<typeof LineListEditor>[0]) {
   return <LineListEditor {...props} />;
 }
 
+function validateSimilarBusinesses(
+  businesses: BusinessBrief["similar_businesses"],
+): ValidationResult {
+  const schemaResult =
+    businessBriefSchema.shape.similar_businesses.safeParse(businesses);
+  if (!schemaResult.success) return schemaResult;
+  const invalidIndex = (businesses ?? []).findIndex(
+    (business) =>
+      Boolean(business.source_url.trim()) &&
+      !isValidSimilarBusinessUrl(business.source_url),
+  );
+  if (invalidIndex < 0) return schemaResult;
+  return {
+    success: false,
+    error: {
+      issues: [
+        {
+          path: [invalidIndex, "source_url"],
+          message: INVALID_SIMILAR_BUSINESS_URL_MESSAGE,
+        },
+      ],
+    },
+  };
+}
+
 function validationMessage(key: keyof BusinessBrief) {
   switch (key) {
     case "brand_name":
@@ -846,9 +872,7 @@ export function BriefStep({
           },
           {
             key: "similar_businesses",
-            result: businessBriefSchema.shape.similar_businesses.safeParse(
-              brief.similar_businesses,
-            ),
+            result: validateSimilarBusinesses(brief.similar_businesses),
           },
         ]);
       case "details":
@@ -1463,7 +1487,10 @@ export function BriefStep({
                   id="agency-logo"
                   type="file"
                   accept="image/png,image/jpeg"
-                  onChange={(event) => onLogo(event.target.files?.[0])}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) onLogo(file);
+                  }}
                 />
                 <FieldDescription>PNG atau JPG, maksimal 1 MB.</FieldDescription>
               </Field>
