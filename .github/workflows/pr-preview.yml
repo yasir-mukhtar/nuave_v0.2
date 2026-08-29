@@ -11,6 +11,7 @@ concurrency:
 permissions:
   contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   preview:
@@ -77,6 +78,7 @@ jobs:
           echo "url=${preview_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Publish review link on the PR
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -136,6 +138,7 @@ jobs:
           command: delete --name nuave-pr-${{ github.event.pull_request.number }} --force
 
       - name: Mark preview as closed on the PR
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
