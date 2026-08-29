@@ -816,7 +816,9 @@ export function BriefStep({
           },
           {
             key: "category",
-            result: businessBriefSchema.shape.category.safeParse(brief.category),
+            result: businessBriefSchema.shape.category.safeParse(
+              brief.category,
+            ),
           },
         ]);
       case "offer":
@@ -950,7 +952,9 @@ export function BriefStep({
   }
 
   function screenForField(key: keyof BusinessBrief): BusinessFactsScreen {
-    if (["brand_name", "entity_scope", "brand_type", "category"].includes(key)) {
+    if (
+      ["brand_name", "entity_scope", "brand_type", "category"].includes(key)
+    ) {
       return "brand";
     }
     if (["verified_offerings", "priority_offering"].includes(key)) {
@@ -1193,7 +1197,9 @@ export function BriefStep({
                 hint="Opsional. Satu kebutuhan per baris."
                 value={brief.verified_customer_needs}
                 error={fieldErrors.verified_customer_needs}
-                onChange={(value) => updateField("verified_customer_needs", value)}
+                onChange={(value) =>
+                  updateField("verified_customer_needs", value)
+                }
               />
               <LineListInput
                 id={fieldIds.verified_decision_criteria}
@@ -1201,7 +1207,9 @@ export function BriefStep({
                 hint="Opsional. Satu faktor pertimbangan per baris."
                 value={brief.verified_decision_criteria}
                 error={fieldErrors.verified_decision_criteria}
-                onChange={(value) => updateField("verified_decision_criteria", value)}
+                onChange={(value) =>
+                  updateField("verified_decision_criteria", value)
+                }
               />
             </FieldGroup>
           </FieldSet>
@@ -1263,7 +1271,9 @@ export function BriefStep({
       {screen === "milestone" ? (
         <div className="grid gap-4 rounded-xl border border-border bg-muted/30 p-5 sm:grid-cols-3">
           <div>
-            <span className="text-xs font-medium text-muted-foreground">Brand</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Brand
+            </span>
             <p className="mt-1 text-sm font-medium">{brief.brand_name}</p>
           </div>
           <div>
@@ -1275,7 +1285,9 @@ export function BriefStep({
             </p>
           </div>
           <div>
-            <span className="text-xs font-medium text-muted-foreground">Pasar</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Pasar
+            </span>
             <p className="mt-1 text-sm font-medium">{brief.market_context}</p>
           </div>
         </div>
@@ -1316,21 +1328,27 @@ export function BriefStep({
                 label="Fakta yang sering keliru"
                 value={brief.customer_supplied_facts}
                 error={fieldErrors.customer_supplied_facts}
-                onChange={(value) => updateField("customer_supplied_facts", value)}
+                onChange={(value) =>
+                  updateField("customer_supplied_facts", value)
+                }
               />
               <LineListInput
                 id={fieldIds.known_accuracy_questions}
                 label="Pertanyaan akurasi"
                 value={brief.known_accuracy_questions}
                 error={fieldErrors.known_accuracy_questions}
-                onChange={(value) => updateField("known_accuracy_questions", value)}
+                onChange={(value) =>
+                  updateField("known_accuracy_questions", value)
+                }
               />
               <LongInput
                 id={fieldIds.regulated_category_notes}
                 label="Catatan kategori yang diatur"
                 value={brief.regulated_category_notes}
                 error={fieldErrors.regulated_category_notes}
-                onChange={(value) => updateField("regulated_category_notes", value)}
+                onChange={(value) =>
+                  updateField("regulated_category_notes", value)
+                }
               />
             </FieldGroup>
           </FieldSet>
@@ -1363,7 +1381,9 @@ export function BriefStep({
             <p className="m-0 text-foreground">{brief.target_customer}</p>
             {brief.verified_customer_needs.length ? (
               <div>
-                <p className="mb-1 mt-0 font-medium text-foreground">Kebutuhan</p>
+                <p className="mb-1 mt-0 font-medium text-foreground">
+                  Kebutuhan
+                </p>
                 <ReviewList values={brief.verified_customer_needs} />
               </div>
             ) : null}
@@ -1383,7 +1403,9 @@ export function BriefStep({
           >
             <p className="m-0 text-foreground">{brief.market_context}</p>
             <div>
-              <p className="mb-1 mt-0 font-medium text-foreground">Sumber resmi</p>
+              <p className="mb-1 mt-0 font-medium text-foreground">
+                Sumber resmi
+              </p>
               <ReviewList values={brief.official_sources} />
             </div>
             {brief.similar_businesses?.filter((item) => item.source_url.trim())
@@ -1405,7 +1427,9 @@ export function BriefStep({
             title="Detail tambahan"
             onEdit={() => editFromReview("details")}
           >
-            {brief.usp ? <p className="m-0">Pembeda utama: {brief.usp}</p> : null}
+            {brief.usp ? (
+              <p className="m-0">Pembeda utama: {brief.usp}</p>
+            ) : null}
             {brief.brand_name_variants.length ? (
               <div>
                 <p className="mb-1 mt-0 font-medium text-foreground">
@@ -1492,7 +1516,9 @@ export function BriefStep({
                     if (file) onLogo(file);
                   }}
                 />
-                <FieldDescription>PNG atau JPG, maksimal 1 MB.</FieldDescription>
+                <FieldDescription>
+                  PNG atau JPG, maksimal 1 MB.
+                </FieldDescription>
               </Field>
             </div>
           </DisclosureSection>
