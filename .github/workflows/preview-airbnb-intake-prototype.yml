@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   preview:
-    if: github.event.head_commit.message == 'Run low fidelity intake prototype preview'
+    if: github.event.head_commit.message == 'Fix and preview low fidelity intake prototype'
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -24,19 +24,29 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Format prototype files
-        run: npx prettier --write src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css
-      - name: Check repository
-        run: npm run check
-      - name: Commit formatting if needed
+      - name: Fix prototype navigation and format
         run: |
-          if ! git diff --quiet -- src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css; then
-            git config user.name "Yasir Mukhtar"
-            git config user.email "yasir.mukhtar@yahoo.com"
-            git add -- src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css
-            git commit -m "Format low fidelity intake prototype"
+          python <<'PY'
+          from pathlib import Path
+          p = Path('src/app/audit/intake-prototype/page.tsx')
+          s = p.read_text()
+          s = s.replace('import { useMemo, useState } from "react";\n', 'import Link from "next/link";\nimport { useMemo, useState } from "react";\n', 1)
+          s = s.replace('<a href="/" className={styles.brandMark}>Nuave</a>', '<Link href="/" className={styles.brandMark}>Nuave</Link>', 1)
+          p.write_text(s)
+          PY
+          npx prettier --write src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css
+      - name: Commit prototype fixes
+        run: |
+          git config user.name "Yasir Mukhtar"
+          git config user.email "yasir.mukhtar@yahoo.com"
+          git add -- src/app/audit/intake-prototype/page.tsx src/app/audit/intake-prototype/prototype.module.css
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "Polish low fidelity intake prototype"
             git push origin HEAD:design/airbnb-intake-prototype
           fi
+      - name: Check repository
+        run: npm run check
       - name: Build and upload branch preview
         run: |
           npx opennextjs-cloudflare build
