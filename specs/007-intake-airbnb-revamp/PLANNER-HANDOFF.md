@@ -28,7 +28,13 @@
   round 6's two corrections and of the founder's 2026-08-30 ruling.
 - `docs/reviews/prompts/spec-007-round-8-closure-check.md` — the narrow
   closure verification of the round-8 corrections. Scoped to those six and the
-  seams they touch; not a ninth review.
+  seams they touch; not a ninth review. It returned one issue: R-13's
+  category-level fallback comparison target would have been dropped by the
+  Indonesian brief projection.
+- `docs/reviews/prompts/spec-007-comparison-target-projection-check.md` — the
+  confirmation of that one correction. **Approved for implementation planning**,
+  with both planner-added rules kept: the leakage carve-out and the equality
+  predicate that recognizes the fallback.
 - `docs/reviews/prompts/spec-007-final-adversarial-review.md` — round 8, a
   deliberate return to an adversarial posture, requested by the founder. Aimed
   at what the closure checks never covered: R-22/R-23 and the feasibility
@@ -257,8 +263,14 @@ Rounds 5 through 7 ran that closure sequence and closed it. Round 8 was the
 founder's deliberate return to an adversarial posture, aimed only at what those
 checks never covered, and it converged the same way: six bounded corrections,
 no reopened decision, and an explicit recommendation against a ninth
-unrestricted review. `spec-007-round-8-closure-check.md` is the remaining
-instrument, and it is the last one.
+unrestricted review.
+
+**The review sequence is closed.** Round 8's closure check returned one issue —
+the comparison-target projection — and the check of that correction approved the
+spec for implementation planning with nothing outstanding. The next act on this
+spec is the founder marking it **Approved** (`WORKFLOW.md`, specification gate),
+then a bounded implementation prompt for Blocker A. Another review round is not
+work; it is delay.
 
 ## 8b · Deployment facts worth not re-deriving
 
