@@ -4,7 +4,7 @@
 > Reviewer: Hermes orchestrator
 > Date: 2026-08-30
 > Spec version or commit: Spec 007 approved 2026-08-30; base `393281d8cf8f95cd3abb8c87976d0b4a849734d7`
-> Implementation version or commit: `e8bb703` (implementation commit; this verification record is finalized in the follow-up commit)
+> Implementation version or commit: `62a5f5b` (final A1 implementation/test commit; this verification record is finalized in the follow-up commit)
 
 ## Scope reviewed
 
@@ -48,8 +48,8 @@ No customer-facing UI or copy was changed in A1. Native-language, accessibility,
 ## Checks run
 
 - `npm run check` — **passed**; typecheck, lint (17 pre-existing warnings, 0 errors), format check, and typography check all passed.
-- `npm run test:audit` — **passed**; 49 test files, 555 tests.
-- `npm run test:unit` — **passed**; 58 test files, 656 tests.
+- `npm run test:audit` — **passed**; 49 test files, 558 tests passed, 1 named todo for R-06 rule 6(b) covered by A3.
+- `npm run test:unit` — **passed**; 58 test files, 659 tests passed, 1 named todo for R-06 rule 6(b) covered by A3.
 - `git diff --check` — **passed**.
 - No `npm run test:live-provider`, `scripts/eval`, or other live/paid provider command was run.
 - `npm run verify` — **passed**; offline check, unit tests, Next.js build, OpenNext Cloudflare build, and all three E2E configurations completed successfully (47 + 3 + 2 tests).
