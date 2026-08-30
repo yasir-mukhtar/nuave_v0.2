@@ -43,9 +43,10 @@ rule from V1's enforcement strength and recording the residue as accepted.
 Round 6 rejected that resolution on two grounds, both correct: the R-20 analogy
 does not hold (R-20's gap is outside the supported journey, this one is inside
 it), and a planner may not record acceptance of a guarantee the authority rule
-assigns to the founder — flagging it as overrulable is not the same as leaving
-it open. The spec now records neither option as accepted and gates Blocker A on
-the founder's ruling. See §7 item 3.
+assigns to the founder. It was returned as an explicit either/or with costs, and
+**the founder chose warn-and-proceed on 2026-08-30**. Logged in
+`DECISION_LOG.md`; R-10 states it; Blocker A is no longer gated on it. The
+R-20 analogy is retired — the spec now says plainly not to use it.
 
 Round 6 also found the slot-9 predicate still underdetermined — no matrix field,
 an open-ended "`lebih` forms", and unstated matching semantics. R-10 now carries
@@ -96,7 +97,7 @@ The nine locked decisions are listed in `SPEC.md`. In addition:
 | Website + Instagram; Google Maps deferred | Locked by founder decision, not by implementation difficulty |
 | Manual name entry as **recovery only** | Locked. Allowed after a valid source fails identification; never as an entry path |
 | Simulated payment | Locked. Not a security boundary, and must not be described as one |
-| Constrained question editing | Locked as a permission rule: users edit wording within a slot, never composition or purpose. **How completely V1 enforces it is open, not locked** — returned to the founder as R-10's open decision. Do not record either option as accepted until the founder rules |
+| Constrained question editing | Locked. Users edit wording within a slot, never composition or purpose. Enforcement strength is also settled now: complete where mechanically decidable, fixed slot frame plus a non-blocking warning elsewhere. Founder decision 2026-08-30, in `DECISION_LOG.md` |
 | Comparison target proposed then accept/edit/replace | Locked |
 | AI-drafts-then-user-verifies intake | Locked. Never a blank questionnaire |
 
@@ -117,7 +118,7 @@ deliberately.
 | Analytics on the preview | Deliberate non-scope, recorded so it is not mistaken for oversight |
 | Anti-double-charge guarantees | Rejected — no charge exists |
 | Calling R-15's guard "idempotent" | Rejected. It is narrower; the word was removed on purpose |
-| A semantic purpose classifier hard-blocking edits on all ten slots | The planner's **recommendation** is against it — a model call on every save, and one false positive traps a customer at the end of intake. This is the only row here the founder has not ruled on: it is option B of R-10's open decision. Do not treat it as settled |
+| A semantic purpose classifier hard-blocking edits on all ten slots | Rejected by the founder on 2026-08-30, having been presented as an explicit option with its costs. A model call per save and a false-positive class that traps a paying customer at the final intake step. Reopening it needs new evidence of real purpose drift, not a fresh argument |
 | Making `market_context` optional on the geography-irrelevant path | Rejected in revision 5. It is `requiredText` in the schema and feeds six of ten prompt slots. The Market screen is never skipped; scope changes what it asks |
 
 ## 5 · Citation verification status
@@ -201,14 +202,7 @@ Not gaps in the spec — real unknowns that need work, not more review.
    wait on the spike. Changing one of those values is a spec change.
 2. **R-23, rate limiting.** Must be decided explicitly: name a
    Cloudflare-compatible mechanism, or defer and record the accepted risk.
-3. **R-10, how completely V1 enforces locked decision 6.** The slot frame and
-   the four mechanical checks cannot detect wording that keeps a slot's required
-   identities while no longer measuring its purpose. Option A warns and lets the
-   user proceed; option B adds model-assisted validation on save. The planner
-   recommends A and has recorded neither as accepted. **Blocker A is not done
-   until the founder rules.** This is a product decision, not a spike — round 6
-   returned it explicitly, and flagging it as overrulable was found insufficient.
-4. **R-21, Instagram parsing behaviors.** Observed during research, not
+3. **R-21, Instagram parsing behaviors.** Observed during research, not
    reproduced in a committed test. Confirm against a live profile first.
 
 ## 8 · Convergence state

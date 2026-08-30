@@ -357,42 +357,36 @@ Indonesian message that names what the slot must ask:
 4. The text is non-empty, within `promptSchema`'s 700-character bound
    (`types.ts:140`), and phrased as a question.
 
-*Everything else* — a drift away from the slot's stated purpose that no
-mechanical check can establish. **What happens here is the open decision
-below.** Under option A the screen restates the slot's purpose, says the edit
-may no longer measure it, and lets the user proceed; under option B the save is
-blocked by a model-assisted check. The four hard blocks above hold either way.
+*Warn, do not block* — a drift away from the slot's stated purpose that no
+mechanical check can establish. The screen restates the slot's purpose and says
+the edit may no longer measure it; the user may proceed. A warning never
+prevents completing intake.
 
-The four checks are settled because they are mechanically decidable and because
-the identity policies are what the report's denominators and assessment classes
-depend on. Only the undecidable remainder is open.
-
-**Open product decision — the founder must settle this before implementation
-planning.** Locked decision 6 says users may not change a slot's measurement
-purpose. The enforcement model above cannot fully deliver that: category,
-declared purpose, and both identity policies are fixed matrix metadata no edit
-can reach, and the four checks hard-block — but wording that keeps the slot's
-required identities and passes every check above can still stop measuring what
+**What this does and does not guarantee.** Locked decision 6 says users may
+not change a slot's measurement purpose. The mechanism above delivers that
+wherever it is mechanically decidable: category, declared purpose, and both
+identity policies are fixed matrix metadata no edit can reach, and the four
+checks hard-block. It does not deliver it for wording that keeps the slot's
+required identities, passes every check above, and still stops measuring what
 the slot exists to measure. Nothing detects that.
 
-This residue is **not** the same shape as R-20's, and must not be justified by
-it. R-20 limits its guarantee to the supported client journey and accepts that
-a determined caller outside that journey can bypass it. This gap sits *inside*
-the supported journey: an ordinary user, doing exactly what the product invites
-them to do, can approve a pack whose slot no longer measures its purpose.
+**The founder settled this on 2026-08-30: warn and proceed** — the mechanism
+above ships as written, and Nuave runs no model-assisted purpose validation on
+edits in V1. The reasoning is recorded in `DECISION_LOG.md`: a validator strong
+enough to block would add a model call per save and a false-positive class that
+can trap a paying customer at the final intake step, and because reported
+denominators derive from the final question text, a drifted question produces a
+less useful question rather than a wrong number.
 
-The planner cannot close this. Under the authority rule, what the product
-guarantees is the founder's to decide. Two options:
+**This spec must therefore not be described as providing semantic purpose
+validation.** It provides a fixed slot frame, four mechanical guarantees, and a
+warning. Do not justify the gap by analogy to R-20 — R-20 limits its guarantee
+to the supported client journey and concerns a determined caller outside it,
+while this gap sits inside the supported journey and concerns an ordinary user.
+The two are different in kind; this one is accepted on its own stated grounds.
 
-| Option | What ships | Cost |
-|---|---|---|
-| **A · Warn and proceed** | The frame, the four hard checks, and a non-blocking warning naming the slot's purpose | A legitimate user can approve a purpose-drifted slot inside the supported journey. Identity labels and denominators stay correct; measurement intent may not |
-| **B · Hard-block on purpose** | Model-assisted purpose validation on save for the nine slots with no mechanical purpose test | A model call per save, added latency, and a false-positive class that can trap a user at the end of intake behind a question they cannot satisfy |
-
-The planner's recommendation is **A**, on the grounds that B's failure mode is
-worse than the gap it closes and that no evidence of real purpose drift exists
-yet. That is a recommendation, not a decision. Until the founder rules, this
-spec records neither option as accepted, and **Blocker A is not done.**
+If real packs later show customers materially degrading their own slots,
+hardening one specific slot is a narrower decision to take then.
 
 Replacing a question means replacing it *for that slot*. There is no
 free-composition editor.
@@ -771,9 +765,9 @@ deliberately at the handoff. Do not claim they pass unchanged.
    enforced in both directions, and one canonical matrix is the only
    measurement authority.
 6. Users may edit wording, but may not change a slot's measurement purpose,
-   category, brand policy, or comparison-target policy. The rule stands as
-   written; **how completely V1 enforces it is an open founder decision** —
-   see R-10.
+   category, brand policy, or comparison-target policy. R-10 states how far V1
+   enforces it: completely where mechanically decidable, by fixed slot frame and
+   a warning elsewhere (`DECISION_LOG.md`, 2026-08-30).
 7. One comparison target is proposed by an explicit derivation step and may be
    accepted, edited, or replaced.
 8. Simulated payment sequences the workflow; it is not a security boundary.
@@ -783,7 +777,7 @@ deliberately at the handoff. Do not claim they pass unchanged.
 
 | | Blocker | Done when |
 |---|---|---|
-| **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix; **and the founder has ruled on R-10's open decision** |
+| **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix |
 | **B** | Workflow and data authority | Every field in R-12 has an owner, screen, requiredness, and invalidation rule; the comparison target has an explicit creation step; conditional screens and stale-data rules are implemented; validation routing is executable for every field |
 | **C** | Payment boundary | No personalized extraction occurs in the supported client journey before simulated payment success, proven by routing tests, a single-call-site guarantee, and E2E network assertions — with server-side entitlement explicitly deferred |
 | **D** | Safe source handling | The SSRF feasibility determination is recorded, R-22's controls each have a stated value and a test, and R-23's rate-limit decision is made |
