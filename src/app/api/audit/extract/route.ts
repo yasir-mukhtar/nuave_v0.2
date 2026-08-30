@@ -14,10 +14,49 @@ import {
   INVALID_SOURCE_INPUT_MESSAGE,
   parseSourceInput,
 } from "@/lib/audit/source-input";
+import {
+  callerIpFromRequest,
+  consumeRateLimit,
+  getAuditRateLimitBindings,
+  RATE_LIMITED_MESSAGE,
+  RATE_LIMIT_UNAVAILABLE_MESSAGE,
+} from "@/lib/audit/rate-limit";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+function extractionRateLimitResponse(status: 429 | 503) {
+  return NextResponse.json(
+    {
+      error:
+        status === 503 ? RATE_LIMIT_UNAVAILABLE_MESSAGE : RATE_LIMITED_MESSAGE,
+      code: status === 503 ? "RATE_LIMIT_UNAVAILABLE" : "RATE_LIMITED",
+      telemetry: [],
+    },
+    { status },
+  );
+}
+
+async function enforceExtractionRateLimit(
+  request: Request,
+): Promise<Response | null> {
+  const bindings = getAuditRateLimitBindings();
+  if (!bindings.contextAvailable && process.env.NODE_ENV === "production") {
+    return extractionRateLimitResponse(503);
+  }
+  if (!bindings.contextAvailable) return null;
+  if (!bindings.extractCaller) return extractionRateLimitResponse(503);
+
+  const allowed = await consumeRateLimit(
+    bindings.extractCaller,
+    callerIpFromRequest(request),
+  );
+  return allowed ? null : extractionRateLimitResponse(429);
+}
+
+export async function GET(request: Request) {
+  const rateLimitError = await enforceExtractionRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+
   try {
     return NextResponse.json({
       limit_usd: 5,
@@ -38,6 +77,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const rateLimitError = await enforceExtractionRateLimit(request);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const body = (await request.json()) as unknown;
     if (!body || typeof body !== "object" || Array.isArray(body)) {
