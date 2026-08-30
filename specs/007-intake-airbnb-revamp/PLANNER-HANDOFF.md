@@ -17,8 +17,11 @@
   closure verification of revision 5. Scoped to the six corrections and the
   seams around them; not a fifth broad review.
 - `docs/reviews/prompts/spec-007-final-corrections-check.md` — the round-6
-  confirmation of round 5's four corrections. Narrowest pass in the series;
-  round 5 pre-approved the spec contingent on exactly those four.
+  confirmation of round 5's four corrections. Round 5 pre-approved the spec
+  contingent on exactly those four.
+- `docs/reviews/prompts/spec-007-settlement-check.md` — the round-7 check of
+  round 6's two corrections and of the founder's 2026-08-30 ruling. Shortest
+  pass in the series; round 6 said no broader review was warranted after it.
 - `docs/reviews/findings/spec-007-adversarial-review-r2.md` — round 2 findings.
 - `docs/reviews/prompts/spec-007-revision-3-planner.md` — the founder directive
   that produced revision 4. **Read this; it carries decisions the spec
