@@ -35,8 +35,9 @@ findings.
   `npm run test:unit`. Do **not** run `npm run test:live-provider` or anything
   under `scripts/eval` — those make paid provider calls.
 - Make no paid model calls of your own.
-- Read the **working tree**. Revision 5 is commit `a612f07`; the four
-  corrections may be uncommitted on top of it — `git diff` shows them if so.
+- Everything is committed and pushed to `origin/feat/intake-big-revamp`. The
+  four corrections are commit `6b8854c` — `git show 6b8854c` is the exact
+  delta you are confirming. Revision 5 itself is `a612f07`.
 
 ## What you are reviewing
 
