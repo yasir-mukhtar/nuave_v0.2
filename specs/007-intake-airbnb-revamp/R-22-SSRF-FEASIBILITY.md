@@ -4,6 +4,9 @@
 > Required by `SPEC.md` R-22 before implementation planning.
 > Method: runtime documentation and repository configuration. **No Worker was
 > deployed and no live fetch was executed** — see §7 for what that leaves open.
+> Corrected 2026-08-30 after the round-8 adversarial review: two evidence claims
+> narrowed to what the repository actually proves, and the literal-IP point
+> re-sourced to documentation. The verdict is unchanged.
 
 ## 1 · The question
 
@@ -23,15 +26,15 @@ could achieve it is disproportionate to the risk on this deployment.**
 1. **`fetch()` exposes no DNS control.** There is no `lookup` hook, no resolver
    override, and no way to bind a request to a pre-resolved address. **This is
    sufficient on its own** — without it there is nothing to pin with.
-2. **`fetch()` appears to refuse a literal IP**, failing with error 1003,
-   "Direct IP access not allowed." That would independently rule out resolving
-   the hostname ourselves and fetching the address. **Sourcing note:** the
-   Workers runtime documentation for `fetch()` does not state this restriction
-   — it was checked and is silent. The claim rests on Cloudflare's general
-   Error 1003 page (written about direct IP access to Cloudflare's network,
-   not specifically about Workers), the open `workerd` issue, and consistent
-   community reports. Treat point 2 as well-attested but not
-   documentation-guaranteed. The verdict does not depend on it.
+2. **Workers subrequests cannot target an IP address.** Cloudflare's Workers
+   known-issues page says it plainly: requests can be made to URLs only, not to
+   IP addresses directly. That independently rules out resolving the hostname
+   ourselves and fetching the address. **Sourcing note:** the runtime
+   documentation for `fetch()` itself is silent — it was checked — and the
+   claim that the failure surfaces as error 1003 rests on Cloudflare's general
+   Error 1003 page, the open `workerd` issue, and community reports. The
+   documented limitation is what this point relies on; the error code is
+   decoration, and the verdict depends on neither.
 
 `connect()` from `cloudflare:sockets` *can* target a specific address, and is
 the only path to a genuine pin. Taking it means writing HTTP/1.1 by hand over a
@@ -49,15 +52,21 @@ From the repository, not from assumption:
 |---|---|
 | Cloudflare Workers via OpenNext | `wrangler.jsonc`, `open-next.config.ts`, `@opennextjs/cloudflare` |
 | `compatibility_date` 2026-08-01, flags `["nodejs_compat"]` | `wrangler.jsonc` |
-| **The only binding is `ASSETS`** | `wrangler.jsonc` |
-| No Workers VPC, no Hyperdrive, no Tunnel, no Durable Objects, no KV | `wrangler.jsonc` |
+| **The only resource binding is `ASSETS`** | `wrangler.jsonc` |
+| No Workers VPC, Hyperdrive, Durable Object, or KV binding. A Worker reaches a Tunnel through a VPC binding, so its absence is the load-bearing fact — the repository proves the binding is absent, not that the account has no Tunnel | `wrangler.jsonc` |
+| API credentials arrive as environment bindings, which Cloudflare also counts as bindings. They are not HTTP destinations and add no `fetch()` target | `groq.ts:99`, `openai.ts:58`, `gemini.ts:49` |
 
 ## 4 · What the runtime does and does not give us
 
 **Given by the platform, at no cost to us:**
 
-- A literal-IP URL is refused outright (error 1003). Every direct-to-address
-  SSRF attempt fails before our code matters.
+- Subrequests can be made to URLs only, not to IP addresses directly (Workers
+  known issues). Every direct-to-address SSRF attempt fails before our code
+  matters.
+- `node:dns` under `nodejs_compat` supplies `resolve4()` and `resolve6()`;
+  `lookup`, `lookupService`, and bare `resolve` throw *Not implemented*. Enough
+  to check every address in a DNS answer before fetching — R-22's DNS-answers
+  control — though not to bind the fetch to one.
 - `connect()` blocks localhost, private network ranges, and Cloudflare IP
   ranges at the runtime level, and blocks port 25.
 - Reaching a private or internal service from a Worker requires a **Workers VPC
@@ -147,3 +156,5 @@ authorized task.
 - [Workers VPC — troubleshooting](https://developers.cloudflare.com/workers-vpc/reference/troubleshooting)
 - [workerd issue 93 — allow fetch to use IP address](https://github.com/cloudflare/workerd/issues/93)
 - [Rate limiting binding · Cloudflare Workers](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
+- [Known issues · Cloudflare Workers](https://developers.cloudflare.com/workers/platform/known-issues/) — subrequests can be made to URLs, not to IP addresses
+- [`node:dns` · Cloudflare Workers](https://developers.cloudflare.com/workers/runtime-apis/nodejs/dns/) — `resolve4`/`resolve6` available; `lookup`, `lookupService`, `resolve` not implemented

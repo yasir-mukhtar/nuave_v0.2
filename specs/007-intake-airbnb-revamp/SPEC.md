@@ -430,7 +430,7 @@ because R-17's error routing must always be executable.
 |---|---|---|---|---|
 | `brand_name` | Extracted | Brand confirm | Yes | — |
 | `official_sources` | Derived from submitted source | Brand confirm (shown) | Yes (min 1) | Source change |
-| `entity_scope` | Extracted | Scope | Yes | — |
+| `entity_scope` | Extracted, then **co-owned by the branch or product screen** | Scope, then branch or product when one applies | Yes | Scope-kind change (drops the branch or product part) |
 | `brand_type` | Extracted | Scope | Yes | — |
 | `category` | Extracted, offered as choices | Category | Yes | — |
 | `market_context` | Extracted | Market — **never skipped** | Yes | **Scope change** |
@@ -461,19 +461,85 @@ market context — nationwide, or online across Indonesia. What scope changes is
 what the Market screen asks, not whether the field is required and not whether
 the screen appears. See R-14.
 
+**The branch or product choice is written into `entity_scope`, and nowhere
+else.** R-24's conditional screen produces a value the audit must carry, and no
+other field can hold it: a dedicated `selected_branch` would need its own
+schema, invalidation rule, and prompt-matrix entry, and this iteration is not
+adding a field to the brief. The Scope screen sets the kind, the conditional
+screen completes the value, and the canonical forms are the approved
+prototype's own readback (`intake-prototype.html:1348-1350`):
+
+| Scope | Canonical `entity_scope` |
+|---|---|
+| Whole brand | `Seluruh brand <brand_name>` |
+| One branch or location | `Cabang: <nama cabang>` |
+| One product or service | `Produk: <nama produk atau layanan>` |
+
+A branch or product the customer adds by hand supplies its own name. The
+extracted `entity_scope` seeds the Scope screen's default selection, per R-16;
+what the brief carries is the customer's selection in the form above. This is
+the string `minimizeIndonesianBrief` hands to question generation as `scope`
+(`questions-id.ts:127`), so it must read as Indonesian a customer would
+recognize. Changing the scope kind recomposes the value and drops the previous
+branch or product name — it never leaves the old name inside the new scope.
+
+One consequence to carry into Blocker A: the whole-brand form contains
+`brand_name`, so `entity_scope` may be supplied only to slots where the audited
+brand is already required. `PROMPT_INPUT_FIELD_MATRIX` satisfies this today —
+`entity_scope` appears in three rows, and each already carries `brand_name`
+(`contracts.ts:227-249`) — and the canonical matrix must keep it that way.
+Handing this field to one of the six unnamed slots would put the brand name in a
+question R-01 forbids it in.
+
 ## R-13 · How the comparison target is created
 
 Extraction does not currently produce `verified_competitor`. Specify it as an
 **explicit deterministic post-extraction derivation step**: after extraction,
-Nuave proposes one target from the extracted category and market context,
-offering `similar_businesses` as selectable candidates when present.
+Nuave proposes one target and offers `similar_businesses` as selectable
+candidates when present, with the extracted category and market context framing
+what the screen asks for. The derivation is stated exactly below; none of it is
+left to the implementer's reading.
 
 It is **not** silently taken from `similar_businesses` — that array is
-suggestions, and the product contract does not define it as the target.
+suggestions, and the product contract does not define it as the target. A
+suggestion shown as a proposal the customer must act on is not a silent take;
+writing one into the brief unseen is.
 
 The user accepts, edits, or replaces the proposal. The goal is to learn how the
 model positions the business against something a customer would realistically
 choose; it is not a competitor taxonomy.
+
+**The derivation, exactly — and it makes no additional provider or web call.**
+Founder decision, 2026-08-30 (`DECISION_LOG.md`). The comparison screen is
+reached in one of two states, and there is no third:
+
+1. **`similar_businesses` holds at least one entry with a usable name or URL.**
+   The first such entry in the returned order becomes the *proposal*, rendered
+   on the comparison screen with its name and source and labelled as Nuave's
+   suggestion. `verified_competitor` is written when the customer accepts,
+   edits, or replaces it — never before. Nothing is written on the customer's
+   behalf while they are not looking, which is what "not silently taken"
+   forbids.
+2. **`similar_businesses` is empty.** This is a normal outcome, not a failure:
+   extraction is instructed to return an empty list when it is not confident
+   (`openai.ts:305`), and `extractionDraftOrManualFallback` always produces one
+   (`openai.ts:212`). The screen then asks the customer to name the business a
+   customer would realistically compare them against, and offers **one fallback
+   they may accept instead** — the category-level alternative, written as
+   `alternatif lain di kategori <kategori>`. The fallback exists so a customer
+   who genuinely cannot name a competitor is not trapped:
+   `verified_competitor.name` is required (R-12), and on this path the fallback
+   is the only way that requirement is satisfiable. Its consequence is
+   deliberate and worth stating: the fallback becomes `comparison_business`
+   (`questions-id.ts:103`), so slot 9 compares the business against a category
+   alternative rather than a named one. That is the honest version of what the
+   customer told us, and it still carries the comparison relation R-10
+   requires.
+
+`withPrimarySimilarBusiness` (`similar-businesses.ts:150-181`) today writes the
+first valid suggestion straight into `verified_competitor` with no customer
+step. Its ranking is what case 1 keeps; the silent write is what this
+requirement removes.
 
 **Field mapping**, because three concepts coexist unnamed:
 
@@ -516,7 +582,7 @@ in that path or the screen is not skipped. `market_context` was the one field
 this rule could have stranded; it is settled above by never skipping its screen,
 so no path is left to the implementer's reading.
 
-## R-15 · Extraction runs after payment, once per journey
+## R-15 · Extraction runs after payment, once per accepted source
 
 On entry to intake, `AuditWorkflow` calls `/api/audit/extract` with the
 confirmed source and any user-corrected name. Route behavior is unchanged.
@@ -524,9 +590,36 @@ confirmed source and any user-corrected name. Route behavior is unchanged.
 Two POST call sites exist today — `LandingAuditHero.tsx:96` (removed by R-19)
 and `AuditWorkflow.tsx:694`. R-15 adds a third trigger point.
 
-**Guarantee: no duplicate extraction during the supported uninterrupted client
-journey.** Achieved with an in-flight guard plus a draft-present check: extract
-only when no draft exists and no extraction is in flight.
+**Guarantee: one extraction per accepted source version during the supported
+uninterrupted client journey.** Achieved with an in-flight guard plus a
+draft-present check: extract only when no draft exists **for the current
+accepted source** and no extraction is in flight.
+
+**A corrected source is a new source version, and it re-extracts.** Brand
+confirm offers *Bukan, ganti brand*, and the correction screen says Nuave will
+read the corrected source again (`intake-prototype.html:575-584`). A literal
+"extract only when no draft exists" would strand that customer with the wrong
+business's facts, and R-12 already lists a source change as what invalidates
+`official_sources`. Accepting a corrected source is therefore a **replacement
+extraction**, not a duplicate one:
+
+- `official_sources` is replaced.
+- The draft from the superseded source is discarded, and every AI-owned field
+  the customer has not edited is re-drafted from the new extraction.
+- Values the customer entered or edited are preserved and marked for
+  re-confirmation at review — the treatment R-14 already gives a user-edited
+  comparison target. The correction screen promises exactly this: *Yang sudah
+  Anda isi tidak hilang*.
+- Derived fields are re-derived from their new upstream values, per R-14.
+- Exactly one extraction runs for the new source version. The in-flight guard is
+  unchanged; what changes is that the counter is per accepted source, not per
+  journey.
+
+**A name correction alone is not a new source version.** The correction screen
+takes a name and an *optional* source. When only the name changes, nothing
+re-extracts: the name is user-verified per R-18 and the existing draft stands. A
+changed source is what triggers replacement extraction, and nothing else does —
+this is a paid call, and a customer fixing a spelling must not spend one.
 
 This is deliberately **not** called idempotency. It does not protect against a
 lost session, a retry before state is stored, or concurrent transitions.
@@ -643,20 +736,27 @@ outcome:
 **DNS pinning is not achievable on this runtime, and V1 does not attempt it.**
 Workers' `fetch()` exposes no DNS control — no resolver override, no `lookup`
 hook, no way to bind a request to a pre-resolved address. That alone settles it.
-A second obstacle is reported but less firmly sourced: `fetch()` appears to
-refuse a literal-IP URL (error 1003), which would also rule out resolving the
-address ourselves and fetching it. `connect()` from `cloudflare:sockets` is the
-only path to a genuine pin and would mean writing HTTP/1.1, TLS, redirects, and
-chunked decoding by hand on a socket path whose raw-IP and custom-SNI support is
-undocumented.
+A second obstacle is documented: Workers subrequests can be made to URLs only,
+not to IP addresses directly, which also rules out resolving the address
+ourselves and fetching it. That the failure surfaces as error 1003 is
+community-sourced and nothing rests on it. `connect()` from
+`cloudflare:sockets` is the only path to a genuine pin and would mean writing
+HTTP/1.1, TLS, redirects, and chunked decoding by hand on a socket path whose
+raw-IP and custom-SNI support is undocumented.
 
 **The founder accepted the residual risk on 2026-08-30** (`DECISION_LOG.md`),
-explicitly and as a V1 tradeoff. The grounds are the deployment's shape: this
-Worker's only binding is `ASSETS` (`wrangler.jsonc`), there is no Workers VPC,
-Tunnel, Hyperdrive, Durable Object, or KV, and Workers exposes no VM-style
-metadata service — so the high-impact SSRF target does not exist here. The
-realistic residual is abuse of Nuave as a public fetch proxy, which **R-23**
-bounds. Every other control in the table below stays mandatory.
+explicitly and as a V1 tradeoff. The grounds are the deployment's shape:
+**no binding gives `fetch()` a new internal target.** `wrangler.jsonc` declares
+one resource binding, `ASSETS`, and no Workers VPC, Hyperdrive, Durable Object,
+or KV. API credentials do reach the code as environment bindings
+(`groq.ts:99`, `openai.ts:58`), which Cloudflare also calls bindings — they are
+not HTTP destinations, and that is the distinction the argument rests on.
+Reaching a private network or a Tunnel from a Worker requires a VPC binding,
+and this Worker has none: the repository proves the binding is absent, not that
+the account has no Tunnel, and the binding is the half that matters. Workers
+exposes no VM-style metadata service. So the high-impact SSRF target does not
+exist here. The realistic residual is abuse of Nuave as a public fetch proxy,
+which **R-23** bounds. Every other control in the table below stays mandatory.
 
 This is **not** a claim that DNS rebinding has been eliminated, and **not** a
 claim that Cloudflare blocks a hostname resolving to private space — that
@@ -670,13 +770,15 @@ must have a test:
 |---|---|
 | Protocols | `http:` and `https:` only; every other scheme rejected before any DNS lookup |
 | Reserved networks | Reject localhost, loopback, private, link-local, unique-local, and cloud-metadata ranges — IPv4 and IPv6, including IPv4-mapped IPv6 |
+| DNS answers | Resolve **both** families before every fetch — `resolve4` and `resolve6` from `node:dns`, which `nodejs_compat` provides; `lookup`, `lookupService`, and bare `resolve` throw *Not implemented* and cannot be used. **Every address in either answer must pass the reserved-network rules; one disallowed address rejects the hostname.** One family returning nothing is normal and is not a failure — `resolve6` **rejects** with `ENODATA` or `ENOTFOUND` for an IPv4-only host rather than returning an empty array, and treating that rejection as a failure would break most of the web. Both families returning nothing, or either failing for any other reason, rejects the hostname. Four required tests: public `A` with private `AAAA`; private `A` with public `AAAA`; an IPv4-only host whose `resolve6` rejects; and both families failing. This is preflight validation only — `fetch()` re-resolves and cannot be bound to the address checked, which is the accepted residue above |
 | DNS rebinding | **Accepted residual risk, not technically mitigated by pinning** — founder decision, 2026-08-30. No pin is available on this runtime. V1 instead revalidates every redirect hop against every other row in this table |
 | Redirects | **At most 3 hops.** Every hop revalidated against every rule in this table before it is followed; hop 4 is a failure, not a truncation |
 | Timeout | **5 s per request**, **10 s total** across the whole redirect chain, via `AbortSignal.timeout` as `groq.ts:178` already does |
-| Response size | **512 KB**, counted on the wire and enforced while streaming; abort at the byte that exceeds it, never buffer then check |
+| Response size | **512 KB**, counted as bytes read from the response body and enforced while streaming; abort at the byte that exceeds it, never buffer then check. Those bytes are **decoded**: a Worker that reads a body reads it decompressed, so compressed wire bytes are not observable here and `Content-Length` is not the measurement — it may be absent, describe encoded bytes, or survive decompression unchanged. Decoded bytes are also the bound that protects the parser |
 | Content type | The identity fetch accepts `text/html` and `application/xhtml+xml` only; anything else is rejected without reading the body |
 | Credentials | Never forward cookies, authorization headers, or credentials; never follow a redirect that carries them |
-| Icon fetching | The same protocol, reserved-network, redirect, timeout, and size rules. Content type is restricted to image types instead of HTML |
+| Per-destination rate limit | R-23's hostname limiter is consumed **immediately before every outbound fetch** — the submitted URL, each redirect destination, and each icon fetch — keyed on that request's own destination hostname. A refusal ends the attempt; it is not a hop |
+| Icon fetching | The same protocol, reserved-network, DNS-answer, redirect, timeout, size, and rate-limit rules. Content type is restricted to image types instead of HTML |
 
 These are metadata fetches of a public page's `<head>`. The numbers are sized
 for that and are deliberately far below the provider-call timeouts in
@@ -703,16 +805,25 @@ runtime accepts a `period` of **10 or 60 seconds only**. Call
 | Route | Key | Limit |
 |---|---|---|
 | `/api/audit/identity` | Caller IP (`CF-Connecting-IP`) | 10 per 60 s |
-| `/api/audit/identity` | Normalized target hostname | 20 per 60 s |
+| `/api/audit/identity` | Normalized hostname of each outbound destination | 20 per 60 s |
 | `/api/audit/extract` | Caller IP (`CF-Connecting-IP`) | 5 per 60 s |
 
 The second identity limiter is the one that matters for R-22: it bounds how
 hard any single third-party host can be hit through Nuave, which an IP-keyed
-limiter alone does not. **Per Cloudflare location, not globally** — the counter
-is per-colo, so a distributed caller can exceed the nominal figure by a factor
-of the colos it reaches. It raises the cost of using Nuave to hammer one target;
-it is not an exact global ceiling. Extraction is limited because it is the
-surface that spends founder budget; a journey needs one call.
+limiter alone does not. **It is consumed inside the outbound fetch primitive,
+immediately before each request and keyed on that request's own destination
+hostname** — not once at the route, on the hostname the caller submitted.
+Keying it on the submitted hostname would not bound the target at all: R-22
+permits three redirect hops and a separate icon fetch, so a caller rotating
+throwaway hostnames that redirect to one victim — or serving a page whose
+favicon points at the victim — charges each request to a fresh bucket and never
+touches the victim's. A refused limiter ends the attempt with R-17's message.
+
+What it bounds is still **per Cloudflare location, not global** — the counter is
+per-colo, so a distributed caller can exceed the nominal figure by a factor of
+the colos it reaches. It raises the cost of using Nuave to hammer one target; it
+is not an exact global ceiling. Extraction is limited because it is the surface
+that spends founder budget; a journey needs one call.
 
 **Stated limitations, so this is not mistaken for more than it is.** The
 counters are per-colo and eventually consistent, and Cloudflare documents the
@@ -735,9 +846,10 @@ error.
 **Pre-payment:** source entry · scan · preview · order and delivery email ·
 simulated checkout · processing · success.
 
-**Post-payment:** brand confirm · scope · (branch | product, conditional) ·
-category · offerings · customer reasons · market · comparison target · facts ·
-review · question review · run.
+**Post-payment:** brand confirm · (source correction, conditional — R-15) ·
+scope · (branch | product, conditional; the choice is written into
+`entity_scope` per R-12) · category · offerings · customer reasons · market ·
+comparison target · facts · review · question review · run.
 
 ## R-25 · What the preview shows
 
@@ -890,9 +1002,13 @@ Verified along the way:
 10. the comparison target is proposed by the R-13 derivation step and can be
     accepted, edited, or replaced;
 11. changing scope invalidates dependent values per R-14 and leaves no stale
-    branch-specific data in the final brief;
+    branch-specific data in the final brief, and a selected branch or product
+    reaches the final brief in R-12's canonical `entity_scope` form;
 12. website identity works; Instagram identity works on the intended deployment
     path, or exercises the R-18 recovery state if the edge fetch cannot
     identify it;
 13. audit execution receives the reviewed final business context and the
-    reviewed final question pack.
+    reviewed final question pack;
+14. correcting the source at brand confirm runs exactly one replacement
+    extraction per R-15, the customer's own entries survive it, and no field
+    from the superseded source reaches the final brief.

@@ -11,7 +11,7 @@
 ## Current state
 
 - Branch `feat/intake-big-revamp`.
-- `specs/007-intake-airbnb-revamp/SPEC.md` — revision 5, status **Draft**.
+- `specs/007-intake-airbnb-revamp/SPEC.md` — revision 6, status **Draft**.
 - `specs/007-intake-airbnb-revamp/R-22-SSRF-FEASIBILITY.md` — the determination
   R-22 required. Complete 2026-08-30: no pin is available on Workers. **The
   founder accepted the residual risk explicitly on 2026-08-30**
@@ -26,6 +26,9 @@
   contingent on exactly those four.
 - `docs/reviews/prompts/spec-007-settlement-check.md` — the round-7 check of
   round 6's two corrections and of the founder's 2026-08-30 ruling.
+- `docs/reviews/prompts/spec-007-round-8-closure-check.md` — the narrow
+  closure verification of the round-8 corrections. Scoped to those six and the
+  seams they touch; not a ninth review.
 - `docs/reviews/prompts/spec-007-final-adversarial-review.md` — round 8, a
   deliberate return to an adversarial posture, requested by the founder. Aimed
   at what the closure checks never covered: R-22/R-23 and the feasibility
@@ -65,6 +68,23 @@ Round 6 also found the slot-9 predicate still underdetermined — no matrix fiel
 an open-ended "`lebih` forms", and unstated matching semantics. R-10 now carries
 whole-token matching per `question-suggestion-guards.ts:7-14`, two closed marker
 groups, and four required test cases. R-02 carries the field.
+
+Round 8 returned six corrections and reopened nothing. Two were in the
+previously unreviewed security material: R-23's hostname limiter was keyed at
+route ingress, so a redirect or a favicon URL reached the protected host on a
+fresh bucket — it now lives inside the outbound fetch primitive and is charged
+per destination; and R-22 never said how a multi-address DNS answer is judged,
+so it now requires `resolve4` and `resolve6` and every returned address to pass.
+Three were workflow seams: the branch or product choice had nowhere to go, and
+is now written into `entity_scope` in the prototype's own readback form; R-15's
+draft-present guard forbade the re-read the approved wrong-brand screen
+promises, and is now stated per accepted source; and R-13 required a
+deterministic proposal without defining one, now a founder decision
+(`DECISION_LOG.md`, 2026-08-30) with no extra provider call. The sixth: 512 KB
+"counted on the wire" is not measurable while reading a body a Worker receives
+decompressed, so it is counted in decoded bytes. Round 8 also narrowed two
+evidence claims in the determination without disturbing the founder's accepted
+risk — see §8b.
 
 The spec has never been implemented. No code in this spec's scope has changed.
 
@@ -112,7 +132,7 @@ The nine locked decisions are listed in `SPEC.md`. In addition:
 | Simulated payment | Locked. Not a security boundary, and must not be described as one |
 | Ship V1 without DNS pinning | Locked by founder decision 2026-08-30, on the deployment grounds recorded in `DECISION_LOG.md`. Every other R-22 control stays mandatory. Revisit only on the recorded triggers — a new private-network binding, materially different exposure, or live evidence against the threat model |
 | Constrained question editing | Locked. Users edit wording within a slot, never composition or purpose. Enforcement strength is also settled now: complete where mechanically decidable, fixed slot frame plus a non-blocking warning elsewhere. Founder decision 2026-08-30, in `DECISION_LOG.md` |
-| Comparison target proposed then accept/edit/replace | Locked |
+| Comparison target proposed then accept/edit/replace | Locked. How the proposal is computed is settled too, by founder decision 2026-08-30: no additional provider or web call, the first usable `similar_businesses` entry as a labelled proposal, and a category-level fallback when there are none |
 | AI-drafts-then-user-verifies intake | Locked. Never a blank questionnaire |
 
 ## 4 · Considered and rejected — do not re-add
@@ -233,6 +253,13 @@ treat that as a signal the loop has stopped converging rather than as a
 finding. The spec is already more thoroughly specified than most of what has
 shipped in this repository.
 
+Rounds 5 through 7 ran that closure sequence and closed it. Round 8 was the
+founder's deliberate return to an adversarial posture, aimed only at what those
+checks never covered, and it converged the same way: six bounded corrections,
+no reopened decision, and an explicit recommendation against a ninth
+unrestricted review. `spec-007-round-8-closure-check.md` is the remaining
+instrument, and it is the last one.
+
 ## 8b · Deployment facts worth not re-deriving
 
 Established while resolving R-22, from `wrangler.jsonc` and
@@ -240,9 +267,15 @@ Established while resolving R-22, from `wrangler.jsonc` and
 
 - Cloudflare Workers via OpenNext (`@opennextjs/cloudflare`), not Vercel.
 - `compatibility_date` 2026-08-01, `compatibility_flags: ["nodejs_compat"]`.
-- **The only binding is `ASSETS`.** No Workers VPC, Tunnel, Hyperdrive, Durable
-  Object, or KV. This is load-bearing for R-22's accepted risk — adding any of
-  them is a stated revisit trigger.
+- **The only resource binding is `ASSETS`.** No Workers VPC, Hyperdrive,
+  Durable Object, or KV binding. This is load-bearing for R-22's accepted risk
+  — adding any of them is a stated revisit trigger. Two precisions round 8
+  forced, both correct: API credentials arrive as environment bindings, which
+  Cloudflare also calls bindings, so the claim is about **resource** bindings
+  and about there being no new `fetch()` target; and `wrangler.jsonc` proves
+  this Worker has no VPC binding, which is how a Worker reaches a Tunnel — it
+  cannot prove the account has no Tunnel. The load-bearing version survives
+  both.
 - Workers has no instance metadata service, so the usual SSRF target does not
   exist on this deployment.
 
