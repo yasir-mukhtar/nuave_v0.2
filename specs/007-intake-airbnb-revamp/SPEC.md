@@ -227,7 +227,11 @@ All derive their slot sets from the matrix; none may hard-code `1–6`.
    the one the current fallback violates.
 4. **Composition integrity.** A pack of six unnamed plus three genuinely-named
    questions must not pass as valid 6/4.
-5. All four run against the deterministic fallback pack as well as generated
+5. **Slot 9 carries a comparison relation.** Naming both parties is not enough:
+   the question must satisfy one of R-10 rule 3's three forms. The eight cases
+   listed there are required, including the two rejections that prove a marker
+   sitting anywhere in the sentence does not pass.
+6. All five run against the deterministic fallback pack as well as generated
    packs. That is what proves R-05.
 
 ## R-07 · The generation instruction derives from the matrix
@@ -319,41 +323,50 @@ Indonesian message that names what the slot must ask:
 1. R-06 rule 1 — none of the slot's forbidden identities appear.
 2. R-06 rule 2 — every identity the slot requires appears. On slot 9 that
    includes the comparison target.
-3. Slot 9 additionally requires a **comparison relation** between the two named
-   parties, not merely both names present. Nothing in the tree defines one —
-   `containsIndonesianComparisonIdentity` (`questions-id.ts:278`) tests identity
-   presence only — so the predicate is defined here in full, as
-   `comparisonRelationMarkers` data on the slot (R-02), not as a heuristic
-   inside the validator.
+3. Slot 9 additionally requires a **comparison relation between the two named
+   parties**, not merely both names present somewhere in the text. Nothing in
+   the tree defines one — `containsIndonesianComparisonIdentity`
+   (`questions-id.ts:278`) tests identity presence only — so the predicate is
+   defined here in full, as `comparisonRelationMarkers` data on the slot
+   (R-02), not as a heuristic inside the validator.
 
    **Matching.** Whole normalized tokens, using the rule already in
    `question-suggestion-guards.ts:7-14`: lower-case with the `id-ID` locale,
    replace every non-alphanumeric run with a space, split on whitespace, compare
    complete tokens. Never substring matching — that is what makes the two-letter
-   `vs` safe.
+   `vs` safe. An identity's "token run" below means the consecutive tokens of
+   the audited brand, a known variant, or the comparison target, matched the
+   same way.
 
-   **Group 1 — any one token satisfies the rule:** `bandingkan`,
-   `dibandingkan`, `membandingkan`, `perbandingan`, `dibanding`, `banding`,
-   `versus`, `vs`, `daripada`, `perbedaan`, `berbeda`, `membedakan`, `beda`,
-   `bedanya`.
+   The question passes when both required identities are present **and** at
+   least one of these three forms holds:
 
-   **Group 2 — `lebih`, qualified.** `lebih` alone never satisfies the rule; it
-   appears in ordinary quantity phrasing. It satisfies only when the question
-   also contains `atau` or `antara`.
-
-   The question passes when it carries both required identities and satisfies
-   group 1 or group 2. R-06 tests the predicate, and these four cases are
-   required:
-
-   | Question shape | Must |
+   | Form | Rule |
    |---|---|
-   | `Bandingkan X dengan Y…` | accept — group 1 |
-   | `Apa perbedaan X dan Y?` · `Apa bedanya X dan Y?` | accept — group 1 |
-   | `Mana yang lebih baik, X atau Y?` | accept — group 2 |
-   | `Apakah X dan Y buka lebih dari 8 jam?` | **reject** — `lebih` unqualified |
+   | **1 · Direct marker** | Any of these tokens appears anywhere: `bandingkan`, `dibandingkan`, `membandingkan`, `perbandingan`, `dibanding`, `banding`, `versus`, `vs`, `daripada`, `perbedaan`, `berbeda`, `membedakan`, `beda`, `bedanya` |
+   | **2 · Identity choice** | The token `atau` appears with one identity's complete token run **immediately before** it and the other identity's complete token run **immediately after** it |
+   | **3 · Bracketed comparison** | Both `antara` and `lebih` appear |
 
-   The list is finite and spec-owned. Adding a token is a spec change, not an
-   implementation choice.
+   Adjacency in form 2 is what ties the relation to the two parties rather than
+   accepting a marker anywhere in the sentence. `lebih` never satisfies the rule
+   on its own — it is ordinary quantity phrasing — and qualifies only through
+   form 3.
+
+   R-06 test 5 covers the predicate, and these cases are required:
+
+   | Question shape | Must | Via |
+   |---|---|---|
+   | `Bandingkan X dengan Y…` | accept | form 1 |
+   | `Apa perbedaan X dan Y?` · `Apa bedanya X dan Y?` | accept | form 1 |
+   | `Mana yang lebih nyaman untuk meeting, X atau Y?` | accept | form 2 |
+   | `Kalau buat nongkrong lama, mending X atau Y?` | accept | form 2 |
+   | `Antara X dan Y, mana yang lebih cocok?` | accept | form 3 |
+   | `Apakah X dan Y buka lebih dari 8 jam?` | **reject** | no form holds |
+   | `Di mana alamat X dan Y?` | **reject** | no form holds |
+   | `Apakah X buka lebih dari 8 jam atau tidak, dan di mana alamat Y?` | **reject** | `atau` is not between the identities |
+
+   The lists are finite and spec-owned. Adding a token or a form is a spec
+   change, not an implementation choice.
 4. The text is non-empty, within `promptSchema`'s 700-character bound
    (`types.ts:140`), and phrased as a question.
 
@@ -374,16 +387,18 @@ the slot exists to measure. Nothing detects that.
 above ships as written, and Nuave runs no model-assisted purpose validation on
 edits in V1. The reasoning is recorded in `DECISION_LOG.md`: a validator strong
 enough to block would add a model call per save and a false-positive class that
-can trap a paying customer at the final intake step, and because reported
-denominators derive from the final question text, a drifted question produces a
-less useful question rather than a wrong number.
+can trap a paying customer at the final intake step. What survives a drifted
+edit is bounded and stated precisely — identity and composition labels and the
+reported denominators remain mechanically correct, because they derive from the
+final question text; the slot's measurement intent may not.
 
 **This spec must therefore not be described as providing semantic purpose
 validation.** It provides a fixed slot frame, four mechanical guarantees, and a
-warning. Do not justify the gap by analogy to R-20 — R-20 limits its guarantee
-to the supported client journey and concerns a determined caller outside it,
-while this gap sits inside the supported journey and concerns an ordinary user.
-The two are different in kind; this one is accepted on its own stated grounds.
+warning.
+
+**Boundary:** R-10's accepted enforcement gap is independent of R-20. R-20
+concerns bypass outside the supported client journey; R-10 concerns
+undetectable purpose drift within it.
 
 If real packs later show customers materially degrading their own slots,
 hardening one specific slot is a narrower decision to take then.
