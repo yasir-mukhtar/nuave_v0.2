@@ -112,6 +112,45 @@ describe("canonical measurement matrix", () => {
     ).toBe(true);
   });
 
+  it("keeps canonical input ownership aligned with identity policy", () => {
+    const unnamedSlots = AUDIT_MEASUREMENT_MATRIX.filter(
+      (slot) => slot.auditedBrandIdentity === "forbidden",
+    );
+    expect(
+      unnamedSlots.every(
+        (slot) =>
+          !(slot.allowedContextFields as readonly string[]).includes(
+            "brand_name",
+          ) &&
+          !(slot.allowedContextFields as readonly string[]).includes(
+            "entity_scope",
+          ),
+      ),
+    ).toBe(true);
+
+    const directComparison = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.category === "direct_comparison",
+    );
+    const openComparison = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.category === "open_comparison",
+    );
+    if (!directComparison || !openComparison) {
+      throw new Error("The canonical comparison slots are missing.");
+    }
+    expect(directComparison?.allowedContextFields).toContain(
+      "verified_competitor",
+    );
+    expect(openComparison?.allowedContextFields).not.toContain(
+      "verified_competitor",
+    );
+    AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+      expect(slot.measurementPurpose).toBeTruthy();
+      expect(slot.customerFacingLabel).toBeTruthy();
+      expect(slot.reportAssessmentClass).toBeTruthy();
+      expect(slot.generatorSlotDescription).toBeTruthy();
+    });
+  });
+
   it("keeps the old tuple API as a derived 5/5 compatibility projection", () => {
     expect(PROMPT_MATRIX).toEqual(
       AUDIT_MEASUREMENT_MATRIX.map((slot) => [
@@ -199,40 +238,113 @@ describe("R-06 canonical identity agreement", () => {
   });
 
   it("rejects comparison-target leakage outside slot 9 and omission in slot 9", () => {
+    const firstForbiddenTargetSlot = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.comparisonTargetIdentity === "forbidden",
+    );
+    const directComparison = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.category === "direct_comparison",
+    );
+    if (!firstForbiddenTargetSlot || !directComparison) {
+      throw new Error("The canonical comparison slots are missing.");
+    }
     const leaked = errorsWithQuestion(
       canonicalQuestions,
-      1,
+      firstForbiddenTargetSlot.order,
       "Kopi Pesaing cocok untuk kebutuhan warga Depok?",
     );
     expect(leaked).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ slot: 1, rule: "competitor_leakage" }),
+        expect.objectContaining({
+          slot: firstForbiddenTargetSlot.order,
+          rule: "competitor_leakage",
+        }),
       ]),
     );
 
     const missing = errorsWithQuestion(
       canonicalQuestions,
-      9,
+      directComparison.order,
       "Bandingkan Kopi Taman Senja dengan pilihan lain untuk warga Depok.",
     );
     expect(missing).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ slot: 9, rule: "identity_requirement" }),
-        expect.objectContaining({ slot: 9, rule: "comparison_relation" }),
+        expect.objectContaining({
+          slot: directComparison.order,
+          rule: "identity_requirement",
+        }),
+        expect.objectContaining({
+          slot: directComparison.order,
+          rule: "comparison_relation",
+        }),
+      ]),
+    );
+  });
+
+  it("rejects the comparison target in every matrix-forbidden slot", () => {
+    AUDIT_MEASUREMENT_MATRIX.filter(
+      (slot) => slot.comparisonTargetIdentity === "forbidden",
+    ).forEach((slot) => {
+      const errors = errorsWithQuestion(
+        canonicalQuestions,
+        slot.order,
+        "Kopi Pesaing cocok untuk kebutuhan warga Depok?",
+      );
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            slot: slot.order,
+            rule: "competitor_leakage",
+          }),
+        ]),
+      );
+    });
+  });
+
+  it("rejects a known audited-brand variant in a forbidden slot", () => {
+    const firstForbiddenBrandSlot = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.auditedBrandIdentity === "forbidden",
+    );
+    if (!firstForbiddenBrandSlot) {
+      throw new Error("The canonical forbidden-brand slots are missing.");
+    }
+    const variantBrief = { ...brief, brand_name_variants: ["Taman Senja"] };
+    const errors = errorsWithQuestion(
+      canonicalQuestions,
+      firstForbiddenBrandSlot.order,
+      "Apakah Taman Senja cocok untuk kebutuhan warga Depok?",
+      variantBrief,
+    );
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          slot: firstForbiddenBrandSlot.order,
+          rule: "identity_leakage",
+        }),
       ]),
     );
   });
 
   it("rejects slot 6 when either forbidden identity is present", () => {
+    const openComparison = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.category === "open_comparison",
+    );
+    if (!openComparison)
+      throw new Error("The open-comparison slot is missing.");
     const errors = errorsWithQuestion(
       canonicalQuestions,
-      6,
+      openComparison.order,
       "Bandingkan Kopi Taman Senja dengan Kopi Pesaing?",
     );
     expect(errors).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ slot: 6, rule: "identity_leakage" }),
-        expect.objectContaining({ slot: 6, rule: "competitor_leakage" }),
+        expect.objectContaining({
+          slot: openComparison.order,
+          rule: "identity_leakage",
+        }),
+        expect.objectContaining({
+          slot: openComparison.order,
+          rule: "competitor_leakage",
+        }),
       ]),
     );
   });
@@ -251,6 +363,10 @@ describe("R-06 canonical identity agreement", () => {
       ]),
     );
   });
+
+  it.todo(
+    "R-06 rule 6(b): a slot-9 fallback question satisfies target and relation after A3 flips the composition",
+  );
 });
 
 describe("R-13 comparison-target projection", () => {
