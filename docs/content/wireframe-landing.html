@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuave - Low-Fidelity Wireframe (Landing Page)</title>
+  <style>
+    /* --- CSS RESET & WIREFRAME BASE STYLES --- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      color: #111;
+      background-color: #fff;
+      padding: 0;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 {
+      font-weight: 700;
+      line-height: 1.25;
+      color: #000;
+    }
+
+    p {
+      color: #444;
+      font-size: 15px;
+    }
+
+    .lead-text {
+      font-size: 18px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .text-center { text-align: center; }
+    .text-muted { color: #666; font-size: 13px; }
+
+    /* Wireframe Annotations & Helpers */
+    .section-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 8px;
+      border: 1px dashed #999;
+      background: #f4f4f4;
+      color: #333;
+      margin-bottom: 12px;
+      border-radius: 2px;
+    }
+
+    .wireframe-box {
+      border: 1px solid #ccc;
+      background: #fafafa;
+      border-radius: 6px;
+      padding: 24px;
+    }
+
+    .wireframe-pill {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #bbb;
+      background: #fff;
+      font-size: 13px;
+      border-radius: 20px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #000;
+    }
+
+    .btn-primary {
+      background: #000;
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* --- LAYOUT SECTIONS --- */
+
+    /* 1. Header / Nav */
+    header.site-header {
+      border-bottom: 1px solid #ddd;
+      padding: 16px 0;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      border: 1px dashed #666;
+      padding: 4px 10px;
+    }
+
+    nav.nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    nav.nav-links a {
+      color: #333;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    nav.nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* 2. Hero Section */
+    section.hero {
+      padding: 72px 0 48px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      margin-bottom: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .hero .lead-text {
+      margin-bottom: 32px;
+    }
+
+    .hero-cta-form {
+      max-width: 520px;
+      margin: 0 auto 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .hero-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #000;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .hero-preview-tabs {
+      margin-top: 48px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .tabs-header {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid #ccc;
+      background: #f4f4f4;
+    }
+
+    .tab-item {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid #ccc;
+      color: #555;
+    }
+
+    .tab-item:last-child {
+      border-right: none;
+    }
+
+    .tab-item.active {
+      background: #fff;
+      color: #000;
+      border-bottom: 2px solid #000;
+    }
+
+    .tab-mockup-body {
+      padding: 32px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+    }
+
+    /* 3. Logos Strip */
+    section.logos-strip {
+      padding: 24px 0;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .logos-grid {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .logo-badge {
+      border: 1px solid #ccc;
+      background: #fff;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    /* 4. Problem & Shift (Comparison) */
+    section.problem-shift {
+      padding: 72px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .comparison-card {
+      padding: 24px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .comparison-card.highlight {
+      border: 2px solid #000;
+      background: #fff;
+    }
+
+    .comparison-card ul {
+      margin-top: 16px;
+      padding-left: 20px;
+    }
+
+    .comparison-card li {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .query-examples {
+      margin-top: 48px;
+    }
+
+    .query-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .query-group {
+      border: 1px dashed #ccc;
+      padding: 16px;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .query-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    /* 5. How It Works */
+    section.how-it-works {
+      padding: 72px 0;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .step-card {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #000;
+      background: #000;
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .step-card h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .step-card p {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 16px;
+      flex: 1;
+    }
+
+    .step-bullets {
+      border-top: 1px dashed #eee;
+      padding-top: 12px;
+      font-size: 12px;
+      color: #444;
+      list-style-type: square;
+      padding-left: 16px;
+    }
+
+    .step-bullets li {
+      margin-bottom: 6px;
+    }
+
+    /* 6. What You Get (Report Breakdown) */
+    section.what-you-get {
+      padding: 72px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .report-preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .report-feature-card {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .report-feature-card h4 {
+      font-size: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .report-feature-card p {
+      font-size: 13px;
+      color: #555;
+    }
+
+    /* 7. Honest Boundaries */
+    section.boundaries {
+      padding: 48px 0;
+      background: #fdfdfd;
+      border-bottom: 1px solid #eee;
+    }
+
+    .boundaries-box {
+      border: 1px dashed #999;
+      padding: 24px;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .boundaries-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .boundary-item h4 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .boundary-item p {
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* 8. Pricing */
+    section.pricing {
+      padding: 72px 0;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+
+    .pricing-card {
+      max-width: 480px;
+      margin: 36px auto 0;
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 36px 24px;
+      background: #fff;
+      text-align: left;
+    }
+
+    .price-tag {
+      font-size: 36px;
+      font-weight: 800;
+      margin: 12px 0 4px;
+    }
+
+    .pricing-features {
+      margin: 24px 0;
+      padding-left: 20px;
+    }
+
+    .pricing-features li {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* 9. FAQ */
+    section.faq {
+      padding: 72px 0;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+    }
+
+    .faq-list {
+      max-width: 760px;
+      margin: 36px auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    details.faq-item {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      padding: 16px 20px;
+    }
+
+    details.faq-item summary {
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    details.faq-item p {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    /* 10. Bottom CTA */
+    section.bottom-cta {
+      padding: 80px 0;
+      text-align: center;
+      background: #000;
+      color: #fff;
+    }
+
+    .bottom-cta h2 {
+      color: #fff;
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .bottom-cta p {
+      color: #ccc;
+      font-size: 16px;
+      margin-bottom: 28px;
+    }
+
+    .bottom-cta .btn {
+      background: #fff;
+      color: #000;
+      border: none;
+    }
+
+    /* 11. Footer */
+    footer.site-footer {
+      padding: 40px 0;
+      border-top: 1px solid #eee;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      color: #666;
+      text-decoration: none;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 28px; }
+      .hero-cta-form { flex-direction: column; }
+      .comparison-grid,
+      .query-grid,
+      .steps-grid,
+      .report-preview-grid,
+      .boundaries-grid {
+        grid-template-columns: 1fr;
+      }
+      .tabs-header {
+        grid-template-columns: 1fr;
+      }
+      .tab-item {
+        border-right: none;
+        border-bottom: 1px solid #ccc;
+      }
+      nav.nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= 1. NAVBAR ================= -->
+  <header class="site-header">
+    <div class="container">
+      <div class="nav-inner">
+        <div class="logo">Nuave</div>
+        <nav class="nav-links">
+          <a href="#cara-kerja">Cara Kerja</a>
+          <a href="#isi-laporan">Isi Laporan</a>
+          <a href="#biaya">Biaya</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="#" class="btn btn-outline" style="padding: 8px 14px; font-size: 13px;">Masuk</a>
+          <a href="#hero-form" class="btn btn-primary" style="padding: 8px 14px; font-size: 13px;">Cek Bisnis Saya</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ================= 2. HERO SECTION ================= -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <span class="section-tag">[Wireframe: Hero Section]</span>
+          <h1>Saat calon pelanggan minta rekomendasi ke ChatGPT, apakah brand Anda yang disebut?</h1>
+          <p class="lead-text">
+            Semakin banyak orang mencari produk, jasa, dan vendor langsung lewat AI. Nuave menguji bagaimana ChatGPT menyebut brand Anda dan menunjukkan informasi publik apa yang perlu diperbaiki di website Anda.
+          </p>
+
+          <form id="hero-form" class="hero-cta-form" onsubmit="event.preventDefault();">
+            <input type="text" class="hero-input" placeholder="Masukkan alamat website (contoh: bisnisanda.com)">
+            <button type="submit" class="btn btn-primary">Cek bisnis saya di AI</button>
+          </form>
+          <p class="text-muted">Cukup masukkan alamat website · Selesai dalam 2 menit · Tanpa kartu kredit</p>
+          <p style="margin-top: 8px;"><a href="#isi-laporan" style="font-size: 13px; color: #000; text-decoration: underline;">Lihat contoh format laporan →</a></p>
+
+          <!-- Interactive / Step Mockup Box -->
+          <div class="hero-preview-tabs">
+            <div class="tabs-header">
+              <div class="tab-item active">1. Cek Identitas Publik</div>
+              <div class="tab-item">2. Uji 10 Pertanyaan</div>
+              <div class="tab-item">3. Terima AI Visibility Report</div>
+            </div>
+            <div class="tab-mockup-body">
+              <div style="border: 1px dashed #999; padding: 16px 24px; background: #fff; border-radius: 4px; max-width: 460px; width: 100%; text-align: left;">
+                <p style="font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase;">[Visual Mockup: Ringkasan Identitas]</p>
+                <p style="font-weight: 700; margin-top: 4px;">Nama Bisnis: Kopi Taman Senja</p>
+                <p style="font-size: 13px; color: #555;">Website: kopitamansenja.id · Kategori: Coffee Shop & Roastery</p>
+                <p style="font-size: 12px; color: #777; margin-top: 8px; border-top: 1px solid #eee; padding-top: 6px;">✓ 10 draf pertanyaan audit siap disimulasikan ke model AI</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. AI SYSTEMS STRIP ================= -->
+    <section class="logos-strip">
+      <div class="container">
+        <p class="text-muted" style="font-size: 13px;">Diuji langsung pada model AI yang digunakan jutaan orang setiap hari:</p>
+        <div class="logos-grid">
+          <div class="logo-badge">ChatGPT (GPT-4o)</div>
+          <div class="logo-badge">Perplexity AI</div>
+          <div class="logo-badge">Claude</div>
+          <div class="logo-badge">Google Gemini</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 4. PROBLEM & BEHAVIOR SHIFT ================= -->
+    <section class="problem-shift">
+      <div class="container">
+        <div class="text-center" style="max-width: 720px; margin: 0 auto;">
+          <span class="section-tag">[Wireframe: Mental Bridge & Problem]</span>
+          <h2>Cara orang mencari bisnis Anda sudah mulai berubah</h2>
+          <p class="lead-text" style="margin-top: 12px;">
+            Google memberi tautan, tetapi ChatGPT memberi rekomendasi langsung. Ketika calon pelanggan menanyakan solusi yang Anda tawarkan, apakah AI mengenali bisnis Anda?
+          </p>
+        </div>
+
+        <!-- Comparison Table / Grid -->
+        <div class="comparison-grid">
+          <div class="comparison-card">
+            <h4>Di Google Search (SEO & Ads)</h4>
+            <p class="text-muted" style="margin-top: 4px;">Cara pencarian lama yang sudah Anda pahami</p>
+            <ul>
+              <li>Calon pelanggan mengetik kata kunci pendek dan melihat 10 tautan biru.</li>
+              <li>Pengunjung harus membuka website satu per satu untuk membandingkan.</li>
+              <li>Anda bisa membayar iklan agar muncul di baris paling atas.</li>
+            </ul>
+          </div>
+
+          <div class="comparison-card highlight">
+            <h4>Di ChatGPT / Pencarian AI</h4>
+            <p class="text-muted" style="margin-top: 4px;">Perilaku baru calon pelanggan berkeinginan beli tinggi</p>
+            <ul>
+              <li>Calon pelanggan mengajukan pertanyaan spesifik untuk mencari rekomendasi.</li>
+              <li>Model AI merangkum dan hanya menyebut <strong>2 sampai 4 nama bisnis terpilih</strong>.</li>
+              <li>Tidak ada slot iklan berbayar. AI hanya merekomendasikan bisnis yang informasinya jelas dan konsisten.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Query Examples -->
+        <div class="query-examples">
+          <h3 class="text-center" style="font-size: 18px; margin-bottom: 8px;">Contoh Pertanyaan Nyata yang Diajukan Calon Pelanggan ke AI:</h3>
+          <div class="query-grid">
+            <div class="query-group">
+              <p style="font-size: 13px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 6px;">Kategori Bisnis Konsumen & Retail (B2C):</p>
+              <div class="query-list">
+                <span class="wireframe-pill">"Rekomendasikan klinik kecantikan terpercaya di Jakarta Selatan untuk kulit sensitif"</span>
+                <span class="wireframe-pill">"Sepatu lari brand lokal terbaik dengan bantalan empuk untuk pemula"</span>
+                <span class="wireframe-pill">"Tempat ngopi yang nyaman untuk kerja (WFC) di Bandung dengan parkir luas"</span>
+              </div>
+            </div>
+            <div class="query-group">
+              <p style="font-size: 13px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 6px;">Kategori Bisnis & Jasa Profesional (B2B):</p>
+              <div class="query-list">
+                <span class="wireframe-pill">"Software akuntansi terbaik untuk bisnis restoran dengan beberapa cabang"</span>
+                <span class="wireframe-pill">"Jasa digital marketing terpercaya di Indonesia untuk perusahaan logistik"</span>
+                <span class="wireframe-pill">"Vendor cloud storage aman untuk perusahaan menengah"</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= 5. HOW IT WORKS ================= -->
+    <section id="cara-kerja" class="how-it-works">
+      <div class="container">
+        <div class="text-center" style="max-width: 720px; margin: 0 auto;">
+          <span class="section-tag">[Wireframe: 3-Step Frictionless Workflow]</span>
+          <h2>3 langkah mudah untuk mengetahui posisi brand Anda di AI</h2>
+          <p class="lead-text" style="margin-top: 8px;">Tanpa perlu keahlian prompt engineering atau setup teknis yang rumit.</p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Masukkan Website Bisnis</h3>
+            <p>Masukkan alamat website Anda. Nuave otomatis menyusun 10 pertanyaan relevan yang biasa diajukan pembeli di industri Anda.</p>
+            <ul class="step-bullets">
+              <li>5 pertanyaan tanpa nama brand (uji penemuan)</li>
+              <li>5 pertanyaan dengan nama brand (uji reputasi)</li>
+            </ul>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Nuave Menguji ke Model AI</h3>
+            <p>Pertanyaan diajukan langsung ke ChatGPT secara objektif untuk melihat apakah bisnis Anda direkomendasikan dan sumber apa yang dikutip.</p>
+            <ul class="step-bullets">
+              <li>Pengujian langsung ke model AI</li>
+              <li>Pencatatan bisnis lain yang disebut</li>
+            </ul>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Terima Laporan & Perbaikan</h3>
+            <p>Dapatkan laporan ringkas yang dapat dibaca dalam 10 menit, lengkap dengan skor X/10 dan panduan perbaikan konten website Anda.</p>
+            <ul class="step-bullets">
+              <li>Akses web & Download PDF</li>
+              <li>Rekomendasi perbaikan konkret</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 6. WHAT YOU GET (REPORT BREAKDOWN) ================= -->
+    <section id="isi-laporan" class="what-you-get">
+      <div class="container">
+        <div class="text-center" style="max-width: 720px; margin: 0 auto;">
+          <span class="section-tag">[Wireframe: Report Deliverables]</span>
+          <h2>Laporan ringkas dan berbasis bukti nyata untuk keputusan bisnis</h2>
+          <p class="lead-text" style="margin-top: 8px;">
+            Setiap laporan dirancang agar dapat dibaca dalam 10 menit oleh pemilik bisnis atau tim marketing, tanpa bahasa teknis yang rumit.
+          </p>
+        </div>
+
+        <div class="report-preview-grid">
+          <div class="report-feature-card">
+            <h4>📊 1. Skor Kemunculan Langsung</h4>
+            <p>Menampilkan rasio nyata seberapa sering bisnis Anda disebut dari 10 pertanyaan (misalnya: <strong>Bisnis Anda muncul di 4 dari 10 pertanyaan</strong>).</p>
+          </div>
+
+          <div class="report-feature-card">
+            <h4>🔍 2. Pemisahan Hasil Kategori vs Brand</h4>
+            <p>Melihat apakah bisnis Anda muncul saat pencarian kategori umum (tanpa nama brand) dan bagaimana bisnis Anda dideskripsikan saat dicari langsung.</p>
+          </div>
+
+          <div class="report-feature-card">
+            <h4>💬 3. Kutipan Persis Respon ChatGPT</h4>
+            <p>Kutipan transparan jawaban AI apa adanya, lengkap dengan link rujukan yang dibaca oleh model AI saat menjawab.</p>
+          </div>
+
+          <div class="report-feature-card">
+            <h4>🏢 4. Bisnis Lain yang Disebut</h4>
+            <p>Mengetahui nama-nama bisnis lain yang direkomendasikan bersamaan dalam jawaban yang sama oleh AI.</p>
+          </div>
+
+          <div class="report-feature-card">
+            <h4>⚠️ 5. Deteksi Fakta Publik yang Kurang</h4>
+            <p>Menemukan informasi penting tentang bisnis Anda yang keliru, tidak konsisten, atau tidak ditemukan di website sehingga membuat AI ragu.</p>
+          </div>
+
+          <div class="report-feature-card">
+            <h4>🛠️ 6. Rekomendasi Perbaikan Konten</h4>
+            <p>Panduan langkah nyata yang bisa langsung diterapkan oleh tim marketing atau web developer Anda.</p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 28px;">
+          <span class="wireframe-pill" style="border-style: dashed;">📄 Dilengkapi tombol <strong>Download PDF</strong> resmi untuk dibagikan ke tim internal</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 7. HONEST BOUNDARIES ================= -->
+    <section class="boundaries">
+      <div class="container">
+        <div class="boundaries-box">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <span class="section-tag" style="background: #fff;">[Wireframe: Transparansi & Batasan]</span>
+            <h3 style="font-size: 18px;">Yang perlu diketahui tentang laporan ini</h3>
+          </div>
+          <div class="boundaries-grid">
+            <div class="boundary-item">
+              <h4>Bukan Peringkat Permanen</h4>
+              <p>Pengujian ini mengamati 10 pertanyaan pada satu waktu tertentu di model AI. Ini adalah potret kondisi informasi publik Anda saat ini.</p>
+            </div>
+            <div class="boundary-item">
+              <h4>Bukan Jaminan Penjualan</h4>
+              <p>Model AI bersifat dinamis. Nuave tidak menjanjikan penambahan penjualan instan, melainkan memastikan informasi brand Anda terbaca jelas oleh AI.</p>
+            </div>
+            <div class="boundary-item">
+              <h4>Hanya Data Publik</h4>
+              <p>Nuave hanya menganalisis informasi yang dapat diakses publik di internet. Kami tidak meminta atau mengumpulkan data internal rahasia perusahaan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 8. PRICING ================= -->
+    <section id="biaya" class="pricing">
+      <div class="container">
+        <span class="section-tag">[Wireframe: Pricing]</span>
+        <h2>Sekali bayar untuk satu audit lengkap</h2>
+        <p class="lead-text" style="margin-top: 8px;">Tanpa langganan bulanan. Tanpa biaya tersembunyi.</p>
+
+        <div class="pricing-card">
+          <p style="font-size: 13px; font-weight: 700; color: #555; text-transform: uppercase;">1x AI Visibility Report</p>
+          <div class="price-tag">Rp99.000</div>
+          <p class="text-muted">Sekali bayar per audit · Berlaku untuk 1 website bisnis</p>
+
+          <ul class="pricing-features">
+            <li>Pengujian 10 pertanyaan mendalam ke ChatGPT</li>
+            <li>Pemeriksaan kemunculan brand dan bisnis lain yang disebut</li>
+            <li>Deteksi kelemahan informasi publik & rekomendasi perbaikan</li>
+            <li>Akses laporan di web & Download PDF</li>
+            <li>Pembayaran instan via QRIS, GoPay, DANA, Transfer Bank (Midtrans)</li>
+          </ul>
+
+          <a href="#hero-form" class="btn btn-primary btn-block">Cek Bisnis Saya Sekarang</a>
+          <p class="text-center text-muted" style="margin-top: 10px;">Audit cek awal (pratinjau draf pertanyaan) gratis</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 9. FAQ ================= -->
+    <section id="faq" class="faq">
+      <div class="container">
+        <div class="text-center" style="max-width: 720px; margin: 0 auto;">
+          <span class="section-tag">[Wireframe: FAQ & Objection Handling]</span>
+          <h2>Tanya Jawab (FAQ)</h2>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq-item" open>
+            <summary>Apa itu Nuave?</summary>
+            <p>Nuave adalah layanan audit visibilitas brand di era AI. Nuave menguji seberapa sering model AI seperti ChatGPT mengenali dan merekomendasikan bisnis Anda saat calon pelanggan mencari produk atau layanan di industri Anda.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary>Kenapa bisnis saya butuh dicek di ChatGPT jika sudah punya SEO dan Google Ads?</summary>
+            <p>Google Ads dan SEO membantu Anda ketika calon pelanggan mencari kata kunci di Google. Namun, ketika mereka bertanya langsung ke ChatGPT untuk meminta perbandingan atau rekomendasi vendor, iklan Google tidak berpengaruh. Nuave membantu Anda memahami bagaimana brand Anda dipandang oleh AI.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary>Apakah saya membutuhkan keahlian teknis atau prompt engineering?</summary>
+            <p>Tidak sama sekali. Anda hanya perlu memasukkan alamat website bisnis Anda. Nuave yang menyusun pertanyaan audit, menjalankan pengujian, dan menyajikan hasilnya dalam laporan berbahasa Indonesia yang mudah dipahami.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary>Apa bedanya Nuave dengan dashboard pemantauan AI lainnya?</summary>
+            <p>Nuave tidak membebani Anda dengan biaya langganan bulanan yang mahal. Nuave memberikan satu laporan audit yang terarah per pengujian (Rp99.000 sekali bayar), sehingga Anda hanya membayar saat Anda butuh mengevaluasi dan memperbaiki konten brand Anda.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary>Apakah Nuave menjamin brand saya pasti direkomendasikan oleh ChatGPT setelah perbaikan?</summary>
+            <p>Tidak ada pihak yang dapat menjamin jawaban model AI karena sifatnya yang dinamis. Namun, dengan melengkapi informasi bisnis yang kurang dan memperbaiki inkonsistensi yang ditunjukkan oleh laporan Nuave, Anda memperbesar peluang brand Anda dikenali dan direkomendasikan AI secara signifikan.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary>Model AI apa saja yang diuji saat ini?</summary>
+            <p>Saat ini Nuave melakukan pengujian mendalam pada ChatGPT (model GPT-4o). Pengujian untuk model lain seperti Gemini, Perplexity, dan Claude sedang disiapkan.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 10. BOTTOM CTA ================= -->
+    <section class="bottom-cta">
+      <div class="container">
+        <div style="max-width: 680px; margin: 0 auto;">
+          <h2>Cari tahu apakah brand Anda sudah direkomendasikan oleh AI hari ini</h2>
+          <p>Hanya butuh 2 menit untuk memeriksa bagaimana ChatGPT merespons pertanyaan calon pelanggan tentang industri Anda.</p>
+          <a href="#hero-form" class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;">Cek bisnis saya di AI</a>
+          <p style="margin-top: 12px; font-size: 13px; color: #aaa;">Masukkan website · Dapatkan draf pertanyaan audit gratis</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= 11. FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <strong>Nuave</strong> — Layanan audit visibilitas brand di era pencarian AI
+        </div>
+        <div class="footer-links">
+          <a href="/terms">Syarat & Ketentuan</a>
+          <a href="/privacy">Kebijakan Privasi</a>
+          <a href="/support">Kontak</a>
+        </div>
+        <div>
+          © 2026 Nuave · Hak Cipta Dilindungi
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
