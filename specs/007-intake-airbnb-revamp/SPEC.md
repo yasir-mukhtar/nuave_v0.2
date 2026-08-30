@@ -62,8 +62,10 @@ structural validation while being semantically wrong.
 One exported structure carries, per slot: id, order, category,
 `auditedBrandIdentity: "forbidden" | "required"`,
 `comparisonTargetIdentity: "forbidden" | "required"`, measurement purpose,
-customer-facing label, report assessment class, and the generator's slot
-description.
+customer-facing label, report assessment class, the generator's slot
+description, and — where the slot declares one — `comparisonRelationMarkers`,
+the closed token list R-10 rule 3 uses. Only slot 9 declares it today; the field
+is absent, not empty, on the other nine.
 
 No measurement policy may exist outside it. Ordering and ids may of course
 contain numbers; what is prohibited is **positional measurement-policy logic**
@@ -318,50 +320,79 @@ Indonesian message that names what the slot must ask:
 2. R-06 rule 2 — every identity the slot requires appears. On slot 9 that
    includes the comparison target.
 3. Slot 9 additionally requires a **comparison relation** between the two named
-   parties, not merely both names present. No such predicate exists in the tree
-   today — `containsIndonesianComparisonIdentity` (`questions-id.ts:278`) tests
-   identity presence only — so the matrix carries the definition: the slot
-   declares a closed list of Indonesian comparison markers, and the question
-   satisfies the rule when it contains both required identities and at least one
-   marker. V1's list is the `banding` stem (`bandingkan`, `dibandingkan`,
-   `membandingkan`, `perbandingan`), `dibanding`, `versus`, `vs`, and the
-   comparative `lebih` forms. It is spec-owned data in the matrix, not a
-   heuristic in the validator, and R-06 tests it. Extending the list is a spec
-   change.
+   parties, not merely both names present. Nothing in the tree defines one —
+   `containsIndonesianComparisonIdentity` (`questions-id.ts:278`) tests identity
+   presence only — so the predicate is defined here in full, as
+   `comparisonRelationMarkers` data on the slot (R-02), not as a heuristic
+   inside the validator.
+
+   **Matching.** Whole normalized tokens, using the rule already in
+   `question-suggestion-guards.ts:7-14`: lower-case with the `id-ID` locale,
+   replace every non-alphanumeric run with a space, split on whitespace, compare
+   complete tokens. Never substring matching — that is what makes the two-letter
+   `vs` safe.
+
+   **Group 1 — any one token satisfies the rule:** `bandingkan`,
+   `dibandingkan`, `membandingkan`, `perbandingan`, `dibanding`, `banding`,
+   `versus`, `vs`, `daripada`, `perbedaan`, `berbeda`, `membedakan`, `beda`,
+   `bedanya`.
+
+   **Group 2 — `lebih`, qualified.** `lebih` alone never satisfies the rule; it
+   appears in ordinary quantity phrasing. It satisfies only when the question
+   also contains `atau` or `antara`.
+
+   The question passes when it carries both required identities and satisfies
+   group 1 or group 2. R-06 tests the predicate, and these four cases are
+   required:
+
+   | Question shape | Must |
+   |---|---|
+   | `Bandingkan X dengan Y…` | accept — group 1 |
+   | `Apa perbedaan X dan Y?` · `Apa bedanya X dan Y?` | accept — group 1 |
+   | `Mana yang lebih baik, X atau Y?` | accept — group 2 |
+   | `Apakah X dan Y buka lebih dari 8 jam?` | **reject** — `lebih` unqualified |
+
+   The list is finite and spec-owned. Adding a token is a spec change, not an
+   implementation choice.
 4. The text is non-empty, within `promptSchema`'s 700-character bound
    (`types.ts:140`), and phrased as a question.
 
-*Warn, do not block* — a drift away from the slot's stated purpose that no
-mechanical check can establish. The screen restates the slot's purpose and says
-the edit may no longer measure it; the user may proceed. A warning never
-prevents completing intake.
+*Everything else* — a drift away from the slot's stated purpose that no
+mechanical check can establish. **What happens here is the open decision
+below.** Under option A the screen restates the slot's purpose, says the edit
+may no longer measure it, and lets the user proceed; under option B the save is
+blocked by a model-assisted check. The four hard blocks above hold either way.
 
-This split is deliberate. The identity policies are what the report's
-denominators and assessment classes depend on, and they are mechanically
-decidable. A purpose check strong enough to hard-block would need a model call
-on every save, and one false positive would trap a customer at the end of
-intake behind a question they cannot satisfy — the failure shape this spec
-exists to remove. If evidence from real packs shows purpose drift actually
-occurring, hardening a specific slot is a later, narrower decision.
+The four checks are settled because they are mechanically decidable and because
+the identity policies are what the report's denominators and assessment classes
+depend on. Only the undecidable remainder is open.
 
-**What the locked decision guarantees, and what V1 enforces.** Locked decision
-6 is a rule about what the product permits: a user may edit wording, and may
-not change a slot's measurement purpose, category, brand policy, or
-comparison-target policy. It is not a claim that every violation is detectable.
+**Open product decision — the founder must settle this before implementation
+planning.** Locked decision 6 says users may not change a slot's measurement
+purpose. The enforcement model above cannot fully deliver that: category,
+declared purpose, and both identity policies are fixed matrix metadata no edit
+can reach, and the four checks hard-block — but wording that keeps the slot's
+required identities and passes every check above can still stop measuring what
+the slot exists to measure. Nothing detects that.
 
-V1 enforces that rule **completely** wherever it is mechanically decidable.
-Category, declared purpose, and both identity policies are fixed matrix
-metadata that no edit can reach; the four checks above hard-block on save.
-V1 enforces it **by frame and warning** in the one place it is not decidable:
-wording that keeps the slot's required identities and still satisfies every
-check above, while no longer measuring what the slot exists to measure.
+This residue is **not** the same shape as R-20's, and must not be justified by
+it. R-20 limits its guarantee to the supported client journey and accepts that
+a determined caller outside that journey can bypass it. This gap sits *inside*
+the supported journey: an ordinary user, doing exactly what the product invites
+them to do, can approve a pack whose slot no longer measures its purpose.
 
-That residue is real, and it is accepted for V1 — the same way R-20 accepts
-that the payment ordering is not server-enforced and says so rather than
-claiming a boundary it does not have. **This spec must not be read as providing
-semantic purpose validation.** Closing the residue costs a model-assisted
-validator on every save; that is a scoped founder decision, not a gap in this
-contract.
+The planner cannot close this. Under the authority rule, what the product
+guarantees is the founder's to decide. Two options:
+
+| Option | What ships | Cost |
+|---|---|---|
+| **A · Warn and proceed** | The frame, the four hard checks, and a non-blocking warning naming the slot's purpose | A legitimate user can approve a purpose-drifted slot inside the supported journey. Identity labels and denominators stay correct; measurement intent may not |
+| **B · Hard-block on purpose** | Model-assisted purpose validation on save for the nine slots with no mechanical purpose test | A model call per save, added latency, and a false-positive class that can trap a user at the end of intake behind a question they cannot satisfy |
+
+The planner's recommendation is **A**, on the grounds that B's failure mode is
+worse than the gap it closes and that no evidence of real purpose drift exists
+yet. That is a recommendation, not a decision. Until the founder rules, this
+spec records neither option as accepted, and **Blocker A is not done.**
 
 Replacing a question means replacing it *for that slot*. There is no
 free-composition editor.
@@ -740,9 +771,9 @@ deliberately at the handoff. Do not claim they pass unchanged.
    enforced in both directions, and one canonical matrix is the only
    measurement authority.
 6. Users may edit wording, but may not change a slot's measurement purpose,
-   category, brand policy, or comparison-target policy. R-10 states which parts
-   of this V1 enforces mechanically and which it enforces by fixed slot frame
-   plus a warning; the rule is unchanged either way.
+   category, brand policy, or comparison-target policy. The rule stands as
+   written; **how completely V1 enforces it is an open founder decision** —
+   see R-10.
 7. One comparison target is proposed by an explicit derivation step and may be
    accepted, edited, or replaced.
 8. Simulated payment sequences the workflow; it is not a security boundary.
@@ -752,7 +783,7 @@ deliberately at the handoff. Do not claim they pass unchanged.
 
 | | Blocker | Done when |
 |---|---|---|
-| **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix |
+| **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix; **and the founder has ruled on R-10's open decision** |
 | **B** | Workflow and data authority | Every field in R-12 has an owner, screen, requiredness, and invalidation rule; the comparison target has an explicit creation step; conditional screens and stale-data rules are implemented; validation routing is executable for every field |
 | **C** | Payment boundary | No personalized extraction occurs in the supported client journey before simulated payment success, proven by routing tests, a single-call-site guarantee, and E2E network assertions — with server-side entitlement explicitly deferred |
 | **D** | Safe source handling | The SSRF feasibility determination is recorded, R-22's controls each have a stated value and a test, and R-23's rate-limit decision is made |
