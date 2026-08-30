@@ -78,6 +78,8 @@ verification is against its acceptance criteria.
   4 named), workflow and data authority, the simulated-payment boundary, safe
   source handling, and the end-to-end acceptance run. Five implementation
   blockers, A through E; A is first and R-04 fixes its internal order.
+  Sequencing, gates, and package status live in the package's
+  [`EXECUTION_PLAN.md`](./007-intake-airbnb-revamp/EXECUTION_PLAN.md).
 
 [`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
 no active spec is named, the next task is to prepare or approve one rather than

@@ -7,6 +7,13 @@
 > already considered and rejected, which claims are verified, and how to
 > resolve a review that disagrees with it. None of this is reconstructable
 > from the repository.
+>
+> **Implementers and orchestrators should not read this file.** It carries
+> eight rounds of superseded argument and will pull them into re-litigating
+> settled decisions. Their entry point is
+> [`EXECUTION_PLAN.md`](./EXECUTION_PLAN.md), which links the spec and the
+> repository rules and carries the package sequence, the gates, and the status
+> ledger.
 
 ## Current state
 
