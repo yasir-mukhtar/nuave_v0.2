@@ -73,28 +73,36 @@ number rather than from the matrix.
 ## R-03 · Migration inventory
 
 Every surface below encodes the old model. This inventory was built by scanning
-the tree for the legacy category enum and the 5/5 composition markers. The
-acceptance criterion is that no legacy policy consumer remains — not that a
+the tree for the legacy category enum, the 5/5 composition markers, and — the
+class most easily missed — every module that maps a slot by **array index** into
+a parallel table. The acceptance criterion is that no legacy policy consumer
+remains and no positional slot mapping survives outside the matrix — not that a
 count was matched.
 
 ### Measurement core
 
 | File | What |
 |---|---|
-| `types.ts:164-171` | `unbranded_prompts`, `branded_prompts`, `five_unbranded`, `five_branded` schema fields; prompt category enum and derived types |
+| `types.ts:3-9` | `promptCategories` — the five-category enum itself, consumed at `:138` and `:185` |
+| `types.ts:164-172` | `unbranded_prompts`, `branded_prompts`, `two_per_category`, `five_unbranded`, `five_branded` schema fields |
 | `contracts.ts:153` | `PROMPT_MATRIX` |
+| **`contracts.ts:216`** | **`PROMPT_INPUT_FIELD_MATRIX` — a second positional slot table, joined to `PROMPT_MATRIX` by array index at `:268`. Row 6 feeds `brand_name` and `verified_competitor` into the slot R-01 makes `open_comparison`; row 9 gives the new `direct_comparison` slot no comparison target at all. Fold it into the matrix as a per-slot `allowedContextFields`** |
 | `contracts.ts:336-344` | `unbranded_prompts: 5`, `five_unbranded`, `two_per_category` self-check |
 | `contracts.ts:727` | `prompt_id !== "NUAVE-BRAND-COMPARISON-02"` competitor exception |
 | `contracts.ts:765-774` | Five categories × exactly two — **delete**, it encodes the old model |
 | `contracts.ts:775-778` | Branded count `!== 5` and its message |
+| **`locked-question-pack.ts:22-32`** | **`lockedPromptSlotIndex` — parses `NVA-ID-NN` into an array index, and maps legacy ids through `PROMPT_MATRIX` (`:14-16`)** |
+| **`locked-question-pack.ts:34-52`** | **`canonicalPrompt` — the server's final interpretation of every question, taking `category` from `INDONESIAN_SLOT_CATEGORIES[slotIndex]`. Live on `/api/audit/run`, `/api/audit/variance`, `report-pipeline.ts`, and `AuditWorkflow.tsx`. Left unmigrated, the server relabels a correct pack with legacy categories after review** |
 | `questions-id.ts:352` / `:371` | `INDONESIAN_SLOT_CATEGORIES`, `INDONESIAN_SLOT_MATRIX` |
 | `questions-id.ts:378` | `default_branded: index >= 5` |
 | `questions-id.ts:454-494` | The ten deterministic fallback templates — see R-05 |
 | `questions-id.ts:586` / `:599` | `slot <= 5` identity guard, `slot !== 6` competitor guard |
 | `questions-id.ts:645` | `repairIndonesianSuggestion` — corrected by consequence of the templates |
+| `questions-id.ts:941` | `INDONESIAN_SLOT_MATRIX[index].suggested_category` — positional |
 | **`question-suggestion-guards.ts:92`** | **`if (unbranded !== 5) … "default_composition_not_five_five"`** |
 | **`question-suggestion-guards.ts:102`** | **`if (index === 5) return;` — the positional slot-6 competitor exception** |
-| `questions-id-live.ts:351` | `categoryLabels`, role, and rationale keyed on the five legacy categories |
+| **`questions.ts`** | **A second complete legacy generator — ten English templates carrying the old per-slot semantics, with slot 6 naming both the brand and the competitor (`:194`) and slot 8 reading `known_accuracy_questions` (`:122`, `:210`), which R-12 stops collecting. It is reachable only from `questions.test.ts`. Migrate it onto the matrix or delete it together with its test; do not leave a second generator standing** |
+| `questions-id-live.ts:30-52` | `CATEGORY_LABELS` and `categoryLabels` — role and rationale keyed on the five legacy categories, called at `:351` |
 | `questions-id-live.ts:368-370` | `two_per_category: true`, `five_unbranded: … === 5`, `five_branded: … === 5` |
 
 ### Generation instruction
@@ -104,6 +112,7 @@ count was matched.
 | `questions-id-provider.ts` | `INDONESIAN_QUESTION_WRITER_INSTRUCTION` — still describes the old slot semantics |
 | `questions-id.ts:41` | `INDONESIAN_QUESTION_INSTRUCTION_VERSION = "question-writer-v1"` — **bump** |
 | `fixture-journey/report.ts:119` | Consumes the version; update with the bump |
+| **`skills/generate-ai-visibility-prompts/SKILL.md`** | **A retained, authoritative generation instruction that states the Intent-5 composition rule directly: `:82-86` (two per category, one unbranded and one branded comparison), `:142-145` (exactly two per category, exactly five unbranded and five branded), `:176-177` and `:194-195` (the `unbranded_prompts: 5` / `five_unbranded` output shape), `:218` (preserve branded allocation). It is named as SETTLED at `DECISION_LOG.md:41` and referenced from `PROMPT_GENERATION_CONTEXT.md:15`, `NOW.md:140`, and `journey/04-questions.md:224`, `:888`. Rewrite it against R-01 or retire it explicitly — an unmigrated skill is a second authoritative generation contract** |
 
 ### Report and interpretation
 
@@ -123,23 +132,55 @@ count was matched.
 | **`ReportPagePreview.tsx:22`** | Same hardcoded `/5` denominators |
 | `QuestionsPreview.tsx:30,51` | Hardcoded group counts of 5 and 5 |
 
+### Scripts
+
+`tsconfig.json` includes `**/*.ts` and excludes only `node_modules` and
+`archive`, so these are typechecked and `npm run check` fails until they are
+migrated. They are not optional.
+
+| File | What |
+|---|---|
+| `scripts/kk/run.ts:74,78` | Imports `PROMPT_MATRIX` and `INDONESIAN_SLOT_MATRIX`; indexes them positionally at `:178` and `:286` |
+| `scripts/kopikenangan/kopi-kenangan-live-run.spec.ts:92,175` | `PROMPT_MATRIX[index]` |
+| `scripts/openrouter/smoke.spec.ts:116` | Hardcodes `category: "solution_discovery"` |
+
 ### Fixtures and tests
 
-`fixtures/fixture-kopi-taman-senja.ts` · `contracts.test.ts` ·
+**`fixtures/report-golden.ts`** is the protected golden fixture and the largest
+single blast radius. It builds `goldenPrompts` from `PROMPT_MATRIX` by index
+(`:76-82`) against ten hardcoded questions whose slot 6 names both the brand and
+the competitor, and pins slot-6 and slot-5 behavior by index at `:115-127`.
+Nine unit suites and two E2E specs import it: `report-pipeline.test.ts` ·
+`report-gaps.test.ts` · `report-priority.test.ts` ·
+`report-delivery-resilience.test.ts` · `report-pipeline-telemetry.test.ts` ·
+`live-reliability-regression.test.ts` · `variance-workflow.test.ts` ·
+`similar-businesses.test.ts` · `workflow-storage.test.ts` ·
+`tests/e2e/wave1-workflow-lifecycle.spec.ts` ·
+`tests/e2e/live-audit-variance.spec.ts`.
+
+Three suites pin the superseded policy as an assertion and must be rewritten,
+not merely re-run:
+
+| File | What it pins |
+|---|---|
+| `question-suggestion-wave2.test.ts:115,133,142,151` | The `default_composition_not_five_five` rule directly |
+| `questions-id-live.test.ts:171,203` | Exactly five branded prompts in the live pack |
+| `wave3-blocker-regressions.test.ts:68,96,113` | Slot 6 as the designated comparison-target exception |
+
+Also: `fixtures/fixture-kopi-taman-senja.ts` · `contracts.test.ts` ·
 `questions.test.ts` · `questions-id.test.ts` ·
 `questions-id-provider-regression.test.ts` · `wave2-route-contract.test.ts` ·
-`locked-question-pack.test.ts` · `report-pipeline.test.ts` ·
-`report-prompt-contract.test.ts` · `run-orchestrator.test.ts` ·
-`variance.test.ts` · `variance-route-proof.test.ts` · `stream.test.ts` ·
-`retry.test.ts` · `groq.test.ts` · `openrouter.test.ts` ·
-`fixture-journey/adapter.test.ts` · `tests/e2e/live-audit-variance.spec.ts` ·
-`tests/e2e/wave1-workflow-lifecycle.spec.ts`
+`locked-question-pack.test.ts` · `report-prompt-contract.test.ts` ·
+`run-orchestrator.test.ts` · `variance.test.ts` · `variance-route-proof.test.ts` ·
+`stream.test.ts` · `retry.test.ts` · `groq.test.ts` · `openrouter.test.ts` ·
+`fixture-journey/adapter.test.ts`.
 
 ### Documentation
 
 `docs/AUDIT.md` · `docs/journey/04-questions.md` · `docs/PRODUCT.md` ·
 `docs/DECISION_LOG.md` · `docs/NOW.md` · `docs/V1_PRODUCT_CONTRACT.md` ·
-`docs/content/website/FAQ.md` · `docs/PROMPT_GENERATION_CONTEXT.md` — see R-09.
+`docs/content/website/FAQ.md` · `docs/PROMPT_GENERATION_CONTEXT.md` ·
+`docs/drafts/00-journey-fixtures.md` · `intake-handoff.md` — see R-09.
 
 ## R-04 · Migration order
 
@@ -223,13 +264,25 @@ and currently preserves the old policy.
 | `AUDIT.md:81` | "five-and-five composition" |
 | **`journey/04-questions.md:51-55`** | 5/5 default, and customers "may freely rewrite … including changing the original purpose or the five/five balance" |
 | `journey/04-questions.md:72,84-86` | The five-purpose coverage guide and its 5/5 breakdown |
+| `journey/04-questions.md:224,888` | Names `generate-ai-visibility-prompts` as the generation method |
+| **`DECISION_LOG.md:34`** | The 2026-07-29 Intent-5 entry: five categories, two questions each, five-unbranded/five-branded — **SETTLED** |
+| **`DECISION_LOG.md:41`** | The 2026-07-31 entry making `generate-ai-visibility-prompts` the universal default skill "with five unbranded and five branded questions" — **SETTLED** |
 | `DECISION_LOG.md:60` | The 2026-08-17 five-and-five coverage brief |
 | `PRODUCT.md:164-165` | "five … five … may change that composition" |
 | `PRODUCT.md:109` | Lists Google Maps as an accepted source, which R-11 defers |
 | `NOW.md:141-144` | "not a composition the customer must preserve" |
+| `NOW.md:140` | The universal Intent-5 matrix and skill described as known-good |
 | `FAQ.md:61-63` | Customer-facing 5/5 and composition-change language |
 | `V1_PRODUCT_CONTRACT.md:291-300` | The 6/4-versus-shipped conflict; mark resolved |
-| `PROMPT_GENERATION_CONTEXT.md` | Legacy category semantics |
+| **`intake-handoff.md:151-160`** | "Blocking conflict with shipped code — not resolved here", ending in "That gap needs a founder decision before intake implementation lands." The decision has been taken; mark it resolved and point at this spec |
+| **`docs/drafts/00-journey-fixtures.md:63-84`** | A section headed **"Composition decision: 5/5, not 6/4"** that decides against the locked model outright; also `:671-674`, `:689`, `:711`, `:731` |
+| `PROMPT_GENERATION_CONTEXT.md` | Legacy category semantics; `:15` points at the skill |
+
+All three `DECISION_LOG.md` entries are marked SETTLED. Superseding only one
+leaves two authoritative-looking decisions standing against this spec. Supersede
+`:34`, `:41`, and `:60`, and add the corresponding rows to the superseded-
+directions table (`DECISION_LOG.md:79` onward) with the 6/4 model as the
+superseding direction.
 
 Also state explicitly that Spec 007 absorbs Spec 004's source-intake
 responsibility, set spec 004 to **Superseded** at the handoff (R-28), register
@@ -239,18 +292,47 @@ the founder advances it.
 
 ## R-10 · Editing preserves measurement purpose
 
-The ten slots are a measurement definition, not ten editable text boxes. A user
-must not be able to turn `brand_fit` into an address lookup,
-`category_recommendation` into an unrelated factual question, or
-`direct_comparison` into a non-comparison — while still passing structural 6/4
-validation.
+The ten slots are a measurement definition, not ten editable text boxes. The
+risk is a pack that passes structural 6/4 validation while a slot no longer
+measures what it exists to measure — `brand_fit` reduced to an address lookup,
+`category_recommendation` to an unrelated factual question,
+`direct_comparison` to something that does not compare.
 
-**Mechanism: constrained editing.** The user edits within a slot; the slot's
-category, purpose, and both identity policies are fixed and displayed. On save,
-the question is validated against that slot's policies (R-06 rules 1 and 2) and
-against a purpose check appropriate to the slot — a `direct_comparison` edit
-that no longer compares is rejected with a plain Indonesian explanation naming
-what the slot must ask.
+The slot frame, not free-text analysis, is the primary defence: a question
+cannot leave its slot, and the slot's policies travel with it.
+
+**Mechanism: constrained editing.** The user edits within a slot. The slot's
+category, purpose, and both identity policies are fixed, displayed, and not
+editable. Composition cannot drift, because no edit moves a question between
+slots.
+
+**What V1 enforces, and how.** Purpose is upheld by the fixed slot frame plus a
+small set of mechanical checks. V1 does not build a semantic purpose classifier
+for ten slots.
+
+*Hard block on save* — every check deterministic, every failure carrying a plain
+Indonesian message that names what the slot must ask:
+
+1. R-06 rule 1 — none of the slot's forbidden identities appear.
+2. R-06 rule 2 — every identity the slot requires appears. On slot 9 that
+   includes the comparison target.
+3. Slot 9 additionally requires a comparison relation between the two named
+   parties, not merely both names present.
+4. The text is non-empty, within `promptSchema`'s 700-character bound
+   (`types.ts:140`), and phrased as a question.
+
+*Warn, do not block* — a drift away from the slot's stated purpose that no
+mechanical check can establish. The screen restates the slot's purpose and says
+the edit may no longer measure it; the user may proceed. A warning never
+prevents completing intake.
+
+This split is deliberate. The identity policies are what the report's
+denominators and assessment classes depend on, and they are mechanically
+decidable. A purpose check strong enough to hard-block would need a model call
+on every save, and one false positive would trap a customer at the end of
+intake behind a question they cannot satisfy — the failure shape this spec
+exists to remove. If evidence from real packs shows purpose drift actually
+occurring, hardening a specific slot is a later, narrower decision.
 
 Replacing a question means replacing it *for that slot*. There is no
 free-composition editor.
@@ -285,7 +367,7 @@ because R-17's error routing must always be executable.
 | `entity_scope` | Extracted | Scope | Yes | — |
 | `brand_type` | Extracted | Scope | Yes | — |
 | `category` | Extracted, offered as choices | Category | Yes | — |
-| `market_context` | Extracted | Market | Yes | **Scope change** |
+| `market_context` | Extracted | Market — **never skipped** | Yes | **Scope change** |
 | `target_customer` | Extracted | Customer reasons | Yes | — |
 | `verified_offerings` | Extracted chips | Offerings | Yes (min 1) | **Scope change to single product** |
 | `verified_customer_needs` | Extracted chips | Customer reasons | **Yes — add `.min(1)`** | — |
@@ -305,6 +387,13 @@ because R-17's error routing must always be executable.
 `verified_customer_needs`, `verified_decision_criteria`, and
 `verified_competitor.name` accept empty values today while the audit needs
 them. Those three schema changes are deliberate.
+
+`market_context` stays required on every path. It is `requiredText` in
+`businessBriefSchema` (`types.ts:68`), and `PROMPT_INPUT_FIELD_MATRIX` feeds it
+into six of the ten slots. A business with no geographic market still has a
+market context — nationwide, or online across Indonesia. What scope changes is
+what the Market screen asks, not whether the field is required and not whether
+the screen appears. See R-14.
 
 ## R-13 · How the comparison target is created
 
@@ -332,7 +421,12 @@ choose; it is not a competitor taxonomy.
 
 Scope determines which screens apply: a single location shows the branch
 screen, a single product shows the product screen, whole-brand shows neither.
-The market screen is skipped when scope makes geography immaterial.
+
+**The Market screen is not one of the conditional screens.** It is always
+shown, because `market_context` is required on every path (R-12). Scope changes
+the question it asks — a service area for a single location, national or online
+reach for a whole brand or a single product — and therefore changes the value,
+never the screen's existence.
 
 **Changing scope after answering downstream screens must not leave stale data
 in the audit.** Concretely: a user picks a single location, answers
@@ -352,7 +446,9 @@ Rules, per the invalidation column in R-12:
 
 Skipping a conditional screen may never leave a required field with no screen
 that owns it. If a skip would orphan a field, the field is either not required
-in that path or the screen is not skipped.
+in that path or the screen is not skipped. `market_context` was the one field
+this rule could have stranded; it is settled above by never skipping its screen,
+so no path is left to the implementer's reading.
 
 ## R-15 · Extraction runs after payment, once per journey
 
@@ -481,19 +577,26 @@ address, so the naive "resolve → validate → fetch" pattern does not deliver 
 intended property on this runtime. Name a mechanism that actually does, or
 record why the risk is accepted for a pre-customer prototype.
 
-Objectively testable acceptance, each with a stated value:
+Objectively testable acceptance. Every value below is fixed by this spec and
+must have a test; the feasibility determination settles the DNS-rebinding row
+only:
 
-| Control | Must define |
+| Control | Value |
 |---|---|
-| Protocols | HTTP/HTTPS only; every other scheme rejected |
-| Reserved networks | Reject localhost, loopback, private, link-local, unique-local, and cloud-metadata ranges |
-| DNS rebinding | The stated mitigation, or the accepted risk |
-| Redirects | A cap, with every hop revalidated against all rules |
-| Timeout | A value, applied per request and in total |
-| Response size | A byte limit, enforced during streaming |
-| Content type | The identity fetch accepts HTML only |
-| Credentials | Never forward cookies, authorization headers, or credentials |
-| Icon fetching | The same rules as the identity fetch |
+| Protocols | `http:` and `https:` only; every other scheme rejected before any DNS lookup |
+| Reserved networks | Reject localhost, loopback, private, link-local, unique-local, and cloud-metadata ranges — IPv4 and IPv6, including IPv4-mapped IPv6 |
+| DNS rebinding | The mechanism named by the feasibility determination, or the accepted risk recorded in its place. This is the one row the spike settles |
+| Redirects | **At most 3 hops.** Every hop revalidated against every rule in this table before it is followed; hop 4 is a failure, not a truncation |
+| Timeout | **5 s per request**, **10 s total** across the whole redirect chain, via `AbortSignal.timeout` as `groq.ts:178` already does |
+| Response size | **512 KB**, counted on the wire and enforced while streaming; abort at the byte that exceeds it, never buffer then check |
+| Content type | The identity fetch accepts `text/html` and `application/xhtml+xml` only; anything else is rejected without reading the body |
+| Credentials | Never forward cookies, authorization headers, or credentials; never follow a redirect that carries them |
+| Icon fetching | The same protocol, reserved-network, redirect, timeout, and size rules. Content type is restricted to image types instead of HTML |
+
+These are metadata fetches of a public page's `<head>`. The numbers are sized
+for that and are deliberately far below the provider-call timeouts in
+`groq.ts:55` and `openrouter.ts:90`, which are model calls and not a precedent
+here. Changing a value is a spec change, not an implementation choice.
 
 ## R-23 · Rate limiting: decide, do not defer implicitly
 
@@ -578,7 +681,10 @@ prerequisites. Pixel parity with the old intake is not a goal.
 Blocker A includes migrating **every legacy-category consumer required to keep
 the current funnel working** — notably `AuditStages.tsx`, whose question-review
 screen groups by the five legacy categories and would render empty if the enum
-changed underneath it. Complete that migration first; then build `/audit/v2`.
+changed underneath it, and `locked-question-pack.ts`, which is on the live
+`/api/audit/run` and `/api/audit/variance` paths and relabels every reviewed
+question from a positional table. Complete that migration first; then build
+`/audit/v2`.
 
 Two distinct gates:
 
@@ -655,8 +761,10 @@ Verified along the way:
 5. forbidden identities are rejected and required identities cannot disappear,
    with slot sets derived from the matrix;
 6. a six-unnamed-plus-three-named pack is rejected as invalid 6/4;
-7. the final pack remains semantically 6/4 after user corrections, and no edit
-   can change a slot's measurement purpose;
+7. the final pack remains semantically 6/4 after user corrections; no edit can
+   change a slot's category, declared measurement purpose, or either identity
+   policy; and an edit that breaks a slot's identity policy — or drops slot 9's
+   comparison relation — is rejected on save, per R-10;
 8. the generation instruction agrees with the matrix slot by slot;
 9. report assessment, labels, and denominators derive from the matrix, with no
    observation falling through per-category rules;

@@ -10,13 +10,24 @@
 
 ## Current state
 
-- Branch `feat/intake-big-revamp`, commit `1765eaa`, pushed to origin.
-- `specs/007-intake-airbnb-revamp/SPEC.md` — revision 4, status **Draft**.
-- `docs/reviews/prompts/spec-007-closure-check.md` — the next review pass.
+- Branch `feat/intake-big-revamp`.
+- `specs/007-intake-airbnb-revamp/SPEC.md` — revision 5, status **Draft**.
+- `docs/reviews/prompts/spec-007-closure-check.md` — the round-4 review pass.
+- `docs/reviews/prompts/spec-007-revision-5-closure-check.md` — the final
+  closure verification of revision 5. Scoped to the six corrections and the
+  seams around them; it is not a fifth broad review.
 - `docs/reviews/findings/spec-007-adversarial-review-r2.md` — round 2 findings.
 - `docs/reviews/prompts/spec-007-revision-3-planner.md` — the founder directive
   that produced revision 4. **Read this; it carries decisions the spec
   summarizes but does not fully explain.**
+
+Revision 5 is a bounded closure patch over revision 4, not a rewrite. It
+changed five things and reopened nothing: R-03's inventory (the positional
+slot-mapping consumers revision 4 missed), R-09's document list (two further
+SETTLED `DECISION_LOG` entries and two tracked documents), R-22's control
+values, the `market_context` conditional rule, and R-10's minimum
+purpose-validation contract. The synthesized round-4 verdict was "product
+decisions locked, one bounded correction pass required." That pass is done.
 
 The spec has never been implemented. No code in this spec's scope has changed.
 
@@ -83,6 +94,8 @@ deliberately.
 | Analytics on the preview | Deliberate non-scope, recorded so it is not mistaken for oversight |
 | Anti-double-charge guarantees | Rejected — no charge exists |
 | Calling R-15's guard "idempotent" | Rejected. It is narrower; the word was removed on purpose |
+| A semantic purpose classifier hard-blocking edits on all ten slots | Rejected in revision 5. A model call on every save, and one false positive traps a customer at the end of intake. R-10 hard-blocks only what is mechanically decidable and warns on the rest |
+| Making `market_context` optional on the geography-irrelevant path | Rejected in revision 5. It is `requiredText` in the schema and feeds six of ten prompt slots. The Market screen is never skipped; scope changes what it asks |
 
 ## 5 · Citation verification status
 
@@ -97,6 +110,20 @@ deliberately.
 `journey/04-questions.md` 51-55, 72, 84-86 · `PRODUCT.md` 64, 109, 164-165, 277 ·
 `NOW.md` 141-144 · Base UI package exports · `ci.yml` triggers ·
 `network-guard.test.ts`.
+
+**Verified during the revision-5 closure patch** — trust these:
+`contracts.ts` 216, 268, 765, 772, 775, 777 · `types.ts` 3-9, 68, 138, 140, 164-172 ·
+`questions-id.ts` 41, 352, 371, 378, 586, 599, 645, 941 ·
+`question-suggestion-guards.ts` 92, 102 · `questions-id-live.ts` 30-52, 351, 368-370 ·
+`locked-question-pack.ts` 14-16, 22-32, 34-52 and its five production importers ·
+`questions.ts` 122, 194, 210 and its single importer ·
+`fixtures/report-golden.ts` 76-82, 115-127 and its eleven importers ·
+`skills/generate-ai-visibility-prompts/SKILL.md` 82-86, 142-145, 176-177, 194-195, 218 ·
+`DECISION_LOG.md` 34, 41, 60, 79 · `intake-handoff.md` 151-160 ·
+`docs/drafts/00-journey-fixtures.md` 63-84 · `scripts/kk/run.ts` 74, 78, 178, 286 ·
+`scripts/kopikenangan/kopi-kenangan-live-run.spec.ts` 92, 175 ·
+`scripts/openrouter/smoke.spec.ts` 116 · `tsconfig.json` include/exclude ·
+`groq.ts` 55, 178 · `openrouter.ts` 90.
 
 **Inherited from a review and spot-checked, not independently re-read** —
 re-verify before relying on them: `stream.ts:174` · `workflow-storage.ts:25, 38` ·
@@ -124,6 +151,12 @@ Three assertions were made from recall rather than verification and were wrong:
 Reviews have also been wrong. Round 3's MED-3 claimed `AuditWorkflow` never
 calls extract; it calls it at `:484` (GET budget) and `:694` (POST extraction).
 
+Revision 4 lost two consumers the revision-3 directive had already named —
+`locked-question-pack.ts` and `fixtures/report-golden.ts` — because R-03 was
+rebuilt by re-scanning rather than by diffing against the directive's own list.
+Both are back in revision 5. When a later revision narrows an inventory,
+diff it against the prior list before publishing it.
+
 **Rule: grep before asserting, including against a reviewer's claim.** Every
 claim that was verified before being written has held; every claim written from
 memory that failed, failed for that reason.
@@ -137,6 +170,12 @@ Not gaps in the spec — real unknowns that need work, not more review.
    spec requires a feasibility determination *before* implementation planning.
    This is a spike, not a review item. If it comes back negative, whether
    identity fetching ships in V1 is a founder decision.
+
+   Narrowed in revision 5: the spike now settles **one** row of R-22's table,
+   DNS rebinding. Every other control — protocols, reserved networks, 3
+   redirect hops, 5 s per request and 10 s total, 512 KB, content types,
+   credentials, icon fetching — carries a fixed value in the spec and does not
+   wait on the spike. Changing one of those values is a spec change.
 2. **R-23, rate limiting.** Must be decided explicitly: name a
    Cloudflare-compatible mechanism, or defer and record the accepted risk.
 3. **R-21, Instagram parsing behaviors.** Observed during research, not
@@ -144,10 +183,16 @@ Not gaps in the spec — real unknowns that need work, not more review.
 
 ## 8 · Convergence state
 
-Three review rounds have run. Each was narrower than the last: round 2 found
+Four review rounds have run. Each was narrower than the last: round 2 found
 product-model and workflow-invariant problems; round 3 found migration
-completeness problems. The next pass is a **closure check**, not a fourth broad
-review — that is what `spec-007-closure-check.md` is for.
+completeness problems; round 4 found migration-inventory omissions and unstated
+control values, and disputed no product decision. Its synthesized verdict asked
+for a bounded correction pass and explicitly recommended **no fifth broad
+review**. Revision 5 is that pass.
+
+What remains is a targeted closure verification of R-03, R-09, R-10, and R-22
+against the tree — not another unrestricted review. `spec-007-closure-check.md`
+is that instrument.
 
 If a review returns another broad redesign or a new set of product questions,
 treat that as a signal the loop has stopped converging rather than as a
