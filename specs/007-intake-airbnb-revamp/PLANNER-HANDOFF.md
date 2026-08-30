@@ -25,8 +25,13 @@
   confirmation of round 5's four corrections. Round 5 pre-approved the spec
   contingent on exactly those four.
 - `docs/reviews/prompts/spec-007-settlement-check.md` — the round-7 check of
-  round 6's two corrections and of the founder's 2026-08-30 ruling. Shortest
-  pass in the series; round 6 said no broader review was warranted after it.
+  round 6's two corrections and of the founder's 2026-08-30 ruling.
+- `docs/reviews/prompts/spec-007-final-adversarial-review.md` — round 8, a
+  deliberate return to an adversarial posture, requested by the founder. Aimed
+  at what the closure checks never covered: R-22/R-23 and the feasibility
+  determination, which no reviewer has yet seen, and Blockers B/C/E and the
+  journey, covered once in round 4 and not since. It attacks the *premises* of
+  the accepted SSRF risk, not the acceptance.
 - `docs/reviews/findings/spec-007-adversarial-review-r2.md` — round 2 findings.
 - `docs/reviews/prompts/spec-007-revision-3-planner.md` — the founder directive
   that produced revision 4. **Read this; it carries decisions the spec
