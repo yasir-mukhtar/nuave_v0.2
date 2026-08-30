@@ -27,11 +27,27 @@ and say whether anything it introduced is worse than what it replaced.
   `npm run test:unit`. Do **not** run `npm run test:live-provider` or anything
   under `scripts/eval` — those make paid provider calls.
 - Make no paid model calls of your own. Deploy nothing.
-- The corrections are the round-8 correction commit on this branch; `git log
-  --oneline -3` names it and `git show` gives the exact delta. If it is not yet
-  committed, `git diff 69c3987` is the same delta.
+- The corrections are commit `f927adb` —
+  `f927adb4476a250a4ec488ab741f7619546f0632`. `git show f927adb` is the exact
+  delta you are confirming; `69c3987` is the tree round 8 reviewed.
 - The spec has still never been implemented. No code in its scope has changed,
   and none should have.
+
+**Reading it in a browser instead.** The repository is private, so this needs a
+GitHub session that can see `yasir-mukhtar/nuave_v0.2`. The delta:
+`https://github.com/yasir-mukhtar/nuave_v0.2/commit/f927adb`. The four files, at
+that commit:
+
+- `https://github.com/yasir-mukhtar/nuave_v0.2/blob/f927adb/specs/007-intake-airbnb-revamp/SPEC.md`
+- `https://github.com/yasir-mukhtar/nuave_v0.2/blob/f927adb/specs/007-intake-airbnb-revamp/R-22-SSRF-FEASIBILITY.md`
+- `https://github.com/yasir-mukhtar/nuave_v0.2/blob/f927adb/specs/007-intake-airbnb-revamp/PLANNER-HANDOFF.md`
+- `https://github.com/yasir-mukhtar/nuave_v0.2/blob/f927adb/docs/DECISION_LOG.md`
+
+Several checks below ask you to verify a claim against source files —
+`contracts.ts`, `similar-businesses.ts`, `questions-id.ts`, `openai.ts`,
+`types.ts`, `wrangler.jsonc`. Read them at the same commit, under
+`blob/f927adb/src/lib/audit/`. If you cannot reach the repository at all, say so
+and stop rather than confirming a correction you did not read.
 
 ## What you are reviewing
 
