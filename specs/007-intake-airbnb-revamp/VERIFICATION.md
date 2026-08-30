@@ -4,7 +4,7 @@
 > Reviewer: Hermes orchestrator
 > Date: 2026-08-30
 > Spec version or commit: Spec 007 approved 2026-08-30; base `393281d8cf8f95cd3abb8c87976d0b4a849734d7`
-> Implementation version or commit: `feat/spec-007-blocker-a-matrix` working tree; implementation commit recorded when this package is committed
+> Implementation version or commit: `e8bb703` (implementation commit; this verification record is finalized in the follow-up commit)
 
 ## Scope reviewed
 
