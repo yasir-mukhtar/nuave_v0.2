@@ -12,6 +12,9 @@
 
 - Branch `feat/intake-big-revamp`.
 - `specs/007-intake-airbnb-revamp/SPEC.md` — revision 5, status **Draft**.
+- `specs/007-intake-airbnb-revamp/R-22-SSRF-FEASIBILITY.md` — the determination
+  R-22 required. Complete 2026-08-30: no pin is available on Workers, the risk
+  is accepted on stated grounds, and §7 of it lists what was *not* verified.
 - `docs/reviews/prompts/spec-007-closure-check.md` — the round-4 review pass.
 - `docs/reviews/prompts/spec-007-revision-5-closure-check.md` — the round-5
   closure verification of revision 5. Scoped to the six corrections and the
@@ -192,20 +195,11 @@ memory that failed, failed for that reason.
 
 Not gaps in the spec — real unknowns that need work, not more review.
 
-1. **R-22, Cloudflare SSRF feasibility.** Resolving a hostname and validating
-   the IP does not pin the subsequent fetch to that address on Workers. The
-   spec requires a feasibility determination *before* implementation planning.
-   This is a spike, not a review item. If it comes back negative, whether
-   identity fetching ships in V1 is a founder decision.
+R-22 and R-23 were both resolved on 2026-08-30 and have left this list. The
+determination is `R-22-SSRF-FEASIBILITY.md`; R-23 chose the Workers Rate
+Limiting binding. One item remains.
 
-   Narrowed in revision 5: the spike now settles **one** row of R-22's table,
-   DNS rebinding. Every other control — protocols, reserved networks, 3
-   redirect hops, 5 s per request and 10 s total, 512 KB, content types,
-   credentials, icon fetching — carries a fixed value in the spec and does not
-   wait on the spike. Changing one of those values is a spec change.
-2. **R-23, rate limiting.** Must be decided explicitly: name a
-   Cloudflare-compatible mechanism, or defer and record the accepted risk.
-3. **R-21, Instagram parsing behaviors.** Observed during research, not
+1. **R-21, Instagram parsing behaviors.** Observed during research, not
    reproduced in a committed test. Confirm against a live profile first.
 
 ## 8 · Convergence state
@@ -225,6 +219,19 @@ If a review returns another broad redesign or a new set of product questions,
 treat that as a signal the loop has stopped converging rather than as a
 finding. The spec is already more thoroughly specified than most of what has
 shipped in this repository.
+
+## 8b · Deployment facts worth not re-deriving
+
+Established while resolving R-22, from `wrangler.jsonc` and
+`open-next.config.ts`:
+
+- Cloudflare Workers via OpenNext (`@opennextjs/cloudflare`), not Vercel.
+- `compatibility_date` 2026-08-01, `compatibility_flags: ["nodejs_compat"]`.
+- **The only binding is `ASSETS`.** No Workers VPC, Tunnel, Hyperdrive, Durable
+  Object, or KV. This is load-bearing for R-22's accepted risk — adding any of
+  them is a stated revisit trigger.
+- Workers has no instance metadata service, so the usual SSRF target does not
+  exist on this deployment.
 
 ## 9 · Repository governance
 

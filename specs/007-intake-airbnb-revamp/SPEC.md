@@ -630,28 +630,40 @@ Instagram path and record the observation date.
 from `og:description` → `meta[name=description]`; favicon from
 `link[rel~=icon]` with a `/favicon.ico` fallback.
 
-## R-22 · SSRF is a release blocker and needs a feasibility determination first
+## R-22 · SSRF controls, with the feasibility determination settled
 
 This introduces the first first-party server-side fetching of user-supplied
 URLs — `extract/route.ts` performs none today; extraction reaches URLs only
 through the provider's web search.
 
-**Before implementation planning**, produce a short technical feasibility
-determination for the Cloudflare Workers runtime. Resolving a hostname and
-validating the returned IP does **not** pin the subsequent fetch to that
-address, so the naive "resolve → validate → fetch" pattern does not deliver the
-intended property on this runtime. Name a mechanism that actually does, or
-record why the risk is accepted for a pre-customer prototype.
+**The feasibility determination R-22 required is complete**:
+[`R-22-SSRF-FEASIBILITY.md`](./R-22-SSRF-FEASIBILITY.md), 2026-08-30. Its
+outcome:
+
+**DNS pinning is not achievable on this runtime, and V1 does not attempt it.**
+Workers' `fetch()` exposes no DNS control, and separately refuses a literal-IP
+URL with error 1003 — so resolving the address ourselves and fetching it, the
+technique a pin depends on, is unavailable on its own terms. `connect()` from
+`cloudflare:sockets` is the only path to a genuine pin and would mean writing
+HTTP/1.1, TLS, redirects, and chunked decoding by hand on a socket path whose
+raw-IP and custom-SNI support is undocumented.
+
+The risk is accepted, on stated grounds rather than by default: this Worker's
+only binding is `ASSETS` (`wrangler.jsonc`), it has no Workers VPC, Tunnel, or
+Hyperdrive binding, and Workers has no instance metadata service — so the
+internal-service prize that motivates the pin does not exist on this
+deployment. The residual exposure is open-proxy abuse, which **R-23** bounds,
+not confidentiality. The determination records its revisit triggers and the one
+cheap live check that would close the remaining unknown.
 
 Objectively testable acceptance. Every value below is fixed by this spec and
-must have a test; the feasibility determination settles the DNS-rebinding row
-only:
+must have a test:
 
 | Control | Value |
 |---|---|
 | Protocols | `http:` and `https:` only; every other scheme rejected before any DNS lookup |
 | Reserved networks | Reject localhost, loopback, private, link-local, unique-local, and cloud-metadata ranges — IPv4 and IPv6, including IPv4-mapped IPv6 |
-| DNS rebinding | The mechanism named by the feasibility determination, or the accepted risk recorded in its place. This is the one row the spike settles |
+| DNS rebinding | **Accepted risk, not mitigated.** No pin is available (see the determination). Revalidate every redirect hop against every other row here; that is what V1 does instead |
 | Redirects | **At most 3 hops.** Every hop revalidated against every rule in this table before it is followed; hop 4 is a failure, not a truncation |
 | Timeout | **5 s per request**, **10 s total** across the whole redirect chain, via `AbortSignal.timeout` as `groq.ts:178` already does |
 | Response size | **512 KB**, counted on the wire and enforced while streaming; abort at the byte that exceeds it, never buffer then check |
@@ -664,16 +676,45 @@ for that and are deliberately far below the provider-call timeouts in
 `groq.ts:55` and `openrouter.ts:90`, which are model calls and not a precedent
 here. Changing a value is a spec change, not an implementation choice.
 
-## R-23 · Rate limiting: decide, do not defer implicitly
+## R-23 · Rate limiting: decided — the Workers Rate Limiting binding
 
-Durable infrastructure is deferred, which is what a rate limiter would normally
-need. Choose one and record it:
+**Decision, 2026-08-30: include it now.** The premise that a rate limiter needs
+the durable infrastructure this spec defers is false on this runtime. Cloudflare
+ships a **Rate Limiting binding** for Workers that needs no Durable Object, no
+KV, and no paid storage: counters are held per Cloudflare location and updated
+in the background.
 
-- name a Cloudflare-compatible mechanism and include it now; or
-- defer rate limiting and record the accepted risk — that a bypassed extraction
-  call spends founder budget.
+This also carries R-22's residual. The determination found open-proxy abuse to
+be the real exposure of an unauthenticated fetch endpoint; this is what bounds
+it.
 
-Blocker D must not depend on an undefined capability.
+**Configuration** — a `ratelimits` entry in `wrangler.jsonc` per limiter, each
+with a `name`, a unique `namespace_id`, and `simple: { limit, period }`. The
+runtime accepts a `period` of **10 or 60 seconds only**. Call
+`env.<NAME>.limit({ key })` and branch on the returned `success`.
+
+| Route | Key | Limit |
+|---|---|---|
+| `/api/audit/identity` | Caller IP (`CF-Connecting-IP`) | 10 per 60 s |
+| `/api/audit/identity` | Normalized target hostname | 20 per 60 s |
+| `/api/audit/extract` | Caller IP (`CF-Connecting-IP`) | 5 per 60 s |
+
+The second identity limiter is the one that matters for R-22: it bounds how
+hard any single third-party host can be hit through Nuave, which an IP-keyed
+limiter alone does not. Extraction is limited because it is the surface that
+spends founder budget; a journey needs one call.
+
+**Stated limitations, so this is not mistaken for more than it is.** The
+counters are per-colo and eventually consistent, and Cloudflare documents the
+API as permissive and explicitly not an accounting system. Cloudflare also
+discourages IP addresses as keys, because callers share them — the IP-keyed
+limits above are therefore set generously and are a coarse backstop, not a
+per-user quota. **This is not an entitlement boundary**; R-20 continues to
+govern that, and rate limiting does not change what a determined caller can
+reach.
+
+Exceeding a limit returns a plain Indonesian message per R-17, never a raw
+error.
 
 ---
 
@@ -795,7 +836,7 @@ deliberately at the handoff. Do not claim they pass unchanged.
 | **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix |
 | **B** | Workflow and data authority | Every field in R-12 has an owner, screen, requiredness, and invalidation rule; the comparison target has an explicit creation step; conditional screens and stale-data rules are implemented; validation routing is executable for every field |
 | **C** | Payment boundary | No personalized extraction occurs in the supported client journey before simulated payment success, proven by routing tests, a single-call-site guarantee, and E2E network assertions — with server-side entitlement explicitly deferred |
-| **D** | Safe source handling | The SSRF feasibility determination is recorded, R-22's controls each have a stated value and a test, and R-23's rate-limit decision is made |
+| **D** | Safe source handling | R-22's controls each have a stated value and a test, and R-23's limiters are configured and enforced. The feasibility determination and the rate-limit decision are both recorded (2026-08-30) and are no longer gates |
 | **E** | End-to-end runnable journey | The acceptance scenario passes from the real landing entry |
 
 ## Deferred after workflow validation
