@@ -95,6 +95,7 @@ count was matched.
 | `contracts.ts:775-778` | Branded count `!== 5` and its message |
 | **`locked-question-pack.ts:22-32`** | **`lockedPromptSlotIndex` — parses `NVA-ID-NN` into an array index, and maps legacy ids through `PROMPT_MATRIX` (`:14-16`)** |
 | **`locked-question-pack.ts:34-52`** | **`canonicalPrompt` — the server's final interpretation of every question, taking `category` from `INDONESIAN_SLOT_CATEGORIES[slotIndex]`. Live on `/api/audit/run`, `/api/audit/variance`, `report-pipeline.ts`, and `AuditWorkflow.tsx`. Left unmigrated, the server relabels a correct pack with legacy categories after review** |
+| **`questions-id.ts:141-147`** | **`minimizeIndonesianBrief` builds `comparison_business` only when `verified_competitor.source_url` is non-empty as well as the name, so R-13's name-only fallback target becomes `comparison_business: null` and slot 9 has nothing to name. Project on the name alone and carry `source_url` through when it exists. The doc comment at `:114-118` calls the null case "unusable"; a missing URL is not that** |
 | `questions-id.ts:352` / `:371` | `INDONESIAN_SLOT_CATEGORIES`, `INDONESIAN_SLOT_MATRIX` |
 | `questions-id.ts:378` | `default_branded: index >= 5` |
 | `questions-id.ts:454-494` | The ten deterministic fallback templates — see R-05 |
@@ -231,7 +232,17 @@ All derive their slot sets from the matrix; none may hard-code `1–6`.
    the question must satisfy one of R-10 rule 3's three forms. The eight cases
    listed there are required, including the two rejections that prove a marker
    sitting anywhere in the sentence does not pass.
-6. All five run against the deterministic fallback pack as well as generated
+6. **A name-only comparison target survives the projection.** A regression
+   test, not a review item, in four cases: (a) `verified_competitor.name` set
+   to R-13's category-level fallback with an empty `source_url` reaches the
+   minimized brief as `comparison_business`, not `null`; (b) slot 9 built from
+   that brief satisfies both the required comparison-target identity and R-10
+   rule 3's relation predicate; (c) a URL-backed comparison target projects
+   exactly as it does today, `source_url` included and unchanged; and (d) an
+   unnamed slot asking about alternatives in the customer's own category is
+   **not** rejected as comparison-target leakage while the fallback is the
+   target, though a named business in that slot still is.
+7. All six run against the deterministic fallback pack as well as generated
    packs. That is what proves R-05.
 
 ## R-07 · The generation instruction derives from the matrix
@@ -540,6 +551,31 @@ reached in one of two states, and there is no third:
 first valid suggestion straight into `verified_competitor` with no customer
 step. Its ranking is what case 1 keeps; the silent write is what this
 requirement removes.
+
+**The fallback must survive the Indonesian projection, and today it would not.**
+`minimizeIndonesianBrief` builds `comparison_business` only when
+`verified_competitor.source_url` is non-empty as well as the name
+(`questions-id.ts:141-147`), so the fallback — which deliberately has no source —
+would arrive at generation as `comparison_business: null`, and slot 9 would lose
+the target R-10 requires it to name. The contract, which Blocker A implements:
+
+- **A non-empty `verified_competitor.name` produces a comparison target.** The
+  name alone is sufficient; the URL is not part of the test.
+- **`source_url` may be empty, and stays empty.** No URL is invented,
+  synthesized, or substituted for the category-level fallback. It is not a
+  business with a website, and the brief must not imply it is.
+- **A comparison target the customer chose with a real URL keeps it**, projected
+  exactly as it is today.
+- **The fallback is not an identity, and the leakage guard must not treat it as
+  one.** The comparison-target leakage check exists to stop a *named* business
+  appearing outside slot 9. `alternatif lain di kategori <kategori>` is category
+  vocabulary, and slots 1 through 6 legitimately ask about alternatives in a
+  category — matching it there means the customer's own category words appeared,
+  not that a target leaked. When the comparison target is this fallback, the
+  comparison-target leakage check does not run. Every check on the audited
+  brand's own identity is unaffected, in every slot.
+
+R-03 carries the migration row and R-06 rule 6 carries the regression test.
 
 **Field mapping**, because three concepts coexist unnamed:
 
@@ -955,7 +991,7 @@ deliberately at the handoff. Do not claim they pass unchanged.
 
 | | Blocker | Done when |
 |---|---|---|
-| **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix |
+| **A** | Measurement authority | The canonical matrix exists with both-direction identity policy; every surface in R-03 derives from it; the generation instruction and report semantics are migrated and the instruction version bumped; the Indonesian brief projection preserves a name-only comparison target per R-13; R-06's agreement tests pass; no positional measurement-policy logic remains outside the matrix |
 | **B** | Workflow and data authority | Every field in R-12 has an owner, screen, requiredness, and invalidation rule; the comparison target has an explicit creation step; conditional screens and stale-data rules are implemented; validation routing is executable for every field |
 | **C** | Payment boundary | No personalized extraction occurs in the supported client journey before simulated payment success, proven by routing tests, a single-call-site guarantee, and E2E network assertions — with server-side entitlement explicitly deferred |
 | **D** | Safe source handling | R-22's controls each have a stated value and a test, and R-23's limiters are configured and enforced. The feasibility determination and the rate-limit decision are both recorded (2026-08-30) and are no longer gates |
@@ -1000,7 +1036,9 @@ Verified along the way:
 9. report assessment, labels, and denominators derive from the matrix, with no
    observation falling through per-category rules;
 10. the comparison target is proposed by the R-13 derivation step and can be
-    accepted, edited, or replaced;
+    accepted, edited, or replaced — including the category-level fallback, which
+    reaches question generation as the comparison target with no source URL and
+    still lets slot 9 pass R-10's identity and relation checks;
 11. changing scope invalidates dependent values per R-14 and leaves no stale
     branch-specific data in the final brief, and a selected branch or product
     reaches the final brief in R-12's canonical `entity_scope` form;
