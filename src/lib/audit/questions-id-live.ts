@@ -23,41 +23,13 @@ import {
   validateIndonesianQuestionPack,
 } from "./questions-id";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
-
-const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
-  need_discovery: {
-    role: "Memahami kebutuhan pelanggan",
-    rationale: "Pertanyaan untuk memahami kebutuhan pelanggan.",
-  },
-  solution_discovery: {
-    role: "Mencari pilihan solusi",
-    rationale: "Pertanyaan untuk mencari pilihan solusi.",
-  },
-  comparison: {
-    role: "Membandingkan pilihan",
-    rationale: "Pertanyaan untuk membandingkan pilihan.",
-  },
-  validation: {
-    role: "Memvalidasi fakta publik",
-    rationale: "Pertanyaan untuk memvalidasi fakta publik.",
-  },
-  action: {
-    role: "Mendorong langkah tindakan",
-    rationale: "Pertanyaan untuk mendorong langkah tindakan.",
-  },
-};
-
-function categoryLabels(category: string) {
-  return (
-    CATEGORY_LABELS[category] ?? {
-      role: "Pertanyaan pelanggan",
-      rationale: "Pertanyaan pelanggan.",
-    }
-  );
-}
 
 type CapturedCall = {
   url: string;
@@ -328,6 +300,26 @@ export async function buildLiveIndonesianPromptPack(input: {
     selectedQuestions.map((item) => item.text),
     minimized,
   );
+  const expectedCategoryCounts = new Map<string, number>();
+  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+    expectedCategoryCounts.set(
+      slot.legacyCategory,
+      (expectedCategoryCounts.get(slot.legacyCategory) ?? 0) + 1,
+    );
+  });
+  const actualCategoryCounts = new Map<string, number>();
+  selectedQuestions.forEach((item) => {
+    actualCategoryCounts.set(
+      item.suggested_category,
+      (actualCategoryCounts.get(item.suggested_category) ?? 0) + 1,
+    );
+  });
+  const categoryCountsMatch = [...expectedCategoryCounts].every(
+    ([category, count]) => actualCategoryCounts.get(category) === count,
+  );
+  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => !slot.legacyBranded,
+  ).length;
 
   const pack: PromptPack = {
     status: "draft_for_review",
@@ -348,14 +340,19 @@ export async function buildLiveIndonesianPromptPack(input: {
       branded_prompts: classificationSummary.menyebut_bisnis_anda,
     },
     prompts: selectedQuestions.map((item, index) => {
-      const labels = categoryLabels(item.suggested_category);
+      const slot = measurementSlotForOrder(index + 1);
+      if (!slot) {
+        throw new Error(
+          `No canonical measurement slot for question ${index + 1}.`,
+        );
+      }
       return {
         prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
         category: item.suggested_category,
-        role: labels.role,
+        role: slot.customerFacingLabel,
         branded: item.final_classification === "menyebut_bisnis_anda",
         question: item.text,
-        rationale: labels.rationale,
+        rationale: slot.generatorSlotDescription,
         // The provider receives one minimized confirmed-facts record. Do not
         // claim three specific fields were used when the authored question may
         // have been grounded in different confirmed fields.
@@ -365,9 +362,12 @@ export async function buildLiveIndonesianPromptPack(input: {
     }),
     self_check: {
       ten_prompts: selectedQuestions.length === 10,
-      two_per_category: true,
-      five_unbranded: classificationSummary.tanpa_menyebut_bisnis_anda === 5,
-      five_branded: classificationSummary.menyebut_bisnis_anda === 5,
+      two_per_category: categoryCountsMatch,
+      five_unbranded:
+        classificationSummary.tanpa_menyebut_bisnis_anda === expectedUnbranded,
+      five_branded:
+        classificationSummary.menyebut_bisnis_anda ===
+        AUDIT_MEASUREMENT_MATRIX.length - expectedUnbranded,
       no_brand_leakage: selectedBlockers.length === 0,
       verified_inputs_only: true,
       verified_competitor_only: true,

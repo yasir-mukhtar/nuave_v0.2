@@ -1,20 +1,18 @@
-import { PROMPT_MATRIX } from "./contracts";
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
 import {
-  INDONESIAN_SLOT_CATEGORIES,
   classifyIndonesianQuestion,
   minimizeIndonesianBrief,
 } from "./questions-id";
+import {
+  measurementSlotForId,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 import { selectVariancePrompts } from "./variance";
 
 export type CanonicalLockedQuestionPack = {
   prompts: AuditPrompt[];
   by_id: ReadonlyMap<string, AuditPrompt>;
 };
-
-const LEGACY_PROMPT_SLOT_INDEX = new Map<string, number>(
-  PROMPT_MATRIX.map(([promptId], index) => [promptId, index]),
-);
 
 function normalizedPromptId(value: string) {
   return value.trim();
@@ -24,12 +22,11 @@ function lockedPromptSlotIndex(value: string): number | null {
   const promptId = normalizedPromptId(value);
   const indonesianMatch = /^NVA-ID-(\d{2})$/.exec(promptId);
   if (indonesianMatch) {
-    const slotIndex = Number(indonesianMatch[1]) - 1;
-    return slotIndex >= 0 && slotIndex < INDONESIAN_SLOT_CATEGORIES.length
-      ? slotIndex
-      : null;
+    const slot = measurementSlotForOrder(Number(indonesianMatch[1]));
+    return slot ? slot.order - 1 : null;
   }
-  return LEGACY_PROMPT_SLOT_INDEX.get(promptId) ?? null;
+  const slot = measurementSlotForId(promptId);
+  return slot ? slot.order - 1 : null;
 }
 
 function canonicalPrompt(
@@ -37,8 +34,8 @@ function canonicalPrompt(
   brief: BusinessBrief,
   slotIndex: number,
 ): AuditPrompt {
-  const category = INDONESIAN_SLOT_CATEGORIES[slotIndex];
-  if (!category) {
+  const slot = measurementSlotForOrder(slotIndex + 1);
+  if (!slot) {
     throw new Error(`Locked question slot ${slotIndex + 1} is not canonical.`);
   }
   const minimized = minimizeIndonesianBrief(brief);
@@ -47,7 +44,7 @@ function canonicalPrompt(
   return {
     ...prompt,
     prompt_id: normalizedPromptId(prompt.prompt_id),
-    category,
+    category: slot.legacyCategory,
     question,
     branded: classification === "menyebut_bisnis_anda",
   };

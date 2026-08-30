@@ -1,9 +1,11 @@
-import type { BusinessBrief } from "./types";
+import type { BusinessBrief, LegacyPromptCategory } from "./types";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 
 // Indonesian question-generation boundary (Spec 002, R-29..R-37, AC-23,
-// AC-24). This module is additive and versioned: it sits BESIDE the English
-// deterministic path (src/lib/audit/questions.ts, "deterministic-v4-en") and
-// is not wired into the live engine (that is Phase 3). It owns:
+// AC-24). This module is additive and versioned. It owns:
 //
 //   - the model-first provider interface (one bounded no-search call that
 //     receives only the minimized confirmed brief and returns exactly ten
@@ -115,7 +117,8 @@ export type MinimizedIndonesianBrief = {
  * Projection adapter from the existing verified English brief shape. The
  * Indonesian contract treats the comparison business as optional, so the
  * minimized brief carries `comparison_business: null` only when the source
- * value is unusable.
+ * has no comparison name. A missing URL does not make a named comparison
+ * target unusable.
  */
 export function minimizeIndonesianBrief(
   brief: BusinessBrief,
@@ -138,14 +141,13 @@ export function minimizeIndonesianBrief(
     customer_needs: brief.verified_customer_needs,
     decision_considerations: brief.verified_decision_criteria,
     differentiator: brief.usp,
-    comparison_business:
-      comparisonName && brief.verified_competitor.source_url
-        ? {
-            name: comparisonName,
-            scope: brief.verified_competitor.scope,
-            source_url: brief.verified_competitor.source_url,
-          }
-        : null,
+    comparison_business: comparisonName
+      ? {
+          name: comparisonName,
+          scope: brief.verified_competitor.scope,
+          source_url: brief.verified_competitor.source_url,
+        }
+      : null,
     known_accuracy_questions: brief.known_accuracy_questions,
     conversion_action: brief.conversion_action,
     official_source_urls: brief.official_sources,
@@ -216,11 +218,29 @@ function phraseId(value: string) {
     .trim();
 }
 
-function normalizeId(value: string) {
+export function normalizeIndonesianIdentity(value: string) {
   return value
     .toLocaleLowerCase("id-ID")
     .replace(/[^a-z0-9]+/gi, " ")
     .trim();
+}
+
+function normalizeId(value: string) {
+  return normalizeIndonesianIdentity(value);
+}
+
+/** The only supported unnamed comparison target when no business is supplied. */
+export function categoryComparisonFallbackName(category: string) {
+  return `alternatif lain di kategori ${category.trim()}`;
+}
+
+export function isCategoryComparisonFallback(brief: MinimizedIndonesianBrief) {
+  const target = brief.comparison_business?.name ?? "";
+  return (
+    Boolean(target) &&
+    normalizeId(target) ===
+      normalizeId(categoryComparisonFallbackName(brief.category))
+  );
 }
 
 /** Brand identities as normalized whole tokens (length >= 3 to stay specific). */
@@ -280,6 +300,96 @@ export function containsIndonesianComparisonIdentity(
   identity: string,
 ) {
   return containsNormalizedIdentity(text, identity, 3);
+}
+
+function normalizedTokens(value: string) {
+  return normalizeId(value).split(/\s+/).filter(Boolean);
+}
+
+function containsTokenRunAt(tokens: string[], identity: string, start: number) {
+  const identityTokens = normalizedTokens(identity);
+  return (
+    identityTokens.length > 0 &&
+    identityTokens.every((token, index) => tokens[start + index] === token)
+  );
+}
+
+function containsTokenRun(tokens: string[], identity: string) {
+  return tokens.some((_, index) => containsTokenRunAt(tokens, identity, index));
+}
+
+function hasIdentityChoice(
+  tokens: string[],
+  firstIdentity: string,
+  secondIdentity: string,
+  connector: string,
+) {
+  const firstTokens = normalizedTokens(firstIdentity);
+  if (!firstTokens.length) return false;
+  return tokens.some(
+    (_, index) =>
+      containsTokenRunAt(tokens, firstIdentity, index) &&
+      tokens[index + firstTokens.length] === connector &&
+      containsTokenRunAt(
+        tokens,
+        secondIdentity,
+        index + firstTokens.length + 1,
+      ),
+  );
+}
+
+/**
+ * R-10's closed comparison-relation predicate. Both identities must be
+ * present, then one of the matrix-owned forms must hold: a direct marker, an
+ * identity pair joined by `atau`, or the `antara` + `lebih` bracketed form.
+ * Markers are compared as whole normalized tokens; a marker elsewhere in the
+ * sentence is not enough for the identity-choice form.
+ */
+export function hasIndonesianComparisonRelation(
+  text: string,
+  brief: MinimizedIndonesianBrief,
+) {
+  const comparisonSlot = AUDIT_MEASUREMENT_MATRIX.find(
+    (slot) => "comparisonRelationMarkers" in slot,
+  );
+  if (!comparisonSlot || !("comparisonRelationMarkers" in comparisonSlot)) {
+    return false;
+  }
+
+  const brandIdentities = [brief.brand_name, ...brief.brand_name_variants];
+  const comparisonIdentity = brief.comparison_business?.name ?? "";
+  const tokens = normalizedTokens(text);
+  if (
+    !brandIdentities.some((identity) => containsTokenRun(tokens, identity)) ||
+    !containsTokenRun(tokens, comparisonIdentity)
+  ) {
+    return false;
+  }
+
+  const markers = comparisonSlot.comparisonRelationMarkers;
+  if (markers.direct.some((marker) => tokens.includes(marker))) return true;
+
+  const choicePairs = brandIdentities.flatMap(
+    (brandIdentity) =>
+      [
+        [brandIdentity, comparisonIdentity],
+        [comparisonIdentity, brandIdentity],
+      ] as const,
+  );
+  if (
+    choicePairs.some(([firstIdentity, secondIdentity]) =>
+      hasIdentityChoice(
+        tokens,
+        firstIdentity,
+        secondIdentity,
+        markers.identityChoice[0],
+      ),
+    )
+  ) {
+    return true;
+  }
+
+  return markers.bracketed.every((marker) => tokens.includes(marker));
 }
 
 /** True when the question text names the audited business, a known variant,
@@ -349,20 +459,9 @@ export function parseNumberedIndonesianQuestions(
 // Deterministic Indonesian fallback (cannot hard-fail)
 // ---------------------------------------------------------------------------
 
-export const INDONESIAN_SLOT_CATEGORIES = [
-  "need_discovery",
-  "need_discovery",
-  "solution_discovery",
-  "solution_discovery",
-  "comparison",
-  "comparison",
-  "validation",
-  "validation",
-  "action",
-  "action",
-] as const;
-export type IndonesianSlotCategory =
-  (typeof INDONESIAN_SLOT_CATEGORIES)[number];
+export const INDONESIAN_SLOT_CATEGORIES: readonly LegacyPromptCategory[] =
+  AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.legacyCategory);
+export type IndonesianSlotCategory = LegacyPromptCategory;
 
 /** Code-owned slot semantics: the ten slot ids, their coverage role, and the
  * default suggestion's name/no-name posture. The model authors only the ten
@@ -372,10 +471,10 @@ export const INDONESIAN_SLOT_MATRIX: readonly {
   order: number;
   suggested_category: IndonesianSlotCategory;
   default_branded: boolean;
-}[] = INDONESIAN_SLOT_CATEGORIES.map((suggested_category, index) => ({
-  order: index + 1,
-  suggested_category,
-  default_branded: index >= 5,
+}[] = AUDIT_MEASUREMENT_MATRIX.map((slot) => ({
+  order: slot.order,
+  suggested_category: slot.legacyCategory,
+  default_branded: slot.legacyBranded,
 }));
 
 /**
@@ -517,7 +616,10 @@ export type IndonesianValidationRule =
   | "empty"
   | "unexecutable"
   | "identity_leakage"
+  | "identity_requirement"
   | "competitor_leakage"
+  | "comparison_relation"
+  | "composition"
   | "unsupported_premise"
   | "distinctness";
 
@@ -580,10 +682,12 @@ export function validateIndonesianQuestionPack(
       });
     }
 
-    // Identity leakage: the five default unbranded slots must not reveal the
-    // audited business name or a known variant.
+    const matrixSlot = measurementSlotForOrder(slot);
+
+    // Compatibility identity policy for the still-running 5/5 suggestion
+    // path. The policy comes from the matrix, never from the slot number.
     if (
-      slot <= 5 &&
+      matrixSlot?.legacyAuditedBrandIdentity === "forbidden" &&
       brandSignals.some((signal) => containsIdentityToken(question, signal))
     ) {
       issues.push({
@@ -593,10 +697,12 @@ export function validateIndonesianQuestionPack(
       });
     }
 
-    // The comparison business may be named only in the designated comparison
-    // slot (6), including punctuation and compact renderings.
+    // The comparison business may be named only in the matrix-designated
+    // compatibility comparison slot, including punctuation and compact
+    // renderings. The category-level fallback is not an identity.
     if (
-      slot !== 6 &&
+      matrixSlot?.legacyComparisonTargetIdentity !== "required" &&
+      !isCategoryComparisonFallback(brief) &&
       containsIndonesianComparisonIdentity(question, competitorSignal)
     ) {
       issues.push({
@@ -618,6 +724,144 @@ export function validateIndonesianQuestionPack(
       });
     }
   });
+
+  const seen = new Set<string>();
+  questions.forEach((question, index) => {
+    const normalized = normalizeId(question);
+    if (seen.has(normalized)) {
+      issues.push({
+        slot: index + 1,
+        rule: "distinctness",
+        message: `Question ${index + 1} duplicates another question.`,
+      });
+    } else {
+      seen.add(normalized);
+    }
+  });
+
+  return issues;
+}
+
+/**
+ * Agreement validator for the canonical R-01 matrix. The current customer
+ * path still calls `validateIndonesianQuestionPack` for its protected 5/5
+ * compatibility pack; this function makes the next 6/4 contract executable
+ * now so the composition flip cannot bypass any policy checks.
+ */
+export function validateCanonicalIndonesianQuestionPack(
+  questions: string[],
+  brief: MinimizedIndonesianBrief,
+): IndonesianValidationIssue[] {
+  const issues: IndonesianValidationIssue[] = [];
+  if (questions.length !== AUDIT_MEASUREMENT_MATRIX.length) {
+    issues.push({
+      slot: null,
+      rule: "count",
+      message: `The canonical Indonesian question pack must contain exactly ${AUDIT_MEASUREMENT_MATRIX.length} questions, received ${questions.length}.`,
+    });
+    return issues;
+  }
+
+  const comparisonTarget = brief.comparison_business?.name ?? "";
+  const fallbackTarget = isCategoryComparisonFallback(brief);
+  const classifications = questions.map((question) =>
+    classifyIndonesianQuestion(question, brief),
+  );
+
+  questions.forEach((question, index) => {
+    const slot = measurementSlotForOrder(index + 1);
+    if (!slot) return;
+    const normalized = normalizeWhitespace(question);
+    if (!normalized) {
+      issues.push({
+        slot: slot.order,
+        rule: "empty",
+        message: `Question ${slot.order} is empty.`,
+      });
+      return;
+    }
+    if (normalized.length < INDONESIAN_UNEXECUTABLE_MIN_LENGTH) {
+      issues.push({
+        slot: slot.order,
+        rule: "unexecutable",
+        message: `Question ${slot.order} is too short to be executed as a standalone question.`,
+      });
+    }
+
+    const brandMentioned = mentionsIndonesianBrand(question, brief);
+    if (slot.auditedBrandIdentity === "forbidden" && brandMentioned) {
+      issues.push({
+        slot: slot.order,
+        rule: "identity_leakage",
+        message: `Question ${slot.order} must not mention the audited business.`,
+      });
+    }
+    if (slot.auditedBrandIdentity === "required" && !brandMentioned) {
+      issues.push({
+        slot: slot.order,
+        rule: "identity_requirement",
+        message: `Question ${slot.order} must mention the audited business.`,
+      });
+    }
+
+    const targetMentioned =
+      Boolean(comparisonTarget) &&
+      containsIndonesianComparisonIdentity(question, comparisonTarget);
+    if (
+      slot.comparisonTargetIdentity === "forbidden" &&
+      !fallbackTarget &&
+      targetMentioned
+    ) {
+      issues.push({
+        slot: slot.order,
+        rule: "competitor_leakage",
+        message: `Question ${slot.order} must not mention the comparison target.`,
+      });
+    }
+    if (slot.comparisonTargetIdentity === "required" && !targetMentioned) {
+      issues.push({
+        slot: slot.order,
+        rule: "identity_requirement",
+        message: `Question ${slot.order} must mention the comparison target.`,
+      });
+    }
+
+    if (
+      "comparisonRelationMarkers" in slot &&
+      !hasIndonesianComparisonRelation(question, brief)
+    ) {
+      issues.push({
+        slot: slot.order,
+        rule: "comparison_relation",
+        message: `Question ${slot.order} must compare the audited business with the comparison target.`,
+      });
+    }
+    if (
+      INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS.some((pattern) =>
+        pattern.test(question),
+      )
+    ) {
+      issues.push({
+        slot: slot.order,
+        rule: "unsupported_premise",
+        message: `Question ${slot.order} assumes an unconfirmed fact as true or asserts an unsupported claim.`,
+      });
+    }
+  });
+
+  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.auditedBrandIdentity === "forbidden",
+  ).length;
+  const actualUnbranded = classifications.filter(
+    (classification) => classification === "tanpa_menyebut_bisnis_anda",
+  ).length;
+  if (actualUnbranded !== expectedUnbranded) {
+    issues.push({
+      slot: null,
+      rule: "composition",
+      message: `The canonical question pack must contain ${expectedUnbranded} unnamed and ${AUDIT_MEASUREMENT_MATRIX.length - expectedUnbranded} named questions.`,
+    });
+  }
 
   const seen = new Set<string>();
   questions.forEach((question, index) => {
@@ -933,14 +1177,22 @@ function toQuestionItems(
   originals: string[],
   brief: MinimizedIndonesianBrief,
 ): IndonesianQuestionItem[] {
-  return texts.map((text, index) => ({
-    order: index + 1,
-    text,
-    final_classification: classifyIndonesianQuestion(text, brief),
-    original_suggestion: originals[index],
-    suggested_category: INDONESIAN_SLOT_MATRIX[index].suggested_category,
-    edited: false,
-  }));
+  return texts.map((text, index) => {
+    const slot = measurementSlotForOrder(index + 1);
+    if (!slot) {
+      throw new Error(
+        `No canonical measurement slot for question ${index + 1}.`,
+      );
+    }
+    return {
+      order: slot.order,
+      text,
+      final_classification: classifyIndonesianQuestion(text, brief),
+      original_suggestion: originals[index],
+      suggested_category: slot.legacyCategory,
+      edited: false,
+    };
+  });
 }
 
 /**
