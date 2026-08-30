@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AuditNotice } from "@/components/product/AuditNotice";
 import { Button } from "@/components/ui/button";
-import { IconCheck, IconDownload } from "@tabler/icons-react";
+import { IconDownload } from "@tabler/icons-react";
 import {
   businessBriefSchema,
   AUDIT_COST_LIMIT_USD,
@@ -123,13 +123,6 @@ const emptyBrief: BusinessBrief = {
   agency_name: "",
   agency_logo_data_url: "",
 };
-
-const stepLabels = [
-  "Fakta bisnis",
-  "Periksa fakta",
-  "Periksa pertanyaan",
-  "Jalankan audit",
-];
 
 class AuditRequestError extends Error {
   readonly telemetry: AuditCallTelemetry[];
@@ -1124,13 +1117,6 @@ export default function AuditWorkflow() {
     setError("");
   }
 
-  function backToSource() {
-    operationGeneration.invalidate("Navigated back to source");
-    varianceInFlightRunKey.current = null;
-    setBusy(null);
-    setFactsExtracted(false);
-  }
-
   function backToFacts() {
     operationGeneration.invalidate("Navigated back to business facts");
     varianceInFlightRunKey.current = null;
@@ -1215,37 +1201,6 @@ export default function AuditWorkflow() {
         </div>
       </header>
 
-      {step > 0 && step < 4 ? (
-        <nav
-          className={`${styles.stepper} ${styles.noPrint}`}
-          aria-label="Tahapan audit"
-        >
-          <div className={styles.stepContext}>
-            <span>Pengaturan audit</span>
-            <strong>
-              Langkah {step + 1} dari {stepLabels.length}
-            </strong>
-          </div>
-          <ol className={styles.stepList}>
-            {stepLabels.map((label, index) => (
-              <li
-                key={label}
-                className={`${styles.step} ${index <= step ? styles.stepActive : ""} ${index < step ? styles.stepComplete : ""}`}
-                aria-current={index === step ? "step" : undefined}
-              >
-                <span className={styles.stepBar} aria-hidden="true" />
-                <span className={styles.stepLabel}>
-                  <span className={styles.stepMarker} aria-hidden="true">
-                    {index < step ? <IconCheck /> : index + 1}
-                  </span>
-                  {label}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </nav>
-      ) : null}
-
       {error && step > 0 ? (
         <div className={`${styles.globalAlert} ${styles.noPrint}`}>
           <AuditNotice title="Periksa ini sebelum melanjutkan" tone="danger">
@@ -1276,7 +1231,6 @@ export default function AuditWorkflow() {
           }}
           busy={busy}
           onGenerate={generatePrompts}
-          onBack={backToSource}
           onLogo={handleLogo}
         />
       ) : null}
