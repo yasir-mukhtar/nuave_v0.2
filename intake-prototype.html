@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuave Intake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg-page:#ffffff; --bg-surface:#fafafa; --bg-surface-raised:#f4f4f5;
+    --border-light:#ececec; --border-default:#e5e7eb; --border-strong:#d1d5db;
+    --text-heading:#18181b; --text-body:#3f3f46; --text-muted:#52525b;
+    --text-placeholder:#a1a1aa;
+    --action:#18181b; --action-hover:#27272a; --action-foreground:#ffffff;
+    --action-soft:#f4f4f5;
+    --status-ok:#16a34a;
+    --radius-sm:6px; --radius-md:8px; --radius-lg:10px; --radius-xl:14px;
+    --dur-fast:150ms; --dur-base:250ms; --dur-slow:400ms;
+    --ease:cubic-bezier(0.16,1,0.3,1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg-page);color:var(--text-body);
+    font-family:Geist,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  /* type roles */
+  .type-heading-lg{font-size:32px;font-weight:600;line-height:1.15;letter-spacing:-0.03em;color:var(--text-heading)}
+  .type-heading-md{font-size:24px;font-weight:600;line-height:1.25;letter-spacing:-0.025em;color:var(--text-heading)}
+  .type-heading-sm{font-size:20px;font-weight:600;line-height:1.3;letter-spacing:-0.02em;color:var(--text-heading)}
+  .type-copy-lg{font-size:18px;font-weight:400;line-height:1.5;letter-spacing:-0.01em}
+  .type-copy{font-size:16px;font-weight:400;line-height:1.5}
+  .type-copy-sm{font-size:14px;font-weight:400;line-height:1.5}
+  .type-label{font-size:14px;font-weight:500;line-height:1.4}
+  .type-label-sm{font-size:12px;font-weight:500;line-height:1.35}
+
+  /* app frame: mobile-first, same column widens on desktop */
+  #app{max-width:560px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+  #top{display:flex;justify-content:space-between;align-items:center;padding:16px 24px 8px}
+  #wordmark{font-weight:600;letter-spacing:-0.02em;font-size:16px;color:var(--text-heading)}
+  #scenario{font:inherit;font-size:12px;font-weight:500;color:var(--text-muted);
+    border:1px solid var(--border-default);border-radius:var(--radius-sm);
+    background:var(--bg-surface);padding:4px 8px;max-width:180px}
+
+  #stage{flex:1;overflow-y:auto;padding:8px 24px 160px}
+  .screen{display:none;animation:enter var(--dur-base) var(--ease)}
+  .screen.on{display:block}
+  @keyframes enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .kicker{margin:16px 0 0;font-size:12px;font-weight:500;line-height:1.35;
+    letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)}
+  h1{margin:8px 0;font-size:20px;font-weight:600;line-height:1.3;letter-spacing:-0.02em;
+    color:var(--text-heading);text-wrap:balance}
+  @media(min-width:640px){h1{font-size:24px;line-height:1.25;letter-spacing:-0.025em}}
+  .lead{margin:0 0 24px;font-size:16px;line-height:1.5;color:var(--text-muted);max-width:44ch}
+  .hint{margin-top:8px;font-size:14px;line-height:1.5;color:var(--text-muted)}
+  .optional{display:inline-block;vertical-align:4px;margin-left:8px;padding:2px 8px;
+    font-size:12px;font-weight:500;line-height:1.35;color:var(--text-muted);
+    border:1px solid var(--border-default);border-radius:999px}
+  a{color:var(--text-heading);text-underline-offset:3px}
+
+  /* focus: two-layer ring */
+  :focus{outline:none}
+  :focus-visible{box-shadow:0 0 0 2px var(--bg-page),0 0 0 4px var(--action)}
+
+  /* inputs */
+  input[type=text],textarea{width:100%;min-height:48px;padding:8px 16px;font:inherit;font-size:16px;
+    color:var(--text-body);background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-md);transition:border-color var(--dur-fast) var(--ease)}
+  input::placeholder,textarea::placeholder{color:var(--text-placeholder)}
+  input:focus-visible,textarea:focus-visible{border-color:var(--action)}
+  textarea{min-height:112px;padding:16px;resize:vertical;line-height:1.5}
+  .stack{display:flex;flex-direction:column;gap:8px}
+
+  /* buttons */
+  button{font:inherit;cursor:pointer;color:var(--text-body)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;
+    padding:0 24px;font-size:16px;font-weight:500;border-radius:var(--radius-md);border:0;
+    background:var(--action);color:var(--action-foreground);
+    transition:background var(--dur-fast) var(--ease)}
+  .btn:hover{background:var(--action-hover)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn-outline{background:var(--bg-page);color:var(--text-heading);border:1px solid var(--border-strong)}
+  .btn-outline:hover{background:var(--bg-surface)}
+  .btn-ghost{background:none;border:0;min-height:44px;padding:0 8px;font-size:16px;
+    font-weight:500;color:var(--text-heading);text-decoration:underline;text-underline-offset:3px}
+  .btn-sm{min-height:32px;padding:0 16px;font-size:14px;border-radius:var(--radius-sm)}
+
+  /* option cards */
+  .cards{display:flex;flex-direction:column;gap:8px}
+  .card{display:flex;gap:16px;align-items:flex-start;width:100%;text-align:left;min-height:44px;
+    padding:16px;background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-lg);box-shadow:0 1px 2px rgba(0,0,0,0.05);
+    transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
+  .card:hover{border-color:var(--border-strong)}
+  .card.sel{border-color:var(--action);background:var(--action-soft);box-shadow:0 0 0 1px var(--action)}
+  .card .t{font-size:16px;font-weight:500;line-height:1.4;color:var(--text-heading)}
+  .card .d{font-size:14px;line-height:1.5;color:var(--text-muted);margin-top:2px}
+  .card svg{flex:none;margin-top:2px;color:var(--text-muted)}
+  .card.sel svg{color:var(--text-heading)}
+
+  /* chips (pill controls) */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;
+    font-size:14px;font-weight:500;line-height:1.4;color:var(--text-heading);
+    background:var(--bg-page);border:1px solid var(--border-default);border-radius:999px;
+    transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+  .chip:hover{border-color:var(--border-strong)}
+  .chip.on{background:var(--action);border-color:var(--action);color:var(--action-foreground)}
+  .chip .x{opacity:.6;display:inline-flex}
+
+  /* radio rows */
+  .rows{display:flex;flex-direction:column;gap:8px}
+  .row{display:flex;align-items:center;gap:16px;width:100%;text-align:left;min-height:44px;
+    padding:16px;background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-lg);box-shadow:0 1px 2px rgba(0,0,0,0.05);
+    transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
+  .row:hover{border-color:var(--border-strong)}
+  .row.sel{border-color:var(--action);background:var(--action-soft);box-shadow:0 0 0 1px var(--action)}
+  .row .rt{font-size:16px;font-weight:500;color:var(--text-heading)}
+  .row .rd{font-size:14px;color:var(--text-muted);margin-top:2px}
+  .dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--border-strong)}
+  .row.sel .dot{border:6px solid var(--action)}
+
+  /* competitor rows */
+  .comp{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:16px;
+    background:var(--bg-page);border:1px solid var(--border-default);border-radius:var(--radius-lg);
+    box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+  .comp.removed{opacity:.5;background:var(--bg-surface);box-shadow:none}
+  .comp .nm{font-size:16px;font-weight:500;color:var(--text-heading)}
+  .comp .ctx{font-size:14px;color:var(--text-muted);margin-top:2px}
+  .mini{flex:none;min-height:32px;padding:0 16px;font-size:14px;font-weight:500;
+    color:var(--text-muted);background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-sm)}
+  .mini:hover{border-color:var(--border-strong);color:var(--text-heading)}
+
+  /* brand card */
+  .brandcard{padding:24px;text-align:center;background:var(--bg-page);
+    border:1px solid var(--border-default);border-radius:var(--radius-xl);
+    box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+  .logo{width:64px;height:64px;margin-bottom:8px;border-radius:var(--radius-xl);
+    background:var(--action);color:var(--action-foreground);display:inline-flex;
+    align-items:center;justify-content:center;font-weight:600;font-size:24px}
+
+  /* progressive disclosure */
+  .reveal{display:none;margin-top:24px;padding:16px 0 4px 16px;border-left:2px solid var(--border-strong)}
+  .reveal.on{display:block;animation:enter var(--dur-base) var(--ease)}
+  .reveal h3{margin:0 0 8px;font-size:16px;font-weight:500;line-height:1.4;color:var(--text-heading)}
+
+  /* reading state */
+  .steps{display:flex;flex-direction:column;gap:16px;margin-top:32px}
+  .step{display:flex;gap:16px;align-items:center;font-size:16px;font-weight:500;
+    color:var(--text-placeholder);transition:color var(--dur-base) var(--ease)}
+  .step .tick{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--border-default);
+    display:flex;align-items:center;justify-content:center;color:transparent}
+  .step.busy{color:var(--text-muted)}
+  .step.busy .tick{border-color:var(--border-strong);border-top-color:var(--action);animation:spin 0.8s linear infinite}
+  .step.done{color:var(--text-heading)}
+  .step.done .tick{background:var(--action);border-color:var(--action);color:var(--action-foreground);animation:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* readback */
+  .rv{padding:16px 0;border-bottom:1px solid var(--border-light)}
+  .rv h4{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 4px;
+    font-size:12px;font-weight:500;line-height:1.35;letter-spacing:0.06em;
+    text-transform:uppercase;color:var(--text-muted)}
+  .rv p{margin:0;font-size:16px;line-height:1.5}
+  .rv .edit{min-height:32px;padding:0 8px;font-size:14px;font-weight:500;letter-spacing:0;
+    text-transform:none;color:var(--text-heading);background:none;border:0;
+    text-decoration:underline;text-underline-offset:3px}
+
+  /* question review */
+  .qgroup{margin-top:32px}
+  .qgroup .gh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .qgroup .gh b{font-size:16px;font-weight:600;letter-spacing:-0.01em;color:var(--text-heading)}
+  .qgroup .gh span{font-size:14px;font-weight:500;color:var(--text-muted);flex:none}
+  .qgroup .gd{margin:4px 0 16px;font-size:14px;line-height:1.5;color:var(--text-muted);max-width:44ch}
+  .q{margin-bottom:8px;padding:16px;background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-lg);box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+  .q .qn{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;
+    font-size:12px;font-weight:500;line-height:1.35;letter-spacing:0.04em;color:var(--text-muted)}
+  .q .qt{font-size:16px;line-height:1.5}
+  .q textarea{min-height:80px;margin-top:4px}
+  .q .edit{min-height:32px;padding:0 8px;font-size:14px;font-weight:500;color:var(--text-heading);
+    background:none;border:0;text-decoration:underline;text-underline-offset:3px}
+  .q .err{margin:8px 0 0;font-size:14px;line-height:1.5;color:#dc2626}
+
+  /* payment entry */
+  .payok{width:48px;height:48px;margin:48px 0 16px;border-radius:50%;
+    background:#f0fdf4;color:var(--status-ok);display:flex;align-items:center;justify-content:center}
+
+  /* ===== pre-payment: landing, reveal, audit preview, payment ===== */
+  .btn-block{width:100%}
+  .backlink{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:8px;
+    padding:0;font-size:14px;font-weight:500;color:var(--text-muted);background:none;border:0}
+  .backlink:hover{color:var(--text-heading)}
+
+  /* integrated report preview: real identity on top, results blurred and
+     fading out (Acctual-style) */
+  .report{margin-top:24px;background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-xl);box-shadow:0 1px 2px rgba(0,0,0,0.05);overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 130px),transparent 100%);
+    mask-image:linear-gradient(to bottom,#000 calc(100% - 130px),transparent 100%)}
+  .rp-brand{padding:16px;border-bottom:1px solid var(--border-light)}
+  .rp-id{display:flex;gap:12px;align-items:center}
+  .rp-brand .logo{width:40px;height:40px;margin:0;font-size:16px;flex:none}
+  .rp-brand .rp-n{font-size:18px;font-weight:600;letter-spacing:-0.01em;color:var(--text-heading)}
+  .rp-desc{margin-top:12px;font-size:14px;line-height:1.5;color:var(--text-body)}
+  .rp-url{margin-top:4px;font-size:13px;color:var(--text-muted)}
+  .rp-score{display:flex;justify-content:space-between;align-items:center;gap:16px;
+    padding:16px;border-bottom:1px solid var(--border-light)}
+  .rp-label{font-size:14px;font-weight:500;color:var(--text-heading)}
+  .rp-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .rp-blur-num{font-size:28px;font-weight:600;color:var(--text-muted);
+    filter:blur(9px);user-select:none;pointer-events:none}
+  .rp-comps{padding:16px;border-bottom:1px solid var(--border-light)}
+  .rp-comp{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .rp-comp:first-of-type{margin-top:10px}
+  .rp-dot{flex:none;width:28px;height:28px;border-radius:50%;background:var(--bg-surface-raised)}
+  .rp-line{height:10px;border-radius:5px;background:var(--bg-surface-raised)}
+  .rp-fade{padding:16px 16px 24px;filter:blur(2px);user-select:none;pointer-events:none}
+  .rp-fade .rp-line{margin-bottom:12px}
+
+  /* purchase section: open layout, no outer container */
+  .buy2{margin-top:40px}
+  .buy2 h2{margin:0 0 4px;font-size:20px;font-weight:600;line-height:1.3;
+    letter-spacing:-0.02em;color:var(--text-heading)}
+  .points{display:flex;flex-direction:column;gap:20px;margin:24px 0}
+  .point{display:flex;gap:16px;align-items:flex-start}
+  .point .pic{flex:none;width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center}
+  .point .pt{font-size:15px;font-weight:600;line-height:1.4;color:var(--text-heading)}
+  .point .pd{font-size:14px;line-height:1.5;color:var(--text-muted);margin-top:2px}
+
+  /* floating payment bar (Airbnb-style pill) */
+  #floatpay{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:5;
+    width:calc(100% - 32px);max-width:512px;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
+    padding:8px 8px 8px 24px;background:var(--bg-page);
+    border:1px solid var(--border-light);border-radius:999px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.16);
+    transition:transform var(--dur-base) var(--ease),opacity var(--dur-base) var(--ease)}
+  #floatpay.off{transform:translate(-50%,150%);opacity:0;pointer-events:none}
+  #floatpay .fp-price{font-size:17px;font-weight:600;letter-spacing:-0.01em;
+    color:var(--text-heading);font-variant-numeric:tabular-nums}
+  #floatpay .btn{border-radius:999px}
+
+  /* payment surface */
+  .ordercard{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;
+    padding:16px;background:var(--bg-surface);border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);margin-bottom:24px}
+  .ordercard .oc-t{font-size:14px;font-weight:500;color:var(--text-heading)}
+  .ordercard .oc-d{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .payrow{display:flex;align-items:center;gap:16px;width:100%;text-align:left;min-height:56px;
+    padding:12px 16px;background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-lg);box-shadow:0 1px 2px rgba(0,0,0,0.05);
+    transition:border-color var(--dur-fast) var(--ease)}
+  .payrow:hover{border-color:var(--border-strong)}
+  .payrow .pr-t{font-size:16px;font-weight:500;color:var(--text-heading)}
+  .payrow .pr-d{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .payrow .chev{margin-left:auto;flex:none;color:var(--text-muted)}
+  .plogo{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:32px;
+    font-size:11px;font-weight:700;letter-spacing:-0.01em;border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);background:var(--bg-page)}
+  .banklist{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .banklist.on{display:grid;animation:enter var(--dur-base) var(--ease)}
+  .bankbtn{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;
+    padding:8px 12px;font-size:14px;font-weight:600;color:var(--text-heading);
+    background:var(--bg-page);border:1px solid var(--border-default);border-radius:var(--radius-md)}
+  .bankbtn:hover{border-color:var(--border-strong)}
+  .bankbtn svg{color:var(--text-muted)}
+  .amountline{display:flex;justify-content:space-between;align-items:baseline;
+    padding:16px;background:var(--bg-surface);border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);margin-bottom:16px}
+  .amount{font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--text-heading);
+    font-variant-numeric:tabular-nums}
+  .qrbox{display:flex;justify-content:center;padding:24px;background:var(--bg-page);
+    border:1px solid var(--border-default);border-radius:var(--radius-lg);margin-bottom:16px}
+  .vanumbox{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:16px;
+    background:var(--bg-page);border:1px solid var(--border-default);
+    border-radius:var(--radius-lg);margin-bottom:16px}
+  .vanum{font-size:20px;font-weight:600;letter-spacing:0.03em;color:var(--text-heading);
+    font-variant-numeric:tabular-nums}
+  .paysteps{margin:0 0 24px;padding-left:20px;font-size:14px;line-height:1.7;color:var(--text-muted)}
+  .simnote{margin-top:24px;font-size:12px;line-height:1.5;color:var(--text-placeholder);text-align:center}
+  .walletcard{padding:24px;text-align:center;background:var(--bg-surface);
+    border:1px solid var(--border-light);border-radius:var(--radius-xl);margin-bottom:16px}
+
+  /* processing dots */
+  .dots{display:flex;gap:6px;justify-content:center;margin:64px 0 24px}
+  .dots i{width:8px;height:8px;border-radius:50%;background:var(--action);
+    animation:pulse 1s ease-in-out infinite}
+  .dots i:nth-child(2){animation-delay:0.15s}
+  .dots i:nth-child(3){animation-delay:0.3s}
+  @keyframes pulse{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+
+  /* bottom nav */
+  #navwrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;
+    background:var(--bg-page);border-top:1px solid var(--border-light)}
+  #progress{display:flex;gap:4px;height:4px;margin:0 24px;padding-top:8px}
+  #progress div{flex:1;background:var(--border-light);border-radius:2px;overflow:hidden}
+  #progress div i{display:block;height:100%;width:0;background:var(--action);
+    transition:width var(--dur-slow) var(--ease)}
+  #nav{display:flex;justify-content:space-between;align-items:center;
+    padding:8px 24px calc(16px + env(safe-area-inset-bottom))}
+
+  .addline{display:flex;gap:8px;margin-top:16px}
+  .addline input{flex:1}
+  .addline button{flex:none;min-height:48px;padding:0 16px;font-weight:500;
+    color:var(--text-heading);background:var(--bg-page);border:1px solid var(--border-strong);
+    border-radius:var(--radius-md)}
+  .addline button:hover{background:var(--bg-surface)}
+
+  .check{display:flex;gap:8px;align-items:center;width:100%;min-height:44px;margin-top:16px;
+    padding:8px 0;font-size:14px;font-weight:500;color:var(--text-muted);
+    background:none;border:0;text-align:left}
+  .check .box{flex:none;width:20px;height:20px;border:2px solid var(--border-strong);
+    border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:transparent}
+  .check.on{color:var(--text-heading)}
+  .check.on .box{background:var(--action);border-color:var(--action);color:var(--action-foreground)}
+
+  #done{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;
+    text-align:center;padding:32px;background:var(--bg-page)}
+  #done.on{display:flex}
+
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="top">
+    <span id="wordmark">nuave</span>
+    <select id="scenario" aria-label="Skenario prototipe" onchange="setScenario(this.value)">
+      <option value="lengkap">Prototipe: sumber lengkap</option>
+      <option value="tipis">Prototipe: sumber tipis</option>
+      <option value="keliru">Prototipe: brand keliru</option>
+      <option value="manual">Prototipe: tanpa sumber</option>
+    </select>
+  </div>
+
+  <div id="stage">
+
+    <!-- ============ PRA-BAYAR ============ -->
+    <section class="screen" id="p-landing">
+      <p class="kicker">Audit Visibilitas AI</p>
+      <h1>Saat orang bertanya ke AI, apakah bisnis Anda yang disebut?</h1>
+      <p class="lead">Masukkan alamat situs, Instagram, atau Google Maps bisnis Anda. Nuave akan mengenalinya dan menunjukkan apa yang bisa diaudit.</p>
+      <div class="stack">
+        <input type="text" id="urlInput" placeholder="kopisudut.id, @kopisudut, atau tautan Google Maps" inputmode="url" autocomplete="off" aria-label="Alamat situs, Instagram, atau Google Maps">
+        <button class="btn btn-block" id="landingGo" onclick="startScan()" disabled>Cek brand saya</button>
+      </div>
+      <p class="hint">Belum punya situs atau Instagram? <a href="#" onclick="startManual(event)">Mulai tanpa sumber</a>. Nuave akan bertanya sedikit lebih banyak.</p>
+    </section>
+
+    <section class="screen" id="p-scan">
+      <h1>Sebentar, Nuave sedang memeriksa</h1>
+      <div class="steps" role="status" aria-live="polite">
+        <div class="step" id="ps1"><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span id="ps1t">Membuka sumber Anda</span></div>
+        <div class="step" id="ps2"><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span>Mengenali brand dan kategorinya</span></div>
+        <div class="step" id="ps3"><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span>Menyiapkan pratinjau audit</span></div>
+      </div>
+    </section>
+
+    <!-- brand reveal + audit preview: the confidence moment before payment -->
+    <section class="screen" id="p-reveal">
+      <h1 id="pRevealH">Nuave menemukan brand Anda</h1>
+
+      <div class="report" aria-label="Pratinjau laporan audit">
+        <div class="rp-brand">
+          <div class="rp-id">
+            <div class="logo" id="pLogo" aria-hidden="true">KS</div>
+            <div class="rp-n" id="pName">Kopi Sudut</div>
+          </div>
+          <div class="rp-desc" id="pDesc" hidden></div>
+          <div class="rp-url" id="pUrl" hidden></div>
+        </div>
+        <div class="rp-score">
+          <div class="rp-label">Skor Visibilitas AI</div>
+          <span class="rp-blur-num" aria-hidden="true">74</span>
+        </div>
+        <div class="rp-comps">
+          <div class="rp-label">Kompetitor</div>
+          <div id="pvCompRows"></div>
+        </div>
+        <div class="rp-fade" aria-hidden="true">
+          <div class="rp-line" style="width:42%"></div>
+          <div class="rp-line" style="width:88%"></div>
+          <div class="rp-line" style="width:76%"></div>
+          <div class="rp-line" style="width:81%"></div>
+        </div>
+      </div>
+      <p class="hint" style="text-align:center">Bukan brand Anda? <a href="#" onclick="changeSource(event)">Ganti sumber</a></p>
+
+      <div class="buy2">
+        <h2>Audit sekarang</h2>
+        <p class="lead" style="margin-bottom:0">Apa yang akan Anda dapatkan di audit ini?</p>
+        <div class="points">
+          <div class="point">
+            <span class="pic" style="background:#EFF4FE" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B6FD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 12.5h5"/></svg></span>
+            <div>
+              <div class="pt">Respon AI tentang brand Anda</div>
+              <div class="pd">Kami menguji 10 pertanyaan ke AI untuk melihat bagaimana brand Anda disebut dan direkomendasikan.</div>
+            </div>
+          </div>
+          <div class="point">
+            <span class="pic" style="background:#EDF7EF" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3E9B57" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10m6 10V4m6 16v-7"/><path d="M2 20h20"/></svg></span>
+            <div>
+              <div class="pt">Performa kompetitor Anda</div>
+              <div class="pd">Lihat bagaimana AI menyebut brand kompetitor Anda untuk pertanyaan yang sama.</div>
+            </div>
+          </div>
+          <div class="point">
+            <span class="pic" style="background:#FDF3E7" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C77E28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.5 1 2.5h6c0-1 .3-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg></span>
+            <div>
+              <div class="pt">Saran perbaikan</div>
+              <div class="pd">Hal yang bisa Anda lakukan untuk meningkatkan performa brand Anda di mata AI.</div>
+            </div>
+          </div>
+        </div>
+        <p class="hint" id="payNote" style="margin-bottom:16px">Setelah membayar, Anda bisa memeriksa informasi brand Anda dan 10 pertanyaan yang akan kami ajukan sebelum audit dijalankan.</p>
+        <button class="btn btn-block" id="buyBtn" onclick="show('p-pay')">Bayar Rp99.000</button>
+      </div>
+    </section>
+
+    <!-- payment method selection -->
+    <section class="screen" id="p-pay">
+      <button class="backlink" onclick="show('p-reveal')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7l-7 7 7 7"/></svg> Kembali</button>
+      <h1>Pilih cara bayar</h1>
+      <div class="ordercard">
+        <div>
+          <div class="oc-t" id="ocTitle">Audit Visibilitas AI · Kopi Sudut</div>
+          <div class="oc-d">Order NV-260830-0917 · sekali bayar</div>
+        </div>
+        <span class="amount">Rp99.000</span>
+      </div>
+      <div class="rows">
+        <button class="payrow" onclick="show('p-pay-qris')">
+          <span class="plogo">QRIS</span>
+          <span><span class="pr-t" style="display:block">QRIS</span><span class="pr-d" style="display:block">Scan dari aplikasi bank atau e-wallet apa pun</span></span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button class="payrow" onclick="startWallet('GoPay')">
+          <span class="plogo" style="color:#00AED6">gopay</span>
+          <span><span class="pr-t" style="display:block">GoPay</span><span class="pr-d" style="display:block">Termasuk GoPay QRIS</span></span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button class="payrow" onclick="startWallet('DANA')">
+          <span class="plogo" style="color:#108EE9">DANA</span>
+          <span><span class="pr-t" style="display:block">DANA</span></span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button class="payrow" id="vaToggle" onclick="toggleBanks()" aria-expanded="false">
+          <span class="plogo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 9h16l-8-5-8 5zm2 0v9m4-9v9m4-9v9m4-9v9"/></svg></span>
+          <span><span class="pr-t" style="display:block">Virtual Account</span><span class="pr-d" style="display:block">Transfer dari mobile banking atau ATM</span></span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="banklist" id="bankList"></div>
+      <p class="simnote">Pembayaran diproses aman lewat Midtrans · Ini simulasi prototipe, tidak ada tagihan sungguhan</p>
+    </section>
+
+    <!-- path A: QRIS -->
+    <section class="screen" id="p-pay-qris">
+      <button class="backlink" onclick="show('p-pay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7l-7 7 7 7"/></svg> Ganti cara bayar</button>
+      <h1>Bayar dengan QRIS</h1>
+      <div class="amountline"><span class="type-label">Total</span><span class="amount">Rp99.000</span></div>
+      <div class="qrbox" id="qrBox" aria-label="Kode QRIS simulasi"></div>
+      <ol class="paysteps">
+        <li>Buka aplikasi bank atau e-wallet Anda</li>
+        <li>Scan kode QR di atas</li>
+        <li>Periksa nama penerima <b>NUAVE</b>, lalu bayar</li>
+      </ol>
+      <button class="btn btn-block" onclick="finishPayment()">Saya sudah bayar</button>
+      <p class="simnote">Simulasi: tombol di atas mewakili pembayaran yang masuk</p>
+    </section>
+
+    <!-- path B: virtual account -->
+    <section class="screen" id="p-pay-va">
+      <button class="backlink" onclick="show('p-pay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7l-7 7 7 7"/></svg> Ganti cara bayar</button>
+      <h1 id="vaTitle">Virtual Account Mandiri</h1>
+      <div class="amountline"><span class="type-label">Total</span><span class="amount">Rp99.000</span></div>
+      <div class="vanumbox">
+        <div>
+          <div class="type-label-sm" style="color:var(--text-muted)" id="vaBankLabel">Nomor Virtual Account</div>
+          <div class="vanum" id="vaNum">8908 0812 3341 7789</div>
+        </div>
+        <button class="mini" id="vaCopy" onclick="copyVa()">Salin</button>
+      </div>
+      <ol class="paysteps">
+        <li>Buka mobile banking atau ATM bank Anda</li>
+        <li>Pilih transfer ke Virtual Account, tempel nomor di atas</li>
+        <li>Periksa nama penerima <b>NUAVE</b> dan jumlah Rp99.000, lalu bayar</li>
+      </ol>
+      <button class="btn btn-block" onclick="finishPayment()">Saya sudah transfer</button>
+      <p class="simnote">Simulasi: tombol di atas mewakili transfer yang masuk</p>
+    </section>
+
+    <!-- path C: wallet handoff -->
+    <section class="screen" id="p-pay-wallet">
+      <button class="backlink" onclick="show('p-pay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7l-7 7 7 7"/></svg> Ganti cara bayar</button>
+      <h1 id="walletTitle">Bayar dengan GoPay</h1>
+      <div class="walletcard">
+        <div class="plogo" style="margin:0 auto 8px;width:64px;height:40px;font-size:14px" id="walletLogo">gopay</div>
+        <div class="amount">Rp99.000</div>
+        <p class="type-copy-sm" style="color:var(--text-muted);margin:8px 0 0" id="walletCopy">Anda akan diarahkan ke aplikasi GoPay untuk mengonfirmasi pembayaran ke NUAVE.</p>
+      </div>
+      <button class="btn btn-block" id="walletBtn" onclick="finishPayment()">Konfirmasi di GoPay</button>
+      <p class="simnote">Simulasi: tombol di atas mewakili konfirmasi di aplikasi</p>
+    </section>
+
+    <!-- processing -->
+    <section class="screen" id="p-processing">
+      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h1 style="text-align:center">Memeriksa pembayaran Anda</h1>
+    </section>
+
+    <!-- payment success: audit unlocked, hand off into intake -->
+    <section class="screen" id="p-success">
+      <div class="payok" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </div>
+      <h1>Pembayaran berhasil</h1>
+      <p class="lead" id="successCopy">Audit Anda sudah terbuka. Satu langkah lagi: pastikan Nuave memahami bisnis Anda dengan benar, supaya auditnya tepat. Sekitar tiga menit.</p>
+      <button class="btn btn-block" onclick="enterIntake()">Mulai konfirmasi</button>
+    </section>
+
+    <section class="screen" id="s-crawl">
+      <h1>Sebentar, Nuave sedang membaca</h1>
+      <div class="steps" role="status" aria-live="polite">
+        <div class="step" id="cs1"><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span id="cs1t">Membaca sumber Anda</span></div>
+        <div class="step" id="cs2"><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span>Menemukan produk dan lokasi</span></div>
+        <div class="step" id="cs3"><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span>Memperkirakan pelanggan dan pembanding</span></div>
+      </div>
+      <p class="hint" style="margin-top:32px">Semua bisa Anda koreksi. Anda yang paling tahu bisnis Anda.</p>
+    </section>
+
+    <!-- manual fallback: no readable source (pre-payment) -->
+    <section class="screen" id="p-manual">
+      <h1>Siapa nama brand Anda?</h1>
+      <p class="lead">Dari nama dan kategori, Nuave akan menyusun perkiraan. Anda tinggal memeriksa dan melengkapi.</p>
+      <div class="stack">
+        <input type="text" id="mName" placeholder="Nama brand" autocomplete="off" aria-label="Nama brand">
+        <input type="text" id="mCity" placeholder="Kota utama (opsional)" autocomplete="off" aria-label="Kota utama, opsional">
+        <button class="btn btn-block" id="manualGo" onclick="show('p-reveal')" disabled>Lanjut</button>
+      </div>
+      <p class="hint"><a href="#" onclick="event.preventDefault();show('p-landing')">Punya situs atau Instagram? Pakai itu saja.</a></p>
+    </section>
+
+    <!-- ============ BAB 1 ============ -->
+    <section class="screen" id="s-brand">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1>Ini brand yang ingin Anda audit?</h1>
+      <p class="lead" id="thinNote" hidden></p>
+      <div class="brandcard">
+        <div class="logo" id="bLogo" aria-hidden="true">KS</div>
+        <div class="type-heading-sm" id="bName">Kopi Sudut</div>
+        <div class="type-copy-sm" id="bMeta" style="color:var(--text-muted);margin-top:4px"></div>
+      </div>
+      <div class="cards" style="margin-top:16px">
+        <button class="card" data-group="brandok" data-val="ya">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          <span><span class="t">Ya, benar</span></span>
+        </button>
+        <button class="card" data-group="brandok" data-val="bukan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <span><span class="t">Bukan, ganti brand</span><span class="d" style="display:block">Tunjukkan nama atau sumber yang benar</span></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- wrong-brand correction, inline, nothing else is discarded -->
+    <section class="screen" id="s-brand-fix">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1>Brand mana yang benar?</h1>
+      <p class="lead">Nuave akan membaca ulang dari sumber ini. Yang sudah Anda isi tidak hilang.</p>
+      <div class="stack">
+        <input type="text" id="fixName" placeholder="Nama brand" aria-label="Nama brand">
+        <input type="text" id="fixUrl" placeholder="Situs atau Instagram (opsional)" aria-label="Situs atau Instagram, opsional">
+      </div>
+    </section>
+
+    <section class="screen" id="s-scope">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1>Apa yang ingin Anda audit?</h1>
+      <p class="lead">Ini menentukan sudut pandang seluruh audit.</p>
+      <div class="cards" id="scopeCards"></div>
+    </section>
+
+    <section class="screen" id="s-branch">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1>Cabang mana yang ingin diaudit?</h1>
+      <div class="rows" id="branchRows"></div>
+      <div class="addline"><input type="text" id="branchAdd" placeholder="Cari atau tambah cabang lain" aria-label="Tambah cabang"><button onclick="addBranch()">Tambah</button></div>
+      <p class="hint">Cabang yang belum ada bisa ditambahkan dengan nama dan alamat.</p>
+    </section>
+
+    <section class="screen" id="s-product">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1>Produk atau layanan mana?</h1>
+      <div class="rows" id="prodRows"></div>
+      <div class="addline"><input type="text" id="prodAdd" placeholder="Cari atau tambah produk lain" aria-label="Tambah produk"><button onclick="addProd()">Tambah</button></div>
+      <p class="hint">Pertanyaan tentang pelanggan dan pembanding selanjutnya akan difokuskan ke produk ini.</p>
+    </section>
+
+    <section class="screen" id="s-category">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1>Bisnis Anda paling tepat disebut apa?</h1>
+      <p class="lead">Pilih sebutan yang mungkin dipakai pelanggan saat bertanya ke AI.</p>
+      <div class="cards" id="catCards"></div>
+      <div class="addline"><input type="text" id="catAdd" placeholder="Tulis kategori sendiri" aria-label="Tulis kategori sendiri"><button onclick="addCat()">Pakai</button></div>
+    </section>
+
+    <section class="screen" id="s-offerings">
+      <p class="kicker">Brand dan yang Anda tawarkan</p>
+      <h1 id="offH">Ini produk Anda. Sudah benar?</h1>
+      <p class="lead" id="offLead">Hapus yang salah, tambah yang kurang.</p>
+      <div class="chips" id="offChips"></div>
+      <div class="addline"><input type="text" id="offAdd" placeholder="Tambah produk atau layanan" aria-label="Tambah produk atau layanan"><button onclick="addOff()">Tambah</button></div>
+    </section>
+
+    <!-- ============ BAB 2 ============ -->
+    <section class="screen" id="s-customers">
+      <p class="kicker">Pelanggan Anda</p>
+      <h1>Kenapa pelanggan biasanya mencari yang seperti ini? <span class="optional">Opsional</span></h1>
+      <p class="lead">Hapus yang tidak sesuai, tambah yang kurang. Ini yang membentuk pertanyaan yang akan diuji ke AI.</p>
+      <div class="chips" id="custChips"></div>
+      <div class="addline"><input type="text" id="custAdd" placeholder="Tambah sendiri" aria-label="Tambah alasan pelanggan"><button onclick="addCust()">Tambah</button></div>
+    </section>
+
+    <!-- ============ BAB 3 ============ -->
+    <section class="screen" id="s-market">
+      <p class="kicker">Pasar dan pembanding</p>
+      <h1>Di mana pelanggan Anda berada?</h1>
+      <p class="lead">Ditanyakan karena lokasi memengaruhi rekomendasi untuk bisnis Anda. Untuk bisnis yang sepenuhnya online, layar ini dilewati.</p>
+      <div class="cards">
+        <button class="card" data-group="mkt" data-val="lokal"><span><span class="t">Sekitar lokasi tertentu</span><span class="d" style="display:block">Pelanggan datang dari area di sekitar Anda</span></span></button>
+        <button class="card" data-group="mkt" data-val="kota"><span><span class="t">Beberapa kota</span></span></button>
+        <button class="card" data-group="mkt" data-val="nasional"><span><span class="t">Seluruh Indonesia</span><span class="d" style="display:block">Misalnya lewat e-commerce atau pengiriman</span></span></button>
+        <button class="card" data-group="mkt" data-val="global"><span><span class="t">Juga di luar negeri</span></span></button>
+      </div>
+      <div class="reveal" id="cityReveal">
+        <h3>Kota atau area mana?</h3>
+        <div class="chips" id="cityChips"></div>
+        <div class="addline"><input type="text" id="cityAdd" placeholder="Tambah kota atau area" aria-label="Tambah kota atau area"><button onclick="addCity()">Tambah</button></div>
+        <h3 style="margin-top:24px">Pelanggan harus datang ke lokasi Anda?</h3>
+        <div class="chips">
+          <button class="chip" data-single="bound">Ya, bisnis kami lokal</button>
+          <button class="chip" data-single="bound">Tidak, kami juga melayani online</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="s-competitors">
+      <p class="kicker">Pasar dan pembanding</p>
+      <h1>Ini yang mungkin dibandingkan dengan Anda</h1>
+      <p class="lead" id="compLead">Hapus yang tidak relevan, tambah yang kurang.</p>
+      <div class="rows" id="compRows"></div>
+      <div class="addline"><input type="text" id="compAdd" placeholder="Tambah pembanding" aria-label="Tambah pembanding"><button onclick="addComp()">Tambah</button></div>
+      <button class="check" id="noComp" onclick="this.classList.toggle('on')" aria-pressed="false">
+        <span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
+        Tidak ada pesaing langsung yang saya tahu
+      </button>
+    </section>
+
+    <!-- ============ BAB 4 ============ -->
+    <section class="screen" id="s-facts">
+      <p class="kicker">Sebelum audit</p>
+      <h1>Apa yang tidak boleh salah dipahami tentang brand Anda? <span class="optional">Opsional</span></h1>
+      <p class="lead">Satu hal yang, kalau AI salah paham, akan membuat seluruh audit meleset. Satu kalimat cukup.</p>
+      <textarea id="factsText" placeholder="Misalnya: keunggulan yang sering terlewat, fakta harga, sertifikasi, istilah khas, atau kesalahpahaman yang sering terjadi." aria-label="Hal yang wajib benar"></textarea>
+      <p class="hint">Boleh dikosongkan.</p>
+    </section>
+
+    <section class="screen" id="s-review">
+      <p class="kicker">Sebelum audit</p>
+      <h1>Ini yang akan Nuave audit</h1>
+      <p class="lead">Periksa sekali lagi. Semua bisa diubah.</p>
+      <div id="rvBody"></div>
+    </section>
+
+    <section class="screen" id="s-questions">
+      <p class="kicker">Sebelum audit</p>
+      <h1>Periksa pertanyaan audit</h1>
+      <p class="lead">Sepuluh pertanyaan ini akan diuji ke model AI, satu per satu. Ubah kalau ada yang tidak wajar.</p>
+
+      <div class="qgroup">
+        <div class="gh"><b>Tanpa menyebut bisnis Anda</b><span>6 pertanyaan</span></div>
+        <div class="gd" id="ubDesc">Menguji apakah brand Anda muncul dan direkomendasikan dengan sendirinya. Nama brand tidak boleh ada di sini.</div>
+        <div id="qUnbranded"></div>
+      </div>
+
+      <div class="qgroup">
+        <div class="gh"><b>Menyebut bisnis Anda</b><span>4 pertanyaan</span></div>
+        <div class="gd">Menguji apa yang model AI katakan saat brand Anda ditanyakan langsung. Hasilnya tidak dihitung sebagai penemuan spontan.</div>
+        <div id="qBranded"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="floatpay" class="off">
+    <span class="fp-price">Rp99.000</span>
+    <button class="btn" onclick="show('p-pay')">Bayar sekarang</button>
+  </div>
+
+  <div id="navwrap">
+    <div id="progress"><div><i></i></div><div><i></i></div><div><i></i></div><div><i></i></div></div>
+    <div id="nav">
+      <button id="back" class="btn-ghost" onclick="go(-1)">Kembali</button>
+      <button id="next" class="btn" onclick="go(1)">Lanjut</button>
+    </div>
+  </div>
+
+  <div id="done">
+    <div>
+      <div class="payok" style="margin:0 auto 16px" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </div>
+      <h1 style="margin-bottom:8px">Audit dimulai</h1>
+      <p class="lead" style="margin:0 auto" id="doneCopy">Nuave sedang menguji bagaimana AI memahami dan merekomendasikan brand Anda. Hasilnya siap dalam beberapa menit.</p>
+      <button class="btn-outline btn btn-sm" style="margin-top:24px" onclick="location.reload()">Ulangi prototipe</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Scenario data. Everything here is mocked; in the real product all suggestion
+// lists come from the source read plus category-conditioned generation.
+// ---------------------------------------------------------------------------
+const COFFEE_CATS = [
+  {label:'Kedai kopi susu (chain lokal)', ex:'"kedai kopi susu enak di Jakarta"'},
+  {label:'Coffee shop specialty'},
+  {label:'Coffee roaster dan retail biji kopi'},
+];
+const COFFEE_CUST = [
+  {t:'Ngopi enak dekat kantor', on:true},
+  {t:'Tempat nugas atau kerja yang nyaman', on:true},
+  {t:'Kopi harian yang rasanya konsisten', on:true},
+  {t:'Harga masuk akal untuk diminum tiap hari', on:true},
+  {t:'Beli biji kopi untuk diseduh di rumah', on:false},
+  {t:'Pesan kopi untuk meeting atau acara', on:false},
+  {t:'Cari kopi susu yang tidak terlalu manis', on:false},
+];
+const COFFEE_COMPS = [
+  {n:'Fore Coffee', c:'Chain kopi nasional, 200+ gerai', keep:true},
+  {n:'Kopi Janji Jiwa', c:'Chain kopi susu nasional', keep:true},
+  {n:'Toko Kopi Tuku', c:'Kopi susu lokal Jakarta', keep:true},
+  {n:'Starbucks', c:'Chain internasional, segmen harga berbeda', keep:true},
+];
+
+const SCENARIOS = {
+  // 1. successful extraction: rich source, owner mostly confirms
+  lengkap: {
+    brand:{name:'Kopi Sudut', initials:'KS', tagline:'Kopi susu untuk hari kerja', url:'kopisudut.id'},
+    source:'kopisudut.id', sources:'kopisudut.id · @kopisudut',
+    aliases:['Kopi Sudoet','Sudut Coffee'],
+    city:'Jakarta Selatan', area:'Senopati',
+    branches:[
+      {n:'Kopi Sudut Senopati', d:'Jl. Senopati No. 43, Jakarta Selatan'},
+      {n:'Kopi Sudut BSD', d:'The Breeze, Tangerang Selatan'},
+      {n:'Kopi Sudut Dago', d:'Jl. Ir. H. Juanda 92, Bandung'},
+    ],
+    products:[
+      {n:'Langganan kopi bulanan', d:'Dikirim ke seluruh Indonesia'},
+      {n:'Biji kopi kemasan 200g', d:'Dikirim ke seluruh Indonesia'},
+      {n:'Kopi Susu Sudut', d:'Menu di gerai'},
+    ],
+    categories:COFFEE_CATS, catSel:0,
+    offerings:{detected:['Kopi Susu Sudut','Americano dan espresso','Latte gula aren','Non-kopi (matcha, cokelat)','Croissant dan pastry','Biji kopi kemasan 200g','Langganan kopi bulanan'], suggested:[]},
+    customers:COFFEE_CUST,
+    competitors:COFFEE_COMPS, compLead:'Hapus yang tidak relevan, tambah yang kurang.',
+    cities:['Jakarta Selatan','Tangerang Selatan','Bandung'],
+    thinNote:null,
+  },
+
+  // 2. thin evidence: one quiet Instagram; Nuave commits to guesses where it
+  // can (category, customers, competitors) and asks only what matters (offerings).
+  tipis: {
+    brand:{name:'Kopi Ruang Kecil', initials:'RK', tagline:null, url:'@kopiruangkecil'},
+    source:'@kopiruangkecil', sources:'@kopiruangkecil',
+    aliases:['Ruang Kecil Coffee'],
+    city:'Bekasi', area:'Bekasi',
+    branches:[], products:[],
+    categories:[
+      {label:'Kedai kopi susu (kedai lokal)', ex:'"kedai kopi enak di Bekasi"'},
+      {label:'Coffee shop kecil independen'},
+      {label:'Kopi grab-and-go'},
+    ], catSel:0,
+    offerings:{detected:['Kopi susu gula aren','Americano'],
+      suggested:['Latte','Non-kopi (cokelat, teh)','Roti bakar dan camilan','Biji kopi kemasan']},
+    offeringsAsk:true,
+    customers:[
+      {t:'Ngopi santai dekat rumah', on:true},
+      {t:'Kopi harian yang harganya masuk akal', on:true},
+      {t:'Tempat nugas atau kerja yang nyaman', on:false},
+      {t:'Cari kopi susu yang tidak terlalu manis', on:false},
+      {t:'Pesan kopi untuk acara', on:false},
+    ],
+    competitors:[
+      {n:'Kopi Janji Jiwa', c:'Chain kopi susu nasional', keep:true},
+      {n:'Toko Kopi Tuku', c:'Kopi susu lokal Jabodetabek', keep:true},
+      {n:'Kedai kopi sekitar Bekasi', c:'Kedai independen di area yang sama', keep:true},
+    ],
+    compLead:'Nuave belum menemukan pembanding dari sumber Anda. Ini pembanding yang umum untuk kategori Anda. Hapus yang tidak relevan, tambah yang kurang.',
+    cities:['Bekasi'],
+    thinNote:'Sumber Anda tidak banyak bercerita. Nuave mengisi yang bisa diperkirakan dan hanya bertanya yang penting.',
+  },
+
+  // 3. wrong-brand: the read lands on the wrong business first
+  keliru: null, // filled below: same data as lengkap, wrong brand card first
+
+  // 4. manual fallback: no usable source at all
+  manual: {
+    brand:{name:'', initials:'?', tagline:null, url:null},
+    source:null, sources:'Tidak ada, diisi manual',
+    aliases:[],
+    city:'Jakarta', area:'Jakarta',
+    branches:[], products:[],
+    categories:COFFEE_CATS.map(c=>({...c})), catSel:null,
+    offerings:{detected:[], suggested:['Kopi susu','Americano dan espresso','Latte','Non-kopi (cokelat, teh)','Camilan','Biji kopi kemasan']},
+    offeringsAsk:true,
+    customers:COFFEE_CUST.map(c=>({...c})),
+    competitors:COFFEE_COMPS.map(c=>({...c})),
+    compLead:'Ini pembanding yang umum untuk kategori Anda. Hapus yang tidak relevan, tambah yang kurang.',
+    cities:['Jakarta'],
+    thinNote:null,
+  },
+};
+SCENARIOS.keliru = {...SCENARIOS.lengkap,
+  wrongBrand:{name:'Kopi Sudut Pandang', initials:'KP', tagline:'Kedai kopi dan ruang baca, Yogyakarta', url:'kopisudutpandang.com'}};
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let sc, mode, S, offerings, offSuggested, custData, comps, ALIASES;
+let cur = 'p-landing';
+
+function setScenario(key){
+  sc = {...SCENARIOS[key]};
+  mode = key==='manual' ? 'manual' : 'read';
+  S = {brandok:null, scope:null, branch:null, prod:null,
+       cat: sc.catSel!=null ? sc.categories[sc.catSel].label : null,
+       mkt:null, wrong: key==='keliru'};
+  offerings = sc.offerings.detected.slice();
+  offSuggested = sc.offerings.suggested.map(t=>({t, on:false}));
+  custData = sc.customers.map(c=>({...c}));
+  comps = sc.competitors.map(c=>({...c}));
+  ALIASES = sc.aliases.slice();
+  QUESTIONS = null; aliasesEditing = false;
+  document.getElementById('factsText').value='';
+  document.getElementById('urlInput').value='';
+  document.getElementById('mName').value='';
+  document.getElementById('mCity').value='';
+  document.getElementById('noComp').classList.remove('on');
+  document.getElementById('bankList').classList.remove('on');
+  document.getElementById('vaToggle').setAttribute('aria-expanded','false');
+  renderScope(); renderCats(); renderBranches(); renderProducts();
+  renderOff(); renderCust(); renderComp(); renderCities();
+  preEnable();
+  show(key==='manual' ? 'p-manual' : 'p-landing');
+}
+
+// Products that ship nationally make geography immaterial, so the market
+// screen is skipped (contract section 4).
+const SHIPPED = ['Langganan kopi bulanan','Biji kopi kemasan 200g'];
+function marketMatters(){
+  if (S.scope==='produk' && SHIPPED.includes(S.prod)) return false;
+  return sc.branches.length>0 || true; // location-bound category in all mocked scenarios
+}
+
+// ---------------------------------------------------------------------------
+// Flow
+// ---------------------------------------------------------------------------
+function flow(){
+  // URL entry, brand read, and payment now happen pre-payment (p-* screens);
+  // the intake starts at brand confirmation (read) or scope (manual).
+  const f = [];
+  if (mode!=='manual') f.push('s-brand');
+  f.push('s-scope');
+  if (S.scope==='cabang') f.push('s-branch');
+  if (S.scope==='produk') f.push('s-product');
+  f.push('s-category','s-offerings','s-customers');
+  if (marketMatters()) f.push('s-market');
+  f.push('s-competitors','s-facts','s-review','s-questions');
+  return f;
+}
+const CHAPTER = id => {
+  if (id==='s-customers') return 1;
+  if (['s-market','s-competitors'].includes(id)) return 2;
+  if (['s-facts','s-review','s-questions'].includes(id)) return 3;
+  return 0;
+};
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  cur = id;
+  document.getElementById('stage').scrollTo(0,0);
+  window.scrollTo(0,0);
+  // pre-payment and transition screens carry their own navigation
+  const bare = id.startsWith('p-') || id==='s-crawl';
+  document.getElementById('navwrap').style.display = bare ? 'none':'block';
+  if (id!=='p-reveal') document.getElementById('floatpay').classList.add('off');
+  if (bare){
+    if (id==='p-scan') runScan();
+    if (id==='p-reveal') renderReveal();
+    if (id==='p-pay-qris') buildQr();
+    if (id==='p-processing') setTimeout(()=>show('p-success'), 1800);
+    if (id==='s-crawl') runCrawl();
+    return;
+  }
+  const f = flow(), ch = CHAPTER(id);
+  const inCh = f.filter(x=>CHAPTER(x)===ch);
+  const frac = inCh.includes(id) ? (inCh.indexOf(id)+1)/inCh.length : 0.5;
+  document.querySelectorAll('#progress i').forEach((bar,i)=>{
+    bar.style.width = i<ch ? '100%' : i===ch ? (frac*100)+'%' : '0';
+  });
+  document.getElementById('back').style.visibility =
+    f.indexOf(id)<=0 && id!=='s-brand-fix' ? 'hidden' : 'visible';
+  const next = document.getElementById('next');
+  next.textContent = id==='s-review' ? 'Buat pertanyaan audit'
+    : id==='s-questions' ? 'Jalankan audit' : 'Lanjut';
+  if (id==='s-brand') renderBrand();
+  if (id==='s-review') buildReview();
+  if (id==='s-questions') buildQuestions();
+  validate();
+}
+function go(dir){
+  if (cur==='s-questions' && dir===1){
+    document.getElementById('doneCopy').textContent =
+      'Nuave sedang menguji bagaimana AI memahami dan merekomendasikan '+brandName()+'. Hasilnya siap dalam beberapa menit.';
+    document.getElementById('done').classList.add('on');
+    return;
+  }
+  if (cur==='s-brand-fix'){
+    if (dir===-1){ show('s-brand'); return; }
+    applyBrandFix(); return;
+  }
+  const f = flow(), i = f.indexOf(cur);
+  const n = f[i+dir];
+  if (n) show(n);
+}
+function goto(id){ show(id); }
+
+// Only brand confirmation, scope resolution, and category block progress
+// (contract section 8.7).
+function validate(){
+  const need = {
+    's-brand':()=>S.brandok==='ya',
+    's-brand-fix':()=>document.getElementById('fixName').value.trim(),
+    's-scope':()=>S.scope,
+    's-branch':()=>S.branch,
+    's-product':()=>S.prod,
+    's-category':()=>S.cat,
+  };
+  document.getElementById('next').disabled = need[cur] ? !need[cur]() : false;
+}
+document.getElementById('fixName').addEventListener('input',validate);
+
+// pre-payment CTAs enable on input
+function preEnable(){
+  document.getElementById('landingGo').disabled = !document.getElementById('urlInput').value.trim();
+  document.getElementById('manualGo').disabled = !document.getElementById('mName').value.trim();
+}
+['urlInput','mName'].forEach(id=>
+  document.getElementById(id).addEventListener('input',preEnable));
+document.getElementById('urlInput').addEventListener('keydown',e=>{
+  if (e.key==='Enter' && !document.getElementById('landingGo').disabled) startScan();
+});
+
+function brandName(){
+  return mode==='manual'
+    ? (document.getElementById('mName').value.trim() || 'brand Anda')
+    : sc.brand.name;
+}
+
+// ---------------------------------------------------------------------------
+// Entry paths
+// ---------------------------------------------------------------------------
+function startManual(e){
+  e.preventDefault();
+  sc = {...SCENARIOS.manual};
+  mode='manual';
+  S = {brandok:null, scope:null, branch:null, prod:null, cat:null, mkt:null, wrong:false};
+  offerings = []; offSuggested = sc.offerings.suggested.map(t=>({t,on:false}));
+  custData = sc.customers.map(c=>({...c}));
+  comps = sc.competitors.map(c=>({...c}));
+  ALIASES = [];
+  QUESTIONS = null; aliasesEditing = false;
+  document.getElementById('scenario').value='manual';
+  renderScope(); renderCats(); renderOff(); renderCust(); renderComp(); renderCities();
+  preEnable();
+  show('p-manual');
+}
+
+// ---------------------------------------------------------------------------
+// Pre-payment sequence: scan, reveal + audit preview, payment simulation
+// ---------------------------------------------------------------------------
+function startScan(){ show('p-scan'); }
+function runScan(){
+  document.getElementById('ps1t').textContent =
+    'Membuka '+(document.getElementById('urlInput').value.trim()||sc.source||'sumber Anda');
+  const steps=['ps1','ps2','ps3'];
+  steps.forEach(id=>document.getElementById(id).classList.remove('done','busy'));
+  steps.forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.add('busy'), i*650);
+    setTimeout(()=>{const el=document.getElementById(id);el.classList.remove('busy');el.classList.add('done');}, 480+i*650);
+  });
+  setTimeout(()=>show('p-reveal'), 2200);
+}
+function changeSource(e){
+  e.preventDefault();
+  // re-reading a corrected source resolves to the right brand in the prototype
+  S.wrong = false;
+  show('p-landing');
+  document.getElementById('urlInput').focus();
+}
+
+function renderReveal(){
+  const manual = mode==='manual';
+  const b = manual
+    ? {name:brandName(), initials:(brandName().slice(0,2)||'?').toUpperCase(), tagline:null, url:null}
+    : (S.wrong ? sc.wrongBrand : sc.brand);
+  document.getElementById('pRevealH').textContent = manual
+    ? 'Ini yang akan Nuave audit' : 'Nuave menemukan brand Anda';
+  document.getElementById('pLogo').textContent = b.initials;
+  document.getElementById('pName').textContent = b.name;
+  const city = manual ? document.getElementById('mCity').value.trim() : '';
+  let desc = manual ? 'Diisi manual'+(city?' · '+city:'') : (b.tagline||'');
+  if (desc.length>140) desc = desc.slice(0,140).trimEnd()+'…';
+  const descEl = document.getElementById('pDesc');
+  descEl.textContent = desc; descEl.hidden = !desc;
+  const urlEl = document.getElementById('pUrl');
+  urlEl.textContent = b.url||''; urlEl.hidden = !b.url;
+  document.getElementById('ocTitle').textContent = 'Audit Visibilitas AI · '+b.name;
+  document.getElementById('successCopy').textContent =
+    'Audit '+b.name+' sudah terbuka. Satu langkah lagi: pastikan Nuave memahami bisnis Anda dengan benar, supaya auditnya tepat. Sekitar tiga menit.';
+  // competitor rows: grey circle + grey text placeholders
+  const rows = document.getElementById('pvCompRows'); rows.innerHTML='';
+  ['62%','48%','55%'].forEach(w=>{
+    const d=document.createElement('div'); d.className='rp-comp';
+    d.innerHTML='<span class="rp-dot"></span>'+
+      '<span class="rp-line" style="flex:none;width:'+w+'"></span>';
+    rows.appendChild(d);
+  });
+  armFloatPay();
+}
+
+// floating pay bar: visible on the reveal screen until the pre-CTA note is
+// fully in view, then it slides away (Airbnb-style)
+let fpObs = null;
+function armFloatPay(){
+  if (fpObs) fpObs.disconnect();
+  fpObs = new IntersectionObserver(entries=>{
+    const vis = cur==='p-reveal' && entries[0].intersectionRatio < 1;
+    document.getElementById('floatpay').classList.toggle('off', !vis);
+  },{threshold:1});
+  fpObs.observe(document.getElementById('payNote'));
+}
+
+const BANKS = [
+  ['Mandiri','8908'],['BNI','8808'],['BRI','2621'],['PermataBank','8528'],
+  ['CIMB Niaga','2705'],['SeaBank','9018'],['BSI','9002'],['Danamon','8915'],
+  ['Bank lain','9881'],
+];
+function toggleBanks(){
+  const list = document.getElementById('bankList');
+  if (!list.childElementCount){
+    BANKS.forEach(([n])=>{
+      const btn=document.createElement('button'); btn.className='bankbtn';
+      btn.innerHTML='<span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+      btn.querySelector('span').textContent=n;
+      btn.onclick=()=>selectBank(n);
+      list.appendChild(btn);
+    });
+  }
+  const on = list.classList.toggle('on');
+  document.getElementById('vaToggle').setAttribute('aria-expanded', on?'true':'false');
+}
+function selectBank(name){
+  const prefix = (BANKS.find(b=>b[0]===name)||BANKS[0])[1];
+  document.getElementById('vaTitle').textContent =
+    name==='Bank lain' ? 'Virtual Account bank lain' : 'Virtual Account '+name;
+  document.getElementById('vaNum').textContent = prefix+' 0812 3341 7789';
+  show('p-pay-va');
+}
+function copyVa(){
+  const btn = document.getElementById('vaCopy');
+  const num = document.getElementById('vaNum').textContent.replace(/\s/g,'');
+  if (navigator.clipboard) navigator.clipboard.writeText(num).catch(()=>{});
+  btn.textContent='Tersalin'; setTimeout(()=>btn.textContent='Salin',1500);
+}
+function startWallet(w){
+  document.getElementById('walletTitle').textContent='Bayar dengan '+w;
+  const logo=document.getElementById('walletLogo');
+  logo.textContent = w==='GoPay'?'gopay':'DANA';
+  logo.style.color = w==='GoPay'?'#00AED6':'#108EE9';
+  document.getElementById('walletCopy').textContent =
+    'Anda akan diarahkan ke aplikasi '+w+' untuk mengonfirmasi pembayaran ke NUAVE.';
+  document.getElementById('walletBtn').textContent='Konfirmasi di '+w;
+  show('p-pay-wallet');
+}
+function finishPayment(){ show('p-processing'); }
+function enterIntake(){ show(mode==='manual' ? 's-scope' : 's-brand'); }
+
+// deterministic fake QR: three finder squares plus pseudo-random modules
+function buildQr(){
+  const box=document.getElementById('qrBox');
+  if (box.childElementCount) return;
+  const n=25, c=7, dark='var(--text-heading)';
+  const inFinder=(x,y)=>(x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8);
+  let s='<svg width="'+(n*c)+'" height="'+(n*c)+'" viewBox="0 0 '+(n*c)+' '+(n*c)+'" aria-hidden="true">';
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    if(inFinder(x,y)) continue;
+    if(((x*37+y*61+13)%17)<8) s+='<rect x="'+(x*c)+'" y="'+(y*c)+'" width="'+c+'" height="'+c+'" fill="'+dark+'"/>';
+  }
+  [[0,0],[n-7,0],[0,n-7]].forEach(([fx,fy])=>{
+    s+='<rect x="'+(fx*c)+'" y="'+(fy*c)+'" width="'+(7*c)+'" height="'+(7*c)+'" fill="'+dark+'"/>'
+     +'<rect x="'+((fx+1)*c)+'" y="'+((fy+1)*c)+'" width="'+(5*c)+'" height="'+(5*c)+'" fill="var(--bg-page)"/>'
+     +'<rect x="'+((fx+2)*c)+'" y="'+((fy+2)*c)+'" width="'+(3*c)+'" height="'+(3*c)+'" fill="'+dark+'"/>';
+  });
+  s+='</svg>';
+  box.innerHTML=s;
+}
+
+function runCrawl(){
+  document.getElementById('cs1t').textContent = 'Membaca '+(sc.source||'sumber Anda');
+  const steps=['cs1','cs2','cs3'];
+  steps.forEach(id=>{const el=document.getElementById(id);el.classList.remove('done','busy');});
+  steps.forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.add('busy'), i*700);
+    setTimeout(()=>{const el=document.getElementById(id);el.classList.remove('busy');el.classList.add('done');}, 500+i*700);
+  });
+  setTimeout(()=>show('s-brand'), 2400);
+}
+
+function renderBrand(){
+  const b = S.wrong ? sc.wrongBrand : sc.brand;
+  document.getElementById('bLogo').textContent = b.initials;
+  document.getElementById('bName').textContent = b.name;
+  document.getElementById('bMeta').innerHTML =
+    (b.tagline ? '&ldquo;'+b.tagline+'&rdquo; · ' : '') + (b.url||'');
+  const note = document.getElementById('thinNote');
+  note.hidden = !sc.thinNote;
+  if (sc.thinNote) note.textContent = sc.thinNote;
+  // reset selection so a wrong card is never silently pre-accepted
+  document.querySelectorAll('[data-group="brandok"]').forEach(x=>x.classList.remove('sel'));
+  S.brandok = null;
+}
+
+function applyBrandFix(){
+  // In the real product this triggers a re-read of the corrected source.
+  // Here: the corrected brand resolves to the rich sample data.
+  const name = document.getElementById('fixName').value.trim();
+  sc = {...SCENARIOS.lengkap};
+  if (name && name.toLowerCase()!=='kopi sudut'){
+    sc.brand = {...sc.brand, name, initials:name.slice(0,2).toUpperCase(),
+      url:document.getElementById('fixUrl').value.trim()||sc.brand.url};
+  }
+  S.wrong = false; S.brandok = null;
+  ALIASES = sc.aliases.slice();
+  QUESTIONS = null;
+  renderScope(); renderCats(); renderBranches(); renderProducts();
+  renderOff(); renderComp(); renderCities();
+  show('s-crawl');
+}
+
+// ---------------------------------------------------------------------------
+// Screen rendering
+// ---------------------------------------------------------------------------
+const ICONS = {
+  brand:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1M9 13h1m4 0h1M9 17h1m4 0h1"/></svg>',
+  pin:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  box:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>',
+  x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+};
+
+function renderScope(){
+  const box = document.getElementById('scopeCards'); box.innerHTML='';
+  const opts = [
+    {v:'brand', ic:'brand', t:()=>'Seluruh brand '+(brandName()), d:'Semua lokasi dan produk dinilai sebagai satu brand'},
+  ];
+  if (sc.branches.length) opts.push({v:'cabang', ic:'pin', t:()=>'Satu cabang atau lokasi', d:'Misalnya hanya satu gerai'});
+  opts.push({v:'produk', ic:'box', t:()=>'Satu produk atau layanan', d:'Misalnya hanya satu lini produk'});
+  opts.forEach(o=>{
+    const c = document.createElement('button');
+    c.className='card'; c.dataset.group='scope'; c.dataset.val=o.v;
+    c.innerHTML = ICONS[o.ic]+'<span><span class="t">'+o.t()+'</span><span class="d" style="display:block">'+o.d+'</span></span>';
+    box.appendChild(c);
+  });
+}
+
+function renderCats(){
+  const box = document.getElementById('catCards'); box.innerHTML='';
+  sc.categories.forEach((k,i)=>{
+    const c = document.createElement('button');
+    c.className='card'+(sc.catSel===i?' sel':''); c.dataset.group='cat'; c.dataset.val=k.label;
+    c.innerHTML = '<span><span class="t">'+k.label+'</span>'+(k.ex?'<span class="d" style="display:block">'+k.ex+'</span>':'')+'</span>';
+    box.appendChild(c);
+  });
+}
+
+function renderBranches(){
+  const box = document.getElementById('branchRows'); box.innerHTML='';
+  sc.branches.forEach(b=>{
+    const r = document.createElement('button');
+    r.className='row'; r.dataset.group='branch'; r.dataset.val=b.n;
+    r.innerHTML='<span class="dot"></span><span><span class="rt" style="display:block">'+b.n+'</span><span class="rd" style="display:block">'+b.d+'</span></span>';
+    box.appendChild(r);
+  });
+}
+function renderProducts(){
+  const box = document.getElementById('prodRows'); box.innerHTML='';
+  sc.products.forEach(p=>{
+    const r = document.createElement('button');
+    r.className='row'; r.dataset.group='prod'; r.dataset.val=p.n;
+    r.innerHTML='<span class="dot"></span><span><span class="rt" style="display:block">'+p.n+'</span>'+(p.d?'<span class="rd" style="display:block">'+p.d+'</span>':'')+'</span>';
+    box.appendChild(r);
+  });
+}
+
+// offerings: confirm mode shows detected chips; ask mode also shows
+// unselected category suggestions to tap
+function renderOff(){
+  const ask = !!sc.offeringsAsk;
+  document.getElementById('offH').textContent = ask
+    ? 'Apa saja yang Anda tawarkan?' : 'Ini produk Anda. Sudah benar?';
+  document.getElementById('offLead').textContent = ask
+    ? (offerings.length
+        ? 'Nuave menemukan '+offerings.length+' dari sumber Anda. Pilih dari saran di bawah atau tambah sendiri.'
+        : 'Pilih dari saran di bawah atau tambah sendiri.')
+    : 'Hapus yang salah, tambah yang kurang.';
+  const box = document.getElementById('offChips'); box.innerHTML='';
+  offerings.forEach(o=>{
+    const c = document.createElement('button'); c.className='chip on';
+    c.innerHTML = o+' <span class="x">'+ICONS.x+'</span>';
+    c.setAttribute('aria-pressed','true');
+    c.onclick = ()=>{ offerings = offerings.filter(x=>x!==o); renderOff(); };
+    box.appendChild(c);
+  });
+  offSuggested.filter(s=>!s.on).forEach(s=>{
+    const c = document.createElement('button'); c.className='chip'; c.textContent=s.t;
+    c.setAttribute('aria-pressed','false');
+    c.onclick = ()=>{ s.on=true; offerings.push(s.t); renderOff(); };
+    box.appendChild(c);
+  });
+}
+function addOff(){ const i=document.getElementById('offAdd'); if(i.value.trim()){ offerings.push(i.value.trim()); i.value=''; renderOff(); } }
+
+function renderCust(){
+  const box = document.getElementById('custChips'); box.innerHTML='';
+  custData.forEach(s=>{
+    const c = document.createElement('button'); c.className='chip'+(s.on?' on':''); c.textContent=s.t;
+    c.setAttribute('aria-pressed', s.on?'true':'false');
+    c.onclick = ()=>{ s.on=!s.on; renderCust(); };
+    box.appendChild(c);
+  });
+}
+function addCust(){ const i=document.getElementById('custAdd'); if(i.value.trim()){ custData.push({t:i.value.trim(),on:true}); i.value=''; renderCust(); } }
+
+function renderComp(){
+  document.getElementById('compLead').textContent = sc.compLead;
+  const box = document.getElementById('compRows'); box.innerHTML='';
+  comps.forEach(k=>{
+    const d = document.createElement('div'); d.className='comp'+(k.keep?'':' removed');
+    d.innerHTML = '<div><div class="nm">'+k.n+'</div><div class="ctx">'+k.c+'</div></div>'+
+      '<button class="mini">'+(k.keep?'Hapus':'Batalkan')+'</button>';
+    d.querySelector('.mini').onclick = ()=>{ k.keep=!k.keep; renderComp(); };
+    box.appendChild(d);
+  });
+}
+function addComp(){ const i=document.getElementById('compAdd'); if(i.value.trim()){ comps.push({n:i.value.trim(),c:'Ditambahkan manual',keep:true}); i.value=''; renderComp(); } }
+
+function renderCities(){
+  const box = document.getElementById('cityChips'); box.innerHTML='';
+  sc.cities.forEach(city=>{
+    const c=document.createElement('button'); c.className='chip on'; c.textContent=city;
+    c.setAttribute('aria-pressed','true');
+    box.appendChild(c);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Generic selection handling
+// ---------------------------------------------------------------------------
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-group]');
+  if (el){
+    const g = el.dataset.group;
+    el.parentElement.querySelectorAll('[data-group="'+g+'"]').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel');
+    S[g] = el.dataset.val;
+    if (g==='brandok' && S.brandok==='bukan'){
+      const b = S.wrong ? sc.wrongBrand : sc.brand;
+      document.getElementById('fixName').value='';
+      document.getElementById('fixUrl').value='';
+      show('s-brand-fix');
+      return;
+    }
+    if (g==='mkt'){
+      document.getElementById('cityReveal').classList.toggle('on', ['lokal','kota'].includes(S.mkt));
+    }
+    validate();
+  }
+  const cityChip = e.target.closest('#cityChips .chip');
+  if (cityChip){
+    cityChip.classList.toggle('on');
+    cityChip.setAttribute('aria-pressed', cityChip.classList.contains('on')?'true':'false');
+  }
+  const sc2 = e.target.closest('[data-single]');
+  if (sc2){
+    sc2.parentElement.querySelectorAll('[data-single]').forEach(x=>x.classList.remove('on'));
+    sc2.classList.add('on');
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Manual adds
+// ---------------------------------------------------------------------------
+function addCity(){ const i=document.getElementById('cityAdd'); if(!i.value.trim())return;
+  const c=document.createElement('button'); c.className='chip on'; c.textContent=i.value.trim();
+  c.setAttribute('aria-pressed','true');
+  document.getElementById('cityChips').appendChild(c); i.value=''; }
+function addBranch(){ const i=document.getElementById('branchAdd'); if(!i.value.trim())return;
+  const r=document.createElement('button'); r.className='row'; r.dataset.group='branch'; r.dataset.val=i.value.trim();
+  r.innerHTML='<span class="dot"></span><span><span class="rt" style="display:block">'+i.value.trim()+'</span><span class="rd" style="display:block">Lengkapi alamat nanti</span></span>';
+  document.getElementById('branchRows').appendChild(r); i.value=''; }
+function addProd(){ const i=document.getElementById('prodAdd'); if(!i.value.trim())return;
+  const r=document.createElement('button'); r.className='row'; r.dataset.group='prod'; r.dataset.val=i.value.trim();
+  r.innerHTML='<span class="dot"></span><span><span class="rt" style="display:block">'+i.value.trim()+'</span></span>';
+  document.getElementById('prodRows').appendChild(r); i.value=''; }
+function addCat(){ const i=document.getElementById('catAdd'); if(!i.value.trim())return; S.cat=i.value.trim();
+  document.querySelectorAll('[data-group="cat"]').forEach(x=>x.classList.remove('sel'));
+  const card=document.createElement('button'); card.className='card sel'; card.dataset.group='cat'; card.dataset.val=S.cat;
+  card.innerHTML='<span><span class="t">'+S.cat+'</span></span>';
+  document.getElementById('catCards').appendChild(card); i.value=''; validate(); }
+
+// ---------------------------------------------------------------------------
+// Readback
+// ---------------------------------------------------------------------------
+let aliasesEditing = false;
+function buildReview(){
+  const chipsOn = id => [...document.querySelectorAll('#'+id+' .chip.on')].map(c=>c.textContent.trim());
+  const scopeTxt = S.scope==='cabang' ? 'Cabang: '+(S.branch||'belum dipilih')
+    : S.scope==='produk' ? 'Produk: '+(S.prod||'belum dipilih')
+    : 'Seluruh brand '+brandName();
+  const kept = comps.filter(k=>k.keep);
+  const cust = custData.filter(s=>s.on).map(s=>s.t);
+  const facts = document.getElementById('factsText').value.trim();
+  const mktTxt = !marketMatters() ? 'Tidak relevan untuk audit ini. Produk ini dikirim ke seluruh Indonesia.'
+    : (S.mkt==='lokal'||S.mkt==='kota') ? (chipsOn('cityChips').join(', ')||'Belum diisi')
+    : S.mkt==='nasional' ? 'Seluruh Indonesia'
+    : S.mkt==='global' ? 'Indonesia dan luar negeri' : 'Belum dipilih';
+  const rows = [
+    ['Yang diaudit','s-scope', scopeTxt+' · kategori: '+(S.cat||'belum dipilih')],
+    ['Produk dan layanan','s-offerings', offerings.join(', ')||'Belum diisi'],
+    ['Kenapa pelanggan mencari','s-customers', cust.join(', ')||'Belum diisi'],
+    ['Pasar', marketMatters()?'s-market':'s-competitors', mktTxt],
+    ['Pembanding','s-competitors', document.getElementById('noComp').classList.contains('on')
+      ? 'Tidak ada pesaing langsung. Audit membandingkan dengan alternatif dalam kategori Anda.'
+      : (kept.map(k=>k.n).join(', ')||'Belum diisi')],
+    ['Hal yang wajib benar','s-facts', facts||'Tidak diisi'],
+  ];
+  let html = rows.map(r=>
+    '<div class="rv"><h4>'+r[0]+' <button class="edit" onclick="goto(\''+r[1]+'\')">Ubah</button></h4><p>'+r[2]+'</p></div>').join('');
+
+  // Auto-derived, surfaced here for the first time. Aliases matter: the six
+  // unbranded questions are screened against them.
+  const aliasTxt = ALIASES.length ? ALIASES.join(', ') : 'Tidak ada';
+  html += '<div class="rv"><h4>Nama lain dan sumber <button class="edit" onclick="toggleAliases()">'+
+    (aliasesEditing?'Selesai':'Ubah')+'</button></h4>'+
+    (aliasesEditing
+      ? '<input type="text" id="aliasInput" value="'+ALIASES.join(', ')+'" style="margin-top:8px" aria-label="Nama lain brand">'+
+        '<p class="hint">Nama lain dipakai untuk memastikan enam pertanyaan tanpa menyebut bisnis Anda benar-benar tidak menyebutnya.</p>'
+      : '<p>Nama lain: '+aliasTxt+'<br>Sumber: '+sc.sources+'</p>')+
+    '</div>';
+  document.getElementById('rvBody').innerHTML = html;
+  if (aliasesEditing) document.getElementById('aliasInput').focus();
+}
+function toggleAliases(){
+  if (aliasesEditing){
+    const v = document.getElementById('aliasInput').value;
+    ALIASES = v.split(',').map(x=>x.trim()).filter(Boolean);
+  }
+  aliasesEditing = !aliasesEditing;
+  buildReview();
+}
+
+// ---------------------------------------------------------------------------
+// Question review: 6 unbranded + 4 branded (contract section 5). Hardcoded
+// templates in the prototype; generated in the real product.
+// ---------------------------------------------------------------------------
+function questionSet(){
+  const b = brandName();
+  const kept = comps.filter(k=>k.keep);
+  const comp = kept.length ? kept[0].n : 'chain kopi susu lain';
+  const mCity = mode==='manual' ? document.getElementById('mCity').value.trim() : '';
+  const city = mCity || sc.city, area = mCity || sc.area;
+  return [
+    {t:'Kedai kopi susu yang enak di '+city+' apa aja ya?', k:'Rekomendasi kategori'},
+    {t:'Lagi cari tempat ngopi yang nyaman buat kerja seharian di sekitar '+area+', ada rekomendasi?', k:'Situasi pelanggan'},
+    {t:'Kedai kopi mana yang rasanya konsisten tapi harganya masih masuk akal buat diminum tiap hari?', k:'Kebutuhan dan pertimbangan'},
+    {t:'Mau pesan kopi susu untuk meeting kantor 20 orang di '+city+', sebaiknya pesan di mana?', k:'Produk untuk kebutuhan tertentu'},
+    {t:'Kasih 5 kedai kopi susu lokal di '+city+' yang layak dicoba dong.', k:'Shortlist'},
+    {t:'Antara chain kopi susu lokal dan chain nasional, mana yang biasanya lebih worth it?', k:'Pertimbangan antar pilihan'},
+    {t:b+' cocok nggak buat kerja seharian sambil ngopi?', k:'Kecocokan untuk kebutuhan', b:true},
+    {t:'Apakah kamu merekomendasikan '+b+' buat orang yang cari kopi susu harian di '+city+'?', k:'Rekomendasi eksplisit', b:true},
+    {t:b+' vs '+comp+', bagusan mana untuk kopi susu harian?', k:'Perbandingan langsung', b:true},
+    {t:'Buat siapa '+b+' cocok, dan buat siapa sebaiknya cari yang lain?', k:'Cocok, tidak cocok, kelebihan dan kekurangan', b:true},
+  ];
+}
+let QUESTIONS = null;
+function buildQuestions(){
+  if (!QUESTIONS) QUESTIONS = questionSet();
+  document.getElementById('ubDesc').textContent =
+    'Menguji apakah '+brandName()+' muncul dan direkomendasikan dengan sendirinya. Nama brand tidak boleh ada di sini.';
+  const ub = document.getElementById('qUnbranded'), br = document.getElementById('qBranded');
+  ub.innerHTML=''; br.innerHTML='';
+  QUESTIONS.forEach((q,i)=>{
+    const d = document.createElement('div'); d.className='q';
+    d.innerHTML = '<div class="qn"><span>'+(i+1)+' · '+q.k+'</span><button class="edit">Ubah</button></div><div class="qt"></div>';
+    d.querySelector('.qt').textContent = q.t;
+    d.querySelector('.edit').onclick = ()=>editQuestion(d, q);
+    (q.b?br:ub).appendChild(d);
+  });
+}
+// Unbranded edits are re-screened against the brand name and aliases
+// (contract section 8.12); a violation is refused with a plain message.
+function violatesUnbranded(text){
+  const names = [brandName(), ...ALIASES].filter(Boolean).map(n=>n.toLowerCase());
+  const t = text.toLowerCase();
+  return names.some(n=>t.includes(n));
+}
+function editQuestion(el, q){
+  const body = el.querySelector('.qt'), btn = el.querySelector('.edit');
+  const ta = document.createElement('textarea'); ta.value = q.t;
+  ta.setAttribute('aria-label','Ubah pertanyaan');
+  body.replaceWith(ta); btn.textContent = 'Simpan'; ta.focus();
+  const cancel = ()=>{ buildQuestions(); };
+  ta.addEventListener('keydown', ev=>{ if(ev.key==='Escape') cancel(); });
+  btn.onclick = ()=>{
+    const v = ta.value.trim() || q.t;
+    if (!q.b && violatesUnbranded(v)){
+      el.querySelector('.err')?.remove();
+      const err = document.createElement('p'); err.className='err';
+      err.setAttribute('role','alert');
+      err.textContent = 'Pertanyaan ini tidak boleh menyebut '+brandName()+' atau nama lainnya, supaya hasilnya tetap mengukur penemuan spontan.';
+      ta.after(err);
+      return;
+    }
+    q.t = v;
+    buildQuestions();
+  };
+}
+
+setScenario('lengkap');
+</script>
+</body>
+</html>
