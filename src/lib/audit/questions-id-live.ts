@@ -349,10 +349,10 @@ export async function buildLiveIndonesianPromptPack(input: {
       return {
         prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
         category: item.suggested_category,
-        role: slot.customerFacingLabel,
+        role: slot.legacyRole,
         branded: item.final_classification === "menyebut_bisnis_anda",
         question: item.text,
-        rationale: slot.generatorSlotDescription,
+        rationale: slot.legacyRole,
         // The provider receives one minimized confirmed-facts record. Do not
         // claim three specific fields were used when the authored question may
         // have been grounded in different confirmed fields.
