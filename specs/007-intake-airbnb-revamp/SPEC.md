@@ -1,6 +1,6 @@
 # Spec 007: Runnable V1 audit journey
 
-> Status: **Draft**
+> Status: **Approved** (founder-approved 2026-08-30)
 > Owner: Founder
 > Updated: 2026-08-30
 > Implements: the V1 customer journey, end to end, with real business data

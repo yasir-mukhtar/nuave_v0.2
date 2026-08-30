@@ -11,7 +11,9 @@
 ## Current state
 
 - Branch `feat/intake-big-revamp`.
-- `specs/007-intake-airbnb-revamp/SPEC.md` — revision 6, status **Draft**.
+- `specs/007-intake-airbnb-revamp/SPEC.md` — revision 6, status **Approved**
+  (founder-approved 2026-08-30). Implementation may begin; `WORKFLOW.md`'s
+  specification gate is satisfied.
 - `specs/007-intake-airbnb-revamp/R-22-SSRF-FEASIBILITY.md` — the determination
   R-22 required. Complete 2026-08-30: no pin is available on Workers. **The
   founder accepted the residual risk explicitly on 2026-08-30**

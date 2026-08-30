@@ -72,6 +72,12 @@ verification is against its acceptance criteria.
   copy pass (calm instrument). Wave 1 verified 2026-08-20: P0 foundation and
   P1 landing (see its `VERIFICATION.md`). Wave 2 (P2–P7) is gated on the
   report-quality gate per the package's `EXECUTION_PLAN.md`.
+- [`007-intake-airbnb-revamp/SPEC.md`](./007-intake-airbnb-revamp/SPEC.md)
+  — status **Approved** (founder-approved 2026-08-30). The runnable V1 journey
+  end to end with real business data: canonical measurement matrix (6 unnamed +
+  4 named), workflow and data authority, the simulated-payment boundary, safe
+  source handling, and the end-to-end acceptance run. Five implementation
+  blockers, A through E; A is first and R-04 fixes its internal order.
 
 [`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
 no active spec is named, the next task is to prepare or approve one rather than
