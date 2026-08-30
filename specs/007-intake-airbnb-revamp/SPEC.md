@@ -121,7 +121,7 @@ count was matched.
 | `report-prompt-contract.ts:2-6` | Assessment rules keyed on `need_discovery`/`solution_discovery`/`comparison` and `validation`/`action` |
 | `contracts.ts` observation validation | Legacy `validation`/`action` special-casing |
 | `ReportView.tsx` | Report category labels |
-| `fixture-journey/adapter.ts:34-38` | Category role/input mapping and the legacy assessed-denominator comments |
+| `fixture-journey/adapter.ts:306-336` | `roleOf` and `inputsUsedOf` — role and allowed-input mappings switched on the five legacy categories, consumed at `:343` and `:347`. The legacy assessed-denominator reasoning is documented separately at `:34-38` |
 
 ### UI and customer-facing
 
@@ -134,8 +134,9 @@ count was matched.
 
 ### Scripts
 
-`tsconfig.json` includes `**/*.ts` and excludes only `node_modules` and
-`archive`, so these are typechecked and `npm run check` fails until they are
+`tsconfig.json:31` includes `**/*.ts` and excludes only `node_modules`,
+`archive`, and `Archive Candidates` — none of which cover `scripts/`. These are
+typechecked, and `npm run check` runs `tsc --noEmit`, so it fails until they are
 migrated. They are not optional.
 
 | File | What |
@@ -316,8 +317,17 @@ Indonesian message that names what the slot must ask:
 1. R-06 rule 1 — none of the slot's forbidden identities appear.
 2. R-06 rule 2 — every identity the slot requires appears. On slot 9 that
    includes the comparison target.
-3. Slot 9 additionally requires a comparison relation between the two named
-   parties, not merely both names present.
+3. Slot 9 additionally requires a **comparison relation** between the two named
+   parties, not merely both names present. No such predicate exists in the tree
+   today — `containsIndonesianComparisonIdentity` (`questions-id.ts:278`) tests
+   identity presence only — so the matrix carries the definition: the slot
+   declares a closed list of Indonesian comparison markers, and the question
+   satisfies the rule when it contains both required identities and at least one
+   marker. V1's list is the `banding` stem (`bandingkan`, `dibandingkan`,
+   `membandingkan`, `perbandingan`), `dibanding`, `versus`, `vs`, and the
+   comparative `lebih` forms. It is spec-owned data in the matrix, not a
+   heuristic in the validator, and R-06 tests it. Extending the list is a spec
+   change.
 4. The text is non-empty, within `promptSchema`'s 700-character bound
    (`types.ts:140`), and phrased as a question.
 
@@ -334,11 +344,27 @@ intake behind a question they cannot satisfy — the failure shape this spec
 exists to remove. If evidence from real packs shows purpose drift actually
 occurring, hardening a specific slot is a later, narrower decision.
 
+**What the locked decision guarantees, and what V1 enforces.** Locked decision
+6 is a rule about what the product permits: a user may edit wording, and may
+not change a slot's measurement purpose, category, brand policy, or
+comparison-target policy. It is not a claim that every violation is detectable.
+
+V1 enforces that rule **completely** wherever it is mechanically decidable.
+Category, declared purpose, and both identity policies are fixed matrix
+metadata that no edit can reach; the four checks above hard-block on save.
+V1 enforces it **by frame and warning** in the one place it is not decidable:
+wording that keeps the slot's required identities and still satisfies every
+check above, while no longer measuring what the slot exists to measure.
+
+That residue is real, and it is accepted for V1 — the same way R-20 accepts
+that the payment ordering is not server-enforced and says so rather than
+claiming a boundary it does not have. **This spec must not be read as providing
+semantic purpose validation.** Closing the residue costs a model-assisted
+validator on every save; that is a scoped founder decision, not a gap in this
+contract.
+
 Replacing a question means replacing it *for that slot*. There is no
 free-composition editor.
-
-Locked decision 6 reads: **users may edit wording, but may not change a slot's
-measurement purpose, category, brand policy, or comparison-target policy.**
 
 Reported denominators continue to derive from the actual final question text —
 existing behavior, preserved.
@@ -714,7 +740,9 @@ deliberately at the handoff. Do not claim they pass unchanged.
    enforced in both directions, and one canonical matrix is the only
    measurement authority.
 6. Users may edit wording, but may not change a slot's measurement purpose,
-   category, brand policy, or comparison-target policy.
+   category, brand policy, or comparison-target policy. R-10 states which parts
+   of this V1 enforces mechanically and which it enforces by fixed slot frame
+   plus a warning; the rule is unchanged either way.
 7. One comparison target is proposed by an explicit derivation step and may be
    accepted, edited, or replaced.
 8. Simulated payment sequences the workflow; it is not a security boundary.

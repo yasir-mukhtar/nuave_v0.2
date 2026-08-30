@@ -13,9 +13,12 @@
 - Branch `feat/intake-big-revamp`.
 - `specs/007-intake-airbnb-revamp/SPEC.md` — revision 5, status **Draft**.
 - `docs/reviews/prompts/spec-007-closure-check.md` — the round-4 review pass.
-- `docs/reviews/prompts/spec-007-revision-5-closure-check.md` — the final
+- `docs/reviews/prompts/spec-007-revision-5-closure-check.md` — the round-5
   closure verification of revision 5. Scoped to the six corrections and the
-  seams around them; it is not a fifth broad review.
+  seams around them; not a fifth broad review.
+- `docs/reviews/prompts/spec-007-final-corrections-check.md` — the round-6
+  confirmation of round 5's four corrections. Narrowest pass in the series;
+  round 5 pre-approved the spec contingent on exactly those four.
 - `docs/reviews/findings/spec-007-adversarial-review-r2.md` — round 2 findings.
 - `docs/reviews/prompts/spec-007-revision-3-planner.md` — the founder directive
   that produced revision 4. **Read this; it carries decisions the spec
@@ -28,6 +31,18 @@ SETTLED `DECISION_LOG` entries and two tracked documents), R-22's control
 values, the `market_context` conditional rule, and R-10's minimum
 purpose-validation contract. The synthesized round-4 verdict was "product
 decisions locked, one bounded correction pass required." That pass is done.
+
+Round 5 verified it and closed four of the six checks outright, returning three
+corrections: the slot-9 comparison predicate was undefined, a `tsconfig` claim
+was false, and `fixture-journey/adapter.ts:34-38` cited the assessed-denominator
+comment rather than the `roleOf`/`inputsUsedOf` mappings at `:306-336`. All
+three are fixed. It also found the one seam this note should carry forward:
+R-10's warn-don't-block path versus locked decision 6's "may not change a
+slot's measurement purpose." Resolved in the spec by separating the permission
+rule from V1's enforcement strength and recording the residue as accepted.
+**The founder may want to overrule that** — it is the only place revision 5
+settled something that touches a product guarantee rather than an
+implementation detail.
 
 The spec has never been implemented. No code in this spec's scope has changed.
 
@@ -73,7 +88,7 @@ The nine locked decisions are listed in `SPEC.md`. In addition:
 | Website + Instagram; Google Maps deferred | Locked by founder decision, not by implementation difficulty |
 | Manual name entry as **recovery only** | Locked. Allowed after a valid source fails identification; never as an entry path |
 | Simulated payment | Locked. Not a security boundary, and must not be described as one |
-| Constrained question editing | Locked. Users edit wording within a slot, never composition or purpose |
+| Constrained question editing | Locked. Users edit wording within a slot, never composition or purpose. This is the permission rule. R-10 sets V1's enforcement strength — complete where mechanically decidable, frame-plus-warning for undetectable semantic drift — and the residue is recorded as accepted, on the R-20 pattern. Closing it needs a founder decision, not a planner's |
 | Comparison target proposed then accept/edit/replace | Locked |
 | AI-drafts-then-user-verifies intake | Locked. Never a blank questionnaire |
 
