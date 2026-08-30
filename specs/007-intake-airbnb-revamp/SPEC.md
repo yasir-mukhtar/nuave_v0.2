@@ -641,20 +641,27 @@ through the provider's web search.
 outcome:
 
 **DNS pinning is not achievable on this runtime, and V1 does not attempt it.**
-Workers' `fetch()` exposes no DNS control, and separately refuses a literal-IP
-URL with error 1003 — so resolving the address ourselves and fetching it, the
-technique a pin depends on, is unavailable on its own terms. `connect()` from
-`cloudflare:sockets` is the only path to a genuine pin and would mean writing
-HTTP/1.1, TLS, redirects, and chunked decoding by hand on a socket path whose
-raw-IP and custom-SNI support is undocumented.
+Workers' `fetch()` exposes no DNS control — no resolver override, no `lookup`
+hook, no way to bind a request to a pre-resolved address. That alone settles it.
+A second obstacle is reported but less firmly sourced: `fetch()` appears to
+refuse a literal-IP URL (error 1003), which would also rule out resolving the
+address ourselves and fetching it. `connect()` from `cloudflare:sockets` is the
+only path to a genuine pin and would mean writing HTTP/1.1, TLS, redirects, and
+chunked decoding by hand on a socket path whose raw-IP and custom-SNI support is
+undocumented.
 
-The risk is accepted, on stated grounds rather than by default: this Worker's
-only binding is `ASSETS` (`wrangler.jsonc`), it has no Workers VPC, Tunnel, or
-Hyperdrive binding, and Workers has no instance metadata service — so the
-internal-service prize that motivates the pin does not exist on this
-deployment. The residual exposure is open-proxy abuse, which **R-23** bounds,
-not confidentiality. The determination records its revisit triggers and the one
-cheap live check that would close the remaining unknown.
+**The founder accepted the residual risk on 2026-08-30** (`DECISION_LOG.md`),
+explicitly and as a V1 tradeoff. The grounds are the deployment's shape: this
+Worker's only binding is `ASSETS` (`wrangler.jsonc`), there is no Workers VPC,
+Tunnel, Hyperdrive, Durable Object, or KV, and Workers exposes no VM-style
+metadata service — so the high-impact SSRF target does not exist here. The
+realistic residual is abuse of Nuave as a public fetch proxy, which **R-23**
+bounds. Every other control in the table below stays mandatory.
+
+This is **not** a claim that DNS rebinding has been eliminated, and **not** a
+claim that Cloudflare blocks a hostname resolving to private space — that
+behavior is unverified. The determination records the revisit triggers and the
+one cheap live check that would settle it.
 
 Objectively testable acceptance. Every value below is fixed by this spec and
 must have a test:
@@ -663,7 +670,7 @@ must have a test:
 |---|---|
 | Protocols | `http:` and `https:` only; every other scheme rejected before any DNS lookup |
 | Reserved networks | Reject localhost, loopback, private, link-local, unique-local, and cloud-metadata ranges — IPv4 and IPv6, including IPv4-mapped IPv6 |
-| DNS rebinding | **Accepted risk, not mitigated.** No pin is available (see the determination). Revalidate every redirect hop against every other row here; that is what V1 does instead |
+| DNS rebinding | **Accepted residual risk, not technically mitigated by pinning** — founder decision, 2026-08-30. No pin is available on this runtime. V1 instead revalidates every redirect hop against every other row in this table |
 | Redirects | **At most 3 hops.** Every hop revalidated against every rule in this table before it is followed; hop 4 is a failure, not a truncation |
 | Timeout | **5 s per request**, **10 s total** across the whole redirect chain, via `AbortSignal.timeout` as `groq.ts:178` already does |
 | Response size | **512 KB**, counted on the wire and enforced while streaming; abort at the byte that exceeds it, never buffer then check |
@@ -701,8 +708,11 @@ runtime accepts a `period` of **10 or 60 seconds only**. Call
 
 The second identity limiter is the one that matters for R-22: it bounds how
 hard any single third-party host can be hit through Nuave, which an IP-keyed
-limiter alone does not. Extraction is limited because it is the surface that
-spends founder budget; a journey needs one call.
+limiter alone does not. **Per Cloudflare location, not globally** — the counter
+is per-colo, so a distributed caller can exceed the nominal figure by a factor
+of the colos it reaches. It raises the cost of using Nuave to hammer one target;
+it is not an exact global ceiling. Extraction is limited because it is the
+surface that spends founder budget; a journey needs one call.
 
 **Stated limitations, so this is not mistaken for more than it is.** The
 counters are per-colo and eventually consistent, and Cloudflare documents the

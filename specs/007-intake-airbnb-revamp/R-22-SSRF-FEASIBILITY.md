@@ -1,6 +1,6 @@
 # R-22 · SSRF feasibility determination — Cloudflare Workers
 
-> Status: **Complete** · Date: 2026-08-30
+> Status: **Complete; residue accepted by the founder 2026-08-30** · Date: 2026-08-30
 > Required by `SPEC.md` R-22 before implementation planning.
 > Method: runtime documentation and repository configuration. **No Worker was
 > deployed and no live fetch was executed** — see §7 for what that leaves open.
@@ -20,14 +20,18 @@ Is pinning achievable on Cloudflare Workers?
 **No. Pinning is not achievable through `fetch()`, and the workaround that
 could achieve it is disproportionate to the risk on this deployment.**
 
-Two independent blocks:
-
 1. **`fetch()` exposes no DNS control.** There is no `lookup` hook, no resolver
-   override, and no way to bind a request to a pre-resolved address.
-2. **`fetch()` refuses a literal IP.** A URL whose host is an IP address fails
-   with **error 1003, "Direct IP access not allowed."** So even resolving the
-   hostname ourselves and fetching the address does not work — the technique
-   the pin depends on is unavailable on its own terms.
+   override, and no way to bind a request to a pre-resolved address. **This is
+   sufficient on its own** — without it there is nothing to pin with.
+2. **`fetch()` appears to refuse a literal IP**, failing with error 1003,
+   "Direct IP access not allowed." That would independently rule out resolving
+   the hostname ourselves and fetching the address. **Sourcing note:** the
+   Workers runtime documentation for `fetch()` does not state this restriction
+   — it was checked and is silent. The claim rests on Cloudflare's general
+   Error 1003 page (written about direct IP access to Cloudflare's network,
+   not specifically about Workers), the open `workerd` issue, and consistent
+   community reports. Treat point 2 as well-attested but not
+   documentation-guaranteed. The verdict does not depend on it.
 
 `connect()` from `cloudflare:sockets` *can* target a specific address, and is
 the only path to a genuine pin. Taking it means writing HTTP/1.1 by hand over a
@@ -87,8 +91,13 @@ and no binding reachable from a URL. The realistic residual is:
 ## 6 · Decision
 
 **Do not build a pinned fetch for V1.** Ship `fetch()` with the full R-22
-control set applied as pre-flight validation and per-hop revalidation, and
-record the DNS-rebinding residue as accepted, on these grounds:
+control set applied as pre-flight validation and per-hop revalidation.
+
+**The founder accepted the DNS-rebinding residue explicitly on 2026-08-30**, as
+a V1 tradeoff and not as a claim that rebinding has been eliminated. The
+decision is recorded in `docs/DECISION_LOG.md`. This determination supplies the
+technical grounds; the acceptance is the founder's, not the planner's. Those
+grounds:
 
 - The naive pattern's failure mode is reaching an internal service. This
   deployment has none, and Cloudflare will not route a Worker into private
@@ -115,15 +124,26 @@ Recorded so no one mistakes this for a tested result.
    would rest on.
 
 **The cheap check that closes item 1:** deploy a throwaway route that fetches a
-hostname whose DNS A record points at `127.0.0.1`, and record the error. One
-deploy, no provider cost, no customer exposure. Worth doing before the identity
-endpoint carries real traffic; not a blocker for implementation planning.
+hostname whose DNS A record points at `127.0.0.1`, and record how `fetch()`
+behaves. One deploy, no provider cost, no customer exposure. It would turn an
+undocumented assumption into observed evidence.
+
+Classified deliberately:
+
+- **Worth doing before the identity endpoint carries real customer traffic.**
+- **Not required before implementation planning**, and not a gate on Blocker D.
+- **Not evidence that the founder's V1 decision is still open.** That decision
+  is settled; this check would only narrow what is written in §5.1.
+
+Nothing here authorizes a deploy. Running it is a separate, explicitly
+authorized task.
 
 ## Sources
 
 - [TCP sockets · Cloudflare Workers](https://developers.cloudflare.com/workers/runtime-apis/tcp-sockets/)
 - [Announcing `connect()` — a new API for creating TCP sockets from Workers](https://blog.cloudflare.com/workers-tcp-socket-api-connect-databases/)
-- [Error 1003 · Cloudflare](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1003)
+- [Error 1003 · Cloudflare](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1003) — supporting only; general, not Workers-specific
+- [`fetch()` · Cloudflare Workers runtime](https://developers.cloudflare.com/workers/runtime-apis/fetch/) — checked, and silent on IP-address restrictions
 - [Workers VPC — troubleshooting](https://developers.cloudflare.com/workers-vpc/reference/troubleshooting)
 - [workerd issue 93 — allow fetch to use IP address](https://github.com/cloudflare/workerd/issues/93)
 - [Rate limiting binding · Cloudflare Workers](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)

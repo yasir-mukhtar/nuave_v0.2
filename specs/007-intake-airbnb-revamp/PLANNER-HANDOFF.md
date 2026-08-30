@@ -13,8 +13,10 @@
 - Branch `feat/intake-big-revamp`.
 - `specs/007-intake-airbnb-revamp/SPEC.md` — revision 5, status **Draft**.
 - `specs/007-intake-airbnb-revamp/R-22-SSRF-FEASIBILITY.md` — the determination
-  R-22 required. Complete 2026-08-30: no pin is available on Workers, the risk
-  is accepted on stated grounds, and §7 of it lists what was *not* verified.
+  R-22 required. Complete 2026-08-30: no pin is available on Workers. **The
+  founder accepted the residual risk explicitly on 2026-08-30**
+  (`DECISION_LOG.md`) — this is settled, not a planner judgement. §7 of the
+  determination lists what was *not* verified.
 - `docs/reviews/prompts/spec-007-closure-check.md` — the round-4 review pass.
 - `docs/reviews/prompts/spec-007-revision-5-closure-check.md` — the round-5
   closure verification of revision 5. Scoped to the six corrections and the
@@ -103,6 +105,7 @@ The nine locked decisions are listed in `SPEC.md`. In addition:
 | Website + Instagram; Google Maps deferred | Locked by founder decision, not by implementation difficulty |
 | Manual name entry as **recovery only** | Locked. Allowed after a valid source fails identification; never as an entry path |
 | Simulated payment | Locked. Not a security boundary, and must not be described as one |
+| Ship V1 without DNS pinning | Locked by founder decision 2026-08-30, on the deployment grounds recorded in `DECISION_LOG.md`. Every other R-22 control stays mandatory. Revisit only on the recorded triggers — a new private-network binding, materially different exposure, or live evidence against the threat model |
 | Constrained question editing | Locked. Users edit wording within a slot, never composition or purpose. Enforcement strength is also settled now: complete where mechanically decidable, fixed slot frame plus a non-blocking warning elsewhere. Founder decision 2026-08-30, in `DECISION_LOG.md` |
 | Comparison target proposed then accept/edit/replace | Locked |
 | AI-drafts-then-user-verifies intake | Locked. Never a blank questionnaire |
@@ -195,9 +198,14 @@ memory that failed, failed for that reason.
 
 Not gaps in the spec — real unknowns that need work, not more review.
 
-R-22 and R-23 were both resolved on 2026-08-30 and have left this list. The
-determination is `R-22-SSRF-FEASIBILITY.md`; R-23 chose the Workers Rate
-Limiting binding. One item remains.
+R-22 and R-23 were both resolved on 2026-08-30 and have left this list. R-22's
+residual DNS-rebinding risk was **accepted by the founder**, on the record, with
+revisit triggers; R-23 chose the Workers Rate Limiting binding. Neither is open,
+and neither is a reason to reopen anything else. One item remains.
+
+The throwaway `fetch()`-to-private-IP check in §7 of the determination is an
+operational follow-up, not an open decision: do it before the identity endpoint
+carries real customer traffic, not before implementation planning.
 
 1. **R-21, Instagram parsing behaviors.** Observed during research, not
    reproduced in a committed test. Confirm against a live profile first.
