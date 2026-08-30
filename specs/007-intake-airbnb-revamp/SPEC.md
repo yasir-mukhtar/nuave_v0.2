@@ -574,6 +574,14 @@ the target R-10 requires it to name. The contract, which Blocker A implements:
   not that a target leaked. When the comparison target is this fallback, the
   comparison-target leakage check does not run. Every check on the audited
   brand's own identity is unaffected, in every slot.
+- **How the fallback is recognized**, so this is decidable and not a judgement
+  call: the comparison target *is* the fallback exactly when its name equals the
+  composed string for that brief's own `category`, compared after the same
+  normalization the identity guards use (`question-suggestion-guards.ts:7-14`).
+  Nothing else is treated as the fallback, no field is added to
+  `verified_competitor` to mark it, and a customer who types that phrase
+  themselves gets the same treatment — which is the right one, because they have
+  told us the same thing.
 
 R-03 carries the migration row and R-06 rule 6 carries the regression test.
 
