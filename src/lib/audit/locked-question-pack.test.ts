@@ -5,7 +5,11 @@ import {
   lockedObservationBindingErrors,
   variancePromptBindingErrors,
 } from "./locked-question-pack";
-import { INDONESIAN_SLOT_CATEGORIES } from "./questions-id";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  COMPATIBILITY_COMPOSITION_COUNTS,
+  measurementSlotForPromptId,
+} from "./measurement-matrix";
 import {
   assertSafeComparisonBusinessUrls,
   isValidSimilarBusinessUrl,
@@ -41,21 +45,27 @@ function brief(): BusinessBrief {
 }
 
 function prompts(): AuditPrompt[] {
-  return INDONESIAN_SLOT_CATEGORIES.map((category, index) => {
-    const branded = index >= 5;
+  return AUDIT_MEASUREMENT_MATRIX.map((slot) => {
+    const branded = slot.legacyBranded;
     return {
-      prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-      category,
+      prompt_id: `NVA-ID-${String(slot.order).padStart(2, "0")}`,
+      category: slot.legacyCategory,
       role: "test",
       branded,
       question: branded
-        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${index + 1}?`
-        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${index + 1}?`,
+        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${slot.order}?`
+        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${slot.order}?`,
       rationale: "test",
       inputs_used: ["brand_name"],
       review_status: "needs_human_review",
     };
   });
+}
+
+function legacyCategoryFor(promptId: string) {
+  const slot = measurementSlotForPromptId(promptId);
+  if (!slot) throw new Error(`Unknown canonical prompt ID: ${promptId}`);
+  return slot.legacyCategory;
 }
 
 function observation(prompt: AuditPrompt): AuditObservation {
@@ -79,6 +89,17 @@ function observation(prompt: AuditPrompt): AuditObservation {
 }
 
 describe("canonical locked question pack", () => {
+  it("keeps the compatibility pack at the matrix-derived 5/5 split", () => {
+    const pack = prompts();
+    expect(pack).toHaveLength(AUDIT_MEASUREMENT_MATRIX.length);
+    expect(pack.filter((prompt) => prompt.branded)).toHaveLength(
+      COMPATIBILITY_COMPOSITION_COUNTS.branded,
+    );
+    expect(pack.filter((prompt) => !prompt.branded)).toHaveLength(
+      COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+    );
+  });
+
   it("rejects duplicate prompt IDs at the pre-execution lock boundary", () => {
     const pack = prompts();
     pack[9] = { ...pack[9], prompt_id: pack[0].prompt_id };
@@ -99,14 +120,18 @@ describe("canonical locked question pack", () => {
     const pack = prompts();
     pack[0] = { ...pack[0], category: "action" };
     const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
-    expect(canonical[0].category).toBe("need_discovery");
+    expect(canonical[0].category).toBe(
+      legacyCategoryFor(canonical[0].prompt_id),
+    );
   });
 
   it("overrides a tampered slot 7 category from the code-owned slot", () => {
     const pack = prompts();
     pack[6] = { ...pack[6], category: "comparison" };
     const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
-    expect(canonical[6].category).toBe("validation");
+    expect(canonical[6].category).toBe(
+      legacyCategoryFor(canonical[6].prompt_id),
+    );
   });
 
   it("recomputes branded independently of the code-owned slot category", () => {
@@ -125,11 +150,11 @@ describe("canonical locked question pack", () => {
     };
     const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
     expect(canonical[0]).toMatchObject({
-      category: "need_discovery",
+      category: legacyCategoryFor(canonical[0].prompt_id),
       branded: true,
     });
     expect(canonical[5]).toMatchObject({
-      category: "comparison",
+      category: legacyCategoryFor(canonical[5].prompt_id),
       branded: false,
     });
   });
@@ -164,8 +189,14 @@ describe("canonical locked question pack", () => {
         category: prompt.category,
       })),
     ).toEqual([
-      { prompt_id: "NVA-ID-01", category: "need_discovery" },
-      { prompt_id: "NVA-ID-06", category: "comparison" },
+      {
+        prompt_id: "NVA-ID-01",
+        category: legacyCategoryFor("NVA-ID-01"),
+      },
+      {
+        prompt_id: "NVA-ID-06",
+        category: legacyCategoryFor("NVA-ID-06"),
+      },
     ]);
 
     const requested = designated.map((prompt) => ({

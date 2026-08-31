@@ -32,6 +32,11 @@ import type {
   ExtractionDraft,
   PromptPack,
 } from "@/lib/audit/types";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  COMPATIBILITY_COMPOSITION_COUNTS,
+  measurementSlotForPromptId,
+} from "@/lib/audit/measurement-matrix";
 import SimilarBusinessesEditor from "./SimilarBusinessesEditor";
 import styles from "./audit.module.css";
 
@@ -40,22 +45,6 @@ type UpdateBrief = <K extends keyof BusinessBrief>(
   key: K,
   value: BusinessBrief[K],
 ) => void;
-
-export const categoryLabels: Record<string, string> = {
-  need_discovery: "Need discovery",
-  solution_discovery: "Solution discovery",
-  comparison: "Comparison",
-  validation: "Validation",
-  action: "Action",
-};
-
-const categories = [
-  "need_discovery",
-  "solution_discovery",
-  "comparison",
-  "validation",
-  "action",
-] as const;
 
 function lines(value: string) {
   return value
@@ -641,8 +630,10 @@ export function BriefStep({
         </div>
         <div className={styles.actionRow}>
           <p>
-            Nuave builds five unbranded and five branded questions from these
-            verified facts. This step makes no API call and costs nothing.
+            Nuave builds {COMPATIBILITY_COMPOSITION_COUNTS.unbranded} unbranded
+            and {COMPATIBILITY_COMPOSITION_COUNTS.branded} branded questions
+            from these verified facts. This step makes no API call and costs
+            nothing.
           </p>
           <Button
             variant="default"
@@ -677,6 +668,15 @@ export function QuestionsStep({
   onBack: () => void;
   onRun: () => void;
 }) {
+  const promptsBySlot = new Map<
+    string,
+    { prompt: PromptPack["prompts"][number]; index: number }
+  >();
+  pack.prompts.forEach((prompt, index) => {
+    const slot = measurementSlotForPromptId(prompt.prompt_id);
+    if (slot) promptsBySlot.set(slot.id, { prompt, index });
+  });
+
   return (
     <section className={`${styles.workspace} ${styles.workspaceWide}`}>
       <Button variant="ghost" onClick={onBack} className={styles.backButton}>
@@ -689,8 +689,12 @@ export function QuestionsStep({
         description={`Unbranded questions must not hint at ${brandName}. Each question runs as a separate observation.`}
       />
       <div className={styles.summaryChips}>
-        <Badge variant="secondary">5 unbranded</Badge>
-        <Badge variant="default">5 branded</Badge>
+        <Badge variant="secondary">
+          {COMPATIBILITY_COMPOSITION_COUNTS.unbranded} unbranded
+        </Badge>
+        <Badge variant="default">
+          {COMPATIBILITY_COMPOSITION_COUNTS.branded} branded
+        </Badge>
         <Badge variant="outline">Target: ChatGPT</Badge>
       </div>
       {pack.warnings.length ? (
@@ -699,48 +703,50 @@ export function QuestionsStep({
         </WarningAlert>
       ) : null}
       <div className={styles.categoryList}>
-        {categories.map((category) => (
-          <StageSection
-            key={category}
-            id={`category-${category}`}
-            title={categoryLabels[category]}
-            className={styles.promptSection}
-          >
-            <FieldGroup
-              className={styles.promptPair}
-              aria-labelledby={`category-${category}`}
+        {AUDIT_MEASUREMENT_MATRIX.map((slot) => {
+          const entry = promptsBySlot.get(slot.id);
+          if (!entry) return null;
+          const { prompt, index } = entry;
+          const questionId = `audit-question-${index}`;
+          const rationaleId = `${questionId}-rationale`;
+          const sectionId = `measurement-slot-${slot.order}`;
+          return (
+            <StageSection
+              key={slot.id}
+              id={sectionId}
+              title={slot.compatibilityCustomerFacingLabel}
+              description={slot.compatibilityMeasurementPurpose}
+              className={styles.promptSection}
             >
-              {pack.prompts.map((prompt, index) => {
-                if (prompt.category !== category) return null;
-                const questionId = `audit-question-${index}`;
-                const rationaleId = `${questionId}-rationale`;
-                return (
-                  <Field key={prompt.prompt_id}>
-                    <div className={styles.promptMeta}>
-                      <Badge variant={prompt.branded ? "default" : "secondary"}>
-                        {prompt.branded ? "Branded" : "Unbranded"}
-                      </Badge>
-                      <code>{prompt.prompt_id}</code>
-                    </div>
-                    <FieldLabel htmlFor={questionId}>
-                      Question {index + 1}
-                    </FieldLabel>
-                    <Textarea
-                      id={questionId}
-                      rows={3}
-                      value={prompt.question}
-                      aria-describedby={rationaleId}
-                      onChange={(event) => onEdit(index, event.target.value)}
-                    />
-                    <FieldDescription id={rationaleId}>
-                      {prompt.rationale}
-                    </FieldDescription>
-                  </Field>
-                );
-              })}
-            </FieldGroup>
-          </StageSection>
-        ))}
+              <FieldGroup
+                className={styles.promptPair}
+                aria-labelledby={sectionId}
+              >
+                <Field>
+                  <div className={styles.promptMeta}>
+                    <Badge variant={prompt.branded ? "default" : "secondary"}>
+                      {prompt.branded ? "Branded" : "Unbranded"}
+                    </Badge>
+                    <code>{prompt.prompt_id}</code>
+                  </div>
+                  <FieldLabel htmlFor={questionId}>
+                    Question {slot.order}
+                  </FieldLabel>
+                  <Textarea
+                    id={questionId}
+                    rows={3}
+                    value={prompt.question}
+                    aria-describedby={rationaleId}
+                    onChange={(event) => onEdit(index, event.target.value)}
+                  />
+                  <FieldDescription id={rationaleId}>
+                    {slot.compatibilityMeasurementPurpose}
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
+            </StageSection>
+          );
+        })}
       </div>
       <div className={styles.stickyAction}>
         <div>

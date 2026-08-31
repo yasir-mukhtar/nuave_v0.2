@@ -1,5 +1,6 @@
 import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 import type { ReportDiagnosticCode } from "./report-recovery";
+import { measurementSlotForPromptId } from "./measurement-matrix";
 
 const PROHIBITED_REPORT_CLAIMS = [
   /\b(?:number|no\.?)[ -]?1\b|\b(?:permanent(?:ly)?|always) rank|\btop-ranked\b/i,
@@ -72,7 +73,13 @@ function safeEvidenceNote(language: "en" | "id" | undefined) {
 }
 
 function repairedAccuracyStatus(content: ReportContent) {
-  const information = content.details.map((detail) => detail.information);
+  const information = content.details
+    .filter(
+      (detail) =>
+        measurementSlotForPromptId(detail.prompt_id)
+          ?.compatibilityReportAssessmentClass === "information",
+    )
+    .map((detail) => detail.information);
   if (information.includes("conflicting")) return "needs_correction" as const;
   if (information.includes("incomplete")) return "needs_confirmation" as const;
   if (information.some((value) => value !== "not_assessed")) {
@@ -159,7 +166,13 @@ export function sanitizeRecoverableReportQuality(
   });
 
   let accuracy_status = content.accuracy_status;
-  const information = details.map((detail) => detail.information);
+  const information = details
+    .filter(
+      (detail) =>
+        measurementSlotForPromptId(detail.prompt_id)
+          ?.compatibilityReportAssessmentClass === "information",
+    )
+    .map((detail) => detail.information);
   const accuracyIsContradictory =
     (accuracy_status === "no_clear_issues" &&
       information.some((status) =>

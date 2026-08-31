@@ -26,7 +26,10 @@ import {
   assembleReportContent,
   type ObservationInstructionVersion,
 } from "./contracts";
-import { reportAssessmentInstructions } from "./report-prompt-contract";
+import {
+  reportAssessmentInstructions,
+  reportPromptMeasurements,
+} from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
 import {
   AUDIT_CALL_LIMITS,
@@ -622,6 +625,7 @@ export async function generateReportContent(
             agency_logo_data_url: "[not sent]",
           },
           prompts: input.prompts,
+          measurement_definitions: reportPromptMeasurements(input.prompts),
           observations: input.observations.map(
             ({ telemetry, ...observation }) => {
               void telemetry;

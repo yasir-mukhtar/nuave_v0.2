@@ -1,6 +1,9 @@
 "use client";
 
+import { COMPATIBILITY_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
+
 export default function ExampleReportPreview() {
+  const { unbranded, branded } = COMPATIBILITY_COMPOSITION_COUNTS;
   return (
     <div
       id="contoh-laporan"
@@ -23,7 +26,7 @@ export default function ExampleReportPreview() {
           </p>
           <p className="type-heading-md text-[#111827] m-0 mt-1">4/10</p>
           <p className="type-label-sm text-gray-500 m-0 mt-1">
-            Tanpa menyebut bisnis Anda: 1/5 · Menyebut bisnis Anda: 3/5
+            {`Tanpa menyebut bisnis Anda: 1/${unbranded} · Menyebut bisnis Anda: 3/${branded}`}
           </p>
         </div>
 

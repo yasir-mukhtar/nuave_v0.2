@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import { buildLiveIndonesianPromptPack } from "./questions-id-live";
 import { minimizeIndonesianBrief } from "./questions-id";
+import { COMPATIBILITY_COMPOSITION_COUNTS } from "./measurement-matrix";
 import type { BusinessBrief } from "./types";
 
 const brief: BusinessBrief = {
@@ -104,9 +105,12 @@ describe("Wave 2 generated suggestion guards", () => {
     ).toEqual([]);
   });
 
-  it("detects an advertised default that is not actually 5/5", () => {
+  it("detects an advertised default outside the matrix-derived compatibility composition", () => {
     const unbalanced = validQuestions.slice();
     unbalanced[0] = "Apakah Kopi Taman Senja cocok untuk ngopi di Depok?";
+    expect(
+      validQuestions.filter((question) => question.includes(brief.brand_name)),
+    ).toHaveLength(COMPATIBILITY_COMPOSITION_COUNTS.branded);
     expect(
       generatedSuggestionGuardIssues(
         unbalanced,
@@ -180,8 +184,8 @@ describe("Wave 2 generated suggestion guards", () => {
     expect(result.generation.warnings).toContain("slot_safety_repair:1");
     expect(result.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+      menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.branded,
     });
     expect(
       result.pack.prompts.every(

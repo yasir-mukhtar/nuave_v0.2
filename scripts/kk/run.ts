@@ -71,12 +71,18 @@ import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
   validateIndonesianQuestionPack,
-  INDONESIAN_SLOT_MATRIX,
 } from "../../src/lib/audit/questions-id";
 import {
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
-  PROMPT_MATRIX,
 } from "../../src/lib/audit/contracts";
+import {
+  measurementSlotForOrder,
+} from "../../src/lib/audit/measurement-matrix";
+import {
+  INDONESIAN_REPORT_LABELS,
+  indonesianCountLabel,
+  indonesianMeasureLabel,
+} from "../../src/lib/audit/report-labels";
 import { summarizeAuditTelemetry } from "../../src/lib/audit/telemetry";
 
 const RUN_ID = "kk-live-run-2026-08-19";
@@ -175,21 +181,20 @@ function buildLockedPrompts(
   brief: BusinessBrief,
 ): AuditPrompt[] {
   return questions.map((text, index) => {
-    const spec = PROMPT_MATRIX[index];
+    const slot = measurementSlotForOrder(index + 1);
+    if (!slot) throw new Error(`Question ${index + 1} has no matrix slot.`);
     const branded = classifyIndonesianQuestion(
       text,
       minimizeIndonesianBrief(brief),
     ) === "menyebut_bisnis_anda";
-    const inputs = branded
-      ? ["brand_name", "entity_scope", "category", "market_context"]
-      : ["category", "market_context", "target_customer"];
+    const inputs = [...slot.legacyAllowedContextFields];
     return {
       prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-      category: spec[1],
-      role: spec[3],
+      category: slot.legacyCategory,
+      role: slot.legacyRole,
       branded,
       question: text,
-      rationale: `${spec[3]}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.compatibilityMeasurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };
@@ -204,21 +209,28 @@ function renderReport(report: AuditReport): string {
     `> Generated ${report.generated_at} · writing standard ${report.writing_standard_version}`,
   );
   lines.push("");
-  const d = report.facts.discovery;
-  const recognition = report.facts.recognition;
-  const appearedTotal = d.recommended + d.mentioned_not_recommended + recognition.recognized;
+  const { measures } = report;
   lines.push("## Hasil utama");
   lines.push("");
   lines.push(
-    `**Bisnis Anda muncul di ${appearedTotal} dari ${d.recommended + d.mentioned_not_recommended + d.absent + d.failed + recognition.total} pertanyaan**`,
+    `**Bisnis Anda muncul di ${measures.overall.appeared} dari ${measures.overall.total} pertanyaan**`,
   );
   lines.push("");
   lines.push(
-    `- Tanpa menyebut bisnis Anda: ${d.recommended + d.mentioned_not_recommended} dari ${d.recommended + d.mentioned_not_recommended + d.absent}`,
+    `- ${INDONESIAN_REPORT_LABELS.without_business_name}: ${indonesianCountLabel(measures.unbranded.appeared, measures.unbranded.total)}`,
   );
-  lines.push(`- Menyebut bisnis Anda: ${recognition.recognized} dari ${recognition.total}`);
   lines.push(
-    `- Direkomendasikan: ${d.recommended} · Disebut tanpa rekomendasi: ${d.mentioned_not_recommended} · Tidak muncul: ${d.absent} · Gagal: ${d.failed}`,
+    `- ${INDONESIAN_REPORT_LABELS.with_business_name}: ${indonesianCountLabel(measures.branded.appeared, measures.branded.total)}`,
+  );
+  lines.push(
+    `- Direkomendasikan: ${indonesianCountLabel(measures.recommendation.recommended, measures.recommendation.assessed)} · Diunggulkan dalam perbandingan: ${indonesianCountLabel(measures.comparison.client_preferred, measures.comparison.assessed)}`,
+  );
+  lines.push(
+    `- Informasi publik: ${indonesianMeasureLabel(
+      measures.information.assessed,
+      () =>
+        `${measures.information.confirmed} terkonfirmasi, ${measures.information.incomplete} belum lengkap, ${measures.information.conflicting} bertentangan dari ${measures.information.assessed} pertanyaan yang dinilai`,
+    )}`,
   );
   lines.push("");
   lines.push("## Kesimpulan");
@@ -283,7 +295,11 @@ async function main() {
     order: index + 1,
     text,
     classification: classifyIndonesianQuestion(text, minimized),
-    suggested_category: INDONESIAN_SLOT_MATRIX[index].suggested_category,
+    suggested_category: (() => {
+      const slot = measurementSlotForOrder(index + 1);
+      if (!slot) throw new Error(`Question ${index + 1} has no matrix slot.`);
+      return slot.legacyCategory;
+    })(),
   }));
   writeFileSync(
     join(ARTIFACTS_DIR, "questions.json"),

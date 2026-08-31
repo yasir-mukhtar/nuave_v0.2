@@ -17,6 +17,10 @@ import {
 } from "./fixtures/report-golden";
 import { validateReportLanguage } from "./report-language";
 import { reportContentSchema, reportSynthesisSchema } from "./types";
+import {
+  measurementSlotForPromptId,
+  measurementSlotsForCompatibilityAssessmentClass,
+} from "./measurement-matrix";
 
 describe("privacy-safe report golden fixture", () => {
   it("assembles code-owned evidence fields from a compact synthesis", () => {
@@ -44,7 +48,7 @@ describe("privacy-safe report golden fixture", () => {
     expect(assembled.details[0]).toMatchObject({
       run: "completed",
       appearance: "absent",
-      recommendation: "not_recommended",
+      recommendation: "not_assessed",
       comparison: "not_observed",
       information: "not_assessed",
       answer_excerpt: goldenObservations[0].raw_answer,
@@ -270,8 +274,19 @@ describe("structured result dimensions", () => {
     expect(report.facts.recognition.label).toBe(
       expectedDenominatorLabels.recognition,
     );
-    expect(report.facts.discovery.total).toBe(5);
-    expect(report.facts.discovery.failed).toBe(1);
+    expect(report.facts.discovery.total).toBe(
+      measurementSlotsForCompatibilityAssessmentClass("recommendation").filter(
+        (slot) => !slot.legacyBranded,
+      ).length,
+    );
+    expect(report.facts.discovery.failed).toBe(
+      goldenObservations.filter(
+        (observation) =>
+          observation.run_status === "failed" &&
+          measurementSlotForPromptId(observation.prompt_id)
+            ?.compatibilityReportAssessmentClass === "recommendation",
+      ).length,
+    );
     expect(report.facts.coverage).toMatchObject({
       completed: 9,
       total: 10,

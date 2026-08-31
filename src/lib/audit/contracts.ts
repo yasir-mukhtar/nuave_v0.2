@@ -9,16 +9,24 @@ import type {
 } from "./types";
 import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
 import { summarizeAuditTelemetry } from "./telemetry";
-import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  measurementSlotForPromptId,
+  measurementSlotsForCompatibilityAssessmentClass,
+} from "./measurement-matrix";
 
 export {
   AUDIT_MEASUREMENT_MATRIX,
+  COMPATIBILITY_COMPOSITION_COUNTS,
   COMPARISON_RELATION_MARKERS,
   IDENTITY_POLICIES,
   PROMPT_MATRIX,
   REPORT_ASSESSMENT_CLASSES,
   measurementSlotForId,
   measurementSlotForOrder,
+  measurementSlotForPromptId,
+  measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "./measurement-matrix";
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
@@ -137,13 +145,13 @@ export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
   writingStandardVersion: REPORT_WRITING_STANDARD_VERSION,
   promptContractVersion: PROMPT_CONTRACT_VERSION,
   discoveryRecommendedLabel: (recommended, total, failed) =>
-    `Recommended in ${recommended} of ${total} discovery questions${englishFailedContext(failed)}`,
+    `Recommended in ${recommended} of ${total} questions without the business name${englishFailedContext(failed)}`,
   discoveryMentionLabel: (mentioned, total, failed) =>
-    `Named without recommendation in ${mentioned} of ${total} discovery questions${englishFailedContext(failed)}`,
+    `Named without recommendation in ${mentioned} of ${total} questions without the business name${englishFailedContext(failed)}`,
   recognitionLabel: (recognized, total, failed) =>
-    `Recognized in ${recognized} of ${total} brand questions${englishFailedContext(failed)}`,
+    `Recognized in ${recognized} of ${total} questions that named the business${englishFailedContext(failed)}`,
   comparisonLabel: (clientPreferred, total, competitorPreferred) =>
-    `Client preferred in ${clientPreferred} of ${total} questions; competitor preferred in ${competitorPreferred}.`,
+    `Client preferred in ${clientPreferred} of ${total} assessed comparison questions; competitor preferred in ${competitorPreferred}.`,
   informationLabel: (confirmed, incomplete, conflicting) =>
     `${confirmed} confirmed, ${incomplete} incomplete, and ${conflicting} conflicting information results.`,
   coverageLabel: (completed, total, failed) =>
@@ -158,7 +166,7 @@ export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
     brandedTotal,
     coverageLabel,
   }) =>
-    `We tested ${totalQuestions} questions one at a time through ${systemPart}${modelPart} with web search. ${unbrandedTotal} discovery questions did not name the business in the question. ${brandedTotal} direct checks named the business. ${coverageLabel} A mention is not a recommendation, and a failed test is not a negative result.`,
+    `We tested ${totalQuestions} questions one at a time through ${systemPart}${modelPart} with web search. ${unbrandedTotal} questions did not name the business in the question. ${brandedTotal} questions named the business. ${coverageLabel} A mention is not a recommendation, and a failed test is not a negative result.`,
 };
 
 function hasPromptContextValue(value: BusinessBrief[keyof BusinessBrief]) {
@@ -183,10 +191,19 @@ export function promptQuestionSpecs(brief: BusinessBrief) {
       canonical_category: slot.category,
       audited_brand_identity: slot.auditedBrandIdentity,
       comparison_target_identity: slot.comparisonTargetIdentity,
-      measurement_purpose: slot.measurementPurpose,
-      customer_facing_label: slot.customerFacingLabel,
-      report_assessment_class: slot.reportAssessmentClass,
-      generator_slot_description: slot.generatorSlotDescription,
+      canonical_measurement_purpose: slot.measurementPurpose,
+      canonical_customer_facing_label: slot.customerFacingLabel,
+      canonical_report_assessment_class: slot.reportAssessmentClass,
+      canonical_generator_slot_description: slot.generatorSlotDescription,
+      measurement_purpose: slot.compatibilityMeasurementPurpose,
+      customer_facing_label: slot.compatibilityCustomerFacingLabel,
+      report_assessment_class: slot.compatibilityReportAssessmentClass,
+      generator_slot_description: slot.compatibilityMeasurementPurpose,
+      compatibility_customer_facing_label:
+        slot.compatibilityCustomerFacingLabel,
+      compatibility_measurement_purpose: slot.compatibilityMeasurementPurpose,
+      compatibility_report_assessment_class:
+        slot.compatibilityReportAssessmentClass,
     };
   });
 }
@@ -473,6 +490,7 @@ export function normalizeReportEvidence(
   const details = content.details.map((detail) => {
     const observation = observationByPrompt.get(detail.prompt_id);
     if (!observation) return detail;
+    const measurementSlot = measurementSlotForPromptId(detail.prompt_id);
     const run = observation.run_status;
     const appearance =
       run === "failed"
@@ -495,19 +513,23 @@ export function normalizeReportEvidence(
       run,
       appearance,
       recommendation:
-        run === "failed"
+        run === "failed" ||
+        measurementSlot?.compatibilityReportAssessmentClass !==
+          "recommendation" ||
+        appearance !== "mentioned"
           ? "not_assessed"
-          : appearance === "absent"
-            ? "not_recommended"
-            : detail.recommendation,
+          : detail.recommendation,
       comparison:
         run === "failed"
           ? "not_assessed"
-          : appearance === "absent"
+          : measurementSlot?.compatibilityReportAssessmentClass !==
+                "comparison" || appearance !== "mentioned"
             ? "not_observed"
             : detail.comparison,
       information:
-        run === "failed" || appearance === "absent"
+        run === "failed" ||
+        measurementSlot?.compatibilityReportAssessmentClass !== "information" ||
+        appearance !== "mentioned"
           ? "not_assessed"
           : detail.information,
       answer_excerpt,
@@ -746,6 +768,18 @@ export function validateReportContent(
   const errors: string[] = [];
   errors.push(...prohibitedClaimErrors(content));
   const promptIds = new Set(observations.map((item) => item.prompt_id));
+  const measurementSlots = new Map(
+    observations.flatMap((observation) => {
+      const slot = measurementSlotForPromptId(observation.prompt_id);
+      if (!slot) {
+        errors.push(
+          `Observation ${observation.prompt_id} does not map to a canonical measurement slot.`,
+        );
+        return [];
+      }
+      return [[observation.prompt_id, slot] as const];
+    }),
+  );
   const validateIds = (ids: string[], label: string) => {
     ids.forEach((id) => {
       if (!promptIds.has(id))
@@ -777,6 +811,8 @@ export function validateReportContent(
       (item) => item.prompt_id === detail.prompt_id,
     );
     if (!observation) return;
+    const measurementSlot = measurementSlots.get(detail.prompt_id);
+    if (!measurementSlot) return;
     if (detail.prompt_id !== observations[index]?.prompt_id) {
       errors.push(`Detailed findings are out of order at ${detail.prompt_id}.`);
     }
@@ -785,24 +821,36 @@ export function validateReportContent(
         `${detail.prompt_id} report run status does not match the retained observation.`,
       );
     }
-    // Recommendation is a judgment dimension: need_discovery, solution_discovery,
-    // and comparison questions ask the model to recommend or prefer something,
-    // so a completed, mentioned answer there must carry a real judgment (the
-    // Sozo live-run defect: the model returned not_assessed instead of an
-    // actual recommendation). validation and action questions ask for a fact
-    // or a next step, not a recommendation, so not_assessed is their honest
-    // completed value.
-    const recommendationOptional = ["validation", "action"].includes(
-      observation.category,
-    );
-    if (
-      observation.run_status === "completed" &&
-      (detail.appearance === "not_assessed" ||
-        (detail.recommendation === "not_assessed" && !recommendationOptional))
-    ) {
-      errors.push(
-        `${detail.prompt_id} completed, so appearance and recommendation must be assessed.`,
-      );
+    // The matrix owns the active pre-A3 interpretation path. Canonical R-01
+    // meaning remains available for A3, but cannot decide this report until
+    // the locked question text changes.
+    const compatibilityClass =
+      measurementSlot.compatibilityReportAssessmentClass;
+    if (observation.run_status === "completed") {
+      if (
+        compatibilityClass !== "recommendation" &&
+        detail.recommendation !== "not_assessed"
+      ) {
+        errors.push(
+          `${detail.prompt_id} carries recommendation semantics outside its pre-A3 compatibility path.`,
+        );
+      }
+      if (
+        compatibilityClass !== "comparison" &&
+        detail.comparison !== "not_observed"
+      ) {
+        errors.push(
+          `${detail.prompt_id} carries comparison semantics outside its pre-A3 compatibility path.`,
+        );
+      }
+      if (
+        compatibilityClass !== "information" &&
+        detail.information !== "not_assessed"
+      ) {
+        errors.push(
+          `${detail.prompt_id} carries information semantics outside its pre-A3 compatibility path.`,
+        );
+      }
     }
     const visibleBrandAppeared = containsIdentity(
       observation.raw_answer,
@@ -908,7 +956,10 @@ export function validateReportContent(
         detail.information === "incomplete" ||
         detail.information === "conflicting" ||
         detail.comparison === "competitor_preferred" ||
-        (!observation.branded && detail.recommendation === "not_recommended")
+        (!observation.branded &&
+          measurementSlotForPromptId(promptId)
+            ?.compatibilityReportAssessmentClass === "recommendation" &&
+          detail.recommendation === "not_recommended")
       );
     });
     if (!hasObservedGap) {
@@ -947,9 +998,13 @@ export function validateReportContent(
       }
     });
   });
-  const informationResults = content.details.map(
-    (detail) => detail.information,
-  );
+  const informationResults = content.details
+    .filter(
+      (detail) =>
+        measurementSlotForPromptId(detail.prompt_id)
+          ?.compatibilityReportAssessmentClass === "information",
+    )
+    .map((detail) => detail.information);
   if (
     content.accuracy_status === "no_clear_issues" &&
     informationResults.some((status) =>
@@ -1035,35 +1090,70 @@ export function buildAuditReport(
   const details = new Map(
     content.details.map((detail) => [detail.prompt_id, detail]),
   );
-  const completed = observations.filter(
-    (item) => item.run_status === "completed",
+  const detailFor = (id: string) => details.get(id);
+  const recommendationSlotIds = new Set(
+    measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
+      (slot) => slot.id,
+    ),
   );
-  const unbranded = observations.filter((item) => !item.branded);
-  const branded = observations.filter((item) => item.branded);
+  const comparisonSlotIds = new Set(
+    measurementSlotsForCompatibilityAssessmentClass("comparison").map(
+      (slot) => slot.id,
+    ),
+  );
+  const informationSlotIds = new Set(
+    measurementSlotsForCompatibilityAssessmentClass("information").map(
+      (slot) => slot.id,
+    ),
+  );
+
+  const records = observations.map((observation) => {
+    const slot = measurementSlotForPromptId(observation.prompt_id);
+    if (!slot) {
+      throw new Error(
+        `Observation ${observation.prompt_id} does not map to a canonical measurement slot.`,
+      );
+    }
+    return { observation, slot, detail: detailFor(observation.prompt_id) };
+  });
+  const completed = records.filter(
+    ({ observation }) => observation.run_status === "completed",
+  );
+  const unbranded = records.filter(({ observation }) => !observation.branded);
+  const branded = records.filter(({ observation }) => observation.branded);
   const completedUnbranded = unbranded.filter(
-    (item) => item.run_status === "completed",
+    ({ observation }) => observation.run_status === "completed",
   );
   const completedBranded = branded.filter(
-    (item) => item.run_status === "completed",
+    ({ observation }) => observation.run_status === "completed",
   );
-  const detailFor = (id: string) => details.get(id);
+  const discoveryRecords = unbranded.filter(({ slot }) =>
+    recommendationSlotIds.has(slot.id),
+  );
 
   const failed = observations.length - completed.length;
-  const unbrandedFailed = unbranded.length - completedUnbranded.length;
   const brandedFailed = branded.length - completedBranded.length;
-  const unbrandedRecommended = completedUnbranded.filter(
-    (item) => detailFor(item.prompt_id)?.recommendation === "recommended",
+  const discoveryFailed = discoveryRecords.filter(
+    ({ observation }) => observation.run_status === "failed",
   ).length;
-  const unbrandedMentioned = completedUnbranded.filter(
-    (item) =>
-      detailFor(item.prompt_id)?.appearance === "mentioned" &&
-      detailFor(item.prompt_id)?.recommendation !== "recommended",
+  const unbrandedRecommended = discoveryRecords.filter(
+    ({ observation, detail }) =>
+      observation.run_status === "completed" &&
+      detail?.appearance === "mentioned" &&
+      detail.recommendation === "recommended",
   ).length;
-  const unbrandedAbsent = completedUnbranded.filter(
-    (item) => detailFor(item.prompt_id)?.appearance === "absent",
+  const unbrandedMentioned = discoveryRecords.filter(
+    ({ observation, detail }) =>
+      observation.run_status === "completed" &&
+      detail?.appearance === "mentioned" &&
+      detail.recommendation !== "recommended",
+  ).length;
+  const unbrandedAbsent = discoveryRecords.filter(
+    ({ observation, detail }) =>
+      observation.run_status === "completed" && detail?.appearance === "absent",
   ).length;
   const brandedRecognized = completedBranded.filter(
-    (item) => detailFor(item.prompt_id)?.appearance === "mentioned",
+    ({ detail }) => detail?.appearance === "mentioned",
   ).length;
   // R3-7 (Phase 3 fix-round-3 adversarial review): "appeared" is
   // appearance === "mentioned", read directly, exactly as the fixture
@@ -1075,15 +1165,8 @@ export function buildAuditReport(
   // { appearance: "absent", recommendation: "recommended" } would have
   // overstated the headline.
   const unbrandedAppeared = completedUnbranded.filter(
-    (item) => detailFor(item.prompt_id)?.appearance === "mentioned",
+    ({ detail }) => detail?.appearance === "mentioned",
   ).length;
-  const detailValues = [...details.values()];
-  const countComparison = (
-    value: ReportContent["details"][number]["comparison"],
-  ) => detailValues.filter((detail) => detail.comparison === value).length;
-  const countInformation = (
-    value: ReportContent["details"][number]["information"],
-  ) => detailValues.filter((detail) => detail.information === value).length;
   // AC-17 eligibility (R3-3, Phase 3 fix-round-3 adversarial review): a
   // dimension is "assessed" only when the brand APPEARED and the dimension
   // was judged. The same rule applies to all three dimensions. Before this,
@@ -1092,31 +1175,49 @@ export function buildAuditReport(
   // not_recommended / not_observed / not_assessed) and produced a report
   // that read "0 of 10 pertanyaan yang dinilai" on one line and "Tidak
   // diuji" on the next two for the same nine questions.
-  const assessableDetails = detailValues.filter(
-    (detail) => detail.appearance === "mentioned",
+  const assessableRecords = records.filter(
+    ({ detail }) => detail?.appearance === "mentioned",
   );
-  const recommendationAssessed = assessableDetails.filter((detail) =>
-    (["recommended", "not_recommended"] as const).includes(
-      detail.recommendation as "recommended" | "not_recommended",
-    ),
+  const recommendationAssessed = assessableRecords.filter(
+    ({ detail, slot }) =>
+      recommendationSlotIds.has(slot.id) &&
+      (["recommended", "not_recommended"] as const).includes(
+        detail?.recommendation as "recommended" | "not_recommended",
+      ),
   );
-  const comparisonAssessed = assessableDetails.filter((detail) =>
-    (
-      [
-        "client_preferred",
-        "competitor_preferred",
-        "compared_no_preference",
-      ] as const
-    ).includes(
-      detail.comparison as
-        "client_preferred" | "competitor_preferred" | "compared_no_preference",
-    ),
+  const comparisonAssessed = assessableRecords.filter(
+    ({ detail, slot }) =>
+      comparisonSlotIds.has(slot.id) &&
+      (
+        [
+          "client_preferred",
+          "competitor_preferred",
+          "compared_no_preference",
+        ] as const
+      ).includes(
+        detail?.comparison as
+          | "client_preferred"
+          | "competitor_preferred"
+          | "compared_no_preference",
+      ),
   );
-  const informationAssessed = assessableDetails.filter((detail) =>
-    (["confirmed", "incomplete", "conflicting"] as const).includes(
-      detail.information as "confirmed" | "incomplete" | "conflicting",
-    ),
+  const informationAssessed = assessableRecords.filter(
+    ({ detail, slot }) =>
+      informationSlotIds.has(slot.id) &&
+      (["confirmed", "incomplete", "conflicting"] as const).includes(
+        detail?.information as "confirmed" | "incomplete" | "conflicting",
+      ),
   );
+  const countComparison = (
+    value: ReportContent["details"][number]["comparison"],
+  ) =>
+    comparisonAssessed.filter((record) => record.detail?.comparison === value)
+      .length;
+  const countInformation = (
+    value: ReportContent["details"][number]["information"],
+  ) =>
+    informationAssessed.filter((record) => record.detail?.information === value)
+      .length;
   const measures: AuditReport["measures"] = {
     overall: {
       appeared: unbrandedAppeared + brandedRecognized,
@@ -1132,13 +1233,13 @@ export function buildAuditReport(
     },
     recommendation: {
       recommended: recommendationAssessed.filter(
-        (detail) => detail.recommendation === "recommended",
+        (record) => record.detail?.recommendation === "recommended",
       ).length,
       assessed: recommendationAssessed.length,
     },
     comparison: {
       client_preferred: comparisonAssessed.filter(
-        (detail) => detail.comparison === "client_preferred",
+        (record) => record.detail?.comparison === "client_preferred",
       ).length,
       assessed: comparisonAssessed.length,
     },
@@ -1146,13 +1247,13 @@ export function buildAuditReport(
       // Numerators read from the same eligible set as the denominator, as
       // recommendation and comparison above already do (R3-3).
       confirmed: informationAssessed.filter(
-        (detail) => detail.information === "confirmed",
+        (record) => record.detail?.information === "confirmed",
       ).length,
       incomplete: informationAssessed.filter(
-        (detail) => detail.information === "incomplete",
+        (record) => record.detail?.information === "incomplete",
       ).length,
       conflicting: informationAssessed.filter(
-        (detail) => detail.information === "conflicting",
+        (record) => record.detail?.information === "conflicting",
       ).length,
       assessed: informationAssessed.length,
     },
@@ -1164,18 +1265,20 @@ export function buildAuditReport(
       recommended: unbrandedRecommended,
       mentioned_not_recommended: unbrandedMentioned,
       absent: unbrandedAbsent,
-      completed: completedUnbranded.length,
-      total: unbranded.length,
-      failed: unbrandedFailed,
+      completed: discoveryRecords.filter(
+        ({ observation }) => observation.run_status === "completed",
+      ).length,
+      total: discoveryRecords.length,
+      failed: discoveryFailed,
       recommendation_label: labels.discoveryRecommendedLabel(
         unbrandedRecommended,
-        unbranded.length,
-        unbrandedFailed,
+        discoveryRecords.length,
+        discoveryFailed,
       ),
       mention_label: labels.discoveryMentionLabel(
         unbrandedMentioned,
-        unbranded.length,
-        unbrandedFailed,
+        discoveryRecords.length,
+        discoveryFailed,
       ),
     },
     recognition: {
@@ -1195,7 +1298,7 @@ export function buildAuditReport(
       compared_no_preference: countComparison("compared_no_preference"),
       label: labels.comparisonLabel(
         countComparison("client_preferred"),
-        observations.length,
+        comparisonAssessed.length,
         countComparison("competitor_preferred"),
       ),
     },

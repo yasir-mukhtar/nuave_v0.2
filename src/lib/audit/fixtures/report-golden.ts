@@ -1,4 +1,9 @@
-import { PROMPT_MATRIX } from "../contracts";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  measurementSlotForOrder,
+  measurementSlotForPromptId,
+  measurementSlotsForCompatibilityAssessmentClass,
+} from "../measurement-matrix";
 import type {
   AuditObservation,
   AuditPrompt,
@@ -28,17 +33,39 @@ export type ExpectedResultDimensions = {
 };
 
 const questions = [
-  "Which advisory firms help local manufacturers prepare for export?",
-  "What should a manufacturer check before hiring an export adviser?",
-  "Which export advisory firms serve Port Aurora?",
-  "Who is recommended for export-readiness support in Port Aurora?",
-  "How do local export advisers differ in their support?",
-  "How does Northstar Advisory compare with Meridian Partners?",
-  "Does Northstar Advisory offer export-readiness reviews?",
-  "Is Northstar Advisory based in Port Aurora?",
-  "Is Northstar Advisory's published registration information consistent?",
-  "How can a manufacturer contact Northstar Advisory?",
+  {
+    order: 1,
+    text: "Which advisory firms help local manufacturers prepare for export?",
+  },
+  {
+    order: 2,
+    text: "What should a manufacturer check before hiring an export adviser?",
+  },
+  { order: 3, text: "Which export advisory firms serve Port Aurora?" },
+  {
+    order: 4,
+    text: "Who is recommended for export-readiness support in Port Aurora?",
+  },
+  { order: 5, text: "How do local export advisers differ in their support?" },
+  {
+    order: 6,
+    text: "How does Northstar Advisory compare with Meridian Partners?",
+  },
+  { order: 7, text: "Does Northstar Advisory offer export-readiness reviews?" },
+  { order: 8, text: "Is Northstar Advisory based in Port Aurora?" },
+  {
+    order: 9,
+    text: "Is Northstar Advisory's published registration information consistent?",
+  },
+  { order: 10, text: "How can a manufacturer contact Northstar Advisory?" },
 ] as const;
+
+const questionForOrder = (order: number) => {
+  const question = questions.find((item) => item.order === order);
+  if (!question)
+    throw new Error(`Golden fixture question ${order} is missing.`);
+  return question.text;
+};
 
 export const goldenBrief: BusinessBrief = {
   brand_name: "Northstar Advisory",
@@ -73,90 +100,129 @@ export const goldenBrief: BusinessBrief = {
   agency_logo_data_url: "",
 };
 
-export const goldenPrompts: AuditPrompt[] = PROMPT_MATRIX.map(
-  ([prompt_id, category, branded, role], index) => ({
-    prompt_id,
-    category,
-    role,
-    branded,
-    question: questions[index],
-    rationale: "Represents one fictional customer decision intent.",
-    inputs_used: ["market_context"],
+export const goldenPrompts: AuditPrompt[] = AUDIT_MEASUREMENT_MATRIX.map(
+  (slot) => ({
+    prompt_id: slot.id,
+    // This fixture keeps the temporary AuditPrompt compatibility shape. Its
+    // report meaning is always resolved from the canonical slot above.
+    category: slot.legacyCategory,
+    role: slot.legacyRole,
+    branded: slot.legacyBranded,
+    question: questionForOrder(slot.order),
+    rationale: slot.compatibilityMeasurementPurpose,
+    inputs_used: [...slot.legacyAllowedContextFields],
     review_status: "needs_human_review",
   }),
 );
 
-const answers = [
-  "Several local firms offer export planning and documentation support.",
-  "Check relevant experience, scope, written deliverables, and references.",
-  "Northstar Advisory is one export advisory option in Port Aurora.",
-  "Northstar Advisory is recommended for manufacturers needing an export-readiness review.",
-  "",
-  "Northstar Advisory is a better fit for readiness reviews, while Meridian Partners focuses on logistics.",
-  "Northstar Advisory offers export-readiness reviews for local manufacturers.",
-  "Northstar Advisory lists its office in Port Aurora.",
-  "Sources conflict on Northstar Advisory's registration date.",
-  "Use Northstar Advisory's official contact form to request a consultation.",
-] as const;
+function goldenPromptForOrder(order: number) {
+  const slot = measurementSlotForOrder(order);
+  if (!slot) throw new Error(`Golden fixture slot ${order} is missing.`);
+  const prompt = goldenPrompts.find((item) => item.prompt_id === slot.id);
+  if (!prompt) throw new Error(`Golden fixture prompt ${order} is missing.`);
+  return prompt;
+}
+
+const answersByOrder = new Map<number, string>([
+  [1, "Several local firms offer export planning and documentation support."],
+  [
+    2,
+    "Check relevant experience, scope, written deliverables, and references.",
+  ],
+  [3, "Northstar Advisory is one export advisory option in Port Aurora."],
+  [
+    4,
+    "Northstar Advisory is recommended for manufacturers needing an export-readiness review.",
+  ],
+  [5, ""],
+  [
+    6,
+    "Northstar Advisory is a better fit for readiness reviews, while Meridian Partners focuses on logistics.",
+  ],
+  [
+    7,
+    "Northstar Advisory offers export-readiness reviews for local manufacturers.",
+  ],
+  [8, "Northstar Advisory lists its office in Port Aurora."],
+  [9, "Sources conflict on Northstar Advisory's registration date."],
+  [
+    10,
+    "Use Northstar Advisory's official contact form to request a consultation.",
+  ],
+]);
 
 export const goldenObservations: AuditObservation[] = goldenPrompts.map(
-  (prompt, index) => ({
-    prompt_id: prompt.prompt_id,
-    category: prompt.category,
-    branded: prompt.branded,
-    question: prompt.question,
-    system: "OpenAI Responses API",
-    requested_model: "fixture-requested-model",
-    returned_model: "fixture-returned-model",
-    response_id: `fixture-response-${index + 1}`,
-    observed_at: "2026-08-01T00:00:00.000Z",
-    raw_answer: answers[index],
-    sources:
-      index === 4
+  (prompt) => {
+    const slot = measurementSlotForPromptId(prompt.prompt_id);
+    if (!slot)
+      throw new Error(`Golden prompt ${prompt.prompt_id} is unmapped.`);
+    const answer = answersByOrder.get(slot.order);
+    if (answer === undefined) {
+      throw new Error(`Golden fixture answer ${slot.order} is missing.`);
+    }
+    const failed = slot.order === 5;
+    return {
+      prompt_id: prompt.prompt_id,
+      category: prompt.category,
+      branded: prompt.branded,
+      question: prompt.question,
+      system: "OpenAI Responses API",
+      requested_model: "fixture-requested-model",
+      returned_model: "fixture-returned-model",
+      response_id: `fixture-response-${slot.order}`,
+      observed_at: "2026-08-01T00:00:00.000Z",
+      raw_answer: answer,
+      sources: failed
         ? []
         : [
             {
               url:
-                index === 5
+                slot.order === 6
                   ? "https://meridian.example/services"
-                  : `https://northstar.example/evidence-${index + 1}`,
-              title: `Fictional source ${index + 1}`,
+                  : `https://northstar.example/evidence-${slot.order}`,
+              title: `Fictional source ${slot.order}`,
             },
           ],
-    run_status: index === 4 ? "failed" : "completed",
-    failure_reason: index === 4 ? "Synthetic provider timeout." : "",
-    telemetry: [],
-  }),
+      run_status: failed ? "failed" : "completed",
+      failure_reason: failed ? "Synthetic provider timeout." : "",
+      telemetry: [],
+    };
+  },
 );
 
 export function goldenReportContent(): ReportContent {
   return {
-    conclusion:
-      "Northstar appeared in two discovery answers. One recommended it, while one comparison preferred it for a specific need.",
+    conclusion: `Northstar appeared in ${goldenDiscoveryAppeared} of ${compatibilityUnbrandedSlots.length} unbranded recommendation-path answers. One direct comparison preferred it for a specific need. ${goldenInformationConflicting} factual check found conflicting information.`,
     accuracy_status: "needs_correction",
     observed_competitors: [
       {
         name: "Meridian Partners",
         relationship: "client_preferred",
-        evidence_prompt_ids: [goldenPrompts[5].prompt_id],
+        evidence_prompt_ids: [goldenPromptForOrder(6).prompt_id],
       },
     ],
     key_findings: [
       {
-        title: "Discovery was limited",
-        explanation:
-          "Northstar appeared in two of five discovery attempts. One attempt failed.",
+        title: "Unbranded recommendation coverage was limited",
+        explanation: `Northstar appeared in ${goldenDiscoveryAppeared} of ${compatibilityUnbrandedSlots.length} unbranded recommendation-path attempts.`,
         evidence_prompt_ids: [
-          goldenPrompts[2].prompt_id,
-          goldenPrompts[3].prompt_id,
-          goldenPrompts[4].prompt_id,
+          goldenPromptForOrder(1).prompt_id,
+          goldenPromptForOrder(2).prompt_id,
+          goldenPromptForOrder(3).prompt_id,
+          goldenPromptForOrder(4).prompt_id,
         ],
+      },
+      {
+        title: "One comparison preferred Northstar",
+        explanation:
+          "One answer directly compared Northstar Advisory with Meridian Partners and preferred Northstar for a specific need.",
+        evidence_prompt_ids: [goldenPromptForOrder(6).prompt_id],
       },
       {
         title: "One public detail conflicts",
         explanation:
-          "The registration date differed between the sources used for one answer.",
-        evidence_prompt_ids: [goldenPrompts[8].prompt_id],
+          "The registration date differed between the sources used for one factual answer.",
+        evidence_prompt_ids: [goldenPromptForOrder(9).prompt_id],
       },
     ],
     priorities: [
@@ -164,24 +230,25 @@ export function goldenReportContent(): ReportContent {
         order: 1,
         timing: "do_first",
         action: "Clarify the registration date",
-        why: "One answer found conflicting public dates.",
+        why: "One factual answer found conflicting public dates.",
         basis: "The registration check found inconsistent dates.",
         owner: "business_owner",
         done_when: "The same date appears on every official page.",
-        evidence_prompt_ids: [goldenPrompts[8].prompt_id],
+        evidence_prompt_ids: [goldenPromptForOrder(9).prompt_id],
         caveat: "This may not change future answers.",
       },
       {
         order: 2,
         timing: "do_next",
         action: "Explain the readiness review clearly",
-        why: "Three discovery answers did not name Northstar.",
-        basis: "The first two searches did not name a provider.",
+        why: "Two unbranded recommendation-path answers did not name Northstar.",
+        basis:
+          "The first two recommendation-path answers did not name a provider.",
         owner: "marketing",
         done_when: "One official page explains the service and ideal client.",
         evidence_prompt_ids: [
-          goldenPrompts[0].prompt_id,
-          goldenPrompts[1].prompt_id,
+          goldenPromptForOrder(1).prompt_id,
+          goldenPromptForOrder(2).prompt_id,
         ],
         caveat: "Clearer copy does not guarantee discovery.",
       },
@@ -193,109 +260,151 @@ export function goldenReportContent(): ReportContent {
         basis: "The provider returned no usable answer.",
         owner: "marketing",
         done_when: "The same question completes and its answer is reviewed.",
-        evidence_prompt_ids: [goldenPrompts[4].prompt_id],
+        evidence_prompt_ids: [goldenPromptForOrder(5).prompt_id],
         caveat: "A later answer may still vary.",
       },
     ],
-    details: goldenPrompts.map((prompt, index) => ({
-      prompt_id: prompt.prompt_id,
-      ...expectedDimensionsByPrompt[prompt.prompt_id],
-      finding:
-        index === 4
+    details: goldenPrompts.map((prompt) => {
+      const observation = goldenObservations.find(
+        (item) => item.prompt_id === prompt.prompt_id,
+      );
+      if (!observation) {
+        throw new Error(`Golden observation ${prompt.prompt_id} is missing.`);
+      }
+      const failed = observation.run_status === "failed";
+      return {
+        prompt_id: prompt.prompt_id,
+        ...expectedDimensionsByPrompt[prompt.prompt_id],
+        finding: failed
           ? "This test could not be completed."
           : "The result follows the synthetic answer.",
-      answer_excerpt: goldenObservations[index].raw_answer,
-      evidence_note:
-        index === 4
+        answer_excerpt: observation.raw_answer,
+        evidence_note: failed
           ? "No answer was available to assess."
           : "The copied answer supports this result.",
-      source_urls: goldenObservations[index].sources.map(
-        (source) => source.url,
-      ),
-    })),
+        source_urls: observation.sources.map((source) => source.url),
+      };
+    }),
+  };
+}
+
+const expectedAssessmentByPromptId: Record<
+  string,
+  Partial<
+    Pick<
+      ExpectedResultDimensions,
+      "recommendation" | "comparison" | "information"
+    >
+  >
+> = {
+  [goldenPromptForOrder(3).prompt_id]: { recommendation: "not_recommended" },
+  [goldenPromptForOrder(4).prompt_id]: { recommendation: "recommended" },
+  [goldenPromptForOrder(6).prompt_id]: { comparison: "client_preferred" },
+  [goldenPromptForOrder(7).prompt_id]: { information: "confirmed" },
+  [goldenPromptForOrder(8).prompt_id]: { information: "confirmed" },
+  [goldenPromptForOrder(9).prompt_id]: { information: "conflicting" },
+  [goldenPromptForOrder(10).prompt_id]: { information: "confirmed" },
+};
+
+function expectedDimensionsForPrompt(
+  promptId: string,
+): ExpectedResultDimensions {
+  const slot = measurementSlotForPromptId(promptId);
+  const observation = goldenObservations.find(
+    (item) => item.prompt_id === promptId,
+  );
+  if (!slot || !observation) {
+    throw new Error(`Golden fixture dimensions are missing for ${promptId}.`);
+  }
+  const failed = observation.run_status === "failed";
+  if (failed) {
+    return {
+      appearance: "not_assessed",
+      recommendation: "not_assessed",
+      comparison: "not_assessed",
+      information: "not_assessed",
+      run: "failed",
+    };
+  }
+  const appearance = observation.raw_answer.includes(goldenBrief.brand_name)
+    ? "mentioned"
+    : "absent";
+  const override = expectedAssessmentByPromptId[promptId] ?? {};
+  return {
+    appearance,
+    recommendation:
+      slot.compatibilityReportAssessmentClass === "recommendation"
+        ? appearance === "mentioned"
+          ? (override.recommendation ?? "not_assessed")
+          : "not_assessed"
+        : "not_assessed",
+    comparison:
+      slot.compatibilityReportAssessmentClass === "comparison"
+        ? appearance === "mentioned"
+          ? (override.comparison ?? "not_observed")
+          : "not_observed"
+        : "not_observed",
+    information:
+      slot.compatibilityReportAssessmentClass === "information"
+        ? appearance === "mentioned"
+          ? (override.information ?? "not_assessed")
+          : "not_assessed"
+        : "not_assessed",
+    run: observation.run_status,
   };
 }
 
 export const expectedDimensionsByPrompt: Record<
   string,
   ExpectedResultDimensions
-> = {
-  [goldenPrompts[0].prompt_id]: {
-    appearance: "absent",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "not_assessed",
-    run: "completed",
-  },
-  [goldenPrompts[1].prompt_id]: {
-    appearance: "absent",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "not_assessed",
-    run: "completed",
-  },
-  [goldenPrompts[2].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "not_assessed",
-    run: "completed",
-  },
-  [goldenPrompts[3].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "recommended",
-    comparison: "not_observed",
-    information: "not_assessed",
-    run: "completed",
-  },
-  [goldenPrompts[4].prompt_id]: {
-    appearance: "not_assessed",
-    recommendation: "not_assessed",
-    comparison: "not_assessed",
-    information: "not_assessed",
-    run: "failed",
-  },
-  [goldenPrompts[5].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "recommended",
-    comparison: "client_preferred",
-    information: "not_assessed",
-    run: "completed",
-  },
-  [goldenPrompts[6].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "confirmed",
-    run: "completed",
-  },
-  [goldenPrompts[7].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "confirmed",
-    run: "completed",
-  },
-  [goldenPrompts[8].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "conflicting",
-    run: "completed",
-  },
-  [goldenPrompts[9].prompt_id]: {
-    appearance: "mentioned",
-    recommendation: "not_recommended",
-    comparison: "not_observed",
-    information: "confirmed",
-    run: "completed",
-  },
-};
+> = Object.fromEntries(
+  AUDIT_MEASUREMENT_MATRIX.map((slot) => {
+    const prompt = goldenPromptForOrder(slot.order);
+    return [prompt.prompt_id, expectedDimensionsForPrompt(prompt.prompt_id)];
+  }),
+) as Record<string, ExpectedResultDimensions>;
+
+const compatibilityUnbrandedSlots =
+  measurementSlotsForCompatibilityAssessmentClass("recommendation").filter(
+    (slot) => !slot.legacyBranded,
+  );
+const compatibilityInformationSlots =
+  measurementSlotsForCompatibilityAssessmentClass("information");
+const compatibilityNamedSlots = AUDIT_MEASUREMENT_MATRIX.filter(
+  (slot) => slot.legacyBranded,
+);
+const goldenDiscoveryRecommended = compatibilityUnbrandedSlots.filter(
+  (slot) =>
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.recommendation === "recommended" &&
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.appearance === "mentioned",
+).length;
+const goldenDiscoveryAppeared = compatibilityUnbrandedSlots.filter(
+  (slot) =>
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.appearance === "mentioned",
+).length;
+const goldenDiscoveryFailed = compatibilityUnbrandedSlots.filter(
+  (slot) =>
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.run === "failed",
+).length;
+const goldenNamedRecognized = compatibilityNamedSlots.filter(
+  (slot) =>
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.appearance === "mentioned",
+).length;
+
+const goldenInformationConflicting = compatibilityInformationSlots.filter(
+  (slot) =>
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.information === "conflicting",
+).length;
 
 export const expectedDenominatorLabels = {
-  discovery:
-    "Recommended in 1 of 5 discovery questions; 1 question could not be tested.",
-  recognition: "Recognized in 5 of 5 brand questions.",
+  discovery: `Recommended in ${goldenDiscoveryRecommended} of ${compatibilityUnbrandedSlots.length} questions without the business name${goldenDiscoveryFailed ? `; ${goldenDiscoveryFailed} question could not be tested` : ""}.`,
+  recognition: `Recognized in ${goldenNamedRecognized} of ${compatibilityNamedSlots.length} questions that named the business.`,
 } as const;
 
 export const goldenReviewCriteria = {
