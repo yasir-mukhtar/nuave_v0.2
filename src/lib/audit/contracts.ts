@@ -690,7 +690,9 @@ export function validatePromptPack(
   });
 
   const competitorSignal = normalize(brief.verified_competitor.name);
-  const comparisonFallback = isCategoryComparisonFallback(minimizedBrief);
+  const comparisonFallback =
+    isCategoryComparisonFallback(minimizedBrief) ||
+    !minimizedBrief.comparison_business?.name.trim();
   prompts.forEach((prompt, index) => {
     const slot = AUDIT_MEASUREMENT_MATRIX[index];
     if (!slot) return;

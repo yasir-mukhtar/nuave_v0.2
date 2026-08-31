@@ -249,6 +249,13 @@ export function isCategoryComparisonFallback(brief: MinimizedIndonesianBrief) {
   );
 }
 
+function comparisonTargetIdentity(brief: MinimizedIndonesianBrief) {
+  return (
+    brief.comparison_business?.name.trim() ||
+    categoryComparisonFallbackName(brief.category || "ini")
+  );
+}
+
 /** Brand identities as normalized whole tokens (length >= 3 to stay specific). */
 function brandIdentitySignals(brief: MinimizedIndonesianBrief) {
   return [brief.brand_name, ...brief.brand_name_variants]
@@ -363,7 +370,7 @@ export function hasIndonesianComparisonRelation(
   }
 
   const brandIdentities = [brief.brand_name, ...brief.brand_name_variants];
-  const comparisonIdentity = brief.comparison_business?.name ?? "";
+  const comparisonIdentity = comparisonTargetIdentity(brief);
   const tokens = normalizedTokens(text);
   if (
     !brandIdentities.some((identity) => containsTokenRun(tokens, identity)) ||
@@ -639,8 +646,10 @@ export function validateCanonicalIndonesianQuestionPack(
     return issues;
   }
 
-  const comparisonTarget = brief.comparison_business?.name.trim() ?? "";
-  const fallbackTarget = isCategoryComparisonFallback(brief);
+  const comparisonTarget = comparisonTargetIdentity(brief);
+  const fallbackTarget =
+    isCategoryComparisonFallback(brief) ||
+    !brief.comparison_business?.name.trim();
   const classifications = questions.map((question) =>
     classifyIndonesianQuestion(question, brief),
   );

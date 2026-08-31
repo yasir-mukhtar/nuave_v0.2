@@ -514,6 +514,18 @@ describe("R-13 comparison-target projection", () => {
     );
   });
 
+  it("accepts the category fallback when no comparison target is present", () => {
+    const noTarget = { ...brief, comparison_business: null };
+    const fallback = buildDeterministicIndonesianPack(noTarget);
+    const fallbackName = categoryComparisonFallbackName(noTarget.category);
+
+    expect(fallback[8]).toContain(fallbackName);
+    expect(hasIndonesianComparisonRelation(fallback[8], noTarget)).toBe(true);
+    expect(validateCanonicalIndonesianQuestionPack(fallback, noTarget)).toEqual(
+      [],
+    );
+  });
+
   it("preserves a URL-backed target exactly", () => {
     const projected = minimizeIndonesianBrief({
       brand_name: brief.brand_name,
