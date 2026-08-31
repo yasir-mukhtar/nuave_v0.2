@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   AUDIT_MEASUREMENT_MATRIX,
-  COMPATIBILITY_COMPOSITION_COUNTS,
+  CANONICAL_COMPOSITION_COUNTS,
   PROMPT_MATRIX,
-  measurementSlotsForCompatibilityAssessmentClass,
+  measurementSlotsForAssessmentClass,
   assemblePromptPack,
   buildAuditReport,
   makeEvidenceExport,
@@ -61,12 +61,15 @@ const brief: BusinessBrief = {
 
 const prompts: AuditPrompt[] = AUDIT_MEASUREMENT_MATRIX.map((slot) => ({
   prompt_id: slot.id,
-  category: slot.legacyCategory,
-  role: slot.legacyRole,
-  branded: slot.legacyBranded,
-  question: slot.legacyBranded
-    ? `What public information is available about Nuave Test for need ${slot.order}?`
-    : `How should I choose an audit service for need ${slot.order}?`,
+  category: slot.category,
+  role: slot.generatorSlotDescription,
+  branded: slot.auditedBrandIdentity === "required",
+  question:
+    slot.comparisonTargetIdentity === "required"
+      ? `Which is better for need ${slot.order}: Nuave Test versus Test Competitor?`
+      : slot.auditedBrandIdentity === "required"
+        ? `What public information is available about Nuave Test for need ${slot.order}?`
+        : `How should I choose an audit service for need ${slot.order}?`,
   rationale: "Represents the specified intent.",
   inputs_used: ["market_context"],
   review_status: "needs_human_review",
@@ -127,7 +130,7 @@ function reportContent(): ReportContent {
         run: "completed",
         appearance: index === 0 ? "mentioned" : "absent",
         recommendation:
-          slot.compatibilityReportAssessmentClass === "recommendation"
+          slot.reportAssessmentClass === "recommendation"
             ? "not_recommended"
             : "not_assessed",
         comparison: "not_observed",
@@ -159,7 +162,7 @@ describe("prompt-pack contract", () => {
     ).toBe(true);
   });
 
-  it("accepts the exact Intent-5 matrix", () => {
+  it("accepts the exact canonical ten-slot matrix", () => {
     expect(validatePromptPack(prompts, brief)).toEqual([]);
   });
 
@@ -184,8 +187,8 @@ describe("prompt-pack contract", () => {
     });
     expect(pack.summary).toEqual({
       total_prompts: 10,
-      unbranded_prompts: 5,
-      branded_prompts: 5,
+      unbranded_prompts: 6,
+      branded_prompts: 4,
     });
     expect(Object.values(pack.self_check).every(Boolean)).toBe(true);
     expect(validatePromptPack(pack.prompts, brief)).toEqual([]);
@@ -222,7 +225,7 @@ describe("prompt-pack contract", () => {
     );
 
     expect(withCompetitor).toHaveLength(1);
-    expect(withCompetitor[0].prompt_id).toBe("NUAVE-BRAND-COMPARISON-02");
+    expect(withCompetitor[0].prompt_id).toBe("NUAVE-BRAND-ACTION-01");
     expect(Object.hasOwn(specs[0].allowed_context, "brand_name")).toBe(false);
   });
 
@@ -270,6 +273,40 @@ describe("prompt-pack contract", () => {
     expect(errors).toContain("must be distinct");
     expect(errors).toContain("unsupported premise");
   });
+
+  it("rejects the old 5/5 composition in the supported validator", () => {
+    const oldComposition = prompts.map((prompt, index) =>
+      index === 0
+        ? {
+            ...prompt,
+            branded: true,
+            question: "Apakah Nuave Test cocok untuk pelanggan?",
+          }
+        : prompt,
+    );
+    expect(validatePromptPack(oldComposition, brief)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("4 branded and 6 unbranded"),
+      ]),
+    );
+  });
+
+  it("rejects slot 9 when both identities lack a closed relation", () => {
+    const withoutRelation = prompts.map((prompt, index) =>
+      index === 8
+        ? {
+            ...prompt,
+            question:
+              "Are Nuave Test and Test Competitor open more than 8 hours?",
+          }
+        : prompt,
+    );
+    expect(validatePromptPack(withoutRelation, brief)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("valid comparison relation"),
+      ]),
+    );
+  });
 });
 
 describe("report evidence guardrails", () => {
@@ -305,20 +342,20 @@ describe("report evidence guardrails", () => {
     expect(report.counts).toEqual({
       unbranded_recommended: 0,
       unbranded_mentioned: 1,
-      unbranded_total: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+      unbranded_total: CANONICAL_COMPOSITION_COUNTS.unbranded,
       branded_recognized: 0,
-      branded_total: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+      branded_total: CANONICAL_COMPOSITION_COUNTS.branded,
       failed: 0,
     });
     expect(report.measures).toEqual({
       overall: { appeared: 1, total: AUDIT_MEASUREMENT_MATRIX.length },
       unbranded: {
         appeared: 1,
-        total: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+        total: CANONICAL_COMPOSITION_COUNTS.unbranded,
       },
       branded: {
         appeared: 0,
-        total: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+        total: CANONICAL_COMPOSITION_COUNTS.branded,
       },
       // One question the brand appeared in, judged not_recommended: the nine
       // absent questions are outside every assessed denominator, not inside
@@ -330,13 +367,13 @@ describe("report evidence guardrails", () => {
     expect(report.system_label).toContain("gpt-5.6-sol");
     expect(report.facts.discovery.recommendation_label).toBe(
       `Recommended in 0 of ${
-        measurementSlotsForCompatibilityAssessmentClass(
-          "recommendation",
-        ).filter((slot) => !slot.legacyBranded).length
+        measurementSlotsForAssessmentClass("recommendation").filter(
+          (slot) => slot.auditedBrandIdentity === "forbidden",
+        ).length
       } questions without the business name.`,
     );
     expect(report.facts.recognition.label).toBe(
-      `Recognized in 0 of ${COMPATIBILITY_COMPOSITION_COUNTS.branded} questions that named the business.`,
+      `Recognized in 0 of ${CANONICAL_COMPOSITION_COUNTS.branded} questions that named the business.`,
     );
     expect(report.facts.coverage.label).toBe("10 of 10 questions completed.");
     expect(report.method_summary).toContain(
@@ -389,17 +426,17 @@ describe("report evidence guardrails", () => {
         throw new Error(`Missing canonical slot for ${detail.prompt_id}`);
       expect(detail.appearance).toBe("mentioned");
       expect(detail.recommendation).toBe(
-        slot.compatibilityReportAssessmentClass === "recommendation"
+        slot.reportAssessmentClass === "recommendation"
           ? "recommended"
           : "not_assessed",
       );
       expect(detail.comparison).toBe(
-        slot.compatibilityReportAssessmentClass === "comparison"
+        slot.reportAssessmentClass === "comparison"
           ? "client_preferred"
           : "not_observed",
       );
       expect(detail.information).toBe(
-        slot.compatibilityReportAssessmentClass === "information"
+        slot.reportAssessmentClass === "information"
           ? "confirmed"
           : "not_assessed",
       );
@@ -511,14 +548,14 @@ describe("report evidence guardrails", () => {
     // The absent-but-recommended detail must not count as a recommendation.
     expect(report.counts.unbranded_recommended).toBe(1);
     expect(report.counts.unbranded_mentioned).toBe(2);
-    expect(report.measures.unbranded.appeared).toBe(4);
+    expect(report.measures.unbranded.appeared).toBe(5);
     expect(report.measures.unbranded.appeared).not.toBe(
       report.counts.unbranded_mentioned,
     );
     expect(report.measures.unbranded.appeared).not.toBe(
       report.counts.unbranded_recommended + report.counts.unbranded_mentioned,
     );
-    expect(report.measures.branded.appeared).toBe(1);
+    expect(report.measures.branded.appeared).toBe(0);
     expect(report.measures.overall.appeared).toBe(5);
     expect(report.measures.overall.total).toBe(AUDIT_MEASUREMENT_MATRIX.length);
   });
@@ -526,8 +563,8 @@ describe("report evidence guardrails", () => {
   it("applies one eligibility rule — appeared and judged — to all three assessed denominators (R3-3)", () => {
     const report = buildAuditReport(mixedReportContent(), mixedObservations);
 
-    // Four details have appearance "mentioned" (0, 1, 2, 5). Matrix slot 1
-    // and slot 3 use recommendation assessment; slot 6 uses comparison.
+    // Five details have appearance "mentioned" (0, 1, 2, 4, 5). Matrix slots
+    // 1, 3, and 5 use recommendation assessment; slot 6 uses comparison.
     // The absent-but-judged details stay outside every denominator.
     expect(report.measures.recommendation).toEqual({
       recommended: 1,
@@ -613,18 +650,18 @@ describe("report evidence guardrails", () => {
     expect(validateReportContent(content, observations, brief)).toEqual([]);
   });
 
-  it("rejects a future canonical assessment on a compatibility information slot", () => {
+  it("rejects a recommendation without a visible brand appearance", () => {
     const content = reportContent();
     content.details[7].recommendation = "recommended";
 
     expect(
       validateReportContent(content, observations, brief).join(" "),
-    ).toContain("carries recommendation semantics outside its pre-A3");
+    ).toContain("raw response does not name the brand");
   });
 
   it("rejects a global accuracy conclusion that contradicts detail facts", () => {
     const content = reportContent();
-    content.details[8].information = "conflicting";
+    content.details[3].information = "conflicting";
 
     expect(
       validateReportContent(content, observations, brief).join(" "),

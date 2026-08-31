@@ -2,8 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BusinessBrief } from "./types";
 import { buildLiveIndonesianPromptPack } from "./questions-id-live";
 import { promptPackSchema } from "./types";
-import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
-import { COMPATIBILITY_COMPOSITION_COUNTS } from "./measurement-matrix";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  CANONICAL_COMPOSITION_COUNTS,
+} from "./measurement-matrix";
+import {
+  buildDeterministicIndonesianPack,
+  minimizeIndonesianBrief,
+} from "./questions-id";
 
 const BRAND = "Klinik Gigi Sehat";
 
@@ -43,18 +49,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function tenQuestions(): string[] {
-  return [
-    "Di mana saya bisa menemukan klinik gigi terdekat di Depok untuk scaling?",
-    "Klinik gigi mana di sekitar Margonda yang bisa menangani tambal gigi?",
-    "Apa saja pilihan klinik gigi di area Margonda yang menyediakan behel dan scaling?",
-    "Berapa jam buka klinik gigi di Depok dan bagaimana cara reservasinya?",
-    "Bagaimana perbandingan klinik gigi di Margonda dari segi lokasi dan harga?",
-    `Apakah ${BRAND} menyediakan scaling gigi di cabang Margonda?`,
-    `Berapa jam operasional ${BRAND}?`,
-    `Bagaimana cara reservasi di ${BRAND} melalui WhatsApp?`,
-    `Apakah ${BRAND} melayani perawatan behel untuk anak?`,
-    `Apa saja layanan unggulan ${BRAND} untuk tambal gigi?`,
-  ];
+  return buildDeterministicIndonesianPack(minimizeIndonesianBrief(dentalBrief));
 }
 
 function stubValidOpenCodeGoMethod() {
@@ -171,19 +166,19 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     expect(result.pack.prompts).toHaveLength(10);
     expect(new Set(result.pack.prompts.map((p) => p.prompt_id)).size).toBe(10);
     expect(result.pack.prompts.filter((p) => p.branded)).toHaveLength(
-      COMPATIBILITY_COMPOSITION_COUNTS.branded,
+      CANONICAL_COMPOSITION_COUNTS.branded,
     );
     expect(result.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
-      menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+      tanpa_menyebut_bisnis_anda: CANONICAL_COMPOSITION_COUNTS.unbranded,
+      menyebut_bisnis_anda: CANONICAL_COMPOSITION_COUNTS.branded,
     });
     expect(
       result.pack.prompts.map((prompt) => [prompt.role, prompt.rationale]),
     ).toEqual(
       AUDIT_MEASUREMENT_MATRIX.map((slot) => [
-        slot.legacyRole,
-        slot.legacyRole,
+        slot.generatorSlotDescription,
+        slot.measurementPurpose,
       ]),
     );
     const openComparisonSlot = AUDIT_MEASUREMENT_MATRIX.find(
@@ -195,14 +190,14 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     const liveOpenComparison =
       result.pack.prompts[openComparisonSlot.order - 1];
     expect(liveOpenComparison).toMatchObject({
-      role: openComparisonSlot.legacyRole,
-      rationale: openComparisonSlot.legacyRole,
+      role: openComparisonSlot.generatorSlotDescription,
+      rationale: openComparisonSlot.measurementPurpose,
     });
-    expect(liveOpenComparison.role).not.toBe(
-      openComparisonSlot.customerFacingLabel,
-    );
-    expect(liveOpenComparison.rationale).not.toBe(
+    expect(liveOpenComparison.role).toBe(
       openComparisonSlot.generatorSlotDescription,
+    );
+    expect(liveOpenComparison.rationale).toBe(
+      openComparisonSlot.measurementPurpose,
     );
     expect(promptPackSchema.safeParse(result.pack).success).toBe(true);
 
@@ -231,7 +226,7 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     expect(result.generation.warnings).toContain("fallback_used");
     expect(result.pack.prompts).toHaveLength(10);
     expect(result.pack.prompts.filter((p) => p.branded)).toHaveLength(
-      COMPATIBILITY_COMPOSITION_COUNTS.branded,
+      CANONICAL_COMPOSITION_COUNTS.branded,
     );
     expect(promptPackSchema.safeParse(result.pack).success).toBe(true);
     expect(result.telemetry[0].status).toBe("failed");

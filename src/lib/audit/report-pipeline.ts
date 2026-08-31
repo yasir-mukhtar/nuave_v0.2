@@ -12,6 +12,10 @@ import {
   canonicalLockedQuestionPack,
   lockedObservationBindingErrors,
 } from "./locked-question-pack";
+import {
+  isHistoricalPromptPack,
+  type HistoricalPromptPackId,
+} from "./measurement-matrix";
 import { assertSafeComparisonBusinessUrls } from "./similar-businesses";
 import { productionObservationMethodErrors } from "./production-observation-method";
 import {
@@ -47,6 +51,10 @@ import {
   effectiveAuditCarryoverCostUsd,
   summarizeAuditTelemetry,
 } from "./telemetry";
+import {
+  minimizeIndonesianBrief,
+  validateCanonicalIndonesianQuestionPack,
+} from "./questions-id";
 
 export type ReportPipelineInput = {
   brief: BusinessBrief;
@@ -55,13 +63,17 @@ export type ReportPipelineInput = {
   safety_identifier: string;
   budget: AuditBudget;
   language?: "en" | "id";
+  /** Internal replay marker for one of the two immutable historical fixtures. */
+  historical_fixture_id?: HistoricalPromptPackId;
 };
 
 function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
   assertSafeComparisonBusinessUrls(input.brief);
   return {
     ...input,
-    prompts: canonicalLockedQuestionPack(input.prompts, input.brief).prompts,
+    prompts: canonicalLockedQuestionPack(input.prompts, input.brief, {
+      historicalFixtureId: input.historical_fixture_id,
+    }).prompts,
   };
 }
 
@@ -126,8 +138,17 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
       prompts,
       observations,
       brief: canonical.brief,
+      historicalFixtureId: canonical.historical_fixture_id,
     }),
   );
+  if (!isHistoricalPromptPack(prompts, canonical.historical_fixture_id)) {
+    errors.push(
+      ...validateCanonicalIndonesianQuestionPack(
+        prompts.map((prompt) => prompt.question),
+        minimizeIndonesianBrief(canonical.brief),
+      ).map((issue) => issue.message),
+    );
+  }
 
   const notEvaluable = observations.filter(
     (observation) =>
@@ -194,6 +215,7 @@ function normalizeAndRepairReport(
     rawContent,
     input.observations,
     input.brief,
+    input.historical_fixture_id,
   );
 
   const rawSources = rawContent.details.reduce(
@@ -234,6 +256,7 @@ function normalizeAndRepairReport(
     excerptRepair.content,
     input.observations,
     input.brief,
+    input.historical_fixture_id,
   );
   if (priorityRepair.removed_orders.length) {
     diagnostics.add("unsupported_priority_removed");
@@ -247,6 +270,7 @@ function normalizeAndRepairReport(
     input.observations,
     input.brief,
     input.language,
+    input.historical_fixture_id,
   );
   qualityRepair.diagnostics.forEach((diagnostic) =>
     diagnostics.add(diagnostic),
@@ -305,6 +329,7 @@ export async function createValidatedAuditReport(
     content,
     lockedInput.observations,
     lockedInput.brief,
+    lockedInput.historical_fixture_id,
   );
   if (evidenceErrors.length) {
     throw new ReportPipelineError(
@@ -374,6 +399,7 @@ export async function createValidatedAuditReport(
           content,
           lockedInput.observations,
           lockedInput.brief,
+          lockedInput.historical_fixture_id,
         ),
       ];
       if (retryIntegrityErrors.length) {
@@ -412,6 +438,7 @@ export async function createValidatedAuditReport(
       ),
     },
     isIndonesian ? INDONESIAN_AUDIT_REPORT_LABELS : undefined,
+    lockedInput.historical_fixture_id,
   );
   if (isIndonesian) {
     const builtFieldErrors = indonesianReportBuiltFieldErrors(report);

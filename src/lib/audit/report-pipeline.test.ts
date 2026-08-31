@@ -34,6 +34,7 @@ const partialInput = {
   observations: goldenObservations,
   safety_identifier: "fixture-user-123",
   budget: fixtureBudget,
+  historical_fixture_id: "northstar-report-golden-v1" as const,
 };
 
 const goldenCompletedObservations = fixtureProtectedObservationSet(

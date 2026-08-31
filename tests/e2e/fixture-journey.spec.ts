@@ -7,6 +7,7 @@ import {
   kopiTamanSenjaQuestions,
 } from "../../src/lib/audit/fixtures/fixture-kopi-taman-senja";
 import { COMPATIBILITY_COMPOSITION_COUNTS } from "../../src/lib/audit/measurement-matrix";
+import { HISTORICAL_FIXTURE_NOTICE } from "../../src/lib/fixture-journey/adapter";
 import { kopiTamanSenjaMeasures } from "../../src/lib/fixture-journey/adapter";
 import {
   FIXTURE_SESSION_KEY,
@@ -74,7 +75,7 @@ test.describe("entry and landing (AC-01)", () => {
       page.getByRole("button", { name: "Bayar Rp99.000" }),
     ).toHaveCount(0);
     const body = await page.locator("body").innerText();
-    expect(body).not.toMatch(/8\/10|3\/5|5\/5/);
+    expect(body).toContain(HISTORICAL_FIXTURE_NOTICE);
     expect(body).not.toContain(KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME);
     await assertNoSideEffects(page, requests);
   });
@@ -163,7 +164,7 @@ test.describe("canonical sequence and gates (AC-03..AC-09)", () => {
     ).toBeVisible();
     // No result, competitor, finding, or score is previewed.
     const body = await page.locator("body").innerText();
-    expect(body).not.toMatch(/8\/10|3\/5|5\/5/);
+    expect(body).toContain(HISTORICAL_FIXTURE_NOTICE);
     expect(body).not.toContain(KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME);
     // The priced action opens the simulated payment.
     await expect(

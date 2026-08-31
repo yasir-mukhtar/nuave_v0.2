@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   AUDIT_MEASUREMENT_MATRIX,
-  COMPATIBILITY_COMPOSITION_COUNTS,
+  CANONICAL_COMPOSITION_COUNTS,
   COMPARISON_RELATION_MARKERS,
   PROMPT_MATRIX,
   measurementSlotForPromptId,
   measurementSlotsForAssessmentClass,
-  measurementSlotsForCompatibilityAssessmentClass,
 } from "./measurement-matrix";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import {
   categoryComparisonFallbackName,
+  buildDeterministicIndonesianPack,
   hasIndonesianComparisonRelation,
   isCategoryComparisonFallback,
   minimizeIndonesianBrief,
@@ -48,21 +48,8 @@ const canonicalQuestions = [
   "Apa perbedaan pilihan kedai kopi di Depok untuk kebutuhan ini?",
   "Apakah Kopi Taman Senja cocok untuk kebutuhan warga Depok?",
   "Apakah Kopi Taman Senja layak direkomendasikan untuk warga Depok?",
-  "Bandingkan Kopi Taman Senja dengan Kopi Pesaing untuk warga Depok.",
+  "Bandingkan Kopi Taman Senja dengan Kopi Pesaing untuk warga Depok?",
   "Siapa yang cocok memilih Kopi Taman Senja dan apa pertimbangannya?",
-];
-
-const legacyQuestions = [
-  "Ada rekomendasi kedai kopi di Depok?",
-  "Saya cari tempat ngopi yang nyaman di Depok.",
-  "Kedai kopi apa saja yang tersedia di Depok?",
-  "Di mana ada kopi susu di Depok?",
-  "Bandingkan pilihan kedai kopi di Depok.",
-  "Bandingkan Kopi Taman Senja dengan Kopi Pesaing di Depok.",
-  "Apa saja yang disediakan Kopi Taman Senja?",
-  "Di mana alamat Kopi Taman Senja dan buka jam berapa?",
-  "Bagaimana cara datang ke Kopi Taman Senja?",
-  "Apakah Kopi Taman Senja menyediakan manual brew?",
 ];
 
 function errorsWithQuestion(
@@ -158,89 +145,58 @@ describe("canonical measurement matrix", () => {
     });
   });
 
-  it("keeps the old tuple API as a derived 5/5 compatibility projection", () => {
+  it("keeps the tuple API derived from canonical slot metadata", () => {
     expect(PROMPT_MATRIX).toEqual(
       AUDIT_MEASUREMENT_MATRIX.map((slot) => [
         slot.id,
-        slot.legacyCategory,
-        slot.legacyBranded,
-        slot.legacyRole,
+        slot.category,
+        slot.auditedBrandIdentity === "required",
+        slot.generatorSlotDescription,
       ]),
     );
     expect(
-      AUDIT_MEASUREMENT_MATRIX.filter((slot) => !slot.legacyBranded),
-    ).toHaveLength(5);
+      AUDIT_MEASUREMENT_MATRIX.filter(
+        (slot) => slot.auditedBrandIdentity === "forbidden",
+      ),
+    ).toHaveLength(CANONICAL_COMPOSITION_COUNTS.unbranded);
     expect(
-      AUDIT_MEASUREMENT_MATRIX.filter((slot) => slot.legacyBranded),
-    ).toHaveLength(5);
+      AUDIT_MEASUREMENT_MATRIX.filter(
+        (slot) => slot.auditedBrandIdentity === "required",
+      ),
+    ).toHaveLength(CANONICAL_COMPOSITION_COUNTS.branded);
   });
 
-  it("derives the pre-A3 compatibility report paths without changing R-01 fields", () => {
+  it("derives canonical report paths from the matrix", () => {
     expect(
-      measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
+      measurementSlotsForAssessmentClass("recommendation").map(
         (slot) => slot.order,
       ),
-    ).toEqual([1, 2, 3, 4]);
+    ).toEqual([1, 3, 5, 7, 8, 10]);
     expect(
-      measurementSlotsForCompatibilityAssessmentClass("comparison").map(
+      measurementSlotsForAssessmentClass("comparison").map(
         (slot) => slot.order,
       ),
-    ).toEqual([5, 6]);
+    ).toEqual([6, 9]);
     expect(
-      measurementSlotsForCompatibilityAssessmentClass("information").map(
+      measurementSlotsForAssessmentClass("information").map(
         (slot) => slot.order,
       ),
-    ).toEqual([7, 8, 9, 10]);
-
-    const slotFor = (order: number) => {
-      const slot = AUDIT_MEASUREMENT_MATRIX.find(
-        (candidate) => candidate.order === order,
-      );
-      if (!slot) throw new Error(`Missing matrix slot ${order}`);
-      return slot;
-    };
-    expect(slotFor(6)).toMatchObject({
+    ).toEqual([4]);
+    expect(
+      measurementSlotsForAssessmentClass("none").map((slot) => slot.order),
+    ).toEqual([2]);
+    expect(AUDIT_MEASUREMENT_MATRIX[5]).toMatchObject({
       category: "open_comparison",
       auditedBrandIdentity: "forbidden",
       comparisonTargetIdentity: "forbidden",
       reportAssessmentClass: "comparison",
-      compatibilityCustomerFacingLabel: "Perbandingan",
-      compatibilityMeasurementPurpose:
-        "How the audited business compares with one verified competitor for the customer's criteria",
-      compatibilityReportAssessmentClass: "comparison",
     });
-    expect(slotFor(6).compatibilityMeasurementPurpose).not.toContain("unnamed");
-    expect(slotFor(8)).toMatchObject({
-      category: "explicit_recommendation",
-      reportAssessmentClass: "recommendation",
-      compatibilityCustomerFacingLabel: "Fakta bisnis",
-      compatibilityMeasurementPurpose:
-        "Whether the business identity, scope, location, opening hours, or other public facts are consistent",
-      compatibilityReportAssessmentClass: "information",
-    });
-    expect(slotFor(8).compatibilityMeasurementPurpose).not.toContain(
-      "recommends",
-    );
-    expect(slotFor(9)).toMatchObject({
+    expect(AUDIT_MEASUREMENT_MATRIX[8]).toMatchObject({
       category: "direct_comparison",
+      auditedBrandIdentity: "required",
+      comparisonTargetIdentity: "required",
       reportAssessmentClass: "comparison",
-      compatibilityCustomerFacingLabel: "Langkah berikutnya",
-      compatibilityMeasurementPurpose:
-        "How a customer can take the next practical step or contact the business",
-      compatibilityReportAssessmentClass: "information",
     });
-    expect(slotFor(9).compatibilityMeasurementPurpose).not.toContain(
-      "compares",
-    );
-    expect(slotFor(10)).toMatchObject({
-      category: "fit_misfit",
-      reportAssessmentClass: "recommendation",
-      compatibilityCustomerFacingLabel: "Langkah berikutnya",
-      compatibilityMeasurementPurpose:
-        "Whether another practical offering, facility, or selection detail is available",
-      compatibilityReportAssessmentClass: "information",
-    });
-    expect(slotFor(10).compatibilityMeasurementPurpose).not.toContain("suits");
   });
 
   it("resolves every supported prompt identifier to one matrix-owned slot", () => {
@@ -262,10 +218,10 @@ describe("canonical measurement matrix", () => {
     ).toBeUndefined();
   });
 
-  it("gives every slot exactly one report assessment path while keeping 5/5 compatibility", () => {
-    expect(COMPATIBILITY_COMPOSITION_COUNTS).toEqual({
-      unbranded: 5,
-      branded: 5,
+  it("gives every slot exactly one canonical report assessment path", () => {
+    expect(CANONICAL_COMPOSITION_COUNTS).toEqual({
+      unbranded: 6,
+      branded: 4,
     });
     expect(
       AUDIT_MEASUREMENT_MATRIX.every((slot) =>
@@ -479,9 +435,16 @@ describe("R-06 canonical identity agreement", () => {
     );
   });
 
-  it.todo(
-    "R-06 rule 6(b): a slot-9 fallback question satisfies target and relation after A3 flips the composition",
-  );
+  it("R-06 rule 6(b): the slot-9 deterministic fallback satisfies target and relation", () => {
+    const fallback = buildDeterministicIndonesianPack(brief);
+    const slotNine = fallback[8];
+    expect(slotNine).toContain(brief.brand_name);
+    expect(slotNine).toContain(brief.comparison_business?.name ?? "");
+    expect(hasIndonesianComparisonRelation(slotNine, brief)).toBe(true);
+    expect(validateCanonicalIndonesianQuestionPack(fallback, brief)).toEqual(
+      [],
+    );
+  });
 });
 
 describe("R-13 comparison-target projection", () => {
@@ -522,17 +485,33 @@ describe("R-13 comparison-target projection", () => {
     });
     expect(isCategoryComparisonFallback(minimized)).toBe(true);
 
-    const legacyWithFallback = legacyQuestions.slice();
-    legacyWithFallback[0] =
-      "Ada alternatif lain di kategori Kedai kopi untuk warga Depok?";
-    legacyWithFallback[5] =
-      "Bandingkan Kopi Taman Senja dengan alternatif lain di kategori Kedai kopi di Depok.";
+    const canonicalFallback = buildDeterministicIndonesianPack(minimized);
     expect(
-      validateIndonesianQuestionPack(legacyWithFallback, minimized),
+      validateIndonesianQuestionPack(canonicalFallback, minimized),
     ).toEqual([]);
     expect(
-      generatedSuggestionGuardIssues(legacyWithFallback, minimized),
+      generatedSuggestionGuardIssues(canonicalFallback, minimized),
     ).not.toContain("compact_competitor_leakage:1");
+
+    const unnamedAlternatives = canonicalFallback.slice();
+    unnamedAlternatives[5] = `Apa perbedaan ${fallbackName} untuk pelanggan?`;
+    expect(
+      validateCanonicalIndonesianQuestionPack(
+        unnamedAlternatives,
+        minimized,
+      ).filter((issue) => issue.rule === "competitor_leakage"),
+    ).toEqual([]);
+
+    const namedInUnnamedSlot = canonicalFallback.slice();
+    namedInUnnamedSlot[5] =
+      "Apa perbedaan Kopi Taman Senja dan pilihan lain untuk pelanggan?";
+    expect(
+      validateCanonicalIndonesianQuestionPack(namedInUnnamedSlot, minimized),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 6, rule: "identity_leakage" }),
+      ]),
+    );
   });
 
   it("preserves a URL-backed target exactly", () => {

@@ -77,9 +77,10 @@ import { liveExecuteAuditPrompt } from "../../src/lib/audit/provider";
 import { classifyObservationFailure } from "../../src/lib/audit/retry";
 import { runAuditObservations } from "../../src/lib/audit/run-orchestrator";
 import {
+  INDONESIAN_QUESTION_INSTRUCTION_VERSION,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
   type IndonesianQuestionPackSuggestion,
   type MinimizedIndonesianBrief,
 } from "../../src/lib/audit/questions-id";
@@ -151,7 +152,7 @@ function validatePack(
   minimized: MinimizedIndonesianBrief,
 ) {
   const questions = pack.questions.map((q) => q.text);
-  const issues = validateIndonesianQuestionPack(questions, minimized);
+  const issues = validateCanonicalIndonesianQuestionPack(questions, minimized);
   const blockers = indonesianPackBlockers(questions, minimized);
   return {
     count: questions.length,
@@ -174,15 +175,14 @@ function buildLockedPrompts(
   return pack.questions.map((item) => {
     const slot = measurementSlotForOrder(item.order);
     if (!slot) throw new Error(`Question ${item.order} has no matrix slot.`);
-    const branded = item.final_classification === "menyebut_bisnis_anda";
-    const inputs = [...slot.legacyAllowedContextFields];
+    const inputs = [...slot.allowedContextFields];
     return {
       prompt_id: `NVA-ID-${String(item.order).padStart(2, "0")}`,
-      category: slot.legacyCategory,
-      role: slot.legacyRole,
-      branded,
+      category: slot.category,
+      role: slot.generatorSlotDescription,
+      branded: slot.auditedBrandIdentity === "required",
       question: item.text,
-      rationale: `${slot.compatibilityMeasurementPurpose}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.measurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };
@@ -216,7 +216,7 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
       provider_lock: {
         observation_and_extraction: "openai / gpt-5.6-luna (OpenCode Go)",
         question_generation: "openai / gpt-5.6-luna",
-        instruction_version: OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
+        instruction_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
       },
       started_at: runStartedAt,
     };
@@ -276,11 +276,11 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
     expect(
       packValidation.classification.tanpa_menyebut_bisnis_anda,
       "no-name questions",
-    ).toBe(5);
+    ).toBe(6);
     expect(
       packValidation.classification.menyebut_bisnis_anda,
       "name questions",
-    ).toBe(5);
+    ).toBe(4);
     expect(packValidation.blockers, "pack blockers").toEqual([]);
     expect(
       packValidation.issues.filter(
@@ -308,7 +308,7 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
             order: q.order,
             text: q.text,
             final_classification: q.final_classification,
-            suggested_category: q.suggested_category,
+            category: q.category,
           })),
         },
         null,

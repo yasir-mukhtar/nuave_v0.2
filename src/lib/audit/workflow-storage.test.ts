@@ -18,8 +18,12 @@ function currentReport() {
       goldenReportContent(),
       goldenObservations,
       goldenBrief,
+      "northstar-report-golden-v1",
     ),
     goldenObservations,
+    undefined,
+    undefined,
+    "northstar-report-golden-v1",
   );
 }
 

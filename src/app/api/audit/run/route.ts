@@ -19,7 +19,7 @@ import {
 import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
 } from "@/lib/audit/questions-id";
 import {
   canonicalLockedQuestionPack,
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const lockedPack = canonicalLockedQuestionPack(input.prompts, input.brief);
     const lockedPrompts = lockedPack.prompts;
     const minimized = minimizeIndonesianBrief(input.brief);
-    const questionErrors = validateIndonesianQuestionPack(
+    const questionErrors = validateCanonicalIndonesianQuestionPack(
       lockedPrompts.map((prompt) => prompt.question),
       minimized,
     );

@@ -76,9 +76,10 @@ import type { AuditBudget, BusinessBrief } from "../../src/lib/audit/types";
 import {
   buildDeterministicIndonesianPack,
   classifyIndonesianQuestion,
+  INDONESIAN_QUESTION_INSTRUCTION_VERSION,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
   type IndonesianQuestionPackSuggestion,
   type MinimizedIndonesianBrief,
 } from "../../src/lib/audit/questions-id";
@@ -544,7 +545,7 @@ function captureFetch(calls: CapturedCall[]): typeof fetch {
 
 function packMechanicalScore(pack: IndonesianQuestionPackSuggestion, brief: MinimizedIndonesianBrief) {
   const questions = pack.questions.map((q) => q.text);
-  const issues = validateIndonesianQuestionPack(questions, brief);
+  const issues = validateCanonicalIndonesianQuestionPack(questions, brief);
   const blockers = indonesianPackBlockers(questions, brief);
   const classification = pack.classification_summary;
   const leaks = issues.filter((i) => i.rule === "identity_leakage" || i.rule === "competitor_leakage");
@@ -565,7 +566,7 @@ function packMechanicalScore(pack: IndonesianQuestionPackSuggestion, brief: Mini
 
 function fallbackMechanicalScore(brief: MinimizedIndonesianBrief) {
   const questions = buildDeterministicIndonesianPack(brief);
-  const issues = validateIndonesianQuestionPack(questions, brief);
+  const issues = validateCanonicalIndonesianQuestionPack(questions, brief);
   const blockers = indonesianPackBlockers(questions, brief);
   const classification = {
     total: questions.length,
@@ -893,13 +894,13 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
                   order: q.order,
                   text: q.text,
                   final_classification: q.final_classification,
-                  suggested_category: q.suggested_category,
+                  category: q.category,
                 })),
               }
             : {
                 status: degradedToFallback ? "degraded_to_fallback" : "failed",
                 requested_model: GEMINI_CANDIDATE_MODEL,
-                instruction_version: "question-writer-v1",
+                instruction_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
                 latency_ms: questionLatencyMs,
                 http_status: questionHttp?.status ?? null,
                 failure_reason:
@@ -989,7 +990,7 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
                       order: q.order,
                       text: q.text,
                       final_classification: q.final_classification,
-                      suggested_category: q.suggested_category,
+                      category: q.category,
                     })),
                   }
                 : {
@@ -997,7 +998,7 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
                       ? "degraded_to_fallback"
                       : "failed",
                     requested_model: OPENAI_BENCHMARK_MODEL,
-                    instruction_version: "question-writer-v1",
+                    instruction_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
                     latency_ms: openaiQuestionLatencyMs,
                     http_status: openaiQuestionHttp?.status ?? null,
                     failure_reason:
@@ -1014,7 +1015,7 @@ describe("Spec 003 five-business provider evaluation (dental clinics, Depok)", (
               reason:
                 "OPENAI_API_KEY is missing from .env.local; GPT-5.6 Luna benchmark not run (flagged, per task)",
               requested_model: OPENAI_BENCHMARK_MODEL,
-              instruction_version: "question-writer-v1",
+              instruction_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
             },
           };
         }

@@ -15,11 +15,7 @@ export const promptCategories = [
 ] as const;
 export type CanonicalPromptCategory = (typeof promptCategories)[number];
 
-/**
- * Compatibility categories for the pre-A3 5/5 consumers. They remain
- * parseable until downstream report, UI, fixture, and script consumers move
- * to the canonical categories.
- */
+/** Historical category values retained only to parse frozen pre-A3 records. */
 export const legacyPromptCategories = [
   "need_discovery",
   "solution_discovery",
@@ -28,6 +24,11 @@ export const legacyPromptCategories = [
   "action",
 ] as const;
 export type LegacyPromptCategory = (typeof legacyPromptCategories)[number];
+
+export const promptCategorySchema = z.union([
+  z.enum(promptCategories),
+  z.enum(legacyPromptCategories),
+]);
 
 export const appearanceStatuses = [
   "absent",
@@ -156,7 +157,7 @@ export const extractionDraftSchema = z.object({
 
 export const promptSchema = z.object({
   prompt_id: z.string(),
-  category: z.enum(legacyPromptCategories),
+  category: promptCategorySchema,
   role: z.string(),
   branded: z.boolean(),
   question: z.string().trim().min(1).max(700),
@@ -188,9 +189,8 @@ export const promptPackSchema = z.object({
   prompts: z.array(promptSchema).length(10),
   self_check: z.object({
     ten_prompts: z.boolean(),
-    two_per_category: z.boolean(),
-    five_unbranded: z.boolean(),
-    five_branded: z.boolean(),
+    one_prompt_per_slot: z.boolean(),
+    canonical_composition: z.boolean(),
     no_brand_leakage: z.boolean(),
     verified_inputs_only: z.boolean(),
     verified_competitor_only: z.boolean(),
@@ -203,7 +203,7 @@ export const promptPackSchema = z.object({
 
 export const auditObservationSchema = z.object({
   prompt_id: z.string(),
-  category: z.enum(legacyPromptCategories),
+  category: promptCategorySchema,
   branded: z.boolean(),
   question: z.string(),
   // Spec 003 R-14/R-20: the versioned neutral instruction used for this
@@ -374,12 +374,12 @@ export type BusinessBrief = z.infer<typeof businessBriefSchema>;
 export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;
 type ParsedAuditPrompt = z.infer<typeof promptSchema>;
 export type AuditPrompt = Omit<ParsedAuditPrompt, "category"> & {
-  category: LegacyPromptCategory;
+  category: CanonicalPromptCategory | LegacyPromptCategory;
 };
 export type PromptPack = z.infer<typeof promptPackSchema>;
 type ParsedAuditObservation = z.infer<typeof auditObservationSchema>;
 export type AuditObservation = Omit<ParsedAuditObservation, "category"> & {
-  category: LegacyPromptCategory;
+  category: CanonicalPromptCategory | LegacyPromptCategory;
 };
 export type AuditCallTelemetry = z.infer<typeof auditCallTelemetrySchema>;
 export type AuditBudget = z.infer<typeof auditBudgetSchema>;

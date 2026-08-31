@@ -13,6 +13,7 @@ import type {
 } from "@/lib/audit/types";
 import {
   fixtureObservationCompositionLabel,
+  HISTORICAL_FIXTURE_NOTICE,
   fixtureObservationResultLabel,
   kopiTamanSenjaMeasures,
   kopiTamanSenjaMethod,
@@ -145,6 +146,7 @@ export default function FixtureReportView({
             <span className={styles.reportFictionalBadge}>
               Contoh fiktif, bukan hasil audit pelanggan
             </span>
+            <p className={styles.reportNote}>{HISTORICAL_FIXTURE_NOTICE}</p>
           </div>
           <dl className={styles.reportScopeGrid}>
             <div>

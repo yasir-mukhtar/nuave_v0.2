@@ -11,6 +11,7 @@ import {
   generateIndonesianQuestionPack,
 } from "./questions-id";
 import { AUDIT_MODEL, AUDIT_PRICING_VERSION } from "./telemetry";
+import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 import {
   OPENCODEGO_BASE_URL,
   assertOpenCodeGoProductionMethodConfigured,
@@ -26,7 +27,7 @@ import {
 //     "openai" | "gemini"), independent from NUAVE_PROVIDER so tests can
 //     exercise alternatives while the protected live path remains locked to
 //     OpenCode Go (founder decision 2026-08-21);
-//   - the versioned question-writer instruction (question-writer-v1, the
+//   - the versioned question-writer instruction (question-writer-v2, the
 //     docs/journey/04 "Suggested generation instruction" substance) as the one
 //     authoritative instruction source;
 //   - the minimal ten-strings output schema for all Responses-compatible
@@ -84,27 +85,42 @@ export const INDONESIAN_QUESTION_GEMINI_ENDPOINT_PREFIX =
   "https://generativelanguage.googleapis.com/v1beta/models" as const;
 
 // ---------------------------------------------------------------------------
-// Versioned question-writer instruction (question-writer-v1)
+// Versioned question-writer instruction (question-writer-v2)
 // ---------------------------------------------------------------------------
+
+function writerSlotInstruction(
+  slot: (typeof AUDIT_MEASUREMENT_MATRIX)[number],
+) {
+  const brandRule =
+    slot.auditedBrandIdentity === "required"
+      ? "The audited business must be named."
+      : "Do not name the audited business or any known variant.";
+  const targetRule =
+    slot.comparisonTargetIdentity === "required"
+      ? "The comparison target must be named."
+      : "Do not name the comparison target.";
+  const relationRule =
+    "comparisonRelationMarkers" in slot
+      ? `Use an explicit comparison relation from the slot's closed markers: ${JSON.stringify(slot.comparisonRelationMarkers)}.`
+      : "";
+  return `Slot ${slot.order} — category ${slot.category}. Purpose: ${slot.measurementPurpose}. ${slot.generatorSlotDescription} ${brandRule} ${targetRule} ${relationRule}`.trim();
+}
 
 /**
  * The canonical, versioned question-writer instruction (docs/journey/04 —
  * "Suggested generation instruction", preserved in substance). Paired with
- * `INDONESIAN_QUESTION_INSTRUCTION_VERSION` ("question-writer-v1") exported by
- * questions-id.ts; the frozen fixture record uses the same version. The
+ * `INDONESIAN_QUESTION_INSTRUCTION_VERSION` ("question-writer-v2") exported by
+ * questions-id.ts. Historical frozen fixture records retain their recorded
+ * version and are not relabeled. The
  * minimized confirmed brief follows as structured data, not concatenated
  * prose (docs/journey/04). The required output language is id-ID.
  */
 export const INDONESIAN_QUESTION_WRITER_INSTRUCTION = [
   "You write questions that plausible Indonesian prospective customers would ask an AI assistant about one business category and one exact business.",
   "Use the confirmed business context below. Write natural Indonesian appropriate to the category and audience. Do not translate fixed English sentence templates. Familiar borrowed words, abbreviations, direct commands, and casual wording are allowed when real customers in this context would use them. Do not force slang where a more formal register is natural.",
-  "Write exactly ten independent questions in the assigned order:",
-  "1–2: customer needs or situations, without the audited business name.",
-  "3–4: requests for relevant options, without the audited business name.",
-  "5: compare relevant unnamed options, without the audited business name.",
-  "6: compare the audited business with the supplied comparison business; if no credible comparison is supplied, compare it with relevant alternatives without inventing a name.",
-  "7–8: check useful public facts about the audited business.",
-  "9–10: help a customer make a decision or take a practical next step involving the audited business.",
+  "Write exactly ten independent questions in the fixed slot order below. The slot metadata is code-owned: do not change a slot's category, purpose, identity policy, allowed context, or order.",
+  "The fixed composition is six unnamed slots (1-6) and four named slots (7-10).",
+  ...AUDIT_MEASUREMENT_MATRIX.map(writerSlotInstruction),
   "Prefer the direct question a customer wants answered over an abstract question about how to evaluate options. Vary the customer job, not merely the wording.",
   "You may ask whether an unknown public fact is true, but do not write as if that fact is already true. Use only confirmed facts as premises. Do not favour the audited business or word a discovery question to reveal it.",
   "Do not include answers, explanations, rationales, citations, scores, findings, or marketing claims. Return only the ten questions in the required output format.",

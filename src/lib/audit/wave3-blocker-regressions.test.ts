@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import {
   applyIndonesianQuestionEdits,
+  buildDeterministicIndonesianPack,
   containsIndonesianComparisonIdentity,
   generateIndonesianQuestionPack,
   indonesianPackBlockers,
@@ -39,18 +40,7 @@ const shortComparisonBrief: MinimizedIndonesianBrief = {
   },
 };
 
-const validQuestions = [
-  "Ada rekomendasi kedai kopi di Depok?",
-  "Saya cari tempat ngopi yang nyaman di Depok.",
-  "Kedai kopi apa saja yang tersedia di Depok?",
-  "Di mana ada kopi susu di Depok?",
-  "Bandingkan pilihan kedai kopi di Depok.",
-  "Bandingkan Kopi Taman Senja dengan Kopi Pesaing di Depok.",
-  "Apa saja yang disediakan Kopi Taman Senja?",
-  "Di mana alamat Kopi Taman Senja dan buka jam berapa?",
-  "Bagaimana cara datang ke Kopi Taman Senja?",
-  "Apakah Kopi Taman Senja menyediakan manual brew?",
-];
+const validQuestions = buildDeterministicIndonesianPack(brief);
 
 function providerFor(questions: string[]): IndonesianQuestionProvider {
   return {
@@ -65,7 +55,7 @@ describe("Wave 3 final comparison-business identity boundary", () => {
     "Kopi.Pesaing",
     "Kopi_Pesaing",
     "KopiPesaing",
-  ])("rejects comparison identity outside slot 6: %s", (identity) => {
+  ])("rejects comparison identity outside slot 9: %s", (identity) => {
     const questions = validQuestions.slice();
     questions[0] = `Ada rekomendasi kedai kopi seperti ${identity} di Depok?`;
 
@@ -93,10 +83,10 @@ describe("Wave 3 final comparison-business identity boundary", () => {
     },
   );
 
-  it("rejects exact short comparison identity outside slot 6", () => {
+  it("rejects exact short comparison identity outside slot 9", () => {
     const questions = validQuestions.slice();
     questions[0] = "Rekomendasikan tempat seperti XO di Depok?";
-    questions[5] = "Bandingkan Kopi Taman Senja dengan XO di Depok.";
+    questions[8] = "Bandingkan Kopi Taman Senja dengan XO di Depok?";
 
     expect(
       validateIndonesianQuestionPack(questions, shortComparisonBrief),
@@ -110,11 +100,11 @@ describe("Wave 3 final comparison-business identity boundary", () => {
     );
   });
 
-  it("keeps intended comparison-business use valid in designated slot 6", () => {
+  it("keeps intended comparison-business use valid in designated slot 9", () => {
     expect(validateIndonesianQuestionPack(validQuestions, brief)).toEqual([]);
 
     const shortNameQuestions = validQuestions.slice();
-    shortNameQuestions[5] = "Bandingkan Kopi Taman Senja dengan XO di Depok.";
+    shortNameQuestions[8] = "Bandingkan Kopi Taman Senja dengan XO di Depok?";
     expect(
       validateIndonesianQuestionPack(shortNameQuestions, shortComparisonBrief),
     ).toEqual([]);
@@ -161,7 +151,7 @@ describe("Wave 3 default-language guard stays suggestion-only", () => {
       "Which coffee shops are available in Depok?",
       "Where can I get milk coffee near Depok?",
       "How do I compare coffee shop options in Depok?",
-      "How does Kopi Taman Senja compare with Kopi Pesaing in Depok?",
+      "How do I compare unnamed coffee shop options near Depok?",
     ];
     const edited = applyIndonesianQuestionEdits(
       suggestion,
