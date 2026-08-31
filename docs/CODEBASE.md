@@ -53,7 +53,7 @@ Audit Run → Audit Report**. Status legend: ✅ production-relevant code;
 | Business Facts (brief) | `/audit` step 1 | `BriefStep` (`AuditStages.tsx`) | Edits the AI-drafted brief; `customer_supplied_facts` vs AI-drafted field ownership (`workflow-storage.ts`, `similar-businesses.ts`) | workflow state | ✅ |
 | Questions | `/audit` step 2 | `QuestionsStep` (`AuditStages.tsx`) | Live Indonesian generation (`questions-id-live.ts` → provider) with deterministic fallback (`questions-id.ts`); reviewed pack is locked before run | workflow state | ✅ |
 | Audit Run | `/audit` step 3 | `AuditRunStep` | Streaming observation execution (`stream.ts`, `run-orchestrator.ts`, `retry.ts`) via `/api/audit/run` | workflow state | ✅ |
-| Audit Report | `/audit` step 4 | `ReportView`, `ReportToolbar` | Report synthesis + repair (`report-pipeline.ts`, `report-recovery.ts`, `report-quality-repair.ts`) via `/api/audit/report`; evidence export (`customer-evidence-export.ts`) | workflow state | ✅ (delivery: ⏳ — durable access and Download PDF are planned, not implemented) |
+| Audit Report | `/audit` step 4 | `ReportView`, `ReportToolbar` | Report synthesis + repair (`report-pipeline.ts`, `report-recovery.ts`, `report-quality-repair.ts`) via `/api/audit/report`; evidence export (`customer-evidence-export.ts`) | workflow state | ✅ (browser print/save-to-PDF is implemented; durable PDF delivery and hosted/private access are planned) |
 | Fixture journey | `/audit/fixture` (`src/app/audit/fixture/`) | `FixtureJourney`, `FixtureReportView` | Full 01→06 journey with fictional business (Kopi Taman Senja), simulated payment and destination; gated by server env `NUAVE_FIXTURE_PREVIEW_ENABLED`; makes **no** `/api/audit/*` calls (`state.test.ts` enforces this) | `nuave.fixtureJourney.v4` (session storage) | 🧪 |
 | Spec 004 demo | `/audit/spec004` | `Spec004Demo`, `Spec004Hero` | Standalone demo surface, isolated from the live workflow | none | 🧪 |
 
@@ -81,15 +81,18 @@ Transitions that are **simulated or planned** (not production code):
 - Payment/checkout: **not implemented** — neither the production nor the
   fixture path makes a payment call. The fixture journey renders a simulated
   checkout screen.
-- Durable delivery (named-recipient access, Download PDF): **planned** per
-  README, not present in code. The report is only in browser session state.
+- Durable delivery (named-recipient access, generated/hosted PDF): **planned**
+  per README, not present in code. Browser print/save-to-PDF is implemented
+  through `ReportView` (`window.print()`); the report is otherwise only in
+  browser session state.
 - Spec 007's 6/4 composition (six unnamed + three named + comparison slot):
   **planned** (package A3). Current live generation still produces the 5/5
   compatibility composition.
 
 ## 5. State and data ownership
 
-All state is **browser-side**; there is no database, server store, or accounts.
+All resumable customer workflow state is **browser-side**; there is no
+database, server store, or accounts.
 
 - **Live workflow** (`src/lib/audit/workflow-storage.ts`):
   - `AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v7"` — the resumable
@@ -135,9 +138,10 @@ workflow's operations.
   `report-prompt-contract.ts` defines the synthesis prompt contract.
 - **Variance**: `variance/route.ts` + `variance.ts` — guards that prompt-pack
   semantics match the measurement matrix before a run is accepted.
-- **Provider boundary** (`src/lib/audit/`): `provider.ts` selects the
-  implementation once at module load from env (`NUAVE_PROVIDER` /
-  `NUAVE_QUESTION_PROVIDER`). Implementations: `openai.ts`,
+- **Provider boundary** (`src/lib/audit/`): `provider.ts` binds
+  extraction/observation/report provider behavior from `NUAVE_PROVIDER`.
+  `questions-id-provider.ts` independently selects the question-generation
+  provider from `NUAVE_QUESTION_PROVIDER`. Implementations: `openai.ts`,
   `gemini.ts`, `groq.ts`, `openrouter.ts`, `opencodego.ts`
   (the protected production path, OpenAI-Responses-compatible).
   `protected-observation-provider.ts` / `production-observation-method.ts`
@@ -149,7 +153,9 @@ workflow's operations.
   were derived from it in the A2 commit (HEAD).
 - Cost guard: `telemetry.ts` reserves and accounts per call against a USD
   ceiling; `OPENAI_AUDIT_CARRYOVER_COST_USD` seeds already-accounted cost.
-  (No secret values are reproduced here; see `.env.example`.)
+  The budget ledger is not durable server-owned session state; `telemetry.ts`
+  explicitly treats that as an accepted current gap. (No secret values are
+  reproduced here; see `.env.example`.)
 
 ## 7. UI and design system
 
@@ -199,8 +205,9 @@ workflow's operations.
   journey must never call `/api/audit/*` (`state.test.ts` enforces it) and is
   enabled only by a server env flag (`NUAVE_FIXTURE_PREVIEW_ENABLED`, never
   client-controllable). Do not route live traffic through fixture code.
-- **Provider resolution happens once at module load** (`provider.ts`); a single
-  run must not mix providers. The protected production path
+- **Provider resolution happens once at module load** (`provider.ts` for the
+  audit provider; `questions-id-provider.ts` for the question provider). A
+  single audit/observation run must not mix audit providers. The protected production path
   (opencodego + `low` reasoning + web search on) fails closed on
   misconfiguration (`protected-observation-provider.ts`,
   `production-observation-method.ts`).
@@ -209,10 +216,13 @@ workflow's operations.
   consumers (A1 invariant, `measurement-matrix.test.ts`). The 5/5
   compatibility projection is a derived compatibility layer slated for removal
   by Spec 007 A2/A3, not an independent policy table.
-- **Locked question pack**: after the customer approves the pack, editing rules
-  and identity prohibitions are enforced (`locked-question-pack.ts`,
-  `question-suggestion-guards.ts`); the run receives the reviewed pack, not a
-  regenerated one.
+- **Locked question pack**: after the customer approves the pack,
+  `locked-question-pack.ts` enforces ten prompts, canonical IDs/order, exact
+  observation binding, and re-derived classification. The model-authored
+  suggestion guards in `question-suggestion-guards.ts` apply before customer
+  editing; they do not enforce the final customer-edit rules or identity
+  prohibitions, which remain planned under Spec 007 A3. The run receives the
+  reviewed pack, not a regenerated one.
 - **`executionStarted` and report shape**: once execution begins, the run is
   not restartable from an arbitrary earlier state; `restorableAuditReport()`
   guards required fields on restore. Report `measures`/`counts` are derived,
