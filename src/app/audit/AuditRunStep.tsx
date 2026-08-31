@@ -109,7 +109,8 @@ export default function AuditRunStep({
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <div>
                   <strong>
-                    {measurementSlot?.customerFacingLabel ?? "Pertanyaan"}
+                    {measurementSlot?.compatibilityCustomerFacingLabel ??
+                      "Pertanyaan"}
                   </strong>
                   <small>{prompt.question}</small>
                 </div>

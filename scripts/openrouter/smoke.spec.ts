@@ -117,12 +117,12 @@ describe("OpenRouter free path smoke check", () => {
       const prompt = promptSchema.parse({
         prompt_id: smokeSlot.id,
         category: smokeSlot.legacyCategory,
-        role: smokeSlot.generatorSlotDescription,
+        role: smokeSlot.legacyRole,
         branded: smokeSlot.legacyBranded,
         question:
           "Klinik gigi yang bagus di Depok untuk pasang behel apa saja?",
         rationale: "Smoke check for the free OpenRouter path.",
-        inputs_used: [...smokeSlot.allowedContextFields],
+        inputs_used: [...smokeSlot.legacyAllowedContextFields],
         review_status: "needs_human_review",
       });
       const brief = businessBriefSchema.parse({

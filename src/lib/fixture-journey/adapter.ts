@@ -30,7 +30,7 @@
  * `recommendation: "not_assessed"` for observations 07-10. Those values pass
  * through unchanged. Report aggregation resolves each observation to its
  * matrix slot and counts only the dimension declared by that slot's
- * `reportAssessmentClass`; the frozen dimensions themselves are never
+ * `compatibilityReportAssessmentClass`; the frozen dimensions themselves are never
  * modified.
  */
 import type {
@@ -44,7 +44,7 @@ import {
   AUDIT_MEASUREMENT_MATRIX,
   COMPATIBILITY_COMPOSITION_COUNTS,
   measurementSlotForOrder,
-  measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "../audit/measurement-matrix";
 import {
   KOPI_TAMAN_SENJA_BUSINESS_NAME,
@@ -153,7 +153,7 @@ function reportDimensionsForObservation(
 ): EvidenceDimensions {
   const slot = measurementSlotForFixtureOrder(observation.order);
   const { appearance } = observation.dimensions;
-  switch (slot.reportAssessmentClass) {
+  switch (slot.compatibilityReportAssessmentClass) {
     case "recommendation":
       return {
         appearance,
@@ -184,13 +184,6 @@ function reportDimensionsForObservation(
             ? observation.dimensions.information
             : "not_assessed",
       };
-    case "none":
-      return {
-        appearance,
-        recommendation: "not_assessed",
-        comparison: "not_observed",
-        information: "not_assessed",
-      };
   }
 }
 
@@ -201,7 +194,7 @@ function resultLabelForObservation(
   if (dimensions.appearance === "absent")
     return "Tidak muncul dalam jawaban ini";
   const slot = measurementSlotForFixtureOrder(observation.order);
-  switch (slot.reportAssessmentClass) {
+  switch (slot.compatibilityReportAssessmentClass) {
     case "recommendation":
       if (dimensions.recommendation === "recommended")
         return "Disebut dan direkomendasikan";
@@ -224,8 +217,6 @@ function resultLabelForObservation(
       if (dimensions.information === "conflicting")
         return "Disebut, informasi bertentangan";
       return "Disebut, tanpa penilaian informasi";
-    case "none":
-      return "Disebut";
   }
 }
 
@@ -299,13 +290,19 @@ export const kopiTamanSenjaMeasures = (() => {
     ({ observation }) => observation.classification === "menyebut_bisnis_anda",
   );
   const recommendationSlotIds = new Set(
-    measurementSlotsForAssessmentClass("recommendation").map((slot) => slot.id),
+    measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
+      (slot) => slot.id,
+    ),
   );
   const comparisonSlotIds = new Set(
-    measurementSlotsForAssessmentClass("comparison").map((slot) => slot.id),
+    measurementSlotsForCompatibilityAssessmentClass("comparison").map(
+      (slot) => slot.id,
+    ),
   );
   const informationSlotIds = new Set(
-    measurementSlotsForAssessmentClass("information").map((slot) => slot.id),
+    measurementSlotsForCompatibilityAssessmentClass("information").map(
+      (slot) => slot.id,
+    ),
   );
   const recommendation = records.filter(
     ({ observation, slot }) =>
@@ -418,13 +415,13 @@ export const kopiTamanSenjaPrompts: AuditPrompt[] = questions.questions.map(
     return {
       prompt_id: promptIdOf(question.order),
       // AuditPrompt remains a legacy-shaped compatibility record until A3;
-      // all report meaning below comes from the canonical slot.
+      // all report meaning below comes from the matrix compatibility projection.
       category: slot.legacyCategory,
-      role: slot.generatorSlotDescription,
+      role: slot.legacyRole,
       branded: question.final_classification === "menyebut_bisnis_anda",
       question: question.text,
-      rationale: slot.measurementPurpose,
-      inputs_used: [...slot.allowedContextFields],
+      rationale: slot.compatibilityMeasurementPurpose,
+      inputs_used: [...slot.legacyAllowedContextFields],
       review_status: "needs_human_review",
     };
   },
@@ -511,7 +508,8 @@ export function detailCopyFor(observation: IndonesianEvidenceObservation): {
     };
   }
   switch (
-    measurementSlotForFixtureOrder(observation.order).reportAssessmentClass
+    measurementSlotForFixtureOrder(observation.order)
+      .compatibilityReportAssessmentClass
   ) {
     case "recommendation":
       if (dimensions.recommendation === "recommended") {
@@ -589,11 +587,6 @@ export function detailCopyFor(observation: IndonesianEvidenceObservation): {
         evidence_note:
           "Jawaban yang disimpan tidak memuat penilaian informasi.",
       };
-    case "none":
-      return {
-        finding: "Bisnis disebut dalam jawaban ini.",
-        evidence_note: "Jawaban yang disimpan memuat penyebutan bisnis.",
-      };
   }
 }
 
@@ -621,8 +614,8 @@ export function kopiTamanSenjaReportContent(): ReportContent {
   );
 
   return {
-    conclusion: `Sepuluh pertanyaan diuji dengan model AI. Kopi Taman Senja muncul di ${kopiTamanSenjaMeasures.overall.appeared} dari ${kopiTamanSenjaMeasures.overall.total} jawaban. Saat pertanyaan tidak menyebut nama, bisnis muncul di ${kopiTamanSenjaMeasures.unbranded.appeared} dari ${kopiTamanSenjaMeasures.unbranded.total} jawaban. Saat nama disebut, muncul di ${kopiTamanSenjaMeasures.branded.appeared} dari ${kopiTamanSenjaMeasures.branded.total} jawaban. Dari slot yang memang menguji rekomendasi, bisnis direkomendasikan di ${kopiTamanSenjaMeasures.recommendation.recommended} dari ${kopiTamanSenjaMeasures.recommendation.assessed} penilaian.`,
-    accuracy_status: "no_clear_issues",
+    conclusion: `Sepuluh pertanyaan diuji dengan model AI. Kopi Taman Senja muncul di ${kopiTamanSenjaMeasures.overall.appeared} dari ${kopiTamanSenjaMeasures.overall.total} jawaban. Tanpa nama, bisnis muncul di ${kopiTamanSenjaMeasures.unbranded.appeared} dari ${kopiTamanSenjaMeasures.unbranded.total} jawaban. Saat nama disebut, muncul di ${kopiTamanSenjaMeasures.branded.appeared} dari ${kopiTamanSenjaMeasures.branded.total} jawaban. Jalur rekomendasi menghasilkan ${kopiTamanSenjaMeasures.recommendation.recommended} rekomendasi dari ${kopiTamanSenjaMeasures.recommendation.assessed} penilaian. Perbandingan dan informasi publik dicatat di jalurnya masing-masing.`,
+    accuracy_status: "needs_correction",
     observed_competitors: [
       {
         name: KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME,
@@ -638,58 +631,57 @@ export function kopiTamanSenjaReportContent(): ReportContent {
       },
       {
         title: `Rekomendasi tercatat di ${kopiTamanSenjaMeasures.recommendation.recommended} dari ${kopiTamanSenjaMeasures.recommendation.assessed} penilaian`,
-        explanation: `Dari slot yang memiliki jalur rekomendasi dan dapat dinilai, ${kopiTamanSenjaMeasures.recommendation.recommended} merekomendasikan Kopi Taman Senja. Angka ini tidak memasukkan slot perbandingan atau informasi.`,
-        evidence_prompt_ids: [3, 5].map(promptIdOf),
+        explanation: `Dari pertanyaan yang memang meminta rekomendasi, ${kopiTamanSenjaMeasures.recommendation.recommended} merekomendasikan Kopi Taman Senja. Angka ini tidak memasukkan pertanyaan perbandingan atau informasi publik.`,
+        evidence_prompt_ids: [3, 4].map(promptIdOf),
       },
       {
-        title: "Satu perbandingan langsung memiliki pilihan unggulan",
-        explanation: `Pada ${kopiTamanSenjaMeasures.comparison.assessed} penilaian perbandingan yang tersedia, Kopi Taman Senja diunggulkan ${kopiTamanSenjaMeasures.comparison.clientPreferred} kali.`,
-        evidence_prompt_ids: [6].map(promptIdOf),
+        title: `Perbandingan mencatat ${kopiTamanSenjaMeasures.comparison.clientPreferred} pilihan untuk Kopi Taman Senja`,
+        explanation: `Dari ${kopiTamanSenjaMeasures.comparison.assessed} penilaian perbandingan yang tersedia, Kopi Taman Senja diunggulkan ${kopiTamanSenjaMeasures.comparison.clientPreferred} kali.`,
+        evidence_prompt_ids: [5, 6].map(promptIdOf),
       },
       {
-        title: `Pertanyaan bernama bisnis menghasilkan ${kopiTamanSenjaMeasures.branded.appeared} kemunculan`,
-        explanation: `${kopiTamanSenjaMeasures.branded.total} pertanyaan yang menyebut nama bisnis menghasilkan ${kopiTamanSenjaMeasures.branded.appeared} jawaban yang memuat Kopi Taman Senja. Ini adalah hasil pengamatan pada pertanyaan yang diuji, bukan penilaian kualitas layanan.`,
-        evidence_prompt_ids: [6, 7, 8, 9, 10].map(promptIdOf),
+        title: `Informasi publik: ${kopiTamanSenjaMeasures.information.conflicting} bertentangan dan ${kopiTamanSenjaMeasures.information.incomplete} belum lengkap`,
+        explanation: `Pertanyaan fakta publik menghasilkan ${kopiTamanSenjaMeasures.information.confirmed} informasi terkonfirmasi, ${kopiTamanSenjaMeasures.information.incomplete} informasi belum lengkap, dan ${kopiTamanSenjaMeasures.information.conflicting} informasi bertentangan.`,
+        evidence_prompt_ids: [7, 8, 9, 10].map(promptIdOf),
       },
     ],
     priorities: [
       {
         order: 1,
         timing: "do_first",
-        action: "Perjelas kecocokan bisnis untuk kebutuhan pelanggan",
-        why: "Dua penilaian rekomendasi pada pertanyaan tanpa nama tidak merekomendasikan Kopi Taman Senja.",
+        action: "Samakan jam buka di semua sumber resmi",
+        why: "Satu pertanyaan fakta menemukan jam buka yang berbeda antara situs resmi dan direktori.",
         basis:
-          "Jawaban yang disimpan menyebut bisnis tanpa rekomendasi pada jalur yang memang menguji rekomendasi.",
+          "Jawaban yang disimpan memuat perbedaan 08.00–21.00 dan 09.00–20.00.",
         owner: "business_owner",
-        done_when:
-          "Halaman resmi menjelaskan kebutuhan yang dapat dilayani dan bukti pendukungnya.",
-        evidence_prompt_ids: [3, 5].map(promptIdOf),
-        caveat: "Perubahan halaman tidak menjamin jawaban berubah.",
+        done_when: "Jam buka yang sama tercantum di setiap halaman resmi.",
+        evidence_prompt_ids: [8].map(promptIdOf),
+        caveat: "Informasi yang konsisten tidak menjamin jawaban berubah.",
       },
       {
         order: 2,
         timing: "do_next",
-        action: "Periksa kembali pertanyaan tanpa nama",
-        why: `${kopiTamanSenjaMeasures.unbranded.total - kopiTamanSenjaMeasures.unbranded.appeared} pertanyaan tanpa nama tidak menghasilkan jawaban yang memuat Kopi Taman Senja.`,
+        action: "Jelaskan fasilitas ruang kerja di halaman resmi",
+        why: "Beberapa jawaban belum dapat memastikan fasilitas dari sumber resmi.",
         basis:
-          "Jawaban yang disimpan tidak menyebut bisnis pada pertanyaan tanpa nama.",
+          "Jawaban yang disimpan menyebut informasi fasilitas yang belum lengkap.",
         owner: "web_developer",
         done_when:
-          "Pertanyaan serupa diuji ulang dan hasilnya ditinjau dengan bukti yang sama.",
-        evidence_prompt_ids: [1, 2].map(promptIdOf),
-        caveat: "Pengujian ulang dapat menghasilkan jawaban yang berbeda.",
+          "Halaman resmi mencantumkan fasilitas yang dicari calon pelanggan.",
+        evidence_prompt_ids: [7, 10].map(promptIdOf),
+        caveat: "Informasi yang lebih jelas tidak menjamin jawaban berubah.",
       },
       {
         order: 3,
         timing: "do_next",
-        action: "Tambahkan bukti untuk kebutuhan yang belum direkomendasikan",
-        why: "Dua slot rekomendasi tanpa nama yang dapat dinilai belum merekomendasikan Kopi Taman Senja.",
+        action: "Perjelas kebutuhan pelanggan yang dilayani",
+        why: "Pertanyaan tanpa nama pada jalur rekomendasi tidak selalu menghasilkan rekomendasi untuk Kopi Taman Senja.",
         basis:
-          "Jawaban yang disimpan memuat penyebutan tanpa rekomendasi pada slot tersebut.",
+          "Jawaban yang disimpan menunjukkan dua penilaian rekomendasi tanpa nama.",
         owner: "marketing",
         done_when:
-          "Sumber resmi menjelaskan kecocokan penawaran dengan kebutuhan yang diuji.",
-        evidence_prompt_ids: [3, 5].map(promptIdOf),
+          "Sumber resmi menjelaskan kebutuhan pelanggan dan kecocokan penawaran.",
+        evidence_prompt_ids: [1, 2, 3].map(promptIdOf),
         caveat: "Perubahan halaman tidak menjamin jawaban berubah.",
       },
     ],

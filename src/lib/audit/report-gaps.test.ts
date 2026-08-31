@@ -17,7 +17,10 @@ import {
 } from "./fixtures/report-golden";
 import { validateReportLanguage } from "./report-language";
 import { reportContentSchema, reportSynthesisSchema } from "./types";
-import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
+import {
+  measurementSlotForPromptId,
+  measurementSlotsForCompatibilityAssessmentClass,
+} from "./measurement-matrix";
 
 describe("privacy-safe report golden fixture", () => {
   it("assembles code-owned evidence fields from a compact synthesis", () => {
@@ -272,13 +275,18 @@ describe("structured result dimensions", () => {
       expectedDenominatorLabels.recognition,
     );
     expect(report.facts.discovery.total).toBe(
-      AUDIT_MEASUREMENT_MATRIX.filter(
-        (slot) =>
-          !slot.legacyBranded &&
-          slot.reportAssessmentClass === "recommendation",
+      measurementSlotsForCompatibilityAssessmentClass("recommendation").filter(
+        (slot) => !slot.legacyBranded,
       ).length,
     );
-    expect(report.facts.discovery.failed).toBe(1);
+    expect(report.facts.discovery.failed).toBe(
+      goldenObservations.filter(
+        (observation) =>
+          observation.run_status === "failed" &&
+          measurementSlotForPromptId(observation.prompt_id)
+            ?.compatibilityReportAssessmentClass === "recommendation",
+      ).length,
+    );
     expect(report.facts.coverage).toMatchObject({
       completed: 9,
       total: 10,

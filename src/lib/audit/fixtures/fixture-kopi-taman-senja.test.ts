@@ -306,7 +306,7 @@ describe("AC-11 appearance counts", () => {
     ) =>
       records.filter(
         ({ observation, slot }) =>
-          slot.reportAssessmentClass === assessmentClass &&
+          slot.compatibilityReportAssessmentClass === assessmentClass &&
           observation.dimensions.appearance === "mentioned",
       );
     const recommendationAssessed = recordsFor("recommendation").filter(
@@ -320,7 +320,7 @@ describe("AC-11 appearance counts", () => {
         ({ observation }) =>
           observation.dimensions.recommendation === "recommended",
       ),
-    ).toHaveLength(0);
+    ).toHaveLength(1);
 
     const comparisonAssessed = recordsFor("comparison").filter(
       ({ observation }) =>
@@ -328,7 +328,7 @@ describe("AC-11 appearance counts", () => {
         observation.dimensions.comparison === "competitor_preferred" ||
         observation.dimensions.comparison === "compared_no_preference",
     );
-    expect(comparisonAssessed).toHaveLength(1);
+    expect(comparisonAssessed).toHaveLength(2);
     expect(
       comparisonAssessed.filter(
         ({ observation }) =>
@@ -342,7 +342,57 @@ describe("AC-11 appearance counts", () => {
         observation.dimensions.information === "incomplete" ||
         observation.dimensions.information === "conflicting",
     );
-    expect(informationAssessed).toHaveLength(0);
+    expect(informationAssessed).toHaveLength(4);
+  });
+
+  it("keeps current slot text and evidence on compatibility paths", () => {
+    const byOrder = new Map(
+      kopiTamanSenjaEvidence.observations.map((observation) => [
+        observation.order,
+        observation,
+      ]),
+    );
+    const slotFor = (order: number) => {
+      const slot = measurementSlotForOrder(order);
+      if (!slot) throw new Error(`Missing matrix slot ${order}`);
+      return slot;
+    };
+
+    const comparisonSlot = slotFor(6);
+    expect(comparisonSlot).toMatchObject({
+      category: "open_comparison",
+      reportAssessmentClass: "comparison",
+      compatibilityReportAssessmentClass: "comparison",
+    });
+    expect(byOrder.get(6)?.question).toContain("vs Kopi Ruang Pagi");
+    expect(byOrder.get(6)?.dimensions.comparison).toBe("client_preferred");
+
+    const hoursSlot = slotFor(8);
+    expect(hoursSlot).toMatchObject({
+      category: "explicit_recommendation",
+      reportAssessmentClass: "recommendation",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(byOrder.get(8)?.question).toContain("Buka jam berapa");
+    expect(byOrder.get(8)?.dimensions.information).toBe("conflicting");
+
+    const contactSlot = slotFor(9);
+    expect(contactSlot).toMatchObject({
+      category: "direct_comparison",
+      reportAssessmentClass: "comparison",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(byOrder.get(9)?.question).toContain("kontak");
+    expect(byOrder.get(9)?.dimensions.information).toBe("confirmed");
+
+    const facilitySlot = slotFor(10);
+    expect(facilitySlot).toMatchObject({
+      category: "fit_misfit",
+      reportAssessmentClass: "recommendation",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(byOrder.get(10)?.question).toContain("parkiran");
+    expect(byOrder.get(10)?.dimensions.information).toBe("incomplete");
   });
 });
 

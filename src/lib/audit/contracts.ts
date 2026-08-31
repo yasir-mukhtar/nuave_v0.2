@@ -12,7 +12,7 @@ import { summarizeAuditTelemetry } from "./telemetry";
 import {
   AUDIT_MEASUREMENT_MATRIX,
   measurementSlotForPromptId,
-  measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "./measurement-matrix";
 
 export {
@@ -26,6 +26,7 @@ export {
   measurementSlotForOrder,
   measurementSlotForPromptId,
   measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "./measurement-matrix";
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
@@ -190,10 +191,19 @@ export function promptQuestionSpecs(brief: BusinessBrief) {
       canonical_category: slot.category,
       audited_brand_identity: slot.auditedBrandIdentity,
       comparison_target_identity: slot.comparisonTargetIdentity,
-      measurement_purpose: slot.measurementPurpose,
-      customer_facing_label: slot.customerFacingLabel,
-      report_assessment_class: slot.reportAssessmentClass,
-      generator_slot_description: slot.generatorSlotDescription,
+      canonical_measurement_purpose: slot.measurementPurpose,
+      canonical_customer_facing_label: slot.customerFacingLabel,
+      canonical_report_assessment_class: slot.reportAssessmentClass,
+      canonical_generator_slot_description: slot.generatorSlotDescription,
+      measurement_purpose: slot.compatibilityMeasurementPurpose,
+      customer_facing_label: slot.compatibilityCustomerFacingLabel,
+      report_assessment_class: slot.compatibilityReportAssessmentClass,
+      generator_slot_description: slot.compatibilityMeasurementPurpose,
+      compatibility_customer_facing_label:
+        slot.compatibilityCustomerFacingLabel,
+      compatibility_measurement_purpose: slot.compatibilityMeasurementPurpose,
+      compatibility_report_assessment_class:
+        slot.compatibilityReportAssessmentClass,
     };
   });
 }
@@ -504,20 +514,21 @@ export function normalizeReportEvidence(
       appearance,
       recommendation:
         run === "failed" ||
-        measurementSlot?.reportAssessmentClass !== "recommendation" ||
+        measurementSlot?.compatibilityReportAssessmentClass !==
+          "recommendation" ||
         appearance !== "mentioned"
           ? "not_assessed"
           : detail.recommendation,
       comparison:
         run === "failed"
           ? "not_assessed"
-          : measurementSlot?.reportAssessmentClass !== "comparison" ||
-              appearance !== "mentioned"
+          : measurementSlot?.compatibilityReportAssessmentClass !==
+                "comparison" || appearance !== "mentioned"
             ? "not_observed"
             : detail.comparison,
       information:
         run === "failed" ||
-        measurementSlot?.reportAssessmentClass !== "information" ||
+        measurementSlot?.compatibilityReportAssessmentClass !== "information" ||
         appearance !== "mentioned"
           ? "not_assessed"
           : detail.information,
@@ -810,11 +821,37 @@ export function validateReportContent(
         `${detail.prompt_id} report run status does not match the retained observation.`,
       );
     }
-    // The matrix owns the interpretation path. A completed answer may still
-    // be not_assessed when it does not support that slot's path; aggregation
-    // below counts only the dimension declared by this matrix row. The local
-    // binding above deliberately prevents a legacy category fallback.
-    void measurementSlot.reportAssessmentClass;
+    // The matrix owns the active pre-A3 interpretation path. Canonical R-01
+    // meaning remains available for A3, but cannot decide this report until
+    // the locked question text changes.
+    const compatibilityClass =
+      measurementSlot.compatibilityReportAssessmentClass;
+    if (observation.run_status === "completed") {
+      if (
+        compatibilityClass !== "recommendation" &&
+        detail.recommendation !== "not_assessed"
+      ) {
+        errors.push(
+          `${detail.prompt_id} carries recommendation semantics outside its pre-A3 compatibility path.`,
+        );
+      }
+      if (
+        compatibilityClass !== "comparison" &&
+        detail.comparison !== "not_observed"
+      ) {
+        errors.push(
+          `${detail.prompt_id} carries comparison semantics outside its pre-A3 compatibility path.`,
+        );
+      }
+      if (
+        compatibilityClass !== "information" &&
+        detail.information !== "not_assessed"
+      ) {
+        errors.push(
+          `${detail.prompt_id} carries information semantics outside its pre-A3 compatibility path.`,
+        );
+      }
+    }
     const visibleBrandAppeared = containsIdentity(
       observation.raw_answer,
       brandSignals,
@@ -919,7 +956,10 @@ export function validateReportContent(
         detail.information === "incomplete" ||
         detail.information === "conflicting" ||
         detail.comparison === "competitor_preferred" ||
-        (!observation.branded && detail.recommendation === "not_recommended")
+        (!observation.branded &&
+          measurementSlotForPromptId(promptId)
+            ?.compatibilityReportAssessmentClass === "recommendation" &&
+          detail.recommendation === "not_recommended")
       );
     });
     if (!hasObservedGap) {
@@ -958,9 +998,13 @@ export function validateReportContent(
       }
     });
   });
-  const informationResults = content.details.map(
-    (detail) => detail.information,
-  );
+  const informationResults = content.details
+    .filter(
+      (detail) =>
+        measurementSlotForPromptId(detail.prompt_id)
+          ?.compatibilityReportAssessmentClass === "information",
+    )
+    .map((detail) => detail.information);
   if (
     content.accuracy_status === "no_clear_issues" &&
     informationResults.some((status) =>
@@ -1048,13 +1092,19 @@ export function buildAuditReport(
   );
   const detailFor = (id: string) => details.get(id);
   const recommendationSlotIds = new Set(
-    measurementSlotsForAssessmentClass("recommendation").map((slot) => slot.id),
+    measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
+      (slot) => slot.id,
+    ),
   );
   const comparisonSlotIds = new Set(
-    measurementSlotsForAssessmentClass("comparison").map((slot) => slot.id),
+    measurementSlotsForCompatibilityAssessmentClass("comparison").map(
+      (slot) => slot.id,
+    ),
   );
   const informationSlotIds = new Set(
-    measurementSlotsForAssessmentClass("information").map((slot) => slot.id),
+    measurementSlotsForCompatibilityAssessmentClass("information").map(
+      (slot) => slot.id,
+    ),
   );
 
   const records = observations.map((observation) => {

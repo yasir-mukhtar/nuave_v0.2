@@ -11,7 +11,7 @@ import {
   COMPATIBILITY_COMPOSITION_COUNTS,
   measurementSlotForOrder,
   measurementSlotForPromptId,
-  measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "../audit/measurement-matrix";
 import {
   FIXTURE_BUSINESS_NAME,
@@ -214,7 +214,7 @@ describe("fixture journey adapter — assessed-denominator measures", () => {
       assessmentClass: "recommendation" | "comparison" | "information",
     ) => {
       const slotIds = new Set(
-        measurementSlotsForAssessmentClass(assessmentClass).map(
+        measurementSlotsForCompatibilityAssessmentClass(assessmentClass).map(
           (slot) => slot.id,
         ),
       );
@@ -341,10 +341,10 @@ describe("fixture journey adapter — derived report content (additive export)",
     });
   });
 
-  it("projects only the matrix-declared assessment dimension from frozen evidence", () => {
-    // The projection keeps only the dimension declared by the canonical
-    // assessment class; all other dimensions use their neutral value. Report
-    // denominators use the same class declaration.
+  it("projects only the pre-A3 compatibility assessment dimension from frozen evidence", () => {
+    // The projection keeps only the dimension declared by the pre-A3
+    // compatibility class; canonical R-01 fields remain independently tested
+    // in the matrix suite.
     content.details.forEach((detail) => {
       const slot = measurementSlotForPromptId(detail.prompt_id);
       if (!slot)
@@ -355,19 +355,19 @@ describe("fixture journey adapter — derived report content (additive export)",
       if (!frozen)
         throw new Error(`Missing frozen observation for ${detail.prompt_id}`);
       expect(detail.information).toBe(
-        slot.reportAssessmentClass === "information" &&
+        slot.compatibilityReportAssessmentClass === "information" &&
           frozen.dimensions.appearance === "mentioned"
           ? frozen.dimensions.information
           : "not_assessed",
       );
       expect(detail.comparison).toBe(
-        slot.reportAssessmentClass === "comparison" &&
+        slot.compatibilityReportAssessmentClass === "comparison" &&
           frozen.dimensions.appearance === "mentioned"
           ? frozen.dimensions.comparison
           : "not_observed",
       );
       expect(detail.recommendation).toBe(
-        slot.reportAssessmentClass === "recommendation" &&
+        slot.compatibilityReportAssessmentClass === "recommendation" &&
           frozen.dimensions.appearance === "mentioned"
           ? frozen.dimensions.recommendation
           : "not_assessed",
@@ -385,10 +385,16 @@ describe("fixture journey adapter — derived report content (additive export)",
       "Tidak muncul dalam jawaban ini",
     );
     expect(fixtureObservationResultLabel(4)).toBe(
-      "Disebut, tanpa penilaian informasi",
+      "Disebut dan direkomendasikan",
     );
     expect(fixtureObservationResultLabel(8)).toBe(
-      "Disebut, tanpa penilaian rekomendasi",
+      "Disebut, informasi bertentangan",
+    );
+    expect(fixtureObservationResultLabel(9)).toBe(
+      "Disebut, informasi terkonfirmasi",
+    );
+    expect(fixtureObservationResultLabel(10)).toBe(
+      "Disebut, informasi belum lengkap",
     );
     expect(fixtureObservationCompositionLabel(1)).toBe(
       "Tanpa menyebut bisnis Anda",

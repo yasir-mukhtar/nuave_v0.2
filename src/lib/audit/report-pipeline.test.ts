@@ -454,7 +454,7 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     );
     expect(
       measurementSlotForPromptId(defective.details[2].prompt_id)
-        ?.reportAssessmentClass,
+        ?.compatibilityReportAssessmentClass,
     ).toBe("recommendation" satisfies ReportAssessmentClass);
     expect(report.details[2].recommendation).toBe("not_assessed");
   });
@@ -479,19 +479,19 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
       if (!slot)
         throw new Error(`Missing canonical slot for ${detail.prompt_id}`);
       if (
-        slot.reportAssessmentClass !== "recommendation" ||
+        slot.compatibilityReportAssessmentClass !== "recommendation" ||
         detail.appearance !== "mentioned"
       ) {
         expect(detail.recommendation).toBe("not_assessed");
       }
       if (
-        slot.reportAssessmentClass !== "comparison" ||
+        slot.compatibilityReportAssessmentClass !== "comparison" ||
         detail.appearance !== "mentioned"
       ) {
         expect(detail.comparison).toBe("not_observed");
       }
       if (
-        slot.reportAssessmentClass !== "information" ||
+        slot.compatibilityReportAssessmentClass !== "information" ||
         detail.appearance !== "mentioned"
       ) {
         expect(detail.information).toBe("not_assessed");
@@ -527,12 +527,17 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     expect(report.facts.recognition.label).toContain("Dikenali di");
   });
 
-  it("accepts not_assessed on a completed validation observation's recommendation (the permissive branch)", async () => {
+  it("keeps a current validation fact on the compatibility information path", async () => {
+    const slot = measurementSlotForPromptId(goldenPrompts[6].prompt_id);
+    expect(slot?.category).toBe("brand_fit");
+    expect(slot?.reportAssessmentClass).toBe("recommendation");
+    expect(slot?.compatibilityReportAssessmentClass).toBe("information");
     expect(goldenPrompts[6].category).toBe("validation");
     const content = protectedReportContent();
     content.details[6] = {
       ...content.details[6],
-      recommendation: "not_assessed",
+      recommendation: "recommended",
+      information: "confirmed",
     };
     const generate = vi.fn(async () =>
       result(content, "response-validation-not-assessed"),
@@ -541,24 +546,28 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     const report = await createValidatedAuditReport(input, generate);
 
     expect(report.details[6].recommendation).toBe("not_assessed");
+    expect(report.details[6].information).toBe("confirmed");
   });
 
-  it("uses the matrix-owned information class instead of the legacy category", async () => {
-    const slot = measurementSlotForPromptId(goldenPrompts[3].prompt_id);
-    expect(slot?.category).toBe("offering_use_case");
-    expect(slot?.reportAssessmentClass).toBe("information");
-    expect(goldenPrompts[3].category).toBe(slot?.legacyCategory);
+  it("preserves a current address-hours conflict instead of future recommendation semantics", async () => {
+    const slot = measurementSlotForPromptId(goldenPrompts[7].prompt_id);
+    expect(slot?.category).toBe("explicit_recommendation");
+    expect(slot?.reportAssessmentClass).toBe("recommendation");
+    expect(slot?.compatibilityReportAssessmentClass).toBe("information");
+    expect(goldenPrompts[7].category).toBe(slot?.legacyCategory);
     const content = protectedReportContent();
-    content.details[3] = {
-      ...content.details[3],
-      recommendation: "not_assessed",
+    content.details[7] = {
+      ...content.details[7],
+      recommendation: "recommended",
+      information: "conflicting",
     };
     const generate = vi.fn(async () =>
       result(content, "response-judgment-not-assessed"),
     ) as unknown as ReportGenerator;
 
     const report = await createValidatedAuditReport(input, generate);
-    expect(report.details[3].recommendation).toBe("not_assessed");
-    expect(report.measures.information.assessed).toBe(0);
+    expect(report.details[7].recommendation).toBe("not_assessed");
+    expect(report.details[7].information).toBe("conflicting");
+    expect(report.measures.information.conflicting).toBeGreaterThan(0);
   });
 });

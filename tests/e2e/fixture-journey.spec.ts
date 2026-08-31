@@ -7,7 +7,6 @@ import {
   kopiTamanSenjaQuestions,
 } from "../../src/lib/audit/fixtures/fixture-kopi-taman-senja";
 import { COMPATIBILITY_COMPOSITION_COUNTS } from "../../src/lib/audit/measurement-matrix";
-import { INDONESIAN_REPORT_LABELS } from "../../src/lib/audit/report-labels";
 import { kopiTamanSenjaMeasures } from "../../src/lib/fixture-journey/adapter";
 import {
   FIXTURE_SESSION_KEY,
@@ -556,7 +555,10 @@ test.describe("complete path, processing, and report (AC-03, AC-10, AC-11)", () 
       ),
     ).toBeVisible();
     await expect(
-      page.getByText(INDONESIAN_REPORT_LABELS.not_tested, { exact: true }),
+      page.getByText(
+        `${kopiTamanSenjaMeasures.information.confirmed} terkonfirmasi, ${kopiTamanSenjaMeasures.information.incomplete} belum lengkap, ${kopiTamanSenjaMeasures.information.conflicting} bertentangan dari ${kopiTamanSenjaMeasures.information.assessed} pertanyaan yang dinilai`,
+        { exact: true },
+      ),
     ).toBeVisible();
     // One to five findings and one to five actions.
     await expect(page.locator("ol[class*='findings'] > li")).toHaveCount(4);

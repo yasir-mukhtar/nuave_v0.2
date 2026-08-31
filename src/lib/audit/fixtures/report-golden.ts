@@ -2,6 +2,7 @@ import {
   AUDIT_MEASUREMENT_MATRIX,
   measurementSlotForOrder,
   measurementSlotForPromptId,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "../measurement-matrix";
 import type {
   AuditObservation,
@@ -108,8 +109,8 @@ export const goldenPrompts: AuditPrompt[] = AUDIT_MEASUREMENT_MATRIX.map(
     role: slot.legacyRole,
     branded: slot.legacyBranded,
     question: questionForOrder(slot.order),
-    rationale: slot.measurementPurpose,
-    inputs_used: [...slot.allowedContextFields],
+    rationale: slot.compatibilityMeasurementPurpose,
+    inputs_used: [...slot.legacyAllowedContextFields],
     review_status: "needs_human_review",
   }),
 );
@@ -191,8 +192,8 @@ export const goldenObservations: AuditObservation[] = goldenPrompts.map(
 
 export function goldenReportContent(): ReportContent {
   return {
-    conclusion: `Northstar appeared in ${goldenDiscoveryAppeared} of ${compatibilityUnbrandedSlots.length} unnamed recommendation-path answers. One direct comparison preferred it for a specific need.`,
-    accuracy_status: "no_clear_issues",
+    conclusion: `Northstar appeared in ${goldenDiscoveryAppeared} of ${compatibilityUnbrandedSlots.length} unbranded recommendation-path answers. One direct comparison preferred it for a specific need. ${goldenInformationConflicting} factual check found conflicting information.`,
+    accuracy_status: "needs_correction",
     observed_competitors: [
       {
         name: "Meridian Partners",
@@ -202,47 +203,47 @@ export function goldenReportContent(): ReportContent {
     ],
     key_findings: [
       {
-        title: "Unnamed recommendation-path coverage was limited",
-        explanation:
-          "Northstar appeared in one of three unnamed recommendation-path attempts. One attempt failed.",
+        title: "Unbranded recommendation coverage was limited",
+        explanation: `Northstar appeared in ${goldenDiscoveryAppeared} of ${compatibilityUnbrandedSlots.length} unbranded recommendation-path attempts.`,
         evidence_prompt_ids: [
+          goldenPromptForOrder(1).prompt_id,
+          goldenPromptForOrder(2).prompt_id,
           goldenPromptForOrder(3).prompt_id,
           goldenPromptForOrder(4).prompt_id,
-          goldenPromptForOrder(5).prompt_id,
         ],
       },
       {
-        title: "One direct comparison preferred Northstar",
+        title: "One comparison preferred Northstar",
         explanation:
           "One answer directly compared Northstar Advisory with Meridian Partners and preferred Northstar for a specific need.",
         evidence_prompt_ids: [goldenPromptForOrder(6).prompt_id],
+      },
+      {
+        title: "One public detail conflicts",
+        explanation:
+          "The registration date differed between the sources used for one factual answer.",
+        evidence_prompt_ids: [goldenPromptForOrder(9).prompt_id],
       },
     ],
     priorities: [
       {
         order: 1,
         timing: "do_first",
-        action: "Clarify the needs Northstar serves",
-        why: "Unnamed recommendation-path answers did not consistently include Northstar.",
-        basis:
-          "The tested answers show an observed gap in unnamed recommendation-path coverage.",
+        action: "Clarify the registration date",
+        why: "One factual answer found conflicting public dates.",
+        basis: "The registration check found inconsistent dates.",
         owner: "business_owner",
-        done_when:
-          "An official page explains the customer needs Northstar serves.",
-        evidence_prompt_ids: [
-          goldenPromptForOrder(1).prompt_id,
-          goldenPromptForOrder(3).prompt_id,
-          goldenPromptForOrder(5).prompt_id,
-        ],
-        caveat:
-          "Clearer public information does not guarantee a recommendation.",
+        done_when: "The same date appears on every official page.",
+        evidence_prompt_ids: [goldenPromptForOrder(9).prompt_id],
+        caveat: "This may not change future answers.",
       },
       {
         order: 2,
         timing: "do_next",
         action: "Explain the readiness review clearly",
-        why: "Two completed unnamed recommendation-path answers did not name Northstar.",
-        basis: "The first two searches did not name a provider.",
+        why: "Two unbranded recommendation-path answers did not name Northstar.",
+        basis:
+          "The first two recommendation-path answers did not name a provider.",
         owner: "marketing",
         done_when: "One official page explains the service and ideal client.",
         evidence_prompt_ids: [
@@ -254,8 +255,8 @@ export function goldenReportContent(): ReportContent {
       {
         order: 3,
         timing: "do_next",
-        action: "Repeat the failed shortlist test",
-        why: "One unnamed recommendation-path test could not be completed.",
+        action: "Repeat the failed comparison test",
+        why: "One comparison could not be completed.",
         basis: "The provider returned no usable answer.",
         owner: "marketing",
         done_when: "The same question completes and its answer is reviewed.",
@@ -297,7 +298,12 @@ const expectedAssessmentByPromptId: Record<
   >
 > = {
   [goldenPromptForOrder(3).prompt_id]: { recommendation: "not_recommended" },
+  [goldenPromptForOrder(4).prompt_id]: { recommendation: "recommended" },
   [goldenPromptForOrder(6).prompt_id]: { comparison: "client_preferred" },
+  [goldenPromptForOrder(7).prompt_id]: { information: "confirmed" },
+  [goldenPromptForOrder(8).prompt_id]: { information: "confirmed" },
+  [goldenPromptForOrder(9).prompt_id]: { information: "conflicting" },
+  [goldenPromptForOrder(10).prompt_id]: { information: "confirmed" },
 };
 
 function expectedDimensionsForPrompt(
@@ -327,19 +333,19 @@ function expectedDimensionsForPrompt(
   return {
     appearance,
     recommendation:
-      slot.reportAssessmentClass === "recommendation"
+      slot.compatibilityReportAssessmentClass === "recommendation"
         ? appearance === "mentioned"
           ? (override.recommendation ?? "not_assessed")
           : "not_assessed"
         : "not_assessed",
     comparison:
-      slot.reportAssessmentClass === "comparison"
+      slot.compatibilityReportAssessmentClass === "comparison"
         ? appearance === "mentioned"
           ? (override.comparison ?? "not_observed")
           : "not_observed"
         : "not_observed",
     information:
-      slot.reportAssessmentClass === "information"
+      slot.compatibilityReportAssessmentClass === "information"
         ? appearance === "mentioned"
           ? (override.information ?? "not_assessed")
           : "not_assessed"
@@ -358,10 +364,12 @@ export const expectedDimensionsByPrompt: Record<
   }),
 ) as Record<string, ExpectedResultDimensions>;
 
-const compatibilityUnbrandedSlots = AUDIT_MEASUREMENT_MATRIX.filter(
-  (slot) =>
-    !slot.legacyBranded && slot.reportAssessmentClass === "recommendation",
-);
+const compatibilityUnbrandedSlots =
+  measurementSlotsForCompatibilityAssessmentClass("recommendation").filter(
+    (slot) => !slot.legacyBranded,
+  );
+const compatibilityInformationSlots =
+  measurementSlotsForCompatibilityAssessmentClass("information");
 const compatibilityNamedSlots = AUDIT_MEASUREMENT_MATRIX.filter(
   (slot) => slot.legacyBranded,
 );
@@ -388,8 +396,14 @@ const goldenNamedRecognized = compatibilityNamedSlots.filter(
       ?.appearance === "mentioned",
 ).length;
 
+const goldenInformationConflicting = compatibilityInformationSlots.filter(
+  (slot) =>
+    expectedDimensionsByPrompt[goldenPromptForOrder(slot.order).prompt_id]
+      ?.information === "conflicting",
+).length;
+
 export const expectedDenominatorLabels = {
-  discovery: `Recommended in ${goldenDiscoveryRecommended} of ${compatibilityUnbrandedSlots.length} questions without the business name; ${goldenDiscoveryFailed} question could not be tested.`,
+  discovery: `Recommended in ${goldenDiscoveryRecommended} of ${compatibilityUnbrandedSlots.length} questions without the business name${goldenDiscoveryFailed ? `; ${goldenDiscoveryFailed} question could not be tested` : ""}.`,
   recognition: `Recognized in ${goldenNamedRecognized} of ${compatibilityNamedSlots.length} questions that named the business.`,
 } as const;
 

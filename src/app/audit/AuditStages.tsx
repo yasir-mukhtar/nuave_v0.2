@@ -714,8 +714,8 @@ export function QuestionsStep({
             <StageSection
               key={slot.id}
               id={sectionId}
-              title={slot.customerFacingLabel}
-              description={slot.measurementPurpose}
+              title={slot.compatibilityCustomerFacingLabel}
+              description={slot.compatibilityMeasurementPurpose}
               className={styles.promptSection}
             >
               <FieldGroup
@@ -740,7 +740,7 @@ export function QuestionsStep({
                     onChange={(event) => onEdit(index, event.target.value)}
                   />
                   <FieldDescription id={rationaleId}>
-                    {slot.generatorSlotDescription}
+                    {slot.compatibilityMeasurementPurpose}
                   </FieldDescription>
                 </Field>
               </FieldGroup>

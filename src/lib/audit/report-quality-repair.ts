@@ -76,8 +76,8 @@ function repairedAccuracyStatus(content: ReportContent) {
   const information = content.details
     .filter(
       (detail) =>
-        measurementSlotForPromptId(detail.prompt_id)?.reportAssessmentClass ===
-        "information",
+        measurementSlotForPromptId(detail.prompt_id)
+          ?.compatibilityReportAssessmentClass === "information",
     )
     .map((detail) => detail.information);
   if (information.includes("conflicting")) return "needs_correction" as const;
@@ -169,8 +169,8 @@ export function sanitizeRecoverableReportQuality(
   const information = details
     .filter(
       (detail) =>
-        measurementSlotForPromptId(detail.prompt_id)?.reportAssessmentClass ===
-        "information",
+        measurementSlotForPromptId(detail.prompt_id)
+          ?.compatibilityReportAssessmentClass === "information",
     )
     .map((detail) => detail.information);
   const accuracyIsContradictory =

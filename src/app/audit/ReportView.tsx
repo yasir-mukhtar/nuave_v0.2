@@ -32,7 +32,8 @@ import styles from "./audit.module.css";
 
 function measurementLabel(promptId: string) {
   return (
-    measurementSlotForPromptId(promptId)?.customerFacingLabel ?? "Pertanyaan"
+    measurementSlotForPromptId(promptId)?.compatibilityCustomerFacingLabel ??
+    "Pertanyaan"
   );
 }
 
@@ -41,7 +42,7 @@ function resultLabel(detail: ReportDetail) {
   if (detail.appearance === "absent") return "Tidak disebut";
   const assessmentClass = measurementSlotForPromptId(
     detail.prompt_id,
-  )?.reportAssessmentClass;
+  )?.compatibilityReportAssessmentClass;
   switch (assessmentClass) {
     case "comparison":
       if (detail.comparison === "client_preferred")
@@ -61,8 +62,6 @@ function resultLabel(detail: ReportDetail) {
       if (detail.recommendation === "not_recommended")
         return "Disebut, tidak direkomendasikan";
       return "Disebut, tanpa penilaian rekomendasi";
-    case "none":
-      return "Disebut";
     default:
       return "Hasil belum memiliki jalur penilaian";
   }

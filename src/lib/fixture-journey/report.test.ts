@@ -7,7 +7,7 @@ import {
   COMPATIBILITY_COMPOSITION_COUNTS,
   measurementSlotForOrder,
   measurementSlotForPromptId,
-  measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "../audit/measurement-matrix";
 import {
   kopiTamanSenjaBrief,
@@ -96,17 +96,17 @@ describe("constructFixtureReport", () => {
       // other dimensions remain not_assessed/not_observed projections.
       expect(detail.appearance).toBe(frozen.dimensions.appearance);
       expect(detail.information).toBe(
-        slot.reportAssessmentClass === "information"
+        slot.compatibilityReportAssessmentClass === "information"
           ? frozen.dimensions.information
           : "not_assessed",
       );
       expect(detail.comparison).toBe(
-        slot.reportAssessmentClass === "comparison"
+        slot.compatibilityReportAssessmentClass === "comparison"
           ? frozen.dimensions.comparison
           : "not_observed",
       );
       expect(detail.recommendation).toBe(
-        slot.reportAssessmentClass === "recommendation" &&
+        slot.compatibilityReportAssessmentClass === "recommendation" &&
           frozen.dimensions.appearance === "mentioned"
           ? frozen.dimensions.recommendation
           : "not_assessed",
@@ -135,7 +135,7 @@ describe("constructFixtureReport", () => {
 
   it("derives the model-level counts from the projected observations", () => {
     const recommendationSlotIds = new Set(
-      measurementSlotsForAssessmentClass("recommendation").map(
+      measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
         (slot) => slot.id,
       ),
     );

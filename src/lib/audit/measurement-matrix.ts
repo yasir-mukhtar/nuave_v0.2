@@ -53,6 +53,14 @@ export type PromptMeasurementSlot = {
   customerFacingLabel: string;
   reportAssessmentClass: ReportAssessmentClass;
   generatorSlotDescription: string;
+  /**
+   * Compatibility projection for the still-running pre-A3 5/5 questions.
+   * These fields describe the question that is actually executed today;
+   * canonical R-01 fields above remain the A3 target semantics.
+   */
+  compatibilityCustomerFacingLabel: string;
+  compatibilityMeasurementPurpose: string;
+  compatibilityReportAssessmentClass: ReportAssessmentClass;
   allowedContextFields: readonly (keyof BusinessBrief)[];
   /**
    * Compatibility metadata for the still-running pre-A3 5/5 path. It is a
@@ -74,10 +82,11 @@ export type PromptMeasurementSlot = {
  *
  * The first-class fields describe the approved V1 model: six unnamed slots,
  * four named slots, and one direct comparison slot that requires both parties
- * plus an explicit comparison relation. The `legacy*` fields are a bounded
- * compatibility projection for the current 5/5 implementation while A2/A3
- * migrate its consumers and flip the composition. They are kept in this same
- * object so no policy is duplicated in a parallel positional table.
+ * plus an explicit comparison relation. The `compatibility*` and `legacy*`
+ * fields are bounded compatibility projections for the current 5/5
+ * implementation while A2/A3 migrate its consumers and flip the composition.
+ * They are kept in this same object so no policy is duplicated in a parallel
+ * positional table.
  */
 export const AUDIT_MEASUREMENT_MATRIX = [
   {
@@ -91,6 +100,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "recommendation",
     generatorSlotDescription:
       "Ask which options exist in the category and context without naming the audited business.",
+    compatibilityCustomerFacingLabel: "Kebutuhan pelanggan",
+    compatibilityMeasurementPurpose:
+      "Which customer needs or category options the business could appear for before its name is mentioned",
+    compatibilityReportAssessmentClass: "recommendation",
     allowedContextFields: [
       "category",
       "market_context",
@@ -120,6 +133,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "none",
     generatorSlotDescription:
       "Ask about a real customer situation or occasion without naming the audited business.",
+    compatibilityCustomerFacingLabel: "Kebutuhan pelanggan",
+    compatibilityMeasurementPurpose:
+      "Which customer situations or needs prompt someone to look for category options before the business name is mentioned",
+    compatibilityReportAssessmentClass: "recommendation",
     allowedContextFields: [
       "category",
       "target_customer",
@@ -149,6 +166,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "recommendation",
     generatorSlotDescription:
       "Ask which category options fit a specific verified customer need without naming the audited business.",
+    compatibilityCustomerFacingLabel: "Pilihan layanan",
+    compatibilityMeasurementPurpose:
+      "Which category options fit a specific customer need before the business name is mentioned",
+    compatibilityReportAssessmentClass: "recommendation",
     allowedContextFields: ["category", "market_context", "target_customer"],
     legacyCategory: "solution_discovery",
     legacyBranded: false,
@@ -172,6 +193,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "information",
     generatorSlotDescription:
       "Ask where a customer can find one concrete offering or use case without naming the audited business.",
+    compatibilityCustomerFacingLabel: "Pilihan layanan",
+    compatibilityMeasurementPurpose:
+      "Where a customer can find a verified offering or use case before the business name is mentioned",
+    compatibilityReportAssessmentClass: "recommendation",
     allowedContextFields: [
       "category",
       "market_context",
@@ -201,6 +226,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "recommendation",
     generatorSlotDescription:
       "Ask which unnamed options belong on a realistic customer shortlist.",
+    compatibilityCustomerFacingLabel: "Perbandingan",
+    compatibilityMeasurementPurpose:
+      "How relevant category options differ for the customer's criteria before the business name is mentioned",
+    compatibilityReportAssessmentClass: "comparison",
     allowedContextFields: [
       "category",
       "market_context",
@@ -228,6 +257,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "comparison",
     generatorSlotDescription:
       "Ask the model to compare realistic unnamed options without naming either business.",
+    compatibilityCustomerFacingLabel: "Perbandingan",
+    compatibilityMeasurementPurpose:
+      "How the audited business compares with one verified competitor for the customer's criteria",
+    compatibilityReportAssessmentClass: "comparison",
     allowedContextFields: [
       "category",
       "market_context",
@@ -258,6 +291,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "recommendation",
     generatorSlotDescription:
       "Ask whether the audited business fits a stated need, offering, or use case.",
+    compatibilityCustomerFacingLabel: "Fakta bisnis",
+    compatibilityMeasurementPurpose:
+      "Whether the business provides a verified offering or fits the stated use case",
+    compatibilityReportAssessmentClass: "information",
     allowedContextFields: [
       "brand_name",
       "entity_scope",
@@ -289,6 +326,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "recommendation",
     generatorSlotDescription:
       "Ask directly whether the model recommends the audited business for the customer's need.",
+    compatibilityCustomerFacingLabel: "Fakta bisnis",
+    compatibilityMeasurementPurpose:
+      "Whether the business identity, scope, location, opening hours, or other public facts are consistent",
+    compatibilityReportAssessmentClass: "information",
     allowedContextFields: [
       "brand_name",
       "entity_scope",
@@ -331,6 +372,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
       "verified_decision_criteria",
     ],
     comparisonRelationMarkers: COMPARISON_RELATION_MARKERS,
+    compatibilityCustomerFacingLabel: "Langkah berikutnya",
+    compatibilityMeasurementPurpose:
+      "How a customer can take the next practical step or contact the business",
+    compatibilityReportAssessmentClass: "information",
     legacyCategory: "action",
     legacyBranded: true,
     legacyAuditedBrandIdentity: "required",
@@ -353,6 +398,10 @@ export const AUDIT_MEASUREMENT_MATRIX = [
     reportAssessmentClass: "recommendation",
     generatorSlotDescription:
       "Ask who the audited business suits, who it may not suit, and what trade-offs matter.",
+    compatibilityCustomerFacingLabel: "Langkah berikutnya",
+    compatibilityMeasurementPurpose:
+      "Whether another practical offering, facility, or selection detail is available",
+    compatibilityReportAssessmentClass: "information",
     allowedContextFields: [
       "brand_name",
       "entity_scope",
@@ -414,6 +463,15 @@ export function measurementSlotsForAssessmentClass(
 ) {
   return AUDIT_MEASUREMENT_MATRIX.filter(
     (slot) => slot.reportAssessmentClass === assessmentClass,
+  );
+}
+
+/** Slots grouped by their matrix-owned pre-A3 compatibility interpretation. */
+export function measurementSlotsForCompatibilityAssessmentClass(
+  assessmentClass: ReportAssessmentClass,
+) {
+  return AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.compatibilityReportAssessmentClass === assessmentClass,
   );
 }
 

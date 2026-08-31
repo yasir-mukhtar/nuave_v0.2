@@ -3,6 +3,7 @@ import {
   AUDIT_MEASUREMENT_MATRIX,
   COMPATIBILITY_COMPOSITION_COUNTS,
   PROMPT_MATRIX,
+  measurementSlotsForCompatibilityAssessmentClass,
   assemblePromptPack,
   buildAuditReport,
   makeEvidenceExport,
@@ -116,18 +117,27 @@ function reportContent(): ReportContent {
         caveat: "This does not guarantee a recommendation.",
       },
     ],
-    details: prompts.map((prompt, index) => ({
-      prompt_id: prompt.prompt_id,
-      run: "completed",
-      appearance: index === 0 ? "mentioned" : "absent",
-      recommendation: "not_recommended",
-      comparison: "not_observed",
-      information: "not_assessed",
-      finding: "Finding based on the response.",
-      answer_excerpt: observations[index].raw_answer,
-      evidence_note: "The answer supports this result.",
-      source_urls: ["https://example.com"],
-    })),
+    details: prompts.map((prompt, index) => {
+      const slot = AUDIT_MEASUREMENT_MATRIX.find(
+        (candidate) => candidate.id === prompt.prompt_id,
+      );
+      if (!slot) throw new Error(`Missing matrix slot for ${prompt.prompt_id}`);
+      return {
+        prompt_id: prompt.prompt_id,
+        run: "completed",
+        appearance: index === 0 ? "mentioned" : "absent",
+        recommendation:
+          slot.compatibilityReportAssessmentClass === "recommendation"
+            ? "not_recommended"
+            : "not_assessed",
+        comparison: "not_observed",
+        information: "not_assessed",
+        finding: "Finding based on the response.",
+        answer_excerpt: observations[index].raw_answer,
+        evidence_note: "The answer supports this result.",
+        source_urls: ["https://example.com"],
+      };
+    }),
   };
 }
 
@@ -320,11 +330,9 @@ describe("report evidence guardrails", () => {
     expect(report.system_label).toContain("gpt-5.6-sol");
     expect(report.facts.discovery.recommendation_label).toBe(
       `Recommended in 0 of ${
-        AUDIT_MEASUREMENT_MATRIX.filter(
-          (slot) =>
-            !slot.legacyBranded &&
-            slot.reportAssessmentClass === "recommendation",
-        ).length
+        measurementSlotsForCompatibilityAssessmentClass(
+          "recommendation",
+        ).filter((slot) => !slot.legacyBranded).length
       } questions without the business name.`,
     );
     expect(report.facts.recognition.label).toBe(
@@ -381,17 +389,17 @@ describe("report evidence guardrails", () => {
         throw new Error(`Missing canonical slot for ${detail.prompt_id}`);
       expect(detail.appearance).toBe("mentioned");
       expect(detail.recommendation).toBe(
-        slot.reportAssessmentClass === "recommendation"
+        slot.compatibilityReportAssessmentClass === "recommendation"
           ? "recommended"
           : "not_assessed",
       );
       expect(detail.comparison).toBe(
-        slot.reportAssessmentClass === "comparison"
+        slot.compatibilityReportAssessmentClass === "comparison"
           ? "client_preferred"
           : "not_observed",
       );
       expect(detail.information).toBe(
-        slot.reportAssessmentClass === "information"
+        slot.compatibilityReportAssessmentClass === "information"
           ? "confirmed"
           : "not_assessed",
       );
@@ -414,7 +422,7 @@ describe("report evidence guardrails", () => {
   const mixedObservations: AuditObservation[] = observations.map(
     (observation, index) => ({
       ...observation,
-      raw_answer: [0, 1, 2, 5].includes(index)
+      raw_answer: [0, 1, 2, 4, 5].includes(index)
         ? "Nuave Test is one option worth considering."
         : "The response does not name the audit brand.",
     }),
@@ -450,12 +458,11 @@ describe("report evidence guardrails", () => {
         information: "confirmed",
       },
       {
-        appearance: "absent",
-        recommendation: "recommended",
+        appearance: "mentioned",
+        recommendation: "not_assessed",
         comparison: "not_observed",
         information: "not_assessed",
       },
-      // Matrix slots 6-10 are the branded compatibility projection.
       {
         appearance: "mentioned",
         recommendation: "not_assessed",
@@ -503,8 +510,8 @@ describe("report evidence guardrails", () => {
 
     // The absent-but-recommended detail must not count as a recommendation.
     expect(report.counts.unbranded_recommended).toBe(1);
-    expect(report.counts.unbranded_mentioned).toBe(1);
-    expect(report.measures.unbranded.appeared).toBe(3);
+    expect(report.counts.unbranded_mentioned).toBe(2);
+    expect(report.measures.unbranded.appeared).toBe(4);
     expect(report.measures.unbranded.appeared).not.toBe(
       report.counts.unbranded_mentioned,
     );
@@ -512,7 +519,7 @@ describe("report evidence guardrails", () => {
       report.counts.unbranded_recommended + report.counts.unbranded_mentioned,
     );
     expect(report.measures.branded.appeared).toBe(1);
-    expect(report.measures.overall.appeared).toBe(4);
+    expect(report.measures.overall.appeared).toBe(5);
     expect(report.measures.overall.total).toBe(AUDIT_MEASUREMENT_MATRIX.length);
   });
 
@@ -606,9 +613,18 @@ describe("report evidence guardrails", () => {
     expect(validateReportContent(content, observations, brief)).toEqual([]);
   });
 
+  it("rejects a future canonical assessment on a compatibility information slot", () => {
+    const content = reportContent();
+    content.details[7].recommendation = "recommended";
+
+    expect(
+      validateReportContent(content, observations, brief).join(" "),
+    ).toContain("carries recommendation semantics outside its pre-A3");
+  });
+
   it("rejects a global accuracy conclusion that contradicts detail facts", () => {
     const content = reportContent();
-    content.details[0].information = "conflicting";
+    content.details[8].information = "conflicting";
 
     expect(
       validateReportContent(content, observations, brief).join(" "),

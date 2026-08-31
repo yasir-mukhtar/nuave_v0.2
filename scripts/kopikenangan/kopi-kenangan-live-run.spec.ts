@@ -175,14 +175,14 @@ function buildLockedPrompts(
     const slot = measurementSlotForOrder(item.order);
     if (!slot) throw new Error(`Question ${item.order} has no matrix slot.`);
     const branded = item.final_classification === "menyebut_bisnis_anda";
-    const inputs = [...slot.allowedContextFields];
+    const inputs = [...slot.legacyAllowedContextFields];
     return {
       prompt_id: `NVA-ID-${String(item.order).padStart(2, "0")}`,
       category: slot.legacyCategory,
-      role: slot.generatorSlotDescription,
+      role: slot.legacyRole,
       branded,
       question: item.text,
-      rationale: `${slot.measurementPurpose}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.compatibilityMeasurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };

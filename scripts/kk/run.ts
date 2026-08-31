@@ -187,14 +187,14 @@ function buildLockedPrompts(
       text,
       minimizeIndonesianBrief(brief),
     ) === "menyebut_bisnis_anda";
-    const inputs = [...slot.allowedContextFields];
+    const inputs = [...slot.legacyAllowedContextFields];
     return {
       prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
       category: slot.legacyCategory,
-      role: slot.generatorSlotDescription,
+      role: slot.legacyRole,
       branded,
       question: text,
-      rationale: `${slot.measurementPurpose}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.compatibilityMeasurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };

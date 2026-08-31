@@ -6,6 +6,7 @@ import {
   PROMPT_MATRIX,
   measurementSlotForPromptId,
   measurementSlotsForAssessmentClass,
+  measurementSlotsForCompatibilityAssessmentClass,
 } from "./measurement-matrix";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import {
@@ -151,6 +152,9 @@ describe("canonical measurement matrix", () => {
       expect(slot.customerFacingLabel).toBeTruthy();
       expect(slot.reportAssessmentClass).toBeTruthy();
       expect(slot.generatorSlotDescription).toBeTruthy();
+      expect(slot.compatibilityCustomerFacingLabel).toBeTruthy();
+      expect(slot.compatibilityMeasurementPurpose).toBeTruthy();
+      expect(slot.compatibilityReportAssessmentClass).toBeTruthy();
     });
   });
 
@@ -169,6 +173,74 @@ describe("canonical measurement matrix", () => {
     expect(
       AUDIT_MEASUREMENT_MATRIX.filter((slot) => slot.legacyBranded),
     ).toHaveLength(5);
+  });
+
+  it("derives the pre-A3 compatibility report paths without changing R-01 fields", () => {
+    expect(
+      measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
+        (slot) => slot.order,
+      ),
+    ).toEqual([1, 2, 3, 4]);
+    expect(
+      measurementSlotsForCompatibilityAssessmentClass("comparison").map(
+        (slot) => slot.order,
+      ),
+    ).toEqual([5, 6]);
+    expect(
+      measurementSlotsForCompatibilityAssessmentClass("information").map(
+        (slot) => slot.order,
+      ),
+    ).toEqual([7, 8, 9, 10]);
+
+    const slotFor = (order: number) => {
+      const slot = AUDIT_MEASUREMENT_MATRIX.find(
+        (candidate) => candidate.order === order,
+      );
+      if (!slot) throw new Error(`Missing matrix slot ${order}`);
+      return slot;
+    };
+    expect(slotFor(6)).toMatchObject({
+      category: "open_comparison",
+      auditedBrandIdentity: "forbidden",
+      comparisonTargetIdentity: "forbidden",
+      reportAssessmentClass: "comparison",
+      compatibilityCustomerFacingLabel: "Perbandingan",
+      compatibilityMeasurementPurpose:
+        "How the audited business compares with one verified competitor for the customer's criteria",
+      compatibilityReportAssessmentClass: "comparison",
+    });
+    expect(slotFor(6).compatibilityMeasurementPurpose).not.toContain("unnamed");
+    expect(slotFor(8)).toMatchObject({
+      category: "explicit_recommendation",
+      reportAssessmentClass: "recommendation",
+      compatibilityCustomerFacingLabel: "Fakta bisnis",
+      compatibilityMeasurementPurpose:
+        "Whether the business identity, scope, location, opening hours, or other public facts are consistent",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(slotFor(8).compatibilityMeasurementPurpose).not.toContain(
+      "recommends",
+    );
+    expect(slotFor(9)).toMatchObject({
+      category: "direct_comparison",
+      reportAssessmentClass: "comparison",
+      compatibilityCustomerFacingLabel: "Langkah berikutnya",
+      compatibilityMeasurementPurpose:
+        "How a customer can take the next practical step or contact the business",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(slotFor(9).compatibilityMeasurementPurpose).not.toContain(
+      "compares",
+    );
+    expect(slotFor(10)).toMatchObject({
+      category: "fit_misfit",
+      reportAssessmentClass: "recommendation",
+      compatibilityCustomerFacingLabel: "Langkah berikutnya",
+      compatibilityMeasurementPurpose:
+        "Whether another practical offering, facility, or selection detail is available",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(slotFor(10).compatibilityMeasurementPurpose).not.toContain("suits");
   });
 
   it("resolves every supported prompt identifier to one matrix-owned slot", () => {
