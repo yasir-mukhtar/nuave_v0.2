@@ -9,6 +9,17 @@ import type {
 } from "./types";
 import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
 import { summarizeAuditTelemetry } from "./telemetry";
+import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
+
+export {
+  AUDIT_MEASUREMENT_MATRIX,
+  COMPARISON_RELATION_MARKERS,
+  IDENTITY_POLICIES,
+  PROMPT_MATRIX,
+  REPORT_ASSESSMENT_CLASSES,
+  measurementSlotForId,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
 export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v4";
@@ -150,112 +161,6 @@ export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
     `We tested ${totalQuestions} questions one at a time through ${systemPart}${modelPart} with web search. ${unbrandedTotal} discovery questions did not name the business in the question. ${brandedTotal} direct checks named the business. ${coverageLabel} A mention is not a recommendation, and a failed test is not a negative result.`,
 };
 
-export const PROMPT_MATRIX = [
-  [
-    "NUAVE-BRAND-NEED-01",
-    "need_discovery",
-    false,
-    "Explore one verified need without naming a brand",
-  ],
-  [
-    "NUAVE-BRAND-NEED-02",
-    "need_discovery",
-    false,
-    "Explore a different verified need without naming a brand",
-  ],
-  [
-    "NUAVE-BRAND-SOLUTION-01",
-    "solution_discovery",
-    false,
-    "Find relevant category options in the market context",
-  ],
-  [
-    "NUAVE-BRAND-SOLUTION-02",
-    "solution_discovery",
-    false,
-    "Find options for one verified offering or use case",
-  ],
-  [
-    "NUAVE-BRAND-COMPARISON-01",
-    "comparison",
-    false,
-    "Compare unnamed category options using verified criteria",
-  ],
-  [
-    "NUAVE-BRAND-COMPARISON-02",
-    "comparison",
-    true,
-    "Compare the brand with one verified competitor",
-  ],
-  [
-    "NUAVE-BRAND-VALIDATION-01",
-    "validation",
-    true,
-    "Verify category fit, offering, or an important public fact",
-  ],
-  [
-    "NUAVE-BRAND-VALIDATION-02",
-    "validation",
-    true,
-    "Verify identity, scope, market, or information consistency",
-  ],
-  [
-    "NUAVE-BRAND-ACTION-01",
-    "action",
-    true,
-    "Ask about a practical next step or access path",
-  ],
-  [
-    "NUAVE-BRAND-ACTION-02",
-    "action",
-    true,
-    "Ask about another verified decision or conversion detail",
-  ],
-] as const;
-
-const PROMPT_INPUT_FIELD_MATRIX = [
-  ["category", "market_context", "target_customer", "verified_customer_needs"],
-  [
-    "category",
-    "target_customer",
-    "verified_customer_needs",
-    "verified_decision_criteria",
-  ],
-  ["category", "market_context", "target_customer"],
-  ["category", "market_context", "verified_offerings", "priority_offering"],
-  ["category", "market_context", "verified_decision_criteria"],
-  [
-    "brand_name",
-    "entity_scope",
-    "category",
-    "market_context",
-    "verified_competitor",
-    "verified_decision_criteria",
-  ],
-  [
-    "brand_name",
-    "entity_scope",
-    "category",
-    "verified_offerings",
-    "priority_offering",
-  ],
-  [
-    "brand_name",
-    "entity_scope",
-    "market_context",
-    "official_sources",
-    "known_accuracy_questions",
-    "regulated_category_notes",
-  ],
-  ["brand_name", "conversion_action", "official_sources"],
-  [
-    "brand_name",
-    "priority_offering",
-    "verified_decision_criteria",
-    "conversion_action",
-  ],
-] as const satisfies readonly (readonly (keyof BusinessBrief)[])[];
-
 function hasPromptContextValue(value: BusinessBrief[keyof BusinessBrief]) {
   if (typeof value === "string") return Boolean(value.trim());
   if (Array.isArray(value)) return value.length > 0;
@@ -263,13 +168,26 @@ function hasPromptContextValue(value: BusinessBrief[keyof BusinessBrief]) {
 }
 
 export function promptQuestionSpecs(brief: BusinessBrief) {
-  return PROMPT_MATRIX.map(([prompt_id, category, branded, role], index) => {
+  return AUDIT_MEASUREMENT_MATRIX.map((slot) => {
     const allowed_context = Object.fromEntries(
-      PROMPT_INPUT_FIELD_MATRIX[index]
+      slot.legacyAllowedContextFields
         .map((field) => [field, brief[field]] as const)
         .filter(([, value]) => hasPromptContextValue(value)),
     );
-    return { prompt_id, category, branded, role, allowed_context };
+    return {
+      prompt_id: slot.id,
+      category: slot.legacyCategory,
+      branded: slot.legacyBranded,
+      role: slot.legacyRole,
+      allowed_context,
+      canonical_category: slot.category,
+      audited_brand_identity: slot.auditedBrandIdentity,
+      comparison_target_identity: slot.comparisonTargetIdentity,
+      measurement_purpose: slot.measurementPurpose,
+      customer_facing_label: slot.customerFacingLabel,
+      report_assessment_class: slot.reportAssessmentClass,
+      generator_slot_description: slot.generatorSlotDescription,
+    };
   });
 }
 
@@ -318,6 +236,30 @@ export function assemblePromptPack(
     throw new Error(`Question generation failed review: ${errors.join(" ")}`);
   }
 
+  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => !slot.legacyBranded,
+  ).length;
+  const expectedBranded = AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.legacyBranded,
+  ).length;
+  const expectedCategoryCounts = new Map<string, number>();
+  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+    expectedCategoryCounts.set(
+      slot.legacyCategory,
+      (expectedCategoryCounts.get(slot.legacyCategory) ?? 0) + 1,
+    );
+  });
+  const actualCategoryCounts = new Map<string, number>();
+  prompts.forEach((prompt) => {
+    actualCategoryCounts.set(
+      prompt.category,
+      (actualCategoryCounts.get(prompt.category) ?? 0) + 1,
+    );
+  });
+  const categoryCountsMatch = [...expectedCategoryCounts].every(
+    ([category, count]) => actualCategoryCounts.get(category) === count,
+  );
+
   return {
     status: "draft_for_review",
     prompt_pack_version: PROMPT_CONTRACT_VERSION,
@@ -333,15 +275,18 @@ export function assemblePromptPack(
     },
     summary: {
       total_prompts: 10,
-      unbranded_prompts: 5,
-      branded_prompts: 5,
+      unbranded_prompts: expectedUnbranded,
+      branded_prompts: expectedBranded,
     },
     prompts,
     self_check: {
       ten_prompts: true,
-      two_per_category: true,
-      five_unbranded: true,
-      five_branded: true,
+      two_per_category: categoryCountsMatch,
+      five_unbranded:
+        prompts.filter((prompt) => !prompt.branded).length ===
+        expectedUnbranded,
+      five_branded:
+        prompts.filter((prompt) => prompt.branded).length === expectedBranded,
       no_brand_leakage: true,
       verified_inputs_only: true,
       verified_competitor_only: true,
@@ -695,17 +640,19 @@ export function validatePromptPack(
   if (prompts.length !== 10)
     errors.push("The audit must contain exactly 10 questions.");
 
-  PROMPT_MATRIX.forEach(([id, category, branded, role], index) => {
-    const prompt = prompts[index];
+  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+    const prompt = prompts[slot.order - 1];
     if (!prompt) return;
-    if (prompt.prompt_id !== id)
-      errors.push(`Question ${index + 1} has the wrong ID.`);
-    if (prompt.category !== category)
-      errors.push(`${id} has the wrong category.`);
-    if (prompt.branded !== branded)
-      errors.push(`${id} has the wrong branded status.`);
-    if (prompt.role !== role) errors.push(`${id} has the wrong role.`);
-    if (!prompt.question.trim()) errors.push(`${id} has an empty question.`);
+    if (prompt.prompt_id !== slot.id)
+      errors.push(`Question ${slot.order} has the wrong ID.`);
+    if (prompt.category !== slot.legacyCategory)
+      errors.push(`${slot.id} has the wrong category.`);
+    if (prompt.branded !== slot.legacyBranded)
+      errors.push(`${slot.id} has the wrong branded status.`);
+    if (prompt.role !== slot.legacyRole)
+      errors.push(`${slot.id} has the wrong role.`);
+    if (!prompt.question.trim())
+      errors.push(`${slot.id} has an empty question.`);
   });
 
   const brandSignals = [brief.brand_name, ...brief.brand_name_variants]
@@ -723,8 +670,13 @@ export function validatePromptPack(
     });
 
   const competitorSignal = normalize(brief.verified_competitor.name);
+  const legacyComparisonPromptIds = new Set<string>(
+    AUDIT_MEASUREMENT_MATRIX.filter(
+      (slot) => slot.legacyComparisonTargetIdentity === "required",
+    ).map((slot) => slot.id),
+  );
   prompts
-    .filter((prompt) => prompt.prompt_id !== "NUAVE-BRAND-COMPARISON-02")
+    .filter((prompt) => !legacyComparisonPromptIds.has(prompt.prompt_id))
     .forEach((prompt) => {
       if (
         competitorSignal.length >= 3 &&
@@ -758,23 +710,29 @@ export function validatePromptPack(
     }
   });
 
+  const expectedCategoryCounts = new Map<string, number>();
+  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+    expectedCategoryCounts.set(
+      slot.legacyCategory,
+      (expectedCategoryCounts.get(slot.legacyCategory) ?? 0) + 1,
+    );
+  });
   const counts = new Map<string, number>();
   prompts.forEach((prompt) =>
     counts.set(prompt.category, (counts.get(prompt.category) ?? 0) + 1),
   );
-  for (const category of [
-    "need_discovery",
-    "solution_discovery",
-    "comparison",
-    "validation",
-    "action",
-  ]) {
-    if (counts.get(category) !== 2)
-      errors.push(`The ${category} category must contain two questions.`);
-  }
-  if (prompts.filter((prompt) => prompt.branded).length !== 5) {
+  expectedCategoryCounts.forEach((expected, category) => {
+    if (counts.get(category) !== expected)
+      errors.push(
+        `The ${category} category must contain ${expected} questions.`,
+      );
+  });
+  const expectedBranded = AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.legacyBranded,
+  ).length;
+  if (prompts.filter((prompt) => prompt.branded).length !== expectedBranded) {
     errors.push(
-      "The audit must contain five branded and five unbranded questions.",
+      `The audit must contain ${expectedBranded} branded and ${AUDIT_MEASUREMENT_MATRIX.length - expectedBranded} unbranded questions.`,
     );
   }
   return errors;

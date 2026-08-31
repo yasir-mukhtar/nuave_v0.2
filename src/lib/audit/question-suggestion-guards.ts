@@ -1,8 +1,13 @@
 import {
   classifyIndonesianQuestion,
   containsIndonesianComparisonIdentity,
+  isCategoryComparisonFallback,
   type MinimizedIndonesianBrief,
 } from "./questions-id";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 
 function normalizedWords(value: string) {
   return value
@@ -89,7 +94,12 @@ export function generatedSuggestionGuardIssues(
       classifyIndonesianQuestion(question, brief) ===
       "tanpa_menyebut_bisnis_anda",
   ).length;
-  if (unbranded !== 5) issues.push("default_composition_not_five_five");
+  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => !slot.legacyBranded,
+  ).length;
+  if (unbranded !== expectedUnbranded) {
+    issues.push("default_composition_not_five_five");
+  }
 
   if (
     questions.filter(clearlyEnglishQuestion).length >= CLEARLY_ENGLISH_MAJORITY
@@ -98,8 +108,15 @@ export function generatedSuggestionGuardIssues(
   }
 
   const competitor = brief.comparison_business?.name ?? "";
+  const comparisonFallback = isCategoryComparisonFallback(brief);
   questions.forEach((question, index) => {
-    if (index === 5) return;
+    const slot = measurementSlotForOrder(index + 1);
+    if (
+      slot?.legacyComparisonTargetIdentity === "required" ||
+      comparisonFallback
+    ) {
+      return;
+    }
     if (containsIndonesianComparisonIdentity(question, competitor)) {
       issues.push(`compact_competitor_leakage:${index + 1}`);
     }

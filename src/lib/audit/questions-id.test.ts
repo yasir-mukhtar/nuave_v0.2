@@ -931,15 +931,20 @@ describe("approved-pack persistence and verbatim replay", () => {
 // ---------------------------------------------------------------------------
 
 describe("additive isolation", () => {
-  it("exposes no symbols that collide with the English question contract", async () => {
-    const english = await import("./questions");
+  it("uses the canonical matrix instead of a second question generator", async () => {
     const contracts = await import("./contracts");
     const indonesian = await import("./questions-id");
-    const englishExports = Object.keys(english);
-    const indonesianExports = Object.keys(indonesian);
-    indonesianExports.forEach((name) => {
-      expect(englishExports).not.toContain(name);
-    });
+    expect(indonesian.INDONESIAN_SLOT_MATRIX.map((slot) => slot.order)).toEqual(
+      contracts.AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.order),
+    );
+    expect(contracts.PROMPT_MATRIX).toEqual(
+      contracts.AUDIT_MEASUREMENT_MATRIX.map((slot) => [
+        slot.id,
+        slot.legacyCategory,
+        slot.legacyBranded,
+        slot.legacyRole,
+      ]),
+    );
     expect(contracts.PROMPT_CONTRACT_VERSION).toBe("deterministic-v4-en");
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BusinessBrief } from "./types";
 import { buildLiveIndonesianPromptPack } from "./questions-id-live";
 import { promptPackSchema } from "./types";
+import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 
 const BRAND = "Klinik Gigi Sehat";
 
@@ -174,6 +175,32 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
       tanpa_menyebut_bisnis_anda: 5,
       menyebut_bisnis_anda: 5,
     });
+    expect(
+      result.pack.prompts.map((prompt) => [prompt.role, prompt.rationale]),
+    ).toEqual(
+      AUDIT_MEASUREMENT_MATRIX.map((slot) => [
+        slot.legacyRole,
+        slot.legacyRole,
+      ]),
+    );
+    const openComparisonSlot = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.category === "open_comparison",
+    );
+    if (!openComparisonSlot) {
+      throw new Error("The open-comparison slot is missing.");
+    }
+    const liveOpenComparison =
+      result.pack.prompts[openComparisonSlot.order - 1];
+    expect(liveOpenComparison).toMatchObject({
+      role: openComparisonSlot.legacyRole,
+      rationale: openComparisonSlot.legacyRole,
+    });
+    expect(liveOpenComparison.role).not.toBe(
+      openComparisonSlot.customerFacingLabel,
+    );
+    expect(liveOpenComparison.rationale).not.toBe(
+      openComparisonSlot.generatorSlotDescription,
+    );
     expect(promptPackSchema.safeParse(result.pack).success).toBe(true);
 
     expect(result.telemetry).toHaveLength(1);
