@@ -89,9 +89,9 @@ import {
 } from "../../src/lib/audit/questions-id-provider";
 import { summarizeAuditTelemetry } from "../../src/lib/audit/telemetry";
 import {
-  PROMPT_MATRIX,
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
 } from "../../src/lib/audit/contracts";
+import { measurementSlotForOrder } from "../../src/lib/audit/measurement-matrix";
 
 // ---------------------------------------------------------------------------
 // 3. Run configuration (public facts only)
@@ -171,19 +171,18 @@ function buildLockedPrompts(
   pack: IndonesianQuestionPackSuggestion,
   brief: BusinessBrief,
 ): AuditPrompt[] {
-  return pack.questions.map((item, index) => {
-    const spec = PROMPT_MATRIX[index];
+  return pack.questions.map((item) => {
+    const slot = measurementSlotForOrder(item.order);
+    if (!slot) throw new Error(`Question ${item.order} has no matrix slot.`);
     const branded = item.final_classification === "menyebut_bisnis_anda";
-    const inputs = branded
-      ? ["brand_name", "entity_scope", "category", "market_context"]
-      : ["category", "market_context", "target_customer"];
+    const inputs = [...slot.allowedContextFields];
     return {
-      prompt_id: spec[0],
-      category: spec[1],
-      role: spec[3],
+      prompt_id: `NVA-ID-${String(item.order).padStart(2, "0")}`,
+      category: slot.legacyCategory,
+      role: slot.generatorSlotDescription,
       branded,
       question: item.text,
-      rationale: `${spec[3]}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.measurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };

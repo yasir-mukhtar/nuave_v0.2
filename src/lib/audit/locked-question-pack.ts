@@ -4,8 +4,8 @@ import {
   minimizeIndonesianBrief,
 } from "./questions-id";
 import {
-  measurementSlotForId,
   measurementSlotForOrder,
+  measurementSlotForPromptId,
 } from "./measurement-matrix";
 import { selectVariancePrompts } from "./variance";
 
@@ -20,12 +20,7 @@ function normalizedPromptId(value: string) {
 
 function lockedPromptSlotIndex(value: string): number | null {
   const promptId = normalizedPromptId(value);
-  const indonesianMatch = /^NVA-ID-(\d{2})$/.exec(promptId);
-  if (indonesianMatch) {
-    const slot = measurementSlotForOrder(Number(indonesianMatch[1]));
-    return slot ? slot.order - 1 : null;
-  }
-  const slot = measurementSlotForId(promptId);
+  const slot = measurementSlotForPromptId(promptId);
   return slot ? slot.order - 1 : null;
 }
 

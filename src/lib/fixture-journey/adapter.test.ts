@@ -8,6 +8,12 @@ import {
   kopiTamanSenjaQuestions,
 } from "../audit/fixtures/fixture-kopi-taman-senja";
 import {
+  COMPATIBILITY_COMPOSITION_COUNTS,
+  measurementSlotForOrder,
+  measurementSlotForPromptId,
+  measurementSlotsForAssessmentClass,
+} from "../audit/measurement-matrix";
+import {
   FIXTURE_BUSINESS_NAME,
   FIXTURE_ORDER_REFERENCE,
   detailCopyFor,
@@ -84,12 +90,16 @@ describe("fixture journey adapter — question pack", () => {
 
   it("splits exactly five without-name and five with-name questions", () => {
     expect(questionPackIsBalanced()).toBe(true);
-    expect(fixtureJourneyContext.questions.unbranded).toHaveLength(5);
-    expect(fixtureJourneyContext.questions.branded).toHaveLength(5);
+    expect(fixtureJourneyContext.questions.unbranded).toHaveLength(
+      COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+    );
+    expect(fixtureJourneyContext.questions.branded).toHaveLength(
+      COMPATIBILITY_COMPOSITION_COUNTS.branded,
+    );
     expect(fixtureJourneyContext.questions.counts).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+      menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.branded,
     });
   });
 
@@ -116,17 +126,34 @@ describe("fixture journey adapter — report projections", () => {
     expect(kopiTamanSenjaPrompts.map((p) => p.question)).toEqual(
       kopiTamanSenjaQuestions.questions.map((q) => q.text),
     );
-    kopiTamanSenjaQuestions.questions.forEach((question, index) => {
-      const prompt = kopiTamanSenjaPrompts[index];
+    kopiTamanSenjaQuestions.questions.forEach((question) => {
+      const slot = measurementSlotForOrder(question.order);
+      if (!slot)
+        throw new Error(`Missing canonical slot for ${question.order}`);
+      const prompt = kopiTamanSenjaPrompts.find(
+        (item) =>
+          item.prompt_id ===
+          `NVA-FIKTIF-001-Q${String(question.order).padStart(2, "0")}`,
+      );
+      if (!prompt)
+        throw new Error(`Missing projected prompt for ${question.order}`);
       expect(prompt.branded).toBe(
         question.final_classification === "menyebut_bisnis_anda",
       );
-      expect(prompt.category).toBe(question.suggested_category);
-      const observation = kopiTamanSenjaObservations[index];
+      expect(prompt.category).toBe(slot.legacyCategory);
+      const observation = kopiTamanSenjaObservations.find(
+        (item) => item.prompt_id === prompt.prompt_id,
+      );
+      if (!observation)
+        throw new Error(`Missing observation for ${prompt.prompt_id}`);
       expect(observation.run_status).toBe("completed");
+      const frozen = kopiTamanSenjaEvidence.observations.find(
+        (item) => item.order === question.order,
+      );
+      if (!frozen)
+        throw new Error(`Missing frozen observation for ${question.order}`);
       expect(observation.raw_answer).toBe(
-        kopiTamanSenjaEvidence.observations[index].selected_observation
-          .raw_answer,
+        frozen.selected_observation.raw_answer,
       );
     });
   });
@@ -159,25 +186,77 @@ describe("fixture journey adapter — report projections", () => {
 
 describe("fixture journey adapter — assessed-denominator measures", () => {
   it("matches the frozen arithmetic exactly (8/10, 3/5, 5/5)", () => {
-    expect(kopiTamanSenjaMeasures.overall).toEqual({ appeared: 8, total: 10 });
-    expect(kopiTamanSenjaMeasures.unbranded).toEqual({ appeared: 3, total: 5 });
-    expect(kopiTamanSenjaMeasures.branded).toEqual({ appeared: 5, total: 5 });
+    expect(kopiTamanSenjaMeasures.overall).toEqual({
+      appeared: 8,
+      total: kopiTamanSenjaQuestions.questions.length,
+    });
+    expect(kopiTamanSenjaMeasures.unbranded).toEqual({
+      appeared: 3,
+      total: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+    });
+    expect(kopiTamanSenjaMeasures.branded).toEqual({
+      appeared: 5,
+      total: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+    });
   });
 
   it("uses eligible denominators for recommendation, comparison, information", () => {
+    const records = kopiTamanSenjaEvidence.observations.map((observation) => {
+      const slot = measurementSlotForOrder(observation.order);
+      if (!slot) {
+        throw new Error(
+          `Missing canonical slot for fixture order ${observation.order}`,
+        );
+      }
+      return { observation, slot };
+    });
+    const expectedFor = (
+      assessmentClass: "recommendation" | "comparison" | "information",
+    ) => {
+      const slotIds = new Set(
+        measurementSlotsForAssessmentClass(assessmentClass).map(
+          (slot) => slot.id,
+        ),
+      );
+      return records.filter(
+        ({ observation, slot }) =>
+          slotIds.has(slot.id) &&
+          observation.dimensions.appearance === "mentioned" &&
+          observation.dimensions[assessmentClass] !== "not_assessed" &&
+          observation.dimensions[assessmentClass] !== "not_observed",
+      );
+    };
+    const expectedRecommendation = expectedFor("recommendation");
+    const expectedComparison = expectedFor("comparison");
+    const expectedInformation = expectedFor("information");
+
     expect(kopiTamanSenjaMeasures.recommendation).toEqual({
-      recommended: 2,
-      assessed: 6,
+      recommended: expectedRecommendation.filter(
+        ({ observation }) =>
+          observation.dimensions.recommendation === "recommended",
+      ).length,
+      assessed: expectedRecommendation.length,
     });
     expect(kopiTamanSenjaMeasures.comparison).toEqual({
-      clientPreferred: 1,
-      assessed: 2,
+      clientPreferred: expectedComparison.filter(
+        ({ observation }) =>
+          observation.dimensions.comparison === "client_preferred",
+      ).length,
+      assessed: expectedComparison.length,
     });
     expect(kopiTamanSenjaMeasures.information).toEqual({
-      confirmed: 1,
-      incomplete: 2,
-      conflicting: 1,
-      assessed: 4,
+      confirmed: expectedInformation.filter(
+        ({ observation }) => observation.dimensions.information === "confirmed",
+      ).length,
+      incomplete: expectedInformation.filter(
+        ({ observation }) =>
+          observation.dimensions.information === "incomplete",
+      ).length,
+      conflicting: expectedInformation.filter(
+        ({ observation }) =>
+          observation.dimensions.information === "conflicting",
+      ).length,
+      assessed: expectedInformation.length,
     });
   });
 });
@@ -233,9 +312,20 @@ describe("fixture journey adapter — derived report content (additive export)",
 
   it("keeps every detail excerpt exact and source-attached", () => {
     expect(content.details).toHaveLength(10);
-    content.details.forEach((detail, index) => {
-      const observation = kopiTamanSenjaEvidence.observations[index];
-      expect(detail.prompt_id).toBe(kopiTamanSenjaPrompts[index].prompt_id);
+    content.details.forEach((detail) => {
+      const slot = measurementSlotForPromptId(detail.prompt_id);
+      if (!slot)
+        throw new Error(`Missing canonical slot for ${detail.prompt_id}`);
+      const observation = kopiTamanSenjaEvidence.observations.find(
+        (item) => item.order === slot.order,
+      );
+      if (!observation)
+        throw new Error(`Missing frozen observation for ${detail.prompt_id}`);
+      expect(detail.prompt_id).toBe(
+        kopiTamanSenjaPrompts.find(
+          (item) => item.prompt_id === detail.prompt_id,
+        )?.prompt_id,
+      );
       expect(detail.answer_excerpt).toBe(
         observation.selected_observation.answer_excerpt,
       );
@@ -251,17 +341,37 @@ describe("fixture journey adapter — derived report content (additive export)",
     });
   });
 
-  it("projects recommendation, information, and comparison verbatim from the frozen evidence", () => {
-    // The frozen evidence records recommendation not_assessed for the four
-    // factual checks (orders 7-10, validation and action categories); the
-    // projection keeps that value as-is, since validateReportContent only
-    // requires an assessed recommendation for judgment categories
-    // (need_discovery, solution_discovery, comparison).
-    content.details.forEach((detail, index) => {
-      const frozen = kopiTamanSenjaEvidence.observations[index];
-      expect(detail.information).toBe(frozen.dimensions.information);
-      expect(detail.comparison).toBe(frozen.dimensions.comparison);
-      expect(detail.recommendation).toBe(frozen.dimensions.recommendation);
+  it("projects only the matrix-declared assessment dimension from frozen evidence", () => {
+    // The projection keeps only the dimension declared by the canonical
+    // assessment class; all other dimensions use their neutral value. Report
+    // denominators use the same class declaration.
+    content.details.forEach((detail) => {
+      const slot = measurementSlotForPromptId(detail.prompt_id);
+      if (!slot)
+        throw new Error(`Missing canonical slot for ${detail.prompt_id}`);
+      const frozen = kopiTamanSenjaEvidence.observations.find(
+        (item) => item.order === slot.order,
+      );
+      if (!frozen)
+        throw new Error(`Missing frozen observation for ${detail.prompt_id}`);
+      expect(detail.information).toBe(
+        slot.reportAssessmentClass === "information" &&
+          frozen.dimensions.appearance === "mentioned"
+          ? frozen.dimensions.information
+          : "not_assessed",
+      );
+      expect(detail.comparison).toBe(
+        slot.reportAssessmentClass === "comparison" &&
+          frozen.dimensions.appearance === "mentioned"
+          ? frozen.dimensions.comparison
+          : "not_observed",
+      );
+      expect(detail.recommendation).toBe(
+        slot.reportAssessmentClass === "recommendation" &&
+          frozen.dimensions.appearance === "mentioned"
+          ? frozen.dimensions.recommendation
+          : "not_assessed",
+      );
     });
   });
 
@@ -275,10 +385,10 @@ describe("fixture journey adapter — derived report content (additive export)",
       "Tidak muncul dalam jawaban ini",
     );
     expect(fixtureObservationResultLabel(4)).toBe(
-      "Disebut dan direkomendasikan",
+      "Disebut, tanpa penilaian informasi",
     );
     expect(fixtureObservationResultLabel(8)).toBe(
-      "Disebut, informasi bertentangan",
+      "Disebut, tanpa penilaian rekomendasi",
     );
     expect(fixtureObservationCompositionLabel(1)).toBe(
       "Tanpa menyebut bisnis Anda",

@@ -18,6 +18,10 @@ import {
   assembleReportContent,
   normalizeReportEvidence,
 } from "./contracts";
+import {
+  reportAssessmentInstructions,
+  reportPromptMeasurements,
+} from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
 import { AuditCallExecutionError, failedCallTelemetry } from "./telemetry";
 
@@ -471,6 +475,7 @@ export async function generateReportContent(
     "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
     `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION}.`,
     ...reportWritingInstructions(),
+    ...reportAssessmentInstructions(),
     "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",
     "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
     "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
@@ -497,6 +502,7 @@ export async function generateReportContent(
   const userContent = JSON.stringify({
     verified_brief: { ...input.brief, agency_logo_data_url: "[not sent]" },
     prompts: input.prompts,
+    measurement_definitions: reportPromptMeasurements(input.prompts),
     observations: input.observations.map(({ telemetry, ...observation }) => {
       void telemetry;
       return observation;

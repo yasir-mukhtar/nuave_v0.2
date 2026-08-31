@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   AUDIT_MEASUREMENT_MATRIX,
+  COMPATIBILITY_COMPOSITION_COUNTS,
   COMPARISON_RELATION_MARKERS,
   PROMPT_MATRIX,
+  measurementSlotForPromptId,
+  measurementSlotsForAssessmentClass,
 } from "./measurement-matrix";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import {
@@ -166,6 +169,46 @@ describe("canonical measurement matrix", () => {
     expect(
       AUDIT_MEASUREMENT_MATRIX.filter((slot) => slot.legacyBranded),
     ).toHaveLength(5);
+  });
+
+  it("resolves every supported prompt identifier to one matrix-owned slot", () => {
+    AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+      expect(measurementSlotForPromptId(slot.id)).toBe(slot);
+      expect(
+        measurementSlotForPromptId(
+          `NVA-ID-${String(slot.order).padStart(2, "0")}`,
+        ),
+      ).toBe(slot);
+      expect(
+        measurementSlotForPromptId(
+          `NVA-FIKTIF-001-Q${String(slot.order).padStart(2, "0")}`,
+        ),
+      ).toBe(slot);
+    });
+    expect(
+      measurementSlotForPromptId("not-a-canonical-prompt"),
+    ).toBeUndefined();
+  });
+
+  it("gives every slot exactly one report assessment path while keeping 5/5 compatibility", () => {
+    expect(COMPATIBILITY_COMPOSITION_COUNTS).toEqual({
+      unbranded: 5,
+      branded: 5,
+    });
+    expect(
+      AUDIT_MEASUREMENT_MATRIX.every((slot) =>
+        measurementSlotsForAssessmentClass(slot.reportAssessmentClass).some(
+          (candidate) => candidate.id === slot.id,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      AUDIT_MEASUREMENT_MATRIX.flatMap((slot) =>
+        measurementSlotsForAssessmentClass(slot.reportAssessmentClass).filter(
+          (candidate) => candidate.id === slot.id,
+        ),
+      ),
+    ).toHaveLength(AUDIT_MEASUREMENT_MATRIX.length);
   });
 });
 

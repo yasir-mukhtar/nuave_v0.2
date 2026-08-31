@@ -387,6 +387,47 @@ export function measurementSlotForId(id: string) {
   return AUDIT_MEASUREMENT_MATRIX.find((slot) => slot.id === id);
 }
 
+/**
+ * Resolve the transport identifiers used by the current English, Indonesian,
+ * and fixture paths to their canonical measurement slot. The identifier format
+ * is an adapter detail; measurement meaning always comes from the resolved
+ * matrix row.
+ */
+export function measurementSlotForPromptId(promptId: string) {
+  const normalized = promptId.trim();
+  const direct = measurementSlotForId(normalized);
+  if (direct) return direct;
+
+  const transportMatch = /^(?:NVA-ID-(\d{2})|NVA-FIKTIF-\d+-Q(\d{2}))$/.exec(
+    normalized,
+  );
+  if (!transportMatch) return undefined;
+
+  return measurementSlotForOrder(
+    Number(transportMatch[1] ?? transportMatch[2]),
+  );
+}
+
+/** Slots grouped by their matrix-owned report interpretation path. */
+export function measurementSlotsForAssessmentClass(
+  assessmentClass: ReportAssessmentClass,
+) {
+  return AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.reportAssessmentClass === assessmentClass,
+  );
+}
+
+/**
+ * Temporary composition counts for the pre-A3 compatibility path. These are
+ * derived from the matrix's compatibility projection and intentionally remain
+ * five unnamed plus five named until A3 changes the supported pack.
+ */
+export const COMPATIBILITY_COMPOSITION_COUNTS = {
+  unbranded: AUDIT_MEASUREMENT_MATRIX.filter((slot) => !slot.legacyBranded)
+    .length,
+  branded: AUDIT_MEASUREMENT_MATRIX.filter((slot) => slot.legacyBranded).length,
+} as const;
+
 export type LegacyPromptMatrixRow = readonly [
   id: string,
   category: LegacyPromptCategory,

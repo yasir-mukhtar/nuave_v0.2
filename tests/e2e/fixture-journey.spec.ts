@@ -6,6 +6,9 @@ import {
   kopiTamanSenjaEvidence,
   kopiTamanSenjaQuestions,
 } from "../../src/lib/audit/fixtures/fixture-kopi-taman-senja";
+import { COMPATIBILITY_COMPOSITION_COUNTS } from "../../src/lib/audit/measurement-matrix";
+import { INDONESIAN_REPORT_LABELS } from "../../src/lib/audit/report-labels";
+import { kopiTamanSenjaMeasures } from "../../src/lib/fixture-journey/adapter";
 import {
   FIXTURE_SESSION_KEY,
   FIXTURE_STATE_VERSION,
@@ -93,7 +96,9 @@ test.describe("entry and landing (AC-01)", () => {
     ).toHaveCount(0);
     // The landing reuses the live /audit source hero while remaining inert
     // until the visitor explicitly submits a source.
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     await expect(
       hero.getByRole("heading", {
         name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
@@ -106,7 +111,9 @@ test.describe("entry and landing (AC-01)", () => {
       ),
     ).toBeVisible();
     await expect(hero.getByText(/Google Business Profile/i)).toHaveCount(0);
-    await expect(page.getByText("Ilustrasi", { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText("Ilustrasi", { exact: true }).first(),
+    ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
 });
@@ -130,7 +137,7 @@ test.describe("canonical sequence and gates (AC-03..AC-09)", () => {
     // Ten-question scope with the exact composition.
     await expect(
       page.getByText(
-        "Satu audit menguji 10 pertanyaan ala calon pelanggan: 5 Tanpa menyebut bisnis Anda dan 5 Menyebut bisnis Anda, sesuai contoh yang dibekukan.",
+        `Satu audit menguji 10 pertanyaan ala calon pelanggan: ${COMPATIBILITY_COMPOSITION_COUNTS.unbranded} Tanpa menyebut bisnis Anda dan ${COMPATIBILITY_COMPOSITION_COUNTS.branded} Menyebut bisnis Anda, sesuai contoh yang dibekukan.`,
       ),
     ).toBeVisible();
     // Rp99.000 total with no added tax or fee, and the 30-day quote note.
@@ -340,26 +347,26 @@ test.describe("canonical sequence and gates (AC-03..AC-09)", () => {
       .locator("p[class*='questionText']")
       .allTextContents();
     expect(texts.map((text) => text.trim())).toEqual(EXPECTED_QUESTION_TEXTS);
-    // Exact composition labels: five and five.
+    // Exact composition labels: the current matrix-derived compatibility split.
     await expect(
       page
         .locator("span[class*='questionChip']")
         .getByText("Tanpa menyebut bisnis Anda", { exact: true }),
-    ).toHaveCount(5);
+    ).toHaveCount(COMPATIBILITY_COMPOSITION_COUNTS.unbranded);
     await expect(
       page
         .locator("span[class*='questionChip']")
         .getByText("Menyebut bisnis Anda", { exact: true }),
-    ).toHaveCount(5);
+    ).toHaveCount(COMPATIBILITY_COMPOSITION_COUNTS.branded);
     await expect(
       page.getByRole("heading", {
-        name: "Tanpa menyebut bisnis Anda · 5",
+        name: `Tanpa menyebut bisnis Anda · ${COMPATIBILITY_COMPOSITION_COUNTS.unbranded}`,
         exact: true,
       }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", {
-        name: "Menyebut bisnis Anda · 5",
+        name: `Menyebut bisnis Anda · ${COMPATIBILITY_COMPOSITION_COUNTS.branded}`,
         exact: true,
       }),
     ).toBeVisible();
@@ -525,30 +532,31 @@ test.describe("complete path, processing, and report (AC-03, AC-10, AC-11)", () 
     await expect(page.getByText("8/10", { exact: true })).toBeVisible();
     const compositionCards = page.locator("div[class*='compositionCard']");
     await expect(compositionCards).toHaveCount(2);
-    await expect(compositionCards.first()).toContainText("3/5");
+    await expect(compositionCards.first()).toContainText(
+      `${kopiTamanSenjaMeasures.unbranded.appeared}/${kopiTamanSenjaMeasures.unbranded.total}`,
+    );
     await expect(compositionCards.first()).toContainText(
       "Tanpa menyebut bisnis Anda",
     );
-    await expect(compositionCards.nth(1)).toContainText("5/5");
+    await expect(compositionCards.nth(1)).toContainText(
+      `${kopiTamanSenjaMeasures.branded.appeared}/${kopiTamanSenjaMeasures.branded.total}`,
+    );
     await expect(compositionCards.nth(1)).toContainText("Menyebut bisnis Anda");
     // Recommendation / comparison / information measures with eligible denominators.
     await expect(
-      page.getByText("Direkomendasikan di 2 dari 6 pertanyaan yang dinilai", {
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Diunggulkan di 1 dari 2 pertanyaan yang dinilai", {
-        exact: true,
-      }),
+      page.getByText(
+        `Direkomendasikan di ${kopiTamanSenjaMeasures.recommendation.recommended} dari ${kopiTamanSenjaMeasures.recommendation.assessed} pertanyaan yang dinilai`,
+        { exact: true },
+      ),
     ).toBeVisible();
     await expect(
       page.getByText(
-        "1 terkonfirmasi, 2 belum lengkap, 1 bertentangan dari 4 pertanyaan yang dinilai",
-        {
-          exact: true,
-        },
+        `Diunggulkan di ${kopiTamanSenjaMeasures.comparison.clientPreferred} dari ${kopiTamanSenjaMeasures.comparison.assessed} pertanyaan yang dinilai`,
+        { exact: true },
       ),
+    ).toBeVisible();
+    await expect(
+      page.getByText(INDONESIAN_REPORT_LABELS.not_tested, { exact: true }),
     ).toBeVisible();
     // One to five findings and one to five actions.
     await expect(page.locator("ol[class*='findings'] > li")).toHaveCount(4);

@@ -4,6 +4,10 @@ import {
   goldenPrompts,
 } from "../../src/lib/audit/fixtures/report-golden";
 import {
+  COMPATIBILITY_COMPOSITION_COUNTS,
+  measurementSlotForPromptId,
+} from "../../src/lib/audit/measurement-matrix";
+import {
   buildDeterministicIndonesianPack,
   minimizeIndonesianBrief,
 } from "../../src/lib/audit/questions-id";
@@ -17,12 +21,21 @@ import { grantAccess } from "./helpers";
 const questions = buildDeterministicIndonesianPack(
   minimizeIndonesianBrief(goldenBrief),
 );
-const prompts = goldenPrompts.map((prompt, index) => ({
-  ...prompt,
-  question: questions[index],
-  rationale: "Offline Wave 1 lifecycle regression.",
-  inputs_used: ["category"],
-}));
+const questionsByOrder = new Map(
+  questions.map((question, index) => [index + 1, question]),
+);
+const prompts = goldenPrompts.map((prompt) => {
+  const slot = measurementSlotForPromptId(prompt.prompt_id);
+  if (!slot) throw new Error(`Missing canonical slot for ${prompt.prompt_id}`);
+  const question = questionsByOrder.get(slot.order);
+  if (!question) throw new Error(`Missing question for slot ${slot.order}`);
+  return {
+    ...prompt,
+    question,
+    rationale: "Offline Wave 1 lifecycle regression.",
+    inputs_used: ["category"],
+  };
+});
 const promptPack: PromptPack = {
   status: "draft_for_review",
   prompt_pack_version: "wave1-lifecycle-v1",
@@ -36,13 +49,17 @@ const promptPack: PromptPack = {
     market_context: goldenBrief.market_context,
     target_customer: goldenBrief.target_customer,
   },
-  summary: { total_prompts: 10, unbranded_prompts: 5, branded_prompts: 5 },
+  summary: {
+    total_prompts: 10,
+    unbranded_prompts: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+    branded_prompts: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+  },
   prompts,
   self_check: {
     ten_prompts: true,
     two_per_category: true,
-    five_unbranded: true,
-    five_branded: true,
+    five_unbranded: COMPATIBILITY_COMPOSITION_COUNTS.unbranded === 5,
+    five_branded: COMPATIBILITY_COMPOSITION_COUNTS.branded === 5,
     no_brand_leakage: true,
     verified_inputs_only: true,
     verified_competitor_only: true,
@@ -127,7 +144,9 @@ test("initial run POST rejection keeps the reviewed questions retryable", async 
   await expect
     .poll(() =>
       page.evaluate((key) => {
-        const state = JSON.parse(window.sessionStorage.getItem(key) || "{}") as {
+        const state = JSON.parse(
+          window.sessionStorage.getItem(key) || "{}",
+        ) as {
           executionStarted?: boolean;
           observations?: unknown[];
           promptPack?: unknown;

@@ -19,6 +19,10 @@ import {
 } from "./report-pipeline";
 import { liveGenerateReportContent } from "./provider";
 import type { ReportContent } from "./types";
+import {
+  measurementSlotForPromptId,
+  type ReportAssessmentClass,
+} from "./measurement-matrix";
 
 // The Phase-1 golden record: 9 completed + 1 failed, no attempt telemetry. It
 // remains a historical direct-OpenAI fixture and is intentionally NOT mutated
@@ -254,7 +258,7 @@ describe("validated report pipeline", () => {
     expect(report.details[0]).toMatchObject({
       run: "completed",
       appearance: "absent",
-      recommendation: "not_recommended",
+      recommendation: "not_assessed",
       comparison: "not_observed",
       information: "not_assessed",
       answer_excerpt: goldenObservations[0].raw_answer,
@@ -348,12 +352,7 @@ describe("validated report pipeline", () => {
       ),
     );
     expect(report.details.map((detail) => detail.recommendation)).toEqual(
-      // Question 5 is the golden failure, backfilled to completed with an
-      // answer that does not name the brand, so it normalizes from the
-      // content's not_assessed to not_recommended before and after the retry.
-      protectedReportContent().details.map((detail, index) =>
-        index === 4 ? "not_recommended" : detail.recommendation,
-      ),
+      protectedReportContent().details.map((detail) => detail.recommendation),
     );
   });
 });
@@ -439,7 +438,7 @@ describe("live provider credential guard on the direct-library path (R3-5)", () 
 describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 R-19/R-37)", () => {
   const allCompletedInput = input;
 
-  it("rejects a synthesis that marks a completed, mentioned observation not_assessed (the Sozo defect)", async () => {
+  it("accepts not_assessed when a completed recommendation-path answer has no endorsement", async () => {
     const defective = protectedReportContent();
     defective.details[2] = {
       ...defective.details[2],
@@ -449,11 +448,15 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
       result(defective, "response-defective"),
     ) as unknown as ReportGenerator;
 
-    await expect(
-      createValidatedAuditReport(allCompletedInput, generate),
-    ).rejects.toThrow(
-      /completed, so appearance and recommendation must be assessed/,
+    const report = await createValidatedAuditReport(
+      allCompletedInput,
+      generate,
     );
+    expect(
+      measurementSlotForPromptId(defective.details[2].prompt_id)
+        ?.reportAssessmentClass,
+    ).toBe("recommendation" satisfies ReportAssessmentClass);
+    expect(report.details[2].recommendation).toBe("not_assessed");
   });
 
   it("passes the automatic pipeline end-to-end with a correct synthesis for a 10/10 completed run", async () => {
@@ -471,9 +474,29 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     expect(report.details.every((detail) => detail.run === "completed")).toBe(
       true,
     );
-    expect(
-      report.details.some((detail) => detail.recommendation === "not_assessed"),
-    ).toBe(false);
+    report.details.forEach((detail) => {
+      const slot = measurementSlotForPromptId(detail.prompt_id);
+      if (!slot)
+        throw new Error(`Missing canonical slot for ${detail.prompt_id}`);
+      if (
+        slot.reportAssessmentClass !== "recommendation" ||
+        detail.appearance !== "mentioned"
+      ) {
+        expect(detail.recommendation).toBe("not_assessed");
+      }
+      if (
+        slot.reportAssessmentClass !== "comparison" ||
+        detail.appearance !== "mentioned"
+      ) {
+        expect(detail.comparison).toBe("not_observed");
+      }
+      if (
+        slot.reportAssessmentClass !== "information" ||
+        detail.appearance !== "mentioned"
+      ) {
+        expect(detail.information).toBe("not_assessed");
+      }
+    });
     expect(
       report.priorities.every(
         (priority) => priority.evidence_prompt_ids.length > 0,
@@ -520,8 +543,11 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
     expect(report.details[6].recommendation).toBe("not_assessed");
   });
 
-  it("still rejects not_assessed on a completed judgment-category observation's recommendation", async () => {
-    expect(goldenPrompts[3].category).toBe("solution_discovery");
+  it("uses the matrix-owned information class instead of the legacy category", async () => {
+    const slot = measurementSlotForPromptId(goldenPrompts[3].prompt_id);
+    expect(slot?.category).toBe("offering_use_case");
+    expect(slot?.reportAssessmentClass).toBe("information");
+    expect(goldenPrompts[3].category).toBe(slot?.legacyCategory);
     const content = protectedReportContent();
     content.details[3] = {
       ...content.details[3],
@@ -531,8 +557,8 @@ describe("report synthesis integrity (Sozo live-run defect regression, Spec 003 
       result(content, "response-judgment-not-assessed"),
     ) as unknown as ReportGenerator;
 
-    await expect(createValidatedAuditReport(input, generate)).rejects.toThrow(
-      /completed, so appearance and recommendation must be assessed/,
-    );
+    const report = await createValidatedAuditReport(input, generate);
+    expect(report.details[3].recommendation).toBe("not_assessed");
+    expect(report.measures.information.assessed).toBe(0);
   });
 });

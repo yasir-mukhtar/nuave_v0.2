@@ -3,6 +3,7 @@ import type { BusinessBrief } from "./types";
 import { buildLiveIndonesianPromptPack } from "./questions-id-live";
 import { promptPackSchema } from "./types";
 import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
+import { COMPATIBILITY_COMPOSITION_COUNTS } from "./measurement-matrix";
 
 const BRAND = "Klinik Gigi Sehat";
 
@@ -169,11 +170,13 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     expect(result.pack.language).toBe("id-ID");
     expect(result.pack.prompts).toHaveLength(10);
     expect(new Set(result.pack.prompts.map((p) => p.prompt_id)).size).toBe(10);
-    expect(result.pack.prompts.filter((p) => p.branded)).toHaveLength(5);
+    expect(result.pack.prompts.filter((p) => p.branded)).toHaveLength(
+      COMPATIBILITY_COMPOSITION_COUNTS.branded,
+    );
     expect(result.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+      menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.branded,
     });
     expect(
       result.pack.prompts.map((prompt) => [prompt.role, prompt.rationale]),
@@ -227,7 +230,9 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     expect(result.generation.source).toBe("fallback");
     expect(result.generation.warnings).toContain("fallback_used");
     expect(result.pack.prompts).toHaveLength(10);
-    expect(result.pack.prompts.filter((p) => p.branded)).toHaveLength(5);
+    expect(result.pack.prompts.filter((p) => p.branded)).toHaveLength(
+      COMPATIBILITY_COMPOSITION_COUNTS.branded,
+    );
     expect(promptPackSchema.safeParse(result.pack).success).toBe(true);
     expect(result.telemetry[0].status).toBe("failed");
     expect(result.telemetry[0].accounted_cost_usd).toBe(0);

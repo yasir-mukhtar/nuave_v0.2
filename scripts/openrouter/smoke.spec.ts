@@ -29,6 +29,7 @@ import {
   promptSchema,
   type AuditBudget,
 } from "../../src/lib/audit/types";
+import { measurementSlotForOrder } from "../../src/lib/audit/measurement-matrix";
 
 function loadEnvLocal(): void {
   const file = join(process.cwd(), ".env.local");
@@ -54,6 +55,8 @@ function loadEnvLocal(): void {
 loadEnvLocal();
 
 const configured = Boolean(process.env.OPENROUTER_API_KEY?.trim());
+const smokeSlot = measurementSlotForOrder(3);
+if (!smokeSlot) throw new Error("OpenRouter smoke slot is missing.");
 
 // Free models queue behind paid traffic; a cold start of 30-60s is normal.
 const LIVE_TIMEOUT_MS = 180_000;
@@ -112,14 +115,14 @@ describe("OpenRouter free path smoke check", () => {
       // satisfy the same auditObservationSchema every other provider returns,
       // or the orchestrator and the report pipeline will reject it later.
       const prompt = promptSchema.parse({
-        prompt_id: "NUAVE-01",
-        category: "solution_discovery",
-        role: "prospective customer",
-        branded: false,
+        prompt_id: smokeSlot.id,
+        category: smokeSlot.legacyCategory,
+        role: smokeSlot.generatorSlotDescription,
+        branded: smokeSlot.legacyBranded,
         question:
           "Klinik gigi yang bagus di Depok untuk pasang behel apa saja?",
         rationale: "Smoke check for the free OpenRouter path.",
-        inputs_used: ["category", "market_context"],
+        inputs_used: [...smokeSlot.allowedContextFields],
         review_status: "needs_human_review",
       });
       const brief = businessBriefSchema.parse({

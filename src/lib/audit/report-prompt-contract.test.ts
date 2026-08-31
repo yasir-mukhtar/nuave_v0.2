@@ -1,34 +1,59 @@
 import { describe, expect, it } from "vitest";
-import { reportAssessmentInstructions } from "./report-prompt-contract";
+import {
+  reportAssessmentInstructions,
+  reportPromptMeasurement,
+  reportPromptMeasurements,
+} from "./report-prompt-contract";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  REPORT_ASSESSMENT_CLASSES,
+} from "./measurement-matrix";
 
 describe("report assessment prompt contract", () => {
   const instructions = reportAssessmentInstructions().join("\n");
 
-  it("matches the validator's category-specific recommendation contract", () => {
-    expect(instructions).toContain(
-      "need_discovery, solution_discovery, or comparison",
-    );
-    expect(instructions).toContain("validation or action");
-    expect(instructions).toContain("recommendation may be not_assessed");
+  it("derives every slot's report meaning from the canonical matrix", () => {
+    AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
+      expect(instructions).toContain(slot.id);
+      expect(instructions).toContain(slot.category);
+      expect(instructions).toContain(slot.customerFacingLabel);
+      expect(instructions).toContain(slot.measurementPurpose);
+      expect(instructions).toContain(slot.reportAssessmentClass);
+    });
+    expect(instructions).not.toContain("need_discovery");
+    expect(instructions).not.toContain("solution_discovery");
+    expect(instructions).not.toContain("validation or action");
   });
 
-  it("requires actual comparison evidence and otherwise not_observed", () => {
+  it("defines all matrix-owned assessment paths", () => {
+    REPORT_ASSESSMENT_CLASSES.forEach((assessmentClass) => {
+      expect(instructions).toContain(`${assessmentClass} assessment path`);
+    });
     expect(instructions).toContain("only when the answer actually compares");
     expect(instructions).toContain("otherwise use not_observed");
+    expect(instructions).toContain("otherwise use not_assessed");
   });
 
-  it("allows information not_assessed on completed observations when no public fact was assessed", () => {
-    expect(instructions).toContain(
-      "otherwise information must be not_assessed, even though the observation completed successfully",
+  it("projects report metadata for provider prompts without legacy categories", () => {
+    const metadata = reportPromptMeasurements(
+      AUDIT_MEASUREMENT_MATRIX.map((slot) => ({ prompt_id: slot.id })),
     );
+    expect(metadata).toHaveLength(AUDIT_MEASUREMENT_MATRIX.length);
+    metadata.forEach((item, index) => {
+      const slot = AUDIT_MEASUREMENT_MATRIX[index];
+      expect(item).toEqual({
+        prompt_id: slot.id,
+        canonical_category: slot.category,
+        measurement_purpose: slot.measurementPurpose,
+        customer_facing_label: slot.customerFacingLabel,
+        report_assessment_class: slot.reportAssessmentClass,
+      });
+    });
   });
 
-  it("does not reintroduce the contradictory completed-all-dimensions rule", () => {
-    expect(instructions).not.toContain(
-      "For every COMPLETED observation all three dimensions must be assessed",
-    );
-    expect(instructions).not.toContain(
-      "not_assessed is reserved for FAILED tests only",
+  it("rejects a prompt ID with no canonical measurement slot", () => {
+    expect(() => reportPromptMeasurement("not-a-canonical-prompt")).toThrow(
+      /does not map to a canonical measurement slot/i,
     );
   });
 });
