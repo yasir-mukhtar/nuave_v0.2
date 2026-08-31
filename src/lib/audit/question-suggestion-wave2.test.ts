@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import { buildLiveIndonesianPromptPack } from "./questions-id-live";
-import { minimizeIndonesianBrief } from "./questions-id";
-import { COMPATIBILITY_COMPOSITION_COUNTS } from "./measurement-matrix";
+import {
+  buildDeterministicIndonesianPack,
+  minimizeIndonesianBrief,
+} from "./questions-id";
 import type { BusinessBrief } from "./types";
 
 const brief: BusinessBrief = {
@@ -34,30 +36,20 @@ const brief: BusinessBrief = {
   agency_logo_data_url: "",
 };
 
-const validQuestions = [
-  "Ada rekomendasi kedai kopi di Depok?",
-  "Saya cari tempat ngopi yang nyaman di Depok.",
-  "Kedai kopi apa saja yang tersedia di Depok?",
-  "Di mana ada kopi susu di Depok?",
-  "Bandingkan pilihan kedai kopi di Depok.",
-  "Bandingkan Kopi Taman Senja dengan Kopi Pesaing di Depok.",
-  "Apa saja yang disediakan Kopi Taman Senja?",
-  "Di mana alamat Kopi Taman Senja dan buka jam berapa?",
-  "Bagaimana cara datang ke Kopi Taman Senja?",
-  "Apakah Kopi Taman Senja menyediakan manual brew?",
-];
+const minimizedBrief = minimizeIndonesianBrief(brief);
+const validQuestions = buildDeterministicIndonesianPack(minimizedBrief);
 
 const clearlyEnglishQuestions = [
-  "What coffee shop is recommended near Depok?",
-  "Where can I find coffee with a quiet place near Depok?",
-  "Which coffee shops are available for customers in Depok?",
-  "Where can I get milk coffee near Depok?",
-  "How do I compare coffee shop options in Depok?",
+  "Which coffee shop options are recommended near Depok?",
+  "What situation makes customers look for coffee shops near Depok?",
+  "Which coffee shop options are suitable for customer needs near Depok?",
+  "Where can I find milk coffee for customers near Depok?",
+  "Which coffee shops should I compare for a shortlist near Depok?",
+  "How can I compare unnamed coffee shop options near Depok?",
+  "Does Kopi Taman Senja fit a customer need near Depok?",
+  "Would you recommend Kopi Taman Senja for customers in Depok?",
   "How does Kopi Taman Senja compare with Kopi Pesaing in Depok?",
-  "What does Kopi Taman Senja offer for customers in Depok?",
-  "Where is Kopi Taman Senja and when is it open in Depok?",
-  "How can I visit Kopi Taman Senja in Depok?",
-  "How does Kopi Taman Senja offer manual brew for customers in Depok?",
+  "Who does Kopi Taman Senja suit, who may it not suit, and what are the trade-offs?",
 ];
 
 function mixedLanguagePack(englishCount: number) {
@@ -105,18 +97,18 @@ describe("Wave 2 generated suggestion guards", () => {
     ).toEqual([]);
   });
 
-  it("detects an advertised default outside the matrix-derived compatibility composition", () => {
+  it("detects an advertised default outside the canonical composition", () => {
     const unbalanced = validQuestions.slice();
     unbalanced[0] = "Apakah Kopi Taman Senja cocok untuk ngopi di Depok?";
     expect(
       validQuestions.filter((question) => question.includes(brief.brand_name)),
-    ).toHaveLength(COMPATIBILITY_COMPOSITION_COUNTS.branded);
+    ).toHaveLength(4);
     expect(
       generatedSuggestionGuardIssues(
         unbalanced,
         minimizeIndonesianBrief(brief),
       ),
-    ).toContain("default_composition_not_five_five");
+    ).toContain("default_composition_not_canonical");
   });
 
   it("rejects a fully clearly-English model default", () => {
@@ -134,7 +126,7 @@ describe("Wave 2 generated suggestion guards", () => {
       minimizeIndonesianBrief(brief),
     );
     expect(issues).toContain("clearly_non_indonesian_output");
-    expect(issues).not.toContain("default_composition_not_five_five");
+    expect(issues).not.toContain("default_composition_not_canonical");
   });
 
   it("enforces the adopted majority boundary at six clearly-English questions", () => {
@@ -143,7 +135,7 @@ describe("Wave 2 generated suggestion guards", () => {
       minimizeIndonesianBrief(brief),
     );
     expect(issues).toContain("clearly_non_indonesian_output");
-    expect(issues).not.toContain("default_composition_not_five_five");
+    expect(issues).not.toContain("default_composition_not_canonical");
   });
 
   it("does not classify a five-English / five-Indonesian default as majority-English", () => {
@@ -152,7 +144,7 @@ describe("Wave 2 generated suggestion guards", () => {
       minimizeIndonesianBrief(brief),
     );
     expect(issues).not.toContain("clearly_non_indonesian_output");
-    expect(issues).not.toContain("default_composition_not_five_five");
+    expect(issues).not.toContain("default_composition_not_canonical");
   });
 
   it("detects compact or punctuation-mutated competitor leakage outside slot 6", () => {
@@ -184,8 +176,8 @@ describe("Wave 2 generated suggestion guards", () => {
     expect(result.generation.warnings).toContain("slot_safety_repair:1");
     expect(result.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
-      menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
     expect(
       result.pack.prompts.every(

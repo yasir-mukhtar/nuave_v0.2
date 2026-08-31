@@ -116,13 +116,13 @@ describe("OpenRouter free path smoke check", () => {
       // or the orchestrator and the report pipeline will reject it later.
       const prompt = promptSchema.parse({
         prompt_id: smokeSlot.id,
-        category: smokeSlot.legacyCategory,
-        role: smokeSlot.legacyRole,
-        branded: smokeSlot.legacyBranded,
+        category: smokeSlot.category,
+        role: smokeSlot.generatorSlotDescription,
+        branded: smokeSlot.auditedBrandIdentity === "required",
         question:
           "Klinik gigi yang bagus di Depok untuk pasang behel apa saja?",
         rationale: "Smoke check for the free OpenRouter path.",
-        inputs_used: [...smokeSlot.legacyAllowedContextFields],
+        inputs_used: [...smokeSlot.allowedContextFields],
         review_status: "needs_human_review",
       });
       const brief = businessBriefSchema.parse({

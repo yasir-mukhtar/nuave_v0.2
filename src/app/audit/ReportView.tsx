@@ -32,8 +32,7 @@ import styles from "./audit.module.css";
 
 function measurementLabel(promptId: string) {
   return (
-    measurementSlotForPromptId(promptId)?.compatibilityCustomerFacingLabel ??
-    "Pertanyaan"
+    measurementSlotForPromptId(promptId)?.customerFacingLabel ?? "Pertanyaan"
   );
 }
 
@@ -42,7 +41,7 @@ function resultLabel(detail: ReportDetail) {
   if (detail.appearance === "absent") return "Tidak disebut";
   const assessmentClass = measurementSlotForPromptId(
     detail.prompt_id,
-  )?.compatibilityReportAssessmentClass;
+  )?.reportAssessmentClass;
   switch (assessmentClass) {
     case "comparison":
       if (detail.comparison === "client_preferred")

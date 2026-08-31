@@ -1,6 +1,7 @@
-import type { BusinessBrief, LegacyPromptCategory } from "./types";
+import type { BusinessBrief, CanonicalPromptCategory } from "./types";
 import {
   AUDIT_MEASUREMENT_MATRIX,
+  CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForOrder,
 } from "./measurement-matrix";
 
@@ -23,7 +24,8 @@ import {
 //   - the persisted approved-pack record, replayable verbatim (R-33).
 //
 // The frozen Indonesian fixture pack (NVA-FIKTIF-001.questions.v1,
-// docs/drafts/00-journey-fixtures.md) passes the same mechanical rules.
+// docs/drafts/00-journey-fixtures.md) remains a historical record and is not
+// relabeled or used as the active generated pack.
 
 // ---------------------------------------------------------------------------
 // Contract versions
@@ -37,10 +39,10 @@ export const INDONESIAN_QUESTION_RECORD_VERSION =
   "indonesian-question-pack-record-v1";
 
 /**
- * Version of the canonical question-writer instruction (one authoritative
- * instruction source, matching the frozen fixture's `instruction_version`).
+ * Version of the active canonical question-writer instruction. Frozen
+ * historical fixture records retain their recorded version.
  */
-export const INDONESIAN_QUESTION_INSTRUCTION_VERSION = "question-writer-v1";
+export const INDONESIAN_QUESTION_INSTRUCTION_VERSION = "question-writer-v2";
 
 export const INDONESIAN_QUESTION_LANGUAGE = "id-ID" as const;
 
@@ -70,6 +72,10 @@ export const INDONESIAN_FALLBACK_DISCLOSURE = {
   title: "Kami menyiapkan pertanyaan dasar",
   body: "Nuave belum dapat menyesuaikan seluruh pertanyaan secara otomatis. Anda tetap dapat mengubah pertanyaan mana pun sebelum audit dimulai.",
 } as const;
+
+/** R-10 warning for edits that pass mechanical checks but may drift in purpose. */
+export const INDONESIAN_PURPOSE_DRIFT_WARNING =
+  "Tujuan pertanyaan ditetapkan oleh Nuave. Perubahan wording dapat membuat pertanyaan tidak lagi mengukur tujuan tersebut, tetapi tidak menghalangi Anda melanjutkan jika pemeriksaan mekanis lulus.";
 
 /**
  * Provider input ceiling for the minimized brief. Bounds the confirmed brief
@@ -243,6 +249,13 @@ export function isCategoryComparisonFallback(brief: MinimizedIndonesianBrief) {
   );
 }
 
+function comparisonTargetIdentity(brief: MinimizedIndonesianBrief) {
+  return (
+    brief.comparison_business?.name.trim() ||
+    categoryComparisonFallbackName(brief.category || "ini")
+  );
+}
+
 /** Brand identities as normalized whole tokens (length >= 3 to stay specific). */
 function brandIdentitySignals(brief: MinimizedIndonesianBrief) {
   return [brief.brand_name, ...brief.brand_name_variants]
@@ -357,7 +370,7 @@ export function hasIndonesianComparisonRelation(
   }
 
   const brandIdentities = [brief.brand_name, ...brief.brand_name_variants];
-  const comparisonIdentity = brief.comparison_business?.name ?? "";
+  const comparisonIdentity = comparisonTargetIdentity(brief);
   const tokens = normalizedTokens(text);
   if (
     !brandIdentities.some((identity) => containsTokenRun(tokens, identity)) ||
@@ -459,23 +472,13 @@ export function parseNumberedIndonesianQuestions(
 // Deterministic Indonesian fallback (cannot hard-fail)
 // ---------------------------------------------------------------------------
 
-export const INDONESIAN_SLOT_CATEGORIES: readonly LegacyPromptCategory[] =
-  AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.legacyCategory);
-export type IndonesianSlotCategory = LegacyPromptCategory;
+/** @deprecated Use AUDIT_MEASUREMENT_MATRIX directly for slot metadata. */
+export const INDONESIAN_SLOT_CATEGORIES: readonly CanonicalPromptCategory[] =
+  AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.category);
+export type IndonesianSlotCategory = CanonicalPromptCategory;
 
-/** Code-owned slot semantics: the ten slot ids, their coverage role, and the
- * default suggestion's name/no-name posture. The model authors only the ten
- * strings; code owns this metadata (docs/journey/04 — Minimal model-output
- * contract). */
-export const INDONESIAN_SLOT_MATRIX: readonly {
-  order: number;
-  suggested_category: IndonesianSlotCategory;
-  default_branded: boolean;
-}[] = AUDIT_MEASUREMENT_MATRIX.map((slot) => ({
-  order: slot.order,
-  suggested_category: slot.legacyCategory,
-  default_branded: slot.legacyBranded,
-}));
+/** @deprecated This is an alias, not a second slot-policy table. */
+export const INDONESIAN_SLOT_MATRIX = AUDIT_MEASUREMENT_MATRIX;
 
 /**
  * A value may be used in an unbranded fallback question only when it cannot
@@ -512,18 +515,19 @@ function firstSafe(
 
 /**
  * One guaranteed-safe deterministic Indonesian question for a slot. Used both
- * by the full fallback pack and as the "safe slot fallback before display"
+ * the full fallback pack and as the "safe slot fallback before display"
  * repair for a leaking or premise-asserting suggested question (Spec 002
  * failure-and-recovery matrix). Every slot's template skeleton is unique, so
- * a full fallback pack is distinct by construction. Branded slots may name
- * the audited business; slots 1-5 and 7-10 never name the comparison
- * business, which is used only in slot 6 (comparison).
+ * a full fallback pack is distinct by construction. The slot identity and
+ * allowed identities come from the canonical matrix; the templates below only
+ * provide deterministic Indonesian wording for those fixed purposes.
  */
 export function deterministicIndonesianQuestion(
   brief: MinimizedIndonesianBrief,
   slot: number,
 ): string {
-  const category = safeUnbrandedValue(brief.category, brief);
+  const category =
+    safeUnbrandedValue(brief.category, brief) || "pilihan yang tersedia";
   const scope = safeUnbrandedValue(brief.scope, brief);
   const customer = safeUnbrandedValue(brief.customer_context, brief);
   const needs = [
@@ -536,59 +540,40 @@ export function deterministicIndonesianQuestion(
     brief,
     "",
   );
-  const secondOffering = firstSafe(
-    [brief.offerings[1] ?? "", brief.offerings[0] ?? "", brief.category],
-    brief,
-    "",
-  );
-  const action = safeUnbrandedValue(brief.conversion_action, brief);
   const brand = phraseId(brief.brand_name) || brief.brand_name;
-  const competitor = brief.comparison_business
-    ? phraseId(brief.comparison_business.name)
-    : "";
+  const competitor = phraseId(brief.comparison_business?.name ?? "");
+  const comparisonTarget =
+    competitor || categoryComparisonFallbackName(brief.category || "ini");
   const customerPart = customer ? ` untuk ${customer}` : "";
   const inScopePart = scope ? ` di ${scope}` : "";
-  const needPart = firstSafe(needs, brief, "") || category;
+  const needPart = firstSafe(needs, brief, "kebutuhan pelanggan");
+  const criteria = firstSafe(
+    brief.decision_considerations,
+    brief,
+    "kebutuhan pelanggan",
+  );
 
   switch (slot) {
     case 1:
-      return category
-        ? `Ada rekomendasi ${category}${inScopePart}${customerPart}?`
-        : "Saya butuh bantuan untuk menemukan pilihan yang cocok.";
+      return `Rekomendasi ${category}${inScopePart}${customerPart} apa saja?`;
     case 2:
-      return needPart
-        ? `Saya cari ${needPart}${inScopePart}${customerPart}.`
-        : "Rekomendasikan tempat yang cocok untuk kebutuhan saya.";
+      return `Dalam situasi apa ${customer || "calon pelanggan"} biasanya mencari ${category}${inScopePart}?`;
     case 3:
-      return category
-        ? `${category} apa saja yang tersedia${inScopePart}${customerPart}?`
-        : "Tempat seperti apa yang cocok untuk kebutuhan saya?";
+      return `Untuk ${needPart}, ${category} apa yang cocok${inScopePart}${customerPart}?`;
     case 4:
-      return offering
-        ? `Di mana ada ${offering}${inScopePart}${customerPart}?`
-        : "Di mana saya bisa menemukan pilihan yang cocok?";
+      return `Di mana saya bisa menemukan ${offering || category}${inScopePart}${customerPart}?`;
     case 5:
-      return category
-        ? `Bandingkan pilihan ${category}${inScopePart}${customerPart}.`
-        : "Bandingkan pilihan yang tersedia untuk kebutuhan saya.";
+      return `Pilihan ${category} mana yang layak masuk daftar pertimbangan berdasarkan ${criteria}${inScopePart}?`;
     case 6:
-      return competitor
-        ? `Bandingkan ${brand} dengan ${competitor}${customerPart}${inScopePart}.`
-        : `Bandingkan ${brand} dengan pilihan lain yang serupa${inScopePart}.`;
+      return `Apa perbedaan pilihan ${category}${inScopePart} berdasarkan ${criteria}${customerPart}?`;
     case 7:
-      return `Apa saja yang disediakan ${brand}${customerPart}?`;
+      return `Apakah ${brand} cocok untuk ${needPart}${inScopePart}${customerPart}?`;
     case 8:
-      return scope
-        ? `Di mana alamat ${brand}${inScopePart}? Buka jam berapa?`
-        : `Di mana alamat ${brand}? Buka jam berapa?`;
+      return `Apakah ${brand} layak direkomendasikan untuk ${customer || "kebutuhan pelanggan"}${inScopePart}?`;
     case 9:
-      return action
-        ? `Bagaimana cara ${action} dengan ${brand}?`
-        : `Bagaimana cara menghubungi ${brand}?`;
+      return `Bandingkan ${brand} dengan ${comparisonTarget} berdasarkan ${criteria}${inScopePart}?`;
     case 10:
-      return secondOffering || offering
-        ? `${brand} menyediakan ${secondOffering || offering}${customerPart}?`
-        : `Apa yang perlu saya ketahui sebelum memilih ${brand}?`;
+      return `Siapa yang cocok memilih ${brand}, siapa yang mungkin kurang cocok, dan apa trade-offnya${inScopePart}?`;
     default:
       return `Apa yang perlu saya ketahui sebelum memilih ${brand}?`;
   }
@@ -602,7 +587,7 @@ export function deterministicIndonesianQuestion(
 export function buildDeterministicIndonesianPack(
   brief: MinimizedIndonesianBrief,
 ): string[] {
-  return INDONESIAN_SLOT_MATRIX.map((slot) =>
+  return AUDIT_MEASUREMENT_MATRIX.map((slot) =>
     deterministicIndonesianQuestion(brief, slot.order),
   );
 }
@@ -620,6 +605,8 @@ export type IndonesianValidationRule =
   | "competitor_leakage"
   | "comparison_relation"
   | "composition"
+  | "length"
+  | "question_form"
   | "unsupported_premise"
   | "distinctness";
 
@@ -641,112 +628,9 @@ const INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS = [
 const INDONESIAN_UNEXECUTABLE_MIN_LENGTH = 8;
 
 /**
- * Mechanical safety rules (R-37): identity leakage in the five default
- * unbranded slots, unsupported-premise wording, distinctness, and
- * emptiness/unexecutability. The comparison business may be named only in
- * slot 6. Returns every issue found; callers decide repair vs fallback.
- */
-export function validateIndonesianQuestionPack(
-  questions: string[],
-  brief: MinimizedIndonesianBrief,
-): IndonesianValidationIssue[] {
-  const issues: IndonesianValidationIssue[] = [];
-  if (questions.length !== INDONESIAN_SLOT_MATRIX.length) {
-    issues.push({
-      slot: null,
-      rule: "count",
-      message: `The Indonesian question pack must contain exactly ${INDONESIAN_SLOT_MATRIX.length} questions, received ${questions.length}.`,
-    });
-    return issues;
-  }
-
-  const brandSignals = identitySignals(brief);
-  const competitorSignal = brief.comparison_business?.name ?? "";
-
-  questions.forEach((question, index) => {
-    const slot = index + 1;
-    const normalized = normalizeWhitespace(question);
-    if (!normalized) {
-      issues.push({
-        slot,
-        rule: "empty",
-        message: `Question ${slot} is empty.`,
-      });
-      return;
-    }
-    if (normalized.length < INDONESIAN_UNEXECUTABLE_MIN_LENGTH) {
-      issues.push({
-        slot,
-        rule: "unexecutable",
-        message: `Question ${slot} is too short to be executed as a standalone question.`,
-      });
-    }
-
-    const matrixSlot = measurementSlotForOrder(slot);
-
-    // Compatibility identity policy for the still-running 5/5 suggestion
-    // path. The policy comes from the matrix, never from the slot number.
-    if (
-      matrixSlot?.legacyAuditedBrandIdentity === "forbidden" &&
-      brandSignals.some((signal) => containsIdentityToken(question, signal))
-    ) {
-      issues.push({
-        slot,
-        rule: "identity_leakage",
-        message: `Question ${slot} reveals the audited business name or one of its known variants.`,
-      });
-    }
-
-    // The comparison business may be named only in the matrix-designated
-    // compatibility comparison slot, including punctuation and compact
-    // renderings. The category-level fallback is not an identity.
-    if (
-      matrixSlot?.legacyComparisonTargetIdentity !== "required" &&
-      !isCategoryComparisonFallback(brief) &&
-      containsIndonesianComparisonIdentity(question, competitorSignal)
-    ) {
-      issues.push({
-        slot,
-        rule: "competitor_leakage",
-        message: `Question ${slot} reveals the comparison business outside the designated comparison question.`,
-      });
-    }
-
-    if (
-      INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS.some((pattern) =>
-        pattern.test(question),
-      )
-    ) {
-      issues.push({
-        slot,
-        rule: "unsupported_premise",
-        message: `Question ${slot} assumes an unconfirmed fact as true or asserts an unsupported claim.`,
-      });
-    }
-  });
-
-  const seen = new Set<string>();
-  questions.forEach((question, index) => {
-    const normalized = normalizeId(question);
-    if (seen.has(normalized)) {
-      issues.push({
-        slot: index + 1,
-        rule: "distinctness",
-        message: `Question ${index + 1} duplicates another question.`,
-      });
-    } else {
-      seen.add(normalized);
-    }
-  });
-
-  return issues;
-}
-
-/**
- * Agreement validator for the canonical R-01 matrix. The current customer
- * path still calls `validateIndonesianQuestionPack` for its protected 5/5
- * compatibility pack; this function makes the next 6/4 contract executable
- * now so the composition flip cannot bypass any policy checks.
+ * Deterministic agreement validator for the canonical R-01 matrix. The same
+ * validator is used for generated defaults, customer edits, approval, and the
+ * server run boundary so no compatibility composition can pass as active.
  */
 export function validateCanonicalIndonesianQuestionPack(
   questions: string[],
@@ -762,8 +646,10 @@ export function validateCanonicalIndonesianQuestionPack(
     return issues;
   }
 
-  const comparisonTarget = brief.comparison_business?.name ?? "";
-  const fallbackTarget = isCategoryComparisonFallback(brief);
+  const comparisonTarget = comparisonTargetIdentity(brief);
+  const fallbackTarget =
+    isCategoryComparisonFallback(brief) ||
+    !brief.comparison_business?.name.trim();
   const classifications = questions.map((question) =>
     classifyIndonesianQuestion(question, brief),
   );
@@ -776,15 +662,32 @@ export function validateCanonicalIndonesianQuestionPack(
       issues.push({
         slot: slot.order,
         rule: "empty",
-        message: `Question ${slot.order} is empty.`,
+        message: `Pertanyaan ${slot.order} tidak boleh kosong.`,
       });
       return;
+    }
+    if (question.trim().length > 700) {
+      issues.push({
+        slot: slot.order,
+        rule: "length",
+        message: `Pertanyaan ${slot.order} tidak boleh lebih dari 700 karakter.`,
+      });
     }
     if (normalized.length < INDONESIAN_UNEXECUTABLE_MIN_LENGTH) {
       issues.push({
         slot: slot.order,
         rule: "unexecutable",
-        message: `Question ${slot.order} is too short to be executed as a standalone question.`,
+        message: `Pertanyaan ${slot.order} terlalu singkat untuk dijalankan sebagai pertanyaan mandiri.`,
+      });
+    }
+    if (
+      !normalized.endsWith("?") ||
+      (question.match(/\?/g) ?? []).length !== 1
+    ) {
+      issues.push({
+        slot: slot.order,
+        rule: "question_form",
+        message: `Pertanyaan ${slot.order} harus berupa satu pertanyaan dengan tanda tanya di akhir.`,
       });
     }
 
@@ -793,14 +696,14 @@ export function validateCanonicalIndonesianQuestionPack(
       issues.push({
         slot: slot.order,
         rule: "identity_leakage",
-        message: `Question ${slot.order} must not mention the audited business.`,
+        message: `Pertanyaan ${slot.order} tidak boleh menyebut bisnis Anda.`,
       });
     }
     if (slot.auditedBrandIdentity === "required" && !brandMentioned) {
       issues.push({
         slot: slot.order,
         rule: "identity_requirement",
-        message: `Question ${slot.order} must mention the audited business.`,
+        message: `Pertanyaan ${slot.order} harus menyebut bisnis Anda.`,
       });
     }
 
@@ -815,14 +718,14 @@ export function validateCanonicalIndonesianQuestionPack(
       issues.push({
         slot: slot.order,
         rule: "competitor_leakage",
-        message: `Question ${slot.order} must not mention the comparison target.`,
+        message: `Pertanyaan ${slot.order} tidak boleh menyebut bisnis pembanding.`,
       });
     }
     if (slot.comparisonTargetIdentity === "required" && !targetMentioned) {
       issues.push({
         slot: slot.order,
         rule: "identity_requirement",
-        message: `Question ${slot.order} must mention the comparison target.`,
+        message: `Pertanyaan ${slot.order} harus menyebut bisnis pembanding.`,
       });
     }
 
@@ -833,7 +736,7 @@ export function validateCanonicalIndonesianQuestionPack(
       issues.push({
         slot: slot.order,
         rule: "comparison_relation",
-        message: `Question ${slot.order} must compare the audited business with the comparison target.`,
+        message: `Pertanyaan ${slot.order} harus membandingkan bisnis Anda dengan bisnis pembanding.`,
       });
     }
     if (
@@ -844,22 +747,19 @@ export function validateCanonicalIndonesianQuestionPack(
       issues.push({
         slot: slot.order,
         rule: "unsupported_premise",
-        message: `Question ${slot.order} assumes an unconfirmed fact as true or asserts an unsupported claim.`,
+        message: `Pertanyaan ${slot.order} tidak boleh menganggap fakta yang belum dikonfirmasi sebagai benar.`,
       });
     }
   });
 
-  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
-    (slot) => slot.auditedBrandIdentity === "forbidden",
-  ).length;
   const actualUnbranded = classifications.filter(
     (classification) => classification === "tanpa_menyebut_bisnis_anda",
   ).length;
-  if (actualUnbranded !== expectedUnbranded) {
+  if (actualUnbranded !== CANONICAL_COMPOSITION_COUNTS.unbranded) {
     issues.push({
       slot: null,
       rule: "composition",
-      message: `The canonical question pack must contain ${expectedUnbranded} unnamed and ${AUDIT_MEASUREMENT_MATRIX.length - expectedUnbranded} named questions.`,
+      message: `Paket pertanyaan harus berisi ${CANONICAL_COMPOSITION_COUNTS.unbranded} pertanyaan tanpa nama dan ${CANONICAL_COMPOSITION_COUNTS.branded} pertanyaan yang menyebut bisnis.`,
     });
   }
 
@@ -880,6 +780,10 @@ export function validateCanonicalIndonesianQuestionPack(
   return issues;
 }
 
+/** Active name retained for callers of the Indonesian contract. */
+export const validateIndonesianQuestionPack =
+  validateCanonicalIndonesianQuestionPack;
+
 /**
  * Safe slot fallback: replaces every suggested question that breaks a
  * mechanical safety rule (or duplicates another) with the deterministic
@@ -890,8 +794,13 @@ export function repairIndonesianSuggestion(
   questions: string[],
   brief: MinimizedIndonesianBrief,
 ): { questions: string[]; originals: string[]; warnings: string[] } | null {
-  if (questions.length !== INDONESIAN_SLOT_MATRIX.length) return null;
-  const issues = validateIndonesianQuestionPack(questions, brief);
+  if (questions.length !== AUDIT_MEASUREMENT_MATRIX.length) return null;
+  const issues = validateCanonicalIndonesianQuestionPack(questions, brief);
+  if (
+    issues.some((issue) => issue.slot === null && issue.rule !== "composition")
+  ) {
+    return null;
+  }
   const repairSlots = new Set(
     issues
       .filter((issue) => issue.slot !== null)
@@ -1041,7 +950,8 @@ function providerInputLimitIssues(brief: MinimizedIndonesianBrief) {
  * data, disallowed individualized high-impact advice, content unrelated to
  * the audited business or its customer decision, and content the provider
  * cannot lawfully or safely process. Informal wording, English terms, changed
- * intent, unknown-fact investigations, and 5/5-balance changes never block.
+ * intent, unknown-fact investigations, and composition changes are handled by
+ * the canonical approval validator rather than this narrow safety list.
  */
 export function indonesianPackBlockers(
   questions: string[],
@@ -1118,7 +1028,7 @@ export type IndonesianQuestionItem = {
   final_classification: IndonesianClassificationValue;
   /** The text the generator originally suggested for this slot. */
   original_suggestion: string;
-  suggested_category: IndonesianSlotCategory;
+  category: IndonesianSlotCategory;
   edited: boolean;
 };
 
@@ -1189,7 +1099,7 @@ function toQuestionItems(
       text,
       final_classification: classifyIndonesianQuestion(text, brief),
       original_suggestion: originals[index],
-      suggested_category: slot.legacyCategory,
+      category: slot.category,
       edited: false,
     };
   });
@@ -1247,7 +1157,7 @@ export async function generateIndonesianQuestionPack(
       const candidate = output.questions
         .map((question) => normalizeWhitespace(question))
         .filter(Boolean);
-      if (candidate.length === INDONESIAN_SLOT_MATRIX.length) {
+      if (candidate.length === AUDIT_MEASUREMENT_MATRIX.length) {
         questions = candidate;
         originals = candidate;
         source = "model";
@@ -1301,10 +1211,10 @@ export type IndonesianEditRecordEntry = {
 
 /**
  * Applies customer edits to a suggestion (R-34). Classification is recomputed
- * from the final text, counts update immediately, the suggested category and
- * original suggestion are preserved, and every edit is recorded. Ordinary
- * edits — including balance changes — never block; only the narrow blocker
- * list can block approval.
+ * from the final text, counts update immediately, the canonical slot category
+ * and original suggestion are preserved, and every edit is recorded. The UI
+ * may hold an invalid draft while the user types; approval is the hard-block
+ * boundary and rechecks the complete canonical pack.
  */
 export function applyIndonesianQuestionEdits(
   suggestion: IndonesianQuestionPackSuggestion,
@@ -1432,10 +1342,39 @@ export function approveIndonesianQuestionPack(
   brief: MinimizedIndonesianBrief,
   context: IndonesianApprovalContext,
 ): IndonesianQuestionPackRecord {
-  const blockers = indonesianPackBlockers(
+  const metadataBlockers = suggestion.questions.flatMap((item, index) => {
+    const slot = measurementSlotForOrder(index + 1);
+    if (!slot) {
+      return [`Pertanyaan ${index + 1} tidak memiliki slot kanonis.`];
+    }
+    const errors: string[] = [];
+    if (item.order !== slot.order) {
+      errors.push(`Pertanyaan ${index + 1} mengubah urutan slot kanonis.`);
+    }
+    if (item.category !== slot.category) {
+      errors.push(`Pertanyaan ${index + 1} mengubah kategori slot kanonis.`);
+    }
+    if (
+      item.final_classification !== classifyIndonesianQuestion(item.text, brief)
+    ) {
+      errors.push(
+        `Pertanyaan ${index + 1} memiliki klasifikasi yang tidak sesuai dengan teks akhirnya.`,
+      );
+    }
+    return errors;
+  });
+  const canonicalIssues = validateCanonicalIndonesianQuestionPack(
     suggestion.questions.map((item) => item.text),
     brief,
   );
+  const blockers = [
+    ...metadataBlockers,
+    ...canonicalIssues.map((issue) => issue.message),
+    ...indonesianPackBlockers(
+      suggestion.questions.map((item) => item.text),
+      brief,
+    ),
+  ];
   if (blockers.length > 0) {
     throw new IndonesianApprovalBlockedError(blockers);
   }

@@ -24,7 +24,7 @@ import {
   indonesianReportBuiltFieldErrors,
   indonesianReportLanguageErrors,
 } from "../audit/report-language";
-import { INDONESIAN_QUESTION_INSTRUCTION_VERSION } from "../audit/questions-id";
+import { kopiTamanSenjaQuestions } from "../audit/fixtures/fixture-kopi-taman-senja";
 import {
   kopiTamanSenjaBrief,
   kopiTamanSenjaMethod,
@@ -68,11 +68,13 @@ export function constructFixtureReport(
     kopiTamanSenjaReportContent(),
     kopiTamanSenjaObservations,
     kopiTamanSenjaBrief,
+    "kopi-taman-senja-v1",
   );
   const errors = validateReportContent(
     content,
     kopiTamanSenjaObservations,
     kopiTamanSenjaBrief,
+    "kopi-taman-senja-v1",
   );
   if (errors.length > 0) {
     throw new FixtureJourneyReportError(errors.join(" "));
@@ -116,7 +118,10 @@ export function constructFixtureReport(
       response_id: "fixture-report-response",
       // The ten prompts came from the Indonesian question-writer contract,
       // not the English deterministic matrix (adversarial review Finding 2).
-      prompt_contract_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
+      // This report preserves the frozen v1 question record. Do not relabel
+      // historical provider evidence as the active A3 instruction version.
+      prompt_contract_version:
+        kopiTamanSenjaQuestions.generation.instruction_version,
     },
     // Indonesian labels for the report-computed method summary and facts
     // labels, so no Nuave-authored English reaches the report object or its
@@ -125,6 +130,7 @@ export function constructFixtureReport(
     // invisible on screen (FixtureReportView builds its own Indonesian
     // method section) but ships whole through "Unduh JSON".
     INDONESIAN_AUDIT_REPORT_LABELS,
+    "kopi-taman-senja-v1",
   );
   // These report-computed fields sit outside ReportContent, so the
   // Indonesian calibration check above never saw them; check them here,

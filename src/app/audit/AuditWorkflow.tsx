@@ -49,7 +49,7 @@ import {
 import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
 } from "@/lib/audit/questions-id";
 import {
   completedLockedObservationSetErrors,
@@ -951,7 +951,7 @@ export default function AuditWorkflow() {
       return;
     }
     const minimized = minimizeIndonesianBrief(brief);
-    const questionErrors = validateIndonesianQuestionPack(
+    const questionErrors = validateCanonicalIndonesianQuestionPack(
       promptPack.prompts.map((prompt) => prompt.question),
       minimized,
     );

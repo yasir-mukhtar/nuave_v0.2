@@ -1,6 +1,10 @@
 import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 import type { ReportDiagnosticCode } from "./report-recovery";
-import { measurementSlotForPromptId } from "./measurement-matrix";
+import {
+  measurementSlotForPromptId,
+  reportMeasurementSemantics,
+  type HistoricalPromptPackId,
+} from "./measurement-matrix";
 
 const PROHIBITED_REPORT_CLAIMS = [
   /\b(?:number|no\.?)[ -]?1\b|\b(?:permanent(?:ly)?|always) rank|\btop-ranked\b/i,
@@ -72,12 +76,35 @@ function safeEvidenceNote(language: "en" | "id" | undefined) {
     : "The answer excerpt above comes directly from the retained test evidence.";
 }
 
-function repairedAccuracyStatus(content: ReportContent) {
+function detailAssessmentClass(
+  detail: ReportContent["details"][number],
+  observations: AuditObservation[],
+  historicalFixtureId?: HistoricalPromptPackId,
+) {
+  const observation = observations.find(
+    (item) => item.prompt_id === detail.prompt_id,
+  );
+  const slot = measurementSlotForPromptId(detail.prompt_id);
+  return observation && slot
+    ? reportMeasurementSemantics(
+        slot,
+        observation.category,
+        observation.branded,
+        historicalFixtureId,
+      ).reportAssessmentClass
+    : null;
+}
+
+function repairedAccuracyStatus(
+  content: ReportContent,
+  observations: AuditObservation[],
+  historicalFixtureId?: HistoricalPromptPackId,
+) {
   const information = content.details
     .filter(
       (detail) =>
-        measurementSlotForPromptId(detail.prompt_id)
-          ?.compatibilityReportAssessmentClass === "information",
+        detailAssessmentClass(detail, observations, historicalFixtureId) ===
+        "information",
     )
     .map((detail) => detail.information);
   if (information.includes("conflicting")) return "needs_correction" as const;
@@ -103,6 +130,7 @@ export function sanitizeRecoverableReportQuality(
   observations: AuditObservation[],
   brief: BusinessBrief,
   language?: "en" | "id",
+  historicalFixtureId?: HistoricalPromptPackId,
 ): ReportQualityRepair {
   const diagnostics = new Set<ReportDiagnosticCode>();
   const knownPromptIds = new Set(observations.map((item) => item.prompt_id));
@@ -169,8 +197,8 @@ export function sanitizeRecoverableReportQuality(
   const information = details
     .filter(
       (detail) =>
-        measurementSlotForPromptId(detail.prompt_id)
-          ?.compatibilityReportAssessmentClass === "information",
+        detailAssessmentClass(detail, observations, historicalFixtureId) ===
+        "information",
     )
     .map((detail) => detail.information);
   const accuracyIsContradictory =
@@ -181,7 +209,11 @@ export function sanitizeRecoverableReportQuality(
     (accuracy_status === "needs_correction" &&
       !information.includes("conflicting"));
   if (accuracyIsContradictory) {
-    accuracy_status = repairedAccuracyStatus({ ...content, details });
+    accuracy_status = repairedAccuracyStatus(
+      { ...content, details },
+      observations,
+      historicalFixtureId,
+    );
     diagnostics.add("minimum_report_fallback_used");
   }
 

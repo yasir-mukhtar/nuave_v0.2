@@ -28,6 +28,7 @@ import {
 import {
   INDONESIAN_QUESTION_INSTRUCTION_VERSION,
   INDONESIAN_QUESTION_LANGUAGE,
+  buildDeterministicIndonesianPack,
   type MinimizedIndonesianBrief,
 } from "./questions-id";
 
@@ -55,18 +56,7 @@ const brief: MinimizedIndonesianBrief = {
   official_source_urls: ["https://kopitamansenja.example"],
 };
 
-const ten = [
-  "Rekomendasikan tempat yang asik untuk ngopi dan WFC di Dago.",
-  "Tempat rapat kecil di Bandung yang ada makanan, minuman, dan bisa dipakai kerja di mana ya?",
-  "Kedai kopi apa aja di Dago yang cocok untuk WFC atau meeting?",
-  "Di mana ada cafe yang menyediakan kopi lokal dan bisa untuk kerja atau WFC di Bandung?",
-  "Bandingkan coffee shop di Bandung yang asik untuk kerja, harganya affordable, dan buka sampai malam.",
-  "Bandingin Kopi Taman Senja vs Kopi Ruang Pagi untuk WFC dan meeting di Dago.",
-  "Kopi Taman Senja bisa dipakai WFC atau kerja nggak ya? Kopi yang disediakan kopi apa?",
-  "Di mana alamat Kopi Taman Senja? Buka jam berapa?",
-  "Cariin kontak Kopi Taman Senja.",
-  "Kopi Taman Senja ada parkiran mobil dan mushollanya nggak?",
-];
+const ten = buildDeterministicIndonesianPack(brief);
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -190,11 +180,11 @@ describe("question-writer provider configuration", () => {
 });
 
 describe("versioned question-writer request", () => {
-  it("pairs the canonical instruction with question-writer-v1 and id-ID", () => {
-    expect(INDONESIAN_QUESTION_INSTRUCTION_VERSION).toBe("question-writer-v1");
+  it("pairs the canonical instruction with question-writer-v2 and id-ID", () => {
+    expect(INDONESIAN_QUESTION_INSTRUCTION_VERSION).toBe("question-writer-v2");
     expect(INDONESIAN_QUESTION_LANGUAGE).toBe("id-ID");
     expect(INDONESIAN_QUESTION_WRITER_INSTRUCTION).toContain(
-      "Write exactly ten independent questions in the assigned order",
+      "Write exactly ten independent questions in the fixed slot order",
     );
     expect(INDONESIAN_QUESTION_WRITER_INSTRUCTION).toContain(
       "Write natural Indonesian appropriate to the category and audience",
@@ -427,13 +417,13 @@ describe("live wiring through the Indonesian generation boundary", () => {
     expect(suggestion.questions.map((item) => item.text)).toEqual(ten);
     expect(suggestion.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
     expect(suggestion.generation).toMatchObject({
       system: "OpenCode Go Responses API",
       requested_model: "gpt-5.6-luna",
-      instruction_version: "question-writer-v1",
+      instruction_version: "question-writer-v2",
       generated_at: "2026-08-21T00:00:00.000Z",
       fallback_used: false,
     });

@@ -4,7 +4,7 @@ import {
   goldenPrompts,
 } from "../../src/lib/audit/fixtures/report-golden";
 import {
-  COMPATIBILITY_COMPOSITION_COUNTS,
+  CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForPromptId,
 } from "../../src/lib/audit/measurement-matrix";
 import {
@@ -31,9 +31,12 @@ const prompts = goldenPrompts.map((prompt) => {
   if (!question) throw new Error(`Missing question for slot ${slot.order}`);
   return {
     ...prompt,
+    category: slot.category,
+    role: slot.generatorSlotDescription,
+    branded: slot.auditedBrandIdentity === "required",
     question,
     rationale: "Offline Wave 1 lifecycle regression.",
-    inputs_used: ["category"],
+    inputs_used: [...slot.allowedContextFields],
   };
 });
 const promptPack: PromptPack = {
@@ -51,15 +54,14 @@ const promptPack: PromptPack = {
   },
   summary: {
     total_prompts: 10,
-    unbranded_prompts: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
-    branded_prompts: COMPATIBILITY_COMPOSITION_COUNTS.branded,
+    unbranded_prompts: CANONICAL_COMPOSITION_COUNTS.unbranded,
+    branded_prompts: CANONICAL_COMPOSITION_COUNTS.branded,
   },
   prompts,
   self_check: {
     ten_prompts: true,
-    two_per_category: true,
-    five_unbranded: COMPATIBILITY_COMPOSITION_COUNTS.unbranded === 5,
-    five_branded: COMPATIBILITY_COMPOSITION_COUNTS.branded === 5,
+    one_prompt_per_slot: true,
+    canonical_composition: true,
     no_brand_leakage: true,
     verified_inputs_only: true,
     verified_competitor_only: true,

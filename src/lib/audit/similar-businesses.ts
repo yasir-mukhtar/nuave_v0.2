@@ -162,11 +162,6 @@ export function withPrimarySimilarBusiness(
     return {
       ...brief,
       similar_businesses: similarBusinesses,
-      verified_competitor: {
-        name: "",
-        scope: "",
-        source_url: "",
-      },
     };
   }
   return {

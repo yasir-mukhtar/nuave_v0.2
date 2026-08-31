@@ -1,9 +1,9 @@
 "use client";
 
-import { COMPATIBILITY_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
+import { CANONICAL_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
 
 export default function ReportPagePreview() {
-  const { unbranded, branded } = COMPATIBILITY_COMPOSITION_COUNTS;
+  const { unbranded, branded } = CANONICAL_COMPOSITION_COUNTS;
   return (
     <div className="w-[340px] h-[310px] rounded-[6px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden">
       {/* Report page header */}

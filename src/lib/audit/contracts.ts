@@ -10,14 +10,21 @@ import type {
 import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
 import { summarizeAuditTelemetry } from "./telemetry";
 import {
+  hasIndonesianComparisonRelation,
+  isCategoryComparisonFallback,
+  minimizeIndonesianBrief,
+} from "./questions-id";
+import {
   AUDIT_MEASUREMENT_MATRIX,
+  CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForPromptId,
-  measurementSlotsForCompatibilityAssessmentClass,
+  reportMeasurementSemantics,
+  type HistoricalPromptPackId,
 } from "./measurement-matrix";
 
 export {
   AUDIT_MEASUREMENT_MATRIX,
-  COMPATIBILITY_COMPOSITION_COUNTS,
+  CANONICAL_COMPOSITION_COUNTS,
   COMPARISON_RELATION_MARKERS,
   IDENTITY_POLICIES,
   PROMPT_MATRIX,
@@ -26,7 +33,6 @@ export {
   measurementSlotForOrder,
   measurementSlotForPromptId,
   measurementSlotsForAssessmentClass,
-  measurementSlotsForCompatibilityAssessmentClass,
 } from "./measurement-matrix";
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
@@ -178,32 +184,22 @@ function hasPromptContextValue(value: BusinessBrief[keyof BusinessBrief]) {
 export function promptQuestionSpecs(brief: BusinessBrief) {
   return AUDIT_MEASUREMENT_MATRIX.map((slot) => {
     const allowed_context = Object.fromEntries(
-      slot.legacyAllowedContextFields
+      slot.allowedContextFields
         .map((field) => [field, brief[field]] as const)
         .filter(([, value]) => hasPromptContextValue(value)),
     );
     return {
       prompt_id: slot.id,
-      category: slot.legacyCategory,
-      branded: slot.legacyBranded,
-      role: slot.legacyRole,
+      category: slot.category,
+      branded: slot.auditedBrandIdentity === "required",
+      role: slot.generatorSlotDescription,
       allowed_context,
-      canonical_category: slot.category,
       audited_brand_identity: slot.auditedBrandIdentity,
       comparison_target_identity: slot.comparisonTargetIdentity,
-      canonical_measurement_purpose: slot.measurementPurpose,
-      canonical_customer_facing_label: slot.customerFacingLabel,
-      canonical_report_assessment_class: slot.reportAssessmentClass,
-      canonical_generator_slot_description: slot.generatorSlotDescription,
-      measurement_purpose: slot.compatibilityMeasurementPurpose,
-      customer_facing_label: slot.compatibilityCustomerFacingLabel,
-      report_assessment_class: slot.compatibilityReportAssessmentClass,
-      generator_slot_description: slot.compatibilityMeasurementPurpose,
-      compatibility_customer_facing_label:
-        slot.compatibilityCustomerFacingLabel,
-      compatibility_measurement_purpose: slot.compatibilityMeasurementPurpose,
-      compatibility_report_assessment_class:
-        slot.compatibilityReportAssessmentClass,
+      measurement_purpose: slot.measurementPurpose,
+      customer_facing_label: slot.customerFacingLabel,
+      report_assessment_class: slot.reportAssessmentClass,
+      generator_slot_description: slot.generatorSlotDescription,
     };
   });
 }
@@ -253,28 +249,9 @@ export function assemblePromptPack(
     throw new Error(`Question generation failed review: ${errors.join(" ")}`);
   }
 
-  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
-    (slot) => !slot.legacyBranded,
-  ).length;
-  const expectedBranded = AUDIT_MEASUREMENT_MATRIX.filter(
-    (slot) => slot.legacyBranded,
-  ).length;
-  const expectedCategoryCounts = new Map<string, number>();
-  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
-    expectedCategoryCounts.set(
-      slot.legacyCategory,
-      (expectedCategoryCounts.get(slot.legacyCategory) ?? 0) + 1,
-    );
-  });
-  const actualCategoryCounts = new Map<string, number>();
-  prompts.forEach((prompt) => {
-    actualCategoryCounts.set(
-      prompt.category,
-      (actualCategoryCounts.get(prompt.category) ?? 0) + 1,
-    );
-  });
-  const categoryCountsMatch = [...expectedCategoryCounts].every(
-    ([category, count]) => actualCategoryCounts.get(category) === count,
+  const slotMetadataMatch = prompts.every(
+    (prompt, index) =>
+      prompt.category === AUDIT_MEASUREMENT_MATRIX[index]?.category,
   );
 
   return {
@@ -292,18 +269,18 @@ export function assemblePromptPack(
     },
     summary: {
       total_prompts: 10,
-      unbranded_prompts: expectedUnbranded,
-      branded_prompts: expectedBranded,
+      unbranded_prompts: CANONICAL_COMPOSITION_COUNTS.unbranded,
+      branded_prompts: CANONICAL_COMPOSITION_COUNTS.branded,
     },
     prompts,
     self_check: {
       ten_prompts: true,
-      two_per_category: categoryCountsMatch,
-      five_unbranded:
+      one_prompt_per_slot: slotMetadataMatch,
+      canonical_composition:
         prompts.filter((prompt) => !prompt.branded).length ===
-        expectedUnbranded,
-      five_branded:
-        prompts.filter((prompt) => prompt.branded).length === expectedBranded,
+          CANONICAL_COMPOSITION_COUNTS.unbranded &&
+        prompts.filter((prompt) => prompt.branded).length ===
+          CANONICAL_COMPOSITION_COUNTS.branded,
       no_brand_leakage: true,
       verified_inputs_only: true,
       verified_competitor_only: true,
@@ -415,6 +392,7 @@ export function assembleReportContent(
   synthesis: ReportSynthesis,
   observations: AuditObservation[],
   brief: BusinessBrief,
+  historicalFixtureId?: HistoricalPromptPackId,
 ): ReportContent {
   const promptIds = new Set(observations.map((item) => item.prompt_id));
   const assessmentIds = new Set(
@@ -475,6 +453,7 @@ export function assembleReportContent(
     },
     observations,
     brief,
+    historicalFixtureId,
   );
 }
 
@@ -482,6 +461,7 @@ export function normalizeReportEvidence(
   content: ReportContent,
   observations: AuditObservation[],
   brief: BusinessBrief,
+  historicalFixtureId?: HistoricalPromptPackId,
 ): ReportContent {
   const observationByPrompt = new Map(
     observations.map((observation) => [observation.prompt_id, observation]),
@@ -507,6 +487,14 @@ export function normalizeReportEvidence(
     const permittedSources = new Set(
       observation.sources.map((source) => source.url),
     );
+    const semantics = measurementSlot
+      ? reportMeasurementSemantics(
+          measurementSlot,
+          observation.category,
+          observation.branded,
+          historicalFixtureId,
+        )
+      : null;
 
     return {
       ...detail,
@@ -514,21 +502,20 @@ export function normalizeReportEvidence(
       appearance,
       recommendation:
         run === "failed" ||
-        measurementSlot?.compatibilityReportAssessmentClass !==
-          "recommendation" ||
+        semantics?.reportAssessmentClass !== "recommendation" ||
         appearance !== "mentioned"
           ? "not_assessed"
           : detail.recommendation,
       comparison:
         run === "failed"
           ? "not_assessed"
-          : measurementSlot?.compatibilityReportAssessmentClass !==
-                "comparison" || appearance !== "mentioned"
+          : semantics?.reportAssessmentClass !== "comparison" ||
+              appearance !== "mentioned"
             ? "not_observed"
             : detail.comparison,
       information:
         run === "failed" ||
-        measurementSlot?.compatibilityReportAssessmentClass !== "information" ||
+        semantics?.reportAssessmentClass !== "information" ||
         appearance !== "mentioned"
           ? "not_assessed"
           : detail.information,
@@ -667,11 +654,11 @@ export function validatePromptPack(
     if (!prompt) return;
     if (prompt.prompt_id !== slot.id)
       errors.push(`Question ${slot.order} has the wrong ID.`);
-    if (prompt.category !== slot.legacyCategory)
+    if (prompt.category !== slot.category)
       errors.push(`${slot.id} has the wrong category.`);
-    if (prompt.branded !== slot.legacyBranded)
+    if (prompt.branded !== (slot.auditedBrandIdentity === "required"))
       errors.push(`${slot.id} has the wrong branded status.`);
-    if (prompt.role !== slot.legacyRole)
+    if (prompt.role !== slot.generatorSlotDescription)
       errors.push(`${slot.id} has the wrong role.`);
     if (!prompt.question.trim())
       errors.push(`${slot.id} has an empty question.`);
@@ -680,27 +667,38 @@ export function validatePromptPack(
   const brandSignals = [brief.brand_name, ...brief.brand_name_variants]
     .map(normalize)
     .filter((value) => value.length >= 3);
-  prompts
-    .filter((prompt) => !prompt.branded)
-    .forEach((prompt) => {
+  const minimizedBrief = minimizeIndonesianBrief(brief);
+  prompts.forEach((prompt, index) => {
+    const slot = AUDIT_MEASUREMENT_MATRIX[index];
+    if (!slot) return;
+    const brandRequired = slot.auditedBrandIdentity === "required";
+    const brandMentioned = containsIdentity(prompt.question, [
+      brief.brand_name,
+      ...brief.brand_name_variants,
+    ]);
+    if (!brandRequired) {
       const question = normalize(prompt.question);
       if (brandSignals.some((signal) => question.includes(signal))) {
         errors.push(
           `${prompt.prompt_id} reveals the brand name or one of its variants.`,
         );
       }
-    });
+    }
+    if (brandRequired && !brandMentioned) {
+      errors.push(`${prompt.prompt_id} must mention the audited business.`);
+    }
+  });
 
   const competitorSignal = normalize(brief.verified_competitor.name);
-  const legacyComparisonPromptIds = new Set<string>(
-    AUDIT_MEASUREMENT_MATRIX.filter(
-      (slot) => slot.legacyComparisonTargetIdentity === "required",
-    ).map((slot) => slot.id),
-  );
-  prompts
-    .filter((prompt) => !legacyComparisonPromptIds.has(prompt.prompt_id))
-    .forEach((prompt) => {
+  const comparisonFallback =
+    isCategoryComparisonFallback(minimizedBrief) ||
+    !minimizedBrief.comparison_business?.name.trim();
+  prompts.forEach((prompt, index) => {
+    const slot = AUDIT_MEASUREMENT_MATRIX[index];
+    if (!slot) return;
+    if (slot.comparisonTargetIdentity === "forbidden") {
       if (
+        !comparisonFallback &&
         competitorSignal.length >= 3 &&
         normalize(prompt.question).includes(competitorSignal)
       ) {
@@ -708,7 +706,21 @@ export function validatePromptPack(
           `${prompt.prompt_id} reveals the competitor outside the designated comparison question.`,
         );
       }
-    });
+    } else if (
+      competitorSignal.length >= 3 &&
+      !normalize(prompt.question).includes(competitorSignal)
+    ) {
+      errors.push(`${prompt.prompt_id} must mention the comparison target.`);
+    }
+    if (
+      slot.category === "direct_comparison" &&
+      !hasIndonesianComparisonRelation(prompt.question, minimizedBrief)
+    ) {
+      errors.push(
+        `${prompt.prompt_id} must contain a valid comparison relation.`,
+      );
+    }
+  });
 
   const normalizedQuestions = prompts.map((prompt) =>
     normalize(prompt.question),
@@ -732,29 +744,14 @@ export function validatePromptPack(
     }
   });
 
-  const expectedCategoryCounts = new Map<string, number>();
-  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
-    expectedCategoryCounts.set(
-      slot.legacyCategory,
-      (expectedCategoryCounts.get(slot.legacyCategory) ?? 0) + 1,
-    );
-  });
-  const counts = new Map<string, number>();
-  prompts.forEach((prompt) =>
-    counts.set(prompt.category, (counts.get(prompt.category) ?? 0) + 1),
-  );
-  expectedCategoryCounts.forEach((expected, category) => {
-    if (counts.get(category) !== expected)
-      errors.push(
-        `The ${category} category must contain ${expected} questions.`,
-      );
-  });
-  const expectedBranded = AUDIT_MEASUREMENT_MATRIX.filter(
-    (slot) => slot.legacyBranded,
-  ).length;
-  if (prompts.filter((prompt) => prompt.branded).length !== expectedBranded) {
+  if (
+    prompts.filter((prompt) => !prompt.branded).length !==
+      CANONICAL_COMPOSITION_COUNTS.unbranded ||
+    prompts.filter((prompt) => prompt.branded).length !==
+      CANONICAL_COMPOSITION_COUNTS.branded
+  ) {
     errors.push(
-      `The audit must contain ${expectedBranded} branded and ${AUDIT_MEASUREMENT_MATRIX.length - expectedBranded} unbranded questions.`,
+      `The audit must contain ${CANONICAL_COMPOSITION_COUNTS.branded} branded and ${CANONICAL_COMPOSITION_COUNTS.unbranded} unbranded questions.`,
     );
   }
   return errors;
@@ -764,6 +761,7 @@ export function validateReportContent(
   content: ReportContent,
   observations: AuditObservation[],
   brief: BusinessBrief,
+  historicalFixtureId?: HistoricalPromptPackId,
 ): string[] {
   const errors: string[] = [];
   errors.push(...prohibitedClaimErrors(content));
@@ -777,7 +775,20 @@ export function validateReportContent(
         );
         return [];
       }
-      return [[observation.prompt_id, slot] as const];
+      return [
+        [
+          observation.prompt_id,
+          {
+            slot,
+            semantics: reportMeasurementSemantics(
+              slot,
+              observation.category,
+              observation.branded,
+              historicalFixtureId,
+            ),
+          },
+        ] as const,
+      ];
     }),
   );
   const validateIds = (ids: string[], label: string) => {
@@ -811,8 +822,9 @@ export function validateReportContent(
       (item) => item.prompt_id === detail.prompt_id,
     );
     if (!observation) return;
-    const measurementSlot = measurementSlots.get(detail.prompt_id);
-    if (!measurementSlot) return;
+    const measurementBinding = measurementSlots.get(detail.prompt_id);
+    if (!measurementBinding) return;
+    const { semantics } = measurementBinding;
     if (detail.prompt_id !== observations[index]?.prompt_id) {
       errors.push(`Detailed findings are out of order at ${detail.prompt_id}.`);
     }
@@ -821,34 +833,31 @@ export function validateReportContent(
         `${detail.prompt_id} report run status does not match the retained observation.`,
       );
     }
-    // The matrix owns the active pre-A3 interpretation path. Canonical R-01
-    // meaning remains available for A3, but cannot decide this report until
-    // the locked question text changes.
-    const compatibilityClass =
-      measurementSlot.compatibilityReportAssessmentClass;
+    // The matrix owns the active interpretation path for this canonical slot.
+    const assessmentClass = semantics.reportAssessmentClass;
     if (observation.run_status === "completed") {
       if (
-        compatibilityClass !== "recommendation" &&
+        assessmentClass !== "recommendation" &&
         detail.recommendation !== "not_assessed"
       ) {
         errors.push(
-          `${detail.prompt_id} carries recommendation semantics outside its pre-A3 compatibility path.`,
+          `${detail.prompt_id} carries recommendation semantics outside its matrix assessment path.`,
         );
       }
       if (
-        compatibilityClass !== "comparison" &&
+        assessmentClass !== "comparison" &&
         detail.comparison !== "not_observed"
       ) {
         errors.push(
-          `${detail.prompt_id} carries comparison semantics outside its pre-A3 compatibility path.`,
+          `${detail.prompt_id} carries comparison semantics outside its matrix assessment path.`,
         );
       }
       if (
-        compatibilityClass !== "information" &&
+        assessmentClass !== "information" &&
         detail.information !== "not_assessed"
       ) {
         errors.push(
-          `${detail.prompt_id} carries information semantics outside its pre-A3 compatibility path.`,
+          `${detail.prompt_id} carries information semantics outside its matrix assessment path.`,
         );
       }
     }
@@ -950,6 +959,15 @@ export function validateReportContent(
         (item) => item.prompt_id === promptId,
       );
       if (!detail || !observation) return false;
+      const slot = measurementSlotForPromptId(promptId);
+      const semantics = slot
+        ? reportMeasurementSemantics(
+            slot,
+            observation.category,
+            observation.branded,
+            historicalFixtureId,
+          )
+        : null;
       return (
         detail.run === "failed" ||
         detail.appearance === "absent" ||
@@ -957,8 +975,7 @@ export function validateReportContent(
         detail.information === "conflicting" ||
         detail.comparison === "competitor_preferred" ||
         (!observation.branded &&
-          measurementSlotForPromptId(promptId)
-            ?.compatibilityReportAssessmentClass === "recommendation" &&
+          semantics?.reportAssessmentClass === "recommendation" &&
           detail.recommendation === "not_recommended")
       );
     });
@@ -999,11 +1016,22 @@ export function validateReportContent(
     });
   });
   const informationResults = content.details
-    .filter(
-      (detail) =>
-        measurementSlotForPromptId(detail.prompt_id)
-          ?.compatibilityReportAssessmentClass === "information",
-    )
+    .filter((detail) => {
+      const observation = observations.find(
+        (item) => item.prompt_id === detail.prompt_id,
+      );
+      const slot = measurementSlotForPromptId(detail.prompt_id);
+      return (
+        observation !== undefined &&
+        slot !== undefined &&
+        reportMeasurementSemantics(
+          slot,
+          observation.category,
+          observation.branded,
+          historicalFixtureId,
+        ).reportAssessmentClass === "information"
+      );
+    })
     .map((detail) => detail.information);
   if (
     content.accuracy_status === "no_clear_issues" &&
@@ -1086,27 +1114,12 @@ export function buildAuditReport(
     response_id: "not recorded",
   },
   labels: AuditReportLabelPack = ENGLISH_AUDIT_REPORT_LABELS,
+  historicalFixtureId?: HistoricalPromptPackId,
 ): AuditReport {
   const details = new Map(
     content.details.map((detail) => [detail.prompt_id, detail]),
   );
   const detailFor = (id: string) => details.get(id);
-  const recommendationSlotIds = new Set(
-    measurementSlotsForCompatibilityAssessmentClass("recommendation").map(
-      (slot) => slot.id,
-    ),
-  );
-  const comparisonSlotIds = new Set(
-    measurementSlotsForCompatibilityAssessmentClass("comparison").map(
-      (slot) => slot.id,
-    ),
-  );
-  const informationSlotIds = new Set(
-    measurementSlotsForCompatibilityAssessmentClass("information").map(
-      (slot) => slot.id,
-    ),
-  );
-
   const records = observations.map((observation) => {
     const slot = measurementSlotForPromptId(observation.prompt_id);
     if (!slot) {
@@ -1114,7 +1127,17 @@ export function buildAuditReport(
         `Observation ${observation.prompt_id} does not map to a canonical measurement slot.`,
       );
     }
-    return { observation, slot, detail: detailFor(observation.prompt_id) };
+    return {
+      observation,
+      slot,
+      semantics: reportMeasurementSemantics(
+        slot,
+        observation.category,
+        observation.branded,
+        historicalFixtureId,
+      ),
+      detail: detailFor(observation.prompt_id),
+    };
   });
   const completed = records.filter(
     ({ observation }) => observation.run_status === "completed",
@@ -1127,8 +1150,8 @@ export function buildAuditReport(
   const completedBranded = branded.filter(
     ({ observation }) => observation.run_status === "completed",
   );
-  const discoveryRecords = unbranded.filter(({ slot }) =>
-    recommendationSlotIds.has(slot.id),
+  const discoveryRecords = unbranded.filter(
+    ({ semantics }) => semantics.reportAssessmentClass === "recommendation",
   );
 
   const failed = observations.length - completed.length;
@@ -1179,15 +1202,15 @@ export function buildAuditReport(
     ({ detail }) => detail?.appearance === "mentioned",
   );
   const recommendationAssessed = assessableRecords.filter(
-    ({ detail, slot }) =>
-      recommendationSlotIds.has(slot.id) &&
+    ({ detail, semantics }) =>
+      semantics.reportAssessmentClass === "recommendation" &&
       (["recommended", "not_recommended"] as const).includes(
         detail?.recommendation as "recommended" | "not_recommended",
       ),
   );
   const comparisonAssessed = assessableRecords.filter(
-    ({ detail, slot }) =>
-      comparisonSlotIds.has(slot.id) &&
+    ({ detail, semantics }) =>
+      semantics.reportAssessmentClass === "comparison" &&
       (
         [
           "client_preferred",
@@ -1202,8 +1225,8 @@ export function buildAuditReport(
       ),
   );
   const informationAssessed = assessableRecords.filter(
-    ({ detail, slot }) =>
-      informationSlotIds.has(slot.id) &&
+    ({ detail, semantics }) =>
+      semantics.reportAssessmentClass === "information" &&
       (["confirmed", "incomplete", "conflicting"] as const).includes(
         detail?.information as "confirmed" | "incomplete" | "conflicting",
       ),

@@ -23,8 +23,8 @@ function observations(): AuditObservation[] {
     if (!slot) throw new Error(`Missing canonical slot for ${prompt_id}`);
     return {
       prompt_id,
-      category: slot.legacyCategory,
-      branded: slot.legacyBranded,
+      category: slot.category,
+      branded: slot.auditedBrandIdentity === "required",
       question: "Pertanyaan uji.",
       system: "OpenAI Responses API",
       requested_model: "gpt-5.6",

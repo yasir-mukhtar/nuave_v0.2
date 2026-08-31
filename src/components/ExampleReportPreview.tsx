@@ -1,9 +1,9 @@
 "use client";
 
-import { COMPATIBILITY_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
+import { CANONICAL_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
 
 export default function ExampleReportPreview() {
-  const { unbranded, branded } = COMPATIBILITY_COMPOSITION_COUNTS;
+  const { unbranded, branded } = CANONICAL_COMPOSITION_COUNTS;
   return (
     <div
       id="contoh-laporan"

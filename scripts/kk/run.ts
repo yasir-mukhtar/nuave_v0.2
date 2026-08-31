@@ -68,13 +68,11 @@ import { runAuditObservations } from "../../src/lib/audit/run-orchestrator";
 import {
   buildDeterministicIndonesianPack,
   classifyIndonesianQuestion,
+  INDONESIAN_QUESTION_INSTRUCTION_VERSION,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
 } from "../../src/lib/audit/questions-id";
-import {
-  OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
-} from "../../src/lib/audit/contracts";
 import {
   measurementSlotForOrder,
 } from "../../src/lib/audit/measurement-matrix";
@@ -178,23 +176,18 @@ function brandIdentitySignals(brief: BusinessBrief) {
 // ---------------------------------------------------------------------------
 function buildLockedPrompts(
   questions: string[],
-  brief: BusinessBrief,
 ): AuditPrompt[] {
   return questions.map((text, index) => {
     const slot = measurementSlotForOrder(index + 1);
     if (!slot) throw new Error(`Question ${index + 1} has no matrix slot.`);
-    const branded = classifyIndonesianQuestion(
-      text,
-      minimizeIndonesianBrief(brief),
-    ) === "menyebut_bisnis_anda";
-    const inputs = [...slot.legacyAllowedContextFields];
+    const inputs = [...slot.allowedContextFields];
     return {
       prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-      category: slot.legacyCategory,
-      role: slot.legacyRole,
-      branded,
+      category: slot.category,
+      role: slot.generatorSlotDescription,
+      branded: slot.auditedBrandIdentity === "required",
       question: text,
-      rationale: `${slot.compatibilityMeasurementPurpose}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.measurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };
@@ -278,7 +271,7 @@ async function main() {
     provider_lock: {
       observation_and_report: "opencodego (OpenAI Responses API, gpt-5.6-luna)",
       question_generation: "deterministic Indonesian pack (no API call)",
-      instruction_version: OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
+      instruction_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
     },
     started_at: new Date().toISOString(),
   };
@@ -287,7 +280,7 @@ async function main() {
   const minimized = minimizeIndonesianBrief(KK_BRIEF);
   const questions = buildDeterministicIndonesianPack(minimized);
   const blockers = indonesianPackBlockers(questions, minimized);
-  const issues = validateIndonesianQuestionPack(questions, minimized);
+  const issues = validateCanonicalIndonesianQuestionPack(questions, minimized);
   if (blockers.length) {
     throw new Error(`Question pack blocked: ${blockers.join(" ")}`);
   }
@@ -295,10 +288,10 @@ async function main() {
     order: index + 1,
     text,
     classification: classifyIndonesianQuestion(text, minimized),
-    suggested_category: (() => {
+    category: (() => {
       const slot = measurementSlotForOrder(index + 1);
       if (!slot) throw new Error(`Question ${index + 1} has no matrix slot.`);
-      return slot.legacyCategory;
+      return slot.category;
     })(),
   }));
   writeFileSync(
@@ -322,7 +315,7 @@ async function main() {
   }
 
   // ================= 05 — Ten observations (1+2 retry orchestrator) ========
-  const prompts = buildLockedPrompts(questions, KK_BRIEF);
+  const prompts = buildLockedPrompts(questions);
   const budget: AuditBudget = { limit_usd: LIMIT_USD, carryover_cost_usd: 0, calls: [] };
   const events: AuditRunEvent[] = [];
   const runStartedAt = new Date().toISOString();

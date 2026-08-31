@@ -20,11 +20,12 @@ import {
   generateIndonesianQuestionPack,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
 } from "./questions-id";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
 import {
   AUDIT_MEASUREMENT_MATRIX,
+  CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForOrder,
 } from "./measurement-matrix";
 import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
@@ -176,7 +177,7 @@ export async function buildLiveIndonesianPromptPack(input: {
 
   const candidateTexts = selectedQuestions.map((item) => item.text);
   const candidateBlockers = indonesianPackBlockers(candidateTexts, minimized);
-  const candidateIssues = validateIndonesianQuestionPack(
+  const candidateIssues = validateCanonicalIndonesianQuestionPack(
     candidateTexts,
     minimized,
   );
@@ -185,9 +186,9 @@ export async function buildLiveIndonesianPromptPack(input: {
     minimized,
   );
 
-  // The default suggestion must truthfully satisfy the advertised 5/5 and
-  // Indonesian composition before customer editing. Customer edits after this
-  // boundary remain free to change the final balance.
+  // The default suggestion must truthfully satisfy the canonical composition
+  // and Indonesian contract before customer editing. Customer edits are
+  // checked again at the locked run/approval boundary.
   if (
     provenanceError ||
     candidateBlockers.length ||
@@ -206,7 +207,7 @@ export async function buildLiveIndonesianPromptPack(input: {
 
     const fallbackTexts = buildDeterministicIndonesianPack(minimized);
     const fallbackBlockers = indonesianPackBlockers(fallbackTexts, minimized);
-    const fallbackIssues = validateIndonesianQuestionPack(
+    const fallbackIssues = validateCanonicalIndonesianQuestionPack(
       fallbackTexts,
       minimized,
     );
@@ -300,26 +301,15 @@ export async function buildLiveIndonesianPromptPack(input: {
     selectedQuestions.map((item) => item.text),
     minimized,
   );
-  const expectedCategoryCounts = new Map<string, number>();
-  AUDIT_MEASUREMENT_MATRIX.forEach((slot) => {
-    expectedCategoryCounts.set(
-      slot.legacyCategory,
-      (expectedCategoryCounts.get(slot.legacyCategory) ?? 0) + 1,
-    );
-  });
-  const actualCategoryCounts = new Map<string, number>();
-  selectedQuestions.forEach((item) => {
-    actualCategoryCounts.set(
-      item.suggested_category,
-      (actualCategoryCounts.get(item.suggested_category) ?? 0) + 1,
-    );
-  });
-  const categoryCountsMatch = [...expectedCategoryCounts].every(
-    ([category, count]) => actualCategoryCounts.get(category) === count,
+  const slotMetadataMatches = selectedQuestions.every(
+    (item, index) =>
+      item.category === AUDIT_MEASUREMENT_MATRIX[index]?.category,
   );
-  const expectedUnbranded = AUDIT_MEASUREMENT_MATRIX.filter(
-    (slot) => !slot.legacyBranded,
-  ).length;
+  const canonicalCompositionMatches =
+    classificationSummary.tanpa_menyebut_bisnis_anda ===
+      CANONICAL_COMPOSITION_COUNTS.unbranded &&
+    classificationSummary.menyebut_bisnis_anda ===
+      CANONICAL_COMPOSITION_COUNTS.branded;
 
   const pack: PromptPack = {
     status: "draft_for_review",
@@ -348,11 +338,11 @@ export async function buildLiveIndonesianPromptPack(input: {
       }
       return {
         prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-        category: item.suggested_category,
-        role: slot.legacyRole,
+        category: slot.category,
+        role: slot.generatorSlotDescription,
         branded: item.final_classification === "menyebut_bisnis_anda",
         question: item.text,
-        rationale: slot.legacyRole,
+        rationale: slot.measurementPurpose,
         // The provider receives one minimized confirmed-facts record. Do not
         // claim three specific fields were used when the authored question may
         // have been grounded in different confirmed fields.
@@ -362,12 +352,8 @@ export async function buildLiveIndonesianPromptPack(input: {
     }),
     self_check: {
       ten_prompts: selectedQuestions.length === 10,
-      two_per_category: categoryCountsMatch,
-      five_unbranded:
-        classificationSummary.tanpa_menyebut_bisnis_anda === expectedUnbranded,
-      five_branded:
-        classificationSummary.menyebut_bisnis_anda ===
-        AUDIT_MEASUREMENT_MATRIX.length - expectedUnbranded,
+      one_prompt_per_slot: slotMetadataMatches,
+      canonical_composition: canonicalCompositionMatches,
       no_brand_leakage: selectedBlockers.length === 0,
       verified_inputs_only: true,
       verified_competitor_only: true,

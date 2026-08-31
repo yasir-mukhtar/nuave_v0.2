@@ -34,9 +34,10 @@ import type {
 } from "@/lib/audit/types";
 import {
   AUDIT_MEASUREMENT_MATRIX,
-  COMPATIBILITY_COMPOSITION_COUNTS,
+  CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForPromptId,
 } from "@/lib/audit/measurement-matrix";
+import { INDONESIAN_PURPOSE_DRIFT_WARNING } from "@/lib/audit/questions-id";
 import SimilarBusinessesEditor from "./SimilarBusinessesEditor";
 import styles from "./audit.module.css";
 
@@ -630,10 +631,9 @@ export function BriefStep({
         </div>
         <div className={styles.actionRow}>
           <p>
-            Nuave builds {COMPATIBILITY_COMPOSITION_COUNTS.unbranded} unbranded
-            and {COMPATIBILITY_COMPOSITION_COUNTS.branded} branded questions
-            from these verified facts. This step makes no API call and costs
-            nothing.
+            Nuave builds {CANONICAL_COMPOSITION_COUNTS.unbranded} unbranded and{" "}
+            {CANONICAL_COMPOSITION_COUNTS.branded} branded questions from these
+            verified facts. This step makes no API call and costs nothing.
           </p>
           <Button
             variant="default"
@@ -690,13 +690,16 @@ export function QuestionsStep({
       />
       <div className={styles.summaryChips}>
         <Badge variant="secondary">
-          {COMPATIBILITY_COMPOSITION_COUNTS.unbranded} unbranded
+          {CANONICAL_COMPOSITION_COUNTS.unbranded} unbranded
         </Badge>
         <Badge variant="default">
-          {COMPATIBILITY_COMPOSITION_COUNTS.branded} branded
+          {CANONICAL_COMPOSITION_COUNTS.branded} branded
         </Badge>
         <Badge variant="outline">Target: ChatGPT</Badge>
       </div>
+      <WarningAlert title="Tujuan setiap slot tetap ditetapkan Nuave">
+        <p>{INDONESIAN_PURPOSE_DRIFT_WARNING}</p>
+      </WarningAlert>
       {pack.warnings.length ? (
         <WarningAlert title="Question generator warning">
           {pack.warnings.join(" ")}
@@ -714,8 +717,8 @@ export function QuestionsStep({
             <StageSection
               key={slot.id}
               id={sectionId}
-              title={slot.compatibilityCustomerFacingLabel}
-              description={slot.compatibilityMeasurementPurpose}
+              title={slot.customerFacingLabel}
+              description={slot.measurementPurpose}
               className={styles.promptSection}
             >
               <FieldGroup
@@ -724,8 +727,16 @@ export function QuestionsStep({
               >
                 <Field>
                   <div className={styles.promptMeta}>
-                    <Badge variant={prompt.branded ? "default" : "secondary"}>
-                      {prompt.branded ? "Branded" : "Unbranded"}
+                    <Badge
+                      variant={
+                        slot.auditedBrandIdentity === "required"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {slot.auditedBrandIdentity === "required"
+                        ? "Branded"
+                        : "Unbranded"}
                     </Badge>
                     <code>{prompt.prompt_id}</code>
                   </div>
@@ -740,7 +751,7 @@ export function QuestionsStep({
                     onChange={(event) => onEdit(index, event.target.value)}
                   />
                   <FieldDescription id={rationaleId}>
-                    {slot.compatibilityMeasurementPurpose}
+                    {slot.measurementPurpose}
                   </FieldDescription>
                 </Field>
               </FieldGroup>

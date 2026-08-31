@@ -1,8 +1,10 @@
 import type {
+  AuditPrompt,
   BusinessBrief,
   CanonicalPromptCategory,
   LegacyPromptCategory,
 } from "./types";
+import { legacyPromptCategories } from "./types";
 
 export const IDENTITY_POLICIES = ["forbidden", "required"] as const;
 export type IdentityPolicy = (typeof IDENTITY_POLICIES)[number];
@@ -54,17 +56,16 @@ export type PromptMeasurementSlot = {
   reportAssessmentClass: ReportAssessmentClass;
   generatorSlotDescription: string;
   /**
-   * Compatibility projection for the still-running pre-A3 5/5 questions.
-   * These fields describe the question that is actually executed today;
-   * canonical R-01 fields above remain the A3 target semantics.
+   * Read-only historical projection for frozen pre-A3 5/5 records. Current
+   * generation and report paths never use these fields.
    */
   compatibilityCustomerFacingLabel: string;
   compatibilityMeasurementPurpose: string;
   compatibilityReportAssessmentClass: ReportAssessmentClass;
   allowedContextFields: readonly (keyof BusinessBrief)[];
   /**
-   * Compatibility metadata for the still-running pre-A3 5/5 path. It is a
-   * derived view of the old contract, not a second measurement authority.
+   * Historical metadata for frozen pre-A3 records. It is a derived view of
+   * the old contract, not a second measurement authority.
    */
   legacyCategory: LegacyPromptCategory;
   legacyBranded: boolean;
@@ -83,10 +84,9 @@ export type PromptMeasurementSlot = {
  * The first-class fields describe the approved V1 model: six unnamed slots,
  * four named slots, and one direct comparison slot that requires both parties
  * plus an explicit comparison relation. The `compatibility*` and `legacy*`
- * fields are bounded compatibility projections for the current 5/5
- * implementation while A2/A3 migrate its consumers and flip the composition.
- * They are kept in this same object so no policy is duplicated in a parallel
- * positional table.
+ * fields are bounded read-only projections for frozen pre-A3 records. They
+ * are kept in this same object so historical adapters do not create a second
+ * measurement authority.
  */
 export const AUDIT_MEASUREMENT_MATRIX = [
   {
@@ -427,9 +427,100 @@ export const AUDIT_MEASUREMENT_MATRIX = [
 export type CanonicalMeasurementSlot =
   (typeof AUDIT_MEASUREMENT_MATRIX)[number];
 
+export const HISTORICAL_PROMPT_PACK_IDS = [
+  "northstar-report-golden-v1",
+  "kopi-taman-senja-v1",
+] as const;
+export type HistoricalPromptPackId =
+  (typeof HISTORICAL_PROMPT_PACK_IDS)[number];
+
+export type ReportMeasurementSemantics = {
+  reportAssessmentClass: ReportAssessmentClass;
+  customerFacingLabel: string;
+  measurementPurpose: string;
+};
+
+/**
+ * Resolve report semantics from the matrix. The legacy branch is a read-only
+ * adapter for frozen pre-A3 observations; current canonical observations use
+ * the first-class fields above.
+ */
+export function reportMeasurementSemantics(
+  slot: CanonicalMeasurementSlot,
+  category: AuditPrompt["category"],
+  branded: boolean,
+  historicalFixtureId?: HistoricalPromptPackId,
+): ReportMeasurementSemantics {
+  if (
+    historicalFixtureId !== undefined &&
+    HISTORICAL_PROMPT_PACK_IDS.includes(historicalFixtureId) &&
+    category === slot.legacyCategory &&
+    branded === slot.legacyBranded
+  ) {
+    return {
+      reportAssessmentClass: slot.compatibilityReportAssessmentClass,
+      customerFacingLabel: slot.compatibilityCustomerFacingLabel,
+      measurementPurpose: slot.compatibilityMeasurementPurpose,
+    };
+  }
+  return {
+    reportAssessmentClass: slot.reportAssessmentClass,
+    customerFacingLabel: slot.customerFacingLabel,
+    measurementPurpose: slot.measurementPurpose,
+  };
+}
+
+/** Composition counts derived from the canonical identity policies. */
+export const CANONICAL_COMPOSITION_COUNTS = {
+  unbranded: AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.auditedBrandIdentity === "forbidden",
+  ).length,
+  branded: AUDIT_MEASUREMENT_MATRIX.filter(
+    (slot) => slot.auditedBrandIdentity === "required",
+  ).length,
+} as const;
+
 /** Slot lookup by order is an ordering operation, not a policy definition. */
 export function measurementSlotForOrder(order: number) {
   return AUDIT_MEASUREMENT_MATRIX.find((slot) => slot.order === order);
+}
+
+/**
+ * Explicit adapter predicate for frozen pre-A3 prompt packs. It is strict so
+ * current canonical packs cannot accidentally enter the historical path.
+ */
+export function isHistoricalPromptPack(
+  prompts: AuditPrompt[],
+  historicalFixtureId?: HistoricalPromptPackId,
+) {
+  return isHistoricalPromptPackForId(prompts, historicalFixtureId);
+}
+
+export function isHistoricalPromptPackForId(
+  prompts: AuditPrompt[],
+  historicalFixtureId: HistoricalPromptPackId | undefined,
+) {
+  return (
+    historicalFixtureId !== undefined &&
+    HISTORICAL_PROMPT_PACK_IDS.includes(historicalFixtureId) &&
+    prompts.length === AUDIT_MEASUREMENT_MATRIX.length &&
+    prompts.every((prompt, index) => {
+      const slot = measurementSlotForOrder(index + 1);
+      return (
+        slot !== undefined &&
+        legacyPromptCategoryIsPresent(prompt.category) &&
+        prompt.category === slot.legacyCategory &&
+        prompt.role === slot.legacyRole &&
+        prompt.branded === slot.legacyBranded
+      );
+    })
+  );
+}
+
+function legacyPromptCategoryIsPresent(
+  category: AuditPrompt["category"],
+): category is LegacyPromptCategory {
+  return legacyPromptCategories.includes(category as LegacyPromptCategory);
 }
 
 export function measurementSlotForId(id: string) {
@@ -466,7 +557,7 @@ export function measurementSlotsForAssessmentClass(
   );
 }
 
-/** Slots grouped by their matrix-owned pre-A3 compatibility interpretation. */
+/** Slots grouped by their matrix-owned historical interpretation. */
 export function measurementSlotsForCompatibilityAssessmentClass(
   assessmentClass: ReportAssessmentClass,
 ) {
@@ -476,9 +567,8 @@ export function measurementSlotsForCompatibilityAssessmentClass(
 }
 
 /**
- * Temporary composition counts for the pre-A3 compatibility path. These are
- * derived from the matrix's compatibility projection and intentionally remain
- * five unnamed plus five named until A3 changes the supported pack.
+ * Historical composition counts for frozen pre-A3 records. These are derived
+ * from the matrix's legacy projection and never validate a current pack.
  */
 export const COMPATIBILITY_COMPOSITION_COUNTS = {
   unbranded: AUDIT_MEASUREMENT_MATRIX.filter((slot) => !slot.legacyBranded)
@@ -486,24 +576,23 @@ export const COMPATIBILITY_COMPOSITION_COUNTS = {
   branded: AUDIT_MEASUREMENT_MATRIX.filter((slot) => slot.legacyBranded).length,
 } as const;
 
-export type LegacyPromptMatrixRow = readonly [
+export type PromptMatrixRow = readonly [
   id: string,
-  category: LegacyPromptCategory,
+  category: CanonicalPromptCategory,
   branded: boolean,
   role: string,
 ];
 
 /**
- * Temporary compatibility projection for callers that still consume the old
- * four-item tuple. It is derived exclusively from the canonical matrix and is
- * not a place to define policy.
+ * Matrix-derived four-item tuple retained for older transport callers. It is
+ * canonical in A3; legacy metadata is not used to define this active tuple.
  */
 export const PROMPT_MATRIX = AUDIT_MEASUREMENT_MATRIX.map(
   (slot) =>
     [
       slot.id,
-      slot.legacyCategory,
-      slot.legacyBranded,
-      slot.legacyRole,
+      slot.category,
+      slot.auditedBrandIdentity === "required",
+      slot.generatorSlotDescription,
     ] as const,
-) as readonly LegacyPromptMatrixRow[];
+) as readonly PromptMatrixRow[];

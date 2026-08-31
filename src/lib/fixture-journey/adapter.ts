@@ -30,8 +30,8 @@
  * `recommendation: "not_assessed"` for observations 07-10. Those values pass
  * through unchanged. Report aggregation resolves each observation to its
  * matrix slot and counts only the dimension declared by that slot's
- * `compatibilityReportAssessmentClass`; the frozen dimensions themselves are never
- * modified.
+ * `compatibilityReportAssessmentClass`; this compatibility branch is
+ * historical-only and the frozen dimensions themselves are never modified.
  */
 import type {
   AuditObservation,
@@ -130,15 +130,19 @@ export const fixtureJourneyContext = {
   },
 } as const;
 
+/** Visible boundary for the immutable pre-A3 fixture chain. */
+export const HISTORICAL_FIXTURE_NOTICE =
+  "Contoh historis: paket pertanyaan v1 memakai komposisi 5 tanpa nama dan 5 menyebut nama. Ini bukan susunan aktif A3.";
+
 /** Plain-language explanation of the two question classes (Indonesian). */
 export const questionClassExplanations = {
   unbranded: {
     label: "Tanpa menyebut bisnis Anda",
-    detail: `${COMPATIBILITY_COMPOSITION_COUNTS.unbranded} pertanyaan ini tidak menyebut nama ${KOPI_TAMAN_SENJA_BUSINESS_NAME}. Pertanyaan ini meniru yang diketik calon pelanggan saat mencari kedai kopi di Dago, Bandung, dan menguji apakah bisnis muncul tanpa nama disebut.`,
+    detail: `Contoh historis v1: ${COMPATIBILITY_COMPOSITION_COUNTS.unbranded} pertanyaan ini tidak menyebut nama ${KOPI_TAMAN_SENJA_BUSINESS_NAME}. Pertanyaan ini meniru yang diketik calon pelanggan saat mencari kedai kopi di Dago, Bandung, dan menguji apakah bisnis muncul tanpa nama disebut.`,
   },
   branded: {
     label: "Menyebut bisnis Anda",
-    detail: `${COMPATIBILITY_COMPOSITION_COUNTS.branded} pertanyaan ini menyebut nama ${KOPI_TAMAN_SENJA_BUSINESS_NAME}. Pertanyaan ini menguji apa yang dikatakan model AI tentang bisnis saat calon pelanggan sudah mengenalnya, yaitu apakah informasinya akurat, konsisten, dan mudah digunakan.`,
+    detail: `Contoh historis v1: ${COMPATIBILITY_COMPOSITION_COUNTS.branded} pertanyaan ini menyebut nama ${KOPI_TAMAN_SENJA_BUSINESS_NAME}. Pertanyaan ini menguji apa yang dikatakan model AI tentang bisnis saat calon pelanggan sudah mengenalnya, yaitu apakah informasinya akurat, konsisten, dan mudah digunakan.`,
   },
 } as const;
 
@@ -414,8 +418,8 @@ export const kopiTamanSenjaPrompts: AuditPrompt[] = questions.questions.map(
     const slot = measurementSlotForFixtureOrder(question.order);
     return {
       prompt_id: promptIdOf(question.order),
-      // AuditPrompt remains a legacy-shaped compatibility record until A3;
-      // all report meaning below comes from the matrix compatibility projection.
+      // This explicit historical adapter preserves the legacy-shaped record;
+      // its report meaning comes from the matrix compatibility projection.
       category: slot.legacyCategory,
       role: slot.legacyRole,
       branded: question.final_classification === "menyebut_bisnis_anda",
@@ -492,7 +496,8 @@ export const kopiTamanSenjaBrief: BusinessBrief = {
 // superiority/ranking/guarantee/forecast language, no praise. Every finding
 // and action references the exact frozen observations that support it, and
 // the arithmetic follows `kopiTamanSenjaMeasures`; composition totals remain
-// the matrix-derived 5/5 compatibility projection until A3.
+// the matrix-derived 5/5 compatibility projection because this is the frozen
+// v1 record; the active A3 pack uses canonical composition and semantics.
 // ---------------------------------------------------------------------------
 
 /** Indonesian, evidence-led finding text for one observation row. */
