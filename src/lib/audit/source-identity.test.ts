@@ -222,4 +222,20 @@ describe("source identity metadata", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect(destinationRateLimiter.limit).toHaveBeenCalledTimes(2);
   });
+
+  it("returns unavailable protection when the destination limiter throws", async () => {
+    const destinationRateLimiter = {
+      limit: vi.fn().mockRejectedValue(new Error("binding unavailable")),
+    };
+    const fetchImpl = vi.fn<typeof fetch>();
+
+    await expect(
+      fetchSourceIdentity(
+        { sourceType: "website", normalizedUrl: "https://business.example/" },
+        identityOptions(fetchImpl, destinationRateLimiter),
+      ),
+    ).rejects.toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(destinationRateLimiter.limit).toHaveBeenCalledTimes(1);
+  });
 });

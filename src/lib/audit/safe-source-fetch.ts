@@ -288,37 +288,46 @@ function parseHttpUrl(input: string | URL): URL {
   return parsed;
 }
 
+function sourceTimeoutError(): SafeSourceFetchError {
+  return new SafeSourceFetchError(
+    "TIMEOUT",
+    "Membaca sumber membutuhkan waktu terlalu lama.",
+  );
+}
+
+async function awaitBeforeDeadline<T>(
+  operation: () => Promise<T>,
+  deadline: number,
+  now: () => number,
+): Promise<T> {
+  const remaining = deadline - now();
+  if (remaining <= 0) throw sourceTimeoutError();
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation(),
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(sourceTimeoutError()), remaining);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 async function resolveFamily(
   resolver: (hostname: string) => Promise<readonly string[]>,
   hostname: string,
   deadline: number,
   now: () => number,
 ): Promise<readonly string[]> {
-  const remaining = deadline - now();
-  if (remaining <= 0) {
-    throw new SafeSourceFetchError(
-      "TIMEOUT",
-      "Membaca sumber membutuhkan waktu terlalu lama.",
-    );
-  }
-
-  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const answers = await Promise.race([
-      resolver(hostname),
-      new Promise<readonly string[]>((_, reject) => {
-        timer = setTimeout(
-          () =>
-            reject(
-              new SafeSourceFetchError(
-                "TIMEOUT",
-                "Membaca sumber membutuhkan waktu terlalu lama.",
-              ),
-            ),
-          remaining,
-        );
-      }),
-    ]);
+    const answers = await awaitBeforeDeadline(
+      () => resolver(hostname),
+      deadline,
+      now,
+    );
     if (!Array.isArray(answers)) {
       throw new Error("DNS resolver returned an invalid answer.");
     }
@@ -330,8 +339,6 @@ async function resolveFamily(
       "DNS_FAILURE",
       "The source hostname could not be checked.",
     );
-  } finally {
-    if (timer !== undefined) clearTimeout(timer);
   }
 }
 
@@ -549,6 +556,8 @@ function isAbortError(error: unknown): boolean {
 async function consumeDestinationRateLimit(
   limiter: SourceDestinationRateLimiter,
   hostname: string,
+  deadline: number,
+  now: () => number,
 ): Promise<void> {
   if (!limiter || typeof limiter.limit !== "function") {
     throw new SafeSourceFetchError(
@@ -558,7 +567,11 @@ async function consumeDestinationRateLimit(
   }
 
   try {
-    const result = await limiter.limit({ key: hostname });
+    const result = await awaitBeforeDeadline(
+      () => limiter.limit({ key: hostname }),
+      deadline,
+      now,
+    );
     if (result?.success === true) return;
     if (result?.success === false) {
       throw new SafeSourceFetchError(
@@ -627,7 +640,12 @@ export async function safeFetchPublicResource(
 
     // Keep this call directly before fetch: every submitted, redirect, and icon
     // destination gets its own hostname charge.
-    await consumeDestinationRateLimit(options.destinationRateLimiter, hostname);
+    await consumeDestinationRateLimit(
+      options.destinationRateLimiter,
+      hostname,
+      startedAt + SOURCE_TOTAL_TIMEOUT_MS,
+      now,
+    );
 
     const remainingBeforeFetch = SOURCE_TOTAL_TIMEOUT_MS - (now() - startedAt);
     if (remainingBeforeFetch <= 0) {

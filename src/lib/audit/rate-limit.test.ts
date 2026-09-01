@@ -209,6 +209,28 @@ describe("D1 route rate limits", () => {
     expect(mocks.fetchSourceIdentity).not.toHaveBeenCalled();
   });
 
+  it("returns unavailable protection when the extraction caller limiter throws in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const extractCaller = {
+      limit: vi.fn().mockRejectedValue(new Error("binding unavailable")),
+    };
+    setCloudflareBindings({ extractCaller });
+
+    const response = await extractPOST(
+      new Request("https://nuave.test/api/audit/extract", {
+        method: "POST",
+        headers: { "CF-Connecting-IP": "198.51.100.15" },
+        body: "not inspected",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
+    expect(mocks.assertConfigured).not.toHaveBeenCalled();
+    expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
   it("fails closed in production when an identity binding is missing", async () => {
     vi.stubEnv("NODE_ENV", "production");
     const identityCaller = rateLimiter();

@@ -178,6 +178,42 @@ describe("safe public source fetch DNS preflight", () => {
     });
     expect(options.fetchImpl).not.toHaveBeenCalled();
   });
+
+  it("bounds a hanging destination limiter by the remaining total deadline", async () => {
+    const options = safeFetchOptions({
+      now: vi
+        .fn()
+        .mockReturnValueOnce(0)
+        .mockReturnValue(SOURCE_TOTAL_TIMEOUT_MS - 1),
+      destinationRateLimiter: {
+        limit: vi.fn(() => new Promise<{ success: boolean }>(() => {})),
+      },
+    });
+
+    const outcome = await Promise.race([
+      safeFetchPublicResource("https://hanging-limiter.example", options).then(
+        () => ({ kind: "resolved" as const }),
+        (error: unknown) => ({
+          kind: "error" as const,
+          code:
+            error instanceof SafeSourceFetchError
+              ? error.code
+              : error instanceof Error
+                ? error.message
+                : String(error),
+        }),
+      ),
+      new Promise<{ kind: "hung" }>((resolve) =>
+        setTimeout(() => resolve({ kind: "hung" }), 50),
+      ),
+    ]);
+
+    expect(outcome).toEqual({
+      kind: "error",
+      code: "TIMEOUT",
+    });
+    expect(options.fetchImpl).not.toHaveBeenCalled();
+  });
 });
 
 describe("safe public source reserved-address policy", () => {
