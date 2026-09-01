@@ -47,17 +47,23 @@ function IntakeActions({
   onNext,
   nextLabel = "Lanjut",
   busy = false,
+  showBack = true,
 }: {
   onBack: () => void;
   onNext: () => void;
   nextLabel?: string;
   busy?: boolean;
+  showBack?: boolean;
 }) {
   return (
     <div className={styles.stickyAction}>
-      <Button variant="ghost" type="button" onClick={onBack}>
-        <IconArrowLeft /> Kembali
-      </Button>
+      {showBack ? (
+        <Button variant="ghost" type="button" onClick={onBack}>
+          <IconArrowLeft /> Kembali
+        </Button>
+      ) : (
+        <span aria-hidden="true" />
+      )}
       <Button variant="default" type="button" onClick={onNext} disabled={busy}>
         {busy ? (
           <IconLoader2 className="animate-spin" aria-hidden="true" />
@@ -147,7 +153,7 @@ function StageIntro({
   return (
     <header className={styles.stageIntro} tabIndex={-1} id={`stage-${number}`}>
       <p className={styles.stageMeta}>
-        Step {number} of 4 <span aria-hidden="true">·</span> {eyebrow}
+        Langkah {number} dari 4 <span aria-hidden="true">·</span> {eyebrow}
       </p>
       <h1>{title}</h1>
       <p>{description}</p>
@@ -648,7 +654,6 @@ export function B1BriefStep({
   onAcceptComparison,
   onContinue,
   onBack,
-  onBackToSource,
   onGenerate,
 }: {
   brief: BusinessBrief;
@@ -677,7 +682,6 @@ export function B1BriefStep({
   onAcceptComparison: (input: ComparisonTargetInput) => void;
   onContinue: (screen: IntakeScreen) => void;
   onBack: (screen: IntakeScreen) => void;
-  onBackToSource: () => void;
   onGenerate: () => void;
 }) {
   const [correctionSource, setCorrectionSource] = useState(
@@ -688,7 +692,7 @@ export function B1BriefStep({
   );
 
   const titleByScreen: Record<IntakeScreen, string> = {
-    "brand-confirm": "Check the client brief before it shapes the audit.",
+    "brand-confirm": "Periksa brief brand Anda.",
     "source-correction": "Perbaiki sumber dan nama brand.",
     scope: "Tentukan cakupan audit.",
     branch: "Lengkapi cabang atau lokasi.",
@@ -703,7 +707,7 @@ export function B1BriefStep({
   };
   const descriptionByScreen: Record<IntakeScreen, string> = {
     "brand-confirm":
-      "Detail ini adalah draft, bukan fakta terverifikasi. Perbaiki yang keliru, lengkapi yang kosong, lalu konfirmasi brief.",
+      "Detail ini adalah draft, bukan fakta terverifikasi. Perbaiki yang keliru, lengkapi yang kosong, lalu konfirmasi informasi brand Anda.",
     "source-correction":
       "Nuave akan membaca ulang sumber yang Anda pilih. Perubahan sumber menjalankan satu ekstraksi pengganti; perubahan nama saja tidak memanggil ekstraksi baru.",
     scope:
@@ -742,20 +746,19 @@ export function B1BriefStep({
 
   return (
     <section className={`${styles.workspace} ${styles.workspaceWide}`}>
-      <Button
-        variant="ghost"
-        onClick={
-          screen === "brand-confirm" ? onBackToSource : () => onBack(screen)
-        }
-        className={styles.backButton}
-        type="button"
-      >
-        <IconArrowLeft />{" "}
-        {screen === "brand-confirm" ? "Change website" : "Kembali"}
-      </Button>
+      {screen !== "brand-confirm" ? (
+        <Button
+          variant="ghost"
+          onClick={() => onBack(screen)}
+          className={styles.backButton}
+          type="button"
+        >
+          <IconArrowLeft /> Kembali
+        </Button>
+      ) : null}
       <StageIntro
         number={2}
-        eyebrow="Verify facts"
+        eyebrow="Periksa fakta"
         title={titleByScreen[screen]}
         description={descriptionByScreen[screen]}
       />
@@ -783,7 +786,7 @@ export function B1BriefStep({
             >
               <TextInput
                 id="brand-name"
-                label="Brand name"
+                label="Nama brand"
                 required
                 value={brief.brand_name}
                 error={error("brand_name")}
@@ -843,8 +846,9 @@ export function B1BriefStep({
             </div>
           </StageSection>
           <IntakeActions
-            onBack={onBackToSource}
+            onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
+            showBack={false}
             busy={Boolean(busy)}
           />
         </>
@@ -1044,7 +1048,7 @@ export function B1BriefStep({
             ) : null}
             <TextInput
               id="category"
-              label="Category"
+              label="Kategori"
               required
               value={brief.category}
               error={error("category")}
@@ -1073,12 +1077,12 @@ export function B1BriefStep({
         <>
           <StageSection
             id="market-heading"
-            title="Market atau lokasi"
+            title="Konteks pasar"
             description={workflowMetaDescription(scopeKind)}
           >
             <TextInput
               id="market-context"
-              label="Market or location"
+              label="Konteks pasar"
               required
               value={brief.market_context}
               error={error("market_context")}
@@ -1114,7 +1118,7 @@ export function B1BriefStep({
           >
             <LongInput
               id="target-customer"
-              label="Target customer"
+              label="Target pelanggan"
               required
               value={brief.target_customer}
               error={error("target_customer")}
@@ -1133,7 +1137,7 @@ export function B1BriefStep({
             <div className={styles.gridTwo}>
               <LineListInput
                 id="customer-needs"
-                label="Customer needs"
+                label="Kebutuhan pelanggan"
                 required
                 value={brief.verified_customer_needs}
                 error={error("verified_customer_needs")}
@@ -1153,7 +1157,7 @@ export function B1BriefStep({
               />
               <LineListInput
                 id="decision-criteria"
-                label="Decision criteria"
+                label="Pertimbangan keputusan"
                 required
                 value={brief.verified_decision_criteria}
                 error={error("verified_decision_criteria")}
@@ -1186,7 +1190,7 @@ export function B1BriefStep({
           <StageSection id="offerings-heading" title="Produk atau layanan">
             <LineListInput
               id="verified-offerings"
-              label="Products or services"
+              label="Produk atau layanan"
               required
               value={brief.verified_offerings}
               error={error("verified_offerings")}
@@ -1206,7 +1210,7 @@ export function B1BriefStep({
               onChange={(value) => updateBrief("verified_offerings", value)}
             />
             <Field>
-              <FieldLabel>Priority offering</FieldLabel>
+              <FieldLabel>Penawaran utama</FieldLabel>
               <FieldDescription>
                 {brief.priority_offering ||
                   "Akan diturunkan dari item pertama yang terisi."}
@@ -1288,7 +1292,7 @@ export function B1BriefStep({
         <>
           <StageSection
             id="review-heading"
-            title="Review brief"
+            title="Tinjau informasi brand Anda sebelum membuat pertanyaan."
             description="Konfirmasi ini adalah tindakan eksplisit. Berpindah layar tidak mengonfirmasi brief."
           >
             {preservedEntries.length ? (
@@ -1315,7 +1319,7 @@ export function B1BriefStep({
             ) : null}
             <dl className={styles.factList}>
               <div className={styles.factRow}>
-                <dt className={styles.factLabel}>Brand</dt>
+                <dt className={styles.factLabel}>Nama brand</dt>
                 <dd className={styles.factValue}>{brief.brand_name}</dd>
               </div>
               <div className={styles.factRow}>
@@ -1333,15 +1337,15 @@ export function B1BriefStep({
                 <dd className={styles.factValue}>{brief.category}</dd>
               </div>
               <div className={styles.factRow}>
-                <dt className={styles.factLabel}>Market</dt>
+                <dt className={styles.factLabel}>Konteks pasar</dt>
                 <dd className={styles.factValue}>{brief.market_context}</dd>
               </div>
               <div className={styles.factRow}>
-                <dt className={styles.factLabel}>Priority offering</dt>
+                <dt className={styles.factLabel}>Penawaran utama</dt>
                 <dd className={styles.factValue}>{brief.priority_offering}</dd>
               </div>
               <div className={styles.factRow}>
-                <dt className={styles.factLabel}>Comparison target</dt>
+                <dt className={styles.factLabel}>Bisnis pembanding</dt>
                 <dd className={styles.factValue}>
                   {brief.verified_competitor.name || "Belum dikonfirmasi"}
                 </dd>
@@ -1417,20 +1421,22 @@ export function QuestionsStep({
   return (
     <section className={`${styles.workspace} ${styles.workspaceWide}`}>
       <Button variant="ghost" onClick={onBack} className={styles.backButton}>
-        <IconArrowLeft /> Back to client brief
+        <IconArrowLeft /> Kembali ke informasi brand
       </Button>
       <StageIntro
         number={3}
-        eyebrow="Review questions"
-        title="Review the ten questions before you run the audit."
-        description={`Unbranded questions must not hint at ${brandName}. Each question runs as a separate observation.`}
+        eyebrow="Periksa pertanyaan"
+        title="Periksa pertanyaan audit"
+        description={`Pertanyaan tanpa nama brand tidak boleh mengarah ke ${brandName}. Setiap pertanyaan diperiksa sebagai jawaban terpisah.`}
       />
       <div className={styles.summaryChips}>
         <Badge variant="secondary">
-          {CANONICAL_COMPOSITION_COUNTS.unbranded} unbranded
+          <span>Tanpa menyebut bisnis Anda</span>
+          <span>{CANONICAL_COMPOSITION_COUNTS.unbranded}</span>
         </Badge>
         <Badge variant="default">
-          {CANONICAL_COMPOSITION_COUNTS.branded} branded
+          <span>Menyebut bisnis Anda</span>
+          <span>{CANONICAL_COMPOSITION_COUNTS.branded}</span>
         </Badge>
         <Badge variant="outline">Target: ChatGPT</Badge>
       </div>
@@ -1438,7 +1444,7 @@ export function QuestionsStep({
         <p>{INDONESIAN_PURPOSE_DRIFT_WARNING}</p>
       </WarningAlert>
       {pack.warnings.length ? (
-        <WarningAlert title="Question generator warning">
+        <WarningAlert title="Catatan pembuatan pertanyaan">
           {pack.warnings.join(" ")}
         </WarningAlert>
       ) : null}
@@ -1478,7 +1484,7 @@ export function QuestionsStep({
                     <code>{prompt.prompt_id}</code>
                   </div>
                   <FieldLabel htmlFor={questionId}>
-                    Question {slot.order}
+                    Pertanyaan {slot.order}
                   </FieldLabel>
                   <Textarea
                     id={questionId}
@@ -1498,13 +1504,13 @@ export function QuestionsStep({
       </div>
       <div className={styles.stickyAction}>
         <div>
-          <strong>Ready to run 10 independent observations</strong>
+          <strong>Siap menjalankan 10 pertanyaan</strong>
           <span>
-            The client brief and questions lock when the audit starts.
+            Informasi brand dan pertanyaan terkunci saat audit dimulai.
           </span>
         </div>
         <Button variant="default" onClick={onRun} disabled={Boolean(busy)}>
-          <IconSparkles /> Run the audit
+          <IconSparkles /> Jalankan audit
         </Button>
       </div>
     </section>

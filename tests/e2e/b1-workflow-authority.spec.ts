@@ -73,9 +73,9 @@ async function goToComparison(page: Page) {
   for (const heading of [
     "Tentukan cakupan audit.",
     "Pilih kategori brand.",
-    "Jelaskan konteks pasar.",
-    "Kenali pelanggan dan alasannya.",
     "Pilih produk atau layanan yang diverifikasi.",
+    "Kenali pelanggan dan alasannya.",
+    "Jelaskan konteks pasar.",
   ]) {
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
@@ -140,7 +140,7 @@ test.describe("B1 workflow authority", () => {
     await page.goto("/audit");
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
 
@@ -164,22 +164,22 @@ test.describe("B1 workflow authority", () => {
     ).toBeVisible();
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
-      page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
+      page.getByRole("heading", {
+        name: "Pilih produk atau layanan yang diverifikasi.",
+      }),
     ).toBeVisible();
-    await page.getByLabel("Market or location*").fill("Bandung, Indonesia");
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
       page.getByRole("heading", { name: "Kenali pelanggan dan alasannya." }),
     ).toBeVisible();
     await page
-      .getByLabel("Target customer*")
+      .getByLabel("Target pelanggan*")
       .fill("Pelanggan yang bekerja malam hari");
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
-      page.getByRole("heading", {
-        name: "Pilih produk atau layanan yang diverifikasi.",
-      }),
+      page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
     ).toBeVisible();
+    await page.getByLabel("Konteks pasar*").fill("Bandung, Indonesia");
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
       page.getByRole("heading", {
@@ -191,13 +191,13 @@ test.describe("B1 workflow authority", () => {
     expect(saved.brief.verified_competitor.name).toBe("Peer Coffee");
 
     for (const heading of [
-      "Pilih produk atau layanan yang diverifikasi.",
-      "Kenali pelanggan dan alasannya.",
       "Jelaskan konteks pasar.",
+      "Kenali pelanggan dan alasannya.",
+      "Pilih produk atau layanan yang diverifikasi.",
       "Pilih kategori brand.",
       "Lengkapi cabang atau lokasi.",
       "Tentukan cakupan audit.",
-      "Check the client brief before it shapes the audit.",
+      "Periksa brief brand Anda.",
     ]) {
       await page.getByRole("button", { name: "Kembali" }).first().click();
       await expect(page.getByRole("heading", { name: heading })).toBeVisible();
@@ -213,7 +213,7 @@ test.describe("B1 workflow authority", () => {
     await page.getByRole("button", { name: "Baca ulang sumber" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
 
@@ -264,7 +264,7 @@ test.describe("B1 workflow authority", () => {
     await page.getByRole("button", { name: "Baca ulang sumber" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     expect(extractionRequests).toHaveLength(1);
@@ -273,9 +273,9 @@ test.describe("B1 workflow authority", () => {
       "Tentukan cakupan audit.",
       "Lengkapi cabang atau lokasi.",
       "Pilih kategori brand.",
-      "Jelaskan konteks pasar.",
-      "Kenali pelanggan dan alasannya.",
       "Pilih produk atau layanan yang diverifikasi.",
+      "Kenali pelanggan dan alasannya.",
+      "Jelaskan konteks pasar.",
       "Pilih bisnis pembanding yang realistis.",
     ]) {
       await page.getByRole("button", { name: "Lanjut" }).click();
@@ -297,7 +297,7 @@ test.describe("B1 workflow authority", () => {
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Tinjau brief sebelum membuat pertanyaan.",
+        name: "Tinjau informasi brand Anda sebelum membuat pertanyaan.",
       }),
     ).toBeVisible();
     const preservedNotice = page
@@ -361,7 +361,7 @@ test.describe("B1 workflow authority", () => {
     await page.getByRole("button", { name: "Baca ulang sumber" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
 
@@ -414,7 +414,7 @@ test.describe("B1 workflow authority", () => {
     await page.getByRole("button", { name: "Baca ulang sumber" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     expect(postCount).toBe(0);
@@ -435,7 +435,7 @@ test.describe("B1 workflow authority", () => {
     await page.goto("/audit");
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     await goToComparison(page);
@@ -455,6 +455,21 @@ test.describe("B1 workflow authority", () => {
       source_url: "",
     });
     expect(saved.meta.comparisonStatus).toBe("confirmed");
+
+    await page.getByLabel("Nama bisnis pembanding*").fill("Replacement Coffee");
+    await page
+      .getByLabel("Sumber URL (opsional)")
+      .fill("https://replacement.example");
+    await page
+      .getByRole("button", { name: "Simpan bisnis pembanding" })
+      .click();
+    saved = await readWorkflow(page);
+    expect(saved.brief.verified_competitor).toEqual({
+      name: "Replacement Coffee",
+      scope: "",
+      source_url: "https://replacement.example/",
+    });
+    expect(saved.meta.comparisonStatus).toBe("confirmed");
   });
 
   test("changing scope kind clears stale branch value, offerings, and market context", async ({
@@ -472,7 +487,7 @@ test.describe("B1 workflow authority", () => {
     await page.goto("/audit");
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Lanjut" }).click();
@@ -534,16 +549,16 @@ test.describe("B1 workflow authority", () => {
         { exact: true },
       ),
     ).toBeVisible();
-    await page.getByLabel("Category*").fill("Coffee shop");
+    await page.getByLabel("Kategori*").fill("Coffee shop");
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     await expect(
       page.getByText(
-        "Nuave belum menemukan konteks pasar dari sumber ini. Isi konteks pasar yang benar untuk melanjutkan.",
+        "Nuave belum menemukan produk atau layanan dari sumber ini. Isi setidaknya satu produk atau layanan untuk melanjutkan.",
         { exact: true },
       ),
     ).toBeVisible();
-    await page.getByLabel("Market or location*").fill("Indonesia");
+    await page.getByLabel("Produk atau layanan*").fill("Coffee");
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     await expect(
@@ -564,18 +579,18 @@ test.describe("B1 workflow authority", () => {
         { exact: true },
       ),
     ).toBeVisible();
-    await page.getByLabel("Target customer*").fill("Customers");
-    await page.getByLabel("Customer needs*").fill("A place to work");
-    await page.getByLabel("Decision criteria*").fill("Location");
+    await page.getByLabel("Target pelanggan*").fill("Customers");
+    await page.getByLabel("Kebutuhan pelanggan*").fill("A place to work");
+    await page.getByLabel("Pertimbangan keputusan*").fill("Location");
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     await expect(
       page.getByText(
-        "Nuave belum menemukan produk atau layanan dari sumber ini. Isi setidaknya satu produk atau layanan untuk melanjutkan.",
+        "Nuave belum menemukan konteks pasar dari sumber ini. Isi konteks pasar yang benar untuk melanjutkan.",
         { exact: true },
       ),
     ).toBeVisible();
-    await page.getByLabel("Products or services*").fill("Coffee");
+    await page.getByLabel("Konteks pasar*").fill("Indonesia");
     await page.getByRole("button", { name: "Lanjut" }).click();
     await page
       .getByRole("button", { name: "Gunakan alternatif kategori" })
@@ -608,7 +623,7 @@ test.describe("B1 workflow authority", () => {
       meta: { ...initialState.meta, intakeScreen: "market" as const },
     });
     await page.goto("/audit");
-    const marketInput = page.getByLabel("Market or location*");
+    const marketInput = page.getByLabel("Konteks pasar*");
     await expect(marketInput).toBeVisible();
     const next = page.getByRole("button", { name: "Lanjut" });
     await expect(next).toBeEnabled();
@@ -637,7 +652,7 @@ test.describe("B1 workflow authority", () => {
     await page.goto("/audit");
     await expect(
       page.getByRole("heading", {
-        name: "Tinjau brief sebelum membuat pertanyaan.",
+        name: "Tinjau informasi brand Anda sebelum membuat pertanyaan.",
       }),
     ).toBeVisible();
     await page
@@ -646,7 +661,7 @@ test.describe("B1 workflow authority", () => {
     await expect(
       page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
     ).toBeVisible();
-    await expect(page.getByLabel("Market or location*")).toBeFocused();
+    await expect(page.getByLabel("Konteks pasar*")).toBeFocused();
   });
 
   test("routes a persisted missing official source to a focusable correction control", async ({

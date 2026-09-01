@@ -165,6 +165,37 @@ async function expectTouchTarget(locator: Locator, label: string) {
   ).toBeGreaterThanOrEqual(44);
 }
 
+async function completeLandingCheckout(
+  page: Page,
+  email = "owner@example.com",
+) {
+  await page
+    .getByRole("button", { name: "Lanjut ke ringkasan pesanan" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Ringkasan pesanan" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Ringkasan pesanan" })
+      .getByText("Rp99.000", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Email penerima laporan*").fill(email);
+  await page.getByRole("button", { name: "Lanjut ke pembayaran" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Simulasi pembayaran" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Memproses simulasi pembayaran" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Pembayaran simulasi selesai" }),
+  ).toBeVisible();
+}
+
 test.beforeEach(async ({ page }) => {
   await grantAccess(page);
 });
@@ -185,7 +216,7 @@ test.describe("C1 landing payment boundary", () => {
     });
     await expect(
       hero.getByRole("heading", {
-        name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
+        name: "Cek bisnis Anda di AI",
       }),
     ).toBeVisible();
     await expect(hero.getByPlaceholder("https://bisnisanda.com")).toBeVisible();
@@ -206,7 +237,7 @@ test.describe("C1 landing payment boundary", () => {
       name: "Mulai audit visibilitas AI",
     });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("not a website");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
 
     await expect(
       hero.getByText(
@@ -227,7 +258,7 @@ test.describe("C1 landing payment boundary", () => {
       name: "Mulai audit visibilitas AI",
     });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
@@ -248,14 +279,17 @@ test.describe("C1 landing payment boundary", () => {
     ).toBeNull();
 
     await page
-      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .getByRole("button", { name: "Lanjut ke ringkasan pesanan" })
       .click();
     await expect(
-      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Kembali ke pratinjau identitas" })
-      .click();
+    await expect(
+      page
+        .getByRole("region", { name: "Ringkasan pesanan" })
+        .getByText("Rp99.000", { exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Kembali ke pratinjau" }).click();
     await expect(
       page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
     ).toBeVisible();
@@ -282,17 +316,11 @@ test.describe("C1 landing payment boundary", () => {
       name: "Mulai audit visibilitas AI",
     });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
     await expect(
       page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
-      .click();
-    await expect(
-      page.getByRole("heading", { name: "Simulasi pembayaran" }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+    await completeLandingCheckout(page);
     await expect(
       page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
         exact: true,
@@ -312,13 +340,21 @@ test.describe("C1 landing payment boundary", () => {
         (key) => window.sessionStorage.getItem(key),
         AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
       ),
-    ).toBe(SOURCE);
+    ).toBeNull();
 
     await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
-    await expect(page).toHaveURL(/\/audit$/);
+    await expect(page).toHaveURL(/\/audit\/v2\?entry=landing-paid$/);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (key) => window.sessionStorage.getItem(key),
+          AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+        ),
+      )
+      .toBeNull();
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     await expect.poll(calls.extractCalls).toBe(1);
@@ -352,12 +388,13 @@ test.describe("C1 landing payment boundary", () => {
       name: "Mulai audit visibilitas AI",
     });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
-    await page
-      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
-      .click();
-    await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+    await completeLandingCheckout(page);
     await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
+    await expect(page).toHaveURL(/\/audit\/v2\?entry=landing-paid$/);
 
     await expect.poll(calls.extractCalls).toBe(1);
     await expect(
@@ -367,13 +404,13 @@ test.describe("C1 landing payment boundary", () => {
       ),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Simulasikan pembayaran" }),
+      page.getByRole("button", { name: "Selesaikan simulasi pembayaran" }),
     ).toHaveCount(0);
 
     await page.getByRole("button", { name: "Lanjutkan audit" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     await expect.poll(calls.extractCalls).toBe(2);
@@ -389,11 +426,11 @@ test.describe("C1 landing payment boundary", () => {
       name: "Mulai audit visibilitas AI",
     });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
 
     await expect(
       hero.getByText(
-        "Sumber bisnis belum dapat dianalisis. Periksa sumber lalu coba lagi.",
+        "Sumber publik belum dapat dibaca. Periksa link lalu coba lagi.",
         { exact: true },
       ),
     ).toBeVisible();
@@ -413,24 +450,36 @@ test.describe("C1 landing payment boundary", () => {
       name: "Mulai audit visibilitas AI",
     });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
     await expect(
       page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
     ).toBeVisible();
     await expect(
-      page.getByText("Nama brand belum dapat dipastikan dari sumber ini.", {
-        exact: true,
-      }),
+      page.getByText(/Nama brand belum dapat dipastikan dari sumber ini\./),
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .getByRole("button", { name: "Lanjut ke ringkasan pesanan" })
       .click();
-    await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
+    ).toBeVisible();
+    await page.getByLabel("Email penerima laporan*").fill("owner@example.com");
+    await page.getByRole("button", { name: "Lanjut ke pembayaran" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Pembayaran simulasi selesai" }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
+    await expect(page).toHaveURL(/\/audit\/v2\?entry=landing-paid$/);
 
     await expect(
       page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
+        name: "Periksa brief brand Anda.",
       }),
     ).toBeVisible();
     await expect.poll(calls.extractCalls).toBe(1);
@@ -499,7 +548,7 @@ test.describe("C1 landing payment boundary", () => {
       .fill("example.com");
     await page
       .getByRole("region", { name: "Mulai audit visibilitas AI" })
-      .getByRole("button", { name: "Lanjutkan audit" })
+      .getByRole("button", { name: "Cek bisnis saya di AI" })
       .click();
     await expect(
       page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
@@ -541,7 +590,7 @@ test.describe("C1 landing payment boundary", () => {
       await expectNoHorizontalScroll(page);
       await hero
         .getByRole("heading", {
-          name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
+          name: "Cek bisnis Anda di AI",
         })
         .scrollIntoViewIfNeeded();
       await expectNoHorizontalScroll(page);
@@ -565,7 +614,7 @@ test.describe("C1 mobile touch targets", () => {
       name: "Mulai audit visibilitas AI",
     });
     await expectTouchTarget(
-      hero.getByRole("button", { name: "Lanjutkan audit" }),
+      hero.getByRole("button", { name: "Cek bisnis saya di AI" }),
       "source submit",
     );
     await expectTouchTarget(
@@ -583,21 +632,39 @@ test.describe("C1 mobile touch targets", () => {
     await expect(sheetClose).toHaveCount(0);
 
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
     await expect(
       page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
     ).toBeVisible();
     await expectTouchTarget(
-      page.getByRole("button", { name: "Lanjut ke simulasi pembayaran" }),
+      page.getByRole("button", { name: "Lanjut ke ringkasan pesanan" }),
       "preview continue",
     );
     await page
-      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .getByRole("button", { name: "Lanjut ke ringkasan pesanan" })
       .click();
+    await expect(
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
+    ).toBeVisible();
+    await page.getByLabel("Email penerima laporan*").fill("owner@example.com");
     await expectTouchTarget(
-      page.getByRole("button", { name: "Simulasikan pembayaran" }),
+      page.getByRole("button", { name: "Lanjut ke pembayaran" }),
+      "order continue",
+    );
+    await page.getByRole("button", { name: "Lanjut ke pembayaran" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeVisible();
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Selesaikan simulasi pembayaran" }),
       "simulated payment",
     );
+    await page
+      .getByRole("button", { name: "Selesaikan simulasi pembayaran" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Pembayaran simulasi selesai" }),
+    ).toBeVisible();
     expect(calls.extractCalls()).toBe(0);
   });
 
@@ -628,4 +695,43 @@ test.describe("C1 mobile touch targets", () => {
       "Spec004 example action",
     );
   });
+});
+
+test("E1 pre-payment actions remain touch-sized on desktop", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await stubIdentityAndExtraction(page);
+  await page.goto("/");
+  const hero = page.getByRole("region", {
+    name: "Mulai audit visibilitas AI",
+  });
+  await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+  await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+  ).toBeVisible();
+  await expectTouchTarget(
+    page.getByRole("button", { name: "Lanjut ke ringkasan pesanan" }),
+    "desktop preview continue",
+  );
+  await page
+    .getByRole("button", { name: "Lanjut ke ringkasan pesanan" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Ringkasan pesanan" }),
+  ).toBeVisible();
+  await page.getByLabel("Email penerima laporan*").fill("owner@example.com");
+  await expectTouchTarget(
+    page.getByRole("button", { name: "Lanjut ke pembayaran" }),
+    "desktop order continue",
+  );
+  await page.getByRole("button", { name: "Lanjut ke pembayaran" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Simulasi pembayaran" }),
+  ).toBeVisible();
+  await expectTouchTarget(
+    page.getByRole("button", { name: "Selesaikan simulasi pembayaran" }),
+    "desktop simulated payment",
+  );
 });

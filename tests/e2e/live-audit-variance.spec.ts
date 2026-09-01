@@ -347,7 +347,7 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
 
     await page.goto("/audit");
     await expect.poll(budgetCalls).toBe(1);
-    await page.getByRole("button", { name: "Run the audit" }).click();
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
     await waitForStorage(page, VARIANCE_STORAGE_KEY);
     await expect(
       page.getByRole("button", { name: "Cetak / simpan PDF" }).first(),
@@ -440,7 +440,7 @@ test.describe("live audit variance orchestration (Spec 003 R-22)", () => {
 
     await page.goto("/audit");
     await expect.poll(budgetCalls).toBe(1);
-    await page.getByRole("button", { name: "Run the audit" }).click();
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
     await waitForStorage(page, VARIANCE_FAILURE_STORAGE_KEY);
 
     expect(runCalls()).toBe(1);

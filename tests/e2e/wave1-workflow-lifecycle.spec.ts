@@ -163,10 +163,15 @@ test("initial run POST rejection keeps the reviewed questions retryable", async 
   });
 
   await page.goto("/audit");
-  const runButton = page.getByRole("button", { name: "Run the audit" });
+  const runButton = page.getByRole("button", { name: "Jalankan audit" });
   await expect(runButton).toBeVisible();
   await runButton.click();
-  await expect(page.getByText("Synthetic pre-stream rejection.")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Audit terhenti sebelum selesai. Coba lanjutkan dari hasil yang sudah tersimpan.",
+      { exact: true },
+    ),
+  ).toBeVisible();
   await expect(runButton).toBeVisible();
   expect(runCalls).toBe(1);
 
