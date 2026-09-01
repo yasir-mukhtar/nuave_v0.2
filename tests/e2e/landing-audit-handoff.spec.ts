@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "../../src/lib/audit/source-handoff";
 import { AUDIT_WORKFLOW_STORAGE_KEY } from "../../src/lib/audit/workflow-storage";
 import {
   VARIANCE_FAILURE_STORAGE_KEY,
@@ -14,7 +15,7 @@ import {
 
 const SOURCE = "https://example.com/";
 
-function extractionDraft() {
+function extractionDraft(overrides: Record<string, unknown> = {}) {
   return {
     brand_name: "Example Business",
     entity_scope: "Example Business",
@@ -36,22 +37,39 @@ function extractionDraft() {
     regulated_category_notes: "",
     evidence: [],
     warnings: [],
+    ...overrides,
   };
 }
 
-async function stubExtraction(
+async function stubIdentityAndExtraction(
   page: Page,
-  options: { holdPost?: boolean } = {},
+  options: { confidence?: boolean; failFirstExtraction?: boolean } = {},
 ) {
+  let identityCalls = 0;
+  let identitySource = "";
   let budgetCalls = 0;
   let extractCalls = 0;
+  let failNextExtraction = options.failFirstExtraction === true;
   let requestedSource = "";
-  let releasePost: (() => void) | null = null;
-  const postGate = options.holdPost
-    ? new Promise<void>((resolve) => {
-        releasePost = resolve;
-      })
-    : null;
+  let requestedBody: Record<string, unknown> | null = null;
+
+  await page.route("**/api/audit/identity*", async (route) => {
+    identityCalls += 1;
+    identitySource =
+      new URL(route.request().url()).searchParams.get("source") ?? "";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        display_name: options.confidence === false ? "" : "Example Business",
+        description: "Coffee shop",
+        canonical_url: SOURCE,
+        icon_data_url: null,
+        source_type: "website",
+        confidence: options.confidence !== false,
+      }),
+    });
+  });
 
   await page.route("**/api/audit/extract", async (route) => {
     const method = route.request().method();
@@ -71,15 +89,29 @@ async function stubExtraction(
 
     if (method === "POST") {
       extractCalls += 1;
-      const request = route.request().postDataJSON() as {
-        website_url?: string;
-      };
-      requestedSource = request.website_url ?? "";
-      if (postGate) await postGate;
+      requestedBody = route.request().postDataJSON() as Record<string, unknown>;
+      requestedSource = String(requestedBody.website_url ?? "");
+      if (failNextExtraction) {
+        failNextExtraction = false;
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: "Synthetic extraction failure.",
+            code: "EXTRACTION_TRANSIENT_FAILURE",
+            telemetry: [],
+          }),
+        });
+        return;
+      }
+      const draft =
+        options.confidence === false
+          ? extractionDraft({ brand_name: "" })
+          : extractionDraft();
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ draft: extractionDraft(), telemetry: [] }),
+        body: JSON.stringify({ draft, telemetry: [] }),
       });
       return;
     }
@@ -88,10 +120,36 @@ async function stubExtraction(
   });
 
   return {
+    identityCalls: () => identityCalls,
+    identitySource: () => identitySource,
     budgetCalls: () => budgetCalls,
     extractCalls: () => extractCalls,
     requestedSource: () => requestedSource,
-    releasePost: () => releasePost?.(),
+    requestedBody: () => requestedBody,
+  };
+}
+
+async function stubIdentityFailure(page: Page) {
+  let identityCalls = 0;
+  let extractCalls = 0;
+  await page.route("**/api/audit/identity*", async (route) => {
+    identityCalls += 1;
+    await route.fulfill({
+      status: 400,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Kami tidak dapat membaca sumber publik ini.",
+        code: "SOURCE_UNAVAILABLE",
+      }),
+    });
+  });
+  await page.route("**/api/audit/extract", async (route) => {
+    if (route.request().method() === "POST") extractCalls += 1;
+    await route.abort();
+  });
+  return {
+    identityCalls: () => identityCalls,
+    extractCalls: () => extractCalls,
   };
 }
 
@@ -111,7 +169,7 @@ test.beforeEach(async ({ page }) => {
   await grantAccess(page);
 });
 
-test.describe("landing audit hero handoff", () => {
+test.describe("C1 landing payment boundary", () => {
   test("landing stays side-effect free until the user submits", async ({
     page,
   }) => {
@@ -159,42 +217,10 @@ test.describe("landing audit hero handoff", () => {
     expect(auditRequests).toBe(0);
   });
 
-  test("valid submission remains on landing while extraction is pending", async ({
+  test("valid submission calls identity only and preview back/edit stays pre-payment", async ({
     page,
   }) => {
-    const calls = await stubExtraction(page, { holdPost: true });
-
-    await page.goto("/");
-    const hero = page.getByRole("region", {
-      name: "Mulai audit visibilitas AI",
-    });
-    const input = hero.getByPlaceholder("https://bisnisanda.com");
-    const submit = hero.getByRole("button", { name: "Lanjutkan audit" });
-    await input.fill("example.com");
-    await submit.click();
-
-    await expect.poll(calls.extractCalls).toBe(1);
-    expect(calls.requestedSource()).toBe(SOURCE);
-    expect(new URL(page.url()).pathname).toBe("/");
-    await expect(hero).toBeVisible();
-    await expect(input).toBeDisabled();
-    await expect(submit).toBeDisabled();
-    await expect(submit).toHaveAttribute("aria-busy", "true");
-    await expect(
-      page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
-      }),
-    ).toHaveCount(0);
-    expect(calls.extractCalls()).toBe(1);
-
-    calls.releasePost();
-    await expect(page).toHaveURL(/\/audit$/);
-  });
-
-  test("successful extraction navigates once through the populated B1 screens without re-extracting", async ({
-    page,
-  }) => {
-    const calls = await stubExtraction(page);
+    const calls = await stubIdentityAndExtraction(page);
 
     await page.goto("/");
     const hero = page.getByRole("region", {
@@ -203,129 +229,252 @@ test.describe("landing audit hero handoff", () => {
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
 
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Example Business", { exact: true }),
+    ).toBeVisible();
+    expect(calls.identityCalls()).toBe(1);
+    expect(calls.identitySource()).toBe(SOURCE);
+    expect(calls.budgetCalls()).toBe(0);
+    expect(calls.extractCalls()).toBe(0);
+    expect(new URL(page.url()).pathname).toBe("/");
+    expect(
+      await page.evaluate(
+        (key) => window.sessionStorage.getItem(key),
+        AUDIT_WORKFLOW_STORAGE_KEY,
+      ),
+    ).toBeNull();
+
+    await page
+      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Kembali ke pratinjau identitas" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+    expect(calls.extractCalls()).toBe(0);
+  });
+
+  test("simulated success precedes one authoritative initial extraction", async ({
+    page,
+  }) => {
+    const calls = await stubIdentityAndExtraction(page);
+    const requestSequence: string[] = [];
+    page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/audit/identity") {
+        requestSequence.push(`identity:${request.method()}`);
+      }
+      if (pathname === "/api/audit/extract") {
+        requestSequence.push(`extract:${request.method()}`);
+      }
+    });
+
+    await page.goto("/");
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
+    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+    await expect(
+      page.getByText("Pembayaran simulasi selesai. Tidak ada tagihan.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    expect(calls.extractCalls()).toBe(0);
+    expect(calls.budgetCalls()).toBe(0);
+    expect(
+      await page.evaluate(
+        (key) => window.sessionStorage.getItem(key),
+        AUDIT_WORKFLOW_STORAGE_KEY,
+      ),
+    ).toBeNull();
+    expect(
+      await page.evaluate(
+        (key) => window.sessionStorage.getItem(key),
+        AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      ),
+    ).toBe(SOURCE);
+
+    await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
     await expect(page).toHaveURL(/\/audit$/);
     await expect(
       page.getByRole("heading", {
         name: "Check the client brief before it shapes the audit.",
       }),
     ).toBeVisible();
-    const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
-    await expect(brandNameInput).toHaveValue("Example Business");
-
-    await brandNameInput.fill("Edited Example Business");
-    await expect(brandNameInput).toHaveValue("Edited Example Business");
-
-    await page.getByRole("button", { name: "Lanjut" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Tentukan cakupan audit." }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Lanjut" }).click();
-
-    await expect(
-      page.getByRole("heading", { name: "Pilih kategori brand." }),
-    ).toBeVisible();
-    await expect(page.getByRole("textbox", { name: "Category*" })).toHaveValue(
-      "Coffee shop",
-    );
-    await page.getByRole("button", { name: "Lanjut" }).click();
-
-    await expect(
-      page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("textbox", { name: "Market or location*" }),
-    ).toHaveValue("Indonesia");
-    await page.getByRole("button", { name: "Lanjut" }).click();
-
-    await expect(
-      page.getByRole("heading", { name: "Kenali pelanggan dan alasannya." }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("textbox", { name: "Target customer*" }),
-    ).toHaveValue("Customers");
-    await expect(
-      page.getByRole("textbox", { name: "Customer needs*" }),
-    ).toHaveValue("A place to work");
-    await expect(
-      page.getByRole("textbox", { name: "Decision criteria*" }),
-    ).toHaveValue("Location");
-    await page.getByRole("button", { name: "Lanjut" }).click();
-
-    await expect(
-      page.getByRole("heading", {
-        name: "Pilih produk atau layanan yang diverifikasi.",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("textbox", { name: "Products or services*" }),
-    ).toHaveValue("Coffee");
-    await page.getByRole("button", { name: "Lanjut" }).click();
-
-    await expect(
-      page.getByRole("heading", {
-        name: "Pilih bisnis pembanding yang realistis.",
-      }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Terima saran Nuave" }).click();
-    await expect(
-      page.getByRole("group", { name: "Saran Nuave" }).getByText("Peer Coffee"),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Lanjut" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Tambahkan fakta opsional." }),
-    ).toBeVisible();
-
-    expect(calls.extractCalls()).toBe(1);
+    await expect.poll(calls.extractCalls).toBe(1);
+    expect(calls.budgetCalls()).toBeGreaterThanOrEqual(1);
+    expect(calls.requestedSource()).toBe(SOURCE);
+    expect(calls.requestedBody()).toMatchObject({
+      website_url: SOURCE,
+      brand_name: "",
+      identity_unverified: true,
+    });
     await page.waitForTimeout(300);
     expect(calls.extractCalls()).toBe(1);
+    expect(requestSequence[0]).toBe("identity:GET");
+    const extractEvents = requestSequence.slice(1);
+    expect(extractEvents.filter((event) => event === "extract:POST")).toEqual([
+      "extract:POST",
+    ]);
+    expect(
+      extractEvents.slice(0, -1).every((event) => event === "extract:GET"),
+    ).toBe(true);
   });
 
-  test("a stale saved audit cannot win over a new landing extraction", async ({
+  test("post-payment extraction failure retries in the audit workflow without another payment", async ({
     page,
   }) => {
-    const calls = await stubExtraction(page);
+    const calls = await stubIdentityAndExtraction(page, {
+      failFirstExtraction: true,
+    });
+    await page.goto("/");
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
+    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await page
+      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .click();
+    await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+    await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
+
+    await expect.poll(calls.extractCalls).toBe(1);
+    await expect(
+      page.getByText(
+        "Sumber bisnis belum dapat dianalisis. Periksa sumber lalu coba lagi.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Simulasikan pembayaran" }),
+    ).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Check the client brief before it shapes the audit.",
+      }),
+    ).toBeVisible();
+    await expect.poll(calls.extractCalls).toBe(2);
+    expect(calls.budgetCalls()).toBeGreaterThanOrEqual(1);
+  });
+
+  test("identity failure stays pre-payment and never reaches extraction", async ({
+    page,
+  }) => {
+    const calls = await stubIdentityFailure(page);
+    await page.goto("/");
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
+    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+
+    await expect(
+      hero.getByText(
+        "Sumber bisnis belum dapat dianalisis. Periksa sumber lalu coba lagi.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toHaveCount(0);
+    expect(calls.identityCalls()).toBe(1);
+    expect(calls.extractCalls()).toBe(0);
+  });
+
+  test("an unconfident identity remains identity-unverified after payment", async ({
+    page,
+  }) => {
+    const calls = await stubIdentityAndExtraction(page, { confidence: false });
+    await page.goto("/");
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
+    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Nama brand belum dapat dipastikan dari sumber ini.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .click();
+    await page.getByRole("button", { name: "Simulasikan pembayaran" }).click();
+    await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
+
+    await expect(
+      page.getByRole("heading", {
+        name: "Check the client brief before it shapes the audit.",
+      }),
+    ).toBeVisible();
+    await expect.poll(calls.extractCalls).toBe(1);
+    expect(calls.requestedBody()).toMatchObject({
+      identity_unverified: true,
+      brand_name: "",
+    });
+    const saved = await page.evaluate(
+      (key) => JSON.parse(window.sessionStorage.getItem(key) || "null"),
+      AUDIT_WORKFLOW_STORAGE_KEY,
+    );
+    expect(saved.factsExtracted).toBe(true);
+    expect(saved.meta.identityUnverified).toBe(true);
+    expect(saved.brief.brand_name).toBe("");
+  });
+
+  test("direct /audit source entry cannot bypass the simulated payment boundary", async ({
+    page,
+  }) => {
+    const calls = await stubIdentityAndExtraction(page);
+    await page.goto("/audit");
+    await expect.poll(calls.budgetCalls).toBe(1);
+    const source = page.getByPlaceholder("https://bisnisanda.com");
+    await source.fill("example.com");
+    await page.getByRole("button", { name: "Lanjutkan audit" }).click();
+
+    await expect(
+      page.getByText(
+        "Mulai dari halaman utama untuk melihat pratinjau identitas dan menyelesaikan simulasi pembayaran.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    expect(calls.extractCalls()).toBe(0);
+  });
+
+  test("a new landing source clears stale workflow state before payment", async ({
+    page,
+  }) => {
+    const calls = await stubIdentityAndExtraction(page);
     await page.addInitScript(
       ({ workflowKey, varianceKey, failureKey }) => {
         window.sessionStorage.setItem(
           workflowKey,
-          JSON.stringify({
-            websiteUrl: "https://stale.example/",
-            brief: {
-              brand_name: "Stale Business",
-              entity_scope: "Stale Business",
-              brand_type: "Business",
-              category: "Old category",
-              market_context: "Old market",
-              target_customer: "Old customers",
-              official_sources: ["https://stale.example/"],
-              verified_offerings: ["Old offering"],
-              verified_customer_needs: [],
-              verified_decision_criteria: [],
-              verified_competitor: { name: "", scope: "", source_url: "" },
-              similar_businesses: [],
-              brand_name_variants: [],
-              priority_offering: "",
-              conversion_action: "",
-              customer_supplied_facts: [],
-              known_accuracy_questions: [],
-              usp: "",
-              regulated_category_notes: "",
-              language: "en-US",
-              agency_name: "",
-              agency_logo_data_url: "",
-            },
-            factsExtracted: true,
-            factsConfirmed: false,
-            factsCustomerOwned: false,
-            extraction: null,
-            promptPack: null,
-            observations: [],
-            report: null,
-            setupTelemetry: [],
-            executionStarted: false,
-            postReportBudgetCalls: [],
-            reportFailureCode: null,
-          }),
+          JSON.stringify({ stale: true }),
         );
         window.sessionStorage.setItem(
           varianceKey,
@@ -344,29 +493,32 @@ test.describe("landing audit hero handoff", () => {
     );
 
     await page.goto("/");
-    const hero = page.getByRole("region", {
-      name: "Mulai audit visibilitas AI",
-    });
-    await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-    await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
-
-    await expect(page).toHaveURL(/\/audit$/);
-    const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
-    await expect(brandNameInput).toHaveValue("Example Business");
-    await expect(brandNameInput).not.toHaveValue("Stale Business");
-    expect(calls.extractCalls()).toBe(1);
-
-    const staleVariance = await page.evaluate(
-      ({ varianceKey, failureKey }) => ({
-        variance: window.sessionStorage.getItem(varianceKey),
-        failure: window.sessionStorage.getItem(failureKey),
-      }),
-      {
-        varianceKey: VARIANCE_STORAGE_KEY,
-        failureKey: VARIANCE_FAILURE_STORAGE_KEY,
-      },
-    );
-    expect(staleVariance).toEqual({ variance: null, failure: null });
+    await page
+      .getByRole("region", { name: "Mulai audit visibilitas AI" })
+      .getByPlaceholder("https://bisnisanda.com")
+      .fill("example.com");
+    await page
+      .getByRole("region", { name: "Mulai audit visibilitas AI" })
+      .getByRole("button", { name: "Lanjutkan audit" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        ({ workflowKey, varianceKey, failureKey }) => ({
+          workflow: window.sessionStorage.getItem(workflowKey),
+          variance: window.sessionStorage.getItem(varianceKey),
+          failure: window.sessionStorage.getItem(failureKey),
+        }),
+        {
+          workflowKey: AUDIT_WORKFLOW_STORAGE_KEY,
+          varianceKey: VARIANCE_STORAGE_KEY,
+          failureKey: VARIANCE_FAILURE_STORAGE_KEY,
+        },
+      ),
+    ).toEqual({ workflow: null, variance: null, failure: null });
+    expect(calls.extractCalls()).toBe(0);
   });
 
   for (const viewport of [
@@ -401,12 +553,12 @@ test.describe("landing audit hero handoff", () => {
   }
 });
 
-test.describe("mobile touch target policy", () => {
-  test("migrated live controls expose approximately 44px hit areas", async ({
+test.describe("C1 mobile touch targets", () => {
+  test("identity preview and payment actions remain touch-sized", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    const calls = await stubExtraction(page);
+    const calls = await stubIdentityAndExtraction(page);
 
     await page.goto("/");
     const hero = page.getByRole("region", {
@@ -432,17 +584,21 @@ test.describe("mobile touch target policy", () => {
 
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
-    await expect(page).toHaveURL(/audit$/);
     await expect(
-      page.getByRole("heading", {
-        name: "Check the client brief before it shapes the audit.",
-      }),
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
     ).toBeVisible();
     await expectTouchTarget(
-      page.getByRole("button", { name: "Lanjut" }),
-      "B1 brand-confirm action",
+      page.getByRole("button", { name: "Lanjut ke simulasi pembayaran" }),
+      "preview continue",
     );
-    expect(calls.extractCalls()).toBe(1);
+    await page
+      .getByRole("button", { name: "Lanjut ke simulasi pembayaran" })
+      .click();
+    await expectTouchTarget(
+      page.getByRole("button", { name: "Simulasikan pembayaran" }),
+      "simulated payment",
+    );
+    expect(calls.extractCalls()).toBe(0);
   });
 
   test("fixture and report actions remain touch-sized on mobile", async ({

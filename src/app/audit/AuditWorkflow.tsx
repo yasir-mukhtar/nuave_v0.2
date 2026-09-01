@@ -21,6 +21,10 @@ import {
   customerAuditErrorMessage,
   type AuditCustomerStage,
 } from "@/lib/audit/customer-error";
+import {
+  canStartPostPaymentExtraction,
+  PREPAYMENT_EXTRACTION_BLOCKED_MESSAGE,
+} from "@/lib/audit/payment-boundary";
 import { makeCustomerEvidenceExport } from "@/lib/audit/customer-evidence-export";
 import { sanitizeAiSimilarBusinesses } from "@/lib/audit/similar-businesses";
 import { AUDIT_STAGE_CALL_LIMITS } from "@/lib/audit/telemetry";
@@ -271,6 +275,8 @@ export default function AuditWorkflow() {
   const [exiting, setExiting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const extractionInFlightRef = useRef<string | null>(null);
+  // This is a client-flow marker only. It never authorizes the extraction API.
+  const paymentSatisfiedRef = useRef(false);
 
   const safetyIdentifier = useMemo(() => {
     if (typeof window === "undefined") return "nuave-server-placeholder";
@@ -444,6 +450,7 @@ export default function AuditWorkflow() {
             setBrief(state.brief || emptyBrief);
             setWorkflowMeta(state.meta);
             setFactsExtracted(Boolean(state.factsExtracted));
+            if (state.factsExtracted) paymentSatisfiedRef.current = true;
             setFactsConfirmed(Boolean(state.factsConfirmed));
             setFactsCustomerOwned(
               Boolean(state.factsCustomerOwned || state.factsConfirmed),
@@ -860,7 +867,11 @@ export default function AuditWorkflow() {
     }));
   }
 
-  async function extractWebsite(url?: string, brandNameOverride?: string) {
+  async function extractWebsite(
+    url?: string,
+    brandNameOverride?: string,
+    fromApprovedHandoff = false,
+  ) {
     setError("");
     const rawUrl = url?.trim() || websiteUrl.trim();
     const parsedSource = parseSourceInput(rawUrl);
@@ -868,6 +879,16 @@ export default function AuditWorkflow() {
       setError(INVALID_SOURCE_INPUT_MESSAGE);
       return;
     }
+    if (
+      !canStartPostPaymentExtraction({
+        paymentSucceeded: paymentSatisfiedRef.current,
+        fromApprovedHandoff,
+      })
+    ) {
+      setError(PREPAYMENT_EXTRACTION_BLOCKED_MESSAGE);
+      return;
+    }
+    if (fromApprovedHandoff) paymentSatisfiedRef.current = true;
     const resolvedUrl = parsedSource.normalizedUrl;
     const correctedBrandName = brandNameOverride?.trim();
     const requestBrief = correctedBrandName
@@ -1330,6 +1351,7 @@ export default function AuditWorkflow() {
     setWorkflowMeta(createWorkflowMeta(emptyBrief));
     setExtractedSourceUrl("");
     extractionInFlightRef.current = null;
+    paymentSatisfiedRef.current = false;
     setFieldErrors({});
   }
 
@@ -1464,7 +1486,9 @@ export default function AuditWorkflow() {
           initialValue={websiteUrl}
           extracting={busy === "extract"}
           error={error}
-          onExtract={extractWebsite}
+          onExtract={(url, fromApprovedHandoff) =>
+            extractWebsite(url, undefined, fromApprovedHandoff)
+          }
           exiting={exiting}
         />
       ) : null}

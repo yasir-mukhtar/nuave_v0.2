@@ -53,3 +53,182 @@
   background-image: url("../assets/nuave-beach-hero.webp") !important;
   background-position: center bottom !important;
 }
+
+.prepaymentShell {
+  display: flex;
+  width: min(48rem, calc(100% - 2.5rem));
+  min-height: 34rem;
+  margin: 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 6rem 0 4rem;
+  color: #14213d;
+}
+
+.prepaymentIntro {
+  max-width: 42rem;
+}
+
+.prepaymentEyebrow,
+.identityLabel {
+  margin: 0 0 0.55rem;
+  color: #42618e;
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.prepaymentHeading {
+  margin: 0;
+  color: #14213d;
+  font-size: var(--type-heading-xl-size);
+  font-weight: var(--type-heading-xl-weight);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.prepaymentLead,
+.paymentDisclosure,
+.paymentSuccess,
+.identityDescription,
+.prepaymentError {
+  margin: 0;
+  color: #42618e;
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
+}
+
+.prepaymentLead {
+  max-width: 58ch;
+  margin-top: 1rem;
+}
+
+.identityCard {
+  display: flex;
+  max-width: 42rem;
+  flex-direction: column;
+  gap: 0.9rem;
+  border: 1px solid rgba(35, 78, 135, 0.18);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 1.35rem;
+  box-shadow: 0 1rem 3rem rgba(31, 73, 125, 0.08);
+}
+
+.identityHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.identityHeader h2 {
+  margin: 0;
+  color: #14213d;
+  font-size: var(--type-heading-sm-size);
+  line-height: var(--type-heading-sm-leading);
+}
+
+.identityIcon,
+.identityIconFallback {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  border-radius: 0.8rem;
+}
+
+.identityIconFallback {
+  display: grid;
+  place-items: center;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+}
+
+.identityDetails {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+  border-top: 1px solid rgba(35, 78, 135, 0.12);
+  padding-top: 1rem;
+}
+
+.identityDetails div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.identityDetails dt {
+  color: #42618e;
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.identityDetails dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #14213d;
+  font-size: var(--type-copy-sm-size);
+}
+
+.identityDetails code,
+.identityDescription code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--type-mono-sm-size);
+}
+
+.identityWarning,
+.paymentSuccess {
+  margin: 0;
+  border-radius: 0.7rem;
+  background: #fff7db;
+  padding: 0.85rem 1rem;
+  color: #6f4d00;
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.paymentDisclosure {
+  max-width: 58ch;
+  margin-top: 1rem;
+  border-left: 3px solid #1d4ed8;
+  padding-left: 1rem;
+}
+
+.prepaymentActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 42rem;
+}
+
+.prepaymentError {
+  width: min(42rem, calc(100% - 2.5rem));
+  margin: 0 auto 2rem;
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .prepaymentShell {
+    width: min(100% - 2rem, 42rem);
+    min-height: 30rem;
+    padding-top: 4rem;
+  }
+
+  .prepaymentActions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .prepaymentActions button {
+    width: 100%;
+  }
+}

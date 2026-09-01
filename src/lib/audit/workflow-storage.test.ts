@@ -39,7 +39,7 @@ describe("live audit workflow session storage", () => {
     expect(AUDIT_SESSION_STORAGE_KEY).toBe("nuave.audit.session.v1");
   });
 
-  it("creates a complete extracted initial state for the landing handoff", () => {
+  it("creates a complete extracted state for a post-payment extraction result", () => {
     const state = createInitialExtractedAuditWorkflowState({
       websiteUrl: "https://example.com/",
       telemetry: [],

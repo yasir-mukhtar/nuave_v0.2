@@ -7,13 +7,6 @@ export const metadata: Metadata = {
     "Periksa satu bisnis, tinjau sepuluh pertanyaan, lalu buat AI Visibility Report berbasis bukti.",
 };
 
-type AuditPageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function AuditPage({ searchParams }: AuditPageProps) {
-  const params = await searchParams;
-  return (
-    <AuditEntryShell landingExtracted={params.entry === "landing-extracted"} />
-  );
+export default function AuditPage() {
+  return <AuditEntryShell />;
 }
