@@ -226,6 +226,23 @@ describe("B1 scope, invalidation, and review routing", () => {
     expect(product.brief.verified_offerings).toEqual([]);
     expect(product.brief.market_context).toBe("");
     expect(product.meta.marketInvalidated).toBe(true);
+
+    const productA = {
+      ...baseBrief,
+      entity_scope: "Produk: Kopi A",
+      verified_offerings: ["Kopi A"],
+    };
+    const productAMeta = createWorkflowMeta(productA, {
+      scopeKind: "product",
+      scopeValue: "Kopi A",
+    });
+    const productB = applyScopeSelection(
+      productA,
+      productAMeta,
+      "product",
+      "Kopi B",
+    );
+    expect(productB.brief.verified_offerings).toEqual([]);
   });
 
   it("invalidates and re-proposes a comparison target after category changes", () => {
@@ -364,6 +381,12 @@ describe("B1 persistence and extraction ownership", () => {
       parseWorkflowStorageState({
         ...validState,
         meta: { ...validState.meta, marketInvalidated: undefined },
+      }),
+    ).toBeNull();
+    expect(
+      parseWorkflowStorageState({
+        ...validState,
+        meta: { ...validState.meta, intakeScreen: "branch" },
       }),
     ).toBeNull();
   });

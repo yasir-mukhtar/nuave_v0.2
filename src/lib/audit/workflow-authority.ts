@@ -418,6 +418,10 @@ export function applyScopeSelection(
     currentMeta.scopeValue !== nextValue ||
     brief.entity_scope !==
       canonicalEntityScope(brief.brand_name, scopeKind, nextValue);
+  const productValueChanged =
+    scopeKind === "product" &&
+    (currentMeta.scopeKind !== "product" ||
+      currentMeta.scopeValue !== nextValue);
   const geographyChanged =
     scopeChanged &&
     (currentMeta.scopeKind !== scopeKind ||
@@ -426,9 +430,7 @@ export function applyScopeSelection(
   const nextBrief = rederiveBrief({
     ...brief,
     entity_scope: canonicalEntityScope(brief.brand_name, scopeKind, nextValue),
-    ...(scopeKind === "product" && currentMeta.scopeKind !== "product"
-      ? { verified_offerings: [] }
-      : {}),
+    ...(productValueChanged ? { verified_offerings: [] } : {}),
     ...(geographyChanged ? { market_context: "" } : {}),
   });
   const nextMeta = createWorkflowMeta(nextBrief, {
@@ -837,6 +839,14 @@ export function parseWorkflowStorageState(value: unknown) {
     !Array.isArray(meta.customerEditedFields) ||
     meta.customerEditedFields.some((field) => typeof field !== "string") ||
     typeof meta.identityUnverified !== "boolean"
+  ) {
+    return null;
+  }
+  const persistedScopeKind = meta.scopeKind as ScopeKind;
+  const persistedIntakeScreen = meta.intakeScreen as IntakeScreen;
+  if (
+    persistedIntakeScreen !== "source-correction" &&
+    !intakeScreenSequence(persistedScopeKind).includes(persistedIntakeScreen)
   ) {
     return null;
   }
