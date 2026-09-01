@@ -30,7 +30,7 @@ export default function SourceHero({
   initialValue: string;
   extracting: boolean;
   error: string;
-  onExtract: (normalizedUrl: string) => void;
+  onExtract: (normalizedUrl: string, fromApprovedHandoff?: boolean) => void;
   exiting: boolean;
   showLogo?: boolean;
   autoFocus?: boolean;
@@ -82,7 +82,7 @@ export default function SourceHero({
     // submitted source in the input during the budget-readiness handoff.
     const timer = window.setTimeout(() => {
       setDraft((current) => current ?? handoffSource.normalizedUrl);
-      onExtract(handoffSource.normalizedUrl);
+      onExtract(handoffSource.normalizedUrl, true);
     }, 0);
 
     return () => window.clearTimeout(timer);
