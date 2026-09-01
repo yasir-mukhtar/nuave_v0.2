@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   assembleReportContent,
   buildAuditReport,
-  validatePromptPack,
   validateReportContent,
 } from "./contracts";
 import {
@@ -17,6 +16,13 @@ import {
 } from "./fixtures/report-golden";
 import { validateReportLanguage } from "./report-language";
 import { reportContentSchema, reportSynthesisSchema } from "./types";
+import {
+  isHistoricalPromptPack,
+  measurementSlotForPromptId,
+  measurementSlotsForCompatibilityAssessmentClass,
+} from "./measurement-matrix";
+
+const NORTHSTAR_HISTORICAL_FIXTURE_ID = "northstar-report-golden-v1" as const;
 
 describe("privacy-safe report golden fixture", () => {
   it("assembles code-owned evidence fields from a compact synthesis", () => {
@@ -38,13 +44,14 @@ describe("privacy-safe report golden fixture", () => {
       synthesis,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     );
 
     expect(assembled.details).toHaveLength(10);
     expect(assembled.details[0]).toMatchObject({
       run: "completed",
       appearance: "absent",
-      recommendation: "not_recommended",
+      recommendation: "not_assessed",
       comparison: "not_observed",
       information: "not_assessed",
       answer_excerpt: goldenObservations[0].raw_answer,
@@ -58,16 +65,29 @@ describe("privacy-safe report golden fixture", () => {
       },
     ]);
     expect(
-      validateReportContent(assembled, goldenObservations, goldenBrief),
+      validateReportContent(
+        assembled,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ),
     ).toEqual([]);
   });
 
   it("validates the fictional prompt, evidence, and writing contracts", () => {
     const content = goldenReportContent();
 
-    expect(validatePromptPack(goldenPrompts, goldenBrief)).toEqual([]);
+    expect(isHistoricalPromptPack(goldenPrompts)).toBe(false);
     expect(
-      validateReportContent(content, goldenObservations, goldenBrief),
+      isHistoricalPromptPack(goldenPrompts, NORTHSTAR_HISTORICAL_FIXTURE_ID),
+    ).toBe(true);
+    expect(
+      validateReportContent(
+        content,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ),
     ).toEqual([]);
     expect(validateReportLanguage(content)).toEqual([]);
   });
@@ -92,7 +112,12 @@ describe("privacy-safe report golden fixture", () => {
     content.details[0].recommendation = "recommended";
 
     expect(
-      validateReportContent(content, goldenObservations, goldenBrief).join(" "),
+      validateReportContent(
+        content,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ).join(" "),
     ).toContain("raw response does not name it");
   });
 
@@ -104,7 +129,12 @@ describe("privacy-safe report golden fixture", () => {
     content.details[0].appearance = "mentioned";
 
     expect(
-      validateReportContent(content, observations, goldenBrief).join(" "),
+      validateReportContent(
+        content,
+        observations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ).join(" "),
     ).toContain("raw response does not name it");
   });
 
@@ -114,7 +144,12 @@ describe("privacy-safe report golden fixture", () => {
     content.details[6].information = "not_assessed";
 
     expect(
-      validateReportContent(content, goldenObservations, goldenBrief).join(" "),
+      validateReportContent(
+        content,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ).join(" "),
     ).toContain("visible raw response names it");
   });
 
@@ -128,6 +163,7 @@ describe("privacy-safe report golden fixture", () => {
       content,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     ).join(" ");
     expect(errors).toContain("not copied exactly");
     expect(errors).toContain("not attached to the observation");
@@ -141,7 +177,12 @@ describe("privacy-safe report golden fixture", () => {
     content.details[4].appearance = "absent";
 
     expect(
-      validateReportContent(content, goldenObservations, goldenBrief).join(" "),
+      validateReportContent(
+        content,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ).join(" "),
     ).toContain("result dimensions must be not_assessed");
   });
 
@@ -153,7 +194,12 @@ describe("privacy-safe report golden fixture", () => {
     };
 
     expect(
-      validateReportContent(content, goldenObservations, goldenBrief).join(" "),
+      validateReportContent(
+        content,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ).join(" "),
     ).toContain(
       `Observed competitor Unseen Associates is not named in ${goldenPrompts[5].prompt_id}`,
     );
@@ -257,12 +303,23 @@ describe("structured result dimensions", () => {
     };
 
     expect(
-      validateReportContent(content, goldenObservations, goldenBrief).join(" "),
+      validateReportContent(
+        content,
+        goldenObservations,
+        goldenBrief,
+        NORTHSTAR_HISTORICAL_FIXTURE_ID,
+      ).join(" "),
     ).toContain("observed gap");
   });
 
   it("provides direct denominators and failed-test context", () => {
-    const report = buildAuditReport(goldenReportContent(), goldenObservations);
+    const report = buildAuditReport(
+      goldenReportContent(),
+      goldenObservations,
+      undefined,
+      undefined,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
+    );
 
     expect(report.facts.discovery.recommendation_label).toBe(
       expectedDenominatorLabels.discovery,
@@ -270,8 +327,19 @@ describe("structured result dimensions", () => {
     expect(report.facts.recognition.label).toBe(
       expectedDenominatorLabels.recognition,
     );
-    expect(report.facts.discovery.total).toBe(5);
-    expect(report.facts.discovery.failed).toBe(1);
+    expect(report.facts.discovery.total).toBe(
+      measurementSlotsForCompatibilityAssessmentClass("recommendation").filter(
+        (slot) => !slot.legacyBranded,
+      ).length,
+    );
+    expect(report.facts.discovery.failed).toBe(
+      goldenObservations.filter(
+        (observation) =>
+          observation.run_status === "failed" &&
+          measurementSlotForPromptId(observation.prompt_id)
+            ?.compatibilityReportAssessmentClass === "recommendation",
+      ).length,
+    );
     expect(report.facts.coverage).toMatchObject({
       completed: 9,
       total: 10,

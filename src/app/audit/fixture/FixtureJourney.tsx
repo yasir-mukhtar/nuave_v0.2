@@ -11,6 +11,7 @@ import {
   type FixtureJourneyStage,
 } from "@/lib/fixture-journey/state";
 import {
+  HISTORICAL_FIXTURE_NOTICE,
   fixtureJourneyContext,
   provenanceLabelText,
   questionClassExplanations,
@@ -246,7 +247,8 @@ function PreviewScreen({
           Yang akan diperiksa
         </h2>
         <p className={styles.note}>
-          Satu audit menguji 10 pertanyaan ala calon pelanggan:{" "}
+          <strong>{HISTORICAL_FIXTURE_NOTICE}</strong> Satu audit menguji 10
+          pertanyaan ala calon pelanggan:{" "}
           {questions.counts.tanpa_menyebut_bisnis_anda} Tanpa menyebut bisnis
           Anda dan {questions.counts.menyebut_bisnis_anda} Menyebut bisnis Anda,
           sesuai contoh yang dibekukan.
@@ -732,6 +734,9 @@ function QuestionsScreen({
       <p className={styles.lede}>
         Nuave menyiapkan 10 pertanyaan sebagai titik awal. Pada pratinjau ini,
         pertanyaan hanya dapat dibaca dan tidak dapat diubah.
+      </p>
+      <p className={styles.lede}>
+        <strong>{HISTORICAL_FIXTURE_NOTICE}</strong>
       </p>
       <p className={styles.lede}>
         <strong>Audit belum dimulai.</strong>

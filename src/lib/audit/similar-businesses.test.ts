@@ -6,12 +6,12 @@ import {
   normalizeSimilarBusinessUrl,
   normalizeSimilarBusinesses,
   sanitizeAiSimilarBusinesses,
-  withPrimarySimilarBusiness,
 } from "./similar-businesses";
+import { deriveComparisonProposal } from "./workflow-authority";
 import { businessBriefSchema } from "./types";
 
 describe("similar-business intake", () => {
-  it("allows the audit brief to continue with no competitor", () => {
+  it("requires an explicitly confirmed comparison target", () => {
     const result = businessBriefSchema.safeParse({
       ...goldenBrief,
       verified_competitor: {
@@ -21,45 +21,50 @@ describe("similar-business intake", () => {
       },
       similar_businesses: [],
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
-  it("normalizes URL-only input and derives the legacy primary comparison", () => {
-    const prepared = withPrimarySimilarBusiness({
+  it("normalizes URL-only suggestions without deriving a primary target", () => {
+    const brief = {
       ...goldenBrief,
+      verified_competitor: { name: "", scope: "", source_url: "" },
       similar_businesses: [
         {
           source_url: "amanieadvisors.com",
-          origin: "user",
+          origin: "user" as const,
         },
       ],
-    });
-    expect(prepared.similar_businesses?.[0]?.source_url).toBe(
-      "https://amanieadvisors.com/",
-    );
-    expect(prepared.verified_competitor).toEqual({
+    };
+    const normalized = normalizeSimilarBusinesses(brief.similar_businesses);
+    expect(normalized[0]?.source_url).toBe("https://amanieadvisors.com/");
+    expect(brief.verified_competitor.name).toBe("");
+    expect(deriveComparisonProposal(brief)).toEqual({
+      kind: "suggestion",
       name: "amanieadvisors.com",
       scope: "",
       source_url: "https://amanieadvisors.com/",
     });
   });
 
-  it("preserves an AI-supplied name without asking the user for scope", () => {
-    const prepared = withPrimarySimilarBusiness({
+  it("preserves an AI-supplied name as a proposal until the user acts", () => {
+    const brief = {
       ...goldenBrief,
+      verified_competitor: { name: "", scope: "", source_url: "" },
       similar_businesses: [
         {
           name: "Amanie Advisors",
           source_url: "https://amanieadvisors.com/",
-          origin: "ai",
+          origin: "ai" as const,
         },
       ],
-    });
-    expect(prepared.verified_competitor).toEqual({
+    };
+    expect(deriveComparisonProposal(brief)).toEqual({
+      kind: "suggestion",
       name: "Amanie Advisors",
       scope: "",
       source_url: "https://amanieadvisors.com/",
     });
+    expect(brief.verified_competitor.name).toBe("");
   });
 
   it("deduplicates entries, drops blanks, and caps the list", () => {
@@ -94,6 +99,7 @@ describe("similar-business intake", () => {
         source_url: "https://valid.example/",
       },
       { name: "Bad", source_url: "javascript:alert(1)" },
+      { name: "Name only", source_url: "" },
     ]);
     expect(suggestions).toEqual([
       {
@@ -101,6 +107,7 @@ describe("similar-business intake", () => {
         source_url: "https://valid.example/",
         origin: "ai",
       },
+      { name: "Name only", source_url: "", origin: "ai" },
     ]);
   });
 

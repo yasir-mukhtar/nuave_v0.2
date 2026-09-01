@@ -122,8 +122,8 @@ export default function SimilarBusinessesEditor({
         <span>Tambah bisnis serupa</span>
       </Button>
       <p className={`${styles.hint} type-copy-sm`}>
-        Website, profil Instagram, atau Google Business Profile. Opsional,
-        maksimal {MAX_SIMILAR_BUSINESSES} bisnis.
+        Website atau profil Instagram. Saran pembanding bersifat opsional dan
+        bukan sumber intake.
       </p>
     </div>
   );

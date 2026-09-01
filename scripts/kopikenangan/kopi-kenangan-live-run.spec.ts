@@ -77,9 +77,10 @@ import { liveExecuteAuditPrompt } from "../../src/lib/audit/provider";
 import { classifyObservationFailure } from "../../src/lib/audit/retry";
 import { runAuditObservations } from "../../src/lib/audit/run-orchestrator";
 import {
+  INDONESIAN_QUESTION_INSTRUCTION_VERSION,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
   type IndonesianQuestionPackSuggestion,
   type MinimizedIndonesianBrief,
 } from "../../src/lib/audit/questions-id";
@@ -89,9 +90,9 @@ import {
 } from "../../src/lib/audit/questions-id-provider";
 import { summarizeAuditTelemetry } from "../../src/lib/audit/telemetry";
 import {
-  PROMPT_MATRIX,
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
 } from "../../src/lib/audit/contracts";
+import { measurementSlotForOrder } from "../../src/lib/audit/measurement-matrix";
 
 // ---------------------------------------------------------------------------
 // 3. Run configuration (public facts only)
@@ -151,7 +152,7 @@ function validatePack(
   minimized: MinimizedIndonesianBrief,
 ) {
   const questions = pack.questions.map((q) => q.text);
-  const issues = validateIndonesianQuestionPack(questions, minimized);
+  const issues = validateCanonicalIndonesianQuestionPack(questions, minimized);
   const blockers = indonesianPackBlockers(questions, minimized);
   return {
     count: questions.length,
@@ -171,19 +172,17 @@ function buildLockedPrompts(
   pack: IndonesianQuestionPackSuggestion,
   brief: BusinessBrief,
 ): AuditPrompt[] {
-  return pack.questions.map((item, index) => {
-    const spec = PROMPT_MATRIX[index];
-    const branded = item.final_classification === "menyebut_bisnis_anda";
-    const inputs = branded
-      ? ["brand_name", "entity_scope", "category", "market_context"]
-      : ["category", "market_context", "target_customer"];
+  return pack.questions.map((item) => {
+    const slot = measurementSlotForOrder(item.order);
+    if (!slot) throw new Error(`Question ${item.order} has no matrix slot.`);
+    const inputs = [...slot.allowedContextFields];
     return {
-      prompt_id: spec[0],
-      category: spec[1],
-      role: spec[3],
-      branded,
+      prompt_id: `NVA-ID-${String(item.order).padStart(2, "0")}`,
+      category: slot.category,
+      role: slot.generatorSlotDescription,
+      branded: slot.auditedBrandIdentity === "required",
       question: item.text,
-      rationale: `${spec[3]}. Built from verified ${inputs.join(", ")}.`,
+      rationale: `${slot.measurementPurpose}. Built from verified ${inputs.join(", ")}.`,
       inputs_used: inputs,
       review_status: "needs_human_review",
     };
@@ -217,7 +216,7 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
       provider_lock: {
         observation_and_extraction: "openai / gpt-5.6-luna (OpenCode Go)",
         question_generation: "openai / gpt-5.6-luna",
-        instruction_version: OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
+        instruction_version: INDONESIAN_QUESTION_INSTRUCTION_VERSION,
       },
       started_at: runStartedAt,
     };
@@ -277,11 +276,11 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
     expect(
       packValidation.classification.tanpa_menyebut_bisnis_anda,
       "no-name questions",
-    ).toBe(5);
+    ).toBe(6);
     expect(
       packValidation.classification.menyebut_bisnis_anda,
       "name questions",
-    ).toBe(5);
+    ).toBe(4);
     expect(packValidation.blockers, "pack blockers").toEqual([]);
     expect(
       packValidation.issues.filter(
@@ -309,7 +308,7 @@ describe("Kopi Kenangan — live private audit (Spec 003)", () => {
             order: q.order,
             text: q.text,
             final_classification: q.final_classification,
-            suggested_category: q.suggested_category,
+            category: q.category,
           })),
         },
         null,

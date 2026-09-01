@@ -16,6 +16,10 @@ import {
   assembleReportContent,
   normalizeReportEvidence,
 } from "./contracts";
+import {
+  reportAssessmentInstructions,
+  reportPromptMeasurements,
+} from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
 import { AuditCallExecutionError, failedCallTelemetry } from "./telemetry";
 
@@ -614,12 +618,19 @@ export async function generateReportContent(
       2,
     );
     const promptsJson = JSON.stringify(input.prompts, null, 2);
-    const system = `You are a senior analyst writing Nuave AI Visibility Reports. ${reportWritingInstructions}`;
+    const system = [
+      "You are a senior analyst writing Nuave AI Visibility Reports.",
+      ...reportWritingInstructions(),
+      ...reportAssessmentInstructions(),
+    ].join("\n");
     const user = `Brand brief:
 ${JSON.stringify(input.brief, null, 2)}
 
 Audit prompts:
 ${promptsJson}
+
+Matrix-owned measurement definitions:
+${JSON.stringify(reportPromptMeasurements(input.prompts), null, 2)}
 
 Audit observations:
 ${observationsJson}

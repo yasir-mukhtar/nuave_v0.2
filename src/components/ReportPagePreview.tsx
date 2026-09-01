@@ -1,6 +1,9 @@
 "use client";
 
+import { CANONICAL_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
+
 export default function ReportPagePreview() {
+  const { unbranded, branded } = CANONICAL_COMPOSITION_COUNTS;
   return (
     <div className="w-[340px] h-[310px] rounded-[6px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden">
       {/* Report page header */}
@@ -19,7 +22,7 @@ export default function ReportPagePreview() {
           </p>
           <p className="type-heading-sm text-[#111827] m-0 mt-1">4/10</p>
           <p className="type-label-sm text-gray-500 m-0 mt-1">
-            Tanpa menyebut bisnis Anda: 1/5 · Menyebut bisnis Anda: 3/5
+            {`Tanpa menyebut bisnis Anda: 1/${unbranded} · Menyebut bisnis Anda: 3/${branded}`}
           </p>
         </div>
 

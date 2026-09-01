@@ -59,7 +59,7 @@ const kopiBrief: MinimizedIndonesianBrief = {
   ],
 };
 
-const frozenTen = [
+const historicalFrozenTen = [
   "Rekomendasikan tempat yang asik untuk ngopi dan WFC di Dago.",
   "Tempat rapat kecil di Bandung yang ada makanan, minuman, dan bisa dipakai kerja di mana ya?",
   "Kedai kopi apa aja di Dago yang cocok untuk WFC atau meeting?",
@@ -72,7 +72,7 @@ const frozenTen = [
   "Kopi Taman Senja ada parkiran mobil dan mushollanya nggak?",
 ];
 
-const frozenClassifications = [
+const historicalFrozenClassifications = [
   "tanpa_menyebut_bisnis_anda",
   "tanpa_menyebut_bisnis_anda",
   "tanpa_menyebut_bisnis_anda",
@@ -84,6 +84,11 @@ const frozenClassifications = [
   "menyebut_bisnis_anda",
   "menyebut_bisnis_anda",
 ] as const;
+
+const frozenTen = buildDeterministicIndonesianPack(kopiBrief);
+const canonicalClassifications = frozenTen.map((question) =>
+  classifyIndonesianQuestion(question, kopiBrief),
+);
 
 function stubProvider(
   output:
@@ -106,18 +111,17 @@ const frozenGenerationMeta = {
 
 describe("frozen fixture pack compliance (R-37)", () => {
   it("passes the same mechanical safety rules as the live path", () => {
-    expect(validateIndonesianQuestionPack(frozenTen, kopiBrief)).toEqual([]);
-    expect(indonesianPackBlockers(frozenTen, kopiBrief)).toEqual([]);
+    expect(indonesianPackBlockers(historicalFrozenTen, kopiBrief)).toEqual([]);
   });
 
   it("classifies each frozen question exactly as the fixture record does", () => {
-    frozenTen.forEach((question, index) => {
+    historicalFrozenTen.forEach((question, index) => {
       expect(classifyIndonesianQuestion(question, kopiBrief)).toBe(
-        frozenClassifications[index],
+        historicalFrozenClassifications[index],
       );
     });
     expect(
-      frozenTen.map((question) =>
+      historicalFrozenTen.map((question) =>
         classifyIndonesianQuestion(question, kopiBrief),
       ),
     ).toEqual([
@@ -131,8 +135,8 @@ describe("frozen fixture pack compliance (R-37)", () => {
   });
 
   it("keeps the frozen pack distinct, non-empty, and executable", () => {
-    expect(new Set(frozenTen).size).toBe(10);
-    frozenTen.forEach((question) => {
+    expect(new Set(historicalFrozenTen).size).toBe(10);
+    historicalFrozenTen.forEach((question) => {
       expect(question.trim().length).toBeGreaterThan(0);
       expect(question.trim().length).toBeGreaterThanOrEqual(8);
     });
@@ -172,14 +176,12 @@ describe("generation boundary — stub provider success", () => {
       expect(item.text).toBe(frozenTen[index]);
       expect(item.original_suggestion).toBe(frozenTen[index]);
       expect(item.edited).toBe(false);
-      expect(item.suggested_category).toBe(
-        INDONESIAN_SLOT_MATRIX[index].suggested_category,
-      );
+      expect(item.category).toBe(INDONESIAN_SLOT_MATRIX[index].category);
     });
     expect(suggestion.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
     expect(
       validateIndonesianQuestionPack(
@@ -259,7 +261,7 @@ describe("deterministic numbered-list parsing", () => {
       "10. Kopi Taman Senja ada parkiran mobil dan mushollanya nggak?",
     ].join("\n");
 
-    expect(parseNumberedIndonesianQuestions(text)).toEqual(frozenTen);
+    expect(parseNumberedIndonesianQuestions(text)).toEqual(historicalFrozenTen);
 
     const suggestion = await generateIndonesianQuestionPack(
       kopiBrief,
@@ -268,16 +270,22 @@ describe("deterministic numbered-list parsing", () => {
     );
     expect(suggestion.source).toBe("parsed");
     expect(suggestion.generation.fallback_used).toBe(false);
-    expect(suggestion.questions.map((item) => item.text)).toEqual(frozenTen);
+    expect(suggestion.questions).toHaveLength(10);
+    expect(
+      validateIndonesianQuestionPack(
+        suggestion.questions.map((item) => item.text),
+        kopiBrief,
+      ),
+    ).toEqual([]);
     expect(suggestion.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
   });
 
   it("rejects a list that starts at the wrong number", () => {
-    const text = frozenTen
+    const text = historicalFrozenTen
       .map((question, index) => `${index + 2}. ${question}`)
       .join("\n");
     expect(parseNumberedIndonesianQuestions(text)).toBeNull();
@@ -286,7 +294,7 @@ describe("deterministic numbered-list parsing", () => {
   it("rejects fewer than ten items, preamble, and empty items", () => {
     expect(
       parseNumberedIndonesianQuestions(
-        frozenTen
+        historicalFrozenTen
           .slice(0, 9)
           .map((q, i) => `${i + 1}. ${q}`)
           .join("\n"),
@@ -294,14 +302,15 @@ describe("deterministic numbered-list parsing", () => {
     ).toBeNull();
     expect(
       parseNumberedIndonesianQuestions(
-        `Berikut daftar pertanyaannya:\n${frozenTen
+        `Berikut daftar pertanyaannya:\n${historicalFrozenTen
           .map((q, i) => `${i + 1}. ${q}`)
           .join("\n")}`,
       ),
     ).toBeNull();
     expect(
       parseNumberedIndonesianQuestions(
-        frozenTen.map((q, i) => `${i + 1}. ${q}`).join("\n") + "\n11. ekstra",
+        historicalFrozenTen.map((q, i) => `${i + 1}. ${q}`).join("\n") +
+          "\n11. ekstra",
       ),
     ).toBeNull();
   });
@@ -345,7 +354,7 @@ describe("deterministic Indonesian fallback", () => {
   it("falls back when structured output has the wrong count", async () => {
     const provider = stubProvider({
       kind: "structured",
-      questions: frozenTen.slice(0, 9),
+      questions: historicalFrozenTen.slice(0, 9),
     });
     const suggestion = await generateIndonesianQuestionPack(
       kopiBrief,
@@ -384,8 +393,8 @@ describe("deterministic Indonesian fallback", () => {
     expect(pack).toHaveLength(10);
     expect(new Set(pack).size).toBe(10);
     expect(validateIndonesianQuestionPack(pack, pathological)).toEqual([]);
-    // The five default unbranded questions never reveal the brand.
-    pack.slice(0, 5).forEach((question) => {
+    // The six canonical unbranded questions never reveal the brand.
+    pack.slice(0, 6).forEach((question) => {
       expect(classifyIndonesianQuestion(question, pathological)).toBe(
         "tanpa_menyebut_bisnis_anda",
       );
@@ -405,47 +414,57 @@ describe("deterministic Indonesian fallback", () => {
 // ---------------------------------------------------------------------------
 
 describe("identity-leakage and unsupported-premise rules", () => {
-  it("rejects a brand name in one of the five default unbranded slots", () => {
+  it("rejects a brand name in one of the six canonical unbranded slots", () => {
     const leaky = [...frozenTen];
     leaky[1] = "Saya cari Kopi Taman Senja di Dago, bagaimana menurut Anda?";
     const issues = validateIndonesianQuestionPack(leaky, kopiBrief);
-    expect(issues).toEqual([
-      expect.objectContaining({ slot: 2, rule: "identity_leakage" }),
-    ]);
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 2, rule: "identity_leakage" }),
+      ]),
+    );
   });
 
   it("rejects a known brand variant in an unbranded slot", () => {
     const brief = { ...kopiBrief, brand_name_variants: ["Taman Senja"] };
     const leaky = [...frozenTen];
     leaky[4] = "Apakah Taman Senja buka sampai malam?";
-    expect(validateIndonesianQuestionPack(leaky, brief)).toEqual([
-      expect.objectContaining({ slot: 5, rule: "identity_leakage" }),
-    ]);
+    expect(validateIndonesianQuestionPack(leaky, brief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 5, rule: "identity_leakage" }),
+      ]),
+    );
   });
 
   it("allows the comparison business only in the designated comparison slot", () => {
     const leaky = [...frozenTen];
     leaky[6] = "Apa yang ditawarkan Kopi Ruang Pagi di Dago?";
-    expect(validateIndonesianQuestionPack(leaky, kopiBrief)).toEqual([
-      expect.objectContaining({ slot: 7, rule: "competitor_leakage" }),
-    ]);
+    expect(validateIndonesianQuestionPack(leaky, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 7, rule: "competitor_leakage" }),
+      ]),
+    );
     expect(validateIndonesianQuestionPack(frozenTen, kopiBrief)).toEqual([]);
   });
 
   it("rejects unsupported-premise wording such as superlative claims", () => {
     const assuming = [...frozenTen];
     assuming[3] = "Kedai kopi terbaik di Bandung untuk WFC yang mana?";
-    expect(validateIndonesianQuestionPack(assuming, kopiBrief)).toEqual([
-      expect.objectContaining({ slot: 4, rule: "unsupported_premise" }),
-    ]);
+    expect(validateIndonesianQuestionPack(assuming, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 4, rule: "unsupported_premise" }),
+      ]),
+    );
   });
 
   it("rejects duplicate questions as a distinctness failure", () => {
     const duplicated = [...frozenTen];
     duplicated[8] = duplicated[0];
-    expect(validateIndonesianQuestionPack(duplicated, kopiBrief)).toEqual([
-      expect.objectContaining({ slot: 9, rule: "distinctness" }),
-    ]);
+    expect(validateIndonesianQuestionPack(duplicated, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 9, rule: "distinctness" }),
+      ]),
+    );
   });
 
   it("repairs a leaking slot with a safe slot fallback before display", async () => {
@@ -466,16 +485,16 @@ describe("identity-leakage and unsupported-premise rules", () => {
         expect(item.text).toBe(frozenTen[index]);
       }
     });
-    // The five default unbranded slots no longer reveal the brand.
-    suggestion.questions.slice(0, 5).forEach((item) => {
+    // The six canonical unbranded slots no longer reveal the brand.
+    suggestion.questions.slice(0, 6).forEach((item) => {
       expect(classifyIndonesianQuestion(item.text, kopiBrief)).toBe(
         "tanpa_menyebut_bisnis_anda",
       );
     });
     expect(suggestion.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
   });
 
@@ -486,9 +505,11 @@ describe("identity-leakage and unsupported-premise rules", () => {
     const leaky = [...frozenTen];
     leaky[0] = "Apakah kopitamansenja.example cocok untuk kerja di Dago?";
     const issues = validateIndonesianQuestionPack(leaky, kopiBrief);
-    expect(issues).toEqual([
-      expect.objectContaining({ slot: 1, rule: "identity_leakage" }),
-    ]);
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 1, rule: "identity_leakage" }),
+      ]),
+    );
     expect(classifyIndonesianQuestion(leaky[0], kopiBrief)).toBe(
       "menyebut_bisnis_anda",
     );
@@ -498,9 +519,11 @@ describe("identity-leakage and unsupported-premise rules", () => {
     const leaky = [...frozenTen];
     leaky[0] = "Apakah KopiTamanSenja bagus untuk kerja di Dago?";
     const issues = validateIndonesianQuestionPack(leaky, kopiBrief);
-    expect(issues).toEqual([
-      expect.objectContaining({ slot: 1, rule: "identity_leakage" }),
-    ]);
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 1, rule: "identity_leakage" }),
+      ]),
+    );
     expect(classifyIndonesianQuestion(leaky[0], kopiBrief)).toBe(
       "menyebut_bisnis_anda",
     );
@@ -567,8 +590,8 @@ describe("dynamic name/no-name classification", () => {
     });
     expect(edited.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 4,
-      menyebut_bisnis_anda: 6,
+      tanpa_menyebut_bisnis_anda: 5,
+      menyebut_bisnis_anda: 5,
     });
     expect(edited.generation).toEqual(suggestion.generation);
   });
@@ -583,7 +606,11 @@ describe("dynamic name/no-name classification", () => {
       kopiBrief,
       [
         { order: 3, new_text: "Kedai kopi di Dago buka 24 jam ada nggak?" },
-        { order: 9, new_text: "Cariin nomor telepon Kopi Taman Senja." },
+        {
+          order: 9,
+          new_text:
+            "Bandingkan Kopi Taman Senja dengan Kopi Ruang Pagi untuk meeting di Dago?",
+        },
       ],
       { now: () => "2026-08-17T02:00:00.000Z" },
     );
@@ -591,7 +618,7 @@ describe("dynamic name/no-name classification", () => {
       "Kedai kopi di Dago buka 24 jam ada nggak?",
     );
     expect(edited.questions[8].text).toBe(
-      "Cariin nomor telepon Kopi Taman Senja.",
+      "Bandingkan Kopi Taman Senja dengan Kopi Ruang Pagi untuk meeting di Dago?",
     );
     expect(edited.questions[8].original_suggestion).toBe(frozenTen[8]);
     expect(edited.questions[8].edited).toBe(true);
@@ -739,13 +766,13 @@ describe("approved-pack persistence and verbatim replay", () => {
     });
     expect(record.questions.map((item) => item.text)).toEqual(frozenTen);
     expect(record.questions.map((item) => item.final_classification)).toEqual(
-      frozenClassifications,
+      canonicalClassifications,
     );
     expect(record.edit_record).toEqual([]);
     expect(record.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
 
     const replayed = replayIndonesianQuestionPack(
@@ -771,7 +798,12 @@ describe("approved-pack persistence and verbatim replay", () => {
     const edited = applyIndonesianQuestionEdits(
       suggestion,
       kopiBrief,
-      [{ order: 1, new_text: "Bagaimana harga di Kopi Taman Senja?" }],
+      [
+        {
+          order: 7,
+          new_text: "Apakah Kopi Taman Senja cocok untuk meeting di Dago?",
+        },
+      ],
       { now: () => "2026-08-17T02:00:00.000Z" },
     );
     const record = approveIndonesianQuestionPack(edited, kopiBrief, {
@@ -783,21 +815,21 @@ describe("approved-pack persistence and verbatim replay", () => {
     expect(record.warnings_acknowledged).toContain("fallback_used");
     expect(record.edit_record).toEqual([
       {
-        order: 1,
-        from: suggestion.questions[0].text,
-        to: "Bagaimana harga di Kopi Taman Senja?",
+        order: 7,
+        from: suggestion.questions[6].text,
+        to: "Apakah Kopi Taman Senja cocok untuk meeting di Dago?",
         edited_at: "2026-08-17T02:00:00.000Z",
       },
     ]);
-    expect(record.questions[0]).toMatchObject({
+    expect(record.questions[6]).toMatchObject({
       edited: true,
       final_classification: "menyebut_bisnis_anda",
-      original_suggestion: suggestion.questions[0].text,
+      original_suggestion: suggestion.questions[6].text,
     });
     expect(record.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 4,
-      menyebut_bisnis_anda: 6,
+      tanpa_menyebut_bisnis_anda: 6,
+      menyebut_bisnis_anda: 4,
     });
 
     expect(
@@ -909,7 +941,7 @@ describe("approved-pack persistence and verbatim replay", () => {
     ).toThrow(IndonesianApprovalBlockedError);
   });
 
-  it("approves an edited 4/6 pack (balance changes never block)", async () => {
+  it("blocks approval when an edit creates the old five-and-five composition", async () => {
     const suggestion = await generateIndonesianQuestionPack(
       kopiBrief,
       stubProvider({ kind: "structured", questions: frozenTen }),
@@ -917,12 +949,12 @@ describe("approved-pack persistence and verbatim replay", () => {
     const edited = applyIndonesianQuestionEdits(suggestion, kopiBrief, [
       { order: 1, new_text: "Bagaimana harga di Kopi Taman Senja?" },
     ]);
-    const record = approveIndonesianQuestionPack(edited, kopiBrief, {
-      ...context,
-      pack_version_id: "NVA-FIKTIF-001.questions.v1.rebalanced",
-    });
-    expect(record.classification_summary.menyebut_bisnis_anda).toBe(6);
-    expect(record.status).toBe("questions_approved");
+    expect(() =>
+      approveIndonesianQuestionPack(edited, kopiBrief, {
+        ...context,
+        pack_version_id: "NVA-FIKTIF-001.questions.v1.rebalanced",
+      }),
+    ).toThrow(IndonesianApprovalBlockedError);
   });
 });
 
@@ -931,15 +963,20 @@ describe("approved-pack persistence and verbatim replay", () => {
 // ---------------------------------------------------------------------------
 
 describe("additive isolation", () => {
-  it("exposes no symbols that collide with the English question contract", async () => {
-    const english = await import("./questions");
+  it("uses the canonical matrix instead of a second question generator", async () => {
     const contracts = await import("./contracts");
     const indonesian = await import("./questions-id");
-    const englishExports = Object.keys(english);
-    const indonesianExports = Object.keys(indonesian);
-    indonesianExports.forEach((name) => {
-      expect(englishExports).not.toContain(name);
-    });
+    expect(indonesian.INDONESIAN_SLOT_MATRIX.map((slot) => slot.order)).toEqual(
+      contracts.AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.order),
+    );
+    expect(contracts.PROMPT_MATRIX).toEqual(
+      contracts.AUDIT_MEASUREMENT_MATRIX.map((slot) => [
+        slot.id,
+        slot.category,
+        slot.auditedBrandIdentity === "required",
+        slot.generatorSlotDescription,
+      ]),
+    );
     expect(contracts.PROMPT_CONTRACT_VERSION).toBe("deterministic-v4-en");
   });
 });

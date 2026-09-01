@@ -1,8 +1,13 @@
 import {
   classifyIndonesianQuestion,
   containsIndonesianComparisonIdentity,
+  isCategoryComparisonFallback,
   type MinimizedIndonesianBrief,
 } from "./questions-id";
+import {
+  CANONICAL_COMPOSITION_COUNTS,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 
 function normalizedWords(value: string) {
   return value
@@ -74,8 +79,8 @@ const CLEARLY_ENGLISH_MAJORITY = 6;
 
 /**
  * Guards only the model-authored DEFAULT suggestion. These constraints are not
- * applied after customer editing: the final approved pack may have any
- * name/no-name balance allowed by the locked-pack contract.
+ * applied after customer editing: the final approved pack is checked by the
+ * canonical locked-pack boundary.
  */
 export function generatedSuggestionGuardIssues(
   questions: string[],
@@ -89,7 +94,9 @@ export function generatedSuggestionGuardIssues(
       classifyIndonesianQuestion(question, brief) ===
       "tanpa_menyebut_bisnis_anda",
   ).length;
-  if (unbranded !== 5) issues.push("default_composition_not_five_five");
+  if (unbranded !== CANONICAL_COMPOSITION_COUNTS.unbranded) {
+    issues.push("default_composition_not_canonical");
+  }
 
   if (
     questions.filter(clearlyEnglishQuestion).length >= CLEARLY_ENGLISH_MAJORITY
@@ -98,8 +105,12 @@ export function generatedSuggestionGuardIssues(
   }
 
   const competitor = brief.comparison_business?.name ?? "";
+  const comparisonFallback = isCategoryComparisonFallback(brief);
   questions.forEach((question, index) => {
-    if (index === 5) return;
+    const slot = measurementSlotForOrder(index + 1);
+    if (slot?.comparisonTargetIdentity === "required" || comparisonFallback) {
+      return;
+    }
     if (containsIndonesianComparisonIdentity(question, competitor)) {
       issues.push(`compact_competitor_leakage:${index + 1}`);
     }

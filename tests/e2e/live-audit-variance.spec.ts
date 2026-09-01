@@ -5,6 +5,10 @@ import {
   goldenPrompts,
   goldenReportContent,
 } from "../../src/lib/audit/fixtures/report-golden";
+import {
+  CANONICAL_COMPOSITION_COUNTS,
+  measurementSlotForPromptId,
+} from "../../src/lib/audit/measurement-matrix";
 import { fixtureCallTelemetry } from "../../src/lib/audit/fixtures/telemetry";
 import {
   buildDeterministicIndonesianPack,
@@ -30,20 +34,49 @@ import {
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  WORKFLOW_SCHEMA_VERSION,
 } from "../../src/lib/audit/workflow-storage";
+import {
+  createWorkflowMeta,
+  defaultConversionAction,
+  defaultRegulatedCategoryNotes,
+  derivePriorityOffering,
+} from "../../src/lib/audit/workflow-authority";
 import { grantAccess } from "./helpers";
 
 const SAFETY_IDENTIFIER = "live-e2e-session-123456";
 const REPORT_RESPONSE_ID = "resp-live-e2e-report";
+const workflowBrief = {
+  ...goldenBrief,
+  entity_scope: "Seluruh brand Northstar Advisory",
+  priority_offering: derivePriorityOffering(goldenBrief.verified_offerings),
+  conversion_action: defaultConversionAction(goldenBrief.category),
+  regulated_category_notes: defaultRegulatedCategoryNotes(goldenBrief.category),
+  known_accuracy_questions: [],
+  agency_name: "",
+  agency_logo_data_url: "",
+};
 
 const minimizedBrief = minimizeIndonesianBrief(goldenBrief);
 const questions = buildDeterministicIndonesianPack(minimizedBrief);
-const lockedPrompts = goldenPrompts.map((prompt, index) => ({
-  ...prompt,
-  question: questions[index],
-  rationale: "Offline live-workflow regression fixture.",
-  inputs_used: ["category"],
-}));
+const questionsByOrder = new Map(
+  questions.map((question, index) => [index + 1, question]),
+);
+const lockedPrompts = goldenPrompts.map((prompt) => {
+  const slot = measurementSlotForPromptId(prompt.prompt_id);
+  if (!slot) throw new Error(`Missing canonical slot for ${prompt.prompt_id}`);
+  const question = questionsByOrder.get(slot.order);
+  if (!question) throw new Error(`Missing question for slot ${slot.order}`);
+  return {
+    ...prompt,
+    category: slot.category,
+    role: slot.generatorSlotDescription,
+    branded: slot.auditedBrandIdentity === "required",
+    question,
+    rationale: "Offline live-workflow regression fixture.",
+    inputs_used: [...slot.allowedContextFields],
+  };
+});
 
 const promptPack: PromptPack = {
   status: "draft_for_review",
@@ -60,15 +93,14 @@ const promptPack: PromptPack = {
   },
   summary: {
     total_prompts: 10,
-    unbranded_prompts: 5,
-    branded_prompts: 5,
+    unbranded_prompts: CANONICAL_COMPOSITION_COUNTS.unbranded,
+    branded_prompts: CANONICAL_COMPOSITION_COUNTS.branded,
   },
   prompts: lockedPrompts,
   self_check: {
     ten_prompts: true,
-    two_per_category: true,
-    five_unbranded: true,
-    five_branded: true,
+    one_prompt_per_slot: true,
+    canonical_composition: true,
     no_brand_leakage: true,
     verified_inputs_only: true,
     verified_competitor_only: true,
@@ -132,10 +164,18 @@ const report = buildAuditReport(
 
 function liveState(overrides: Record<string, unknown> = {}) {
   return {
+    version: WORKFLOW_SCHEMA_VERSION,
     websiteUrl: "https://northstar.example",
-    brief: goldenBrief,
+    extractedSourceUrl: "https://northstar.example",
+    brief: workflowBrief,
+    meta: createWorkflowMeta(workflowBrief, {
+      intakeScreen: "review",
+      identityUnverified: false,
+      comparisonStatus: "confirmed",
+    }),
     factsExtracted: true,
     factsConfirmed: true,
+    factsCustomerOwned: false,
     extraction: null,
     promptPack,
     observations: [],
@@ -143,6 +183,7 @@ function liveState(overrides: Record<string, unknown> = {}) {
     setupTelemetry: [],
     executionStarted: false,
     postReportBudgetCalls: [],
+    reportFailureCode: null,
     ...overrides,
   };
 }

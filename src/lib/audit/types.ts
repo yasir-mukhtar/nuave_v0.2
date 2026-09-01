@@ -1,12 +1,35 @@
 import { z } from "zod";
+import { parseSourceInput } from "./source-input";
 
+/** The ten categories in the canonical measurement matrix (R-01). */
 export const promptCategories = [
+  "category_recommendation",
+  "situation",
+  "need_fit",
+  "offering_use_case",
+  "shortlist",
+  "open_comparison",
+  "brand_fit",
+  "explicit_recommendation",
+  "direct_comparison",
+  "fit_misfit",
+] as const;
+export type CanonicalPromptCategory = (typeof promptCategories)[number];
+
+/** Historical category values retained only to parse frozen pre-A3 records. */
+export const legacyPromptCategories = [
   "need_discovery",
   "solution_discovery",
   "comparison",
   "validation",
   "action",
 ] as const;
+export type LegacyPromptCategory = (typeof legacyPromptCategories)[number];
+
+export const promptCategorySchema = z.union([
+  z.enum(promptCategories),
+  z.enum(legacyPromptCategories),
+]);
 
 export const appearanceStatuses = [
   "absent",
@@ -53,6 +76,10 @@ export const sourceSchema = z.object({
 });
 
 const optionalSourceUrl = z.union([sourceUrl, z.literal("")]);
+const officialSourceUrl = sourceUrl.refine(
+  (value) => Boolean(parseSourceInput(value)),
+  "Official source must be a supported public website or Instagram profile.",
+);
 
 export const similarBusinessSchema = z.object({
   name: z.string().trim().max(160).optional(),
@@ -67,12 +94,12 @@ export const businessBriefSchema = z.object({
   category: requiredText.max(200),
   market_context: requiredText.max(300),
   target_customer: requiredText.max(500),
-  official_sources: z.array(sourceUrl).min(1).max(10),
+  official_sources: z.array(officialSourceUrl).min(1).max(10),
   verified_offerings: z.array(requiredText.max(300)).min(1).max(12),
-  verified_customer_needs: z.array(requiredText.max(300)).max(12),
-  verified_decision_criteria: z.array(requiredText.max(300)).max(12),
+  verified_customer_needs: z.array(requiredText.max(300)).min(1).max(12),
+  verified_decision_criteria: z.array(requiredText.max(300)).min(1).max(12),
   verified_competitor: z.object({
-    name: z.string().trim().max(160),
+    name: z.string().trim().min(1).max(160),
     scope: z.string().trim().max(300),
     source_url: optionalSourceUrl,
   }),
@@ -100,6 +127,7 @@ export const extractionRequestSchema = z.object({
   brand_name: z.string().trim().max(160),
   market_context: z.string().trim().max(300),
   category: z.string().trim().max(200),
+  identity_unverified: z.boolean().default(false),
   safety_identifier: z.string().trim().min(8).max(64),
 });
 
@@ -135,7 +163,7 @@ export const extractionDraftSchema = z.object({
 
 export const promptSchema = z.object({
   prompt_id: z.string(),
-  category: z.enum(promptCategories),
+  category: promptCategorySchema,
   role: z.string(),
   branded: z.boolean(),
   question: z.string().trim().min(1).max(700),
@@ -167,9 +195,8 @@ export const promptPackSchema = z.object({
   prompts: z.array(promptSchema).length(10),
   self_check: z.object({
     ten_prompts: z.boolean(),
-    two_per_category: z.boolean(),
-    five_unbranded: z.boolean(),
-    five_branded: z.boolean(),
+    one_prompt_per_slot: z.boolean(),
+    canonical_composition: z.boolean(),
     no_brand_leakage: z.boolean(),
     verified_inputs_only: z.boolean(),
     verified_competitor_only: z.boolean(),
@@ -182,7 +209,7 @@ export const promptPackSchema = z.object({
 
 export const auditObservationSchema = z.object({
   prompt_id: z.string(),
-  category: z.enum(promptCategories),
+  category: promptCategorySchema,
   branded: z.boolean(),
   question: z.string(),
   // Spec 003 R-14/R-20: the versioned neutral instruction used for this
@@ -351,9 +378,15 @@ export type Source = z.infer<typeof sourceSchema>;
 export type SimilarBusiness = z.infer<typeof similarBusinessSchema>;
 export type BusinessBrief = z.infer<typeof businessBriefSchema>;
 export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;
-export type AuditPrompt = z.infer<typeof promptSchema>;
+type ParsedAuditPrompt = z.infer<typeof promptSchema>;
+export type AuditPrompt = Omit<ParsedAuditPrompt, "category"> & {
+  category: CanonicalPromptCategory | LegacyPromptCategory;
+};
 export type PromptPack = z.infer<typeof promptPackSchema>;
-export type AuditObservation = z.infer<typeof auditObservationSchema>;
+type ParsedAuditObservation = z.infer<typeof auditObservationSchema>;
+export type AuditObservation = Omit<ParsedAuditObservation, "category"> & {
+  category: CanonicalPromptCategory | LegacyPromptCategory;
+};
 export type AuditCallTelemetry = z.infer<typeof auditCallTelemetrySchema>;
 export type AuditBudget = z.infer<typeof auditBudgetSchema>;
 export type ReportDetail = z.infer<typeof reportDetailSchema>;

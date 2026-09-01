@@ -12,30 +12,32 @@ import {
   validateIndonesianReportLanguageRevision,
   validateReportLanguage,
 } from "./report-language";
+import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 import type { AuditObservation, ReportContent } from "./types";
 
-const PROMPT_IDS = Array.from(
-  { length: 10 },
-  (_, index) => `prompt-${index + 1}`,
-);
+const PROMPT_IDS = AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.id);
 
 function observations(): AuditObservation[] {
-  return PROMPT_IDS.map((prompt_id) => ({
-    prompt_id,
-    category: "validation",
-    branded: false,
-    question: "Pertanyaan uji.",
-    system: "OpenAI Responses API",
-    requested_model: "gpt-5.6",
-    returned_model: "gpt-5.6-sol",
-    response_id: `resp_${prompt_id}`,
-    observed_at: "2026-08-18T10:00:00.000Z",
-    raw_answer: "Jawaban yang tersimpan tidak menyebutkan bisnis Anda.",
-    sources: [],
-    run_status: "completed",
-    failure_reason: "",
-    telemetry: [],
-  }));
+  return PROMPT_IDS.map((prompt_id) => {
+    const slot = AUDIT_MEASUREMENT_MATRIX.find((item) => item.id === prompt_id);
+    if (!slot) throw new Error(`Missing canonical slot for ${prompt_id}`);
+    return {
+      prompt_id,
+      category: slot.category,
+      branded: slot.auditedBrandIdentity === "required",
+      question: "Pertanyaan uji.",
+      system: "OpenAI Responses API",
+      requested_model: "gpt-5.6",
+      returned_model: "gpt-5.6-sol",
+      response_id: `resp_${prompt_id}`,
+      observed_at: "2026-08-18T10:00:00.000Z",
+      raw_answer: "Jawaban yang tersimpan tidak menyebutkan bisnis Anda.",
+      sources: [],
+      run_status: "completed",
+      failure_reason: "",
+      telemetry: [],
+    };
+  });
 }
 
 function reportContent(): ReportContent {

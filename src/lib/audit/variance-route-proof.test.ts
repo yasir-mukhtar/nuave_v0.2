@@ -5,6 +5,7 @@ import {
   canonicalLockedQuestionPack,
   designatedVariancePrompts,
 } from "./locked-question-pack";
+import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 import type { AuditPrompt, BusinessBrief } from "./types";
 
 // Wave 1 route-boundary regressions intentionally use stubs only.
@@ -29,19 +30,6 @@ vi.mock(import("@/lib/audit/retry"), async (importOriginal) => {
 
 import { POST } from "@/app/api/audit/variance/route";
 
-const categories = [
-  "need_discovery",
-  "need_discovery",
-  "solution_discovery",
-  "solution_discovery",
-  "comparison",
-  "comparison",
-  "validation",
-  "validation",
-  "action",
-  "action",
-] as const;
-
 function brief(): BusinessBrief {
   return {
     brand_name: "Kopi Nuave",
@@ -54,7 +42,7 @@ function brief(): BusinessBrief {
     verified_offerings: ["coffee"],
     verified_customer_needs: ["find coffee"],
     verified_decision_criteria: ["location"],
-    verified_competitor: { name: "", scope: "", source_url: "" },
+    verified_competitor: { name: "Kopi Pembanding", scope: "", source_url: "" },
     similar_businesses: [],
     brand_name_variants: ["Nuave Coffee"],
     priority_offering: "coffee",
@@ -70,18 +58,18 @@ function brief(): BusinessBrief {
 }
 
 function rawPrompts(): AuditPrompt[] {
-  return categories.map((category, index) => {
-    const branded = index >= 5;
+  return AUDIT_MEASUREMENT_MATRIX.map((slot) => {
+    const branded = slot.auditedBrandIdentity === "required";
     return {
-      prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-      category,
-      role: "test",
+      prompt_id: `NVA-ID-${String(slot.order).padStart(2, "0")}`,
+      category: slot.category,
+      role: slot.generatorSlotDescription,
       branded,
       question: branded
-        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${index + 1}?`
-        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${index + 1}?`,
-      rationale: "test",
-      inputs_used: ["brand_name"],
+        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${slot.order}?`
+        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${slot.order}?`,
+      rationale: slot.measurementPurpose,
+      inputs_used: [...slot.allowedContextFields],
       review_status: "needs_human_review",
     };
   });

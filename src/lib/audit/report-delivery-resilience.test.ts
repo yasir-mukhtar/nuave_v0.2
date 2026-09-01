@@ -25,6 +25,7 @@ const input = {
   observations: protectedObservations,
   safety_identifier: "report-resilience-fixture",
   budget: fixtureBudget,
+  historical_fixture_id: "northstar-report-golden-v1" as const,
 };
 
 function protectedReportContent(

@@ -1,5 +1,7 @@
 "use client";
 
+import { CANONICAL_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
+
 const WITHOUT_BRAND = [
   "Sepatu lari lokal terbaik untuk pemula",
   "Klinik kecantikan terpercaya di Jakarta",
@@ -12,6 +14,7 @@ const WITH_BRAND = [
 ];
 
 export default function QuestionsPreview() {
+  const { unbranded, branded } = CANONICAL_COMPOSITION_COUNTS;
   return (
     <div className="w-[340px] h-[310px] rounded-[6px] border border-border-light bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden">
       {/* Header */}
@@ -27,7 +30,7 @@ export default function QuestionsPreview() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="type-label-sm text-gray-500 m-0">Tanpa nama brand</p>
-            <span className="type-label-sm text-gray-400">5</span>
+            <span className="type-label-sm text-gray-400">{unbranded}</span>
           </div>
           <div className="flex flex-col gap-1.5">
             {WITHOUT_BRAND.map((q) => (
@@ -39,7 +42,7 @@ export default function QuestionsPreview() {
               </div>
             ))}
             <div className="type-label-sm h-8 px-3 rounded-md border border-dashed border-border-light flex items-center text-gray-400">
-              +2 pertanyaan lainnya
+              +{unbranded - WITHOUT_BRAND.length} pertanyaan lainnya
             </div>
           </div>
         </div>
@@ -48,7 +51,7 @@ export default function QuestionsPreview() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="type-label-sm text-gray-500 m-0">Dengan nama brand</p>
-            <span className="type-label-sm text-gray-400">5</span>
+            <span className="type-label-sm text-gray-400">{branded}</span>
           </div>
           <div className="flex flex-col gap-1.5">
             {WITH_BRAND.map((q) => (
@@ -60,7 +63,7 @@ export default function QuestionsPreview() {
               </div>
             ))}
             <div className="type-label-sm h-8 px-3 rounded-md border border-dashed border-border-light flex items-center text-gray-400">
-              +3 pertanyaan lainnya
+              +{branded - WITH_BRAND.length} pertanyaan lainnya
             </div>
           </div>
         </div>

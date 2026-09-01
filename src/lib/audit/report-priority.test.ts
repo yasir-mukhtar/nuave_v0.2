@@ -15,6 +15,7 @@ import { sanitizeUnsupportedReportPriorities } from "./report-priority";
 import type { ReportContent } from "./types";
 
 const POSITIVE_ONLY_PROMPT_ID = goldenPrompts[6].prompt_id;
+const NORTHSTAR_HISTORICAL_FIXTURE_ID = "northstar-report-golden-v1" as const;
 
 function completeGoldenObservations() {
   return fixtureProtectedObservationSet(goldenPrompts, goldenObservations);
@@ -39,6 +40,7 @@ describe("unsupported report priority containment", () => {
       original,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     );
 
     expect(result.removed_orders).toEqual([]);
@@ -54,6 +56,7 @@ describe("unsupported report priority containment", () => {
       draft,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     );
 
     expect(result.removed_orders).toEqual([1, 3]);
@@ -72,6 +75,7 @@ describe("unsupported report priority containment", () => {
       draft,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     );
 
     expect(
@@ -89,6 +93,7 @@ describe("unsupported report priority containment", () => {
       draft,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     );
 
     expect(result.removed_orders).toEqual([1]);
@@ -114,6 +119,7 @@ describe("unsupported report priority containment", () => {
       draft,
       goldenObservations,
       goldenBrief,
+      NORTHSTAR_HISTORICAL_FIXTURE_ID,
     );
 
     expect(
@@ -141,6 +147,7 @@ describe("unsupported report priority containment", () => {
       {
         brief: goldenBrief,
         prompts: goldenPrompts,
+        historical_fixture_id: "northstar-report-golden-v1" as const,
         observations,
         safety_identifier: "fixture-user-123",
         budget: fixtureBudget,

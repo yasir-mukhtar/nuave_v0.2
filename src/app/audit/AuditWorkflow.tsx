@@ -7,7 +7,6 @@ import { AuditNotice } from "@/components/product/AuditNotice";
 import { Button } from "@/components/ui/button";
 import { IconCheck, IconDownload } from "@tabler/icons-react";
 import {
-  businessBriefSchema,
   AUDIT_COST_LIMIT_USD,
   type AuditCallTelemetry,
   type AuditBudget,
@@ -23,10 +22,7 @@ import {
   type AuditCustomerStage,
 } from "@/lib/audit/customer-error";
 import { makeCustomerEvidenceExport } from "@/lib/audit/customer-evidence-export";
-import {
-  sanitizeAiSimilarBusinesses,
-  withPrimarySimilarBusiness,
-} from "@/lib/audit/similar-businesses";
+import { sanitizeAiSimilarBusinesses } from "@/lib/audit/similar-businesses";
 import { AUDIT_STAGE_CALL_LIMITS } from "@/lib/audit/telemetry";
 import {
   classifyReportRecovery,
@@ -36,8 +32,29 @@ import {
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  type AuditWorkflowStorageState,
   restorableAuditReport,
 } from "@/lib/audit/workflow-storage";
+import {
+  INVALID_SOURCE_INPUT_MESSAGE,
+  parseSourceInput,
+} from "@/lib/audit/source-input";
+import {
+  acceptComparisonTarget,
+  applyBriefFieldChange,
+  applyScopeSelection,
+  confirmIdentity,
+  createWorkflowMeta,
+  mergeExtractionIntoBrief,
+  nextIntakeScreen,
+  parseWorkflowStorageState,
+  previousIntakeScreen,
+  validateBriefForReview,
+  WORKFLOW_SCHEMA_VERSION,
+  type ComparisonTargetInput,
+  type ScopeKind,
+  type WorkflowMeta,
+} from "@/lib/audit/workflow-authority";
 import {
   VARIANCE_FAILURE_STORAGE_KEY,
   VARIANCE_STORAGE_KEY,
@@ -49,7 +66,7 @@ import {
 import {
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
 } from "@/lib/audit/questions-id";
 import {
   completedLockedObservationSetErrors,
@@ -67,7 +84,7 @@ import {
   type PromptRunStatus,
 } from "@/lib/audit/stream";
 import {
-  BriefStep,
+  B1BriefStep,
   QuestionsStep,
   type RunUnfinishedState,
 } from "./AuditStages";
@@ -78,21 +95,7 @@ import styles from "./audit.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
 
-type SavedState = {
-  websiteUrl: string;
-  brief: BusinessBrief;
-  factsExtracted: boolean;
-  factsConfirmed: boolean;
-  factsCustomerOwned?: boolean;
-  extraction: ExtractionDraft | null;
-  promptPack: PromptPack | null;
-  observations: AuditObservation[];
-  report: AuditReport | null;
-  setupTelemetry?: AuditCallTelemetry[];
-  executionStarted?: boolean;
-  postReportBudgetCalls?: AuditCallTelemetry[];
-  reportFailureCode?: ReportFailureCode | null;
-};
+type SavedState = AuditWorkflowStorageState;
 
 const STORAGE_KEY = AUDIT_WORKFLOW_STORAGE_KEY;
 const SESSION_KEY = AUDIT_SESSION_STORAGE_KEY;
@@ -206,16 +209,6 @@ function readStoredRunRecord<T extends { run_key: string }>(
   }
 }
 
-function friendlyBriefError(brief: BusinessBrief) {
-  const result = businessBriefSchema.safeParse(brief);
-  if (result.success) return "";
-  const first = result.error.issues[0];
-  const field = first.path
-    .join(".")
-    .replace("verified_competitor.", "competitor.");
-  return `Lengkapi ${field || "informasi bisnis"}: ${first.message}`;
-}
-
 function initialStatuses(
   pack: PromptPack | null,
   observations: AuditObservation[],
@@ -233,6 +226,10 @@ function initialStatuses(
 export default function AuditWorkflow() {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [brief, setBrief] = useState<BusinessBrief>(emptyBrief);
+  const [workflowMeta, setWorkflowMeta] = useState<WorkflowMeta>(() =>
+    createWorkflowMeta(emptyBrief),
+  );
+  const [extractedSourceUrl, setExtractedSourceUrl] = useState("");
   const [factsExtracted, setFactsExtracted] = useState(false);
   const [factsConfirmed, setFactsConfirmed] = useState(false);
   const [factsCustomerOwned, setFactsCustomerOwned] = useState(false);
@@ -272,6 +269,8 @@ export default function AuditWorkflow() {
   const [carryoverCostUsd, setCarryoverCostUsd] = useState(0);
   const [budgetReady, setBudgetReady] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const extractionInFlightRef = useRef<string | null>(null);
 
   const safetyIdentifier = useMemo(() => {
     if (typeof window === "undefined") return "nuave-server-placeholder";
@@ -432,33 +431,41 @@ export default function AuditWorkflow() {
       try {
         const saved = window.sessionStorage.getItem(STORAGE_KEY);
         if (saved) {
-          const state = JSON.parse(saved) as SavedState;
-          const restoredObservations = state.observations || [];
-          const restoredPack = state.promptPack || null;
-          setWebsiteUrl(state.websiteUrl || "");
-          setBrief(state.brief || emptyBrief);
-          setFactsExtracted(Boolean(state.factsExtracted));
-          setFactsConfirmed(Boolean(state.factsConfirmed));
-          setFactsCustomerOwned(
-            Boolean(state.factsCustomerOwned || state.factsConfirmed),
-          );
-          setExtraction(state.extraction || null);
-          setPromptPack(restoredPack);
-          setObservations(restoredObservations);
-          setReport(restorableAuditReport(state.report));
-          setSetupTelemetry(state.setupTelemetry || []);
-          setPostReportBudgetCalls(state.postReportBudgetCalls || []);
-          setReportFailureCode(
-            isReportFailureCode(state.reportFailureCode)
-              ? state.reportFailureCode
-              : null,
-          );
-          setExecutionStarted(
-            Boolean(state.executionStarted || restoredObservations.length),
-          );
-          setPromptStatuses(
-            initialStatuses(restoredPack, restoredObservations),
-          );
+          const state = parseWorkflowStorageState(
+            JSON.parse(saved),
+          ) as SavedState | null;
+          if (!state) {
+            window.sessionStorage.removeItem(STORAGE_KEY);
+          } else {
+            const restoredObservations = state.observations || [];
+            const restoredPack = state.promptPack || null;
+            setWebsiteUrl(state.websiteUrl || "");
+            setExtractedSourceUrl(state.extractedSourceUrl || "");
+            setBrief(state.brief || emptyBrief);
+            setWorkflowMeta(state.meta);
+            setFactsExtracted(Boolean(state.factsExtracted));
+            setFactsConfirmed(Boolean(state.factsConfirmed));
+            setFactsCustomerOwned(
+              Boolean(state.factsCustomerOwned || state.factsConfirmed),
+            );
+            setExtraction(state.extraction || null);
+            setPromptPack(restoredPack);
+            setObservations(restoredObservations);
+            setReport(restorableAuditReport(state.report));
+            setSetupTelemetry(state.setupTelemetry || []);
+            setPostReportBudgetCalls(state.postReportBudgetCalls || []);
+            setReportFailureCode(
+              isReportFailureCode(state.reportFailureCode)
+                ? state.reportFailureCode
+                : null,
+            );
+            setExecutionStarted(
+              Boolean(state.executionStarted || restoredObservations.length),
+            );
+            setPromptStatuses(
+              initialStatuses(restoredPack, restoredObservations),
+            );
+          }
         }
         setVarianceRecord(
           readStoredRunRecord<VarianceRecord>(VARIANCE_STORAGE_KEY),
@@ -516,8 +523,11 @@ export default function AuditWorkflow() {
   useEffect(() => {
     if (!restored) return;
     const state: SavedState = {
+      version: WORKFLOW_SCHEMA_VERSION,
       websiteUrl,
+      extractedSourceUrl,
       brief,
+      meta: workflowMeta,
       factsExtracted,
       factsConfirmed,
       factsCustomerOwned,
@@ -537,6 +547,7 @@ export default function AuditWorkflow() {
     }
   }, [
     brief,
+    extractedSourceUrl,
     executionStarted,
     extraction,
     factsConfirmed,
@@ -549,6 +560,7 @@ export default function AuditWorkflow() {
     reportFailureCode,
     setupTelemetry,
     restored,
+    workflowMeta,
     websiteUrl,
   ]);
 
@@ -661,6 +673,7 @@ export default function AuditWorkflow() {
     setExecutionStarted(false);
     setPromptStatuses({});
     setRunUnfinished(null);
+    setFieldErrors({});
   }
 
   function updateBrief<K extends keyof BusinessBrief>(
@@ -668,24 +681,228 @@ export default function AuditWorkflow() {
     value: BusinessBrief[K],
   ) {
     if (executionStarted) return;
-    setBrief((current) => ({ ...current, [key]: value }));
+    const mutation = applyBriefFieldChange(brief, workflowMeta, key, value);
+    setBrief(mutation.brief);
+    setWorkflowMeta(mutation.meta);
     setFactsCustomerOwned(true);
     clearAfterBriefChange();
   }
 
-  async function extractWebsite(url?: string) {
+  function updateScopeKind(scopeKind: ScopeKind) {
+    if (executionStarted) return;
+    const mutation = applyScopeSelection(
+      brief,
+      workflowMeta,
+      scopeKind,
+      scopeKind === workflowMeta.scopeKind ? workflowMeta.scopeValue : "",
+    );
+    setBrief(mutation.brief);
+    setWorkflowMeta(mutation.meta);
+    setFactsCustomerOwned(true);
+    clearAfterBriefChange();
+  }
+
+  function updateScopeValue(scopeValue: string) {
+    if (executionStarted) return;
+    const mutation = applyScopeSelection(
+      brief,
+      workflowMeta,
+      workflowMeta.scopeKind,
+      scopeValue,
+    );
+    setBrief(mutation.brief);
+    setWorkflowMeta(mutation.meta);
+    setFactsCustomerOwned(true);
+    clearAfterBriefChange();
+  }
+
+  function updateComparisonTarget(input: ComparisonTargetInput) {
+    if (executionStarted) return;
+    const mutation = acceptComparisonTarget(brief, workflowMeta, input);
+    setBrief(mutation.brief);
+    setWorkflowMeta(mutation.meta);
+    setFactsCustomerOwned(true);
+    clearAfterBriefChange();
+  }
+
+  function confirmBrandIdentity() {
+    if (!brief.brand_name.trim()) {
+      setFieldErrors({ brand_name: "Isi nama brand Anda." });
+      setError("Isi nama brand Anda sebelum mengonfirmasi identitas.");
+      return;
+    }
+    const mutation = confirmIdentity(brief, workflowMeta);
+    setWorkflowMeta(mutation.meta);
+    setFieldErrors({});
     setError("");
-    const resolvedUrl = url?.trim() || websiteUrl.trim();
+  }
+
+  function requestSourceCorrection() {
+    if (executionStarted || busy) return;
+    setFieldErrors({});
+    setError("");
+    setWorkflowMeta((current) => ({
+      ...current,
+      intakeScreen: "source-correction",
+    }));
+  }
+
+  async function submitSourceCorrection(
+    sourceUrl: string,
+    correctedBrandName: string,
+  ) {
+    const sourceCandidate =
+      sourceUrl.trim() || extractedSourceUrl || brief.official_sources[0] || "";
+    const parsedSource = parseSourceInput(sourceCandidate);
+    if (!parsedSource) {
+      showIntakeIssue({
+        field: "sourceCorrectionSource",
+        screen: "source-correction",
+        message:
+          "Masukkan website publik atau profil Instagram yang valid untuk sumber baru.",
+      });
+      return;
+    }
+    if (!correctedBrandName.trim()) {
+      showIntakeIssue({
+        field: "sourceCorrectionName",
+        screen: "source-correction",
+        message: "Isi nama brand yang benar sebelum membaca ulang sumber.",
+      });
+      return;
+    }
+
+    const resolvedUrl = parsedSource.normalizedUrl;
+    if (resolvedUrl === extractedSourceUrl) {
+      const mutation = applyBriefFieldChange(
+        brief,
+        workflowMeta,
+        "brand_name",
+        correctedBrandName.trim(),
+      );
+      setBrief(mutation.brief);
+      setWorkflowMeta({
+        ...mutation.meta,
+        intakeScreen: "brand-confirm",
+        identityUnverified: false,
+      });
+      setFactsCustomerOwned(true);
+      clearAfterBriefChange();
+      return;
+    }
+
+    await extractWebsite(resolvedUrl, correctedBrandName.trim());
+  }
+
+  function inputIdForField(field: string) {
+    if (field === "entity_scope") {
+      return workflowMeta.scopeKind === "whole-brand"
+        ? "scope-kind-whole-brand"
+        : "scope-value";
+    }
+    return (
+      {
+        brand_name: "brand-name",
+        official_sources: "source-correction-source",
+        scopeValue: "scope-value",
+        brand_type: "brand-type",
+        category: "category",
+        market_context: "market-context",
+        target_customer: "target-customer",
+        verified_customer_needs: "customer-needs",
+        verified_decision_criteria: "decision-criteria",
+        verified_offerings: "verified-offerings",
+        "verified_competitor.name": "comparison-name",
+        "verified_competitor.scope": "comparison-scope",
+        "verified_competitor.source_url": "comparison-source",
+        sourceCorrectionSource: "source-correction-source",
+        sourceCorrectionName: "source-correction-name",
+      } as Record<string, string>
+    )[field];
+  }
+
+  function showIntakeIssue(issue: {
+    field: string;
+    screen: typeof workflowMeta.intakeScreen;
+    message: string;
+  }) {
+    setFieldErrors({ [issue.field]: issue.message });
+    setWorkflowMeta((current) => ({ ...current, intakeScreen: issue.screen }));
+    setError(issue.message);
+    window.setTimeout(() => {
+      const id = inputIdForField(issue.field);
+      if (id) document.getElementById(id)?.focus();
+    }, 0);
+  }
+
+  function continueIntake(screen: typeof workflowMeta.intakeScreen) {
+    const issue = validateBriefForReview(brief, workflowMeta).find(
+      (candidate) => candidate.screen === screen,
+    );
+    if (issue) {
+      showIntakeIssue(issue);
+      return;
+    }
+    setFieldErrors({});
+    setError("");
+    setWorkflowMeta((current) => ({
+      ...current,
+      intakeScreen: nextIntakeScreen(current.scopeKind, screen),
+    }));
+  }
+
+  function goBackInIntake(screen: typeof workflowMeta.intakeScreen) {
+    setFieldErrors({});
+    setError("");
+    setWorkflowMeta((current) => ({
+      ...current,
+      intakeScreen: previousIntakeScreen(current.scopeKind, screen),
+    }));
+  }
+
+  async function extractWebsite(url?: string, brandNameOverride?: string) {
+    setError("");
+    const rawUrl = url?.trim() || websiteUrl.trim();
+    const parsedSource = parseSourceInput(rawUrl);
+    if (!parsedSource) {
+      setError(INVALID_SOURCE_INPUT_MESSAGE);
+      return;
+    }
+    const resolvedUrl = parsedSource.normalizedUrl;
+    const correctedBrandName = brandNameOverride?.trim();
+    const requestBrief = correctedBrandName
+      ? { ...brief, brand_name: correctedBrandName }
+      : brief;
+    const requestMeta = correctedBrandName
+      ? {
+          ...workflowMeta,
+          identityUnverified: false,
+          customerEditedFields: [
+            ...new Set([...workflowMeta.customerEditedFields, "brand_name"]),
+          ],
+        }
+      : workflowMeta;
     if (!budgetReady) {
       setError(customerAuditErrorMessage("bootstrap"));
       return;
     }
-    if (!resolvedUrl) {
-      setError("Masukkan URL situs resmi brand Anda terlebih dahulu.");
+    if (extractionInFlightRef.current) return;
+    if (
+      extractedSourceUrl === resolvedUrl &&
+      extraction &&
+      !correctedBrandName
+    ) {
+      setWebsiteUrl(resolvedUrl);
+      setFactsExtracted(true);
+      setWorkflowMeta((current) => ({
+        ...current,
+        intakeScreen: "brand-confirm",
+      }));
       return;
     }
-    if (url) setWebsiteUrl(url.trim());
-    const preserveCustomerFacts = factsCustomerOwned;
+    setWebsiteUrl(resolvedUrl);
+    extractionInFlightRef.current = resolvedUrl;
+    const preserveCustomerFacts = requestMeta.customerEditedFields.length > 0;
     setBusy("extract");
     try {
       const result = await postJson<{
@@ -693,9 +910,12 @@ export default function AuditWorkflow() {
         telemetry: AuditCallTelemetry[];
       }>("/api/audit/extract", {
         website_url: resolvedUrl,
-        brand_name: brief.brand_name,
-        market_context: brief.market_context,
-        category: brief.category,
+        brand_name: requestBrief.brand_name,
+        market_context: requestBrief.market_context,
+        category: requestBrief.category,
+        identity_unverified: correctedBrandName
+          ? false
+          : workflowMeta.identityUnverified || !brief.brand_name.trim(),
         safety_identifier: safetyIdentifier,
         budget: {
           limit_usd: AUDIT_COST_LIMIT_USD,
@@ -714,34 +934,22 @@ export default function AuditWorkflow() {
           ? [...new Set([...draft.warnings, PRESERVED_FACTS_WARNING])]
           : draft.warnings,
       });
-      if (!preserveCustomerFacts) {
-        setBrief((current) =>
-          withPrimarySimilarBusiness({
-            ...current,
-            brand_name: draft.brand_name || current.brand_name,
-            entity_scope: draft.entity_scope || current.entity_scope,
-            brand_type: draft.brand_type || current.brand_type,
-            category: draft.category || current.category,
-            market_context: draft.market_context || current.market_context,
-            target_customer: draft.target_customer || current.target_customer,
-            official_sources: [
-              ...new Set([resolvedUrl, ...draft.official_sources]),
-            ],
-            verified_offerings: draft.verified_offerings,
-            verified_customer_needs: draft.verified_customer_needs,
-            verified_decision_criteria: draft.verified_decision_criteria,
-            similar_businesses: similarBusinesses,
-            brand_name_variants: draft.brand_name_variants,
-            priority_offering: draft.priority_offering,
-            conversion_action: draft.conversion_action,
-            customer_supplied_facts: draft.customer_supplied_facts,
-            known_accuracy_questions: draft.known_accuracy_questions,
-            usp: draft.usp,
-            regulated_category_notes: draft.regulated_category_notes,
-          }),
-        );
-        setFactsCustomerOwned(false);
-      }
+      const mutation = mergeExtractionIntoBrief({
+        currentBrief: requestBrief,
+        currentMeta: requestMeta,
+        draft: { ...draft, similar_businesses: similarBusinesses },
+        acceptedSourceUrl: resolvedUrl,
+      });
+      setBrief(mutation.brief);
+      setWorkflowMeta({
+        ...mutation.meta,
+        intakeScreen: "brand-confirm",
+        identityUnverified: correctedBrandName
+          ? false
+          : mutation.meta.identityUnverified,
+      });
+      setFactsCustomerOwned(preserveCustomerFacts);
+      setExtractedSourceUrl(resolvedUrl);
       setFactsExtracted(true);
       setFactsConfirmed(false);
       setSetupTelemetry((calls) => [...calls, ...result.telemetry]);
@@ -751,33 +959,30 @@ export default function AuditWorkflow() {
       }
       setError(safeError("extract", cause));
     } finally {
+      if (extractionInFlightRef.current === resolvedUrl) {
+        extractionInFlightRef.current = null;
+      }
       setBusy(null);
     }
   }
 
   async function generatePrompts() {
     setError("");
-    const preparedBrief = withPrimarySimilarBusiness(brief);
-    const validationError = friendlyBriefError(preparedBrief);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    if (!factsConfirmed) {
-      setError(
-        "Periksa fakta bisnis di atas dan konfirmasi sebelum melanjutkan.",
-      );
+    const validationIssue = validateBriefForReview(brief, workflowMeta)[0];
+    if (validationIssue) {
+      showIntakeIssue(validationIssue);
       return;
     }
 
     const operation = operationGeneration.begin("prompts");
-    setBrief(preparedBrief);
+    setFactsConfirmed(true);
+    setFactsCustomerOwned(true);
     setBusy("prompts");
     try {
       const result = await postJson<{
         pack: PromptPack;
         telemetry?: AuditCallTelemetry[];
-      }>("/api/audit/prompts", { brief: preparedBrief }, operation.signal);
+      }>("/api/audit/prompts", { brief }, operation.signal);
       if (!operationGeneration.isCurrent(operation)) return;
       const pack = result.pack;
       setPromptPack(pack);
@@ -951,7 +1156,7 @@ export default function AuditWorkflow() {
       return;
     }
     const minimized = minimizeIndonesianBrief(brief);
-    const questionErrors = validateIndonesianQuestionPack(
+    const questionErrors = validateCanonicalIndonesianQuestionPack(
       promptPack.prompts.map((prompt) => prompt.question),
       minimized,
     );
@@ -1122,6 +1327,10 @@ export default function AuditWorkflow() {
     setRunUnfinished(null);
     setBusy(null);
     setError("");
+    setWorkflowMeta(createWorkflowMeta(emptyBrief));
+    setExtractedSourceUrl("");
+    extractionInFlightRef.current = null;
+    setFieldErrors({});
   }
 
   function backToSource() {
@@ -1129,6 +1338,11 @@ export default function AuditWorkflow() {
     varianceInFlightRunKey.current = null;
     setBusy(null);
     setFactsExtracted(false);
+    setWorkflowMeta((current) => ({
+      ...current,
+      intakeScreen: "brand-confirm",
+    }));
+    setFieldErrors({});
   }
 
   function backToFacts() {
@@ -1136,21 +1350,12 @@ export default function AuditWorkflow() {
     varianceInFlightRunKey.current = null;
     setBusy(null);
     setPromptPack(null);
-  }
-
-  function handleLogo(file: File | undefined) {
-    if (!file) {
-      updateBrief("agency_logo_data_url", "");
-      return;
-    }
-    if (!file.type.match(/^image\/(png|jpeg)$/) || file.size > 1_000_000) {
-      setError("Unggah logo PNG atau JPG berukuran maksimal 1 MB.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () =>
-      updateBrief("agency_logo_data_url", String(reader.result || ""));
-    reader.readAsDataURL(file);
+    setFactsConfirmed(false);
+    setWorkflowMeta((current) => ({
+      ...current,
+      intakeScreen: "review",
+    }));
+    setFieldErrors({});
   }
 
   function downloadEvidenceJson() {
@@ -1185,7 +1390,7 @@ export default function AuditWorkflow() {
     observations.filter((item) => item.run_status === "completed").length < 10;
 
   return (
-    <main className={styles.shell} lang="en" data-theme="light">
+    <main className={styles.shell} lang="id" data-theme="light">
       <header
         className={`${styles.topbar} ${styles.noPrint}`}
         style={
@@ -1265,19 +1470,33 @@ export default function AuditWorkflow() {
       ) : null}
 
       {step === 1 ? (
-        <BriefStep
+        <B1BriefStep
+          key={workflowMeta.intakeScreen}
           brief={brief}
           updateBrief={updateBrief}
           extraction={extraction}
-          factsConfirmed={factsConfirmed}
-          setFactsConfirmed={(value) => {
-            setFactsConfirmed(value);
-            if (value) setFactsCustomerOwned(true);
-          }}
+          screen={workflowMeta.intakeScreen}
+          scopeKind={workflowMeta.scopeKind}
+          scopeValue={workflowMeta.scopeValue}
+          comparisonProposal={workflowMeta.comparisonProposal}
+          comparisonStatus={workflowMeta.comparisonStatus}
+          marketInvalidated={workflowMeta.marketInvalidated}
+          offeringsInvalidated={workflowMeta.offeringsInvalidated}
+          customerEditedFields={workflowMeta.customerEditedFields}
+          preservedCustomerFields={workflowMeta.preservedCustomerFields}
+          fieldErrors={fieldErrors}
+          identityUnverified={workflowMeta.identityUnverified}
           busy={busy}
+          onScopeKindChange={updateScopeKind}
+          onScopeValueChange={updateScopeValue}
+          onConfirmIdentity={confirmBrandIdentity}
+          onRequestSourceCorrection={requestSourceCorrection}
+          onSubmitSourceCorrection={submitSourceCorrection}
+          onAcceptComparison={updateComparisonTarget}
+          onContinue={continueIntake}
+          onBack={goBackInIntake}
+          onBackToSource={backToSource}
           onGenerate={generatePrompts}
-          onBack={backToSource}
-          onLogo={handleLogo}
         />
       ) : null}
 

@@ -6,10 +6,11 @@ import { IconLoader2, IconRefresh } from "@tabler/icons-react";
 import { AuditNotice } from "@/components/product/AuditNotice";
 import { AuditProgress } from "@/components/product/AuditProgress";
 import { INDONESIAN_RUN_STATUS_LABELS } from "@/lib/audit/report-labels";
+import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import type { ReportRecoveryState } from "@/lib/audit/report-recovery";
 import type { PromptRunStatus } from "@/lib/audit/stream";
 import type { AuditObservation, PromptPack } from "@/lib/audit/types";
-import { categoryLabels, type RunUnfinishedState } from "./AuditStages";
+import { type RunUnfinishedState } from "./AuditStages";
 import styles from "./audit.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
@@ -88,6 +89,9 @@ export default function AuditRunStep({
         <div className={styles.runList}>
           {pack.prompts.map((prompt, index) => {
             const status = statuses[prompt.prompt_id] ?? "pending";
+            const measurementSlot = measurementSlotForPromptId(
+              prompt.prompt_id,
+            );
             const statusVariant =
               status === "failed"
                 ? "destructive"
@@ -104,7 +108,9 @@ export default function AuditRunStep({
               <div className={styles.runRow} key={prompt.prompt_id}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <div>
-                  <strong>{categoryLabels[prompt.category]}</strong>
+                  <strong>
+                    {measurementSlot?.customerFacingLabel ?? "Pertanyaan"}
+                  </strong>
                   <small>{prompt.question}</small>
                 </div>
                 <Badge variant={statusVariant} className={statusClassName}>

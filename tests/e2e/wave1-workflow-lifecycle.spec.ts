@@ -4,6 +4,10 @@ import {
   goldenPrompts,
 } from "../../src/lib/audit/fixtures/report-golden";
 import {
+  CANONICAL_COMPOSITION_COUNTS,
+  measurementSlotForPromptId,
+} from "../../src/lib/audit/measurement-matrix";
+import {
   buildDeterministicIndonesianPack,
   minimizeIndonesianBrief,
 } from "../../src/lib/audit/questions-id";
@@ -11,18 +15,48 @@ import type { PromptPack } from "../../src/lib/audit/types";
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  WORKFLOW_SCHEMA_VERSION,
 } from "../../src/lib/audit/workflow-storage";
+import {
+  createWorkflowMeta,
+  defaultConversionAction,
+  defaultRegulatedCategoryNotes,
+  derivePriorityOffering,
+} from "../../src/lib/audit/workflow-authority";
 import { grantAccess } from "./helpers";
+
+const workflowBrief = {
+  ...goldenBrief,
+  entity_scope: "Seluruh brand Northstar Advisory",
+  priority_offering: derivePriorityOffering(goldenBrief.verified_offerings),
+  conversion_action: defaultConversionAction(goldenBrief.category),
+  regulated_category_notes: defaultRegulatedCategoryNotes(goldenBrief.category),
+  known_accuracy_questions: [],
+  agency_name: "",
+  agency_logo_data_url: "",
+};
 
 const questions = buildDeterministicIndonesianPack(
   minimizeIndonesianBrief(goldenBrief),
 );
-const prompts = goldenPrompts.map((prompt, index) => ({
-  ...prompt,
-  question: questions[index],
-  rationale: "Offline Wave 1 lifecycle regression.",
-  inputs_used: ["category"],
-}));
+const questionsByOrder = new Map(
+  questions.map((question, index) => [index + 1, question]),
+);
+const prompts = goldenPrompts.map((prompt) => {
+  const slot = measurementSlotForPromptId(prompt.prompt_id);
+  if (!slot) throw new Error(`Missing canonical slot for ${prompt.prompt_id}`);
+  const question = questionsByOrder.get(slot.order);
+  if (!question) throw new Error(`Missing question for slot ${slot.order}`);
+  return {
+    ...prompt,
+    category: slot.category,
+    role: slot.generatorSlotDescription,
+    branded: slot.auditedBrandIdentity === "required",
+    question,
+    rationale: "Offline Wave 1 lifecycle regression.",
+    inputs_used: [...slot.allowedContextFields],
+  };
+});
 const promptPack: PromptPack = {
   status: "draft_for_review",
   prompt_pack_version: "wave1-lifecycle-v1",
@@ -36,13 +70,16 @@ const promptPack: PromptPack = {
     market_context: goldenBrief.market_context,
     target_customer: goldenBrief.target_customer,
   },
-  summary: { total_prompts: 10, unbranded_prompts: 5, branded_prompts: 5 },
+  summary: {
+    total_prompts: 10,
+    unbranded_prompts: CANONICAL_COMPOSITION_COUNTS.unbranded,
+    branded_prompts: CANONICAL_COMPOSITION_COUNTS.branded,
+  },
   prompts,
   self_check: {
     ten_prompts: true,
-    two_per_category: true,
-    five_unbranded: true,
-    five_branded: true,
+    one_prompt_per_slot: true,
+    canonical_composition: true,
     no_brand_leakage: true,
     verified_inputs_only: true,
     verified_competitor_only: true,
@@ -63,10 +100,18 @@ function seedQuestionsState(page: Page) {
       workflowKey: AUDIT_WORKFLOW_STORAGE_KEY,
       sessionKey: AUDIT_SESSION_STORAGE_KEY,
       state: {
+        version: WORKFLOW_SCHEMA_VERSION,
         websiteUrl: "https://northstar.example",
-        brief: goldenBrief,
+        extractedSourceUrl: "https://northstar.example",
+        brief: workflowBrief,
+        meta: createWorkflowMeta(workflowBrief, {
+          intakeScreen: "review",
+          identityUnverified: false,
+          comparisonStatus: "confirmed",
+        }),
         factsExtracted: true,
         factsConfirmed: true,
+        factsCustomerOwned: false,
         extraction: null,
         promptPack,
         observations: [],
@@ -74,6 +119,7 @@ function seedQuestionsState(page: Page) {
         setupTelemetry: [],
         executionStarted: false,
         postReportBudgetCalls: [],
+        reportFailureCode: null,
       },
     },
   );
@@ -127,7 +173,9 @@ test("initial run POST rejection keeps the reviewed questions retryable", async 
   await expect
     .poll(() =>
       page.evaluate((key) => {
-        const state = JSON.parse(window.sessionStorage.getItem(key) || "{}") as {
+        const state = JSON.parse(
+          window.sessionStorage.getItem(key) || "{}",
+        ) as {
           executionStarted?: boolean;
           observations?: unknown[];
           promptPack?: unknown;

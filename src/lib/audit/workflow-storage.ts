@@ -1,14 +1,9 @@
 /**
- * Session-storage keys and the restore guard for the live audit workflow.
+ * Versioned session storage for the live audit workflow.
  *
- * The workflow key is versioned for persisted-state compatibility. Spec 003's
- * OpenCode Go migration changes the meaning of a resumable observation even
- * though its TypeScript shape is unchanged: pre-migration v4 state may contain
- * direct-OpenAI observations, and silently restoring those would allow a mixed
- * provider audit. v5 therefore invalidates all pre-migration workflow state.
- *
- * The report-shape guard remains as a second line of defense for required
- * fields read without optional chaining by the report screen.
+ * B1 changes the stored workflow from one monolithic facts screen to a
+ * screen-owned intake state. v9 therefore rejects v8 and older records instead
+ * of silently interpreting their fields as the new workflow.
  */
 import type {
   AuditCallTelemetry,
@@ -17,24 +12,38 @@ import type {
   ExtractionDraft,
 } from "./types";
 import {
-  sanitizeAiSimilarBusinesses,
-  withPrimarySimilarBusiness,
-} from "./similar-businesses";
+  WORKFLOW_SCHEMA_VERSION,
+  createWorkflowMeta,
+  mergeExtractionIntoBrief,
+  type WorkflowMeta,
+} from "./workflow-authority";
+import { sanitizeAiSimilarBusinesses } from "./similar-businesses";
 
-/** Bump whenever the persisted `SavedState` shape or resumable method changes. */
-export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v7";
+export { WORKFLOW_SCHEMA_VERSION };
+
+export const AUDIT_WORKFLOW_STORAGE_KEY = "nuave.audit.workflow.v9";
 export const AUDIT_SESSION_STORAGE_KEY = "nuave.audit.session.v1";
 
-/**
- * Complete v7 workflow state created after a successful landing-page
- * extraction. This is intentionally a full initial SavedState-compatible
- * record, not a partial object. Keeping the constructor next to the versioned
- * key makes the landing -> /audit transfer explicit while AuditWorkflow
- * remains the owner of all subsequent persistence.
- */
-export type InitialExtractedAuditWorkflowState = {
+export type AuditWorkflowStorageState = {
+  version: typeof WORKFLOW_SCHEMA_VERSION;
   websiteUrl: string;
+  extractedSourceUrl: string;
   brief: BusinessBrief;
+  meta: WorkflowMeta;
+  factsExtracted: boolean;
+  factsConfirmed: boolean;
+  factsCustomerOwned: boolean;
+  extraction: ExtractionDraft | null;
+  promptPack: import("./types").PromptPack | null;
+  observations: import("./types").AuditObservation[];
+  report: AuditReport | null;
+  setupTelemetry: AuditCallTelemetry[];
+  executionStarted: boolean;
+  postReportBudgetCalls: AuditCallTelemetry[];
+  reportFailureCode: import("./report-recovery").ReportFailureCode | null;
+};
+
+export type InitialExtractedAuditWorkflowState = AuditWorkflowStorageState & {
   factsExtracted: true;
   factsConfirmed: false;
   factsCustomerOwned: false;
@@ -42,12 +51,43 @@ export type InitialExtractedAuditWorkflowState = {
   promptPack: null;
   observations: [];
   report: null;
-  setupTelemetry: AuditCallTelemetry[];
   executionStarted: false;
   postReportBudgetCalls: [];
   reportFailureCode: null;
 };
 
+function blankBrief(): BusinessBrief {
+  return {
+    brand_name: "",
+    entity_scope: "",
+    brand_type: "",
+    category: "",
+    market_context: "",
+    target_customer: "",
+    official_sources: [],
+    verified_offerings: [],
+    verified_customer_needs: [],
+    verified_decision_criteria: [],
+    verified_competitor: { name: "", scope: "", source_url: "" },
+    similar_businesses: [],
+    brand_name_variants: [],
+    priority_offering: "",
+    conversion_action: "",
+    customer_supplied_facts: [],
+    known_accuracy_questions: [],
+    usp: "",
+    regulated_category_notes: "",
+    language: "en-US",
+    agency_name: "",
+    agency_logo_data_url: "",
+  };
+}
+
+/**
+ * Complete v9 workflow state created after a successful source extraction. The
+ * comparison suggestion is kept as a proposal in `meta`; no suggestion is
+ * written into `brief.verified_competitor` until a customer action.
+ */
 export function createInitialExtractedAuditWorkflowState(input: {
   websiteUrl: string;
   draft: ExtractionDraft;
@@ -59,37 +99,28 @@ export function createInitialExtractedAuditWorkflowState(input: {
   const extraction: ExtractionDraft = {
     ...input.draft,
     similar_businesses: similarBusinesses,
+    known_accuracy_questions: [],
   };
-  const brief = withPrimarySimilarBusiness({
-    brand_name: input.draft.brand_name,
-    entity_scope: input.draft.entity_scope,
-    brand_type: input.draft.brand_type,
-    category: input.draft.category,
-    market_context: input.draft.market_context,
-    target_customer: input.draft.target_customer,
-    official_sources: [
-      ...new Set([input.websiteUrl, ...input.draft.official_sources]),
-    ],
-    verified_offerings: input.draft.verified_offerings,
-    verified_customer_needs: input.draft.verified_customer_needs,
-    verified_decision_criteria: input.draft.verified_decision_criteria,
-    verified_competitor: { name: "", scope: "", source_url: "" },
-    similar_businesses: similarBusinesses,
-    brand_name_variants: input.draft.brand_name_variants,
-    priority_offering: input.draft.priority_offering,
-    conversion_action: input.draft.conversion_action,
-    customer_supplied_facts: input.draft.customer_supplied_facts,
-    known_accuracy_questions: input.draft.known_accuracy_questions,
-    usp: input.draft.usp,
-    regulated_category_notes: input.draft.regulated_category_notes,
-    language: "en-US",
-    agency_name: "",
-    agency_logo_data_url: "",
+  const initialBrief = blankBrief();
+  const merged = mergeExtractionIntoBrief({
+    currentBrief: initialBrief,
+    currentMeta: createWorkflowMeta(initialBrief),
+    draft: extraction,
+    acceptedSourceUrl: input.websiteUrl,
   });
+  const meta: WorkflowMeta = {
+    ...merged.meta,
+    intakeScreen: "brand-confirm",
+    identityUnverified: !input.draft.brand_name.trim(),
+    customerEditedFields: [],
+  };
 
   return {
+    version: WORKFLOW_SCHEMA_VERSION,
     websiteUrl: input.websiteUrl,
-    brief,
+    extractedSourceUrl: input.websiteUrl,
+    brief: merged.brief,
+    meta,
     factsExtracted: true,
     factsConfirmed: false,
     factsCustomerOwned: false,

@@ -142,17 +142,17 @@ describe("question-writer contract regressions", () => {
     const instruction = INDONESIAN_QUESTION_WRITER_INSTRUCTION;
 
     expect(instruction).toContain(
-      "Write exactly ten independent questions in the assigned order",
+      "Write exactly ten independent questions in the fixed slot order",
     );
     expect(instruction).toContain(
       "Write natural Indonesian appropriate to the category and audience",
     );
-    expect(instruction).toContain("without the audited business name");
+    expect(instruction).toContain("without naming the audited business");
     expect(instruction).toContain(
-      "compare the audited business with the supplied comparison business",
+      "Compare the audited business with the supplied comparison target using an explicit relation",
     );
     expect(instruction).toContain(
-      "compare it with relevant alternatives without inventing a name",
+      "compare realistic unnamed options without naming either business",
     );
     expect(instruction).toContain(
       "You may ask whether an unknown public fact is true",

@@ -20,44 +20,17 @@ import {
   generateIndonesianQuestionPack,
   indonesianPackBlockers,
   minimizeIndonesianBrief,
-  validateIndonesianQuestionPack,
+  validateCanonicalIndonesianQuestionPack,
 } from "./questions-id";
 import { generatedSuggestionGuardIssues } from "./question-suggestion-guards";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  CANONICAL_COMPOSITION_COUNTS,
+  measurementSlotForOrder,
+} from "./measurement-matrix";
 import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
-
-const CATEGORY_LABELS: Record<string, { role: string; rationale: string }> = {
-  need_discovery: {
-    role: "Memahami kebutuhan pelanggan",
-    rationale: "Pertanyaan untuk memahami kebutuhan pelanggan.",
-  },
-  solution_discovery: {
-    role: "Mencari pilihan solusi",
-    rationale: "Pertanyaan untuk mencari pilihan solusi.",
-  },
-  comparison: {
-    role: "Membandingkan pilihan",
-    rationale: "Pertanyaan untuk membandingkan pilihan.",
-  },
-  validation: {
-    role: "Memvalidasi fakta publik",
-    rationale: "Pertanyaan untuk memvalidasi fakta publik.",
-  },
-  action: {
-    role: "Mendorong langkah tindakan",
-    rationale: "Pertanyaan untuk mendorong langkah tindakan.",
-  },
-};
-
-function categoryLabels(category: string) {
-  return (
-    CATEGORY_LABELS[category] ?? {
-      role: "Pertanyaan pelanggan",
-      rationale: "Pertanyaan pelanggan.",
-    }
-  );
-}
 
 type CapturedCall = {
   url: string;
@@ -204,7 +177,7 @@ export async function buildLiveIndonesianPromptPack(input: {
 
   const candidateTexts = selectedQuestions.map((item) => item.text);
   const candidateBlockers = indonesianPackBlockers(candidateTexts, minimized);
-  const candidateIssues = validateIndonesianQuestionPack(
+  const candidateIssues = validateCanonicalIndonesianQuestionPack(
     candidateTexts,
     minimized,
   );
@@ -213,9 +186,9 @@ export async function buildLiveIndonesianPromptPack(input: {
     minimized,
   );
 
-  // The default suggestion must truthfully satisfy the advertised 5/5 and
-  // Indonesian composition before customer editing. Customer edits after this
-  // boundary remain free to change the final balance.
+  // The default suggestion must truthfully satisfy the canonical composition
+  // and Indonesian contract before customer editing. Customer edits are
+  // checked again at the locked run/approval boundary.
   if (
     provenanceError ||
     candidateBlockers.length ||
@@ -234,7 +207,7 @@ export async function buildLiveIndonesianPromptPack(input: {
 
     const fallbackTexts = buildDeterministicIndonesianPack(minimized);
     const fallbackBlockers = indonesianPackBlockers(fallbackTexts, minimized);
-    const fallbackIssues = validateIndonesianQuestionPack(
+    const fallbackIssues = validateCanonicalIndonesianQuestionPack(
       fallbackTexts,
       minimized,
     );
@@ -328,6 +301,15 @@ export async function buildLiveIndonesianPromptPack(input: {
     selectedQuestions.map((item) => item.text),
     minimized,
   );
+  const slotMetadataMatches = selectedQuestions.every(
+    (item, index) =>
+      item.category === AUDIT_MEASUREMENT_MATRIX[index]?.category,
+  );
+  const canonicalCompositionMatches =
+    classificationSummary.tanpa_menyebut_bisnis_anda ===
+      CANONICAL_COMPOSITION_COUNTS.unbranded &&
+    classificationSummary.menyebut_bisnis_anda ===
+      CANONICAL_COMPOSITION_COUNTS.branded;
 
   const pack: PromptPack = {
     status: "draft_for_review",
@@ -348,14 +330,19 @@ export async function buildLiveIndonesianPromptPack(input: {
       branded_prompts: classificationSummary.menyebut_bisnis_anda,
     },
     prompts: selectedQuestions.map((item, index) => {
-      const labels = categoryLabels(item.suggested_category);
+      const slot = measurementSlotForOrder(index + 1);
+      if (!slot) {
+        throw new Error(
+          `No canonical measurement slot for question ${index + 1}.`,
+        );
+      }
       return {
         prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-        category: item.suggested_category,
-        role: labels.role,
+        category: slot.category,
+        role: slot.generatorSlotDescription,
         branded: item.final_classification === "menyebut_bisnis_anda",
         question: item.text,
-        rationale: labels.rationale,
+        rationale: slot.measurementPurpose,
         // The provider receives one minimized confirmed-facts record. Do not
         // claim three specific fields were used when the authored question may
         // have been grounded in different confirmed fields.
@@ -365,9 +352,8 @@ export async function buildLiveIndonesianPromptPack(input: {
     }),
     self_check: {
       ten_prompts: selectedQuestions.length === 10,
-      two_per_category: true,
-      five_unbranded: classificationSummary.tanpa_menyebut_bisnis_anda === 5,
-      five_branded: classificationSummary.menyebut_bisnis_anda === 5,
+      one_prompt_per_slot: slotMetadataMatches,
+      canonical_composition: canonicalCompositionMatches,
       no_brand_leakage: selectedBlockers.length === 0,
       verified_inputs_only: true,
       verified_competitor_only: true,

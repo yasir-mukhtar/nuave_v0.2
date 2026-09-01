@@ -199,8 +199,8 @@ describe("Wave 2 real route contract (K-09)", () => {
     expect(generated.pack.prompts).toHaveLength(10);
     expect(generated.pack.summary).toEqual({
       total_prompts: 10,
-      unbranded_prompts: 5,
-      branded_prompts: 5,
+      unbranded_prompts: 6,
+      branded_prompts: 4,
     });
 
     // This is the explicit review handoff: the run receives the exact pack
@@ -298,9 +298,7 @@ describe("Wave 2 real route contract (K-09)", () => {
 
     expect(runResponse.status).toBe(422);
     expect(await runResponse.json()).toMatchObject({
-      error: expect.stringContaining(
-        "reveals the comparison business outside the designated comparison question",
-      ),
+      error: expect.stringContaining("tidak boleh menyebut bisnis pembanding"),
     });
     expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
     expect(providerMocks.execute).not.toHaveBeenCalled();
@@ -348,9 +346,7 @@ describe("Wave 2 real route contract (K-09)", () => {
 
     expect(runResponse.status).toBe(422);
     expect(await runResponse.json()).toMatchObject({
-      error: expect.stringContaining(
-        "reveals the comparison business outside the designated comparison question",
-      ),
+      error: expect.stringContaining("tidak boleh menyebut bisnis pembanding"),
     });
     expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
     expect(providerMocks.execute).not.toHaveBeenCalled();

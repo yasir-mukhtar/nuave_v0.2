@@ -8,6 +8,7 @@ import { buildAuditReport, normalizeReportEvidence } from "./contracts";
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  WORKFLOW_SCHEMA_VERSION,
   createInitialExtractedAuditWorkflowState,
   restorableAuditReport,
 } from "./workflow-storage";
@@ -18,18 +19,22 @@ function currentReport() {
       goldenReportContent(),
       goldenObservations,
       goldenBrief,
+      "northstar-report-golden-v1",
     ),
     goldenObservations,
+    undefined,
+    undefined,
+    "northstar-report-golden-v1",
   );
 }
 
 describe("live audit workflow session storage", () => {
   it("invalidates stale workflow state while keeping the browser session identity stable", () => {
-    // v4 may contain direct-OpenAI observations; v5 may contain a live run from
-    // a browser bundle that predates the explicit stream-contract guard. This
-    // build reads only v7 so neither stale resumable state can be mixed in.
-    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v7");
-    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v6");
+    // v8 contains the first screen-owned workflow. This build reads only v9 so
+    // the new source-correction semantics cannot reinterpret stale state.
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).toBe("nuave.audit.workflow.v9");
+    expect(WORKFLOW_SCHEMA_VERSION).toBe(9);
+    expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v7");
     expect(AUDIT_WORKFLOW_STORAGE_KEY).not.toBe("nuave.audit.workflow.v5");
     expect(AUDIT_SESSION_STORAGE_KEY).toBe("nuave.audit.session.v1");
   });
@@ -86,11 +91,20 @@ describe("live audit workflow session storage", () => {
     expect(state.brief.market_context).toBe("Indonesia");
     expect(state.brief.target_customer).toBe("Customers");
     expect(state.brief.verified_offerings).toEqual(["Coffee"]);
+    expect(state.meta.offeringsInvalidated).toBe(false);
+    expect(state.meta.preservedCustomerFields).toEqual([]);
     expect(state.brief.official_sources).toEqual([
       "https://example.com/",
       "https://example.com/about",
     ]);
     expect(state.brief.verified_competitor).toEqual({
+      name: "",
+      scope: "",
+      source_url: "",
+    });
+    expect(state.meta.comparisonStatus).toBe("pending");
+    expect(state.meta.comparisonProposal).toEqual({
+      kind: "suggestion",
       name: "Peer Coffee",
       scope: "",
       source_url: "https://peer.example/",

@@ -85,6 +85,7 @@ const completedObservations = fixtureProtectedObservationSet(
 const reportInput = {
   brief: goldenBrief,
   prompts: goldenPrompts,
+  historical_fixture_id: "northstar-report-golden-v1" as const,
   observations: completedObservations,
   safety_identifier: "fixture-user-123",
   budget: fixtureBudget,

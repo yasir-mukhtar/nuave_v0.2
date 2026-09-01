@@ -265,6 +265,22 @@ describe("live website extraction", () => {
     expect(request.input[0].content).not.toContain("previous attempt");
   });
 
+  it("carries an unverified identity into extraction without treating it as confirmed", async () => {
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: parsedDraft }),
+    );
+
+    await extractBusinessDraft({ ...input, identity_unverified: true });
+
+    const request = mockResponsesParse.mock.calls[0][0];
+    expect(request.input[0].content).toContain(
+      "The supplied brand name is unverified.",
+    );
+    expect(JSON.parse(request.input[1].content)).toMatchObject({
+      supplied_brand_name_unverified: true,
+    });
+  });
+
   it("retries once with a stricter brevity instruction after an output-limit truncation", async () => {
     // `docs/journey/03-business-facts.md`: an empty structured output is retried
     // once within the preparation allowance before manual entry.

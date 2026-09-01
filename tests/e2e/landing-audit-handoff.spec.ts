@@ -24,8 +24,9 @@ function extractionDraft() {
     target_customer: "Customers",
     official_sources: [SOURCE],
     verified_offerings: ["Coffee"],
-    verified_customer_needs: [],
-    verified_decision_criteria: [],
+    verified_customer_needs: ["A place to work"],
+    verified_decision_criteria: ["Location"],
+    similar_businesses: [{ name: "Peer Coffee", source_url: "", origin: "ai" }],
     brand_name_variants: ["Example Business"],
     priority_offering: "Coffee",
     conversion_action: "Visit website",
@@ -70,7 +71,9 @@ async function stubExtraction(
 
     if (method === "POST") {
       extractCalls += 1;
-      const request = route.request().postDataJSON() as { website_url?: string };
+      const request = route.request().postDataJSON() as {
+        website_url?: string;
+      };
       requestedSource = request.website_url ?? "";
       if (postGate) await postGate;
       await route.fulfill({
@@ -95,8 +98,13 @@ async function stubExtraction(
 async function expectTouchTarget(locator: Locator, label: string) {
   const box = await locator.boundingBox();
   expect(box, `${label} should be rendered`).not.toBeNull();
-  expect(Math.round(box?.width ?? 0), `${label} width`).toBeGreaterThanOrEqual(44);
-  expect(Math.round(box?.height ?? 0), `${label} height`).toBeGreaterThanOrEqual(44);
+  expect(Math.round(box?.width ?? 0), `${label} width`).toBeGreaterThanOrEqual(
+    44,
+  );
+  expect(
+    Math.round(box?.height ?? 0),
+    `${label} height`,
+  ).toBeGreaterThanOrEqual(44);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -104,7 +112,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("landing audit hero handoff", () => {
-  test("landing stays side-effect free until the user submits", async ({ page }) => {
+  test("landing stays side-effect free until the user submits", async ({
+    page,
+  }) => {
     let auditRequests = 0;
     await page.route("**/api/audit/**", async (route) => {
       auditRequests += 1;
@@ -112,7 +122,9 @@ test.describe("landing audit hero handoff", () => {
     });
 
     await page.goto("/");
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     await expect(
       hero.getByRole("heading", {
         name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
@@ -132,7 +144,9 @@ test.describe("landing audit hero handoff", () => {
     });
 
     await page.goto("/");
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("not a website");
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
 
@@ -151,7 +165,9 @@ test.describe("landing audit hero handoff", () => {
     const calls = await stubExtraction(page, { holdPost: true });
 
     await page.goto("/");
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     const input = hero.getByPlaceholder("https://bisnisanda.com");
     const submit = hero.getByRole("button", { name: "Lanjutkan audit" });
     await input.fill("example.com");
@@ -175,13 +191,15 @@ test.describe("landing audit hero handoff", () => {
     await expect(page).toHaveURL(/\/audit$/);
   });
 
-  test("successful extraction navigates once to a populated editable brief without re-extracting", async ({
+  test("successful extraction navigates once through the populated B1 screens without re-extracting", async ({
     page,
   }) => {
     const calls = await stubExtraction(page);
 
     await page.goto("/");
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
 
@@ -193,15 +211,69 @@ test.describe("landing audit hero handoff", () => {
     ).toBeVisible();
     const brandNameInput = page.getByRole("textbox", { name: "Brand name*" });
     await expect(brandNameInput).toHaveValue("Example Business");
-    await expect(page.getByRole("textbox", { name: "Category*" })).toHaveValue(
-      "Coffee shop",
-    );
-    await expect(page.getByLabel("Market or location")).toHaveValue("Indonesia");
-    await expect(page.getByLabel("Target customer")).toHaveValue("Customers");
-    await expect(page.getByLabel("Products or services")).toHaveValue("Coffee");
 
     await brandNameInput.fill("Edited Example Business");
     await expect(brandNameInput).toHaveValue("Edited Example Business");
+
+    await page.getByRole("button", { name: "Lanjut" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Tentukan cakupan audit." }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Lanjut" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Pilih kategori brand." }),
+    ).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Category*" })).toHaveValue(
+      "Coffee shop",
+    );
+    await page.getByRole("button", { name: "Lanjut" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Market or location*" }),
+    ).toHaveValue("Indonesia");
+    await page.getByRole("button", { name: "Lanjut" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Kenali pelanggan dan alasannya." }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Target customer*" }),
+    ).toHaveValue("Customers");
+    await expect(
+      page.getByRole("textbox", { name: "Customer needs*" }),
+    ).toHaveValue("A place to work");
+    await expect(
+      page.getByRole("textbox", { name: "Decision criteria*" }),
+    ).toHaveValue("Location");
+    await page.getByRole("button", { name: "Lanjut" }).click();
+
+    await expect(
+      page.getByRole("heading", {
+        name: "Pilih produk atau layanan yang diverifikasi.",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Products or services*" }),
+    ).toHaveValue("Coffee");
+    await page.getByRole("button", { name: "Lanjut" }).click();
+
+    await expect(
+      page.getByRole("heading", {
+        name: "Pilih bisnis pembanding yang realistis.",
+      }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Terima saran Nuave" }).click();
+    await expect(
+      page.getByRole("group", { name: "Saran Nuave" }).getByText("Peer Coffee"),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Lanjut" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Tambahkan fakta opsional." }),
+    ).toBeVisible();
 
     expect(calls.extractCalls()).toBe(1);
     await page.waitForTimeout(300);
@@ -255,8 +327,14 @@ test.describe("landing audit hero handoff", () => {
             reportFailureCode: null,
           }),
         );
-        window.sessionStorage.setItem(varianceKey, JSON.stringify({ stale: true }));
-        window.sessionStorage.setItem(failureKey, JSON.stringify({ stale: true }));
+        window.sessionStorage.setItem(
+          varianceKey,
+          JSON.stringify({ stale: true }),
+        );
+        window.sessionStorage.setItem(
+          failureKey,
+          JSON.stringify({ stale: true }),
+        );
       },
       {
         workflowKey: AUDIT_WORKFLOW_STORAGE_KEY,
@@ -266,7 +344,9 @@ test.describe("landing audit hero handoff", () => {
     );
 
     await page.goto("/");
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
     await hero.getByRole("button", { name: "Lanjutkan audit" }).click();
 
@@ -297,9 +377,14 @@ test.describe("landing audit hero handoff", () => {
     test(`hero and landing remain horizontally contained at ${viewport.name} width`, async ({
       page,
     }) => {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.setViewportSize({
+        width: viewport.width,
+        height: viewport.height,
+      });
       await page.goto("/");
-      const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+      const hero = page.getByRole("region", {
+        name: "Mulai audit visibilitas AI",
+      });
       await expect(hero).toBeVisible();
       await expectNoHorizontalScroll(page);
       await hero
@@ -317,12 +402,16 @@ test.describe("landing audit hero handoff", () => {
 });
 
 test.describe("mobile touch target policy", () => {
-  test("migrated live controls expose approximately 44px hit areas", async ({ page }) => {
+  test("migrated live controls expose approximately 44px hit areas", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const calls = await stubExtraction(page);
 
     await page.goto("/");
-    const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
+    const hero = page.getByRole("region", {
+      name: "Mulai audit visibilitas AI",
+    });
     await expectTouchTarget(
       hero.getByRole("button", { name: "Lanjutkan audit" }),
       "source submit",
@@ -350,19 +439,15 @@ test.describe("mobile touch target policy", () => {
       }),
     ).toBeVisible();
     await expectTouchTarget(
-      page.getByRole("button", { name: "Create 10 audit questions" }),
-      "standard facts action",
-    );
-
-    await page.getByRole("button", { name: "Tambah bisnis serupa" }).click();
-    await expectTouchTarget(
-      page.getByRole("button", { name: "Hapus bisnis serupa 1" }),
-      "similar-business remove",
+      page.getByRole("button", { name: "Lanjut" }),
+      "B1 brand-confirm action",
     );
     expect(calls.extractCalls()).toBe(1);
   });
 
-  test("fixture and report actions remain touch-sized on mobile", async ({ page }) => {
+  test("fixture and report actions remain touch-sized on mobile", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     seedFixtureState(page, v3ReadyState());
     await page.goto("/audit/fixture");

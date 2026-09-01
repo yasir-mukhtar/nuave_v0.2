@@ -26,7 +26,10 @@ import {
   assembleReportContent,
   type ObservationInstructionVersion,
 } from "./contracts";
-import { reportAssessmentInstructions } from "./report-prompt-contract";
+import {
+  reportAssessmentInstructions,
+  reportPromptMeasurements,
+} from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
 import {
   AUDIT_CALL_LIMITS,
@@ -147,8 +150,8 @@ export const extractionModelDraftSchema = extractionDraftSchema.extend({
   similar_businesses: z
     .array(
       z.object({
-        name: z.string().trim().min(1).max(160),
-        source_url: z.string().trim().min(1).max(2_000),
+        name: z.string().trim().max(160),
+        source_url: z.string().trim().max(2_000),
       }),
     )
     .max(3),
@@ -247,6 +250,7 @@ type ExtractionInput = {
   brand_name: string;
   market_context: string;
   category: string;
+  identity_unverified?: boolean;
   safety_identifier: string;
   budget: AuditBudget;
 };
@@ -302,11 +306,16 @@ function extractionRequest(
           "Extract a review draft using only public facts supported by the supplied official website.",
           "Do not infer praise, reputation, quality, target demographics, or outcomes.",
           "All ordinary business facts must be supported by the official website. similar_businesses is the only exception: it is an optional suggestion list for human review, not a verified fact.",
-          "Suggest at most three genuinely comparable businesses only when you can supply a specific public website, Instagram profile, or Google Business Profile URL with high confidence from existing model knowledge. Never include the audited business itself. Never guess or fabricate a business or URL; return an empty list when uncertain.",
+          "Suggest at most three genuinely comparable businesses only when you can supply a specific public website or Instagram profile URL with high confidence from existing model knowledge. Never include the audited business itself. Never guess or fabricate a business or URL; return an empty list when uncertain.",
           "Do not add similar_businesses items to evidence, and do not claim they were found on the official website unless the website actually supports that.",
           "Web search remains restricted to the supplied official domain; do not imply that competitor URLs were web-verified by this extraction call.",
           "Write all explanatory text in clear, natural English. Preserve official brand names, product names, and place names as published.",
           "Leave unsupported scalar fields empty and unsupported arrays empty.",
+          ...(input.identity_unverified
+            ? [
+                "The supplied brand name is unverified. Do not present it as confirmed; if the official source does not provide a confident name, leave brand_name empty.",
+              ]
+            : []),
           "For each material extracted value add an evidence record with the exact field, value, source URL, and a short note.",
           ...EXTRACTION_LENGTH_INSTRUCTIONS,
           ...extraInstructions,
@@ -320,6 +329,7 @@ function extractionRequest(
           supplied_brand_name: input.brand_name,
           supplied_market_context: input.market_context,
           supplied_category: input.category,
+          supplied_brand_name_unverified: Boolean(input.identity_unverified),
         }),
       },
     ],
@@ -622,6 +632,7 @@ export async function generateReportContent(
             agency_logo_data_url: "[not sent]",
           },
           prompts: input.prompts,
+          measurement_definitions: reportPromptMeasurements(input.prompts),
           observations: input.observations.map(
             ({ telemetry, ...observation }) => {
               void telemetry;

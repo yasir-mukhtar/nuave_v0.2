@@ -13,6 +13,11 @@ import {
   kopiTamanSenjaQuestions,
 } from "./fixture-kopi-taman-senja";
 import type { IndonesianQuestion } from "./fixture-kopi-taman-senja";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  COMPATIBILITY_COMPOSITION_COUNTS,
+  measurementSlotForOrder,
+} from "../measurement-matrix";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -250,7 +255,7 @@ describe("AC-11 appearance counts", () => {
       (observation) =>
         observation.classification === "tanpa_menyebut_bisnis_anda",
     );
-    expect(unbranded).toHaveLength(5);
+    expect(unbranded).toHaveLength(COMPATIBILITY_COMPOSITION_COUNTS.unbranded);
     const appeared = unbranded.filter(
       (observation) => observation.dimensions.appearance === "mentioned",
     );
@@ -261,7 +266,7 @@ describe("AC-11 appearance counts", () => {
     const branded = kopiTamanSenjaEvidence.observations.filter(
       (observation) => observation.classification === "menyebut_bisnis_anda",
     );
-    expect(branded).toHaveLength(5);
+    expect(branded).toHaveLength(COMPATIBILITY_COMPOSITION_COUNTS.branded);
     const appeared = branded.filter(
       (observation) => observation.dimensions.appearance === "mentioned",
     );
@@ -289,51 +294,105 @@ describe("AC-11 appearance counts", () => {
     }
   });
 
-  it("matches the draft's derived report arithmetic (C.4)", () => {
-    const details = kopiTamanSenjaEvidence.observations.map(
-      (observation) => observation.dimensions,
+  it("matches report arithmetic through matrix-owned assessment classes (C.4)", () => {
+    const records = kopiTamanSenjaEvidence.observations.map((observation) => {
+      const slot = measurementSlotForOrder(observation.order);
+      if (!slot)
+        throw new Error(`Missing canonical slot for ${observation.order}`);
+      return { observation, slot };
+    });
+    const recordsFor = (
+      assessmentClass: "recommendation" | "comparison" | "information",
+    ) =>
+      records.filter(
+        ({ observation, slot }) =>
+          slot.compatibilityReportAssessmentClass === assessmentClass &&
+          observation.dimensions.appearance === "mentioned",
+      );
+    const recommendationAssessed = recordsFor("recommendation").filter(
+      ({ observation }) =>
+        observation.dimensions.recommendation === "recommended" ||
+        observation.dimensions.recommendation === "not_recommended",
     );
-    const assessed = <T extends string>(values: T[], statuses: readonly T[]) =>
-      values.filter((value) => statuses.includes(value)).length;
-
-    // Recommendation: 2 recommended of 6 assessed.
-    const recommendationAssessed = assessed(
-      details.map((d) => d.recommendation),
-      ["recommended", "not_recommended"],
-    );
-    expect(recommendationAssessed).toBe(6);
+    expect(recommendationAssessed).toHaveLength(2);
     expect(
-      details.filter((d) => d.recommendation === "recommended"),
-    ).toHaveLength(2);
-
-    // Comparison: 1 client-preferred of 2 assessed.
-    const comparisonAssessed = assessed(
-      details.map((d) => d.comparison),
-      ["client_preferred", "competitor_preferred", "compared_no_preference"],
-    );
-    expect(comparisonAssessed).toBe(2);
-    expect(
-      details.filter((d) => d.comparison === "client_preferred"),
-    ).toHaveLength(1);
-    expect(
-      details.filter((d) => d.comparison === "competitor_preferred"),
+      recommendationAssessed.filter(
+        ({ observation }) =>
+          observation.dimensions.recommendation === "recommended",
+      ),
     ).toHaveLength(1);
 
-    // Public information: 1 confirmed, 2 incomplete, 1 conflicting of 4 assessed.
-    const informationAssessed = assessed(
-      details.map((d) => d.information),
-      ["confirmed", "incomplete", "conflicting"],
+    const comparisonAssessed = recordsFor("comparison").filter(
+      ({ observation }) =>
+        observation.dimensions.comparison === "client_preferred" ||
+        observation.dimensions.comparison === "competitor_preferred" ||
+        observation.dimensions.comparison === "compared_no_preference",
     );
-    expect(informationAssessed).toBe(4);
-    expect(details.filter((d) => d.information === "confirmed")).toHaveLength(
-      1,
+    expect(comparisonAssessed).toHaveLength(2);
+    expect(
+      comparisonAssessed.filter(
+        ({ observation }) =>
+          observation.dimensions.comparison === "client_preferred",
+      ),
+    ).toHaveLength(1);
+
+    const informationAssessed = recordsFor("information").filter(
+      ({ observation }) =>
+        observation.dimensions.information === "confirmed" ||
+        observation.dimensions.information === "incomplete" ||
+        observation.dimensions.information === "conflicting",
     );
-    expect(details.filter((d) => d.information === "incomplete")).toHaveLength(
-      2,
+    expect(informationAssessed).toHaveLength(4);
+  });
+
+  it("keeps current slot text and evidence on compatibility paths", () => {
+    const byOrder = new Map(
+      kopiTamanSenjaEvidence.observations.map((observation) => [
+        observation.order,
+        observation,
+      ]),
     );
-    expect(details.filter((d) => d.information === "conflicting")).toHaveLength(
-      1,
-    );
+    const slotFor = (order: number) => {
+      const slot = measurementSlotForOrder(order);
+      if (!slot) throw new Error(`Missing matrix slot ${order}`);
+      return slot;
+    };
+
+    const comparisonSlot = slotFor(6);
+    expect(comparisonSlot).toMatchObject({
+      category: "open_comparison",
+      reportAssessmentClass: "comparison",
+      compatibilityReportAssessmentClass: "comparison",
+    });
+    expect(byOrder.get(6)?.question).toContain("vs Kopi Ruang Pagi");
+    expect(byOrder.get(6)?.dimensions.comparison).toBe("client_preferred");
+
+    const hoursSlot = slotFor(8);
+    expect(hoursSlot).toMatchObject({
+      category: "explicit_recommendation",
+      reportAssessmentClass: "recommendation",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(byOrder.get(8)?.question).toContain("Buka jam berapa");
+    expect(byOrder.get(8)?.dimensions.information).toBe("conflicting");
+
+    const contactSlot = slotFor(9);
+    expect(contactSlot).toMatchObject({
+      category: "direct_comparison",
+      reportAssessmentClass: "comparison",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(byOrder.get(9)?.question).toContain("kontak");
+    expect(byOrder.get(9)?.dimensions.information).toBe("confirmed");
+
+    const facilitySlot = slotFor(10);
+    expect(facilitySlot).toMatchObject({
+      category: "fit_misfit",
+      reportAssessmentClass: "recommendation",
+      compatibilityReportAssessmentClass: "information",
+    });
+    expect(byOrder.get(10)?.question).toContain("parkiran");
+    expect(byOrder.get(10)?.dimensions.information).toBe("incomplete");
   });
 });
 
@@ -353,23 +412,27 @@ describe("question pack compliance (R-37)", () => {
     ]);
   });
 
-  it("classifies from the final text: 5 tanpa, then 5 menyebut", () => {
+  it("classifies from final text using the matrix-derived 5/5 compatibility counts", () => {
     const { questions } = kopiTamanSenjaQuestions;
+    const unbranded = questions.filter(
+      (question) =>
+        question.final_classification === "tanpa_menyebut_bisnis_anda",
+    );
+    const branded = questions.filter(
+      (question) => question.final_classification === "menyebut_bisnis_anda",
+    );
+    expect(unbranded).toHaveLength(COMPATIBILITY_COMPOSITION_COUNTS.unbranded);
+    expect(branded).toHaveLength(COMPATIBILITY_COMPOSITION_COUNTS.branded);
     expect(
-      questions
-        .slice(0, 5)
-        .every(
-          (question) =>
-            question.final_classification === "tanpa_menyebut_bisnis_anda",
-        ),
+      unbranded.every(
+        (question) =>
+          question.final_classification === "tanpa_menyebut_bisnis_anda",
+      ),
     ).toBe(true);
     expect(
-      questions
-        .slice(5)
-        .every(
-          (question) =>
-            question.final_classification === "menyebut_bisnis_anda",
-        ),
+      branded.every(
+        (question) => question.final_classification === "menyebut_bisnis_anda",
+      ),
     ).toBe(true);
     for (const question of questions) {
       const mentionsBusiness = question.text.includes(
@@ -383,8 +446,8 @@ describe("question pack compliance (R-37)", () => {
     }
     expect(kopiTamanSenjaQuestions.classification_summary).toEqual({
       total: 10,
-      tanpa_menyebut_bisnis_anda: 5,
-      menyebut_bisnis_anda: 5,
+      tanpa_menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.unbranded,
+      menyebut_bisnis_anda: COMPATIBILITY_COMPOSITION_COUNTS.branded,
     });
   });
 
@@ -511,13 +574,23 @@ describe("reconciled fiction", () => {
       "https://kopiruangpagi.example",
     );
 
-    const comparisonQuestion = kopiTamanSenjaQuestions.questions[5];
+    const comparisonSlot = AUDIT_MEASUREMENT_MATRIX.find(
+      (slot) => slot.legacyComparisonTargetIdentity === "required",
+    );
+    if (!comparisonSlot)
+      throw new Error("Missing compatibility comparison slot.");
+    const comparisonQuestion = kopiTamanSenjaQuestions.questions.find(
+      (question) => question.order === comparisonSlot.order,
+    );
+    if (!comparisonQuestion) throw new Error("Missing comparison question.");
     expect(comparisonQuestion.text).toContain(
       KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME,
     );
 
-    const comparisonAnswer =
-      kopiTamanSenjaEvidence.observations[5].selected_observation.raw_answer;
+    const comparisonAnswer = kopiTamanSenjaEvidence.observations.find(
+      (observation) => observation.order === comparisonSlot.order,
+    )?.selected_observation.raw_answer;
+    if (!comparisonAnswer) throw new Error("Missing comparison observation.");
     expect(comparisonAnswer).toContain(
       KOPI_TAMAN_SENJA_COMPARISON_BUSINESS_NAME,
     );

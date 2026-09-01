@@ -5,7 +5,11 @@ import {
   lockedObservationBindingErrors,
   variancePromptBindingErrors,
 } from "./locked-question-pack";
-import { INDONESIAN_SLOT_CATEGORIES } from "./questions-id";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  CANONICAL_COMPOSITION_COUNTS,
+  measurementSlotForPromptId,
+} from "./measurement-matrix";
 import {
   assertSafeComparisonBusinessUrls,
   isValidSimilarBusinessUrl,
@@ -41,21 +45,45 @@ function brief(): BusinessBrief {
 }
 
 function prompts(): AuditPrompt[] {
-  return INDONESIAN_SLOT_CATEGORIES.map((category, index) => {
-    const branded = index >= 5;
+  return AUDIT_MEASUREMENT_MATRIX.map((slot) => {
+    const branded = slot.auditedBrandIdentity === "required";
     return {
-      prompt_id: `NVA-ID-${String(index + 1).padStart(2, "0")}`,
-      category,
-      role: "test",
+      prompt_id: `NVA-ID-${String(slot.order).padStart(2, "0")}`,
+      category: slot.category,
+      role: slot.generatorSlotDescription,
       branded,
       question: branded
-        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${index + 1}?`
-        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${index + 1}?`,
-      rationale: "test",
-      inputs_used: ["brand_name"],
+        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${slot.order}?`
+        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${slot.order}?`,
+      rationale: slot.measurementPurpose,
+      inputs_used: [...slot.allowedContextFields],
       review_status: "needs_human_review",
     };
   });
+}
+
+function legacyPrompts(): AuditPrompt[] {
+  return AUDIT_MEASUREMENT_MATRIX.map((slot) => {
+    const branded = slot.legacyBranded;
+    return {
+      prompt_id: `NVA-ID-${String(slot.order).padStart(2, "0")}`,
+      category: slot.legacyCategory,
+      role: slot.legacyRole,
+      branded,
+      question: branded
+        ? `Apa yang perlu diketahui tentang Kopi Nuave untuk keputusan ${slot.order}?`
+        : `Apa pilihan coffee shop di Jakarta untuk kebutuhan ${slot.order}?`,
+      rationale: slot.compatibilityMeasurementPurpose,
+      inputs_used: [...slot.legacyAllowedContextFields],
+      review_status: "needs_human_review",
+    };
+  });
+}
+
+function canonicalCategoryFor(promptId: string) {
+  const slot = measurementSlotForPromptId(promptId);
+  if (!slot) throw new Error(`Unknown canonical prompt ID: ${promptId}`);
+  return slot.category;
 }
 
 function observation(prompt: AuditPrompt): AuditObservation {
@@ -79,6 +107,17 @@ function observation(prompt: AuditPrompt): AuditObservation {
 }
 
 describe("canonical locked question pack", () => {
+  it("keeps the active pack at the matrix-derived 6/4 split", () => {
+    const pack = prompts();
+    expect(pack).toHaveLength(AUDIT_MEASUREMENT_MATRIX.length);
+    expect(pack.filter((prompt) => prompt.branded)).toHaveLength(
+      CANONICAL_COMPOSITION_COUNTS.branded,
+    );
+    expect(pack.filter((prompt) => !prompt.branded)).toHaveLength(
+      CANONICAL_COMPOSITION_COUNTS.unbranded,
+    );
+  });
+
   it("rejects duplicate prompt IDs at the pre-execution lock boundary", () => {
     const pack = prompts();
     pack[9] = { ...pack[9], prompt_id: pack[0].prompt_id };
@@ -95,41 +134,41 @@ describe("canonical locked question pack", () => {
     );
   });
 
-  it("overrides a tampered slot 1 category from the code-owned slot", () => {
+  it("rejects tampered slot 1 metadata on the active boundary", () => {
     const pack = prompts();
     pack[0] = { ...pack[0], category: "action" };
-    const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
-    expect(canonical[0].category).toBe("need_discovery");
+    expect(() => canonicalLockedQuestionPack(pack, brief())).toThrow(
+      /canonical slot metadata/i,
+    );
   });
 
-  it("overrides a tampered slot 7 category from the code-owned slot", () => {
+  it("rejects tampered slot 7 metadata on the active boundary", () => {
     const pack = prompts();
     pack[6] = { ...pack[6], category: "comparison" };
-    const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
-    expect(canonical[6].category).toBe("validation");
+    expect(() => canonicalLockedQuestionPack(pack, brief())).toThrow(
+      /canonical slot metadata/i,
+    );
   });
 
   it("recomputes branded independently of the code-owned slot category", () => {
     const pack = prompts();
     pack[0] = {
       ...pack[0],
-      category: "action",
       branded: false,
       question: "Apakah Kopi Nuave cocok untuk rapat pagi di Jakarta?",
     };
     pack[5] = {
       ...pack[5],
-      category: "need_discovery",
       branded: true,
       question: "Apa pilihan coffee shop dekat kantor di Jakarta?",
     };
     const canonical = canonicalLockedQuestionPack(pack, brief()).prompts;
     expect(canonical[0]).toMatchObject({
-      category: "need_discovery",
+      category: canonicalCategoryFor(canonical[0].prompt_id),
       branded: true,
     });
     expect(canonical[5]).toMatchObject({
-      category: "comparison",
+      category: canonicalCategoryFor(canonical[5].prompt_id),
       branded: false,
     });
   });
@@ -152,25 +191,13 @@ describe("canonical locked question pack", () => {
     expect(ids).toEqual(["NVA-ID-02", "NVA-ID-01"]);
   });
 
-  it("canonicalizes tampered categories for variance designation and binding", () => {
+  it("rejects legacy metadata in active variance requests", () => {
     const pack = prompts();
-    pack[0] = { ...pack[0], category: "action" };
-    pack[5] = { ...pack[5], category: "validation" };
-
     const designated = designatedVariancePrompts(pack, brief());
-    expect(
-      designated.map((prompt) => ({
-        prompt_id: prompt.prompt_id,
-        category: prompt.category,
-      })),
-    ).toEqual([
-      { prompt_id: "NVA-ID-01", category: "need_discovery" },
-      { prompt_id: "NVA-ID-06", category: "comparison" },
-    ]);
-
     const requested = designated.map((prompt) => ({
       ...prompt,
       category: "action" as const,
+      role: "legacy role",
     }));
     expect(
       variancePromptBindingErrors({
@@ -178,7 +205,25 @@ describe("canonical locked question pack", () => {
         requested_prompts: requested,
         brief: brief(),
       }),
-    ).toEqual([]);
+    ).not.toEqual([]);
+  });
+
+  it("accepts legacy metadata only with an explicit known historical fixture ID", () => {
+    const canonical = canonicalLockedQuestionPack(legacyPrompts(), brief(), {
+      historicalFixtureId: "northstar-report-golden-v1",
+    }).prompts;
+    expect(canonical[0].category).toBe(
+      AUDIT_MEASUREMENT_MATRIX[0].legacyCategory,
+    );
+    expect(canonical[9].category).toBe(
+      AUDIT_MEASUREMENT_MATRIX[9].legacyCategory,
+    );
+  });
+
+  it("rejects an unmarked legacy prompt pack", () => {
+    expect(() => canonicalLockedQuestionPack(legacyPrompts(), brief())).toThrow(
+      /historical fixture ID/i,
+    );
   });
 
   it("rejects a resumed observation whose ID points at different question text", () => {

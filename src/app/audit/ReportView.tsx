@@ -27,32 +27,44 @@ import {
   indonesianMeasureLabel,
   INDONESIAN_REPORT_LABELS,
 } from "@/lib/audit/report-labels";
+import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import styles from "./audit.module.css";
+
+function measurementLabel(promptId: string) {
+  return (
+    measurementSlotForPromptId(promptId)?.customerFacingLabel ?? "Pertanyaan"
+  );
+}
 
 function resultLabel(detail: ReportDetail) {
   if (detail.run === "failed") return "Belum berhasil diuji";
   if (detail.appearance === "absent") return "Tidak disebut";
-  if (detail.comparison === "client_preferred")
-    return "Diunggulkan dalam perbandingan ini";
-  if (detail.comparison === "competitor_preferred")
-    return "Bisnis lain diunggulkan";
-  if (detail.comparison === "compared_no_preference")
-    return "Dibandingkan tanpa pilihan unggulan";
-  if (detail.recommendation === "recommended") return "Direkomendasikan";
-  if (detail.information === "conflicting") return "Informasi bertentangan";
-  if (detail.information === "incomplete") return "Informasi belum lengkap";
-  if (detail.recommendation === "not_assessed")
-    return "Disebut, tanpa penilaian rekomendasi";
-  return "Disebut, tidak direkomendasikan";
+  const assessmentClass = measurementSlotForPromptId(
+    detail.prompt_id,
+  )?.reportAssessmentClass;
+  switch (assessmentClass) {
+    case "comparison":
+      if (detail.comparison === "client_preferred")
+        return "Diunggulkan dalam perbandingan ini";
+      if (detail.comparison === "competitor_preferred")
+        return "Bisnis lain diunggulkan";
+      if (detail.comparison === "compared_no_preference")
+        return "Dibandingkan tanpa pilihan unggulan";
+      return "Disebut, tanpa penilaian perbandingan";
+    case "information":
+      if (detail.information === "conflicting") return "Informasi bertentangan";
+      if (detail.information === "incomplete") return "Informasi belum lengkap";
+      if (detail.information === "confirmed") return "Informasi terkonfirmasi";
+      return "Disebut, tanpa penilaian informasi";
+    case "recommendation":
+      if (detail.recommendation === "recommended") return "Direkomendasikan";
+      if (detail.recommendation === "not_recommended")
+        return "Disebut, tidak direkomendasikan";
+      return "Disebut, tanpa penilaian rekomendasi";
+    default:
+      return "Hasil belum memiliki jalur penilaian";
+  }
 }
-
-const reportCategoryLabels: Record<string, string> = {
-  need_discovery: "Kebutuhan pelanggan",
-  solution_discovery: "Pilihan layanan",
-  comparison: "Perbandingan",
-  validation: "Fakta bisnis",
-  action: "Langkah berikutnya",
-};
 
 const ownerLabels: Record<string, string> = {
   business_owner: "Pemilik bisnis",
@@ -497,7 +509,7 @@ export default function ReportView({
                       <span className={styles.detailTitle}>
                         <small>
                           {observation
-                            ? reportCategoryLabels[observation.category]
+                            ? measurementLabel(observation.prompt_id)
                             : "Pertanyaan"}
                         </small>
                         <strong>{resultLabel(detail)}</strong>
@@ -525,7 +537,7 @@ export default function ReportView({
                     <div>
                       <small>
                         {observation
-                          ? reportCategoryLabels[observation.category]
+                          ? measurementLabel(observation.prompt_id)
                           : "Pertanyaan"}
                       </small>
                       <h3>{resultLabel(detail)}</h3>
