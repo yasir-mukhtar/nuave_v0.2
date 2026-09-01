@@ -91,6 +91,8 @@ describe("live audit workflow session storage", () => {
     expect(state.brief.market_context).toBe("Indonesia");
     expect(state.brief.target_customer).toBe("Customers");
     expect(state.brief.verified_offerings).toEqual(["Coffee"]);
+    expect(state.meta.offeringsInvalidated).toBe(false);
+    expect(state.meta.preservedCustomerFields).toEqual([]);
     expect(state.brief.official_sources).toEqual([
       "https://example.com/",
       "https://example.com/about",

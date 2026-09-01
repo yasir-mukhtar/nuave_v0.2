@@ -204,6 +204,18 @@ describe("B1 comparison target authority", () => {
       pack.slice(0, 6).every((item) => !item.includes("Kopi Taman Senja")),
     ).toBe(true);
   });
+
+  it("routes missing official sources to the focusable source-correction screen", () => {
+    const issues = validateBriefForReview(
+      { ...baseBrief, official_sources: [] },
+      validMeta({ ...baseBrief, official_sources: [] }),
+    );
+    expect(issues[0]).toEqual({
+      field: "official_sources",
+      screen: "source-correction",
+      message: "Tambahkan satu sumber resmi yang dapat dibuka.",
+    });
+  });
 });
 
 describe("B1 scope, invalidation, and review routing", () => {
@@ -243,6 +255,99 @@ describe("B1 scope, invalidation, and review routing", () => {
       "Kopi B",
     );
     expect(productB.brief.verified_offerings).toEqual([]);
+  });
+
+  it("preserves a customer-selected product scope and other edits across source replacement", () => {
+    const initial = createInitialExtractedAuditWorkflowState({
+      websiteUrl: "https://source-a.example/",
+      draft: {
+        ...extraction,
+        entity_scope: "Seluruh brand Kopi Taman Senja",
+      },
+      telemetry: [],
+    });
+    const selectedScope = applyScopeSelection(
+      initial.brief,
+      initial.meta,
+      "product",
+      "Cold Brew",
+    );
+    const editedBrief = applyBriefFieldChange(
+      selectedScope.brief,
+      selectedScope.meta,
+      "target_customer",
+      "Pelanggan yang bekerja malam hari",
+    );
+    const comparator = acceptComparisonTarget(
+      editedBrief.brief,
+      editedBrief.meta,
+      {
+        kind: "replacement",
+        name: "Customer Chosen Comparator",
+        scope: "Bandung",
+        source_url: "",
+      },
+    );
+
+    const replaced = mergeExtractionIntoBrief({
+      currentBrief: comparator.brief,
+      currentMeta: comparator.meta,
+      draft: {
+        ...extraction,
+        brand_name: "Provider B Name",
+        entity_scope: "Seluruh brand Provider B Name",
+        brand_type: "Software company from source B",
+        category: "Klinik gigi",
+        market_context: "Jawa Barat",
+        target_customer: "Provider B customer profile",
+        verified_offerings: ["B SaaS offer"],
+        verified_customer_needs: ["B customer need"],
+        verified_decision_criteria: ["B decision criterion"],
+        similar_businesses: [
+          { name: "Source B Suggestion", source_url: "", origin: "ai" },
+        ],
+      },
+      acceptedSourceUrl: "https://source-b.example/",
+    });
+
+    expect(replaced.brief.official_sources).toEqual([
+      "https://source-b.example/",
+      "https://new-source.example/about",
+    ]);
+    expect(replaced.brief.entity_scope).toBe("Produk: Cold Brew");
+    expect(replaced.meta.scopeKind).toBe("product");
+    expect(replaced.meta.scopeValue).toBe("Cold Brew");
+    expect(replaced.brief.target_customer).toBe(
+      "Pelanggan yang bekerja malam hari",
+    );
+    expect(replaced.brief.brand_type).toBe("Software company from source B");
+    expect(replaced.brief.category).toBe("Klinik gigi");
+    expect(replaced.brief.verified_offerings).toEqual(["B SaaS offer"]);
+    expect(replaced.brief.priority_offering).toBe("B SaaS offer");
+    expect(replaced.brief.conversion_action).toBe(
+      "Hubungi bisnis melalui sumber resmi untuk konsultasi.",
+    );
+    expect(replaced.brief.regulated_category_notes).toBe(
+      "Gunakan hanya informasi publik yang dapat diverifikasi untuk kategori ini.",
+    );
+    expect(replaced.brief.verified_competitor).toEqual(
+      comparator.brief.verified_competitor,
+    );
+    expect(replaced.meta.comparisonStatus).toBe("needs_reconfirmation");
+    expect(replaced.meta.customerEditedFields).toEqual(
+      expect.arrayContaining([
+        "entity_scope",
+        "target_customer",
+        "verified_competitor",
+      ]),
+    );
+    expect(replaced.meta.preservedCustomerFields).toEqual(
+      expect.arrayContaining([
+        "entity_scope",
+        "target_customer",
+        "verified_competitor",
+      ]),
+    );
   });
 
   it("invalidates and re-proposes a comparison target after category changes", () => {
@@ -312,6 +417,24 @@ describe("B1 scope, invalidation, and review routing", () => {
     });
   });
 
+  it("routes comparison scope validation to the editable comparison screen", () => {
+    const candidate = {
+      ...baseBrief,
+      verified_competitor: {
+        name: "Peer Coffee",
+        scope: "x".repeat(301),
+        source_url: "",
+      },
+    };
+    const issues = validateBriefForReview(candidate, validMeta(candidate));
+    expect(issues[0]).toEqual({
+      field: "verified_competitor.scope",
+      screen: "comparison-target",
+      message:
+        "Periksa cakupan bisnis pembanding atau kosongkan jika tidak diperlukan.",
+    });
+  });
+
   it("routes a stale entity scope to the scope owner", () => {
     const branch = applyScopeSelection(
       baseBrief,
@@ -371,6 +494,8 @@ describe("B1 persistence and extraction ownership", () => {
       telemetry: [],
     });
     expect(parseWorkflowStorageState(validState)).toEqual(validState);
+    expect(validState.meta.offeringsInvalidated).toBe(false);
+    expect(validState.meta.preservedCustomerFields).toEqual([]);
     expect(
       parseWorkflowStorageState({
         ...validState,
@@ -381,6 +506,18 @@ describe("B1 persistence and extraction ownership", () => {
       parseWorkflowStorageState({
         ...validState,
         meta: { ...validState.meta, marketInvalidated: undefined },
+      }),
+    ).toBeNull();
+    expect(
+      parseWorkflowStorageState({
+        ...validState,
+        meta: { ...validState.meta, offeringsInvalidated: undefined },
+      }),
+    ).toBeNull();
+    expect(
+      parseWorkflowStorageState({
+        ...validState,
+        meta: { ...validState.meta, preservedCustomerFields: undefined },
       }),
     ).toBeNull();
     expect(

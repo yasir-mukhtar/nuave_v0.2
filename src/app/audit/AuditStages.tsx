@@ -87,6 +87,52 @@ function text(value: string[]) {
   return value.join("\n");
 }
 
+function hasFilledValue(value: string | string[]) {
+  return Array.isArray(value)
+    ? value.some((item) => item.trim())
+    : value.trim().length > 0;
+}
+
+function emptyAiFieldHint(
+  value: string | string[],
+  field: string,
+  customerEditedFields: string[],
+  extractionMessage: string,
+  invalidationMessage?: string,
+) {
+  if (hasFilledValue(value)) return "";
+  if (invalidationMessage) return invalidationMessage;
+  if (customerEditedFields.includes(field)) {
+    return "Nilai ini dikosongkan setelah perubahan Anda. Isi nilai yang benar untuk melanjutkan.";
+  }
+  return extractionMessage;
+}
+
+const preservedFieldLabels: Record<string, string> = {
+  brand_name: "Nama brand",
+  entity_scope: "Cakupan audit",
+  brand_type: "Jenis brand",
+  category: "Kategori",
+  market_context: "Konteks pasar",
+  target_customer: "Target pelanggan",
+  verified_offerings: "Produk atau layanan",
+  verified_customer_needs: "Kebutuhan pelanggan",
+  verified_decision_criteria: "Pertimbangan keputusan",
+  verified_competitor: "Bisnis pembanding",
+  brand_name_variants: "Nama brand lain",
+  customer_supplied_facts: "Fakta tambahan",
+  usp: "Differentiator",
+};
+
+function preservedFieldValue(brief: BusinessBrief, field: string) {
+  if (field === "verified_competitor") {
+    return brief.verified_competitor.name;
+  }
+  const value = brief[field as keyof BusinessBrief];
+  if (Array.isArray(value)) return value.join(", ");
+  return typeof value === "string" ? value : "";
+}
+
 function StageIntro({
   number,
   eyebrow,
@@ -363,6 +409,7 @@ function B1ComparisonTarget({
   proposal,
   status,
   error,
+  scopeError,
   sourceError,
   onAccept,
 }: {
@@ -370,6 +417,7 @@ function B1ComparisonTarget({
   proposal: ComparisonTargetProposal | null;
   status: ComparisonStatus;
   error?: string;
+  scopeError?: string;
   sourceError?: string;
   onAccept: (input: ComparisonTargetInput) => void;
 }) {
@@ -533,6 +581,7 @@ function B1ComparisonTarget({
             id="comparison-scope"
             label="Cakupan pembanding"
             value={scope}
+            error={scopeError}
             hint="Opsional. Misalnya kota atau cabang."
             onChange={setScope}
           />
@@ -584,6 +633,10 @@ export function B1BriefStep({
   scopeValue,
   comparisonProposal,
   comparisonStatus,
+  marketInvalidated,
+  offeringsInvalidated,
+  customerEditedFields,
+  preservedCustomerFields,
   fieldErrors,
   identityUnverified,
   busy,
@@ -606,6 +659,10 @@ export function B1BriefStep({
   scopeValue: string;
   comparisonProposal: ComparisonTargetProposal | null;
   comparisonStatus: ComparisonStatus;
+  marketInvalidated: boolean;
+  offeringsInvalidated: boolean;
+  customerEditedFields: string[];
+  preservedCustomerFields: string[];
   fieldErrors: Record<string, string>;
   identityUnverified: boolean;
   busy: Busy;
@@ -650,11 +707,11 @@ export function B1BriefStep({
     "source-correction":
       "Nuave akan membaca ulang sumber yang Anda pilih. Perubahan sumber menjalankan satu ekstraksi pengganti; perubahan nama saja tidak memanggil ekstraksi baru.",
     scope:
-      "Pilih satu entitas saja. Pilihan cabang atau produk akan ditulis ke entity_scope.",
+      "Pilih satu entitas saja. Pilihan cabang atau produk akan menjadi cakupan audit.",
     branch:
-      "Nama ini akan menjadi bagian dari entity_scope dan menggantikan nilai cabang lama.",
+      "Nama ini akan menjadi bagian dari cakupan audit dan menggantikan nilai cabang lama.",
     product:
-      "Nama ini akan menjadi bagian dari entity_scope dan menggantikan nilai produk lama.",
+      "Nama ini akan menjadi bagian dari cakupan audit dan menggantikan nilai produk lama.",
     category:
       "Kategori yang dipilih menentukan pertanyaan dan nilai default yang dapat diturunkan Nuave.",
     market:
@@ -673,6 +730,15 @@ export function B1BriefStep({
 
   const error = (field: string) => fieldErrors[field];
   const showSources = screen === "brand-confirm";
+  const preservedEntries = preservedCustomerFields
+    .map((field) => ({
+      field,
+      label: preservedFieldLabels[field],
+      value: preservedFieldValue(brief, field),
+    }))
+    .filter((entry): entry is { field: string; label: string; value: string } =>
+      Boolean(entry.label),
+    );
 
   return (
     <section className={`${styles.workspace} ${styles.workspaceWide}`}>
@@ -724,7 +790,14 @@ export function B1BriefStep({
                 hint={
                   identityUnverified
                     ? "Nuave tidak dapat membaca nama brand dari sumber ini. Isi nama yang benar lalu konfirmasi."
-                    : "Pastikan nama ini persis seperti yang digunakan brand Anda."
+                    : brief.brand_name.trim()
+                      ? "Pastikan nama ini persis seperti yang digunakan brand Anda."
+                      : emptyAiFieldHint(
+                          brief.brand_name,
+                          "brand_name",
+                          customerEditedFields,
+                          "Nuave belum menemukan nama brand dari sumber ini. Isi nama yang benar untuk melanjutkan.",
+                        )
                 }
                 onChange={(value) => updateBrief("brand_name", value)}
               />
@@ -789,7 +862,9 @@ export function B1BriefStep({
                 id="source-correction-source"
                 label="Website atau profil Instagram baru (opsional)"
                 value={correctionSource}
-                error={error("sourceCorrectionSource")}
+                error={
+                  error("official_sources") ?? error("sourceCorrectionSource")
+                }
                 hint="Kosongkan untuk memakai sumber yang sudah diterima. Google Maps dan nama brand tanpa sumber baru tidak didukung."
                 onChange={setCorrectionSource}
               />
@@ -861,15 +936,22 @@ export function B1BriefStep({
                 hint={
                   brief.brand_type.trim()
                     ? "Pastikan jenis brand ini sesuai dengan sumber resmi."
-                    : "Ekstraksi belum menemukan jenis brand. Isi nilai yang benar."
+                    : emptyAiFieldHint(
+                        brief.brand_type,
+                        "brand_type",
+                        customerEditedFields,
+                        "Nuave belum menemukan jenis brand dari sumber ini. Isi nilai yang benar untuk melanjutkan.",
+                      )
                 }
                 onChange={(value) => updateBrief("brand_type", value)}
               />
               <Field>
-                <FieldLabel>entity_scope</FieldLabel>
+                <FieldLabel>Cakupan audit</FieldLabel>
                 <FieldDescription>
                   {brief.entity_scope ||
-                    "Pilih cakupan untuk membentuk nilai ini."}
+                    (customerEditedFields.includes("entity_scope")
+                      ? "Cakupan Anda belum lengkap. Pilih atau lengkapi nilainya."
+                      : "Nuave belum menemukan cakupan audit dari sumber ini. Pilih cakupan yang benar untuk melanjutkan.")}
                 </FieldDescription>
                 {error("entity_scope") ? (
                   <p className={styles.validationError}>
@@ -908,10 +990,10 @@ export function B1BriefStep({
               onChange={onScopeValueChange}
             />
             <Field>
-              <FieldLabel>Nilai entity_scope</FieldLabel>
+              <FieldLabel>Cakupan terpilih</FieldLabel>
               <FieldDescription>
                 {brief.entity_scope ||
-                  "Nilai akan muncul setelah nama dilengkapi."}
+                  "Nilai cakupan akan muncul setelah nama dilengkapi."}
               </FieldDescription>
               {error("entity_scope") ? (
                 <p className={styles.validationError}>
@@ -966,7 +1048,16 @@ export function B1BriefStep({
               required
               value={brief.category}
               error={error("category")}
-              hint="Gunakan nama kategori yang cukup spesifik untuk pertanyaan pelanggan."
+              hint={
+                brief.category.trim()
+                  ? "Gunakan nama kategori yang cukup spesifik untuk pertanyaan pelanggan."
+                  : emptyAiFieldHint(
+                      brief.category,
+                      "category",
+                      customerEditedFields,
+                      "Nuave belum menemukan kategori dari sumber ini. Isi kategori yang benar untuk melanjutkan.",
+                    )
+              }
               onChange={(value) => updateBrief("category", value)}
             />
           </StageSection>
@@ -992,9 +1083,17 @@ export function B1BriefStep({
               value={brief.market_context}
               error={error("market_context")}
               hint={
-                error("market_context")
-                  ? "Konteks lama dihapus karena cakupan berubah. Isi ulang sebelum lanjut."
-                  : "Contoh: nasional di Indonesia, online di Indonesia, atau Bandung."
+                brief.market_context.trim()
+                  ? "Contoh: nasional di Indonesia, online di Indonesia, atau Bandung."
+                  : emptyAiFieldHint(
+                      brief.market_context,
+                      "market_context",
+                      customerEditedFields,
+                      "Nuave belum menemukan konteks pasar dari sumber ini. Isi konteks pasar yang benar untuk melanjutkan.",
+                      marketInvalidated
+                        ? "Cakupan berubah, sehingga konteks pasar lama dihapus. Isi konteks pasar yang benar untuk melanjutkan."
+                        : undefined,
+                    )
               }
               onChange={(value) => updateBrief("market_context", value)}
             />
@@ -1022,7 +1121,12 @@ export function B1BriefStep({
               hint={
                 brief.target_customer.trim()
                   ? "Pastikan deskripsi ini mewakili pelanggan yang ingin dipahami."
-                  : "Ekstraksi belum menemukan target customer. Jelaskan pelanggan yang ingin dipahami."
+                  : emptyAiFieldHint(
+                      brief.target_customer,
+                      "target_customer",
+                      customerEditedFields,
+                      "Nuave belum menemukan target pelanggan dari sumber ini. Isi nilai yang benar untuk melanjutkan.",
+                    )
               }
               onChange={(value) => updateBrief("target_customer", value)}
             />
@@ -1033,7 +1137,16 @@ export function B1BriefStep({
                 required
                 value={brief.verified_customer_needs}
                 error={error("verified_customer_needs")}
-                hint="Setidaknya satu kebutuhan, satu item per baris."
+                hint={
+                  hasFilledValue(brief.verified_customer_needs)
+                    ? "Setidaknya satu kebutuhan, satu item per baris."
+                    : emptyAiFieldHint(
+                        brief.verified_customer_needs,
+                        "verified_customer_needs",
+                        customerEditedFields,
+                        "Nuave belum menemukan kebutuhan pelanggan dari sumber ini. Isi setidaknya satu kebutuhan untuk melanjutkan.",
+                      )
+                }
                 onChange={(value) =>
                   updateBrief("verified_customer_needs", value)
                 }
@@ -1044,7 +1157,16 @@ export function B1BriefStep({
                 required
                 value={brief.verified_decision_criteria}
                 error={error("verified_decision_criteria")}
-                hint="Setidaknya satu pertimbangan, satu item per baris."
+                hint={
+                  hasFilledValue(brief.verified_decision_criteria)
+                    ? "Setidaknya satu pertimbangan, satu item per baris."
+                    : emptyAiFieldHint(
+                        brief.verified_decision_criteria,
+                        "verified_decision_criteria",
+                        customerEditedFields,
+                        "Nuave belum menemukan pertimbangan keputusan dari sumber ini. Isi setidaknya satu pertimbangan untuk melanjutkan.",
+                      )
+                }
                 onChange={(value) =>
                   updateBrief("verified_decision_criteria", value)
                 }
@@ -1068,7 +1190,19 @@ export function B1BriefStep({
               required
               value={brief.verified_offerings}
               error={error("verified_offerings")}
-              hint="Setidaknya satu item terverifikasi, satu item per baris."
+              hint={
+                hasFilledValue(brief.verified_offerings)
+                  ? "Setidaknya satu item terverifikasi, satu item per baris."
+                  : emptyAiFieldHint(
+                      brief.verified_offerings,
+                      "verified_offerings",
+                      customerEditedFields,
+                      "Nuave belum menemukan produk atau layanan dari sumber ini. Isi setidaknya satu produk atau layanan untuk melanjutkan.",
+                      offeringsInvalidated
+                        ? "Cakupan produk berubah, sehingga daftar sebelumnya dihapus. Isi setidaknya satu produk atau layanan untuk melanjutkan."
+                        : undefined,
+                    )
+              }
               onChange={(value) => updateBrief("verified_offerings", value)}
             />
             <Field>
@@ -1100,6 +1234,7 @@ export function B1BriefStep({
               proposal={comparisonProposal}
               status={comparisonStatus}
               error={error("verified_competitor.name")}
+              scopeError={error("verified_competitor.scope")}
               sourceError={error("verified_competitor.source_url")}
               onAccept={onAcceptComparison}
             />
@@ -1122,7 +1257,12 @@ export function B1BriefStep({
               hint={
                 brief.usp.trim()
                   ? "Draft dari ekstraksi; koreksi jika diperlukan."
-                  : "Ekstraksi tidak menemukan differentiator. Boleh dikosongkan atau tambahkan fakta Anda."
+                  : emptyAiFieldHint(
+                      brief.usp,
+                      "usp",
+                      customerEditedFields,
+                      "Nuave belum menemukan differentiator dari sumber ini. Isi nilai yang benar atau biarkan kosong karena bidang ini opsional.",
+                    )
               }
               onChange={(value) => updateBrief("usp", value)}
             />
@@ -1151,6 +1291,28 @@ export function B1BriefStep({
             title="Review brief"
             description="Konfirmasi ini adalah tindakan eksplisit. Berpindah layar tidak mengonfirmasi brief."
           >
+            {preservedEntries.length ? (
+              <WarningAlert title="Nilai yang dipertahankan dari sumber sebelumnya">
+                <p>
+                  Sumber telah diganti. Nilai berikut berasal dari isian Anda
+                  sebelumnya dan perlu diperiksa serta dikonfirmasi ulang.
+                </p>
+                <ul className={styles.compactList}>
+                  {preservedEntries.map((entry) => (
+                    <li key={entry.field}>
+                      <strong>{entry.label}</strong>:
+                      {entry.value || " Belum diisi"}
+                    </li>
+                  ))}
+                </ul>
+                {comparisonStatus === "needs_reconfirmation" ? (
+                  <p>
+                    Bisnis pembanding juga harus dikonfirmasi ulang pada layar
+                    pemilihannya.
+                  </p>
+                ) : null}
+              </WarningAlert>
+            ) : null}
             <dl className={styles.factList}>
               <div className={styles.factRow}>
                 <dt className={styles.factLabel}>Brand</dt>

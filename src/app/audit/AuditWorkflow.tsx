@@ -803,6 +803,7 @@ export default function AuditWorkflow() {
     return (
       {
         brand_name: "brand-name",
+        official_sources: "source-correction-source",
         scopeValue: "scope-value",
         brand_type: "brand-type",
         category: "category",
@@ -812,6 +813,8 @@ export default function AuditWorkflow() {
         verified_decision_criteria: "decision-criteria",
         verified_offerings: "verified-offerings",
         "verified_competitor.name": "comparison-name",
+        "verified_competitor.scope": "comparison-scope",
+        "verified_competitor.source_url": "comparison-source",
         sourceCorrectionSource: "source-correction-source",
         sourceCorrectionName: "source-correction-name",
       } as Record<string, string>
@@ -1477,6 +1480,10 @@ export default function AuditWorkflow() {
           scopeValue={workflowMeta.scopeValue}
           comparisonProposal={workflowMeta.comparisonProposal}
           comparisonStatus={workflowMeta.comparisonStatus}
+          marketInvalidated={workflowMeta.marketInvalidated}
+          offeringsInvalidated={workflowMeta.offeringsInvalidated}
+          customerEditedFields={workflowMeta.customerEditedFields}
+          preservedCustomerFields={workflowMeta.preservedCustomerFields}
           fieldErrors={fieldErrors}
           identityUnverified={workflowMeta.identityUnverified}
           busy={busy}

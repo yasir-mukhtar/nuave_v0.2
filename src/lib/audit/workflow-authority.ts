@@ -40,6 +40,23 @@ export type ComparisonTargetProposal = {
 
 export type ComparisonStatus = "pending" | "confirmed" | "needs_reconfirmation";
 
+const PRESERVABLE_CUSTOMER_FIELDS = [
+  "brand_name",
+  "entity_scope",
+  "brand_type",
+  "category",
+  "market_context",
+  "target_customer",
+  "verified_offerings",
+  "verified_customer_needs",
+  "verified_decision_criteria",
+  "verified_competitor",
+  "brand_name_variants",
+  "customer_supplied_facts",
+  "usp",
+] as const;
+type PreservableCustomerField = (typeof PRESERVABLE_CUSTOMER_FIELDS)[number];
+
 export type WorkflowMeta = {
   intakeScreen: IntakeScreen;
   scopeKind: ScopeKind;
@@ -47,7 +64,9 @@ export type WorkflowMeta = {
   comparisonProposal: ComparisonTargetProposal | null;
   comparisonStatus: ComparisonStatus;
   marketInvalidated: boolean;
+  offeringsInvalidated: boolean;
   customerEditedFields: string[];
+  preservedCustomerFields: string[];
   identityUnverified: boolean;
 };
 
@@ -380,7 +399,9 @@ export function createWorkflowMeta(
         : options.comparisonProposal,
     comparisonStatus,
     marketInvalidated: options.marketInvalidated ?? false,
+    offeringsInvalidated: options.offeringsInvalidated ?? false,
     customerEditedFields: options.customerEditedFields ?? [],
+    preservedCustomerFields: options.preservedCustomerFields ?? [],
     identityUnverified: options.identityUnverified ?? !brief.brand_name.trim(),
   };
 }
@@ -427,6 +448,8 @@ export function applyScopeSelection(
     (currentMeta.scopeKind !== scopeKind ||
       currentMeta.scopeKind === "branch" ||
       scopeKind === "branch");
+  const edited = new Set(currentMeta.customerEditedFields);
+  if (scopeChanged) edited.add("entity_scope");
   const nextBrief = rederiveBrief({
     ...brief,
     entity_scope: canonicalEntityScope(brief.brand_name, scopeKind, nextValue),
@@ -444,6 +467,9 @@ export function applyScopeSelection(
       ? comparisonStatusAfterUpstreamChange(nextBrief)
       : currentMeta.comparisonStatus,
     marketInvalidated: geographyChanged || currentMeta.marketInvalidated,
+    offeringsInvalidated:
+      productValueChanged || currentMeta.offeringsInvalidated,
+    customerEditedFields: [...edited],
   });
   return { brief: nextBrief, meta: nextMeta };
 }
@@ -488,6 +514,10 @@ export function applyBriefFieldChange<K extends keyof BusinessBrief>(
 
   if (field === "market_context" && String(value).trim()) {
     nextMeta = { ...nextMeta, marketInvalidated: false };
+  }
+
+  if (field === "verified_offerings") {
+    nextMeta = { ...nextMeta, offeringsInvalidated: false };
   }
 
   nextBrief = rederiveBrief(nextBrief);
@@ -562,6 +592,11 @@ export function mergeExtractionIntoBrief(input: {
   const preserveComparisonTarget =
     edited.has("verified_competitor") &&
     currentBrief.verified_competitor.name.trim().length > 0;
+  const preservedCustomerFields = PRESERVABLE_CUSTOMER_FIELDS.filter(
+    (field): field is PreservableCustomerField =>
+      edited.has(field) &&
+      (field !== "verified_competitor" || preserveComparisonTarget),
+  );
   const sourceUrls = supportedOfficialSources([
     acceptedSourceUrl,
     ...draft.official_sources,
@@ -613,10 +648,12 @@ export function mergeExtractionIntoBrief(input: {
     agency_name: "",
     agency_logo_data_url: "",
   };
-  const scope = inferScopeSelection(
-    candidate.brand_name,
-    candidate.entity_scope,
-  );
+  const scope = edited.has("entity_scope")
+    ? {
+        scopeKind: currentMeta.scopeKind,
+        scopeValue: currentMeta.scopeValue,
+      }
+    : inferScopeSelection(candidate.brand_name, candidate.entity_scope);
   const nextBrief = rederiveBrief({
     ...candidate,
     entity_scope: canonicalEntityScope(
@@ -634,6 +671,8 @@ export function mergeExtractionIntoBrief(input: {
       ? "needs_reconfirmation"
       : "pending",
     marketInvalidated: false,
+    offeringsInvalidated: false,
+    preservedCustomerFields,
     identityUnverified: !draft.brand_name.trim(),
     intakeScreen: "brand-confirm",
   });
@@ -661,7 +700,7 @@ export function validateBriefForReview(
     issues.push(
       issue(
         "official_sources",
-        "brand-confirm",
+        "source-correction",
         "Tambahkan satu sumber resmi yang dapat dibuka.",
       ),
     );
@@ -777,7 +816,7 @@ export function validateBriefForReview(
         : rootField;
     const screenByField: Record<string, IntakeScreen> = {
       brand_name: "brand-confirm",
-      official_sources: "brand-confirm",
+      official_sources: "source-correction",
       entity_scope: "scope",
       brand_type: "scope",
       category: "category",
@@ -798,6 +837,8 @@ export function validateBriefForReview(
     const messageByField: Record<string, string> = {
       official_sources:
         "Periksa sumber resmi: gunakan website publik atau profil Instagram yang valid.",
+      "verified_competitor.scope":
+        "Periksa cakupan bisnis pembanding atau kosongkan jika tidak diperlukan.",
       "verified_competitor.source_url":
         "Periksa URL bisnis pembanding, atau kosongkan jika Anda hanya memiliki namanya.",
       brand_name_variants:
@@ -836,8 +877,17 @@ export function parseWorkflowStorageState(value: unknown) {
       meta.comparisonStatus,
     ) ||
     typeof meta.marketInvalidated !== "boolean" ||
+    typeof meta.offeringsInvalidated !== "boolean" ||
     !Array.isArray(meta.customerEditedFields) ||
     meta.customerEditedFields.some((field) => typeof field !== "string") ||
+    !Array.isArray(meta.preservedCustomerFields) ||
+    meta.preservedCustomerFields.some(
+      (field) =>
+        typeof field !== "string" ||
+        !PRESERVABLE_CUSTOMER_FIELDS.includes(
+          field as PreservableCustomerField,
+        ),
+    ) ||
     typeof meta.identityUnverified !== "boolean"
   ) {
     return null;
