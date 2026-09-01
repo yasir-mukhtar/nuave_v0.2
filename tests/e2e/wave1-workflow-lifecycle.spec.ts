@@ -15,8 +15,26 @@ import type { PromptPack } from "../../src/lib/audit/types";
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  WORKFLOW_SCHEMA_VERSION,
 } from "../../src/lib/audit/workflow-storage";
+import {
+  createWorkflowMeta,
+  defaultConversionAction,
+  defaultRegulatedCategoryNotes,
+  derivePriorityOffering,
+} from "../../src/lib/audit/workflow-authority";
 import { grantAccess } from "./helpers";
+
+const workflowBrief = {
+  ...goldenBrief,
+  entity_scope: "Seluruh brand Northstar Advisory",
+  priority_offering: derivePriorityOffering(goldenBrief.verified_offerings),
+  conversion_action: defaultConversionAction(goldenBrief.category),
+  regulated_category_notes: defaultRegulatedCategoryNotes(goldenBrief.category),
+  known_accuracy_questions: [],
+  agency_name: "",
+  agency_logo_data_url: "",
+};
 
 const questions = buildDeterministicIndonesianPack(
   minimizeIndonesianBrief(goldenBrief),
@@ -82,10 +100,18 @@ function seedQuestionsState(page: Page) {
       workflowKey: AUDIT_WORKFLOW_STORAGE_KEY,
       sessionKey: AUDIT_SESSION_STORAGE_KEY,
       state: {
+        version: WORKFLOW_SCHEMA_VERSION,
         websiteUrl: "https://northstar.example",
-        brief: goldenBrief,
+        extractedSourceUrl: "https://northstar.example",
+        brief: workflowBrief,
+        meta: createWorkflowMeta(workflowBrief, {
+          intakeScreen: "review",
+          identityUnverified: false,
+          comparisonStatus: "confirmed",
+        }),
         factsExtracted: true,
         factsConfirmed: true,
+        factsCustomerOwned: false,
         extraction: null,
         promptPack,
         observations: [],
@@ -93,6 +119,7 @@ function seedQuestionsState(page: Page) {
         setupTelemetry: [],
         executionStarted: false,
         postReportBudgetCalls: [],
+        reportFailureCode: null,
       },
     },
   );

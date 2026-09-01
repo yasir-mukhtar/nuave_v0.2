@@ -34,11 +34,28 @@ import {
 import {
   AUDIT_SESSION_STORAGE_KEY,
   AUDIT_WORKFLOW_STORAGE_KEY,
+  WORKFLOW_SCHEMA_VERSION,
 } from "../../src/lib/audit/workflow-storage";
+import {
+  createWorkflowMeta,
+  defaultConversionAction,
+  defaultRegulatedCategoryNotes,
+  derivePriorityOffering,
+} from "../../src/lib/audit/workflow-authority";
 import { grantAccess } from "./helpers";
 
 const SAFETY_IDENTIFIER = "live-e2e-session-123456";
 const REPORT_RESPONSE_ID = "resp-live-e2e-report";
+const workflowBrief = {
+  ...goldenBrief,
+  entity_scope: "Seluruh brand Northstar Advisory",
+  priority_offering: derivePriorityOffering(goldenBrief.verified_offerings),
+  conversion_action: defaultConversionAction(goldenBrief.category),
+  regulated_category_notes: defaultRegulatedCategoryNotes(goldenBrief.category),
+  known_accuracy_questions: [],
+  agency_name: "",
+  agency_logo_data_url: "",
+};
 
 const minimizedBrief = minimizeIndonesianBrief(goldenBrief);
 const questions = buildDeterministicIndonesianPack(minimizedBrief);
@@ -147,10 +164,18 @@ const report = buildAuditReport(
 
 function liveState(overrides: Record<string, unknown> = {}) {
   return {
+    version: WORKFLOW_SCHEMA_VERSION,
     websiteUrl: "https://northstar.example",
-    brief: goldenBrief,
+    extractedSourceUrl: "https://northstar.example",
+    brief: workflowBrief,
+    meta: createWorkflowMeta(workflowBrief, {
+      intakeScreen: "review",
+      identityUnverified: false,
+      comparisonStatus: "confirmed",
+    }),
     factsExtracted: true,
     factsConfirmed: true,
+    factsCustomerOwned: false,
     extraction: null,
     promptPack,
     observations: [],
@@ -158,6 +183,7 @@ function liveState(overrides: Record<string, unknown> = {}) {
     setupTelemetry: [],
     executionStarted: false,
     postReportBudgetCalls: [],
+    reportFailureCode: null,
     ...overrides,
   };
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseSourceInput } from "./source-input";
 
 /** The ten categories in the canonical measurement matrix (R-01). */
 export const promptCategories = [
@@ -75,6 +76,10 @@ export const sourceSchema = z.object({
 });
 
 const optionalSourceUrl = z.union([sourceUrl, z.literal("")]);
+const officialSourceUrl = sourceUrl.refine(
+  (value) => Boolean(parseSourceInput(value)),
+  "Official source must be a supported public website or Instagram profile.",
+);
 
 export const similarBusinessSchema = z.object({
   name: z.string().trim().max(160).optional(),
@@ -89,12 +94,12 @@ export const businessBriefSchema = z.object({
   category: requiredText.max(200),
   market_context: requiredText.max(300),
   target_customer: requiredText.max(500),
-  official_sources: z.array(sourceUrl).min(1).max(10),
+  official_sources: z.array(officialSourceUrl).min(1).max(10),
   verified_offerings: z.array(requiredText.max(300)).min(1).max(12),
-  verified_customer_needs: z.array(requiredText.max(300)).max(12),
-  verified_decision_criteria: z.array(requiredText.max(300)).max(12),
+  verified_customer_needs: z.array(requiredText.max(300)).min(1).max(12),
+  verified_decision_criteria: z.array(requiredText.max(300)).min(1).max(12),
   verified_competitor: z.object({
-    name: z.string().trim().max(160),
+    name: z.string().trim().min(1).max(160),
     scope: z.string().trim().max(300),
     source_url: optionalSourceUrl,
   }),
@@ -122,6 +127,7 @@ export const extractionRequestSchema = z.object({
   brand_name: z.string().trim().max(160),
   market_context: z.string().trim().max(300),
   category: z.string().trim().max(200),
+  identity_unverified: z.boolean().default(false),
   safety_identifier: z.string().trim().min(8).max(64),
 });
 
