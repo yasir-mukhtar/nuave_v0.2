@@ -1,7 +1,7 @@
 # Nuave design guide
 
 > Status: **Canonical current UI/design authority**
-> Updated: 2026-08-29
+> Updated: 2026-09-01
 
 This guide governs Nuave's presentation layer. Product, audit, voice, privacy,
 and journey contracts remain governed by their canonical documents in
@@ -168,3 +168,46 @@ font system. In particular, do not add new HeroUI components, bespoke generic
 primitive layers, Lucide icons, or global Lenis scrolling. HeroUI may remain
 only temporarily while an active feature slice is being migrated; it is removed
 once the repository-wide active-code search proves there are no consumers.
+
+## Design judgment
+
+These are reusable presentation judgments. They do not define product meaning,
+behavior, or copy; those remain owned by the contracts listed in
+[`docs/INDEX.md`](./INDEX.md).
+
+### Avoid card soup
+
+Do not give every concept its own card, bordered panel, or raised surface.
+Establish hierarchy first through layout, spacing, typography, alignment, and
+grouping. Use a container when it communicates a meaningful boundary, state, or
+interaction, not merely because content exists.
+
+### Visual prominence follows product importance
+
+Visual hierarchy should reflect what matters most to the customer's current
+task. Implementation complexity, data volume, backend importance, or
+engineering effort must not determine visual prominence.
+
+### Mobile is an intentionally composed state
+
+Treat mobile as a deliberate composition, not a desktop layout that has merely
+become narrower or vertically stacked. Decide information order, what is
+visible first, density, grouping, primary-action placement, touch-target
+usability, and progressive disclosure on purpose. Typography stays governed by
+the responsive-typography rules above; this principle does not authorize
+page-specific mobile typography systems.
+
+## Where recurring design knowledge belongs
+
+When a recurring design failure is observed, first check whether an existing
+canonical Nuave document already owns the decision. If none does:
+
+- judgment that requires interpretation belongs in this guide;
+- repeatable presentation mechanics belong in tokens, components, or shared
+  styles;
+- objectively detectable violations belong in deterministic checks;
+- an isolated failure does not become a global rule without evidence that it
+  recurs.
+
+This keeps this guide from accumulating one-off preferences while still letting
+repeated failures improve the system.

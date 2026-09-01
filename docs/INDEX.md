@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-08-29
+> Updated: 2026-09-01
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -140,3 +140,4 @@ context an agent must read. Do not implement a draft specification.
 | Work on audit logic | `AUDIT.md`, active spec | Referenced audit code and tests |
 | Work on one touchpoint | `JOURNEY_CONTRACT.md`, the matching `journey/` plan | The active spec and referenced code |
 | Write customer-facing copy | `VOICE.md`, the matching `content/` source | `PRODUCT.md` for claim boundaries |
+| Work on a design or presentation change | `AGENTS.md`, `docs/DESIGN.md` | The owning product, journey, voice, audit, or approved-spec contract for any behavior or meaning the change touches |
