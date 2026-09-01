@@ -1,7 +1,7 @@
 # Nuave product
 
 > Status: **Current product direction**
-> Updated: 2026-08-12
+> Updated: 2026-09-01
 >
 > This document describes the current customer, offer, promise, journey, and
 > non-goals. It derives from [`VISION.md`](./VISION.md), which states why Nuave
@@ -107,12 +107,12 @@ Never contact a business using a finding that was not actually observed.
 
 ### 2. Free identity and order preview
 
-Collect one official website, Google Maps listing, or public Instagram business
-profile plus a delivery email. Show a best-effort identity preview from that
-public source and the one-audit order scope without running personalized
-preparation or audit questions. If a confident business name cannot be found,
-ask for the name and location needed to present the order; never guess between
-branches.
+Collect one official website or public Instagram business profile plus a
+delivery email. Google Maps is deferred in the current V1. Show a best-effort
+identity preview from that public source and the one-audit order scope without
+running personalized preparation or audit questions. If a confident business
+name cannot be found, ask for the name and location needed to present the order;
+never guess between branches.
 
 The preview is not an audit result. It shows no appearance count, competitor,
 finding, recommendation, or score.
@@ -133,11 +133,10 @@ webhooks, reconciliation, and remedies before accepting a real payment.
 ### 4. Business confirmation
 
 After verified payment, prepare a draft from the submitted source and any
-additional official sources needed to resolve one exact business: name and
-known variants, location or service area, public listing, official website, or
-authoritative social profile. If identity remains ambiguous, stop or ask the
-customer to correct it. Never guess which branch or entity an AI answer refers
-to.
+additional supported official source needed to resolve one exact business: name
+and known variants, location or service area, official website, or Instagram
+profile. If identity remains ambiguous, stop or ask the customer to correct it.
+Never guess which branch or entity an AI answer refers to.
 
 Tell the customer to verify the exact business and branch before starting the
 audit. A correction to the same intended business before start creates a new
@@ -160,12 +159,16 @@ need.
 
 ### 5. Question review
 
-Suggest ten natural Indonesian questions from the confirmed facts. The default
-pack contains five that do not name the business and five that do, but the
-customer may replace any question and change that composition. Explain the
-measurement consequence and block only narrow privacy, safety, business-scope,
-and technical violations. Lock and persist the exact final pack. Do not start
-the audit from unconfirmed facts or unapproved questions.
+Suggest ten natural Indonesian questions from the confirmed facts using the
+canonical matrix: six fixed unnamed slots followed by four fixed named slots.
+Slot 9 also requires a comparison target and a comparison relation. The
+customer may edit wording within a slot, but cannot change its identity,
+category, declared purpose, brand policy, comparison-target policy, or the 6/4
+composition. Deterministic checks block mechanically invalid edits; wording
+that may drift from a slot's purpose raises a non-blocking warning and proceeds
+in V1, without a model-assisted purpose validator. Lock and persist the exact
+final pack. Do not start the audit from unconfirmed facts or unapproved
+questions.
 
 ### 6. Audit
 

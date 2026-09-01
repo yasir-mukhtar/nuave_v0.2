@@ -4,7 +4,8 @@ For the implementing agent. The spec explains *why*; the prototype shows *feel*.
 This file states what's real, what's fake, and what's decided.
 
 > Governed by [`docs/V1_PRODUCT_CONTRACT.md`](./docs/V1_PRODUCT_CONTRACT.md).
-> Revised 2026-08-29 to comply with it. The contract wins over anything here.
+> Revised 2026-09-01 to comply with Spec 007 and the contract. Spec 007 owns
+> the runnable V1 intake and wins over anything here.
 
 ## Design intent in one line
 
@@ -148,19 +149,21 @@ Notes:
 5. Alias screening for unbranded questions: exact-match, normalized, or
    model-judged.
 
-## Blocking conflict with shipped code — not resolved here
+## Resolved by Spec 007
 
-The contract's **6 unbranded + 4 branded** structure is not what the engine
-builds. `src/lib/audit/contracts.ts` declares 5/5, asserts `five_unbranded` /
-`five_branded` invariants, and its validator rejects any other split;
-`docs/journey/04-questions.md` assigns slots 7–8 to factual lookup (address,
-opening hours) that contract §5 excludes; report previews and the fixture
-adapter are pinned to /5. Full detail in the appendix of
-[`docs/V1_PRODUCT_CONTRACT.md`](./docs/V1_PRODUCT_CONTRACT.md).
+The former conflict between the intake contract's 6/4 structure and the
+pre-A3 implementation is resolved by the founder-approved and landed
+[`Spec 007`](./specs/007-intake-airbnb-revamp/SPEC.md). Its R-01/R-02 canonical
+matrix defines ten fixed slots: 6 unnamed and 4 named; slot 9 also requires a
+comparison target and a comparison relation. R-10 keeps wording edits inside a
+slot and blocks changes to slot identity, category, declared purpose, identity
+policies, comparison-target policy, or composition; undetectable purpose drift
+warns and proceeds in V1 without model-assisted validation.
 
-The intake design and prototype comply with the contract. The engine does not.
-That gap needs a founder decision before intake implementation lands, because
-the question-review screen displays a split the engine cannot currently produce.
+This handoff therefore contains no unresolved 5/5-versus-6/4 decision. New
+intake work must follow Spec 007 and the matrix implementation it names. The
+supported source inputs remain the official website and Instagram; Google Maps
+is deferred.
 
 ## Success bar (from the original brief)
 

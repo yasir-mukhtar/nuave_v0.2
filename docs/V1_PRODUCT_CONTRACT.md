@@ -2,6 +2,7 @@
 
 > Status: **Product hypothesis locked for V1**
 > Filed: 2026-08-29
+> Reconciled with Spec 007: 2026-09-01
 > Governs: intake design, reasoning workflow, audit generation, and reporting
 
 Shared reference for Fable, engineering, reasoning workflow, audit generation,
@@ -56,6 +57,9 @@ Missing non-critical information **must not block the user from continuing**.
 
 Payment sits **before the intake begins**, but payment placement and payment
 experience are outside the scope of this intake-design stage.
+
+V1 supports one public source entry from an official website or Instagram
+profile. Google Maps is deferred; there is no brand-name-only entry path.
 
 ## 3. Nuave's job behind the scenes
 
@@ -168,6 +172,19 @@ relevant to recommendation.
 **Branded results must never be counted as spontaneous discovery.**
 
 **Mentioned and recommended are separate outcomes.**
+
+### Question editing contract
+
+The customer may edit wording within any of the ten fixed slots before the
+audit starts. The slot's identity, category, declared purpose, audited-brand
+policy, comparison-target policy, and 6/4 composition are not editable. Slots
+1–6 remain unnamed and forbid the audited brand; slots 7–10 remain named and
+require it; slot 9 also requires the comparison target and a comparison
+relation.
+
+Deterministic checks block mechanically invalid edits. Wording that passes
+those checks but may drift from the slot's purpose raises a non-blocking warning
+and proceeds in V1. Nuave does not use a model-assisted purpose validator.
 
 ## 6. Required primary report outcomes
 
@@ -288,34 +305,29 @@ the contract.
 | `intake-handoff.md` | Rewritten to match; superseded locked decisions and now-settled open decisions recorded. |
 | `intake-prototype.html` | Rebuilt against the revised spec. |
 
-## Open conflicts with shipped work — needs a founder decision
+## Reconciled conflicts with shipped work
 
-**1. Question pack is 5 unbranded + 5 branded, not 6 + 4.**
+This appendix originally recorded conflicts found when the contract was filed.
+Spec 007 is now the approved and landed authority for the runnable V1 journey.
 
-`src/lib/audit/contracts.ts` declares `unbranded_prompts: 5` /
-`branded_prompts: 5` (~line 336), asserts `five_unbranded` / `five_branded`
-invariants (~line 343), and its deterministic validator (~line 775) *rejects*
-any pack that is not exactly 5/5. `PROMPT_MATRIX` fixes the branded status of
-each of the ten slots. Moving to 6/4 changes the matrix, the invariants, the
-validator, and the fixtures and tests pinned to them.
+**1. Question-pack composition — RESOLVED.** The former 5/5 implementation
+conflict is closed: the canonical matrix now defines exactly **6 unbranded + 4
+branded** slots, and the implementation derives validation and composition from
+that matrix. Historical fixtures retain their own compatibility metadata where
+needed; they do not change the current measurement model.
 
-**2. Two shipped questions are factual lookup, which §5 now excludes.**
+**2. Historical slot semantics — RESOLVED.** Before Spec 007, the production
+generation guidance assigned factual lookup and practical-action work to
+positions that did not match §5. Spec 007 now defines the ten slot purposes,
+including brand fit, explicit recommendation, direct comparison, and fit/misfit;
+the canonical matrix is the current authority.
 
-The production generation instruction in `docs/journey/04-questions.md`
-(~line 457) assigns slots 7–8 to "check useful public facts about the audited
-business"; its own worked example uses "Di mana alamat … Buka jam berapa?".
-§5 excludes address and opening-hours lookups from the default audit. Slots
-9–10 ("take a practical next step") also overlap the conversion action that §7
-removes from intake.
+**3. Historical report labels — RESOLVED.** Before Spec 007, preview and
+fixture paths used `/5` denominators and positional composition logic. Current
+report semantics derive from the canonical matrix and exact final question
+text; historical fixture adapters may retain explicitly bounded compatibility
+metadata.
 
-**3. Report labels and counts are pinned to /5.**
-
-`src/components/ReportPagePreview.tsx` and `ExampleReportPreview.tsx` render
-"Tanpa menyebut bisnis Anda: 1/5 · Menyebut bisnis Anda: 3/5";
-`src/lib/fixture-journey/adapter.ts` splits composition at question 6. §6 also
-requires unbranded **recommendation** to be reported separately from unbranded
-**appearance**, which needs checking against what `contracts.ts` currently
-derives.
-
-Until these are resolved, the intake design complies with the contract but the
-downstream engine does not.
+The remaining items below are retained as implementation history and are no
+longer founder-decision blockers. Current slot, report, and intake authority is
+Spec 007 and the canonical matrix it names.
