@@ -20,17 +20,17 @@ describe("D1 Worker rate-limit configuration", () => {
     expect(config.ratelimits).toEqual([
       {
         name: "IDENTITY_CALLER_RATE_LIMITER",
-        namespace_id: "1001",
+        namespace_id: "1053120767",
         simple: { limit: 10, period: 60 },
       },
       {
         name: "IDENTITY_DESTINATION_RATE_LIMITER",
-        namespace_id: "1002",
+        namespace_id: "1955950742",
         simple: { limit: 20, period: 60 },
       },
       {
         name: "EXTRACT_CALLER_RATE_LIMITER",
-        namespace_id: "1003",
+        namespace_id: "1945116857",
         simple: { limit: 5, period: 60 },
       },
     ]);

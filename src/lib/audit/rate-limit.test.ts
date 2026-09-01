@@ -187,6 +187,42 @@ describe("D1 route rate limits", () => {
     expect(mocks.extract).not.toHaveBeenCalled();
   });
 
+  it("fails closed in production when an identity binding is missing", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const identityCaller = rateLimiter();
+    setCloudflareBindings({ identityCaller });
+
+    const response = await identityGET(
+      new Request(
+        "https://nuave.test/api/audit/identity?source=https%3A%2F%2Fkopi.example%2F",
+      ),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
+    expect(identityCaller.limit).not.toHaveBeenCalled();
+    expect(mocks.fetchSourceIdentity).not.toHaveBeenCalled();
+  });
+
+  it("fails closed in production when the extraction caller binding is missing", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    setCloudflareBindings({});
+
+    const response = await extractPOST(
+      new Request("https://nuave.test/api/audit/extract", {
+        method: "POST",
+        body: "not inspected",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
+    expect(mocks.assertConfigured).not.toHaveBeenCalled();
+    expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
   it("fails closed in production when the Worker request context is unavailable", async () => {
     vi.stubEnv("NODE_ENV", "production");
     mocks.getCloudflareContext.mockImplementation(() => {

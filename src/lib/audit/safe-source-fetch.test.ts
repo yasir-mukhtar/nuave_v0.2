@@ -479,6 +479,26 @@ describe("safe public source response bounds", () => {
     expect(read).toHaveBeenCalledTimes(1);
   });
 
+  it("stops an HTML response after </head> before the 512 KiB body cap", async () => {
+    const head = "<!doctype html><head><title>Instagram</title></head>";
+    const body = `${head}${"x".repeat(MAX_SOURCE_RESPONSE_BYTES + 1)}`;
+    const options = safeFetchOptions({
+      fetchImpl: vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(body, {
+          headers: { "content-type": "text/html" },
+        }),
+      ),
+    });
+
+    const result = await safeFetchPublicResource(
+      "https://instagram.example/",
+      options,
+    );
+
+    expect(new TextDecoder().decode(result.bytes)).toBe(head);
+    expect(result.bytes.byteLength).toBe(head.length);
+  });
+
   it("uses image content types for icon fetches", async () => {
     const options = safeFetchOptions({
       kind: "image",

@@ -369,10 +369,54 @@ async function cancelReader(reader: ReadableStreamDefaultReader<Uint8Array>) {
   }
 }
 
+type DecodedChunkStopper = (chunk: Uint8Array) => number | null;
+
+/**
+ * Identity parsing only needs the document head. Stop after its closing tag so
+ * a large page body cannot make a valid metadata response fail the 512 KiB
+ * decoded-byte bound. The matcher carries state across stream chunks and only
+ * accepts a real `</head>` tag, including ASCII case and whitespace variants.
+ */
+function createHtmlHeadStopper(): DecodedChunkStopper {
+  const marker = [60, 47, 104, 101, 97, 100]; // </head
+  let matched = 0;
+
+  return (chunk) => {
+    for (let index = 0; index < chunk.byteLength; index += 1) {
+      const byte = chunk[index];
+      const lowerByte = byte >= 65 && byte <= 90 ? byte + (97 - 65) : byte;
+
+      if (matched < marker.length) {
+        if (lowerByte === marker[matched]) {
+          matched += 1;
+        } else {
+          matched = byte === 60 ? 1 : 0;
+        }
+        continue;
+      }
+
+      if (byte === 62) return index + 1; // >
+      if (
+        byte === 32 ||
+        byte === 9 ||
+        byte === 10 ||
+        byte === 12 ||
+        byte === 13
+      ) {
+        continue;
+      }
+      matched = byte === 60 ? 1 : 0;
+    }
+
+    return null;
+  };
+}
+
 async function readDecodedBytes(
   body: ReadableStream<Uint8Array> | null,
   deadline: number,
   now: () => number,
+  stopAt?: DecodedChunkStopper,
 ) {
   if (!body) {
     throw new SafeSourceFetchError(
@@ -425,6 +469,21 @@ async function readDecodedBytes(
           "FETCH_FAILED",
           "The source response body is invalid.",
         );
+      }
+
+      const stopLength = stopAt?.(value);
+      if (stopLength !== undefined && stopLength !== null) {
+        total += stopLength;
+        if (total > MAX_SOURCE_RESPONSE_BYTES) {
+          await cancelReader(reader);
+          throw new SafeSourceFetchError(
+            "RESPONSE_TOO_LARGE",
+            "The source response is too large.",
+          );
+        }
+        chunks.push(value.slice(0, stopLength));
+        await cancelReader(reader);
+        break;
       }
 
       total += value.byteLength;
@@ -614,6 +673,7 @@ export async function safeFetchPublicResource(
       response.body,
       startedAt + SOURCE_TOTAL_TIMEOUT_MS,
       now,
+      options.kind === "html" ? createHtmlHeadStopper() : undefined,
     );
     return {
       bytes,
