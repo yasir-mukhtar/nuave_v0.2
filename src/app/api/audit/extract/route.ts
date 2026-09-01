@@ -46,11 +46,16 @@ async function enforceExtractionRateLimit(
   if (!bindings.contextAvailable) return null;
   if (!bindings.extractCaller) return extractionRateLimitResponse(503);
 
-  const allowed = await consumeRateLimit(
+  const rateLimitDecision = await consumeRateLimit(
     bindings.extractCaller,
     callerIpFromRequest(request),
   );
-  return allowed ? null : extractionRateLimitResponse(429);
+  if (rateLimitDecision === "unavailable") {
+    return extractionRateLimitResponse(503);
+  }
+  return rateLimitDecision === "allowed"
+    ? null
+    : extractionRateLimitResponse(429);
 }
 
 export async function GET(request: Request) {

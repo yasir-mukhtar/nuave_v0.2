@@ -46,11 +46,12 @@ export async function GET(request: Request) {
       return rateLimitResponse(503);
     }
 
-    const allowed = await consumeRateLimit(
+    const rateLimitDecision = await consumeRateLimit(
       bindings.identityCaller,
       callerIpFromRequest(request),
     );
-    if (!allowed) return rateLimitResponse();
+    if (rateLimitDecision === "unavailable") return rateLimitResponse(503);
+    if (rateLimitDecision === "limited") return rateLimitResponse();
   }
 
   const source = new URL(request.url).searchParams.get("source") ?? "";

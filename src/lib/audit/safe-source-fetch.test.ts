@@ -4,6 +4,7 @@ import {
   MAX_SOURCE_RESPONSE_BYTES,
   SOURCE_REQUEST_TIMEOUT_MS,
   SOURCE_TOTAL_TIMEOUT_MS,
+  SafeSourceFetchError,
   isReservedAddress,
   safeFetchPublicResource,
 } from "./safe-source-fetch";
@@ -138,6 +139,43 @@ describe("safe public source fetch DNS preflight", () => {
     await expect(
       safeFetchPublicResource("https://dns-failure.example", options),
     ).rejects.toMatchObject({ code: "DNS_FAILURE" });
+    expect(options.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("bounds a hanging DNS preflight by the remaining total deadline", async () => {
+    const options = safeFetchOptions({
+      now: vi
+        .fn()
+        .mockReturnValueOnce(0)
+        .mockReturnValue(SOURCE_TOTAL_TIMEOUT_MS - 1),
+      dns: {
+        resolve4: vi.fn(() => new Promise<readonly string[]>(() => {})),
+        resolve6: vi.fn(() => new Promise<readonly string[]>(() => {})),
+      },
+    });
+
+    const outcome = await Promise.race([
+      safeFetchPublicResource("https://hanging-dns.example", options).then(
+        () => ({ kind: "resolved" as const }),
+        (error: unknown) => ({
+          kind: "error" as const,
+          code:
+            error instanceof SafeSourceFetchError
+              ? error.code
+              : error instanceof Error
+                ? error.message
+                : String(error),
+        }),
+      ),
+      new Promise<{ kind: "hung" }>((resolve) =>
+        setTimeout(() => resolve({ kind: "hung" }), 50),
+      ),
+    ]);
+
+    expect(outcome).toEqual({
+      kind: "error",
+      code: "TIMEOUT",
+    });
     expect(options.fetchImpl).not.toHaveBeenCalled();
   });
 });
@@ -354,7 +392,7 @@ describe("safe public source redirects and destination limiting", () => {
     expect(options.fetchImpl).not.toHaveBeenCalled();
   });
 
-  it("maps a limiter runtime error to a safe rate-limit failure", async () => {
+  it("maps a limiter runtime error to an unavailable rate-limit failure", async () => {
     const options = safeFetchOptions({
       destinationRateLimiter: {
         limit: vi.fn().mockRejectedValue(new Error("internal binding detail")),
@@ -363,7 +401,20 @@ describe("safe public source redirects and destination limiting", () => {
 
     await expect(
       safeFetchPublicResource("https://limited.example/", options),
-    ).rejects.toMatchObject({ code: "RATE_LIMITED" });
+    ).rejects.toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
+    expect(options.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("maps a malformed limiter result to an unavailable rate-limit failure", async () => {
+    const options = safeFetchOptions({
+      destinationRateLimiter: {
+        limit: vi.fn().mockResolvedValue({}),
+      },
+    });
+
+    await expect(
+      safeFetchPublicResource("https://limited.example/", options),
+    ).rejects.toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
     expect(options.fetchImpl).not.toHaveBeenCalled();
   });
 });

@@ -291,25 +291,55 @@ function parseHttpUrl(input: string | URL): URL {
 async function resolveFamily(
   resolver: (hostname: string) => Promise<readonly string[]>,
   hostname: string,
+  deadline: number,
+  now: () => number,
 ): Promise<readonly string[]> {
+  const remaining = deadline - now();
+  if (remaining <= 0) {
+    throw new SafeSourceFetchError(
+      "TIMEOUT",
+      "Membaca sumber membutuhkan waktu terlalu lama.",
+    );
+  }
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const answers = await resolver(hostname);
+    const answers = await Promise.race([
+      resolver(hostname),
+      new Promise<readonly string[]>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new SafeSourceFetchError(
+                "TIMEOUT",
+                "Membaca sumber membutuhkan waktu terlalu lama.",
+              ),
+            ),
+          remaining,
+        );
+      }),
+    ]);
     if (!Array.isArray(answers)) {
       throw new Error("DNS resolver returned an invalid answer.");
     }
     return answers;
   } catch (error) {
+    if (error instanceof SafeSourceFetchError) throw error;
     if (hasDnsNoAnswersCode(error)) return [];
     throw new SafeSourceFetchError(
       "DNS_FAILURE",
       "The source hostname could not be checked.",
     );
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
 }
 
 async function validateDestination(
   url: URL,
   resolvers: SourceDnsResolvers,
+  deadline: number,
+  now: () => number,
 ): Promise<string> {
   const hostname = normalizeHostname(url.hostname);
   if (isLocalHostname(hostname)) {
@@ -328,8 +358,8 @@ async function validateDestination(
   }
 
   const [ipv4Answers, ipv6Answers] = await Promise.all([
-    resolveFamily(resolvers.resolve4, hostname),
-    resolveFamily(resolvers.resolve6, hostname),
+    resolveFamily(resolvers.resolve4, hostname, deadline, now),
+    resolveFamily(resolvers.resolve6, hostname, deadline, now),
   ]);
   const answers = [...ipv4Answers, ...ipv6Answers];
   if (answers.length === 0) {
@@ -529,17 +559,22 @@ async function consumeDestinationRateLimit(
 
   try {
     const result = await limiter.limit({ key: hostname });
-    if (!result || result.success !== true) {
+    if (result?.success === true) return;
+    if (result?.success === false) {
       throw new SafeSourceFetchError(
         "RATE_LIMITED",
         "Permintaan ke sumber ini terlalu sering.",
       );
     }
+    throw new SafeSourceFetchError(
+      "RATE_LIMIT_UNAVAILABLE",
+      "Perlindungan akses sumber sedang tidak tersedia.",
+    );
   } catch (error) {
     if (error instanceof SafeSourceFetchError) throw error;
     throw new SafeSourceFetchError(
-      "RATE_LIMITED",
-      "Permintaan ke sumber ini terlalu sering.",
+      "RATE_LIMIT_UNAVAILABLE",
+      "Perlindungan akses sumber sedang tidak tersedia.",
     );
   }
 }
@@ -575,7 +610,12 @@ export async function safeFetchPublicResource(
       );
     }
 
-    const hostname = await validateDestination(currentUrl, resolvers);
+    const hostname = await validateDestination(
+      currentUrl,
+      resolvers,
+      startedAt + SOURCE_TOTAL_TIMEOUT_MS,
+      now,
+    );
     const remainingAfterValidation =
       SOURCE_TOTAL_TIMEOUT_MS - (now() - startedAt);
     if (remainingAfterValidation <= 0) {

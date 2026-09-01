@@ -21,6 +21,8 @@ export interface AuditRateLimitBindings {
   extractCaller?: AuditRateLimitBinding;
 }
 
+export type AuditRateLimitDecision = "allowed" | "limited" | "unavailable";
+
 type WorkerEnvironment = Record<string, unknown>;
 
 function asRateLimitBinding(value: unknown): AuditRateLimitBinding | undefined {
@@ -60,14 +62,16 @@ export function getAuditRateLimitBindings(): AuditRateLimitBindings {
 export async function consumeRateLimit(
   binding: AuditRateLimitBinding | undefined,
   key: string,
-): Promise<boolean> {
-  if (!binding) return false;
+): Promise<AuditRateLimitDecision> {
+  if (!binding) return "unavailable";
 
   try {
     const result = await binding.limit({ key });
-    return result?.success === true;
+    if (result?.success === true) return "allowed";
+    if (result?.success === false) return "limited";
+    return "unavailable";
   } catch {
-    return false;
+    return "unavailable";
   }
 }
 
