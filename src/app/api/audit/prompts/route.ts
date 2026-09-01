@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { businessBriefSchema } from "@/lib/audit/types";
 import { buildLiveIndonesianPromptPack } from "@/lib/audit/questions-id-live";
-import {
-  assertSafeComparisonBusinessUrls,
-  withPrimarySimilarBusiness,
-} from "@/lib/audit/similar-businesses";
+import { assertSafeComparisonBusinessUrls } from "@/lib/audit/similar-businesses";
 
 export const runtime = "nodejs";
 
@@ -18,7 +15,7 @@ export async function POST(request: Request) {
     const input = requestSchema.parse(await request.json());
     assertSafeComparisonBusinessUrls(input.brief);
     const result = await buildLiveIndonesianPromptPack({
-      brief: withPrimarySimilarBusiness(input.brief),
+      brief: input.brief,
     });
     return NextResponse.json(result);
   } catch (error) {

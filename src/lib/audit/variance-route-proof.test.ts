@@ -42,7 +42,7 @@ function brief(): BusinessBrief {
     verified_offerings: ["coffee"],
     verified_customer_needs: ["find coffee"],
     verified_decision_criteria: ["location"],
-    verified_competitor: { name: "", scope: "", source_url: "" },
+    verified_competitor: { name: "Kopi Pembanding", scope: "", source_url: "" },
     similar_businesses: [],
     brand_name_variants: ["Nuave Coffee"],
     priority_offering: "coffee",

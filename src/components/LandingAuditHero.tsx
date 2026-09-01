@@ -101,6 +101,7 @@ export default function LandingAuditHero() {
           brand_name: "",
           market_context: "",
           category: "",
+          identity_unverified: true,
           safety_identifier: safetyIdentifier,
           budget: {
             limit_usd: AUDIT_COST_LIMIT_USD,

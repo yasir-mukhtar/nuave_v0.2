@@ -2,21 +2,13 @@
 
 import { useId, useState } from "react";
 import { IconLoader2 } from "@tabler/icons-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +16,6 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconExternalLink,
-  IconSearch,
   IconSparkles,
 } from "@tabler/icons-react";
 import type {
@@ -32,14 +23,52 @@ import type {
   ExtractionDraft,
   PromptPack,
 } from "@/lib/audit/types";
+import type {
+  ComparisonTargetInput,
+  ComparisonTargetProposal,
+  ComparisonStatus,
+  IntakeScreen,
+  ScopeKind,
+} from "@/lib/audit/workflow-authority";
 import {
   AUDIT_MEASUREMENT_MATRIX,
   CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForPromptId,
 } from "@/lib/audit/measurement-matrix";
 import { INDONESIAN_PURPOSE_DRIFT_WARNING } from "@/lib/audit/questions-id";
-import SimilarBusinessesEditor from "./SimilarBusinessesEditor";
+import {
+  isValidSimilarBusinessUrl,
+  normalizeSimilarBusinessUrl,
+} from "@/lib/audit/similar-businesses";
 import styles from "./audit.module.css";
+
+function IntakeActions({
+  onBack,
+  onNext,
+  nextLabel = "Lanjut",
+  busy = false,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  nextLabel?: string;
+  busy?: boolean;
+}) {
+  return (
+    <div className={styles.stickyAction}>
+      <Button variant="ghost" type="button" onClick={onBack}>
+        <IconArrowLeft /> Kembali
+      </Button>
+      <Button variant="default" type="button" onClick={onNext} disabled={busy}>
+        {busy ? (
+          <IconLoader2 className="animate-spin" aria-hidden="true" />
+        ) : (
+          <IconArrowRight />
+        )}
+        {nextLabel}
+      </Button>
+    </div>
+  );
+}
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
 type UpdateBrief = <K extends keyof BusinessBrief>(
@@ -58,12 +87,50 @@ function text(value: string[]) {
   return value.join("\n");
 }
 
-function sourceTitle(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
+function hasFilledValue(value: string | string[]) {
+  return Array.isArray(value)
+    ? value.some((item) => item.trim())
+    : value.trim().length > 0;
+}
+
+function emptyAiFieldHint(
+  value: string | string[],
+  field: string,
+  customerEditedFields: string[],
+  extractionMessage: string,
+  invalidationMessage?: string,
+) {
+  if (hasFilledValue(value)) return "";
+  if (invalidationMessage) return invalidationMessage;
+  if (customerEditedFields.includes(field)) {
+    return "Nilai ini dikosongkan setelah perubahan Anda. Isi nilai yang benar untuk melanjutkan.";
   }
+  return extractionMessage;
+}
+
+const preservedFieldLabels: Record<string, string> = {
+  brand_name: "Nama brand",
+  entity_scope: "Cakupan audit",
+  brand_type: "Jenis brand",
+  category: "Kategori",
+  market_context: "Konteks pasar",
+  target_customer: "Target pelanggan",
+  verified_offerings: "Produk atau layanan",
+  verified_customer_needs: "Kebutuhan pelanggan",
+  verified_decision_criteria: "Pertimbangan keputusan",
+  verified_competitor: "Bisnis pembanding",
+  brand_name_variants: "Nama brand lain",
+  customer_supplied_facts: "Fakta tambahan",
+  usp: "Differentiator",
+};
+
+function preservedFieldValue(brief: BusinessBrief, field: string) {
+  if (field === "verified_competitor") {
+    return brief.verified_competitor.name;
+  }
+  const value = brief[field as keyof BusinessBrief];
+  if (Array.isArray(value)) return value.join(", ");
+  return typeof value === "string" ? value : "";
 }
 
 function StageIntro({
@@ -132,30 +199,16 @@ function WarningAlert({
   );
 }
 
-function DisclosureSection({
-  value,
-  title,
-  children,
-}: Readonly<{
-  value: string;
-  title: React.ReactNode;
-  children: React.ReactNode;
-}>) {
-  return (
-    <Accordion className={styles.disclosure}>
-      <AccordionItem value={value} className="border-0">
-        <AccordionTrigger className={styles.disclosureTrigger}>
-          {title}
-        </AccordionTrigger>
-        <AccordionContent className={styles.disclosureBody}>
-          {children}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-  );
+function FieldError({ id, message }: { id: string; message?: string }) {
+  return message ? (
+    <p id={id} className={styles.validationError} role="alert">
+      {message}
+    </p>
+  ) : null;
 }
 
 function TextInput({
+  id,
   label,
   value,
   onChange,
@@ -164,7 +217,9 @@ function TextInput({
   required,
   type = "text",
   disabled,
+  error,
 }: {
+  id?: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -173,11 +228,17 @@ function TextInput({
   required?: boolean;
   type?: string;
   disabled?: boolean;
+  error?: string;
 }) {
-  const fieldId = useId();
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
   const hintId = `${fieldId}-hint`;
+  const errorId = `${fieldId}-error`;
   return (
-    <Field data-disabled={disabled || undefined}>
+    <Field
+      data-disabled={disabled || undefined}
+      data-invalid={error || undefined}
+    >
       <FieldLabel htmlFor={fieldId}>
         {label}
         {required ? "*" : ""}
@@ -189,33 +250,45 @@ function TextInput({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
-        aria-describedby={hint ? hintId : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={
+          [hint ? hintId : "", error ? errorId : ""]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
         onChange={(event) => onChange(event.target.value)}
       />
       {hint ? <FieldDescription id={hintId}>{hint}</FieldDescription> : null}
+      <FieldError id={errorId} message={error} />
     </Field>
   );
 }
 
 function LongInput({
+  id,
   label,
   value,
   onChange,
   hint,
   required,
   rows = 3,
+  error,
 }: {
+  id?: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   hint?: string;
   required?: boolean;
   rows?: number;
+  error?: string;
 }) {
-  const fieldId = useId();
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
   const hintId = `${fieldId}-hint`;
+  const errorId = `${fieldId}-error`;
   return (
-    <Field>
+    <Field data-invalid={error || undefined}>
       <FieldLabel htmlFor={fieldId}>
         {label}
         {required ? "*" : ""}
@@ -225,32 +298,44 @@ function LongInput({
         rows={rows}
         value={value}
         required={required}
-        aria-describedby={hint ? hintId : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={
+          [hint ? hintId : "", error ? errorId : ""]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
         onChange={(event) => onChange(event.target.value)}
       />
       {hint ? <FieldDescription id={hintId}>{hint}</FieldDescription> : null}
+      <FieldError id={errorId} message={error} />
     </Field>
   );
 }
 
 function LineListEditor({
+  id,
   label,
   initialValue,
   onChange,
   hint,
   required,
   rows = 3,
+  error,
 }: {
+  id?: string;
   label: string;
   initialValue: string;
   onChange: (value: string[]) => void;
   hint?: string;
   required?: boolean;
   rows?: number;
+  error?: string;
 }) {
   const [draft, setDraft] = useState(initialValue);
-  const fieldId = useId();
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
   const hintId = `${fieldId}-hint`;
+  const errorId = `${fieldId}-error`;
 
   function commitDraft() {
     const normalizedValue = lines(draft);
@@ -259,7 +344,7 @@ function LineListEditor({
   }
 
   return (
-    <Field>
+    <Field data-invalid={error || undefined}>
       <FieldLabel htmlFor={fieldId}>
         {label}
         {required ? "*" : ""}
@@ -269,165 +354,414 @@ function LineListEditor({
         rows={rows}
         value={draft}
         required={required}
-        aria-describedby={hint ? hintId : undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={
+          [hint ? hintId : "", error ? errorId : ""]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commitDraft}
       />
       {hint ? <FieldDescription id={hintId}>{hint}</FieldDescription> : null}
+      <FieldError id={errorId} message={error} />
     </Field>
   );
 }
 
 function LineListInput({
+  id,
   label,
   value,
   onChange,
   hint,
   required,
   rows = 3,
+  error,
 }: {
+  id?: string;
   label: string;
   value: string[];
   onChange: (value: string[]) => void;
   hint?: string;
   required?: boolean;
   rows?: number;
+  error?: string;
 }) {
   const serializedValue = text(value);
   return (
     <LineListEditor
       key={serializedValue}
+      id={id}
       label={label}
       initialValue={serializedValue}
       onChange={onChange}
       hint={hint}
       required={required}
       rows={rows}
+      error={error}
     />
   );
 }
 
-export function SourceStep({
-  websiteUrl,
-  setWebsiteUrl,
+function B1ComparisonTarget({
   brief,
-  updateBrief,
-  busy,
-  factsExtracted,
-  onExtract,
+  proposal,
+  status,
+  error,
+  scopeError,
+  sourceError,
+  onAccept,
 }: {
-  websiteUrl: string;
-  setWebsiteUrl: (value: string) => void;
   brief: BusinessBrief;
-  updateBrief: UpdateBrief;
-  busy: Busy;
-  factsExtracted: boolean;
-  onExtract: () => void;
+  proposal: ComparisonTargetProposal | null;
+  status: ComparisonStatus;
+  error?: string;
+  scopeError?: string;
+  sourceError?: string;
+  onAccept: (input: ComparisonTargetInput) => void;
 }) {
+  const current = brief.verified_competitor;
+  const [name, setName] = useState(current.name || proposal?.name || "");
+  const [scope, setScope] = useState(current.scope || proposal?.scope || "");
+  const [sourceUrl, setSourceUrl] = useState(
+    current.source_url || proposal?.source_url || "",
+  );
+  const [localError, setLocalError] = useState("");
+
+  function saveReplacement() {
+    if (!name.trim()) {
+      setLocalError(
+        "Isi nama bisnis pembanding atau gunakan alternatif kategori.",
+      );
+      return;
+    }
+    if (sourceUrl.trim() && !isValidSimilarBusinessUrl(sourceUrl)) {
+      setLocalError("Masukkan URL publik yang valid atau kosongkan sumbernya.");
+      return;
+    }
+    setLocalError("");
+    onAccept({
+      kind: "replacement",
+      name,
+      scope,
+      source_url: sourceUrl ? normalizeSimilarBusinessUrl(sourceUrl) : "",
+    });
+  }
+
   return (
-    <section className={`${styles.workspace} ${styles.workspaceFocused}`}>
-      <StageIntro
-        number={1}
-        eyebrow="Official source"
-        title="Start with facts you can verify."
-        description="Add the client's official website. Nuave will draft the business brief, and you will check every fact before the audit runs."
-      />
-      <form
-        className={styles.stageForm}
-        onSubmit={(event) => {
-          event.preventDefault();
-          onExtract();
-        }}
-      >
-        <StageSection
-          id="client-business-heading"
-          title="Client business"
-          description="Use the official business identity so every later observation refers to the right entity."
-          className={styles.focusedSection}
+    <div className={styles.stageSectionBody}>
+      {status === "needs_reconfirmation" && current.name ? (
+        <WarningAlert title="Konfirmasi ulang target sebelumnya">
+          <p>
+            Cakupan atau kategori berubah. Target yang Anda pilih sebelumnya
+            tetap ada, tetapi harus dikonfirmasi ulang sebelum audit dibuat.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() =>
+              onAccept({
+                kind: "replacement",
+                name: current.name,
+                scope: current.scope,
+                source_url: current.source_url,
+              })
+            }
+          >
+            Konfirmasi target sebelumnya
+          </Button>
+        </WarningAlert>
+      ) : null}
+
+      {proposal ? (
+        <div
+          className={styles.auditAlert}
+          role="group"
+          aria-label="Saran Nuave"
         >
-          <FieldSet aria-labelledby="client-business-heading">
-            <FieldGroup className={styles.gridTwo}>
-              <TextInput
-                label="Official website"
-                type="url"
-                required
-                value={websiteUrl}
-                placeholder="https://example.com"
-                hint="Nuave uses this domain as the primary source for the draft."
-                onChange={setWebsiteUrl}
-              />
-              <TextInput
-                label="Brand name"
-                value={brief.brand_name}
-                placeholder="Public brand name"
-                onChange={(value) => updateBrief("brand_name", value)}
-              />
-              <TextInput
-                label="Market or location"
-                value={brief.market_context}
-                placeholder="For example: Jakarta, Indonesia"
-                onChange={(value) => updateBrief("market_context", value)}
-              />
-              <TextInput
-                label="Business category"
-                value={brief.category}
-                placeholder="For example: dental clinic"
-                onChange={(value) => updateBrief("category", value)}
-              />
-            </FieldGroup>
-            <div className={`${styles.actionRow} ${styles.inlineAction}`}>
-              <p>Only public information from the official domain is used.</p>
-              <Button type="submit" variant="default" disabled={Boolean(busy)}>
-                {busy === "extract" ? (
-                  <IconLoader2 className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <IconSearch />
-                )}
-                {factsExtracted ? "Analyze again" : "Draft the client brief"}
+          <span className={styles.auditAlertIcon} aria-hidden="true">
+            ✦
+          </span>
+          <div className={styles.auditAlertBody}>
+            <h2 className={styles.auditAlertTitle}>Saran Nuave</h2>
+            <p>
+              {proposal.kind === "suggestion"
+                ? "Nuave mengusulkan target ini dari hasil ekstraksi. Pilihan Anda diperlukan; target belum disimpan."
+                : "Jika Anda tidak dapat menyebut bisnis tertentu, Anda dapat menerima alternatif kategori ini."}
+            </p>
+            <strong>{proposal.name}</strong>
+            {proposal.source_url ? (
+              <p>
+                Sumber: <code>{proposal.source_url}</code>
+              </p>
+            ) : null}
+            <div className={styles.actionRow}>
+              <Button
+                type="button"
+                variant="default"
+                onClick={() =>
+                  onAccept({
+                    kind: proposal.kind,
+                    name: proposal.name,
+                    scope: proposal.scope,
+                    source_url: proposal.source_url,
+                  })
+                }
+              >
+                {proposal.kind === "suggestion"
+                  ? "Terima saran Nuave"
+                  : "Gunakan alternatif kategori"}
               </Button>
             </div>
-          </FieldSet>
+          </div>
+        </div>
+      ) : null}
+
+      {brief.similar_businesses?.length ? (
+        <StageSection
+          id="comparison-choices-heading"
+          title="Pilihan lain dari hasil ekstraksi"
+          description="Pilih hanya jika bisnis ini adalah pembanding yang realistis bagi pelanggan."
+        >
+          <div className={styles.compactList}>
+            {brief.similar_businesses.map((business, index) => {
+              const candidateName =
+                business.name?.trim() ||
+                business.source_url ||
+                `Pilihan ${index + 1}`;
+              return (
+                <div key={`${business.source_url}-${business.name}-${index}`}>
+                  <strong>{candidateName}</strong>
+                  {business.source_url ? (
+                    <span> · {business.source_url}</span>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                      onAccept({
+                        kind: "suggestion",
+                        name: candidateName,
+                        scope: "",
+                        source_url: business.source_url,
+                      })
+                    }
+                  >
+                    Pilih sebagai target
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
         </StageSection>
-      </form>
-    </section>
+      ) : null}
+
+      <StageSection
+        id="comparison-entry-heading"
+        title="Edit atau ganti target"
+        description="Anda dapat menerima saran, mengeditnya, menggantinya, atau menerima alternatif kategori. Sumber URL boleh dikosongkan."
+      >
+        <FieldGroup
+          className={styles.gridTwo}
+          aria-labelledby="comparison-entry-heading"
+        >
+          <TextInput
+            id="comparison-name"
+            label="Nama bisnis pembanding"
+            value={name}
+            required
+            error={localError || error}
+            onChange={(value) => {
+              setName(value);
+              setLocalError("");
+            }}
+          />
+          <TextInput
+            id="comparison-scope"
+            label="Cakupan pembanding"
+            value={scope}
+            error={scopeError}
+            hint="Opsional. Misalnya kota atau cabang."
+            onChange={setScope}
+          />
+          <TextInput
+            id="comparison-source"
+            label="Sumber URL (opsional)"
+            type="url"
+            value={sourceUrl}
+            error={sourceError}
+            hint="Kosongkan jika Anda hanya memiliki nama bisnis."
+            onChange={(value) => {
+              setSourceUrl(value);
+              setLocalError("");
+            }}
+          />
+        </FieldGroup>
+        <div className={styles.actionRow}>
+          <Button type="button" variant="secondary" onClick={saveReplacement}>
+            Simpan bisnis pembanding
+          </Button>
+          {proposal?.kind === "category_fallback" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                onAccept({
+                  kind: "category_fallback",
+                  name: proposal.name,
+                  scope: "",
+                  source_url: "",
+                })
+              }
+            >
+              Terima “{proposal.name}”
+            </Button>
+          ) : null}
+        </div>
+      </StageSection>
+    </div>
   );
 }
 
-export function BriefStep({
+export function B1BriefStep({
   brief,
   updateBrief,
   extraction,
-  factsConfirmed,
-  setFactsConfirmed,
+  screen,
+  scopeKind,
+  scopeValue,
+  comparisonProposal,
+  comparisonStatus,
+  marketInvalidated,
+  offeringsInvalidated,
+  customerEditedFields,
+  preservedCustomerFields,
+  fieldErrors,
+  identityUnverified,
   busy,
-  onGenerate,
+  onScopeKindChange,
+  onScopeValueChange,
+  onConfirmIdentity,
+  onRequestSourceCorrection,
+  onSubmitSourceCorrection,
+  onAcceptComparison,
+  onContinue,
   onBack,
-  onLogo,
+  onBackToSource,
+  onGenerate,
 }: {
   brief: BusinessBrief;
   updateBrief: UpdateBrief;
   extraction: ExtractionDraft | null;
-  factsConfirmed: boolean;
-  setFactsConfirmed: (value: boolean) => void;
+  screen: IntakeScreen;
+  scopeKind: ScopeKind;
+  scopeValue: string;
+  comparisonProposal: ComparisonTargetProposal | null;
+  comparisonStatus: ComparisonStatus;
+  marketInvalidated: boolean;
+  offeringsInvalidated: boolean;
+  customerEditedFields: string[];
+  preservedCustomerFields: string[];
+  fieldErrors: Record<string, string>;
+  identityUnverified: boolean;
   busy: Busy;
+  onScopeKindChange: (value: ScopeKind) => void;
+  onScopeValueChange: (value: string) => void;
+  onConfirmIdentity: () => void;
+  onRequestSourceCorrection: () => void;
+  onSubmitSourceCorrection: (
+    sourceUrl: string,
+    brandName: string,
+  ) => void | Promise<void>;
+  onAcceptComparison: (input: ComparisonTargetInput) => void;
+  onContinue: (screen: IntakeScreen) => void;
+  onBack: (screen: IntakeScreen) => void;
+  onBackToSource: () => void;
   onGenerate: () => void;
-  onBack: () => void;
-  onLogo: (file: File | undefined) => void;
 }) {
+  const [correctionSource, setCorrectionSource] = useState(
+    brief.official_sources[0] || "",
+  );
+  const [correctionBrandName, setCorrectionBrandName] = useState(
+    brief.brand_name,
+  );
+
+  const titleByScreen: Record<IntakeScreen, string> = {
+    "brand-confirm": "Check the client brief before it shapes the audit.",
+    "source-correction": "Perbaiki sumber dan nama brand.",
+    scope: "Tentukan cakupan audit.",
+    branch: "Lengkapi cabang atau lokasi.",
+    product: "Lengkapi produk atau layanan.",
+    category: "Pilih kategori brand.",
+    market: "Jelaskan konteks pasar.",
+    "customer-reasons": "Kenali pelanggan dan alasannya.",
+    offerings: "Pilih produk atau layanan yang diverifikasi.",
+    "comparison-target": "Pilih bisnis pembanding yang realistis.",
+    facts: "Tambahkan fakta opsional.",
+    review: "Tinjau brief sebelum membuat pertanyaan.",
+  };
+  const descriptionByScreen: Record<IntakeScreen, string> = {
+    "brand-confirm":
+      "Detail ini adalah draft, bukan fakta terverifikasi. Perbaiki yang keliru, lengkapi yang kosong, lalu konfirmasi brief.",
+    "source-correction":
+      "Nuave akan membaca ulang sumber yang Anda pilih. Perubahan sumber menjalankan satu ekstraksi pengganti; perubahan nama saja tidak memanggil ekstraksi baru.",
+    scope:
+      "Pilih satu entitas saja. Pilihan cabang atau produk akan menjadi cakupan audit.",
+    branch:
+      "Nama ini akan menjadi bagian dari cakupan audit dan menggantikan nilai cabang lama.",
+    product:
+      "Nama ini akan menjadi bagian dari cakupan audit dan menggantikan nilai produk lama.",
+    category:
+      "Kategori yang dipilih menentukan pertanyaan dan nilai default yang dapat diturunkan Nuave.",
+    market:
+      "Layar ini selalu ditampilkan. Konteks pasar wajib diisi, termasuk untuk brand nasional atau online.",
+    "customer-reasons":
+      "Isi kebutuhan dan pertimbangan yang benar-benar penting bagi pelanggan.",
+    offerings:
+      "Setidaknya satu item terverifikasi diperlukan untuk membuat pertanyaan audit.",
+    "comparison-target":
+      "Saran Nuave belum menjadi target sampai Anda menerima, mengedit, atau menggantinya.",
+    facts:
+      "Fakta tambahan dari Anda bersifat opsional dan tidak menggantikan hasil audit.",
+    review:
+      "Periksa semua nilai. Konfirmasi eksplisit di sini sebelum pertanyaan dibuat.",
+  };
+
+  const error = (field: string) => fieldErrors[field];
+  const showSources = screen === "brand-confirm";
+  const preservedEntries = preservedCustomerFields
+    .map((field) => ({
+      field,
+      label: preservedFieldLabels[field],
+      value: preservedFieldValue(brief, field),
+    }))
+    .filter((entry): entry is { field: string; label: string; value: string } =>
+      Boolean(entry.label),
+    );
+
   return (
     <section className={`${styles.workspace} ${styles.workspaceWide}`}>
-      <Button variant="ghost" onClick={onBack} className={styles.backButton}>
-        <IconArrowLeft /> Change website
+      <Button
+        variant="ghost"
+        onClick={
+          screen === "brand-confirm" ? onBackToSource : () => onBack(screen)
+        }
+        className={styles.backButton}
+        type="button"
+      >
+        <IconArrowLeft />{" "}
+        {screen === "brand-confirm" ? "Change website" : "Kembali"}
       </Button>
       <StageIntro
         number={2}
         eyebrow="Verify facts"
-        title="Check the client brief before it shapes the audit."
-        description="These details are a draft, not verified facts. Correct anything that is wrong, fill any gaps, then confirm the brief."
+        title={titleByScreen[screen]}
+        description={descriptionByScreen[screen]}
       />
 
       {extraction?.warnings.length ? (
-        <WarningAlert title="Review these items">
+        <WarningAlert title="Periksa catatan ekstraksi">
           <ul className={styles.compactList}>
             {extraction.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
@@ -436,221 +770,624 @@ export function BriefStep({
         </WarningAlert>
       ) : null}
 
-      <StageSection
-        id="identity-scope-heading"
-        title="Identity and audit scope"
-        description="Confirm the exact business, market, and customer context the audit will test."
-      >
-        <FieldSet aria-labelledby="identity-scope-heading">
-          <FieldGroup className={styles.gridTwo}>
+      {screen === "brand-confirm" ? (
+        <>
+          <StageSection
+            id="brand-confirm-heading"
+            title="Identitas brand"
+            description="Sumber resmi tetap menjadi dasar brief ini."
+          >
+            <FieldGroup
+              className={styles.gridTwo}
+              aria-labelledby="brand-confirm-heading"
+            >
+              <TextInput
+                id="brand-name"
+                label="Brand name"
+                required
+                value={brief.brand_name}
+                error={error("brand_name")}
+                hint={
+                  identityUnverified
+                    ? "Nuave tidak dapat membaca nama brand dari sumber ini. Isi nama yang benar lalu konfirmasi."
+                    : brief.brand_name.trim()
+                      ? "Pastikan nama ini persis seperti yang digunakan brand Anda."
+                      : emptyAiFieldHint(
+                          brief.brand_name,
+                          "brand_name",
+                          customerEditedFields,
+                          "Nuave belum menemukan nama brand dari sumber ini. Isi nama yang benar untuk melanjutkan.",
+                        )
+                }
+                onChange={(value) => updateBrief("brand_name", value)}
+              />
+              <Field>
+                <FieldLabel>Sumber resmi</FieldLabel>
+                {showSources && brief.official_sources.length ? (
+                  <ul className={styles.compactList}>
+                    {brief.official_sources.map((source) => (
+                      <li key={source}>
+                        <a href={source} target="_blank" rel="noreferrer">
+                          {source} <IconExternalLink />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <FieldDescription>
+                    Tambahkan website resmi atau profil Instagram yang valid
+                    dari langkah sebelumnya.
+                  </FieldDescription>
+                )}
+              </Field>
+            </FieldGroup>
+            {identityUnverified ? (
+              <div className={styles.actionRow}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onConfirmIdentity}
+                >
+                  Konfirmasi nama brand ini
+                </Button>
+              </div>
+            ) : null}
+            <div className={styles.actionRow}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onRequestSourceCorrection}
+              >
+                Bukan, ganti brand atau sumber
+              </Button>
+            </div>
+          </StageSection>
+          <IntakeActions
+            onBack={onBackToSource}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "source-correction" ? (
+        <>
+          <StageSection
+            id="source-correction-heading"
+            title="Sumber yang benar"
+            description="Gunakan website publik atau profil Instagram brand yang benar."
+          >
+            <div className={styles.gridTwo}>
+              <TextInput
+                id="source-correction-source"
+                label="Website atau profil Instagram baru (opsional)"
+                value={correctionSource}
+                error={
+                  error("official_sources") ?? error("sourceCorrectionSource")
+                }
+                hint="Kosongkan untuk memakai sumber yang sudah diterima. Google Maps dan nama brand tanpa sumber baru tidak didukung."
+                onChange={setCorrectionSource}
+              />
+              <TextInput
+                id="source-correction-name"
+                label="Nama brand yang benar"
+                required
+                value={correctionBrandName}
+                error={error("sourceCorrectionName")}
+                hint="Nama ini dikirim sebagai koreksi pengguna saat sumber dibaca ulang."
+                onChange={setCorrectionBrandName}
+              />
+            </div>
+            <p className={styles.mutedText}>
+              Yang sudah Anda isi tidak hilang. Sumber baru memulai satu draft
+              ekstraksi pengganti; bila sumbernya sama, hanya nama yang
+              diperbarui tanpa ekstraksi baru.
+            </p>
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() =>
+              onSubmitSourceCorrection(correctionSource, correctionBrandName)
+            }
+            nextLabel="Baca ulang sumber"
+            busy={busy === "extract"}
+          />
+        </>
+      ) : null}
+
+      {screen === "scope" ? (
+        <>
+          <StageSection
+            id="scope-heading"
+            title="Cakupan audit"
+            description="Pilih salah satu bentuk entitas yang akan diaudit."
+          >
+            <fieldset>
+              <legend className="sr-only">Jenis cakupan audit</legend>
+              <div className={styles.gridThree}>
+                {(["whole-brand", "branch", "product"] as ScopeKind[]).map(
+                  (kind) => (
+                    <label key={kind}>
+                      <input
+                        id={`scope-kind-${kind}`}
+                        type="radio"
+                        name="scope-kind"
+                        value={kind}
+                        checked={scopeKind === kind}
+                        onChange={() => onScopeKindChange(kind)}
+                      />{" "}
+                      {kind === "whole-brand"
+                        ? "Seluruh brand"
+                        : kind === "branch"
+                          ? "Satu cabang atau lokasi"
+                          : "Satu produk atau layanan"}
+                    </label>
+                  ),
+                )}
+              </div>
+            </fieldset>
+            <div className={styles.gridTwo}>
+              <TextInput
+                id="brand-type"
+                label="Jenis brand"
+                required
+                value={brief.brand_type}
+                error={error("brand_type")}
+                hint={
+                  brief.brand_type.trim()
+                    ? "Pastikan jenis brand ini sesuai dengan sumber resmi."
+                    : emptyAiFieldHint(
+                        brief.brand_type,
+                        "brand_type",
+                        customerEditedFields,
+                        "Nuave belum menemukan jenis brand dari sumber ini. Isi nilai yang benar untuk melanjutkan.",
+                      )
+                }
+                onChange={(value) => updateBrief("brand_type", value)}
+              />
+              <Field>
+                <FieldLabel>Cakupan audit</FieldLabel>
+                <FieldDescription>
+                  {brief.entity_scope ||
+                    (customerEditedFields.includes("entity_scope")
+                      ? "Cakupan Anda belum lengkap. Pilih atau lengkapi nilainya."
+                      : "Nuave belum menemukan cakupan audit dari sumber ini. Pilih cakupan yang benar untuk melanjutkan.")}
+                </FieldDescription>
+                {error("entity_scope") ? (
+                  <p className={styles.validationError}>
+                    {error("entity_scope")}
+                  </p>
+                ) : null}
+              </Field>
+            </div>
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "branch" || screen === "product" ? (
+        <>
+          <StageSection
+            id={`${screen}-heading`}
+            title={
+              screen === "branch" ? "Cabang atau lokasi" : "Produk atau layanan"
+            }
+          >
             <TextInput
-              label="Brand name"
+              id="scope-value"
+              label={
+                screen === "branch"
+                  ? "Nama cabang atau lokasi"
+                  : "Nama produk atau layanan"
+              }
               required
-              value={brief.brand_name}
-              onChange={(value) => updateBrief("brand_name", value)}
+              value={scopeValue}
+              error={error("scopeValue") || error("entity_scope")}
+              onChange={onScopeValueChange}
             />
+            <Field>
+              <FieldLabel>Cakupan terpilih</FieldLabel>
+              <FieldDescription>
+                {brief.entity_scope ||
+                  "Nilai cakupan akan muncul setelah nama dilengkapi."}
+              </FieldDescription>
+              {error("entity_scope") ? (
+                <p className={styles.validationError}>
+                  {error("entity_scope")}
+                </p>
+              ) : null}
+            </Field>
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "category" ? (
+        <>
+          <StageSection id="category-heading" title="Kategori">
+            {extraction?.category.trim() ? (
+              <fieldset>
+                <legend>Saran kategori</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="category-choice"
+                    checked={brief.category === extraction.category.trim()}
+                    onChange={() =>
+                      updateBrief("category", extraction.category.trim())
+                    }
+                  />{" "}
+                  {extraction.category.trim()} (saran dari ekstraksi)
+                </label>{" "}
+                <label>
+                  <input
+                    type="radio"
+                    name="category-choice"
+                    checked={brief.category !== extraction.category.trim()}
+                    onChange={() => {
+                      if (brief.category === extraction.category.trim()) {
+                        updateBrief("category", "");
+                      }
+                    }}
+                  />{" "}
+                  Kategori lain
+                </label>
+              </fieldset>
+            ) : null}
             <TextInput
-              label="Business scope"
-              required
-              hint="The one branch, brand, or product line this audit will test."
-              value={brief.entity_scope}
-              onChange={(value) => updateBrief("entity_scope", value)}
-            />
-            <TextInput
-              label="Brand type"
-              required
-              value={brief.brand_type}
-              onChange={(value) => updateBrief("brand_type", value)}
-            />
-            <TextInput
+              id="category"
               label="Category"
               required
               value={brief.category}
+              error={error("category")}
+              hint={
+                brief.category.trim()
+                  ? "Gunakan nama kategori yang cukup spesifik untuk pertanyaan pelanggan."
+                  : emptyAiFieldHint(
+                      brief.category,
+                      "category",
+                      customerEditedFields,
+                      "Nuave belum menemukan kategori dari sumber ini. Isi kategori yang benar untuk melanjutkan.",
+                    )
+              }
               onChange={(value) => updateBrief("category", value)}
             />
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "market" ? (
+        <>
+          <StageSection
+            id="market-heading"
+            title="Market atau lokasi"
+            description={workflowMetaDescription(scopeKind)}
+          >
             <TextInput
+              id="market-context"
               label="Market or location"
               required
               value={brief.market_context}
+              error={error("market_context")}
+              hint={
+                brief.market_context.trim()
+                  ? "Contoh: nasional di Indonesia, online di Indonesia, atau Bandung."
+                  : emptyAiFieldHint(
+                      brief.market_context,
+                      "market_context",
+                      customerEditedFields,
+                      "Nuave belum menemukan konteks pasar dari sumber ini. Isi konteks pasar yang benar untuk melanjutkan.",
+                      marketInvalidated
+                        ? "Cakupan berubah, sehingga konteks pasar lama dihapus. Isi konteks pasar yang benar untuk melanjutkan."
+                        : undefined,
+                    )
+              }
               onChange={(value) => updateBrief("market_context", value)}
             />
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "customer-reasons" ? (
+        <>
+          <StageSection
+            id="customer-reasons-heading"
+            title="Pelanggan dan kebutuhan"
+          >
             <LongInput
+              id="target-customer"
               label="Target customer"
               required
               value={brief.target_customer}
+              error={error("target_customer")}
+              hint={
+                brief.target_customer.trim()
+                  ? "Pastikan deskripsi ini mewakili pelanggan yang ingin dipahami."
+                  : emptyAiFieldHint(
+                      brief.target_customer,
+                      "target_customer",
+                      customerEditedFields,
+                      "Nuave belum menemukan target pelanggan dari sumber ini. Isi nilai yang benar untuk melanjutkan.",
+                    )
+              }
               onChange={(value) => updateBrief("target_customer", value)}
             />
-          </FieldGroup>
-        </FieldSet>
-      </StageSection>
-
-      <StageSection
-        id="offer-needs-heading"
-        title="Offer and customer needs"
-        description="Keep each list specific enough to support ordinary customer questions."
-      >
-        <FieldSet aria-labelledby="offer-needs-heading">
-          <FieldGroup className={styles.gridTwo}>
-            <LineListInput
-              label="Products or services"
-              required
-              hint="One verified item per line."
-              value={brief.verified_offerings}
-              onChange={(value) => updateBrief("verified_offerings", value)}
-            />
-            <LineListInput
-              label="Customer needs"
-              hint="Optional. Add one need per line."
-              value={brief.verified_customer_needs}
-              onChange={(value) =>
-                updateBrief("verified_customer_needs", value)
-              }
-            />
-            <LineListInput
-              label="Decision criteria"
-              hint="Optional. Add one factor per line."
-              value={brief.verified_decision_criteria}
-              onChange={(value) =>
-                updateBrief("verified_decision_criteria", value)
-              }
-            />
-            <LineListInput
-              label="Official sources"
-              required
-              hint="One URL per line."
-              value={brief.official_sources}
-              onChange={(value) => updateBrief("official_sources", value)}
-            />
-          </FieldGroup>
-        </FieldSet>
-      </StageSection>
-
-      <StageSection
-        id="similar-businesses-heading"
-        title="Bisnis lain yang serupa"
-        description="Opsional. Tambahkan bisnis yang serupa atau sering dibandingkan dengan bisnis Anda. Saran dari Nuave tetap dapat Anda hapus atau ubah."
-      >
-        <FieldSet aria-labelledby="similar-businesses-heading">
-          <SimilarBusinessesEditor
-            businesses={brief.similar_businesses ?? []}
-            onChange={(value) => updateBrief("similar_businesses", value)}
+            <div className={styles.gridTwo}>
+              <LineListInput
+                id="customer-needs"
+                label="Customer needs"
+                required
+                value={brief.verified_customer_needs}
+                error={error("verified_customer_needs")}
+                hint={
+                  hasFilledValue(brief.verified_customer_needs)
+                    ? "Setidaknya satu kebutuhan, satu item per baris."
+                    : emptyAiFieldHint(
+                        brief.verified_customer_needs,
+                        "verified_customer_needs",
+                        customerEditedFields,
+                        "Nuave belum menemukan kebutuhan pelanggan dari sumber ini. Isi setidaknya satu kebutuhan untuk melanjutkan.",
+                      )
+                }
+                onChange={(value) =>
+                  updateBrief("verified_customer_needs", value)
+                }
+              />
+              <LineListInput
+                id="decision-criteria"
+                label="Decision criteria"
+                required
+                value={brief.verified_decision_criteria}
+                error={error("verified_decision_criteria")}
+                hint={
+                  hasFilledValue(brief.verified_decision_criteria)
+                    ? "Setidaknya satu pertimbangan, satu item per baris."
+                    : emptyAiFieldHint(
+                        brief.verified_decision_criteria,
+                        "verified_decision_criteria",
+                        customerEditedFields,
+                        "Nuave belum menemukan pertimbangan keputusan dari sumber ini. Isi setidaknya satu pertimbangan untuk melanjutkan.",
+                      )
+                }
+                onChange={(value) =>
+                  updateBrief("verified_decision_criteria", value)
+                }
+              />
+            </div>
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
           />
-        </FieldSet>
-      </StageSection>
-
-      <DisclosureSection
-        value="optional-details"
-        title="Optional details and report branding"
-      >
-        <div className={styles.gridTwo}>
-          <LongInput
-            label="Differentiator"
-            value={brief.usp}
-            onChange={(value) => updateBrief("usp", value)}
-          />
-          <LineListInput
-            label="Other brand names"
-            value={brief.brand_name_variants}
-            onChange={(value) => updateBrief("brand_name_variants", value)}
-          />
-          <TextInput
-            label="Priority offer"
-            value={brief.priority_offering}
-            onChange={(value) => updateBrief("priority_offering", value)}
-          />
-          <TextInput
-            label="Customer next step"
-            value={brief.conversion_action}
-            onChange={(value) => updateBrief("conversion_action", value)}
-          />
-          <LineListInput
-            label="Facts that are often wrong"
-            value={brief.customer_supplied_facts}
-            onChange={(value) => updateBrief("customer_supplied_facts", value)}
-          />
-          <LineListInput
-            label="Accuracy questions"
-            value={brief.known_accuracy_questions}
-            onChange={(value) => updateBrief("known_accuracy_questions", value)}
-          />
-          <LongInput
-            label="Regulated-category notes"
-            value={brief.regulated_category_notes}
-            onChange={(value) => updateBrief("regulated_category_notes", value)}
-          />
-          <TextInput
-            label="Agency name"
-            value={brief.agency_name}
-            onChange={(value) => updateBrief("agency_name", value)}
-          />
-          <Field>
-            <FieldLabel htmlFor="agency-logo">Agency logo</FieldLabel>
-            <Input
-              id="agency-logo"
-              type="file"
-              accept="image/png,image/jpeg"
-              onChange={(event) => onLogo(event.target.files?.[0])}
-            />
-            <FieldDescription>PNG or JPG, up to 1 MB.</FieldDescription>
-          </Field>
-        </div>
-      </DisclosureSection>
-
-      {extraction?.evidence.length ? (
-        <DisclosureSection
-          value="extraction-notes"
-          title={`${extraction.evidence.length} extraction source notes`}
-        >
-          <div className={styles.evidenceList}>
-            {extraction.evidence.map((item, index) => (
-              <div key={`${item.field}-${index}`}>
-                <strong>{item.field}</strong>
-                <span>{item.value}</span>
-                <a href={item.source_url} target="_blank" rel="noreferrer">
-                  {sourceTitle(item.source_url)} <IconExternalLink />
-                </a>
-              </div>
-            ))}
-          </div>
-        </DisclosureSection>
+        </>
       ) : null}
 
-      <div className={styles.stickyAction}>
-        <div className={styles.confirmation}>
-          <Field orientation="horizontal" className="items-start">
-            <Checkbox
-              id="facts-confirmed"
-              checked={factsConfirmed}
-              onCheckedChange={(checked) => setFactsConfirmed(checked === true)}
+      {screen === "offerings" ? (
+        <>
+          <StageSection id="offerings-heading" title="Produk atau layanan">
+            <LineListInput
+              id="verified-offerings"
+              label="Products or services"
+              required
+              value={brief.verified_offerings}
+              error={error("verified_offerings")}
+              hint={
+                hasFilledValue(brief.verified_offerings)
+                  ? "Setidaknya satu item terverifikasi, satu item per baris."
+                  : emptyAiFieldHint(
+                      brief.verified_offerings,
+                      "verified_offerings",
+                      customerEditedFields,
+                      "Nuave belum menemukan produk atau layanan dari sumber ini. Isi setidaknya satu produk atau layanan untuk melanjutkan.",
+                      offeringsInvalidated
+                        ? "Cakupan produk berubah, sehingga daftar sebelumnya dihapus. Isi setidaknya satu produk atau layanan untuk melanjutkan."
+                        : undefined,
+                    )
+              }
+              onChange={(value) => updateBrief("verified_offerings", value)}
             />
-            <FieldLabel htmlFor="facts-confirmed" className="leading-6">
-              I have checked these facts and approve them for use in the audit
-              questions.
-            </FieldLabel>
-          </Field>
-        </div>
-        <div className={styles.actionRow}>
-          <p>
-            Nuave builds {CANONICAL_COMPOSITION_COUNTS.unbranded} unbranded and{" "}
-            {CANONICAL_COMPOSITION_COUNTS.branded} branded questions from these
-            verified facts. This step makes no API call and costs nothing.
-          </p>
-          <Button
-            variant="default"
-            onClick={onGenerate}
-            disabled={Boolean(busy) || !factsConfirmed}
+            <Field>
+              <FieldLabel>Priority offering</FieldLabel>
+              <FieldDescription>
+                {brief.priority_offering ||
+                  "Akan diturunkan dari item pertama yang terisi."}
+              </FieldDescription>
+            </Field>
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "comparison-target" ? (
+        <>
+          <StageSection
+            id="comparison-target-heading"
+            title="Bisnis pembanding"
+            description="Target baru ditulis hanya setelah tindakan eksplisit Anda."
           >
-            {busy === "prompts" ? (
-              <IconLoader2 className="animate-spin" aria-hidden="true" />
-            ) : (
-              <IconArrowRight />
-            )}
-            Create 10 audit questions
-          </Button>
-        </div>
-      </div>
+            <B1ComparisonTarget
+              key={`${comparisonStatus}:${brief.verified_competitor.name}:${comparisonProposal?.name || ""}`}
+              brief={brief}
+              proposal={comparisonProposal}
+              status={comparisonStatus}
+              error={error("verified_competitor.name")}
+              scopeError={error("verified_competitor.scope")}
+              sourceError={error("verified_competitor.source_url")}
+              onAccept={onAcceptComparison}
+            />
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "facts" ? (
+        <>
+          <StageSection id="facts-heading" title="Fakta tambahan">
+            <LongInput
+              id="usp"
+              label="Differentiator (opsional)"
+              value={brief.usp}
+              hint={
+                brief.usp.trim()
+                  ? "Draft dari ekstraksi; koreksi jika diperlukan."
+                  : emptyAiFieldHint(
+                      brief.usp,
+                      "usp",
+                      customerEditedFields,
+                      "Nuave belum menemukan differentiator dari sumber ini. Isi nilai yang benar atau biarkan kosong karena bidang ini opsional.",
+                    )
+              }
+              onChange={(value) => updateBrief("usp", value)}
+            />
+            <LineListInput
+              id="customer-supplied-facts"
+              label="Fakta yang Anda tambahkan (opsional)"
+              value={brief.customer_supplied_facts}
+              onChange={(value) =>
+                updateBrief("customer_supplied_facts", value)
+              }
+              hint="Satu fakta per baris. Jangan masukkan data pribadi atau rahasia."
+            />
+          </StageSection>
+          <IntakeActions
+            onBack={() => onBack(screen)}
+            onNext={() => onContinue(screen)}
+            busy={Boolean(busy)}
+          />
+        </>
+      ) : null}
+
+      {screen === "review" ? (
+        <>
+          <StageSection
+            id="review-heading"
+            title="Review brief"
+            description="Konfirmasi ini adalah tindakan eksplisit. Berpindah layar tidak mengonfirmasi brief."
+          >
+            {preservedEntries.length ? (
+              <WarningAlert title="Nilai yang dipertahankan dari sumber sebelumnya">
+                <p>
+                  Sumber telah diganti. Nilai berikut berasal dari isian Anda
+                  sebelumnya dan perlu diperiksa serta dikonfirmasi ulang.
+                </p>
+                <ul className={styles.compactList}>
+                  {preservedEntries.map((entry) => (
+                    <li key={entry.field}>
+                      <strong>{entry.label}</strong>:
+                      {entry.value || " Belum diisi"}
+                    </li>
+                  ))}
+                </ul>
+                {comparisonStatus === "needs_reconfirmation" ? (
+                  <p>
+                    Bisnis pembanding juga harus dikonfirmasi ulang pada layar
+                    pemilihannya.
+                  </p>
+                ) : null}
+              </WarningAlert>
+            ) : null}
+            <dl className={styles.factList}>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Brand</dt>
+                <dd className={styles.factValue}>{brief.brand_name}</dd>
+              </div>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Sumber resmi</dt>
+                <dd className={styles.factValue}>
+                  {brief.official_sources.join(", ")}
+                </dd>
+              </div>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Cakupan</dt>
+                <dd className={styles.factValue}>{brief.entity_scope}</dd>
+              </div>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Kategori</dt>
+                <dd className={styles.factValue}>{brief.category}</dd>
+              </div>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Market</dt>
+                <dd className={styles.factValue}>{brief.market_context}</dd>
+              </div>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Priority offering</dt>
+                <dd className={styles.factValue}>{brief.priority_offering}</dd>
+              </div>
+              <div className={styles.factRow}>
+                <dt className={styles.factLabel}>Comparison target</dt>
+                <dd className={styles.factValue}>
+                  {brief.verified_competitor.name || "Belum dikonfirmasi"}
+                </dd>
+              </div>
+            </dl>
+            <LineListInput
+              id="brand-name-variants"
+              label="Nama brand lain (opsional)"
+              value={brief.brand_name_variants}
+              onChange={(value) => updateBrief("brand_name_variants", value)}
+            />
+          </StageSection>
+          <div className={styles.stickyAction}>
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => onBack(screen)}
+            >
+              <IconArrowLeft /> Kembali
+            </Button>
+            <Button
+              variant="default"
+              type="button"
+              onClick={onGenerate}
+              disabled={Boolean(busy)}
+            >
+              {busy === "prompts" ? (
+                <IconLoader2 className="animate-spin" aria-hidden="true" />
+              ) : (
+                <IconArrowRight />
+              )}
+              Konfirmasi fakta dan buat 10 pertanyaan
+            </Button>
+          </div>
+        </>
+      ) : null}
     </section>
   );
+}
+
+function workflowMetaDescription(scopeKind: ScopeKind) {
+  if (scopeKind === "branch")
+    return "Untuk satu cabang, isi area layanan atau lokasi yang benar-benar berlaku.";
+  if (scopeKind === "product")
+    return "Untuk satu produk, isi cakupan pasar produk ini; layar tetap wajib diisi.";
+  return "Untuk seluruh brand, isi jangkauan nasional atau online yang ingin diuji.";
 }
 
 export function QuestionsStep({

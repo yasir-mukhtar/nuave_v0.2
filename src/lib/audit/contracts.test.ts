@@ -152,14 +152,14 @@ function allowedInput(index: number) {
 }
 
 describe("prompt-pack contract", () => {
-  it("accepts a brief without customer needs or decision criteria", () => {
+  it("rejects a brief without customer needs or decision criteria", () => {
     expect(
       businessBriefSchema.safeParse({
         ...brief,
         verified_customer_needs: [],
         verified_decision_criteria: [],
       }).success,
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("accepts the exact canonical ten-slot matrix", () => {

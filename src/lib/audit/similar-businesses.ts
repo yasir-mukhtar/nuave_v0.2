@@ -121,14 +121,17 @@ export function normalizeSimilarBusinesses(
   const normalized: SimilarBusiness[] = [];
   const seen = new Set<string>();
   for (const business of businesses) {
+    const name = business.name?.trim() || "";
     const sourceUrl = normalizeSimilarBusinessUrl(business.source_url);
-    if (!sourceUrl) continue;
-    const key = sourceUrl.replace(/\/$/, "").toLowerCase();
+    if (!name && !sourceUrl) continue;
+    const key = sourceUrl
+      ? `url:${sourceUrl.replace(/\/$/, "").toLowerCase()}`
+      : `name:${name.toLowerCase()}`;
     if (seen.has(key)) continue;
     seen.add(key);
     normalized.push({
       source_url: sourceUrl,
-      ...(business.name?.trim() ? { name: business.name.trim() } : {}),
+      ...(name ? { name } : {}),
       ...(business.origin ? { origin: business.origin } : {}),
     });
     if (normalized.length >= MAX_SIMILAR_BUSINESSES) break;
@@ -144,34 +147,8 @@ export function sanitizeAiSimilarBusinesses(
       ...business,
       origin: "ai" as const,
     })),
-  ).filter((business) => isValidSimilarBusinessUrl(business.source_url));
-}
-
-export function withPrimarySimilarBusiness(
-  brief: BusinessBrief,
-): BusinessBrief {
-  assertSafeComparisonBusinessUrls(brief);
-  if (brief.similar_businesses === undefined) return brief;
-  const similarBusinesses = normalizeSimilarBusinesses(
-    brief.similar_businesses,
+  ).filter(
+    (business) =>
+      !business.source_url || isValidSimilarBusinessUrl(business.source_url),
   );
-  const primary = similarBusinesses.find((business) =>
-    isValidSimilarBusinessUrl(business.source_url),
-  );
-  if (!primary) {
-    return {
-      ...brief,
-      similar_businesses: similarBusinesses,
-    };
-  }
-  return {
-    ...brief,
-    similar_businesses: similarBusinesses,
-    verified_competitor: {
-      name:
-        primary.name?.trim() || similarBusinessDisplayName(primary.source_url),
-      scope: "",
-      source_url: primary.source_url,
-    },
-  };
 }
