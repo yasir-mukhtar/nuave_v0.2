@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-08-28
+> Updated: 2026-09-01
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -137,11 +137,13 @@ remain intentionally pending.
   Facts → Questions → Audit Run → Audit Report. Payment unlocks personalized
   preparation; only the explicit approved-question start action consumes the
   audit.
-- The universal brand prompt context and `generate-ai-visibility-prompts` skill
-  are retained mechanisms for suggesting one verified question pack. Five
-  questions without the business name and five with it are the default coverage
-  guide, not a composition the customer must preserve. The report follows the
-  exact final customer-approved mix.
+- The canonical ten-slot matrix and retained `generate-ai-visibility-prompts`
+  skill suggest one verified question pack. It has 6 unnamed slots and 4 named
+  slots; slot 9 also requires the comparison target and a comparison relation.
+  Customers may edit wording within a fixed slot, but cannot change its
+  category, declared purpose, identity policies, comparison-target policy, or
+  composition. Deterministic invalid edits are blocked; undetectable purpose
+  drift warns and proceeds in V1 without a model-assisted validator.
 - The active launch scope remains one vertical in one city until it works. The
   universal matrix is not permission to claim cross-industry support; each new
   category still needs claims and report review.
@@ -151,9 +153,9 @@ remain intentionally pending.
   and Indonesian. The journey shell changes only enough routing and copy to make
   the owner-facing walkthrough coherent. The full landing rewrite remains in
   the later product-wide polish pass.
-- A local `/audit` workflow covers official-website extraction, human fact
-  confirmation, ten-question prompt review, independent OpenCode Go
-  Responses-compatible execution with GPT-5.6 Luna and web search, final-format
+- A local `/audit` workflow covers official-website or Instagram-source
+  extraction, human fact confirmation, ten-question prompt review, independent
+  OpenCode Go Responses-compatible execution with GPT-5.6 Luna and web search, final-format
   report generation, A4 print/PDF, and complete JSON evidence export.
 - The protected Phase 3 production path is OpenCode Go end to end:
   `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`, endpoint

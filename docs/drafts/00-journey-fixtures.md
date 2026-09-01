@@ -3,9 +3,16 @@
 > Status: **Draft — fiction reconciled 2026-08-17** (founder approval of the
 > fixture document still pending; Spec 002 open question 4)
 > Owner: Nuave orchestrator (leaf-worker draft)
-> Updated: 2026-08-17
+> Updated: 2026-09-01
 > Implements: [`docs/JOURNEY_CONTRACT.md`](../JOURNEY_CONTRACT.md) — "Required
 > handoff fields" and "Module ownership and handoffs"
+
+> **Supersession note (2026-09-01):** This draft records pre-Spec 007 fixture
+> decisions and is not current product or measurement authority. The runnable
+> V1 uses Spec 007's fixed 10-slot matrix (6 unnamed + 4 named), with official
+> website and Instagram as the supported source inputs; Google Maps is deferred.
+> The 5/5 arithmetic and synthetic Maps examples below remain only as clearly
+> historical fixture data.
 
 This document specifies **three frozen fixtures** — one per versioned handoff —
 so that modules 03 (Business Facts), 04 (Questions), 05 (Audit Run), and 06
@@ -60,12 +67,19 @@ NVA-FIKTIF-001.facts.v1    (03 → 04)
   → NVA-FIKTIF-001.evidence.v1   (05 → 06)
 ```
 
-## Composition decision: 5/5, not 6/4
+## Superseded historical composition decision: 5/5, not 6/4
 
-The canonical default for these fixtures is a **5 / 5** composition — five
+This section records the pre-Spec 007 choice for these historical fixtures, not
+the current V1 contract. The former fixture default was a **5 / 5** composition
+— five
 **Tanpa menyebut bisnis Anda** questions and five **Menyebut bisnis Anda**
 questions — even though the fictional sample report in
 `docs/journey/06-audit-report.md` demonstrates a **6 / 4** composition.
+
+**Current direction:** Spec 007 R-01/R-02 supersedes this choice. Current V1
+packs use ten fixed slots: 6 unnamed and 4 named, with slot policies attached
+to the canonical matrix. Do not use this section to implement or update the
+current journey.
 
 Rationale (documented so no later module "corrects" it back):
 
@@ -81,10 +95,9 @@ Rationale (documented so no later module "corrects" it back):
    illustration of the post-edit state, not the default. Its 6/4 split (and its
    English placeholder copy) is therefore *not* the normative fixture shape.
 
-Consequence: the frozen question pack and evidence set below use the 5/5
-default. Customer edits that change the balance are real product behaviour, but
-they are deliberately out of scope for the frozen default fixtures (see
-"Out of scope").
+Historical consequence: the frozen question pack and evidence set below use the
+5/5 default. That record is not a current 6/4 pack and its old customer-editing
+assumptions are superseded by Spec 007 R-10's fixed-slot editing contract.
 
 ---
 
@@ -655,7 +668,10 @@ fixture. A factual address/contact/facility question must remain
 ]
 ```
 
-### C.4 Derived report arithmetic (for 06 to verify against)
+### C.4 Historical derived report arithmetic (pre-Spec 007)
+
+This subsection is retained for the frozen pre-Spec 007 fixture record. It is
+not the arithmetic or composition for the current V1 journey.
 
 | Measure | Value |
 |---|---|
@@ -666,13 +682,10 @@ fixture. A factual address/contact/facility question must remain
 | Comparison (assessed) | 1 client-preferred of 2 assessed |
 | Public information (assessed) | 1 confirmed, 2 incomplete, 1 conflicting of 4 assessed |
 
-This is the arithmetic 06 must reproduce from the frozen evidence; the fixture
-carries the answers, the report computes the counts. The `8/10` here is the
-natural result of the 5/5 composition and the chosen outcomes, and it is the
-exact headline value Spec 002 AC-11 requires (**Bisnis Anda muncul di 8 dari 10
-pertanyaan**, **Tanpa menyebut bisnis Anda** 3/5, **Menyebut bisnis Anda**
-5/5). It is *not* required to match the `7/10` shown in `06`'s illustrative
-6/4 English sample, which is superseded by this chain.
+This is the historical arithmetic 06 reproduced from the frozen evidence; the
+fixture carries the answers, the report computes the counts. The `8/10` here is
+the historical result of the 5/5 composition and chosen outcomes. It must not
+be used to define current V1 denominators: Spec 007 uses the fixed 6/4 matrix.
 
 ---
 
@@ -685,10 +698,11 @@ schema in `src/lib/audit/types.ts`:
 - Current `BusinessBrief` requires `verified_competitor` (non-optional) and
   fixes `language: "en-US"`. Fixture A makes the comparison business optional
   and the language `id-ID`.
-- Current `PromptPack` fixes `en-US`, `target_product: "ChatGPT"`, and a fixed
-  5/5 matrix with `review_status: "needs_human_review"`. Fixture B adds a
-  customer `edit_record`, dynamic final classification, and an approval
-  timestamp.
+- The pre-A3 historical `PromptPack` fixed `en-US`,
+  `target_product: "ChatGPT"`, and a 5/5 matrix with
+  `review_status: "needs_human_review"`. Fixture B adds a customer
+  `edit_record`, dynamic final classification, and an approval timestamp. The
+  current V1 pack follows Spec 007's fixed 6/4 matrix instead.
 - Current `AuditObservation` has `run_status`, `telemetry`, and `sources` but no
   final classification, `appearance_classification`, `attempts` list, or
   `dimensions` object. Fixture C is a superset that adds them.
@@ -708,9 +722,11 @@ schemas and the 208-test audit baseline are untouched.
 ## Out of scope
 
 - Any code or fixture change (including `report-golden.ts`).
-- Edited question packs (non-5/5 compositions, customer rewrites).
+- The current Spec 007 question-pack model, including its fixed 6/4 composition
+  and wording-only editing contract.
 - Technical-failure evidence sets (the `9/10`, retry, and recovery paths).
-- The comparison-fallback path where no named comparator exists.
+- The current Spec 007 comparison-target fallback; this historical fixture has
+  no such case.
 - Report language (final Indonesian report copy is a separate, later review).
 - PDF, delivery email, access/recovery (07), or payment (02) records.
 
@@ -727,9 +743,9 @@ schemas and the 208-test audit baseline are untouched.
    this draft's residual **Kopi Purnama** traces in evidence observations 01,
    03, and 05 were reconciled to **Kopi Ruang Pagi** on 2026-08-17 so the whole
    chain names one comparison business. Evidence observations 07 and 08 were
-   also reconciled so the retained answers literally name **Kopi Taman Senja**,
-   keeping the branded appearance count at 5/5 under the visible-appearance
-   rule required by AC-11.
+   also reconciled so the retained answers literally name **Kopi Taman Senja**.
+   This preserves the historical branded appearance count at 5/5 under the
+   visible-appearance rule required by AC-11; it is not the current V1 model.
 2. **Final Indonesian report copy is not yet approved** (`06` settled decision
    #10). The fixtures store Indonesian raw answers, but 06 cannot finalize
    customer-facing report text until that language decision lands. This does
@@ -743,7 +759,7 @@ schemas and the 208-test audit baseline are untouched.
 
 ## Verification record
 
-- Verification artifact: `src/lib/audit/fixtures/fixture-kopi-taman-senja.ts`
+- Verification artifact for this historical fixture: `src/lib/audit/fixtures/fixture-kopi-taman-senja.ts`
   (frozen chain module: `NVA-FIKTIF-001.facts.v1` → `questions.v1` →
   `evidence.v1`) and `src/lib/audit/fixtures/fixture-kopi-taman-senja.test.ts`
   (unit tests: 10/10 evaluable with no failed test, appearance counts exactly

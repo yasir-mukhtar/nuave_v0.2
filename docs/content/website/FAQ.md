@@ -58,13 +58,18 @@ dashboard, atau langganan.
 ## Apa yang diuji oleh Nuave?
 
 Kami menguji 10 pertanyaan berbahasa Indonesia pada `[LAYANAN AI YANG DIUJI]`.
-Saran awal berisi lima pertanyaan tanpa nama bisnis Anda dan lima pertanyaan
-yang menyebut nama bisnis Anda, tetapi Anda dapat mengubah pertanyaan dan
-komposisi tersebut sebelum audit dimulai.
+Saran awal mengikuti 10 slot tetap: enam pertanyaan tanpa nama bisnis Anda dan
+empat pertanyaan yang menyebut nama bisnis Anda. Slot kesembilan juga memuat
+target pembanding dan hubungan perbandingan. Anda dapat mengubah teks dalam
+setiap slot sebelum audit dimulai, tetapi tidak dapat mengubah tujuan, kebijakan
+identitas, atau komposisi slot tersebut.
 
 Anda dapat memeriksa dan mengubah pertanyaan tersebut sebelum audit dimulai.
-Setelah Anda menyetujuinya, pertanyaan dikunci agar laporan sesuai dengan ruang
-lingkup yang Anda pesan.
+Pemeriksaan otomatis memblokir perubahan yang melanggar kebijakan slot. Jika
+teks tetap valid secara mekanis tetapi mungkin bergeser dari tujuan slot,
+Nuave memberi peringatan dan Anda tetap dapat melanjutkan pada V1. Setelah Anda
+menyetujuinya, pertanyaan dikunci agar laporan sesuai dengan ruang lingkup yang
+Anda pesan.
 
 ## Apa yang saya terima?
 
@@ -164,9 +169,10 @@ laporan Anda sebelum masa akses berakhir.
 
 ## Apakah saya harus mempunyai website?
 
-Tidak selalu, tetapi Nuave membutuhkan sumber publik yang cukup untuk memastikan
-identitas bisnis dan menilai informasi yang tersedia. Website resmi, profil bisnis,
-atau profil sosial yang aktif dapat membantu.
+Tidak selalu. Nuave saat ini menerima satu sumber publik yang didukung: situs
+resmi atau profil Instagram resmi. Google Maps belum didukung untuk V1. Sumber
+tersebut harus cukup untuk memastikan identitas bisnis dan menilai informasi yang
+tersedia.
 
 Jika bisnis atau cabang yang dimaksud tidak dapat dipastikan, kami akan meminta
 perbaikan sebelum audit dimulai atau menolak pesanan dan mengembalikan pembayaran.

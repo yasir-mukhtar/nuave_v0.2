@@ -43,7 +43,7 @@ decision log does not become a permanent hidden override.
 | Document | Governs | Status |
 |---|---|---|
 | [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) | Thin v2 journey, integration sequence, quality gates, and launch readiness | Founder-approved direction; each implementation phase still requires an approved spec |
-| [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md) | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); conflicts with shipped 5/5 question pack are listed in its appendix |
+| [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md) | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007 |
 | [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md) | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries | Current founder-approved product contract; implementation still requires an approved spec |
 | [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack | Working product context |
 
@@ -112,8 +112,9 @@ context an agent must read. Do not implement a draft specification.
 | [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md) | Fixture-backed landing-to-report preview with unmistakably simulated checkout | Verified (2026-08-17); realigned by Spec 002 |
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md) | Indonesian audit and report contracts, journey realigned to the canonical sequence | Verified (2026-08-17) |
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Approved; implementing — **the current objective** |
-| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Approved; implementing |
+| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Superseded by Spec 007 |
 | [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md) |
+| [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md) | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance | Approved (founder-approved 2026-08-30); A4 documents reconciled |
 
 ## Reference and history
 

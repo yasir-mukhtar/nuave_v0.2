@@ -63,10 +63,9 @@ verification is against its acceptance criteria.
   evaluation (dental clinics, Depok), first live audit (Sozo Dental
   Depok/Margonda), and the report-quality gate verdict.
 - [`004-source-hero-intake/SPEC.md`](./004-source-hero-intake/SPEC.md)
-  — status **Approved** (founder-approved 2026-08-19; implementation in
-  progress). Replaces the audit tool's step-0 intake form with one focused hero
-  field that accepts a website or Instagram account, auto-detects the type, and
-  scans into the existing facts screen. UI-only; no backend contract change.
+  — status **Superseded** by Spec 007 (founder-approved 2026-08-30 for the
+  authority transition). Its historical hero-intake specification is retained,
+  but Spec 007 owns the runnable V1 intake/customer journey.
 - [`006-product-wide-polish/SPEC.md`](./006-product-wide-polish/SPEC.md)
   — status **Implementing** (founder-approved 2026-08-20). Phase 6 design and
   copy pass (calm instrument). Wave 1 verified 2026-08-20: P0 foundation and

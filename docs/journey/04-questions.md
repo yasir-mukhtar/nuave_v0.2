@@ -2,20 +2,20 @@
 
 > Status: Working product plan
 > Depends on: [`03-business-facts.md`](./03-business-facts.md)
-> Updated: 2026-08-17
+> Updated: 2026-09-01
 
 ## Objective
 
 Prepare ten relevant, context-aware Indonesian questions that resemble what
 real prospective customers might ask an AI system about this kind of business,
-then let the business owner freely replace or rewrite any question before the
+then let the business owner edit the wording within each fixed slot before the
 audit begins.
 
 The intended customer reaction is:
 
 > “These sound like questions my customers would actually ask. Nuave has given
-> me a useful starting point, and I can still test anything I genuinely want to
-> know.”
+> me a useful starting point, and I can still adapt the wording within each
+> slot to ask what I genuinely want to know.”
 
 The question pack is not merely an input to the audit engine. It is the
 customer's first concrete view of what they purchased. Generic, translated, or
@@ -29,8 +29,8 @@ Verified payment
   → Nuave prepares a business-information draft
   → customer corrects and confirms the facts
   → Nuave prepares ten suggested questions
-  → customer reads, replaces, or rewrites any question
-  → Nuave explains material coverage changes without blocking ordinary edits
+  → customer reads and edits wording within each fixed slot
+  → deterministic checks block invalid edits and purpose drift may warn
   → customer explicitly starts the audit
   → the exact final questions are locked and run independently
 ```
@@ -41,53 +41,50 @@ order. The order is consumed only when Nuave accepts the customer's explicit
 
 ## Settled product decisions
 
-1. Nuave recommends ten questions as a useful starting pack; it does not dictate
-   what a business owner is allowed to ask.
+1. Nuave recommends ten fixed measurement slots as a useful starting pack. The
+   customer owns the wording, but not the slot definitions or policies.
 2. A model writes the primary suggested pack after the business facts have been
    confirmed. Universal sentence templates are not the primary generation
    method.
-3. The model receives a fixed coverage brief but must author category- and
-   context-specific Indonesian rather than fill slots in translated templates.
-4. The suggested pack starts with five questions that do not name the business
-   and five that do. This creates a useful default balance between discovery
-   and named-business understanding.
-5. After generation, customers may freely rewrite or replace any of the ten
-   questions, including changing the original purpose or the five/five balance.
-6. Nuave uses advice and transparent consequences instead of artificial
-   restrictions. It blocks only narrow safety, privacy, scope, and technical
-   violations.
+3. The model receives the canonical matrix's fixed slot definitions and must
+   author category- and context-specific Indonesian rather than fill slots in
+   translated templates.
+4. The canonical pack has ten slots: six unnamed questions in slots 1–6 and
+   four named questions in slots 7–10. Slot 9 also requires a comparison target
+   and an explicit comparison relation.
+5. After generation, customers may edit wording within any slot. They may not
+   change a slot's identity, category, declared purpose, brand policy,
+   comparison-target policy, or the 6/4 composition.
+6. Deterministic checks block mechanically invalid edits. Wording that passes
+   those checks but may drift from the slot's purpose raises a non-blocking
+   warning and proceeds in V1; there is no model-assisted purpose validator.
 7. Questions may investigate facts that are not yet known. Asking whether a
    facility, menu item, policy, or access option exists is not the same as
    asserting that it exists.
 8. The exact customer-approved pack is persisted and replayed verbatim for any
    later comparable re-check.
 9. The customer-facing interface calls them **pertanyaan**, not prompts,
-   unbranded prompts, branded prompts, query classes, or Intent-5 records.
+    unbranded prompts, branded prompts, query classes, or internal slot records.
 10. The current word **credit** is removed. The customer bought one audit, not
     platform credits.
 
-## Product principle: coverage guide, not universal templates
+## Product principle: canonical slots, not universal templates
 
-Nuave still needs an internal method so the first suggestion is not ten random
-questions. The existing five purposes remain useful as a coverage guide:
+Nuave uses one canonical ten-slot measurement matrix so the first suggestion is
+not ten random questions. The complete slot definitions live in
+[`Spec 007 R-01/R-02`](../../specs/007-intake-airbnb-revamp/SPEC.md)
+and the [canonical implementation](../../src/lib/audit/measurement-matrix.ts).
+That matrix is the only authority for slot category, declared purpose, identity
+policy, comparison-target policy, and composition.
 
-| Internal purpose | Default quantity | What it should reveal |
-|---|---:|---|
-| Need discovery | 2 | How AI responds to a customer's situation before a business is named |
-| Option discovery | 2 | Which relevant businesses, providers, or products AI proposes |
-| Comparison | 2 | How AI compares unnamed choices and the audited business with another option |
-| Validation | 2 | Whether AI understands important public information about the named business |
-| Decision or action | 2 | Whether AI can answer practical questions needed to proceed |
+The current composition is fixed at **10 total questions: 6 unnamed and 4 named**.
+Slots 1–6 forbid the audited brand and comparison target. Slots 7–10 require
+the audited brand; slot 9 additionally requires the comparison target and a
+comparison relation.
 
-The default allocation is:
-
-- five questions without the audited business name: two need discovery, two
-  option discovery, and one comparison; and
-- five questions with the audited business name: one comparison, two
-  validation, and two decision or action questions.
-
-This matrix tells the question-writing model which customer jobs to cover. It
-does **not** prescribe sentence structure.
+The matrix tells the question-writing model what each slot measures. It does
+**not** prescribe sentence structure, and the customer may edit wording only
+inside the assigned slot.
 
 A coffee-shop customer may naturally ask:
 
@@ -114,7 +111,7 @@ model call to prepare ten suggested questions.
 
 The call:
 
-- does not need web search, Maps grounding, or URL retrieval;
+- does not need web search or URL retrieval;
 - receives only the confirmed, minimized business brief;
 - receives no email, payment information, provider metadata, or sensitive free
   text;
@@ -189,7 +186,8 @@ Business Facts page:
 - the needs or situations those customers have;
 - practical considerations that influence their decision;
 - an observable differentiator, when available;
-- one comparison business, when credibly established;
+- one comparison target, using a credibly established business when available
+  or the approved category-level fallback;
 - known outdated, conflicting, or frequently incorrect information;
 - official public sources only as provenance signals, not as content to copy;
 - the practical action a customer can take, when known; and
@@ -256,11 +254,12 @@ The model must:
 9. Prefer concrete requests over abstract meta-questions.
 10. Give the ten questions different customer jobs; do not produce superficial
     paraphrases of the same request.
-11. Keep the audited business and its identifying clues out of the five
-    default discovery questions.
-12. Name the audited business clearly in the five default named-business
-    questions.
-13. Use the comparison business only when it is supplied and credibly scoped.
+11. Keep the audited business and its identifying clues out of slots 1–6, whose
+    brand and comparison-target identities are forbidden by the matrix.
+12. Name the audited business clearly in slots 7–10, whose brand identity is
+    required by the matrix; slot 9 also names its required comparison target.
+13. Keep slot 9's comparison target within the approved target policy and use
+    an explicit comparison relation.
 14. Ask about unknown decision details without presenting them as true.
 15. Avoid wording designed to force the audited business to appear.
 
@@ -352,19 +351,27 @@ needs, but must phrase it as an open investigation.
 
 ### Comparison behaviour
 
-When a confirmed comparison business exists, the default named comparison may
-use it:
+The canonical matrix has two different comparison slots. Slot 6 is an unnamed
+comparison among realistic options and must not name either business:
+
+> Bandingkan beberapa coffee shop di Dago untuk WFC berdasarkan kenyamanan,
+> harga, dan jam buka.
+
+Slot 9 is a named direct comparison and must include the audited business, its
+comparison target, and an explicit relation. When a confirmed comparison
+business exists, use it:
 
 > Bandingin Kopi Taman Senja vs Kopi Ruang Pagi untuk WFC dan meeting di Dago.
 
-When no credible comparison business exists, generation must not stop and must
-not invent one. Use an unnamed alternative:
+When no credible named comparison business exists, generation must not stop and
+must not invent one. Use the approved category-level alternative for slot 9:
 
-> Bandingin Kopi Taman Senja dengan coffee shop lain untuk WFC di Dago.
+> Bandingin Kopi Taman Senja dengan alternatif lain di kategori kedai kopi untuk
+> WFC di Dago.
 
-The comparison-business input is therefore optional for generation. This
-supersedes the current contract that treats `verified_competitor` as universally
-required.
+The target is therefore always represented in slot 9, either as a proposed
+verified business or as the category-level fallback. No invented named
+competitor is allowed.
 
 ### Safety and integrity boundaries
 
@@ -397,7 +404,7 @@ Code owns:
 
 - the ten slot identifiers and their order;
 - the default coverage role for each slot;
-- whether the default slot should name the business;
+- each slot's fixed category, purpose, and identity policies;
 - the confirmed brief and its version;
 - generation provider and model provenance;
 - validation results;
@@ -450,16 +457,23 @@ templates. Familiar borrowed words, abbreviations, direct commands, and casual
 wording are allowed when real customers in this context would use them. Do not
 force slang where a more formal register is natural.
 
-Write exactly ten independent questions in the assigned order:
-1–2: customer needs or situations, without the audited business name.
-3–4: requests for relevant options, without the audited business name.
-5: compare relevant unnamed options, without the audited business name.
-6: compare the audited business with the supplied comparison business; if no
-credible comparison is supplied, compare it with relevant alternatives without
-inventing a name.
-7–8: check useful public facts about the audited business.
-9–10: help a customer make a decision or take a practical next step involving
-the audited business.
+Write exactly ten independent questions in the assigned order, following the
+canonical matrix:
+1: category recommendation, without the audited business name or comparison
+target.
+2: a customer situation that leads someone to look, without either identity.
+3: fit for a specific need, without either identity.
+4: one concrete offering or use case, without either identity.
+5: a realistic customer shortlist, without either identity.
+6: comparison among unnamed options, without either identity.
+7: whether the audited business suits a stated need.
+8: whether the AI explicitly recommends the audited business.
+9: direct comparison of the audited business with the required comparison target,
+with an explicit comparison relation.
+10: who the audited business suits, who it may not suit, and relevant trade-offs.
+
+Slots 1–6 must not name the audited business or comparison target. Slots 7–10
+must name the audited business; slot 9 must also name the comparison target.
 
 Prefer the direct question a customer wants answered over an abstract question
 about how to evaluate options. Vary the customer job, not merely the wording.
@@ -498,76 +512,78 @@ indefinite spinner.
 
 > ## Periksa pertanyaan audit
 >
-> Nuave menyiapkan 10 pertanyaan sebagai titik awal. Anda bebas mengubah
-> pertanyaan mana pun sesuai hal yang ingin Anda ketahui dari AI.
+> Nuave menyiapkan 10 pertanyaan sebagai titik awal. Anda dapat mengubah
+> wording di setiap slot sesuai hal yang ingin Anda ketahui dari AI, tanpa
+> mengubah tujuan dan kebijakan slot tersebut.
 >
 > **Audit belum dimulai.**
 >
-> `5 Tanpa menyebut bisnis Anda` · `5 Menyebut bisnis Anda` · `10 pertanyaan`
+> `6 Tanpa menyebut bisnis Anda` · `4 Menyebut bisnis Anda` · `10 pertanyaan`
 
 #### Suggested questions
 
 > **1** · Tanpa menyebut bisnis Anda
 >
-> Rekomendasikan tempat yang asik untuk ngopi dan WFC di Dago.
+> Rekomendasikan kedai kopi di Dago yang cocok untuk WFC.
 >
 > `[Ubah]`
 
 > **2** · Tanpa menyebut bisnis Anda
 >
-> Tempat rapat kecil di Bandung yang ada makanan, minuman, dan bisa dipakai
-> kerja di mana ya?
+> Untuk acara apa orang biasanya mencari kedai kopi di Bandung yang bisa dipakai
+> bekerja?
 >
 > `[Ubah]`
 
 > **3** · Tanpa menyebut bisnis Anda
 >
-> Kedai kopi apa aja di Dago yang cocok untuk WFC atau meeting?
+> Kedai kopi seperti apa yang cocok untuk WFC lama dengan Wi-Fi dan colokan?
 >
 > `[Ubah]`
 
 > **4** · Tanpa menyebut bisnis Anda
 >
-> Di mana ada cafe yang menyediakan kopi lokal dan bisa untuk kerja atau WFC di
-> Bandung?
+> Di mana bisa menemukan kedai kopi di Bandung yang menyediakan kopi lokal untuk
+> bekerja?
 >
 > `[Ubah]`
 
 > **5** · Tanpa menyebut bisnis Anda
 >
-> Bandingkan coffee shop di Bandung yang asik untuk kerja, harganya affordable,
-> dan buka sampai malam.
+> Kedai kopi mana di Dago yang layak masuk daftar pilihan untuk WFC sampai malam?
 >
 > `[Ubah]`
 
-> **6** · Menyebut bisnis Anda
+> **6** · Tanpa menyebut bisnis Anda
 >
-> Bandingin Kopi Taman Senja vs Kopi Ruang Pagi untuk WFC dan meeting di Dago.
+> Bandingkan beberapa kedai kopi di Dago untuk WFC berdasarkan kenyamanan, harga,
+> dan jam buka.
 >
 > `[Ubah]`
 
 > **7** · Menyebut bisnis Anda
 >
-> Kopi Taman Senja bisa dipakai WFC atau kerja nggak ya? Kopi yang disediakan
-> kopi apa?
+> Apakah Kopi Taman Senja cocok untuk WFC dan meeting di Dago?
 >
 > `[Ubah]`
 
 > **8** · Menyebut bisnis Anda
 >
-> Di mana alamat Kopi Taman Senja? Buka jam berapa?
+> Apakah Anda merekomendasikan Kopi Taman Senja untuk WFC di Dago?
 >
 > `[Ubah]`
 
 > **9** · Menyebut bisnis Anda
 >
-> Cariin kontak Kopi Taman Senja.
+> Bandingin Kopi Taman Senja dengan Kopi Ruang Pagi untuk WFC dan meeting di
+> Dago.
 >
 > `[Ubah]`
 
 > **10** · Menyebut bisnis Anda
 >
-> Kopi Taman Senja ada parkiran mobil dan mushollanya nggak?
+> Kopi Taman Senja cocok untuk siapa, dan apa kekurangannya untuk pelanggan yang
+> ingin WFC lama?
 >
 > `[Ubah]`
 
@@ -590,15 +606,20 @@ primary task; editing is available when needed.
 
 ### What the customer may change
 
-The customer may replace any question with another business-relevant question,
-including:
+The customer may edit or replace the wording of any question, but only within
+its assigned slot. The customer may use their own vocabulary, spelling, and
+natural sentence shape. The following are fixed and not editable:
 
-- adding or removing the audited business name;
-- changing a discovery question into a factual question;
-- replacing a comparison with a facility, menu, route, policy, availability,
-  or contact question;
-- using their own vocabulary and spelling; and
-- changing the original five-with-name/five-without-name balance.
+- the slot's identity, order, category, and declared measurement purpose;
+- whether the audited brand is forbidden or required;
+- whether the comparison target is forbidden or required; and
+- the 6 unnamed / 4 named composition.
+
+In particular, slots 1–6 must continue to omit the audited brand and comparison
+target, slots 7–10 must continue to name the audited brand, and slot 9 must
+continue to name its comparison target and express a comparison relation.
+There is no free-composition editor: replacing a question means replacing it
+for that same slot.
 
 Nuave does not silently rewrite a customer's saved wording for grammar, style,
 or methodology.
@@ -607,55 +628,40 @@ One paid audit still runs exactly ten independent questions. To test a new
 question, the customer replaces one of the ten; the first version does not add
 question packages, overage pricing, or extra credits.
 
-### Dynamic classification
+### Final-text classification and checks
 
-After each edit, code recalculates only the customer-useful distinction:
+Code classifies the exact final text for reporting:
 
 - **Tanpa menyebut bisnis Anda** when the final text contains no audited business name
   or known variant; and
 - **Menyebut bisnis Anda** when it does.
 
-The count at the top updates immediately. Internal intent labels may be
-retained for the original suggestion, but must not be treated as factual after
-the customer substantially replaces its content. Do not add a second model
-call merely to classify every edit.
+For a valid pack these classifications remain 6 unnamed and 4 named because
+the slot policies are fixed. The count is derived from the exact final text,
+not from an earlier suggestion, and no second model call is used to classify an
+edit.
 
-### Advice instead of prohibition
+On save, deterministic checks block mechanically invalid wording:
 
-If all or nearly all final questions name the business, show:
+- forbidden audited-brand or comparison-target identity leakage;
+- missing required audited-brand identity;
+- missing required comparison target in slot 9;
+- a slot-9 question without one of its allowed comparison relations;
+- empty, overlong, or non-question text; and
+- private, sensitive, unsafe, or clearly unrelated content.
 
-> **Hampir semua pertanyaan menyebut nama bisnis Anda**
->
-> Nuave tetap dapat menjalankan audit, tetapi hasilnya akan lebih banyak
-> menunjukkan bagaimana AI menjelaskan bisnis Anda—bukan apakah bisnis Anda
-> muncul ketika calon pelanggan belum mengetahui namanya.
->
-> `[Lihat saran Nuave]` `[Tetap gunakan pertanyaan saya]`
-
-If most questions do not name the business, show the inverse:
-
-> **Hanya sedikit pertanyaan yang memeriksa bisnis Anda secara langsung**
->
-> Nuave dapat menguji bisnis apa yang muncul, tetapi hanya sedikit informasi
-> tentang bisnis Anda yang akan diperiksa.
-
-These are warnings, not blockers. Do not repeatedly show the same warning after
-the customer chooses to continue with their pack.
+The slot frame and these checks are deterministic. Wording that passes every
+mechanical check but may no longer measure the slot's declared purpose produces
+a non-blocking warning that restates the purpose; the customer may proceed in
+V1. Nuave does not run a model-assisted purpose validator.
 
 ### Narrow hard stops
 
-Block approval only when a question:
-
-- is empty or cannot be executed as a meaningful request;
-- exceeds the provider's safe input limit;
-- contains private or sensitive personal data;
-- requests disallowed individualized high-impact advice;
-- is clearly unrelated to the audited business or its customer decision; or
-- contains content the chosen provider cannot lawfully or safely process.
-
-Do not block a question merely because it is informal, contains English terms,
-changes its original intent, investigates an unknown fact, or alters the 5/5
-balance.
+The customer can still ask about an unknown public fact, use informal language,
+or include familiar English terms when those fit the category. Those choices
+are not blocked unless they violate a deterministic identity, shape, safety,
+privacy, scope, or provider-processing check. A possible semantic purpose drift
+is warned about and proceeds; it is not model-validated in V1.
 
 ## Information and navigation questions
 
@@ -740,17 +746,18 @@ After Nuave accepts the start:
 The report must describe the questions the customer actually approved, not the
 original suggested matrix.
 
-If customer edits change the composition:
+For the final approved pack:
 
-- calculate discovery denominators from the final questions without the
-  business name;
-- calculate named-business denominators from the final questions with the
-  business name;
-- never keep displaying `5/5` merely because the suggestions started that way;
-- show **“tidak diuji”** when the final pack contains no question for a result
-  dimension rather than treating it as zero performance; and
-- explain that customer-selected questions affect which parts of the business
-  were examined.
+- calculate name/no-name classifications from the exact final question text;
+- preserve the canonical 6 unnamed / 4 named slot composition;
+- keep each slot's category, declared purpose, identity policies, and
+  comparison-target policy attached to that slot; and
+- show **“tidak diuji”** when the pack contains no question for a result
+  dimension rather than treating it as zero performance.
+
+The report may explain wording choices and any non-blocking purpose warning, but
+it must not present a customer edit as permission to change the measurement
+composition or slot semantics.
 
 The report headline uses the direct overall appearance count, for example
 **Bisnis Anda muncul di 4 dari 10 pertanyaan** and **4/10**. Directly beneath
@@ -796,12 +803,12 @@ question pack.
 | Generation is still running | Show honest short progress and state that the audit has not begun | Reuse the same in-progress job; do not start another call on refresh |
 | Model call times out or fails | Show the deterministic Indonesian fallback with a light disclosure and full editing | Record failure telemetry; do not consume the audit |
 | Model returns fewer or more than ten questions | Recover ten only when parsing is deterministic; otherwise use the fallback | Do not ask the customer to repair provider formatting |
-| Suggested discovery question leaks the business identity | Replace the suggestion with a safe fallback for that slot before display | Record contract failure; never display it as a valid discovery suggestion |
+| Suggested unnamed question leaks the business or comparison-target identity | Replace the suggestion with a safe fallback for that slot before display | Record contract failure; never display it as a valid unnamed suggestion |
 | Suggested question assumes an unsupported fact | Replace that question with a safe fallback or phrase it as an open investigation only through deterministic rules | Do not silently present the assumption |
 | Customer refreshes | Restore the same suggestions and edits | No new generation call |
 | Customer opens another authorized device | Restore the current server-backed pack | Do not depend only on browser session state |
 | Customer changes confirmed facts | Warn that the question pack will be replaced, then regenerate once from the new fact version | Preserve history for auditability; only the newest approved version can run |
-| Customer creates an unusual but allowed pack | Explain coverage consequences once and permit approval | Recalculate denominators from the final pack |
+| Customer makes an unusual but mechanically valid wording edit | Show any non-blocking purpose warning once and permit approval | Keep the slot metadata and 6/4 composition fixed; derive name/no-name labels from final text |
 | Customer double-clicks start | Show one running audit | Idempotently consume one entitlement and create one run |
 | Audit start fails before a run is created | Keep the approved pack locked but recoverable | Reconcile server state; do not consume a second order |
 
@@ -823,9 +830,9 @@ generation guidance for both models.
 For every pack record:
 
 - whether all ten questions were returned and parsed;
-- correct five-without-name/five-with-name default composition;
+- correct 6-unnamed / 4-named slot composition and policy;
 - category and location relevance;
-- whether each question represents a plausible customer decision;
+- whether each question represents its assigned customer decision;
 - naturalness of Indonesian vocabulary, register, and sentence shape;
 - whether the questions are meaningfully different rather than paraphrases;
 - unsupported premises or invented facts;
@@ -844,8 +851,7 @@ A candidate is acceptable for initial implementation only when:
 
 - all five packs can be recovered into ten executable questions without manual
   technical repair;
-- no discovery question leaks the audited business or comparison-business
-  identity;
+- no unnamed slot leaks the audited business or comparison-target identity;
 - no generated question contains a material unsupported premise or prohibited
   request;
 - at least eight of ten questions in at least four of five packs are judged
@@ -878,7 +884,9 @@ The eventual implementor should work in this order:
 - Make a named comparison business optional with an unnamed fallback.
 - Distinguish unknown facts being investigated from unsupported factual
   premises.
-- Define free customer editing and dynamic final denominators.
+- Define wording-only customer editing within fixed slots, deterministic
+  identity/shape checks, and a non-blocking warning for undetectable purpose
+  drift; final denominators still come from the exact text.
 - Update `docs/AUDIT.md` and `docs/PRODUCT.md` where they still imply that the
   default matrix must remain fixed after customer edits.
 - Preserve the exact final pack for comparable re-checks.
@@ -904,8 +912,9 @@ The eventual implementor should work in this order:
 - Build the Indonesian review screen and compact question cards.
 - Provide full replacement editing, cancel, save, and restore-suggestion
   actions.
-- Update name/no-name counts locally.
-- Implement advisory coverage warnings and narrow hard stops.
+- Update final-text name/no-name classifications locally while preserving 6/4.
+- Implement deterministic slot-policy checks and the non-blocking purpose-drift
+  warning; do not add a model-assisted purpose validator.
 - Preserve state across navigation, refresh, and authorized device recovery.
 
 ### 5. Lock and run boundary
@@ -927,8 +936,8 @@ The eventual implementor should work in this order:
 - Run unit tests for generation parsing, identity leakage, fallback, fact
   invalidation, classification, warnings, and idempotency.
 - Run browser tests for generation, editing, restore suggestion, refresh,
-  backward navigation, altered pack composition, approval, and double-clicked
-  start.
+  backward navigation, attempted slot-policy changes, approval, and
+  double-clicked start.
 - Independently review Indonesian question quality; automated contract tests
   cannot establish naturalness.
 
@@ -942,8 +951,8 @@ The touchpoint is ready for implementation verification when:
    suggestion.
 3. The model instruction requires context-specific natural Indonesian and does
    not use universal fill-in-the-blanks sentence templates.
-4. The default suggestion covers ten distinct customer jobs with five questions
-   without the business name and five with it.
+4. The default suggestion covers ten distinct customer jobs with six unnamed
+   slots and four named slots, following the canonical matrix.
 5. Unknown public facts may be investigated without being asserted as true.
 6. A missing comparison business uses a truthful unnamed alternative and does
    not block generation.
@@ -953,45 +962,46 @@ The touchpoint is ready for implementation verification when:
    call.
 9. All ten suggestions are visible in one readable customer flow without
    exposing internal prompt IDs or model rationales.
-10. The customer can freely replace any question and restore the original
-    suggestion.
-11. Name/no-name counts update from the final text, and composition changes
-    produce advisory warnings rather than ordinary hard blocks.
-12. Only narrow privacy, safety, business-scope, and technical violations block
-    approval.
-13. Changing confirmed facts explicitly invalidates and regenerates the pack;
+10. The customer can edit wording within any fixed slot and restore the
+    original suggestion; slot identity, category, purpose, identity policies,
+    comparison-target policy, and composition cannot be changed.
+11. Name/no-name classifications update from the final text while valid packs
+    remain 6/4; mechanically invalid edits are blocked.
+12. Undetectable semantic purpose drift produces a non-blocking warning and
+    proceeds in V1; no model-assisted purpose validator is used.
+13. Only narrow privacy, safety, business-scope, and technical violations, plus
+    deterministic slot-policy failures, block approval.
+14. Changing confirmed facts explicitly invalidates and regenerates the pack;
     navigation without changes preserves it.
-14. The final confirmation uses **Jalankan audit** and **Mulai audit sekarang**,
+15. The final confirmation uses **Jalankan audit** and **Mulai audit sekarang**,
     never credits or token-spending language.
-15. Audit start is server-side and idempotent and consumes no more than one paid
+16. Audit start is server-side and idempotent and consumes no more than one paid
     order.
-16. The exact final questions, order, provenance, edits, and classification are
+17. The exact final questions, order, provenance, edits, and classification are
     persisted before observations begin.
-17. Every observation runs independently with the exact locked text.
-18. Report denominators reflect the final customer-approved composition and
+18. Every observation runs independently with the exact locked text.
+19. Report denominators reflect the final customer-approved text and fixed 6/4
+    composition and
     never imply spontaneous discovery from a named-business question.
-19. A comparable re-check can replay the exact final pack verbatim.
-20. The five-business evaluation clears the practical quality gate before the
+20. A comparable re-check can replay the exact final pack verbatim.
+21. The five-business evaluation clears the practical quality gate before the
     generator is approved for customer use.
 
-## Known conflicts requiring reconciliation
+## Spec 007 reconciliation note
 
-This founder-approved direction intentionally changes current repository
-behaviour:
+This working plan predates the landed Spec 007 model. For current
+implementation and documentation, the canonical matrix in Spec 007 R-01/R-02
+and its implementation are authoritative: ten fixed slots, 6 unnamed and 4
+named; slot policies and declared purposes stay attached to their slots; and
+slot 9 requires a comparison target and relation. The retained prompt context
+and generation skill must describe that same matrix rather than recreate a
+second contract.
 
-- `src/lib/audit/questions.ts` currently authors English questions through
-  deterministic sentence templates.
-- `src/lib/audit/contracts.ts` currently reports `deterministic-v4-en` and fixes
-  the generated pack to `en-US`.
-- `docs/PROMPT_GENERATION_CONTEXT.md` and the existing prompt skill treat one
-  verified named competitor and the fixed matrix as hard pack requirements.
-- Current validation assumes the generated roles and five/five allocation stay
-  intact after editing.
-- Current report contracts include fixed result dimensions that must become
-  honest about dimensions removed by customer edits.
-
-An implementor must not patch around these conflicts only in the UI. Resolve
-the contract and report implications through an approved specification first.
+Customer wording edits remain constrained to their assigned slot. Deterministic
+identity, shape, safety, privacy, scope, and provider checks block invalid edits;
+undetectable purpose drift warns and proceeds in V1 without a model-assisted
+purpose validator. Report classifications and denominators use the exact final
+text while preserving the fixed slot composition.
 
 ## Out of scope
 

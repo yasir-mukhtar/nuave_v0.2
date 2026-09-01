@@ -1,7 +1,7 @@
 # Nuave audit method
 
 > Status: **Current audit method**
-> Updated: 2026-08-09
+> Updated: 2026-09-01
 >
 > Customer context: Nuave's customer is the owner or marketing decision-maker
 > of a small or medium Indonesian business, ordering an audit of the business
@@ -28,15 +28,25 @@ AI ranking.
 Every run uses:
 
 - one exact, verified business;
-- one customer-reviewed ten-question pack from the current question method,
-  written in natural Indonesian and locked exactly as approved;
-- the final customer-approved composition, which may contain any mix of
-  questions that mention or do not mention the business;
+- one customer-reviewed ten-question pack, written in natural Indonesian and
+  locked exactly as approved;
+- the single canonical ten-slot measurement matrix: slots 1–6 are unnamed and
+  forbid the audited brand, while slots 7–10 are named and require it; slot 9
+  also requires the comparison target and a comparison relation (see
+  [`Spec 007 R-01/R-02`](../specs/007-intake-airbnb-revamp/SPEC.md)
+  and the [canonical implementation](../src/lib/audit/measurement-matrix.ts));
+- wording edits within a fixed slot only. A slot's identity, category, declared
+  purpose, brand policy, comparison-target policy, and the 6/4 composition are
+  fixed;
 - ChatGPT on one honestly named execution surface;
 - relevant public business and competitor sources, weighted towards the
   Indonesian sources AI systems actually draw on;
 - the exact run design recorded before execution; and
 - automatic report analysis with evidence-reference and count validation.
+
+The canonical composition is **10 total questions: 6 unnamed and 4 named**.
+The matrix, not this summary, is the authority for each slot's category,
+declared purpose, and identity policies.
 
 Name the execution surface as the OpenAI Responses API, exact returned model,
 and web-search condition. Do not represent an API, standardized run, or one
@@ -60,7 +70,7 @@ Before running questions, record:
 - official business name and known variants;
 - exact location, branch, or service area;
 - public business-listing URL;
-- official website or authoritative social profile; and
+- official website or Instagram profile; and
 - public phone or another signal when needed to distinguish similar names.
 
 If identity remains ambiguous, stop or select another business. Never guess
@@ -72,13 +82,17 @@ Generate the current pack through
 [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) and its
 repository skill. The user review gate must confirm that:
 
+- the ten fixed slots contain 6 unnamed questions (slots 1–6) and 4 named
+  questions (slots 7–10), as defined by the canonical matrix;
 - the questions are in natural Indonesian and sound like something a real
   Indonesian customer would actually type, not a translated English sentence;
-- the default questions that do not name the business do not leak its name or
-  a unique identifier;
-- Nuave explains how adding or removing the business name changes what the
-  report can measure, without forcing the customer to preserve the suggested
-  five-and-five composition;
+- slots 1–6 do not leak the audited business, comparison target, or a unique
+  identifier;
+- wording edits stay within their assigned slot and cannot change its category,
+  declared purpose, brand policy, comparison-target policy, or composition;
+- deterministic checks block mechanically invalid edits; undetectable semantic
+  purpose drift warns and proceeds in V1, with no model-assisted purpose
+  validator;
 - every business, service, location, and competitor fact is verified;
 - the location is expressed the way local customers would say it; and
 - regulated, professional-advice, service-quality, or unsupported superiority
@@ -123,13 +137,14 @@ information`, or `could not be tested`.
 
 ## Verify sources and conflicts
 
-For factual checks, prefer the exact official website and Google Business
-Profile listing, then the Indonesian sources that actually feed answers about
+For V1 source intake and identity, support the official website and Instagram
+profile; Google Maps is deferred. For factual checks, prefer those exact
+official sources, then the Indonesian sources that actually feed answers about
 this kind of business — marketplaces, sector directories, local news, and
 applicable public registries — then clearly labeled buyer-supplied facts, then
 other third-party sources. A source hierarchy built for another market will
-mis-weight what Indonesian AI answers are drawn from. Public availability
-does not prove accuracy, and a source returned by ChatGPT does not by itself
+mis-weight what Indonesian AI answers are drawn from. Public availability does
+not prove accuracy, and a source returned by ChatGPT does not by itself
 validate the claim it supports.
 
 Record conflicting authoritative sources as a finding instead of selecting the

@@ -1,7 +1,7 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-08-30
+> Updated: 2026-09-01
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
@@ -79,6 +79,25 @@ old rows to make history cleaner; add a superseding row.
 | 2026-08-30 | Ship V1 identity fetching **without DNS pinning**, accepting the residual DNS-rebinding/SSRF risk. Pinning a fetch to a pre-validated IP is not practical on the current Cloudflare Workers runtime, so identity fetching ships with the complete R-22 control set — HTTP/HTTPS only, rejection of reserved, private, loopback, link-local and metadata ranges for IPv4 and IPv6, revalidation of every redirect hop, at most 3 hops, 5 s per request and 10 s total, a 512 KB streamed response cap, restricted content types, no credential forwarding, and the same protection for icon fetching — plus the R-23 Workers Rate Limiting bindings. This is a V1 tradeoff, **not** a claim that DNS rebinding has been technically eliminated, and not a claim that Cloudflare blocks a hostname that resolves to private space; that behavior is unverified. | SETTLED | The decision rests on the current deployment having no private-network connectivity or equivalent internal HTTP target: the Worker's only binding is `ASSETS`, there is no Workers VPC, Tunnel, Hyperdrive, Durable Object or KV, and Workers exposes no VM-style metadata service, so the high-impact SSRF target does not exist. The realistic residual is abuse of Nuave as a public fetch proxy, which the rate-limiting bindings mitigate. | Workers VPC, Tunnel, Hyperdrive, another private-network mechanism, or materially different endpoint exposure is introduced; or live evidence shows this threat model is wrong. |
 | 2026-08-30 | The comparison target is proposed **without an additional provider or web call**. When extraction returns a usable `similar_businesses` entry, the first one is shown on the comparison screen as a labelled proposal the customer must accept, edit, or replace — it is never written into the brief unseen. When extraction returns none, the screen asks the customer to name the comparison target and offers one acceptable fallback: the category-level alternative, `alternatif lain di kategori <kategori>`. | SETTLED | Spec 007 R-13 required a deterministic derivation and did not define one, so two implementers would have built different things — one inventing a category mapping, one spending a model call, one leaving a required field unfillable. A second call inside the paid flow adds cost and a new failure mode for a field the customer is being shown anyway, and `verified_competitor.name` is required, so the empty case needs an answer the customer can always give. | Real journeys show customers stalling on the comparison screen, or the fallback target visibly weakens slot 9's comparison. |
 
+## Supersession annotations
+
+The historical decision rows above remain unchanged. Their obsolete
+measurement directions are explicitly superseded by the founder-approved
+Spec 007 R-01/R-02 canonical matrix (2026-08-30):
+
+- **2026-07-29 — Intent-5:** the five-category, two-per-category, 5/5
+  allocation is superseded. The distinction between named and unnamed results
+  remains, but the current matrix has 6 unnamed and 4 named fixed slots.
+- **2026-07-31 — universal `generate-ai-visibility-prompts` skill:** its
+  Intent-5 and 5/5 generation contract is superseded. The skill remains the
+  retained generation method only after being rewritten against Spec 007's
+  matrix.
+- **2026-08-17 — five-and-five coverage brief:** its five-purpose, 5/5
+  composition and free-composition editing direction are superseded. The
+  bounded no-search generation call, natural Indonesian, fallback, and exact
+  final-pack recording remain part of the current direction where compatible
+  with Spec 007.
+
 ## Superseded directions
 
 | Former direction                                             | Status     | Superseded by                                                                         |
@@ -114,3 +133,6 @@ old rows to make history cleaner; add a superseding row.
 | PDF rendering success required before report-ready delivery | SUPERSEDED | Deliver the validated web report while retrying the PDF artifact from the same report version |
 | Direct OpenAI transport for Phase 3 GPT-5.6 Luna | SUPERSEDED | OpenCode Go transport serving GPT-5.6 Luna (2026-08-21) |
 | HeroUI v3 as the default workflow design system | SUPERSEDED | shadcn/ui + Base UI + Tailwind CSS v4 + BeUI with a BeUI light baseline and Tabler Icons (2026-08-28) |
+| Intent-5: five categories, two questions each, with 5 unnamed / 5 named | SUPERSEDED | Spec 007 R-01/R-02 canonical ten-slot matrix: 6 unnamed + 4 named, with fixed slot policies (2026-08-30) |
+| Universal `generate-ai-visibility-prompts` skill using Intent-5 and 5/5 | SUPERSEDED | Retained skill rewritten against Spec 007's canonical 6/4 matrix (2026-08-30) |
+| Five-and-five coverage brief with free-composition editing | SUPERSEDED | Spec 007 R-10: wording edits stay within fixed slots; composition and slot policies cannot change (2026-08-30) |

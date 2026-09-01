@@ -1,6 +1,7 @@
 # Spec 004: Hero source intake — one-field website or Instagram input
 
-> Status: **Approved** (founder-approved 2026-08-19; implementation in progress)
+> Status: **Superseded** by [`Spec 007`](../007-intake-airbnb-revamp/SPEC.md)
+> (founder-approved 2026-08-30; current runnable V1 intake authority)
 > Owner: Founder
 > Updated: 2026-08-19
 > Implements: the **first data intake** of the live `/audit` workflow — step 0
@@ -13,6 +14,12 @@
 > payment → facts) recorded in `docs/DECISION_LOG.md` (2026-08-17). The hero
 > replaces the intake *form* of the access-gated live tool so the first screen
 > asks one warm question instead of presenting a four-field agency form.
+
+> **Authority transition:** Spec 007 absorbs Spec 004's source-intake
+> responsibility for the runnable V1 intake and customer journey. This file is
+> retained as historical specification context; its former Approved/in-progress
+> status and source requirements do not govern current work. Current V1 supports
+> official website and Instagram inputs; Google Maps is deferred.
 
 ## Required context
 
