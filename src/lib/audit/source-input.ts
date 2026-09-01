@@ -133,9 +133,11 @@ export function parseSourceInput(value: string): ParsedSourceInput | null {
 
   const handleMatch = raw.match(HANDLE_PATTERN);
   if (handleMatch) {
+    const handle = handleMatch[1];
+    if (INSTAGRAM_NON_PROFILE_ROOTS.has(handle.toLowerCase())) return null;
     return {
       sourceType: "instagram",
-      normalizedUrl: `https://instagram.com/${handleMatch[1]}`,
+      normalizedUrl: `https://instagram.com/${handle}`,
     };
   }
 

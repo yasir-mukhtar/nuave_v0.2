@@ -84,6 +84,13 @@ describe("parseSourceInput canonical source policy", () => {
     },
   );
 
+  it.each(["@accounts", "@explore", "@p", "@reel", "@stories", "@tv"])(
+    "rejects reserved Instagram root handle %s",
+    (input) => {
+      expect(parseSourceInput(input)).toBeNull();
+    },
+  );
+
   it.each([
     "@",
     "instagram.com",
