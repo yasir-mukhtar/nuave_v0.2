@@ -23,12 +23,13 @@ import type {
   ExtractionDraft,
   PromptPack,
 } from "@/lib/audit/types";
-import type {
-  ComparisonTargetInput,
-  ComparisonTargetProposal,
-  ComparisonStatus,
-  IntakeScreen,
-  ScopeKind,
+import {
+  intakeScreenSequence,
+  type ComparisonTargetInput,
+  type ComparisonTargetProposal,
+  type ComparisonStatus,
+  type IntakeScreen,
+  type ScopeKind,
 } from "@/lib/audit/workflow-authority";
 import {
   AUDIT_MEASUREMENT_MATRIX,
@@ -42,13 +43,93 @@ import {
 } from "@/lib/audit/similar-businesses";
 import styles from "./audit.module.css";
 
+const INTAKE_CHAPTER_LABELS = [
+  "Brand dan yang Anda tawarkan",
+  "Pelanggan Anda",
+  "Pasar dan pembanding",
+  "Sebelum audit",
+] as const;
+
+function intakeChapterFor(screen: IntakeScreen) {
+  if (screen === "customer-reasons") return 1;
+  if (screen === "market" || screen === "comparison-target") return 2;
+  if (screen === "facts" || screen === "review") return 3;
+  return 0;
+}
+
+function IntakeChapterProgress({
+  screen,
+  scopeKind,
+}: {
+  screen: IntakeScreen;
+  scopeKind: ScopeKind;
+}) {
+  const sequence = intakeScreenSequence(scopeKind);
+  const currentChapter = intakeChapterFor(screen);
+  const chapterScreens = sequence.filter(
+    (candidate) => intakeChapterFor(candidate) === currentChapter,
+  );
+  const currentPosition = chapterScreens.indexOf(screen);
+  const currentProgress =
+    currentPosition >= 0
+      ? ((currentPosition + 1) / chapterScreens.length) * 100
+      : 0;
+
+  return (
+    <div
+      className={styles.chapterProgress}
+      role="group"
+      aria-label="Progres persiapan audit"
+    >
+      <div className={styles.chapterProgressMeta}>
+        <span>
+          Bab {currentChapter + 1} dari {INTAKE_CHAPTER_LABELS.length}
+        </span>
+        <strong>{INTAKE_CHAPTER_LABELS[currentChapter]}</strong>
+      </div>
+      <ol className={styles.chapterProgressList} aria-label="Progres bab">
+        {INTAKE_CHAPTER_LABELS.map((label, index) => {
+          const progress =
+            index < currentChapter
+              ? 100
+              : index === currentChapter
+                ? currentProgress
+                : 0;
+          return (
+            <li
+              key={label}
+              data-chapter={index}
+              aria-current={index === currentChapter ? "step" : undefined}
+              aria-label={`Bab ${index + 1}: ${label}`}
+            >
+              <span className={styles.chapterProgressTrack} aria-hidden="true">
+                <span
+                  className={styles.chapterProgressFill}
+                  style={{ width: `${progress}%` }}
+                />
+              </span>
+              <span className="sr-only">
+                Bab {index + 1}: {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 function IntakeActions({
+  screen,
+  scopeKind,
   onBack,
   onNext,
   nextLabel = "Lanjut",
   busy = false,
   showBack = true,
 }: {
+  screen: IntakeScreen;
+  scopeKind: ScopeKind;
   onBack: () => void;
   onNext: () => void;
   nextLabel?: string;
@@ -56,23 +137,34 @@ function IntakeActions({
   showBack?: boolean;
 }) {
   return (
-    <div className={styles.stickyAction}>
-      {showBack ? (
-        <Button variant="ghost" type="button" onClick={onBack}>
-          <IconArrowLeft /> Kembali
-        </Button>
-      ) : (
-        <span aria-hidden="true" />
-      )}
-      <Button variant="default" type="button" onClick={onNext} disabled={busy}>
-        {busy ? (
-          <IconLoader2 className="animate-spin" aria-hidden="true" />
+    <nav
+      className={`${styles.stickyAction} ${styles.intakeActions}`}
+      aria-label="Progres persiapan audit"
+    >
+      <IntakeChapterProgress screen={screen} scopeKind={scopeKind} />
+      <div className={`${styles.actionRow} ${styles.intakeActionRow}`}>
+        {showBack ? (
+          <Button variant="ghost" type="button" onClick={onBack}>
+            <IconArrowLeft /> Kembali
+          </Button>
         ) : (
-          <IconArrowRight />
+          <span aria-hidden="true" />
         )}
-        {nextLabel}
-      </Button>
-    </div>
+        <Button
+          variant="default"
+          type="button"
+          onClick={onNext}
+          disabled={busy}
+        >
+          {busy ? (
+            <IconLoader2 className="animate-spin" aria-hidden="true" />
+          ) : (
+            <IconArrowRight />
+          )}
+          {nextLabel}
+        </Button>
+      </div>
+    </nav>
   );
 }
 
@@ -745,7 +837,9 @@ export function B1BriefStep({
     );
 
   return (
-    <section className={`${styles.workspace} ${styles.workspaceWide}`}>
+    <section
+      className={`${styles.workspace} ${styles.workspaceWide} ${styles.intakeWorkspace}`}
+    >
       {screen !== "brand-confirm" ? (
         <Button
           variant="ghost"
@@ -846,6 +940,8 @@ export function B1BriefStep({
             </div>
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             showBack={false}
@@ -889,6 +985,8 @@ export function B1BriefStep({
             </p>
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() =>
               onSubmitSourceCorrection(correctionSource, correctionBrandName)
@@ -966,6 +1064,8 @@ export function B1BriefStep({
             </div>
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1007,6 +1107,8 @@ export function B1BriefStep({
             </Field>
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1066,6 +1168,8 @@ export function B1BriefStep({
             />
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1103,6 +1207,8 @@ export function B1BriefStep({
             />
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1178,6 +1284,8 @@ export function B1BriefStep({
             </div>
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1218,6 +1326,8 @@ export function B1BriefStep({
             </Field>
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1244,6 +1354,8 @@ export function B1BriefStep({
             />
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}
@@ -1281,6 +1393,8 @@ export function B1BriefStep({
             />
           </StageSection>
           <IntakeActions
+            screen={screen}
+            scopeKind={scopeKind}
             onBack={() => onBack(screen)}
             onNext={() => onContinue(screen)}
             busy={Boolean(busy)}

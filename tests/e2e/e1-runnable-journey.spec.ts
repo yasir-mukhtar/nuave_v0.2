@@ -2,13 +2,15 @@ import { expect, test } from "@playwright/test";
 import { grantAccess } from "./helpers";
 
 const SOURCE = "https://example.com/";
+const IDENTITY_ICON =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
 function identityPayload() {
   return {
     display_name: "Example Business",
     description: "Kedai kopi untuk bekerja dan bertemu.",
     canonical_url: SOURCE,
-    icon_data_url: null,
+    icon_data_url: IDENTITY_ICON,
     source_type: "website",
     confidence: true,
   };
@@ -87,7 +89,46 @@ test("Gate 1 runs /audit/v2 through identity, order, and simulated checkout with
     page.getByText("Kedai kopi untuk bekerja dan bertemu.", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText(SOURCE, { exact: true })).toBeVisible();
-  await expect(page.getByText("Bisnis Anda muncul di X dari 10 pertanyaan")).toHaveCount(0);
+  await expect(
+    page.locator('[data-stage="identity-preview"] img[alt=""]'),
+  ).toHaveCount(1);
+  await expect(page.getByText("Terbaca", { exact: true })).toBeVisible();
+  const illustrativeReport = page.getByRole("region", {
+    name: "Contoh laporan ilustratif",
+  });
+  await expect(illustrativeReport).toBeVisible();
+  await expect(
+    illustrativeReport.getByText("Contoh laporan", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    illustrativeReport.getByText("Ilustrasi", { exact: true }),
+  ).toBeVisible();
+  const illustrativeResult = illustrativeReport.locator(
+    "[data-illustrative-result]",
+  );
+  await expect(illustrativeResult).toHaveAttribute("aria-hidden", "true");
+  await expect(illustrativeResult).toContainText(
+    "Bisnis Anda muncul di X dari 10 pertanyaan",
+  );
+  await expect(illustrativeResult).toContainText(
+    "Tanpa menyebut bisnis Anda: …/6",
+  );
+  await expect(illustrativeResult).toContainText(
+    "Menyebut bisnis Anda: …/4",
+  );
+  await expect(illustrativeResult).not.toContainText("Example Business");
+  await expect(illustrativeResult).not.toContainText(SOURCE);
+  const resultPresentation = await illustrativeResult.evaluate((element) => {
+    const styles = window.getComputedStyle(element);
+    return {
+      filter: styles.filter,
+      pointerEvents: styles.pointerEvents,
+      userSelect: styles.userSelect,
+    };
+  });
+  expect(resultPresentation.filter).toMatch(/blur/);
+  expect(resultPresentation.pointerEvents).toBe("none");
+  expect(resultPresentation.userSelect).toBe("none");
   await expect(page.getByText("Skor Visibilitas AI")).toHaveCount(0);
   expect(calls.identityCalls()).toBe(1);
   expect(calls.extractionPostCalls()).toBe(0);
@@ -182,6 +223,49 @@ test("Gate 1 runs /audit/v2 through identity, order, and simulated checkout with
   expect(calls.extractionPostCalls()).toBe(0);
 });
 
+test("preview floating pay bar is safe, responsive, and opens order first", async ({
+  page,
+}) => {
+  const calls = await stubPrePaymentApis(page);
+
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/audit/v2");
+    await page.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+    await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+    ).toBeVisible();
+
+    const payBar = page.getByRole("region", {
+      name: "Aksi pembayaran simulasi",
+    });
+    await expect(payBar).toBeVisible();
+    await expect(payBar.getByText("Rp99.000", { exact: true })).toBeVisible();
+    await expect(
+      payBar.getByText("Simulasi — tidak ada tagihan", { exact: true }),
+    ).toBeVisible();
+    const payButton = payBar.getByRole("button", { name: "Bayar sekarang" });
+    await expect(payButton).toBeVisible();
+    const box = await payButton.boundingBox();
+    expect(box, `floating pay button on ${viewport.width}px`).not.toBeNull();
+    expect(Math.round(box?.width ?? 0)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(44);
+    expect(calls.extractionPostCalls()).toBe(0);
+
+    await payButton.click();
+    await expect(
+      page.getByRole("heading", { name: "Ringkasan pesanan" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Simulasi pembayaran" }),
+    ).toHaveCount(0);
+    expect(calls.extractionPostCalls()).toBe(0);
+  }
+});
 test("identity scan failure stays recoverable and still does not call extraction", async ({
   page,
 }) => {

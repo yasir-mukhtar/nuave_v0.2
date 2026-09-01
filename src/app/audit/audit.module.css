@@ -373,7 +373,7 @@
   padding: 1rem 0;
 }
 
-.stickyAction > div:not(.actionRow) {
+.stickyAction > div:not(.actionRow):not(.chapterProgress) {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -383,6 +383,88 @@
   flex: 1 1 100%;
   border-top: 1px solid var(--border-default);
   padding-top: 1rem;
+}
+
+.intakeWorkspace {
+  padding-bottom: 8rem;
+}
+
+.intakeActions {
+  position: fixed;
+  z-index: 20;
+  bottom: 0;
+  left: 50%;
+  width: min(64rem, calc(100% - 2.5rem));
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0;
+  transform: translateX(-50%);
+  border-top-color: var(--border-strong);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+.chapterProgress {
+  display: grid;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.chapterProgressMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  color: var(--text-muted);
+  font-size: var(--type-label-sm-size);
+  line-height: var(--type-label-sm-leading);
+}
+
+.chapterProgressMeta strong {
+  color: var(--foreground);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-leading);
+}
+
+.chapterProgressList {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chapterProgressList li {
+  min-width: 0;
+}
+
+.chapterProgressTrack {
+  display: block;
+  height: 0.35rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border-light);
+}
+
+.chapterProgressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 180ms ease-out;
+}
+
+.intakeActionRow {
+  width: 100%;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.intakeActionRow button {
+  min-height: var(--target-min-size);
 }
 
 .confirmation {
@@ -1280,6 +1362,11 @@
   .stickyAction {
     bottom: 0;
     margin-top: 1rem;
+  }
+
+  .intakeActions {
+    width: calc(100% - 2rem);
+    margin-top: 0;
   }
 
   .stickyAction > button,

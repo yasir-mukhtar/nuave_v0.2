@@ -403,6 +403,23 @@ test("/audit/v2 continues through every applicable post-payment screen and sends
     page.getByRole("button", { name: "Kembali ke sumber" }),
   ).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Kembali" })).toHaveCount(0);
+  const intakeNavigation = page.getByRole("navigation", {
+    name: "Progres persiapan audit",
+  });
+  await expect(intakeNavigation).toBeVisible();
+  await expect(intakeNavigation).toContainText("Bab 1 dari 4");
+  await expect(
+    intakeNavigation.locator("[data-chapter='0']"),
+  ).toHaveAttribute("aria-current", "step");
+  await expect(
+    intakeNavigation.getByRole("button", { name: "Kembali" }),
+  ).toHaveCount(0);
+  const firstNextButton = intakeNavigation.getByRole("button", {
+    name: "Lanjut",
+  });
+  const firstNextBox = await firstNextButton.boundingBox();
+  expect(firstNextBox).not.toBeNull();
+  expect(Math.round(firstNextBox?.height ?? 0)).toBeGreaterThanOrEqual(44);
   await expect.poll(() => calls.extractionRequests.length).toBe(1);
 
   await page.getByRole("button", { name: "Lanjut" }).click();
@@ -411,6 +428,28 @@ test("/audit/v2 continues through every applicable post-payment screen and sends
   ).toBeVisible();
   await page.getByLabel("Satu cabang atau lokasi").check();
   await page.getByRole("button", { name: "Lanjut" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Lengkapi cabang atau lokasi." }),
+  ).toBeVisible();
+  await expect(intakeNavigation).toContainText("Bab 1 dari 4");
+  const conditionalBackButton = intakeNavigation.getByRole("button", {
+    name: "Kembali",
+  });
+  const conditionalNextButton = intakeNavigation.getByRole("button", {
+    name: "Lanjut",
+  });
+  for (const button of [conditionalBackButton, conditionalNextButton]) {
+    const box = await button.boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(44);
+  }
+  await conditionalBackButton.focus();
+  await expect(conditionalBackButton).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Tentukan cakupan audit." }),
+  ).toBeVisible();
+  await intakeNavigation.getByRole("button", { name: "Lanjut" }).click();
   await expect(
     page.getByRole("heading", { name: "Lengkapi cabang atau lokasi." }),
   ).toBeVisible();
@@ -429,6 +468,10 @@ test("/audit/v2 continues through every applicable post-payment screen and sends
   await expect(
     page.getByRole("heading", { name: "Kenali pelanggan dan alasannya." }),
   ).toBeVisible();
+  await expect(intakeNavigation).toContainText("Bab 2 dari 4");
+  await expect(
+    intakeNavigation.locator("[data-chapter='1']"),
+  ).toHaveAttribute("aria-current", "step");
   await page.getByLabel("Target pelanggan*").fill("Pekerja remote di Bandung");
   await page.getByLabel("Kebutuhan pelanggan*").fill("Tempat tenang untuk WFC");
   await page.getByLabel("Pertimbangan keputusan*").fill("Lokasi dan Wi-Fi");
@@ -436,6 +479,10 @@ test("/audit/v2 continues through every applicable post-payment screen and sends
   await expect(
     page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
   ).toBeVisible();
+  await expect(intakeNavigation).toContainText("Bab 3 dari 4");
+  await expect(
+    intakeNavigation.locator("[data-chapter='2']"),
+  ).toHaveAttribute("aria-current", "step");
   await page.getByLabel("Konteks pasar*").fill("Bandung, Indonesia");
   await page.getByRole("button", { name: "Lanjut" }).click();
   await expect(
@@ -448,6 +495,10 @@ test("/audit/v2 continues through every applicable post-payment screen and sends
   await expect(
     page.getByRole("heading", { name: "Tambahkan fakta opsional." }),
   ).toBeVisible();
+  await expect(intakeNavigation).toContainText("Bab 4 dari 4");
+  await expect(
+    intakeNavigation.locator("[data-chapter='3']"),
+  ).toHaveAttribute("aria-current", "step");
   await page
     .getByLabel("Differentiator (opsional)")
     .fill("Kopi lokal pilihan.");
@@ -492,6 +543,69 @@ test("/audit/v2 continues through every applicable post-payment screen and sends
   });
   expect(calls.runRequests[0]?.prompts).toHaveLength(10);
   expect(calls.reportRequests[0]?.observations).toHaveLength(10);
+});
+
+test("chapter navigation respects the conditional product path", async ({
+  page,
+}) => {
+  const calls = await stubFullJourneyApis(page);
+  await page.goto("/audit/v2");
+  await page.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+  await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
+  ).toBeVisible();
+  await completeV2Payment(page);
+  await page.getByRole("button", { name: "Mulai persiapan audit" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Periksa brief brand Anda." }),
+  ).toBeVisible();
+  await expect.poll(() => calls.extractionRequests.length).toBe(1);
+
+  const intakeNavigation = page.getByRole("navigation", {
+    name: "Progres persiapan audit",
+  });
+  await page.getByRole("button", { name: "Lanjut" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Tentukan cakupan audit." }),
+  ).toBeVisible();
+  await page.getByLabel("Satu produk atau layanan").check();
+  await page.getByRole("button", { name: "Lanjut" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Lengkapi produk atau layanan." }),
+  ).toBeVisible();
+  await expect(intakeNavigation).toContainText("Bab 1 dari 4");
+  const conditionalBackButton = intakeNavigation.getByRole("button", {
+    name: "Kembali",
+  });
+  const conditionalNextButton = intakeNavigation.getByRole("button", {
+    name: "Lanjut",
+  });
+  for (const button of [conditionalBackButton, conditionalNextButton]) {
+    const box = await button.boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.round(box?.height ?? 0)).toBeGreaterThanOrEqual(44);
+  }
+  await conditionalBackButton.focus();
+  await expect(conditionalBackButton).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Tentukan cakupan audit." }),
+  ).toBeVisible();
+  await intakeNavigation.getByRole("button", { name: "Lanjut" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Lengkapi produk atau layanan." }),
+  ).toBeVisible();
+
+  await page.getByLabel("Nama produk atau layanan*").fill("Kopi botol");
+  await intakeNavigation.getByRole("button", { name: "Lanjut" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Pilih kategori brand." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Lengkapi cabang atau lokasi." }),
+  ).toHaveCount(0);
+  expect((await readWorkflow(page)).brief.entity_scope).toBe("Produk: Kopi botol");
 });
 
 test("the real landing entry reaches the completed report journey", async ({

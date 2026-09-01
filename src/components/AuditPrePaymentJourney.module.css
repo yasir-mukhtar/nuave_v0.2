@@ -321,6 +321,60 @@
   text-align: center;
 }
 
+.previewStage {
+  padding-bottom: calc(var(--space-2xl) + 5rem);
+}
+
+.floatingPayBar {
+  position: fixed;
+  z-index: 30;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  left: 50%;
+  display: flex;
+  width: min(42rem, calc(100% - 2rem));
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  transform: translateX(-50%);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--background);
+  padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
+.floatingPayInfo {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.floatingPayLabel,
+.floatingPayNote {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--type-label-sm-size);
+  line-height: var(--type-label-sm-leading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floatingPayPrice {
+  color: var(--foreground);
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-leading);
+}
+
+.floatingPayButton {
+  min-height: var(--target-min-size);
+  border-radius: 999px;
+  padding-right: 1.25rem;
+  padding-left: 1.25rem;
+}
+
 .processingContent {
   display: grid;
   max-width: 34rem;
@@ -357,5 +411,16 @@
   .actions button,
   .scanActions button {
     width: 100%;
+  }
+
+  .floatingPayBar {
+    width: calc(100% - 1rem);
+    gap: var(--space-sm);
+    padding-left: 1rem;
+  }
+
+  .floatingPayButton {
+    padding-right: 1rem;
+    padding-left: 1rem;
   }
 }

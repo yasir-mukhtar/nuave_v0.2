@@ -2,73 +2,69 @@
 
 import { CANONICAL_COMPOSITION_COUNTS } from "@/lib/audit/measurement-matrix";
 
-export default function ExampleReportPreview() {
+type ExampleReportPreviewProps = {
+  id?: string;
+  ariaLabel?: string;
+};
+
+export default function ExampleReportPreview({
+  id = "contoh-laporan",
+  ariaLabel = "Contoh laporan ilustratif",
+}: ExampleReportPreviewProps) {
   const { unbranded, branded } = CANONICAL_COMPOSITION_COUNTS;
   return (
-    <div
-      id="contoh-laporan"
-      className="max-w-[640px] mx-auto rounded-[12px] border border-[#E5E7EB] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.10)] overflow-hidden text-left"
+    <section
+      id={id}
+      role="region"
+      aria-label={ariaLabel}
+      data-report-preview="illustrative"
+      className="mx-auto max-w-[640px] overflow-hidden rounded-[12px] border border-[#E5E7EB] bg-white text-left shadow-[0_8px_40px_rgba(0,0,0,0.10)]"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-        <p className="type-label text-gray-900 m-0">Contoh laporan</p>
-        <span className="type-label-sm text-gray-500 bg-gray-100 rounded-full px-2.5 py-1">
+      <header className="flex items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
+        <p className="type-label m-0 text-gray-900">Contoh laporan</p>
+        <span className="type-label-sm rounded-full bg-gray-100 px-2.5 py-1 text-gray-500">
           Ilustrasi
         </span>
+      </header>
+
+      <div className="px-6 pt-4">
+        <p className="type-copy-sm m-0 text-gray-600">
+          Contoh tampilan saja — bukan hasil untuk bisnis Anda.
+        </p>
       </div>
 
-      <div className="p-6 flex flex-col gap-5">
-        {/* Direct count — ink, with denominator, no band or percentage */}
-        <div className="rounded-[8px] bg-[#F9FAFB] border border-[#E5E7EB] px-4 py-3">
-          <p className="type-label-sm text-gray-500 m-0">Hasil langsung</p>
-          <p className="type-label text-[#111827] m-0 mt-1">
-            Bisnis Anda muncul di 4 dari 10 pertanyaan
-          </p>
-          <p className="type-heading-md text-[#111827] m-0 mt-1">4/10</p>
-          <p className="type-label-sm text-gray-500 m-0 mt-1">
-            {`Tanpa menyebut bisnis Anda: 1/${unbranded} · Menyebut bisnis Anda: 3/${branded}`}
-          </p>
-        </div>
-
-        {/* ChatGPT answer quote — fictional-only product names */}
-        <div>
-          <p className="type-label-sm text-gray-500 m-0 mb-2">
-            Jawaban ChatGPT
-          </p>
-          <div className="rounded-[8px] border border-[#E5E7EB] p-4">
-            <p className="type-copy-sm text-gray-900 m-0">
-              <span className="font-bold">1.</span> Toko Sepatu Jaya, salah satu
-              brand lokal untuk sepatu lari dan futsal. Contoh model: Seri Ceria
-              (daily trainer), Lincah Ringan (ringan).
+      <div className="p-6 pt-4">
+        <div
+          data-illustrative-result="true"
+          aria-hidden="true"
+          className="flex flex-col gap-4 rounded-[8px] border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-4"
+          style={{
+            filter: "blur(9px)",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          <div>
+            <p className="type-label-sm m-0 text-gray-500">Contoh hasil</p>
+            <p className="type-label m-0 mt-1 text-[#111827]">
+              Bisnis Anda muncul di X dari 10 pertanyaan
             </p>
-            <p className="type-label-sm text-gray-400 m-0 mt-2">
-              Sumber:{" "}
-              <span className="text-brand underline underline-offset-2">
-                tokosepatujaya.example
-              </span>
+            <p className="type-label-sm m-0 mt-1 text-gray-500">
+              {`Tanpa menyebut bisnis Anda: …/${unbranded} · Menyebut bisnis Anda: …/${branded}`}
             </p>
           </div>
-        </div>
-
-        {/* Findings */}
-        <div>
-          <p className="type-label-sm text-gray-500 m-0 mb-2">
-            Temuan dan rekomendasi
-          </p>
-          <div className="flex flex-col gap-2">
-            <div className="type-copy-sm flex items-start gap-2.5 rounded-[8px] bg-amber-50 border border-amber-200/60 px-3 py-2.5 text-gray-700">
-              <span className="shrink-0 mt-[1px]">•</span>
-              Jam operasional tidak konsisten di 2 situs. Perbarui agar AI
-              mengutip informasi yang sama.
-            </div>
-            <div className="type-copy-sm flex items-start gap-2.5 rounded-[8px] bg-red-50 border border-red-200/60 px-3 py-2.5 text-gray-700">
-              <span className="shrink-0 mt-[1px]">•</span>
-              Belum ada halaman FAQ. Buat halaman tanya jawab agar AI punya
-              struktur yang mudah dikutip.
-            </div>
+          <div className="flex flex-col gap-2" aria-hidden="true">
+            <div className="h-3 w-4/5 rounded-full bg-gray-300" />
+            <div className="h-3 w-full rounded-full bg-gray-300" />
+            <div className="h-3 w-3/5 rounded-full bg-gray-300" />
           </div>
         </div>
       </div>
-    </div>
+
+      <p className="type-label-sm m-0 border-t border-[#E5E7EB] px-6 py-4 text-gray-500">
+        Hasil nyata baru tersedia setelah pembayaran simulasi dan audit
+        dijalankan.
+      </p>
+    </section>
   );
 }

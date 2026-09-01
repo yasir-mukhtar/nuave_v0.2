@@ -21,6 +21,7 @@ import {
 } from "@/lib/audit/variance";
 import styles from "./AuditPrePaymentJourney.module.css";
 import SourceHero from "@/app/audit/SourceHero";
+import ExampleReportPreview from "./ExampleReportPreview";
 
 type PrePaymentStep =
   | "source"
@@ -141,6 +142,31 @@ function IdentityScanStep({
   );
 }
 
+function FloatingPayBar({ onContinue }: { onContinue: () => void }) {
+  return (
+    <aside
+      className={styles.floatingPayBar}
+      role="region"
+      aria-label="Aksi pembayaran simulasi"
+    >
+      <div className={styles.floatingPayInfo}>
+        <span className={styles.floatingPayLabel}>Siap memesan audit?</span>
+        <strong className={styles.floatingPayPrice}>Rp99.000</strong>
+        <span className={styles.floatingPayNote}>
+          Simulasi — tidak ada tagihan
+        </span>
+      </div>
+      <Button
+        type="button"
+        className={styles.floatingPayButton}
+        onClick={onContinue}
+      >
+        Bayar sekarang
+      </Button>
+    </aside>
+  );
+}
+
 function IdentityPreviewStep({
   identity,
   onEditSource,
@@ -151,9 +177,24 @@ function IdentityPreviewStep({
   onContinue: () => void;
 }) {
   const hasConfidentName = identity.confidence && identity.display_name.trim();
+  const [floatingPayBarVisible, setFloatingPayBarVisible] = useState(true);
+  const primaryActionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const target = primaryActionRef.current;
+    if (!target || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setFloatingPayBarVisible(!entry.isIntersecting),
+      { threshold: 1 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section
-      className={styles.stage}
+      className={`${styles.stage} ${styles.previewStage}`}
       aria-labelledby="identity-preview-heading"
       data-stage="identity-preview"
     >
@@ -225,7 +266,11 @@ function IdentityPreviewStep({
           audit berbayar.
         </p>
       </section>
-      <div className={styles.actions}>
+      <ExampleReportPreview
+        id="identity-example-report"
+        ariaLabel="Contoh laporan ilustratif — pratinjau identitas"
+      />
+      <div ref={primaryActionRef} className={styles.actions}>
         <Button type="button" variant="ghost" onClick={onEditSource}>
           <IconArrowLeft aria-hidden="true" /> Ubah sumber
         </Button>
@@ -233,6 +278,9 @@ function IdentityPreviewStep({
           Lanjut ke ringkasan pesanan
         </Button>
       </div>
+      {floatingPayBarVisible ? (
+        <FloatingPayBar onContinue={onContinue} />
+      ) : null}
     </section>
   );
 }
