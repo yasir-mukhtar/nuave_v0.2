@@ -25,6 +25,32 @@ function identityOptions(
 }
 
 describe("source identity metadata", () => {
+  it.each([
+    [403, "403 Forbidden"],
+    [404, "404 Not Found"],
+  ])(
+    "rejects an HTTP error page instead of returning its title: %s",
+    async (status, title) => {
+      const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(`<html><head><title>${title}</title></head></html>`, {
+          status,
+          headers: { "content-type": "text/html" },
+        }),
+      );
+
+      await expect(
+        fetchSourceIdentity(
+          {
+            sourceType: "website",
+            normalizedUrl: "https://error-page.example/",
+          },
+          identityOptions(fetchImpl),
+        ),
+      ).rejects.toMatchObject({ code: "HTTP_ERROR" });
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("uses website metadata precedence and inlines the declared icon", async () => {
     const pageUrl = "https://business.example/about";
     const iconUrl = "https://business.example/brand.png";

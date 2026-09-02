@@ -456,6 +456,28 @@ describe("safe public source redirects and destination limiting", () => {
 });
 
 describe("safe public source response bounds", () => {
+  it.each([
+    [403, "403 Forbidden"],
+    [404, "404 Not Found"],
+  ])(
+    "rejects an unsuccessful HTML response before reading its error page: %s",
+    async (status, title) => {
+      const options = safeFetchOptions({
+        fetchImpl: vi.fn<typeof fetch>().mockResolvedValue(
+          new Response(`<html><head><title>${title}</title></head></html>`, {
+            status,
+            headers: { "content-type": "text/html" },
+          }),
+        ),
+      });
+
+      await expect(
+        safeFetchPublicResource("https://error-page.example/", options),
+      ).rejects.toMatchObject({ code: "HTTP_ERROR" });
+      expect(options.fetchImpl).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("passes only non-credentialed headers to fetch", async () => {
     const options = safeFetchOptions();
 

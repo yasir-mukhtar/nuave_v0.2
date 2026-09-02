@@ -4,6 +4,7 @@ import {
   IDENTITY_CALLER_RATE_LIMITER,
   IDENTITY_DESTINATION_RATE_LIMITER,
 } from "./rate-limit";
+import { SafeSourceFetchError } from "./safe-source-fetch";
 
 const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
@@ -92,6 +93,31 @@ describe("D1 route rate limits", () => {
     expect(mocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
     expect(mocks.assertConfigured).not.toHaveBeenCalled();
     expect(mocks.extract).not.toHaveBeenCalled();
+  });
+
+  it("maps an HTTP source failure to the customer-safe identity error", async () => {
+    setCloudflareBindings({
+      identityCaller: rateLimiter(),
+      identityDestination: rateLimiter(),
+    });
+    mocks.fetchSourceIdentity.mockRejectedValue(
+      new SafeSourceFetchError("HTTP_ERROR", "403 Forbidden"),
+    );
+
+    const response = await identityGET(
+      new Request(
+        "https://nuave.test/api/audit/identity?source=https%3A%2F%2Fkopi.example%2F",
+      ),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error:
+        "Kami tidak dapat membaca sumber publik ini. Periksa URL dan coba lagi.",
+      code: "SOURCE_UNAVAILABLE",
+    });
+    expect(JSON.stringify(body)).not.toContain("403 Forbidden");
   });
 
   it("stops identity before source work when its caller-IP limiter refuses", async () => {
