@@ -266,10 +266,12 @@ test("preview floating pay bar is safe, responsive, and opens order first", asyn
     expect(calls.extractionPostCalls()).toBe(0);
   }
 });
-test("identity scan failure stays recoverable and still does not call extraction", async ({
+test("identity scan failure and rapid retry stay recoverable without extraction", async ({
   page,
 }) => {
   let identityCalls = 0;
+  let activeIdentityRequests = 0;
+  let maxConcurrentIdentityRequests = 0;
   let extractionPostCalls = 0;
   let releaseFirstIdentityRequest = () => {};
   let releaseSecondIdentityRequest = () => {};
@@ -281,24 +283,33 @@ test("identity scan failure stays recoverable and still does not call extraction
   });
   await page.route("**/api/audit/identity*", async (route) => {
     identityCalls += 1;
-    if (identityCalls === 1) {
-      await firstIdentityRequest;
+    activeIdentityRequests += 1;
+    maxConcurrentIdentityRequests = Math.max(
+      maxConcurrentIdentityRequests,
+      activeIdentityRequests,
+    );
+    try {
+      if (identityCalls === 1) {
+        await firstIdentityRequest;
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: "Synthetic identity outage.",
+            code: "SOURCE_UNAVAILABLE",
+          }),
+        });
+        return;
+      }
+      await secondIdentityRequest;
       await route.fulfill({
-        status: 503,
+        status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          error: "Synthetic identity outage.",
-          code: "SOURCE_UNAVAILABLE",
-        }),
+        body: JSON.stringify(identityPayload()),
       });
-      return;
+    } finally {
+      activeIdentityRequests -= 1;
     }
-    await secondIdentityRequest;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(identityPayload()),
-    });
   });
   await page.route("**/api/audit/extract", async (route) => {
     if (route.request().method() === "POST") extractionPostCalls += 1;
@@ -329,7 +340,13 @@ test("identity scan failure stays recoverable and still does not call extraction
   await expect(scanStatus.locator("svg.animate-spin")).toHaveCount(0);
   expect(extractionPostCalls).toBe(0);
 
-  await page.getByRole("button", { name: "Coba lagi" }).click();
+  const retryButton = page.getByRole("button", { name: "Coba lagi" });
+  await retryButton.evaluate((element) => {
+    // Model two rapid native clicks before the pending request resolves.
+    const button = element as HTMLButtonElement;
+    button.click();
+    button.click();
+  });
   await expect.poll(() => identityCalls).toBe(2);
   await expect(scanStatus).toHaveAttribute("aria-busy", "true");
   await expect(scanStatus.locator("svg.animate-spin")).toHaveCount(1);
@@ -338,5 +355,61 @@ test("identity scan failure stays recoverable and still does not call extraction
     page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
   ).toBeVisible();
   expect(identityCalls).toBe(2);
+  expect(maxConcurrentIdentityRequests).toBe(1);
+  expect(activeIdentityRequests).toBe(0);
+  expect(extractionPostCalls).toBe(0);
+});
+
+test("identity scan failure can return to source entry without extraction", async ({
+  page,
+}) => {
+  let identityCalls = 0;
+  let extractionPostCalls = 0;
+
+  await page.route("**/api/audit/identity*", async (route) => {
+    identityCalls += 1;
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Synthetic identity outage.",
+        code: "SOURCE_UNAVAILABLE",
+      }),
+    });
+  });
+  await page.route("**/api/audit/extract", async (route) => {
+    if (route.request().method() === "POST") extractionPostCalls += 1;
+    await route.abort();
+  });
+
+  await page.goto("/audit/v2");
+  await page.getByPlaceholder("https://bisnisanda.com").fill("example.com");
+  await page.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
+
+  const scanStage = page.locator('[data-stage="identity-scan"]');
+  const scanStatus = scanStage.getByRole("status");
+  await expect(
+    page.getByText(
+      "Sumber publik belum dapat dibaca. Periksa link lalu coba lagi.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(scanStatus).toHaveAttribute("aria-busy", "false");
+  await expect(scanStatus.locator("svg.animate-spin")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Ubah sumber" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Ubah sumber" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Cek bisnis Anda di AI" }),
+  ).toBeVisible();
+  await expect(page.getByPlaceholder("https://bisnisanda.com")).toHaveValue("");
+  await expect(
+    page.getByText(
+      "Sumber publik belum dapat dibaca. Periksa link lalu coba lagi.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
+  await expect(scanStage).toHaveCount(0);
+  expect(identityCalls).toBe(1);
   expect(extractionPostCalls).toBe(0);
 });
