@@ -42,6 +42,7 @@ export type SafeSourceFetchErrorCode =
   | "RATE_LIMIT_UNAVAILABLE"
   | "RATE_LIMITED"
   | "FETCH_FAILED"
+  | "HTTP_ERROR"
   | "TIMEOUT"
   | "REDIRECT_LIMIT"
   | "INVALID_REDIRECT"
@@ -717,6 +718,15 @@ export async function safeFetchPublicResource(
       currentUrl = parseHttpUrl(redirectUrl);
       redirects += 1;
       continue;
+    }
+
+    // An HTTP error page may still be HTML and may contain a plausible-looking
+    // title. Reject every non-success final response before any parser sees it.
+    if (response.status < 200 || response.status >= 300) {
+      throw new SafeSourceFetchError(
+        "HTTP_ERROR",
+        "Sumber publik mengembalikan respons HTTP yang gagal.",
+      );
     }
 
     const contentType = mediaType(response.headers.get("content-type"));

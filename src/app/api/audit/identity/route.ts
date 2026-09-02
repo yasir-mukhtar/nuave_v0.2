@@ -20,6 +20,7 @@ export const runtime = "nodejs";
 
 const IDENTITY_SOURCE_ERROR_MESSAGE =
   "Kami tidak dapat membaca sumber publik ini. Periksa URL dan coba lagi.";
+const IDENTITY_SOURCE_ERROR_CODE = "SOURCE_UNAVAILABLE" as const;
 
 const LOCAL_DESTINATION_RATE_LIMITER: SourceDestinationRateLimiter = {
   limit: async () => ({ success: true }),
@@ -33,6 +34,16 @@ function rateLimitResponse(status = 429) {
       code: status === 503 ? "RATE_LIMIT_UNAVAILABLE" : "RATE_LIMITED",
     },
     { status },
+  );
+}
+
+function sourceUnavailableResponse() {
+  return NextResponse.json(
+    {
+      error: IDENTITY_SOURCE_ERROR_MESSAGE,
+      code: IDENTITY_SOURCE_ERROR_CODE,
+    },
+    { status: 400 },
   );
 }
 
@@ -85,12 +96,10 @@ export async function GET(request: Request) {
     ) {
       return rateLimitResponse(503);
     }
-    return NextResponse.json(
-      {
-        error: IDENTITY_SOURCE_ERROR_MESSAGE,
-        code: "SOURCE_UNAVAILABLE",
-      },
-      { status: 400 },
-    );
+    if (error instanceof SafeSourceFetchError && error.code === "HTTP_ERROR") {
+      // Never expose the upstream status or error-page title to the client.
+      return sourceUnavailableResponse();
+    }
+    return sourceUnavailableResponse();
   }
 }
