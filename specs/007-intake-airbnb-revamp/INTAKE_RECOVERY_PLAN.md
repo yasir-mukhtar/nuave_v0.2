@@ -433,7 +433,7 @@ needs localization.**
 `competitor_leakage`, `identity_requirement`, `comparison_relation`,
 `unsupported_premise`, `composition`, and `distinctness`. Every message
 this edit transaction can surface is Indonesian except `distinctness`, which
-currently emits `Question N duplicates another question.` (`:771`). S2
+currently emits `Question N duplicates another question.` (`:773`). S2
 changes that message — not the rule or its attribution — to:
 
 > **Pertanyaan ini sama dengan pertanyaan lain dalam paket. Setiap pertanyaan
