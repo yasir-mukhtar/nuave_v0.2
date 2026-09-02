@@ -1,231 +1,168 @@
 # Intake experience recovery plan — Spec 007 R-27 conformance
 
-> Status: **Draft, awaiting founder approval**
-> Created: 2026-09-02
+> Status: **Revision 2, awaiting founder approval**
+> Created: 2026-09-02 · Revised: 2026-09-02 after implementation review
 > Companion to [`SPEC.md`](./SPEC.md) (Approved) and
 > [`EXECUTION_PLAN.md`](./EXECUTION_PLAN.md).
 > Purpose: recover the approved Airbnb-style intake experience by finishing the
 > three R-27 components package E1 did not build. Where this file disagrees
 > with `SPEC.md`, **the spec wins** and this file is wrong.
+>
+> Revision 2 corrects seven findings from review of revision 1. The change
+> table is at the end of this document.
 
 
 ## Context
 
-Spec 007 shipped a technically substantial, runnable end-to-end journey. Its
-measurement core, workflow authority, safe source handling, and payment
-sequencing are correct and are not in question here.
+Spec 007 shipped a runnable end-to-end journey. Its measurement core, workflow
+authority, safe source handling, and payment sequencing are correct and are not
+in question. But after payment the customer lands in something that looks and
+feels like the old intake form rather than the approved prototype.
 
-But the founder opens `/audit/v2`, pays, and lands in something that looks and
-feels like the old intake form rather than the approved prototype. This plan
-locates why, and recovers the experience without touching the engine.
-
-The cause is precise and verifiable. Spec 007's final package **E1** owned every
-experience requirement (R-24 through R-28) in one slice. Its diff
-(`0294a35`) shows what happened:
-
-| E1 built | Lines |
-|---|---|
-| `src/components/AuditPrePaymentJourney.tsx` (new) | +719 |
-| `src/components/AuditPrePaymentJourney.module.css` (new) | +426 |
-| `src/app/audit/AuditStages.tsx` (edited) | **+242** |
-
-The **pre-payment** half of R-24 was built fresh, to the prototype. The
-**post-payment** half — the twelve intake screens, the question review, the
-shell around them — was satisfied by extending the pre-existing
-`AuditStages.tsx` form in place. `AuditV2Journey.tsx:47` makes it literal:
+The cause is precise. Spec 007's package **E1** owned every experience
+requirement (R-24…R-28) in one slice. Its diff (`0294a35`) built
+`AuditPrePaymentJourney.tsx` fresh (+719 lines) and satisfied the entire
+post-payment intake with **+242 lines inside the existing `AuditStages.tsx`
+form**. `AuditV2Journey.tsx:47` is literal about the result:
 
 ```tsx
 if (entry === "post-payment" || paymentCompleted) return <AuditWorkflow />;
 ```
 
-`AuditWorkflow` is the 1,548-line component that renders the previous intake.
-So the customer crosses payment and steps out of the approved experience into
-the old one.
+Concretely, **three of the seven components R-27 required were never built** —
+`SPEC.md:944` lists selection card, selection row, chip, bottom navigation with
+chapter progress, floating pay bar, scan steps, example report card. The last
+four exist. Selection card, selection row, and chip appear nowhere in `src/`.
+Without them the screens had nowhere to land except `TextInput`, `LongInput`,
+and `LineListInput`.
 
-Concretely, **three of the seven components R-27 required were never built**:
-
-> `SPEC.md:944` — "Build only what the journey needs: selection card, selection
-> row, chip, bottom navigation with chapter progress, floating pay bar, scan
-> steps, example report card."
-
-Bottom navigation, floating pay bar, scan steps, and example report card exist.
-**Selection card, selection row, and chip do not exist anywhere in `src/`.**
-They are the three primitives that carry the entire "selection instead of form"
-character of the prototype. Without them the screens had nowhere to land except
-`TextInput`, `LongInput`, and `LineListInput`.
-
-**This is therefore Spec 007 conformance work, not a redesign.** No settled
-product decision is reopened. The plan finishes R-27.
+**This is Spec 007 conformance work, not a redesign.** No settled product
+decision is reopened.
 
 ---
 
 ## 1. Diagnosis
 
-### 1.1 What is already right — more than expected
-
-The recovery is cheap because most of the prototype's structure already shipped:
+### 1.1 What is already right
 
 - **The screen sequence is exact.** `INTAKE_SCREENS`
-  (`src/lib/audit/workflow-authority.ts:15`) and `intakeScreenSequence()`
-  (`:209`) reproduce the prototype's flow, conditional screens included. This is
-  the prototype's `flow()` function, in TypeScript, tested.
-- **The four-chapter progress model shipped.** `IntakeChapterProgress`
-  (`AuditStages.tsx:60`) renders four fractional bars with the prototype's own
-  chapter labels.
-- **The persistent bottom Kembali/Lanjut bar shipped.** `IntakeActions`
-  (`AuditStages.tsx:122`).
+  (`workflow-authority.ts:15`) and `intakeScreenSequence()` (`:209`) reproduce
+  the prototype's flow, conditionals included, and are tested.
+- **Chapter progress and the bottom Kembali/Lanjut bar shipped**
+  (`AuditStages.tsx:60`, `:122`).
 - **The token layer is already the prototype, variable for variable.**
-  `src/styles/tokens.css:1-50` and the prototype's `:root` block are an exact
-  match: `--bg-page:#ffffff`, `--action:#18181b`, `--action-soft:#f4f4f5`,
-  `--border-default:#e5e7eb`, `--text-muted:#52525b`, spacing 4/8/16/24/32/48/64,
-  `--motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1)`,
-  `--shadow-card: 0 1px 2px rgba(0,0,0,0.05)`. The historical purple is retired
-  (`--purple: var(--action)`).
+  `src/styles/tokens.css:1-50` matches the prototype's `:root` exactly —
+  `--action:#18181b`, `--action-soft:#f4f4f5`, `--border-default:#e5e7eb`,
+  spacing 4/8/16/24/32/48/64, `cubic-bezier(0.16,1,0.3,1)`,
+  `0 1px 2px rgba(0,0,0,0.05)`. Purple is retired (`--purple: var(--action)`).
 
-**No token work is required.** The gap is entirely composition and interaction.
+**No token work is required.** The gap is composition and interaction only.
 
-### 1.2 The five differences that produce the old feeling
+### 1.2 The differences that produce the old feeling
 
 **(a) Every screen asks with a form field instead of offering a choice.**
-This is the largest single difference. Prototype vs shipped, same screen:
 
 | Screen | Prototype | Shipped (`AuditStages.tsx`) |
 |---|---|---|
-| brand-confirm | Centred brand card + two big cards: *Ya, benar* / *Bukan, ganti brand* | `TextInput#brand-name` in a two-column `FieldGroup` + a source list + a ghost button (`:877-940`) |
-| scope | Three `.card`s with title + description | Bare `<fieldset>` + `<input type="radio">` + a `TextInput#brand-type` (`:1007-1063`) |
-| category | Three pre-selected `.card`s + an add-line | Bare radio pair labelled "(saran dari ekstraksi)" + `TextInput#category` (`:1123-1168`) |
-| offerings | Removable `.chip`s, pre-filled, + add-line | `LineListInput` — a **newline-delimited textarea** (`:1299`) |
-| customer-reasons | One chip multi-select, pre-selected | Three fields: `LongInput` + two `LineListInput`s in `styles.gridTwo` (`:1225-1284`) |
-| market | Four `.card`s + a `.reveal` for cities | One free-text `TextInput#market-context` (`:1187`) |
-| facts | One optional textarea | Two fields, one labelled **"Differentiator (opsional)"** (`:1369-1393`) |
-| review | Seven readback rows each with an **Ubah** link | A `<dl>` with no edit affordance (`:1434-1467`) |
+| brand-confirm | Brand card + two cards: *Ya, benar* / *Bukan, ganti brand* | `TextInput#brand-name` in a two-column `FieldGroup` (`:877-940`) |
+| scope | Three cards, title + description | Bare `<fieldset>` + `<input type="radio">` + `TextInput#brand-type` (`:1007-1063`) |
+| category | Prefilled card + add-line | Bare radio pair labelled "(saran dari ekstraksi)" + `TextInput` (`:1123-1168`) |
+| offerings | Removable chips, pre-filled | `LineListInput` — a **newline-delimited textarea** (`:1299`) |
+| customer-reasons | Chip multi-select | Three fields in `styles.gridTwo` (`:1225-1284`) |
+| market | Four cards + a reveal | One free-text `TextInput` (`:1187`) |
+| facts | One optional textarea | Two fields, one labelled **"Differentiator (opsional)"** (`:1369`) |
+| review | Rows each with an **Ubah** link | A `<dl>` with no edit affordance (`:1434-1467`) |
 
-**(b) Three competing progress indicators on every intake screen.**
-1. `AuditWorkflow`'s sticky topbar stepper — "Pengaturan audit / Langkah 2 dari 4"
-   over `Fakta bisnis · Periksa fakta · Periksa pertanyaan · Jalankan audit`
-   (`AuditWorkflow.tsx:1433-1462`)
-2. `StageIntro` — "Langkah 2 dari 4 · Periksa fakta" (`AuditStages.tsx:853`)
-3. `IntakeChapterProgress` — "Bab 1 dari 4 / Brand dan yang Anda tawarkan"
+**(b) Three competing progress indicators** on every intake screen —
+`AuditWorkflow`'s topbar stepper (`:1433-1462`), `StageIntro`'s "Langkah 2 dari
+4" (`AuditStages.tsx:853`), and `IntakeChapterProgress`. Plus **two Kembali
+buttons** (`:843` and the bottom bar).
 
-Plus **two Kembali buttons**: a ghost one at the top (`:843`) and one in the
-bottom bar. The prototype has exactly one progress element and one Back.
+**(c) The frame is a desktop admin workspace.** `.workspace` is
+`min(64rem,…)` = 1024px (`audit.module.css:160`); `.stageSection` is a
+`minmax(10rem,0.34fr) minmax(0,1fr)` label/content grid (`:242`); `.topbar` is
+a sticky 4rem app bar spanning 72rem (`:17`). The prototype is a 560px column
+with a 16px wordmark row.
 
-**(c) The frame is a desktop admin workspace, not a mobile-first column.**
+**(d) Provenance and internal schema leak into the interface** — prohibited by
+`V1_PRODUCT_CONTRACT.md:126` and `:88`. Shipped anyway: `"(saran dari
+ekstraksi)"`, `"Draft dari ekstraksi"`, `"Terima saran Nuave"`, `"Periksa
+catatan ekstraksi"`; labels `Konteks pasar`, `Differentiator`, `Penawaran
+utama`, `Pertimbangan keputusan`; and screen titles that instruct rather than
+ask — `"Pilih kategori brand."` where the prototype asks *"Bisnis Anda paling
+tepat disebut apa?"*
 
-| | Prototype | Shipped |
-|---|---|---|
-| Column | `#app{max-width:560px}` | `.workspace{width:min(64rem,…)}` = 1024px (`audit.module.css:160`) |
-| Screen body | `h1` 20px → 24px at 640px | `StageIntro h1` + `.stageSection{grid-template-columns:minmax(10rem,0.34fr) minmax(0,1fr)}` — a label/content documentation grid (`:242`) |
-| Chrome | 16px wordmark row | `.topbar{position:sticky;min-height:4rem;padding:… max(1.25rem,calc((100vw - 72rem)/2))}` (`:17`) |
+**(e) Two shipped defects.**
+1. **The review readback renders unstyled.** `AuditStages.tsx:1434` uses
+   `styles.factList/factRow/factLabel/factValue`; those classes exist only in
+   `fixture.module.css:247`, not `audit.module.css`. All resolve to `undefined`.
+2. **The approved intake theme is dead code.** `tweakcn-intake.css` (10.5 KB,
+   imported by `audit/layout.tsx:2`) scopes every rule to
+   `:has(#identity-scope-heading)` — an id present in no `.tsx`.
 
-**(d) Provenance and internal schema leak into the interface.** Both are
-explicitly prohibited by `docs/V1_PRODUCT_CONTRACT.md:126-129` ("Metadata such
-as extracted, inferred, user supplied, confidence, provenance, or source
-timestamp **must not be shown in the UI**") and `:88` ("**The schema does not
-define the UI.**"). Shipped anyway:
-
-- `"(saran dari ekstraksi)"`, `"Saran kategori"`, `"Draft dari ekstraksi"`,
-  `"Terima saran Nuave"`, `"Periksa catatan ekstraksi"`,
-  `"Nilai yang dipertahankan dari sumber sebelumnya"`
-- Schema-shaped labels: `Konteks pasar`, `Differentiator`, `Penawaran utama`,
-  `Fakta tambahan`, `Pertimbangan keputusan`, `Target pelanggan`, `Cakupan`
-- Screen titles are imperative instructions — `"Pilih kategori brand."`,
-  `"Jelaskan konteks pasar."` (`:786-799`) — where the prototype asks the
-  customer's own question: *"Bisnis Anda paling tepat disebut apa?"*,
-  *"Di mana pelanggan Anda berada?"*
-
-**(e) Two shipped defects that hurt more than their size suggests.**
-
-1. **The review readback renders completely unstyled.** `AuditStages.tsx:1434`
-   uses `styles.factList / factRow / factLabel / factValue`. Those classes do
-   **not exist** in `audit.module.css` — they are only defined in
-   `src/app/audit/fixture/fixture.module.css:247`. Every class resolves to
-   `undefined`. The single most important "here is what Nuave understood"
-   moment is a bare `<dl>`.
-2. **The approved intake theme is dead code.** `src/app/audit/tweakcn-intake.css`
-   (10.5 KB, imported by `audit/layout.tsx:2`) scopes every rule to
-   `main[data-theme="light"]:has(#identity-scope-heading)`. That id, and the
-   sibling `#offer-needs-heading` / `#similar-businesses-heading`, exist in **no
-   `.tsx` file**. The B1 rename to per-screen headings silently disabled the
-   whole file.
-
-### 1.3 The question review screen
-
-`QuestionsStep` (`AuditStages.tsx:1511`) renders ten separate `StageSection`s,
-each a full label/content grid containing an always-open `<Textarea rows={3}>`,
-an English `Badge` reading **"Branded"** / **"Unbranded"**, and
-`<code>{prompt.prompt_id}</code>` — an internal identifier shown to the
-customer. The prototype shows two grouped lists of compact read-first cards with
-an **Ubah** link that reveals editing on demand.
+**(f) The question review** renders ten `StageSection`s, each with an
+always-open `<Textarea rows={3}>`, an English `Badge` ("Branded"/"Unbranded"),
+and `<code>{prompt.prompt_id}</code>` shown to the customer
+(`AuditStages.tsx:1511-1632`).
 
 ---
 
 ## 2. Experience north star
 
-From `docs/V1_PRODUCT_CONTRACT.md:33-42` and the Fable brief:
-
 > **Nuave shows what it believes. The owner fixes what matters. Nuave then
-> creates the audit.**
+> creates the audit.** — `V1_PRODUCT_CONTRACT.md:33-42`
 
-Operationally, five tests every screen must pass:
+Five tests every screen must pass:
 
-1. **One question, asked in the customer's words**, as an `h1`. If the heading
-   names a backend field, it is wrong.
-2. **The answer is already there.** The default interaction is confirm or
-   remove, not type. Typing is the escape hatch, in a secondary add-line.
+1. **One question, asked in the customer's words**, as an `h1`. A heading that
+   names a backend field is wrong.
+2. **The answer is already there.** The default action is confirm or remove.
+   Typing is the escape hatch, in a secondary add-line.
 3. **Tapping, not filling.** Cards for single choice, rows for choosing from a
    detected list, chips for multi-select and removal.
-4. **Nothing about how Nuave knows.** No provenance, confidence, source, or
-   extraction language. Removability is the honesty signal.
-5. **One column, one progress bar, one Back, 560px wide, thumb-reachable.**
+4. **No internal metadata.** No provenance, confidence, extraction, or
+   source-timestamp language, and no schema names.
+   **The customer's own official public source stays visible** on brand
+   confirm — R-12 requires it. The prohibition is on *how Nuave knows*, never
+   on *what Nuave read*.
+5. **One column, one progress bar, one Back, 560px, thumb-reachable.**
 
 ---
 
-## 3. What stays — do not touch
+## 3. What stays — the fence
 
-Preserved unchanged. A worker that finds itself editing these has left scope.
+**Engine and contracts — unchanged.** All of `src/lib/audit/` except the two
+named moves in §4: measurement matrix, question generation, extraction, run
+orchestration, report, variance, safe source handling, rate limiting,
+`payment-boundary.ts`, all six `/api/audit/*` routes, and **`types.ts` — the
+`BusinessBrief` schema does not change.**
 
-**Engine and contracts (all of `src/lib/audit/` except two named moves):**
-- Measurement matrix and question generation — `measurement-matrix.ts`,
-  `questions-id*.ts`, `contracts.ts`, `locked-question-pack.ts`,
-  `question-suggestion-guards.ts`
-- Extraction, run orchestration, report, variance — `provider.ts`,
-  `run-orchestrator.ts`, `stream.ts`, `report-*.ts`, `variance.ts`
-- Safe source handling and rate limiting — `safe-source-fetch.ts`,
-  `source-identity.ts`, `rate-limit.ts`
-- Payment sequencing — `payment-boundary.ts`
-- All six `/api/audit/*` routes
-- `types.ts` — **the `BusinessBrief` schema does not change.** Every new screen
-  writes the same fields.
+**The intake state machine — reused as-is.** `workflow-authority.ts`:
+`INTAKE_SCREENS`, `intakeScreenSequence`, `nextIntakeScreen`,
+`previousIntakeScreen`, `validateBriefForReview`, `applyBriefFieldChange`,
+`applyScopeSelection`, `acceptComparisonTarget`, `confirmIdentity`,
+`mergeExtractionIntoBrief`, `FIELD_OWNERSHIP`.
 
-**The intake state machine — reused as-is, this is the biggest asset:**
-`src/lib/audit/workflow-authority.ts` — `INTAKE_SCREENS`,
-`intakeScreenSequence`, `nextIntakeScreen`, `previousIntakeScreen`,
-`validateBriefForReview`, `applyBriefFieldChange`, `applyScopeSelection`,
-`acceptComparisonTarget`, `confirmIdentity`, `mergeExtractionIntoBrief`,
-`FIELD_OWNERSHIP`. Pure functions. The new UI calls exactly these.
+**`AuditWorkflow.tsx` remains the workflow controller.** See §6.0 — this is the
+correction that shapes the whole sequence.
 
-**Untouched surfaces:** the pre-payment journey (`AuditPrePaymentJourney.tsx`),
-the run screen (`AuditRunStep.tsx`), the report (`ReportView.tsx`), the fixture
-journey, the landing.
+**Untouched surfaces:** the pre-payment journey, `AuditRunStep`, `ReportView`,
+the fixture journey, the landing.
 
-**Settled Spec 007 decisions that override the prototype — do not "restore" the
-prototype here:**
+**Settled decisions that override the prototype — do not "restore" it here:**
 
 | Prototype | Authority wins |
 |---|---|
-| Market screen is conditional | **Never skipped.** `market_context` required on every path (R-12, R-14) |
-| A keep/remove list of competitors | **One** comparison target, proposed then accepted/edited/replaced (R-13) |
-| Customer reasons is `Opsional` | `verified_customer_needs` and `verified_decision_criteria` are **required, min 1** (R-12) |
-| `Lanjut` disabled until answered | **Next stays enabled**; press surfaces an actionable error and moves focus (R-17) |
-| "Skor Visibilitas AI" | Retired. **Bisnis Anda muncul di X dari 10 pertanyaan** (R-25, `VOICE.md:42`) |
+| Market screen conditional | **Never skipped**; `market_context` required on every path (R-12, R-14) |
+| A list of competitors | **One** comparison target, proposed then accepted/edited/replaced (R-13) |
+| Customer reasons `Opsional` | `verified_customer_needs`, `verified_decision_criteria` **required, min 1** (R-12) |
+| `Lanjut` disabled until answered | **Next stays enabled**; press surfaces an error and moves focus (R-17) |
+| "Skor Visibilitas AI" | Retired → **Bisnis Anda muncul di X dari 10 pertanyaan** (R-25) |
 | Brand-name-only entry | A public source is mandatory (R-11) |
 
-On requiredness: R-12 and the "must not block" rule in the product contract
-(`:57`) are reconciled by R-16, not by a rule change. The chips arrive
-**pre-selected from the draft**, so the required minimum is already satisfied
-when the screen opens. The customer only meets a block if they remove every
-option — which is a real correction, not an unanswered question.
+Requiredness and "must not block" are reconciled by R-16, not a rule change:
+chips arrive **pre-selected from the draft**, so the minimum is already met when
+the screen opens. §6.2 handles the path where the draft is empty.
 
 ---
 
@@ -233,183 +170,312 @@ option — which is a real correction, not an unanswered question.
 
 | Kind | Item |
 |---|---|
-| **New** | Three R-27 primitives: selection card, selection row, chip (+ add-line, reveal) |
-| **New** | An intake shell: 560px column, one bottom nav, one progress bar |
-| **Rebuilt** | All twelve intake screens, as compositions of the above |
-| **Rebuilt** | The question review screen, as two grouped read-first lists |
-| **Reshaped** | Screen headings become the customer's question; all provenance and schema language removed |
-| **Moved** | `INTAKE_CHAPTER_LABELS` + `intakeChapterFor` from `AuditStages.tsx:46-58` into `workflow-authority.ts`, next to `intakeScreenSequence` |
-| **Lifted** | Intake navigation + error focus (`AuditWorkflow.tsx:804-868`) into the new journey container |
-| **Deleted at switchover** | `B1BriefStep`, `QuestionsStep`, `StageIntro`, `TextInput`/`LongInput`/`LineListInput`/`LineListEditor`, `B1ComparisonTarget`, the `AuditWorkflow` topbar stepper for intake steps, `tweakcn-intake.css`, orphaned `SimilarBusinessesEditor.tsx` |
+| **New** | R-27 primitives: selection card, selection row, chip (+ add-line, reveal) |
+| **New** | Intake shell: 560px column, one bottom nav, one progress bar |
+| **New** | A per-screen surface flag inside `AuditWorkflow` so new and old screens coexist (§6.0) |
+| **New** | A per-question save transaction for R-10 (§6.5) |
+| **Rebuilt** | The twelve intake screens and the question review, as presentation only |
+| **Reshaped** | Headings become the customer's question; internal metadata removed |
+| **Moved** | `INTAKE_CHAPTER_LABELS` + `intakeChapterFor` (`AuditStages.tsx:46-58`) → `workflow-authority.ts` |
+| **Deleted, after Gate 2** | `B1BriefStep`, `QuestionsStep`, `StageIntro`, `TextInput`/`LongInput`/`LineListInput`/`LineListEditor`, `B1ComparisonTarget`, the topbar stepper on intake steps, `tweakcn-intake.css`, orphaned `SimilarBusinessesEditor.tsx`, the surface flag |
 | **Rewritten** | The e2e specs that pin form-field labels (§8) |
 
 ---
 
 ## 5. Highest-leverage recovery work
 
-Ranked. The first four recover most of the felt difference.
+1. **Build the three missing primitives (R-27).** Nothing else is possible
+   without them.
+2. **Replace the frame** — one progress indicator, one Back, 560px column.
+   Changes the first impression before any screen is rebuilt.
+3. **Convert the screens where a form field replaced a choice** — scope,
+   offerings, category, market, customer-reasons, brand-confirm.
+4. **Fix the review readback** — style it and give every row an **Ubah** link.
+5. **Strip internal metadata**, and the settled CTA
+   (`"Konfirmasi fakta dan buat 10 pertanyaan"` → **"Buat pertanyaan audit"**).
+6. **Rebuild the question review** with the R-10 save transaction (§6.5).
 
-**1 — Build the three missing primitives (R-27).** Nothing else can be done
-correctly without them, and every screen collapses to a few lines once they
-exist.
-
-**2 — Replace the frame.** Remove the topbar stepper and `StageIntro`'s step
-counter from intake, drop `.workspace`'s 1024px grid, put the screens in a
-560px column with one bottom nav. This alone changes the first impression
-before a single screen is rebuilt.
-
-**3 — Convert the six screens where a form field replaced a choice**: scope,
-category, market, offerings, customer-reasons, brand-confirm. These carry the
-"large administrative form" feeling.
-
-**4 — Fix the review readback.** Style it, and give every row an **Ubah** link
-that routes to the owning screen. It is currently unstyled, and it is the
-moment the whole correction loop is supposed to pay off.
-
-**5 — Strip provenance and schema language** across every screen and the
-settled CTA (`"Konfirmasi fakta dan buat 10 pertanyaan"` → **"Buat pertanyaan
-audit"**).
-
-**6 — Rebuild the question review** into grouped, read-first cards.
-
-**Explicitly not leverage:** pixel parity (R-27: "Pixel parity with the old
-intake is not a goal"), radius alignment (tokens give 6/8/12/16 vs the
-prototype's 6/8/10/14 — near enough), the focus-ring formula (R-27 defers
-focus migration; use the existing `--shadow-focus` convention).
+**Not leverage:** pixel parity (R-27 excludes it), radius alignment
+(6/8/12/16 vs 6/8/10/14), the focus-ring formula (R-27 defers focus migration).
 
 ---
 
-## 6. Recommended implementation sequence
+## 6. Implementation sequence
 
-New code lands **beside** the old journey so each slice is reviewable and
-reversible; the final slice flips the routes and deletes the old path.
+### 6.0 Architecture — `AuditWorkflow` stays the controller
+
+**This corrects revision 1's central error.** `AuditWorkflow.tsx` owns session
+restore and persistence (`:435-492`, `:530-572`), the payment-satisfied marker
+(`:279`), budget bootstrap (`:494-528`), extraction (`:870-988`), prompt
+generation (`:990-1022`), question editing (`:1024-1045`), audit execution
+(`:1172-1307`), report creation (`:1047-1124`), variance (`:301-429`), and the
+run/report branches. `SourceHero.tsx:59-95` consumes the paid source handoff and
+calls back into `extractWebsite`. Repointing the routes at a presentation-only
+journey would either break the audit or duplicate 1,548 lines.
+
+So:
+
+- `AuditV2Journey.tsx` and `AuditEntryShell.tsx` are **not modified.**
+- New screens are **presentation only**. They receive `brief`, `extraction`,
+  `workflowMeta`, `fieldErrors`, `busy` and the existing callbacks
+  (`updateBrief`, `onContinue`, `onBack`, `onScopeKindChange`,
+  `onConfirmIdentity`, `onAcceptComparison`, `onGenerate`, `onEdit`, `onRun`)
+  as props — the same props `B1BriefStep` and `QuestionsStep` take today.
+- `AuditWorkflow`'s step-1 and step-2 branches (`:1484-1523`) each choose
+  between the old and new renderer. Nothing else in the controller changes.
+
+**The seam is a per-screen surface flag.**
+
+```ts
+// src/app/audit/intakeSurface.ts
+export const NEXT_INTAKE_SCREENS: ReadonlySet<IntakeScreen | "questions"> =
+  new Set([...]);   // grows one slice at a time; empty today
+```
+
+`B1BriefStep` and `QuestionsStep` consult it and render the new screen when the
+current screen is in the set, otherwise the existing markup. This is what makes
+a **thin vertical slice** possible: a partially converted intake still runs end
+to end, so Gate 1 can show every interaction pattern without converting every
+screen first. The route `/audit/v2/intake-preview` (noindex, not linked) renders
+`AuditWorkflow` with the set forced full, seeded from `sessionStorage` the way
+the e2e specs already do.
+
+At S6 the set becomes every screen. At S7, after Gate 2, the flag and the old
+renderers are deleted.
 
 ### New files
 
 ```
 src/components/product/selection/
-  SelectionCard.tsx      # single-choice card: icon? + title + optional description
-  SelectionRow.tsx       # single-choice row from a detected list, with a radio dot
-  Chip.tsx               # toggle / removable pill
-  AddLine.tsx            # Input + outline Button, the "add your own" escape hatch
-  Reveal.tsx             # conditional follow-up, left-rule subordination
-  selection.module.css   # consumes tokens.css only; no raw font-size
+  SelectionCard.tsx   SelectionRow.tsx   Chip.tsx   AddLine.tsx   Reveal.tsx
+  selection.module.css        # tokens.css only; no raw font-size
 
-src/app/audit/v2/intake/
-  IntakeJourney.tsx      # container: state, navigation, validation focus
-  IntakeShell.tsx        # 560px column, scroll body, one bottom nav + progress
+src/app/audit/intake/
+  IntakeShell.tsx             # 560px column, scroll body, one bottom nav
   intake.module.css
-  screens/BrandConfirmScreen.tsx, SourceCorrectionScreen.tsx, ScopeScreen.tsx,
-          BranchScreen.tsx, ProductScreen.tsx, CategoryScreen.tsx,
-          OfferingsScreen.tsx, CustomerReasonsScreen.tsx, MarketScreen.tsx,
-          ComparisonTargetScreen.tsx, FactsScreen.tsx, ReviewScreen.tsx,
-          QuestionReviewScreen.tsx
+  screens/*.tsx               # one per IntakeScreen + QuestionReviewScreen
 ```
 
 ### Build rules for every worker
 
-- Build on `@base-ui/react` — it ships `radio`, `radio-group`, `toggle`,
-  `toggle-group`, `checkbox-group`, `collapsible`. **Do not run
-  `npx shadcn add` against the default registry** (R-27); `components.json`
-  is pinned to `base-nova` + `@beui`. Tabler icons only.
-- CSS Modules consuming `src/styles/tokens.css`. **No raw `font-size`** —
-  `scripts/check-typography.mjs` fails the build on it. Use `--type-*` roles.
-- Every control: keyboard-operable, visible focus, correct ARIA, ≥44px target.
-- Copy is Bahasa Indonesia per `docs/VOICE.md`: `Anda`, `brand Anda`, `pesaing`,
-  `model AI`, **no em or en dashes in prose** (use `·` or a comma). The five
-  verbatim labels never change.
-- The prototype (`intake-prototype.html`) is the reference for composition and
-  copy. Where §3's table says the spec overrides it, the spec wins.
+- Build on `@base-ui/react` (`radio`, `radio-group`, `toggle`, `toggle-group`,
+  `checkbox-group`, `collapsible`). **Do not run `npx shadcn add` against the
+  default registry** (R-27) — `components.json` is pinned to `base-nova` +
+  `@beui`. Tabler icons only.
+- CSS Modules over `src/styles/tokens.css`. **No raw `font-size`** —
+  `scripts/check-typography.mjs` fails the build. Use `--type-*` roles.
+- Keyboard-operable, visible focus, correct ARIA, ≥44px targets.
+- Bahasa Indonesia per `VOICE.md`: `Anda`, `brand Anda`, `pesaing`, `model AI`,
+  **no em or en dashes in prose**. The five verbatim labels never change.
+- `intake-prototype.html` is the reference for composition and copy; where §3
+  says the spec overrides it, the spec wins.
+- **Add no external request** — `offline-network.spec.ts` guards `/`, `/audit`,
+  `/audit/fixture`. Geist is already local; do not copy the prototype's Google
+  Fonts link.
 
-### Slices
+### 6.1 Screens whose data does not match the prototype
 
-**S1 — Primitives.** The five components above, plus a unit test per component
-covering keyboard operation and ARIA state. Renders nowhere yet. *Reversible:
-pure addition.*
+Verified against the extraction contract. Two screens cannot be built as
+revision 1 described them.
 
-**S2 — Shell + chapter 1 opening (→ Gate 1).**
-`IntakeShell` + `IntakeJourney` + `BrandConfirmScreen`, `ScopeScreen`,
-`CategoryScreen`. Move `INTAKE_CHAPTER_LABELS`/`intakeChapterFor` into
-`workflow-authority.ts`. Mount behind `/audit/v2/intake-preview` (noindex, not
-linked) so the founder can walk it with a seeded session while `/audit/v2`
-still serves the current journey.
-- brand-confirm: brand card (logo/initials, name, meta) + two selection cards
-  *Ya, benar* / *Bukan, ganti brand*. R-18 copy when the name is unverified —
-  never "we found your business".
-- scope: three selection cards. Writes `entity_scope` in the canonical form
-  from R-12 (`Seluruh brand <brand_name>` / `Cabang: …` / `Produk: …`).
-- category: up to three selection cards from the extraction draft, first
-  pre-selected, plus an add-line. No "(saran dari ekstraksi)".
+**Scope — `brand_type` needs a control.** R-12 makes `brand_type` required and
+owned by the Scope screen, and `extractionDraftOrManualFallback`
+(`openai.ts:194-216`) returns `brand_type: ""` — along with `entity_scope: ""`
+and `target_customer: ""` — on the manual-fallback path. Three selection cards
+alone would strand that customer with a validation error and no control.
 
-**S3 — Rest of chapter 1.** `SourceCorrectionScreen`, `BranchScreen`,
-`ProductScreen`, `OfferingsScreen` (pre-filled removable chips + add-line,
-replacing the newline textarea).
+Rule, applied to **every** AI-owned field, straight from R-16 ("Where
+extraction returned nothing for an AI-owned field, the screen says so plainly
+and asks. It never renders an unexplained blank."):
 
-**S4 — Chapters 2–3.** `CustomerReasonsScreen` (one chip multi-select carrying
-`target_customer`, `verified_customer_needs`, `verified_decision_criteria` —
-the product contract at `:88` explicitly permits one interaction to populate
-several engine fields), `MarketScreen` (four selection cards + `Reveal` for
-cities; always shown per R-14, wording varies by scope),
-`ComparisonTargetScreen` (the R-13 proposal as one card with accept / replace,
-plus the `alternatif lain di kategori <kategori>` fallback — no entity picker).
+> When the draft has a value, it is confirmed silently by continuing — no field
+> is shown. When the draft is empty, the screen opens a `Reveal` that says
+> plainly what Nuave could not read and asks for it in customer language.
 
-**S5 — Chapter 4.** `FactsScreen` (one optional textarea, `Opsional` badge on
-the heading; `usp` shown as a pre-filled editable line only when extraction
-produced one). `ReviewScreen` — styled readback rows, each with **Ubah**
-routing to its owning screen, `brand_name_variants` editable inline, primary
-action **"Buat pertanyaan audit"**.
+So Scope shows three cards writing `entity_scope` in R-12's canonical form
+(`Seluruh brand <brand_name>` / `Cabang: …` / `Produk: …`), and a `Reveal`
+for `brand_type` only when it is empty. The happy path stays two taps.
 
-**S6 — Question review.** Two `.qgroup`s — **Tanpa menyebut bisnis Anda** (6)
-and **Menyebut bisnis Anda** (4) — of compact read-first cards showing
-`slot.customerFacingLabel` and the question, with an **Ubah** link that reveals
-a textarea. R-10's fixed slot frame stays visible; identity-leak errors block
-on save, purpose drift warns and proceeds. Drop the `prompt_id` `<code>` and
-the English Branded/Unbranded badges. Primary action **"Jalankan audit"**.
+**Category — one card, not three.** `extractionDraftSchema.category` is a
+single `z.string()` (`types.ts:138`); there is no alternatives array. Adding one
+would change the extraction contract, which §3 fences off. So: one prefilled
+selection card showing the drafted category, plus **Ganti** revealing an
+add-line. No "(saran dari ekstraksi)".
 
-**S7 — Switchover (→ Gate 2).** Point `AuditV2Journey`'s post-payment branch and
-`AuditEntryShell` at `IntakeJourney`; remove `/audit/v2/intake-preview`; delete
-the dead code listed in §4; rewrite the e2e specs (§8); run `npm run verify`.
+### 6.2 Customer reasons — the mapping, decided by the schema
+
+Revision 1 proposed one undifferentiated chip set for three fields. That is
+unsafe: `minimizeIndonesianBrief` (`questions-id.ts:132-150`) projects them
+separately as `customer_context`, `customer_needs`, and
+`decision_considerations`, so mirroring corrupts the question inputs. The schema
+settles the shape — `target_customer` is a **string** (`requiredText.max(500)`),
+the other two are **arrays** (`min(1).max(12)`) (`types.ts:96-100`).
+
+One screen, heading *"Kenapa pelanggan biasanya mencari yang seperti ini?"*,
+three visibly distinct groups:
+
+| Group | Field | Control | Empty-draft behaviour |
+|---|---|---|---|
+| Who looks | `target_customer` | One prefilled statement + **Ubah** → inline input | `Reveal` asks plainly (R-16) |
+| What they need | `verified_customer_needs` | Chip group, drafted chips pre-selected | `Reveal` + add-line |
+| What they weigh | `verified_decision_criteria` | Chip group, drafted chips pre-selected | `Reveal` + add-line |
+
+Exact mutations — no inference, no cross-field writes:
+
+- **Select / deselect a chip** → toggles membership of *that group's array only*.
+- **Add via that group's add-line** → appends to *that group's array only*.
+- **Remove the last chip in a group** → the array is empty; Next stays enabled
+  (R-17) and press routes the error to this screen with that group focused.
+- **Editing the statement** → writes `target_customer` only.
+
+If this reads heavy at Gate 1, the fallback is to move `target_customer` to its
+own screen — not to merge the groups.
+
+**Required test:** an e2e assertion on the `BusinessBrief` submitted to
+`/api/audit/prompts` after a scripted select/remove/add on this screen,
+asserting all three fields carry exactly the expected values.
+
+### 6.3 Slices
+
+**S1 — Primitives.** The five components, plus a unit test each covering
+keyboard operation, ARIA selected/pressed state, and disabled behaviour.
+Rendered nowhere. *Pure addition.*
+
+**S2 — Frame + vertical slice (→ Gate 1).** `IntakeShell`, the surface flag
+(§6.0), the chapter-label move, `/audit/v2/intake-preview`, and **one screen
+per defining pattern, wired to real data**:
+
+| Pattern | Screen |
+|---|---|
+| Selection card + reveal | Scope (with the `brand_type` reveal, §6.1) |
+| Selection row | Branch |
+| Chip | Offerings (pre-filled removable chips + add-line) |
+| Readback with **Ubah** | Review, styled, rows routing to owning screens |
+| Read-first question editing | Question review, one group, full save transaction (§6.5) |
+
+Unconverted screens fall through to the existing renderer, so the journey still
+runs end to end. Implementation **stops** at Gate 1.
+
+**S3 — Chapter 1 remainder.** brand-confirm (brand card + two cards; R-18 copy
+when unverified; official source visible per R-12), source-correction, product,
+category (§6.1).
+
+**S4 — Chapters 2–3.** customer-reasons (§6.2), market (four cards + city
+reveal; always shown per R-14, wording varies by scope), comparison-target (the
+R-13 proposal as one card with accept / replace, plus the `alternatif lain di
+kategori <kategori>` fallback — no entity picker).
+
+**S5 — Chapter 4 and both question groups.** facts (one optional textarea with
+an `Opsional` badge; `usp` as a prefilled editable line only when drafted).
+Review complete, primary action **"Buat pertanyaan audit"**. Question review
+complete, primary action **"Jalankan audit"**.
+
+**S6 — Flip the default (→ Gate 2).** The surface set becomes every screen;
+rewrite the e2e specs (§8); `npm run verify`. **The old renderers stay in the
+tree.**
+
+**S7 — Cleanup, only after Gate 2 passes.** Delete the old renderers, the
+surface flag, `/audit/v2/intake-preview`, `tweakcn-intake.css`, and
+`SimilarBusinessesEditor.tsx`; `npm run verify`.
+
+### 6.4 Readback rows
+
+`ReviewScreen` renders one row per fact: uppercase label, value, and an **Ubah**
+button that sets `workflowMeta.intakeScreen` to the owning screen from
+`FIELD_OWNERSHIP`. Empty states are plain Indonesian, never a blank.
+`brand_name_variants` is editable inline.
+
+### 6.5 The question-edit save transaction
+
+R-10 (`SPEC.md:322-387`) requires **four hard-block classes on save**, not one:
+forbidden identities absent; required identities present (the comparison target
+on slot 9); slot 9's comparison relation; and non-empty / ≤700 characters /
+question-shaped. Plus a **non-blocking** purpose-drift warning, with the slot's
+purpose and policies displayed throughout.
+
+Today `editPrompt` (`AuditWorkflow.tsx:1024-1045`) performs **no validation at
+all** — it writes the text and clears downstream state. A customer only learns
+their edit is invalid when they press **Jalankan audit**.
+
+**Every check already exists and is reused, not rewritten.**
+`validateCanonicalIndonesianQuestionPack` (`questions-id.ts:635`) emits
+`empty`, `length`, `question_form`, `identity_leakage`, `competitor_leakage`,
+`identity_requirement`, and `comparison_relation` issues with Indonesian
+messages, each carrying a `slot`. It calls `hasIndonesianComparisonRelation`
+(`:361`), which reads `comparisonRelationMarkers` off the matrix.
+
+The save transaction:
+
+1. **Ubah** replaces the read-only question with a textarea holding a **local
+   draft**. The rest of the pack is untouched. Slot label and purpose stay
+   visible.
+2. **Batal** discards the draft and restores the read-only card.
+3. **Simpan** builds a candidate pack (current prompts, edited question
+   substituted), runs
+   `validateCanonicalIndonesianQuestionPack(candidate, minimizeIndonesianBrief(brief))`,
+   and filters issues to the edited slot.
+4. Any issue in a hard-block class → **the save is rejected**, the message
+   renders in `role="alert"` beneath the textarea, focus stays in the textarea,
+   and `onEdit` is never called. Nothing downstream is cleared.
+5. No blocking issue → `onEdit(index, question)` (the existing callback,
+   unchanged), the card returns to read-only, and any purpose-drift warning
+   renders non-blocking beside it. The customer may proceed (R-10, settled
+   2026-08-30).
+
+**Required tests:** one per hard-block class — forbidden identity on an unnamed
+slot, missing required identity on a named slot, slot 9 without a comparison
+relation, and over-length / non-question text — each asserting the pack is
+unchanged after a rejected save; plus one asserting the drift warning does not
+block.
 
 ---
 
 ## 7. Experience review gates
 
-Two, as chosen. Both are founder-only. `EXECUTION_PLAN.md:93-97` is explicit
-that CI does not cover "human judgment on customer-facing copy and layout".
+Two founder gates. `EXECUTION_PLAN.md:93-97` is explicit that CI does not cover
+"human judgment on customer-facing copy and layout".
 
-### Gate 1 — after S2. "Does the frame feel like the prototype?"
+### Gate 1 — after S2. Every defining pattern, before the rest is built
 
-Walk `/audit/v2/intake-preview` on a phone-width viewport. Implementation
-**stops** until this passes; every later screen inherits this frame.
+Walk `/audit/v2/intake-preview` at phone width. Revision 1 showed only cards
+here; this gate now includes one live example of **every** pattern the rest of
+the work repeats, so the interaction model is approved before it is multiplied.
+Implementation **stops** until this passes.
 
-- [ ] One column, roughly 560px, reads as one product with the pre-payment side
+- [ ] One column ≈560px; reads as one product with the pre-payment side
 - [ ] Exactly one progress indicator, exactly one Back
 - [ ] Each screen asks one question in the customer's own words
-- [ ] The first action available is a tap, not a text field
-- [ ] No provenance, confidence, source, or schema language anywhere
-- [ ] Primary action is thumb-reachable; targets feel ≥44px
+- [ ] The first available action is a tap, not a text field
+- [ ] Cards, rows, and chips each feel right to use on a thumb
+- [ ] The `brand_type` reveal appears only when Nuave genuinely had nothing
+- [ ] The readback is legible and every row's **Ubah** lands on the right screen
+- [ ] A question is read-first; **Ubah** reveals editing; an invalid save is
+      refused there and then, in plain Indonesian
+- [ ] No provenance, confidence, extraction, or schema language — while the
+      customer's own official source is still visible on brand confirm
 - [ ] It reads as the prototype, not as the old intake
 
-A failure here is a frame problem: fix S2 and re-gate. Do not proceed to S3.
+A failure here is a model problem: fix S2 and re-gate. Do not proceed to S3.
 
-### Gate 2 — after S7. "Would I let a paying customer do this?"
+### Gate 2 — after S6. "Would I let a paying customer do this?"
 
 Full journey from the landing with a **real business source**, end to end, on a
-phone. Per R-28 this is final acceptance — verifying the route in isolation is
-not the same gate.
+phone. Per R-28 this is final acceptance; verifying the route in isolation is
+not the same gate. **The old implementation is still in the tree** — if this
+gate fails, reverting is one flag.
 
 - [ ] Preview → payment → intake reads as one continuous experience
 - [ ] The intake feels like confirming, not filling in a form
 - [ ] Every screen arrives pre-populated, or says plainly what it could not
       find and asks (R-16)
-- [ ] The readback is legible and every row is correctable
-- [ ] The ten questions read naturally and are editable without friction
+- [ ] The ten questions read naturally; editing is quick and errors are clear
 - [ ] Nothing exposes an internal identifier, schema name, or provenance label
 - [ ] Wrong-brand correction works without losing entered work (R-15)
+- [ ] The manual-fallback path completes without a dead end
 
-Record the verdict in `specs/007-intake-airbnb-revamp/VERIFICATION.md` —
-which today still covers **only package A1** and marks ten acceptance rows
-Blocked. E1 has no verification record at all.
+Record the verdict in `specs/007-intake-airbnb-revamp/VERIFICATION.md`, which
+today covers **only package A1** and marks ten acceptance rows Blocked. E1 has
+no verification record at all.
 
 ---
 
@@ -420,122 +486,125 @@ Blocked. E1 has no verification record at all.
 **check:typography**) → `test:unit` → `build` → `build:cf` → `test:e2e`
 (three Playwright configs). Per `AGENTS.md:57`, no slice is ready without it.
 
-### What stays a machine safeguard
-
-Untouched and must stay green — they protect the engine this plan preserves:
+### Untouched safeguards
 `measurement-matrix.test.ts`, `a3-composition.test.ts`, `contracts.test.ts`,
 `questions-id*.test.ts`, `locked-question-pack.test.ts`, `report-*.test.ts`,
 `run-orchestrator.test.ts`, `variance*.test.ts`, `safe-source-fetch.test.ts`,
 `source-identity.test.ts`, `rate-limit*.test.ts`, provider tests,
-`report-labels.test.ts` (the five verbatim strings).
+`report-labels.test.ts`.
 
 **`workflow-authority.test.ts` and `e1-workflow-navigation.test.ts` are the
-regression net for this work.** They pin the screen sequence and the
-field→screen error routing. The new UI must satisfy them **unchanged**. If a
-slice wants to edit either, it has changed the state machine — which is out of
-scope.
+regression net.** They pin the screen sequence and field→screen error routing,
+and must pass **unchanged**. A slice wanting to edit either has changed the
+state machine — out of scope.
 
-New unit coverage to add: one test per primitive (keyboard operation, ARIA
-selected/pressed state, disabled behaviour).
+### New: a screen contract test
 
-### What must be rewritten, deliberately
+Primitive unit tests prove a chip works in isolation; the journey invariants
+below prove the flow works. Neither stops a future change from replacing chips
+with a textarea again. One integrated Playwright spec —
+`tests/e2e/intake-screen-contract.spec.ts` — closes that:
 
-R-28 already anticipated this: *"The Playwright specs … are updated
-deliberately at the handoff. Do not claim they pass unchanged."* And operating
-rule 2: rewritten to derive from the new authority — **never deleted, never
-skipped**.
+- single-choice screens (scope, category, market) expose cards or radios, and
+  **no primary text input**;
+- offerings and customer-reasons expose selected chips;
+- the readback is read-first: values visible, **Ubah** present, no textarea
+  until it is pressed;
+- question textareas are absent until **Ubah**;
+- exactly one progress indicator and one Back element render;
+- the prohibited phrase list (`saran dari ekstraksi`, `Draft dari ekstraksi`,
+  `Terima saran Nuave`, `Differentiator`, `Konteks pasar`, `Penawaran utama`,
+  `Pertimbangan keputusan`) is absent everywhere.
+
+This asserts the *interaction model*, which is the thing that regressed.
+
+### Rewritten deliberately
+
+R-28: *"The Playwright specs … are updated deliberately at the handoff. Do not
+claim they pass unchanged."* Operating rule 2: rewritten to derive from the new
+authority — **never deleted, never skipped**. All of this lands in **S6**, when
+the default flips; S2–S5 leave the default on the old surface, so CI stays green
+throughout.
 
 | Spec | Coupling | Action |
 |---|---|---|
-| `tests/e2e/e1-postpayment-journey.spec.ts` (835 lines) | Every screen title, every `getByLabel("…*")`, the nine-screen reverse walk at `:689-702` | Rewrite against new headings and roles; keep the sequence, chapter-progress, and 44px assertions |
-| `tests/e2e/b1-workflow-authority.spec.ts` | Same, plus error element ids `#market-context-error`, `#source-correction-source-error`, `#comparison-scope-error` | Rewrite; **keep** the R-17 assertions that the error appears on the owning screen and the control takes focus |
-| `src/lib/audit/payment-boundary.test.ts:39-64` | `readFileSync` asserting on component names and import symbols | Update the asserted paths. **Keep the negative assertions** — `AuditPrePaymentJourney` must still not reach `/api/audit/extract` |
-| `tests/e2e/landing-audit-handoff.spec.ts` | Landing hero + `/audit/v2?entry=landing-paid` URL contract | Should survive; re-run and confirm |
-| `tests/e2e/e1-runnable-journey.spec.ts` | Pre-payment only | Untouched; must stay green as proof the pre-payment surface was not disturbed |
+| `e1-postpayment-journey.spec.ts` (835 lines) | Every screen title, every `getByLabel("…*")`, the nine-screen reverse walk (`:689-702`) | Rewrite against new roles; keep sequence, chapter-progress, and 44px assertions |
+| `b1-workflow-authority.spec.ts` | Same, plus `#market-context-error`, `#source-correction-source-error`, `#comparison-scope-error` | Rewrite; **keep** the R-17 assertions that the error lands on the owning screen and the control takes focus |
+| `payment-boundary.test.ts:39-64` | `readFileSync` on component names and import symbols | Update paths. **Keep the negative assertions** — `AuditPrePaymentJourney` must still not reach `/api/audit/extract` |
+| `landing-audit-handoff.spec.ts` | Landing hero + `/audit/v2?entry=landing-paid` | Should survive; re-run and confirm |
+| `e1-runnable-journey.spec.ts` | Pre-payment only | Untouched; must stay green as proof the pre-payment surface was not disturbed |
 
-**Rewrite principle:** assert journey invariants — screen order, what the brief
-contains at submission, which screen an error routes to, that the primary
-action is reachable — not form-field labels. A label change must not turn CI
-red; a lost screen must.
-
-Also: `tests/e2e/offline-network.spec.ts` asserts no unexpected external
-requests over `/`, `/audit`, `/audit/fixture`. **Do not add a font, icon, or
-image CDN** — the prototype's Google Fonts link must not be copied across;
-Geist is already local via `--font-geist-sans`.
+**Rewrite principle:** assert journey invariants — screen order, the submitted
+brief, which screen an error routes to, CTA reachability — plus the §8 screen
+contract. A label change must not turn CI red; a lost screen or a lost
+interaction pattern must.
 
 ### Green CI is not delivery
 Every criterion in §7 is judgment. `specs/README.md:31` — *"Do not mark a spec
-verified because the build passes."* A slice that is green and fails Gate 1 has
-failed.
+verified because the build passes."*
 
 ---
 
 ## 9. Deferred / future hardening
 
-Real, and out of scope for this recovery:
-
 - **Pre-payment frame alignment.** `AuditPrePaymentJourney` is a 768px column
-  with `clamp()` display headings vs the intake's 560px / 20–24px. Structurally
-  it is already prototype-shaped (kicker, heading, lead, scan steps, floating
-  pay bar). Revisit only if Gate 2 shows the seam.
-- **`/audit/fixture`** — a complete parallel journey (`FixtureJourney.tsx`,
-  1,617 lines) in a card-heavier language. Not customer-facing. Leave it.
-- **`audit.module.css`** — 30 KB serving the run, report, and legacy surfaces.
-  The intake stops depending on it; a broader cleanup is separate work.
-- **Durable persistence.** State is `sessionStorage` (`nuave.audit.workflow.v9`).
-  R-15 explicitly declines to call this idempotency. Unchanged here; bump the
+  with `clamp()` display headings vs the intake's 560px / 20–24px.
+  Structurally already prototype-shaped. Revisit only if Gate 2 shows the seam.
+- **Category alternatives in the extraction contract.** Would let Category
+  become three cards as the prototype shows. A deliberate contract change,
+  not part of this recovery.
+- **Lifting the controller out of `AuditWorkflow`.** The 1,100 lines of
+  orchestration inside a client component are worth extracting eventually.
+  Explicitly not now — §6.0 depends on leaving it alone.
+- **`/audit/fixture`** — a complete parallel journey (1,617 lines), not
+  customer-facing. Leave it.
+- **`audit.module.css`** — 30 KB still serving run, report, and legacy
+  surfaces after the intake stops depending on it.
+- **Durable persistence.** State is `sessionStorage`
+  (`nuave.audit.workflow.v9`); R-15 declines to call this idempotency. Bump the
   key only if the shape changes (R-26).
 - **Aggressive invalidation.** `updateBrief` → `clearAfterBriefChange()`
-  (`AuditWorkflow.tsx:668`) discards the pack, observations and report on any
-  brief edit. Correct per R-14, but a customer editing after generation loses
-  work silently. Worth a warning later, not now.
-- **Screenshot / visual-regression tooling.** None exists. Founder eyes remain
+  (`AuditWorkflow.tsx:668`) discards pack, observations, and report on any brief
+  edit. Correct per R-14, but silent. Worth a warning later.
+- **Screenshot / visual-regression tooling.** None exists; founder eyes remain
   the mechanism.
 - **`NOW.md` and the Spec 007 status ledger are stale** — `NOW.md` still names
   Spec 003 and `/audit`; `EXECUTION_PLAN.md:296` shows every package "Not
-  started" though all eight shipped. Reconcile after Gate 2, not during.
-- Rare paths kept working but not re-designed: multi-branch disambiguation
-  beyond the R-12 model, conflicting-source display, sensitive-text stop.
+  started" though all eight shipped. Reconcile after Gate 2.
 
 ---
 
-## 10. Risks and founder decisions
+## 10. Risks
 
-**One decision is genuinely open** — the rest are settled and cited above.
+Revision 1 listed the customer-reasons mapping as an open founder decision.
+**It is now closed** — §6.2 derives the mapping from the field types, so nothing
+is left to interpretation. Two risks remain, each with a stated response:
 
-**Customer-reasons as one interaction.** S4 proposes a single chip multi-select
-("Kenapa pelanggan biasanya mencari yang seperti ini?") populating three
-required brief fields — `target_customer`, `verified_customer_needs`,
-`verified_decision_criteria` — instead of three separate inputs. This is the
-prototype's design and the product contract permits it explicitly (`:88`,
-"One UI interaction may populate or normalize into several engine fields"). It
-is called out here because it is the one place the plan maps user-facing
-language onto engine structure rather than showing the structure. If the split
-matters for question quality, say so before S4 and it becomes two screens.
-
-**Two risks worth naming, both with a stated response:**
-
-1. *Test rewrites hide a regression.* Mitigation: `workflow-authority.test.ts`
-   and `e1-workflow-navigation.test.ts` stay unchanged as the state-machine net,
-   and the rewritten e2e specs keep the R-17 error-routing and touch-target
-   assertions rather than dropping them.
-2. *Scope creep into the engine.* Mitigation: §3 is a fence. `types.ts`,
+1. *A test rewrite hides a regression.* `workflow-authority.test.ts` and
+   `e1-workflow-navigation.test.ts` stay unchanged as the state-machine net; the
+   rewritten e2e specs keep the R-17 error-routing and touch-target assertions;
+   and the new screen contract (§8) pins the interaction model that regressed
+   the first time.
+2. *Scope creep into the engine.* §3 is a fence. `types.ts`,
    `workflow-authority.ts`'s logic, and the API routes are unchanged; a worker
    editing them has left scope and should report rather than proceed.
 
 ---
 
-## Verification of this plan
+## What changed in revision 2
 
-The test is the founder's own:
+| # | Finding | Correction |
+|---|---|---|
+| 1 | S7 repointed routes at a presentation-only journey, dropping the controller | §6.0 — `AuditWorkflow` stays the controller; new screens render inside its step branches behind a per-screen surface flag |
+| 2 | Scope had no control for the required `brand_type`; Category assumed alternatives that `ExtractionDraft` does not carry | §6.1 — R-16 empty-draft reveal for every AI-owned field; Category becomes one prefilled card + **Ganti** |
+| 3 | Customer reasons had no field mapping | §6.2 — three groups derived from the field types, exact mutations, e2e assertion on the submitted brief |
+| 4 | Gate 1 covered only cards; most patterns were approved after S7 deleted the old path | §6.3 S2 is a vertical slice showing every pattern; deletion moves to S7, after Gate 2 |
+| 5 | The question-edit contract named one of R-10's four hard blocks and no save transaction | §6.5 — full transaction reusing `validateCanonicalIndonesianQuestionPack`; tests for all four classes |
+| 6 | Safeguards did not protect the interaction model | §8 — a screen contract spec |
+| 7 | "No source language" contradicted R-12 | §2 test 4 and Gate 1 — no internal metadata; the customer's own source stays visible |
 
-> If we execute this plan well, will the founder open Nuave and immediately
-> recognise the Airbnb-inspired experience they approved, while retaining the
-> technical correctness already achieved?
-
-The plan answers yes because the missing 20% is unusually well-defined: three
-named components from R-27 that were never built, one frame, and the screens
-that had nowhere to land without them. The state machine, tokens, chapter
-progress, bottom navigation, and every engine contract already exist and are
-reused unchanged. Gate 1 tests the recognition within one slice of work; Gate 2
-and `npm run verify` together test that nothing correct was lost.
+Every code claim above was verified in the tree: `openai.ts:194-216`
+(`brand_type: ""`), `types.ts:96-100` and `:136-144` (field types),
+`questions-id.ts:132-150` (separate projection), `:635-780` (all four hard-block
+rules already implemented), `AuditWorkflow.tsx:1024-1045` (no save validation
+today), `SourceHero.tsx:59-95` (handoff-driven extraction).
