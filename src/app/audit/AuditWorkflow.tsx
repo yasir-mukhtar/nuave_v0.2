@@ -1355,18 +1355,6 @@ export default function AuditWorkflow() {
     setFieldErrors({});
   }
 
-  function backToSource() {
-    operationGeneration.invalidate("Navigated back to source");
-    varianceInFlightRunKey.current = null;
-    setBusy(null);
-    setFactsExtracted(false);
-    setWorkflowMeta((current) => ({
-      ...current,
-      intakeScreen: "brand-confirm",
-    }));
-    setFieldErrors({});
-  }
-
   function backToFacts() {
     operationGeneration.invalidate("Navigated back to business facts");
     varianceInFlightRunKey.current = null;
@@ -1519,7 +1507,6 @@ export default function AuditWorkflow() {
           onAcceptComparison={updateComparisonTarget}
           onContinue={continueIntake}
           onBack={goBackInIntake}
-          onBackToSource={backToSource}
           onGenerate={generatePrompts}
         />
       ) : null}

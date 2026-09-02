@@ -44,46 +44,43 @@ export default function AuditRunStep({
     <section className={`${styles.workspace} ${styles.workspaceFocused}`}>
       <header className={styles.stageIntro} tabIndex={-1} id="stage-4">
         <p className={styles.stageMeta}>
-          Step 4 of 4 <span aria-hidden="true">·</span> Run audit
+          Langkah 4 dari 4 <span aria-hidden="true">·</span> Jalankan audit
         </p>
         <h1>
           {reporting
-            ? "All observations are complete. Creating the report…"
-            : "Collecting ten independent observations."}
+            ? "Semua pengamatan selesai. Laporan sedang dibuat."
+            : "Menjalankan sepuluh pertanyaan audit."}
         </h1>
         <p>
-          This progress comes from live server responses. Technical failures
-          retry automatically up to two more times per question under the same
-          locked method; completed observations are never rerun, and failed
-          attempts remain in the evidence. The browser must stay open: closing
-          the tab stops the run, with no continuation in the background.
+          Status ini berasal dari jawaban server. Gangguan teknis dapat dicoba
+          kembali hingga dua kali untuk setiap pertanyaan. Pengamatan yang
+          selesai tidak diulang. Halaman harus tetap terbuka karena audit tidak
+          berjalan di latar belakang.
         </p>
       </header>
 
       {runUnfinished ? (
-        <AuditNotice title="The audit could not be completed" tone="danger">
-          {runUnfinished.completed} of 10 questions were evaluated.{" "}
-          {runUnfinished.failedPromptIds.length} question
-          {runUnfinished.failedPromptIds.length === 1 ? "" : "s"} exhausted
-          automatic technical recovery and is marked &ldquo;not yet tested
-          successfully&rdquo; below. Nuave delivers ten tests and ten tests
-          only, so no report is created before 10/10 evaluable observations and
-          no partial report exists. Every completed observation and every
-          attempt remains preserved and is not rerun. Ask for help:
-          founder-assisted recovery may retry only the affected questions under
-          the locked method.
+        <AuditNotice title="Audit belum dapat diselesaikan" tone="danger">
+          {runUnfinished.completed} dari 10 pertanyaan telah diperiksa.{" "}
+          {runUnfinished.failedPromptIds.length} pertanyaan tidak berhasil
+          dipulihkan secara otomatis. Laporan tidak dibuat sebelum 10 dari 10
+          pengamatan dapat dinilai. Pengamatan dan percobaan yang selesai tetap
+          tersimpan dan tidak diulang. Minta bantuan Nuave untuk melanjutkan
+          pertanyaan yang gagal.
         </AuditNotice>
       ) : interrupted && completed > 0 ? (
-        <AuditNotice title="The audit was interrupted" tone="danger">
-          The audit runs while this page stays open: the browser must remain
-          open during the run, and closing the tab stops it. {completed} of 10
-          observations were saved and are preserved in this session; they are
-          not rerun. This phase does not continue in the background, and no
-          report is created before 10/10 evaluable observations.
+        <AuditNotice title="Audit terhenti" tone="danger">
+          Audit berjalan selama halaman ini terbuka. {completed} dari 10
+          pengamatan tersimpan di sesi ini dan tidak diulang. Audit tidak
+          dilanjutkan di latar belakang. Laporan tidak dibuat sebelum 10 dari 10
+          pengamatan dapat dinilai.
         </AuditNotice>
       ) : null}
 
-      <section className={styles.runSection} aria-label="Audit observations">
+      <section
+        className={styles.runSection}
+        aria-label="Hasil pengamatan audit"
+      >
         <AuditProgress completed={completed} reporting={reporting} />
 
         <div className={styles.runList}>

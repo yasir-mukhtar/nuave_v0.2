@@ -11,7 +11,7 @@ import { journeyWebServer } from "./tests/e2e/shared-config";
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch:
-    /(fixture-journey|landing-audit-handoff|live-audit-variance|b1-workflow-authority|offline-network)\.spec\.ts/,
+    /(fixture-journey|landing-audit-handoff|live-audit-variance|b1-workflow-authority|offline-network|e1-runnable-journey|e1-postpayment-journey|wave1-workflow-lifecycle)\.spec\.ts/,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

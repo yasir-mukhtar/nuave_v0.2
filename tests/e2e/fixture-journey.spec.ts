@@ -101,7 +101,7 @@ test.describe("entry and landing (AC-01)", () => {
     });
     await expect(
       hero.getByRole("heading", {
-        name: "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
+        name: "Cek bisnis Anda di AI",
       }),
     ).toBeVisible();
     await expect(hero.getByPlaceholder("https://bisnisanda.com")).toBeVisible();

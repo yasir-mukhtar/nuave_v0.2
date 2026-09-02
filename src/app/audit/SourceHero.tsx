@@ -26,6 +26,9 @@ export default function SourceHero({
   contentClassName = "",
   backdropClassName = "",
   backdropOverlay = null,
+  heading = "Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?",
+  subheading = "Cek brand Anda di hasil pencarian AI sekarang.",
+  submitLabel = "Lanjutkan audit",
 }: {
   initialValue: string;
   extracting: boolean;
@@ -38,6 +41,9 @@ export default function SourceHero({
   contentClassName?: string;
   backdropClassName?: string;
   backdropOverlay?: ReactNode;
+  heading?: string;
+  subheading?: string;
+  submitLabel?: string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [localError, setLocalError] = useState("");
@@ -134,12 +140,8 @@ export default function SourceHero({
           </div>
         ) : null}
 
-        <h1 className={`${styles.heroHeading} type-display`}>
-          Saat customer minta rekomendasi ke ChatGPT, apakah brand Anda disebut?
-        </h1>
-        <p className={`${styles.heroSubheading} type-copy-lg`}>
-          Cek brand Anda di hasil pencarian AI sekarang.
-        </p>
+        <h1 className={`${styles.heroHeading} type-display`}>{heading}</h1>
+        <p className={`${styles.heroSubheading} type-copy-lg`}>{subheading}</p>
 
         <form onSubmit={handleSubmit} className={styles.heroForm} noValidate>
           <Field className="w-full">
@@ -173,7 +175,7 @@ export default function SourceHero({
                 size="icon"
                 className={styles.heroSubmit}
                 disabled={!hasValue || extracting}
-                aria-label="Lanjutkan audit"
+                aria-label={submitLabel}
                 aria-busy={extracting}
               >
                 {extracting ? (

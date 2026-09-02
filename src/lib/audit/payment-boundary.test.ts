@@ -38,14 +38,18 @@ describe("C1 payment boundary", () => {
 
   it("keeps the supported landing architecture identity-only", () => {
     const landing = source("src/components/LandingAuditHero.tsx");
+    const prepayment = source("src/components/AuditPrePaymentJourney.tsx");
     const workflow = source("src/app/audit/AuditWorkflow.tsx");
 
-    expect(landing).toContain("/api/audit/identity");
-    expect(landing).toContain("AUDIT_SOURCE_HANDOFF_STORAGE_KEY");
-    expect(landing).not.toContain("/api/audit/extract");
-    expect(landing).not.toContain("createInitialExtractedAuditWorkflowState");
-    expect(landing).not.toContain("factsExtracted");
-    expect(landing).not.toContain("landing-extracted");
+    expect(landing).toContain("AuditPrePaymentJourney");
+    expect(prepayment).toContain("/api/audit/identity");
+    expect(prepayment).toContain("AUDIT_SOURCE_HANDOFF_STORAGE_KEY");
+    expect(prepayment).not.toContain("/api/audit/extract");
+    expect(prepayment).not.toContain(
+      "createInitialExtractedAuditWorkflowState",
+    );
+    expect(prepayment).not.toContain("factsExtracted");
+    expect(prepayment).not.toContain("landing-extracted");
 
     expect(workflow).toContain("/api/audit/extract");
     expect(workflow).toContain("submitSourceCorrection");
