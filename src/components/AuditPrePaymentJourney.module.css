@@ -120,6 +120,17 @@
   background: var(--action-soft);
 }
 
+.scanStepFailed {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.scanStepFailed .scanMarker {
+  border-color: var(--red);
+  background: var(--red-light);
+  color: var(--red);
+}
+
 .scanError {
   margin: 0;
   border-left: 3px solid var(--red);

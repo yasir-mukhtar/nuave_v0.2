@@ -271,9 +271,18 @@ test("identity scan failure stays recoverable and still does not call extraction
 }) => {
   let identityCalls = 0;
   let extractionPostCalls = 0;
+  let releaseFirstIdentityRequest = () => {};
+  let releaseSecondIdentityRequest = () => {};
+  const firstIdentityRequest = new Promise<void>((resolve) => {
+    releaseFirstIdentityRequest = resolve;
+  });
+  const secondIdentityRequest = new Promise<void>((resolve) => {
+    releaseSecondIdentityRequest = resolve;
+  });
   await page.route("**/api/audit/identity*", async (route) => {
     identityCalls += 1;
     if (identityCalls === 1) {
+      await firstIdentityRequest;
       await route.fulfill({
         status: 503,
         contentType: "application/json",
@@ -284,6 +293,7 @@ test("identity scan failure stays recoverable and still does not call extraction
       });
       return;
     }
+    await secondIdentityRequest;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -301,16 +311,29 @@ test("identity scan failure stays recoverable and still does not call extraction
   await expect(
     page.getByRole("heading", { name: "Membaca identitas bisnis" }),
   ).toBeVisible();
+  const scanStatus = page.locator(
+    '[data-stage="identity-scan"] [role="status"]',
+  );
+  await expect(scanStatus).toHaveAttribute("aria-busy", "true");
+  await expect(scanStatus.locator("svg.animate-spin")).toHaveCount(1);
+  releaseFirstIdentityRequest();
   await expect(
     page.getByText(
       "Sumber publik belum dapat dibaca. Periksa link lalu coba lagi.",
       { exact: true },
     ),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ubah sumber" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Coba lagi" })).toBeVisible();
+  await expect(scanStatus).toHaveAttribute("aria-busy", "false");
+  await expect(scanStatus.locator("svg.animate-spin")).toHaveCount(0);
   expect(extractionPostCalls).toBe(0);
 
   await page.getByRole("button", { name: "Coba lagi" }).click();
+  await expect.poll(() => identityCalls).toBe(2);
+  await expect(scanStatus).toHaveAttribute("aria-busy", "true");
+  await expect(scanStatus.locator("svg.animate-spin")).toHaveCount(1);
+  releaseSecondIdentityRequest();
   await expect(
     page.getByRole("heading", { name: "Pratinjau identitas bisnis" }),
   ).toBeVisible();
