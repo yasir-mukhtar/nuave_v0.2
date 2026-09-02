@@ -8,7 +8,12 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { IconArrowLeft, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconCheck,
+  IconLoader2,
+  IconX,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -80,10 +85,12 @@ function isValidEmail(value: string) {
 }
 
 function IdentityScanStep({
+  loading,
   error,
   onRetry,
   onEditSource,
 }: {
+  loading: boolean;
   error: string;
   onRetry: () => void;
   onEditSource: () => void;
@@ -104,14 +111,33 @@ function IdentityScanStep({
           Belum ada pertanyaan audit atau analisis oleh model AI.
         </p>
       </div>
-      <div className={styles.scanCard} role="status" aria-live="polite">
+      <div
+        className={styles.scanCard}
+        role="status"
+        aria-live="polite"
+        aria-busy={loading}
+      >
         <p className={styles.scanDescription}>
           Proses ini tidak memulai audit dan tidak membuat rekomendasi.
         </p>
         <ol className={styles.scanSteps}>
-          <li className={`${styles.scanStep} ${styles.scanStepActive}`}>
+          <li
+            className={[
+              styles.scanStep,
+              loading ? styles.scanStepActive : "",
+              error ? styles.scanStepFailed : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
             <span className={styles.scanMarker} aria-hidden="true">
-              <IconLoader2 className="animate-spin" />
+              {loading ? (
+                <IconLoader2 className="animate-spin" />
+              ) : error ? (
+                <IconX />
+              ) : (
+                <IconCheck />
+              )}
             </span>
             <span>Memeriksa sumber publik</span>
           </li>
@@ -679,6 +705,7 @@ export default function AuditPrePaymentJourney({
       ) : null}
       {step === "scan" ? (
         <IdentityScanStep
+          loading={identityLoading}
           error={identityError}
           onRetry={() => void readIdentity(source)}
           onEditSource={editSource}
