@@ -1,7 +1,7 @@
 # Intake experience recovery plan — Spec 007 R-27 conformance
 
-> Status: **Revision 3, ready for worker handoff on founder approval**
-> Created: 2026-09-02 · Revised: 2026-09-02 (two review rounds)
+> Status: **Revision 3.1, ready for worker handoff on founder approval**
+> Created: 2026-09-02 · Revised: 2026-09-02 (two review rounds + closure correction)
 > Companion to [`SPEC.md`](./SPEC.md) (Approved) and
 > [`EXECUTION_PLAN.md`](./EXECUTION_PLAN.md).
 > Purpose: recover the approved Airbnb-style intake experience by finishing the
@@ -289,9 +289,9 @@ src/app/audit/intake/
 
 ### 6.1 Drafted values stay correctable
 
-`extractionDraftOrManualFallback` (`openai.ts:194-216`) returns
-`brand_type: ""`, `entity_scope: ""`, and `target_customer: ""` on the
-manual-fallback path. R-12 makes `brand_type` required and owns it on the Scope
+`extractionDraftOrManualFallback` (`openai.ts:194-221`) returns
+`brand_type: ""`, `entity_scope: ""`, `target_customer: ""`, and `usp: ""`
+on the manual-fallback path. R-12 makes `brand_type` required and owns it on the Scope
 screen, so cards alone would strand that customer with a validation error and no
 control.
 
@@ -309,9 +309,12 @@ correct* Nuave's understanding. The rule is therefore:
 "No other control" is the scope limit, and it keeps this from becoming a field
 per screen. A field already correctable through its screen's primary control —
 `category` via its card, `verified_offerings` via chips, `market_context` via
-cards — gets no extra statement. Today the rule binds exactly two fields:
-`brand_type` on Scope, and `target_customer` on customer-reasons (§6.2 already
-gives it this treatment). The happy path on Scope stays one tap plus a glance.
+cards — gets no extra statement. Today the rule binds exactly three fields:
+`brand_type` on Scope, `target_customer` on customer-reasons (§6.2 already
+gives it this treatment), and `usp` on Facts. `usp` is extraction-owned
+(`workflow-authority.ts:147-151`) and manual fallback returns it empty
+(`openai.ts:221`), so R-16 applies even though the field is optional. The happy
+path on Scope stays one tap plus a glance.
 
 **Category — one card, not three.** `extractionDraftSchema.category` is a
 single `z.string()` (`types.ts:138`); there is no alternatives array. Adding one
@@ -395,8 +398,9 @@ R-13 proposal as one card with accept / replace, plus the `alternatif lain di
 kategori <kategori>` fallback — no entity picker).
 
 **S5 — Chapter 4.** facts (one optional textarea with an `Opsional` badge;
-`usp` as a read-first statement with **Ubah** when drafted, per §6.1). Review
-complete across all fields, primary action **"Buat pertanyaan audit"**.
+`usp` as a read-first statement with **Ubah** when drafted, and an open input
+with a plain explanation when empty, per §6.1). Review complete across all
+fields, primary action **"Buat pertanyaan audit"**.
 
 **S6 — Flip the default (→ Gate 2).** `PRODUCTION_INTAKE_SURFACE` becomes the
 full set; rewrite the legacy journey specs and repoint the preview suite at the
@@ -422,12 +426,20 @@ throughout. Today `editPrompt` (`AuditWorkflow.tsx:1024-1045`) performs **no
 validation at all** — it writes the text and clears downstream state, so a
 customer only learns their edit is invalid when they press **Jalankan audit**.
 
-**Every check already exists and is reused, not rewritten.**
+**Every check already exists and is reused; only one customer-facing message
+needs localization.**
 `validateCanonicalIndonesianQuestionPack` (`questions-id.ts:635-780`) emits
 `empty`, `length`, `unexecutable`, `question_form`, `identity_leakage`,
 `competitor_leakage`, `identity_requirement`, `comparison_relation`,
-`unsupported_premise`, `composition`, and `distinctness`, with Indonesian
-messages. It calls `hasIndonesianComparisonRelation` (`:361`), which reads
+`unsupported_premise`, `composition`, and `distinctness`. Every message
+this edit transaction can surface is Indonesian except `distinctness`, which
+currently emits `Question N duplicates another question.` (`:771`). S2
+changes that message — not the rule or its attribution — to:
+
+> **Pertanyaan ini sama dengan pertanyaan lain dalam paket. Setiap pertanyaan
+> harus berbeda.**
+
+It calls `hasIndonesianComparisonRelation` (`:361`), which reads
 `comparisonRelationMarkers` off the matrix.
 
 Two things about it decide the design:
@@ -472,9 +484,10 @@ The transaction:
 3. **Simpan** computes `introduced` as above.
 4. `introduced` non-empty → **the save is rejected.** The messages render in
    `role="alert"` beneath the textarea, focus stays there, `onEdit` is never
-   called, and nothing downstream is cleared. An issue attributed to another
-   slot names that slot in its own message, so the customer still learns what
-   they collided with.
+   called, and nothing downstream is cleared. For `distinctness`, do not
+   present the validator's later-slot attribution as if that unchanged slot
+   caused the edit: render the localized message above beneath the card being
+   edited. `composition` keeps its pack-level Indonesian message.
 5. `introduced` empty → `onEdit(index, question)` (the existing callback,
    unchanged), the card returns to read-only, and
    `INDONESIAN_PURPOSE_DRIFT_WARNING` (`questions-id.ts:77`) renders beside it
@@ -487,9 +500,10 @@ The transaction:
 **Required tests:** a rejected save leaves the pack unchanged for each of —
 forbidden identity on an unnamed slot; missing required identity on a named
 slot; slot 9 without a comparison relation; over-length and non-question text;
-**a duplicate of another slot's question** (attributed elsewhere); and **an
-edit that breaks 6/4 composition** (`slot: null`). Plus one asserting the drift
-warning appears after a valid edit and does not block.
+**a duplicate of another slot's question** (attributed elsewhere), asserting
+the card-local Indonesian message and the absence of English `Question N`
+copy; and **an edit that breaks 6/4 composition** (`slot: null`). Plus one
+asserting the drift warning appears after a valid edit and does not block.
 
 ---
 
@@ -583,6 +597,8 @@ interaction model itself:
 - single-choice screens (scope, category, market) expose cards or radios, and
   **no primary text input**;
 - offerings and customer-reasons expose selected chips;
+- `usp` is read-first with **Ubah** when drafted; an empty extraction opens an
+  input with a plain explanation rather than rendering an unexplained blank;
 - the readback is read-first: values visible, **Ubah** present, no textarea
   until it is pressed;
 - question textareas are absent until **Ubah**;
@@ -679,7 +695,7 @@ official-source contradiction (§2).
 | 1 | The save transaction passed a `PromptPack` to a `string[]` validator and filtered issues to the edited slot — which drops `composition` (`slot: null`) and misattributes `distinctness` to the later duplicate | §6.5 — map to `question` strings; block on a **diff of introduced issues** regardless of slot; two more required tests; the drift warning shows after every successful edit rather than pretending to be detected |
 | 2 | The surface flag was described both as growing per slice and as leaving production on the old surface, and the preview was "forced full" when most screens did not exist | §6.0 — two named constants, an optional `AuditWorkflow` prop, and a stage table: production empty through S5, full at S6, deleted at S7; preview carries the implemented set |
 | 3 | S2 proposed one question group, but `QuestionsStep` is a single renderer over the whole matrix with no group-level fallback | §6.3 — question review is completed in S2; removed from S5 |
-| 4 | "When the draft has a value, no field is shown" made a populated but wrong value uncorrectable | §6.1 — read-first statement with **Ubah** when populated, open input when empty, scoped to fields with no other control on their screen (today: `brand_type`, `target_customer`) |
+| 4 | "When the draft has a value, no field is shown" made a populated but wrong value uncorrectable | §6.1 — read-first statement with **Ubah** when populated, open input when empty, scoped to fields with no other control on their screen; Revision 3.1 corrects the bound list to `brand_type`, `target_customer`, and `usp` |
 | 5 | Legacy rewrites correctly waited for S6, but the new surface then went untested until the flip | §8 — a preview journey suite and the screen contract both start in S2 and grow through S5; legacy specs rewritten and the preview suite repointed in S6 |
 
 Plus a wording correction in §6.2: the explicit mapping is a **choice** this
@@ -687,7 +703,16 @@ plan makes and defends, not something the schema dictates —
 `V1_PRODUCT_CONTRACT.md:88` permits the combined interaction, and §9 records
 revisiting it.
 
-Code claims verified in the tree: `openai.ts:194-216` (`brand_type: ""`),
+**Revision 3.1** closes two final handoff inconsistencies:
+
+- §6.5 keeps the issue-set diff but localizes `distinctness` with a card-local
+  Indonesian message and requires the duplicate-save test to assert that copy.
+- §6.1 includes extraction-owned `usp` as the third field governed by the
+  populated/read-first versus empty/open-input rule; S5 and §8 now cover both
+  states.
+
+Code claims verified in the tree: `openai.ts:194-221` (empty fallback
+`brand_type`, `entity_scope`, `target_customer`, and `usp`),
 `types.ts:96-100` and `:136-144` (field types), `questions-id.ts:132-150`
 (separate projection), `:635-780` (rule set, `slot: null` on `composition`,
 later-duplicate attribution on `distinctness`), `:77`
