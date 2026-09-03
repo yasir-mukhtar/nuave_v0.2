@@ -1,6 +1,6 @@
 # NUAVE — Clean Rebuild Plan for the Airbnb-Inspired Business Intake
 
-**Status:** Revision 2, draft for independent review
+**Status:** Revision 3, draft for final narrow closure check
 
 **Date:** 2026-09-03
 
@@ -8,7 +8,7 @@
 
 **Purpose:** Replace the customer-facing legacy/hybrid business intake with one coherent, Airbnb-inspired intake journey while preserving safe downstream capabilities where they remain suitable.
 
-This document is an implementation plan, not authorization to merge, deploy, make paid-provider calls, or change production. Revision 2 was checked against `origin/main` at `e531ff4653c324007eb049bee93f2a3b922cf216`. Before implementation, the executing agent must refresh that baseline, read `AGENTS.md`, inspect the current repository and branch, and revise this draft if later code invalidates a load-bearing assumption.
+This document is an implementation plan, not authorization to merge, deploy, make paid-provider calls, or change production. Revision 2 was checked against `origin/main` at `e531ff4653c324007eb049bee93f2a3b922cf216`; Revision 3 incorporates the narrow closure check of plan commit `c8eadaba0ca674ed1ce615a1826c0392f879f18f`. Revision 3 does not claim that the repository baseline was refreshed. Before implementation, the executing agent must refresh it, read `AGENTS.md`, inspect the current repository and branch, and revise this draft if later code invalidates a load-bearing assumption.
 
 ---
 
@@ -34,12 +34,15 @@ Security, payment authority, privacy, and the locked product promise remain hard
 
 ### Authority order
 
-1. Locked V1 product contract and safety/payment boundaries.
-2. Approved Airbnb intake prototype and its experience invariants.
-3. Explicit founder decisions recorded during the UX gates in this plan.
-4. New intake architecture and data contracts.
-5. Existing backend contracts and implementation, where compatible.
-6. Legacy intake implementation and tests, for dependency discovery and rollback only.
+1. Safety, legal, privacy, and server-authoritative payment boundaries.
+2. The latest explicit founder decision that clearly states its scope and supersedes an earlier product or experience decision, including decisions recorded at the UX gates in this plan.
+3. The locked V1 product contract for behavior not explicitly superseded.
+4. The approved Airbnb intake prototype and its experience invariants.
+5. New intake architecture and data contracts.
+6. Existing backend contracts and implementation, where compatible.
+7. Legacy intake implementation and tests, for dependency discovery and rollback only.
+
+Phase 0 must sweep every intake-relevant canonical document named by `docs/INDEX.md`, plus the approved prototype and its handoff artifacts, for conflicts affecting behavior, copy, or customer-visible states. Record each conflict, the applicable authority above, and its resolution. Do not silently choose between documents at the same authority level; an unclear same-level conflict blocks only the affected decision and returns to Yasir.
 
 The legacy intake is **not** a design reference. An agent may inspect it to identify APIs, persistence, state transitions, and downstream dependencies, but may not copy its screen hierarchy, form composition, internal vocabulary, navigation, or validation presentation into the new experience.
 
@@ -99,7 +102,20 @@ Do not reopen these decisions without a concrete technical, security, or legal b
 - After material business facts change, generated questions become stale and must be regenerated and reviewed again.
 - The customer explicitly confirms before the audit runs.
 
-The complete composed path to protect is:
+### Revision 3 release scope
+
+This rebuild delivers the complete new intake journey on Nuave's **current simulated-payment product path**. It does not implement real payment, a production order service, server-owned paid intake storage, or cross-device paid resume. Those capabilities are separate paid-launch prerequisites in Section 8 and may not be implied by fixture or browser-only behavior.
+
+The complete composed path delivered by this rebuild is:
+
+```text
+Source → Free identity preview → Clearly simulated order/payment handoff
+→ Preparation → New intake journey → Final intake review
+→ Generate 10 questions → Question review → Explicit run confirmation
+→ Audit → Report
+```
+
+The later paid-launch target is:
 
 ```text
 Source → Free identity preview → Order/payment → Verified paid preparation
@@ -165,7 +181,7 @@ This ledger—not the legacy screen order—defines the new journey controller.
 
 ```mermaid
 flowchart TD
-    A["Source and free identity preview"] --> B["Verified payment and paid preparation"]
+    A["Source and free identity preview"] --> B["Current simulation or future verified paid preparation"]
     B --> C["New IntakeJourney and IntakeState"]
     C --> D["intakeToBusinessBrief()"]
     D --> E["Existing questions, audit, and report"]
@@ -276,22 +292,31 @@ It observes one event/record from intake: a confirmed fact version plus its deri
 
 ### 4.7 Persistence decision
 
-For the paid target product, intake state is server-persisted against the verified order and a version. The browser stores only an opaque order/session pointer plus a disposable cache. Clearing browser storage must not destroy paid preparation or confirmed work, and an authorized customer must be able to resume on another device.
+Do not decompose, convert, or migrate `nuave.audit.workflow.v9` in place. It remains owned by and accessible only to the complete legacy journey while legacy entries drain.
 
-The current repository still uses simulated payment and `sessionStorage`. The isolated fixture/preview may continue to do so, but it must be labelled non-durable and must not be presented as proof of paid resume. Real-payment cutover is blocked until the server-owned state contract is implemented and verified.
+For the current simulated rebuild, create two new versioned `sessionStorage` records:
+
+- `nuave.audit.intake.v1`, written only by `IntakeJourney`, contains mutable `IntakeState` and its current screen/version; and
+- `nuave.audit.workflow.v10`, written only by the narrowed macro/downstream workflow, contains preparation handoff/status, the immutable confirmed `BusinessBrief` snapshot, and question, audit, and report state.
+
+The completion handoff may copy an immutable derived snapshot from the intake record into the downstream record. It must never copy mutable intake ownership into `AuditWorkflow` or synchronize changes back into `IntakeState`. New simulated entries use the new records; existing `v9` entries remain on the legacy journey. There is no cross-version coercion or state translation.
+
+These `sessionStorage` records must support truthful refresh and revisit behavior within the same browser session, but they remain non-durable. The simulated route must not claim persistence after that session, paid durability, or cross-device resume.
+
+Before real payment launches, replace the browser persistence implementation behind the same narrow conceptual boundary with server-owned versioned intake state keyed to a verified order. The browser then stores only an opaque order/session pointer plus a disposable cache. Clearing browser storage must not destroy paid preparation or confirmed work, and an authorized customer must be able to resume on another device. Real-payment cutover is blocked until that server-owned contract is implemented and verified.
 
 Define one narrow persistence boundary, not a framework, covering:
 
 - current screen and chapter;
 - confirmed intake values;
 - preparation status;
-- server-owned verified order and state version;
+- current simulated journey/session and state version, with a future verified-order owner at paid launch;
 - generated-question version or invalidation state;
 - refresh/revisit restoration;
 - stale/incompatible state behavior; and
 - clean handoff to later audit stages.
 
-Do not silently coerce old saved intake state into the new UI. Either provide an explicit, tested migration for safe cases or restart the intake with a clear customer-safe explanation.
+Do not coerce old saved intake state into the new UI. This rebuild provides no `v9` migration: a `v9` entry stays on the complete legacy journey, while a deliberate restart creates new-version state with a clear simulation-safe explanation.
 
 ### 4.8 Cutover boundary
 
@@ -352,24 +377,25 @@ Yasir remains the final approver at every Founder UX Gate. Semantic/system work 
 
 ### Gate and rework rule
 
-- Every gate ends with an explicit **Approved** or **Changes requested** verdict. Silence or elapsed time is never approval; work waits without an assumed response SLA.
+- Every gate ends with an explicit **Approved** or **Changes requested** verdict. The planning target is a founder response within one working day per gate. This is a turnaround assumption, not automatic approval: silence or elapsed time is never approval, and dependent work waits.
+- While a gate waits, only work explicitly shown to be independent of the pending decision may continue. Do not build ahead against an unapproved experience assumption merely to protect the schedule.
 - Gate 0 and Gate 1 allow at most two bounded rework rounds. A second rejection stops downstream work and returns to the experience contract or architecture decision rather than applying a third cosmetic patch.
 - A failure at Gate 2, 3, or 4 returns to the earliest artifact invalidated by the finding. Later approvals do not protect a disproven earlier assumption.
 - Every gate package states what is real, mocked, incomplete, and intentionally deferred.
 
 ### Working estimates
 
-These are planning ranges for one focused implementation stream, not delivery promises. Founder waiting time, independent review, CI queueing, and approved live-provider work are excluded.
+These are planning ranges for one focused implementation stream, not delivery promises. Independent review, CI queueing, and approved live-provider work are excluded. The implementation budget remains **25–43 focused working days**; calendar planning adds up to five one-working-day founder gate turnarounds. If all five waits are sequential and meet the target, the calendar range is approximately **30–48 working days**. A later response extends calendar duration but never converts silence into approval.
 
 | Phase | Working range | Re-plan trigger |
 | --- | ---: | --- |
 | 0. Evidence and plan checkpoint | 3–5 working days | A root cause, state owner, or downstream dependency remains unknown |
 | 1. Archive and quarantine | 1–2 days | Legacy behavior cannot run independently after test isolation |
 | 2. Experience/data proof | 3–5 days | Prototype coverage, copy, mapping, or journey budget is unresolved |
-| 3. Controller/state boundary | 2–4 days | Split requires duplicate mutable state or broad downstream rewrite |
+| 3. Controller/state boundary and new storage records | 3–5 days | Split requires duplicate mutable state, `v9` migration, or broad downstream rewrite |
 | 4. Complete fixture skeleton | 4–6 days | Normal path exceeds the Gate 0 screen/time budget |
 | 5. Real interactions and mapper | 4–7 days | Real-shaped data breaks the approved archetypes or mapping |
-| 6. Preparation/persistence/downstream integration | 5–8 days | Paid/durable boundary cannot be isolated or state cannot resume safely |
+| 6. Current simulated preparation/persistence/downstream integration | 4–7 days | New-version browser state cannot restore safely or the paid-launch seam is not isolatable |
 | 7. Release-candidate hardening | 2–4 days | A customer state lacks deterministic coverage or founder approval |
 | 8. Cutover and cleanup | 1–2 days plus stabilization | In-flight work cannot drain or rollback as a whole journey |
 
@@ -388,12 +414,14 @@ Re-plan immediately, rather than consuming the remaining estimate, when any of t
 - Trace `AuditWorkflow`, `workflow-storage`, `workflow-authority`, `AuditV2Journey`, preparation, prompts, questions, run, and report handoffs. Identify the exact seam for the new controller.
 - Inspect existing analytics/telemetry for legacy completion, time, step drop-off, validation, correction, and support evidence. Nuave currently has zero paying v2 customers, so record unavailable metrics as unavailable; never fabricate a baseline.
 - Establish a comparable internal baseline by walking the legacy journey and the prototype with the same rich, sparse, and corrected fixtures. Record screen count, task completion, elapsed time, validation failures, and places where help was needed.
-- Reconcile authority conflicts that would otherwise produce different customer copy, especially hidden provenance in `V1_PRODUCT_CONTRACT.md` versus visible provenance labels in `VOICE.md`.
+- Sweep every intake-relevant canonical document named by `docs/INDEX.md`, plus the approved prototype and handoff artifacts, for conflicting behavior, copy, or customer-visible states. Create a conflict register containing the conflicting clauses, authority level, controlling decision, and required canonical edit. Reconcile every conflict that affects Gate 0, including hidden provenance in `V1_PRODUCT_CONTRACT.md` versus visible provenance labels in `VOICE.md`; an unclear same-level conflict returns to Yasir.
+- Confirm the Revision 3 scope split: this rebuild targets the current simulated-payment product, while real payment, server-owned paid state, cross-device resume, and paid remedies remain separately blocked paid-launch prerequisites.
+- Verify that `nuave.audit.workflow.v9` can remain legacy-only and identify the exact owners and serialization boundaries for new `nuave.audit.intake.v1` and `nuave.audit.workflow.v10` records. Do not plan an in-place `v9` decomposition.
 - Verify the recovery-plan branch remains archival evidence only and contains no code that should be forward-ported.
 
 #### Phase 0 checkpoint
 
-The only deliverable is a repository-grounded revision of this plan containing the forensic, state map, keep/rebuild decisions, available baseline evidence, canonical-document conflicts, exact files in scope, and revised estimates.
+The only deliverable is a repository-grounded revision of this plan containing the forensic, state map, keep/rebuild decisions, available baseline evidence, canonical-document conflict register, confirmed simulated-versus-paid scope split, exact storage ownership, exact files in scope, and revised estimates.
 
 Return **Proceed**, **Re-plan**, or **Stop**. No implementation begins from a plan whose load-bearing repository facts failed this checkpoint.
 
@@ -427,7 +455,7 @@ Then produce, as one Gate 0 package:
   5. readback with correction links;
 - a paper `IntakeState` model and complete intake-to-`BusinessBrief` mapping table, including all unmapped/lossy concepts and proposed downstream schema changes;
 - the field-level materiality/invalidation table;
-- the state-location decision: server-owned against verified order for the paid target; browser-only storage is fixture/simulation only;
+- the state-location decision: new versioned `sessionStorage` records for the current simulated rebuild, with server-owned state against a verified order retained as a separate paid-launch prerequisite;
 - representative fixtures shaped from captured preparation output: one rich case, at least two deliberately messy real-shaped cases, wrong/ambiguous identity, manual fallback, and preparation failure. Reuse sanitized recorded/test output where possible; do not make a live or paid call without separate authorization;
 - a privacy-safe funnel event list: intake started, screen viewed, continued, validation failed, answer corrected, resumed, and completed. Never record entered answer text, public-source content, contact/payment data, or credentials in analytics;
 - journey budgets and measurable outcomes.
@@ -435,7 +463,9 @@ Then produce, as one Gate 0 package:
 #### Gate 0 journey budgets
 
 - The normal prototype currently contains no more than 10 post-payment intake screens before question review, or 11 including question review. The approved ledger may preserve or reduce that maximum. Any increase requires Yasir’s explicit approval and a stated reason that cannot be handled through progressive disclosure.
-- Phase 0 sets a timed prototype baseline. The new happy path must not be more than 10% slower than that baseline in comparable internal dry runs unless Yasir approves a different numeric budget.
+- Phase 0 times the static prototype as an interaction target, not as evidence of real loading or recovery performance.
+- Gate 0 approves two separate numeric budgets: **(a)** happy-path active customer time against the prototype under comparable fixture conditions, targeted at no more than 10% slower; and **(b)** total elapsed time for a fixed deterministic recovery script containing one preparation wait and one failed attempt followed by retry. Record active customer time and system wait time separately.
+- Measure both budgets on the same fixed fixture scripts at Gates 1 and 4. A fast static dry run cannot satisfy the recovery budget, and variable live-provider latency cannot replace the deterministic comparison.
 - Every rich, sparse, and corrected fixture must reach final intake review without developer help or a dead end.
 - Correction rate is observed, not optimized downward: corrections can mean the product made uncertainty safely editable.
 - Per-screen funnel instrumentation ships with the new preview so post-cutover completion, elapsed time, validation, correction, resume, and drop-off can be compared once real usage exists.
@@ -450,7 +480,7 @@ Stop and ask Yasir to approve:
 - every prototype deviation;
 - mapping outcomes and any proposed downstream schema change;
 - materiality and regeneration behavior;
-- state/resume behavior, including cross-device expectations; and
+- current same-browser-session state/resume behavior and the explicitly deferred paid-launch cross-device boundary; and
 - numeric screen-count and completion-time budgets.
 
 No customer-facing implementation proceeds with an unmapped concept or unapproved copy/archetype.
@@ -462,13 +492,14 @@ This is a first-class technical phase, not late integration.
 - Implement the recorded decision that `IntakeJourney` owns its screen graph, mutable `IntakeState`, validation presentation, and intake persistence.
 - Narrow `AuditWorkflow` so it observes intake only at the immutable confirmed-fact/`BusinessBrief` handoff and continues to own later questions, run, report, and variance behavior where verified.
 - Introduce the smallest completion contract and persistence boundary needed by the approved state map.
+- Leave `nuave.audit.workflow.v9` unchanged and legacy-only. Introduce new `nuave.audit.intake.v1` and `nuave.audit.workflow.v10` `sessionStorage` records with one writer each, explicit schemas/versions, and no cross-version migration or reverse synchronization.
 - Ensure no parent effect can overwrite newer intake-owned state.
 - Keep the production legacy route working unchanged while the new path remains non-production.
 - Add contract/architecture tests proving one state writer, no legacy imports, no per-screen switching, and no editable `BusinessBrief` inside intake.
 
 Do not build the new screen composition in this phase. If the seam cannot be established without duplicate mutable state or a broad rewrite of downstream behavior, stop and re-plan.
 
-**Exit evidence:** state-ownership map matches code; old journey stays green; a minimal test harness can submit an immutable confirmed fact version to the downstream workflow.
+**Exit evidence:** state-ownership map matches code; old journey and its `v9` record stay green; serialization tests prove the two new records have one writer each; a minimal test harness can submit an immutable confirmed fact version to the downstream workflow. The actual parent-remount overwrite regression remains a Phase 5 exit requirement because the interactive state needed to reproduce it does not yet exist here.
 
 ### Phase 4 — Build the complete fixture-driven journey skeleton
 
@@ -484,7 +515,7 @@ The skeleton must be navigable end to end. No old screen may appear, including a
 
 #### Founder UX Gate 1 — Complete normal-path walkthrough
 
-Stop and provide one stable preview, exact scenario instructions, the sequential screenshot gallery, the measured screen/time budget, known placeholders, and deviations. Yasir returns **Approved** or **Changes requested** for the complete mobile-first journey; approval of representative components does not count.
+Stop and provide one stable preview, exact scenario instructions, the sequential screenshot gallery, measured screen count, both Gate 0 time budgets, known placeholders, and deviations. Yasir returns **Approved** or **Changes requested** for the complete mobile-first journey; approval of representative components does not count.
 
 ### Phase 5 — Implement real interactions, customer states, and mapper
 
@@ -497,6 +528,9 @@ Stop and provide one stable preview, exact scenario instructions, the sequential
 - Implement materiality comparison against normalized mapper output and question-pack invalidation state.
 - Add semantic headings, keyboard behavior, focus placement, error association, approximately 44px touch targets, and reduced-motion behavior.
 - Add behavior, contract, accessibility, and screenshot tests without pinning ordinary copy as the workflow authority.
+- Reproduce the cycle-2 overwrite failure against the new interactive path: create newer intake-owned state, force the parent workflow to remount or restore an older downstream snapshot, and assert that `IntakeState` remains authoritative and unchanged.
+
+**Exit evidence:** all approved interactive fixtures and mapper cases pass, and the parent-remount/restore regression proves that an older parent snapshot cannot overwrite newer intake-owned state.
 
 #### Founder UX Gate 2 — Interactive customer touchpoints
 
@@ -504,11 +538,11 @@ Stop and ask Yasir to validate selecting versus typing, editing drafts, optional
 
 ### Phase 6 — Integrate preparation, persistence, questions, and downstream flow
 
-- Connect personalized preparation only after the approved simulated handoff in the current phase and, before real payment, only after server-verified entitlement.
-- Enforce one current preparation job per verified order and draft version; reload/reconnect returns it.
+- Connect personalized preparation only after the approved, clearly simulated handoff for this rebuild. Preserve one explicit entitlement seam so a later paid launch can require server verification without changing the intake controller; do not build the real payment or server-state service in this phase.
+- For the simulated journey, enforce one current preparation job per journey/session and draft version; reload/reconnect within that browser session returns it. One job per verified order remains a paid-launch contract, not a simulated proof.
 - Initialize `IntakeState` from grounded preparation output without making the preparation schema dictate the UI.
-- Connect the approved persistence boundary. The fixture path may use disposable browser state; a real paid path must use server-owned versioned intake state.
-- Implement pending, retry, manual-ready fallback, sparse evidence, stale state, refresh, authorized another-device resume, and browser Back behavior.
+- Connect `nuave.audit.intake.v1` and `nuave.audit.workflow.v10` through the approved one-way handoff. Both remain `sessionStorage`-only and explicitly non-durable in this release.
+- Implement pending, retry, manual-ready fallback, sparse evidence, stale state, same-browser-session refresh/revisit, and browser Back behavior. Persistence after that browser session and cross-device resume are not claimed or tested as delivered behavior in this rebuild.
 - Submit the immutable derived `BusinessBrief` to existing question generation.
 - Preserve exactly 10 questions, 6 unbranded and 4 branded; require review and explicit audit start.
 - Regenerate once per new confirmed fact version according to Section 4.5 and never on refresh.
@@ -517,7 +551,7 @@ Stop and ask Yasir to validate selecting versus typing, editing drafts, optional
 
 #### Founder UX Gate 3 — Real-data-shaped and recovery walkthrough
 
-Stop and ask Yasir to validate successful preparation, both messy cases, pending/failure/retry, refresh/resume, correction and invalidation, payment-to-intake transition, question review, and explicit run transition. Paid live-provider calls are excluded unless separately authorized.
+Stop and ask Yasir to validate successful preparation, both messy cases, pending/failure/retry, same-browser-session refresh/revisit, correction and invalidation, the clearly simulated payment-to-intake transition, question review, and explicit run transition. Paid live-provider calls are excluded unless separately authorized.
 
 ### Phase 7 — Release-candidate hardening
 
@@ -532,7 +566,7 @@ Stop and ask Yasir to validate successful preparation, both messy cases, pending
 
 #### Founder UX Gate 4 — Release candidate
 
-Stop and provide one complete preview covering Source → Preview → payment/preparation simulation → Intake → Final review → 10-question review → Explicit run confirmation. Include measured journey budgets and all known limitations. Green CI and earlier screen approvals cannot substitute for Yasir’s explicit composed-experience approval.
+Stop and provide one complete preview covering Source → Preview → payment/preparation simulation → Intake → Final review → 10-question review → Explicit run confirmation. Include the measured happy-path and fixed recovery-path budgets, split into active customer time and system wait time, plus all known limitations. Green CI and earlier screen approvals cannot substitute for Yasir’s explicit composed-experience approval.
 
 ### Phase 8 — Atomic cutover, drain, rollback, and cleanup
 
@@ -541,7 +575,7 @@ Stop and provide one complete preview covering Source → Preview → payment/pr
 - During rollback, stop assigning new entries to the new journey, preserve new-version state, and let safely completable in-flight work drain on its owning journey.
 - For the current simulated product, a non-migratable state may restart only with clear simulation-safe copy. Before real payment launches, Yasir must approve the paid abandonment, manual-completion, refund/remedy, and support policy; no agent invents it during release.
 - Smoke-test the approved production path and critical recovery states. Confirm no duplicate preparation, mapping failure, stale-pack use, or restoration loop.
-- Keep the complete legacy journey for at least seven calendar days and three successful founder-supervised new-journey completions, whichever is later.
+- Releasing the approved new simulated journey does not wait for the cleanup window. Keep the complete legacy journey for at least seven calendar days and three successful founder-supervised new-journey completions, whichever is later, **before deleting legacy code**.
 - After that window and explicit founder approval, delete legacy renderers, obsolete styles, proposed/implemented per-screen flags, preview compatibility code, and quarantined UI-pinning tests. Retain the Git archive and concise migration record.
 - Update canonical architecture/status documents only when the approved implementation changes those facts.
 
@@ -560,7 +594,9 @@ Automated verification must protect product behavior without dictating the speci
 - Only the mapper creates an immutable `BusinessBrief` snapshot from a confirmed fact version; no reverse synchronization exists.
 - The mapper remains side-effect free.
 - Only one owner writes each persisted workflow field.
+- Legacy `nuave.audit.workflow.v9` is never read or written by the new journey; new mutable intake state and downstream workflow state use their separate versioned records.
 - `AuditWorkflow` receives no per-screen intake mutation.
+- A parent remount or restore cannot overwrite newer intake-owned state.
 - Legacy UI tests run only against the complete legacy journey until cleanup.
 
 ### Unit and state-machine tests
@@ -574,18 +610,27 @@ Automated verification must protect product behavior without dictating the speci
 - normalized materiality comparison and question invalidation; and
 - persistence serialization/version handling.
 
-### Contract and integration tests
+### Contract and integration tests for this rebuild
 
 - preparation payload → initial `IntakeState`;
 - confirmed `IntakeState` → expected `BusinessBrief`;
 - `BusinessBrief` → `/api/audit/prompts` request;
 - exactly 6 unbranded and 4 branded questions;
 - reviewed questions → explicit audit start;
-- refresh/revisit restores the right macro and intake stage;
-- authorized another-device resume restores server-owned paid state;
-- payment remains server-authoritative;
-- preparation remains idempotent; and
+- same-browser-session refresh/revisit restores the right macro and intake stage from the two new versioned records;
+- restoring an older parent snapshot never overwrites newer `IntakeState`;
+- the simulated payment handoff is labelled and cannot be mistaken for server-authoritative entitlement;
+- preparation remains idempotent per simulated journey/session and draft version; and
 - repeated generation for one fact version returns the existing pack/job.
+
+### Paid-launch acceptance contracts — not blockers for this rebuild
+
+Keep these as explicit acceptance criteria for the separate paid-launch work. Do not mark them passing from fixtures or browser storage:
+
+- real payment is server-authoritatively verified before personalized preparation;
+- one verified order owns one current preparation job and draft version;
+- server-owned versioned paid state survives browser-storage loss; and
+- an authorized customer can resume paid work on another device.
 
 ### End-to-end scenarios
 
@@ -600,12 +645,13 @@ At minimum:
 7. prompt-generation failure and retry;
 8. material intake edit after questions, forcing regeneration and re-review;
 9. in-flight whole-journey drain/rollback without mixed screens;
-10. complete mobile journey; and
-11. representative desktop journey.
+10. parent remount/restore while newer intake-owned state exists;
+11. complete mobile journey; and
+12. representative desktop journey.
 
 ### Visual/customer validation
 
-Maintain an ordered screenshot gallery and stable preview scenarios. Its purpose is to make the entire journey inspectable, not merely to accumulate pixel snapshots. After founder approval, selected screenshots may become visual-regression baselines for shell, spacing, duplicate chrome, and major layout drift.
+Maintain an ordered screenshot gallery and stable preview scenarios. Its purpose is to make the entire journey inspectable, not merely to accumulate pixel snapshots. Measure both the comparable happy path and the fixed wait-plus-retry recovery path at Gates 1 and 4, separating active customer time from system wait. After founder approval, selected screenshots may become visual-regression baselines for shell, spacing, duplicate chrome, and major layout drift.
 
 The privacy-safe funnel must make customer outcomes observable: start, per-screen continuation/drop-off, validation, correction, resume, elapsed completion, and successful handoff to question review. Because Nuave currently has zero paying v2 customers, the internal prototype/legacy benchmark and approved Gate 0 budgets are the pre-launch comparison; real-customer targets are set only after sufficient real usage exists.
 
@@ -613,7 +659,9 @@ No package may mark customer experience as “owned by another package” withou
 
 ---
 
-## 8. Definition of done
+## 8. Definition of done and paid-launch boundary
+
+### Done for this simulated-product rebuild
 
 The rebuild is complete only when all statements below are true:
 
@@ -628,18 +676,32 @@ The rebuild is complete only when all statements below are true:
 - `intakeToBusinessBrief()` is small, pure, one-way, deterministic, validated, and comprehensively mapped.
 - `BusinessBrief` is an immutable derived snapshot per confirmed fact version, never a second editable intake copy.
 - Any necessary downstream schema changes are coherent, versioned where needed, and tested across consumers.
-- Real payment is verified server-side before personalized preparation; the current simulated route never claims paid durability.
-- Preparation is idempotent and recoverable.
-- Paid target state is server-owned by verified order/version; refresh, another-device resume, Back, loading, empty, error, retry, and correction states work.
+- The simulated payment handoff is unmistakably labelled and never claims server-authoritative entitlement or paid durability.
+- Preparation is idempotent and recoverable per simulated journey/session and draft version.
+- `nuave.audit.workflow.v9` remains legacy-only; the new journey uses separate versioned intake and downstream workflow records with one writer each.
+- Same-browser-session refresh/revisit, Back, loading, empty, error, retry, and correction states work; persistence after that session is not claimed, and an older parent restore cannot overwrite newer intake-owned state.
 - Final intake review precedes generation of exactly 10 questions: 6 unbranded and 4 branded.
 - Material fact edits invalidate questions and force regeneration/re-review.
 - The audit starts only after explicit confirmation.
-- Every approved fixture completes without developer help or a dead end, and the release candidate stays within the Gate 0 screen-count and completion-time budgets.
+- Every approved fixture completes without developer help or a dead end, and the release candidate stays within the Gate 0 screen-count, happy-path, and fixed recovery-path budgets.
 - Privacy-safe funnel events are present and contain no answer text or sensitive/payment data.
 - One Intake Experience Owner reviewed every customer-facing change; Yasir approved UX Gates 0 through 4.
 - Required repository checks pass.
 - Production verification passes after an atomic whole-journey cutover.
 - The legacy intake is isolated and safely removable from active source.
+
+The seven-day/three-completion stabilization window governs deletion of legacy code, not release of the approved new simulated journey.
+
+### Required before a real paid launch — separate follow-up scope
+
+The current rebuild is not evidence that these are complete. A real paid launch remains blocked until:
+
+- payment is verified server-side before personalized preparation;
+- one verified order owns one idempotent current preparation job and draft version;
+- versioned intake and downstream state are server-owned and survive browser-storage loss;
+- an authorized customer can resume on another device;
+- paid abandonment, non-migratable rollback, manual-completion, support, and refund/remedy policies are approved; and
+- the maximum customer-created fact versions/model generations per order and the remedy after that ceiling are approved.
 
 ---
 
@@ -649,7 +711,7 @@ The plan must not invent these commercial/cost policies:
 
 1. Before real payment launches: what a paid customer receives after abandonment, a non-migratable in-flight rollback, or exhausted technical recovery, including manual completion, support, refund, or another remedy.
 2. Before model-generated question regeneration is enabled for customers: the maximum number of customer-created fact versions/model generations per paid order and the remedy after that ceiling.
-3. At Gate 0: the exact completion-time budget derived from the Phase 0 timed prototype benchmark.
+3. At Gate 0: the exact happy-path and fixed recovery-path time budgets derived from the Phase 0 measurements.
 
 These decisions block only the affected paid behavior. They do not block the fixture-first shell or paper architecture work.
 
@@ -659,6 +721,7 @@ These decisions block only the affected paid behavior. They do not block the fix
 
 - Rewriting the audit methodology merely because the intake is new.
 - Replacing working payment, prompt-generation, audit-runner, provider, or reporting systems without a demonstrated incompatibility.
+- Implementing real payment, a production order service, server-owned paid persistence, or cross-device paid resume inside this simulated-product rebuild.
 - Building a dynamic-form platform or generic workflow framework.
 - Adding provenance/confidence badges or technical metadata to customer screens.
 - Adding audit-priority or conversion-action screens.
@@ -681,8 +744,8 @@ These decisions block only the affected paid behavior. They do not block the fix
 | Tests keep the old form alive | Quarantine legacy UI tests on the legacy route; build behavior/contract tests for the new route; delete only at cleanup |
 | Green CI hides visual breakage | Complete fixture preview, ordered screenshot gallery, founder walkthrough |
 | Partial migration reaches customers | Production remains wholly legacy until approved atomic cutover |
-| Refresh, parent persistence, or another-device resume loses paid work | Server-owned versioned `IntakeState`, single writer per field, explicit restoration tests |
-| Paid preparation runs early or twice | Server-verified order boundary and idempotency/integration tests |
+| Parent restore or shared persistence overwrites current intake work | Separate new-version records, one writer per record, and the forced parent-remount regression |
+| A later paid launch loses state or runs preparation early/twice | Paid launch remains blocked on server-owned state, server-verified order authority, and idempotency/resume contracts |
 | New questions become stale after edits | Version/invalidation rule with required regeneration and re-review |
 | Mechanically correct rebuild performs worse | Gate 0 journey budgets, privacy-safe funnel, timed fixture tasks, post-cutover outcome review |
 | Rollback strands an in-flight paid customer | Journey versioning, drain path, preserved state, and founder-approved manual/refund remedy before real payment |
@@ -690,7 +753,9 @@ These decisions block only the affected paid behavior. They do not block the fix
 
 ---
 
-## 12. Revision 2 disposition of the adversarial review
+## 12. Review disposition
+
+### Revision 2 adversarial review
 
 This iteration changes only the plan. It does not broaden into implementation or canonical-document edits.
 
@@ -698,7 +763,7 @@ This iteration changes only the plan. It does not broaden into implementation or
 | --- | --- |
 | B1, failed-cycle diagnosis | Accepted. Added a repository-grounded two-cycle forensic and cause-to-control proof map. |
 | B2, `AuditWorkflow` under-scoped | Accepted. Added a state-ownership artifact, a recorded intake-owned-controller decision, and a separate pre-UI architecture phase. |
-| B3, state location | Accepted with phase distinction. Paid target state is server-owned by verified order/version; browser state remains fixture-only until real payment architecture exists. |
+| B3, state location | Accepted with phase distinction. The current simulated rebuild uses isolated versioned `sessionStorage` records; paid target state is later server-owned by verified order/version. |
 | B4, late mapper discovery | Accepted. Complete paper mapping and schema-impact spike now block Gate 0. |
 | B5, outcomes and journey budget | Accepted without inventing customer history. Phase 0 records that Nuave has zero paying v2 customers, creates comparable internal baselines, and Gate 0 fixes numeric screen/time budgets plus privacy-safe funnel measurement. |
 | B6, materiality/two authorities | Accepted. Added normalized field-level materiality, sole mutable `IntakeState`, immutable derived briefs, one pack per fact version, and a founder decision for the per-order generation ceiling. |
@@ -714,23 +779,30 @@ This iteration changes only the plan. It does not broaden into implementation or
 
 ---
 
-## 13. Instructions for the independent reviewer
+### Revision 3 closure check
 
-Review this plan against the current repository and approved prototype. Do not reopen locked product decisions unless a verified technical, safety, or legal blocker makes them impossible.
+| Finding | Disposition |
+| --- | --- |
+| N1, two end states | Accepted. This rebuild now delivers the current simulated-payment journey. Real payment, server-owned state, cross-device resume, and paid remedies are a separate blocked paid-launch scope; tests and done-criteria are split accordingly. |
+| N2, overwrite proof too early | Accepted. Phase 3 proves the seam and writers; Phase 5 must reproduce parent remount/restore with newer interactive intake state, and Section 7 guards the regression. |
+| N3, `v9` storage migration | Accepted in principle, but not by decomposing the legacy blob. `v9` stays untouched and legacy-only; the new journey uses `intake.v1` and `workflow.v10`, with Phase 3 repriced to 3–5 days. |
+| N4, static timing baseline | Accepted. The prototype is an interaction target, while separate happy-path and deterministic wait-plus-retry budgets are measured at Gates 1 and 4. |
+| N5, wider canonical conflicts | Accepted. Phase 0 performs a canonical sweep, records a conflict register, and applies an explicit precedence rule. |
+| N6, unbounded calendar time | Accepted. Founder response is targeted within one working day per gate without ever treating silence as approval; calendar planning adds up to five turnaround days. |
 
-The review should answer:
+---
 
-1. Does this plan structurally prevent old and new intake experiences from coexisting inside one journey?
-2. Is the prototype treated as an end-to-end experience authority rather than a screen catalog?
-3. Are the legacy archive and rollback mechanisms recoverable without keeping unnecessary runtime complexity?
-4. Is `IntakeState` genuinely presentation-oriented and independent from `BusinessBrief`?
-5. Is `intakeToBusinessBrief()` small and one-way, or does the plan accidentally require a new subsystem?
-6. Can schemas change when necessary without creating uncontrolled downstream breakage?
-7. Are payment, preparation, persistence, question review, audit, and report boundaries preserved correctly?
-8. Do the founder UX gates occur before expensive downstream work and before release?
-9. Can automated checks pass while the composed experience is still materially wrong? If so, identify the missing gate.
-10. Are any repository facts, routes, component names, or constraints in this plan stale or false?
-11. Are state ownership, mapper feasibility, controller narrowing, and materiality resolved before expensive UI work?
-12. Do the journey budgets and instrumentation measure customer completion without fabricating a legacy benchmark?
+## 13. Instructions for the final narrow closure checker
 
-Return one verdict: **APPROVE**, **APPROVE WITH CHANGES**, or **REVISE BEFORE IMPLEMENTATION**. Findings should be limited to issues that would change implementation, schedule, safety, or customer outcome.
+This is not another broad adversarial review. Check Revision 3 only against N1–N6 above and the current repository facts that load-bear on those corrections. Do not reopen the 21 findings already closed or settled product decisions unless Revision 3 introduced a concrete contradiction that would change implementation, schedule, safety, or customer outcome.
+
+Confirm only that:
+
+1. current simulated-rebuild done-criteria and later paid-launch prerequisites no longer conflict;
+2. the parent-overwrite regression is required when interactive state exists and is also retained in final verification;
+3. `v9` remains isolated without an in-place migration, while the two new records have coherent single writers;
+4. happy-path and fixed recovery-path budgets are independently measurable at Gates 1 and 4;
+5. the canonical conflict sweep and precedence rule cannot silently choose an ambiguous authority; and
+6. the one-working-day gate target changes calendar planning but never grants approval.
+
+Return **CLOSED** or **NOT CLOSED**. For **NOT CLOSED**, identify only the exact unmet item and the smallest correction required.
