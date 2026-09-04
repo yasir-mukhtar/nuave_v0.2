@@ -1,0 +1,98 @@
+{
+  "artboards": [
+    {
+      "file": "ReadingNow.dc.html",
+      "title": "Reading · now",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ReadingNext.dc.html",
+      "title": "Reading · proposed",
+      "x": 480,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "BrandNow.dc.html",
+      "title": "Brand · now",
+      "x": 0,
+      "y": 1200,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "Brand · proposed",
+      "x": 480,
+      "y": 1200,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "BrandMerged.dc.html",
+      "title": "Brand · merged 1.1+1.2",
+      "x": 960,
+      "y": 1200,
+      "w": 390,
+      "h": 844
+    }
+  ],
+  "annotations": [
+    {
+      "id": "hdr-reading",
+      "x": 0,
+      "y": -120,
+      "w": 880,
+      "text": "SCREEN 1 — \"Sebentar, Nuave sedang membaca\"\nLeft: what the screenshot shows. Right: proposed. Numbered markers map to the notes below."
+    },
+    {
+      "id": "note-reading-now",
+      "x": 0,
+      "y": 880,
+      "w": 390,
+      "text": "1 · Bab 1's kicker on a Bab 0 screen, with no progress bar to anchor it.\n\n2 · \"membaca\" has no object. The user can't tell which source was received.\n\n3 · Headline and first item both say the same thing.\n\n4 · Empty 24px rings read as unticked checkboxes — same shape as the real radio rows later in the flow.\n\n5 · The sentence that explains the whole product, set as 14px muted hint. Second sentence is flattery, and uses \"bisnis Anda\" where VOICE.md §2 defaults to \"brand Anda\".\n\nNo progress bar and no footer here, then both appear on the next screen."
+    },
+    {
+      "id": "note-reading-next",
+      "x": 480,
+      "y": 880,
+      "w": 390,
+      "text": "1 · Kicker removed.\n\n2 · Source named. A wrong URL gets caught here instead of four screens later.\n\n3 · Steps become nouns — what you'll be asked to check, not what the machine is doing. No overlap with the headline.\n\n4 · Only the active step gets a ring. The rest are dim text.\n\n5 · Promoted to 16px body, one sentence. It's the mental model for the whole flow.\n\nProgress bar stays, empty. Chrome no longer appears and disappears between screens. Content is centred, not top-hugging.\n\nOpen: dropping the verbs loses the \"these are guesses\" signal. The promoted sentence carries it instead — worth a look."
+    },
+    {
+      "id": "hdr-brand",
+      "x": 0,
+      "y": 1080,
+      "w": 1340,
+      "text": "SCREEN 2 — \"Ini brand yang ingin Anda audit?\"\nLeft: what the screenshot shows. Middle: proposed. Right: the alternative that merges 1.1 into 1.2 (needs founder sign-off — it touches the locked IA)."
+    },
+    {
+      "id": "note-brand-now",
+      "x": 0,
+      "y": 2080,
+      "w": 390,
+      "text": "1 · First segment renders full at the FIRST screen of the chapter. The prototype computes (index+1)/count = 25% (intake-prototype.html:917).\n\n2 · Name only. \"Ya, benar\" can't be a real check when there is nothing to check it against. The shipped stage does show the source (AuditStages.tsx:902) — this design dropped it.\n\n3 · Three near-identical surfaces. The content and the two controls look the same. DESIGN.md § \"Avoid card soup\".\n\n4 · Two taps for one decision: pick \"Ya, benar\", then \"Lanjut\". validate() also disables Lanjut until you pick, so you arrive at a dead primary.\n\n5 · The \"N\" badge sits on the Kembali touch target. Product chrome or prototype chrome?"
+    },
+    {
+      "id": "note-brand-next",
+      "x": 480,
+      "y": 2080,
+      "w": 390,
+      "text": "1 · 25% at the first of four screens in the chapter.\n\n2 · The card becomes evidence: name + source + tagline, per intake-redesign-spec.md §1.1. This is the highest-value change on the screen — without it no confirmation pattern works, including the current one.\n\n3 · Correction demoted to a text link. Minority branch, minority weight.\n\n4 · The primary carries the affirmation. The gate survives — still an explicit affirmative act — at one tap instead of two, and the button is never disabled on arrival.\n\nOne bordered object on the screen, so the eye lands on the content. This is \"Review your request\": the card is the evidence, the filled button is the yes, Back is the quiet no.\n\nThe screen ends up emptier than the current one. That is the trade, not an oversight: one object, one action. Kept top-aligned rather than centred so it doesn't jump against the content-heavy screens that follow (scope, category, offerings).\n\nNeeds sign-off: locked decision 1 says \"persistent Kembali/Lanjut\". The flow already varies the primary label twice (Buat pertanyaan audit, Jalankan audit), so it costs no new mechanism — but it is the founder's call."
+    },
+    {
+      "id": "note-brand-merged",
+      "x": 960,
+      "y": 2080,
+      "w": 390,
+      "text": "6 · Brand becomes a context header with its own quiet \"Ganti\", carrying the same evidence.\n\n7 · The screen's real question becomes scope. Choosing a scope confirms the brand implicitly, and the tap now carries information instead of restating what the user typed two screens ago.\n\nRemoves one screen from a nine-screen flow, and it's the least informative one.\n\nCost: touches locked decision 1's IA, and the wrong-brand branch now hangs off a header rather than the body. Put to the founder, don't ship unilaterally."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

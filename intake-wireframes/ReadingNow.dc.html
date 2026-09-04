@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #18181b; } a:hover { color: #3f3f46; }
+    .fr { width: 390px; height: 844px; display: flex; flex-direction: column;
+      background: #ffffff; color: #3f3f46; overflow: hidden;
+      font-family: Geist, ui-sans-serif, system-ui, sans-serif; }
+    .hd { padding: 16px 24px 8px; }
+    .wm { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: #18181b; }
+    .st { flex: 1; display: flex; flex-direction: column; padding: 8px 24px 24px; min-height: 0; }
+    .kk { font-size: 12px; font-weight: 500; line-height: 1.35; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #52525b; margin: 16px 0 0; }
+    .h1 { font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.02em;
+      color: #18181b; margin: 8px 0 0; }
+    .steps { display: flex; flex-direction: column; gap: 16px; margin-top: 32px; }
+    .step { display: flex; gap: 16px; align-items: center; font-size: 16px; font-weight: 500; }
+    .ring { flex: none; width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; }
+    .ring.busy { border-color: #d1d5db; border-top-color: #18181b; }
+    .dots { font-size: 11px; color: #a1a1aa; letter-spacing: 1px; }
+    .hint { font-size: 14px; line-height: 1.5; color: #52525b; margin-top: 32px; }
+    .void { flex: 1; min-height: 0; margin-top: 24px; border: 1px dashed #e5e7eb;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .void span { font-size: 12px; color: #a1a1aa; letter-spacing: 0.04em; }
+    .mk { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #a1a1aa;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 500; color: #52525b; }
+    .rowmk { display: flex; align-items: center; gap: 8px; }
+    .fab { position: absolute; left: 24px; bottom: 24px; width: 48px; height: 48px;
+      border-radius: 50%; background: #18181b; color: #ffffff; display: flex;
+      align-items: center; justify-content: center; font-size: 18px; font-weight: 600; }
+  </style>
+</helmet>
+<div class="fr" style="position: relative">
+  <div class="hd"><div class="wm">nuave</div></div>
+  <div class="st">
+    <div class="rowmk">
+      <p class="kk" style="flex-grow: 1">Brand dan yang Anda tawarkan</p>
+      <span class="mk">1</span>
+    </div>
+    <div class="rowmk">
+      <h1 class="h1" style="flex-grow: 1">Sebentar, Nuave sedang membaca</h1>
+      <span class="mk">2</span>
+    </div>
+    <div class="steps">
+      <div class="step" style="color: #52525b">
+        <span class="ring busy"><span class="dots">•••</span></span>
+        <span style="flex-grow: 1">Membaca sumber Anda</span>
+        <span class="mk">3</span>
+      </div>
+      <div class="step" style="color: #a1a1aa">
+        <span class="ring"></span>
+        <span style="flex-grow: 1">Menemukan produk dan lokasi</span>
+        <span class="mk">4</span>
+      </div>
+      <div class="step" style="color: #a1a1aa">
+        <span class="ring"></span>
+        <span style="flex-grow: 1">Memperkirakan pelanggan dan pembanding</span>
+      </div>
+    </div>
+    <div class="rowmk" style="align-items: flex-start">
+      <p class="hint" style="flex-grow: 1; margin-right: 8px">Semua bisa Anda koreksi. Anda yang paling tahu bisnis Anda.</p>
+      <span class="mk" style="margin-top: 32px">5</span>
+    </div>
+    <div class="void"><span>ruang kosong &mdash; sekitar 60% layar</span></div>
+  </div>
+  <div class="fab">N</div>
+</div>
+</x-dc>
+</body>
+</html>

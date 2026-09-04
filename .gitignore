@@ -40,3 +40,7 @@ blob-report/
 
 # Next.js generated type shim (regenerated on every build)
 next-env.d.ts
+
+# Generated design-canvas payload (regenerate with the design skill's seeder
+# from intake-wireframes/*.dc.html + canvas.json; ~2.5MB of editor runtime)
+intake-wireframes/nuave-intake-wireframes.html
