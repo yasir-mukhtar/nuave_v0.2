@@ -28,7 +28,7 @@ never expose how sure Nuave is.
    a **question review** ("Periksa pertanyaan audit") showing 6 + 4 under the
    settled group labels **Tanpa menyebut bisnis Anda** / **Menyebut bisnis
    Anda**. The readback CTA is **Buat pertanyaan audit**; the final CTA is
-   **Jalankan audit**. These four strings are settled copy, do not paraphrase.
+   **Mulai audit**. These four strings are settled copy, do not paraphrase.
 4. **No confidence or provenance in the UI at all.** No Terdeteksi/Perkiraan
    badges, no "Rekomendasi Nuave" tag, no source labels, no AI decoration.
    Confident facts are shown as plain editable content; inferences are shown as

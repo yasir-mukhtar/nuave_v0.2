@@ -153,7 +153,8 @@ Collect only the additional facts that change the report:
 - known competitors, optional; and
 - public facts that AI may get wrong, optional.
 
-Mark buyer-supplied facts as such until verified. Do not collect customer
+Flag buyer-supplied facts backend-side until verified (server flag, never a
+visible label). Do not collect customer
 records, payment credentials, or other sensitive information the audit does not
 need.
 
