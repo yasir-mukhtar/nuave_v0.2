@@ -88,6 +88,7 @@ export function toggleId(list: readonly string[], id: string): string[] {
 /** Journey-level market skip removed (handoff 2026-09-05): s-market is
  *  always shown. Retained only as a deprecated no-op alias so the journey
  *  contract's older sections read clearly; always false. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function isMarketSkippedFixture(_fixture: unknown): boolean {
   return false;
 }
