@@ -76,8 +76,9 @@ the bounded return path requires an account.
 
 - A five-stage `/audit` workflow for website extraction, fact confirmation,
   question review, live observations, and report display.
-- Ten-question default with five questions that do not name the business and
-  five that do, followed by free customer editing and dynamic composition.
+- Ten-question default with six questions that do not name the business and
+  four that do, in fixed slots; wording is editable within a slot, composition
+  is not.
 - Independent OpenAI Responses API observations with web search and streamed
   per-question progress.
 - Evidence contracts that preserve exact excerpts, sources, failures, model
@@ -140,8 +141,8 @@ gate and commercial terms are settled.
 
 **Customer question:** “Did Nuave find my business, and what am I buying?”
 
-Collect one official website, Google Maps listing, or public Instagram business
-profile plus one delivery email. Use bounded public metadata to show a
+Collect one official website or public Instagram business profile plus one
+delivery email. Use bounded public metadata to show a
 best-effort business identity, the one-audit scope, the report deliverables, and
 the snapshot limitation. Ask for a name and location only when the submitted
 source cannot support a confident preview.
@@ -180,8 +181,9 @@ the delivery promise, privacy, retention, and terminal remedy.
 **Customer question:** “Did Nuave understand my business correctly?”
 
 After verified or explicitly simulated payment, prepare facts from the submitted
-source and other exact official sources needed for identity. Show attribution
-and ask the customer to confirm or correct:
+source and other exact official sources needed for identity. Attribution stays
+backend-only (server flags, never rendered); ask the customer to confirm
+or correct:
 
 - exact identity and scope;
 - category and target customer;
@@ -191,7 +193,8 @@ and ask the customer to confirm or correct:
 - one verified comparison business when available; and
 - optional public facts that AI may get wrong.
 
-Facts supplied by the customer remain labelled until verified. If extraction
+Facts supplied by the customer stay flagged backend-side until verified
+(never labelled in the UI). If extraction
 fails, open the same confirmation screen with manual fields rather than ending
 the journey. Preparation does not start the audit.
 
@@ -206,8 +209,9 @@ audit chance; a replacement order is the last resort.
 **Customer question:** “What exactly will Nuave ask?”
 
 Show all ten Indonesian questions in their final order. The suggested pack
-starts with five **Tanpa menyebut bisnis Anda** and five **Menyebut bisnis
-Anda**, but the customer may replace any question and change that composition.
+starts with six **Tanpa menyebut bisnis Anda** and four **Menyebut bisnis
+Anda** in fixed slots; the customer may edit wording within a slot but cannot
+change that composition.
 
 Explain the measurement consequences and block only empty or unexecutable text,
 sensitive personal data, disallowed high-impact advice, content unrelated to the

@@ -179,12 +179,12 @@ The voice is constant; the register and vocabulary shift per surface.
 
 #### 7.2 Business facts (neutral register)
 
-- Use provenance labels exactly: **Ditemukan di website** · **Ditemukan di
-  Google Maps** · **Ditemukan di Instagram** · **Saran Nuave** ·
-  **Ditambahkan oleh Anda** · **Perlu diperiksa**.
-- Distinguish sourced facts, Nuave suggestions, and customer input. No
-  numerical confidence scores, no superlatives (`terbaik`, `nomor satu`,
-  `paling dipercaya`).
+- Never show provenance or confidence in the UI: no source labels, no
+  confidence badges, no numerical scores. Provenance and confidence are
+  backend-only flags used for preparation and review, never rendered.
+- Distinguish sourced facts, Nuave suggestions, and customer input through
+  plain editable content and one-tap-removable options, not visible labels.
+  No superlatives (`terbaik`, `nomor satu`, `paling dipercaya`).
 - Primary action: **Buat pertanyaan audit**. Confirmation: "Saya sudah
   memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan
   audit."
@@ -196,7 +196,7 @@ The voice is constant; the register and vocabulary shift per surface.
   `aja`, `Bandingin`) when the category and audience warrant it.
 - The two composition labels are exact: **Tanpa menyebut bisnis Anda** and
   **Menyebut bisnis Anda**.
-- Primary actions: **Jalankan audit** and **Mulai audit sekarang**. Never
+- Primary action: **Mulai audit**. Never
   credits, token-spending, or "prompt" language.
 
 #### 7.4 Report (evidence-led register)
