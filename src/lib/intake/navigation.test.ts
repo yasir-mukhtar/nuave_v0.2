@@ -196,9 +196,12 @@ describe("shell copy lookups (deck §6)", () => {
     expect(continueLabelFor("s-questions")).toBe("Mulai audit");
   });
 
-  it("marks s-crawl bare and the seven blocking screens", () => {
+  it("marks s-crawl bare and the journey-contract blocking screens", () => {
     expect(isBareScreen("s-crawl")).toBe(true);
     expect(isBareScreen("s-brand")).toBe(false);
+    // Blocking set per the journey contract §2 (settles the Gate 0
+    // disagreement: whole/location offerings require ≥1) + §9.5 + §9.12
+    // (review approval needs every active blocking answer valid).
     for (const id of [
       "s-brand",
       "s-brand-fix",
@@ -206,12 +209,16 @@ describe("shell copy lookups (deck §6)", () => {
       "s-branch",
       "s-product",
       "s-category",
+      "s-offerings",
       "s-service",
+      "s-market",
+      "s-competitors",
+      "s-review",
     ] as const) {
       expect(isBlockingScreen(id)).toBe(true);
     }
-    expect(isBlockingScreen("s-offerings")).toBe(false);
-    expect(isBlockingScreen("s-review")).toBe(false);
+    expect(isBlockingScreen("s-customers")).toBe(false);
+    expect(isBlockingScreen("s-facts")).toBe(false);
   });
 });
 

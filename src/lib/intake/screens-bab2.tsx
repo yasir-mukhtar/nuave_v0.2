@@ -15,27 +15,46 @@
  * (readback = meaning, never an engine dump).
  *
  * Rules honored here:
- * - NO live calls, NO network, NO persistence beyond a tab-local draft
- *   cache (Back/resume restores in-memory state; reload-resume stays the
- *   shell/orchestrator's job).
+ * - NO live calls, NO network. Committed answers live in shell-owned
+ *   `IntakeState` (`state.ts`): screens read it and write through it, so
+ *   Back navigation and remounts restore committed answers.
+ *   Reload-resume stays the shell/orchestrator's job (Phase 6).
  * - Prepared values come from the `fixture` prop (pinned fixture shape
  *   `{ screens, entry }`); the shell stub shape degrades to empty states.
  * - Tap-first: chips, cards, rows are buttons; typing lives only in
  *   add-lines, question edits, and the s-facts textarea.
- * - Validation per handoff (2026-09-05): s-market blocks until one reach
- *   is chosen (and ≥1 area when the reach is area-based); s-competitors
- *   requires ≥1 named competitor or the no-direct mode; s-facts /
- *   s-review / s-questions never block. The shell's stub gate stays
- *   permissive (Phase 5 wires real blocking via `nav.canContinue`).
- * - Funnel: screens emit only E5 (answer_corrected, count only) and E6
- *   (resumed, on draft-cache rehydrate). Payloads carry ids/counters
- *   only, never text.
+ * - Validation per handoff (2026-09-05) + journey contract §9, computed
+ *   from committed state: s-market blocks until one reach is chosen (and
+ *   ≥1 area when area-based); s-competitors requires ≥1 named competitor
+ *   or the no-direct mode; s-review requires every active blocking answer
+ *   valid; s-facts / s-questions never block.
+ * - Funnel: screens emit only E5 (answer_corrected, count only).
+ *   Back-navigation resume (E6) is emitted by the shell, which owns the
+ *   committed state. Payloads carry ids/counters only, never text.
  * - 44px+ touch targets, two-layer focus via the shell frame, single
  *   ease-out curve, `prefers-reduced-motion` disables motion.
  */
 
 import { useEffect, useRef, useState } from "react";
 import type { FixtureScreenState } from "./fixtures";
+import {
+  addCompetitor,
+  addMarketArea,
+  deriveReviewRowsFromState,
+  isReviewApprovable,
+  isScreenAnswerValid,
+  removeCompetitor,
+  removeMarketArea,
+  setCompetitorsNoDirect,
+  setFactsText,
+  setMarketKind,
+  toggleCompetitor,
+  toggleMarketArea,
+  useIntakeAnswers,
+} from "./state";
+import type { MarketKind, ReviewRow } from "./state";
+export { isMarketAnswerValid } from "./state";
+export type { ReviewRow } from "./state";
 import type {
   IntakeFunnelEmit,
   IntakeScreenSlot,
@@ -219,15 +238,6 @@ export function deriveQuestionSlots(fixture: unknown): QuestionSlot[] {
 
 /* ── s-review row derivation (meaning-level, data contract §1-§2) ── */
 
-export type ReviewRow = {
-  key: string;
-  label: string;
-  value: string;
-  /** Owning screen for the chevron correction link. */
-  target: IntakeScreenId;
-  advisory?: boolean;
-};
-
 export function deriveReviewRows(
   fixture: unknown,
   activeScreens?: readonly IntakeScreenId[],
@@ -407,51 +417,6 @@ function brandRowValue(fixture: unknown): string {
   }
   const selected = selectedLabels(brand);
   return selected.length > 0 ? selected[0] : "Belum dipilih";
-}
-
-/* ── Tab-local draft cache (Back restores state; reload is shell-owned) ── */
-
-const draftCache = new Map<string, unknown>();
-
-function readDraft<T>(key: string): T | undefined {
-  return draftCache.get(key) as T | undefined;
-}
-
-function writeDraft(key: string, value: unknown): void {
-  draftCache.set(key, value);
-}
-
-/** Local editable state seeded from the fixture, restored from the
- *  tab-local draft on remount (Back navigation). Emits E6 once per
- *  rehydrate; payloads carry counts only, never text. */
-function useDraftState<T>(
-  screenId: IntakeScreenId,
-  key: string,
-  seed: () => T,
-  emit: IntakeFunnelEmit,
-): [T, (next: T | ((prev: T) => T)) => void] {
-  const cacheKey = `${screenId}:${key}`;
-  const [value, setValue] = useState<T>(() => {
-    const cached = readDraft<T>(cacheKey);
-    return cached !== undefined ? cached : seed();
-  });
-  const resumedRef = useRef(false);
-  useEffect(() => {
-    if (!resumedRef.current && readDraft<T>(cacheKey) !== undefined) {
-      resumedRef.current = true;
-      emit({ event: "intake_resumed", screenId });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const set = (next: T | ((prev: T) => T)) => {
-    setValue((prev) => {
-      const resolved =
-        typeof next === "function" ? (next as (p: T) => T)(prev) : next;
-      writeDraft(cacheKey, resolved);
-      return resolved;
-    });
-  };
-  return [value, set];
 }
 
 function useCorrectionCounter(
@@ -668,8 +633,6 @@ function AddLine({
 
 /* ── s-market: single-select reach + conditional required area chips ── */
 
-type MarketKind = "sekitar" | "beberapa" | "seluruh" | "luar";
-
 const MARKET_OPTIONS: ReadonlyArray<{
   kind: MarketKind;
   glyph: string;
@@ -718,73 +681,24 @@ function marketKindFromId(id: string): MarketKind | null {
   return null;
 }
 
-function seedMarketKind(state: FixtureScreenState | null): MarketKind | null {
-  if (!state) return null;
-  for (const id of state.selected) {
-    const kind = marketKindFromId(id);
-    if (kind) return kind;
-  }
-  for (const item of state.prepared) {
-    if (!item.on) continue;
-    const kind = marketKindFromId(item.id);
-    if (kind) return kind;
-  }
-  return null;
-}
-
-function seedCityIds(state: FixtureScreenState | null): string[] {
-  if (!state) return [];
-  return state.prepared
-    .filter(
-      (item) =>
-        /^city/i.test(item.id) ||
-        (/kota|area|city/i.test(item.id) && marketKindFromId(item.id) === null),
-    )
-    .filter((item) => state.selected.includes(item.id))
-    .map((item) => item.id);
-}
-
-/** Reach + areas both required for area-based reach (handoff: "required area
- *  selection where applicable"). Pure, unit-tested. */
-export function isMarketAnswerValid(
-  kind: MarketKind | null,
-  areaCount: number,
-): boolean {
-  if (kind === null) return false;
-  if (kind === "sekitar" || kind === "beberapa") return areaCount > 0;
-  return true;
-}
-
 function MarketScreen({
   fixture,
   nav,
   emit,
   invalidAttempts,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
 }: IntakeScreenSlotProps) {
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
+  );
   const state = getFixtureScreen(fixture, "s-market");
   const countCorrections = useCorrectionCounter("s-market", emit);
-  const [kind, setKind] = useDraftState<MarketKind | null>(
-    "s-market",
-    "kind",
-    () => seedMarketKind(state),
-    emit,
-  );
-  const [cityIds, setCityIds] = useDraftState<string[]>(
-    "s-market",
-    "cities",
-    () => {
-      const ids = seedCityIds(state);
-      /* Sekitar is single-select (workbench): seed at most one area. */
-      return seedMarketKind(state) === "sekitar" ? ids.slice(0, 1) : ids;
-    },
-    emit,
-  );
-  const [customCities, setCustomCities] = useDraftState<string[]>(
-    "s-market",
-    "custom-cities",
-    () => [],
-    emit,
-  );
+  const kind = answers.market.kind;
+  const cityIds = answers.market.areaIds;
+  const customCities = answers.market.customAreas;
 
   const cityById = new Map(
     (state?.prepared ?? []).map((item) => [item.id, item.label]),
@@ -805,8 +719,7 @@ function MarketScreen({
   );
   const reveal = kind === "sekitar" || kind === "beberapa";
   const singleArea = kind === "sekitar";
-  const areaCount = cityIds.length + customCities.length;
-  const valid = isMarketAnswerValid(kind, areaCount);
+  const valid = isScreenAnswerValid("s-market", answers);
 
   /* Publish blocking validity to the shell gate (founder Gate 1 review
    * 2026-09-05): reach pick required; area-based reach also needs ≥1 area. */
@@ -825,7 +738,7 @@ function MarketScreen({
   const reachErrorText = "Pilih jangkauan utama untuk melanjutkan.";
 
   const toggleArea = (id: string) => {
-    setCityIds(singleArea ? [id] : toggleId(cityIds, id));
+    updateAnswer((prev) => toggleMarketArea(prev, id));
     countCorrections();
   };
 
@@ -846,10 +759,9 @@ function MarketScreen({
             aria-checked={kind === option.kind}
             onClick={() => {
               if (kind !== option.kind) countCorrections();
-              setKind(option.kind);
               /* Reach change resets the area pick (workbench behavior):
                * sekitar re-picks one, beberapa re-picks many. */
-              setCityIds([]);
+              updateAnswer((prev) => setMarketKind(prev, option.kind));
             }}
             style={{
               minHeight: "44px",
@@ -966,9 +878,7 @@ function MarketScreen({
                   key={`custom-${city}`}
                   on
                   onToggle={() => {
-                    setCustomCities(
-                      customCities.filter((entry) => entry !== city),
-                    );
+                    updateAnswer((prev) => removeMarketArea(prev, city));
                     countCorrections();
                   }}
                   label={`Hapus ${city}`}
@@ -984,7 +894,7 @@ function MarketScreen({
             buttonLabel="Tambahkan"
             onAdd={(value) => {
               if (!customCities.includes(value)) {
-                setCustomCities([...customCities, value]);
+                updateAnswer((prev) => addMarketArea(prev, value));
                 countCorrections();
               }
             }}
@@ -1016,32 +926,24 @@ function CompetitorsScreen({
   nav,
   emit,
   invalidAttempts,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
 }: IntakeScreenSlotProps) {
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
+  );
   const state = getFixtureScreen(fixture, "s-competitors");
   const thin = isThinCompetitorState(state);
   const countCorrections = useCorrectionCounter("s-competitors", emit);
-  const [keptIds, setKeptIds] = useDraftState<string[]>(
-    "s-competitors",
-    "kept",
-    () => state?.selected.filter((id) => /^competitor/i.test(id)) ?? [],
-    emit,
-  );
-  const [custom, setCustom] = useDraftState<string[]>(
-    "s-competitors",
-    "custom",
-    () => state?.selected.filter((id) => !/^competitor/i.test(id)) ?? [],
-    emit,
-  );
-  const [noDirect, setNoDirect] = useDraftState<boolean>(
-    "s-competitors",
-    "no-direct",
-    () => false,
-    emit,
-  );
+  const keptIds = answers.competitors.keptIds;
+  const custom = answers.competitors.custom;
+  const noDirect = answers.competitors.noDirect;
 
   /* Blocking gate (founder Gate 1 review 2026-09-05, workbench string):
    * ≥1 competitor or the no-direct acknowledgment before Continue. */
-  const valid = keptIds.length + custom.length > 0 || noDirect;
+  const valid = isScreenAnswerValid("s-competitors", answers);
   const publishValidity = nav?.onValidityChange;
   useEffect(() => {
     publishValidity?.(valid);
@@ -1153,7 +1055,7 @@ function CompetitorsScreen({
               row.label,
               keptIds.includes(row.id),
               () => {
-                setKeptIds(toggleId(keptIds, row.id));
+                updateAnswer((prev) => toggleCompetitor(prev, row.id));
                 countCorrections();
               },
               row.id,
@@ -1176,7 +1078,7 @@ function CompetitorsScreen({
               name,
               true,
               () => {
-                setCustom(custom.filter((entry) => entry !== name));
+                updateAnswer((prev) => removeCompetitor(prev, name));
                 countCorrections();
               },
               `custom-${name}`,
@@ -1190,7 +1092,7 @@ function CompetitorsScreen({
         buttonLabel="Tambahkan"
         onAdd={(value) => {
           if (!custom.includes(value)) {
-            setCustom([...custom, value]);
+            updateAnswer((prev) => addCompetitor(prev, value));
             countCorrections();
           }
         }}
@@ -1200,7 +1102,7 @@ function CompetitorsScreen({
         role="checkbox"
         aria-checked={noDirect}
         onClick={() => {
-          setNoDirect(!noDirect);
+          updateAnswer((prev) => setCompetitorsNoDirect(prev, !noDirect));
           countCorrections();
         }}
         style={{
@@ -1250,16 +1152,22 @@ function CompetitorsScreen({
 
 const SENSITIVE_NOTICE_ID = "s-facts-sensitive-notice";
 
-function FactsScreen({ emit }: IntakeScreenSlotProps) {
-  // Free text lives only in the tab-local draft: the pinned fixture shape
-  // carries no free-text field (note is fixture metadata), so F1 seeds
-  // the normal skipped state (empty textarea + placeholder guidance).
-  const [text, setText] = useDraftState<string>(
-    "s-facts",
-    "text",
-    () => "",
-    emit,
+function FactsScreen({
+  fixture,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
+}: IntakeScreenSlotProps) {
+  // Free text commits into shell answers (Back-safe); the pinned fixture
+  // shape carries no free-text field, so F1 seeds the normal skipped state
+  // (empty textarea + placeholder guidance).
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
   );
+  const text = answers.facts.text;
+  const setText = (value: string) =>
+    updateAnswer((prev) => setFactsText(prev, value));
   const flagged = containsSensitiveData(text);
 
   return (
@@ -1347,9 +1255,25 @@ function ReviewScreen({
   nav,
   emit,
   activeScreens,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
 }: IntakeScreenSlotProps) {
-  const rows = deriveReviewRows(fixture, activeScreens);
+  /* Review is a current projection of the committed draft (journey §8.3):
+   * rows read shell answers, never fixture fallbacks or inactive data. */
+  const [answers] = useIntakeAnswers(fixture, answersProp, updateAnswerProp);
+  const rows = deriveReviewRowsFromState(answers, fixture, activeScreens);
   const countCorrections = useCorrectionCounter("s-review", emit);
+
+  /* Approval gate (journey §8.3 + §9.12): "Buat pertanyaan audit" stays
+   * blocked until every active blocking answer is valid. */
+  const publishValidity = nav?.onValidityChange;
+  const approvable = isReviewApprovable(
+    answers,
+    activeScreens ?? INTAKE_SCREEN_ORDER,
+  );
+  useEffect(() => {
+    publishValidity?.(approvable);
+  }, [approvable, publishValidity]);
 
   const correctAndJump = (target: IntakeScreenId) => () => {
     countCorrections();
@@ -1448,12 +1372,10 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
   const aliases = resolveAliases(fixture);
   const identities = [brand, ...aliases];
   const countCorrections = useCorrectionCounter("s-questions", emit);
-  const [edits, setEdits] = useDraftState<Record<string, string>>(
-    "s-questions",
-    "edits",
-    () => ({}),
-    emit,
-  );
+  /* Post-intake wording edits stay mount-local: the question pack is
+   * post-handoff (generation unwired, Phase 6) and not part of the intake
+   * draft, so Back re-derives it from the pack. */
+  const [edits, setEdits] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [refusal, setRefusal] = useState<number | null>(null);

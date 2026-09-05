@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { ComponentType } from "react";
+import type { IntakeState } from "./state";
 import { type IntakeScreenId } from "./screens";
 
 /**
@@ -209,9 +210,12 @@ export function isBareScreen(screenId: IntakeScreenId): boolean {
 /**
  * Screens whose Continue stays disabled until their decision is explicit
  * (ledger §8.3 + founder Gate 1 review 2026-09-05: market needs reach+areas,
- * competitors need ≥1 or the no-direct toggle — workbench behavior). The
- * shell gate is real: screens publish validity via `nav.onValidityChange`
- * and blocking screens default to blocked until they publish.
+ * competitors need ≥1 or the no-direct toggle — workbench behavior; journey
+ * contract §2 + §9.5: whole/location offerings need ≥1; s-review needs every
+ * active blocking answer valid — journey §8.3/§9.12). The shell gate is
+ * real: screens publish validity from committed `IntakeState` via
+ * `nav.onValidityChange` and blocking screens default to blocked until
+ * their first publish.
  */
 const BLOCKING_SCREENS: readonly IntakeScreenId[] = [
   "s-brand",
@@ -220,9 +224,11 @@ const BLOCKING_SCREENS: readonly IntakeScreenId[] = [
   "s-branch",
   "s-product",
   "s-category",
+  "s-offerings",
   "s-service",
   "s-market",
   "s-competitors",
+  "s-review",
 ];
 
 export function isBlockingScreen(screenId: IntakeScreenId): boolean {
@@ -362,7 +368,28 @@ export type IntakeScreenSlotProps = {
    * slot tests keep compiling.
    */
   invalidAttempts?: number;
+  /**
+   * Committed journey answers (Phase 5 real `IntakeState`, shell-owned).
+   * Screens read answers from here and write through `updateAnswer`, so
+   * Back navigation and remounts restore committed answers. Optional so
+   * existing slot tests keep compiling; absent, screens seed an equivalent
+   * isolated state from `fixture` and render identically.
+   */
+  answers?: IntakeState;
+  /**
+   * Apply a pure answer transition to the shell-owned state. Optional
+   * alongside `answers`.
+   */
+  updateAnswer?: IntakeAnswerUpdater;
 };
+
+/**
+ * Functional answer update against the shell-owned `IntakeState` (Phase 5).
+ * Screens dispatch pure transitions from `state.ts`; the shell applies them.
+ */
+export type IntakeAnswerUpdater = (
+  updater: (prev: IntakeState) => IntakeState,
+) => void;
 
 /** A screen-content component. The shell renders one per screen id. */
 export type IntakeScreenSlot = ComponentType<IntakeScreenSlotProps>;

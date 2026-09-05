@@ -10,6 +10,7 @@ import {
   normalizeStubAnswers,
   resolveJourneyPath,
   useIntakeFunnel,
+  type IntakeAnswerUpdater,
   type IntakeEntryMode,
   type IntakeFunnelSink,
   type IntakeScopeChoice,
@@ -19,6 +20,15 @@ import {
 } from "./navigation";
 import IntakeChapterProgress from "./progress";
 import { isIntakeScreenId, type IntakeScreenId } from "./screens";
+import {
+  applyScopeChange,
+  commitBrandFix,
+  createIntakeState,
+  isMaterialChange,
+  scopeOptionIdOfKind,
+  withBumpedFactVersion,
+  type IntakeState,
+} from "./state";
 
 type IntakeJourneyProps = {
   /** Screen to show first. Unknown values fall back to the first screen. */
@@ -86,6 +96,9 @@ export default function IntakeJourney({
   fixtureOverride,
   ScreenSlot = DefaultScreenSlot,
 }: IntakeJourneyProps) {
+  /* Stub graph drivers until wave-2 content owns real answers. Scope lives
+   * in committed IntakeState (Phase 5); entry/brand-fix stay preview stub
+   * drivers until preparation owns them. */
   const answers = useMemo(
     () =>
       normalizeStubAnswers({
@@ -95,15 +108,51 @@ export default function IntakeJourney({
       }),
     [entry, stubScope, stubBrandNeedsFix],
   );
-  /* Live scope answer: the s-scope pick re-resolves the path (founder Gate 1
-   * review 2026-09-05). Seeded from the stub until the user picks. */
-  const [scopeChoice, setScopeChoice] = useState<IntakeScopeChoice>(
-    answers.scope,
+  /* Real committed answers, shell-owned (Phase 5): screens read through
+   * `answers` and write through `updateAnswer`, so Back navigation and
+   * remounts restore committed answers instead of reseeding. The preview
+   * stub scope still seeds the route (same as before); a stub-driven scope
+   * counts as unanswered until the owner explicitly picks (data contract
+   * §1.1 rule 3 — never silently confirmed). */
+  const [committed, setCommitted] = useState<IntakeState>(() => {
+    const seeded = createIntakeState(fixtureOverride);
+    if (seeded.scope === answers.scope) return seeded;
+    return {
+      ...seeded,
+      scope: answers.scope,
+      scopeOptionId: scopeOptionIdOfKind(answers.scope),
+      scopeCommitted: false,
+    };
+  });
+  const updateAnswer: IntakeAnswerUpdater = useCallback((updater) => {
+    setCommitted((prev) => updater(prev));
+  }, []);
+  /* Stub fixture datum until a real fixture is injected via fixtureOverride. */
+  const stubFixture: unknown = useMemo(
+    () => ({
+      entry: answers.entry,
+      scope: answers.scope,
+      brandNeedsFix: answers.brandNeedsFix,
+    }),
+    [answers],
   );
+  const fixture: unknown = fixtureOverride ?? stubFixture;
+  /* Live scope answer: the committed pick re-resolves the path (founder
+   * Gate 1 review 2026-09-05 re-route behavior, now state-driven). */
+  const scopeChoice: IntakeScopeChoice = committed.scope;
   const liveAnswers = useMemo(
     () => ({ ...answers, scope: scopeChoice }),
     [answers, scopeChoice],
   );
+  /* Transactional review-edit session (journey §8.1.6 + §8.3): leaving
+   * s-review for a row owner snapshots committed answers. Back from the
+   * entry screen cancels (snapshot restored, unchanged review); Lanjut
+   * saves (fact version bumps on material change, dependents reconfirmed,
+   * return to updated review). Never resumes the linear journey. */
+  const [editSession, setEditSession] = useState<{
+    snapshot: IntakeState;
+    entry: IntakeScreenId;
+  } | null>(null);
   const path = useMemo<IntakeScreenId[]>(
     () =>
       screens && screens.length > 0
@@ -148,9 +197,32 @@ export default function IntakeJourney({
     [current],
   );
 
-  const handleScopeChoice = useCallback((scope: IntakeScopeChoice) => {
-    setScopeChoice(scope);
-  }, []);
+  const handleScopeChoice = useCallback(
+    (scope: IntakeScopeChoice) => {
+      /* The pick re-resolves the route (founder Gate 1 review 2026-09-05)
+       * and invalidates scope-conditioned answers (journey §8.2): the old
+       * target leaves the draft, product scope deactivates offerings. */
+      setCommitted((prev) =>
+        prev.scope === scope && prev.scopeCommitted
+          ? prev
+          : applyScopeChange(prev, fixture, scope),
+      );
+    },
+    [fixture],
+  );
+
+  const jumpTo = useCallback(
+    (target: IntakeScreenId) => {
+      const at = path.indexOf(target);
+      if (at !== -1) {
+        setInvalidAttempts(0);
+        setIndex(at);
+        return true;
+      }
+      return false;
+    },
+    [path],
+  );
 
   const goNext = useCallback(() => {
     if (terminal || path.length === 0) return;
@@ -163,6 +235,36 @@ export default function IntakeJourney({
     }
     setInvalidAttempts(0);
     const at = path[safeIndex];
+    /* Review-edit save (journey §8.1.6 + §8.3): Lanjut on the owner commits.
+     * Processing/correction screens advance without closing the session. */
+    if (editSession && at !== "s-crawl" && at !== "s-brand-fix") {
+      const material = isMaterialChange(editSession.snapshot, committed);
+      if (at === "s-scope" && committed.scope !== editSession.snapshot.scope) {
+        /* Scope change: visit only the new target + invalid dependents,
+         * then the normal forward walk returns to review (journey §8.3). */
+        setCommitted((prev) => (material ? withBumpedFactVersion(prev) : prev));
+        setEditSession(null);
+        emit({ event: "intake_continued", screenId: at });
+        jumpTo(
+          committed.scope === "cabang"
+            ? "s-branch"
+            : committed.scope === "produk"
+              ? "s-product"
+              : "s-category",
+        );
+        return;
+      }
+      setCommitted((prev) => (material ? withBumpedFactVersion(prev) : prev));
+      setEditSession(null);
+      emit({ event: "intake_continued", screenId: at });
+      jumpTo("s-review");
+      return;
+    }
+    if (at === "s-brand-fix") {
+      /* Periksa lagi commits the staged correction, then the re-read loop
+       * continues (journey §4.1 wrong-brand loop). */
+      setCommitted((prev) => commitBrandFix(prev));
+    }
     if (at === "s-review") {
       emit({ event: "intake_continued", screenId: at });
       emit({ event: "intake_completed", screenId: at, completed: true });
@@ -190,28 +292,55 @@ export default function IntakeJourney({
     safeIndex,
     canContinue,
     current,
+    committed,
+    editSession,
     emit,
+    jumpTo,
     onReviewConfirm,
     onQuestionsConfirm,
   ]);
 
   const goBack = useCallback(() => {
-    if (terminal || safeIndex <= 0) return;
+    if (terminal) return;
+    /* Review-edit cancel (journey §8.1.6): Back from the entry screen
+     * restores the snapshot — the review returns unchanged. Deeper nested
+     * correction screens step back normally; a session that cannot step
+     * back also cancels instead of stranding the owner. */
+    if (editSession && (current === editSession.entry || safeIndex <= 0)) {
+      setCommitted(editSession.snapshot);
+      setEditSession(null);
+      setInvalidAttempts(0);
+      emit({ event: "intake_resumed", screenId: "s-review" });
+      jumpTo("s-review");
+      return;
+    }
+    if (safeIndex <= 0) return;
     setInvalidAttempts(0);
+    const dest = path[safeIndex - 1];
     setIndex(safeIndex - 1);
-  }, [terminal, safeIndex]);
+    /* Back restores committed answers (shell-owned state survives the
+     * remount); the resume event carries counts only, never answers. */
+    if (dest !== undefined) emit({ event: "intake_resumed", screenId: dest });
+  }, [terminal, safeIndex, path, current, editSession, emit, jumpTo]);
 
-  /* Direct jump for readback correction links; no-op off-path. */
+  /* Readback correction jumps (journey §8.3). Leaving s-review for a row
+   * owner opens the transactional edit session; no-op off-path. */
   const goToScreen = useCallback(
     (target: IntakeScreenId) => {
       if (terminal) return;
       const at = path.indexOf(target);
-      if (at !== -1) {
-        setInvalidAttempts(0);
-        setIndex(at);
+      if (at === -1) return;
+      if (
+        editSession === null &&
+        current === "s-review" &&
+        target !== "s-review"
+      ) {
+        setEditSession({ snapshot: committed, entry: target });
       }
+      setInvalidAttempts(0);
+      setIndex(at);
     },
-    [terminal, path],
+    [terminal, path, current, editSession, committed],
   );
 
   /* Funnel: started + one screen-viewed per screen (deduped for remounts). */
@@ -240,17 +369,6 @@ export default function IntakeJourney({
     window.scrollTo({ top: 0, behavior: "auto" });
     mainRef.current?.focus({ preventScroll: true });
   }, [terminal, safeIndex]);
-
-  /* Stub fixture datum until a real fixture is injected via fixtureOverride. */
-  const stubFixture: unknown = useMemo(
-    () => ({
-      entry: answers.entry,
-      scope: scopeChoice,
-      brandNeedsFix: answers.brandNeedsFix,
-    }),
-    [answers, scopeChoice],
-  );
-  const fixture: unknown = fixtureOverride ?? stubFixture;
 
   if (path.length === 0) {
     return (
@@ -342,6 +460,8 @@ export default function IntakeJourney({
             activeScreens={path}
             scopeChoice={scopeChoice}
             invalidAttempts={invalidAttempts}
+            answers={committed}
+            updateAnswer={updateAnswer}
           />
         </>
       )}

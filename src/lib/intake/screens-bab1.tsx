@@ -13,6 +13,21 @@ import type {
   IntakeScreenSlotProps,
 } from "./navigation";
 import type { IntakeScreenId } from "./screens";
+import {
+  addMultiCustom,
+  addSingleCustom,
+  isScreenAnswerValid,
+  resetBrandFixDraft,
+  scopeKindOfOptionId,
+  setBrandFixDraft,
+  setCategoryAnswer,
+  setCategoryCustom,
+  setScopeAnswer,
+  setSingleAnswer,
+  toggleMultiAnswer,
+  toggleServiceChannel,
+  useIntakeAnswers,
+} from "./state";
 
 /**
  * Bab 0-1 intake screens (wave-2 content worker: s-crawl … s-customers).
@@ -364,11 +379,21 @@ function useBabAddLine({
   emit,
   prefix,
   guidance,
+  store,
 }: {
   screenId: IntakeScreenId;
   emit: IntakeFunnelEmit;
   prefix: string;
   guidance: string;
+  /**
+   * Shell-state backing for user-added rows (Phase 5): when present, added
+   * rows commit into shared answers (Back-safe); otherwise they stay local
+   * exactly as before.
+   */
+  store?: {
+    items: PreparedItem[];
+    push: (item: PreparedItem) => void;
+  };
 }) {
   const [value, setValue] = useState("");
   const [custom, setCustom] = useState<PreparedItem[]>([]);
@@ -384,6 +409,18 @@ function useBabAddLine({
       emit({ event: "intake_validation_failed", screenId });
       errorRef.current?.focus();
       return false;
+    }
+    if (store !== undefined) {
+      const item: PreparedItem = {
+        id: `${prefix}-custom-${store.items.length + 1}`,
+        label,
+        on: true,
+      };
+      store.push(item);
+      onAdd(item);
+      setValue("");
+      setError(null);
+      return true;
     }
     const next = addCustomItem(custom, label, prefix);
     setCustom(next.items);
@@ -684,7 +721,15 @@ function readBrandCard(state: FixtureScreenState): {
   };
 }
 
-function BrandScreen({ screenId, fixture, nav }: BabScreenProps) {
+function BrandScreen({
+  screenId,
+  fixture,
+  nav,
+  answers: answersProp,
+  updateAnswer,
+}: BabScreenProps) {
+  void screenId;
+  const [answers] = useIntakeAnswers(fixture, answersProp, updateAnswer);
   const state = readScreenState(fixture, "s-brand");
   const card = readBrandCard(state);
   const fix = readFixPrefill(readScreenState(fixture, "s-brand-fix"), fixture);
@@ -692,12 +737,15 @@ function BrandScreen({ screenId, fixture, nav }: BabScreenProps) {
   // (fix-name filled), the confirmed card is the corrected business. The
   // real fact-version state arrives with IntakeState (Phase 5); this keeps
   // the F4 wrong-identity walk truthful until then.
+  const committedFix = answers.brandCorrected;
   const resolvedCard =
     card === null
       ? null
-      : fix.name !== ""
-        ? { ...card, name: fix.name, source: fix.source }
-        : card;
+      : committedFix !== null
+        ? { ...card, name: committedFix.name, source: committedFix.source }
+        : fix.name !== ""
+          ? { ...card, name: fix.name, source: fix.source }
+          : card;
   // Editorial Konfirmasi: the card is the focal point; the sticky "Lanjut"
   // implicitly confirms. No Yes/No choice exists on this screen.
   useBabValidity(true, nav);
@@ -874,14 +922,40 @@ function readFixPrefill(
   };
 }
 
-function BrandFixScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
-  const state = readScreenState(fixture, "s-brand-fix");
-  const prefill = readFixPrefill(state, fixture);
-  const [name, setName] = useState(prefill.name);
-  const [source, setSource] = useState(prefill.source);
+function BrandFixScreen({
+  screenId,
+  fixture,
+  nav,
+  emit,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
+}: BabScreenProps) {
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
+  );
+  /* Staged correction draft (journey §8.1.4): uncommitted until Periksa
+   * lagi; Batal drops it. Draft lives in shell state so the blocking gate
+   * reads the same value the fields show. */
+  const draft = answers.brandFixDraft;
+  const name = draft.name;
+  const source = draft.source;
+  const setName = (value: string) =>
+    updateAnswer((prev) =>
+      setBrandFixDraft(prev, {
+        name: value,
+        source: prev.brandFixDraft.source,
+      }),
+    );
+  const setSource = (value: string) =>
+    updateAnswer((prev) =>
+      setBrandFixDraft(prev, { name: prev.brandFixDraft.name, source: value }),
+    );
   const [touched, setTouched] = useState(false);
   const reportCorrection = useBabCorrections(screenId, emit);
   const valid = isBrandFixValid(name);
+  useBabValidity(valid, nav);
   const headingId = useId();
   const nameId = useId();
   const sourceId = useId();
@@ -974,7 +1048,9 @@ function BrandFixScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
           <button
             type="button"
             onClick={() => {
-              // "Batal" returns to Konfirmasi (the card) without changes.
+              // "Batal" returns to Konfirmasi (the card) without changes:
+              // the staged draft is dropped, never committed.
+              updateAnswer((prev) => resetBrandFixDraft(prev, fixture));
               if (nav.onGotoScreen) nav.onGotoScreen("s-brand");
               else nav.onBack();
             }}
@@ -999,7 +1075,19 @@ const fixLabelStyle: React.CSSProperties = {
 
 /* ── s-scope: A2 choose what to audit ──────────────────────── */
 
-function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
+function ScopeScreen({
+  screenId,
+  fixture,
+  nav,
+  emit,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
+}: BabScreenProps) {
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
+  );
   const state = readScreenState(fixture, "s-scope");
   /* Fixed single-select (handoff 2026-09-05): the three scope choices are
    * always offered regardless of what the source prepared; a prepared
@@ -1020,21 +1108,15 @@ function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
             on: prepared?.on ?? false,
           };
         });
-  const [selectedId, setSelectedId] = useState<string | null>(() =>
-    initialSingleSelection({ ...state, prepared: options }),
-  );
+  const selectedId = answers.scopeOptionId;
   const initialRef = useRef(selectedId);
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isSingleChoiceValid(selectedId), nav);
+  useBabValidity(isScreenAnswerValid("s-scope", answers), nav);
   const headingId = useId();
 
   /* scope-option id → journey scope answer (handoff locked routes). */
-  const scopeOf = (id: string): IntakeScopeChoice | null => {
-    if (id === "scope-branch") return "cabang";
-    if (id === "scope-product") return "produk";
-    if (id === "scope-whole-brand") return "brand";
-    return null;
-  };
+  const scopeOf = (id: string): IntakeScopeChoice | null =>
+    scopeKindOfOptionId(id);
 
   return (
     <ScreenSection labelledBy={headingId}>
@@ -1056,7 +1138,7 @@ function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
               role="radio"
               aria-checked={checked}
               onClick={() => {
-                setSelectedId(item.id);
+                updateAnswer((prev) => setScopeAnswer(prev, item.id));
                 if (initialRef.current !== item.id) reportCorrection();
                 /* Founder Gate 1 review 2026-09-05: the pick re-resolves the
                  * route (Satu lokasi → s-branch, Satu produk → s-product). */
@@ -1122,6 +1204,8 @@ function EntityScreen({
   hint,
   inputLabel,
   prefix,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
 }: BabScreenProps & {
   heading: string;
   placeholder: string;
@@ -1129,15 +1213,30 @@ function EntityScreen({
   inputLabel: string;
   prefix: string;
 }) {
-  const state = readScreenState(fixture, screenId);
-  const [selectedId, setSelectedId] = useState<string | null>(() =>
-    initialSingleSelection(state),
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
   );
+  const entityKey = screenId === "s-product" ? "product" : "branch";
+  const entity = answers[entityKey];
+  const selectedId = entity.selectedId;
+  const state = readScreenState(fixture, screenId);
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isSingleChoiceValid(selectedId), nav);
-  const addLine = useBabAddLine({ screenId, emit, prefix, guidance: hint });
+  useBabValidity(isScreenAnswerValid(screenId, answers), nav);
+  const addLine = useBabAddLine({
+    screenId,
+    emit,
+    prefix,
+    guidance: hint,
+    store: {
+      items: entity.custom,
+      push: (item) =>
+        updateAnswer((prev) => addSingleCustom(prev, entityKey, item)),
+    },
+  });
   const headingId = useId();
-  const rows = [...state.prepared, ...addLine.custom];
+  const rows = [...state.prepared, ...entity.custom];
 
   return (
     <ScreenSection labelledBy={headingId}>
@@ -1159,7 +1258,9 @@ function EntityScreen({
                 role="radio"
                 aria-checked={checked}
                 onClick={() => {
-                  setSelectedId(item.id);
+                  updateAnswer((prev) =>
+                    setSingleAnswer(prev, entityKey, item.id),
+                  );
                   reportCorrection();
                 }}
                 style={{
@@ -1185,7 +1286,7 @@ function EntityScreen({
         buttonLabel="Tambah"
         inputLabel={inputLabel}
         addLine={addLine}
-        onAdd={(item) => setSelectedId(item.id)}
+        onAdd={() => undefined}
       />
     </ScreenSection>
   );
@@ -1225,14 +1326,19 @@ function CategoryScreen({
   nav,
   emit,
   scopeChoice,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
 }: BabScreenProps) {
-  const state = readScreenState(fixture, "s-category");
-  const [selectedId, setSelectedId] = useState<string | null>(() =>
-    initialSingleSelection(state),
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
   );
-  const [customLabel, setCustomLabel] = useState<string | null>(null);
+  const state = readScreenState(fixture, "s-category");
+  const selectedId = answers.category.selectedId;
+  const customLabel = answers.category.customLabel;
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isSingleChoiceValid(selectedId), nav);
+  useBabValidity(isScreenAnswerValid("s-category", answers), nav);
   const headingId = useId();
   const inputId = useId();
   const errorId = useId();
@@ -1260,9 +1366,7 @@ function CategoryScreen({
       errorRef.current?.focus();
       return false;
     }
-    const id = `category-custom-${customLabel === null ? 1 : 2}`;
-    setCustomLabel(label);
-    setSelectedId(id);
+    updateAnswer((prev) => setCategoryCustom(prev, label));
     setDraft("");
     setError(null);
     reportCorrection();
@@ -1299,7 +1403,7 @@ function CategoryScreen({
                 role="radio"
                 aria-checked={checked}
                 onClick={() => {
-                  setSelectedId(item.id);
+                  updateAnswer((prev) => setCategoryAnswer(prev, item.id));
                   reportCorrection();
                 }}
                 style={{
@@ -1365,6 +1469,9 @@ function ChipsScreen({
   fixture,
   nav,
   emit,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
+  invalidAttempts,
   heading,
   lead,
   pill,
@@ -1382,28 +1489,44 @@ function ChipsScreen({
   /** Ask-mode lead override; receives the detected count (data slot N). */
   askLeadFor?: (detectedCount: number) => string;
 }) {
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
+  );
   const state = readScreenState(fixture, screenId);
   const { mode, detectedCount } = deriveOfferingsMode(state.prepared);
-  const [onIds, setOnIds] = useState<string[]>(() =>
-    initialChipSelection(state),
-  );
+  /* Offerings vs customers share the A3 grammar; only offerings blocks
+   * (journey §2 settles the Gate 0 disagreement: whole/location routes
+   * require ≥1; customers stay optional). */
+  const chipKey = screenId === "s-customers" ? "customers" : "offerings";
+  const answer = answers[chipKey];
+  const onIds = answer.onIds;
   const reportCorrection = useBabCorrections(screenId, emit);
-  // A3 screens in Bab 1 never block Continue (ledger §2, §8.3).
-  useBabValidity(true, nav);
+  const valid =
+    screenId === "s-offerings"
+      ? isScreenAnswerValid("s-offerings", answers)
+      : true;
+  useBabValidity(valid, nav);
   const addLine = useBabAddLine({
     screenId,
     emit,
     prefix,
     guidance: lead,
+    store: {
+      items: answer.custom,
+      push: (item) =>
+        updateAnswer((prev) => addMultiCustom(prev, chipKey, item)),
+    },
   });
   const headingId = useId();
 
   const toggle = (id: string) => {
-    setOnIds((current) => toggleSelected(current, id));
+    updateAnswer((prev) => toggleMultiAnswer(prev, chipKey, id));
     reportCorrection();
   };
 
-  const chips: PreparedItem[] = [...state.prepared, ...addLine.custom];
+  const chips: PreparedItem[] = [...state.prepared, ...answer.custom];
   const resolvedLead =
     askLeadFor !== undefined && mode === "ask"
       ? askLeadFor(detectedCount)
@@ -1440,6 +1563,20 @@ function ChipsScreen({
         ) : null}
       </h1>
       <p style={leadStyle}>{resolvedLead}</p>
+      {screenId === "s-offerings" && (invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          Pilih atau tambah setidaknya satu produk atau layanan.
+        </p>
+      ) : null}
       {chips.length > 0 ? (
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           {chips.map((item) => {
@@ -1479,11 +1616,7 @@ function ChipsScreen({
         buttonLabel="Tambah"
         inputLabel={inputLabel}
         addLine={addLine}
-        onAdd={(item) =>
-          setOnIds((current) =>
-            current.includes(item.id) ? current : [...current, item.id],
-          )
-        }
+        onAdd={() => undefined}
       />
     </ScreenSection>
   );
@@ -1567,13 +1700,22 @@ export function isServiceSelectionValid(ids: readonly string[]): boolean {
   return ids.length > 0;
 }
 
-function ServiceScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
-  const state = readScreenState(fixture, "s-service");
-  const [onIdsState, setOnIdsState] = useState<string[]>(() =>
-    initialChipSelection(state),
+function ServiceScreen({
+  screenId,
+  fixture,
+  nav,
+  emit,
+  answers: answersProp,
+  updateAnswer: updateAnswerProp,
+}: BabScreenProps) {
+  const [answers, updateAnswer] = useIntakeAnswers(
+    fixture,
+    answersProp,
+    updateAnswerProp,
   );
+  const onIdsState = answers.service.onIds;
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isServiceSelectionValid(onIdsState), nav);
+  useBabValidity(isScreenAnswerValid("s-service", answers), nav);
   const headingId = useId();
 
   return (
@@ -1599,7 +1741,7 @@ function ServiceScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
               role="checkbox"
               aria-checked={on}
               onClick={() => {
-                setOnIdsState((current) => toggleSelected(current, channel.id));
+                updateAnswer((prev) => toggleServiceChannel(prev, channel.id));
                 reportCorrection();
               }}
               style={{
