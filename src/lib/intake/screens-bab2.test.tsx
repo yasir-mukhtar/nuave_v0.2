@@ -19,6 +19,7 @@ import {
   containsSensitiveData,
   deriveQuestionSlots,
   deriveReviewRows,
+  isMarketAnswerValid,
   isMarketSkippedFixture,
   isThinCompetitorState,
   isUnbrandedViolation,
@@ -92,8 +93,9 @@ describe("s-market (F1 rich)", () => {
     }
   });
 
-  it("reveals the area panel for the prepared nearby reach with 3 area chips", () => {
-    expect(html).toContain("Pilih area pelanggan");
+  it("reveals the area panel for the prepared nearby reach with area chips", () => {
+    // Panel heading is reach-dependent (workbench: sekitar = pick one).
+    expect(html).toContain("Pilih satu kota atau area");
     expect(html).toContain("Jakarta Selatan");
     expect(html).toContain("Tangerang Selatan");
     expect(html).toContain("Tambah area lain");
@@ -117,7 +119,8 @@ describe("s-market (F1 rich)", () => {
   it("empty fixture degrades to reach cards, never a dead end", () => {
     const empty = renderBab2("s-market", {});
     expect(empty).toContain("Sekitar satu area");
-    expect(empty).not.toContain("Pilih area pelanggan");
+    expect(empty).not.toContain("Pilih satu kota atau area");
+    expect(empty).not.toContain("Pilih semua kota atau area");
   });
 });
 
@@ -443,5 +446,123 @@ describe("shell pairing (transitions + terminal)", () => {
       }),
     );
     expect(questions).toContain("Mulai audit");
+  });
+});
+
+describe("founder Gate 1 review fixes (2026-09-05): blocking gates", () => {
+  /* #5/#6/#7: the shell Continue gate blocks until the screen publishes
+   * validity; a blocked tap shows the inline workbench message. */
+
+  it("market: sekitar seed clamps to a single selected area", () => {
+    const html = renderBab2("s-market");
+    // F1 seeds sekitar: exactly one of the three prepared areas is on.
+    const onCount = (html.match(/aria-pressed="true"/g) ?? []).length;
+    expect(onCount).toBe(1);
+    expect(html).toContain("Jakarta Selatan");
+  });
+
+  it("market: area chips render as tappable options with checkmarks", () => {
+    const html = renderBab2("s-market");
+    // Options are selectable chips (aria-pressed), not just removable tags.
+    expect(html).toContain('aria-label="Pilih Jakarta Selatan"');
+    expect(html).toContain("✓");
+  });
+
+  it("competitors: error message renders after a blocked attempt", () => {
+    const Slot = BAB2_SCREENS["s-competitors"];
+    if (!Slot) throw new Error("missing s-competitors");
+    const html = renderToStaticMarkup(
+      createElement(Slot, {
+        screenId: "s-competitors",
+        fixture: {
+          screens: { "s-competitors": { prepared: [], selected: [] } },
+        },
+        nav: stubNav,
+        emit: noopEmit,
+        invalidAttempts: 1,
+      }),
+    );
+    expect(html).toContain("Pilih setidaknya satu bisnis, atau pilih");
+  });
+
+  it("competitors: F1 stays clean — no error before a blocked attempt", () => {
+    const html = renderBab2("s-competitors");
+    expect(html).not.toContain("Pilih setidaknya satu bisnis");
+  });
+
+  it("market: error message renders after a blocked attempt (empty areas)", () => {
+    const Slot = BAB2_SCREENS["s-market"];
+    if (!Slot) throw new Error("missing s-market");
+    /* Sekitar reach with NO prepared areas and no seed → blocked attempt
+     * shows the area error (workbench string). */
+    const html = renderToStaticMarkup(
+      createElement(Slot, {
+        screenId: "s-market",
+        fixture: {
+          screens: {
+            "s-market": {
+              prepared: [
+                {
+                  id: "market-type-nearby",
+                  label: "Sekitar satu area",
+                  selected: false,
+                },
+              ],
+              selected: [],
+            },
+          },
+        },
+        nav: stubNav,
+        emit: noopEmit,
+        invalidAttempts: 1,
+      }),
+    );
+    expect(html).toContain("Pilih jangkauan utama untuk melanjutkan.");
+  });
+
+  it("market: area error shows when sekitar is picked but no area is", () => {
+    const Slot = BAB2_SCREENS["s-market"];
+    if (!Slot) throw new Error("missing s-market");
+    /* Reach seeded to sekitar with no prepared/selected areas: the area
+     * requirement error (workbench string) shows after a blocked attempt. */
+    const html = renderToStaticMarkup(
+      createElement(Slot, {
+        screenId: "s-market",
+        fixture: {
+          screens: {
+            "s-market": {
+              prepared: [
+                {
+                  id: "market-type-nearby",
+                  label: "Sekitar satu area",
+                  selected: true,
+                },
+              ],
+              selected: ["market-type-nearby"],
+            },
+          },
+        },
+        nav: stubNav,
+        emit: noopEmit,
+        invalidAttempts: 1,
+      }),
+    );
+    expect(html).toContain("Pilih satu kota atau area.");
+  });
+
+  it("market: no error nags before the first attempt", () => {
+    const html = renderBab2("s-market");
+    expect(html).not.toContain("Pilih setidaknya satu kota atau area");
+    expect(html).not.toContain("Pilih jangkauan utama untuk melanjutkan");
+  });
+
+  it("isMarketAnswerValid: reach required; area kinds need ≥1 area", () => {
+    expect(isMarketAnswerValid(null, 0)).toBe(false);
+    expect(isMarketAnswerValid("sekitar", 0)).toBe(false);
+    expect(isMarketAnswerValid("beberapa", 0)).toBe(false);
+    expect(isMarketAnswerValid("sekitar", 1)).toBe(true);
+    expect(isMarketAnswerValid("beberapa", 2)).toBe(true);
+    expect(isMarketAnswerValid("seluruh", 0)).toBe(true);
+    expect(isMarketAnswerValid("luar", 0)).toBe(true);
   });
 });

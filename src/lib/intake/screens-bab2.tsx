@@ -755,7 +755,12 @@ export function isMarketAnswerValid(
   return true;
 }
 
-function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
+function MarketScreen({
+  fixture,
+  nav,
+  emit,
+  invalidAttempts,
+}: IntakeScreenSlotProps) {
   const state = getFixtureScreen(fixture, "s-market");
   const countCorrections = useCorrectionCounter("s-market", emit);
   const [kind, setKind] = useDraftState<MarketKind | null>(
@@ -767,7 +772,11 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
   const [cityIds, setCityIds] = useDraftState<string[]>(
     "s-market",
     "cities",
-    () => seedCityIds(state),
+    () => {
+      const ids = seedCityIds(state);
+      /* Sekitar is single-select (workbench): seed at most one area. */
+      return seedMarketKind(state) === "sekitar" ? ids.slice(0, 1) : ids;
+    },
     emit,
   );
   const [customCities, setCustomCities] = useDraftState<string[]>(
@@ -780,8 +789,45 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
   const cityById = new Map(
     (state?.prepared ?? []).map((item) => [item.id, item.label]),
   );
+  /* Candidate areas: fixture-prepared area chips plus the areas the user
+   * already picked (prepared chips remain tappable options — workbench
+   * behavior; they only show as removable once selected). */
+  const allAreaIds = Array.from(
+    new Set([
+      ...(state?.prepared ?? [])
+        .filter(
+          (item) =>
+            marketKindFromId(item.id) === null && !/^market-/.test(item.id),
+        )
+        .map((item) => item.id),
+      ...cityIds,
+    ]),
+  );
   const reveal = kind === "sekitar" || kind === "beberapa";
+  const singleArea = kind === "sekitar";
   const areaCount = cityIds.length + customCities.length;
+  const valid = isMarketAnswerValid(kind, areaCount);
+
+  /* Publish blocking validity to the shell gate (founder Gate 1 review
+   * 2026-09-05): reach pick required; area-based reach also needs ≥1 area. */
+  const publishValidity = nav?.onValidityChange;
+  useEffect(() => {
+    publishValidity?.(valid);
+  }, [valid, publishValidity]);
+
+  /* Workbench strings: panel heading + attempt error, per reach kind. */
+  const panelHeading = singleArea
+    ? "Pilih satu kota atau area"
+    : "Pilih semua kota atau area";
+  const areaErrorText = singleArea
+    ? "Pilih satu kota atau area."
+    : "Pilih setidaknya satu kota atau area.";
+  const reachErrorText = "Pilih jangkauan utama untuk melanjutkan.";
+
+  const toggleArea = (id: string) => {
+    setCityIds(singleArea ? [id] : toggleId(cityIds, id));
+    countCorrections();
+  };
 
   return (
     <ScreenSection screenId="s-market" labelledBy="s-market-h">
@@ -801,6 +847,9 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
             onClick={() => {
               if (kind !== option.kind) countCorrections();
               setKind(option.kind);
+              /* Reach change resets the area pick (workbench behavior):
+               * sekitar re-picks one, beberapa re-picks many. */
+              setCityIds([]);
             }}
             style={{
               minHeight: "44px",
@@ -867,23 +916,51 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
               color: "var(--text-heading, #18181b)",
             }}
           >
-            Pilih area pelanggan
+            {panelHeading}
           </h2>
-          {areaCount > 0 ? (
+          {/* Attempt-triggered inline error (workbench string). Hidden until
+           * the first blocked Lanjut, so it never nags pre-interaction. */}
+          {(invalidAttempts ?? 0) > 0 && !valid ? (
+            <p
+              role="alert"
+              style={{
+                margin: 0,
+                fontSize: "13px",
+                lineHeight: 1.5,
+                color: "var(--text-danger, #b91c1c)",
+                fontWeight: 600,
+              }}
+            >
+              {areaErrorText}
+            </p>
+          ) : null}
+          {allAreaIds.length > 0 ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {cityIds.map((id) => (
-                <ToggleChip
-                  key={id}
-                  on
-                  onToggle={() => {
-                    setCityIds(toggleId(cityIds, id));
-                    countCorrections();
-                  }}
-                  label={`Hapus ${cityById.get(id) ?? id}`}
-                >
-                  {cityById.get(id) ?? id} ×
-                </ToggleChip>
-              ))}
+              {allAreaIds.map((id) => {
+                const on = cityIds.includes(id);
+                return (
+                  <ToggleChip
+                    key={id}
+                    on={on}
+                    onToggle={() => toggleArea(id)}
+                    label={`Pilih ${cityById.get(id) ?? id}`}
+                  >
+                    {on ? (
+                      <span
+                        aria-hidden="true"
+                        style={{ marginRight: "6px", fontWeight: 700 }}
+                      >
+                        ✓
+                      </span>
+                    ) : null}
+                    {cityById.get(id) ?? id}
+                  </ToggleChip>
+                );
+              })}
+            </div>
+          ) : null}
+          {customCities.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {customCities.map((city) => (
                 <ToggleChip
                   key={`custom-${city}`}
@@ -914,13 +991,32 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
           />
         </div>
       ) : null}
+      {!reveal && (invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          {reachErrorText}
+        </p>
+      ) : null}
     </ScreenSection>
   );
 }
 
 /* ── s-competitors (checkbox names + add + no-direct-competitor mode) ── */
 
-function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
+function CompetitorsScreen({
+  fixture,
+  nav,
+  emit,
+  invalidAttempts,
+}: IntakeScreenSlotProps) {
   const state = getFixtureScreen(fixture, "s-competitors");
   const thin = isThinCompetitorState(state);
   const countCorrections = useCorrectionCounter("s-competitors", emit);
@@ -942,6 +1038,16 @@ function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
     () => false,
     emit,
   );
+
+  /* Blocking gate (founder Gate 1 review 2026-09-05, workbench string):
+   * ≥1 competitor or the no-direct acknowledgment before Continue. */
+  const valid = keptIds.length + custom.length > 0 || noDirect;
+  const publishValidity = nav?.onValidityChange;
+  useEffect(() => {
+    publishValidity?.(valid);
+  }, [valid, publishValidity]);
+  const competitorErrorText =
+    'Pilih setidaknya satu bisnis, atau pilih "Tidak ada pesaing langsung".';
 
   const rows = (state?.prepared ?? [])
     .filter((item) => /^competitor/i.test(item.id))
@@ -1018,6 +1124,20 @@ function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
           ? "Nuave belum menemukan pembanding dari sumber Anda. Ini pembanding yang umum untuk kategori Anda. Pilih yang relevan atau tambah sendiri."
           : "Pilih bisnis yang dipertimbangkan pelanggan untuk kebutuhan yang sama. Nuave akan menggunakannya untuk menguji perbandingan."}
       </Lead>
+      {(invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          {competitorErrorText}
+        </p>
+      ) : null}
       {rows.length > 0 ? (
         <ul
           style={{

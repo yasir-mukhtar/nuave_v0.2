@@ -208,9 +208,10 @@ export function isBareScreen(screenId: IntakeScreenId): boolean {
 
 /**
  * Screens whose Continue stays disabled until their decision is explicit
- * (ledger §8.3). The shell stub satisfies every blocker with prepared stub
- * answers, so wave-2 content drives the real disabled state via the slot
- * `nav.canContinue` contract.
+ * (ledger §8.3 + founder Gate 1 review 2026-09-05: market needs reach+areas,
+ * competitors need ≥1 or the no-direct toggle — workbench behavior). The
+ * shell gate is real: screens publish validity via `nav.onValidityChange`
+ * and blocking screens default to blocked until they publish.
  */
 const BLOCKING_SCREENS: readonly IntakeScreenId[] = [
   "s-brand",
@@ -220,6 +221,8 @@ const BLOCKING_SCREENS: readonly IntakeScreenId[] = [
   "s-product",
   "s-category",
   "s-service",
+  "s-market",
+  "s-competitors",
 ];
 
 export function isBlockingScreen(screenId: IntakeScreenId): boolean {
@@ -319,6 +322,18 @@ export type IntakeScreenNav = {
   canContinue: boolean;
   canGoBack: boolean;
   continueLabel: IntakeContinueLabel;
+  /**
+   * Publish the current screen's blocking validity to the shell gate
+   * (founder Gate 1 review 2026-09-05). Fires from an effect, never during
+   * render. Optional so existing slot tests keep compiling.
+   */
+  onValidityChange?: (valid: boolean) => void;
+  /**
+   * Report the scope answer chosen on s-scope; the shell re-resolves the
+   * journey path (s-branch / s-product XOR) and re-seeds downstream copy.
+   * Optional so existing slot tests keep compiling.
+   */
+  onScopeChoice?: (scope: IntakeScopeChoice) => void;
 };
 
 export type IntakeScreenSlotProps = {
@@ -333,6 +348,20 @@ export type IntakeScreenSlotProps = {
    * (handoff 2026-09-05). Optional so slot tests keep compiling.
    */
   activeScreens?: readonly IntakeScreenId[];
+  /**
+   * The scope answer the shell currently holds (stub seed or the user's
+   * s-scope pick). Drives scope-dependent copy, e.g. the s-category heading
+   * (founder Gate 1 review 2026-09-05). Optional so slot tests keep
+   * compiling.
+   */
+  scopeChoice?: IntakeScopeChoice;
+  /**
+   * Blocked Continue attempts on the current screen since the last advance
+   * (founder Gate 1 review 2026-09-05). >0 means an invalid attempt just
+   * happened: screens render their inline selection message. Optional so
+   * slot tests keep compiling.
+   */
+  invalidAttempts?: number;
 };
 
 /** A screen-content component. The shell renders one per screen id. */

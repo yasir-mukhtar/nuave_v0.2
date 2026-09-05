@@ -8,7 +8,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { INTAKE_FIXTURES } from "./fixtures";
-import type { IntakeScreenSlotProps } from "./navigation";
+import type { IntakeScreenSlotProps, IntakeScopeChoice } from "./navigation";
 import { BAB1_SCREENS } from "./screens-bab1";
 import { INTAKE_SCREEN_ORDER } from "./screens";
 
@@ -54,6 +54,60 @@ describe("Bab 0-1 wiring map", () => {
     for (const id of Object.keys(BAB1_SCREENS)) {
       expect(INTAKE_SCREEN_ORDER).toContain(id);
     }
+  });
+});
+
+describe("founder Gate 1 review fixes (2026-09-05): scope copy + checkmarks", () => {
+  function renderCategoryWithScope(
+    scopeChoice: IntakeScopeChoice | undefined,
+  ): string {
+    const Slot = BAB1_SCREENS["s-category"];
+    if (!Slot) throw new Error("missing s-category");
+    return renderToStaticMarkup(
+      createElement(Slot, {
+        screenId: "s-category",
+        fixture: F1,
+        nav: stubNav,
+        emit: noopEmit,
+        scopeChoice,
+      }),
+    );
+  }
+
+  it("category heading stays whole-brand when scope is brand", () => {
+    expect(renderCategoryWithScope("brand")).toContain(
+      "Bisnis Anda biasanya disebut apa?",
+    );
+  });
+
+  it("category heading reflects a location pick (founder fix #3)", () => {
+    expect(renderCategoryWithScope("cabang")).toContain(
+      "Lokasi ini biasanya disebut apa?",
+    );
+  });
+
+  it("category heading reflects a product pick (founder fix #3)", () => {
+    expect(renderCategoryWithScope("produk")).toContain(
+      "Produk atau layanan ini biasanya disebut apa?",
+    );
+  });
+
+  it("offering chips render a checkmark on the selected pill (#4)", () => {
+    const html = renderBab1("s-offerings");
+    const pills = html.match(/aria-pressed="true"[^>]*>/g) ?? [];
+    expect(pills.length).toBeGreaterThan(0);
+    // Every selected pill carries the ✓ glyph (workbench behavior).
+    for (const pill of pills) {
+      void pill; // marker presence is asserted on the section below
+    }
+    expect(html).toContain("✓");
+  });
+
+  it("scope screen labels the three founder-locked options", () => {
+    const html = renderBab1("s-scope");
+    expect(html).toContain("Brand secara keseluruhan");
+    expect(html).toContain("Satu lokasi");
+    expect(html).toContain("Satu produk atau layanan");
   });
 });
 

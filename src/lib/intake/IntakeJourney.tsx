@@ -6,6 +6,7 @@ import {
   chapterFills,
   continueLabelFor,
   isBareScreen,
+  isBlockingScreen,
   normalizeStubAnswers,
   resolveJourneyPath,
   useIntakeFunnel,
@@ -94,12 +95,21 @@ export default function IntakeJourney({
       }),
     [entry, stubScope, stubBrandNeedsFix],
   );
+  /* Live scope answer: the s-scope pick re-resolves the path (founder Gate 1
+   * review 2026-09-05). Seeded from the stub until the user picks. */
+  const [scopeChoice, setScopeChoice] = useState<IntakeScopeChoice>(
+    answers.scope,
+  );
+  const liveAnswers = useMemo(
+    () => ({ ...answers, scope: scopeChoice }),
+    [answers, scopeChoice],
+  );
   const path = useMemo<IntakeScreenId[]>(
     () =>
       screens && screens.length > 0
         ? [...screens]
-        : resolveJourneyPath(answers),
-    [screens, answers],
+        : resolveJourneyPath(liveAnswers),
+    [screens, liveAnswers],
   );
   const [index, setIndex] = useState(() => {
     if (initialScreenId !== undefined && isIntakeScreenId(initialScreenId)) {
@@ -111,6 +121,12 @@ export default function IntakeJourney({
   const [terminal, setTerminal] = useState(false);
   const mainRef = useRef<HTMLElement | null>(null);
 
+  /* Blocking-validity gate (founder Gate 1 review 2026-09-05): screens
+   * publish validity per screen id; blocking screens default to blocked
+   * until their first publish. Stays per-screen so Back keeps answers. */
+  const [validity, setValidity] = useState<Record<string, boolean>>({});
+  const [invalidAttempts, setInvalidAttempts] = useState(0);
+
   const emit = useIntakeFunnel(funnelSink);
   const emittedRef = useRef<Set<string>>(new Set());
 
@@ -120,9 +136,32 @@ export default function IntakeJourney({
   const bare = !terminal && isBareScreen(current);
   const canGoBack = !terminal && safeIndex > 0;
   const fills = chapterFills(path, current);
+  const blocking = !terminal && isBlockingScreen(current);
+  const canContinue = blocking ? validity[current] === true : true;
+
+  const handleValidityChange = useCallback(
+    (valid: boolean) => {
+      setValidity((prev) =>
+        prev[current] === valid ? prev : { ...prev, [current]: valid },
+      );
+    },
+    [current],
+  );
+
+  const handleScopeChoice = useCallback((scope: IntakeScopeChoice) => {
+    setScopeChoice(scope);
+  }, []);
 
   const goNext = useCallback(() => {
     if (terminal || path.length === 0) return;
+    if (!canContinue) {
+      /* Blocked attempt: count it and let the screen show its message
+       * (workbench behavior — message, no advance). */
+      setInvalidAttempts((count) => count + 1);
+      emit({ event: "intake_validation_failed", screenId: current });
+      return;
+    }
+    setInvalidAttempts(0);
     const at = path[safeIndex];
     if (at === "s-review") {
       emit({ event: "intake_continued", screenId: at });
@@ -145,10 +184,20 @@ export default function IntakeJourney({
     }
     emit({ event: "intake_continued", screenId: at });
     setIndex(Math.min(safeIndex + 1, path.length - 1));
-  }, [terminal, path, safeIndex, emit, onReviewConfirm, onQuestionsConfirm]);
+  }, [
+    terminal,
+    path,
+    safeIndex,
+    canContinue,
+    current,
+    emit,
+    onReviewConfirm,
+    onQuestionsConfirm,
+  ]);
 
   const goBack = useCallback(() => {
     if (terminal || safeIndex <= 0) return;
+    setInvalidAttempts(0);
     setIndex(safeIndex - 1);
   }, [terminal, safeIndex]);
 
@@ -157,7 +206,10 @@ export default function IntakeJourney({
     (target: IntakeScreenId) => {
       if (terminal) return;
       const at = path.indexOf(target);
-      if (at !== -1) setIndex(at);
+      if (at !== -1) {
+        setInvalidAttempts(0);
+        setIndex(at);
+      }
     },
     [terminal, path],
   );
@@ -193,10 +245,10 @@ export default function IntakeJourney({
   const stubFixture: unknown = useMemo(
     () => ({
       entry: answers.entry,
-      scope: answers.scope,
+      scope: scopeChoice,
       brandNeedsFix: answers.brandNeedsFix,
     }),
-    [answers],
+    [answers, scopeChoice],
   );
   const fixture: unknown = fixtureOverride ?? stubFixture;
 
@@ -212,10 +264,13 @@ export default function IntakeJourney({
     onContinue: goNext,
     onBack: goBack,
     onGotoScreen: goToScreen,
-    /* Stub answers satisfy every blocker; wave-2 content drives this. */
-    canContinue: true,
+    /* Real blocking gate (founder Gate 1 review 2026-09-05): blocking
+     * screens stay disabled until they publish validity. */
+    canContinue,
     canGoBack,
     continueLabel: continueLabelFor(terminal ? "s-questions" : current),
+    onValidityChange: handleValidityChange,
+    onScopeChoice: handleScopeChoice,
   };
 
   return (
@@ -285,6 +340,8 @@ export default function IntakeJourney({
             nav={nav}
             emit={emit}
             activeScreens={path}
+            scopeChoice={scopeChoice}
+            invalidAttempts={invalidAttempts}
           />
         </>
       )}
@@ -337,7 +394,8 @@ export default function IntakeJourney({
             <button
               type="button"
               onClick={goNext}
-              disabled={!nav.canContinue}
+              aria-disabled={!nav.canContinue}
+              data-continue-disabled={!nav.canContinue ? "true" : undefined}
               style={{
                 minHeight: "44px",
                 padding: "10px 24px",

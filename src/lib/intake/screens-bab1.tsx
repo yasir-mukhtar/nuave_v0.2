@@ -8,6 +8,7 @@ import type {
 } from "./fixtures";
 import type {
   IntakeFunnelEmit,
+  IntakeScopeChoice,
   IntakeScreenSlot,
   IntakeScreenSlotProps,
 } from "./navigation";
@@ -196,8 +197,12 @@ function scopeDeckFor(item: PreparedItem): {
  * A2 archetype with the two always-available options instead of a blank form.
  */
 function fallbackScopeOptions(): PreparedItem[] {
+  /* All three founder-locked scope choices stay reachable even when no
+   * options were prepared (founder Gate 1 review 2026-09-05: Satu lokasi
+   * must branch to the location pick). */
   return [
     { id: "scope-whole-brand", label: "Seluruh brand", on: false },
+    { id: "scope-branch", label: "Satu lokasi", on: false },
     { id: "scope-product", label: "Satu produk atau layanan", on: false },
   ];
 }
@@ -316,11 +321,9 @@ function ScreenSection({
 /* ── Validity + funnel wiring ──────────────────────────────── */
 
 /**
- * Publish blocking validity. The nav slot object is shell-owned and must
- * never be mutated during render; validity fires through the optional
- * callback for wrappers that lift state. Shell-side enforcement of
- * `canContinue` arrives with real interactions (plan Phase 5) — until then
- * the shell's stub gate stays permissive and this hook only notifies.
+ * Publish blocking validity to the shell gate (founder Gate 1 review
+ * 2026-09-05). The nav slot object is shell-owned and never mutated during
+ * render; validity fires through `nav.onValidityChange` from an effect.
  */
 function useBabValidity(
   valid: boolean,
@@ -328,9 +331,10 @@ function useBabValidity(
   onValidityChange?: (valid: boolean) => void,
 ) {
   void nav;
+  const publish = nav.onValidityChange ?? onValidityChange;
   useEffect(() => {
-    onValidityChange?.(valid);
-  }, [valid, onValidityChange]);
+    publish?.(valid);
+  }, [publish, valid]);
 }
 
 /**
@@ -997,8 +1001,25 @@ const fixLabelStyle: React.CSSProperties = {
 
 function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
   const state = readScreenState(fixture, "s-scope");
-  const options =
-    state.prepared.length > 0 ? state.prepared : fallbackScopeOptions();
+  /* Fixed single-select (handoff 2026-09-05): the three scope choices are
+   * always offered regardless of what the source prepared; a prepared
+   * option may preselect its canonical id. Order: brand, lokasi, produk. */
+  const CANONICAL_SCOPE_IDS = [
+    "scope-whole-brand",
+    "scope-branch",
+    "scope-product",
+  ] as const;
+  const options: PreparedItem[] =
+    state.prepared.length === 0
+      ? fallbackScopeOptions()
+      : CANONICAL_SCOPE_IDS.map((id) => {
+          const prepared = state.prepared.find((p) => p.id === id);
+          return {
+            id,
+            label: prepared?.label ?? "",
+            on: prepared?.on ?? false,
+          };
+        });
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     initialSingleSelection({ ...state, prepared: options }),
   );
@@ -1006,6 +1027,14 @@ function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
   const reportCorrection = useBabCorrections(screenId, emit);
   useBabValidity(isSingleChoiceValid(selectedId), nav);
   const headingId = useId();
+
+  /* scope-option id → journey scope answer (handoff locked routes). */
+  const scopeOf = (id: string): IntakeScopeChoice | null => {
+    if (id === "scope-branch") return "cabang";
+    if (id === "scope-product") return "produk";
+    if (id === "scope-whole-brand") return "brand";
+    return null;
+  };
 
   return (
     <ScreenSection labelledBy={headingId}>
@@ -1029,6 +1058,11 @@ function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
               onClick={() => {
                 setSelectedId(item.id);
                 if (initialRef.current !== item.id) reportCorrection();
+                /* Founder Gate 1 review 2026-09-05: the pick re-resolves the
+                 * route (Satu lokasi → s-branch, Satu produk → s-product). */
+                const scope = scopeOf(item.id);
+                if (scope !== null && nav.onScopeChoice)
+                  nav.onScopeChoice(scope);
               }}
               style={{
                 ...cardButtonBase,
@@ -1185,7 +1219,13 @@ function ProductScreen(props: BabScreenProps) {
 
 /* ── s-category: A4 + A2 hybrid ────────────────────────────── */
 
-function CategoryScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
+function CategoryScreen({
+  screenId,
+  fixture,
+  nav,
+  emit,
+  scopeChoice,
+}: BabScreenProps) {
   const state = readScreenState(fixture, "s-category");
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     initialSingleSelection(state),
@@ -1199,6 +1239,15 @@ function CategoryScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const errorRef = useRef<HTMLParagraphElement | null>(null);
+  /* Founder Gate 1 review 2026-09-05: the heading echoes the scope choice
+   * (workbench getCategoryContext). Whole brand keeps the settled deck copy. */
+  const scope: IntakeScopeChoice = scopeChoice ?? "brand";
+  const heading =
+    scope === "cabang"
+      ? "Lokasi ini biasanya disebut apa?"
+      : scope === "produk"
+        ? "Produk atau layanan ini biasanya disebut apa?"
+        : "Bisnis Anda biasanya disebut apa?";
   const lead =
     "Pilih sebutan yang mungkin dipakai pelanggan saat bertanya ke AI.";
 
@@ -1232,7 +1281,7 @@ function CategoryScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
   return (
     <ScreenSection labelledBy={headingId}>
       <h1 id={headingId} data-bab1-h1="" style={h1Style}>
-        Bisnis Anda biasanya disebut apa?
+        {heading}
       </h1>
       <p style={leadStyle}>{lead}</p>
       {rows.length > 0 ? (
@@ -1403,6 +1452,18 @@ function ChipsScreen({
                 onClick={() => toggle(item.id)}
                 style={chipStyle(on)}
               >
+                {on ? (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      display: "inline-block",
+                      marginRight: "8px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    ✓
+                  </span>
+                ) : null}
                 {item.label}
               </button>
             );
