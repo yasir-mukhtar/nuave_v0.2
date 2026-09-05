@@ -49,9 +49,10 @@ These decisions settle the earlier Gate 0 ambiguities. They are not invitations 
 | Service and market | One conditional `s-market` combines reach with local/online behavior | Add `s-service` for service mode. `s-market` then asks only geographic reach and is shown on every route; only its area controls are conditional. |
 | Blocking rules | Gate 0 Experience and Data contracts disagreed | Whole-brand/location offerings require at least one; customer reasons are optional; service mode and market reach are required; comparator mode must resolve to named comparators or category alternatives. |
 | Names and sources | A differently behaving inline field in `s-review` | Keep it owned by `s-review`, but use a dedicated Review edit substate with the same Save/Cancel return semantics as every other Review edit. It is not a new normal-route screen. |
+| Journey chapters | Screens grouped under visible chapter labels above the main heading | Do not show journey-chapter labels. Stable screens go from progress directly to the main heading; `s-crawl` goes from the Nuave mark directly to its main heading. |
 | Review edits | Direct jumps were defined, but return behavior was incomplete | Save returns to Review after any necessary dependent reconfirmation. Cancel or Back returns to unchanged Review. An edit never resumes the remaining linear intake. |
 
-The new `s-service` uses the existing “Pasar dan pembanding” chapter. No new chapter is introduced. The longest normal route contains ten stable content screens before `s-review`, so the approved ≤10 + Review budget still holds.
+The longest normal route contains ten stable content screens before `s-review`, so the approved ≤10 + Review budget still holds.
 
 ## 3. Compact journey diagram
 
