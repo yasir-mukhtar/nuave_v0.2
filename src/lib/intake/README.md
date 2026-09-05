@@ -10,7 +10,7 @@ absent before creation.
 
 ## Files
 
-- `screens.ts` — canonical `INTAKE_SCREEN_ORDER` (14 `s-*` screens in
+- `screens.ts` — canonical `INTAKE_SCREEN_ORDER` (15 `s-*` screens in
   `intake-prototype.html` document order) + `IntakeScreenId` type.
 - `navigation.ts` — journey graph (`resolveJourneyPath` + next/prev),
   4-chapter fractional progress model, kicker/Continue-label lookups, funnel
@@ -55,7 +55,7 @@ import type {
 const MyScreen: IntakeScreenSlot = ({ screenId, fixture, nav, emit }) => {
   // screenId: IntakeScreenId — the screen being rendered.
   // fixture:  unknown (opaque) — shell currently passes stub graph data
-  //           ({ entry, scope, brandNeedsFix, marketSkipped }); the fixture
+  //           ({ entry, scope, brandNeedsFix }); the fixture
   //           worker pins the real shape without changing this contract.
   // nav:      { onContinue, onBack, canContinue, canGoBack, continueLabel }
   //           — call onContinue/onBack from screen controls; bind blocking
@@ -82,23 +82,26 @@ The shell injects content via the `ScreenSlot` prop on `IntakeJourney`
 ## Shell frame (ledger §2)
 
 One coherent frame across the whole journey: `nuave` wordmark, chapter
-progress (every screen after `s-crawl`), kicker, then content, then the
-sticky bottom bar with ghost `Kembali` (left) and the primary action
-(right). Touch targets are 44px+. `s-crawl` is bare (own chrome,
+progress (every screen after `s-crawl`; never on `s-crawl` itself), then
+content, then the sticky bottom bar with ghost `Kembali` (left) and the
+primary action (right). No chapter eyebrows/kickers above headings
+(handoff 2026-09-05). Touch targets are 44px+. `s-crawl` is bare (own chrome,
 auto-advances, no bar); the terminal `done` state shows `Audit dimulai`
 with no bar. Single 560px centered column; tokens via CSS variables.
 
 ## Journey graph (ledger §1)
 
-`resolveJourneyPath({ entry, scope, brandNeedsFix, marketSkipped })`:
+`resolveJourneyPath({ entry, scope, brandNeedsFix })`:
 
 - read entry: `s-crawl → s-brand → s-scope …`; manual entry starts at
   `s-scope` (Back hidden at journey start in both cases).
 - `brandNeedsFix`: one `s-brand-fix → s-crawl → s-brand` loop after `s-brand`.
 - scope XOR: `cabang` adds `s-branch`, `produk` adds `s-product`, `brand`
   adds neither — at most one entity screen.
-- `marketSkipped` drops `s-market` (Back from `s-competitors` then lands on
-  `s-customers`).
+- `s-service` sits on every route between `s-customers` and `s-market`
+  (handoff 2026-09-05; fixed icon+checkbox multi-select, ≥1 required).
+- `s-market` is always shown — the `marketSkipped` shortcut is retired
+  (handoff 2026-09-05). Area chips appear only for area-based reach.
 - Tail is always `… → s-facts → s-review → s-questions`.
 - Back restores position by walking the same resolved path; `s-crawl`
   auto-advances after its wait.
@@ -135,4 +138,4 @@ names, or contact/payment data.
 - `?entry=manual` — manual path, enters at `s-scope`.
 - `?scope=cabang` / `?scope=produk` — the XOR entity branch.
 - `?brand=fix` — wrong-identity loop once.
-- `?market=skip` — geography-immaterial path.
+- `?market=skip` — retired (s-market is always shown); the param is inert.

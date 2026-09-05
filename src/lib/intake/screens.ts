@@ -26,6 +26,7 @@ export const INTAKE_SCREEN_ORDER = [
   "s-category",
   "s-offerings",
   "s-customers",
+  "s-service",
   "s-market",
   "s-competitors",
   "s-facts",

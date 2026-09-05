@@ -51,7 +51,7 @@ function firstParam(value: string | string[] | undefined): string | undefined {
  * - `entry=manual` → F5 manual fallback (enters at s-scope).
  * - `brand=fix` → F4 wrong identity (one brand-fix loop).
  * - `scope=cabang|produk` → branch/product conditional path.
- * - `market=skip` → drops s-market (geography immaterial).
+ * - `market=skip` is retired: s-market is always shown (handoff 2026-09-05).
  * - `fixture=F2|F3|F6` → messy/conflict/failure fixture on the read path.
  */
 function fixtureForParams(searchParams?: PreviewSearchParams): {
@@ -92,7 +92,6 @@ export default async function NewIntakePreviewPage({
       entry={entry}
       stubScope={stubScope}
       stubBrandNeedsFix={firstParam(resolved?.brand) === "fix"}
-      stubMarketSkipped={firstParam(resolved?.market) === "skip"}
       fixture={INTAKE_FIXTURES[fixtureId]}
       withArrival={firstParam(resolved?.arrival) === "1"}
     />

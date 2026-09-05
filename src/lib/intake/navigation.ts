@@ -31,15 +31,12 @@ export type IntakeStubAnswers = {
   scope: IntakeScopeChoice;
   /** s-brand routes once through s-brand-fix → s-crawl → s-brand. */
   brandNeedsFix: boolean;
-  /** Geography immaterial: s-market is skipped, never defaulted. */
-  marketSkipped: boolean;
 };
 
 export const DEFAULT_STUB_ANSWERS: IntakeStubAnswers = {
   entry: "read",
   scope: "brand",
   brandNeedsFix: false,
-  marketSkipped: false,
 };
 
 export function normalizeStubAnswers(
@@ -52,7 +49,6 @@ export function normalizeStubAnswers(
         ? partial.scope
         : "brand",
     brandNeedsFix: partial?.brandNeedsFix === true,
-    marketSkipped: partial?.marketSkipped === true,
   };
 }
 
@@ -60,11 +56,12 @@ export function normalizeStubAnswers(
 
 /**
  * Visible screen path for one journey, in walk order. Applies every
- * conditional from the ledger §1 graph:
+ * conditional from the handoff locked routes (2026-09-05):
  * - manual entry starts at s-scope (no s-crawl / s-brand);
  * - brand fix inserts exactly one s-brand-fix → s-crawl → s-brand loop;
  * - scope picks at most one of s-branch / s-product (XOR);
- * - market skip drops s-market (recorded, not defaulted);
+ * - product scope skips s-offerings (the product IS the offering set);
+ * - s-service is on every route; s-market is always shown (no skip state);
  * - s-review → s-questions is always the tail.
  */
 export function resolveJourneyPath(
@@ -86,11 +83,19 @@ export function resolveJourneyPath(
   } else if (answers.scope === "produk") {
     path.push("s-product");
   }
-  path.push("s-category", "s-offerings", "s-customers");
-  if (!answers.marketSkipped) {
-    path.push("s-market");
+  path.push("s-category");
+  if (answers.scope !== "produk") {
+    path.push("s-offerings");
   }
-  path.push("s-competitors", "s-facts", "s-review", "s-questions");
+  path.push(
+    "s-customers",
+    "s-service",
+    "s-market",
+    "s-competitors",
+    "s-facts",
+    "s-review",
+    "s-questions",
+  );
   return path;
 }
 
@@ -141,6 +146,7 @@ const CHAPTER_OF: Record<IntakeScreenId, IntakeChapterIndex> = {
   "s-category": 1,
   "s-offerings": 1,
   "s-customers": 1,
+  "s-service": 1,
   "s-market": 2,
   "s-competitors": 2,
   "s-facts": 3,
@@ -156,8 +162,8 @@ export function chapterOf(screenId: IntakeScreenId): IntakeChapterIndex {
  * Chapter fills for `current` on a resolved `path`. Chapters before the
  * current one read 1, chapters after read 0, and the current chapter fills
  * fractionally by the screen's position among that chapter's *visible*
- * screens (so the branch/product XOR and the market skip move the fill,
- * never leave a hole). No interstitial screens exist — the kicker orients.
+ * screens (so the branch/product XOR moves the fill, never leaves a hole).
+ * No interstitial screens exist — each screen's own heading orients.
  */
 export function chapterFills(
   path: readonly IntakeScreenId[],
@@ -181,22 +187,6 @@ export function chapterFills(
 }
 
 /* ── Shell copy lookups (deck §6 — settled strings only) ── */
-
-export function kickerFor(screenId: IntakeScreenId): string {
-  switch (screenId) {
-    case "s-customers":
-      return "Pelanggan Anda";
-    case "s-market":
-    case "s-competitors":
-      return "Pasar dan pembanding";
-    case "s-facts":
-    case "s-review":
-    case "s-questions":
-      return "Sebelum audit";
-    default:
-      return "Brand dan yang Anda tawarkan";
-  }
-}
 
 export type IntakeContinueLabel =
   "Lanjut" | "Buat pertanyaan audit" | "Mulai audit" | "Periksa lagi";
@@ -229,6 +219,7 @@ const BLOCKING_SCREENS: readonly IntakeScreenId[] = [
   "s-branch",
   "s-product",
   "s-category",
+  "s-service",
 ];
 
 export function isBlockingScreen(screenId: IntakeScreenId): boolean {
@@ -336,6 +327,12 @@ export type IntakeScreenSlotProps = {
   fixture: unknown;
   nav: IntakeScreenNav;
   emit: IntakeFunnelEmit;
+  /**
+   * Screens on the resolved journey path (superset of visited; the shell
+   * owns the graph). Review uses it to omit inactive branch rows
+   * (handoff 2026-09-05). Optional so slot tests keep compiling.
+   */
+  activeScreens?: readonly IntakeScreenId[];
 };
 
 /** A screen-content component. The shell renders one per screen id. */

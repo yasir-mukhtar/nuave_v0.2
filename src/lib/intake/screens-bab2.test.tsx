@@ -79,29 +79,25 @@ describe("Bab 2-3 wiring map", () => {
 describe("s-market (F1 rich)", () => {
   const html = renderBab2("s-market");
 
-  it("renders the deck heading, lead, and four market cards", () => {
+  it("renders the workbench heading, lead, and four reach cards", () => {
     expect(html).toContain("Di mana pelanggan Anda berada?");
-    expect(html).toContain(
-      "Ditanyakan karena lokasi memengaruhi rekomendasi untuk bisnis Anda.",
-    );
+    expect(html).toContain("Pilih jangkauan utama untuk audit ini.");
     for (const card of [
-      "Sekitar lokasi tertentu",
-      "Beberapa kota",
+      "Sekitar satu area",
+      "Beberapa area",
       "Seluruh Indonesia",
-      "Juga di luar negeri",
+      "Indonesia dan luar negeri",
     ]) {
       expect(html).toContain(card);
     }
   });
 
-  it("reveals the city panel for the prepared nearby type with 3 city chips", () => {
-    expect(html).toContain("Kota atau area mana?");
+  it("reveals the area panel for the prepared nearby reach with 3 area chips", () => {
+    expect(html).toContain("Pilih area pelanggan");
     expect(html).toContain("Jakarta Selatan");
     expect(html).toContain("Tangerang Selatan");
-    expect(html).toContain("Tambah kota atau area");
-    expect(html).toContain("Pelanggan harus datang ke lokasi Anda?");
-    expect(html).toContain("Ya, bisnis kami lokal");
-    expect(html).toContain("Tidak, kami juga melayani online");
+    expect(html).toContain("Tambah area lain");
+    expect(html).not.toContain("Pelanggan harus datang ke lokasi Anda?");
   });
 
   it("uses radiogroup grammar with 44px targets and reduced-motion CSS", () => {
@@ -111,36 +107,40 @@ describe("s-market (F1 rich)", () => {
     expect(html).toContain("prefers-reduced-motion");
   });
 
-  it("renders the shipped-product skip state instead of choices", () => {
-    const skipped = renderBab2("s-market", { marketSkipped: true });
-    expect(skipped).toContain("Di mana pelanggan Anda berada?");
-    expect(skipped).not.toContain("Beberapa kota");
-    expect(skipped).toContain("dilewati");
+  it("has no skip state: any fixture renders the reach cards", () => {
+    const always = renderBab2("s-market", { marketSkipped: true });
+    expect(always).toContain("Di mana pelanggan Anda berada?");
+    expect(always).toContain("Sekitar satu area");
+    expect(always).not.toContain("dilewati");
   });
 
-  it("empty fixture degrades to cards + add-line, never a dead end", () => {
+  it("empty fixture degrades to reach cards, never a dead end", () => {
     const empty = renderBab2("s-market", {});
-    expect(empty).toContain("Sekitar lokasi tertentu");
-    expect(empty).not.toContain("Kota atau area mana?");
+    expect(empty).toContain("Sekitar satu area");
+    expect(empty).not.toContain("Pilih area pelanggan");
   });
 });
 
 describe("s-competitors (F1 rich)", () => {
   const html = renderBab2("s-competitors");
 
-  it("renders the deck heading with the rich lead", () => {
-    expect(html).toContain("Ini yang mungkin dibandingkan dengan Anda");
-    expect(html).toContain("Hapus yang tidak relevan, tambah yang kurang.");
+  it("renders the workbench heading with the rich lead", () => {
+    expect(html).toContain(
+      "Bisnis apa yang menjadi alternatif bagi pelanggan Anda?",
+    );
+    expect(html).toContain(
+      "Pilih bisnis yang dipertimbangkan pelanggan untuk kebutuhan yang sama.",
+    );
     expect(html).not.toContain("belum menemukan pembanding");
   });
 
-  it("renders 4 prepared rows with Hapus, add-line, and the toggle", () => {
+  it("renders 4 prepared checkbox rows, add-line, and the no-direct toggle", () => {
     expect(html).toContain("Fore Coffee");
     expect(html).toContain("Starbucks");
-    expect(html).toContain("Hapus");
-    expect(html).toContain("Tambah pembanding");
+    expect(html).toContain("Tambah bisnis lain");
     expect(html).toContain("Tidak ada pesaing langsung yang saya tahu");
     expect(html).toContain('role="checkbox"');
+    expect(html).toContain('aria-checked="true"');
   });
 
   it("thin fixture switches to the thin lead", () => {
@@ -150,7 +150,7 @@ describe("s-competitors (F1 rich)", () => {
 
   it("manual empty state still routes forward via add-line + toggle", () => {
     const empty = renderBab2("s-competitors", { screens: {} });
-    expect(empty).toContain("Tambah pembanding");
+    expect(empty).toContain("Tambah bisnis lain");
     expect(empty).toContain("Tidak ada pesaing langsung yang saya tahu");
   });
 });
@@ -158,16 +158,16 @@ describe("s-competitors (F1 rich)", () => {
 describe("s-facts (optional, never blocks)", () => {
   const html = renderBab2("s-facts");
 
-  it("renders the deck heading, pill, lead, placeholder, and hint", () => {
-    expect(html).toContain(
-      "Apa yang tidak boleh salah dipahami tentang brand Anda?",
-    );
+  it("renders the workbench heading, pill, lead, label, and hint", () => {
+    expect(html).toContain("Apa yang tidak boleh Nuave salah pahami?");
     expect(html).toContain("Opsional");
     expect(html).toContain(
-      "Satu hal yang, kalau AI salah paham, akan membuat seluruh audit meleset.",
+      "Tambahkan satu fakta publik yang dapat memengaruhi hasil audit",
     );
-    expect(html).toContain("Misalnya: keunggulan yang sering terlewat");
-    expect(html).toContain("Boleh dikosongkan.");
+    expect(html).toContain("Satu fakta yang wajib benar");
+    expect(html).toContain(
+      "Jangan masukkan data pribadi, informasi pembayaran, atau rahasia bisnis.",
+    );
     expect(html).toContain("<textarea");
   });
 
@@ -180,47 +180,94 @@ describe("s-facts (optional, never blocks)", () => {
 describe("s-review readback (F1 rich)", () => {
   const html = renderBab2("s-review");
 
-  it("renders the deck heading, lead, and all seven row labels", () => {
-    expect(html).toContain("Ini yang akan Nuave audit");
-    expect(html).toContain("Periksa sekali lagi. Semua bisa diubah.");
+  it("renders the workbench heading, lead, and the ten row labels", () => {
+    expect(html).toContain("Konfirmasi informasi brand Anda");
+    expect(html).toContain(
+      "Pastikan informasi ini sudah tepat sebelum Nuave menyusun pertanyaan audit.",
+    );
     for (const label of [
-      "Yang diaudit",
+      "Brand",
+      "Fokus audit",
+      "Target audit",
+      "Kategori",
       "Produk dan layanan",
-      "Kenapa pelanggan mencari",
+      "Alasan pelanggan",
+      "Cara layanan",
       "Pasar",
       "Pembanding",
       "Hal yang wajib benar",
-      "Nama lain dan sumber",
     ]) {
       expect(html).toContain(label);
     }
+    expect(html).not.toContain("Nama lain dan sumber");
   });
 
   it("shows meaning-level F1 values, not engine dumps", () => {
     expect(html).toContain("Seluruh brand Kopi Sudut");
+    expect(html).toContain("Kopi Sudut · kopisudut.id");
     expect(html).toContain("Kopi Susu Sudut");
     expect(html).toContain("Ngopi enak dekat kantor");
+    expect(html).toContain("Di lokasi bisnis Anda");
     expect(html).toContain("Jakarta Selatan");
-    expect(html).toContain("Ya, bisnis kami lokal");
     expect(html).toContain("Fore Coffee");
-    expect(html).toContain("Tidak diisi");
+    expect(html).toContain("Tidak ditambahkan");
   });
 
-  it("links every meaning row back via nav with valid correction targets", () => {
+  it("links every row via whole-row chevron buttons with valid targets", () => {
+    const html = renderBab2("s-review");
     const targets = [...html.matchAll(/data-correction-target="([^"]+)"/g)].map(
       (match) => match[1],
     );
-    expect(targets.length).toBeGreaterThanOrEqual(6);
+    // Direct render (no activeScreens): 10 rows including Target audit.
+    expect(targets.length).toBe(10);
     for (const target of targets) {
       expect(INTAKE_SCREEN_ORDER).toContain(target);
     }
+    expect(targets).toContain("s-brand");
     expect(targets).toContain("s-scope");
+    expect(targets).toContain("s-category");
     expect(targets).toContain("s-offerings");
     expect(targets).toContain("s-customers");
+    expect(targets).toContain("s-service");
     expect(targets).toContain("s-market");
     expect(targets).toContain("s-competitors");
     expect(targets).toContain("s-facts");
-    expect(html).toContain("Ubah");
+    // Chevron grammar: no visible Ubah links (handoff 2026-09-05).
+    expect(html).not.toContain(">Ubah</button>");
+    expect(html).toContain("›");
+  });
+
+  it("omits the Target audit row on whole-brand routes (activeScreens)", () => {
+    const brandRoute = [
+      "s-crawl",
+      "s-brand",
+      "s-scope",
+      "s-category",
+      "s-offerings",
+      "s-customers",
+      "s-service",
+      "s-market",
+      "s-competitors",
+      "s-facts",
+      "s-review",
+      "s-questions",
+    ] as const;
+    const Slot = BAB2_SCREENS["s-review"];
+    if (!Slot) throw new Error("missing s-review slot");
+    const html = renderToStaticMarkup(
+      createElement(Slot, {
+        screenId: "s-review",
+        fixture: F1,
+        nav: stubNav,
+        emit: noopEmit,
+        activeScreens: brandRoute,
+      }),
+    );
+    expect(html).not.toContain("Target audit");
+    const targets = [...html.matchAll(/data-correction-target="([^"]+)"/g)].map(
+      (match) => match[1],
+    );
+    expect(targets.length).toBe(9);
   });
 
   it("adds the F3 advisory conflict row without blocking wording", () => {
@@ -229,21 +276,26 @@ describe("s-review readback (F1 rich)", () => {
     expect(conflict).toContain("tidak menghalangi");
   });
 
-  it("market-skipped review points Pasar at the skip fallback", () => {
+  it("review market row always targets s-market (no skip fallback)", () => {
     const rows = deriveReviewRows({ marketSkipped: true });
     const market = rows.find((row) => row.key === "market");
-    expect(market?.value).toContain("Tidak relevan untuk audit ini");
-    expect(market?.target).toBe("s-competitors");
+    expect(market?.value).toBe("Belum dipilih");
+    expect(market?.target).toBe("s-market");
   });
 
-  it("empty fixture falls back per the deck value list", () => {
+  it("empty fixture falls back per the workbench value list", () => {
     const rows = deriveReviewRows({});
     const byKey = new Map(rows.map((row) => [row.key, row.value]));
-    expect(byKey.get("scope")).toBe("Belum diisi");
-    expect(byKey.get("offerings")).toBe("Belum diisi");
-    expect(byKey.get("market")).toBe("Belum diisi");
-    expect(byKey.get("facts")).toBe("Tidak diisi");
-    expect(byKey.get("aliases")).toBe("Tidak ada");
+    expect(byKey.get("brand")).toBe("Belum dipilih");
+    expect(byKey.get("scope")).toBe("Belum dipilih");
+    expect(byKey.get("category")).toBe("Belum dipilih");
+    expect(byKey.get("offerings")).toBe("Belum dikonfirmasi");
+    expect(byKey.get("service")).toBe("Belum dipilih");
+    expect(byKey.get("market")).toBe("Belum dipilih");
+    expect(byKey.get("competitors")).toBe("Belum dikonfirmasi");
+    expect(byKey.get("facts")).toBe("Tidak ditambahkan");
+    // No aliases row exists anymore.
+    expect(byKey.get("aliases")).toBeUndefined();
   });
 });
 
@@ -292,8 +344,8 @@ describe("pure helpers", () => {
     expect(toggleId(["a", "b"], "b")).toEqual(["a"]);
   });
 
-  it("detects the shipped-product market skip without defaulting", () => {
-    expect(isMarketSkippedFixture({ marketSkipped: true })).toBe(true);
+  it("market skip is retired: the helper is always false (handoff 2026-09-05)", () => {
+    expect(isMarketSkippedFixture({ marketSkipped: true })).toBe(false);
     expect(isMarketSkippedFixture(F1)).toBe(false);
     expect(isMarketSkippedFixture({})).toBe(false);
   });
@@ -367,9 +419,12 @@ describe("shell pairing (transitions + terminal)", () => {
     }
     for (const [screenId, heading] of [
       ["s-market", "Di mana pelanggan Anda berada?"],
-      ["s-competitors", "Ini yang mungkin dibandingkan dengan Anda"],
-      ["s-facts", "Apa yang tidak boleh salah dipahami"],
-      ["s-review", "Ini yang akan Nuave audit"],
+      [
+        "s-competitors",
+        "Bisnis apa yang menjadi alternatif bagi pelanggan Anda?",
+      ],
+      ["s-facts", "Apa yang tidak boleh Nuave salah pahami"],
+      ["s-review", "Konfirmasi informasi brand Anda"],
       ["s-questions", "Periksa pertanyaan audit"],
     ] as const) {
       const html = renderToStaticMarkup(

@@ -154,29 +154,37 @@ export function initialChipSelection(state: FixtureScreenState): string[] {
 
 /* ── Deck copy for scope options (ids → settled titles/descriptions) ── */
 
-const SCOPE_DECK: Record<string, { title: string; description: string }> = {
+const SCOPE_DECK: Record<
+  string,
+  { glyph: string; title: string; description: string }
+> = {
   "scope-whole-brand": {
+    glyph: "✺",
     // Deck: "Seluruh brand <nama>" — the brand-name slot has no fixture
     // source at wave-2 build time, so the slot is omitted, never invented.
-    title: "Seluruh brand",
-    description: "Semua lokasi dan produk dinilai sebagai satu brand",
+    title: "Brand secara keseluruhan",
+    description: "Semua lokasi, produk, dan layanan sebagai satu kesatuan.",
   },
   "scope-branch": {
-    title: "Satu cabang atau lokasi",
-    description: "Misalnya hanya satu gerai",
+    glyph: "⌖",
+    title: "Satu lokasi",
+    description: "Satu gerai atau cabang tertentu.",
   },
   "scope-product": {
+    glyph: "▣",
     title: "Satu produk atau layanan",
-    description: "Misalnya hanya satu lini produk",
+    description: "Satu produk, layanan, atau lini tertentu.",
   },
 };
 
 function scopeDeckFor(item: PreparedItem): {
+  glyph: string;
   title: string;
   description: string;
 } {
   return (
     SCOPE_DECK[item.id] ?? {
+      glyph: "•",
       title: item.label,
       description: "",
     }
@@ -1002,9 +1010,8 @@ function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
   return (
     <ScreenSection labelledBy={headingId}>
       <h1 id={headingId} data-bab1-h1="" style={h1Style}>
-        Apa yang ingin Anda audit?
+        Apa fokus audit ini?
       </h1>
-      <p style={leadStyle}>Ini menentukan sudut pandang seluruh audit.</p>
       <div
         role="radiogroup"
         aria-label="Pilihan cakupan audit"
@@ -1029,9 +1036,26 @@ function ScopeScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
                   ? "var(--action, #18181b)"
                   : "var(--border-default, #e5e7eb)",
                 borderWidth: checked ? "2px" : "1px",
+                alignItems: "flex-start",
               }}
             >
-              <span style={{ display: "grid", gap: "2px" }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: "22px",
+                  lineHeight: 1,
+                  width: "32px",
+                  height: "32px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  color: "var(--text-heading, #18181b)",
+                }}
+              >
+                {deck.glyph}
+              </span>
+              <span style={{ display: "grid", gap: "2px", flex: 1 }}>
                 <span style={{ fontWeight: 600 }}>{deck.title}</span>
                 {deck.description !== "" ? (
                   <span
@@ -1137,10 +1161,10 @@ function BranchScreen(props: BabScreenProps) {
   return (
     <EntityScreen
       {...props}
-      heading="Cabang mana yang ingin diaudit?"
-      placeholder="Cari atau tambah cabang lain"
-      hint="Cabang yang belum ada bisa ditambahkan dengan nama dan alamat."
-      inputLabel="Cari atau tambah cabang lain"
+      heading="Lokasi mana yang ingin Anda audit?"
+      placeholder="Tambah lokasi lain"
+      hint="Nama lokasi dan alamat membantu membedakan antar lokasi."
+      inputLabel="Nama lokasi"
       prefix="branch"
     />
   );
@@ -1150,10 +1174,10 @@ function ProductScreen(props: BabScreenProps) {
   return (
     <EntityScreen
       {...props}
-      heading="Produk atau layanan mana?"
-      placeholder="Cari atau tambah produk lain"
+      heading="Produk atau layanan mana yang ingin Anda audit?"
+      placeholder="Tambah produk atau layanan lain"
       hint="Pertanyaan tentang pelanggan dan pembanding selanjutnya akan difokuskan ke produk ini."
-      inputLabel="Cari atau tambah produk lain"
+      inputLabel="Nama produk atau layanan"
       prefix="product"
     />
   );
@@ -1208,7 +1232,7 @@ function CategoryScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
   return (
     <ScreenSection labelledBy={headingId}>
       <h1 id={headingId} data-bab1-h1="" style={h1Style}>
-        Bisnis Anda paling tepat disebut apa?
+        Bisnis Anda biasanya disebut apa?
       </h1>
       <p style={leadStyle}>{lead}</p>
       {rows.length > 0 ? (
@@ -1412,12 +1436,12 @@ function OfferingsScreen(props: BabScreenProps) {
         deriveOfferingsMode(
           readScreenState(props.fixture, "s-offerings").prepared,
         ).mode === "confirm"
-          ? "Ini produk Anda. Sudah benar?"
+          ? "Apakah ini yang Anda tawarkan?"
           : "Apa saja yang Anda tawarkan?"
       }
-      lead="Hapus yang salah, tambah yang kurang."
-      placeholder="Tambah produk atau layanan"
-      inputLabel="Tambah produk atau layanan"
+      lead="Nuave sudah memilih yang ditemukan. Hapus yang salah, tambah yang kurang."
+      placeholder="Tambah yang belum ada"
+      inputLabel="Produk atau layanan"
       prefix="offering"
       askLeadFor={(detectedCount) =>
         detectedCount > 0
@@ -1432,13 +1456,154 @@ function CustomersScreen(props: BabScreenProps) {
   return (
     <ChipsScreen
       {...props}
-      heading="Kenapa pelanggan biasanya mencari yang seperti ini?"
-      lead="Hapus yang tidak sesuai, tambah yang kurang. Ini yang membentuk pertanyaan yang akan diuji ke AI."
+      heading="Mengapa pelanggan mencari yang seperti ini?"
+      lead="Pilih kebutuhan atau situasi nyata yang mendorong pelanggan mencari pilihan seperti ini. Ini membantu Nuave menyusun pertanyaan audit yang lebih relevan. Anda boleh lanjut tanpa memilih."
       pill="Opsional"
-      placeholder="Tambah sendiri"
-      inputLabel="Tambah sendiri"
+      placeholder="Tambah alasan lain"
+      inputLabel="Alasan pelanggan"
       prefix="customer-chip"
     />
+  );
+}
+
+/* ── s-service: fixed icon+checkbox multi-select (handoff 2026-09-05) ── */
+
+const SERVICE_CHANNELS: ReadonlyArray<{
+  id: string;
+  glyph: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    id: "service-location",
+    glyph: "▦",
+    title: "Di lokasi bisnis Anda",
+    description: "Pelanggan datang untuk membeli atau menggunakan layanan.",
+  },
+  {
+    id: "service-customer",
+    glyph: "⌂",
+    title: "Di lokasi pelanggan",
+    description: "Anda mendatangi pelanggan untuk memberikan layanan.",
+  },
+  {
+    id: "service-delivery",
+    glyph: "⇢",
+    title: "Dikirim ke pelanggan",
+    description: "Produk dikirim tanpa pelanggan datang ke lokasi Anda.",
+  },
+  {
+    id: "service-online",
+    glyph: "▭",
+    title: "Digunakan secara online",
+    description: "Layanan digunakan dari jarak jauh melalui internet.",
+  },
+];
+
+/** ≥1 channel required; fixture `on` flags preselect (AI-prepared values are
+ *  never confirmed merely by being displayed). */
+export function isServiceSelectionValid(ids: readonly string[]): boolean {
+  return ids.length > 0;
+}
+
+function ServiceScreen({ screenId, fixture, nav, emit }: BabScreenProps) {
+  const state = readScreenState(fixture, "s-service");
+  const [onIdsState, setOnIdsState] = useState<string[]>(() =>
+    initialChipSelection(state),
+  );
+  const reportCorrection = useBabCorrections(screenId, emit);
+  useBabValidity(isServiceSelectionValid(onIdsState), nav);
+  const headingId = useId();
+
+  return (
+    <ScreenSection labelledBy={headingId}>
+      <h1 id={headingId} data-bab1-h1="" style={h1Style}>
+        Bagaimana pelanggan mendapatkan yang Anda tawarkan?
+      </h1>
+      <p style={leadStyle}>
+        Pilih semua cara yang berlaku. Ini membantu Nuave memahami di mana
+        pengalaman pelanggan terjadi.
+      </p>
+      <div
+        role="group"
+        aria-label="Cara pelanggan mendapatkan yang Anda tawarkan"
+        style={{ display: "grid", gap: "8px" }}
+      >
+        {SERVICE_CHANNELS.map((channel) => {
+          const on = onIdsState.includes(channel.id);
+          return (
+            <button
+              key={channel.id}
+              type="button"
+              role="checkbox"
+              aria-checked={on}
+              onClick={() => {
+                setOnIdsState((current) => toggleSelected(current, channel.id));
+                reportCorrection();
+              }}
+              style={{
+                ...cardButtonBase,
+                borderColor: on
+                  ? "var(--action, #18181b)"
+                  : "var(--border-default, #e5e7eb)",
+                borderWidth: on ? "2px" : "1px",
+                alignItems: "flex-start",
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: "22px",
+                  lineHeight: 1,
+                  width: "32px",
+                  height: "32px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  color: "var(--text-heading, #18181b)",
+                }}
+              >
+                {channel.glyph}
+              </span>
+              <span style={{ display: "grid", gap: "2px", flex: 1 }}>
+                <span style={{ fontWeight: 600 }}>{channel.title}</span>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    color: "var(--text-muted, #52525b)",
+                  }}
+                >
+                  {channel.description}
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  flexShrink: 0,
+                  borderRadius: "6px",
+                  border: on
+                    ? "2px solid var(--action, #18181b)"
+                    : "1px solid var(--border-strong, #d1d5db)",
+                  background: on
+                    ? "var(--action, #18181b)"
+                    : "var(--bg-surface, #ffffff)",
+                  color: "var(--action-foreground, #ffffff)",
+                  fontSize: "14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {on ? "✓" : ""}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </ScreenSection>
   );
 }
 
@@ -1454,4 +1619,5 @@ export const BAB1_SCREENS: Partial<Record<IntakeScreenId, IntakeScreenSlot>> = {
   "s-category": CategoryScreen,
   "s-offerings": OfferingsScreen,
   "s-customers": CustomersScreen,
+  "s-service": ServiceScreen,
 };

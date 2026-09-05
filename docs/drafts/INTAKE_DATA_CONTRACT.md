@@ -233,3 +233,36 @@ normalized output is non-material.
   deliberate paid-launch deferral (checkpoint §2/§6), already enforced in
   code; no migration needed for this rebuild.
 - File: `docs/drafts/INTAKE_DATA_CONTRACT.md` (this file).
+
+## Amendment — founder-approved handoff (2026-09-05)
+
+Source: `docs/drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md`. Supersedes stale
+clauses above where named; anything not named stands.
+
+1. **Concept #24 — Service channels (s-service).** New canonical concept:
+   `service_channels: ConceptState<ServiceChannel[]>`, one-or-more of the
+   fixed enum `on_premise | on_customer | delivery | online` (exact channels
+   from the handoff; the vague `mixed` market mode is removed). Required
+   (blocking). Persisted in the intake draft; downstream: prompt-pack
+   experience framing, question-gen situational wording.
+2. **#14 Market context rewritten.** `market_context` becomes
+   `ConceptState<{ reach: 'area' | 'multi_area' | 'national' | 'national_international'; areas?: string[] }>`
+   — reach required; `areas` required (≥1, deduped) iff reach is area-based.
+   The auto-skip heuristic (#7 above) is **retired**: s-market is always
+   shown; `marketSkipped` never exists in state.
+3. **#21 brand_name_variants (aliases): removed from s-review.** Aliases
+   derive from the primary source; no customer-facing identifiers row, no
+   identifiers-edit substate. Internal #21 data may still flow to question-gen
+   unbranded screening (backend-only), but it is no longer a review concept.
+4. **Screen count is 15** (`s-service` added; screens.ts order authority).
+   The state parser versions accordingly at Phase 5 (bump, never migrate).
+5. **Scope-kind dependency updates**: → `produk` skips s-offerings (offering
+   set = the product itself; #9 preserved as the product selection);
+   `#4/#5`-changes no longer clear #14 on geography grounds alone — market
+   re-confirmation follows the journey contract's dependency rules, not the
+   old shipped-product skip.
+6. **Review projection** = the ten active-answer rows defined in the
+   experience contract §10.3 (Brand · Fokus audit · Target audit (conditional)
+   · Kategori · Produk dan layanan · Alasan pelanggan · Cara layanan · Pasar ·
+   Pembanding · Hal yang wajib benar, + advisory conflict). The frozen
+   question-generation payload must match this projection exactly.

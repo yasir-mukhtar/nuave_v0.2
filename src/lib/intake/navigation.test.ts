@@ -7,7 +7,6 @@ import {
   DEFAULT_STUB_ANSWERS,
   isBareScreen,
   isBlockingScreen,
-  kickerFor,
   nextScreenInPath,
   normalizeStubAnswers,
   prevScreenInPath,
@@ -28,6 +27,7 @@ describe("resolveJourneyPath", () => {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
@@ -77,13 +77,19 @@ describe("resolveJourneyPath", () => {
     ]);
   });
 
-  it("skips s-market without defaulting it (recorded skip)", () => {
-    const path = resolveJourneyPath(
-      normalizeStubAnswers({ marketSkipped: true }),
-    );
-    expect(path).not.toContain("s-market");
-    expect(nextScreenInPath(path, "s-customers")).toBe("s-competitors");
-    expect(prevScreenInPath(path, "s-competitors")).toBe("s-customers");
+  it("always shows s-market and s-service on every route (no skip state)", () => {
+    for (const answers of [
+      DEFAULT_STUB_ANSWERS,
+      normalizeStubAnswers({ entry: "manual" }),
+      normalizeStubAnswers({ scope: "produk" }),
+      normalizeStubAnswers({ scope: "cabang" }),
+    ]) {
+      const path = resolveJourneyPath(answers);
+      expect(path).toContain("s-market");
+      expect(path).toContain("s-service");
+      expect(nextScreenInPath(path, "s-customers")).toBe("s-service");
+      expect(nextScreenInPath(path, "s-service")).toBe("s-market");
+    }
   });
 
   it("normalizes unknown stub values to safe defaults", () => {
@@ -154,8 +160,8 @@ describe("chapter progress model", () => {
     const fills = chapterFills(path, "s-scope");
     expect(fills).toHaveLength(4);
     expect(fills[0]).toBe(1);
-    // Chapter 1 visible: scope, category, offerings, customers → 1/4.
-    expect(fills[1]).toBeCloseTo(0.25);
+    // Chapter 1 visible: scope, category, offerings, customers, service → 1/5.
+    expect(fills[1]).toBeCloseTo(0.2);
     expect(fills[2]).toBe(0);
     expect(fills[3]).toBe(0);
     for (const fill of fills) {
@@ -171,8 +177,8 @@ describe("chapter progress model", () => {
     const branch = resolveJourneyPath(
       normalizeStubAnswers({ scope: "cabang" }),
     );
-    // Chapter 1 visible: scope, branch, category, offerings, customers → 2/5.
-    expect(chapterFills(branch, "s-branch")[1]).toBeCloseTo(0.4);
+    // Chapter 1 visible: scope, branch, category, offerings, customers, service → 2/6.
+    expect(chapterFills(branch, "s-branch")[1]).toBeCloseTo(1 / 3);
   });
 
   it("completes the empty chapter 0 on the manual path", () => {
@@ -184,24 +190,13 @@ describe("chapter progress model", () => {
 });
 
 describe("shell copy lookups (deck §6)", () => {
-  it("returns the four settled kickers", () => {
-    expect(kickerFor("s-brand")).toBe("Brand dan yang Anda tawarkan");
-    expect(kickerFor("s-offerings")).toBe("Brand dan yang Anda tawarkan");
-    expect(kickerFor("s-customers")).toBe("Pelanggan Anda");
-    expect(kickerFor("s-market")).toBe("Pasar dan pembanding");
-    expect(kickerFor("s-competitors")).toBe("Pasar dan pembanding");
-    expect(kickerFor("s-facts")).toBe("Sebelum audit");
-    expect(kickerFor("s-review")).toBe("Sebelum audit");
-    expect(kickerFor("s-questions")).toBe("Sebelum audit");
-  });
-
   it("pins the settled Continue labels", () => {
     expect(continueLabelFor("s-scope")).toBe("Lanjut");
     expect(continueLabelFor("s-review")).toBe("Buat pertanyaan audit");
     expect(continueLabelFor("s-questions")).toBe("Mulai audit");
   });
 
-  it("marks s-crawl bare and the five blocking screens", () => {
+  it("marks s-crawl bare and the seven blocking screens", () => {
     expect(isBareScreen("s-crawl")).toBe(true);
     expect(isBareScreen("s-brand")).toBe(false);
     for (const id of [
@@ -211,6 +206,7 @@ describe("shell copy lookups (deck §6)", () => {
       "s-branch",
       "s-product",
       "s-category",
+      "s-service",
     ] as const) {
       expect(isBlockingScreen(id)).toBe(true);
     }

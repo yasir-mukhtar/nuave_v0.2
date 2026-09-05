@@ -74,7 +74,7 @@ function isAllowedImportSpecifier(specifier: string): boolean {
   );
 }
 
-/** Canonical order derived from `s-*` document order in intake-prototype.html. */
+/** Canonical order (screens.ts; s-service added by handoff 2026-09-05). */
 const EXPECTED_SCREEN_ORDER = [
   "s-crawl",
   "s-brand",
@@ -85,6 +85,7 @@ const EXPECTED_SCREEN_ORDER = [
   "s-category",
   "s-offerings",
   "s-customers",
+  "s-service",
   "s-market",
   "s-competitors",
   "s-facts",

@@ -2,6 +2,7 @@
 
 > Status: **Binding draft for Founder UX Gate 0** (plan Rev 3, `origin/docs/airbnb-intake-clean-rebuild-plan` @ `483d634`)
 > Date: 2026-09-03 · Branch: `feat/airbnb-intake-rebuild`
+> **Amended 2026-09-05** per the founder-approved `NUAVE_INTAKE_EXPERIENCE_HANDOFF.md` (see §10 Amendment). §10 supersedes any stale clause below where named.
 > Source of truth: `intake-prototype.html` (s-* sections :531-701, `flow()` :878-890, screens.ts order :19-34) — read this session, verbatim.
 > Supersedes nothing canonical; sits inside the Gate 0 package next to `docs/drafts/INTAKE_FIXTURES_AND_BUDGETS.md` (screen-count arithmetic §3.1 and fixtures F1-F6 agreed here) and `NUAVE_AIRBNB_INTAKE_PHASE0_CHECKPOINT.md` §6.
 > Authority: this ledger, **not** the legacy screen order, defines the new journey controller (plan §3).
@@ -23,49 +24,49 @@
 
 ## 1. Canonical screen order + flow model (controller authority)
 
-All 14 screens, in document order (`screens.ts` is the sequence authority):
+All 15 screens, in document order (`screens.ts` is the sequence authority;
+`s-service` added by the 2026-09-05 handoff amendment):
 
 ```
 s-crawl → s-brand → s-brand-fix → s-scope → s-branch → s-product → s-category
-  → s-offerings → s-customers → s-market → s-competitors → s-facts
+  → s-offerings → s-customers → s-service → s-market → s-competitors → s-facts
   → s-review → s-questions
 ```
 
 Post-payment entry (`enterIntake()`): read path enters at `s-crawl` → `s-brand`;
 manual path (`mode==='manual'`, no usable source) enters at `s-scope`.
 
-Actual journey graph (prototype `flow()`; * = conditional):
+Actual journey graph (locked routes, handoff 2026-09-05; * = conditional):
 
 ```
-s-brand ── Ya, benar ──────────────────────────────┐
-   │ Bukan, ganti brand → s-brand-fix → s-crawl → s-brand (re-read, corrected)
+s-brand ── Lanjut (implicit) ─────────────────────┐
+   │ Ubah → s-brand-fix → s-crawl → s-brand (re-read, corrected)
 s-scope ─┬ brand → s-category
          ├ cabang → s-branch → s-category
-         └ produk → s-product → s-category
-s-category → s-offerings → s-customers
-   → s-market* (skip when scope=produk AND produk ships nationally, i.e. geography immaterial)
-   → s-competitors → s-facts* (optional, user-skippable, never journey-skipped)
+         └ produk → s-product → s-category (skips s-offerings)
+s-category → s-offerings → s-customers → s-service
+   → s-market (always shown) → s-competitors → s-facts (optional, user-skippable)
    → s-review → (Buat pertanyaan audit) → s-questions → (Mulai audit) → audit run
 ```
 
-Chapter/kicker model (prototype `CHAPTER()`): Bab 0 = s-crawl/s-brand/s-brand-fix
-(Brand dan yang Anda tawarkan, no explicit chapter label), Bab 1 = s-scope..s-customers
-(Pelanggan Anda), Bab 2 = s-market/s-competitors (Pasar dan pembanding), Bab 3 =
-s-facts/s-review/s-questions (Sebelum audit). Four-segment progress bar shows
-chapter fill; within a chapter the bar fills fractionally by screen. No chapter
-interstitial screens — the kicker does the orientation work (locked decision).
+Chapter model (progress only — **no kicker/eyebrow labels**, handoff 2026-09-05):
+Bab 0 = s-crawl/s-brand/s-brand-fix; Bab 1 = s-scope..s-service; Bab 2 =
+s-market/s-competitors; Bab 3 = s-facts/s-review/s-questions. Four-segment
+progress bar shows chapter fill; within a chapter the bar fills fractionally by
+screen; `s-crawl` shows no progress bar. No chapter interstitial screens — each
+screen's own heading orients (locked decision).
 
 ### 1.1 Screen count vs the ≤10 + review budget (matches INTAKE_FIXTURES_AND_BUDGETS §3.1)
 
 | Count | Value |
 |---|---|
-| Screens in ledger | 14 (`screens.ts`, document order) |
+| Screens in ledger | 15 (`screens.ts`, document order; +s-service, amendment 2026-09-05) |
 | s-crawl, s-brand-fix | transition/correction overlays — **excluded from budget** |
 | s-questions | post-review-confirm, outside the intake screen budget (fixtures budget §3.1) |
-| Happy path (scope=brand), content screens before s-review | 8: s-brand, s-scope, s-category, s-offerings, s-customers, s-market, s-competitors, s-facts (+s-review) — s-facts optional but **counts as shown**; it is user-skipped, never journey-skipped |
-| Worst normal path | 9 + review: adds exactly one of s-branch / s-product (scope picks at most one); s-market may skip (shipped-product scope), which only reduces |
-| Headroom under ≤10 | 1 screen |
-| Prototype total incl. question review | 11 post-payment screens — inside the plan §3 Gate 0 cap (≤10 before question review, 11 including it) |
+| Happy path (scope=brand), content screens before s-review | 9: s-brand, s-scope, s-category, s-offerings, s-customers, s-service, s-market, s-competitors, s-facts (+s-review) — s-facts optional but **counts as shown**; it is user-skipped, never journey-skipped |
+| Worst normal path | 10 + review: adds exactly one of s-branch / s-product (scope picks at most one); product scope skips s-offerings, so it stays 9 content screens — branch scope is the 10 |
+| Headroom under ≤10 | 0 screens (at cap, not over) |
+| Longest route incl. question review | 11 post-payment screens — inside the plan §3 Gate 0 cap (≤10 before question review, 11 including it) |
 
 Growth rule: any new screen beyond this ledger requires Yasir's explicit
 approval with a stated reason that progressive disclosure cannot absorb
@@ -558,3 +559,65 @@ contract wording — sync note in §2 s-questions).
 - [x] Screen count 14 total, normal path 8 + review (worst 9 + review), within ≤10 + review; headroom 1.
 - [x] Every deviation has what/why/invariant/how and is grounded in a locked rule, safety, a11y, or a demonstrated technical limit.
 - [x] Prototype omissions listed as design work (§3), none routed to legacy reuse.
+
+## 10. Amendment — founder-approved handoff (2026-09-05)
+
+Source: `docs/drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md` (founder-approved
+2026-09-05; companion workbench `nuave-intake-design-workbench.html`, SHA-256
+`b7adc54fd2d83def25552e25961dd50eba7e63883a217861811e2f394f830a1c`). This
+section supersedes stale clauses above where named; anything not named stands.
+
+1. **`s-service` screen added** (between `s-customers` and `s-market`, every
+   route). Fixed icon-led cards with checkboxes; exact channels: at the
+   business location, at the customer location, delivered, online.
+   Multi-select, ≥1 required (blocking). The vague `mixed` market mode is
+   removed. Copy: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?" /
+   "Pilih semua cara yang berlaku. Ini membantu Nuave memahami di mana
+   pengalaman pelanggan terjadi."
+2. **s-market rewritten.** Single-select reach cards (icon + selected border):
+   Sekitar satu area / Beberapa area / Seluruh Indonesia / Indonesia dan luar
+   negeri. Area chips appear only for area-based reach and are required (≥1);
+   add-line fallback. The shipped-product skip state (old D-2 rule and
+   `marketSkipped` driver) is **retired** — s-market is always shown. The
+   local-vs-online bound sub-question is removed (superseded by s-service).
+3. **s-review grammar replaced.** "Konfirmasi informasi brand Anda" lead-in;
+   uncontained full-width rows, one per active answer, each row a chevron
+   (`›`) control opening its owner — no visible `Ubah` links. Rows: Brand ·
+   Fokus audit · Target audit (only when a branch/product was visited) ·
+   Kategori · Produk dan layanan · Alasan pelanggan · Cara layanan · Pasar ·
+   Pembanding · Hal yang wajib benar (+ advisory conflict row when present).
+   **"Nama lain dan sumber" row removed** — aliases derive from the primary
+   source; no identifiers-edit substate.
+4. **Product scope skips s-offerings** (the product is the offering set);
+   whole-brand and one-location routes keep s-offerings. Locked routes:
+   whole brand `s-crawl → s-brand → s-scope → s-category → s-offerings →
+   s-customers → s-service → s-market → s-competitors → s-facts → s-review`;
+   one location inserts `s-branch` after scope; one product inserts
+   `s-product` after scope and skips s-offerings.
+5. **No chapter kickers/eyebrows** above headings; `s-crawl` renders no
+   progress bar. Fixed conceptual single-select groups use icon + selected
+   border; fixed multi-select groups use icon + checkbox; dynamic/AI-prepared
+   options stay text-led (no invented icons for categories, offerings,
+   customer reasons, locations, products, competitors).
+6. **Competitors display names only** (checkbox rows), with add fallback and
+   the mutually exclusive "Tidak ada pesaing langsung yang saya tahu" mode.
+7. **s-facts copy updated**: "Apa yang tidak boleh Nuave salah pahami?" — one
+   optional public fact; explicit no-private/payment/secret guidance.
+8. Screen-copy deck §6.4 headings and labels are updated in place by this
+   amendment where the workbench shows different approved wording (scope
+   "Apa fokus audit ini?", branch "Lokasi mana yang ingin Anda audit?",
+   product "Produk atau layanan mana yang ingin Anda audit?", category
+   "Bisnis Anda biasanya disebut apa?", offerings "Apakah ini yang Anda
+   tawarkan?", customers "Mengapa pelanggan mencari yang seperti ini?").
+   §6.2 (chapter kickers) is **void**.
+9. Budget (§1.1) recomputed: happy path 9 content screens; worst normal path
+   10 (branch scope); at cap, not over. The growth rule stands.
+10. Review-edit returns (transactional): Save returns to an updated Review
+    after required dependent reconfirmation; Cancel or Back returns to an
+    unchanged Review — never resumes the remaining linear journey. Back
+    returns through stable screens actually visited; processing states never
+    enter Back history. (Wiring arrives with Phase 5 real state; the
+    skeleton's direct jumps already honor owner targeting.)
+
+The handoff's own acceptance gate (§"Acceptance gate" there) governs the
+visual/composition sign-off for this amendment.

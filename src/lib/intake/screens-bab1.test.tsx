@@ -36,7 +36,7 @@ function renderBab1(
 }
 
 describe("Bab 0-1 wiring map", () => {
-  it("exports exactly the nine owned screens, all valid screen ids", () => {
+  it("exports exactly the ten owned screens, all valid screen ids", () => {
     expect(Object.keys(BAB1_SCREENS).sort()).toEqual(
       [
         "s-brand",
@@ -48,6 +48,7 @@ describe("Bab 0-1 wiring map", () => {
         "s-offerings",
         "s-product",
         "s-scope",
+        "s-service",
       ].sort(),
     );
     for (const id of Object.keys(BAB1_SCREENS)) {
@@ -145,7 +146,10 @@ describe("s-brand-fix (Koreksi, founder decision 2026-09-04)", () => {
 describe("Bab 0-1 F1 rich render (rest of journey)", () => {
   it("s-scope offers the three scope choices", () => {
     const html = renderBab1("s-scope");
-    expect(html).toContain("Apa yang ingin Anda audit");
+    expect(html).toContain("Apa fokus audit ini?");
+    expect(html).toContain("Brand secara keseluruhan");
+    expect(html).toContain("Satu lokasi");
+    expect(html).toContain("Satu produk atau layanan");
   });
 
   it("s-offerings and s-customers render prepared chips", () => {

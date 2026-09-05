@@ -1,7 +1,7 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-01
+> Updated: 2026-09-05
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
@@ -81,6 +81,7 @@ old rows to make history cleaner; add a superseding row.
 
 | 2026-09-03 | Accept the Phase 0 conflict-register resolutions for the Airbnb intake rebuild: hide provenance and confidence in the UI (backend-only flags, never rendered), keep the canonical 6/4 question composition in fixed slots, defer Google Maps as a source (website/Instagram only), and settle the single final CTA **Mulai audit**. | SETTLED | Founder decisions 2026-09-03; plan Rev 3 authority plus the V1 filing over the older VOICE wording. | A later founder decision reopens a conflict, or Gate 0 evidence shows the hidden-provenance or single-CTA direction hurts comprehension or conversion. |
 | 2026-09-03 | Approve Gate 0 for the Airbnb intake rebuild: 14-screen ledger, closed copy deck (CTA **Mulai audit**), 5 archetypes, paper IntakeState + complete mapping (0 lossy, 0 downstream changes), materiality rules, intake.v1 + workflow.v10 storage split, 6 fixtures, privacy-safe funnel, screen/time/typing budgets. Next: fixture skeleton for the Gate 1 composed walkthrough. | SETTLED | Founder walkthrough + verdict 2026-09-03; full package in docs/drafts/INTAKE_EXPERIENCE_CONTRACT.md, INTAKE_DATA_CONTRACT.md, INTAKE_FIXTURES_AND_BUDGETS.md. T_base still unmeasured — binds at Gate 1 latest. | A Gate 1 walkthrough finding invalidates the ledger, archetypes, or mapping; second Gate 0 rejection would return to contract (not invoked). |
+| 2026-09-05 | Approve the intake experience handoff amendments: add s-service (fixed icon+checkbox multi-select, ≥1 channel, every route), always show s-market (single-select reach + required area chips when area-based; shipped-product skip retired), replace s-review with 10 full-width chevron rows and remove the "Nama lain dan sumber" row (aliases derive from the primary source), product scope skips s-offerings, remove chapter kickers, and adopt the approved workbench copy (scope/branch/product/category/offerings/customers/facts headings). Contracts amended in place (§10 experience; data amendment). | SETTLED | Founder-approved `docs/drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md` (2026-09-05) + companion workbench SHA `b7adc54f…`; consistency over hidden system-driven skips; each delta ≤1 lightweight tap; budget stays ≤10 content screens (happy 9, worst 10). | A Gate 1 walkthrough finding or real-data integration shows a channel/reach/row change is needed; review-edit transactional wiring lands with Phase 5. |
 
 ## Supersession annotations
 

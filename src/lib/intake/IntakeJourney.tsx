@@ -6,7 +6,6 @@ import {
   chapterFills,
   continueLabelFor,
   isBareScreen,
-  kickerFor,
   normalizeStubAnswers,
   resolveJourneyPath,
   useIntakeFunnel,
@@ -32,7 +31,6 @@ type IntakeJourneyProps = {
   entry?: IntakeEntryMode;
   stubScope?: IntakeScopeChoice;
   stubBrandNeedsFix?: boolean;
-  stubMarketSkipped?: boolean;
   /**
    * Final-readback transition slot: s-review Continue ("Buat pertanyaan
    * audit"). Defaults to advancing to s-questions.
@@ -68,12 +66,12 @@ function DefaultScreenSlot({ screenId }: IntakeScreenSlotProps) {
 /**
  * Isolated new intake shell (plan §4.1 + Phase 4 shell part).
  *
- * Owns the complete intake frame — wordmark, 4-chapter progress, kicker,
- * sticky Kembali/primary bar — plus the resolved screen graph, Back/Continue
- * behavior, focus + scroll restoration, the readback/question transition
- * slots, and the funnel emission hook. Screen content renders only through
- * the pinned slot contract (`IntakeScreenSlotProps`); the shell never
- * imports or falls through to legacy intake renderers.
+ * Owns the complete intake frame — wordmark, 4-chapter progress (never on
+ * s-crawl), sticky Kembali/primary bar — plus the resolved screen graph,
+ * Back/Continue behavior, focus + scroll restoration, the readback/question
+ * transition slots, and the funnel emission hook. Screen content renders
+ * only through the pinned slot contract (`IntakeScreenSlotProps`); the
+ * shell never imports or falls through to legacy intake renderers.
  */
 export default function IntakeJourney({
   initialScreenId,
@@ -81,7 +79,6 @@ export default function IntakeJourney({
   entry,
   stubScope,
   stubBrandNeedsFix,
-  stubMarketSkipped,
   onReviewConfirm,
   onQuestionsConfirm,
   funnelSink,
@@ -94,9 +91,8 @@ export default function IntakeJourney({
         entry,
         scope: stubScope,
         brandNeedsFix: stubBrandNeedsFix,
-        marketSkipped: stubMarketSkipped,
       }),
-    [entry, stubScope, stubBrandNeedsFix, stubMarketSkipped],
+    [entry, stubScope, stubBrandNeedsFix],
   );
   const path = useMemo<IntakeScreenId[]>(
     () =>
@@ -199,7 +195,6 @@ export default function IntakeJourney({
       entry: answers.entry,
       scope: answers.scope,
       brandNeedsFix: answers.brandNeedsFix,
-      marketSkipped: answers.marketSkipped,
     }),
     [answers],
   );
@@ -284,23 +279,12 @@ export default function IntakeJourney({
         </section>
       ) : (
         <>
-          <p
-            style={{
-              margin: "0 0 8px",
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--text-muted, #52525b)",
-            }}
-          >
-            {kickerFor(current)}
-          </p>
           <ScreenSlot
             screenId={current}
             fixture={fixture}
             nav={nav}
             emit={emit}
+            activeScreens={path}
           />
         </>
       )}

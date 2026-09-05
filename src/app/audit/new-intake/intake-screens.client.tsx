@@ -39,14 +39,12 @@ export default function IntakePreviewClient({
   entry,
   stubScope,
   stubBrandNeedsFix,
-  stubMarketSkipped,
   fixture,
   withArrival,
 }: {
   entry: IntakeEntryMode;
   stubScope: IntakeScopeChoice;
   stubBrandNeedsFix: boolean;
-  stubMarketSkipped: boolean;
   fixture: IntakeFixture;
   withArrival: boolean;
 }) {
@@ -59,7 +57,6 @@ export default function IntakePreviewClient({
       entry={entry}
       stubScope={stubScope}
       stubBrandNeedsFix={stubBrandNeedsFix}
-      stubMarketSkipped={stubMarketSkipped}
       fixtureOverride={fixture}
       ScreenSlot={CombinedSlot}
     />

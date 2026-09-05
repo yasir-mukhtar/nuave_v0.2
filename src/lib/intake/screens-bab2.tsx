@@ -21,15 +21,15 @@
  * - Prepared values come from the `fixture` prop (pinned fixture shape
  *   `{ screens, entry }`); the shell stub shape degrades to empty states.
  * - Tap-first: chips, cards, rows are buttons; typing lives only in
- *   add-lines, the alias inline edit, question edits, and the s-facts
- *   textarea.
- * - Validation per ledger: s-market / s-competitors / s-facts / s-review /
- *   s-questions NEVER block Continue (only brand/scope/category + the
- *   conditional entity rows block, all owned by sibling screens). s-facts
- *   is skippable by tapping Lanjut with empty text.
+ *   add-lines, question edits, and the s-facts textarea.
+ * - Validation per handoff (2026-09-05): s-market blocks until one reach
+ *   is chosen (and ≥1 area when the reach is area-based); s-competitors
+ *   requires ≥1 named competitor or the no-direct mode; s-facts /
+ *   s-review / s-questions never block. The shell's stub gate stays
+ *   permissive (Phase 5 wires real blocking via `nav.canContinue`).
  * - Funnel: screens emit only E5 (answer_corrected, count only) and E6
- *   (resumed, on draft-cache rehydrate). E4 is never emitted here because
- *   nothing blocks. Payloads carry ids/counters only, never text.
+ *   (resumed, on draft-cache rehydrate). Payloads carry ids/counters
+ *   only, never text.
  * - 44px+ touch targets, two-layer focus via the shell frame, single
  *   ease-out curve, `prefers-reduced-motion` disables motion.
  */
@@ -85,17 +85,11 @@ export function toggleId(list: readonly string[], id: string): string[] {
     : [...list, id];
 }
 
-/** Journey-level market skip (shipped product): recorded, never defaulted. */
-export function isMarketSkippedFixture(fixture: unknown): boolean {
-  if (!isRecord(fixture)) return false;
-  if (fixture["marketSkipped"] === true) return true;
-  const market = getFixtureScreen(fixture, "s-market");
-  if (!market) return false;
-  return (
-    market.prepared.length === 0 &&
-    typeof market.note === "string" &&
-    /skip|dilewati|shipped|dikirim/i.test(market.note)
-  );
+/** Journey-level market skip removed (handoff 2026-09-05): s-market is
+ *  always shown. Retained only as a deprecated no-op alias so the journey
+ *  contract's older sections read clearly; always false. */
+export function isMarketSkippedFixture(_fixture: unknown): boolean {
+  return false;
 }
 
 /** Thin/manual competitor lead when prepared rows are generic or absent.
@@ -228,13 +222,18 @@ export type ReviewRow = {
   key: string;
   label: string;
   value: string;
-  /** Owning screen for the Ubah correction link. Null = inline edit. */
-  target: IntakeScreenId | null;
+  /** Owning screen for the chevron correction link. */
+  target: IntakeScreenId;
   advisory?: boolean;
 };
 
-export function deriveReviewRows(fixture: unknown): ReviewRow[] {
+export function deriveReviewRows(
+  fixture: unknown,
+  activeScreens?: readonly IntakeScreenId[],
+): ReviewRow[] {
   const scopeLabels = selectedLabels(getFixtureScreen(fixture, "s-scope"));
+  const branchLabels = selectedLabels(getFixtureScreen(fixture, "s-branch"));
+  const productLabels = selectedLabels(getFixtureScreen(fixture, "s-product"));
   const categoryLabels = selectedLabels(
     getFixtureScreen(fixture, "s-category"),
   );
@@ -244,58 +243,54 @@ export function deriveReviewRows(fixture: unknown): ReviewRow[] {
   const customerLabels = selectedLabels(
     getFixtureScreen(fixture, "s-customers"),
   );
+  const serviceLabels = selectedLabels(getFixtureScreen(fixture, "s-service"));
   const marketState = getFixtureScreen(fixture, "s-market");
   const competitorState = getFixtureScreen(fixture, "s-competitors");
   const factsState = getFixtureScreen(fixture, "s-facts");
   const reviewState = getFixtureScreen(fixture, "s-review");
-  const marketSkipped = isMarketSkippedFixture(fixture);
 
-  const scopeValue =
-    scopeLabels.length > 0
-      ? categoryLabels.length > 0
-        ? `${scopeLabels[0]} · kategori: ${categoryLabels[0]}`
-        : scopeLabels[0]
-      : categoryLabels.length > 0
-        ? `kategori: ${categoryLabels[0]}`
-        : "Belum diisi";
+  const active = (id: IntakeScreenId) =>
+    activeScreens === undefined || activeScreens.includes(id);
+
+  // Scope row: the committed scope choice label.
+  const scopeValue = scopeLabels.length > 0 ? scopeLabels[0] : "Belum dipilih";
+
+  // Target row: the conditional entity (branch or product) actually visited;
+  // omitted entirely on whole-brand routes (handoff: omit inactive branches).
+  const targetLabel =
+    branchLabels.length > 0 ? branchLabels[0] : productLabels[0];
+  const targetValue = targetLabel !== undefined ? targetLabel : "Belum dipilih";
 
   let marketValue: string;
-  let marketTarget: IntakeScreenId;
-  if (marketSkipped) {
-    marketValue =
-      "Tidak relevan untuk audit ini. Produk ini dikirim ke seluruh Indonesia.";
-    marketTarget = "s-competitors";
-  } else if (!marketState || marketState.selected.length === 0) {
-    marketValue = "Belum diisi";
-    marketTarget = "s-market";
+  if (!marketState || marketState.selected.length === 0) {
+    marketValue = "Belum dipilih";
   } else {
     const ids = marketState.selected;
     if (ids.some((id) => /luar|abroad|international/i.test(id))) {
       marketValue = "Indonesia dan luar negeri";
-    } else if (ids.some((id) => /seluruh|nationwide|^all/i.test(id))) {
+    } else if (ids.some((id) => /seluruh|nationwide|^all|national/i.test(id))) {
       marketValue = "Seluruh Indonesia";
     } else {
-      const cities = selectedLabels(marketState).filter(
+      const areas = selectedLabels(marketState).filter(
         (label) => !/^market (type|bound)/i.test(label),
       );
-      const bound = ids.some((id) => /bound-local|lokal/i.test(id))
-        ? "Ya, bisnis kami lokal"
-        : ids.some((id) => /bound-online|online/i.test(id))
-          ? "Tidak, kami juga melayani online"
-          : null;
+      const areaLabels = areas.filter(
+        (label) =>
+          label !== "Sekitar satu area" &&
+          label !== "Beberapa area" &&
+          label !== "Seluruh Indonesia" &&
+          label !== "Indonesia dan luar negeri",
+      );
       marketValue =
-        cities.length > 0
-          ? bound
-            ? `${cities.join(", ")} · ${bound}`
-            : cities.join(", ")
-          : (selectedLabels(marketState)[0] ?? "Belum diisi");
+        areaLabels.length > 0
+          ? `${areaLabels.join(", ")}`
+          : (areas[0] ?? "Belum dipilih");
     }
-    marketTarget = "s-market";
   }
 
   let competitorValue: string;
   if (!competitorState || competitorState.selected.length === 0) {
-    competitorValue = "Belum diisi";
+    competitorValue = "Belum dikonfirmasi";
   } else {
     const kept = selectedLabels(competitorState);
     competitorValue =
@@ -308,33 +303,64 @@ export function deriveReviewRows(fixture: unknown): ReviewRow[] {
     factsState && factsState.selected.length > 0
       ? factsState.selected.join(" ")
       : "";
-  const factsValue = factsText.trim().length > 0 ? factsText : "Tidak diisi";
-
-  const aliases = resolveAliases(fixture);
-  const aliasValue = aliases.length > 0 ? aliases.join(", ") : "Tidak ada";
+  const factsValue =
+    factsText.trim().length > 0 ? factsText : "Tidak ditambahkan";
 
   const rows: ReviewRow[] = [
     {
+      key: "brand",
+      label: "Brand",
+      value: brandRowValue(fixture),
+      target: "s-brand",
+    },
+    {
       key: "scope",
-      label: "Yang diaudit",
+      label: "Fokus audit",
       value: scopeValue,
       target: "s-scope",
+    },
+  ];
+  if (active("s-branch") || active("s-product")) {
+    rows.push({
+      key: "target",
+      label: "Target audit",
+      value: targetValue,
+      target: branchLabels.length > 0 ? "s-branch" : "s-product",
+    });
+  }
+  rows.push(
+    {
+      key: "category",
+      label: "Kategori",
+      value: categoryLabels.length > 0 ? categoryLabels[0] : "Belum dipilih",
+      target: "s-category",
     },
     {
       key: "offerings",
       label: "Produk dan layanan",
       value:
-        offeringLabels.length > 0 ? offeringLabels.join(", ") : "Belum diisi",
+        offeringLabels.length > 0
+          ? offeringLabels.join(", ")
+          : "Belum dikonfirmasi",
       target: "s-offerings",
     },
     {
       key: "customers",
-      label: "Kenapa pelanggan mencari",
+      label: "Alasan pelanggan",
       value:
-        customerLabels.length > 0 ? customerLabels.join(", ") : "Belum diisi",
+        customerLabels.length > 0
+          ? customerLabels.join(", ")
+          : "Tidak ditambahkan",
       target: "s-customers",
     },
-    { key: "market", label: "Pasar", value: marketValue, target: marketTarget },
+    {
+      key: "service",
+      label: "Cara layanan",
+      value:
+        serviceLabels.length > 0 ? serviceLabels.join(", ") : "Belum dipilih",
+      target: "s-service",
+    },
+    { key: "market", label: "Pasar", value: marketValue, target: "s-market" },
     {
       key: "competitors",
       label: "Pembanding",
@@ -347,13 +373,7 @@ export function deriveReviewRows(fixture: unknown): ReviewRow[] {
       value: factsValue,
       target: "s-facts",
     },
-    {
-      key: "aliases",
-      label: "Nama lain dan sumber",
-      value: aliasValue,
-      target: null,
-    },
-  ];
+  );
 
   if (reviewState) {
     for (const item of reviewState.prepared) {
@@ -369,6 +389,23 @@ export function deriveReviewRows(fixture: unknown): ReviewRow[] {
     }
   }
   return rows;
+}
+
+/** Meaning-level brand row value ("Kopi Sudut · kopisudut.id"). Reads the
+ *  prepared brand card (label = name, detail = source) like BrandScreen;
+ *  falls back to selected labels, then "Belum dipilih". */
+function brandRowValue(fixture: unknown): string {
+  const brand = getFixtureScreen(fixture, "s-brand");
+  const card = brand?.prepared[0];
+  if (card) {
+    const source =
+      typeof card.detail === "string" && card.detail.trim().length > 0
+        ? ` · ${card.detail.trim()}`
+        : "";
+    return `${card.label}${source}`;
+  }
+  const selected = selectedLabels(brand);
+  return selected.length > 0 ? selected[0] : "Belum dipilih";
 }
 
 /* ── Tab-local draft cache (Back restores state; reload is shell-owned) ── */
@@ -503,62 +540,6 @@ function Pill({ children }: { children: React.ReactNode }) {
   );
 }
 
-function OptionCard({
-  selected,
-  onSelect,
-  title,
-  description,
-  radioGroup,
-}: {
-  selected: boolean;
-  onSelect: () => void;
-  title: string;
-  description?: string;
-  radioGroup?: string;
-}) {
-  return (
-    <button
-      type="button"
-      role={radioGroup ? "radio" : undefined}
-      aria-checked={radioGroup ? selected : undefined}
-      aria-pressed={radioGroup ? undefined : selected}
-      onClick={onSelect}
-      style={{
-        minHeight: "44px",
-        width: "100%",
-        textAlign: "left",
-        padding: "12px 16px",
-        fontSize: "16px",
-        borderRadius: "12px",
-        cursor: "pointer",
-        background: selected
-          ? "var(--action-soft, #f4f4f5)"
-          : "var(--bg-page, #ffffff)",
-        border: selected
-          ? "2px solid var(--action, #18181b)"
-          : "1px solid var(--border-default, #e5e7eb)",
-        color: "var(--text-heading, #18181b)",
-        transition: `border-color 150ms ${EASE}, background 150ms ${EASE}`,
-      }}
-    >
-      <span style={{ display: "block", fontWeight: 600 }}>{title}</span>
-      {description ? (
-        <span
-          style={{
-            display: "block",
-            marginTop: "4px",
-            fontSize: "14px",
-            fontWeight: 400,
-            color: "var(--text-muted, #52525b)",
-          }}
-        >
-          {description}
-        </span>
-      ) : null}
-    </button>
-  );
-}
-
 function ToggleChip({
   on,
   onToggle,
@@ -684,38 +665,54 @@ function AddLine({
   );
 }
 
-/* ── s-market (A2 choose one + A4 reveal, conditional) ── */
+/* ── s-market: single-select reach + conditional required area chips ── */
 
 type MarketKind = "sekitar" | "beberapa" | "seluruh" | "luar";
 
 const MARKET_OPTIONS: ReadonlyArray<{
   kind: MarketKind;
+  glyph: string;
   title: string;
-  description?: string;
+  description: string;
   reveals: boolean;
 }> = [
   {
     kind: "sekitar",
-    title: "Sekitar lokasi tertentu",
-    description: "Pelanggan datang dari area di sekitar Anda",
+    glyph: "⌖",
+    title: "Sekitar satu area",
+    description: "Pelanggan terutama datang dari satu kota atau area.",
     reveals: true,
   },
-  { kind: "beberapa", title: "Beberapa kota", reveals: true },
+  {
+    kind: "beberapa",
+    glyph: "⌘",
+    title: "Beberapa area",
+    description: "Pelanggan berasal dari beberapa kota atau area tertentu.",
+    reveals: true,
+  },
   {
     kind: "seluruh",
+    glyph: "▤",
     title: "Seluruh Indonesia",
-    description: "Misalnya lewat e-commerce atau pengiriman",
+    description: "Produk atau layanan tersedia secara nasional.",
     reveals: false,
   },
-  { kind: "luar", title: "Juga di luar negeri", reveals: false },
+  {
+    kind: "luar",
+    glyph: "◎",
+    title: "Indonesia dan luar negeri",
+    description: "Pelanggan juga berada di negara lain.",
+    reveals: false,
+  },
 ];
 
 function marketKindFromId(id: string): MarketKind | null {
   const lower = id.toLowerCase();
   if (/sekitar|nearby|lokasi/.test(lower)) return "sekitar";
-  if (/beberapa|multi|kota/.test(lower) && !/tambah/.test(lower))
+  if (/beberapa|multi|kota|cities/.test(lower) && !/tambah/.test(lower))
     return "beberapa";
-  if (/seluruh|nationwide|seluruh-indonesia|^all/.test(lower)) return "seluruh";
+  if (/seluruh|nationwide|seluruh-indonesia|^all|national/.test(lower))
+    return "seluruh";
   if (/luar|abroad|international|luar-negeri/.test(lower)) return "luar";
   return null;
 }
@@ -746,24 +743,19 @@ function seedCityIds(state: FixtureScreenState | null): string[] {
     .map((item) => item.id);
 }
 
-function seedBound(
-  state: FixtureScreenState | null,
-): "lokal" | "online" | null {
-  if (!state) return null;
-  const ids = state.selected;
-  if (ids.some((id) => /bound-local|lokal/i.test(id))) return "lokal";
-  if (ids.some((id) => /bound-online|online/i.test(id))) return "online";
-  for (const item of state.prepared) {
-    if (!item.on) continue;
-    if (/bound-local|lokal/i.test(item.id)) return "lokal";
-    if (/bound-online|online/i.test(item.id)) return "online";
-  }
-  return null;
+/** Reach + areas both required for area-based reach (handoff: "required area
+ *  selection where applicable"). Pure, unit-tested. */
+export function isMarketAnswerValid(
+  kind: MarketKind | null,
+  areaCount: number,
+): boolean {
+  if (kind === null) return false;
+  if (kind === "sekitar" || kind === "beberapa") return areaCount > 0;
+  return true;
 }
 
 function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
   const state = getFixtureScreen(fixture, "s-market");
-  const skipped = isMarketSkippedFixture(fixture);
   const countCorrections = useCorrectionCounter("s-market", emit);
   const [kind, setKind] = useDraftState<MarketKind | null>(
     "s-market",
@@ -777,12 +769,6 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
     () => seedCityIds(state),
     emit,
   );
-  const [bound, setBound] = useDraftState<"lokal" | "online" | null>(
-    "s-market",
-    "bound",
-    () => seedBound(state),
-    emit,
-  );
   const [customCities, setCustomCities] = useDraftState<string[]>(
     "s-market",
     "custom-cities",
@@ -790,53 +776,81 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
     emit,
   );
 
-  if (skipped) {
-    return (
-      <ScreenSection screenId="s-market" labelledBy="s-market-h">
-        <div role="status" style={{ display: "grid", gap: "12px" }}>
-          <Heading id="s-market-h">Di mana pelanggan Anda berada?</Heading>
-          <Lead>
-            Layar ini dilewati. Lokasi tidak memengaruhi rekomendasi untuk audit
-            ini.
-          </Lead>
-        </div>
-      </ScreenSection>
-    );
-  }
-
   const cityById = new Map(
     (state?.prepared ?? []).map((item) => [item.id, item.label]),
   );
   const reveal = kind === "sekitar" || kind === "beberapa";
-  const selectedOption = MARKET_OPTIONS.find((option) => option.kind === kind);
+  const areaCount = cityIds.length + customCities.length;
 
   return (
     <ScreenSection screenId="s-market" labelledBy="s-market-h">
       <Heading id="s-market-h">Di mana pelanggan Anda berada?</Heading>
-      <Lead>
-        Ditanyakan karena lokasi memengaruhi rekomendasi untuk bisnis Anda.
-        Untuk bisnis yang sepenuhnya online, layar ini dilewati.
-      </Lead>
+      <Lead>Pilih jangkauan utama untuk audit ini.</Lead>
       <div
         role="radiogroup"
         aria-label="Di mana pelanggan Anda berada?"
         style={{ display: "grid", gap: "8px" }}
       >
         {MARKET_OPTIONS.map((option) => (
-          <OptionCard
+          <button
             key={option.kind}
-            radioGroup="market-kind"
-            selected={kind === option.kind}
-            title={option.title}
-            description={option.description}
-            onSelect={() => {
+            type="button"
+            role="radio"
+            aria-checked={kind === option.kind}
+            onClick={() => {
               if (kind !== option.kind) countCorrections();
               setKind(option.kind);
             }}
-          />
+            style={{
+              minHeight: "44px",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              textAlign: "left",
+              padding: "12px 16px",
+              fontSize: "16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              background: "var(--bg-page, #ffffff)",
+              border:
+                kind === option.kind
+                  ? "2px solid var(--action, #18181b)"
+                  : "1px solid var(--border-default, #e5e7eb)",
+              color: "var(--text-heading, #18181b)",
+              transition: `border-color 150ms ${EASE}`,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                fontSize: "22px",
+                lineHeight: 1,
+                width: "32px",
+                height: "32px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {option.glyph}
+            </span>
+            <span style={{ display: "grid", gap: "2px", flex: 1 }}>
+              <span style={{ fontWeight: 600 }}>{option.title}</span>
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: "var(--text-muted, #52525b)",
+                }}
+              >
+                {option.description}
+              </span>
+            </span>
+          </button>
         ))}
       </div>
-      {reveal && selectedOption ? (
+      {reveal ? (
         <div
           style={{
             display: "grid",
@@ -852,9 +866,9 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
               color: "var(--text-heading, #18181b)",
             }}
           >
-            Kota atau area mana?
+            Pilih area pelanggan
           </h2>
-          {cityIds.length > 0 || customCities.length > 0 ? (
+          {areaCount > 0 ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {cityIds.map((id) => (
                 <ToggleChip
@@ -887,9 +901,9 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
             </div>
           ) : null}
           <AddLine
-            id="s-market-city-add"
-            placeholder="Tambah kota atau area"
-            buttonLabel="Tambah"
+            id="s-market-area-add"
+            placeholder="Tambah area lain"
+            buttonLabel="Tambahkan"
             onAdd={(value) => {
               if (!customCities.includes(value)) {
                 setCustomCities([...customCities, value]);
@@ -897,46 +911,13 @@ function MarketScreen({ fixture, emit }: IntakeScreenSlotProps) {
               }
             }}
           />
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "16px",
-              color: "var(--text-heading, #18181b)",
-            }}
-          >
-            Pelanggan harus datang ke lokasi Anda?
-          </h2>
-          <div
-            role="radiogroup"
-            aria-label="Pelanggan harus datang ke lokasi Anda?"
-            style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
-          >
-            <OptionCard
-              radioGroup="market-bound"
-              selected={bound === "lokal"}
-              title="Ya, bisnis kami lokal"
-              onSelect={() => {
-                if (bound !== "lokal") countCorrections();
-                setBound("lokal");
-              }}
-            />
-            <OptionCard
-              radioGroup="market-bound"
-              selected={bound === "online"}
-              title="Tidak, kami juga melayani online"
-              onSelect={() => {
-                if (bound !== "online") countCorrections();
-                setBound("online");
-              }}
-            />
-          </div>
         </div>
       ) : null}
     </ScreenSection>
   );
 }
 
-/* ── s-competitors (A3 choose several + add + no-direct-competitor toggle) ── */
+/* ── s-competitors (checkbox names + add + no-direct-competitor mode) ── */
 
 function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
   const state = getFixtureScreen(fixture, "s-competitors");
@@ -961,22 +942,80 @@ function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
     emit,
   );
 
-  const rows = (state?.prepared ?? []).filter((item) =>
-    /^competitor/i.test(item.id),
+  const rows = (state?.prepared ?? [])
+    .filter((item) => /^competitor/i.test(item.id))
+    // Names only: descriptions never render (handoff 2026-09-05).
+    .map((item) => ({ id: item.id, label: item.label }));
+
+  const renderRow = (
+    label: string,
+    kept: boolean,
+    onToggle: () => void,
+    key: string,
+  ) => (
+    <li key={key}>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={kept}
+        disabled={noDirect}
+        onClick={onToggle}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          width: "100%",
+          textAlign: "left",
+          minHeight: "44px",
+          padding: "10px 16px",
+          fontSize: "15px",
+          borderRadius: "12px",
+          cursor: noDirect ? "not-allowed" : "pointer",
+          background: "var(--bg-page, #ffffff)",
+          border: kept
+            ? "1px solid var(--action, #18181b)"
+            : "1px solid var(--border-default, #e5e7eb)",
+          color: "var(--text-heading, #18181b)",
+          opacity: noDirect ? 0.5 : 1,
+        }}
+      >
+        <span>{label}</span>
+        <span
+          aria-hidden="true"
+          style={{
+            width: "24px",
+            height: "24px",
+            flexShrink: 0,
+            borderRadius: "6px",
+            border: kept
+              ? "2px solid var(--action, #18181b)"
+              : "1px solid var(--border-strong, #d1d5db)",
+            background: kept
+              ? "var(--action, #18181b)"
+              : "var(--bg-page, #ffffff)",
+            color: "var(--action-foreground, #ffffff)",
+            fontSize: "14px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {kept ? "✓" : ""}
+        </span>
+      </button>
+    </li>
   );
-  const removedIds = rows
-    .map((row) => row.id)
-    .filter((id) => !keptIds.includes(id));
 
   return (
     <ScreenSection screenId="s-competitors" labelledBy="s-competitors-h">
       <Heading id="s-competitors-h">
-        Ini yang mungkin dibandingkan dengan Anda
+        Bisnis apa yang menjadi alternatif bagi pelanggan Anda?
       </Heading>
       <Lead>
         {thin
-          ? "Nuave belum menemukan pembanding dari sumber Anda. Ini pembanding yang umum untuk kategori Anda. Hapus yang tidak relevan, tambah yang kurang."
-          : "Hapus yang tidak relevan, tambah yang kurang."}
+          ? "Nuave belum menemukan pembanding dari sumber Anda. Ini pembanding yang umum untuk kategori Anda. Pilih yang relevan atau tambah sendiri."
+          : "Pilih bisnis yang dipertimbangkan pelanggan untuk kebutuhan yang sama. Nuave akan menggunakannya untuk menguji perbandingan."}
       </Lead>
       {rows.length > 0 ? (
         <ul
@@ -988,62 +1027,17 @@ function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
             gap: "8px",
           }}
         >
-          {rows.map((row) => {
-            const kept = keptIds.includes(row.id);
-            return (
-              <li
-                key={row.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  minHeight: "44px",
-                  padding: "10px 16px",
-                  borderRadius: "12px",
-                  border: "1px solid var(--border-default, #e5e7eb)",
-                  background: kept
-                    ? "var(--bg-page, #ffffff)"
-                    : "var(--bg-surface-raised, #f4f4f5)",
-                  opacity: kept ? 1 : 0.75,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "15px",
-                    color: "var(--text-heading, #18181b)",
-                  }}
-                >
-                  {row.label}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`${kept ? "Hapus" : "Batalkan"} ${row.label}`}
-                  disabled={noDirect}
-                  onClick={() => {
-                    setKeptIds(toggleId(keptIds, row.id));
-                    countCorrections();
-                  }}
-                  style={{
-                    minHeight: "44px",
-                    minWidth: "44px",
-                    padding: "10px 12px",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    background: "transparent",
-                    border: "none",
-                    cursor: noDirect ? "not-allowed" : "pointer",
-                    color: "var(--text-body, #3f3f46)",
-                    textDecoration: "underline",
-                    textUnderlineOffset: "3px",
-                    opacity: noDirect ? 0.5 : 1,
-                  }}
-                >
-                  {kept ? "Hapus" : "Batalkan"}
-                </button>
-              </li>
-            );
-          })}
+          {rows.map((row) =>
+            renderRow(
+              row.label,
+              keptIds.includes(row.id),
+              () => {
+                setKeptIds(toggleId(keptIds, row.id));
+                countCorrections();
+              },
+              row.id,
+            ),
+          )}
         </ul>
       ) : null}
       {custom.length > 0 ? (
@@ -1056,65 +1050,23 @@ function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
             gap: "8px",
           }}
         >
-          {custom.map((name) => (
-            <li
-              key={`custom-${name}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-                minHeight: "44px",
-                padding: "10px 16px",
-                borderRadius: "12px",
-                border: "1px solid var(--border-default, #e5e7eb)",
-              }}
-            >
-              <span style={{ fontSize: "15px" }}>{name}</span>
-              <button
-                type="button"
-                aria-label={`Hapus ${name}`}
-                disabled={noDirect}
-                onClick={() => {
-                  setCustom(custom.filter((entry) => entry !== name));
-                  countCorrections();
-                }}
-                style={{
-                  minHeight: "44px",
-                  minWidth: "44px",
-                  padding: "10px 12px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  background: "transparent",
-                  border: "none",
-                  cursor: noDirect ? "not-allowed" : "pointer",
-                  color: "var(--text-body, #3f3f46)",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "3px",
-                  opacity: noDirect ? 0.5 : 1,
-                }}
-              >
-                Hapus
-              </button>
-            </li>
-          ))}
+          {custom.map((name) =>
+            renderRow(
+              name,
+              true,
+              () => {
+                setCustom(custom.filter((entry) => entry !== name));
+                countCorrections();
+              },
+              `custom-${name}`,
+            ),
+          )}
         </ul>
-      ) : null}
-      {removedIds.length > 0 ? (
-        <p
-          style={{
-            margin: 0,
-            fontSize: "13px",
-            color: "var(--text-muted, #52525b)",
-          }}
-        >
-          {removedIds.length} saran dihapus dan dicatat sebagai sinyal negatif.
-        </p>
       ) : null}
       <AddLine
         id="s-competitors-add"
-        placeholder="Tambah pembanding"
-        buttonLabel="Tambah"
+        placeholder="Tambah bisnis lain"
+        buttonLabel="Tambahkan"
         onAdd={(value) => {
           if (!custom.includes(value)) {
             setCustom([...custom, value]);
@@ -1146,7 +1098,7 @@ function CompetitorsScreen({ fixture, emit }: IntakeScreenSlotProps) {
         }}
       >
         <span
-          aria-hidden
+          aria-hidden="true"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1192,12 +1144,13 @@ function FactsScreen({ emit }: IntakeScreenSlotProps) {
   return (
     <ScreenSection screenId="s-facts" labelledBy="s-facts-h">
       <Heading id="s-facts-h">
-        Apa yang tidak boleh salah dipahami tentang brand Anda?
+        Apa yang tidak boleh Nuave salah pahami?
         <Pill>Opsional</Pill>
       </Heading>
       <Lead>
-        Satu hal yang, kalau AI salah paham, akan membuat seluruh audit meleset.
-        Satu kalimat cukup.
+        Tambahkan satu fakta publik yang dapat memengaruhi hasil audit, seperti
+        harga, sertifikasi, wilayah layanan, atau istilah khusus. Kosongkan jika
+        tidak ada.
       </Lead>
       <div style={{ display: "grid", gap: "8px" }}>
         <label
@@ -1208,14 +1161,14 @@ function FactsScreen({ emit }: IntakeScreenSlotProps) {
             color: "var(--text-heading, #18181b)",
           }}
         >
-          Satu hal yang wajib benar
+          Satu fakta yang wajib benar
         </label>
         <textarea
           id="s-facts-text"
           value={text}
           aria-describedby={flagged ? SENSITIVE_NOTICE_ID : "s-facts-hint"}
           aria-invalid={flagged}
-          placeholder="Misalnya: keunggulan yang sering terlewat, fakta harga, sertifikasi, istilah khas, atau kesalahpahaman yang sering terjadi."
+          placeholder="Misalnya: harga tertentu, sertifikasi halal, wilayah layanan, atau istilah khas yang sering keliru."
           rows={4}
           onChange={(event) => setText(event.target.value)}
           style={{
@@ -1245,8 +1198,9 @@ function FactsScreen({ emit }: IntakeScreenSlotProps) {
               color: "var(--red, #dc2626)",
             }}
           >
-            Hapus alamat email, nomor telepon, atau identitas pribadi dari kolom
-            ini. Cukup tulis fakta bisnis yang boleh dipahami AI.
+            Jangan masukkan data pribadi, informasi pembayaran, atau rahasia
+            bisnis. Hapus bagian itu dan tulis fakta bisnis yang boleh dipahami
+            AI.
           </p>
         ) : null}
         <p
@@ -1257,38 +1211,28 @@ function FactsScreen({ emit }: IntakeScreenSlotProps) {
             color: "var(--text-muted, #52525b)",
           }}
         >
-          Boleh dikosongkan.
+          Jangan masukkan data pribadi, informasi pembayaran, atau rahasia
+          bisnis.
         </p>
       </div>
     </ScreenSection>
   );
 }
 
-/* ── s-review (A5 readback with correction links) ── */
+/* ── s-review (workbench: full-width chevron rows, no Ubah links) ── */
 
-function ReviewScreen({ fixture, nav, emit }: IntakeScreenSlotProps) {
-  const rows = deriveReviewRows(fixture);
-  const [editingAliases, setEditingAliases] = useState(false);
-  const [aliasText, setAliasText] = useDraftState<string>(
-    "s-review",
-    "aliases",
-    () => {
-      const aliases = resolveAliases(fixture);
-      return aliases.join(", ");
-    },
-    emit,
-  );
+function ReviewScreen({
+  fixture,
+  nav,
+  emit,
+  activeScreens,
+}: IntakeScreenSlotProps) {
+  const rows = deriveReviewRows(fixture, activeScreens);
   const countCorrections = useCorrectionCounter("s-review", emit);
-  const aliasEdited =
-    aliasText.trim().length > 0 &&
-    aliasText !== resolveAliases(fixture).join(", ");
 
-  const correctAndJump = (target: IntakeScreenId | null) => () => {
+  const correctAndJump = (target: IntakeScreenId) => () => {
     countCorrections();
-    // Direct jump to the owning screen when the shell supports it
-    // (data-correction-target preserved for tests); Back walks the
-    // resolved path as the fallback.
-    if (target !== null && nav.onGotoScreen) {
+    if (nav.onGotoScreen) {
       nav.onGotoScreen(target);
       return;
     }
@@ -1297,87 +1241,55 @@ function ReviewScreen({ fixture, nav, emit }: IntakeScreenSlotProps) {
 
   return (
     <ScreenSection screenId="s-review" labelledBy="s-review-h">
-      <Heading id="s-review-h">Ini yang akan Nuave audit</Heading>
-      <Lead>Periksa sekali lagi. Semua bisa diubah.</Lead>
+      <Heading id="s-review-h">Konfirmasi informasi brand Anda</Heading>
+      <Lead>
+        Pastikan informasi ini sudah tepat sebelum Nuave menyusun pertanyaan
+        audit.
+      </Lead>
       <dl style={{ margin: 0, display: "grid", gap: "8px" }}>
         {rows.map((row) => (
-          <div
+          <button
             key={row.key}
+            type="button"
+            data-correction-target={row.target}
+            aria-label={`Ubah ${row.label}`}
+            onClick={correctAndJump(row.target)}
             style={{
               display: "flex",
-              alignItems: "flex-start",
+              alignItems: "center",
               justifyContent: "space-between",
               gap: "12px",
+              width: "100%",
+              textAlign: "left",
               minHeight: "44px",
-              padding: "12px 0",
+              padding: "14px 0",
               borderTop: "1px solid var(--border-default, #e5e7eb)",
+              background: "transparent",
+              borderLeft: "none",
+              borderRight: "none",
+              borderBottom: "none",
+              cursor: "pointer",
             }}
           >
-            <div style={{ display: "grid", gap: "4px" }}>
-              <dt
+            <span style={{ display: "grid", gap: "4px" }}>
+              <span
                 style={{
-                  fontSize: "13px",
+                  fontSize: "14px",
                   fontWeight: 600,
                   color: "var(--text-muted, #52525b)",
                 }}
               >
                 {row.label}
-              </dt>
-              <dd
+              </span>
+              <span
                 style={{
-                  margin: 0,
                   fontSize: "15px",
                   lineHeight: 1.6,
                   color: "var(--text-heading, #18181b)",
                 }}
               >
-                {row.key === "aliases" ? (
-                  editingAliases ? (
-                    <span style={{ display: "grid", gap: "8px" }}>
-                      <input
-                        type="text"
-                        aria-label="Nama lain dan sumber"
-                        value={aliasText}
-                        onChange={(event) => setAliasText(event.target.value)}
-                        style={{
-                          minHeight: "44px",
-                          padding: "10px 14px",
-                          fontSize: "16px",
-                          borderRadius: "12px",
-                          border: "1px solid var(--border-default, #e5e7eb)",
-                          background: "var(--bg-page, #ffffff)",
-                          color: "var(--text-heading, #18181b)",
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: "13px",
-                          color: "var(--text-muted, #52525b)",
-                        }}
-                      >
-                        Nama lain dipakai untuk memastikan enam pertanyaan tanpa
-                        menyebut bisnis Anda benar-benar tidak menyebutnya.
-                      </span>
-                    </span>
-                  ) : (
-                    <span>
-                      {aliasEdited ? aliasText : row.value}
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: "13px",
-                          color: "var(--text-muted, #52525b)",
-                        }}
-                      >
-                        Nama lain dipakai untuk memastikan enam pertanyaan tanpa
-                        menyebut bisnis Anda benar-benar tidak menyebutnya.
-                      </span>
-                    </span>
-                  )
-                ) : (
-                  row.value
-                )}
-              </dd>
+                {row.value}
+              </span>
               {row.advisory ? (
                 <span
                   style={{
@@ -1389,58 +1301,18 @@ function ReviewScreen({ fixture, nav, emit }: IntakeScreenSlotProps) {
                   lanjut.
                 </span>
               ) : null}
-            </div>
-            {row.target !== null ? (
-              <button
-                type="button"
-                data-correction-target={row.target}
-                aria-label={`Ubah ${row.label}`}
-                onClick={correctAndJump(row.target)}
-                style={{
-                  minHeight: "44px",
-                  minWidth: "44px",
-                  flexShrink: 0,
-                  padding: "10px 12px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--text-body, #3f3f46)",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "3px",
-                }}
-              >
-                Ubah
-              </button>
-            ) : (
-              <button
-                type="button"
-                aria-label={`${editingAliases ? "Selesai" : "Ubah"} ${row.label}`}
-                aria-expanded={editingAliases}
-                onClick={() => {
-                  if (editingAliases) countCorrections();
-                  setEditingAliases(!editingAliases);
-                }}
-                style={{
-                  minHeight: "44px",
-                  minWidth: "44px",
-                  flexShrink: 0,
-                  padding: "10px 12px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--text-body, #3f3f46)",
-                  textDecoration: "underline",
-                  textUnderlineOffset: "3px",
-                }}
-              >
-                {editingAliases ? "Selesai" : "Ubah"}
-              </button>
-            )}
-          </div>
+            </span>
+            <span
+              aria-hidden="true"
+              style={{
+                fontSize: "20px",
+                color: "var(--text-muted, #52525b)",
+                flexShrink: 0,
+              }}
+            >
+              ›
+            </span>
+          </button>
         ))}
       </dl>
     </ScreenSection>

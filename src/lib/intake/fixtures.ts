@@ -87,7 +87,7 @@ function state(
   return { prepared, selected, note };
 }
 
-/** All 14 canonical ids must be present (empty-state rule: empty lists + note, never absent). */
+/** All 15 canonical ids must be present (empty-state rule: empty lists + note, never absent). */
 function assertFullCoverage(
   screens: Record<IntakeScreenId, FixtureScreenState>,
 ): void {
@@ -210,21 +210,37 @@ function richCustomers(onCount: number, total: number): FixtureScreenState {
   );
 }
 
+/** s-service channels (fixed set, handoff 2026-09-05: multi-select, ≥1). */
+const SERVICE_CHANNEL_ITEMS: PreparedItem[] = [
+  item("service-location", "Di lokasi bisnis Anda", true),
+  item("service-customer", "Di lokasi pelanggan", false),
+  item("service-delivery", "Dikirim ke pelanggan", false),
+  item("service-online", "Digunakan secara online", false),
+];
+
+function serviceState(selectedIds: string[]): FixtureScreenState {
+  return state(
+    SERVICE_CHANNEL_ITEMS,
+    selectedIds,
+    "A3 fixed multi-select: at least one channel required (blocking).",
+  );
+}
+
 function richMarket(cityCount: number): FixtureScreenState {
   const cities = ["Jakarta Selatan", "Tangerang Selatan", "Bandung"]
     .slice(0, cityCount)
     .map((label, i) => item(`city-${i + 1}`, label, true));
-  const rest: PreparedItem[] = [
-    item("market-type-nearby", "Sekitar lokasi tertentu", true),
-    item("market-type-cities", "Beberapa kota", false),
+  const reach: PreparedItem[] = [
+    item("market-type-nearby", "Sekitar satu area", true),
+    item("market-type-cities", "Beberapa area", false),
     item("market-type-national", "Seluruh Indonesia", false),
-    item("market-bound-local", "Ya, bisnis kami lokal", true),
+    item("market-type-abroad", "Indonesia dan luar negeri", false),
   ];
-  const prepared = [...rest, ...cities];
+  const prepared = [...reach, ...cities];
   return state(
     prepared,
     onIds(prepared),
-    `${cityCount} city chips preselected.`,
+    `${cityCount} area chips preselected; reach preselected.`,
   );
 }
 
@@ -260,26 +276,28 @@ function richCompetitors(count: number, generic: boolean): FixtureScreenState {
 }
 
 const REVIEW_ROWS: PreparedItem[] = [
+  item("row-brand", "Kopi Sudut · kopisudut.id", true),
   item(
     "row-scope",
     "Seluruh brand Kopi Sudut · Kedai kopi susu (chain lokal)",
     true,
   ),
+  item("row-target", "Seluruh brand Kopi Sudut", true),
+  item("row-category", "Kedai kopi susu lokal", true),
   item("row-offerings", "7 produk dan layanan terkonfirmasi", true),
   item("row-customers", "4 alasan pelanggan terkonfirmasi", true),
+  item("row-service", "Di lokasi bisnis Anda", true),
   item(
     "row-market",
-    "Sekitar Jakarta Selatan dan 2 kota lain · datang ke lokasi",
+    "Sekitar satu area · Jakarta Selatan dan 2 area lain",
     true,
   ),
   item("row-competitors", "4 pembanding terkonfirmasi", true),
-  item("row-facts", "Tidak ada catatan khusus", true),
+  item("row-facts", "Tidak ditambahkan", true),
 ];
 
-function reviewState(note: string, aliasesNote?: string): FixtureScreenState {
+function reviewState(note: string): FixtureScreenState {
   const rows = [...REVIEW_ROWS];
-  if (aliasesNote)
-    rows.push(item("row-aliases", "Readback row: aliases + source", true));
   return state(
     rows,
     rows.map((r) => r.id),
@@ -335,12 +353,12 @@ const F1: IntakeFixture = buildFixture("s-crawl", {
   "s-category": richCategory(true),
   "s-offerings": richOfferingsConfirm(),
   "s-customers": richCustomers(4, 7),
+  "s-service": serviceState(["service-location"]),
   "s-market": richMarket(3),
   "s-competitors": richCompetitors(4, false),
   "s-facts": FACTS_EMPTY,
   "s-review": reviewState(
-    "All blocks satisfied; 'Buat pertanyaan audit' enabled. Aliases row shows the two mocked aliases.",
-    "aliases",
+    "All blocks satisfied; 'Buat pertanyaan audit' enabled. 10 dynamic rows; no aliases row (handoff 2026-09-05).",
   ),
   "s-questions": QUESTIONS_POST,
 });
@@ -386,17 +404,17 @@ const F2_CUSTOMERS: FixtureScreenState = (() => {
 })();
 
 const F2_MARKET: FixtureScreenState = (() => {
-  const rest: PreparedItem[] = [
-    item("market-type-nearby", "Sekitar lokasi tertentu", true),
-    item("market-type-cities", "Beberapa kota", false),
+  const reach: PreparedItem[] = [
+    item("market-type-nearby", "Sekitar satu area", true),
+    item("market-type-cities", "Beberapa area", false),
     item("market-type-national", "Seluruh Indonesia", false),
-    item("market-bound-local", "Ya, bisnis kami lokal", true),
+    item("market-type-abroad", "Indonesia dan luar negeri", false),
     item("city-1", "Bekasi", true),
   ];
   return state(
-    rest,
-    onIds(rest),
-    "Single city chip carried from the quiet source.",
+    reach,
+    onIds(reach),
+    "Single area chip carried from the quiet source.",
   );
 })();
 
@@ -415,12 +433,12 @@ const F2: IntakeFixture = buildFixture("s-crawl", {
   "s-category": richCategory(true),
   "s-offerings": F2_OFFERINGS_ASK,
   "s-customers": F2_CUSTOMERS,
+  "s-service": serviceState(["service-location"]),
   "s-market": F2_MARKET,
   "s-competitors": richCompetitors(3, true),
   "s-facts": FACTS_EMPTY,
   "s-review": reviewState(
     "Ask-mode selections satisfy validate(); offerings row reflects tapped suggestions.",
-    "aliases",
   ),
   "s-questions": QUESTIONS_POST,
 });
@@ -439,19 +457,21 @@ const F3: IntakeFixture = buildFixture("s-crawl", {
         "Sumber berbeda soal jam buka — versi situs vs Instagram",
         true,
       ),
-      item("row-aliases", "Readback row: aliases + source", true),
     ],
     [
+      "row-brand",
       "row-scope",
+      "row-target",
+      "row-category",
       "row-offerings",
       "row-customers",
+      "row-service",
       "row-market",
       "row-competitors",
       "row-facts",
       "row-conflict",
-      "row-aliases",
     ],
-    "Advisory conflict row with Ubah to the owning screen; never blocking. Provenance backend-only.",
+    "Advisory conflict row with chevron to the owning screen; never blocking. Provenance backend-only.",
   ),
 });
 
@@ -523,36 +543,35 @@ const F5: IntakeFixture = buildFixture("s-scope", {
   "s-category": richCategory(false),
   "s-offerings": F5_OFFERINGS_SUGGESTED,
   "s-customers": richCustomers(0, 7),
+  "s-service": serviceState(["service-location"]),
   "s-market": state(
     [
-      item("market-type-nearby", "Sekitar lokasi tertentu", true),
-      item("market-bound-local", "Ya, bisnis kami lokal", true),
+      item("market-type-nearby", "Sekitar satu area", true),
+      item("market-type-cities", "Beberapa area", false),
+      item("market-type-national", "Seluruh Indonesia", false),
+      item("market-type-abroad", "Indonesia dan luar negeri", false),
       item("city-manual", "Jakarta", true),
     ],
-    ["market-type-nearby", "market-bound-local", "city-manual"],
-    "Single city chip carried from the manual entry city.",
+    ["market-type-nearby", "city-manual"],
+    "Single area chip carried from the manual entry city.",
   ),
   "s-competitors": richCompetitors(3, true),
   "s-facts": FACTS_EMPTY,
   "s-review": state(
+    [...REVIEW_ROWS.map((r) => ({ ...r }))],
     [
-      ...REVIEW_ROWS.map((r) => ({ ...r })),
-      item(
-        "row-aliases-manual",
-        "Aliases row: none; sources row: manual entry",
-        true,
-      ),
-    ],
-    [
+      "row-brand",
       "row-scope",
+      "row-target",
+      "row-category",
       "row-offerings",
       "row-customers",
+      "row-service",
       "row-market",
       "row-competitors",
       "row-facts",
-      "row-aliases-manual",
     ],
-    "Aliases row 'Tidak ada'; sources row 'diisi manual'. Category (blocking) satisfied by explicit choice.",
+    "10 dynamic rows; no aliases row (handoff 2026-09-05). Category (blocking) satisfied by explicit choice.",
   ),
   "s-questions": QUESTIONS_POST,
 });
@@ -595,6 +614,7 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
@@ -613,6 +633,7 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
@@ -631,6 +652,7 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
@@ -651,6 +673,7 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
@@ -667,6 +690,7 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
@@ -684,6 +708,7 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "s-category",
       "s-offerings",
       "s-customers",
+      "s-service",
       "s-market",
       "s-competitors",
       "s-facts",
