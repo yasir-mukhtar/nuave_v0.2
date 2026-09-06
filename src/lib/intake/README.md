@@ -1,4 +1,4 @@
-# New intake module (isolated, Phase 1 + Phase 4 shell)
+# New intake module (isolated, Phase 1–6A)
 
 Location decision: `src/lib/intake/` was chosen over a route-colocated module
 because the journey shell (`IntakeJourney`) and canonical screen order
@@ -17,8 +17,17 @@ absent before creation.
   hook (`useIntakeFunnel`), and the pinned screen-slot contract types.
 - `progress.tsx` — four-segment chapter progress (fill only, no numerals).
 - `IntakeJourney.tsx` — isolated new shell: frame, graph walk, Back/Continue
-  bar, focus + scroll restoration, transition slots, funnel emission.
-  Never falls through to legacy UI.
+  bar, focus + scroll restoration, transactional Review edits, funnel emission,
+  and the injected question-preview lifecycle. Never falls through to legacy UI.
+- `state.ts` — shell-owned committed `IntakeState`, explicit screen-confirmation
+  ledger, pure answer transitions, blocking validation, meaning-level Review
+  projection, fact versions, and scope-conditioned invalidation.
+- `question-preview.ts` — immutable exact Review projection plus an honest
+  minimized Indonesian question input, with an injected deterministic
+  no-network adapter over the canonical measurement matrix and a one-request
+  lifecycle gate. It imports no live provider or API route.
+- `screens-bab1.tsx` / `screens-bab2.tsx` — the 15 bounded intake and question
+  review surfaces.
 - `IntakeFixturePlaceholder.tsx` — purpose-built placeholder rendered inside
   the new shell for unfinished screens. Never the old form.
 - `navigation.test.ts` — unit contract for the graph + progress model.
@@ -68,9 +77,13 @@ const MyScreen: IntakeScreenSlot = ({ screenId, fixture, nav, emit }) => {
 
 Rules for implementers:
 
-- Drive `nav.canContinue` on blocking screens (`s-brand`, `s-brand-fix`,
-  `s-scope`, `s-branch`, `s-product`, `s-category`); non-blocking screens
-  never block.
+- Every active answer screen is recorded only after explicit `Lanjut`; prepared
+  fixture selections are never sufficient for Review approval. Blocking screens
+  also publish validity through `nav.onValidityChange`: brand/fix, scope/entity,
+  category, offerings (except the inactive product branch), service, market,
+  competitors, Review, and Questions. Customers and extra facts may be empty,
+  but their empty value must still be explicitly confirmed; sensitive text
+  blocks the frozen question handoff.
 - Report corrections via `emit({ event: "intake_answer_corrected", ... })`
   with counts only — never what changed.
 - Copy strings come ONLY from the contract deck (`§6`); no new wording.
@@ -107,10 +120,17 @@ with no bar. Single 560px centered column; tokens via CSS variables.
   auto-advances after its wait.
 
 Transition slots: s-review Continue emits `intake_continued` +
-`intake_completed` and calls `onReviewConfirm` (default: advance to
-`s-questions`); s-questions Continue calls `onQuestionsConfirm` (default:
-terminal `done` state). Every transition scrolls to top and moves focus to
-the shell frame.
+`intake_completed`. An explicit `onReviewConfirm` still overrides the default.
+When `questionPreviewAdapter` is injected, the shell freezes the exact validated
+Review plus supported minimized fields, advances through pending → ready/failure,
+blocks duplicate requests, reuses an unchanged ready pack, and discards it after
+any material Review edit. Scope corrections visit only their unconfirmed target
+and dependents before returning to Review. Without either callback the shell
+advances to the fixture question screen. The preview route injects the
+deterministic offline adapter. s-questions Continue calls `onQuestionsConfirm`
+(default: terminal `done` state) and stays natively disabled until an injected
+pack—and every customer wording edit—passes the canonical and privacy validators.
+Every transition scrolls to top and moves focus to the shell frame.
 
 ## Progress model (ledger §1, deck §6.1)
 

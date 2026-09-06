@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IntakeFixturePlaceholder from "./IntakeFixturePlaceholder";
 import {
+  canContinueOnScreen,
   chapterFills,
   continueLabelFor,
   isBareScreen,
   isBlockingScreen,
   normalizeStubAnswers,
   resolveJourneyPath,
+  screenIndexForScope,
   useIntakeFunnel,
   type IntakeAnswerUpdater,
   type IntakeEntryMode,
@@ -19,12 +21,23 @@ import {
   type IntakeScreenSlotProps,
 } from "./navigation";
 import IntakeChapterProgress from "./progress";
+import {
+  canReuseQuestionPreview,
+  classifyQuestionPreviewCompletion,
+  createQuestionPreviewRequestGate,
+  freezeQuestionPreviewInput,
+  questionPreviewAfterMaterialSave,
+  type QuestionPreviewAdapter,
+  type QuestionPreviewState,
+} from "./question-preview";
 import { isIntakeScreenId, type IntakeScreenId } from "./screens";
 import {
   applyScopeChange,
   commitBrandFix,
+  confirmIntakeScreen,
   createIntakeState,
   isMaterialChange,
+  nextUnconfirmedScreen,
   scopeOptionIdOfKind,
   withBumpedFactVersion,
   type IntakeState,
@@ -47,6 +60,8 @@ type IntakeJourneyProps = {
    * audit"). Defaults to advancing to s-questions.
    */
   onReviewConfirm?: () => void;
+  /** Injected offline adapter for the Phase 6A Review → question preview. */
+  questionPreviewAdapter?: QuestionPreviewAdapter;
   /**
    * Question-review transition slot: s-questions Continue ("Mulai audit").
    * Defaults to the terminal "Audit dimulai" state.
@@ -91,6 +106,7 @@ export default function IntakeJourney({
   stubScope,
   stubBrandNeedsFix,
   onReviewConfirm,
+  questionPreviewAdapter,
   onQuestionsConfirm,
   funnelSink,
   fixtureOverride,
@@ -153,6 +169,10 @@ export default function IntakeJourney({
     snapshot: IntakeState;
     entry: IntakeScreenId;
   } | null>(null);
+  const [questionPreview, setQuestionPreview] = useState<QuestionPreviewState>({
+    status: "idle",
+  });
+  const requestGate = useMemo(() => createQuestionPreviewRequestGate(), []);
   const path = useMemo<IntakeScreenId[]>(
     () =>
       screens && screens.length > 0
@@ -186,7 +206,13 @@ export default function IntakeJourney({
   const canGoBack = !terminal && safeIndex > 0;
   const fills = chapterFills(path, current);
   const blocking = !terminal && isBlockingScreen(current);
-  const canContinue = blocking ? validity[current] === true : true;
+  const canContinue = canContinueOnScreen(
+    current,
+    blocking,
+    validity[current] === true,
+    questionPreviewAdapter ? questionPreview : undefined,
+  );
+  const continueLabel = continueLabelFor(terminal ? "s-questions" : current);
 
   const handleValidityChange = useCallback(
     (valid: boolean) => {
@@ -224,6 +250,13 @@ export default function IntakeJourney({
     [path],
   );
 
+  const invalidateQuestionPreview = useCallback(() => {
+    requestGate.invalidate();
+    setQuestionPreview((current) =>
+      questionPreviewAfterMaterialSave(current, true),
+    );
+  }, [requestGate]);
+
   const goNext = useCallback(() => {
     if (terminal || path.length === 0) return;
     if (!canContinue) {
@@ -235,26 +268,25 @@ export default function IntakeJourney({
     }
     setInvalidAttempts(0);
     const at = path[safeIndex];
-    /* Review-edit save (journey §8.1.6 + §8.3): Lanjut on the owner commits.
-     * Processing/correction screens advance without closing the session. */
+    const confirmed = confirmIntakeScreen(committed, at);
+    /* Review-edit save (journey §8.1.6 + §8.3): Lanjut confirms the
+     * visible owner, visits only invalidated dependents, then commits once. */
     if (editSession && at !== "s-crawl" && at !== "s-brand-fix") {
-      const material = isMaterialChange(editSession.snapshot, committed);
-      if (at === "s-scope" && committed.scope !== editSession.snapshot.scope) {
-        /* Scope change: visit only the new target + invalid dependents,
-         * then the normal forward walk returns to review (journey §8.3). */
-        setCommitted((prev) => (material ? withBumpedFactVersion(prev) : prev));
-        setEditSession(null);
+      const nextInvalid = nextUnconfirmedScreen(confirmed, path, at);
+      if (nextInvalid) {
+        setCommitted(confirmed);
         emit({ event: "intake_continued", screenId: at });
-        jumpTo(
-          committed.scope === "cabang"
-            ? "s-branch"
-            : committed.scope === "produk"
-              ? "s-product"
-              : "s-category",
-        );
+        jumpTo(nextInvalid);
         return;
       }
-      setCommitted((prev) => (material ? withBumpedFactVersion(prev) : prev));
+
+      const material = isMaterialChange(
+        editSession.snapshot,
+        confirmed,
+        fixture,
+      );
+      if (material) invalidateQuestionPreview();
+      setCommitted(material ? withBumpedFactVersion(confirmed) : confirmed);
       setEditSession(null);
       emit({ event: "intake_continued", screenId: at });
       jumpTo("s-review");
@@ -272,6 +304,60 @@ export default function IntakeJourney({
         onReviewConfirm();
         return;
       }
+      if (questionPreviewAdapter) {
+        if (canReuseQuestionPreview(questionPreview, committed.factVersion)) {
+          setIndex(Math.min(safeIndex + 1, path.length - 1));
+          return;
+        }
+        const requestId = requestGate.begin();
+        if (requestId === null) return;
+        try {
+          const input = freezeQuestionPreviewInput(committed, fixture, path);
+          setQuestionPreview({
+            status: "pending",
+            factVersion: input.factVersion,
+          });
+          setIndex(Math.min(safeIndex + 1, path.length - 1));
+          void questionPreviewAdapter(input)
+            .then((pack) => {
+              const completion = classifyQuestionPreviewCompletion(
+                requestGate.activeRequestId(),
+                requestId,
+                input.factVersion,
+                pack.factVersion,
+              );
+              if (completion !== "stale") requestGate.finish(requestId);
+              if (completion === "accept") {
+                setQuestionPreview({ status: "ready", pack });
+              } else if (completion === "invalid") {
+                setQuestionPreview({
+                  status: "failed",
+                  factVersion: input.factVersion,
+                  message: "question_preview_version_mismatch",
+                });
+              }
+            })
+            .catch(() => {
+              if (requestGate.activeRequestId() === requestId) {
+                requestGate.finish(requestId);
+                setQuestionPreview({
+                  status: "failed",
+                  factVersion: input.factVersion,
+                  message: "question_preview_failed",
+                });
+              }
+            });
+        } catch {
+          requestGate.finish(requestId);
+          setQuestionPreview({
+            status: "failed",
+            factVersion: committed.factVersion,
+            message: "question_preview_input_invalid",
+          });
+          setIndex(Math.min(safeIndex + 1, path.length - 1));
+        }
+        return;
+      }
       setIndex(Math.min(safeIndex + 1, path.length - 1));
       return;
     }
@@ -284,6 +370,7 @@ export default function IntakeJourney({
       setTerminal(true);
       return;
     }
+    if (confirmed !== committed) setCommitted(confirmed);
     emit({ event: "intake_continued", screenId: at });
     setIndex(Math.min(safeIndex + 1, path.length - 1));
   }, [
@@ -295,33 +382,55 @@ export default function IntakeJourney({
     committed,
     editSession,
     emit,
+    fixture,
+    invalidateQuestionPreview,
     jumpTo,
     onReviewConfirm,
     onQuestionsConfirm,
+    questionPreview,
+    questionPreviewAdapter,
+    requestGate,
   ]);
 
   const goBack = useCallback(() => {
     if (terminal) return;
-    /* Review-edit cancel (journey §8.1.6): Back from the entry screen
-     * restores the snapshot — the review returns unchanged. Deeper nested
-     * correction screens step back normally; a session that cannot step
-     * back also cancels instead of stranding the owner. */
-    if (editSession && (current === editSession.entry || safeIndex <= 0)) {
+    /* Review-edit cancel (journey §8.1.6): Back anywhere inside the
+     * transaction restores the snapshot and returns directly to Review. */
+    if (editSession) {
+      const reviewIndex = screenIndexForScope(
+        "s-review",
+        answers,
+        editSession.snapshot.scope,
+        screens,
+      );
       setCommitted(editSession.snapshot);
       setEditSession(null);
       setInvalidAttempts(0);
       emit({ event: "intake_resumed", screenId: "s-review" });
-      jumpTo("s-review");
+      if (reviewIndex !== -1) setIndex(reviewIndex);
       return;
     }
     if (safeIndex <= 0) return;
     setInvalidAttempts(0);
     const dest = path[safeIndex - 1];
+    if (current === "s-review" && editSession === null && dest !== undefined) {
+      setEditSession({ snapshot: committed, entry: dest });
+    }
     setIndex(safeIndex - 1);
     /* Back restores committed answers (shell-owned state survives the
      * remount); the resume event carries counts only, never answers. */
     if (dest !== undefined) emit({ event: "intake_resumed", screenId: dest });
-  }, [terminal, safeIndex, path, current, editSession, emit, jumpTo]);
+  }, [
+    terminal,
+    safeIndex,
+    path,
+    current,
+    editSession,
+    emit,
+    committed,
+    answers,
+    screens,
+  ]);
 
   /* Readback correction jumps (journey §8.3). Leaving s-review for a row
    * owner opens the transactional edit session; no-op off-path. */
@@ -362,7 +471,7 @@ export default function IntakeJourney({
     if (terminal || path.length === 0 || current !== "s-crawl") return;
     const timer = setTimeout(goNext, CRAWL_ADVANCE_MS);
     return () => clearTimeout(timer);
-  }, [terminal, current, goNext]);
+  }, [terminal, current, goNext, path.length]);
 
   /* Focus + scroll restoration on every transition. */
   useEffect(() => {
@@ -386,7 +495,7 @@ export default function IntakeJourney({
      * screens stay disabled until they publish validity. */
     canContinue,
     canGoBack,
-    continueLabel: continueLabelFor(terminal ? "s-questions" : current),
+    continueLabel,
     onValidityChange: handleValidityChange,
     onScopeChoice: handleScopeChoice,
   };
@@ -462,6 +571,9 @@ export default function IntakeJourney({
             invalidAttempts={invalidAttempts}
             answers={committed}
             updateAnswer={updateAnswer}
+            questionPreview={
+              questionPreviewAdapter ? questionPreview : undefined
+            }
           />
         </>
       )}
@@ -514,8 +626,13 @@ export default function IntakeJourney({
             <button
               type="button"
               onClick={goNext}
-              aria-disabled={!nav.canContinue}
-              data-continue-disabled={!nav.canContinue ? "true" : undefined}
+              /* Never natively disabled: a blocked Lanjut must stay
+               * clickable so the attempt counter fires and the screen can
+               * show its inline error (founder review 2026-09-06). The
+               * aria-disabled + dimmed treatment keeps the blocked meaning
+               * for sighted users and assistive tech. */
+              aria-disabled={!canContinue}
+              data-continue-disabled={!canContinue ? "true" : undefined}
               style={{
                 minHeight: "44px",
                 padding: "10px 24px",
@@ -523,13 +640,13 @@ export default function IntakeJourney({
                 fontWeight: 600,
                 borderRadius: "999px",
                 border: "1px solid var(--action, #18181b)",
-                cursor: nav.canContinue ? "pointer" : "not-allowed",
+                cursor: canContinue ? "pointer" : "not-allowed",
                 background: "var(--action, #18181b)",
                 color: "var(--action-foreground, #ffffff)",
-                opacity: nav.canContinue ? 1 : 0.5,
+                opacity: canContinue ? 1 : 0.5,
               }}
             >
-              {nav.continueLabel}
+              {continueLabel}
             </button>
           </div>
         </div>

@@ -27,12 +27,13 @@
  *   fixture fallbacks or inactive branch data).
  * - Fact-version state: `factVersion` starts at 1 and bumps on each saved
  *   review-edit that materially changes normalized output (data contract
- *   §3; experience s-review next/branch). The question-pack invalidation
- *   that consumes the version arrives with generation wiring (Phase 6).
+ *   §3; experience s-review next/branch). `question-preview.ts` consumes it
+ *   to supersede stale generation and invalidate a ready pack.
  *
- * Deliberately NOT here: BusinessBrief mapping (data contract §2, Phase 6
- * handoff), storage persistence (reload-resume is journey §8.1.9 "when
- * supported by the approved rebuild plan"), and question-pack wiring.
+ * Deliberately NOT here: the durable BusinessBrief/workflow handoff, storage
+ * persistence (reload-resume is journey §8.1.9 "when supported by the approved
+ * rebuild plan"), or live-provider question generation. The bounded offline
+ * preview boundary lives in `question-preview.ts`.
  */
 
 import type { FixtureScreenState, PreparedItem } from "./fixtures";
@@ -87,6 +88,8 @@ export type IntakeState = {
   competitors: { keptIds: string[]; custom: string[]; noDirect: boolean };
   /** s-facts: one optional public fact (empty = explicitly skipped). */
   facts: { text: string };
+  /** Screens whose visible answer was explicitly committed with Lanjut. */
+  confirmedScreens: IntakeScreenId[];
   /** Fact version: 1 until a saved review-edit materially changes output. */
   factVersion: number;
 };
@@ -326,6 +329,7 @@ export function createIntakeState(fixture: unknown): IntakeState {
       noDirect: false,
     },
     facts: { text: "" },
+    confirmedScreens: [],
     factVersion: 1,
   };
 }
@@ -371,6 +375,18 @@ export function setScopeAnswer(
   return { ...state, scope, scopeOptionId: optionId, scopeCommitted: true };
 }
 
+/** Commit a scope option and invalidate all scope-conditioned answers once. */
+export function commitScopeOption(
+  state: IntakeState,
+  fixture: unknown,
+  optionId: string,
+): IntakeState {
+  const scope = scopeKindOfOptionId(optionId);
+  if (scope === null) return state;
+  if (state.scope === scope && state.scopeCommitted) return state;
+  return applyScopeChange(state, fixture, scope);
+}
+
 export function setSingleAnswer(
   state: IntakeState,
   screen: "branch" | "product",
@@ -394,11 +410,39 @@ export function addSingleCustom(
   };
 }
 
+const CATEGORY_DEPENDENT_SCREENS: readonly IntakeScreenId[] = [
+  "s-offerings",
+  "s-customers",
+  "s-competitors",
+];
+
+function withoutCategoryDependentConfirmations(
+  state: IntakeState,
+): IntakeScreenId[] {
+  return state.confirmedScreens.filter(
+    (screenId) => !CATEGORY_DEPENDENT_SCREENS.includes(screenId),
+  );
+}
+
 export function setCategoryAnswer(
   state: IntakeState,
   selectedId: string | null,
 ): IntakeState {
-  return { ...state, category: { ...state.category, selectedId } };
+  const customLabel =
+    selectedId?.startsWith("category-custom") === true
+      ? state.category.customLabel
+      : null;
+  if (
+    selectedId === state.category.selectedId &&
+    customLabel === state.category.customLabel
+  ) {
+    return state;
+  }
+  return {
+    ...state,
+    category: { selectedId, customLabel },
+    confirmedScreens: withoutCategoryDependentConfirmations(state),
+  };
 }
 
 /** Typed custom category replaces the previous custom label (one slot). */
@@ -406,11 +450,19 @@ export function setCategoryCustom(
   state: IntakeState,
   label: string,
 ): IntakeState {
+  const normalized = label.trim();
+  if (
+    state.category.selectedId?.startsWith("category-custom") === true &&
+    state.category.customLabel?.trim() === normalized
+  ) {
+    return state;
+  }
   const previous = state.category.customLabel;
   const id = `category-custom-${previous === null ? 1 : 2}`;
   return {
     ...state,
-    category: { selectedId: id, customLabel: label },
+    category: { selectedId: id, customLabel: normalized },
+    confirmedScreens: withoutCategoryDependentConfirmations(state),
   };
 }
 
@@ -499,7 +551,10 @@ export function toggleCompetitor(state: IntakeState, id: string): IntakeState {
   const keptIds = state.competitors.keptIds.includes(id)
     ? state.competitors.keptIds.filter((entry) => entry !== id)
     : [...state.competitors.keptIds, id];
-  return { ...state, competitors: { ...state.competitors, keptIds } };
+  return {
+    ...state,
+    competitors: { ...state.competitors, keptIds, noDirect: false },
+  };
 }
 
 export function addCompetitor(state: IntakeState, name: string): IntakeState {
@@ -509,6 +564,7 @@ export function addCompetitor(state: IntakeState, name: string): IntakeState {
     competitors: {
       ...state.competitors,
       custom: [...state.competitors.custom, name],
+      noDirect: false,
     },
   };
 }
@@ -530,7 +586,12 @@ export function setCompetitorsNoDirect(
   state: IntakeState,
   noDirect: boolean,
 ): IntakeState {
-  return { ...state, competitors: { ...state.competitors, noDirect } };
+  return {
+    ...state,
+    competitors: noDirect
+      ? { keptIds: [], custom: [], noDirect: true }
+      : { ...state.competitors, noDirect: false },
+  };
 }
 
 export function setFactsText(state: IntakeState, text: string): IntakeState {
@@ -585,8 +646,9 @@ export function isScreenAnswerValid(
       return isSingleChoiceValid(state.category.selectedId);
     case "s-offerings":
       /* Journey §2 settles the Gate 0 disagreement: whole/location routes
-       * require ≥1 offering. (The screen is inactive on product scope.) */
-      return state.offerings.onIds.length + state.offerings.custom.length > 0;
+       * require ≥1 selected offering. Custom rows remain available after
+       * deselection, so only the committed on-set counts. */
+      return state.offerings.onIds.length > 0;
     case "s-service":
       return isServiceSelectionValid(state.service.onIds);
     case "s-market":
@@ -594,11 +656,11 @@ export function isScreenAnswerValid(
         state.market.kind,
         state.market.areaIds.length + state.market.customAreas.length,
       );
-    case "s-competitors":
-      return (
-        state.competitors.keptIds.length + state.competitors.custom.length >
-          0 || state.competitors.noDirect
-      );
+    case "s-competitors": {
+      const namedCount =
+        state.competitors.keptIds.length + state.competitors.custom.length;
+      return state.competitors.noDirect ? namedCount === 0 : namedCount > 0;
+    }
     default:
       /* s-crawl, s-customers, s-facts, s-review (separate gate), s-questions:
        * never block on their own answer. */
@@ -606,20 +668,96 @@ export function isScreenAnswerValid(
   }
 }
 
+/** Client-side sensitive-data stop for any intake text sent downstream. */
+export function containsSensitiveData(text: string): boolean {
+  if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(text)) return true;
+  if (/(?:\+?62|0)[\d\s\-().]{8,}/.test(text)) return true;
+  if (/(?:\d[\s-]?){13,19}/.test(text)) return true;
+  if (
+    /(?:access[_ -]?token|refresh[_ -]?token|api[_ -]?key|token|secret|password|passwd)\s*[:=]\s*\S+/i.test(
+      text,
+    )
+  )
+    return true;
+  if (/\b(nik|ktp|no\.?\s*(rekening|ktp)|cvv|cvv2|pin\s*atm)\b/i.test(text))
+    return true;
+  return false;
+}
+
+const CONFIRMATION_SCREEN_IDS: readonly IntakeScreenId[] = [
+  "s-brand",
+  "s-scope",
+  "s-branch",
+  "s-product",
+  "s-category",
+  "s-offerings",
+  "s-customers",
+  "s-service",
+  "s-market",
+  "s-competitors",
+  "s-facts",
+];
+
+export function screenRequiresConfirmation(screenId: IntakeScreenId): boolean {
+  return CONFIRMATION_SCREEN_IDS.includes(screenId);
+}
+
+export function confirmIntakeScreen(
+  state: IntakeState,
+  screenId: IntakeScreenId,
+): IntakeState {
+  if (
+    !screenRequiresConfirmation(screenId) ||
+    state.confirmedScreens.includes(screenId)
+  ) {
+    return state;
+  }
+  return {
+    ...state,
+    scopeCommitted: screenId === "s-scope" ? true : state.scopeCommitted,
+    confirmedScreens: [...state.confirmedScreens, screenId],
+  };
+}
+
+export function nextUnconfirmedScreen(
+  state: IntakeState,
+  activePath: readonly IntakeScreenId[],
+  after: IntakeScreenId,
+): IntakeScreenId | null {
+  const start = activePath.indexOf(after);
+  if (start === -1) return null;
+  return (
+    activePath
+      .slice(start + 1)
+      .find(
+        (screenId) =>
+          screenRequiresConfirmation(screenId) &&
+          !state.confirmedScreens.includes(screenId),
+      ) ?? null
+  );
+}
+
 /**
- * Review approval gate (journey §8.3 + §9.12): every blocking screen on the
- * active path holds a valid committed answer and no dependent answer awaits
- * reconfirmation. The shell evaluates this for s-review Continue ("Buat
- * pertanyaan audit"); per-screen gates already enforce it forward, so this
- * bites only when a review-edit invalidates dependents.
+ * Review approval gate (journey §8.3 + §9.12): every answer screen on the
+ * active path was explicitly committed, every blocking answer is valid, and
+ * no dependent answer awaits reconfirmation. Unsafe optional free text also
+ * blocks the handoff so it can never enter question generation.
  */
 export function isReviewApprovable(
   state: IntakeState,
   activePath: readonly IntakeScreenId[],
 ): boolean {
-  return activePath.every(
-    (screenId) =>
-      !isBlockingScreen(screenId) || isScreenAnswerValid(screenId, state),
+  return (
+    !containsSensitiveData(state.facts.text) &&
+    activePath.every(
+      (screenId) =>
+        !screenRequiresConfirmation(screenId) ||
+        state.confirmedScreens.includes(screenId),
+    ) &&
+    activePath.every(
+      (screenId) =>
+        !isBlockingScreen(screenId) || isScreenAnswerValid(screenId, state),
+    )
   );
 }
 
@@ -651,15 +789,27 @@ function multiLabels(
   screenId: IntakeScreenId,
   answer: MultiSelectAnswer,
 ): string[] {
-  const customById = new Map(
-    answer.custom.map((item) => [item.id, item.label]),
-  );
-  const labels: string[] = [];
-  for (const id of answer.onIds) {
-    const label = customById.get(id) ?? labelFor(index, screenId, id);
-    if (label !== undefined) labels.push(label);
-  }
-  return labels;
+  const selected = new Set(answer.onIds);
+  return [...(index.get(screenId) ?? []), ...answer.custom]
+    .filter((item) => selected.has(item.id))
+    .map((item) => item.label);
+}
+
+export function deriveCompetitorNames(
+  state: IntakeState,
+  fixture: unknown,
+): string[] {
+  if (state.competitors.noDirect) return [];
+  const index = buildPreparedLabelIndex(fixture);
+  const selected = new Set(state.competitors.keptIds);
+  const prepared = (index.get("s-competitors") ?? [])
+    .filter((item) => selected.has(item.id))
+    .map((item) => item.label.split(/\s+—\s+/, 1)[0].trim());
+  const custom = state.competitors.custom
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right));
+  return [...new Set([...prepared, ...custom])];
 }
 
 /**
@@ -685,7 +835,12 @@ export function deriveReviewRowsFromState(
 
   const branchLabel = singleLabel(index, "s-branch", state.branch);
   const productLabel = singleLabel(index, "s-product", state.product);
-  const targetLabel = branchLabel ?? productLabel;
+  const targetLabel =
+    state.scope === "cabang"
+      ? branchLabel
+      : state.scope === "produk"
+        ? productLabel
+        : undefined;
   const targetValue = targetLabel !== undefined ? targetLabel : "Belum dipilih";
 
   const categoryLabel =
@@ -698,6 +853,14 @@ export function deriveReviewRowsFromState(
       : undefined;
 
   const offeringLabels = multiLabels(index, "s-offerings", state.offerings);
+  const reviewOfferingLabels =
+    state.scope === "produk"
+      ? productLabel === undefined
+        ? []
+        : [productLabel]
+      : offeringLabels;
+  const reviewOfferingTarget: IntakeScreenId =
+    state.scope === "produk" ? "s-product" : "s-offerings";
   const customerLabels = multiLabels(index, "s-customers", state.customers);
   const serviceLabels = multiLabels(index, "s-service", {
     onIds: state.service.onIds,
@@ -712,8 +875,10 @@ export function deriveReviewRowsFromState(
   } else if (state.market.kind === "seluruh") {
     marketValue = "Seluruh Indonesia";
   } else {
-    const areaLabels = state.market.areaIds
-      .map((id) => labelFor(index, "s-market", id) ?? id)
+    const selectedAreas = new Set(state.market.areaIds);
+    const areaLabels = (index.get("s-market") ?? [])
+      .filter((item) => selectedAreas.has(item.id))
+      .map((item) => item.label)
       .filter(
         (label) =>
           label !== "Sekitar satu area" &&
@@ -721,16 +886,15 @@ export function deriveReviewRowsFromState(
           label !== "Seluruh Indonesia" &&
           label !== "Indonesia dan luar negeri",
       );
-    const all = [...areaLabels, ...state.market.customAreas];
+    const customAreas = state.market.customAreas
+      .map((area) => area.trim())
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right));
+    const all = [...areaLabels, ...customAreas];
     marketValue = all.length > 0 ? all.join(", ") : "Belum dipilih";
   }
 
-  const competitorNames = [
-    ...state.competitors.keptIds
-      .map((id) => labelFor(index, "s-competitors", id))
-      .filter((label): label is string => typeof label === "string"),
-    ...state.competitors.custom,
-  ];
+  const competitorNames = deriveCompetitorNames(state, fixture);
   const competitorValue =
     competitorNames.length > 0
       ? competitorNames.join(", ")
@@ -763,7 +927,7 @@ export function deriveReviewRowsFromState(
       key: "target",
       label: "Target audit",
       value: targetValue,
-      target: branchLabel !== undefined ? "s-branch" : "s-product",
+      target: state.scope === "cabang" ? "s-branch" : "s-product",
     });
   }
   rows.push(
@@ -777,10 +941,10 @@ export function deriveReviewRowsFromState(
       key: "offerings",
       label: "Produk dan layanan",
       value:
-        offeringLabels.length > 0
-          ? offeringLabels.join(", ")
+        reviewOfferingLabels.length > 0
+          ? reviewOfferingLabels.join(", ")
           : "Belum dikonfirmasi",
-      target: "s-offerings",
+      target: reviewOfferingTarget,
     },
     {
       key: "customers",
@@ -837,41 +1001,81 @@ export function deriveReviewRowsFromState(
  * string is non-material (UI-only, staged drafts, empty↔empty edits); the
  * fact version survives all of those untouched.
  */
-export function summarizeCommittedAnswers(state: IntakeState): string {
-  const sorted = (ids: readonly string[]) => [...ids].sort();
+export function summarizeCommittedAnswers(
+  state: IntakeState,
+  fixture?: unknown,
+): string {
+  const index = buildPreparedLabelIndex(fixture);
+  const semanticSingle = (
+    screenId: "s-branch" | "s-product",
+    answer: SingleSelectAnswer,
+  ) => singleLabel(index, screenId, answer) ?? answer.selectedId;
+  const semanticMulti = (
+    screenId: IntakeScreenId,
+    answer: MultiSelectAnswer,
+  ) => {
+    const custom = new Map(answer.custom.map((item) => [item.id, item.label]));
+    return [
+      ...new Set(
+        answer.onIds
+          .map(
+            (id) =>
+              custom.get(id)?.trim() ?? labelFor(index, screenId, id) ?? id,
+          )
+          .filter(Boolean),
+      ),
+    ].sort();
+  };
+  const branch = semanticSingle("s-branch", state.branch);
+  const product = semanticSingle("s-product", state.product);
+  const target =
+    state.scope === "cabang"
+      ? branch
+      : state.scope === "produk"
+        ? product
+        : null;
+  const category =
+    state.category.selectedId?.startsWith("category-custom") === true &&
+    state.category.customLabel !== null
+      ? state.category.customLabel.trim()
+      : state.category.selectedId
+        ? (labelFor(index, "s-category", state.category.selectedId) ??
+          state.category.selectedId)
+        : null;
+  const competitorNames = deriveCompetitorNames(state, fixture);
+
   return JSON.stringify({
     scope: state.scope,
-    scopeOptionId: state.scopeOptionId,
-    brandCorrected: state.brandCorrected,
-    branch: {
-      selectedId: state.branch.selectedId,
-      custom: state.branch.custom.map((item) => item.label),
-    },
-    product: {
-      selectedId: state.product.selectedId,
-      custom: state.product.custom.map((item) => item.label),
-    },
-    category: state.category,
-    offerings: {
-      onIds: sorted(state.offerings.onIds),
-      custom: state.offerings.custom.map((item) => item.label).sort(),
-    },
-    customers: {
-      onIds: sorted(state.customers.onIds),
-      custom: state.customers.custom.map((item) => item.label).sort(),
-    },
-    service: { onIds: sorted(state.service.onIds) },
+    brandCorrected: state.brandCorrected
+      ? {
+          name: state.brandCorrected.name.trim(),
+          source: state.brandCorrected.source.trim(),
+        }
+      : null,
+    target,
+    category,
+    offerings:
+      state.scope === "produk" && product
+        ? [product]
+        : semanticMulti("s-offerings", state.offerings),
+    customers: semanticMulti("s-customers", state.customers),
+    service: state.service.onIds
+      .map((id) => labelFor(index, "s-service", id) ?? id)
+      .sort(),
     market: {
       kind: state.market.kind,
-      areaIds: sorted(state.market.areaIds),
-      customAreas: [...state.market.customAreas].sort(),
+      areas: [
+        ...state.market.areaIds.map(
+          (id) => labelFor(index, "s-market", id) ?? id,
+        ),
+        ...state.market.customAreas.map((area) => area.trim()),
+      ].sort(),
     },
     competitors: {
-      keptIds: sorted(state.competitors.keptIds),
-      custom: [...state.competitors.custom].sort(),
+      names: [...new Set(competitorNames.filter(Boolean))].sort(),
       noDirect: state.competitors.noDirect,
     },
-    facts: state.facts.text.trim() === "" ? "" : state.facts.text.trim(),
+    facts: state.facts.text.trim(),
   });
 }
 
@@ -879,8 +1083,12 @@ export function summarizeCommittedAnswers(state: IntakeState): string {
 export function isMaterialChange(
   prev: IntakeState,
   next: IntakeState,
+  fixture?: unknown,
 ): boolean {
-  return summarizeCommittedAnswers(prev) !== summarizeCommittedAnswers(next);
+  return (
+    summarizeCommittedAnswers(prev, fixture) !==
+    summarizeCommittedAnswers(next, fixture)
+  );
 }
 
 export function withBumpedFactVersion(state: IntakeState): IntakeState {
@@ -892,9 +1100,9 @@ export function withBumpedFactVersion(state: IntakeState): IntakeState {
 /**
  * Apply a new scope kind: the old location/product target leaves the active
  * draft, product scope deactivates general offerings, and target-conditioned
- * answers (branch/product, offerings, market, competitors) reseed from
- * prepared values for re-confirmation. Category, customers, service, and
- * facts survive — they stay semantically valid across a scope change.
+ * answers (branch/product, offerings, competitors) reseed from prepared values
+ * for re-confirmation. Category, customers, service, market, and facts survive
+ * when they remain semantically valid across a scope change.
  */
 export function applyScopeChange(
   state: IntakeState,
@@ -910,8 +1118,18 @@ export function applyScopeChange(
     branch: seeds.branch,
     product: seeds.product,
     offerings: scope === "produk" ? { onIds: [], custom: [] } : seeds.offerings,
-    market: seeds.market,
+    market: state.market,
     competitors: seeds.competitors,
+    confirmedScreens: state.confirmedScreens.filter(
+      (screenId) =>
+        ![
+          "s-scope",
+          "s-branch",
+          "s-product",
+          "s-offerings",
+          "s-competitors",
+        ].includes(screenId),
+    ),
   };
 }
 

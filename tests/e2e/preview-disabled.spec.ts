@@ -12,6 +12,23 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("preview disabled", () => {
+  test("the new intake route cannot be enabled by query input", async ({
+    page,
+  }) => {
+    const requests = collectRequests(page);
+    await page.goto(
+      "/audit/new-intake?fixture=F1&NUAVE_NEW_INTAKE_PREVIEW_ENABLED=true",
+    );
+
+    await expect(
+      page.getByRole("heading", {
+        name: "Pratinjau intake baru tidak tersedia saat ini.",
+      }),
+    ).toBeVisible();
+    await expect(page.locator("[data-new-intake-shell]")).toHaveCount(0);
+    await assertNoSideEffects(page, requests);
+  });
+
   test("the fixture route is unavailable even with the furthest v3 fixture state seeded (AC-02)", async ({
     page,
   }) => {

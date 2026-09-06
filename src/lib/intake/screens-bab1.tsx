@@ -16,13 +16,13 @@ import type { IntakeScreenId } from "./screens";
 import {
   addMultiCustom,
   addSingleCustom,
+  commitScopeOption,
   isScreenAnswerValid,
   resetBrandFixDraft,
   scopeKindOfOptionId,
   setBrandFixDraft,
   setCategoryAnswer,
   setCategoryCustom,
-  setScopeAnswer,
   setSingleAnswer,
   toggleMultiAnswer,
   toggleServiceChannel,
@@ -1080,6 +1080,7 @@ function ScopeScreen({
   fixture,
   nav,
   emit,
+  invalidAttempts,
   answers: answersProp,
   updateAnswer: updateAnswerProp,
 }: BabScreenProps) {
@@ -1111,7 +1112,8 @@ function ScopeScreen({
   const selectedId = answers.scopeOptionId;
   const initialRef = useRef(selectedId);
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isScreenAnswerValid("s-scope", answers), nav);
+  const valid = isScreenAnswerValid("s-scope", answers);
+  useBabValidity(valid, nav);
   const headingId = useId();
 
   /* scope-option id → journey scope answer (handoff locked routes). */
@@ -1123,6 +1125,20 @@ function ScopeScreen({
       <h1 id={headingId} data-bab1-h1="" style={h1Style}>
         Apa fokus audit ini?
       </h1>
+      {(invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          Pilih satu fokus audit untuk melanjutkan.
+        </p>
+      ) : null}
       <div
         role="radiogroup"
         aria-label="Pilihan cakupan audit"
@@ -1138,7 +1154,9 @@ function ScopeScreen({
               role="radio"
               aria-checked={checked}
               onClick={() => {
-                updateAnswer((prev) => setScopeAnswer(prev, item.id));
+                updateAnswer((prev) =>
+                  commitScopeOption(prev, fixture, item.id),
+                );
                 if (initialRef.current !== item.id) reportCorrection();
                 /* Founder Gate 1 review 2026-09-05: the pick re-resolves the
                  * route (Satu lokasi → s-branch, Satu produk → s-product). */
@@ -1199,6 +1217,7 @@ function EntityScreen({
   fixture,
   nav,
   emit,
+  invalidAttempts,
   heading,
   placeholder,
   hint,
@@ -1223,7 +1242,8 @@ function EntityScreen({
   const selectedId = entity.selectedId;
   const state = readScreenState(fixture, screenId);
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isScreenAnswerValid(screenId, answers), nav);
+  const valid = isScreenAnswerValid(screenId, answers);
+  useBabValidity(valid, nav);
   const addLine = useBabAddLine({
     screenId,
     emit,
@@ -1243,6 +1263,22 @@ function EntityScreen({
       <h1 id={headingId} data-bab1-h1="" style={h1Style}>
         {heading}
       </h1>
+      {(invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          {screenId === "s-product"
+            ? "Pilih satu produk atau tambah produk baru untuk melanjutkan."
+            : "Pilih satu lokasi atau tambah lokasi baru untuk melanjutkan."}
+        </p>
+      ) : null}
       {rows.length > 0 ? (
         <div
           role="radiogroup"
@@ -1326,6 +1362,7 @@ function CategoryScreen({
   nav,
   emit,
   scopeChoice,
+  invalidAttempts,
   answers: answersProp,
   updateAnswer: updateAnswerProp,
 }: BabScreenProps) {
@@ -1338,7 +1375,8 @@ function CategoryScreen({
   const selectedId = answers.category.selectedId;
   const customLabel = answers.category.customLabel;
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isScreenAnswerValid("s-category", answers), nav);
+  const valid = isScreenAnswerValid("s-category", answers);
+  useBabValidity(valid, nav);
   const headingId = useId();
   const inputId = useId();
   const errorId = useId();
@@ -1388,6 +1426,20 @@ function CategoryScreen({
         {heading}
       </h1>
       <p style={leadStyle}>{lead}</p>
+      {(invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          Pilih satu kategori untuk melanjutkan.
+        </p>
+      ) : null}
       {rows.length > 0 ? (
         <div
           role="radiogroup"
@@ -1705,6 +1757,7 @@ function ServiceScreen({
   fixture,
   nav,
   emit,
+  invalidAttempts,
   answers: answersProp,
   updateAnswer: updateAnswerProp,
 }: BabScreenProps) {
@@ -1715,7 +1768,8 @@ function ServiceScreen({
   );
   const onIdsState = answers.service.onIds;
   const reportCorrection = useBabCorrections(screenId, emit);
-  useBabValidity(isScreenAnswerValid("s-service", answers), nav);
+  const valid = isScreenAnswerValid("s-service", answers);
+  useBabValidity(valid, nav);
   const headingId = useId();
 
   return (
@@ -1727,6 +1781,20 @@ function ServiceScreen({
         Pilih semua cara yang berlaku. Ini membantu Nuave memahami di mana
         pengalaman pelanggan terjadi.
       </p>
+      {(invalidAttempts ?? 0) > 0 && !valid ? (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            color: "var(--text-danger, #b91c1c)",
+            fontWeight: 600,
+          }}
+        >
+          Pilih setidaknya satu cara untuk melanjutkan.
+        </p>
+      ) : null}
       <div
         role="group"
         aria-label="Cara pelanggan mendapatkan yang Anda tawarkan"

@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   chapterFills,
   chapterOf,
+  canContinueOnScreen,
   continueLabelFor,
   createFunnelSessionId,
   DEFAULT_STUB_ANSWERS,
@@ -11,6 +13,7 @@ import {
   normalizeStubAnswers,
   prevScreenInPath,
   resolveJourneyPath,
+  screenIndexForScope,
 } from "./navigation";
 
 /**
@@ -103,6 +106,27 @@ describe("resolveJourneyPath", () => {
 });
 
 describe("Back/Continue adjacency", () => {
+  it("resolves a Review return index from the restored scope, not the current path", () => {
+    const base = normalizeStubAnswers({ scope: "brand" });
+    const currentIndex = screenIndexForScope("s-review", base, "brand");
+    const restoredIndex = screenIndexForScope("s-review", base, "cabang");
+    const restoredPath = resolveJourneyPath({ ...base, scope: "cabang" });
+
+    expect(restoredIndex).not.toBe(currentIndex);
+    expect(restoredPath[restoredIndex]).toBe("s-review");
+  });
+
+  it("returns Review from a cancelled scope edit using the restored path", () => {
+    const source = readFileSync(
+      new URL("./IntakeJourney.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toMatch(
+      /screenIndexForScope\(\s*"s-review",\s*answers,\s*editSession\.snapshot\.scope,\s*screens,?\s*\)/,
+    );
+  });
+
   it("backs from s-category into the owning scope screen", () => {
     const product = resolveJourneyPath(
       normalizeStubAnswers({ scope: "produk" }),
@@ -190,6 +214,27 @@ describe("chapter progress model", () => {
 });
 
 describe("shell copy lookups (deck §6)", () => {
+  it("lets pending question state override stale published validity", () => {
+    expect(
+      canContinueOnScreen("s-questions", true, true, {
+        status: "pending",
+        factVersion: 2,
+      }),
+    ).toBe(false);
+    const ready = {
+      status: "ready" as const,
+      pack: {
+        factVersion: 2,
+        brandName: "Kopi Sudut",
+        brief: {} as never,
+        slots: [],
+      },
+    };
+    expect(canContinueOnScreen("s-questions", true, false, ready)).toBe(false);
+    expect(canContinueOnScreen("s-questions", true, true, ready)).toBe(true);
+    expect(canContinueOnScreen("s-market", true, true)).toBe(true);
+  });
+
   it("pins the settled Continue labels", () => {
     expect(continueLabelFor("s-scope")).toBe("Lanjut");
     expect(continueLabelFor("s-review")).toBe("Buat pertanyaan audit");
@@ -214,6 +259,7 @@ describe("shell copy lookups (deck §6)", () => {
       "s-market",
       "s-competitors",
       "s-review",
+      "s-questions",
     ] as const) {
       expect(isBlockingScreen(id)).toBe(true);
     }

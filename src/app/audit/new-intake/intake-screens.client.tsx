@@ -21,6 +21,7 @@ import type {
   IntakeScreenSlot,
   IntakeScreenSlotProps,
 } from "@/lib/intake/navigation";
+import { deterministicQuestionPreviewAdapter } from "@/lib/intake/question-preview";
 import { BAB1_SCREENS } from "@/lib/intake/screens-bab1";
 import { BAB2_SCREENS } from "@/lib/intake/screens-bab2";
 
@@ -59,6 +60,7 @@ export default function IntakePreviewClient({
       stubBrandNeedsFix={stubBrandNeedsFix}
       fixtureOverride={fixture}
       ScreenSlot={CombinedSlot}
+      questionPreviewAdapter={deterministicQuestionPreviewAdapter}
     />
   );
 }

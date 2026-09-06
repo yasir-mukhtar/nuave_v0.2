@@ -246,17 +246,8 @@ function richMarket(cityCount: number): FixtureScreenState {
 
 function richCompetitors(count: number, generic: boolean): FixtureScreenState {
   const names = generic
-    ? [
-        "Kopi Janji Jiwa — chain kopi susu nasional",
-        "Toko Kopi Tuku — kopi susu lokal Jabodetabek",
-        "Kedai kopi sekitar — independen di area yang sama",
-      ]
-    : [
-        "Fore Coffee — chain kopi nasional, 200+ gerai",
-        "Kopi Janji Jiwa — chain kopi susu nasional",
-        "Toko Kopi Tuku — kopi susu lokal Jakarta",
-        "Starbucks — chain internasional, segmen harga berbeda",
-      ];
+    ? ["Kopi Janji Jiwa", "Toko Kopi Tuku", "Kedai kopi sekitar"]
+    : ["Fore Coffee", "Kopi Janji Jiwa", "Toko Kopi Tuku", "Starbucks"];
   const rows = names
     .slice(0, count)
     .map((label, i) =>

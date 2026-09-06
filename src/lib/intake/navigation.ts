@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import type { ComponentType } from "react";
+import type { QuestionPreviewState } from "./question-preview";
 import type { IntakeState } from "./state";
 import { type IntakeScreenId } from "./screens";
 
@@ -98,6 +99,23 @@ export function resolveJourneyPath(
     "s-questions",
   );
   return path;
+}
+
+/**
+ * Resolve a destination by screen identity for a particular scope. This keeps
+ * transactional returns stable when restoring a snapshot changes path length.
+ */
+export function screenIndexForScope(
+  screenId: IntakeScreenId,
+  answers: IntakeStubAnswers,
+  scope: IntakeScopeChoice,
+  pathOverride?: readonly IntakeScreenId[],
+): number {
+  const path =
+    pathOverride && pathOverride.length > 0
+      ? pathOverride
+      : resolveJourneyPath({ ...answers, scope });
+  return path.indexOf(screenId);
 }
 
 /** First index of a screen in a resolved path, or -1 when absent. */
@@ -229,10 +247,24 @@ const BLOCKING_SCREENS: readonly IntakeScreenId[] = [
   "s-market",
   "s-competitors",
   "s-review",
+  "s-questions",
 ];
 
 export function isBlockingScreen(screenId: IntakeScreenId): boolean {
   return BLOCKING_SCREENS.includes(screenId);
+}
+
+export function canContinueOnScreen(
+  screenId: IntakeScreenId,
+  blocking: boolean,
+  publishedValid: boolean,
+  questionPreview?: QuestionPreviewState,
+): boolean {
+  if (!blocking) return true;
+  if (screenId === "s-questions" && questionPreview) {
+    return questionPreview.status === "ready" && publishedValid;
+  }
+  return publishedValid;
 }
 
 /* ── Funnel emission hook (fixtures §2: 7 events, allowlist payload only) ── */
@@ -381,6 +413,8 @@ export type IntakeScreenSlotProps = {
    * alongside `answers`.
    */
   updateAnswer?: IntakeAnswerUpdater;
+  /** Frozen no-network question preview owned by the shell (Phase 6A). */
+  questionPreview?: QuestionPreviewState;
 };
 
 /**

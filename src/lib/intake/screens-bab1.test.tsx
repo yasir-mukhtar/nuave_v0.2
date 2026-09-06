@@ -4,6 +4,7 @@
  * the isolation guard and the Bab 2-3 suite). F1 (rich case) must render
  * rich end-to-end; the shell stub shape must degrade to empty states.
  */
+import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -108,6 +109,17 @@ describe("founder Gate 1 review fixes (2026-09-05): scope copy + checkmarks", ()
     expect(html).toContain("Brand secara keseluruhan");
     expect(html).toContain("Satu lokasi");
     expect(html).toContain("Satu produk atau layanan");
+  });
+
+  it("scope clicks use the atomic invalidating transition", () => {
+    const source = readFileSync(
+      new URL("./screens-bab1.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toMatch(
+      /updateAnswer\(\(prev\)\s*=>\s*commitScopeOption\(prev, fixture, item\.id\),?\s*\)/,
+    );
   });
 });
 
@@ -220,6 +232,56 @@ describe("Bab 0-1 empty states", () => {
     for (const id of Object.keys(BAB1_SCREENS)) {
       const html = renderBab1(id as keyof typeof BAB1_SCREENS, {});
       expect(html.length).toBeGreaterThan(200);
+    }
+  });
+});
+
+describe("founder review 2026-09-06: blocked Lanjut shows inline errors", () => {
+  function renderAttempt(
+    screenId: keyof typeof BAB1_SCREENS,
+    attempts: number,
+  ): string {
+    const Slot = BAB1_SCREENS[screenId];
+    if (!Slot) throw new Error(`missing Bab 0-1 screen ${screenId}`);
+    // Empty fixture seeds every answer unanswered, so blocking screens are
+    // invalid and the attempt counter drives their inline error.
+    return renderToStaticMarkup(
+      createElement(Slot, {
+        screenId,
+        fixture: {},
+        nav: stubNav,
+        emit: noopEmit,
+        invalidAttempts: attempts,
+      }),
+    );
+  }
+
+  it.each([
+    ["s-scope", "Pilih satu fokus audit untuk melanjutkan."],
+    [
+      "s-branch",
+      "Pilih satu lokasi atau tambah lokasi baru untuk melanjutkan.",
+    ],
+    [
+      "s-product",
+      "Pilih satu produk atau tambah produk baru untuk melanjutkan.",
+    ],
+    ["s-category", "Pilih satu kategori untuk melanjutkan."],
+    ["s-service", "Pilih setidaknya satu cara untuk melanjutkan."],
+  ] as const)(" %s shows its error after a blocked attempt", (id, text) => {
+    expect(renderAttempt(id, 1)).toContain(text);
+  });
+
+  it("never nags before the first blocked attempt", () => {
+    for (const id of [
+      "s-scope",
+      "s-branch",
+      "s-product",
+      "s-category",
+      "s-service",
+    ] as const) {
+      const html = renderAttempt(id, 0);
+      expect(html).not.toContain('role="alert"');
     }
   });
 });

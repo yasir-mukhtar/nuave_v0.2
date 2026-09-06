@@ -12,7 +12,15 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import IntakeJourney from "./IntakeJourney";
 import { INTAKE_FIXTURES } from "./fixtures";
-import { continueLabelFor, type IntakeScreenSlotProps } from "./navigation";
+import {
+  continueLabelFor,
+  resolveJourneyPath,
+  type IntakeScreenSlotProps,
+} from "./navigation";
+import {
+  deterministicQuestionPreviewAdapter,
+  freezeQuestionPreviewInput,
+} from "./question-preview";
 import {
   BAB2_SCREENS,
   BRANDED_INTENTS,
@@ -29,6 +37,7 @@ import {
   UNBRANDED_INTENTS,
 } from "./screens-bab2";
 import { INTAKE_SCREEN_ORDER } from "./screens";
+import { confirmIntakeScreen, createIntakeState } from "./state";
 
 const F1 = INTAKE_FIXTURES["F1"];
 const F2 = INTAKE_FIXTURES["F2"];
@@ -302,8 +311,53 @@ describe("s-review readback (F1 rich)", () => {
   });
 });
 
-describe("s-questions review (no generation connected)", () => {
+describe("s-questions review (fixture fallback + injected preview)", () => {
   const html = renderBab2("s-questions");
+
+  it("renders a pending state instead of stale fixture questions", () => {
+    const Slot = BAB2_SCREENS["s-questions"];
+    if (!Slot) throw new Error("missing s-questions slot");
+    const props = {
+      screenId: "s-questions" as const,
+      fixture: F1,
+      nav: stubNav,
+      emit: noopEmit,
+      questionPreview: { status: "pending" as const, factVersion: 1 },
+    };
+
+    const pending = renderToStaticMarkup(createElement(Slot, props));
+
+    expect(pending).toContain("Menyiapkan pertanyaan audit");
+    expect(pending).toContain('role="status"');
+    expect(pending).not.toContain("Ubah pertanyaan 1");
+  });
+
+  it("renders the generated canonical pack instead of fixture placeholders", async () => {
+    const Slot = BAB2_SCREENS["s-questions"];
+    if (!Slot) throw new Error("missing s-questions slot");
+    const path = resolveJourneyPath({
+      entry: "read",
+      scope: "brand",
+      brandNeedsFix: false,
+    });
+    const state = path.reduce(confirmIntakeScreen, createIntakeState(F1));
+    const input = freezeQuestionPreviewInput(state, F1, path);
+    const pack = await deterministicQuestionPreviewAdapter(input);
+    const props = {
+      screenId: "s-questions" as const,
+      fixture: F1,
+      nav: stubNav,
+      emit: noopEmit,
+      questionPreview: { status: "ready" as const, pack },
+    };
+
+    const ready = renderToStaticMarkup(createElement(Slot, props));
+
+    expect(ready).toContain(pack.slots[0].intent);
+    expect(ready).toContain(pack.slots[0].text);
+    expect(ready).toContain(pack.slots[9].text);
+    expect(ready).not.toContain("Pertanyaan 1 (Rekomendasi kategori)");
+  });
 
   it("renders the deck heading, lead, and exact 6+4 group labels", () => {
     expect(html).toContain("Periksa pertanyaan audit");
@@ -327,6 +381,14 @@ describe("s-questions review (no generation connected)", () => {
   it("offers per-question Ubah with Simpan pairing in the deck wording", () => {
     expect(html).toContain("Ubah pertanyaan 1");
     expect(html).toContain("Ubah pertanyaan 10");
+  });
+
+  it("separates the branded group from the unbranded list with a rule", () => {
+    const brandedAt = html.indexOf("Menyebut bisnis Anda");
+    expect(brandedAt).toBeGreaterThan(0);
+    const ruleAt = html.indexOf("<hr");
+    expect(ruleAt).toBeGreaterThan(0);
+    expect(ruleAt).toBeLessThan(brandedAt);
   });
 
   it("source never mentions prompt generation or live calls", () => {
@@ -369,11 +431,17 @@ describe("pure helpers", () => {
     expect(isUnbrandedViolation("anything", [])).toBe(false);
   });
 
-  it("flags sensitive facts text without blocking", () => {
+  it("flags sensitive facts text for the Review-level stop", () => {
     expect(containsSensitiveData("hubungi saya di owner@example.com")).toBe(
       true,
     );
     expect(containsSensitiveData("telp 0812-3456-7890")).toBe(true);
+    expect(containsSensitiveData("Nomor kartu 4111-1111-1111-1111")).toBe(true);
+    expect(
+      containsSensitiveData(
+        "https://example.com/callback?access_token=private-value",
+      ),
+    ).toBe(true);
     expect(containsSensitiveData("kopi kami disangrai medium")).toBe(false);
   });
 
@@ -446,6 +514,7 @@ describe("shell pairing (transitions + terminal)", () => {
       }),
     );
     expect(questions).toContain("Mulai audit");
+    expect(questions).toContain("Pertanyaan 1 (Rekomendasi kategori)");
   });
 });
 
@@ -564,5 +633,33 @@ describe("founder Gate 1 review fixes (2026-09-05): blocking gates", () => {
     expect(isMarketAnswerValid("beberapa", 2)).toBe(true);
     expect(isMarketAnswerValid("seluruh", 0)).toBe(true);
     expect(isMarketAnswerValid("luar", 0)).toBe(true);
+  });
+
+  it("competitors: rich lead names the choice without the comparison note", () => {
+    const html = renderBab2("s-competitors");
+    expect(html).toContain(
+      "Pilih bisnis yang dipertimbangkan pelanggan untuk kebutuhan yang sama.",
+    );
+    expect(html).not.toContain("menguji perbandingan");
+  });
+
+  it("competitors: fixture labels are names only, never descriptions", () => {
+    for (const id of ["F1", "F2"] as const) {
+      const prepared = INTAKE_FIXTURES[id].screens["s-competitors"].prepared;
+      expect(prepared.length).toBeGreaterThan(0);
+      for (const row of prepared) {
+        expect(row.label).not.toContain("—");
+      }
+    }
+    expect(
+      INTAKE_FIXTURES["F1"].screens["s-competitors"].prepared.map(
+        (row) => row.label,
+      ),
+    ).toEqual([
+      "Fore Coffee",
+      "Kopi Janji Jiwa",
+      "Toko Kopi Tuku",
+      "Starbucks",
+    ]);
   });
 });

@@ -36,10 +36,15 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import {
+  indonesianPackBlockers,
+  validateCanonicalIndonesianQuestionPack,
+} from "../audit/questions-id";
 import type { FixtureScreenState } from "./fixtures";
 import {
   addCompetitor,
   addMarketArea,
+  containsSensitiveData,
   deriveReviewRowsFromState,
   isReviewApprovable,
   isScreenAnswerValid,
@@ -53,7 +58,7 @@ import {
   useIntakeAnswers,
 } from "./state";
 import type { MarketKind, ReviewRow } from "./state";
-export { isMarketAnswerValid } from "./state";
+export { containsSensitiveData, isMarketAnswerValid } from "./state";
 export type { ReviewRow } from "./state";
 import type {
   IntakeFunnelEmit,
@@ -133,17 +138,6 @@ export function isUnbrandedViolation(
     .map((identity) => identity.trim().toLowerCase())
     .filter((identity) => identity.length > 1)
     .some((identity) => haystack.includes(identity));
-}
-
-/** Client-side sensitive-data stop for s-facts (AGENTS.md rule 12).
- *  Never blocks navigation; the mapper must drop flagged text. */
-export function containsSensitiveData(text: string): boolean {
-  if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(text)) return true;
-  if (/(?:\+?62|0)[\d\s\-().]{8,}/.test(text)) return true;
-  if (/\b\d{16}\b/.test(text)) return true;
-  if (/\b(nik|ktp|no\.?\s*(rekening|ktp)|cvv|cvv2|pin\s*atm)\b/i.test(text))
-    return true;
-  return false;
 }
 
 /* ── Brand + alias resolution (data, never copy) ── */
@@ -442,15 +436,18 @@ const REDUCED_MOTION_CSS = `@media (prefers-reduced-motion: reduce){[data-bab23]
 function ScreenSection({
   screenId,
   labelledBy,
+  questionPreviewVersion,
   children,
 }: {
   screenId: IntakeScreenId;
   labelledBy: string;
+  questionPreviewVersion?: number;
   children: React.ReactNode;
 }) {
   return (
     <section
       data-bab23={screenId}
+      data-question-preview-version={questionPreviewVersion}
       aria-labelledby={labelledBy}
       style={{
         display: "grid",
@@ -1024,7 +1021,7 @@ function CompetitorsScreen({
       <Lead>
         {thin
           ? "Nuave belum menemukan pembanding dari sumber Anda. Ini pembanding yang umum untuk kategori Anda. Pilih yang relevan atau tambah sendiri."
-          : "Pilih bisnis yang dipertimbangkan pelanggan untuk kebutuhan yang sama. Nuave akan menggunakannya untuk menguji perbandingan."}
+          : "Pilih bisnis yang dipertimbangkan pelanggan untuk kebutuhan yang sama."}
       </Lead>
       {(invalidAttempts ?? 0) > 0 && !valid ? (
         <p
@@ -1364,21 +1361,68 @@ function ReviewScreen({
   );
 }
 
-/* ── s-questions (A5 post-intake review; generation is NOT connected) ── */
+/* ── s-questions (A5 post-intake review; Phase 6A preview injected) ── */
 
-function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
-  const slots = deriveQuestionSlots(fixture);
-  const brand = resolveBrandName(fixture);
-  const aliases = resolveAliases(fixture);
+function QuestionsScreen({
+  fixture,
+  emit,
+  nav,
+  questionPreview,
+}: IntakeScreenSlotProps) {
+  const readyPack =
+    questionPreview?.status === "ready" ? questionPreview.pack : null;
+  const slots = readyPack?.slots ?? deriveQuestionSlots(fixture);
+  const brand = readyPack?.brandName ?? resolveBrandName(fixture);
+  const aliases = readyPack ? [] : resolveAliases(fixture);
   const identities = [brand, ...aliases];
   const countCorrections = useCorrectionCounter("s-questions", emit);
-  /* Post-intake wording edits stay mount-local: the question pack is
-   * post-handoff (generation unwired, Phase 6) and not part of the intake
-   * draft, so Back re-derives it from the pack. */
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
-  const [refusal, setRefusal] = useState<number | null>(null);
+  const [refusal, setRefusal] = useState<{
+    slot: number;
+    message: string;
+  } | null>(null);
+  const currentQuestions = slots.map(
+    (slot) => edits[String(slot.number)] ?? slot.text,
+  );
+  const canonicalIssues = readyPack
+    ? validateCanonicalIndonesianQuestionPack(currentQuestions, readyPack.brief)
+    : [];
+  const privacyBlockers = readyPack
+    ? indonesianPackBlockers(currentQuestions, readyPack.brief)
+    : [];
+  const hasSensitiveQuestion = currentQuestions.some(containsSensitiveData);
+  const previewReady =
+    editing === null &&
+    (questionPreview === undefined ||
+      (questionPreview.status === "ready" &&
+        canonicalIssues.length === 0 &&
+        privacyBlockers.length === 0 &&
+        !hasSensitiveQuestion));
+  const publishValidity = nav.onValidityChange;
+  useEffect(() => {
+    publishValidity?.(previewReady);
+  }, [previewReady, publishValidity]);
+
+  if (questionPreview && questionPreview.status !== "ready") {
+    const failed = questionPreview.status === "failed";
+    return (
+      <ScreenSection screenId="s-questions" labelledBy="s-questions-h">
+        <Heading id="s-questions-h">Periksa pertanyaan audit</Heading>
+        <div
+          role={failed ? "alert" : "status"}
+          aria-live={failed ? "assertive" : "polite"}
+        >
+          <Lead>
+            {failed
+              ? "Pertanyaan audit belum dapat disiapkan. Kembali dan coba lagi."
+              : "Menyiapkan pertanyaan audit dari informasi yang Anda konfirmasi."}
+          </Lead>
+        </div>
+      </ScreenSection>
+    );
+  }
 
   const unbranded = slots.filter((slot) => slot.unbranded);
   const branded = slots.filter((slot) => !slot.unbranded);
@@ -1401,8 +1445,50 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
       setRefusal(null);
       return;
     }
-    if (slot.unbranded && isUnbrandedViolation(trimmed, identities)) {
-      setRefusal(slot.number);
+    const candidateQuestions = slots.map((candidate) =>
+      candidate.number === slot.number
+        ? trimmed
+        : (edits[String(candidate.number)] ?? candidate.text),
+    );
+    if (candidateQuestions.some(containsSensitiveData)) {
+      setRefusal({
+        slot: slot.number,
+        message:
+          "Pertanyaan ini berisi data pribadi atau rahasia dan tidak dapat disimpan.",
+      });
+      return;
+    }
+    if (readyPack) {
+      const privacyBlocker = indonesianPackBlockers(
+        candidateQuestions,
+        readyPack.brief,
+      )[0];
+      if (privacyBlocker) {
+        setRefusal({
+          slot: slot.number,
+          message:
+            "Pertanyaan ini meminta atau menampilkan data pribadi dan tidak dapat disimpan.",
+        });
+        return;
+      }
+      const issues = validateCanonicalIndonesianQuestionPack(
+        candidateQuestions,
+        readyPack.brief,
+      );
+      const issue =
+        issues.find(
+          (candidate) =>
+            candidate.slot === slot.number || candidate.slot === null,
+        ) ?? issues[0];
+      if (issue) {
+        setRefusal({ slot: slot.number, message: issue.message });
+        return;
+      }
+    } else if (slot.unbranded && isUnbrandedViolation(trimmed, identities)) {
+      setRefusal({
+        slot: slot.number,
+        message: `Pertanyaan ini tidak boleh menyebut ${brand} atau nama lainnya, supaya hasilnya tetap mengukur penemuan spontan.`,
+      });
       return;
     }
     setEdits((prev) => ({ ...prev, [String(slot.number)]: trimmed }));
@@ -1477,11 +1563,11 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
               id={`s-questions-edit-${slot.number}`}
               value={draft}
               aria-describedby={
-                refusal === slot.number
+                refusal?.slot === slot.number
                   ? `s-questions-refusal-${slot.number}`
                   : undefined
               }
-              aria-invalid={refusal === slot.number}
+              aria-invalid={refusal?.slot === slot.number}
               rows={3}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
@@ -1499,13 +1585,13 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
                 borderRadius: "12px",
                 resize: "vertical",
                 border:
-                  refusal === slot.number
+                  refusal?.slot === slot.number
                     ? "2px solid var(--red, #dc2626)"
                     : "1px solid var(--border-default, #e5e7eb)",
                 fontFamily: "inherit",
               }}
             />
-            {refusal === slot.number ? (
+            {refusal?.slot === slot.number ? (
               <p
                 id={`s-questions-refusal-${slot.number}`}
                 role="alert"
@@ -1515,8 +1601,7 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
                   color: "var(--red, #dc2626)",
                 }}
               >
-                Pertanyaan ini tidak boleh menyebut {brand} atau nama lainnya,
-                supaya hasilnya tetap mengukur penemuan spontan.
+                {refusal.message}
               </p>
             ) : null}
             <div style={{ display: "flex", gap: "8px" }}>
@@ -1576,7 +1661,11 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
   };
 
   return (
-    <ScreenSection screenId="s-questions" labelledBy="s-questions-h">
+    <ScreenSection
+      screenId="s-questions"
+      labelledBy="s-questions-h"
+      questionPreviewVersion={readyPack?.factVersion}
+    >
       <Heading id="s-questions-h">Periksa pertanyaan audit</Heading>
       <Lead>
         Sepuluh pertanyaan ini akan diuji ke model AI, satu per satu. Ubah kalau
@@ -1615,7 +1704,15 @@ function QuestionsScreen({ fixture, emit }: IntakeScreenSlotProps) {
           {unbranded.map(renderSlot)}
         </ul>
       </div>
-      <div style={{ display: "grid", gap: "4px" }}>
+      <hr
+        aria-hidden="true"
+        style={{
+          border: "none",
+          borderTop: "2px solid var(--border-default, #e5e7eb)",
+          margin: "20px 0 0",
+        }}
+      />
+      <div style={{ display: "grid", gap: "4px", marginTop: "20px" }}>
         <h2
           style={{
             margin: 0,
