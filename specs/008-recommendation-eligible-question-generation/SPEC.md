@@ -1,6 +1,6 @@
 # Spec 008: recommendation-eligible question generation
 
-> Status: **Draft**
+> Status: **In review**
 > Owner: Founder / orchestrator
 > Updated: 2026-09-07
 > Implements: a deeper semantic target for Nuave-generated questions: natural Indonesian consumer decisions with genuine entity-recommendation opportunity
@@ -122,6 +122,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **R-05 — Market abstraction:** generation must create an internal market-level model before final unnamed-question wording. At minimum it distinguishes category/entity type, plausible customer choice jobs, ordinary decision dimensions, meaningful contexts, common choice risks/concerns, and target-specific signals that must not be copied directly.
 - **R-06 — Source information is evidence, not wording material:** business facts are used to infer the decision space. They must not flow mechanically into question text merely because they exist in the confirmed brief.
 - **R-07 — Target-specific versus market-level:** the generator must explicitly distinguish ordinary market dimensions from unusually specific target attributes. A target-specific attribute may influence a question only after abstraction into a legitimate broader decision dimension.
+- **R-07A — Market inference boundary:** the generator may infer conservative **category-level** choice jobs, buying dimensions, and choice concerns that were not literally entered as verified business facts when they are needed to model a plausible consumer decision. These inferred dimensions are preferences or decision criteria, not factual premises. They must never be presented as facts about the audited business, a competitor, market price, reputation, availability, policy, certification, outcome, or other entity-specific state. Business-specific factual premises still require confirmed/approved input. The system must preserve this distinction in its internal provenance so “market inference” cannot become a loophole for invented brand claims.
 - **R-08 — No fingerprinting:** unnamed questions must not reproduce exact target-only feature combinations, exact prices, proprietary claims, unusual specifications, slogans, or unnecessarily precise location combinations that effectively identify the audited business.
 - **R-09 — Competitive openness:** a strong unnamed question must leave a legitimate field in which multiple real entities could qualify. The target should have a fair opportunity, not a guaranteed path.
 
@@ -138,7 +139,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **R-15 — Indonesian register:** the writer may use neutral, conversational, slightly colloquial, or naturally code-switched Indonesian according to category and audience. It must not mechanically inject slang, English, or rough grammar.
 - **R-16 — Candidate and selection separation:** unnamed-question generation and final portfolio selection are separate responsibilities. The implementation must be able to reject one candidate without discarding the semantic target or silently accepting a weak mechanically valid sentence.
 - **R-17 — Semantic diversity:** final selection prioritizes different decision situations/intent families over paraphrase diversity. Exact-string distinctness alone is insufficient.
-- **R-18 — Portfolio quality:** the six unnamed questions are evaluated both individually and as a set. A individually valid candidate may be omitted if it adds little decision coverage beyond selected questions.
+- **R-18 — Portfolio quality:** the six unnamed questions are evaluated both individually and as a set. An individually valid candidate may be omitted if it adds little decision coverage beyond selected questions.
 
 ### Canonical measurement compatibility
 
@@ -164,7 +165,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 
 ### Fallback, edits, and history
 
-- **R-32 — Recommendation-eligible fallback:** deterministic continuity questions must satisfy the same semantic target as far as deterministic generation can guarantee. Existing fallback forms that are informational rather than entity-seeking must be replaced.
+- **R-32 — Recommendation-eligible fallback:** deterministic continuity questions must satisfy the same semantic target as far as deterministic generation can guarantee. Existing fallback forms that are informational rather than entity-seeking must be replaced. Unnamed fallback must not use `differentiator`, exact target-only numeric claims, or other target-specific material merely to make the question specific; prefer confirmed category/customer decision inputs and broader safe wording.
 - **R-33 — Safe degradation:** when a generated candidate fails semantic or mechanical validation and no valid reserve candidate exists, use a slot-safe recommendation-eligible fallback. Do not keep a weak question merely because it is grammatically natural.
 - **R-34 — Customer edits unchanged in V1:** after the suggestion reaches the customer, the existing mechanical approval contract and non-blocking purpose-drift behavior remain. This spec improves Nuave's generated defaults; changing customer-edit semantics requires a separate product decision.
 - **R-35 — Historical replay:** previously approved packs remain replayable verbatim. Do not relabel historical instruction versions, regenerate old questions, or change their report interpretation.
@@ -172,7 +173,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 ### Evaluation
 
 - **R-36 — Fixed cross-category evaluation corpus:** before production flip, maintain a privacy-safe repository corpus covering at least local service, local venue/hospitality, retail/store, consumer product/brand, B2B/SaaS, and professional service. Include a regulated/high-impact boundary case for safety behavior.
-- **R-37 — Negative corpus:** include explicit must-reject examples for natural-but-informational questions, recommendation-shaped but unnatural questions, target fingerprinting, recommendation-keyword monoculture, paraphrase-only diversity, criteria overload, website-language contamination, target optimization, overly broad market questions, and artificial persona injection.
+- **R-37 — Negative corpus:** include explicit must-reject examples for natural-but-informational questions, recommendation-shaped but unnatural questions, target fingerprinting, recommendation-keyword monoculture, paraphrase-only diversity, criteria overload, website-language contamination, target optimization, overly broad market questions, artificial persona injection, and an inferred market dimension incorrectly asserted as an entity fact.
 - **R-38 — Baseline comparison:** the evaluation must run the current approach and the candidate approach against the same fixtures/rubric so improvement is attributable rather than impressionistic.
 - **R-39 — Human judgment remains required:** automated tests can prove contracts and known failure cases, but founder/reviewer judgment is required for naturalness and whether the resulting portfolio plausibly represents Indonesian consumer decisions.
 
@@ -192,6 +193,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 - Live provider comparisons require explicit founder authorization and predetermined call/cost ceilings.
 - Evaluation fixtures use fictional/privacy-safe businesses or founder-approved public examples with no customer/contact/payment data.
 - Internal semantic metadata must be compact and diagnostic. Do not persist hidden reasoning or unnecessary source copy.
+- Market-level inference under R-07A may be stored as a short normalized dimension plus provenance such as `category_inference`; it must not be misrepresented as a verified business fact or source citation.
 - The production default remains one primary generation call unless the separate R-29 decision gate is crossed.
 
 ## Acceptance criteria
@@ -200,6 +202,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **AC-02 — Entity demand:** for every generated unnamed question in the fixed acceptance corpus, a reviewer can describe the expected helpful answer as containing concrete relevant entities plus fit reasons; purely generic explanation is insufficient.
 - **AC-03 — Commercial choice:** every generated unnamed question in the acceptance corpus is a choosing/finding/buying/hiring/visiting/obtaining/shortlisting/comparing decision rather than a learning-only task.
 - **AC-04 — Competitive openness:** target-fingerprint fixtures do not reproduce the target's unique feature bundle, exact target-only price, proprietary claim, or other effective identifier in unnamed questions.
+- **AC-04A — Inference versus fact:** a generic category-level decision dimension may be inferred and used as a consumer preference without being falsely marked verified; the same mechanism must reject/assertion-block invented facts about a named entity, exact market price, reputation, availability, certification, policy, or outcome.
 - **AC-05 — Criteria discipline:** unnamed generated situations use no more than three decision criteria and do not create synthetic exhaustive requests.
 - **AC-06 — Semantic diversity:** the final six unnamed questions for each acceptance fixture cover meaningfully distinct consumer decision situations; paraphrases of the same choice do not satisfy this criterion.
 - **AC-07 — Naturalness:** a founder/reviewer sample across every corpus archetype is judged plausible Indonesian consumer language without systematic template feel, fake slang, or website-copy contamination.
@@ -232,6 +235,8 @@ A likely durable internal decomposition is:
 → portfolio selection
 → natural question pack
 → existing mechanical validation / approval / replay boundary
+
+A market decision dimension should carry compact provenance such as `confirmed_input_abstraction` or `category_inference`. This is not source-citation machinery; it exists so code/tests can distinguish a lawful consumer-decision inference from a fabricated business premise.
 
 The initial provider may return the market profile, situations, reserve candidates, and question realizations in one bounded structured response. Code should own slot identity, final selection rules, validation results, versions, and persistence metadata.
 
