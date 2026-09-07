@@ -46,6 +46,8 @@ Examples of the failure class include troubleshooting, definitions, education, g
 
 The current code also has no explicit market-abstraction object, no first-class consumer-decision-situation object, no entity-demand or competitive-openness validation, no target-fingerprint guard beyond identity leakage, and only exact-text duplicate detection rather than portfolio-level semantic diversity.
 
+One current mechanical rule also overreaches relative to the new target: `INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS` rejects words such as `terlengkap` or `termurah` anywhere in a question. The new target permits a consumer to **ask which option best satisfies a criterion**; that is different from asserting without evidence that a named entity already has that property. Spec 008 must preserve unsupported-claim safety without treating every comparative/superlative preference as a false premise.
+
 ## Desired outcome
 
 When Nuave prepares its suggested pack:
@@ -79,6 +81,7 @@ This specification includes:
 - recommendation-eligibility, commercial-relevance, openness, anti-fingerprint, and portfolio-diversity checks;
 - natural Indonesian realization from a sound consumer decision situation;
 - a candidate-generation / candidate-selection separation for unnamed slots;
+- a premise-safety rule that distinguishes consumer selection criteria from unsupported assertions about entities;
 - an updated deterministic continuity fallback that respects the new semantic target;
 - versioning, diagnostics, regression fixtures, and evaluation needed to make the behavior observable;
 - preservation of historical approved-pack replay; and
@@ -143,7 +146,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 
 ### Canonical measurement compatibility
 
-- **R-19 — Preserve matrix semantics:** the canonical matrix remains the authority for slot ID, order, category, measurement purpose, identity policies, comparison relation, and report assessment class. This spec may strengthen `generatorSlotDescription` or writer guidance so a slot is realized as an entity-eligible decision without silently changing what the slot measures.
+- **R-19 — Preserve matrix semantics:** the canonical matrix remains the authority for slot ID, order, category, measurement purpose, identity policies, comparison relation, and report assessment class. This spec may strengthen `generatorSlotDescription`, allowed generation context, or writer guidance so a slot is realized as an entity-eligible decision without silently changing what the slot measures.
 - **R-20 — Slot 2 interpretation:** the `situation` slot must still measure a real occasion, but the final question must ask for entity-level help in that situation rather than ask generically when or why customers seek the category.
 - **R-21 — Slot 4 interpretation:** the `offering_use_case` slot remains about one concrete offering/use case, but the question must make the consumer seek a place/provider/product/entity that can satisfy it rather than merely ask factual background about the offering.
 - **R-22 — Slot 6 interpretation:** the `open_comparison` slot remains an unnamed comparison. It must invite the AI to identify and compare realistic concrete options, not merely teach a comparison framework.
@@ -152,7 +155,8 @@ The generated questions must remain concise enough to read and edit comfortably.
 
 - **R-23 — Separate semantic validation:** generated unnamed candidates must receive explicit eligibility results for at least entity demand, commercial relevance, openness, and anti-fingerprint safety before selection. Naturalness and portfolio diversity are evaluated separately rather than collapsed into one opaque “quality” flag.
 - **R-24 — Failure codes, not hidden reasoning:** validation and selection store compact machine-readable outcomes/reasons. Do not persist model chain-of-thought or free-form private reasoning.
-- **R-25 — Mechanical guards remain:** identity leakage, identity requirements, comparison relation, question shape, safety/privacy, unsupported-premise, and composition checks remain enforced. Semantic validation complements them; it does not replace them.
+- **R-25 — Mechanical guards remain:** identity leakage, identity requirements, comparison relation, question shape, safety/privacy, unsupported entity-fact premises, and composition checks remain enforced. Semantic validation complements them; it does not replace them.
+- **R-25A — Selection criterion is not an asserted premise:** the unsupported-premise guard must distinguish “which option is cheapest/most complete/best fit?” from “Brand X is the cheapest/most complete/best.” A comparative or superlative token is not by itself a hard failure when it is part of an open consumer selection question. Named-entity assertions, guarantees, safety claims, and high-impact winner/suitability requests remain subject to the existing evidence and category-safety rules.
 - **R-26 — No target-optimization loophole:** a candidate fails when it is engineered so the audited business uniquely qualifies, even if it contains no literal brand identity.
 - **R-27 — No semantic-keyword shortcut:** a list of recommendation verbs cannot be the primary eligibility validator. Such tokens may be weak signals or diagnostics only.
 
@@ -161,7 +165,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **R-28 — Versioned internal generation contract:** the provider boundary must become capable of returning the internal market abstraction and consumer-decision situations needed by this spec, not only ten final strings. Historical records retain their recorded instruction/pack versions.
 - **R-29 — One-call default:** the first production implementation keeps one bounded, no-search primary generation call. The internal stages may be represented in one structured response. A second semantic-review provider call may be introduced only if the evaluation gate proves it necessary and the founder separately approves the cost/method change.
 - **R-30 — Stable downstream output:** regardless of richer internal generation data, the customer/replay boundary still receives exactly ten ordered question strings plus the existing code-owned slot metadata. Rich internal data must not leak into observation prompts.
-- **R-31 — Input minimization:** generation remains downstream of the confirmed `BusinessBrief`/minimized projection. It receives no payment/contact data, raw page HTML, provider metadata, or sensitive free text and does not depend on React intake state.
+- **R-31 — Input minimization:** generation remains downstream of the confirmed `BusinessBrief`/minimized projection. It receives no payment/contact data, raw page HTML, provider metadata, or sensitive free text and does not depend on React intake state. The v3 provider request should use a writer-specific projection that excludes provenance-only official-source URLs and comparison-source URLs unless an implementation need is demonstrated; those values may remain local for identity/provenance validation without being wording material.
 
 ### Fallback, edits, and history
 
@@ -173,7 +177,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 ### Evaluation
 
 - **R-36 — Fixed cross-category evaluation corpus:** before production flip, maintain a privacy-safe repository corpus covering at least local service, local venue/hospitality, retail/store, consumer product/brand, B2B/SaaS, and professional service. Include a regulated/high-impact boundary case for safety behavior.
-- **R-37 — Negative corpus:** include explicit must-reject examples for natural-but-informational questions, recommendation-shaped but unnatural questions, target fingerprinting, recommendation-keyword monoculture, paraphrase-only diversity, criteria overload, website-language contamination, target optimization, overly broad market questions, artificial persona injection, and an inferred market dimension incorrectly asserted as an entity fact.
+- **R-37 — Negative corpus:** include explicit must-reject examples for natural-but-informational questions, recommendation-shaped but unnatural questions, target fingerprinting, recommendation-keyword monoculture, paraphrase-only diversity, criteria overload, website-language contamination, target optimization, overly broad market questions, artificial persona injection, an inferred market dimension incorrectly asserted as an entity fact, and an unsupported named-entity superlative/guarantee.
 - **R-38 — Baseline comparison:** the evaluation must run the current approach and the candidate approach against the same fixtures/rubric so improvement is attributable rather than impressionistic.
 - **R-39 — Human judgment remains required:** automated tests can prove contracts and known failure cases, but founder/reviewer judgment is required for naturalness and whether the resulting portfolio plausibly represents Indonesian consumer decisions.
 
@@ -210,8 +214,9 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **AC-09 — Problematic slots repaired:** slot 2, slot 4, and slot 6 examples in the acceptance corpus remain true to their canonical measurement purposes while producing entity-level answer opportunity.
 - **AC-10 — Deterministic fallback:** the fallback pack passes the same mechanical invariants and the repository's deterministic recommendation-eligibility checks; it no longer contains a generic “when do customers look for X?” style situation question.
 - **AC-11 — No keyword monoculture:** acceptance packs contain legitimate implicit recommendation forms; use of the literal word `rekomendasi` is neither necessary nor sufficient for pass.
+- **AC-11A — Preference query versus false premise:** an unnamed open-choice question such as `Toko HP yang paling lengkap di Depok apa ya?` is not rejected solely because `paling lengkap` is a comparative/superlative selection criterion. A question or sentence that asserts without evidence that a named business is `paling lengkap`, `termurah`, guaranteed, safest, or equivalent remains blocked or routed through the applicable evidence/safety rule.
 - **AC-12 — Historical compatibility:** an approved pre-Spec-008 pack replays byte-for-byte and keeps its recorded provider/model/instruction version and report interpretation.
-- **AC-13 — Generation boundary:** the production-path implementation sends only minimized confirmed business context, performs no web search, and returns only selected question text to the observation boundary.
+- **AC-13 — Generation boundary:** the production-path implementation sends only the writer-specific minimized confirmed business context, performs no web search, and returns only selected question text to the observation boundary. Provenance-only source URLs are not sent to v3 merely because they exist locally.
 - **AC-14 — Intake independence:** after the active intake rebuild lands, question generation consumes its canonical `BusinessBrief` handoff rather than importing `IntakeState` or screen components.
 - **AC-15 — Verification:** `npm run verify` passes with no live provider calls, relevant new unit/integration regressions are green, and an independent reviewer checks every acceptance criterion.
 
@@ -228,6 +233,7 @@ No material product question is intentionally left to a worker. The following ar
 A likely durable internal decomposition is:
 
 `MinimizedIndonesianBrief`
+→ writer-specific provider projection
 → `MarketDecisionProfile`
 → `ConsumerDecisionSituation[]`
 → `QuestionCandidate[]`
@@ -237,6 +243,8 @@ A likely durable internal decomposition is:
 → existing mechanical validation / approval / replay boundary
 
 A market decision dimension should carry compact provenance such as `confirmed_input_abstraction` or `category_inference`. This is not source-citation machinery; it exists so code/tests can distinguish a lawful consumer-decision inference from a fabricated business premise.
+
+Candidate objects should reference abstract market-dimension IDs and compact context, not raw `differentiator` text. Even though one provider call can see the bounded writer context, the structured contract should make direct target-fact-to-question flow observable and rejectable.
 
 The initial provider may return the market profile, situations, reserve candidates, and question realizations in one bounded structured response. Code should own slot identity, final selection rules, validation results, versions, and persistence metadata.
 
