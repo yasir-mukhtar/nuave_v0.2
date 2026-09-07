@@ -41,7 +41,8 @@ jobs:
       - name: Build Cloudflare worker (build-only)
         env:
           NUAVE_PROVIDER: opencodego
-          NUAVE_QUESTION_PROVIDER: opencodego
+          NUAVE_QUESTION_PROVIDER: cheaperinference
+          CHEAPERINFERENCE_API_KEY: dummy-build-only-key
           OPENCODEGO_API_KEY: dummy-build-only-key
           OPENAI_API_KEY: dummy-build-only-key
           OPENAI_BASE_URL: https://opencode.ai/zen/go/v1
@@ -52,6 +53,7 @@ jobs:
           cat > .env.production.local <<EOF
           NUAVE_PROVIDER=${NUAVE_PROVIDER}
           NUAVE_QUESTION_PROVIDER=${NUAVE_QUESTION_PROVIDER}
+          CHEAPERINFERENCE_API_KEY=${CHEAPERINFERENCE_API_KEY}
           OPENCODEGO_API_KEY=${OPENCODEGO_API_KEY}
           OPENAI_API_KEY=${OPENAI_API_KEY}
           OPENAI_BASE_URL=${OPENAI_BASE_URL}
@@ -115,10 +117,13 @@ jobs:
         run: npm ci
 
       - name: Prepare production build env
+        env:
+          CHEAPERINFERENCE_API_KEY: ${{ secrets.CHEAPERINFERENCE_API_KEY }}
         run: |
+          : "${CHEAPERINFERENCE_API_KEY:?Set the CHEAPERINFERENCE_API_KEY Actions secret before deploying.}"
           cat > .env.production.local <<'EOF'
           NUAVE_PROVIDER=opencodego
-          NUAVE_QUESTION_PROVIDER=opencodego
+          NUAVE_QUESTION_PROVIDER=cheaperinference
           OPENCODEGO_API_KEY=${{ secrets.OPENCODEGO_API_KEY }}
           OPENAI_API_KEY=${{ secrets.OPENCODEGO_API_KEY }}
           OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
@@ -128,6 +133,7 @@ jobs:
           NUAVE_FIXTURE_FORCE_REPORT_FAILURE=${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
           OPENAI_AUDIT_CARRYOVER_COST_USD=${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
           EOF
+          printf 'CHEAPERINFERENCE_API_KEY=%s\n' "$CHEAPERINFERENCE_API_KEY" >> .env.production.local
 
       - name: Build validated OpenNext worker
         run: npm run build:cf

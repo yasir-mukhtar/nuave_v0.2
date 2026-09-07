@@ -34,7 +34,8 @@ export function offlineVerifierEnv(source = process.env) {
   return {
     ...source,
     NUAVE_PROVIDER: "opencodego",
-    NUAVE_QUESTION_PROVIDER: "opencodego",
+    NUAVE_QUESTION_PROVIDER: "cheaperinference",
+    CHEAPERINFERENCE_API_KEY: "dummy-build-only-key",
     OPENCODEGO_API_KEY: "dummy-build-only-key",
     OPENAI_API_KEY: "dummy-build-only-key",
     OPENAI_BASE_URL: "https://opencode.ai/zen/go/v1",

@@ -23,10 +23,9 @@ import {
 // Indonesian fallback; THIS module owns the real bounded no-search provider
 // call that the boundary is wired to:
 //
-//   - provider selection via NUAVE_QUESTION_PROVIDER ("opencodego" default |
-//     "openai" | "gemini"), independent from NUAVE_PROVIDER so tests can
-//     exercise alternatives while the protected live path remains locked to
-//     OpenCode Go (founder decision 2026-08-21);
+//   - provider selection via NUAVE_QUESTION_PROVIDER, independent from
+//     NUAVE_PROVIDER: Cheaper Inference writes questions by default, while
+//     OpenCode Go remains the audit target and an explicit writer rollback;
 //   - the versioned question-writer instruction (question-writer-v2, the
 //     docs/journey/04 "Suggested generation instruction" substance) as the one
 //     authoritative instruction source;
@@ -43,9 +42,10 @@ import {
 //
 // Tests stub the HTTP layer (injected fetch); no test performs a live call.
 
-export const INDONESIAN_QUESTION_PROVIDER_DEFAULT = "opencodego" as const;
+export const INDONESIAN_QUESTION_PROVIDER_DEFAULT = "cheaperinference" as const;
 
 export const INDONESIAN_QUESTION_PROVIDER_NAMES = [
+  "cheaperinference",
   "opencodego",
   "openai",
   "gemini",
@@ -58,6 +58,21 @@ export const INDONESIAN_QUESTION_OPENCODEGO_SYSTEM =
 export const INDONESIAN_QUESTION_OPENAI_SYSTEM =
   "OpenAI Responses API" as const;
 export const INDONESIAN_QUESTION_GEMINI_SYSTEM = "Google Gemini API" as const;
+export const INDONESIAN_QUESTION_CHEAPERINFERENCE_SYSTEM =
+  "Cheaper Inference Chat Completions API" as const;
+export const INDONESIAN_QUESTION_CHEAPERINFERENCE_MODEL =
+  "glm-5.3-flash" as const;
+export const INDONESIAN_QUESTION_CHEAPERINFERENCE_ENDPOINT =
+  "https://api.cheaperinference.com/v1/chat/completions" as const;
+// Conservative undiscounted catalog rates, not a claim about settled charges.
+// Source: https://platform.cheaperinference.com/models/glm-5.3-flash
+export const INDONESIAN_QUESTION_CHEAPERINFERENCE_PRICING_VERSION =
+  "cheaperinference-glm-5.3-flash-list-ceiling-2026-09-07" as const;
+export const INDONESIAN_QUESTION_CHEAPERINFERENCE_RATES = {
+  input_per_million: 0.15,
+  output_per_million: 0.5,
+} as const;
+export const INDONESIAN_QUESTION_CHEAPERINFERENCE_TIMEOUT_MS = 60_000;
 
 /**
  * Gemini default for the question writer: the five-business evaluation
@@ -167,7 +182,7 @@ export const INDONESIAN_QUESTION_STRUCTURED_OUTPUT_NAME =
 
 /**
  * The question-writer provider name from NUAVE_QUESTION_PROVIDER. Defaults to
- * "opencodego" when unset or empty; fails closed on any other value (mirroring
+ * "cheaperinference" when unset or empty; rejects unknown values (mirroring
  * activeAuditProvider in provider.ts).
  */
 export function indonesianQuestionProviderName(): IndonesianQuestionProviderName {
@@ -186,12 +201,13 @@ export function indonesianQuestionProviderName(): IndonesianQuestionProviderName
 
 /**
  * Question-writer provider for the protected live path (`/api/audit/prompts`).
- * Fails closed to the founder-approved OpenCode Go transport serving
- * GPT-5.6 Luna (DECISION_LOG 2026-08-21). Other providers are testing-only and
- * require `NUAVE_LIVE_PROVIDER_TESTING=1` outside production.
+ * Cheaper Inference serves GLM-5.3 Flash by default. The former OpenCode Go
+ * writer remains an explicit rollback, never an automatic fallback. Other
+ * providers require `NUAVE_LIVE_PROVIDER_TESTING=1` outside production.
  */
 export function liveIndonesianQuestionProviderName(): IndonesianQuestionProviderName {
   const name = indonesianQuestionProviderName();
+  if (name === "cheaperinference") return name;
   if (name === "opencodego") return "opencodego";
   // R-13 (O-10, Phase 3 fix-round-2 adversarial review): see the identical
   // guard and rationale in `provider.ts`'s `liveAuditProvider`.
@@ -202,7 +218,7 @@ export function liveIndonesianQuestionProviderName(): IndonesianQuestionProvider
     return name;
   }
   throw new Error(
-    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenCode Go (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
+    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path accepts Cheaper Inference (glm-5.3-flash) or the explicit OpenCode Go rollback (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 
@@ -217,6 +233,14 @@ export type IndonesianQuestionProviderConfig = {
  * version for the generation record (provenance, R-33). */
 export function indonesianQuestionProviderConfig(): IndonesianQuestionProviderConfig {
   const name = indonesianQuestionProviderName();
+  if (name === "cheaperinference") {
+    return {
+      name,
+      system: INDONESIAN_QUESTION_CHEAPERINFERENCE_SYSTEM,
+      requested_model: INDONESIAN_QUESTION_CHEAPERINFERENCE_MODEL,
+      pricing_version: INDONESIAN_QUESTION_CHEAPERINFERENCE_PRICING_VERSION,
+    };
+  }
   if (name === "opencodego") {
     return {
       name,
@@ -257,6 +281,27 @@ export function indonesianQuestionGenerationMeta(): IndonesianGenerationMeta {
 // ---------------------------------------------------------------------------
 // Request builders (pure, asserted exactly in tests)
 // ---------------------------------------------------------------------------
+
+/** GLM JSON mode does not enforce a JSON schema; the existing boundary
+ * validates the ten strings and their slot/identity constraints locally. */
+export function buildCheaperInferenceIndonesianQuestionRequest(
+  brief: MinimizedIndonesianBrief,
+) {
+  return {
+    model: INDONESIAN_QUESTION_CHEAPERINFERENCE_MODEL,
+    stream: false,
+    max_tokens: INDONESIAN_QUESTION_MAX_OUTPUT_TOKENS,
+    reasoning_effort: "low",
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `${INDONESIAN_QUESTION_WRITER_INSTRUCTION}\nReturn one JSON object matching this shape: ${JSON.stringify(INDONESIAN_QUESTION_STRINGS_JSON_SCHEMA)}`,
+      },
+      { role: "user", content: JSON.stringify(brief) },
+    ],
+  } as const;
+}
 
 /**
  * The exact Responses API payload for one bounded no-search question
@@ -346,12 +391,56 @@ type OpenAIResponseBody = {
   output?: OpenAIResponseItem[];
 };
 
+type CheaperInferenceResponseBody = {
+  error?: unknown;
+  choices?: Array<{
+    finish_reason?: string | null;
+    message?: { content?: string | null; refusal?: string | null };
+  }>;
+};
+
 function isTenQuestionStrings(value: unknown): value is string[] {
   return (
     Array.isArray(value) &&
     value.length === 10 &&
     value.every((item) => typeof item === "string")
   );
+}
+
+export function parseCheaperInferenceIndonesianResponse(
+  json: CheaperInferenceResponseBody,
+): IndonesianProviderOutput {
+  const choice = json?.choices?.[0];
+  if (
+    json?.error ||
+    choice?.finish_reason !== "stop" ||
+    choice.message?.refusal
+  ) {
+    throw new Error("Cheaper Inference question generation did not complete.");
+  }
+  const text = choice.message?.content;
+  if (typeof text !== "string" || !text.trim()) {
+    throw new Error(
+      "Cheaper Inference question generation returned no usable output.",
+    );
+  }
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (
+      parsed !== null &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      isTenQuestionStrings((parsed as { questions?: unknown }).questions)
+    ) {
+      return {
+        kind: "structured",
+        questions: (parsed as { questions: string[] }).questions,
+      };
+    }
+  } catch {
+    // Let the existing boundary parse a numbered list or use its fallback.
+  }
+  return { kind: "text", text };
 }
 
 /**
@@ -484,6 +573,49 @@ export function parseGeminiIndonesianResponse(
 
 export type IndonesianFetch = typeof fetch;
 
+function cheaperInferenceKey(): string {
+  const key = process.env.CHEAPERINFERENCE_API_KEY?.trim();
+  if (!key) {
+    throw new Error(
+      "CHEAPERINFERENCE_API_KEY is not configured on the Nuave server.",
+    );
+  }
+  return key;
+}
+
+export function assertLiveQuestionProviderConfigured(): void {
+  const name = liveIndonesianQuestionProviderName();
+  if (name === "cheaperinference") cheaperInferenceKey();
+  if (name === "opencodego") assertOpenCodeGoProductionMethodConfigured();
+}
+
+async function cheaperInferenceGenerate(
+  brief: MinimizedIndonesianBrief,
+  fetcher: IndonesianFetch,
+): Promise<IndonesianProviderOutput> {
+  const apiKey = cheaperInferenceKey();
+  // Pin the destination and keep this credential separate from OPENAI_*.
+  // One bounded attempt; failures use the existing deterministic fallback.
+  const res = await fetcher(INDONESIAN_QUESTION_CHEAPERINFERENCE_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(buildCheaperInferenceIndonesianQuestionRequest(brief)),
+    signal: AbortSignal.timeout(
+      INDONESIAN_QUESTION_CHEAPERINFERENCE_TIMEOUT_MS,
+    ),
+    redirect: "error",
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Cheaper Inference question generation failed with status ${res.status}.`,
+    );
+  }
+  return parseCheaperInferenceIndonesianResponse(await res.json());
+}
+
 function responsesEndpoint(provider: "opencodego" | "openai"): string {
   if (provider === "openai") return INDONESIAN_QUESTION_OPENAI_ENDPOINT;
   return `${INDONESIAN_QUESTION_OPENCODEGO_BASE_URL}/responses`;
@@ -568,14 +700,16 @@ export function createIndonesianQuestionProvider(
   const fetcher: IndonesianFetch = fetchImpl ?? globalThis.fetch;
   return {
     generate: (brief) =>
-      config.name === "gemini"
-        ? geminiGenerate(brief, config.requested_model, fetcher)
-        : responsesGenerate(
-            config.name,
-            brief,
-            config.requested_model,
-            fetcher,
-          ),
+      config.name === "cheaperinference"
+        ? cheaperInferenceGenerate(brief, fetcher)
+        : config.name === "gemini"
+          ? geminiGenerate(brief, config.requested_model, fetcher)
+          : responsesGenerate(
+              config.name,
+              brief,
+              config.requested_model,
+              fetcher,
+            ),
   };
 }
 
@@ -594,13 +728,7 @@ export async function generateLiveIndonesianQuestionPack(
     fetch?: IndonesianFetch;
   } = {},
 ): Promise<IndonesianQuestionPackSuggestion> {
-  // Enforce the same production provider and method lock used by the audit
-  // path before the provider factory resolves configuration. Tests can opt
-  // into alternative providers with the explicit non-production testing flag.
-  const name = liveIndonesianQuestionProviderName();
-  if (name === "opencodego") {
-    assertOpenCodeGoProductionMethodConfigured();
-  }
+  assertLiveQuestionProviderConfigured();
   const generationMeta =
     options.generationMeta ?? indonesianQuestionGenerationMeta();
   return generateIndonesianQuestionPack(

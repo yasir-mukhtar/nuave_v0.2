@@ -5,8 +5,8 @@ import {
   INDONESIAN_QUESTION_GEMINI_SYSTEM,
   INDONESIAN_QUESTION_MAX_OUTPUT_TOKENS,
   INDONESIAN_QUESTION_OPENCODEGO_BASE_URL,
-  INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
-  INDONESIAN_QUESTION_OPENCODEGO_SYSTEM,
+  INDONESIAN_QUESTION_CHEAPERINFERENCE_PRICING_VERSION,
+  INDONESIAN_QUESTION_CHEAPERINFERENCE_SYSTEM,
   INDONESIAN_QUESTION_OPENAI_ENDPOINT,
   INDONESIAN_QUESTION_OPENAI_PRICING_VERSION,
   INDONESIAN_QUESTION_OPENAI_SYSTEM,
@@ -111,16 +111,16 @@ afterEach(() => {
 });
 
 describe("question-writer provider configuration", () => {
-  it("defaults to OpenCode Go with GPT-5.6 Luna", () => {
+  it("defaults to Cheaper Inference with GLM-5.3 Flash independently of the audit model", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
     vi.stubEnv("OPENAI_AUDIT_MODEL", "");
-    expect(INDONESIAN_QUESTION_PROVIDER_DEFAULT).toBe("opencodego");
-    expect(indonesianQuestionProviderName()).toBe("opencodego");
+    expect(INDONESIAN_QUESTION_PROVIDER_DEFAULT).toBe("cheaperinference");
+    expect(indonesianQuestionProviderName()).toBe("cheaperinference");
     expect(indonesianQuestionProviderConfig()).toEqual({
-      name: "opencodego",
-      system: INDONESIAN_QUESTION_OPENCODEGO_SYSTEM,
-      requested_model: "gpt-5.6-luna",
-      pricing_version: INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
+      name: "cheaperinference",
+      system: INDONESIAN_QUESTION_CHEAPERINFERENCE_SYSTEM,
+      requested_model: "glm-5.3-flash",
+      pricing_version: INDONESIAN_QUESTION_CHEAPERINFERENCE_PRICING_VERSION,
     });
   });
 
@@ -160,17 +160,17 @@ describe("question-writer provider configuration", () => {
     expect(() => indonesianQuestionProviderConfig()).toThrow(/Valid values/);
   });
 
-  it("records OpenCode Go provenance by default", () => {
+  it("records Cheaper Inference provenance by default", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
     vi.stubEnv("OPENAI_AUDIT_MODEL", "");
     expect(indonesianQuestionGenerationMeta()).toEqual({
-      system: "OpenCode Go Responses API",
-      requested_model: "gpt-5.6-luna",
-      pricing_version: INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
+      system: INDONESIAN_QUESTION_CHEAPERINFERENCE_SYSTEM,
+      requested_model: "glm-5.3-flash",
+      pricing_version: INDONESIAN_QUESTION_CHEAPERINFERENCE_PRICING_VERSION,
     });
   });
 
-  it("locks the protected live question path to OpenCode Go", () => {
+  it("retains the explicit OpenCode Go writer rollback", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
 

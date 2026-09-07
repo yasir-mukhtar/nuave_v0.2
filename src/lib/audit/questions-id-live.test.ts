@@ -138,7 +138,7 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
     await expect(
       buildLiveIndonesianPromptPack({ brief: dentalBrief }),
     ).rejects.toThrow(
-      'NUAVE_QUESTION_PROVIDER="openai" is testing-only; the protected live question path fails closed to OpenCode Go',
+      'NUAVE_QUESTION_PROVIDER="openai" is testing-only; the protected live question path accepts Cheaper Inference',
     );
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });

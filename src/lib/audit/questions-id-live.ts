@@ -6,6 +6,8 @@ import type {
 } from "./types";
 import {
   INDONESIAN_QUESTION_OPENCODEGO_PRICING_VERSION,
+  INDONESIAN_QUESTION_CHEAPERINFERENCE_RATES,
+  assertLiveQuestionProviderConfigured,
   createIndonesianQuestionProvider,
   indonesianQuestionGenerationMeta,
   liveIndonesianQuestionProviderName,
@@ -28,7 +30,6 @@ import {
   CANONICAL_COMPOSITION_COUNTS,
   measurementSlotForOrder,
 } from "./measurement-matrix";
-import { assertOpenCodeGoProductionMethodConfigured } from "./opencodego";
 import { configuredAuditCarryoverCostUsd } from "./telemetry";
 import { AUDIT_COST_LIMIT_USD } from "./types";
 
@@ -58,9 +59,14 @@ function capturingFetch(calls: CapturedCall[]): IndonesianFetch {
   return wrapped;
 }
 
-function extractResponsesUsage(body: unknown): {
+function extractQuestionUsage(
+  body: unknown,
+  provider: IndonesianQuestionProviderName,
+): {
   input_tokens: number;
+  cached_input_tokens: number;
   output_tokens: number;
+  reasoning_output_tokens: number;
   total_tokens: number;
   model: string;
   response_id: string;
@@ -68,12 +74,37 @@ function extractResponsesUsage(body: unknown): {
   if (typeof body !== "object" || body === null) return null;
   const record = body as Record<string, unknown>;
   const usage = record.usage as
-    | { input_tokens?: number; output_tokens?: number; total_tokens?: number }
+    | {
+        input_tokens?: number;
+        output_tokens?: number;
+        total_tokens?: number;
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        prompt_tokens_details?: { cached_tokens?: number };
+        completion_tokens_details?: { reasoning_tokens?: number };
+      }
     | undefined;
   if (!usage) return null;
+  const chat = provider === "cheaperinference";
+  const inputTokens = chat ? usage.prompt_tokens : usage.input_tokens;
+  const outputTokens = chat ? usage.completion_tokens : usage.output_tokens;
+  if (
+    chat &&
+    ![inputTokens, outputTokens].every(
+      (value) =>
+        typeof value === "number" && Number.isSafeInteger(value) && value >= 0,
+    )
+  )
+    return null;
   return {
-    input_tokens: usage.input_tokens ?? 0,
-    output_tokens: usage.output_tokens ?? 0,
+    input_tokens: inputTokens ?? 0,
+    cached_input_tokens: chat
+      ? (usage.prompt_tokens_details?.cached_tokens ?? 0)
+      : 0,
+    output_tokens: outputTokens ?? 0,
+    reasoning_output_tokens: chat
+      ? (usage.completion_tokens_details?.reasoning_tokens ?? 0)
+      : 0,
     total_tokens: usage.total_tokens ?? 0,
     model: typeof record.model === "string" ? record.model : "",
     response_id: typeof record.id === "string" ? record.id : "",
@@ -86,7 +117,8 @@ export function protectedQuestionGenerationProvenanceError(input: {
   returned_model: string;
   response_id: string;
 }): string {
-  if (input.provider !== "opencodego") return "";
+  if (input.provider !== "opencodego" && input.provider !== "cheaperinference")
+    return "";
   if (!input.returned_model) {
     return "Protected question generation returned no model provenance.";
   }
@@ -99,14 +131,21 @@ export function protectedQuestionGenerationProvenanceError(input: {
   return "";
 }
 
-function accountedCostUsd(usage: {
-  input_tokens: number;
-  output_tokens: number;
-}): number {
+function accountedCostUsd(
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  },
+  provider: IndonesianQuestionProviderName,
+): number {
+  const rates =
+    provider === "cheaperinference"
+      ? INDONESIAN_QUESTION_CHEAPERINFERENCE_RATES
+      : { input_per_million: 0.2, output_per_million: 1.2 };
   return (
     Math.round(
-      ((usage.input_tokens / 1_000_000) * 0.2 +
-        (usage.output_tokens / 1_000_000) * 1.2) *
+      ((usage.input_tokens / 1_000_000) * rates.input_per_million +
+        (usage.output_tokens / 1_000_000) * rates.output_per_million) *
         100_000_000,
     ) / 100_000_000
   );
@@ -137,9 +176,7 @@ export async function buildLiveIndonesianPromptPack(input: {
 }): Promise<LiveIndonesianPromptPackResult> {
   const { brief } = input;
   const providerName = liveIndonesianQuestionProviderName();
-  if (providerName === "opencodego") {
-    assertOpenCodeGoProductionMethodConfigured();
-  }
+  assertLiveQuestionProviderConfigured();
   const minimized = minimizeIndonesianBrief(brief);
 
   const budget: AuditBudget = {
@@ -159,10 +196,13 @@ export async function buildLiveIndonesianPromptPack(input: {
 
   const latencyMs = Date.now() - startedAt;
   const httpCall =
+    captured.find((call) => call.url.includes("/v1/chat/completions")) ??
     captured.find((call) => call.url.includes("/v1/responses")) ??
     captured.find((call) => call.url.includes("generateContent")) ??
     null;
-  const usage = httpCall ? extractResponsesUsage(httpCall.body) : null;
+  const usage = httpCall
+    ? extractQuestionUsage(httpCall.body, providerName)
+    : null;
   const provenanceError = protectedQuestionGenerationProvenanceError({
     provider: providerName,
     requested_model: generationMeta.requested_model || "",
@@ -270,14 +310,14 @@ export async function buildLiveIndonesianPromptPack(input: {
     service_tier: "default",
     usage: {
       input_tokens: usage?.input_tokens ?? 0,
-      cached_input_tokens: 0,
+      cached_input_tokens: usage?.cached_input_tokens ?? 0,
       cache_write_input_tokens: 0,
       output_tokens: usage?.output_tokens ?? 0,
-      reasoning_output_tokens: 0,
+      reasoning_output_tokens: usage?.reasoning_output_tokens ?? 0,
       total_tokens: usage?.total_tokens ?? 0,
     },
     web_search_calls: 0,
-    accounted_cost_usd: usage ? accountedCostUsd(usage) : 0,
+    accounted_cost_usd: usage ? accountedCostUsd(usage, providerName) : 0,
     cost_basis: usage ? "provider_usage" : "preflight_reservation",
     pricing_version:
       generationMeta.pricing_version ||
