@@ -770,7 +770,8 @@ export function validateCanonicalIndonesianQuestionPack(
       issues.push({
         slot: index + 1,
         rule: "distinctness",
-        message: `Question ${index + 1} duplicates another question.`,
+        message:
+          "Pertanyaan ini sama dengan pertanyaan lain dalam paket. Setiap pertanyaan harus berbeda.",
       });
     } else {
       seen.add(normalized);

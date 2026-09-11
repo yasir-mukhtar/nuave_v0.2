@@ -1,0 +1,342 @@
+/* Recovered intake frame (recovery plan §6.3 S2). 560px column, one chapter
+   progress bar, one Kembali/Lanjut pair. Composition sits on tokens.css;
+   typography only through --type-* roles. */
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.column {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.stage {
+  padding: var(--space-sm) var(--space-lg) 160px;
+}
+
+.heading {
+  margin-top: var(--space-md);
+}
+
+.kicker {
+  margin: 0 0 0;
+  color: var(--text-muted);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: var(--space-sm) 0;
+  color: var(--text-heading);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-leading);
+  letter-spacing: var(--type-heading-sm-tracking);
+  text-wrap: balance;
+}
+
+.optionalBadge {
+  display: inline-block;
+  vertical-align: 4px;
+  margin-left: var(--space-sm);
+  padding: 2px var(--space-sm);
+  color: var(--text-muted);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-token-full);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+}
+
+.lead {
+  margin: 0 0 var(--space-lg);
+  max-width: 44ch;
+  color: var(--text-muted);
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
+}
+
+/* ── Bottom navigation ── */
+
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  background: var(--bg-page);
+  border-top: 1px solid var(--border-light);
+}
+
+.progress {
+  display: flex;
+  gap: var(--space-xs);
+  height: 4px;
+  margin: 0 var(--space-lg);
+  padding: var(--space-sm) 0 0;
+  list-style: none;
+}
+
+.progressStep {
+  flex: 1;
+}
+
+.progressTrack {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+  background: var(--border-light);
+  border-radius: 2px;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--action);
+  transition: width var(--motion-duration-slow) var(--motion-ease-out);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-lg)
+    calc(var(--space-md) + env(safe-area-inset-bottom));
+}
+
+/* ── Read-first statement (§6.1) ── */
+
+.readFirst {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-md);
+  min-height: var(--target-min-size);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.readFirstLabel {
+  color: var(--text-muted);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+}
+
+.readFirstValue {
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-copy-leading);
+}
+
+.editLink {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-sm);
+  color: var(--text-heading);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.editLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-token-xs);
+}
+
+/* ── Small field blocks (typed escape hatch inside a screen) ── */
+
+.fieldBlock {
+  margin-top: var(--space-md);
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: var(--space-xs);
+  color: var(--text-heading);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-leading);
+}
+
+.fieldHint {
+  margin-top: var(--space-sm);
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.fieldError {
+  margin: var(--space-sm) 0 0;
+  color: var(--red);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.plainExplanation {
+  margin: var(--space-sm) 0 0;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* ── Review readback (§6.4) ── */
+
+.reviewList {
+  margin-top: var(--space-md);
+}
+
+.reviewRow {
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-xs);
+}
+
+.reviewLabel {
+  color: var(--text-heading);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-leading);
+}
+
+.reviewValue {
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
+  overflow-wrap: anywhere;
+}
+
+/* ── Question review (R-10) ── */
+
+.questionGroup {
+  margin-top: var(--space-lg);
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.groupTitle {
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: 600;
+  line-height: var(--type-copy-leading);
+  letter-spacing: -0.01em;
+}
+
+.groupCount {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.groupDescription {
+  margin: var(--space-xs) 0 var(--space-md);
+  max-width: 44ch;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.questionCard {
+  margin-bottom: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-token-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.questionMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  color: var(--text-muted);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+  letter-spacing: 0.04em;
+}
+
+.questionText {
+  color: var(--text-body);
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
+  overflow-wrap: anywhere;
+}
+
+.questionActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.questionError {
+  margin: var(--space-sm) 0 0;
+  color: var(--red);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.driftNote {
+  margin: var(--space-sm) 0 0;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.warnings {
+  margin: var(--space-md) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: var(--type-heading-md-size);
+  }
+}

@@ -1,0 +1,266 @@
+/* Selection primitives (Spec 007 R-27). Composition sits on tokens.css only;
+   no raw font sizes — typography comes from --type-* roles. */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* ── Selection card (single choice) ── */
+
+.card {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  width: 100%;
+  min-height: var(--target-min-size);
+  padding: var(--space-md);
+  text-align: left;
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-token-lg);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    background var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.card[data-checked] {
+  border-color: var(--action);
+  background: var(--action-soft);
+  box-shadow:
+    0 0 0 1px var(--action),
+    var(--shadow-card);
+}
+
+.card[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardTitle {
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-copy-leading);
+}
+
+.cardDescription {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.cardIcon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.card[data-checked] .cardIcon {
+  color: var(--text-heading);
+}
+
+/* ── Selection row (choice from a detected list) ── */
+
+.row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  width: 100%;
+  min-height: var(--target-min-size);
+  padding: var(--space-md);
+  text-align: left;
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-token-lg);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    background var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.row:hover {
+  border-color: var(--border-strong);
+}
+
+.row[data-checked] {
+  border-color: var(--action);
+  background: var(--action-soft);
+  box-shadow:
+    0 0 0 1px var(--action),
+    var(--shadow-card);
+}
+
+.row[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.rowDot {
+  flex: none;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-token-full);
+  background: var(--bg-page);
+}
+
+.row[data-checked] .rowDot {
+  border: 5px solid var(--action);
+}
+
+.rowBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.rowTitle {
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-copy-leading);
+}
+
+.rowDescription {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+/* ── Chip (multi-select and removal) ── */
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.chip {
+  display: inline-flex;
+  gap: var(--space-sm);
+  align-items: center;
+  min-height: var(--target-min-size);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-body);
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-token-full);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    background var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.chip:hover {
+  border-color: var(--border-strong);
+}
+
+.chipSelected {
+  color: var(--action-foreground);
+  background: var(--action);
+  border-color: var(--action);
+}
+
+.chipSelected:hover {
+  background: var(--action-hover);
+  border-color: var(--action-hover);
+}
+
+.chip[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.chipLabel {
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
+}
+
+.chipRemove {
+  display: inline-flex;
+  opacity: 0.6;
+}
+
+/* ── Add line (typed escape hatch) ── */
+
+.addLine {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.addLineInput {
+  flex: 1;
+  min-height: var(--target-min-size);
+}
+
+.addLineButton {
+  flex: none;
+  min-height: var(--target-min-size);
+  padding: 0 var(--space-md);
+}
+
+/* ── Reveal (progressive disclosure) ── */
+
+.revealTrigger {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min-size);
+  padding: 0 var(--space-sm);
+  color: var(--text-heading);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.revealTrigger:hover {
+  color: var(--text-body);
+}
+
+.revealTrigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-token-xs);
+}
+
+.revealPanel {
+  margin-top: var(--space-lg);
+  padding: var(--space-md) 0 var(--space-xs) var(--space-md);
+  border-left: 2px solid var(--border-strong);
+}

@@ -24,6 +24,8 @@ import type {
   PromptPack,
 } from "@/lib/audit/types";
 import {
+  INTAKE_CHAPTER_LABELS,
+  intakeChapterFor,
   intakeScreenSequence,
   type ComparisonTargetInput,
   type ComparisonTargetProposal,
@@ -41,21 +43,13 @@ import {
   isValidSimilarBusinessUrl,
   normalizeSimilarBusinessUrl,
 } from "@/lib/audit/similar-businesses";
+import type { IntakeSurface } from "./intakeSurface";
+import { ScopeScreen } from "./intake/screens/ScopeScreen";
+import { BranchScreen } from "./intake/screens/BranchScreen";
+import { OfferingsScreen } from "./intake/screens/OfferingsScreen";
+import { ReviewScreen } from "./intake/screens/ReviewScreen";
+import { QuestionReviewScreen } from "./intake/screens/QuestionReviewScreen";
 import styles from "./audit.module.css";
-
-const INTAKE_CHAPTER_LABELS = [
-  "Brand dan yang Anda tawarkan",
-  "Pelanggan Anda",
-  "Pasar dan pembanding",
-  "Sebelum audit",
-] as const;
-
-function intakeChapterFor(screen: IntakeScreen) {
-  if (screen === "customer-reasons") return 1;
-  if (screen === "market" || screen === "comparison-target") return 2;
-  if (screen === "facts" || screen === "review") return 3;
-  return 0;
-}
 
 function IntakeChapterProgress({
   screen,
@@ -738,6 +732,8 @@ export function B1BriefStep({
   fieldErrors,
   identityUnverified,
   busy,
+  intakeSurface,
+  onNavigateToScreen,
   onScopeKindChange,
   onScopeValueChange,
   onConfirmIdentity,
@@ -763,6 +759,8 @@ export function B1BriefStep({
   fieldErrors: Record<string, string>;
   identityUnverified: boolean;
   busy: Busy;
+  intakeSurface?: IntakeSurface;
+  onNavigateToScreen?: (screen: IntakeScreen) => void;
   onScopeKindChange: (value: ScopeKind) => void;
   onScopeValueChange: (value: string) => void;
   onConfirmIdentity: () => void;
@@ -782,6 +780,68 @@ export function B1BriefStep({
   const [correctionBrandName, setCorrectionBrandName] = useState(
     brief.brand_name,
   );
+
+  // Recovered surface (recovery plan §6.0): converted screens render the new
+  // presentation; everything else falls through to the existing markup below.
+  if (intakeSurface?.has(screen)) {
+    if (screen === "scope") {
+      return (
+        <ScopeScreen
+          brief={brief}
+          updateBrief={updateBrief}
+          scopeKind={scopeKind}
+          fieldErrors={fieldErrors}
+          customerEditedFields={customerEditedFields}
+          busy={busy}
+          onScopeKindChange={onScopeKindChange}
+          onContinue={onContinue}
+          onBack={onBack}
+        />
+      );
+    }
+    if (screen === "branch") {
+      return (
+        <BranchScreen
+          brief={brief}
+          scopeKind={scopeKind}
+          scopeValue={scopeValue}
+          fieldErrors={fieldErrors}
+          busy={busy}
+          onScopeValueChange={onScopeValueChange}
+          onContinue={onContinue}
+          onBack={onBack}
+        />
+      );
+    }
+    if (screen === "offerings") {
+      return (
+        <OfferingsScreen
+          brief={brief}
+          updateBrief={updateBrief}
+          scopeKind={scopeKind}
+          fieldErrors={fieldErrors}
+          customerEditedFields={customerEditedFields}
+          offeringsInvalidated={offeringsInvalidated}
+          busy={busy}
+          onContinue={onContinue}
+          onBack={onBack}
+        />
+      );
+    }
+    if (screen === "review" && onNavigateToScreen) {
+      return (
+        <ReviewScreen
+          brief={brief}
+          updateBrief={updateBrief}
+          scopeKind={scopeKind}
+          busy={busy}
+          onNavigateToScreen={onNavigateToScreen}
+          onBack={onBack}
+          onGenerate={onGenerate}
+        />
+      );
+    }
+  }
 
   const titleByScreen: Record<IntakeScreen, string> = {
     "brand-confirm": "Periksa brief brand Anda.",
@@ -1511,18 +1571,38 @@ function workflowMetaDescription(scopeKind: ScopeKind) {
 export function QuestionsStep({
   pack,
   brandName,
+  brief,
+  scopeKind,
   busy,
+  intakeSurface,
   onEdit,
   onBack,
   onRun,
 }: {
   pack: PromptPack;
   brandName: string;
+  brief?: BusinessBrief;
+  scopeKind?: ScopeKind;
   busy: Busy;
+  intakeSurface?: IntakeSurface;
   onEdit: (index: number, value: string) => void;
   onBack: () => void;
   onRun: () => void;
 }) {
+  if (intakeSurface?.has("questions") && brief && scopeKind) {
+    return (
+      <QuestionReviewScreen
+        pack={pack}
+        brief={brief}
+        scopeKind={scopeKind}
+        busy={busy}
+        onEdit={onEdit}
+        onBack={onBack}
+        onRun={onRun}
+      />
+    );
+  }
+
   const promptsBySlot = new Map<
     string,
     { prompt: PromptPack["prompts"][number]; index: number }
