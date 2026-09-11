@@ -3,6 +3,12 @@
 > Status: Working product plan
 > Depends on: [`03-business-facts.md`](./03-business-facts.md)
 > Updated: 2026-09-01
+> Related spec (in review, not yet implemented):
+> [`specs/008-recommendation-eligible-question-generation`](../../specs/008-recommendation-eligible-question-generation/SPEC.md)
+> — execution authority
+> [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md).
+> This plan describes the current v2 question behavior until R5's activation
+> gate.
 
 ## Objective
 

@@ -93,6 +93,14 @@ and production-method lock are implemented and automated checks are green; the
 first founder-supervised paid product-path report and its quality-gate judgment
 remain intentionally pending.
 
+Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/008-recommendation-eligible-question-generation/SPEC.md)
+is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
+for generated questions. Its sole execution authority is
+[`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
+which owns the gate ledger; next step there is R5's G0 baseline reconciliation.
+The package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
+evaluation gates still require their own explicit founder authorization.
+
 ## What is known
 
 - Nuave sells a one-time audit and a re-check, not subscription software.

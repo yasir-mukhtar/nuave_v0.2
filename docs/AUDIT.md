@@ -98,6 +98,12 @@ repository skill. The user review gate must confirm that:
 - regulated, professional-advice, service-quality, or unsupported superiority
   requests are excluded.
 
+[`Spec 008`](../specs/008-recommendation-eligible-question-generation/SPEC.md)
+(in review) plans a stricter recommendation-eligible semantic target for
+generated unnamed questions; its execution authority is
+[`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md).
+The rules above remain the current contract until R5's activation gate.
+
 ## Capture only what the report needs
 
 For every AI response, save:

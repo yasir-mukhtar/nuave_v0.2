@@ -115,6 +115,7 @@ context an agent must read. Do not implement a draft specification.
 | [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Superseded by Spec 007 |
 | [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md) |
 | [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md) | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance | Approved (founder-approved 2026-08-30); A4 documents reconciled |
+| [`008-recommendation-eligible-question-generation`](../specs/008-recommendation-eligible-question-generation/SPEC.md) | Recommendation-eligible semantic target for generated questions: natural Indonesian consumer decisions with genuine entity-recommendation opportunity | Approved (founder-approved 2026-09-11); execution authority is [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md), whose ledger owns gate status |
 
 ## Reference and history
 
