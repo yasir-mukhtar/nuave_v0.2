@@ -392,7 +392,7 @@ Each session reads current instructions/packet/ledger, checks branch/base and ex
 
 | Gate | Status | Commit / evidence | Next action |
 | --- | --- | --- | --- |
-| G0 | In progress | `ab8336b4b9a79051b1ce9b4c7cfe13156bf45d92` (R5 adoption + superseded-plan retirement + routing); baseline facts recorded above; Review 5 committed as provenance | Verify the deployed/old client bundle and served runtime config (not establishable from the repo); keep `fixture-kopi-taman-senja.ts` (`NVA-FIKTIF-001.questions.v1`) as the preserved ordinary pack; then G1 once `SPEC.md` reaches Approved. |
+| G0 | In progress | `ab8336b4b9a79051b1ce9b4c7cfe13156bf45d92` (R5 adoption + superseded-plan retirement + routing); baseline facts recorded above; Review 5 committed as provenance; `SPEC.md` founder-approved 2026-09-11 | Verify the deployed/old client bundle and served runtime config (not establishable from the repo); keep `fixture-kopi-taman-senja.ts` (`NVA-FIKTIF-001.questions.v1`) as the preserved ordinary pack; then G1. |
 | G1 | Not started | — | Map confirmed context and correction targets. |
 | G2 | Not started | — | Freeze evaluation and rule counterexamples. |
 | G2P | Not started | — | Prove feasibility and retained complexity. |

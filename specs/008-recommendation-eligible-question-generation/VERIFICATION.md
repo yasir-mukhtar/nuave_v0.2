@@ -34,6 +34,6 @@ here without a landed commit plus the evidence R5's gate table requires.
 
 ## Verification record
 
-- Result: Pending (spec In review; implementation not started)
+- Result: Pending (spec **Approved** 2026-09-11; implementation not started)
 - Date: Pending
 - Verified commit or working-tree state: Pending

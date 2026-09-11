@@ -94,12 +94,12 @@ first founder-supervised paid product-path report and its quality-gate judgment
 remain intentionally pending.
 
 Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/008-recommendation-eligible-question-generation/SPEC.md)
-exists **in review**: it plans a recommendation-eligible semantic target for
-generated questions. Its sole execution authority is
+is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
+for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
-which owns the gate ledger. Implementation beyond R5's G0 baseline
-reconciliation waits on the spec reaching **Approved**; the package's older
-`EXECUTION_PLAN.md` is superseded.
+which owns the gate ledger; next step there is R5's G0 baseline reconciliation.
+The package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
+evaluation gates still require their own explicit founder authorization.
 
 ## What is known
 

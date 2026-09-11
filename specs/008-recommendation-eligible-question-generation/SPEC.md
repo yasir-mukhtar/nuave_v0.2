@@ -1,8 +1,8 @@
 # Spec 008: recommendation-eligible question generation
 
-> Status: **In review**
+> Status: **Approved** (founder-approved 2026-09-11)
 > Owner: Founder / orchestrator
-> Updated: 2026-09-07
+> Updated: 2026-09-11
 > Implements: a deeper semantic target for Nuave-generated questions: natural Indonesian consumer decisions with genuine entity-recommendation opportunity
 
 This specification changes **how Nuave generates the suggested question pack**. It does not change the audited entity, the canonical ten-slot composition, the report method, or the customer's existing wording-edit contract unless this spec explicitly says so.
@@ -63,7 +63,7 @@ The concise semantic target is:
 
 > Generate natural questions about **choosing, finding, buying, hiring, visiting, or obtaining something**, not merely questions about the problem that thing solves.
 
-This property is called **recommendation-eligible intent**. It is semantic, not a requirement to use the word `rekomendasi`.
+This property is called **recommendation-eligible intent**. It is semantic, not a requirement to use the word `rekomendasi`. In this spec, “question” includes a natural direct request (for example, `Cariin jasa cuci AC di Depok yang bisa datang ke rumah.`); terminal punctuation is governed by the implementation plan, not by this contract.
 
 ## User and situation
 
@@ -94,7 +94,7 @@ This specification does **not**:
 - change the canonical count of 10 questions, the 6 unnamed / 4 named allocation, slot IDs, audited-brand identity policy, comparison-target identity policy, or slot-9 comparison relation;
 - change `reportAssessmentClass`, report denominators, appearance counting, recommendation counting, or report interpretation;
 - make every slot a `recommendation` assessment slot. A question can create entity opportunity while its canonical report class remains `comparison`, `information`, or `none`;
-- change the customer's existing V1 wording-edit policy or add a model-assisted purpose validator to customer edits;
+- change the customer's existing V1 wording-edit policy (slot ownership, fixed purposes, composition, and the no-model-assisted-purpose-validator rule) or add such a validator to customer edits. One explicit exception: the mechanical terminal-punctuation form check follows the implementation plan's compatible-008 amendment (R5 §5.1), which adoption of that plan approves;
 - redesign the Questions UI or the new intake experience;
 - add new required intake questions solely for generation;
 - use web search during question generation;
@@ -153,7 +153,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 
 ### Validation and observability
 
-- **R-23 — Separate semantic validation:** generated unnamed candidates must receive explicit eligibility results for at least entity demand, commercial relevance, openness, and anti-fingerprint safety before selection. Naturalness and portfolio diversity are evaluated separately rather than collapsed into one opaque “quality” flag.
+- **R-23 — Separate semantic validation:** generated unnamed candidates must receive explicit eligibility results for at least entity demand, commercial relevance, openness, and anti-fingerprint safety before selection. Naturalness and portfolio diversity are evaluated separately rather than collapsed into one opaque “quality” flag. These results are supplied by the versioned generation contract's structured fields, code-owned mechanical checks, and recorded evidence records (writer claims, evaluations, independent review); where no mechanical or independent judgment exists the recorded result is explicitly `not_evaluated` rather than fabricated. No separate runtime semantic-reviewer call is required.
 - **R-24 — Failure codes, not hidden reasoning:** validation and selection store compact machine-readable outcomes/reasons. Do not persist model chain-of-thought or free-form private reasoning.
 - **R-25 — Mechanical guards remain:** identity leakage, identity requirements, comparison relation, question shape, safety/privacy, unsupported entity-fact premises, and composition checks remain enforced. Semantic validation complements them; it does not replace them.
 - **R-25A — Selection criterion is not an asserted premise:** the unsupported-premise guard must distinguish “which option is cheapest/most complete/best fit?” from “Brand X is the cheapest/most complete/best.” A comparative or superlative token is not by itself a hard failure when it is part of an open consumer selection question. Named-entity assertions, guarantees, safety claims, and high-impact winner/suitability requests remain subject to the existing evidence and category-safety rules.
@@ -171,7 +171,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 
 - **R-32 — Recommendation-eligible fallback:** deterministic continuity questions must satisfy the same semantic target as far as deterministic generation can guarantee. Existing fallback forms that are informational rather than entity-seeking must be replaced. Unnamed fallback must not use `differentiator`, exact target-only numeric claims, or other target-specific material merely to make the question specific; prefer confirmed category/customer decision inputs and broader safe wording.
 - **R-33 — Safe degradation:** when a generated candidate fails semantic or mechanical validation and no valid reserve candidate exists, use a slot-safe recommendation-eligible fallback. Do not keep a weak question merely because it is grammatically natural.
-- **R-34 — Customer edits unchanged in V1:** after the suggestion reaches the customer, the existing mechanical approval contract and non-blocking purpose-drift behavior remain. This spec improves Nuave's generated defaults; changing customer-edit semantics requires a separate product decision.
+- **R-34 — Customer edits unchanged in V1:** after the suggestion reaches the customer, the existing mechanical approval contract and non-blocking purpose-drift behavior remain, with one explicit exception: the terminal-punctuation form check follows the implementation plan's compatible-008 amendment (R5 §5.1). This spec improves Nuave's generated defaults; changing customer-edit semantics requires a separate product decision.
 - **R-35 — Historical replay:** previously approved packs remain replayable verbatim. Do not relabel historical instruction versions, regenerate old questions, or change their report interpretation.
 
 ### Evaluation
@@ -224,7 +224,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 
 No material product question is intentionally left to a worker. The following are implementation gates, not license to change product behavior:
 
-1. Whether one-call structured self-review is sufficient in real provider output. The initial implementation assumes **yes**; if the controlled evaluation does not meet the spec, stop and return evidence before proposing a second model call.
+1. Whether one bounded generation call plus code-owned checks produces usable packs in real provider output. This is decided by the implementation plan's frozen pilot and release evaluations (R5 §8), not by a second model call; if the evaluated contract fails them, stop and return evidence before proposing more calls.
 2. Exact candidate-pool size and internal field names. They may be tuned as reversible implementation details as long as candidate generation and selection remain separate and all acceptance criteria hold.
 3. The production model/provider choice. This spec does not change it; provider substitution is evaluated separately from the semantic contract.
 
