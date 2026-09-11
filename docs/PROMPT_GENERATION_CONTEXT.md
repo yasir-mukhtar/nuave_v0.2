@@ -28,6 +28,14 @@ natural Indonesian, as a real Indonesian customer would ask it, not translated
 from an English template. A deterministic Indonesian set is retained only as
 the guaranteed fallback so this stage cannot hard-fail.
 
+> Planned change, not yet implemented:
+> [`Spec 008`](../specs/008-recommendation-eligible-question-generation/SPEC.md)
+> (in review) refines the semantic target to recommendation-eligible consumer
+> decisions. Its sole execution authority is
+> [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md);
+> this document still describes the shipped v2 writer until R5's activation
+> gate (G7).
+
 An earlier vertical-specific method is retained in the repository as history.
 It is not part of the current direction.
 

@@ -919,9 +919,12 @@ Create and approve only the next specification, not all of them at once:
 8. `008-public-launch-controls`
 9. `009-comparable-recheck`
 
-The numbering is a candidate sequence. If implementation evidence changes the
-critical path, record the change in `NOW.md` and the decision log rather than
-quietly reordering work.
+The numbering is a candidate sequence. The `008` package number is in fact
+already taken by
+[`specs/008-recommendation-eligible-question-generation`](../specs/008-recommendation-eligible-question-generation/SPEC.md);
+future candidates take the next free number when they are actually drafted. If
+implementation evidence changes the critical path, record the change in
+`NOW.md` and the decision log rather than quietly reordering work.
 
 ## 15. Definition of done for the thin v2 launch
 

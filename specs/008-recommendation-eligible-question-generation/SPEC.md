@@ -20,7 +20,7 @@ Read in order:
 7. `src/lib/audit/questions-id.ts`
 8. `src/lib/audit/questions-id-provider.ts`
 9. the directly relevant tests beside those files
-10. `EXECUTION_PLAN.md` in this package when implementing
+10. `NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md` in this package when implementing — the sole current execution authority and cross-session ledger (the older `EXECUTION_PLAN.md` is superseded and redirects there)
 
 At the intake-integration package only, also read the then-current `src/lib/intake/` data handoff and its approved contract. The planning baseline on 2026-09-07 is PR #46 (`feat/airbnb-intake-rebuild`), where question-generation wiring is intentionally not yet owned by the new intake module.
 
@@ -252,7 +252,7 @@ Do not make the internal semantic objects customer-facing, and do not turn them 
 
 ## Verification record
 
-- Verification artifact: `VERIFICATION.md` (create when implementation begins)
+- Verification artifact: `VERIFICATION.md` (created 2026-09-11 for R5 adoption provenance; gate evidence begins with implementation)
 - Result: Pending
 - Date: Pending
 - Verified commit or working-tree state: Pending

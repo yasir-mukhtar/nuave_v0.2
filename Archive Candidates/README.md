@@ -31,6 +31,7 @@ here is type-checked, linted, or built.
 | `completed-plans/HANDOFF_LP_REPLACE.md` | `docs/HANDOFF_LP_REPLACE.md` | One-shot handoff written "for the next agent continuing the task". The task landed. | Archive |
 | `completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md` | `docs/V2_SUBDOMAIN_LAUNCH_PLAN.md` | Executed in full: `https://v2.nuave.ai` is live on Cloudflare Workers with the access gate and CI verified. Founder confirmed done 2026-08-19; the facts it established now live in `docs/NOW.md`. | **Decided — archive** |
 | `superseded-plans/DOMAIN_TRANSITION_PLAN.md` | `docs/DOMAIN_TRANSITION_PLAN.md` | Targeted serving the apex `nuave.ai` from this repository with the v1 SaaS moved to `monitor.nuave.ai`. The `v2.` subdomain route shipped instead. Founder superseded it 2026-08-19. | **Decided — archive** |
+| `superseded-plans/SPEC_008_EXECUTION_PLAN_PRE_R5.md` | `specs/008-recommendation-eligible-question-generation/EXECUTION_PLAN.md` | Spec 008's pre-R5 execution plan, superseded when `NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md` was adopted as the spec's sole implementation authority (2026-09-11). A tombstone at the original path redirects to R5. | Archive |
 | `superseded-voice/voice-candidate-2026-08-10.md` | `docs/drafts/VOICE.md` | v1 voice candidate. Explicitly superseded by canonical `docs/VOICE.md`. | Archive |
 | `superseded-voice/voice-v2-candidate-2026-08-17.md` | `docs/drafts/VOICE-v2-candidate.md` | v2 voice candidate. Promoted into canonical `docs/VOICE.md` on 2026-08-17 (Spec 002 R-24/R-25). | Archive |
 
