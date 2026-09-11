@@ -1,0 +1,15 @@
+{
+  "schema":"nuave-buyer-decision-protocol-v4-manifest",
+  "version":"protocol-v4","frozen_at":"2026-09-07",
+  "contract":"protocol-v4-clean-stage1",
+  "settings":{"model":"gpt-5.6-luna","reasoning_effort":"low","service_tier":"default","web_search_tools":false,"store":false,"retries":0,"ranking":false,"repairs":false},
+  "files":[
+    {"kind":"contract","file":"contract.json","sha256":"c5aa6081d7a605c095632707532b779407834507f3a0c356d25b4a039d269144"},
+    {"kind":"instruction","stage":"one-shot","file":"instruction-s.md","sha256":"08e8665841874402bfa308b88db8b1d5dda99803a17e9a96c4d8f4b9144ca757"},
+    {"kind":"instruction","stage":"planner","file":"instruction-planner.md","sha256":"e8b62c4b7621daa9cb3ba20a47d513920a084e44e83806d7395bc3650c52cb30"},
+    {"kind":"instruction","stage":"realizer","file":"instruction-realizer.md","sha256":"9c3a934bf2c5de0ea08c2d49a2d5cfa7ab2b7b123d2262f2bd0783b9a53131ec"},
+    {"kind":"schema","stage":"planner","file":"planner-schema.json","sha256":"0b95f07997f2a2427e003009be5e3bc84c8d2c24a3411390160a78af0bf9fd5e"},
+    {"kind":"schema","stage":"final","file":"final-schema.json","sha256":"2f962f23461b8770c496f266c8537fc983bf704c34b665817d71cdfe5391423d"}
+  ],
+  "fixtures":[{"fixture_id":"v3-ac-repair-rich","file":"fixtures/ac-repair-rich.json","sha256":"285813501150dee4b1430510072a2473fa015a8ce5a89b0ace740ce577b84ea1"},{"fixture_id":"v3-ac-repair-sparse","file":"fixtures/ac-repair-sparse.json","sha256":"1db5253b78c39204273a6fa4821c36a9af754cdf4b4a03786d2e5d8f7478dbc8"},{"fixture_id":"v3-inventory-software-rich","file":"fixtures/inventory-software-rich.json","sha256":"b6e071897cfb7a0dad3844128a74c603c45a9fc9be8314d22c2a6d97e68fbf1a"},{"fixture_id":"v3-inventory-software-sparse","file":"fixtures/inventory-software-sparse.json","sha256":"f03377131f6c83f2ffc1e74b800273cb0887ec4fb7e9ae32b806024fea7fda23"},{"fixture_id":"v3-language-course-rich","file":"fixtures/language-course-rich.json","sha256":"40a959e8d3f958e7a1d320dda826678113172e87a93a7f965231a96d60fec6ea"},{"fixture_id":"v3-language-course-sparse","file":"fixtures/language-course-sparse.json","sha256":"cae8e4c565f2b27c5b82ebe97baf8defa4b58503ee043b7fcb69edf48b1df8c1"},{"fixture_id":"v3-laptop-retailer-rich","file":"fixtures/laptop-retailer-rich.json","sha256":"47703e963f6955d94923c7f9d6af4ee9cf530058f2d0ed94679f32bbeed7e932"},{"fixture_id":"v3-laptop-retailer-sparse","file":"fixtures/laptop-retailer-sparse.json","sha256":"429cf212a01c81e8557d69383cc2a399092d37e1f8b7df63232c167914c617fb"}]
+}

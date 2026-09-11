@@ -1,0 +1,3 @@
+# P planner instruction v4
+
+Plan exactly ten supported buyer decisions from the supplied brief. Do not write customer questions. For each intent provide: decision, evidence_refs, identity_mode (named or unnamed), required_scope, intended_measurement, comparison_target (null unless a comparison is required), and rationale. Include six unnamed and four named intents, including one genuine unnamed and one genuine named comparison. Several intents may probe one coherent decision; do not create padding. Record limitations for missing context. Never invent facts, preferences, locations, competitors, or capabilities.

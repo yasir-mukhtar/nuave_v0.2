@@ -1,0 +1,15 @@
+{
+  "schema":"nuave-buyer-decision-protocol-v3-fixtures-manifest",
+  "version":"protocol-v3",
+  "frozen_at":"2026-09-07",
+  "fixtures":[
+    {"fixture_id":"v3-ac-repair-rich","file":"ac-repair-rich.json","category":"AC repair","brief_richness":"rich","sha256":"285813501150dee4b1430510072a2473fa015a8ce5a89b0ace740ce577b84ea1"},
+    {"fixture_id":"v3-ac-repair-sparse","file":"ac-repair-sparse.json","category":"AC repair","brief_richness":"sparse","sha256":"1db5253b78c39204273a6fa4821c36a9af754cdf4b4a03786d2e5d8f7478dbc8"},
+    {"fixture_id":"v3-inventory-software-rich","file":"inventory-software-rich.json","category":"inventory software","brief_richness":"rich","sha256":"b6e071897cfb7a0dad3844128a74c603c45a9fc9be8314d22c2a6d97e68fbf1a"},
+    {"fixture_id":"v3-inventory-software-sparse","file":"inventory-software-sparse.json","category":"inventory software","brief_richness":"sparse","sha256":"f03377131f6c83f2ffc1e74b800273cb0887ec4fb7e9ae32b806024fea7fda23"},
+    {"fixture_id":"v3-language-course-rich","file":"language-course-rich.json","category":"language course","brief_richness":"rich","sha256":"40a959e8d3f958e7a1d320dda826678113172e87a93a7f965231a96d60fec6ea"},
+    {"fixture_id":"v3-language-course-sparse","file":"language-course-sparse.json","category":"language course","brief_richness":"sparse","sha256":"cae8e4c565f2b27c5b82ebe97baf8defa4b58503ee043b7fcb69edf48b1df8c1"},
+    {"fixture_id":"v3-laptop-retailer-rich","file":"laptop-retailer-rich.json","category":"laptop retail","brief_richness":"rich","sha256":"47703e963f6955d94923c7f9d6af4ee9cf530058f2d0ed94679f32bbeed7e932"},
+    {"fixture_id":"v3-laptop-retailer-sparse","file":"laptop-retailer-sparse.json","category":"laptop retail","brief_richness":"sparse","sha256":"429cf212a01c81e8557d69383cc2a399092d37e1f8b7df63232c167914c617fb"}
+  ]
+}

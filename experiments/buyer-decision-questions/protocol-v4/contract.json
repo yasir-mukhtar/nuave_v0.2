@@ -1,0 +1,24 @@
+{
+  "schema": "nuave-buyer-decision-contract-v3",
+  "version": "buyer-decision-v3",
+  "status": "frozen-offline-preparation",
+  "requests": 10,
+  "composition": {"unnamed": 6, "named": 4},
+  "comparisons": {"required_named": 1, "required_unnamed": 1},
+  "hard_rules": [
+    "Every request stands alone with all context needed for its answer.",
+    "Unnamed requests cannot name the business, signature product, or distinctive identity clue.",
+    "Named requests name the audited business when their intended measurement requires it.",
+    "A supported buyer decision must be traceable to a supplied need, fact, offering, or explicitly recorded unknown.",
+    "Property evaluation, explicit recommendation, comparison, drawback, discovery, and advice are distinct measurements.",
+    "A coverage label or planner claim is a proposal; final text must be reviewed for actual measurement fidelity.",
+    "Do not invent buyer preferences, business facts, competitors, locations, availability, prices, or guarantees.",
+    "Fragments and ordinary Indonesian variation are allowed when they remain answerable and natural."
+  ],
+  "review_gates": {
+    "keep_min": 7,
+    "keep_or_light_min": 9,
+    "blocking_semantic_checks": ["standalone", "grounding", "identity", "measurement_fidelity"],
+    "informational_checks": ["repetition", "old_measurement_crosswalk"]
+  }
+}

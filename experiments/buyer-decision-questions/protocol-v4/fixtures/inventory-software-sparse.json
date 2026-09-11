@@ -1,0 +1,3 @@
+{
+  "fixture_id":"v3-inventory-software-sparse","category":"inventory software","brief_richness":"sparse","business":{"brand_name":"Stok Rapi","entity_scope":"Indonesia","category":"software stok untuk usaha kecil","priority_offering":"aplikasi stok","verified_offerings":["aplikasi stok"],"verified_customer_needs":["ingin stok lebih rapi"],"verified_decision_criteria":[],"verified_competitor":null},"absent_context":["number of users","integrations","migration needs","price","industry"],"test_cases":["B2B terminology","missing requirements","no invented integration"]
+}

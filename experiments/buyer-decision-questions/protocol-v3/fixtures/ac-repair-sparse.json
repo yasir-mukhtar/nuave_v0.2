@@ -1,0 +1,3 @@
+{
+  "fixture_id":"v3-ac-repair-sparse","category":"AC repair","brief_richness":"sparse","business":{"brand_name":"Sejuk Jaya","entity_scope":"Bekasi","category":"jasa servis AC","priority_offering":"servis AC rumah","verified_offerings":["servis AC rumah"],"verified_customer_needs":["AC tidak dingin"],"verified_decision_criteria":[],"verified_competitor":null},"absent_context":["service area detail","diagnosis","price","schedule","warranty"],"test_cases":["advice intent","capability desired but unconfirmed","no comparator"]
+}

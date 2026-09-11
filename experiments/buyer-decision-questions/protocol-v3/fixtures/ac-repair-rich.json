@@ -1,0 +1,3 @@
+{
+  "fixture_id":"v3-ac-repair-rich","category":"AC repair","brief_richness":"rich","business":{"brand_name":"Dingin Sentosa","entity_scope":"Jakarta Selatan","category":"jasa perbaikan AC","priority_offering":"perbaikan AC kantor kecil","verified_offerings":["perbaikan AC kantor kecil","cuci AC"],"verified_customer_needs":["ingin jadwal yang bisa disesuaikan dan diagnosis yang jelas"],"verified_decision_criteria":["cakupan area","kejelasan diagnosis","jadwal","garansi pekerjaan"],"verified_competitor":{"name":"AC Prima","scope":"Jakarta Selatan"}},"absent_context":["exact appointment slot","price","office address"],"test_cases":["explicit comparator","scope completeness","service availability must remain unknown"]
+}

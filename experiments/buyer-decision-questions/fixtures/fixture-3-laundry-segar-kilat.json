@@ -1,0 +1,60 @@
+{
+  "schema": "nuave-buyer-decision-fixture-v1",
+  "fixture_id": "fixture-3-laundry-segar-kilat",
+  "role": "held-out",
+  "fictional": true,
+  "version": 1,
+  "frozen_at": "2026-09-06",
+  "review_title": "Laundry Segar Kilat (Bekasi) — fictional, held out",
+  "review_summary": "Fiksi eksperimen. Jasa laundry kiloan dan satuan di Bekasi; kebutuhan pembeli yang konkret: cucian selesai cepat dan aman, harga per kilo jelas, layanan antar-jemput.",
+  "business_summary": {
+    "name": "Laundry Segar Kilat",
+    "scope": "Kota Bekasi",
+    "category": "Jasa laundry kiloan dan satuan",
+    "offering": "Laundry kiloan",
+    "buyer_need": "Laundry selesai cepat dengan harga per kilo yang jelas dan bisa antar-jemput ke rumah",
+    "note": "Layanan antar-jemput dan kecepatan adalah keinginan pembeli, bukan klaim bahwa laundry menyediakannya. Tidak ada pembanding atau diferensiator yang disuplai."
+  },
+  "absent_context": [
+    "comparison_business",
+    "differentiator",
+    "conversion_action",
+    "official_sources"
+  ],
+  "business": {
+    "brand_name": "Laundry Segar Kilat",
+    "brand_name_variants": [],
+    "entity_scope": "Kota Bekasi",
+    "brand_type": "",
+    "category": "Jasa laundry kiloan dan satuan",
+    "market_context": "Kota Bekasi",
+    "target_customer": "Keluarga dan pekerja di Bekasi yang sibuk dan membutuhkan pakaian bersih tepat waktu",
+    "official_sources": [],
+    "verified_offerings": [],
+    "verified_customer_needs": [
+      "Laundry selesai cepat dengan hasil cucian yang aman untuk pakaian",
+      "Harga per kilogram yang jelas tanpa biaya tambahan yang tidak terduga",
+      "Bisa antar-jemput pakaian ke rumah"
+    ],
+    "verified_decision_criteria": [
+      "Ketepatan waktu selesai",
+      "Transparansi harga",
+      "Layanan antar-jemput",
+      "Perlakuan terhadap pakaian"
+    ],
+    "verified_competitor": {
+      "name": "",
+      "scope": "",
+      "source_url": ""
+    },
+    "priority_offering": "Laundry kiloan",
+    "conversion_action": "",
+    "customer_supplied_facts": [],
+    "known_accuracy_questions": [],
+    "usp": "",
+    "regulated_category_notes": "",
+    "language": "en-US",
+    "agency_name": "Nuave",
+    "agency_logo_data_url": ""
+  }
+}
