@@ -2,8 +2,8 @@
 
 **Natural Indonesian consumer questions and requests with genuine business-recommendation opportunity**
 
-> Status: Proposed execution contract, revised after Adversarial Review 4. No implementation, paid experiment, adoption, or release gate is claimed complete.
-> Revision: R5, 2026-09-07 UTC. Supersedes R4 upon adoption.
+> Status: Adopted 2026-09-11 on branch `docs/spec-008-recommendation-eligible-questions` (adoption commit `ab8336b4b9a79051b1ce9b4c7cfe13156bf45d92`), after Adversarial Review 5's proceed verdict. No implementation, paid experiment, or release gate is claimed complete.
+> Revision: R5, 2026-09-07 UTC. Supersedes R4 and the package's pre-R5 `EXECUTION_PLAN.md` (archived at `Archive Candidates/superseded-plans/SPEC_008_EXECUTION_PLAN_PRE_R5.md`; the old path is now a tombstone redirecting here). Source blob SHA-256 `6fa504d8e7e9e8b0985cebbb77556fd51b56c3eca9fc36a7a320ad8dd3338f44`.
 > Owner: Founder / implementation orchestrator.
 > Purpose: One standalone contract and execution ledger for work across sessions and devices.
 
@@ -381,9 +381,9 @@ Each session reads current instructions/packet/ledger, checks branch/base and ex
 
 | Adoption / configuration record | Value |
 | --- | --- |
-| Canonical path / adopted revision commit | Pending G0 |
-| Actual runtime/provider, intake handoff, old bundle and recovery path | Pending G0 |
-| Effective text limits, legacy form, current client/run contract | Pending G0 |
+| Canonical path / adopted revision commit | `specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`, adopted at `ab8336b4b9a79051b1ce9b4c7cfe13156bf45d92` on branch `docs/spec-008-recommendation-eligible-questions` over `main@e531ff4653c324007eb049bee93f2a3b922cf216` (unchanged since Review 5's inspection). Review 5 artifact committed beside this file at `NUAVE_SPEC_008_ADVERSARIAL_REVIEW_5.md`; provenance hashes in `VERIFICATION.md`. |
+| Actual runtime/provider, intake handoff, old bundle and recovery path | Repo evidence at baseline: question writer `NUAVE_QUESTION_PROVIDER=opencodego` (production-pinned; openai/gemini/openrouter testing-only), `gpt-5.6-luna` via `OPENAI_AUDIT_MODEL`/`AUDIT_MODEL`, endpoint `https://opencode.ai/zen/go/v1`, reasoning `low`, `INDONESIAN_QUESTION_MAX_OUTPUT_TOKENS=2048`, no search (one bounded call + deterministic Indonesian fallback). Intake handoff: `BusinessBrief` JSON to `POST /api/audit/prompts`; `src/lib/intake/` does not exist at baseline — PR #46 `feat/airbnb-intake-rebuild` remains OPEN at `afd518dd75d436319c7a5f1c31db9d640e2728d3` with question wiring still unowned by intake; PR #47 (cheaper-inference experiment) also open, neither merged into this baseline. Deployed/old client bundle: NOT established from repository — the v2.nuave.ai worker exists but its served build/bundle is unverified; remains a G0/G5 verification item. Recovery path: pre-start fact correction regenerates the pack under the same order; post-start runs lock; state persists in browser `sessionStorage` only. |
+| Effective text limits, legacy form, current client/run contract | Question text max 700 chars; v2 legacy form requires exactly one terminal `?` (compatible-008 punctuation per §5.1 is NOT active). Run request: `client_contract_version` literal + `prompts` array of exactly 10 canonical prompt cores; legacy `inputs_used`/diagnostics tolerated. Client serializes `promptPack` through `AuditWorkflow.tsx` and restores via `sessionStorage`. `{ brief }` parses via `businessBriefSchema`; failures return a generic 400 — correctable-fact classification per Review 5 F-01 is open G1/G5 work. |
 | G2 input partitions, rules, configuration hashes, numeric absolute/incremental ceilings and authorization | Pending G2 |
 | Pilot decisions, chosen contract/components, amendments | Pending G2P |
 | Policy resolver revision, GET timeout, concrete evidence consumers | Pending G4 |
@@ -392,7 +392,7 @@ Each session reads current instructions/packet/ledger, checks branch/base and ex
 
 | Gate | Status | Commit / evidence | Next action |
 | --- | --- | --- | --- |
-| G0 | Not started | — | Adopt R5 and reconcile actual baseline. |
+| G0 | In progress | `ab8336b4b9a79051b1ce9b4c7cfe13156bf45d92` (R5 adoption + superseded-plan retirement + routing); baseline facts recorded above; Review 5 committed as provenance | Verify the deployed/old client bundle and served runtime config (not establishable from the repo); keep `fixture-kopi-taman-senja.ts` (`NVA-FIKTIF-001.questions.v1`) as the preserved ordinary pack; then G1 once `SPEC.md` reaches Approved. |
 | G1 | Not started | — | Map confirmed context and correction targets. |
 | G2 | Not started | — | Freeze evaluation and rule counterexamples. |
 | G2P | Not started | — | Prove feasibility and retained complexity. |
