@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nuave-buyer-decision-protocol-v4-plan",
+  "type":"object","additionalProperties":false,
+  "required":["intents","limitations"],
+  "properties":{
+    "intents":{"type":"array","minItems":10,"maxItems":10,"items":{"type":"object","additionalProperties":false,"required":["decision","evidence_refs","identity_mode","required_scope","intended_measurement","comparison_target","rationale"],"properties":{"decision":{"type":"string","minLength":1},"evidence_refs":{"type":"array","items":{"type":"string"}},"identity_mode":{"enum":["named","unnamed"]},"required_scope":{"type":"string"},"intended_measurement":{"type":"string","minLength":1},"comparison_target":{"type":["string","null"]},"rationale":{"type":"string","minLength":1}}}},
+    "limitations":{"type":"array","items":{"type":"string"}}
+  }
+}

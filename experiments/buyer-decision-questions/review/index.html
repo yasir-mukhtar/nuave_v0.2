@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuave — buyer-decision question experiment review</title>
+<style>
+  :root {
+    --fg: #1c1917; --muted: #78716c; --border: #e7e5e4; --card: #ffffff;
+    --accent: #2563eb; --ok: #15803d; --warn: #b45309; --bad: #b91c1c;
+    --soft: #f5f5f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         color: var(--fg); margin: 0; background: #fafaf9; line-height: 1.45; }
+  header { padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--card); }
+  header h1 { margin: 0 0 4px; font-size: 19px; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 980px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 20px 24px 80px; }
+  nav.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 4px; }
+  nav.tabs button { border: 1px solid var(--border); background: var(--card); padding: 7px 12px;
+                    border-radius: 8px; font-size: 13px; cursor: pointer; }
+  nav.tabs button.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); font-weight: 600; }
+  .fixture-panel { display: none; }
+  .fixture-panel.active { display: block; }
+  .context { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .context h2 { margin: 0 0 6px; font-size: 15px; }
+  .context .chips { margin: 0 0 8px; }
+  .chip { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 11.5px;
+          border: 1px solid var(--border); background: var(--soft); margin-right: 6px; }
+  .chip.dev { background: #fff7ed; border-color: #fdba74; color: var(--warn); }
+  .chip.heldout { background: #eff6ff; border-color: #93c5fd; color: var(--accent); }
+  .chip.fictional { background: #fdf2f8; border-color: #f9a8d4; color: #be185d; }
+  dl.facts { display: grid; grid-template-columns: 190px 1fr; gap: 3px 12px; font-size: 13.5px; margin: 8px 0; }
+  dl.facts dt { color: var(--muted); font-weight: 500; }
+  dl.facts dd { margin: 0; }
+  .absent { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  .pack { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin: 14px 0; }
+  .pack-head { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex;
+               justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .pack-head h3 { margin: 0; font-size: 14.5px; }
+  .pack-head .anon { font-weight: 700; }
+  .progress { font-size: 12px; color: var(--muted); }
+  .progress b.good { color: var(--ok); } .progress b.bad { color: var(--bad); }
+  .q { padding: 10px 16px; border-bottom: 1px solid var(--soft); }
+  .q:last-child { border-bottom: none; }
+  .q .text { font-size: 14.5px; margin: 0 0 8px; }
+  .q .meta { display: none; font-size: 12px; color: var(--muted); background: var(--soft);
+             border-radius: 6px; padding: 6px 10px; margin: 0 0 8px; }
+  .revealed .q .meta { display: block; }
+  .marks { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .marks button { border: 1px solid var(--border); background: var(--card); border-radius: 7px;
+                  padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .marks button[data-mark="keep"].sel { background: #dcfce7; border-color: var(--ok); color: var(--ok); font-weight: 600; }
+  .marks button[data-mark="light"].sel { background: #fef9c3; border-color: #ca8a04; color: var(--warn); font-weight: 600; }
+  .marks button[data-mark="replace"].sel { background: #fee2e2; border-color: var(--bad); color: var(--bad); font-weight: 600; }
+  .reason { display: none; margin-top: 8px; }
+  .marks .replace-sel .reason { display: block; }
+  .reason label { display: inline-flex; gap: 5px; align-items: center; margin-right: 14px; font-size: 12.5px; }
+  .note-box { width: 100%; margin-top: 8px; border: 1px solid var(--border); border-radius: 6px;
+              padding: 6px 8px; font-size: 12.5px; font-family: inherit; }
+  .qa-note { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px;
+             font-size: 12.5px; font-family: inherit; }
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+  .toolbar button, .toolbar .btn { border: 1px solid var(--border); background: var(--card); border-radius: 8px;
+                                   padding: 7px 13px; font-size: 13px; cursor: pointer; }
+  .toolbar button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .toolbar button:disabled { opacity: .45; cursor: default; }
+  .banner { border-radius: 8px; padding: 8px 12px; font-size: 13px; margin: 10px 0; }
+  .banner.warn { background: #fffbeb; border: 1px solid #fde68a; color: var(--warn); }
+  .banner.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--ok); }
+  .banner.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .banner.danger { background: #fef2f2; border: 1px solid #fecaca; color: var(--bad); }
+  details.checklist { border: 1px solid var(--border); border-radius: 8px; background: var(--card); margin: 8px 0; }
+  details.checklist summary { cursor: pointer; padding: 8px 12px; font-size: 13.5px; font-weight: 600; }
+  details.checklist .inner { padding: 6px 14px 12px; }
+  .item { margin: 10px 0; font-size: 13px; }
+  .item .qtitle { font-weight: 600; margin-bottom: 3px; }
+  .item label { margin-right: 12px; display: inline-flex; gap: 4px; align-items: center; }
+  .item .s-ok { color: var(--ok); } .item .s-issue { color: var(--bad); }
+  .item select, .pref select { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 13px; }
+  .pref-block { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin: 14px 0; }
+  .pref-block h3 { margin: 0 0 8px; font-size: 14px; }
+  footer { border-top: 1px solid var(--border); margin-top: 26px; padding-top: 12px;
+           color: var(--muted); font-size: 12.5px; }
+  .reveal-meta { font-size: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;
+                 padding: 8px 12px; margin: 10px 0; }
+  code { background: var(--soft); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .q-index { color: var(--muted); font-size: 12px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nuave — Indonesian audit-question experiment (buyer-decision approach)</h1>
+  <p>Blind first pass: mark every question in every pack before revealing metadata. One mark per question —
+     <b>Keep</b> (a plausible customer could send it unchanged), <b>Light</b> (small wording edit; decision and
+     context intact), <b>Replace</b> (sentence or underlying decision needs substantial revision). Mark all ten
+     questions in both packs and choose an overall pack preference to save the pass and unlock the metadata pass.
+     Everything is stored locally in this browser and can be exported at any time.</p>
+</header>
+<main id="main"></main>
+<script src="data.js"></script>
+<script>
+"use strict";
+(function () {
+  function boot() {
+    const DATA = window.EXPERIMENT_DATA;
+    const REVIEW_MODE = DATA.review_mode || "a-vs-b";
+    const STORE_KEY = REVIEW_MODE === "b-v1-vs-b-v2"
+      ? "nuave-bdq-review-b-v1-vs-b-v2"
+      : "nuave-bdq-review-v1";
+    // Bundle mode is selected before boot; v2 uses the B v1 vs B v2 pair.
+    const MARK_LABELS = { keep: "Keep", light: "Light", replace: "Replace" };
+  const PASS2_ITEMS = [
+    { id: "standalone", title: "Standalone answerability",
+      help: "Every request is answerable on its own: no hidden context like \u201cnear my office\u201d or references to other requests." },
+    { id: "grounding", title: "Grounding / unsupported claims",
+      help: "No request asserts a business quality, location, price or service the fixture does not supply; no invented scenarios." },
+    { id: "identity", title: "Identity leakage",
+      help: "Unnamed requests do not leak the business identity (name, signature product, identifying clue); the 6/4 named composition is right." },
+    { id: "coverage", title: "Useful discovery & named-evaluation coverage",
+      help: "Beyond repeated recommendation requests: option discovery, need-based search, named evaluation (incl. a direct recommendation), comparisons (unnamed and named), and a drawback check are genuinely present." },
+    { id: "repetition", title: "Repetition / padding",
+      help: "No exact duplicates and no empty paraphrase padding; overlaps are only between related intentions." },
+    { id: "audit_coverage", title: "Changed or lost old measurements",
+      help: "A packs: do the ten fixed measurements survive (repairs/fallback flagged)? B packs: does this pack still enable the useful audit measurements the old ten-slot set captured (recommendation, discovery, named evaluation, comparison, drawback)? Human judgment; the tags/metadata below are assists only." },
+  ];
+  const PASS2_BLOCKING_ITEMS = ["standalone", "grounding", "identity", "coverage"];
+  const COVERAGE_LABELS = {
+    discover_options: "discover options",
+    find_for_need: "find for a need",
+    evaluate_business: "evaluate named business",
+    compare_alternatives: "compare alternatives",
+    drawback_check: "drawback / hesitation",
+  };
+  const REPLACE_REASONS = [
+    { id: "wrong_decision", label: "Wrong decision" },
+    { id: "awkward_wording", label: "Awkward wording" },
+    { id: "missing_invented_context", label: "Missing / invented context" },
+  ];
+
+  let store = loadStore();
+  const runs = DATA.runs || [];
+
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (error) {
+      console.warn("localStorage unavailable", error);
+    }
+    return { schema: "nuave-bdq-review-state-v1", comparison: {}, extras: {}, createdAt: new Date().toISOString() };
+  }
+  function saveStore() {
+    store.lastSavedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    } catch (error) {
+      console.warn("localStorage write failed", error);
+    }
+  }
+
+  function latestRun(condition, kind, fixtureId) {
+    const candidates = runs
+      .filter((run) => run.condition === condition && run.run_kind === kind && run.fixture_id === fixtureId)
+      .sort((a, b) => (a.run_id < b.run_id ? -1 : 1));
+    return candidates.length ? candidates[candidates.length - 1] : null;
+  }
+  function runById(runId) {
+    return runs.find((run) => run.run_id === runId) || null;
+  }
+  function fixtureById(fixtureId) {
+    return (DATA.fixtures || []).find((fixture) => fixture.fixture_id === fixtureId) || null;
+  }
+
+  function shuffleFor(label) {
+    // Seeded by label string so the first visit's order is stable across reloads
+    // of the same browser, and persists in the store afterwards anyway.
+    let seed = 0;
+    for (const char of label) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+    const rand = () => {
+      seed = (seed * 1103515245 + 12345) >>> 0;
+      return seed / 0xffffffff;
+    };
+    const order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    for (let index = order.length - 1; index > 0; index -= 1) {
+      const pick = Math.floor(rand() * (index + 1));
+      [order[index], order[pick]] = [order[pick], order[index]];
+    }
+    return order;
+  }
+
+  function packState(fixtureId, condition) {
+    const fixtureState = store.comparison[fixtureId] || (store.comparison[fixtureId] = {});
+    const key = condition.toLowerCase();
+    let state = fixtureState[key];
+    if (!state) {
+      state = { displayOrder: shuffleFor(`${fixtureId}:${condition}`), marks: {}, pass2: { items: {} }, revealed: false };
+      fixtureState[key] = state;
+    }
+    return state;
+  }
+  function extraState(runId) {
+    let state = store.extras[runId];
+    if (!state) {
+      state = { displayOrder: shuffleFor(`extra:${runId}`), marks: {}, pass2: { items: {} }, revealed: false };
+      store.extras[runId] = state;
+    }
+    return state;
+  }
+  function fixtureState(fixtureId) {
+    return store.comparison[fixtureId] || (store.comparison[fixtureId] = {});
+  }
+
+  // ---------------------------------------------------------------- rendering
+  const mainEl = document.getElementById("main");
+
+  function el(html) {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = html.trim();
+    return wrap.firstChild;
+  }
+
+  // Keep the selected fixture stable when marking a question causes a full
+  // render. Without this, render() clears the DOM and showFirst() returns to
+  // the first fixture every time.
+  let activePanelId = null;
+
+  function render() {
+    const previousPanelId = activePanelId || mainEl.querySelector(".fixture-panel.active")?.getAttribute("data-panel-id");
+    const fixtures = DATA.fixtures || [];
+    const panelIds = new Set([...fixtures.map((fixture) => fixture.fixture_id), "extras"]);
+    activePanelId = previousPanelId && panelIds.has(previousPanelId)
+      ? previousPanelId
+      : fixtures[0]?.fixture_id || "extras";
+    mainEl.innerHTML = "";
+    const banner = missingRunsBanner();
+    if (banner) mainEl.appendChild(banner);
+
+    if (fixtures.length === 0) {
+      mainEl.appendChild(el(`<div class="banner warn">No fixtures found. Rebuild with review/build-data.mjs.</div>`));
+      return;
+    }
+
+    const tabs = el(`<nav class="tabs">${fixtures.map((fixture) =>
+      `<button data-fixture="${fixture.fixture_id}" class="${activePanelId === fixture.fixture_id ? "active" : ""}">${escapeHtml(shortName(fixture))}</button>`).join("")}
+      <button data-panel="extras" class="${activePanelId === "extras" ? "active" : ""}">Additional packs</button></nav>`);
+    mainEl.appendChild(tabs);
+
+    for (const fixture of fixtures) {
+      const panel = el(`<div class="fixture-panel ${activePanelId === fixture.fixture_id ? "active" : ""}" data-panel-id="${fixture.fixture_id}"></div>`);
+      panel.appendChild(renderFixture(fixture));
+      mainEl.appendChild(panel);
+    }
+    const extrasPanel = el(`<div class="fixture-panel ${activePanelId === "extras" ? "active" : ""}" data-panel-id="extras"></div>`);
+    extrasPanel.appendChild(renderExtras());
+    mainEl.appendChild(extrasPanel);
+
+    const toolbar = el(`<div class="toolbar">
+      <button data-action="export" class="primary">Export review (download JSON)</button>
+      <button data-action="import">Import review JSON</button>
+      <button data-action="reset">Reset ALL reviews for the current data set</button>
+      <span style="color:var(--muted);font-size:12px">Autosaves locally after every change.</span>
+      <input type="file" id="import-file" accept="application/json" style="display:none">
+    </div>`);
+    mainEl.appendChild(toolbar);
+    toolbar.querySelector('[data-action="export"]').addEventListener("click", exportReview);
+    toolbar.querySelector('[data-action="import"]').addEventListener("click", () => document.getElementById("import-file").click());
+    document.getElementById("import-file").addEventListener("change", importReview);
+    toolbar.querySelector('[data-action="reset"]').addEventListener("click", () => {
+      if (window.confirm("Reset ALL stored reviews and blind mappings? This cannot be undone locally.")) {
+        store = { schema: "nuave-bdq-review-state-v1", comparison: {}, extras: {}, createdAt: new Date().toISOString() };
+        saveStore();
+        render();
+      }
+    });
+
+    tabs.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-fixture], button[data-panel]");
+      if (!button) return;
+      const target = button.getAttribute("data-fixture") || button.getAttribute("data-panel");
+      activePanelId = target;
+      tabs.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
+      mainEl.querySelectorAll(".fixture-panel").forEach((panel) => {
+        panel.classList.toggle("active", panel.getAttribute("data-panel-id") === target);
+      });
+    });
+    showFirst();
+  }
+
+  function showFirst() {
+    const active = mainEl.querySelector(".fixture-panel.active");
+    if (active) return;
+    const first = mainEl.querySelector(".fixture-panel");
+    if (first) first.classList.add("active");
+  }
+
+  function reviewPairFor(fixtureId) {
+    return (DATA.review_pairs || []).find((pair) => pair.fixture_id === fixtureId) || null;
+  }
+
+  function missingRunsBanner() {
+    const fixtures = DATA.fixtures || [];
+    const missing = REVIEW_MODE === "b-v1-vs-b-v2"
+      ? fixtures.filter((fixture) => {
+          const pair = reviewPairFor(fixture.fixture_id);
+          return !pair?.baseline || !pair?.candidate;
+        })
+      : fixtures.filter((fixture) => !latestRun("A", "initial", fixture.fixture_id) || !latestRun("B", "initial", fixture.fixture_id));
+    if (missing.length === 0) {
+      const modeText = REVIEW_MODE === "b-v1-vs-b-v2" ? "B v1 baseline and B v2 candidate" : "A and B initial runs";
+      return el(`<div class="banner ok">${modeText} present: ${runs.length} run record(s) bundled (built ${escapeHtml(DATA.built_at || "?")}). Review blindly below, then export and run the gate CLI.</div>`);
+    }
+    return el(`<div class="banner warn">Missing comparison runs for: ${missing.map((fixture) => fixture.fixture_id).join(", ")}. Rebuild the bundle after the required live run.</div>`);
+  }
+
+  function shortName(fixture) {
+    return (fixture.business_summary && fixture.business_summary.name) || fixture.fixture_id;
+  }
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[char]));
+  }
+
+  // ------------------------------------------------------------ fixture view
+  function renderFixture(fixture) {
+    const wrap = el(`<div></div>`);
+    const pair = REVIEW_MODE === "b-v1-vs-b-v2" ? reviewPairFor(fixture.fixture_id) : null;
+    // In the v2 calibration bundle, the anonymous packs are B v1 baseline
+    // and B v2 candidate. In the normal bundle they remain A and B.
+    const runA = pair ? pair.baseline : latestRun("A", "initial", fixture.fixture_id);
+    const runB = pair ? pair.candidate : latestRun("B", "initial", fixture.fixture_id);
+    const both = Boolean(runA && runB);
+    const cssRole = fixture.role === "development" ? "dev" : "heldout";
+    wrap.appendChild(el(`<section class="context">
+      <h2>${escapeHtml(fixture.review_title)}</h2>
+      <div class="chips">
+        <span class="chip ${cssRole}">${fixture.role === "development" ? "development material" : "held out"}</span>
+        ${fixture.fictional ? `<span class="chip fictional">fictional</span>` : ""}
+        <span class="chip">fixture v${fixture.version}</span>
+      </div>
+      <p style="font-size:13.5px;margin:0 0 6px">${escapeHtml(fixture.review_summary)}</p>
+      ${renderContextFacts(fixture)}
+      <div class="absent"><b>Not supplied (do not expect questions to use these):</b> ${(fixture.absent_context || []).map(escapeHtml).join(", ")}</div>
+    </section>`));
+    if (!both) {
+      wrap.appendChild(el(`<div class="banner info">Waiting for the other initial run to appear in data.js (rebuild with review/build-data.mjs).</div>`));
+      return wrap;
+    }
+    const stateA = packState(fixture.fixture_id, "A");
+    const stateB = packState(fixture.fixture_id, "B");
+    if (!stateA.runId) stateA.runId = runA.run_id;
+    if (!stateB.runId) stateB.runId = runB.run_id;
+    const stale = stateA.runId !== runA.run_id || stateB.runId !== runB.run_id;
+    if (stale) {
+      wrap.appendChild(el(`<div class="banner warn">The bundled initial runs changed since this review session started (or were refreshed). If you already reviewed, export first or reset this fixture below.</div>`));
+    }
+
+    const anon = packOrderFor(fixture.fixture_id);
+    // Render in anonymous order, NOT always A first: labelA === "Paket 1"
+    // means the first pack in the list is condition A, otherwise it is B.
+    const firstKey = anon.labelA === "Paket 1" ? "A" : "B";
+    const secondKey = firstKey === "A" ? "B" : "A";
+    const firstRun = firstKey === "A" ? runA : runB;
+    const secondRun = secondKey === "A" ? runA : runB;
+    // The anonymous order is independent from the condition-to-label mapping.
+    // `anon.labelA` always belongs to condition A, even when B is rendered
+    // first. Passing those labels to the render order used to swap the visible
+    // packs while leaving the preference controls mapped to the conditions.
+    wrap.appendChild(
+      renderPack({ fixture, run: firstRun, anonLabel: "Paket 1", state: firstKey === "A" ? stateA : stateB, conditionKey: firstKey, stale }),
+    );
+    wrap.appendChild(
+      renderPack({ fixture, run: secondRun, anonLabel: "Paket 2", state: secondKey === "A" ? stateA : stateB, conditionKey: secondKey, stale }),
+    );
+    wrap.appendChild(renderPreference(fixture, anon));
+    return wrap;
+  }
+
+  function renderContextFacts(fixture) {
+    const b = fixture.business;
+    const facts = [
+      ["Brand", b.brand_name],
+      ["Scope", b.entity_scope || b.market_context],
+      ["Category (raw)", b.category],
+      ["Offering", [b.priority_offering, ...(b.verified_offerings || [])].filter(Boolean).join(", ") || "—"],
+      ["Buyer need(s)", (b.verified_customer_needs || []).join(" • ") || "—"],
+      ["Buyer decision considerations", (b.verified_decision_criteria || []).join(" • ") || "—"],
+      ["Customer context", b.target_customer || "—"],
+      ["Differentiator", b.usp || "—"],
+      ["Conversion action", b.conversion_action || "—"],
+      ["Comparator", b.verified_competitor && b.verified_competitor.name ? `${b.verified_competitor.name} (${b.verified_competitor.scope})` : "absent"],
+    ];
+    return el(`<dl class="facts">${facts.map(([label, value]) =>
+      `<dt>${label}</dt><dd>${escapeHtml(value)}</dd>`).join("")}</dl>`);
+  }
+
+  function packOrderFor(fixtureId) {
+    const state = fixtureState(fixtureId);
+    if (!state.packOrder) {
+      state.packOrder = Math.random() < 0.5 ? { labelA: "Paket 1", labelB: "Paket 2" } : { labelA: "Paket 2", labelB: "Paket 1" };
+      saveStore();
+    }
+    return state.packOrder;
+  }
+
+  function revealedPackLabel(conditionKey) {
+    if (REVIEW_MODE === "b-v1-vs-b-v2") {
+      return conditionKey === "A" ? "B v1 baseline" : "B v2 candidate";
+    }
+    return conditionKey === "A" ? "current ten-slot approach (A)" : "buyer-decision approach (B)";
+  }
+
+  // ------------------------------------------------------------------- pack
+  function renderPack({ fixture, run, anonLabel, state, conditionKey, stale }) {
+    const wrap = el(`<section class="pack ${state.revealed ? "revealed" : ""}"></section>`);
+    const record = run;
+    const questions = (record.output && record.output.questions) || [];
+    const counts = markCounts(state.marks);
+    wrap.appendChild(el(`<div class="pack-head">
+      <h3><span class="anon">${escapeHtml(anonLabel)}</span>
+        <span style="font-weight:400;color:var(--muted);font-size:12.5px">
+        ${state.revealed ? ` — ${revealedPackLabel(conditionKey)}` : " — identity hidden until this pack is fully marked"}</span></h3>
+      <span class="progress">${counts.keep} <b class="good">Keep</b> · ${counts.light} <b>Light</b> · ${counts.replace} <b class="bad">Replace</b> · ${10 - counts.done} unanswered</span>
+    </div>`));
+    if (stale) {
+      wrap.appendChild(el(`<div class="banner danger" style="margin:10px 16px">The underlying run for this pack changed (now ${escapeHtml(run.run_id)}). Reset this fixture to re-review the current pack.</div>`));
+    }
+    if (record.status === "failed") {
+      wrap.appendChild(el(`<div class="banner danger" style="margin:10px 16px">This run FAILED: ${escapeHtml(record.failure_reason || "unknown")} — nothing to review.</div>`));
+      return wrap;
+    }
+    if (record.status === "completed_with_deterministic_fallback") {
+      wrap.appendChild(el(`<div class="banner warn" style="margin:10px 16px">This pack fell back to Nuave's deterministic Indonesian template pack — the wording is NOT model output (provenance shown after reveal).</div>`));
+    }
+    const container = el(`<div></div>`);
+    for (const position of state.displayOrder) {
+      const question = questions[position];
+      if (!question) continue;
+      const qIndex = question.index;
+      const mark = state.marks[String(qIndex)] || {};
+      const q = el(`<div class="q" data-q="${qIndex}">
+        <p class="text"><span class="q-index">#${qIndex}</span>${escapeHtml(question.text)}</p>
+        <div class="meta">${escapeHtml(questionMeta(record, question, state))}</div>
+        <div class="marks" data-markstate="${mark.mark || ""}">
+          ${["keep", "light", "replace"].map((value) =>
+            `<button data-mark="${value}" class="${mark.mark === value ? "sel" : ""}">${MARK_LABELS[value]}</button>`).join("")}
+        </div>
+        <div class="reason">
+          <div style="font-size:12.5px;margin-bottom:4px">Reason for Replace:</div>
+          ${REPLACE_REASONS.map((reason) =>
+            `<label><input type="radio" name="reason-${record.run_id}-${qIndex}" value="${reason.id}" ${mark.replace_reason === reason.id ? "checked" : ""}> ${escapeHtml(reason.label)}</label>`).join("")}
+        </div>
+        <input class="note-box" data-note placeholder="Optional note for this question" value="${escapeHtml(mark.note || "")}">
+      </div>`);
+      q.querySelectorAll(".marks button").forEach((button) => {
+        button.addEventListener("click", () => {
+          const value = button.getAttribute("data-mark");
+          const previous = state.marks[String(qIndex)] || {};
+          state.marks[String(qIndex)] = {
+            ...previous,
+            mark: value,
+            // Capture the text at the moment of judgment. Export must never
+            // reconstruct this from a later record.
+            question_text: previous.question_text === undefined ? question.text : previous.question_text,
+          };
+          saveStore();
+          render();
+        });
+      });
+      q.querySelectorAll(".reason input").forEach((radio) => {
+        radio.addEventListener("change", () => {
+          state.marks[String(qIndex)] = { ...(state.marks[String(qIndex)] || {}), replace_reason: radio.value };
+          saveStore();
+          render();
+        });
+      });
+      q.querySelector(".note-box").addEventListener("input", (event) => {
+        state.marks[String(qIndex)] = { ...(state.marks[String(qIndex)] || {}), note: event.target.value };
+        saveStore();
+      });
+      container.appendChild(q);
+    }
+    wrap.appendChild(container);
+
+    const revealed = state.revealed;
+    const revealBlock = el(`<div class="toolbar" style="margin:6px 16px 12px">
+      ${revealed ? "" : `<button class="primary" data-reveal>Pass 1 complete — reveal metadata (pass 2)</button>`}
+      <button data-reset>Reset this pack's review</button>
+      ${revealed ? `<button data-hide>Hide metadata again</button>` : ""}
+    </div>`);
+    wrap.appendChild(revealBlock);
+    revealBlock.querySelector("[data-reset]").addEventListener("click", () => {
+      state.marks = {}; state.pass2 = { items: {} }; state.revealed = false;
+      saveStore(); render();
+    });
+    const revealButton = revealBlock.querySelector("[data-reveal]");
+    if (revealButton) {
+      const prefOk = fixture ? Boolean(fixtureState(fixture.fixture_id).preference) : true;
+      const needed = canReveal(state, prefOk);
+      revealButton.disabled = !needed.ready;
+      revealButton.title = needed.reason;
+      revealButton.addEventListener("click", () => {
+        if (!needed.ready) return;
+        state.revealed = true;
+        saveStore();
+        render();
+      });
+    }
+    const hideButton = revealBlock.querySelector("[data-hide]");
+    if (hideButton) hideButton.addEventListener("click", () => { state.revealed = false; saveStore(); render(); });
+
+    if (revealed) {
+      wrap.appendChild(renderPass2({ record, state, conditionKey }));
+    }
+    return wrap;
+  }
+
+  function canReveal(state, prefOk) {
+    const done = Object.keys(state.marks).length;
+    if (done < 10) return { ready: false, reason: `Mark all 10 questions first (${done}/10 marked).` };
+    if (!prefOk) return { ready: false, reason: "Choose the overall pack preference below to finish pass 1 before revealing metadata." };
+    return { ready: true, reason: "" };
+  }
+
+  function questionMeta(record, question, state) {
+    const bits = [];
+    const cls = question.final_classification === "menyebut_bisnis_anda" ? "names the business" : "does not name the business";
+    if (state.revealed) {
+      bits.push(`classification: ${cls}`);
+      if (record.condition === "A" && question.slot) {
+        bits.push(`old slot ${question.slot.order} — ${question.slot.category} (${question.slot.measurement_purpose})`);
+      }
+      if (record.condition === "B" && question.coverage) {
+        bits.push(`declared coverage: ${COVERAGE_LABELS[question.coverage] || question.coverage}`);
+      }
+      if (question.generated_by === "deterministic_slot_repair") {
+        bits.push("⚠ replaced by deterministic slot repair (raw text preserved in the record)");
+      }
+      if (question.generated_by === "deterministic_fallback") {
+        bits.push("⚠ deterministic fallback wording — not model output");
+      }
+      if (question.limitation) bits.push(`declared limitation: ${question.limitation}`);
+      if (question.original_suggestion && question.original_suggestion !== question.text) {
+        bits.push(`original (raw): ${question.original_suggestion}`);
+      }
+    }
+    return bits.join(" · ") || "(metadata hidden until reveal)";
+  }
+
+  function markCounts(marks) {
+    const values = Object.values(marks || {}).map((entry) => entry && entry.mark);
+    return {
+      keep: values.filter((value) => value === "keep").length,
+      light: values.filter((value) => value === "light").length,
+      replace: values.filter((value) => value === "replace").length,
+      done: values.filter(Boolean).length,
+    };
+  }
+
+  // ---------------------------------------------------------------- pass 2
+  function renderPass2({ record, state, conditionKey }) {
+    const wrap = el(`<div style="margin:0 16px 14px"></div>`);
+    const provenance = [];
+    provenance.push(`run id ${record.run_id}`);
+    provenance.push(`review pack: ${revealedPackLabel(conditionKey)}`);
+    provenance.push(`condition ${record.condition === "A" ? "A — current ten-slot writer (question-writer-v2)" : "B — buyer-decision instruction"}`);
+    provenance.push(`requested model ${record.model.requested}${record.model.returned ? `, returned ${record.model.returned}` : ""}`);
+    provenance.push(`provider ${record.provider.name}`);
+    if (record.instruction) {
+      provenance.push(`instruction ${record.instruction.id} (${record.instruction.version})`);
+      provenance.push(`instruction sha256 ${record.instruction.sha256.slice(0, 16)}…`);
+    }
+    provenance.push(`source ${record.output.source}${record.output.warnings.length ? `, warnings ${record.output.warnings.join(", ")}` : ""}`);
+    if (record.provenance_errors.length) provenance.push(`⚠ provenance errors: ${record.provenance_errors.join(" | ")}`);
+    if (record.raw_output && record.raw_output.kind === "structured") provenance.push(`raw output recorded (${record.raw_output.questions.length} strings before processing)`);
+    if (record.raw_output && record.raw_output.kind === "b_structured") provenance.push(`raw output recorded (${record.raw_output.questions.length} items + ${record.raw_output.limitations.length} limitation note(s))`);
+    wrap.appendChild(el(`<div class="reveal-meta">${provenance.map(escapeHtml).join("<br>")}</div>`));
+
+    if (record.status === "completed_with_deterministic_fallback" || record.output.warnings.includes("fallback_used")) {
+      wrap.appendChild(el(`<div class="banner warn">Fallback provenance: this whole pack is the deterministic template pack, never model output. Review accordingly.</div>`));
+    }
+    const issuesByQuestion = {};
+    for (const issue of record.output.validation_issues || []) {
+      if (issue.index) (issuesByQuestion[issue.index] = issuesByQuestion[issue.index] || []).push(issue.message);
+    }
+    if (record.output.validation_issues.length) {
+      wrap.appendChild(el(`<div class="banner danger">Contract validation issues (mechanical): ${record.output.validation_issues.map((issue) => `#${issue.index || "pack"}: ${escapeHtml(issue.message)}`).join(" · ")}</div>`));
+    }
+
+    for (const item of PASS2_ITEMS) {
+      const entry = (state.pass2.items[item.id] = state.pass2.items[item.id] || { status: null });
+      const blocking = PASS2_BLOCKING_ITEMS.includes(item.id);
+      const itemBlock = el(`<div class="item" data-item="${item.id}">
+        <div class="qtitle">${item.title}${blocking ? "" : ` <span style="font-weight:400;color:var(--muted);font-size:11.5px">(informational — shown as a warning, does not fail the gate)</span>`}</div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:4px">${escapeHtml(item.help)}</div>
+        <select data-status>
+          <option value="" ${!entry.status ? "selected" : ""}>${blocking ? "— answer required —" : "— optional —"}</option>
+          <option value="ok" ${entry.status === "ok" ? "selected" : ""}>OK (no issue found)</option>
+          <option value="issue" ${entry.status === "issue" ? "selected" : ""}>Issue found</option>
+        </select>
+        <input class="qa-note" data-note placeholder="Optional note" value="${escapeHtml(entry.note || "")}">
+      </div>`);
+      itemBlock.querySelector("[data-status]").addEventListener("change", (event) => {
+        if (!state.pass2.reviewed_run_id) state.pass2.reviewed_run_id = record.run_id;
+        state.pass2.items[item.id].status = event.target.value || null;
+        saveStore();
+      });
+      itemBlock.querySelector("[data-note]").addEventListener("input", (event) => {
+        if (!state.pass2.reviewed_run_id) state.pass2.reviewed_run_id = record.run_id;
+        state.pass2.items[item.id].note = event.target.value;
+        saveStore();
+      });
+      wrap.appendChild(itemBlock);
+    }
+    return wrap;
+  }
+
+  // ------------------------------------------------------------- preference
+  function renderPreference(fixture, anon) {
+    const state = fixtureState(fixture.fixture_id);
+    const wrap = el(`<div class="pref-block"></div>`);
+    wrap.appendChild(el(`<h3>Overall pack preference (required to finish pass 1)</h3>`));
+    const block = el(`<div>
+      <select class="pref" data-pref>
+        <option value="">— choose —</option>
+        <option value="A" ${state.preference === "A" ? "selected" : ""}>${escapeHtml(anon.labelA)} is better</option>
+        <option value="B" ${state.preference === "B" ? "selected" : ""}>${escapeHtml(anon.labelB)} is better</option>
+        <option value="tie" ${state.preference === "tie" ? "selected" : ""}>Tie — can't choose</option>
+      </select>
+      <input class="note-box" data-note placeholder="Optional note on the comparison" value="${escapeHtml(state.notes || "")}">
+    </div>`);
+    wrap.appendChild(block);
+    const select = block.querySelector("[data-pref]");
+    const note = block.querySelector("[data-note]");
+    select.addEventListener("change", (event) => {
+      state.preference = event.target.value || null;
+      state.preference_binding = { A: state.a?.runId || null, B: state.b?.runId || null };
+      saveStore();
+      render();
+    });
+    note.addEventListener("input", (event) => { state.notes = event.target.value; saveStore(); });
+    wrap.appendChild(el(`<div style="margin-top:10px;font-size:12.5px;color:var(--muted)">
+      Pass-2 note: language quality and audit validity are judged separately — a strong language score never masks
+      invalid context or reduced coverage. After reveal, export and run the gate CLI before drawing conclusions.</div>`));
+    return wrap;
+  }
+
+  // ----------------------------------------------------------------- extras
+  function renderExtras() {
+    const wrap = el(`<div></div>`);
+    const extras = REVIEW_MODE === "b-v1-vs-b-v2"
+      ? []
+      : runs.filter((run) => run.run_kind === "confirmation" || run.run_kind === "challenger");
+    wrap.appendChild(el(`<h2 style="font-size:15px">Additional packs</h2>`));
+    if (REVIEW_MODE === "b-v1-vs-b-v2") {
+      wrap.appendChild(el(`<div class="banner info">This calibration bundle is limited to the three B v1 vs B v2 comparison fixtures. Confirmation and challenger packs are intentionally hidden.</div>`));
+      return wrap;
+    }
+    if (extras.length === 0) {
+      wrap.appendChild(el(`<div class="banner info">No additional runs bundled yet. After the founder runs them, rebuild data.js and each pack appears here for its own per-pack quality review.</div>`));
+      return wrap;
+    }
+    wrap.appendChild(el(`<p style="font-size:13px;color:var(--muted);margin:6px 0 10px">Same marking rules as the comparison packs (Keep / Light / Replace) — per-pack gates apply. The run kind (confirmation or challenger) and other metadata appear only after all ten questions are marked and the pack is revealed.</p>`));
+    for (const run of extras) {
+      const fixture = fixtureById(run.fixture_id);
+      const state = extraState(run.run_id);
+      if (!state.runId) state.runId = run.run_id;
+      wrap.appendChild(el(`<h3 style="font-size:13.5px;margin:14px 0 2px">${escapeHtml(fixture ? fixture.business_summary.name : run.fixture_id)} — additional pack</h3>`));
+      wrap.appendChild(renderPack({ fixture, run, anonLabel: "Paket", state, conditionKey: "B", stale: state.runId !== run.run_id }));
+    }
+    return wrap;
+  }
+
+  // ----------------------------------------------------------- export/import
+  function marksList(pack, record) {
+    return Object.entries(pack.marks || {})
+      .filter(([, entry]) => entry && entry.mark)
+      .map(([questionIndex, entry]) => ({
+        run_id: record.run_id,
+        question_index: Number(questionIndex),
+        // Bind each mark to the exact displayed text. The gate refuses an
+        // export if a result is later replaced under the same run id.
+        question_text: entry.question_text,
+        mark: entry.mark,
+        replace_reason: entry.replace_reason || undefined,
+        note: entry.note || undefined,
+      }));
+  }
+  function pass2Export(pack) {
+    const items = {};
+    for (const id of PASS2_ITEMS.map((item) => item.id)) {
+      const entry = (pack.pass2 && pack.pass2.items[id]) || {};
+      items[id] = { status: entry.status || null, note: entry.note || undefined };
+    }
+    return { items, reviewed_run_id: pack.pass2?.reviewed_run_id || null };
+  }
+
+  function exportReview() {
+    const comparison = {};
+    for (const fixture of DATA.fixtures || []) {
+      const pair = REVIEW_MODE === "b-v1-vs-b-v2" ? reviewPairFor(fixture.fixture_id) : null;
+      const runA = pair ? pair.baseline : latestRun("A", "initial", fixture.fixture_id);
+      const runB = pair ? pair.candidate : latestRun("B", "initial", fixture.fixture_id);
+      const state = fixtureState(fixture.fixture_id);
+      if (!runA || !runB) continue;
+      const aPack = state.a || {};
+      const bPack = state.b || {};
+      comparison[fixture.fixture_id] = {
+        fixture_id: fixture.fixture_id,
+        role: fixture.role,
+        run_ids: { A: runA.run_id, B: runB.run_id },
+        a: { run_id: runA.run_id, marks: marksList(aPack, runA), pass2: pass2Export(aPack) },
+        b: { run_id: runB.run_id, marks: marksList(bPack, runB), pass2: pass2Export(bPack) },
+        preference: state.preference || null,
+        preference_binding: state.preference_binding || null,
+        notes: state.notes || undefined,
+      };
+    }
+    const extraPacks = runs
+      .filter((run) => run.run_kind === "confirmation" || run.run_kind === "challenger")
+      .map((run) => {
+        const state = extraState(run.run_id);
+        return { run_id: run.run_id, marks: marksList(state, run), pass2: pass2Export(state) };
+      });
+    const payload = {
+      schema: "nuave-bdq-review-export-v1",
+      exported_at: new Date().toISOString(),
+      data_built_at: DATA.built_at,
+      // Reviewer provenance travels with the export so the gate CLI can
+      // distinguish founder acceptance marks from AI pre-reviews.
+      reviewer: (store && store.reviewer) || { type: "founder", name: "Founder", blind: true },
+      note: "Review export. Marks are per-question by original index; run_ids tie the review to specific run records. Compute gates with review/compute-gates.mjs.",
+      comparison,
+      extra_b_packs: extraPacks,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `nuave-bdq-review-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+  }
+
+  function importReview(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const payload = JSON.parse(String(reader.result));
+        if (payload.schema !== "nuave-bdq-review-export-v1") throw new Error("not a review export");
+        if (!window.confirm("Replace the locally stored review state with the imported export?")) return;
+        store = { schema: "nuave-bdq-review-state-v1", comparison: {}, extras: {}, reviewer: payload.reviewer || { type: "founder", name: "Founder", blind: true }, createdAt: new Date().toISOString(), importedFrom: payload.exported_at };
+        for (const fixtureReview of Object.values(payload.comparison || {})) {
+          const state = store.comparison[fixtureReview.fixture_id] = { preference: fixtureReview.preference || null, notes: fixtureReview.notes || "" };
+          for (const condition of ["a", "b"]) {
+            const pack = fixtureReview[condition];
+            if (!pack) continue;
+            const marks = {};
+            for (const entry of pack.marks || []) marks[String(entry.question_index)] = { mark: entry.mark, replace_reason: entry.replace_reason, note: entry.note, question_text: entry.question_text };
+            state[condition] = { displayOrder: shuffleFor(`${fixtureReview.fixture_id}:${condition}`), marks, pass2: { items: pack.pass2 ? pack.pass2.items : {}, reviewed_run_id: pack.pass2?.reviewed_run_id || null }, revealed: true, runId: pack.run_id };
+          }
+          state.preference_binding = fixtureReview.preference_binding || null;
+        }
+        for (const pack of payload.extra_b_packs || []) {
+          const marks = {};
+          for (const entry of pack.marks || []) marks[String(entry.question_index)] = { mark: entry.mark, replace_reason: entry.replace_reason, note: entry.note, question_text: entry.question_text };
+          store.extras[pack.run_id] = { displayOrder: shuffleFor(`extra:${pack.run_id}`), marks, pass2: { items: pack.pass2 ? pack.pass2.items : {}, reviewed_run_id: pack.pass2?.reviewed_run_id || null }, revealed: true, runId: pack.run_id };
+        }
+        saveStore();
+        render();
+      } catch (error) {
+        window.alert(`Import failed: ${error instanceof Error ? error.message : "unknown"}`);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  }
+
+  render();
+  }
+  // Async bundle switch for a snapshot review (next test). The default
+  // bundle (data.js) is loaded by the script tag above, so boot() runs
+  // immediately; with ?bundle=... boot waits for that file to load.
+  const bundleParam = new URLSearchParams(location.search).get("bundle");
+  if (bundleParam) {
+    const tag = document.createElement("script");
+    tag.src = bundleParam;
+    tag.onload = () => boot();
+    tag.onerror = () => {
+      document.getElementById("main").innerHTML =
+        `<div class="banner warn">Bundle not found: ${bundleParam}. Build it first with review/build-data.mjs --instruction condition-b-v2 --out ${bundleParam.startsWith("review/") ? bundleParam : `review/${bundleParam}`}.</div>`;
+    };
+    document.body.appendChild(tag);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>

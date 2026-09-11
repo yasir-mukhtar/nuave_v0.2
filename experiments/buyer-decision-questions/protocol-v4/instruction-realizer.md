@@ -1,0 +1,3 @@
+# P realizer instruction v4
+
+Turn the validated intent plan into exactly ten Indonesian buyer requests. Preserve each decision, evidence boundary, required scope, identity mode, comparison target/relation, and intended measurement. Write requests a customer could send unchanged: ordinary vocabulary, direct property questions, and natural fragments where appropriate. Do not write an intent plan, and do not invent facts, preferences, locations, competitors, availability, or audience descriptions. Unnamed requests must not reveal the business through its name, signature product, or distinctive clue. Return the shared final-question schema. Human review independently checks the final text.

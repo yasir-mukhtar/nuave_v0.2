@@ -1,0 +1,28 @@
+{
+  "schema": "nuave-buyer-decision-fixtures-manifest-v1",
+  "frozen_at": "2026-09-06",
+  "note": "Hashes are sha256 over the exact JSON file bytes. Live runners refuse to generate when a fixture file no longer matches its frozen hash. Changing a fixture requires a new fixture version and an explicit new run; results are never overwritten.",
+  "fixtures": [
+    {
+      "fixture_id": "fixture-1-kopi-sudut",
+      "file": "fixture-1-kopi-sudut.json",
+      "role": "development",
+      "version": 1,
+      "sha256": "fa1e8d686158aea1a5ce5ea4937ce8c26eb451f4b123ca635c298f5853376341"
+    },
+    {
+      "fixture_id": "fixture-2-kopi-bukit-biru",
+      "file": "fixture-2-kopi-bukit-biru.json",
+      "role": "held-out",
+      "version": 1,
+      "sha256": "4bb503cec5a2d83e32846de1b16bdc0be4fbdcd58cac4216bdbd40ea861d9891"
+    },
+    {
+      "fixture_id": "fixture-3-laundry-segar-kilat",
+      "file": "fixture-3-laundry-segar-kilat.json",
+      "role": "held-out",
+      "version": 1,
+      "sha256": "577420a761482e6dd5b1d93007a1f4249a7160b723c9e98cda702445f7465026"
+    }
+  ]
+}

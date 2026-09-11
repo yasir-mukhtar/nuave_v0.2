@@ -31,6 +31,21 @@ export type IntakeScreen = (typeof INTAKE_SCREENS)[number];
 export const SCOPE_KINDS = ["whole-brand", "branch", "product"] as const;
 export type ScopeKind = (typeof SCOPE_KINDS)[number];
 
+/** Chapter names shown by the intake progress bar, in prototype order. */
+export const INTAKE_CHAPTER_LABELS = [
+  "Brand dan yang Anda tawarkan",
+  "Pelanggan Anda",
+  "Pasar dan pembanding",
+  "Sebelum audit",
+] as const;
+
+export function intakeChapterFor(screen: IntakeScreen) {
+  if (screen === "customer-reasons") return 1;
+  if (screen === "market" || screen === "comparison-target") return 2;
+  if (screen === "facts" || screen === "review") return 3;
+  return 0;
+}
+
 export type ComparisonTargetProposal = {
   kind: "suggestion" | "category_fallback";
   name: string;

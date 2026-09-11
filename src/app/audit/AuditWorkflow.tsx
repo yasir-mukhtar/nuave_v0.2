@@ -92,6 +92,7 @@ import {
   QuestionsStep,
   type RunUnfinishedState,
 } from "./AuditStages";
+import { PRODUCTION_INTAKE_SURFACE, type IntakeSurface } from "./intakeSurface";
 import SourceHero from "./SourceHero";
 import AuditRunStep from "./AuditRunStep";
 import ReportView from "./ReportView";
@@ -227,7 +228,11 @@ function initialStatuses(
   return statuses;
 }
 
-export default function AuditWorkflow() {
+export default function AuditWorkflow({
+  intakeSurface = PRODUCTION_INTAKE_SURFACE,
+}: {
+  intakeSurface?: IntakeSurface;
+} = {}) {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [brief, setBrief] = useState<BusinessBrief>(emptyBrief);
   const [workflowMeta, setWorkflowMeta] = useState<WorkflowMeta>(() =>
@@ -867,6 +872,12 @@ export default function AuditWorkflow() {
     }));
   }
 
+  function navigateToIntakeScreen(screen: typeof workflowMeta.intakeScreen) {
+    setFieldErrors({});
+    setError("");
+    setWorkflowMeta((current) => ({ ...current, intakeScreen: screen }));
+  }
+
   async function extractWebsite(
     url?: string,
     brandNameOverride?: string,
@@ -1399,6 +1410,12 @@ export default function AuditWorkflow() {
     !report &&
     observations.filter((item) => item.run_status === "completed").length < 10;
 
+  // The recovered intake carries its own chapter progress and bottom
+  // navigation; the controller stepper would be a second indicator.
+  const newIntakeSurfaceActive =
+    (step === 1 && intakeSurface.has(workflowMeta.intakeScreen)) ||
+    (step === 2 && intakeSurface.has("questions"));
+
   return (
     <main className={styles.shell} lang="id" data-theme="light">
       <header
@@ -1430,7 +1447,7 @@ export default function AuditWorkflow() {
         </div>
       </header>
 
-      {step > 0 && step < 4 ? (
+      {step > 0 && step < 4 && !newIntakeSurfaceActive ? (
         <nav
           className={`${styles.stepper} ${styles.noPrint}`}
           aria-label="Tahapan audit"
@@ -1499,6 +1516,8 @@ export default function AuditWorkflow() {
           fieldErrors={fieldErrors}
           identityUnverified={workflowMeta.identityUnverified}
           busy={busy}
+          intakeSurface={intakeSurface}
+          onNavigateToScreen={navigateToIntakeScreen}
           onScopeKindChange={updateScopeKind}
           onScopeValueChange={updateScopeValue}
           onConfirmIdentity={confirmBrandIdentity}
@@ -1515,7 +1534,10 @@ export default function AuditWorkflow() {
         <QuestionsStep
           pack={promptPack}
           brandName={brief.brand_name}
+          brief={brief}
+          scopeKind={workflowMeta.scopeKind}
           busy={busy}
+          intakeSurface={intakeSurface}
           onEdit={editPrompt}
           onBack={backToFacts}
           onRun={runAudit}

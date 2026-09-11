@@ -1,0 +1,60 @@
+{
+  "schema": "nuave-buyer-decision-fixture-v1",
+  "fixture_id": "fixture-2-kopi-bukit-biru",
+  "role": "held-out",
+  "fictional": true,
+  "version": 1,
+  "frozen_at": "2026-09-06",
+  "review_title": "Kopi Bukit Biru (Bandung) — fictional, held out",
+  "review_summary": "Fiksi eksperimen. Kedai kopi specialty di Bandung; kebutuhan pembeli yang berbeda dari fixture 1: bekerja sambil ngopi (laptop, WiFi, colokan, suasana tenang).",
+  "business_summary": {
+    "name": "Kopi Bukit Biru",
+    "scope": "Kota Bandung",
+    "category": "Kedai kopi specialty",
+    "offering": "Manual brew single origin",
+    "buyer_need": "Tempat ngopi yang nyaman buat kerja pakai laptop (WiFi stabil, colokan, suasana tenang siang hari)",
+    "note": "Kebutuhan pembeli adalah keinginan pembeli, bukan klaim bahwa kedai menyediakannya. Tidak ada pembanding, diferensiator, atau fakta konversi yang disuplai."
+  },
+  "absent_context": [
+    "comparison_business",
+    "differentiator",
+    "conversion_action",
+    "official_sources"
+  ],
+  "business": {
+    "brand_name": "Kopi Bukit Biru",
+    "brand_name_variants": [],
+    "entity_scope": "Kota Bandung",
+    "brand_type": "",
+    "category": "Kedai kopi specialty",
+    "market_context": "Kota Bandung",
+    "target_customer": "Pekerja remote, freelancer, dan mahasiswa di Bandung yang ingin bekerja sambil menikmati kopi",
+    "official_sources": [],
+    "verified_offerings": [],
+    "verified_customer_needs": [
+      "Tempat ngopi yang nyaman buat kerja pakai laptop",
+      "WiFi stabil dan colokan listrik di dekat meja",
+      "Kopi enak dengan suasana tidak terlalu ramai di siang hari"
+    ],
+    "verified_decision_criteria": [
+      "Kualitas dan kecepatan WiFi",
+      "Ketersediaan colokan listrik",
+      "Tingkat kebisingan",
+      "Harga kopi"
+    ],
+    "verified_competitor": {
+      "name": "",
+      "scope": "",
+      "source_url": ""
+    },
+    "priority_offering": "Manual brew single origin",
+    "conversion_action": "",
+    "customer_supplied_facts": [],
+    "known_accuracy_questions": [],
+    "usp": "",
+    "regulated_category_notes": "",
+    "language": "en-US",
+    "agency_name": "Nuave",
+    "agency_logo_data_url": ""
+  }
+}

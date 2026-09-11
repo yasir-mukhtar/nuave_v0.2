@@ -1,0 +1,25 @@
+{
+  "schema": "nuave-buyer-decision-instructions-manifest-v1",
+  "frozen_at": "2026-09-06",
+  "note": "condition-b-v1 is the frozen buyer-decision instruction used by the 2026-09-06 initial/confirmation runs. condition-b-v2 is the calibration revision prepared from the founder review; it is frozen and available for the next test but has not been run live. Live runners refuse to run condition B when the instruction file no longer matches its hash, so initial, confirmation, challenger, and next-test runs reuse their frozen instruction. The condition-a snapshot is informational only: condition A always uses the writer instruction currently in src/lib/audit/questions-id-provider.ts and records the actual version and hash in each run record.",
+  "instructions": [
+    {
+      "instruction_id": "condition-b-v1",
+      "file": "condition-b-v1.json",
+      "version": "condition-b-v1",
+      "sha256": "6b25a5415ea0e104db0c0466d23e49d713f33d681909e8b622d1cbf81759df70"
+    },
+    {
+      "instruction_id": "condition-b-v2",
+      "file": "condition-b-v2.json",
+      "version": "condition-b-v2",
+      "sha256": "724ace5306c910a0b845e772295ab5588ae484bc1561f566981a6dc1f779c0c4"
+    },
+    {
+      "instruction_id": "condition-a-snapshot",
+      "file": "condition-a-snapshot.json",
+      "snapshot_of": "question-writer-v2 (src/lib/audit/questions-id-provider.ts)",
+      "sha256": "38ca4eecd356efee0dba0553dd71d46ebb9cbc7d90f088cfd42320025829014f"
+    }
+  ]
+}

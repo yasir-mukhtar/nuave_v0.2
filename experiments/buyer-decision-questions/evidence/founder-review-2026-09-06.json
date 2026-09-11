@@ -1,0 +1,478 @@
+{
+  "schema": "nuave-bdq-review-export-v1",
+  "exported_at": "2026-09-06T16:19:55.604Z",
+  "data_built_at": "2026-09-06T15:39:22.205Z",
+  "note": "Founder review export. Marks are per-question by original index; run_ids tie the review to specific run records. Compute gates with review/compute-gates.mjs.",
+  "comparison": {
+    "fixture-1-kopi-sudut": {
+      "fixture_id": "fixture-1-kopi-sudut",
+      "role": "development",
+      "run_ids": {
+        "A": "initial-20260906-223719-8b7d69",
+        "B": "initial-20260906-223724-3348d1"
+      },
+      "a": {
+        "run_id": "initial-20260906-223719-8b7d69",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 1,
+            "mark": "light",
+            "note": "Kafe apa aja yang ada di Depok?"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 2,
+            "mark": "replace",
+            "note": "Kopi yang enak deket kantor"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 3,
+            "mark": "replace",
+            "note": "Kafe apa yang kopinya enak dan deket kantor?"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 4,
+            "mark": "replace",
+            "note": "Kopi paling enak di Depok dan deket kantor"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 5,
+            "mark": "replace",
+            "note": "Kafe yang recommended di Depok"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 6,
+            "mark": "replace",
+            "note": "No one ask this question"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 7,
+            "mark": "replace",
+            "note": "Kopi Sudut kopinya enak ngga?"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 8,
+            "mark": "replace",
+            "note": "Kopi Sudut enak ngga?"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 9,
+            "mark": "replace",
+            "note": "Bandingkan Kopi Sudut dengan kafe lain di Depok"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 10,
+            "mark": "replace",
+            "note": "Kopi Sudut cocok buat WFC ngga?"
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": null
+            },
+            "grounding": {
+              "status": null
+            },
+            "identity": {
+              "status": null
+            },
+            "coverage": {
+              "status": null
+            },
+            "repetition": {
+              "status": null
+            },
+            "audit_coverage": {
+              "status": null
+            }
+          }
+        }
+      },
+      "b": {
+        "run_id": "initial-20260906-223724-3348d1",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 1,
+            "mark": "light",
+            "note": "Ada kafe apa aja di Depok?"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 2,
+            "mark": "light",
+            "note": "Rekomendasiin tempat beli kopi susu di Depok yang rasanya enak dong."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 3,
+            "mark": "light",
+            "note": "Kafe yang kopinya yang enak di Depok apa aja?"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 4,
+            "mark": "light",
+            "note": "Bandingin beberapa coffee shop di Depok dari pilihan menu dan kualitas kopinya"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 5,
+            "mark": "replace",
+            "note": "Bandingin Kopi Sudut vs Starbucks di Depok"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 6,
+            "mark": "replace",
+            "note": "(No one would ask this, reframe the intention)"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 7,
+            "mark": "light",
+            "note": "Kopi Sudut di Depok recommended nggak?"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 8,
+            "mark": "replace",
+            "note": "Kopi Sudut kopi susunya enak ngga?"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 9,
+            "mark": "light",
+            "note": "Apa bedanya Kopi Sudut dengan kafe lain di Depok?"
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": null
+            },
+            "grounding": {
+              "status": null
+            },
+            "identity": {
+              "status": null
+            },
+            "coverage": {
+              "status": null
+            },
+            "repetition": {
+              "status": null
+            },
+            "audit_coverage": {
+              "status": null
+            }
+          }
+        }
+      },
+      "preference": "B"
+    },
+    "fixture-2-kopi-bukit-biru": {
+      "fixture_id": "fixture-2-kopi-bukit-biru",
+      "role": "held-out",
+      "run_ids": {
+        "A": "initial-20260906-223733-250498",
+        "B": "initial-20260906-223737-10e8f4"
+      },
+      "a": {
+        "run_id": "initial-20260906-223733-250498",
+        "marks": [],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": null
+            },
+            "grounding": {
+              "status": null
+            },
+            "identity": {
+              "status": null
+            },
+            "coverage": {
+              "status": null
+            },
+            "repetition": {
+              "status": null
+            },
+            "audit_coverage": {
+              "status": null
+            }
+          }
+        }
+      },
+      "b": {
+        "run_id": "initial-20260906-223737-10e8f4",
+        "marks": [],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": null
+            },
+            "grounding": {
+              "status": null
+            },
+            "identity": {
+              "status": null
+            },
+            "coverage": {
+              "status": null
+            },
+            "repetition": {
+              "status": null
+            },
+            "audit_coverage": {
+              "status": null
+            }
+          }
+        }
+      },
+      "preference": null
+    },
+    "fixture-3-laundry-segar-kilat": {
+      "fixture_id": "fixture-3-laundry-segar-kilat",
+      "role": "held-out",
+      "run_ids": {
+        "A": "initial-20260906-223744-11de6f",
+        "B": "initial-20260906-223747-d9348f"
+      },
+      "a": {
+        "run_id": "initial-20260906-223744-11de6f",
+        "marks": [],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": null
+            },
+            "grounding": {
+              "status": null
+            },
+            "identity": {
+              "status": null
+            },
+            "coverage": {
+              "status": null
+            },
+            "repetition": {
+              "status": null
+            },
+            "audit_coverage": {
+              "status": null
+            }
+          }
+        }
+      },
+      "b": {
+        "run_id": "initial-20260906-223747-d9348f",
+        "marks": [],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": null
+            },
+            "grounding": {
+              "status": null
+            },
+            "identity": {
+              "status": null
+            },
+            "coverage": {
+              "status": null
+            },
+            "repetition": {
+              "status": null
+            },
+            "audit_coverage": {
+              "status": null
+            }
+          }
+        }
+      },
+      "preference": null
+    }
+  },
+  "extra_b_packs": [
+    {
+      "run_id": "confirmation-20260906-223854-5e825a",
+      "marks": [
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 1,
+          "mark": "keep"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 2,
+          "mark": "keep"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 3,
+          "mark": "keep"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 4,
+          "mark": "light",
+          "note": "Kafe di Bandung yang kopinya enak dan ngga terlalu rame"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 5,
+          "mark": "replace",
+          "note": "Kafe di Bandung yang enak buat kerja freelancer"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 6,
+          "mark": "keep"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 7,
+          "mark": "light",
+          "note": "Kopi Bukit Biru di Bandung recommended ngga untuk kerja pakai laptop?"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 8,
+          "mark": "light"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 9,
+          "mark": "replace",
+          "note": "No one would ask that, but probably this: \"Apa review negatif dari Kopi Bukit Biru?\""
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 10,
+          "mark": "replace",
+          "note": "Manual brew Kopi Bukit Biru enak ngga?"
+        }
+      ],
+      "pass2": {
+        "items": {
+          "standalone": {
+            "status": null
+          },
+          "grounding": {
+            "status": null
+          },
+          "identity": {
+            "status": null
+          },
+          "coverage": {
+            "status": null
+          },
+          "repetition": {
+            "status": null
+          },
+          "audit_coverage": {
+            "status": null
+          }
+        }
+      }
+    },
+    {
+      "run_id": "confirmation-20260906-223902-fe3597",
+      "marks": [
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 1,
+          "mark": "light",
+          "note": "Rekomendasi laundry di Bekasi yang tepat waktu"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 2,
+          "mark": "light",
+          "note": "Laundry mana yang cepet dan aman di Bekasi?"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 3,
+          "mark": "replace",
+          "note": "Cariin laundry di Bekasi yang harganya jelas"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 4,
+          "mark": "light",
+          "note": "Bandingin beberapa jasa laundry di Bekasi yang bisa delivery"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 5,
+          "mark": "light",
+          "note": "Laundri di Bekasi yang bisa pickup/delivery ke rumah/kosan"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 6,
+          "mark": "replace",
+          "note": "Gimana cara tau laundry ini bagus atau engga?"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 7,
+          "mark": "replace",
+          "note": "Laundry Segar Kilat di Bekasi recommended ngga?"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 8,
+          "mark": "light",
+          "note": "Berapa biaya Laundry Segar Kilat?"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 9,
+          "mark": "light",
+          "note": "Bandingin Laundry Segar Kilat dengan jasa laundry lain di Bekasi"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 10,
+          "mark": "replace",
+          "note": "Laundry Segar Kilat oke ngga?"
+        }
+      ],
+      "pass2": {
+        "items": {
+          "standalone": {
+            "status": null
+          },
+          "grounding": {
+            "status": null
+          },
+          "identity": {
+            "status": null
+          },
+          "coverage": {
+            "status": null
+          },
+          "repetition": {
+            "status": null
+          },
+          "audit_coverage": {
+            "status": null
+          }
+        }
+      }
+    }
+  ]
+}

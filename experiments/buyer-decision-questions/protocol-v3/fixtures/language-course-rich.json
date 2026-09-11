@@ -1,0 +1,3 @@
+{
+  "fixture_id":"v3-language-course-rich","category":"language course","brief_richness":"rich","business":{"brand_name":"Lancar Yuk","entity_scope":"Jakarta","category":"kursus bahasa Inggris","priority_offering":"kelas speaking","verified_offerings":["kelas speaking","kelas online"],"verified_customer_needs":["latihan speaking untuk presentasi kerja"],"verified_decision_criteria":["jadwal malam","format online","level kelas jelas","kesempatan praktik"],"verified_competitor":{"name":"English Hub","scope":"Jakarta"}},"absent_context":["price","exact schedule","teacher credentials","class size"],"test_cases":["supported professional use","explicit comparator","do not invent credentials"]
+}

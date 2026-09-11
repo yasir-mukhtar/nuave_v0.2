@@ -1,0 +1,3 @@
+{
+  "fixture_id":"v3-laptop-retailer-rich","category":"laptop retail","brief_richness":"rich","business":{"brand_name":"Komputer Nusa","entity_scope":"Surabaya","category":"toko komputer","priority_offering":"laptop bisnis","verified_offerings":["laptop bisnis","upgrade RAM"],"verified_customer_needs":["kerja kantor dan meeting video"],"verified_decision_criteria":["kompatibel dengan aplikasi kantor","garansi jelas","bisa upgrade RAM"],"verified_competitor":{"name":"Laptop Prima","scope":"Surabaya"}},"absent_context":["exact budget","stock today","office address"],"test_cases":["explicit comparator","supported multi-criteria","missing location"]
+}

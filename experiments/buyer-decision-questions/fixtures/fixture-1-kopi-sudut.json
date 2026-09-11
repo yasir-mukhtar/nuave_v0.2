@@ -1,0 +1,53 @@
+{
+  "schema": "nuave-buyer-decision-fixture-v1",
+  "fixture_id": "fixture-1-kopi-sudut",
+  "role": "development",
+  "fictional": false,
+  "version": 1,
+  "frozen_at": "2026-09-06",
+  "review_title": "Kopi Sudut (Depok) — original sparse brief",
+  "review_summary": "Kedai kopi susu jaringan lokal di Depok. Brief sengaja sangat tipis: hanya merek, lingkup, kategori, satu produk, dan satu kebutuhan pembeli.",
+  "business_summary": {
+    "name": "Kopi Sudut",
+    "scope": "Depok",
+    "category": "Kedai kopi susu (chain lokal)",
+    "offering": "Kopi Susu Sudut",
+    "buyer_need": "Ngopi enak dekat kantor",
+    "note": "Lokasi kantor tidak disediakan, sehingga kedekatan tidak bisa diuji apa adanya. Pertanyaan sebaiknya diperluas; keterbatasan ini dicatat, bukan ditambal dengan fakta rekaan."
+  },
+  "absent_context": [
+    "comparison_business",
+    "customer_context",
+    "decision_considerations",
+    "differentiator",
+    "conversion_action",
+    "official_sources"
+  ],
+  "business": {
+    "brand_name": "Kopi Sudut",
+    "brand_name_variants": [],
+    "entity_scope": "Depok",
+    "brand_type": "",
+    "category": "Kedai kopi susu (chain lokal)",
+    "market_context": "Depok",
+    "target_customer": "",
+    "official_sources": [],
+    "verified_offerings": [],
+    "verified_customer_needs": ["Ngopi enak dekat kantor"],
+    "verified_decision_criteria": [],
+    "verified_competitor": {
+      "name": "",
+      "scope": "",
+      "source_url": ""
+    },
+    "priority_offering": "Kopi Susu Sudut",
+    "conversion_action": "",
+    "customer_supplied_facts": [],
+    "known_accuracy_questions": [],
+    "usp": "",
+    "regulated_category_notes": "",
+    "language": "en-US",
+    "agency_name": "Nuave",
+    "agency_logo_data_url": ""
+  }
+}

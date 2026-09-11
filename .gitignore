@@ -40,3 +40,13 @@ blob-report/
 
 # Next.js generated type shim (regenerated on every build)
 next-env.d.ts
+
+# Buyer-decision question experiment: local run records (raw provider output),
+# exported founder reviews, and generated review data bundles
+experiments/buyer-decision-questions/results/
+experiments/buyer-decision-questions/review/data.js
+experiments/buyer-decision-questions/review/data-v2.js
+experiments/buyer-decision-questions/protocol-v3/results/
+experiments/buyer-decision-questions/protocol-v3/review/data.js
+experiments/buyer-decision-questions/protocol-v4/results/
+experiments/buyer-decision-questions/protocol-v4/review/data.js

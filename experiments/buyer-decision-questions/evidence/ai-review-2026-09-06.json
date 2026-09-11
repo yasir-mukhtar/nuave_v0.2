@@ -1,0 +1,807 @@
+{
+  "schema": "nuave-bdq-review-export-v1",
+  "exported_at": "2026-09-06T16:06:52.531608+00:00",
+  "data_built_at": "2026-09-06T15:39:22.205Z",
+  "reviewer": {
+    "type": "ai",
+    "name": "Codex AI reviewer",
+    "blind": false,
+    "note": "User-authorized AI editorial review, not founder marks, native-speaker validation, customer research, or a fully blind comparison. Reviewer participated in proposing B and inspected source."
+  },
+  "note": "AI evaluation. Marks concern plausible substance and wording; semantic validity is separate. Original calculator mishandles exported pass2 objects; use independent-summary.json. Original browser state was not accessed or overwritten.",
+  "comparison": {
+    "fixture-1-kopi-sudut": {
+      "fixture_id": "fixture-1-kopi-sudut",
+      "role": "development",
+      "run_ids": {
+        "A": "initial-20260906-223719-8b7d69",
+        "B": "initial-20260906-223724-3348d1"
+      },
+      "preference": "B",
+      "notes": "AI preference: B is more direct overall; preference does not override absolute quality gates or imply old-matrix equivalence.",
+      "a": {
+        "run_id": "initial-20260906-223719-8b7d69",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 1,
+            "mark": "light",
+            "note": "Use ordinary customer vocabulary: tempat beli kopi susu. The local-chain filter is not a supplied buyer preference."
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 2,
+            "mark": "replace",
+            "note": "The question turns buying coffee into judging practicality for drinking during work; it also omits the city.",
+            "replace_reason": "awkward_wording"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 3,
+            "mark": "light",
+            "note": "Remove untuk kebutuhan. Office proximity remains unanswerable without an area, independently of the wording mark."
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 4,
+            "mark": "keep",
+            "note": "Plausible wording for finding a drink. However, the meeting occasion was invented; see grounding failure."
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 5,
+            "mark": "replace",
+            "note": "Layak masuk daftar pilihan is analyst language and repeats discovery; office location is also missing.",
+            "replace_reason": "wrong_decision"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 6,
+            "mark": "keep",
+            "note": "A direct, intelligible comparison. Price and access were added as criteria; validity is checked separately."
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 7,
+            "mark": "light",
+            "note": "Shorten to Kopi Sudut cocok buat ngopi dekat kantor nggak? This still needs an office area before execution."
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 8,
+            "mark": "keep",
+            "note": "A plausible direct recommendation request, but the unknown office location makes this unusable as a standalone audit question."
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 9,
+            "mark": "replace",
+            "note": "Internal category label and kebutuhan pelanggan make this sound like an audit template. This is deterministic repair, not Luna wording.",
+            "replace_reason": "awkward_wording"
+          },
+          {
+            "run_id": "initial-20260906-223719-8b7d69",
+            "question_index": 10,
+            "mark": "replace",
+            "note": "Three-part customer segmentation and trade-offs are excessive for this supplied coffee decision.",
+            "replace_reason": "awkward_wording"
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": "issue",
+              "note": "Q2 lacks city; Q3/Q5/Q7/Q8 require an unspecified office location. Q7/Q8 also omit branch geography."
+            },
+            "grounding": {
+              "status": "issue",
+              "note": "Q4 adds a meeting occasion; Q2 adds drinking at work as a practical use; Q6 adds price/access criteria not supplied. These are unsupported scenarios/criteria, not established business facts."
+            },
+            "identity": {
+              "status": "ok",
+              "note": "Six unnamed/four named, with generic coffee descriptions in unnamed questions."
+            },
+            "coverage": {
+              "status": "issue",
+              "note": "Several proximity tests cannot execute; many unnamed questions repeat discovery."
+            },
+            "repetition": {
+              "status": "issue",
+              "note": "Q1/Q3/Q5 substantially repeat discovery; Q7/Q8 repeat the unresolved office decision."
+            },
+            "audit_coverage": {
+              "status": "issue",
+              "note": "Original proximity-dependent jobs are not executable; Q9 is repaired category comparison rather than named head-to-head."
+            }
+          }
+        }
+      },
+      "b": {
+        "run_id": "initial-20260906-223724-3348d1",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 1,
+            "mark": "light",
+            "note": "Ada pilihan ... apa saja is cumbersome; Tempat beli kopi susu di Depok apa aja? keeps the decision."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 2,
+            "mark": "keep",
+            "note": "Direct, plausible request using the supplied taste preference."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 3,
+            "mark": "keep",
+            "note": "Individually plausible. At pack level this duplicates Q2 almost completely."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 4,
+            "mark": "keep",
+            "note": "A plausible comparison request; asking about drink choice and coffee quality does not assert either business is good."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 5,
+            "mark": "replace",
+            "note": "Introduces a local-versus-large-chain decision that the buyer did not supply. It also compares types of business rather than identifiable options.",
+            "replace_reason": "missing_invented_context"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 6,
+            "mark": "replace",
+            "note": "Generic pre-purchase checklist is weak for this simple coffee decision and need not elicit any business names.",
+            "replace_reason": "wrong_decision"
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 7,
+            "mark": "keep",
+            "note": "Direct named recommendation, with relevant city and taste need."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 8,
+            "mark": "light",
+            "note": "Orang yang cari kopi susu is unnecessarily third-person. Kopi Sudut di Depok cocok nggak kalau mau beli kopi susu? is more direct."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 9,
+            "mark": "keep",
+            "note": "Plain named comparison against category alternatives."
+          },
+          {
+            "run_id": "initial-20260906-223724-3348d1",
+            "question_index": 10,
+            "mark": "keep",
+            "note": "A plausible request about drawbacks; it does not assert a particular defect."
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": "ok",
+              "note": "City and named identities are explicit; missing office proximity is honestly dropped and recorded."
+            },
+            "grounding": {
+              "status": "issue",
+              "note": "Q5 turns business taxonomy into an unsupported buyer choice between local and larger chains. This violates the experiment's supplied-scenarios-only rule; it is not a fabricated claim about Kopi Sudut."
+            },
+            "identity": {
+              "status": "ok",
+              "note": "Six unnamed/four named; no signature-name leakage."
+            },
+            "coverage": {
+              "status": "issue",
+              "note": "Core broad families appear, but Q2/Q3 are near duplicates and Q5/Q6 add weak or unsupported coverage."
+            },
+            "repetition": {
+              "status": "issue",
+              "note": "Q2/Q3 ask almost the same taste-based discovery; Q1 overlaps them."
+            },
+            "audit_coverage": {
+              "status": "issue",
+              "note": "Office proximity is dropped with disclosure. Distinct shortlist and fit/misfit segmentation are lost; drawbacks are a different measurement, not equivalent."
+            }
+          }
+        }
+      }
+    },
+    "fixture-2-kopi-bukit-biru": {
+      "fixture_id": "fixture-2-kopi-bukit-biru",
+      "role": "held-out",
+      "run_ids": {
+        "A": "initial-20260906-223733-250498",
+        "B": "initial-20260906-223737-10e8f4"
+      },
+      "preference": "B",
+      "notes": "AI preference: B is more direct overall; preference does not override absolute quality gates or imply old-matrix equivalence.",
+      "a": {
+        "run_id": "initial-20260906-223733-250498",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 1,
+            "mark": "keep",
+            "note": "Specific, self-contained discovery for laptop work. Specialty is plausible vocabulary here, although it narrows the pool."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 2,
+            "mark": "keep",
+            "note": "A direct situation-based place search with time and city."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 3,
+            "mark": "light",
+            "note": "Cocok untuk WiFi stabil is the wrong relation. Ask for a place with the desired WiFi and sockets. City is also absent."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 4,
+            "mark": "keep",
+            "note": "Direct search for the supplied generic offering."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 5,
+            "mark": "light",
+            "note": "Replace layak masuk shortlist with rekomendasi; the audience list is unnecessary. City is missing as a standalone request."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 6,
+            "mark": "keep",
+            "note": "Clear comparison across supplied criteria; formal wording is acceptable."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 7,
+            "mark": "keep",
+            "note": "Plausible named suitability question."
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 8,
+            "mark": "light",
+            "note": "Use the buyer perspective: Kopi Bukit Biru recommended nggak buat kerja dengan WiFi stabil dan colokan?"
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 9,
+            "mark": "replace",
+            "note": "Deterministic repair exposes the category label and capitalized field wording. Do not attribute it to the writer.",
+            "replace_reason": "awkward_wording"
+          },
+          {
+            "run_id": "initial-20260906-223733-250498",
+            "question_index": 10,
+            "mark": "replace",
+            "note": "Abstract customer segmentation and three-part trade-off instruction are substantially more elaborate than the actual buyer decision.",
+            "replace_reason": "awkward_wording"
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": "issue",
+              "note": "Q3 and Q5 omit the city for unnamed local-provider searches. Distinct named identity is otherwise adequate for a hypothetical test."
+            },
+            "grounding": {
+              "status": "ok",
+              "note": "Work, WiFi, outlets, quietness, price and manual brew are supported needs/offerings, not asserted properties."
+            },
+            "identity": {
+              "status": "ok",
+              "note": "Correct six/four identity composition."
+            },
+            "coverage": {
+              "status": "ok",
+              "note": "Broad discovery, offering lookup, fit, recommendation and comparison remain present. Original segmentation differs from B drawback coverage."
+            },
+            "repetition": {
+              "status": "issue",
+              "note": "Discovery and shortlist partly repeat the same work-use request."
+            },
+            "audit_coverage": {
+              "status": "issue",
+              "note": "Q9 is a repaired category comparison, not named head-to-head; Q3/Q5 lose local context."
+            }
+          }
+        }
+      },
+      "b": {
+        "run_id": "initial-20260906-223737-10e8f4",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 1,
+            "mark": "keep",
+            "note": "Natural, concise discovery request with a clear buying use."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 2,
+            "mark": "keep",
+            "note": "Direct search for supplied desired facilities; no claim that the audited business has them."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 3,
+            "mark": "keep",
+            "note": "Useful comparison of venues for working at the supplied time of day."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 4,
+            "mark": "keep",
+            "note": "Plausible category price question. Price is in the supplied criteria. This measures information, not business discovery."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 5,
+            "mark": "keep",
+            "note": "Plausible search with daytime quietness. Overlap with Q1 is acceptable because this adds an explicit condition."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 6,
+            "mark": "replace",
+            "note": "Falls back to a checklist about choosing rather than a request for options or evaluation. Too elaborate beside the direct questions.",
+            "replace_reason": "wrong_decision"
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 7,
+            "mark": "keep",
+            "note": "Clear explicit named recommendation."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 8,
+            "mark": "light",
+            "note": "The four-criterion list is heavy. WiFi, colokan, suasana, dan harga is a smaller wording edit that retains the comparison."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 9,
+            "mark": "keep",
+            "note": "A plausible downside question tied to actual work requirements. Remote-worker terminology is justified here."
+          },
+          {
+            "run_id": "initial-20260906-223737-10e8f4",
+            "question_index": 10,
+            "mark": "light",
+            "note": "Overloaded but salvageable by tightening: Kopi Bukit Biru cocok buat kerja siang sambil minum manual brew, dilihat dari WiFi, colokan, suasana, dan harga?"
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": "ok",
+              "note": "Unnamed local searches include Bandung. Named identities are unambiguous within the synthetic brief; repeating city in Q9/Q10 would improve robustness, not warrant a hard failure here."
+            },
+            "grounding": {
+              "status": "ok",
+              "note": "All criteria derive from the fixture. Questions about WiFi and drawbacks do not assert positive or negative properties."
+            },
+            "identity": {
+              "status": "ok",
+              "note": "Six unnamed/four named and no signature leakage."
+            },
+            "coverage": {
+              "status": "ok",
+              "note": "Discovery Q1/Q2/Q5, unnamed comparison Q3, named recommendation Q7, named comparison Q8 and drawback Q9. Q4 is information, not discovery."
+            },
+            "repetition": {
+              "status": "ok",
+              "note": "Some intentional overlap; Q5 adds quiet daytime use. One weak checklist is counted as Replace."
+            },
+            "audit_coverage": {
+              "status": "issue",
+              "note": "No distinct unnamed manual-brew lookup, fixed shortlist, or three-part segmentation. Acceptable experimental tradeoff, not old-matrix equivalence. Category comparison mode is apparent in Q8 but not explicitly recorded in the pack limitations."
+            }
+          }
+        }
+      }
+    },
+    "fixture-3-laundry-segar-kilat": {
+      "fixture_id": "fixture-3-laundry-segar-kilat",
+      "role": "held-out",
+      "run_ids": {
+        "A": "initial-20260906-223744-11de6f",
+        "B": "initial-20260906-223747-d9348f"
+      },
+      "preference": "B",
+      "notes": "AI preference: B is more direct overall; preference does not override absolute quality gates or imply old-matrix equivalence.",
+      "a": {
+        "run_id": "initial-20260906-223744-11de6f",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 1,
+            "mark": "keep",
+            "note": "A straightforward category-options question; mildly formal but plausible."
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 2,
+            "mark": "replace",
+            "note": "Asks for a type of laundry rather than a provider and invents a pile-up occasion not stated in the brief.",
+            "replace_reason": "wrong_decision"
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 3,
+            "mark": "replace",
+            "note": "Pakaian ... aman diperlakukan is unnatural, and the provider search has no location.",
+            "replace_reason": "awkward_wording"
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 4,
+            "mark": "keep",
+            "note": "Clear search for the supplied pickup/delivery requirement; it does not promise service to a specific address."
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 5,
+            "mark": "light",
+            "note": "Use a direct recommendation request and remove the business-facing audience list."
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 6,
+            "mark": "keep",
+            "note": "A plausible service comparison using supplied considerations."
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 7,
+            "mark": "light",
+            "note": "Keluarga atau pekerja is segmentation language. Ask whether the service fits the buyer's need for on-time laundry."
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 8,
+            "mark": "keep",
+            "note": "A clear named recommendation with supplied price and pickup requirements."
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 9,
+            "mark": "replace",
+            "note": "Deterministic repair with internal category and capitalized criterion text.",
+            "replace_reason": "awkward_wording"
+          },
+          {
+            "run_id": "initial-20260906-223744-11de6f",
+            "question_index": 10,
+            "mark": "replace",
+            "note": "Three-part suitability segmentation is forced for this concrete laundry need.",
+            "replace_reason": "awkward_wording"
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": "issue",
+              "note": "Q3 is an unnamed provider search without city. Q2 is a generic advice question and needs no city, but changes the original job."
+            },
+            "grounding": {
+              "status": "issue",
+              "note": "Q2 invents a clothes-piling-up occasion from general busyness. Other desired properties are supported."
+            },
+            "identity": {
+              "status": "ok",
+              "note": "Correct six/four composition; no signature leakage."
+            },
+            "coverage": {
+              "status": "ok",
+              "note": "Provider discovery, fit, direct recommendation and comparison remain; several questions still need rewriting."
+            },
+            "repetition": {
+              "status": "issue",
+              "note": "Options and shortlist repeat general busy-household discovery."
+            },
+            "audit_coverage": {
+              "status": "issue",
+              "note": "Q2 becomes type-selection advice; Q3 loses geography; Q9 repair uses category comparison rather than a named comparator."
+            }
+          }
+        }
+      },
+      "b": {
+        "run_id": "initial-20260906-223747-d9348f",
+        "marks": [
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 1,
+            "mark": "keep",
+            "note": "Simple, self-contained discovery request."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 2,
+            "mark": "keep",
+            "note": "Plausible request for speed and garment care without asserting that a business provides them."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 3,
+            "mark": "keep",
+            "note": "Clear price-transparency requirement in ordinary language."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 4,
+            "mark": "keep",
+            "note": "Direct pickup/delivery discovery. Generic home pickup does not require the buyer's address until eligibility is checked."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 5,
+            "mark": "keep",
+            "note": "A plausible practical service comparison. The supplied criteria are relevant enough to justify the list."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 6,
+            "mark": "replace",
+            "note": "Checklist and keluarga dan pekerja audience wording replace the customer's concrete selection decision.",
+            "replace_reason": "wrong_decision"
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 7,
+            "mark": "light",
+            "note": "Remove the customer-segment list: Laundry Segar Kilat di Bekasi recommended kalau butuh cucian selesai tepat waktu?"
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 8,
+            "mark": "keep",
+            "note": "Clear named comparison on actual supplied requirements."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 9,
+            "mark": "keep",
+            "note": "Natural enough as written; asking for drawbacks or hesitation is a reasonable service decision."
+          },
+          {
+            "run_id": "initial-20260906-223747-d9348f",
+            "question_index": 10,
+            "mark": "light",
+            "note": "Harga per kilo jelas and pakaian tetap aman are more ordinary than transparan and perlakuan aman; same suitability decision."
+          }
+        ],
+        "pass2": {
+          "items": {
+            "standalone": {
+              "status": "ok",
+              "note": "Local searches include Bekasi. Home pickup is a service requirement, not a promise of coverage to an unknown address."
+            },
+            "grounding": {
+              "status": "ok",
+              "note": "Speed, transparent price, care and pickup are all supplied buyer requirements; no business capability is asserted."
+            },
+            "identity": {
+              "status": "ok",
+              "note": "Six unnamed/four named, no leaked identity in discovery."
+            },
+            "coverage": {
+              "status": "ok",
+              "note": "Concrete discovery on separate criteria, unnamed comparison Q5, named recommendation Q7, named comparison Q8, drawbacks Q9 and fit Q10."
+            },
+            "repetition": {
+              "status": "ok",
+              "note": "Q2/Q3/Q4 test different explicit requirements; Q6 remains one weak checklist, counted as Replace."
+            },
+            "audit_coverage": {
+              "status": "issue",
+              "note": "Distinct fixed shortlist and fit/misfit segmentation are not preserved. Category comparison is recorded; the pack supports the revised contract rather than measurement equivalence."
+            }
+          }
+        }
+      }
+    }
+  },
+  "extra_b_packs": [
+    {
+      "run_id": "confirmation-20260906-223854-5e825a",
+      "marks": [
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 1,
+          "mark": "keep",
+          "note": "Direct and plausible laptop-work discovery."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 2,
+          "mark": "keep",
+          "note": "Concrete facilities request with sufficient geography."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 3,
+          "mark": "keep",
+          "note": "Reasonable comparison across supplied working conditions and price."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 4,
+          "mark": "keep",
+          "note": "Plausible taste-plus-daytime-quietness search."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 5,
+          "mark": "replace",
+          "note": "Generic checklist presented through the freelancer persona rather than a useful place-selection request.",
+          "replace_reason": "wrong_decision"
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 6,
+          "mark": "light",
+          "note": "Long inventory of conditions; tighten it. It also largely repeats Q1/Q2/Q4, now adding price."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 7,
+          "mark": "keep",
+          "note": "Clear named recommendation, even without nggak; no slang requirement."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 8,
+          "mark": "keep",
+          "note": "Direct named WiFi comparison. It asks about quality rather than asserting good WiFi."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 9,
+          "mark": "light",
+          "note": "Pekerja remote atau mahasiswa is an audience list; express the shared work need directly."
+        },
+        {
+          "run_id": "confirmation-20260906-223854-5e825a",
+          "question_index": 10,
+          "mark": "light",
+          "note": "Menurut kebutuhan saya is filler: the sentence already states its work/manual-brew need. Shorten layak dipilih dibandingkan; this is not a hidden-context failure."
+        }
+      ],
+      "pass2": {
+        "items": {
+          "standalone": {
+            "status": "ok",
+            "note": "Local searches are anchored to Bandung; Q10 states its need despite the unnecessary menurut kebutuhan saya phrase."
+          },
+          "grounding": {
+            "status": "ok",
+            "note": "Needs and personas are supplied. Masuk akal is a mild expression of the supplied price consideration, not a fabricated budget."
+          },
+          "identity": {
+            "status": "ok",
+            "note": "Correct six/four composition and no identity leak."
+          },
+          "coverage": {
+            "status": "ok",
+            "note": "Discovery, both comparisons, direct recommendation and drawbacks are present."
+          },
+          "repetition": {
+            "status": "issue",
+            "note": "Q6 bundles the criteria already covered by Q1/Q2/Q4; the extra price criterion supplies limited incremental value."
+          },
+          "audit_coverage": {
+            "status": "issue",
+            "note": "No fixed shortlist or explicit fit/misfit segmentation; remains an experimental coverage change."
+          }
+        }
+      }
+    },
+    {
+      "run_id": "confirmation-20260906-223902-fe3597",
+      "marks": [
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 1,
+          "mark": "light",
+          "note": "Replace keluarga atau pekerja with the actual need; a customer is unlikely to introduce both audience segments."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 2,
+          "mark": "keep",
+          "note": "Direct provider search with relevant speed and garment-care requirements."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 3,
+          "mark": "replace",
+          "note": "General advice on choosing displaces a concrete provider or price-transparency question.",
+          "replace_reason": "wrong_decision"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 4,
+          "mark": "keep",
+          "note": "Useful comparison on three supplied considerations."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 5,
+          "mark": "light",
+          "note": "Orang sibuk is unnecessary third-person framing. Ask directly for pickup laundry in Bekasi."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 6,
+          "mark": "replace",
+          "note": "A second checklist adds procedural advice rather than distinct visibility evidence.",
+          "replace_reason": "wrong_decision"
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 7,
+          "mark": "light",
+          "note": "Remove keluarga atau pekerja from the named recommendation; preserve the on-time completion need."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 8,
+          "mark": "keep",
+          "note": "Useful named price and hidden-fee question; does not assert that hidden fees exist."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 9,
+          "mark": "light",
+          "note": "Perlakuan pakaian is awkward; use cara menangani pakaian or hasil cucian while preserving the comparison."
+        },
+        {
+          "run_id": "confirmation-20260906-223902-fe3597",
+          "question_index": 10,
+          "mark": "light",
+          "note": "Long bundle of negative possibilities. Tighten to drawbacks concerning completion time, garment care, and pickup; it does not assert actual damage or lateness."
+        }
+      ],
+      "pass2": {
+        "items": {
+          "standalone": {
+            "status": "ok",
+            "note": "Provider searches contain Bekasi. Named price query identifies the synthetic business; an explicit city would strengthen identity in real use."
+          },
+          "grounding": {
+            "status": "ok",
+            "note": "All needs and audience groups come from the fixture. Questions about damage/delay are concerns, not claims that this business caused them."
+          },
+          "identity": {
+            "status": "ok",
+            "note": "Correct six/four identity composition."
+          },
+          "coverage": {
+            "status": "ok",
+            "note": "Core comparisons and direct recommendation survive. Q3/Q6 are advice questions and add little visibility evidence."
+          },
+          "repetition": {
+            "status": "issue",
+            "note": "Two checklist/advice questions substitute for useful additional discovery. Audience framing repeats in Q1/Q5/Q7."
+          },
+          "audit_coverage": {
+            "status": "issue",
+            "note": "Named price information replaces the first run's separate fit question; fixed shortlist and segmentation are absent. Not equivalent to the old matrix."
+          }
+        }
+      }
+    }
+  ]
+}
