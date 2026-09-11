@@ -128,16 +128,47 @@ tree valid locally but makes `npm ci` fail the in-sync check on every machine,
 including CI — a failure that has already been fixed and reintroduced twice.
 Confirm with `npm ci --dry-run` before committing a lockfile change.
 
-Copy `.env.example` to `.env.local`, add `OPENCODEGO_API_KEY`, and open
-<http://localhost:3000/audit>. The protected production configuration is
-`NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
+Copy `.env.example` to `.env.local`, add `CHEAPERINFERENCE_API_KEY` and
+`OPENCODEGO_API_KEY`, and open <http://localhost:3000/audit>.
+`NUAVE_QUESTION_PROVIDER=cheaperinference` sends the Indonesian question writer
+to `https://api.cheaperinference.com/v1/chat/completions` with the pinned model
+`glm-5.3-flash`. It uses one no-search request, JSON mode with local validation,
+low reasoning, a 2,048-token output ceiling, and a 60-second timeout. The
+existing ten-question composition, instruction, review, and deterministic
+fallback stay in place. A missing writer key fails before the request; provider
+or malformed-output failures retain the fallback and failed-call diagnostics.
+
+The audited responses still come from GPT-5.6 Luna through OpenCode Go.
+Business extraction and report synthesis also retain their existing provider.
+Their protected production configuration remains `NUAVE_PROVIDER=opencodego`,
 `OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
 `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
 `OPENAI_AUDIT_REASONING_EFFORT=low`. Nuave uses the existing OpenAI SDK as the
 Responses-compatible adapter for OpenCode Go. `OPENCODEGO_API_KEY` is the
 canonical production credential; `OPENAI_API_KEY` is populated only
 internally or at build time as the SDK compatibility alias and is not a second
-production credential.
+production credential. Never put the Cheaper Inference key in either OpenAI
+variable. The new writer has its own pinned endpoint and does not mutate them.
+
+Before releasing this migration, add `CHEAPERINFERENCE_API_KEY` as a repository
+Actions secret under **Settings → Secrets and variables → Actions**. Keep the
+existing `OPENCODEGO_API_KEY` secret. CI writes both server credentials into the
+ignored production build environment, and refuses to deploy if the new secret
+is empty. Do not paste either key into source, a public environment variable,
+logs, or a pull request. A redeploy is required to activate the new settings.
+Verify one explicitly authorized prompt-generation request with the real key
+before treating the integration as live-validated; offline tests cannot prove
+the account's model access or current provider behavior.
+
+Question-call telemetry records the returned GLM model, response ID, and Chat
+Completions token usage. Its accounted cost uses conservative catalog list
+ceilings ($0.15/M input, $0.50/M output, checked 2026-09-07), including charging
+cached input at the full input rate. This is a versioned budget estimate, not
+the provider's discounted invoice. [API docs](https://platform.cheaperinference.com/docs)
+and [model catalog](https://platform.cheaperinference.com/markets) are the sources.
+Setting `NUAVE_QUESTION_PROVIDER=opencodego` explicitly restores the previous
+question writer with its existing protected configuration; failures never
+switch providers automatically.
 
 The protected method uses one bounded no-search call for Indonesian question
 generation; official-domain-restricted web search for business extraction;
@@ -145,6 +176,58 @@ required web search for every audit observation; and no web search for report
 synthesis. Questions, audit observations, and the final report use the
 Indonesian contracts required by Spec 003, while exact evidence excerpts and
 technical provenance remain faithful to the recorded run.
+
+### Test the GLM question writer
+
+Pushing this branch or adding an Actions secret does not update `v2.nuave.ai`.
+The current workflow validates pull requests and deploys only after a PR is
+merged into `main`; it does not create a hosted branch preview. For a local
+test without disturbing another working branch, run from your repository:
+
+```bash
+git fetch origin
+git worktree add ../nuave-glm-test origin/feat/cheaperinference-glm-5-3-flash
+cd ../nuave-glm-test
+npm ci
+cp .env.example .env.local
+```
+
+Use Node.js 22. Edit the new worktree's `.env.local` and set both
+`CHEAPERINFERENCE_API_KEY` and `OPENCODEGO_API_KEY`. Actions secrets are not
+downloaded to your computer. Keep `NUAVE_QUESTION_PROVIDER=cheaperinference`;
+the writer model is pinned in code, so no model environment variable is needed.
+Run `npm run dev` and open <http://localhost:3000/audit>.
+
+Use one public business URL and complete the business-data confirmation.
+Before generating questions, open the browser's **Developer Tools → Network**.
+Click **Konfirmasi fakta dan buat 10 pertanyaan** once, select
+`POST /api/audit/prompts`, and inspect its JSON response:
+
+| Field | Expected result |
+|---|---|
+| `pack.prompts.length` | `10` |
+| `generation.source` | `model` or `parsed` |
+| `generation.system` | `Cheaper Inference Chat Completions API` |
+| `generation.requested_model` | `glm-5.3-flash` |
+| `telemetry[0].status` | `completed` |
+| `telemetry[0].returned_model` | `glm-5.3-flash` |
+| `telemetry[0].response_id` | Non-empty |
+| `telemetry[0].usage` | Recorded input/output token usage |
+
+If `generation.source` is `fallback`, the visible questions came from the
+deterministic fallback, even if the HTTP response was successful. Inspect
+`generation.warnings`, `telemetry[0].provider_status`, and
+`telemetry[0].failure_reason` before counting the writer test as passed.
+A missing key returns an error before a provider request.
+
+This is a live test using account credits: website extraction uses OpenCode Go,
+then question generation uses Cheaper Inference. Review the ten questions and
+stop at the question-review screen for this bounded test. Starting the audit
+continues into the existing GPT-5.6 Luna observation and report pipeline.
+The `/audit/fixture` journey and automated offline checks do not validate the
+real key or model access.
+
+### Additional provider settings
 
 Direct OpenAI, Gemini, Groq + Tavily, and OpenRouter remain available for
 explicit local pipeline testing. They are testing-only on the protected live

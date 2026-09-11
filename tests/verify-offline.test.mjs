@@ -91,13 +91,15 @@ describe("offline verifier cleanup", () => {
       NUAVE_LIVE_PROVIDER_TESTING: "1",
       OPENAI_API_KEY: "ambient",
       OPENCODEGO_API_KEY: "ambient",
+      CHEAPERINFERENCE_API_KEY: "ambient",
       GEMINI_API_KEY: "ambient",
       GROQ_API_KEY: "ambient",
       OPENROUTER_API_KEY: "ambient",
     });
 
     expect(env.NUAVE_PROVIDER).toBe("opencodego");
-    expect(env.NUAVE_QUESTION_PROVIDER).toBe("opencodego");
+    expect(env.NUAVE_QUESTION_PROVIDER).toBe("cheaperinference");
+    expect(env.CHEAPERINFERENCE_API_KEY).toBe("dummy-build-only-key");
     expect(env.NUAVE_LIVE_PROVIDER_TESTING).toBe("0");
     expect(env.OPENAI_API_KEY).toBe("dummy-build-only-key");
     expect(env.OPENCODEGO_API_KEY).toBe("dummy-build-only-key");

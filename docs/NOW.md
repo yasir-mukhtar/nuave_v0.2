@@ -1,9 +1,32 @@
 # Nuave now
 
-> Updated: 2026-09-01
+> Updated: 2026-09-07
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
+
+**Bounded provider migration, founder-approved 2026-09-07:** prepare
+`NUAVE_QUESTION_PROVIDER=cheaperinference` with GLM-5.3 Flash for prompt
+generation only. Visibility observations remain GPT-5.6 Luna through OpenCode
+Go; extraction and report synthesis retain their existing provider. The
+implementation is on `feat/cheaperinference-glm-5-3-flash`, based on main
+`e531ff4`. On 2026-09-07 the founder reported the secrets added and explicitly
+approved commit/push after the local browser blocker was reported. This branch
+is prepared for PR review; it has not changed the deployed application.
+Next: complete PR CI including browser checks, then test one real-key writer
+request using the [README test steps](../README.md#test-the-glm-question-writer).
+The real-key check and release remain pending. Merge, deployment, and agent-run
+live calls still require explicit founder authorization. See
+[README development setup](../README.md#development) for configuration and
+rollback. Spec 008 and the intake rebuild are separate work.
+
+Validation rerun on Node 22.23.2: `npm run verify` passed checks, 827 unit tests
+in 67 files, and the Next.js and Cloudflare/OpenNext builds (existing lint
+warnings only). Browser verification remains blocked by the runtime's
+`uv_interface_addresses` error during Next.js dev startup. The required
+Chromium binary is also absent; its earlier download attempt timed out. The
+full local offline gate is therefore **not green**, and no live provider
+request was made. Treat the branch as awaiting PR validation, not release-ready.
 
 Phase 3 of [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), specified by
 [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md):

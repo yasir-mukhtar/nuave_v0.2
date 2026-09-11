@@ -8,6 +8,7 @@ describe("offlineE2EServerEnv", () => {
     vi.stubEnv("OPENAI_API_KEY", "real-looking-openai");
     vi.stubEnv("OPENAI_BASE_URL", "https://example.invalid/v1");
     vi.stubEnv("OPENCODEGO_API_KEY", "real-looking-opencodego");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "real-looking-cheaperinference");
     vi.stubEnv("GEMINI_API_KEY", "real-looking-gemini");
     vi.stubEnv("GROQ_API_KEY", "real-looking-groq");
     vi.stubEnv("OPENROUTER_API_KEY", "real-looking-openrouter");
@@ -21,7 +22,8 @@ describe("offlineE2EServerEnv", () => {
 
     expect(env).toMatchObject({
       NUAVE_PROVIDER: "opencodego",
-      NUAVE_QUESTION_PROVIDER: "opencodego",
+      NUAVE_QUESTION_PROVIDER: "cheaperinference",
+      CHEAPERINFERENCE_API_KEY: "",
       NUAVE_LIVE_PROVIDER_TESTING: "0",
       OPENCODEGO_API_KEY: "",
       OPENAI_API_KEY: "",

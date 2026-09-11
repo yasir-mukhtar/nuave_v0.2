@@ -61,7 +61,7 @@ describe("protected live path fails closed to the founder-approved provider (Spe
     expect(activeAuditProvider()).toBe("groq");
   });
 
-  it("locks the live question path to OpenCode Go", () => {
+  it("retains the explicit OpenCode Go question-writer rollback", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
   });
@@ -73,9 +73,9 @@ describe("protected live path fails closed to the founder-approved provider (Spe
     expect(liveIndonesianQuestionProviderName()).toBe("gemini");
   });
 
-  it("defaults the live question path to OpenCode Go when NUAVE_QUESTION_PROVIDER is unset", () => {
+  it("defaults the live question path to Cheaper Inference when NUAVE_QUESTION_PROVIDER is unset", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "");
-    expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
+    expect(liveIndonesianQuestionProviderName()).toBe("cheaperinference");
   });
 
   it("fails closed before any provider call when OPENCODEGO_API_KEY is missing on the live path (O-10)", () => {

@@ -1,7 +1,7 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-01
+> Updated: 2026-09-07
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
@@ -136,3 +136,19 @@ Spec 007 R-01/R-02 canonical matrix (2026-08-30):
 | Intent-5: five categories, two questions each, with 5 unnamed / 5 named | SUPERSEDED | Spec 007 R-01/R-02 canonical ten-slot matrix: 6 unnamed + 4 named, with fixed slot policies (2026-08-30) |
 | Universal `generate-ai-visibility-prompts` skill using Intent-5 and 5/5 | SUPERSEDED | Retained skill rewritten against Spec 007's canonical 6/4 matrix (2026-08-30) |
 | Five-and-five coverage brief with free-composition editing | SUPERSEDED | Spec 007 R-10: wording edits stay within fixed slots; composition and slot policies cannot change (2026-08-30) |
+
+## 2026-09-07 — Separate the question writer from the audited model
+
+Founder requested Cheaper Inference with GLM-5.3 Flash and clarified that it
+should generate the prompts, while GPT-5.6 Luna through OpenCode Go remains
+the model answering them for AI visibility results. This supersedes the
+2026-08-21 same-provider lock for question generation only. Extraction,
+observations, report synthesis, the observation search requirement, and
+question content contracts are unchanged.
+
+The writer defaults to `NUAVE_QUESTION_PROVIDER=cheaperinference`, with its
+own `CHEAPERINFERENCE_API_KEY` and pinned `glm-5.3-flash` Chat Completions
+endpoint. The old OpenCode Go writer remains an explicit configuration
+rollback; provider failures do not silently switch models. This decision
+authorizes the implementation, not a claim that the new account/model has
+passed a live check or that a release has occurred.

@@ -5,6 +5,7 @@ import {
   assertLiveProviderCredentialsConfigured,
   liveExtractBusinessDraft,
 } from "@/lib/audit/provider";
+import { extractionDraftOrManualFallback } from "@/lib/audit/openai";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
@@ -119,6 +120,26 @@ export async function POST(request: Request) {
     // Validate the complete request before touching the protected provider
     // boundary. Invalid source/input requests therefore make zero calls.
     assertLiveProviderCredentialsConfigured();
+    if (
+      process.env.NODE_ENV !== "production" &&
+      process.env.NUAVE_QUESTION_WRITER_TEST_BYPASS_EXTRACTION === "1"
+    ) {
+      return NextResponse.json({
+        draft: extractionDraftOrManualFallback(
+          input,
+          {
+            status: "failed",
+            incomplete_details: null,
+            output: [],
+            output_parsed: null,
+          },
+          0,
+        ),
+        returned_model: "manual-extraction-bypass",
+        response_id: "local-manual-extraction-bypass",
+        telemetry: [],
+      });
+    }
     return NextResponse.json(await liveExtractBusinessDraft(input));
   } catch (error) {
     if (error instanceof z.ZodError) {
