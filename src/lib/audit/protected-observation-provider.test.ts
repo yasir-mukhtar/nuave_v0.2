@@ -1,14 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const createResponse = vi.hoisted(() => vi.fn());
+const { createResponse, openAIConstructorArgs } = vi.hoisted(() => ({
+  createResponse: vi.fn(),
+  openAIConstructorArgs: [] as Array<Record<string, unknown>>,
+}));
 
 vi.mock("openai", () => ({
   default: class MockOpenAI {
     responses = { create: createResponse };
+    constructor(args: Record<string, unknown>) {
+      openAIConstructorArgs.push(args);
+    }
   },
 }));
 
 import { executeAbortableProtectedObservation } from "./protected-observation-provider";
+import { OPENCODEGO_SESSION_HEADER, OPENCODEGO_USER_AGENT } from "./opencodego";
 import type { AuditBudget, AuditPrompt, BusinessBrief } from "./types";
 
 const prompt: AuditPrompt = {
@@ -60,6 +67,7 @@ describe("abortable protected observation provider", () => {
     delete process.env.OPENAI_AUDIT_MODEL;
     delete process.env.OPENAI_AUDIT_REASONING_EFFORT;
     createResponse.mockReset();
+    openAIConstructorArgs.length = 0;
     createResponse.mockResolvedValue({
       id: "resp-1",
       model: "gpt-5.6-luna",
@@ -102,5 +110,35 @@ describe("abortable protected observation provider", () => {
     expect(createResponse.mock.calls[0][1]).toEqual({
       signal: controller.signal,
     });
+  });
+
+  it("sends the OpenCode Go session header only on the OpenCode Go endpoint", async () => {
+    // OpenCode Go rejects requests without `x-opencode-session` (observed
+    // live 2026-09-12: HTTP 400 MissingSessionID → failed observation). The
+    // protected path points OPENAI_BASE_URL at the OpenCode Go endpoint.
+    process.env.OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1";
+    await executeAbortableProtectedObservation({
+      prompt,
+      brief,
+      safety_identifier: "offline-safety-id",
+      budget,
+    });
+    let headers = openAIConstructorArgs.at(-1)?.defaultHeaders as
+      Record<string, string> | undefined;
+    expect(headers?.[OPENCODEGO_SESSION_HEADER]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(headers?.["User-Agent"]).toBe(OPENCODEGO_USER_AGENT);
+
+    delete process.env.OPENAI_BASE_URL;
+    await executeAbortableProtectedObservation({
+      prompt,
+      brief,
+      safety_identifier: "offline-safety-id",
+      budget,
+    });
+    headers = openAIConstructorArgs.at(-1)?.defaultHeaders as
+      Record<string, string> | undefined;
+    expect(headers).toBeUndefined();
   });
 });

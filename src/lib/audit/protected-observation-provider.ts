@@ -10,7 +10,11 @@ import {
   normalizeSourceTitle,
   observationInstructionText,
 } from "./openai";
-import { OPENCODEGO_SYSTEM } from "./opencodego";
+import {
+  OPENCODEGO_SYSTEM,
+  isOpenCodeGoBaseUrl,
+  opencodeGoTransportHeaders,
+} from "./opencodego";
 import {
   AUDIT_CALL_LIMITS,
   completedCallTelemetry,
@@ -30,7 +34,15 @@ function client() {
     throw new Error("OPENAI_API_KEY is not configured on the Nuave server.");
   }
   const baseURL = process.env.OPENAI_BASE_URL?.trim() || undefined;
-  return new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
+  return new OpenAI({
+    apiKey,
+    ...(baseURL ? { baseURL } : {}),
+    // OpenCode Go rejects requests without its routing session header; the
+    // protected path sets OPENAI_BASE_URL to the OpenCode Go endpoint.
+    ...(isOpenCodeGoBaseUrl(baseURL)
+      ? { defaultHeaders: opencodeGoTransportHeaders() }
+      : {}),
+  });
 }
 
 function collectSources(response: Response): Source[] {
