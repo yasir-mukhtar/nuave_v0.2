@@ -124,11 +124,19 @@ jobs:
 
   cleanup:
     name: Remove closed PR preview
+    # Dependabot PRs run without repository secrets, so no preview worker can
+    # ever have been deployed for them — there is nothing to remove.
     if: >-
       github.event.action == 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
+      - name: Check out default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
       - name: Remove isolated preview worker
         id: remove
         continue-on-error: true
@@ -138,25 +146,30 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: delete --name nuave-pr-${{ github.event.pull_request.number }} --force
 
+      # wrangler-action only sets command-output/command-stderr when the
+      # command succeeds, so a failed delete cannot be classified from its
+      # output. Probe the worker directly instead: a 404 on this exact
+      # worker's script is the only response that confirms absence.
+      - name: Probe whether the preview worker still exists
+        id: probe
+        if: steps.remove.outcome == 'failure'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WORKER_NAME: nuave-pr-${{ github.event.pull_request.number }}
+        run: |
+          http_code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" || true)"
+          echo "http_code=${http_code:-000}" >> "${GITHUB_OUTPUT}"
+
       - name: Resolve preview removal state
         id: state
         if: always()
         env:
           REMOVE_OUTCOME: ${{ steps.remove.outcome }}
-          REMOVE_OUTPUT: ${{ steps.remove.outputs.command-output }}
-        run: |
-          set -euo pipefail
-          # A failed delete can still mean the worker never existed (or was
-          # already removed); only a not-found error confirms absence. Any
-          # other failure stays 'failed' so the job below turns red instead of
-          # claiming removal that did not happen.
-          state='failed'
-          if [ "${REMOVE_OUTCOME}" = "success" ]; then
-            state='removed'
-          elif printf '%s' "${REMOVE_OUTPUT}" | grep -qiE 'does not exist|not found|no worker|10007'; then
-            state='absent'
-          fi
-          echo "result=${state}" >> "${GITHUB_OUTPUT}"
+          PROBE_HTTP_CODE: ${{ steps.probe.outputs.http_code }}
+        run: node scripts/pr-preview-cleanup-state.mjs
 
       - name: Update preview status on the PR
         if: always()
