@@ -67,12 +67,13 @@ For implementation work:
    not permanent protections.
 7. Do not merge, deploy, or make live provider calls unless the founder
    explicitly authorizes that action.
-8. This private repository currently cannot use GitHub branch protection on its
-   Free plan. Direct pushes to `main` are therefore prohibited by convention.
+8. This repository is public. GitHub branch protection on `main` requires a
+   pull request with the `validate` CI check green on an up-to-date branch,
+   requires resolved conversations, and blocks force pushes and branch
+   deletion. Direct pushes to `main` remain prohibited.
    CI must keep the `verify-main-origin` deployment gate: a `main` commit without
    an associated merged pull request must fail that gate and must not deploy.
-   This fallback protects production, but it does not prevent the direct push
-   from changing the `main` branch itself.
+   The gate remains a second layer under the branch-protection rule.
 
 ## UI stack and presentation rules
 
