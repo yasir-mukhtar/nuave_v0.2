@@ -93,4 +93,13 @@ the G1 adapter above and needs no PR.
 4. Delete the unused `NUAVE_ACCESS_CODE` secret when ready (founder action).
 5. Cloudflare follow-ups: stale fixed-name preview workers (`nuave-pr-<N>`) for
    closed PRs are cleaned by the updated workflow going forward; any older
-   leftover workers or stale registrations need separate authorization.
+   leftover workers need separate authorization.
+
+## Stale workflow registrations
+
+Besides `ci.yml` and `pr-preview.yml`, 27 registered workflows existed only on
+deleted branches (one-shot formatters, previews, PR-28/PR-20 helpers,
+`agent-j-*`, wave helpers, and similar). Each was verified absent from every
+retained branch and disabled — a reversible registration change, not a file
+deletion. Dependabot's own `dynamic/dependabot/dependabot-updates` registration
+was left active.
