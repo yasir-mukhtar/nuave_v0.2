@@ -97,7 +97,16 @@ Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/0
 is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
-which owns the gate ledger; next step there is R5's G0 baseline reconciliation.
+which owns the gate ledger. G0 is complete. G1's dormant facts/context adapter
+is implemented on `codex/spec008-g1-adapter` in `/private/tmp/nuave-spec008-g1`,
+from refreshed `origin/main@505ccd4`; full offline verification passed (880 unit
+tests, 84 browser tests, both builds). The founder authorized commit and push;
+merge and deployment remain separate.
+It supports the accepted local intake at `5821d2f` as a serialized reference
+and the current legacy brief without connecting either to v3 generation.
+[Verification](../specs/008-recommendation-eligible-question-generation/VERIFICATION.md)
+records the remaining role/comparison limitations and subsequent gate boundary.
+Next is review of this bounded G1 change, then R5 G2 evaluation freeze.
 The package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
 evaluation gates still require their own explicit founder authorization.
 

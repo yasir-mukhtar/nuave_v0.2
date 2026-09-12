@@ -1,0 +1,318 @@
+[
+  {
+    "version": "nuave-local-intake-input-v1",
+    "factVersion": 7,
+    "fingerprint": "{\"confirmed\":{\"brand\":{\"name\":\"Kopi Sudut\",\"primarySource\":\"kopisudut.id\"},\"scope\":\"brand\",\"target\":null,\"category\":\"Kedai kopi\",\"offerings\":[\"Kopi Susu Sudut\",\"Americano dan espresso\",\"Latte gula aren\",\"Non-kopi (matcha, cokelat)\",\"Croissant dan pastry\",\"Biji kopi kemasan 200g\",\"Langganan kopi bulanan\"],\"customerReasons\":[\"Ngopi enak dekat kantor\",\"Tempat nugas atau kerja yang nyaman\",\"Kopi harian yang rasanya konsisten\",\"Harga masuk akal untuk diminum tiap hari\"],\"serviceChannels\":[{\"channel\":\"on_premise\",\"label\":\"Di lokasi bisnis Anda\"},{\"channel\":\"delivery\",\"label\":\"Dikirim ke pelanggan\"}],\"market\":{\"reach\":\"sekitar\",\"areas\":[\"Jakarta Selatan\"]},\"comparators\":{\"mode\":\"named\",\"names\":[\"Kedai Pagi\",\"Kedai Sore\"]},\"publicFact\":\"\"},\"reviewRows\":[{\"key\":\"brand\",\"label\":\"Brand\",\"value\":\"Kopi Sudut · kopisudut.id\",\"target\":\"s-brand\"},{\"key\":\"scope\",\"label\":\"Fokus audit\",\"value\":\"Seluruh brand Kopi Sudut\",\"target\":\"s-scope\"},{\"key\":\"category\",\"label\":\"Kategori\",\"value\":\"Kedai kopi\",\"target\":\"s-category\"},{\"key\":\"offerings\",\"label\":\"Produk dan layanan\",\"value\":\"Kopi Susu Sudut, Americano dan espresso, Latte gula aren, Non-kopi (matcha, cokelat), Croissant dan pastry, Biji kopi kemasan 200g, Langganan kopi bulanan\",\"target\":\"s-offerings\"},{\"key\":\"customers\",\"label\":\"Alasan pelanggan\",\"value\":\"Ngopi enak dekat kantor, Tempat nugas atau kerja yang nyaman, Kopi harian yang rasanya konsisten, Harga masuk akal untuk diminum tiap hari\",\"target\":\"s-customers\"},{\"key\":\"service\",\"label\":\"Cara layanan\",\"value\":\"Di lokasi bisnis Anda, Dikirim ke pelanggan\",\"target\":\"s-service\"},{\"key\":\"market\",\"label\":\"Pasar\",\"value\":\"Sekitar satu area · Jakarta Selatan\",\"target\":\"s-market\"},{\"key\":\"competitors\",\"label\":\"Pembanding\",\"value\":\"Kedai Pagi, Kedai Sore\",\"target\":\"s-competitors\"},{\"key\":\"facts\",\"label\":\"Hal yang wajib benar\",\"value\":\"Tidak ditambahkan\",\"target\":\"s-facts\"}]}",
+    "confirmed": {
+      "brand": {
+        "name": "Kopi Sudut",
+        "primarySource": "kopisudut.id"
+      },
+      "scope": "brand",
+      "target": null,
+      "category": "Kedai kopi",
+      "offerings": [
+        "Kopi Susu Sudut",
+        "Americano dan espresso",
+        "Latte gula aren",
+        "Non-kopi (matcha, cokelat)",
+        "Croissant dan pastry",
+        "Biji kopi kemasan 200g",
+        "Langganan kopi bulanan"
+      ],
+      "customerReasons": [
+        "Ngopi enak dekat kantor",
+        "Tempat nugas atau kerja yang nyaman",
+        "Kopi harian yang rasanya konsisten",
+        "Harga masuk akal untuk diminum tiap hari"
+      ],
+      "serviceChannels": [
+        {
+          "channel": "on_premise",
+          "label": "Di lokasi bisnis Anda"
+        },
+        {
+          "channel": "delivery",
+          "label": "Dikirim ke pelanggan"
+        }
+      ],
+      "market": {
+        "reach": "sekitar",
+        "areas": ["Jakarta Selatan"]
+      },
+      "comparators": {
+        "mode": "named",
+        "names": ["Kedai Pagi", "Kedai Sore"]
+      },
+      "publicFact": ""
+    },
+    "reviewRows": [
+      {
+        "key": "brand",
+        "label": "Brand",
+        "value": "Kopi Sudut · kopisudut.id",
+        "target": "s-brand"
+      },
+      {
+        "key": "scope",
+        "label": "Fokus audit",
+        "value": "Seluruh brand Kopi Sudut",
+        "target": "s-scope"
+      },
+      {
+        "key": "category",
+        "label": "Kategori",
+        "value": "Kedai kopi",
+        "target": "s-category"
+      },
+      {
+        "key": "offerings",
+        "label": "Produk dan layanan",
+        "value": "Kopi Susu Sudut, Americano dan espresso, Latte gula aren, Non-kopi (matcha, cokelat), Croissant dan pastry, Biji kopi kemasan 200g, Langganan kopi bulanan",
+        "target": "s-offerings"
+      },
+      {
+        "key": "customers",
+        "label": "Alasan pelanggan",
+        "value": "Ngopi enak dekat kantor, Tempat nugas atau kerja yang nyaman, Kopi harian yang rasanya konsisten, Harga masuk akal untuk diminum tiap hari",
+        "target": "s-customers"
+      },
+      {
+        "key": "service",
+        "label": "Cara layanan",
+        "value": "Di lokasi bisnis Anda, Dikirim ke pelanggan",
+        "target": "s-service"
+      },
+      {
+        "key": "market",
+        "label": "Pasar",
+        "value": "Sekitar satu area · Jakarta Selatan",
+        "target": "s-market"
+      },
+      {
+        "key": "competitors",
+        "label": "Pembanding",
+        "value": "Kedai Pagi, Kedai Sore",
+        "target": "s-competitors"
+      },
+      {
+        "key": "facts",
+        "label": "Hal yang wajib benar",
+        "value": "Tidak ditambahkan",
+        "target": "s-facts"
+      }
+    ]
+  },
+  {
+    "version": "nuave-local-intake-input-v1",
+    "factVersion": 7,
+    "fingerprint": "{\"confirmed\":{\"brand\":{\"name\":\"Kopi Sudut\",\"primarySource\":\"kopisudut.id\"},\"scope\":\"cabang\",\"target\":{\"name\":\"Gerai Selatan\",\"detail\":\"Jalan Melati 12, Jakarta Selatan\"},\"category\":\"Kedai kopi\",\"offerings\":[\"Kopi Susu Sudut\",\"Americano dan espresso\",\"Latte gula aren\",\"Non-kopi (matcha, cokelat)\",\"Croissant dan pastry\",\"Biji kopi kemasan 200g\",\"Langganan kopi bulanan\"],\"customerReasons\":[\"Ngopi enak dekat kantor\",\"Tempat nugas atau kerja yang nyaman\",\"Kopi harian yang rasanya konsisten\",\"Harga masuk akal untuk diminum tiap hari\"],\"serviceChannels\":[{\"channel\":\"on_premise\",\"label\":\"Di lokasi bisnis Anda\"},{\"channel\":\"delivery\",\"label\":\"Dikirim ke pelanggan\"}],\"market\":{\"reach\":\"sekitar\",\"areas\":[\"Jakarta Selatan\"]},\"comparators\":{\"mode\":\"named\",\"names\":[\"Kedai Pagi\",\"Kedai Sore\"]},\"publicFact\":\"\"},\"reviewRows\":[{\"key\":\"brand\",\"label\":\"Brand\",\"value\":\"Kopi Sudut · kopisudut.id\",\"target\":\"s-brand\"},{\"key\":\"scope\",\"label\":\"Fokus audit\",\"value\":\"Cabang tertentu (3 gerai)\",\"target\":\"s-scope\"},{\"key\":\"target\",\"label\":\"Target audit\",\"value\":\"Gerai Selatan — Jalan Melati 12, Jakarta Selatan\",\"target\":\"s-branch\"},{\"key\":\"category\",\"label\":\"Kategori\",\"value\":\"Kedai kopi\",\"target\":\"s-category\"},{\"key\":\"offerings\",\"label\":\"Produk dan layanan\",\"value\":\"Kopi Susu Sudut, Americano dan espresso, Latte gula aren, Non-kopi (matcha, cokelat), Croissant dan pastry, Biji kopi kemasan 200g, Langganan kopi bulanan\",\"target\":\"s-offerings\"},{\"key\":\"customers\",\"label\":\"Alasan pelanggan\",\"value\":\"Ngopi enak dekat kantor, Tempat nugas atau kerja yang nyaman, Kopi harian yang rasanya konsisten, Harga masuk akal untuk diminum tiap hari\",\"target\":\"s-customers\"},{\"key\":\"service\",\"label\":\"Cara layanan\",\"value\":\"Di lokasi bisnis Anda, Dikirim ke pelanggan\",\"target\":\"s-service\"},{\"key\":\"market\",\"label\":\"Pasar\",\"value\":\"Sekitar satu area · Jakarta Selatan\",\"target\":\"s-market\"},{\"key\":\"competitors\",\"label\":\"Pembanding\",\"value\":\"Kedai Pagi, Kedai Sore\",\"target\":\"s-competitors\"},{\"key\":\"facts\",\"label\":\"Hal yang wajib benar\",\"value\":\"Tidak ditambahkan\",\"target\":\"s-facts\"}]}",
+    "confirmed": {
+      "brand": {
+        "name": "Kopi Sudut",
+        "primarySource": "kopisudut.id"
+      },
+      "scope": "cabang",
+      "target": {
+        "name": "Gerai Selatan",
+        "detail": "Jalan Melati 12, Jakarta Selatan"
+      },
+      "category": "Kedai kopi",
+      "offerings": [
+        "Kopi Susu Sudut",
+        "Americano dan espresso",
+        "Latte gula aren",
+        "Non-kopi (matcha, cokelat)",
+        "Croissant dan pastry",
+        "Biji kopi kemasan 200g",
+        "Langganan kopi bulanan"
+      ],
+      "customerReasons": [
+        "Ngopi enak dekat kantor",
+        "Tempat nugas atau kerja yang nyaman",
+        "Kopi harian yang rasanya konsisten",
+        "Harga masuk akal untuk diminum tiap hari"
+      ],
+      "serviceChannels": [
+        {
+          "channel": "on_premise",
+          "label": "Di lokasi bisnis Anda"
+        },
+        {
+          "channel": "delivery",
+          "label": "Dikirim ke pelanggan"
+        }
+      ],
+      "market": {
+        "reach": "sekitar",
+        "areas": ["Jakarta Selatan"]
+      },
+      "comparators": {
+        "mode": "named",
+        "names": ["Kedai Pagi", "Kedai Sore"]
+      },
+      "publicFact": ""
+    },
+    "reviewRows": [
+      {
+        "key": "brand",
+        "label": "Brand",
+        "value": "Kopi Sudut · kopisudut.id",
+        "target": "s-brand"
+      },
+      {
+        "key": "scope",
+        "label": "Fokus audit",
+        "value": "Cabang tertentu (3 gerai)",
+        "target": "s-scope"
+      },
+      {
+        "key": "target",
+        "label": "Target audit",
+        "value": "Gerai Selatan — Jalan Melati 12, Jakarta Selatan",
+        "target": "s-branch"
+      },
+      {
+        "key": "category",
+        "label": "Kategori",
+        "value": "Kedai kopi",
+        "target": "s-category"
+      },
+      {
+        "key": "offerings",
+        "label": "Produk dan layanan",
+        "value": "Kopi Susu Sudut, Americano dan espresso, Latte gula aren, Non-kopi (matcha, cokelat), Croissant dan pastry, Biji kopi kemasan 200g, Langganan kopi bulanan",
+        "target": "s-offerings"
+      },
+      {
+        "key": "customers",
+        "label": "Alasan pelanggan",
+        "value": "Ngopi enak dekat kantor, Tempat nugas atau kerja yang nyaman, Kopi harian yang rasanya konsisten, Harga masuk akal untuk diminum tiap hari",
+        "target": "s-customers"
+      },
+      {
+        "key": "service",
+        "label": "Cara layanan",
+        "value": "Di lokasi bisnis Anda, Dikirim ke pelanggan",
+        "target": "s-service"
+      },
+      {
+        "key": "market",
+        "label": "Pasar",
+        "value": "Sekitar satu area · Jakarta Selatan",
+        "target": "s-market"
+      },
+      {
+        "key": "competitors",
+        "label": "Pembanding",
+        "value": "Kedai Pagi, Kedai Sore",
+        "target": "s-competitors"
+      },
+      {
+        "key": "facts",
+        "label": "Hal yang wajib benar",
+        "value": "Tidak ditambahkan",
+        "target": "s-facts"
+      }
+    ]
+  },
+  {
+    "version": "nuave-local-intake-input-v1",
+    "factVersion": 7,
+    "fingerprint": "{\"confirmed\":{\"brand\":{\"name\":\"Kopi Sudut\",\"primarySource\":\"kopisudut.id\"},\"scope\":\"produk\",\"target\":{\"name\":\"Langganan Kopi Sudut\",\"detail\":\"\"},\"category\":\"Langganan kopi bulanan\",\"offerings\":[],\"customerReasons\":[\"Ngopi enak dekat kantor\",\"Tempat nugas atau kerja yang nyaman\",\"Kopi harian yang rasanya konsisten\",\"Harga masuk akal untuk diminum tiap hari\"],\"serviceChannels\":[{\"channel\":\"on_premise\",\"label\":\"Di lokasi bisnis Anda\"},{\"channel\":\"delivery\",\"label\":\"Dikirim ke pelanggan\"}],\"market\":{\"reach\":\"sekitar\",\"areas\":[\"Jakarta Selatan\"]},\"comparators\":{\"mode\":\"named\",\"names\":[\"Kedai Pagi\",\"Kedai Sore\"]},\"publicFact\":\"\"},\"reviewRows\":[{\"key\":\"brand\",\"label\":\"Brand\",\"value\":\"Kopi Sudut · kopisudut.id\",\"target\":\"s-brand\"},{\"key\":\"scope\",\"label\":\"Fokus audit\",\"value\":\"Produk tertentu (3 produk)\",\"target\":\"s-scope\"},{\"key\":\"target\",\"label\":\"Target audit\",\"value\":\"Langganan Kopi Sudut\",\"target\":\"s-product\"},{\"key\":\"category\",\"label\":\"Kategori\",\"value\":\"Langganan kopi bulanan\",\"target\":\"s-category\"},{\"key\":\"customers\",\"label\":\"Alasan pelanggan\",\"value\":\"Ngopi enak dekat kantor, Tempat nugas atau kerja yang nyaman, Kopi harian yang rasanya konsisten, Harga masuk akal untuk diminum tiap hari\",\"target\":\"s-customers\"},{\"key\":\"service\",\"label\":\"Cara layanan\",\"value\":\"Di lokasi bisnis Anda, Dikirim ke pelanggan\",\"target\":\"s-service\"},{\"key\":\"market\",\"label\":\"Pasar\",\"value\":\"Sekitar satu area · Jakarta Selatan\",\"target\":\"s-market\"},{\"key\":\"competitors\",\"label\":\"Pembanding\",\"value\":\"Kedai Pagi, Kedai Sore\",\"target\":\"s-competitors\"},{\"key\":\"facts\",\"label\":\"Hal yang wajib benar\",\"value\":\"Tidak ditambahkan\",\"target\":\"s-facts\"}]}",
+    "confirmed": {
+      "brand": {
+        "name": "Kopi Sudut",
+        "primarySource": "kopisudut.id"
+      },
+      "scope": "produk",
+      "target": {
+        "name": "Langganan Kopi Sudut",
+        "detail": ""
+      },
+      "category": "Langganan kopi bulanan",
+      "offerings": [],
+      "customerReasons": [
+        "Ngopi enak dekat kantor",
+        "Tempat nugas atau kerja yang nyaman",
+        "Kopi harian yang rasanya konsisten",
+        "Harga masuk akal untuk diminum tiap hari"
+      ],
+      "serviceChannels": [
+        {
+          "channel": "on_premise",
+          "label": "Di lokasi bisnis Anda"
+        },
+        {
+          "channel": "delivery",
+          "label": "Dikirim ke pelanggan"
+        }
+      ],
+      "market": {
+        "reach": "sekitar",
+        "areas": ["Jakarta Selatan"]
+      },
+      "comparators": {
+        "mode": "named",
+        "names": ["Kedai Pagi", "Kedai Sore"]
+      },
+      "publicFact": ""
+    },
+    "reviewRows": [
+      {
+        "key": "brand",
+        "label": "Brand",
+        "value": "Kopi Sudut · kopisudut.id",
+        "target": "s-brand"
+      },
+      {
+        "key": "scope",
+        "label": "Fokus audit",
+        "value": "Produk tertentu (3 produk)",
+        "target": "s-scope"
+      },
+      {
+        "key": "target",
+        "label": "Target audit",
+        "value": "Langganan Kopi Sudut",
+        "target": "s-product"
+      },
+      {
+        "key": "category",
+        "label": "Kategori",
+        "value": "Langganan kopi bulanan",
+        "target": "s-category"
+      },
+      {
+        "key": "customers",
+        "label": "Alasan pelanggan",
+        "value": "Ngopi enak dekat kantor, Tempat nugas atau kerja yang nyaman, Kopi harian yang rasanya konsisten, Harga masuk akal untuk diminum tiap hari",
+        "target": "s-customers"
+      },
+      {
+        "key": "service",
+        "label": "Cara layanan",
+        "value": "Di lokasi bisnis Anda, Dikirim ke pelanggan",
+        "target": "s-service"
+      },
+      {
+        "key": "market",
+        "label": "Pasar",
+        "value": "Sekitar satu area · Jakarta Selatan",
+        "target": "s-market"
+      },
+      {
+        "key": "competitors",
+        "label": "Pembanding",
+        "value": "Kedai Pagi, Kedai Sore",
+        "target": "s-competitors"
+      },
+      {
+        "key": "facts",
+        "label": "Hal yang wajib benar",
+        "value": "Tidak ditambahkan",
+        "target": "s-facts"
+      }
+    ]
+  }
+]

@@ -18,9 +18,11 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: `http://localhost:${process.env.NUAVE_E2E_PORT ?? "3000"}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  webServer: journeyWebServer(3000, { NUAVE_FIXTURE_PREVIEW_ENABLED: "true" }),
+  webServer: journeyWebServer(Number(process.env.NUAVE_E2E_PORT ?? "3000"), {
+    NUAVE_FIXTURE_PREVIEW_ENABLED: "true",
+  }),
 });
