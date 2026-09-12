@@ -22,10 +22,13 @@ export function Reveal({
   onOpenChange?: (open: boolean) => void;
   children: React.ReactNode;
 }) {
+  // defaultOpen is the initial state; changing candidate counts later must
+  // not reset an uncontrolled disclosure or change its control mode.
+  const [initialDefaultOpen] = React.useState(defaultOpen);
   return (
     <Collapsible.Root
       open={open}
-      defaultOpen={defaultOpen}
+      defaultOpen={initialDefaultOpen}
       onOpenChange={(nextOpen) => onOpenChange?.(nextOpen)}
     >
       {trigger ? (

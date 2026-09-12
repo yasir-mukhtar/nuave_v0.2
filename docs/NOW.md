@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-01
+> Updated: 2026-09-12
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -13,6 +13,37 @@ real Indonesian report through the actual product path and judge whether it
 contains a finding worth paying for.
 
 ## Active presentation-layer work
+
+The founder authorized completing the entire local intake on 2026-09-12,
+including all three scope branches, every facts Review edit, Question Review,
+and a safe local start handoff. Implementation is isolated on
+`codex/complete-local-intake` in `/private/tmp/nuave-intake-complete`, based on
+refreshed `origin/main` at `505ccd4`. The dirty root repair checkout is preserved.
+
+The established module from `feat/airbnb-intake-rebuild` at `afd518d` is the
+interaction baseline, governed by the September 5 approved
+[handoff](./drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md) and workbench. The new
+local entry is `/audit/new-intake`, enabled only by the server flag
+`NUAVE_NEW_INTAKE_PREVIEW_ENABLED=true`. It uses deterministic preparation and
+question adapters, bypasses local login/payment, and stops at an explicitly
+simulated downloadable start handoff. It does not execute an audit or report.
+
+The [verification record](../specs/007-intake-airbnb-revamp/END_TO_END_INTAKE_VERIFICATION.md)
+records actual checks and remaining limits. On 2026-09-12, Yasir reviewed the
+latest local preview and approved its logic, layout, and flow. The next smallest
+action is branch closeout: inspect the complete diff, finish the previously
+authorized commit/push, and prepare PR review. Acceptance follow-up found HEAD
+still at `505ccd4` with staged implementation changes and no PR for this branch.
+The [next-agent handover](./drafts/CLI_HANDOFF_COMPLETE_LOCAL_INTAKE_2026-09-12.md)
+records the implementation branch, recovery instructions and verified results.
+The founder subsequently authorized committing and pushing this branch; no merge
+or deployment is authorized by that request.
+Founder acceptance of the local preview is complete. Live-provider validation
+and production activation remain pending. After branch closeout, prepare the
+bounded intake-to-engine integration spec, reconciling Spec 008 question
+generation before implementation; prove that connection offline before an
+explicitly authorized Spec 003 real report run. Production intake, payment, providers, reporting, and deployment
+are unchanged by this local deliverable.
 
 The founder-approved UI-stack migration is active on the dedicated
 `feat/ui-stack-migration` branch from baseline `1f28bdd`. Its canonical design

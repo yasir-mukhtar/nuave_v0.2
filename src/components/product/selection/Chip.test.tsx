@@ -41,6 +41,21 @@ function Harness({
 }
 
 describe("Chip", () => {
+  it("supports the intake check indicator without changing its accessible label", () => {
+    render(
+      <Chip
+        label="Kopi susu"
+        selected
+        selectedIndicator="check"
+        onToggle={() => {}}
+      />,
+    );
+    const chip = screen.getByRole("button", { name: "Kopi susu" });
+    expect(chip.querySelector(".tabler-icon-check")).not.toBeNull();
+    expect(chip.querySelector(".tabler-icon-x")).toBeNull();
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("carries an aria-pressed state that follows selection", () => {
     render(<Harness />);
     expect(screen.getByRole("button", { name: "Kopi susu" })).toHaveAttribute(
