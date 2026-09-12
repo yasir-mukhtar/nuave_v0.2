@@ -1,7 +1,7 @@
 # Handover: complete local Nuave intake
 
 > Updated: 12 September 2026, after founder acceptance of the local preview.
-> Status: implemented, offline-verified, and founder-accepted locally; branch closeout remains.
+> Status: implemented, offline-verified, founder-accepted locally, committed and pushed; PR pending.
 > This handover accompanies the implementation on its dedicated branch; a root copy is retained for discovery.
 
 ## Read this first: use the implementation branch
@@ -10,15 +10,14 @@
 `codex/complete-local-intake`.** Its current local worktree is
 `/private/tmp/nuave-intake-complete`; continue there after checking its status.
 The founder explicitly authorized committing and pushing this work after the
-initial handover. The follow-up checkout inspection found HEAD still at `505ccd4`, with the
-implementation staged and no implementation commit present. Authorization is
-recorded, but commit/push completion must not be inferred from it. No pull
-request for this branch was returned by GitHub on 12 September.
+initial handover. Local HEAD and GitHub's `codex/complete-local-intake` both
+resolve to `5821d2fb70fe8217182683aba5e5a951544f4b8f` (`feat(intake): complete
+local intake journey`). The implementation worktree was clean before this
+documentation follow-up. Commit and push are complete; no PR exists yet.
 
-Preserve this worktree until its implementation is committed and pushed. If it
-is unavailable, first check whether `origin/codex/complete-local-intake` exists
-and contains the implementation before attempting recovery. Do not switch the
-dirty root checkout. Check actual local/remote heads before continuing.
+If recovery is needed, fetch `origin/codex/complete-local-intake` and verify
+that it includes `5821d2f`. Preserve the dirty root checkout; use a separate
+worktree.
 The screenshots and logs listed below are still outside Git and may not survive
 cleanup of `/private/tmp`. Nothing was merged or deployed.
 
@@ -76,7 +75,7 @@ git diff --check
 
 Expected branch: `codex/complete-local-intake`. Its original baseline is
 `505ccd49ce857e8726bf85e796edf10f5738878c`, refreshed `origin/main` when this
-session began; the acceptance follow-up found HEAD still at that baseline with staged changes. The root
+session began; the committed implementation is `5821d2f`. The root
 repair branch still points to the baseline and has unrelated uncommitted work.
 Recheck status rather than assuming either checkout is clean. Do not reset,
 clean, switch, stash or auto-commit user changes.
@@ -271,12 +270,12 @@ live activation are outside this local intake deliverable.
 accepts the local intake experience; it does not validate real preparation,
 AI questions, audit execution, or a report.
 
-**Next smallest useful action: close out the accepted implementation branch.**
-Review the complete staged diff and verification evidence, finish the previously
-authorized commit/push, and prepare the pull request for review. Merge remains
+**Next smallest useful action: prepare the accepted implementation PR.**
+Commit/push are complete at `5821d2f`; review the complete branch diff and
+verification evidence and prepare the pull request for review. Merge remains
 a separate founder decision because main triggers deployment.
 
-After branch closeout, prepare the bounded integration specification connecting
+Separately, prepare the bounded integration specification connecting
 confirmed intake facts and approved questions to the existing audit/report
 engine. Reconcile the Spec 008 question-generation boundary before implementing
 that connection. Prove the connection offline first; the subsequent explicitly
