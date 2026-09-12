@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Toggle } from "@base-ui/react";
-import { IconX } from "@tabler/icons-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import styles from "./selection.module.css";
 
 /**
@@ -29,6 +29,9 @@ export function Chip({
       disabled={disabled}
       className={`${styles.chip} ${selected ? styles.chipSelected : ""}`}
     >
+      {selected && !removable ? (
+        <IconCheck size={18} stroke={2} aria-hidden="true" />
+      ) : null}
       <span className={styles.chipLabel}>{label}</span>
       {selected && removable ? (
         <span className={styles.chipRemove} aria-hidden="true">

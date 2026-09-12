@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { IconChevronRight } from "@tabler/icons-react";
 import type { BusinessBrief } from "@/lib/audit/types";
 import {
   FIELD_OWNERSHIP,
@@ -17,32 +16,8 @@ type UpdateBrief = <K extends keyof BusinessBrief>(
   value: BusinessBrief[K],
 ) => void;
 
-type ReviewField =
-  | "brand_name"
-  | "official_sources"
-  | "entity_scope"
-  | "brand_type"
-  | "category"
-  | "verified_offerings"
-  | "target_customer"
-  | "verified_customer_needs"
-  | "verified_decision_criteria"
-  | "market_context"
-  | "verified_competitor"
-  | "customer_supplied_facts";
-
-function screenForField(field: ReviewField): IntakeScreen {
-  return FIELD_OWNERSHIP[field].screen;
-}
-
-/**
- * The review readback (§6.4): one row per fact, uppercase-capable label, plain
- * Indonesian empty states, and an Ubah link routing to the owning screen from
- * FIELD_OWNERSHIP. `brand_name_variants` edits inline.
- */
 export function ReviewScreen({
   brief,
-  updateBrief,
   scopeKind,
   busy,
   onNavigateToScreen,
@@ -57,97 +32,82 @@ export function ReviewScreen({
   onBack: (screen: "review") => void;
   onGenerate: () => void;
 }) {
-  const [variantsEditing, setVariantsEditing] = useState(false);
-  const [variantsDraft, setVariantsDraft] = useState("");
-
+  const joined = (values: string[]) =>
+    values.filter((value) => value.trim()).join(" · ");
   const rows: {
     label: string;
-    field: ReviewField;
+    screen: IntakeScreen;
     value: string;
-    empty: string;
+    empty?: string;
   }[] = [
     {
-      label: "Nama brand",
-      field: "brand_name",
-      value: brief.brand_name,
-      empty: "Belum diisi",
+      label: "Brand",
+      screen: FIELD_OWNERSHIP.brand_name.screen,
+      value: joined([brief.brand_name, brief.official_sources[0] || ""]),
     },
     {
-      label: "Sumber resmi",
-      field: "official_sources",
-      value: brief.official_sources.join(", "),
-      empty: "Belum ada",
+      label: "Fokus audit",
+      screen: "scope",
+      value:
+        scopeKind === "whole-brand"
+          ? "Brand secara keseluruhan"
+          : scopeKind === "branch"
+            ? "Satu lokasi"
+            : "Satu produk atau layanan",
     },
-    {
-      label: "Yang diaudit",
-      field: "entity_scope",
-      value: brief.entity_scope,
-      empty: "Belum dipilih",
-    },
-    {
-      label: "Jenis brand",
-      field: "brand_type",
-      value: brief.brand_type,
-      empty: "Belum diisi",
-    },
+    ...(scopeKind === "whole-brand"
+      ? []
+      : [
+          {
+            label: scopeKind === "branch" ? "Lokasi" : "Produk atau layanan",
+            screen:
+              scopeKind === "branch"
+                ? ("branch" as const)
+                : ("product" as const),
+            value: brief.entity_scope.replace(/^(Cabang|Produk):\s*/, ""),
+          },
+        ]),
     {
       label: "Kategori",
-      field: "category",
+      screen: FIELD_OWNERSHIP.category.screen,
       value: brief.category,
-      empty: "Belum dipilih",
     },
+    ...(scopeKind === "product"
+      ? []
+      : [
+          {
+            label: "Produk dan layanan",
+            screen: "offerings" as const,
+            value: joined(brief.verified_offerings),
+          },
+        ]),
     {
-      label: "Produk dan layanan",
-      field: "verified_offerings",
-      value: brief.verified_offerings.join(", "),
-      empty: "Belum ada",
-    },
-    {
-      label: "Pelanggan",
-      field: "target_customer",
-      value: brief.target_customer,
-      empty: "Belum diisi",
-    },
-    {
-      label: "Kebutuhan pelanggan",
-      field: "verified_customer_needs",
-      value: brief.verified_customer_needs.join(", "),
-      empty: "Belum diisi",
-    },
-    {
-      label: "Pertimbangan pelanggan",
-      field: "verified_decision_criteria",
-      value: brief.verified_decision_criteria.join(", "),
-      empty: "Belum diisi",
+      label: "Alasan pelanggan",
+      screen: FIELD_OWNERSHIP.target_customer.screen,
+      value: joined([
+        brief.target_customer,
+        ...brief.verified_customer_needs,
+        ...brief.verified_decision_criteria,
+      ]),
+      empty: "Tidak ditambahkan",
     },
     {
       label: "Pasar",
-      field: "market_context",
+      screen: FIELD_OWNERSHIP.market_context.screen,
       value: brief.market_context,
-      empty: "Belum diisi",
     },
     {
-      label: "Bisnis pembanding",
-      field: "verified_competitor",
+      label: "Pembanding",
+      screen: FIELD_OWNERSHIP.verified_competitor.screen,
       value: brief.verified_competitor.name,
-      empty: "Belum dikonfirmasi",
     },
     {
-      label: "Fakta tambahan",
-      field: "customer_supplied_facts",
-      value: brief.customer_supplied_facts.join(", "),
-      empty: "Tidak diisi",
+      label: "Hal yang wajib benar",
+      screen: FIELD_OWNERSHIP.customer_supplied_facts.screen,
+      value: joined([brief.usp, ...brief.customer_supplied_facts]),
+      empty: "Tidak ditambahkan",
     },
   ];
-
-  function saveVariants() {
-    const parsed = variantsDraft
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    updateBrief("brand_name_variants", parsed);
-    setVariantsEditing(false);
-  }
 
   return (
     <IntakeShell
@@ -160,78 +120,37 @@ export function ReviewScreen({
     >
       <IntakeHeading
         screen="review"
-        title="Ini yang akan Nuave audit"
-        lead="Periksa sekali lagi. Semua bisa diubah."
+        title="Konfirmasi informasi brand Anda"
+        lead="Pastikan informasi ini sudah tepat sebelum Nuave menyusun pertanyaan audit."
       />
-
-      <div className={styles.reviewList}>
+      <div
+        className={styles.reviewList}
+        role="group"
+        aria-label="Ringkasan informasi brand"
+      >
         {rows.map((row) => (
-          <div key={row.field} className={styles.reviewRow}>
-            <div className={styles.reviewHeader}>
-              <h2 className={styles.reviewLabel}>{row.label}</h2>
-              <button
-                type="button"
-                className={styles.editLink}
-                onClick={() => onNavigateToScreen(screenForField(row.field))}
-              >
-                Ubah
-              </button>
-            </div>
-            <p className={styles.reviewValue}>{row.value || row.empty}</p>
-          </div>
+          <button
+            key={row.label}
+            type="button"
+            className={styles.reviewRow}
+            aria-label={`Ubah ${row.label.toLocaleLowerCase("id-ID")}`}
+            onClick={() => onNavigateToScreen(row.screen)}
+            disabled={Boolean(busy)}
+          >
+            <span className={styles.reviewCopy}>
+              <span className={styles.reviewLabel}>{row.label}</span>
+              <span className={styles.reviewValue}>
+                {row.value || row.empty || "Belum dikonfirmasi"}
+              </span>
+            </span>
+            <IconChevronRight
+              className={styles.reviewChevron}
+              size={24}
+              stroke={1.6}
+              aria-hidden="true"
+            />
+          </button>
         ))}
-
-        <div className={styles.reviewRow}>
-          <div className={styles.reviewHeader}>
-            <h2 className={styles.reviewLabel}>Nama brand lain</h2>
-            {variantsEditing ? (
-              <button
-                type="button"
-                className={styles.editLink}
-                onClick={saveVariants}
-              >
-                Selesai
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={styles.editLink}
-                onClick={() => {
-                  setVariantsDraft(brief.brand_name_variants.join(", "));
-                  setVariantsEditing(true);
-                }}
-              >
-                Ubah
-              </button>
-            )}
-          </div>
-          {variantsEditing ? (
-            <div>
-              <Input
-                id="brand-name-variants"
-                aria-label="Nama brand lain, pisahkan dengan koma"
-                value={variantsDraft}
-                onChange={(event) => setVariantsDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    saveVariants();
-                  }
-                }}
-              />
-              <p className={styles.fieldHint}>
-                Pisahkan dengan koma. Nama lain dipakai untuk memastikan
-                pertanyaan tanpa nama benar-benar tidak menyebut brand Anda.
-              </p>
-            </div>
-          ) : (
-            <p className={styles.reviewValue}>
-              {brief.brand_name_variants.length
-                ? brief.brand_name_variants.join(", ")
-                : "Tidak ada"}
-            </p>
-          )}
-        </div>
       </div>
     </IntakeShell>
   );

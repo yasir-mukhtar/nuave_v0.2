@@ -124,7 +124,8 @@ function packForBrief(brief: BusinessBrief): PromptPack {
 async function seed(page: Page, state: unknown) {
   await page.addInitScript(
     ({ workflowKey, sessionKey, stateValue }) => {
-      window.sessionStorage.setItem(workflowKey, stateValue);
+      if (!window.sessionStorage.getItem(workflowKey))
+        window.sessionStorage.setItem(workflowKey, stateValue);
       window.sessionStorage.setItem(sessionKey, "intake-contract-e2e-1234");
     },
     {
@@ -186,26 +187,28 @@ test.describe("intake screen contract", () => {
     await page.goto("/audit/v2/intake-preview");
 
     await expect(
-      page.getByRole("heading", { name: "Apa yang ingin Anda audit?" }),
+      page.getByRole("heading", { name: "Apa fokus audit ini?" }),
     ).toBeVisible();
     await expect(
       page
-        .getByRole("radiogroup", { name: "Cakupan audit" })
+        .getByRole("radiogroup", { name: "Pilih fokus audit" })
         .getByRole("radio"),
     ).toHaveCount(3);
-    // The drafted brand_type is read-first: no input until Ubah is pressed.
+    // A valid prepared brand type needs no separate input on Scope.
     await expect(page.locator("#brand-type")).toHaveCount(0);
     await expect(page.locator("input[type='text']")).toHaveCount(0);
     await expectOneFrame(page);
     await expectNoProhibitedPhrases(page);
   });
 
-  test("offerings exposes selected removable chips", async ({ page }) => {
+  test("offerings exposes selected chips that remain available after removal", async ({
+    page,
+  }) => {
     await seed(page, confirmedState({ intakeScreen: "offerings" }));
     await page.goto("/audit/v2/intake-preview");
 
     await expect(
-      page.getByRole("heading", { name: "Ini produk Anda. Sudah benar?" }),
+      page.getByRole("heading", { name: "Apakah ini yang Anda tawarkan?" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Coffee" })).toHaveAttribute(
       "aria-pressed",
@@ -214,20 +217,42 @@ test.describe("intake screen contract", () => {
     await expect(
       page.getByRole("button", { name: "Pastries" }),
     ).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Coffee", exact: true }).click();
+    await page.getByRole("button", { name: "Pastries", exact: true }).click();
+    await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+    await expect(page.locator("#verified-offerings")).toBeFocused();
+    await expect(page.getByRole("alert").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Coffee" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    await page.getByRole("button", { name: "Coffee", exact: true }).click();
     await expectNoProhibitedPhrases(page);
+    await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Kenali pelanggan dan alasannya." }),
+    ).toBeVisible();
   });
 
-  test("the readback is read-first with an Ubah link per row", async ({
+  test("the readback has whole-row editing and omits aliases", async ({
     page,
   }) => {
     await seed(page, confirmedState({ intakeScreen: "review" }));
     await page.goto("/audit/v2/intake-preview");
 
     await expect(
-      page.getByRole("heading", { name: "Ini yang akan Nuave audit" }),
+      page.getByRole("heading", { name: "Konfirmasi informasi brand Anda" }),
     ).toBeVisible();
     await expect(page.locator("textarea")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Ubah" })).toHaveCount(13);
+    await expect(
+      page
+        .getByRole("group", { name: "Ringkasan informasi brand" })
+        .getByRole("button"),
+    ).toHaveCount(8);
+    await expect(page.getByText("Ubah", { exact: true })).toHaveCount(0);
+    await expect(
+      page.getByText("Nama brand lain", { exact: true }),
+    ).toHaveCount(0);
     await expect(page.getByText("Coffee shop", { exact: true })).toBeVisible();
     await expect(page.getByText("Peer Coffee")).toBeVisible();
     await expectOneFrame(page);
@@ -317,3 +342,113 @@ test.describe("intake screen contract", () => {
     );
   });
 });
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 900 },
+]) {
+  test(`approved frame keeps visible chapter progress above the question at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await seed(page, confirmedState({ intakeScreen: "scope" }));
+    await page.goto("/audit/v2/intake-preview");
+    const heading = page.getByRole("heading", { name: "Apa fokus audit ini?" });
+    await expect(heading).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expectOneFrame(page);
+    await expect(page.getByRole("button", { name: "Mulai ulang" })).toHaveCount(
+      0,
+    );
+    const progress = page.getByRole("list", {
+      name: "Progres persiapan audit",
+    });
+    const progressBox = await progress.boundingBox();
+    const headingBox = await heading.boundingBox();
+    expect(progressBox!.y + progressBox!.height).toBeLessThan(headingBox!.y);
+    const tracks = progress.locator("li > span[aria-hidden='true']");
+    await expect(tracks).toHaveCount(4);
+    for (const track of await tracks.all())
+      expect((await track.boundingBox())!.height).toBeGreaterThanOrEqual(5);
+    for (const role of ["radio", "button"] as const) {
+      for (const control of await page
+        .getByRole("main")
+        .getByRole(role)
+        .all()) {
+        const box = await control.boundingBox();
+        expect(box!.height).toBeGreaterThanOrEqual(44);
+        expect(box!.width).toBeGreaterThanOrEqual(44);
+      }
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(viewport.width);
+    await expectNoProhibitedPhrases(page);
+  });
+}
+
+for (const width of [390, 1280]) {
+  test(`all five demo screens work without requests or session changes at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    const requests: string[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname.startsWith("/api/"))
+        requests.push(request.url());
+    });
+    await page.addInitScript(
+      (key) =>
+        window.sessionStorage.setItem(key, "existing-workflow-untouched"),
+      AUDIT_WORKFLOW_STORAGE_KEY,
+    );
+    await page.goto("/audit/v2/intake-preview?demo=1");
+    const navigation = page.getByRole("navigation", {
+      name: "Pilih layar pratinjau",
+    });
+    for (const [label, heading] of [
+      ["Fokus audit", "Apa fokus audit ini?"],
+      ["Pilih lokasi", "Lokasi mana yang ingin Anda audit?"],
+      ["Produk dan layanan", "Apakah ini yang Anda tawarkan?"],
+      ["Konfirmasi data", "Konfirmasi informasi brand Anda"],
+      ["Pertanyaan", "Periksa pertanyaan audit"],
+    ]) {
+      await navigation
+        .getByRole("button", { name: label, exact: true })
+        .click();
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expectOneFrame(page);
+      await expectNoProhibitedPhrases(page);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+      const footer = page.getByRole("navigation", {
+        name: "Navigasi persiapan audit",
+      });
+      for (const action of await footer.getByRole("button").all()) {
+        const box = await action.boundingBox();
+        expect(box!.x).toBeGreaterThanOrEqual(0);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+        expect(box!.height).toBeGreaterThanOrEqual(44);
+      }
+      await page.screenshot({
+        path: testInfo.outputPath(`${label.replaceAll(" ", "-")}.png`),
+      });
+    }
+    await expect(page.locator("textarea")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Ubah", exact: true }),
+    ).toHaveCount(10);
+    await page.getByRole("button", { name: "Jalankan audit" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "Tidak ada audit yang dijalankan.",
+    );
+    expect(requests).toEqual([]);
+    expect(
+      await page.evaluate(
+        (key) => window.sessionStorage.getItem(key),
+        AUDIT_WORKFLOW_STORAGE_KEY,
+      ),
+    ).toBe("existing-workflow-untouched");
+  });
+}

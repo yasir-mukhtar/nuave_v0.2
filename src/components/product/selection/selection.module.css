@@ -4,7 +4,7 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 /* ── Selection card (single choice) ── */
@@ -12,15 +12,14 @@
 .card {
   display: flex;
   gap: var(--space-md);
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
-  min-height: var(--target-min-size);
-  padding: var(--space-md);
+  min-height: var(--intake-choice-height);
+  padding: var(--space-lg);
   text-align: left;
   background: var(--bg-page);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-token-lg);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--intake-choice-radius);
   cursor: pointer;
   transition:
     border-color var(--motion-duration-fast) var(--motion-ease-out),
@@ -34,9 +33,7 @@
 .card[data-checked] {
   border-color: var(--action);
   background: var(--action-soft);
-  box-shadow:
-    0 0 0 1px var(--action),
-    var(--shadow-card);
+  box-shadow: 0 0 0 1px var(--action);
 }
 
 .card[data-disabled] {
@@ -56,21 +53,23 @@
 
 .cardTitle {
   color: var(--text-heading);
-  font-size: var(--type-copy-size);
-  font-weight: var(--type-label-weight);
-  line-height: var(--type-copy-leading);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-leading);
 }
 
 .cardDescription {
-  margin-top: 2px;
+  margin-top: var(--space-sm);
   color: var(--text-muted);
-  font-size: var(--type-copy-sm-size);
-  line-height: var(--type-copy-sm-leading);
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
 }
 
 .cardIcon {
+  display: grid;
+  width: var(--target-min-size);
+  place-items: center;
   flex: none;
-  margin-top: 2px;
   color: var(--text-muted);
 }
 
@@ -85,13 +84,12 @@
   gap: var(--space-md);
   align-items: center;
   width: 100%;
-  min-height: var(--target-min-size);
-  padding: var(--space-md);
+  min-height: var(--intake-choice-height);
+  padding: var(--space-lg);
   text-align: left;
   background: var(--bg-page);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-token-lg);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--intake-choice-radius);
   cursor: pointer;
   transition:
     border-color var(--motion-duration-fast) var(--motion-ease-out),
@@ -105,9 +103,7 @@
 .row[data-checked] {
   border-color: var(--action);
   background: var(--action-soft);
-  box-shadow:
-    0 0 0 1px var(--action),
-    var(--shadow-card);
+  box-shadow: 0 0 0 1px var(--action);
 }
 
 .row[data-disabled] {
@@ -123,34 +119,35 @@
 .rowDot {
   flex: none;
   box-sizing: border-box;
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-token-full);
   background: var(--bg-page);
 }
 
 .row[data-checked] .rowDot {
-  border: 5px solid var(--action);
+  border: 7px solid var(--action);
 }
 
 .rowBody {
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .rowTitle {
   color: var(--text-heading);
-  font-size: var(--type-copy-size);
-  font-weight: var(--type-label-weight);
-  line-height: var(--type-copy-leading);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-heading-sm-leading);
 }
 
 .rowDescription {
-  margin-top: 2px;
+  margin-top: var(--space-sm);
   color: var(--text-muted);
-  font-size: var(--type-copy-sm-size);
-  line-height: var(--type-copy-sm-leading);
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
 }
 
 /* ── Chip (multi-select and removal) ── */
@@ -166,7 +163,7 @@
   gap: var(--space-sm);
   align-items: center;
   min-height: var(--target-min-size);
-  padding: var(--space-sm) var(--space-md);
+  padding: 12px var(--space-md);
   color: var(--text-body);
   background: var(--bg-page);
   border: 1px solid var(--border-default);
@@ -238,15 +235,14 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--target-min-size);
-  padding: 0 var(--space-sm);
+  padding: 12px var(--space-lg);
   color: var(--text-heading);
-  background: none;
-  border: 0;
+  background: var(--bg-page);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-token-full);
   cursor: pointer;
-  font-size: var(--type-label-size);
   font-weight: var(--type-label-weight);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-size: var(--type-copy-size);
 }
 
 .revealTrigger:hover {
@@ -256,11 +252,15 @@
 .revealTrigger:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-  border-radius: var(--radius-token-xs);
 }
 
 .revealPanel {
   margin-top: var(--space-lg);
-  padding: var(--space-md) 0 var(--space-xs) var(--space-md);
-  border-left: 2px solid var(--border-strong);
+  padding: var(--space-lg) 0 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.cardIcon svg {
+  width: 30px;
+  height: 30px;
 }

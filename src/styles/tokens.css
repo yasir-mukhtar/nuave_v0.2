@@ -187,6 +187,15 @@
   --focus-ring-width: 2px;
   --target-min-size: 44px;
 
+  /* Approved September 5 intake composition. */
+  --intake-content-width: 600px;
+  --intake-choice-height: 122px;
+  --intake-action-height: 56px;
+  --intake-action-min-width: 158px;
+  --intake-choice-radius: var(--radius-token-2xl);
+  --intake-progress-height: 6px;
+  --intake-progress-spacing: 40px;
+
   /* ── Buttons (Foundation Language, R-08) ── */
   --btn-radius: var(--radius-token-sm);
   --btn-font-size: var(--type-label-size);
@@ -241,4 +250,11 @@
   --lp-nav-glass: rgba(255, 255, 255, 0.9);
   --lp-nav-border: var(--border-light);
   --lp-card-glass: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 600px) {
+  :root {
+    --intake-choice-height: 112px;
+    --intake-action-min-width: 132px;
+  }
 }

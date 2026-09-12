@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { AddLine } from "@/components/product/selection/AddLine";
 import { Chip, ChipGroup } from "@/components/product/selection/Chip";
+import { Reveal } from "@/components/product/selection/Reveal";
 import type { BusinessBrief } from "@/lib/audit/types";
 import type { ScopeKind } from "@/lib/audit/workflow-authority";
 import { IntakeFieldError, IntakeHeading, IntakeShell } from "../IntakeShell";
+import styles from "../intake.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
 type UpdateBrief = <K extends keyof BusinessBrief>(
@@ -12,17 +15,12 @@ type UpdateBrief = <K extends keyof BusinessBrief>(
   value: BusinessBrief[K],
 ) => void;
 
-/**
- * Offerings: the chip pattern. Chips arrive pre-selected from the draft
- * (R-16), so removing the last one still leaves Lanjut enabled (R-17) and the
- * press routes the error back here with the group focused.
- */
 export function OfferingsScreen({
   brief,
   updateBrief,
   scopeKind,
   fieldErrors,
-  customerEditedFields,
+  preparedOfferings = [],
   offeringsInvalidated,
   busy,
   onContinue,
@@ -33,30 +31,31 @@ export function OfferingsScreen({
   scopeKind: ScopeKind;
   fieldErrors: Record<string, string>;
   customerEditedFields: string[];
+  preparedOfferings?: readonly string[];
   offeringsInvalidated: boolean;
   busy: Busy;
   onContinue: (screen: "offerings") => void;
   onBack: (screen: "offerings") => void;
 }) {
-  const offerings = brief.verified_offerings;
-  const hasDraft = offerings.some((item) => item.trim());
-  const emptyExplanation = customerEditedFields.includes("verified_offerings")
-    ? "Nilai ini dikosongkan setelah perubahan Anda. Tambahkan setidaknya satu produk atau layanan untuk melanjutkan."
-    : offeringsInvalidated
-      ? "Cakupan produk berubah, sehingga daftar sebelumnya dihapus. Tambahkan setidaknya satu produk atau layanan untuk melanjutkan."
-      : "Tambahkan setidaknya satu produk atau layanan untuk melanjutkan.";
+  const [added, setAdded] = useState(brief.verified_offerings);
+  const [adding, setAdding] = useState(false);
+  const candidates = [
+    ...new Set(
+      [
+        ...(offeringsInvalidated ? [] : preparedOfferings),
+        ...added,
+        ...brief.verified_offerings,
+      ].filter((value) => value.trim()),
+    ),
+  ];
 
-  function removeOffering(item: string) {
+  function toggle(value: string, selected: boolean) {
+    const current = brief.verified_offerings;
     updateBrief(
       "verified_offerings",
-      offerings.filter((candidate) => candidate !== item),
-    );
-  }
-
-  function addOffering(value: string) {
-    updateBrief(
-      "verified_offerings",
-      offerings.includes(value) ? offerings : [...offerings, value],
+      selected
+        ? [...new Set([...current, value])]
+        : current.filter((item) => item !== value),
     );
   }
 
@@ -70,40 +69,51 @@ export function OfferingsScreen({
     >
       <IntakeHeading
         screen="offerings"
-        title={
-          hasDraft
-            ? "Ini produk Anda. Sudah benar?"
-            : "Apa saja yang Anda tawarkan?"
-        }
+        title="Apakah ini yang Anda tawarkan?"
         lead={
-          hasDraft ? "Hapus yang salah, tambah yang kurang." : emptyExplanation
+          candidates.length
+            ? "Pilih yang sesuai. Tambahkan produk atau layanan yang belum ada."
+            : offeringsInvalidated
+              ? "Fokus audit berubah. Tambahkan produk atau layanan yang sesuai."
+              : "Nuave belum dapat membaca produk atau layanan Anda. Tambahkan setidaknya satu untuk melanjutkan."
         }
       />
-
-      {offerings.length ? (
-        <div id="verified-offerings" tabIndex={-1}>
-          <ChipGroup label="Produk atau layanan">
-            {offerings.map((item) => (
-              <Chip
-                key={item}
-                label={item}
-                selected
-                onToggle={() => removeOffering(item)}
-              />
-            ))}
-          </ChipGroup>
-        </div>
-      ) : (
-        <div id="verified-offerings" tabIndex={-1} />
-      )}
-
+      <div id="verified-offerings" tabIndex={-1}>
+        <ChipGroup label="Produk atau layanan">
+          {candidates.map((item) => (
+            <Chip
+              key={item}
+              label={item}
+              removable={false}
+              selected={brief.verified_offerings.includes(item)}
+              disabled={Boolean(busy)}
+              onToggle={(selected) => toggle(item, selected)}
+            />
+          ))}
+        </ChipGroup>
+      </div>
       <IntakeFieldError message={fieldErrors.verified_offerings} />
-
-      <AddLine
-        inputLabel="Tambah produk atau layanan"
-        placeholder="Tambah produk atau layanan"
-        onCommit={addOffering}
-      />
+      <div className={styles.stack}>
+        <Reveal
+          trigger={
+            candidates.length ? "Tambah produk atau layanan lain" : undefined
+          }
+          open={adding || candidates.length === 0}
+          onOpenChange={setAdding}
+        >
+          <AddLine
+            inputLabel="Nama produk atau layanan"
+            placeholder="Contoh: kopi susu"
+            buttonLabel="Tambahkan"
+            disabled={Boolean(busy)}
+            onCommit={(value) => {
+              setAdded((current) => [...new Set([...current, value])]);
+              toggle(value, true);
+              setAdding(false);
+            }}
+          />
+        </Reveal>
+      </div>
     </IntakeShell>
   );
 }

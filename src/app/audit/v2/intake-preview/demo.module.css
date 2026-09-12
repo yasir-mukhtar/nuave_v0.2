@@ -1,0 +1,31 @@
+.toolbar {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+.label {
+  margin: 0 auto var(--space-sm);
+  max-width: var(--intake-content-width);
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  max-width: var(--intake-content-width);
+  margin: auto;
+  padding-bottom: var(--space-xs);
+}
+.tabs button {
+  flex: none;
+  min-height: var(--target-min-size);
+}
+.message {
+  max-width: var(--intake-content-width);
+  margin: var(--space-sm) auto 0;
+  color: var(--text-heading);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}

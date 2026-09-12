@@ -1,28 +1,23 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  IconArrowLeft,
-  IconArrowRight,
-  IconLoader2,
-} from "@tabler/icons-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import {
   INTAKE_CHAPTER_LABELS,
   intakeChapterFor,
-  intakeScreenSequence,
   type IntakeScreen,
   type ScopeKind,
 } from "@/lib/audit/workflow-authority";
 import styles from "./intake.module.css";
 
 /**
- * The recovered intake frame (recovery plan §6.3 S2): one 560px column, one
- * chapter progress bar, and one Kembali/Lanjut pair, fixed to the bottom.
+ * September 5 approved frame: wordmark, chapter progress, one question,
+ * and a persistent footer. The controller's legacy header stays outside it.
  */
 export function IntakeShell({
   screen,
-  scopeKind,
   onBack,
   onNext,
   nextLabel = "Lanjut",
@@ -40,52 +35,61 @@ export function IntakeShell({
   busy?: boolean;
   children: React.ReactNode;
 }) {
-  const sequence = intakeScreenSequence(scopeKind);
+  const stageRef = React.useRef<HTMLDivElement>(null);
   const chapter =
     screen === "questions"
       ? INTAKE_CHAPTER_LABELS.length - 1
       : intakeChapterFor(screen);
-  const chapterScreens: readonly string[] =
-    screen === "questions"
-      ? ["questions"]
-      : sequence.filter((candidate) => intakeChapterFor(candidate) === chapter);
-  const position = chapterScreens.indexOf(screen);
-  const currentProgress =
-    position >= 0 ? ((position + 1) / chapterScreens.length) * 100 : 0;
+  React.useEffect(() => {
+    stageRef.current?.querySelector("h1")?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [screen]);
 
   return (
     <div className={styles.frame}>
       <div className={styles.column}>
-        <div className={styles.stage}>{children}</div>
+        <header className={styles.masthead}>
+          <Link className={styles.wordmark} href="/" aria-label="Nuave">
+            nuave
+          </Link>
+          <ol className={styles.progress} aria-label="Progres persiapan audit">
+            {INTAKE_CHAPTER_LABELS.map((label, index) => {
+              const fill = index <= chapter ? 100 : 0;
+              return (
+                <li
+                  key={label}
+                  aria-current={index === chapter ? "step" : undefined}
+                  className={styles.progressStep}
+                >
+                  <span className={styles.progressTrack} aria-hidden="true">
+                    <span
+                      className={styles.progressFill}
+                      style={{ width: `${fill}%` }}
+                    />
+                  </span>
+                  <span className="sr-only">
+                    Bab {index + 1}: {label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </header>
+        <div className={styles.stage} ref={stageRef}>
+          {children}
+        </div>
       </div>
       <nav className={styles.bottomNav} aria-label="Navigasi persiapan audit">
-        <ol className={styles.progress} aria-label="Progres persiapan audit">
-          {INTAKE_CHAPTER_LABELS.map((label, index) => {
-            const fill =
-              index < chapter ? 100 : index === chapter ? currentProgress : 0;
-            return (
-              <li
-                key={label}
-                aria-current={index === chapter ? "step" : undefined}
-                className={styles.progressStep}
-              >
-                <span className={styles.progressTrack} aria-hidden="true">
-                  <span
-                    className={styles.progressFill}
-                    style={{ width: `${fill}%` }}
-                  />
-                </span>
-                <span className="sr-only">
-                  Bab {index + 1}: {label}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
         <div className={styles.actions}>
           {showBack ? (
-            <Button variant="ghost" type="button" onClick={onBack}>
-              <IconArrowLeft /> Kembali
+            <Button
+              className={styles.backAction}
+              variant="ghost"
+              type="button"
+              onClick={onBack}
+              disabled={busy}
+            >
+              Kembali
             </Button>
           ) : (
             <span aria-hidden="true" />
@@ -95,12 +99,11 @@ export function IntakeShell({
             type="button"
             onClick={onNext}
             disabled={busy}
+            className={`${styles.primaryAction} ${screen === "review" ? styles.reviewAction : ""}`}
           >
             {busy ? (
               <IconLoader2 className="animate-spin" aria-hidden="true" />
-            ) : (
-              <IconArrowRight />
-            )}
+            ) : null}
             {nextLabel}
           </Button>
         </div>
@@ -123,10 +126,11 @@ export function IntakeHeading({
 }) {
   return (
     <header className={styles.heading}>
-      <p className={styles.kicker}>
-        {INTAKE_CHAPTER_LABELS[intakeChapterFor(screen)]}
-      </p>
-      <h1 className={styles.title}>
+      <h1
+        id={`intake-${screen}-heading`}
+        className={styles.title}
+        tabIndex={-1}
+      >
         {title}
         {optional ? (
           <span className={styles.optionalBadge}>Opsional</span>
