@@ -22,7 +22,7 @@ Read in order:
 9. the directly relevant tests beside those files
 10. `NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md` in this package when implementing — the sole current execution authority and cross-session ledger (the older `EXECUTION_PLAN.md` is superseded and redirects there)
 
-At the intake-integration package only, also read the then-current `src/lib/intake/` data handoff and its approved contract. The planning baseline on 2026-09-07 is PR #46 (`feat/airbnb-intake-rebuild`), where question-generation wiring is intentionally not yet owned by the new intake module.
+At the intake-integration package only, also read the then-current `src/app/audit/intake/` data handoff and its approved contract. The planning baseline on 2026-09-07 was PR #46 (`feat/airbnb-intake-rebuild`), which closed unmerged; the intake module actually landed at `src/app/audit/intake/` via PR #49 (Spec 007 R-27 intake recovery, merged 2026-09-11) with question-generation dispatch still owned by `AuditWorkflow` → `POST /api/audit/prompts`, not by the intake module.
 
 Do not load `archive/`, superseded prompt-generation experiments, or prior drafts unless a task explicitly names them for regression evidence.
 
