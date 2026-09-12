@@ -31,6 +31,7 @@ import {
   buildDeterministicIndonesianPack,
   type MinimizedIndonesianBrief,
 } from "./questions-id";
+import { OPENCODEGO_SESSION_HEADER, OPENCODEGO_USER_AGENT } from "./opencodego";
 
 const brief: MinimizedIndonesianBrief = {
   brand_name: "Kopi Taman Senja",
@@ -242,6 +243,12 @@ describe("OpenCode Go question provider over a stubbed HTTP layer", () => {
     );
     const headers = calls[0].init.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer test-opencode-key");
+    // OpenCode Go rejects requests without its routing session header
+    // (observed live 2026-09-12: HTTP 400 MissingSessionID → fallback).
+    expect(headers[OPENCODEGO_SESSION_HEADER]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(headers["User-Agent"]).toBe(OPENCODEGO_USER_AGENT);
     expect(JSON.parse(String(calls[0].init.body))).toEqual(
       buildOpenAIIndonesianQuestionRequest(brief, "gpt-5.6-luna"),
     );
@@ -308,6 +315,7 @@ describe("direct OpenAI testing provider", () => {
     expect(calls[0].url).toBe(INDONESIAN_QUESTION_OPENAI_ENDPOINT);
     const headers = calls[0].init.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer test-openai-key");
+    expect(headers[OPENCODEGO_SESSION_HEADER]).toBeUndefined();
   });
 
   it("accepts JSON-encoded structured output when parsed is absent", async () => {

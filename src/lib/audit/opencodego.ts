@@ -3,6 +3,33 @@ export const OPENCODEGO_AUDIT_MODEL = "gpt-5.6-luna" as const;
 export const OPENCODEGO_REASONING_EFFORT = "low" as const;
 export const OPENCODEGO_SYSTEM = "OpenCode Go Responses API" as const;
 
+/**
+ * OpenCode Go rejects requests without a stable session ID
+ * (`x-opencode-session`, used for routing and prompt caching) and asks
+ * clients to identify themselves with their own user agent. Nuave provider
+ * calls are one-shot operations rather than multi-turn conversations, so each
+ * call sends a fresh random session ID.
+ */
+export const OPENCODEGO_SESSION_HEADER = "x-opencode-session" as const;
+export const OPENCODEGO_USER_AGENT = "nuave-audit/1.0" as const;
+
+export function opencodeGoTransportHeaders(
+  sessionId: string = crypto.randomUUID(),
+): Record<string, string> {
+  return {
+    [OPENCODEGO_SESSION_HEADER]: sessionId,
+    "User-Agent": OPENCODEGO_USER_AGENT,
+  };
+}
+
+/** True when an OPENAI_BASE_URL value targets the OpenCode Go endpoint. */
+export function isOpenCodeGoBaseUrl(value: string | undefined): boolean {
+  const trimmed = value?.trim();
+  return (
+    Boolean(trimmed) && normalizedBaseUrl(trimmed!) === OPENCODEGO_BASE_URL
+  );
+}
+
 function normalizedBaseUrl(value: string): string {
   return value.replace(/\/+$/, "");
 }

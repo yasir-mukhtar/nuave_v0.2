@@ -15,6 +15,7 @@ import {
   OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN,
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
 } from "./contracts";
+import { OPENCODEGO_SESSION_HEADER, OPENCODEGO_USER_AGENT } from "./opencodego";
 import {
   auditObservationSchema,
   extractionDraftSchema,
@@ -240,11 +241,51 @@ describe("live website extraction", () => {
   beforeEach(() => {
     vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
     delete process.env.OPENAI_AUDIT_MODEL;
+    delete process.env.OPENAI_BASE_URL;
     mockResponsesParse.mockReset();
+    mockOpenAIClient.mockClear();
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it("sends the OpenCode Go session header when the endpoint is OpenCode Go", async () => {
+    // OpenCode Go rejects requests without `x-opencode-session` (observed
+    // live 2026-09-12: HTTP 400 MissingSessionID). The protected path points
+    // OPENAI_BASE_URL at the OpenCode Go endpoint.
+    vi.stubEnv("OPENAI_BASE_URL", "https://opencode.ai/zen/go/v1");
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: parsedDraft }),
+    );
+
+    await extractBusinessDraft(input);
+
+    const ctorArgs = (
+      mockOpenAIClient.mock.calls.at(-1) as
+        [{ defaultHeaders?: Record<string, string> }] | undefined
+    )?.[0];
+    expect(ctorArgs?.defaultHeaders?.[OPENCODEGO_SESSION_HEADER]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(ctorArgs?.defaultHeaders?.["User-Agent"]).toBe(
+      OPENCODEGO_USER_AGENT,
+    );
+  });
+
+  it("sends no OpenCode Go session header to other endpoints", async () => {
+    vi.stubEnv("OPENAI_BASE_URL", "https://api.openai.com/v1");
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: parsedDraft }),
+    );
+
+    await extractBusinessDraft(input);
+
+    const ctorArgs = (
+      mockOpenAIClient.mock.calls.at(-1) as
+        [{ defaultHeaders?: Record<string, string> }] | undefined
+    )?.[0];
+    expect(ctorArgs?.defaultHeaders).toBeUndefined();
   });
 
   it("bounds the drafted lists so a rich website cannot overrun the allowance", async () => {

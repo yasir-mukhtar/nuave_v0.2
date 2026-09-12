@@ -15,6 +15,7 @@ import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 import {
   OPENCODEGO_BASE_URL,
   assertOpenCodeGoProductionMethodConfigured,
+  opencodeGoTransportHeaders,
 } from "./opencodego";
 
 // Live provider for the Indonesian question-generation boundary (Spec 003,
@@ -507,6 +508,8 @@ async function responsesGenerate(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      // OpenCode Go rejects requests without its routing session header.
+      ...(provider === "opencodego" ? opencodeGoTransportHeaders() : {}),
     },
     body: JSON.stringify(request),
   });

@@ -31,6 +31,7 @@ import {
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
+import { isOpenCodeGoBaseUrl, opencodeGoTransportHeaders } from "./opencodego";
 import {
   AUDIT_CALL_LIMITS,
   AUDIT_MODEL,
@@ -63,7 +64,15 @@ function client() {
     throw new Error("OPENAI_API_KEY is not configured on the Nuave server.");
   }
   const baseURL = process.env.OPENAI_BASE_URL?.trim() || undefined;
-  return new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
+  return new OpenAI({
+    apiKey,
+    ...(baseURL ? { baseURL } : {}),
+    // OpenCode Go rejects requests without its routing session header; the
+    // protected path sets OPENAI_BASE_URL to the OpenCode Go endpoint.
+    ...(isOpenCodeGoBaseUrl(baseURL)
+      ? { defaultHeaders: opencodeGoTransportHeaders() }
+      : {}),
+  });
 }
 
 export function auditModel() {
