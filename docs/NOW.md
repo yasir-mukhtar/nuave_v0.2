@@ -52,9 +52,11 @@ request (`validate` job) and, on each `main` push, runs
 pull request — before the `deploy` job builds with `@opennextjs/cloudflare`
 and deploys to the `nuave-v2` worker. Pull requests also get an isolated
 `nuave-pr-<number>` preview worker via `.github/workflows/pr-preview.yml`,
-built with dummy provider credentials only. The currently deployed commit is
-`505ccd49ce857e8726bf85e796edf10f5738878c` (CI run `34663621711`, 2026-09-12;
-validate, verify-main-origin, and deploy all green). The production provider configuration is pinned to
+built with dummy provider credentials only. The most recently deployed commit
+at this update is `e8df42818510ef6768e3cfa377ae74536851dcb1` (CI run
+`34725425535`, 2026-09-13; validate, verify-main-origin, and deploy all green —
+the #57 security merge: Next 16.3.5 plus patched sharp/postcss paths). Every
+merged PR redeploys `nuave-v2`. The production provider configuration is pinned to
 `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
 `OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
 `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and

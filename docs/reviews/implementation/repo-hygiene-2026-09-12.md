@@ -185,21 +185,39 @@ the G1 adapter above and needs no PR.
 Bot-PR check status at record time: `validate` passed on #53–#56 and failed on
 **#57** (run `34691771986`): five browser tests failed — all four
 `live-audit-variance` orchestration tests plus the C1 payment-boundary bypass
-test — while all 836 unit tests and the build passed. The failures are
-storage/timing-sensitive browser tests; a rerun is needed to distinguish a
-flake from a real `next` 16.3.5 regression. Branch protection already blocks
-merge while `validate` is red. All five bot PRs' preview deploys failed for
-the expected reason — runs use Dependabot-scoped secrets and
-`CLOUDFLARE_API_TOKEN` is absent (log: "Secret source: Dependabot"), so no
-preview worker exists for them.
+test — while all 836 unit tests and the build passed. Branch protection
+blocked merge while `validate` was red. All five bot PRs' preview deploys
+failed for the expected reason — runs use Dependabot-scoped secrets and
+`CLOUDFLARE_API_TOKEN` is absent (log: "Secret source: Dependabot").
 
-Prioritized recommendation: (1) one bounded Next-dependency-tree repair —
-resolve #57's `validate` failure (rerun first to separate flake from
-regression), then update the vulnerable `overrides.next` pins (`sharp`
-≥0.35.4, `postcss` ≥8.5.23) and the nested `miniflare` `sharp@0.35.2` so all
-three remaining root alerts clear; (2) #55 (`js-yaml`, dev high); (3) one of
-#54/#56 (`vitest` dev medium — they duplicate each other); (4) #53 (archived
-prototype) last. Alerts on archived/staged manifests can be resolved by
+**Post-record integration update (2026-09-13):** the #57 failures were
+diagnosed and repaired on the same branch — they were deterministic (the
+authorized rerun `34691771986` attempt 2 failed identically), caused by React
+StrictMode mount-effect replay newly active in dev under 16.3.5's vendored
+React (post-facebook/react#35961 build), and fixed by holding the bootstrap
+request in a ref so the replay shares the in-flight promise. The repaired PR
+also removed the stale `overrides.next` pins and added `overrides.sharp:
+0.35.4`, patching every active sharp/postcss copy including miniflare's nested
+`0.35.2`. #57 merged as `e8df42818510ef6768e3cfa377ae74536851dcb1`; main CI
+run `34725425535` (validate, verify-main-origin, deploy all green) deployed
+`nuave-v2` version `5708d948-9b8f-40e5-90a1-8bf924c2270c`. Full diagnosis and
+verification: `docs/reviews/implementation/active-dependency-repair-2026-09-12.md`.
+
+**Correction to the preview claim above:** a preview worker did exist for #57.
+The repair push was made by a human actor, so the `pull_request` run received
+repository secrets and deployed `nuave-pr-57` (run `34702110811`). Its
+close-event cleanup then ran the pre-correction workflow: the
+`wrangler delete` step failed with Cloudflare authentication error 10000 on a
+KV-namespace pre-check, yet the job still commented "has been removed" — the
+misreporting this branch's corrected cleanup is designed to prevent. The
+workers.dev URL now returns error 1042 (no worker serves the route), but
+script-level deletion is unverified; `nuave-pr-57` needs a founder dashboard
+check or a credential-scoped deletion as a separately authorized action.
+
+Prioritized recommendation, updated: (1) ~~Next-dependency-tree repair~~ —
+**done** (merged via #57 as `e8df428`, see post-record update above); (2) #55
+(`js-yaml`, dev high); (3) one of #54/#56 (`vitest` dev medium — they
+duplicate each other); (4) #53 (archived prototype) last. Alerts on archived/staged manifests can be resolved by
 deleting those lockfiles if the founder decides the code is dead — that
 deletion is not authorized here.
 
@@ -214,9 +232,12 @@ deletion is not authorized here.
    needs its own R5 acceptance review.
 3. Review Dependabot PRs #53–#57 per the triage above.
 4. Delete the unused `NUAVE_ACCESS_CODE` secret when ready (founder action).
-5. Cloudflare follow-ups: stale fixed-name preview workers (`nuave-pr-<N>`)
-   for closed PRs are cleaned by the updated workflow going forward; any older
-   leftover workers need separate authorization.
+5. Cloudflare follow-ups: `nuave-pr-57`'s close-event deletion failed under
+   the pre-correction workflow (auth error 10000 on a KV pre-check) while the
+   job misreported success; its workers.dev route now returns 1042, but
+   script-level removal is unverified — check the Cloudflare dashboard or run
+   a credential-scoped deletion under separate authorization. Other stale
+   `nuave-pr-<N>` workers likewise need separate authorization.
 6. PR #52 consistency note (report only; #52 is not modified by this task):
    the adoption-record row opens with evidence **at baseline** — where "PR
    #46 `feat/airbnb-intake-rebuild` remains OPEN at `afd518dd…`" describes
@@ -246,5 +267,7 @@ was left active.
   moved files and the Dependabot manifests above.
 - The recovery copy under `~/nuave-recovery/2026-09-12/` holds private
   evidence outside Git; its contents are intentionally not listed here.
-- Whether #57's five browser-test failures are a flake or a `next` regression
-  is unresolved at record time.
+- #57's five browser-test failures are resolved (deterministic dev-mode
+  StrictMode effect replay; see post-record update). Whether `nuave-pr-57`'s
+  script was actually deleted remains unverified — route-level 1042 observed,
+  API-level absence not checkable without credentials.
