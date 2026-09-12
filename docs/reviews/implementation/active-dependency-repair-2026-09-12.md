@@ -128,8 +128,22 @@ build`, and `test:e2e` (79 + 3 + 2 across all three Playwright configs in
   environment-flaky transient-state spec (see above); the same assertions
   pass in isolation and in CI on both Next versions.
 
-(Verification results for the final published head are recorded in the PR
-checks; this file is updated if local re-verification was re-run.)
+## Published-head results
+
+Local tested tree: the code/lockfile content committed as
+`9b9778584716647f10bcaaafa1fc6318981a4665` (aside from this record file, the
+tree CI ran is identical).
+
+- `validate` — **pass**, run `34701734145` at `9b977858`. All five original
+  failures green; the transient scan-state specs also passed under CI
+  conditions. `verify-main-origin` and the deploy job correctly skipped on
+  this non-`main` ref.
+- PR preview — **pass**, run `34701734152`. The triggering actor was the
+  human push (`yasir-mukhtar`), so repository secrets were available and an
+  isolated preview worker deployed per the existing policy. Dependabot-actor
+  reruns remain secretless/skipped.
+- Original failing run for comparison: `34691771986` (attempts 1 and 2,
+  identical `Expected: 1 / Received: 2` failures at `2d915990`).
 
 ## Remaining alerts by scope
 
