@@ -16,9 +16,15 @@ permissions:
 jobs:
   preview:
     name: Deploy PR preview
+    # Repository policy: Dependabot-authored PRs do not deploy previews.
+    # Dependabot-triggered runs receive Dependabot-scoped secrets, so this
+    # repo's Cloudflare credentials are unavailable to them; attempting the
+    # deploy would fail predictably. The author check (not the event actor)
+    # keeps this true even when a human triggers the event on a bot PR.
     if: >-
       github.event.action != 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check out PR head
@@ -124,8 +130,10 @@ jobs:
 
   cleanup:
     name: Remove closed PR preview
-    # Dependabot PRs run without repository secrets, so no preview worker can
-    # ever have been deployed for them — there is nothing to remove.
+    # Same repository policy as the preview job above: Dependabot-authored
+    # PRs never deploy previews, so their close events have nothing to
+    # remove. Whether any historical preview workers were actually deleted is
+    # not inferred here — that is separately scoped.
     if: >-
       github.event.action == 'closed' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -148,8 +156,9 @@ jobs:
 
       # wrangler-action only sets command-output/command-stderr when the
       # command succeeds, so a failed delete cannot be classified from its
-      # output. Probe the worker directly instead: a 404 on this exact
-      # worker's script is the only response that confirms absence.
+      # output. Probe the exact worker instead: only a structured
+      # worker-not-found (404 + error code 10007) from the Scripts GET
+      # endpoint confirms absence; anything else stays unconfirmed.
       - name: Probe whether the preview worker still exists
         id: probe
         if: steps.remove.outcome == 'failure'
@@ -157,18 +166,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           WORKER_NAME: nuave-pr-${{ github.event.pull_request.number }}
-        run: |
-          http_code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" || true)"
-          echo "http_code=${http_code:-000}" >> "${GITHUB_OUTPUT}"
+        run: node scripts/pr-preview-probe-worker.mjs
 
       - name: Resolve preview removal state
         id: state
         if: always()
         env:
           REMOVE_OUTCOME: ${{ steps.remove.outcome }}
-          PROBE_HTTP_CODE: ${{ steps.probe.outputs.http_code }}
+          PROBE_EVIDENCE: ${{ steps.probe.outputs.evidence }}
         run: node scripts/pr-preview-cleanup-state.mjs
 
       - name: Update preview status on the PR

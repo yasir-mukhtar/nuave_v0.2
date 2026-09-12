@@ -2,18 +2,18 @@
 // Classify the PR-preview cleanup outcome for .github/workflows/pr-preview.yml.
 //
 // Inputs arrive via environment from earlier steps:
-//   REMOVE_OUTCOME    the wrangler delete step's outcome (success/failure/…)
-//   PROBE_HTTP_CODE   HTTP status of the worker-existence probe
-//                     (GET workers/scripts/<name>); empty when the probe did
-//                     not run.
+//   REMOVE_OUTCOME   the wrangler delete step's outcome (success/failure/…)
+//   PROBE_EVIDENCE   the worker-existence probe's evidence:
+//                    exists | absent | unconfirmed (empty when the probe did
+//                    not run)
 //
-// Only a successful delete or a worker-specific 404 may report the preview as
-// removed. Any other combination — delete failure, probe 200, auth or network
-// failure, missing/crashed output — is "failed" so the job turns red instead
-// of claiming a removal that did not happen.
-export function classifyPreviewCleanup(removeOutcome, probeHttpCode) {
+// Only a successful delete or a probe-confirmed worker-not-found may report
+// the preview as removed. Any other combination — delete failure, a live
+// worker, an unconfirmed probe, or missing/crashed output — is "failed" so
+// the job turns red instead of claiming a removal that did not happen.
+export function classifyPreviewCleanup(removeOutcome, probeEvidence) {
   if (removeOutcome === "success") return "removed";
-  if (probeHttpCode === "404") return "absent";
+  if (probeEvidence === "absent") return "absent";
   return "failed";
 }
 
@@ -27,7 +27,7 @@ const invokedDirectly =
 if (invokedDirectly) {
   const result = classifyPreviewCleanup(
     process.env.REMOVE_OUTCOME ?? "",
-    process.env.PROBE_HTTP_CODE ?? "",
+    process.env.PROBE_EVIDENCE ?? "",
   );
   const line = `result=${result}\n`;
   if (process.env.GITHUB_OUTPUT) {
