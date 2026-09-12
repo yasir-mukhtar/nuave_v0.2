@@ -30,7 +30,7 @@ the guaranteed fallback so this stage cannot hard-fail.
 
 > Planned change, not yet implemented:
 > [`Spec 008`](../specs/008-recommendation-eligible-question-generation/SPEC.md)
-> (in review) refines the semantic target to recommendation-eligible consumer
+> (approved 2026-09-11) refines the semantic target to recommendation-eligible consumer
 > decisions. Its sole execution authority is
 > [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md);
 > this document still describes the shipped v2 writer until R5's activation
