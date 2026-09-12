@@ -9,10 +9,10 @@
 `nuave.ai` currently serves the v1 AI-visibility-tracker SaaS (landing, auth,
 webapp). After this transition:
 
-| URL | Serves |
-| --- | --- |
-| `nuave.ai` + `www.nuave.ai` | the v0.2 report tool (this repo) |
-| `monitor.nuave.ai` | the v1 SaaS, unchanged and still working |
+| URL                         | Serves                                   |
+| --------------------------- | ---------------------------------------- |
+| `nuave.ai` + `www.nuave.ai` | the v0.2 report tool (this repo)         |
+| `monitor.nuave.ai`          | the v1 SaaS, unchanged and still working |
 
 Nothing is deleted. The v1 codebase, Vercel project, database, and auth keep
 running — they just answer on a different hostname.
@@ -61,7 +61,7 @@ and the v1 absolute-URL list. Do not proceed otherwise.
 
 ## Phase 1 — Give the old site its new home (zero risk)
 
-The old site becomes reachable at *both* hostnames. Nothing breaks.
+The old site becomes reachable at _both_ hostnames. Nothing breaks.
 
 1. In the v1 Vercel project → Domains → add `monitor.nuave.ai`.
 2. Add the DNS record Vercel asks for (CNAME `monitor` → `cname.vercel-dns.com`,
@@ -95,7 +95,7 @@ generated preview URL.
    - `NUAVE_FIXTURE_FORCE_REPORT_FAILURE` — leave blank
    - `OPENAI_AUDIT_CARRYOVER_COST_USD` — leave blank
    - `NUAVE_ACCESS_CODE` — new; see 2b. Pick a non-guessable string.
-   Do not add any `NEXT_PUBLIC_` variant of these.
+     Do not add any `NEXT_PUBLIC_` variant of these.
 3. Deploy. Confirm the build passes and the landing renders on the
    `*.vercel.app` URL.
 
@@ -223,7 +223,7 @@ Do not do these as part of this task:
 ## Known open risk
 
 The report tool ships publicly before the report-quality gate in
-[`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) has been passed. The access code is
+[`END_TO_END_PLAN.md`](../../docs/END_TO_END_PLAN.md) has been passed. The access code is
 what keeps this honest: no stranger reaches the tool, and spend stays bounded by
 the per-session ceiling. If the code leaks, rotate `NUAVE_ACCESS_CODE` in Vercel
 and redeploy — that invalidates every issued cookie.

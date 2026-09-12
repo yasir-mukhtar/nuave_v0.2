@@ -130,6 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Remove isolated preview worker
+        id: remove
         continue-on-error: true
         uses: cloudflare/wrangler-action@v4
         with:
@@ -137,11 +138,34 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: delete --name nuave-pr-${{ github.event.pull_request.number }} --force
 
-      - name: Mark preview as closed on the PR
+      - name: Resolve preview removal state
+        id: state
+        if: always()
+        env:
+          REMOVE_OUTCOME: ${{ steps.remove.outcome }}
+          REMOVE_OUTPUT: ${{ steps.remove.outputs.command-output }}
+        run: |
+          set -euo pipefail
+          # A failed delete can still mean the worker never existed (or was
+          # already removed); only a not-found error confirms absence. Any
+          # other failure stays 'failed' so the job below turns red instead of
+          # claiming removal that did not happen.
+          state='failed'
+          if [ "${REMOVE_OUTCOME}" = "success" ]; then
+            state='removed'
+          elif printf '%s' "${REMOVE_OUTPUT}" | grep -qiE 'does not exist|not found|no worker|10007'; then
+            state='absent'
+          fi
+          echo "result=${state}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update preview status on the PR
+        if: always()
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          REMOVE_STATE: ${{ steps.state.outputs.result }}
+          WORKER_NAME: nuave-pr-${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           comment_id="$(
@@ -149,10 +173,30 @@ jobs:
               --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- nuave-pr-preview -->"))) | .id' \
               | tail -n 1
           )"
-          if [ -n "${comment_id}" ]; then
-            body='<!-- nuave-pr-preview -->
-          ### Nuave preview closed
-
-          The isolated Cloudflare preview for this PR has been removed.'
-            gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" -f body="${body}" >/dev/null
+          if [ -z "${comment_id}" ]; then
+            exit 0
           fi
+          case "${REMOVE_STATE}" in
+            removed|absent)
+              body='<!-- nuave-pr-preview -->
+            ### Nuave preview closed
+
+            The isolated Cloudflare preview for this PR has been removed.'
+              ;;
+            *)
+              body="<!-- nuave-pr-preview -->
+            ### Nuave preview cleanup failed
+
+            Removal of the isolated preview worker \`${WORKER_NAME}\` could not be confirmed. The worker may still exist; check this run's log and delete it manually if needed."
+              ;;
+          esac
+          gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" -f body="${body}" >/dev/null
+
+      - name: Fail cleanup when preview removal is unconfirmed
+        if: >-
+          always() &&
+          steps.state.outputs.result != 'removed' &&
+          steps.state.outputs.result != 'absent'
+        run: |
+          echo "::error::Preview worker nuave-pr-${{ github.event.pull_request.number }} removal was not confirmed; the worker may still exist."
+          exit 1

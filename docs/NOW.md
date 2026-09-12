@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-01
+> Updated: 2026-09-12
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -12,15 +12,13 @@ method. The remaining Phase 3 gate is to produce the first founder-supervised
 real Indonesian report through the actual product path and judge whether it
 contains a finding worth paying for.
 
-## Active presentation-layer work
+## Presentation layer
 
-The founder-approved UI-stack migration is active on the dedicated
-`feat/ui-stack-migration` branch from baseline `1f28bdd`. Its canonical design
-authority is [`docs/DESIGN.md`](./DESIGN.md). The migration is presentation-layer
-work: it standardizes generic UI on shadcn/Base UI, uses Tailwind CSS v4 and
-the BeUI light baseline, and preserves the existing intake, audit, report,
-fixture, validation, and provider-call contracts. It must make no live or paid
-AI-provider calls and must not change backend or business logic.
+The founder-approved UI-stack migration is **merged** on `main` (PR #22): it
+standardized generic UI on shadcn/Base UI, Tailwind CSS v4, and the BeUI light
+baseline while preserving the existing intake, audit, report, fixture,
+validation, and provider-call contracts. The canonical design authority is
+[`docs/DESIGN.md`](./DESIGN.md).
 
 Wave 1 of the Phase 6 design pass
 ([`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)) shipped
@@ -33,25 +31,30 @@ alongside it on 2026-08-20: P0 foundation and P1 landing are verified (see its
 landing. `nuave.ai` and `www.nuave.ai` are untouched.
 
 The v2 subdomain launch is **complete**. Its plan is retired to
-[`Archive Candidates/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md`](../Archive%20Candidates/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md)
+[`archive/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md`](../archive/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md)
 as a record of how the deployment was built. It is no longer an active
 objective; the facts it established are recorded here instead.
 
-**The access gate is removed in code** (2026-08-20, spec 006 P1): the
-middleware rule and `/access` page are deleted, and `/audit` and `/api/audit/*`
+**The access gate is removed** (2026-08-20, spec 006 P1): the
+middleware rule and `/access` page are deleted, `/audit` and `/api/audit/*`
 ship ungated under the founder's recorded interim-exposure acceptance
-(`docs/DECISION_LOG.md`, 2026-08-20) — the site remains noindex and
-direct-link only, and a minimal server-side rate/cost guard is a prerequisite
-before any public link sharing. **The live deployment still serves the
-previous gated build** until the next redeploy; deleting the now-unused
-`NUAVE_ACCESS_CODE` GitHub secret is a founder action. The custom domain is
-attached to worker `nuave-v2` (Cloudflare manages the proxied AAAA record).
-The deployment URL `https://nuave-v2.mail-yasirmukhtar.workers.dev` remains as a
-fallback.
+(`docs/DECISION_LOG.md`, 2026-08-20), and the currently deployed build serves
+the ungated site. The site remains noindex and direct-link only, and a minimal
+server-side rate/cost guard is a prerequisite before any public link sharing.
+Deleting the now-unused `NUAVE_ACCESS_CODE` GitHub secret is a founder action.
+The custom domain is attached to worker `nuave-v2` (Cloudflare manages the
+proxied AAAA record). The deployment URL
+`https://nuave-v2.mail-yasirmukhtar.workers.dev` remains as a fallback.
 
-**CI is live**: GitHub Actions (`.github/workflows/deploy-pages.yml`) builds with
-`@opennextjs/cloudflare` and deploys to the `nuave-v2` worker on every push to
-`main`, verified end to end. The production provider configuration is pinned to
+**CI is live**: GitHub Actions (`.github/workflows/ci.yml`) validates every pull
+request (`validate` job) and, on each `main` push, runs
+`verify-main-origin` — which fails a `main` commit without an associated merged
+pull request — before the `deploy` job builds with `@opennextjs/cloudflare`
+and deploys to the `nuave-v2` worker. Pull requests also get an isolated
+`nuave-pr-<number>` preview worker via `.github/workflows/pr-preview.yml`,
+built with dummy provider credentials only. The currently deployed commit is
+`505ccd49ce857e8726bf85e796edf10f5738878c` (CI run `34663621711`, 2026-09-12;
+validate, verify-main-origin, and deploy all green). The production provider configuration is pinned to
 `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
 `OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
 `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
@@ -88,7 +91,18 @@ pilot, launch, then re-check. Cumulative accounted private-run spend remains USD
 observation is approved by this documentation reconciliation.
 
 Specs 001 and 002 provide the verified fixture and Indonesian-contract
-baselines. The current bounded work is Spec 003 only: the OpenCode Go migration
+baselines. Spec 007's lettered packages (A1–A4, B1, C1, D1, E1) are merged —
+the package ledger in
+[`EXECUTION_PLAN.md`](../specs/007-intake-airbnb-revamp/EXECUTION_PLAN.md)
+records each landing — and the R-27 intake-recovery tranche merged via PR #49.
+The intake-experience rebuild itself is **unmerged** and continues as two
+preserved review candidates: draft PR #58 (`codex/complete-local-intake`, the
+complete local intake implementation) and draft PR #60
+(`codex/spec-007-approved-s2-repair`, the earlier five-screen S2 repair slice,
+preserved for review). Neither is on `main`; production intake behavior is
+unchanged.
+
+The current bounded work remains Spec 003: the OpenCode Go migration
 and production-method lock are implemented and automated checks are green; the
 first founder-supervised paid product-path report and its quality-gate judgment
 remain intentionally pending.
@@ -97,8 +111,11 @@ Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/0
 is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
-which owns the gate ledger; next step there is R5's G0 baseline reconciliation.
-The package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
+which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
+via PRs #48 and #50); the next dependency-ready gate is G1. A dormant G1
+facts/context adapter exists on the unmerged `codex/spec008-g1-adapter` branch
+(draft PR #59); it stays dormant and changes no live provider behavior. The
+package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
 evaluation gates still require their own explicit founder authorization.
 
 ## What is known
