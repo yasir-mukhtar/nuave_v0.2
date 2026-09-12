@@ -15,7 +15,11 @@ it.each([undefined,"3307"])("keeps default/isolated port coherent: %s", async po
   expect(server.command).toBe(`npm run dev -- --port ${chosen}`);
   expect(server.url).toBe(`http://localhost:${chosen}`);
   expect(server.reuseExistingServer).toBe(false);
-  expect(server.env.OPENCODEGO_API_KEY).toBe("");
-  expect(server.env.OPENAI_API_KEY).toBe("");
-  expect(server.env.NUAVE_LIVE_PROVIDER_TESTING).toBe("0");
+  const env = server.env;
+  if (!env) {
+    throw new Error("webServer.env must exist to pin dummy provider credentials");
+  }
+  expect(env.OPENCODEGO_API_KEY).toBe("");
+  expect(env.OPENAI_API_KEY).toBe("");
+  expect(env.NUAVE_LIVE_PROVIDER_TESTING).toBe("0");
 });
