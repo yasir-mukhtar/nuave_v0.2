@@ -201,6 +201,18 @@ export const FIELD_OWNERSHIP = {
     required: false,
     invalidatedBy: "none",
   },
+  service_areas: {
+    owner: "not-collected",
+    screen: null,
+    required: false,
+    invalidatedBy: "none",
+  },
+  service_channels: {
+    owner: "not-collected",
+    screen: null,
+    required: false,
+    invalidatedBy: "none",
+  },
   agency_name: {
     owner: "not-collected",
     screen: null,
@@ -945,12 +957,22 @@ export function parseWorkflowStorageState(value: unknown) {
     "customer_supplied_facts",
     "known_accuracy_questions",
   ];
+  const optionalArrayFields: (keyof BusinessBrief)[] = [
+    "service_areas",
+    "service_channels",
+  ];
   if (
     stringFields.some((field) => typeof brief[field] !== "string") ||
     arrayFields.some(
       (field) =>
         !Array.isArray(brief[field]) ||
         (brief[field] as unknown[]).some((item) => typeof item !== "string"),
+    ) ||
+    optionalArrayFields.some(
+      (field) =>
+        brief[field] !== undefined &&
+        (!Array.isArray(brief[field]) ||
+          (brief[field] as unknown[]).some((item) => typeof item !== "string")),
     ) ||
     (extractedSourceUrl && !parseSourceInput(extractedSourceUrl)) ||
     !Array.isArray(brief.official_sources) ||

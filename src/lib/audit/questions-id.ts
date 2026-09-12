@@ -835,7 +835,7 @@ export function repairIndonesianSuggestion(
 // Narrow blocker list (R-35)
 // ---------------------------------------------------------------------------
 
-const INDONESIAN_PRIVATE_DATA_PATTERNS = [
+export const INDONESIAN_PRIVATE_DATA_PATTERNS = [
   /\b(?:\+?62[\s-]?|0)8[0-9][\s-]?[0-9]{6,10}\b/,
   /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/,
   /\b\d{16}\b/,

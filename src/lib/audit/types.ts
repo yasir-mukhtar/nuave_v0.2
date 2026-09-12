@@ -111,6 +111,10 @@ export const businessBriefSchema = z.object({
   known_accuracy_questions: z.array(requiredText.max(500)).max(12),
   usp: z.string().trim().max(1_000),
   regulated_category_notes: z.string().trim().max(1_000),
+  // Spec 008 G1 facts seam: optional structured locality/fulfilment facts the
+  // current intake does not collect. Absence means unknown — never defaulted.
+  service_areas: z.array(requiredText.max(160)).max(12).optional(),
+  service_channels: z.array(requiredText.max(160)).max(12).optional(),
   language: z.literal("en-US"),
   agency_name: z.string().trim().max(160),
   agency_logo_data_url: z
