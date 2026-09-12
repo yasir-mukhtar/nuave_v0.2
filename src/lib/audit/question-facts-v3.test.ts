@@ -55,13 +55,19 @@ describe("G1 actual serialized intake boundary", () => {
       expect(facts.identity.comparators).toEqual(["Kedai Pagi", "Kedai Sore"]);
       expect(facts.comparison).toEqual({ kind: "unresolved", name: null });
       expect(JSON.stringify(facts)).not.toContain("reviewRows");
-      expect(JSON.stringify(facts)).not.toContain("kopisudut.id");
+      // The confirmed source survives only as a code-owned guard signal;
+      // it never reaches writer context.
+      expect(facts.identity.sourceSignals).toContain("kopisudut.id");
+      expect(JSON.stringify(buildV3WriterContext(facts))).not.toContain(
+        "kopisudut.id",
+      );
       expect(facts.binding.factsFingerprint).toMatch(/^[a-f0-9]{64}$/);
       if (index === 1)
         expect(facts.entityScope).toEqual({
           kind: "branch",
           name: "Gerai Selatan",
           address: "Jalan Melati 12, Jakarta Selatan",
+          detail: null,
         });
       if (index === 2)
         expect(facts.offerings).toEqual(["Langganan Kopi Sudut"]);
@@ -99,6 +105,7 @@ describe("G1 actual serialized intake boundary", () => {
       kind: "whole-brand",
       name: null,
       address: null,
+      detail: null,
     });
     const product = request(2);
     product.intake.confirmed.offerings = ["Stale offering"];
@@ -512,5 +519,230 @@ it("routes legacy source correction to the source control, and flags absent safe
   expect(parseQuestionFactsV3(restricted)).toMatchObject({
     status: "INPUT_CORRECTION_REQUIRED",
     issues: [{ field: "categorySafety", code: "unsafe", target: null }],
+  });
+});
+
+describe("G1 independent-review regressions", () => {
+  it.each([
+    "Pembayaran menggunakan 4111-1111-1111-1111",
+    "Hasil tes HIV saya positif",
+  ])(
+    "screens sensitive confirmed text instead of projecting it: %s",
+    (value) => {
+      const raw = request();
+      raw.intake.confirmed.customerReasons = [value];
+      const result = parseQuestionFactsV3(raw);
+      expect(result.status).toBe("INPUT_CORRECTION_REQUIRED");
+      expect(JSON.stringify(result)).not.toContain(value);
+    },
+  );
+  it("screens a source-derived numeric handle before it becomes an alias", () => {
+    const raw = request();
+    raw.intake.confirmed.brand.primarySource =
+      "https://instagram.com/081234567890";
+    const result = parseQuestionFactsV3(raw);
+    expect(result).toMatchObject({
+      status: "INPUT_CORRECTION_REQUIRED",
+      issues: [{ field: "identity", code: "unsafe", target: "s-brand-fix" }],
+    });
+    expect(JSON.stringify(result)).not.toContain("081234567890");
+  });
+  it("screens a legacy source-derived numeric handle toward the source editor", () => {
+    const raw = legacy();
+    raw.brief.official_sources = ["https://instagram.com/081234567890"];
+    expect(parseQuestionFactsV3(raw)).toMatchObject({
+      status: "INPUT_CORRECTION_REQUIRED",
+      issues: [
+        { field: "identity", code: "unsafe", target: "official_sources" },
+      ],
+    });
+  });
+  it("preserves the safe meaning of an identity-bearing safety restriction", () => {
+    const raw = legacy();
+    raw.brief.category = "Klinik gigi";
+    raw.brief.brand_type = "Klinik gigi";
+    raw.brief.regulated_category_notes =
+      "Northstar Dental: jangan mengasumsikan layanan bedah tersedia";
+    const facts = projected(raw);
+    const unnamed = projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[0].id);
+    expect(JSON.stringify(unnamed)).toContain(
+      "jangan mengasumsikan layanan bedah tersedia",
+    );
+    expect(JSON.stringify(unnamed)).not.toContain("Northstar");
+    const named = projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[6].id);
+    expect(JSON.stringify(named)).toContain("jangan mengasumsikan");
+  });
+  it("keeps confirmed website domains as guard signals outside writer context", () => {
+    const raw = request();
+    raw.intake.confirmed.brand.primarySource = "https://sudutmenu.example";
+    raw.intake.confirmed.customerReasons = [
+      "Melihat menu di sudutmenu.example",
+    ];
+    const facts = projected(raw);
+    expect(facts.identity.sourceSignals).toContain("sudutmenu.example");
+    expect(
+      hasForbiddenV3Identity(
+        "Cari kedai di sudutmenu.example",
+        facts,
+        AUDIT_MEASUREMENT_MATRIX[0],
+      ),
+    ).toBe(true);
+    expect(
+      JSON.stringify(
+        projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[0].id),
+      ),
+    ).not.toContain("sudutmenu.example");
+    expect(JSON.stringify(buildV3WriterContext(facts))).not.toContain(
+      "sudutmenu.example",
+    );
+  });
+  it("keeps an ordinary product target usable as the slot-4 offering", () => {
+    const raw = request(2);
+    raw.intake.confirmed.target = { name: "Pembersihan AC", detail: "" };
+    raw.intake.confirmed.category = "Jasa perawatan AC";
+    const facts = projected(raw);
+    expect(facts.identity.targets).not.toContain("Pembersihan AC");
+    expect(
+      projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[3].id).context
+        .offerings,
+    ).toEqual(["Pembersihan AC"]);
+  });
+  it("still withholds a brand-identifying product target from unnamed slots", () => {
+    const facts = projected(request(2));
+    expect(facts.identity.targets).toContain("Langganan Kopi Sudut");
+    expect(
+      projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[3].id).context
+        .offerings,
+    ).not.toContain("Langganan Kopi Sudut");
+  });
+  it("binds every confirmed source and provenance change, not just the first", () => {
+    const raw = legacy();
+    raw.brief.official_sources.push("https://before.example");
+    const before = projected(raw).binding;
+    raw.brief.official_sources[1] = "https://after.example";
+    expect(isCurrentFactsResponse(before, projected(raw).binding)).toBe(false);
+
+    const second = legacy();
+    const competitorBefore = projected(second).binding;
+    second.brief.verified_competitor.source_url = "https://after.example";
+    expect(
+      isCurrentFactsResponse(competitorBefore, projected(second).binding),
+    ).toBe(false);
+
+    const third = legacy();
+    third.brief.similar_businesses = [
+      {
+        name: "Other Co",
+        source_url: "https://other.example",
+        origin: "user",
+      },
+    ];
+    const similarBefore = projected(third).binding;
+    third.brief.similar_businesses[0].source_url = "https://changed.example";
+    expect(
+      isCurrentFactsResponse(similarBefore, projected(third).binding),
+    ).toBe(false);
+  });
+  it("preserves an active product target's detail in facts and binding, separate from market", () => {
+    const raw = request(2);
+    raw.intake.confirmed.target = {
+      name: "Langganan Kopi Sudut",
+      detail: "Kemasan 250 gram",
+    };
+    const facts = projected(raw);
+    expect(facts.entityScope).toMatchObject({
+      kind: "offering",
+      name: "Langganan Kopi Sudut",
+      address: null,
+      detail: "Kemasan 250 gram",
+    });
+    expect(facts.marketContext.areas).not.toContain("Kemasan 250 gram");
+    raw.intake.confirmed.target!.detail = "Kemasan 500 gram";
+    expect(isCurrentFactsResponse(facts.binding, projected(raw).binding)).toBe(
+      false,
+    );
+  });
+  it("points an unsafe legacy alias at the existing alias editor", () => {
+    const raw = legacy();
+    raw.brief.brand_name_variants = ["private@example.test"];
+    expect(parseQuestionFactsV3(raw)).toMatchObject({
+      status: "INPUT_CORRECTION_REQUIRED",
+      issues: [
+        {
+          field: "identityAliases",
+          code: "unsafe",
+          target: "brand-name-variants",
+        },
+      ],
+    });
+  });
+  it("shares only confirmed safe access/fulfilment constraints with every slot", () => {
+    const raw = legacy();
+    raw.brief.verified_decision_criteria = [
+      "Akses kursi roda",
+      "harga termurah",
+    ];
+    const facts = projected(raw);
+    expect(facts.accessConstraints).toEqual([
+      { text: "Akses kursi roda", provenance: "buyer_constraint" },
+    ]);
+    expect(facts.buyerConstraints.map((c) => c.text)).toEqual([
+      "Akses kursi roda",
+      "harga termurah",
+    ]);
+    const needFit = projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[2].id);
+    expect(JSON.stringify(needFit)).toContain("Akses kursi roda");
+    expect(JSON.stringify(needFit)).not.toContain("harga termurah");
+    expect(
+      JSON.stringify(
+        projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[4].id),
+      ),
+    ).toContain("harga termurah");
+  });
+  it("accepts the typed shared-constraint seam without inventing facts", () => {
+    const raw = request();
+    const facts = projected({
+      ...raw,
+      factsContext: { accessConstraints: ["bisa datang ke rumah"] },
+    });
+    expect(facts.accessConstraints).toEqual([
+      { text: "bisa datang ke rumah", provenance: "buyer_constraint" },
+    ]);
+    expect(
+      JSON.stringify(
+        projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[2].id),
+      ),
+    ).toContain("bisa datang ke rumah");
+    expect(projected(raw).accessConstraints).toEqual([]);
+  });
+  it("keeps multiple confirmed comparators unresolved rather than selecting one", () => {
+    const facts = projected(request());
+    expect(facts.identity.comparators).toEqual(["Kedai Pagi", "Kedai Sore"]);
+    expect(facts.comparison).toEqual({ kind: "unresolved", name: null });
+    // Founder decision 2026-09-12: with no designated target, slot 9 runs on
+    // the category-alternatives relation — never a selected or joined name.
+    expect(
+      projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[8].id).context
+        .comparison,
+    ).toEqual({
+      kind: "category-alternatives",
+      name: "alternatif lain di kategori Kedai kopi",
+    });
+    expect(parseQuestionFactsV3(request())).toMatchObject({
+      limitations: expect.arrayContaining([
+        "comparison_relation_unresolved",
+        "competitive_role_unknown",
+      ]),
+    });
+  });
+  it("uses a designated single comparator as the slot-9 target", () => {
+    const raw = request();
+    raw.intake.confirmed.comparators.names = ["Kedai Pagi"];
+    const facts = projected(raw);
+    expect(facts.comparison).toEqual({ kind: "named", name: "Kedai Pagi" });
+    expect(
+      projectV3SlotContext(facts, AUDIT_MEASUREMENT_MATRIX[8].id).context
+        .comparison,
+    ).toEqual({ kind: "named", name: "Kedai Pagi" });
   });
 });

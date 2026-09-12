@@ -24,6 +24,9 @@ const scope = z.object({
   kind: z.enum(["whole-brand", "branch", "offering", "unknown"]),
   name: text.nullable(),
   address: text.nullable(),
+  // Confirmed non-address target detail (e.g. a product variant). Branch
+  // addresses stay in `address`, separate from market context.
+  detail: text.nullable().default(null),
 });
 const market = z.object({
   reach: z
@@ -38,6 +41,9 @@ const contextSchema = z.object({
   businessType: text.optional(),
   marketContext: market.optional(),
   serviceChannels: z.array(channel).max(4).optional(),
+  // The R5 §3.2 approved shared subset: confirmed general access/fulfilment
+  // constraints only. Never offerings, needs, identifiers, or claims.
+  accessConstraints: list.optional(),
 });
 const localSchema = z.object({
   version: z.literal("nuave-local-intake-input-v1"),
@@ -115,6 +121,8 @@ export type QuestionFactsV3 = {
     aliases: string[];
     targets: string[];
     comparators: string[];
+    /** Guard-only website signals (host/path, never URLs in writer context). */
+    sourceSignals: string[];
   };
   entityScope: z.infer<typeof scope>;
   category: string;
@@ -127,6 +135,12 @@ export type QuestionFactsV3 = {
     text: string;
     provenance: "buyer_constraint";
     permission: "legacy-criteria";
+  }[];
+  /** Confirmed general access/fulfilment constraints, shared to every slot
+   * under R5 §3.2. Empty when nothing was confirmed for this subset. */
+  accessConstraints: {
+    text: string;
+    provenance: "buyer_constraint";
   }[];
   marketContext: z.infer<typeof market> & { description: string | null };
   serviceChannels: z.infer<typeof channel>[] | null;
@@ -154,8 +168,53 @@ export type FactsResult =
  * boundary; this is not permission to collect personal or regulated records.
  */
 function unsafe(value: string) {
-  return /https?:\/\/|www\.|<[^>]*>|[\w.+-]+@[\w.-]+\.[a-z]{2,}|\b\d{16}\b|(?:\+62|0)8[\d\s-]{7,}|\b(?:api[_ -]?key|access[_ -]?token|password|kata sandi|nomor rekening|nomor ktp|nomor kartu|kartu kredit|credit card|rekam medis|data pasien|riwayat penyakit|medical record|diagnosis (?:saya|pasien))\b/i.test(
+  return /https?:\/\/|www\.|<[^>]*>|[\w.+-]+@[\w.-]+\.[a-z]{2,}|\d(?:[\s-]?\d){12,18}|(?:\+62|0)8[\d\s-]{7,}|\b(?:api[_ -]?key|access[_ -]?token|password|kata sandi|nomor rekening|nomor ktp|ktp|cvv|cvc|nomor kartu|kartu kredit|credit card|rekam medis|data pasien|riwayat penyakit|medical record|diagnosis (?:saya|pasien)|hiv|aids)\b|(?:hasil|riwayat|kondisi|diagnosis|diagnosa|tes|test|lab|laboratorium|penyakit|gejala|obat)\b[^.\n]{0,60}?\b(?:saya|pribadi|keluarga)\b|\b(?:saya|pribadi|keluarga)\b[^.\n]{0,60}?\b(?:positif|negatif|kanker|diabetes|hiv|aids|didiagnosis|penyakit|stroke|jantung|depresi|gangguan jiwa|mental)\b|\bi (?:have|am|was|tested)\b[^.\n]{0,60}?\b(?:positive|negative|cancer|diabetes|hiv|aids)\b|\bmy\b[^.\n]{0,40}?\b(?:diagnosis|medical record|test result|hiv)\b/i.test(
     value,
+  );
+}
+
+/** Bounded mechanical vocabulary for the R5 §3.2 shared subset: safe general
+ * access/fulfilment constraints. It is not a semantic classifier; criteria
+ * without a marker keep their original legacy-slot permission only. */
+const SHARED_ACCESS_MARKERS = [
+  "akses",
+  "kursi roda",
+  "aksesibilitas",
+  "wheelchair",
+  "accessibility",
+  "accessible",
+  "parkir",
+  "parking",
+  "antar",
+  "pengiriman",
+  "delivery",
+  "deliver",
+  "ambil",
+  "pickup",
+  "pick up",
+  "takeaway",
+  "take away",
+  "bawa pulang",
+  "ke rumah",
+  "datang ke rumah",
+  "kunjungan rumah",
+  "home visit",
+  "online",
+  "daring",
+  "remote",
+  "virtual",
+  "janji temu",
+  "appointment",
+  "reservasi",
+  "reservation",
+  "booking",
+  "jam buka",
+  "opening hours",
+];
+function isSharedAccessConstraint(value: string) {
+  const normalized = ` ${normalizeIndonesianIdentity(value)} `;
+  return SHARED_ACCESS_MARKERS.some((marker) =>
+    normalized.includes(` ${normalizeIndonesianIdentity(marker)} `),
   );
 }
 const unique = (values: string[]) => [...new Set(values.filter(Boolean))];
@@ -186,11 +245,13 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
         (
           {
             identity: "brand_name",
+            identityAliases: "brand-name-variants",
             entityScope: "entity_scope",
             category: "category",
             offerings: "verified_offerings",
             customerNeeds: "verified_customer_needs",
             buyerConstraints: "verified_decision_criteria",
+            accessConstraints: "verified_decision_criteria",
             targetCustomer: "target_customer",
             marketContext: "market_context",
             comparison: "verified_competitor.name",
@@ -203,6 +264,7 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       (
         {
           identity: "s-brand-fix",
+          identityAliases: "s-brand-fix",
           entityScope:
             request.intake.confirmed.scope === "brand"
               ? "s-scope"
@@ -223,16 +285,22 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       )[field] ?? null
     );
   };
-  const issue = (field: string, code: Correction["code"]) =>
+  const issue = (
+    field: string,
+    code: Correction["code"],
+    target?: string | null,
+  ) =>
     issues.push({
       field,
       code,
       target:
-        !local && code === "invalid_source"
-          ? "official_sources"
-          : local && field === "entityScope" && code === "conflict"
-            ? "s-scope"
-            : targetFor(field),
+        target !== undefined
+          ? target
+          : !local && code === "invalid_source"
+            ? "official_sources"
+            : local && field === "entityScope" && code === "conflict"
+              ? "s-scope"
+              : targetFor(field),
     });
   const clean = (value: string | null | undefined, field: string) => {
     if (!value) return null;
@@ -246,10 +314,12 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
     unique(values.map((v) => clean(v, field) ?? ""));
   let facts: Omit<QuestionFactsV3, "binding">;
   let source: string;
+  let sources: string[];
   let revision: number;
   if ("intake" in request) {
     const input = request.intake.confirmed;
     source = input.brand.primarySource;
+    sources = [source];
     revision = request.intake.factVersion;
     const kind = (
       { brand: "whole-brand", cabang: "branch", produk: "offering" } as const
@@ -260,13 +330,25 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       issue("entityScope", "missing");
     if (input.scope === "cabang" && !activeTarget?.detail)
       issue("entityScope", "missing");
+    const projectedScope = {
+      kind,
+      name: clean(activeTarget?.name, "entityScope"),
+      // A branch's detail is its address; a product's detail is confirmed
+      // product information. Both stay on the scope, never in marketContext.
+      address:
+        kind === "branch" ? clean(activeTarget?.detail, "entityScope") : null,
+      detail:
+        kind === "offering" ? clean(activeTarget?.detail, "entityScope") : null,
+    };
     // An extension cannot replace a value the accepted UI explicitly confirmed.
     if (
       context?.entityScope &&
       (context.entityScope.kind !== kind ||
         context.entityScope.name !== (activeTarget?.name ?? null) ||
         context.entityScope.address !==
-          (kind === "branch" ? (activeTarget?.detail ?? null) : null))
+          (kind === "branch" ? (activeTarget?.detail ?? null) : null) ||
+        (context.entityScope.detail ?? null) !==
+          (kind === "offering" ? (activeTarget?.detail ?? null) : null))
     )
       issue("entityScope", "conflict");
     if (context?.marketContext) issue("marketContext", "conflict");
@@ -286,18 +368,13 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       identity: {
         brand: clean(input.brand.name, "identity") ?? "",
         aliases: [],
-        targets: cleanList(
-          activeTarget ? [activeTarget.name] : [],
-          "entityScope",
-        ),
+        // Filled below: only identifying target names are forbidden in
+        // unnamed slots, so an ordinary product target stays usable.
+        targets: [],
         comparators,
+        sourceSignals: [],
       },
-      entityScope: {
-        kind,
-        name: clean(activeTarget?.name, "entityScope"),
-        address:
-          kind === "branch" ? clean(activeTarget?.detail, "entityScope") : null,
-      },
+      entityScope: projectedScope,
       category: clean(input.category, "category") ?? "",
       businessType: clean(context?.businessType, "businessType"),
       entityType: context?.entityType ?? null,
@@ -312,6 +389,10 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       targetCustomer: null,
       customerNeeds: cleanList(input.customerReasons, "customerNeeds"),
       buyerConstraints: [],
+      accessConstraints: cleanList(
+        context?.accessConstraints ?? [],
+        "accessConstraints",
+      ).map((text) => ({ text, provenance: "buyer_constraint" as const })),
       marketContext: {
         reach: (
           {
@@ -355,6 +436,7 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
     )
       issue("businessType", "conflict");
     source = input.official_sources[0] ?? "";
+    sources = input.official_sources;
     revision = request.factsRevision;
     const comparisonName = clean(input.verified_competitor.name, "comparison");
     const categoryAlternative =
@@ -363,9 +445,11 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       version: FACTS_PROJECTION_VERSION,
       identity: {
         brand: clean(input.brand_name, "identity") ?? "",
-        aliases: cleanList(input.brand_name_variants, "identity"),
+        aliases: cleanList(input.brand_name_variants, "identityAliases"),
         targets: cleanList(
-          context?.entityScope?.name ? [context.entityScope.name] : [],
+          context?.entityScope?.name && context.entityScope.kind !== "offering"
+            ? [context.entityScope.name]
+            : [],
           "entityScope",
         ),
         comparators: cleanList(
@@ -381,17 +465,20 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
           ],
           "comparison",
         ),
+        sourceSignals: [],
       },
       entityScope: context?.entityScope
         ? {
             kind: context.entityScope.kind,
             name: clean(context.entityScope.name, "entityScope"),
             address: clean(context.entityScope.address, "entityScope"),
+            detail: clean(context.entityScope.detail, "entityScope"),
           }
         : {
             kind: "unknown",
             name: clean(input.entity_scope, "entityScope"),
             address: null,
+            detail: null,
           },
       category: clean(input.category, "category") ?? "",
       businessType: clean(
@@ -411,8 +498,18 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       ).map((text) => ({
         text,
         provenance: "buyer_constraint",
-        permission: "legacy-criteria",
+        permission: "legacy-criteria" as const,
       })),
+      // §3.2 shared subset: the typed seam plus legacy criteria matching the
+      // bounded access/fulfilment vocabulary. Arbitrary criteria are never
+      // promoted out of their legacy slots.
+      accessConstraints: cleanList(
+        [
+          ...(context?.accessConstraints ?? []),
+          ...input.verified_decision_criteria.filter(isSharedAccessConstraint),
+        ],
+        "accessConstraints",
+      ).map((text) => ({ text, provenance: "buyer_constraint" as const })),
       marketContext: {
         reach: context?.marketContext?.reach ?? null,
         areas:
@@ -435,28 +532,66 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       ),
     };
   }
-  const parsedSource = parseSourceInput(source);
-  if (!parsedSource) issue("identity", "invalid_source");
-  if (parsedSource?.sourceType === "instagram") {
-    const handle = new URL(parsedSource.normalizedUrl).pathname
-      .split("/")
-      .filter(Boolean)[0];
-    if (handle)
-      facts.identity.aliases = unique([...facts.identity.aliases, handle]);
+  // Every confirmed source keeps a guard signal: website host/path signals stay
+  // code-owned (never writer context); Instagram handles become aliases.
+  for (const candidate of sources) {
+    const parsedSource = parseSourceInput(candidate);
+    if (!parsedSource) {
+      issue("identity", "invalid_source");
+      continue;
+    }
+    if (parsedSource.sourceType === "instagram") {
+      const handle = new URL(parsedSource.normalizedUrl).pathname
+        .split("/")
+        .filter(Boolean)[0];
+      // Source-derived values are screened like any retained value: a handle
+      // that is really a phone number is a correctable source problem.
+      if (handle) {
+        if (unsafe(handle))
+          issue(
+            "identity",
+            "unsafe",
+            local ? "s-brand-fix" : "official_sources",
+          );
+        else
+          facts.identity.aliases = unique([...facts.identity.aliases, handle]);
+      }
+      continue;
+    }
+    const url = new URL(parsedSource.normalizedUrl);
+    const hostPath = `${url.hostname}${url.pathname}`.replace(/\/+$/, "");
+    facts.identity.sourceSignals = unique([
+      ...facts.identity.sourceSignals,
+      hostPath,
+      url.hostname.replace(/^www\./, ""),
+    ]);
   }
-  // Known branded offerings are identity signals, not safe unnamed abstractions.
+  if (!sources.length) issue("identity", "invalid_source");
+  // Known branded offerings are identity signals, not safe unnamed
+  // abstractions. A branch name always identifies the audited location; a
+  // product target is identifying only when it carries a distinctive brand
+  // token, so an ordinary confirmed offering stays usable in unnamed context.
   const categoryTokens = new Set(
     normalizeIndonesianIdentity(facts.category).split(" "),
   );
   const distinctiveTokens = normalizeIndonesianIdentity(facts.identity.brand)
     .split(" ")
     .filter((token) => token.length > 3 && !categoryTokens.has(token));
+  const carriesBrandToken = (value: string) => {
+    const tokens = normalizeIndonesianIdentity(value).split(" ");
+    return distinctiveTokens.some((token) => tokens.includes(token));
+  };
   facts.identity.targets = unique([
     ...facts.identity.targets,
-    ...facts.offerings.filter((offering) => {
-      const tokens = normalizeIndonesianIdentity(offering).split(" ");
-      return distinctiveTokens.some((token) => tokens.includes(token));
-    }),
+    ...(facts.entityScope.kind === "branch" && facts.entityScope.name
+      ? [facts.entityScope.name]
+      : []),
+    ...(facts.entityScope.kind === "offering" &&
+    facts.entityScope.name &&
+    carriesBrandToken(facts.entityScope.name)
+      ? [facts.entityScope.name]
+      : []),
+    ...facts.offerings.filter(carriesBrandToken),
   ]);
   if (!facts.identity.brand) issue("identity", "missing");
   if (!facts.category) issue("category", "missing");
@@ -505,14 +640,32 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
       binding: {
         requestId: request.requestId,
         factsRevision: revision,
-        factsFingerprint: hash({
-          facts,
-          source,
-          optionalFact:
-            "intake" in request
-              ? request.intake.confirmed.publicFact
-              : [request.brief.customer_supplied_facts, request.brief.usp],
-        }),
+        // Active meaning and source provenance stay bound: any confirmed
+        // change — not just the caller's revision counters — invalidates
+        // earlier suggestions. Cosmetic fields (agency name/logo) stay out.
+        factsFingerprint: hash(
+          "intake" in request
+            ? {
+                facts,
+                source,
+                optionalFact: request.intake.confirmed.publicFact,
+              }
+            : {
+                facts,
+                source,
+                sources: request.brief.official_sources,
+                comparator: request.brief.verified_competitor,
+                similarBusinesses: request.brief.similar_businesses ?? [],
+                optionalFact: [
+                  request.brief.customer_supplied_facts,
+                  request.brief.usp,
+                ],
+                unprojected: [
+                  request.brief.conversion_action,
+                  request.brief.known_accuracy_questions,
+                ],
+              },
+        ),
       },
     },
     limitations,

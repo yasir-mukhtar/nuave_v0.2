@@ -3,7 +3,10 @@ import {
   AUDIT_MEASUREMENT_MATRIX,
   type CanonicalMeasurementSlot,
 } from "./measurement-matrix";
-import { containsIndonesianComparisonIdentity } from "./questions-id";
+import {
+  categoryComparisonFallbackName,
+  containsIndonesianComparisonIdentity,
+} from "./questions-id";
 import type { BusinessBrief } from "./types";
 import type { QuestionFactsV3 } from "./question-facts-v3";
 
@@ -14,6 +17,7 @@ type ContextField =
   | "targetCustomer"
   | "customerNeeds"
   | "buyerConstraints"
+  | "accessConstraints"
   | "offerings"
   | "identity"
   | "entityScope"
@@ -38,6 +42,9 @@ const SHARED: ContextField[] = [
   "entityScope",
   "marketContext",
   "serviceChannels",
+  // R5 §3.2 shared layer: only the confirmed safe general access/fulfilment
+  // subset — never arbitrary legacy criteria, needs, offerings, or claims.
+  "accessConstraints",
 ];
 export const V3_CONTEXT_MAP = AUDIT_MEASUREMENT_MATRIX.map((slot) => ({
   slotId: slot.id,
@@ -64,6 +71,7 @@ export function forbiddenV3Identities(
           facts.identity.brand,
           ...facts.identity.aliases,
           ...facts.identity.targets,
+          ...facts.identity.sourceSignals,
         ]
       : []),
     ...(slot.comparisonTargetIdentity === "forbidden"
@@ -82,6 +90,46 @@ export function hasForbiddenV3Identity(
   return forbiddenV3Identities(facts, slot).some((identity) =>
     containsIndonesianComparisonIdentity(value, identity),
   );
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function identityPattern(identity: string) {
+  return new RegExp(
+    identity.split(/\s+/).map(escapeRegExp).join("[^a-zA-Z0-9]+"),
+    "gi",
+  );
+}
+
+/** A confirmed safety restriction keeps its safe meaning in writer context:
+ * forbidden identities are removed, a leftover leading label fragment is
+ * stripped, and the residual is rechecked. When nothing safe remains, or the
+ * residual still carries an identity, the truthful result is null — a known
+ * premise restriction is never silently erased. */
+function projectSafetyRestriction(
+  value: string | null,
+  facts: QuestionFactsV3,
+  slot: CanonicalMeasurementSlot,
+) {
+  if (!value) return null;
+  const forbidden = forbiddenV3Identities(facts, slot);
+  const startsWithIdentity = forbidden.some((identity) =>
+    new RegExp(`^\\s*${identityPattern(identity).source}`, "i").test(value),
+  );
+  let text = value;
+  for (const identity of forbidden)
+    text = text.replace(identityPattern(identity), "");
+  if (startsWithIdentity) text = text.replace(/^\s*[^:.\n]{1,40}:/, "");
+  text = text
+    .replace(/^[\s:;,.\-–—|]+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  // A bare leftover label fragment is not a premise restriction; report the
+  // truthful inability to project rather than emitting noise.
+  if (!text || (startsWithIdentity && !text.includes(" "))) return null;
+  return hasForbiddenV3Identity(text, facts, slot) ? null : text;
 }
 
 function withoutForbidden(
@@ -109,12 +157,14 @@ export function projectV3SlotContext(facts: QuestionFactsV3, slotId: string) {
   const slot = AUDIT_MEASUREMENT_MATRIX.find((s) => s.id === slotId);
   const permission = V3_CONTEXT_MAP.find((s) => s.slotId === slotId);
   if (!slot || !permission) throw new Error("Unknown canonical slot");
+  const safety = projectSafetyRestriction(facts.categorySafety, facts, slot);
   const values: Record<ContextField, unknown> = {
     category: facts.category,
     marketContext: facts.marketContext,
     targetCustomer: facts.targetCustomer,
     customerNeeds: facts.customerNeeds,
     buyerConstraints: facts.buyerConstraints,
+    accessConstraints: facts.accessConstraints,
     offerings: facts.offerings,
     identity:
       slot.auditedBrandIdentity === "required"
@@ -125,8 +175,20 @@ export function projectV3SlotContext(facts: QuestionFactsV3, slotId: string) {
         ? facts.entityScope
         : { kind: facts.entityScope.kind },
     comparison:
-      slot.comparisonTargetIdentity === "required" ? facts.comparison : null,
-    categorySafety: facts.categorySafety,
+      slot.comparisonTargetIdentity === "required"
+        ? // Founder decision 2026-09-12: confirmed comparators without a
+          // designated target run slot 9 on the category-alternatives
+          // relation rather than selecting or joining a name. The facts
+          // record keeps "unresolved" so diagnostics still see the
+          // undesignated state.
+          facts.comparison.kind === "unresolved"
+          ? {
+              kind: "category-alternatives",
+              name: categoryComparisonFallbackName(facts.category),
+            }
+          : facts.comparison
+        : null,
+    categorySafety: safety,
     serviceChannels: facts.serviceChannels,
   };
   return {
@@ -134,7 +196,7 @@ export function projectV3SlotContext(facts: QuestionFactsV3, slotId: string) {
     contextVersion: QUESTION_CONTEXT_VERSION,
     // Role and safety constrain interpretation, never supply an inferred role.
     entityType: facts.entityType,
-    safetyRestrictions: withoutForbidden(facts.categorySafety, facts, slot),
+    safetyRestrictions: safety,
     safetyPolicy: {
       personalOrRegulatedRecords: "forbidden",
       individualizedHighImpactAdvice: "forbidden",

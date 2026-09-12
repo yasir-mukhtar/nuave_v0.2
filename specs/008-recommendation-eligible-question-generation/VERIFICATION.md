@@ -107,14 +107,20 @@ restrictions remain code-owned; a projection is not semantic certification.
 
 #### Evidence and limits
 
-- Focused offline suite: 44 tests passed after final parsing/correction fixes.
-- Final gate: **PASS**, `NUAVE_E2E_PORT=3300 npm run verify`.
-  Typecheck, formatting and typography passed; 880 unit tests across 73 files;
-  both Next and OpenNext/Cloudflare builds; 84 browser tests (79 primary,
-  three forced-failure, two preview-disabled). Lint: zero errors, 17 existing
-  warnings. Log: `/private/tmp/nuave-spec008-g1-verify-final.log`, ending
-  `Offline verification passed.` This final rerun includes the last legacy
-  source-correction regression. The earlier passing run is not substituted for it.
+- Focused offline suite: 59 tests passed after the independent-review fixes
+  (44 original + 15 regression tests covering each confirmed finding).
+- Gate history: `NUAVE_E2E_PORT=3300 npm run verify` passed on the pre-review
+  head `8ef15a4` (880 unit tests, 84 browser tests, both builds; log
+  `/private/tmp/nuave-spec008-g1-verify-final.log`).
+- Post-fix gate: **PASS**, `NUAVE_E2E_PORT=3400 npm run verify` — typecheck,
+  formatting and typography passed; 895 unit tests across 73 files; both Next
+  and OpenNext/Cloudflare builds; 84 browser tests (79 primary, three
+  forced-failure, two preview-disabled). Lint: zero errors, the same 17
+  existing warnings. Log: `/private/tmp/nuave-spec008-g1-verify-reviewfix.log`,
+  ending `Offline verification passed.` One intermediate run flaked on
+  `e1-runnable-journey.spec.ts` Gate 1 (identity-scan heading timeout); that
+  spec passed in isolation and the rerun passed in full — the dormant adapters
+  have no runtime consumers.
 - Complete change review and whitespace checks passed; documentation links and
   the three serialized fixture scopes were checked. Verification's temporary
   build environment was restored. No diagnostic scripts were added to Git.
@@ -136,15 +142,75 @@ abstraction, premise checks and fallback realization remain the later writer/
 finalizer work; G1 withholds known identifying text rather than inventing an
 abstraction or declaring an entire pack safe.
 
+#### Independent-review fixes — 2026-09-12
+
+A reviewer reproduction suite (`/private/tmp/nuave-spec008-g1-review`, detached
+at the reviewed head `8ef15a4`) demonstrated eight findings against the original
+G1 adapter. Each confirmed case is now a committed regression test in
+`src/lib/audit/question-facts-v3.test.ts`:
+
+1. **Sensitive retained/derived text** — the mechanical screen now also covers
+   long digit runs (formatted card numbers), Indonesian personal health
+   statements, and source-derived Instagram handles, which are screened before
+   becoming aliases. The screen remains a conservative boundary, not a
+   comprehensive personal-data detector.
+2. **Safety restriction preservation** — `projectSafetyRestriction` removes
+   forbidden identities from a confirmed restriction, strips a leftover leading
+   label fragment, rechecks the residual, and keeps the safe meaning (e.g.
+   "jangan mengasumsikan layanan bedah tersedia"). If nothing safe remains the
+   slot gets a truthful null, never a silently erased premise.
+3. **Website source signals** — every confirmed website source contributes a
+   code-owned `identity.sourceSignals` entry (host/path, www stripped) used by
+   `forbiddenV3Identities`/`hasForbiddenV3Identity`; source URLs still never
+   enter writer context.
+4. **Generic product targets** — `identity.targets` now holds branch names
+   always and offering/target names only when they carry a distinctive brand
+   token, so an ordinary confirmed target such as "Pembersihan AC" stays a
+   usable slot-4 offering while "Langganan Kopi Sudut" stays withheld.
+5. **Binding coverage** — the canonical fingerprint now includes all official
+   sources, comparator source provenance, similar-business provenance,
+   unprojected confirmed brief fields, and (through normalized facts) the
+   active product target's `detail`, which is retained on `entityScope` and
+   kept separate from market context.
+6. **Alias correction target** — unsafe legacy `brand_name_variants` entries
+   report `identityAliases` → `brand-name-variants`, the existing alias editor
+   ID, instead of `brand_name`.
+7. **Typed shared access/fulfilment constraints** — `factsContext` accepts an
+   optional `accessConstraints` list (R5 §3.2 shared subset), and legacy
+   `verified_decision_criteria` entries are additionally shared only when they
+   match a bounded access/fulfilment marker vocabulary. Arbitrary criteria keep
+   `permission: "legacy-criteria"` and stay in their original slots; nothing
+   invents buyer facts.
+8. **Slot-9 relation — product decision recorded 2026-09-12** — two confirmed
+   comparator names stay separate in `identity.comparators` and
+   `facts.comparison` remains `{ kind: "unresolved", name: null }` as honest
+   data. Per the founder decision, an **optional comparator designation** will
+   be added to the intake (future work on the intake branch — not this
+   adapter), and **without a designation slot 9's writer context receives the
+   category-alternatives relation** (`alternatif lain di kategori …`), so the
+   unresolved state degrades truthfully instead of blocking or inventing a
+   target. Competitive role stays sourced from the existing `factsContext`
+   `entityType` seam only; the intake keeps it unknown for self-serve until a
+   later optional question. `comparison_relation_unresolved` now documents the
+   undesignated fact state, not an open policy gap; `competitive_role_unknown`
+   remains a genuine limitation. No competitor is selected, joined, or given
+   an inferred role, and no required screen was added.
+
 ## Verification record
 
-- Result: G1 adapter implemented and offline-verified locally. Founder subsequently
-  authorized commit and push of this branch; merge and release remain pending.
+- Result: G1 adapter implemented and offline-verified locally, then revised for
+  the eight independent-review findings above. Founder previously authorized
+  commit and push of the pre-review branch; merge and release remain pending,
+  and no new commit or push is claimed for this revision.
 - Date: 2026-09-12
 - Working-tree base: `505ccd49ce857e8726bf85e796edf10f5738878c`
-- Next: review G1 evidence and resolve concrete role/comparison contract gaps
-  before affected downstream integration. G2/G2P retain R5's sequence and
-  authorization gates; no G3–G5 plumbing or v3 activation is authorized by G1.
+- Post-review-fix gate: **PASS**, `NUAVE_E2E_PORT=3400 npm run verify`
+  (895 unit tests, 84 browser tests, both builds; log
+  `/private/tmp/nuave-spec008-g1-verify-reviewfix.log`).
+- Next: review the review-fix evidence and resolve concrete role/comparison
+  contract gaps before affected downstream integration. G2/G2P retain R5's
+  sequence and authorization gates; no G3–G5 plumbing or v3 activation is
+  authorized by G1.
 
 ## Files changed in this G1 worktree
 
@@ -154,5 +220,6 @@ abstraction or declaring an entire pack safe.
 - `src/lib/audit/fixtures/intake-g1-snapshots.json`
 - `playwright.config.ts`
 - `docs/NOW.md`
+- `docs/DECISION_LOG.md` (review-fix round: slot-9 relation and role decision)
 - `specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`
 - `specs/008-recommendation-eligible-question-generation/VERIFICATION.md`
