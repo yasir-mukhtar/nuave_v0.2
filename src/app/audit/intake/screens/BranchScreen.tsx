@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { SelectionGroup } from "@/components/product/selection/SelectionCard";
 import { SelectionRow } from "@/components/product/selection/SelectionRow";
 import { AddLine } from "@/components/product/selection/AddLine";
+import { Reveal } from "@/components/product/selection/Reveal";
 import type { BusinessBrief } from "@/lib/audit/types";
 import type { ScopeKind } from "@/lib/audit/workflow-authority";
 import { IntakeFieldError, IntakeHeading, IntakeShell } from "../IntakeShell";
@@ -10,12 +12,7 @@ import styles from "../intake.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
 
-/**
- * Branch: the selection-row pattern. The drafted branch arrives pre-selected;
- * the typed escape hatch replaces it through `applyScopeSelection`.
- */
 export function BranchScreen({
-  brief,
   scopeKind,
   scopeValue,
   fieldErrors,
@@ -33,8 +30,15 @@ export function BranchScreen({
   onContinue: (screen: "branch") => void;
   onBack: (screen: "branch") => void;
 }) {
-  const draftedBranch = scopeValue.trim();
+  const [knownBranches, setKnownBranches] = useState(() =>
+    scopeValue.trim() ? [scopeValue] : [],
+  );
+  const [adding, setAdding] = useState(false);
+  const candidates = [
+    ...new Set([...knownBranches, scopeValue].filter((value) => value.trim())),
+  ];
   const error = fieldErrors.scopeValue || fieldErrors.entity_scope;
+  const open = adding || candidates.length === 0 || Boolean(error);
 
   return (
     <IntakeShell
@@ -46,42 +50,46 @@ export function BranchScreen({
     >
       <IntakeHeading
         screen="branch"
-        title="Cabang mana yang ingin diaudit?"
+        title="Lokasi mana yang ingin Anda audit?"
         lead={
-          draftedBranch
-            ? "Pilih cabang yang ada, atau tambahkan nama cabang yang benar."
-            : "Tambahkan nama cabang atau lokasi yang akan diaudit."
+          candidates.length
+            ? undefined
+            : "Nuave belum dapat membaca lokasi Anda. Tambahkan lokasi yang ingin diaudit."
         }
       />
-
-      {draftedBranch ? (
+      {candidates.length ? (
         <SelectionGroup
           value={scopeValue}
           onValueChange={onScopeValueChange}
-          label="Cabang yang diaudit"
+          label="Pilih satu lokasi"
+          disabled={Boolean(busy)}
         >
-          <SelectionRow value={scopeValue} title={draftedBranch} />
+          {candidates.map((candidate) => (
+            <SelectionRow key={candidate} value={candidate} title={candidate} />
+          ))}
         </SelectionGroup>
       ) : null}
-
-      <AddLine
-        id="scope-value"
-        inputLabel="Nama cabang atau lokasi"
-        placeholder={
-          draftedBranch ? "Tambah cabang lain" : "Nama cabang atau lokasi"
-        }
-        onCommit={onScopeValueChange}
-      />
-      <IntakeFieldError message={error} />
-
-      <div className={styles.readFirst}>
-        <div>
-          <span className={styles.readFirstLabel}>Cakupan audit</span>
-          <div className={styles.readFirstValue}>
-            {brief.entity_scope || "Belum lengkap"}
-          </div>
-        </div>
+      <div className={styles.stack}>
+        <Reveal
+          trigger={candidates.length ? "Tambah lokasi lain" : undefined}
+          open={open}
+          onOpenChange={setAdding}
+        >
+          <AddLine
+            id="scope-value"
+            inputLabel="Nama lokasi"
+            placeholder="Contoh: Depok"
+            buttonLabel="Tambahkan"
+            disabled={Boolean(busy)}
+            onCommit={(value) => {
+              setKnownBranches((current) => [...new Set([...current, value])]);
+              onScopeValueChange(value);
+              setAdding(false);
+            }}
+          />
+        </Reveal>
       </div>
+      <IntakeFieldError message={error} />
     </IntakeShell>
   );
 }

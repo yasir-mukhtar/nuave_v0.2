@@ -98,7 +98,8 @@ function packForBrief(brief: BusinessBrief): PromptPack {
 async function seed(page: Page, state: unknown) {
   await page.addInitScript(
     ({ workflowKey, sessionKey, stateValue }) => {
-      window.sessionStorage.setItem(workflowKey, stateValue);
+      if (!window.sessionStorage.getItem(workflowKey))
+        window.sessionStorage.setItem(workflowKey, stateValue);
       window.sessionStorage.setItem(sessionKey, "intake-preview-e2e-1234");
     },
     {
@@ -190,24 +191,13 @@ test.describe("intake preview journey", () => {
 
     // S2 scope screen: cards, read-first brand_type, one frame.
     await expect(
-      page.getByRole("heading", { name: "Apa yang ingin Anda audit?" }),
+      page.getByRole("heading", { name: "Apa fokus audit ini?" }),
     ).toBeVisible();
     await expectNewIntakeFrame(page);
     await expect(
-      page.getByRole("radio", { name: /Seluruh brand Example Business/ }),
+      page.getByRole("radio", { name: /Brand secara keseluruhan/ }),
     ).toHaveAttribute("aria-checked", "true");
     await expect(page.locator("#brand-type")).toHaveCount(0);
-    await expect(page.getByText("Family coffee shop")).toBeVisible();
-
-    // A drafted value stays correctable: Ubah reveals the input, prefilled.
-    await page.getByRole("button", { name: "Ubah" }).click();
-    const brandTypeInput = page.locator("#brand-type");
-    await expect(brandTypeInput).toBeVisible();
-    await expect(brandTypeInput).toHaveValue("Family coffee shop");
-    await brandTypeInput.fill("Specialty coffee shop");
-    await page.getByRole("button", { name: "Selesai" }).click();
-    await expect(page.getByText("Specialty coffee shop")).toBeVisible();
-
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     // category is not converted yet.
@@ -218,16 +208,19 @@ test.describe("intake preview journey", () => {
 
     // S2 offerings screen: chips pre-selected from the draft.
     await expect(
-      page.getByRole("heading", { name: "Ini produk Anda. Sudah benar?" }),
+      page.getByRole("heading", { name: "Apakah ini yang Anda tawarkan?" }),
     ).toBeVisible();
     const coffeeChip = page.getByRole("button", { name: "Coffee" });
     await expect(coffeeChip).toHaveAttribute("aria-pressed", "true");
     await coffeeChip.click();
-    await expect(coffeeChip).toHaveCount(0);
+    await expect(coffeeChip).toHaveAttribute("aria-pressed", "false");
     await page
-      .getByLabel("Tambah produk atau layanan")
+      .getByRole("button", { name: "Tambah produk atau layanan lain" })
+      .click();
+    await page
+      .getByLabel("Nama produk atau layanan")
       .fill("Kopi susu gula aren");
-    await page.getByRole("button", { name: "Tambah", exact: true }).click();
+    await page.getByRole("button", { name: "Tambahkan", exact: true }).click();
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     // Unconverted middle screens keep the journey runnable. The Lanjut above
@@ -244,37 +237,23 @@ test.describe("intake preview journey", () => {
 
     // S2 review readback: styled rows, Ubah routing to the owning screen.
     await expect(
-      page.getByRole("heading", { name: "Ini yang akan Nuave audit" }),
+      page.getByRole("heading", { name: "Konfirmasi informasi brand Anda" }),
     ).toBeVisible();
-    await expect(page.getByText("Specialty coffee shop")).toBeVisible();
-    await expect(page.getByText("Kopi susu gula aren")).toBeVisible();
-    const categoryRowUbah = page
-      .getByRole("heading", { name: "Kategori", exact: true })
-      .locator("..")
-      .getByRole("button", { name: "Ubah" });
-    await categoryRowUbah.click();
+    await expect(
+      page.getByRole("button", {
+        name: "Ubah produk dan layanan",
+        exact: true,
+      }),
+    ).toContainText("Kopi susu gula aren");
+    await page
+      .getByRole("button", { name: "Ubah kategori", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Pilih kategori brand." }),
     ).toBeVisible();
-
-    // Back after a readback jump follows the state machine's predecessor, so
-    // walk Lanjut forward to the review again.
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
-      page.getByRole("heading", { name: "Ini produk Anda. Sudah benar?" }),
-    ).toBeVisible();
-    for (const heading of [
-      "Kenali pelanggan dan alasannya.",
-      "Jelaskan konteks pasar.",
-      "Pilih bisnis pembanding yang realistis.",
-      "Tambahkan fakta opsional.",
-    ]) {
-      await page.getByRole("button", { name: "Lanjut" }).click();
-      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-    }
-    await page.getByRole("button", { name: "Lanjut" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Ini yang akan Nuave audit" }),
+      page.getByRole("heading", { name: "Konfirmasi informasi brand Anda" }),
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Buat pertanyaan audit" }).click();
@@ -284,7 +263,7 @@ test.describe("intake preview journey", () => {
 
     expect(promptRequests).toHaveLength(1);
     const submittedBrief = promptRequests[0].brief as BusinessBrief;
-    expect(submittedBrief.brand_type).toBe("Specialty coffee shop");
+    expect(submittedBrief.brand_type).toBe("Family coffee shop");
     expect(submittedBrief.verified_offerings).toEqual([
       "Pastries",
       "Kopi susu gula aren",
@@ -312,16 +291,16 @@ test.describe("intake preview journey", () => {
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     await expect(
-      page.getByRole("heading", { name: "Apa yang ingin Anda audit?" }),
+      page.getByRole("heading", { name: "Apa fokus audit ini?" }),
     ).toBeVisible();
-    await page.getByRole("radio", { name: /Satu cabang atau lokasi/ }).click();
+    await page.getByRole("radio", { name: /Satu lokasi/ }).click();
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     // The branch screen opens without a value; pressing Lanjut there surfaces
     // the scopeValue error on this screen and focuses the typed escape hatch
     // (R-17 on the new surface).
     await expect(
-      page.getByRole("heading", { name: "Cabang mana yang ingin diaudit?" }),
+      page.getByRole("heading", { name: "Lokasi mana yang ingin Anda audit?" }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Lanjut" }).click();
     await expect(
@@ -335,12 +314,142 @@ test.describe("intake preview journey", () => {
     await expect(page.locator("#scope-value")).toBeFocused();
 
     await page.locator("#scope-value").fill("Senopati");
-    await page.getByRole("button", { name: "Tambah", exact: true }).click();
-    await expect(page.getByText("Cabang: Senopati")).toBeVisible();
+    await page.getByRole("button", { name: "Tambahkan", exact: true }).click();
+    await expect(page.getByRole("radio", { name: "Senopati" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     await page.getByRole("button", { name: "Lanjut" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Pilih kategori brand." }),
     ).toBeVisible();
   });
+});
+
+test("Review edits can cancel, refresh safely, or save back to the same summary", async ({
+  page,
+}) => {
+  const state = confirmedState();
+  await seed(page, {
+    ...state,
+    meta: { ...state.meta, intakeScreen: "review" },
+  });
+  await page.goto("/audit/v2/intake-preview");
+  const summary = page.getByRole("heading", {
+    name: "Konfirmasi informasi brand Anda",
+  });
+  const row = page.getByRole("button", {
+    name: "Ubah produk dan layanan",
+    exact: true,
+  });
+  await expect(row).toContainText("Coffee · Pastries");
+
+  await row.click();
+  const coffee = page.getByRole("button", { name: "Coffee", exact: true });
+  await coffee.click();
+  await expect(coffee).toHaveAttribute("aria-pressed", "false");
+  await coffee.click();
+  await expect(coffee).toHaveAttribute("aria-pressed", "true");
+  await coffee.click();
+  await page.getByRole("button", { name: "Kembali", exact: true }).click();
+  await expect(summary).toBeVisible();
+  await expect(row).toContainText("Coffee · Pastries");
+
+  await row.click();
+  await coffee.click();
+  await page.reload();
+  await expect(summary).toBeVisible();
+  await expect(row).toContainText("Coffee · Pastries");
+
+  await row.click();
+  await coffee.click();
+  await page
+    .getByRole("button", { name: "Tambah produk atau layanan lain" })
+    .click();
+  await page.getByLabel("Nama produk atau layanan").fill("Espresso");
+  await page.getByRole("button", { name: "Tambahkan", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Espresso", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(summary).toBeVisible();
+  await expect(row).toContainText("Pastries · Espresso");
+  await expect
+    .poll(async () =>
+      page.evaluate(
+        (key) =>
+          JSON.parse(window.sessionStorage.getItem(key)!).brief
+            .verified_offerings,
+        AUDIT_WORKFLOW_STORAGE_KEY,
+      ),
+    )
+    .toEqual(["Pastries", "Espresso"]);
+});
+
+test("Review scope edits reconfirm only invalid dependents before returning to the summary", async ({
+  page,
+}) => {
+  const state = confirmedState();
+  await seed(page, {
+    ...state,
+    meta: { ...state.meta, intakeScreen: "review" },
+  });
+  await page.goto("/audit/v2/intake-preview");
+  await page
+    .getByRole("button", { name: "Ubah fokus audit", exact: true })
+    .click();
+  await page.getByRole("radio", { name: /Satu lokasi/ }).click();
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Lokasi mana yang ingin Anda audit?" }),
+  ).toBeVisible();
+  await page.getByLabel("Nama lokasi").fill("Depok");
+  await page.getByRole("button", { name: "Tambahkan", exact: true }).click();
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Jelaskan konteks pasar." }),
+  ).toBeVisible();
+  await expect(page.locator("#market-context")).toHaveValue("");
+  await page.locator("#market-context").fill("Depok");
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Pilih bisnis pembanding yang realistis.",
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Terima saran Nuave", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Konfirmasi informasi brand Anda" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Ubah lokasi", exact: true }),
+  ).toContainText("Depok");
+  await expect(
+    page.getByRole("button", { name: "Ubah pasar", exact: true }),
+  ).toContainText("Depok");
+});
+
+test("empty prepared brand type still has a focused recovery input", async ({
+  page,
+}) => {
+  const state = confirmedState();
+  await seed(page, {
+    ...state,
+    brief: { ...state.brief, brand_type: "" },
+    meta: { ...state.meta, intakeScreen: "scope" },
+  });
+  await page.goto("/audit/v2/intake-preview");
+  await expect(page.getByLabel("Jenis brand")).toBeVisible();
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(page.getByLabel("Jenis brand")).toBeFocused();
+  await page.getByLabel("Jenis brand").pressSequentially("Kedai kopi");
+  await expect(page.getByLabel("Jenis brand")).toHaveValue("Kedai kopi");
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Pilih kategori brand." }),
+  ).toBeVisible();
 });

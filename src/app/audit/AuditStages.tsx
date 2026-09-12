@@ -822,6 +822,7 @@ export function B1BriefStep({
           fieldErrors={fieldErrors}
           customerEditedFields={customerEditedFields}
           offeringsInvalidated={offeringsInvalidated}
+          preparedOfferings={extraction?.verified_offerings}
           busy={busy}
           onContinue={onContinue}
           onBack={onBack}

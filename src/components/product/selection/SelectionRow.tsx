@@ -21,13 +21,13 @@ export function SelectionRow({
 }) {
   return (
     <Radio.Root value={value} disabled={disabled} className={styles.row}>
-      <span className={styles.rowDot} aria-hidden="true" />
       <span className={styles.rowBody}>
         <span className={styles.rowTitle}>{title}</span>
         {description ? (
           <span className={styles.rowDescription}>{description}</span>
         ) : null}
       </span>
+      <span className={styles.rowDot} aria-hidden="true" />
     </Radio.Root>
   );
 }

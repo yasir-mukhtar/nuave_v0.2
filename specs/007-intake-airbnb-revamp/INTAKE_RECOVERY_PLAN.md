@@ -1,5 +1,13 @@
 # Intake experience recovery plan — Spec 007 R-27 conformance
 
+> **Execution correction, 2026-09-12:** the founder approved repairing the
+> existing screens against the September 5 experience handoff. Use
+> [`S2_REPAIR_PLAN.md`](./S2_REPAIR_PLAN.md) for that bounded work. The older
+> composition, copy, review-row, and Gate 1 instructions below do not override
+> the [approved experience](../../docs/drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md).
+> S3–S5 are paused until their data and routing differences are reconciled.
+> Passing the old S2 tests is not evidence of visual acceptance.
+
 > Status: **Revision 3.1, ready for worker handoff on founder approval**
 > Created: 2026-09-02 · Revised: 2026-09-02 (two review rounds + closure correction)
 > Companion to [`SPEC.md`](./SPEC.md) (Approved) and

@@ -279,6 +279,15 @@ export default function AuditWorkflow({
   const [budgetReady, setBudgetReady] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const reviewEditSnapshot = useRef<Pick<
+    SavedState,
+    | "brief"
+    | "meta"
+    | "websiteUrl"
+    | "extractedSourceUrl"
+    | "extraction"
+    | "factsCustomerOwned"
+  > | null>(null);
   const extractionInFlightRef = useRef<string | null>(null);
   // This is a client-flow marker only. It never authorizes the extraction API.
   const paymentSatisfiedRef = useRef(false);
@@ -551,6 +560,9 @@ export default function AuditWorkflow({
       executionStarted,
       postReportBudgetCalls,
       reportFailureCode,
+      // A refresh during a Review edit restores the last committed Review.
+      // The transient edit and its invalidated dependents stay in memory.
+      ...reviewEditSnapshot.current,
     };
     try {
       window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -848,15 +860,24 @@ export default function AuditWorkflow({
   }
 
   function continueIntake(screen: typeof workflowMeta.intakeScreen) {
-    const issue = validateBriefForReview(brief, workflowMeta).find(
-      (candidate) => candidate.screen === screen,
-    );
+    const issues = validateBriefForReview(brief, workflowMeta);
+    const issue = issues.find((candidate) => candidate.screen === screen);
     if (issue) {
       showIntakeIssue(issue);
       return;
     }
     setFieldErrors({});
     setError("");
+    if (reviewEditSnapshot.current) {
+      const dependentIssue = issues[0];
+      if (dependentIssue) {
+        showIntakeIssue(dependentIssue);
+        return;
+      }
+      reviewEditSnapshot.current = null;
+      setWorkflowMeta((current) => ({ ...current, intakeScreen: "review" }));
+      return;
+    }
     setWorkflowMeta((current) => ({
       ...current,
       intakeScreen: nextIntakeScreen(current.scopeKind, screen),
@@ -864,8 +885,20 @@ export default function AuditWorkflow({
   }
 
   function goBackInIntake(screen: typeof workflowMeta.intakeScreen) {
+    if (busy) return;
     setFieldErrors({});
     setError("");
+    const snapshot = reviewEditSnapshot.current;
+    if (snapshot) {
+      reviewEditSnapshot.current = null;
+      setBrief(snapshot.brief);
+      setWorkflowMeta(snapshot.meta);
+      setWebsiteUrl(snapshot.websiteUrl);
+      setExtractedSourceUrl(snapshot.extractedSourceUrl);
+      setExtraction(snapshot.extraction);
+      setFactsCustomerOwned(snapshot.factsCustomerOwned);
+      return;
+    }
     setWorkflowMeta((current) => ({
       ...current,
       intakeScreen: previousIntakeScreen(current.scopeKind, screen),
@@ -873,6 +906,17 @@ export default function AuditWorkflow({
   }
 
   function navigateToIntakeScreen(screen: typeof workflowMeta.intakeScreen) {
+    if (busy || executionStarted) return;
+    if (workflowMeta.intakeScreen === "review" && intakeSurface.has("review")) {
+      reviewEditSnapshot.current = {
+        brief,
+        meta: workflowMeta,
+        websiteUrl,
+        extractedSourceUrl,
+        extraction,
+        factsCustomerOwned,
+      };
+    }
     setFieldErrors({});
     setError("");
     setWorkflowMeta((current) => ({ ...current, intakeScreen: screen }));
@@ -1335,6 +1379,7 @@ export default function AuditWorkflow({
   }
 
   function startOver() {
+    reviewEditSnapshot.current = null;
     operationGeneration.invalidate("Audit restarted");
     varianceInFlightRunKey.current = null;
     window.sessionStorage.removeItem(STORAGE_KEY);
@@ -1417,35 +1462,45 @@ export default function AuditWorkflow({
     (step === 2 && intakeSurface.has("questions"));
 
   return (
-    <main className={styles.shell} lang="id" data-theme="light">
-      <header
-        className={`${styles.topbar} ${styles.noPrint}`}
-        style={
-          step === 0 && !exiting
-            ? { position: "absolute", opacity: 0, pointerEvents: "none" }
-            : undefined
-        }
-      >
-        <Link href="/" className={styles.brand}>
-          <Image
-            src="/logo-nuave-horizontal.png"
-            width={152}
-            height={48}
-            priority
-            alt="Nuave"
-          />
-        </Link>
-        <div className={styles.topActions}>
-          <Button variant="secondary" size="sm" onClick={startOver}>
-            Mulai ulang
-          </Button>
-          {report && varianceSettled ? (
-            <Button variant="default" size="sm" onClick={() => window.print()}>
-              <IconDownload /> Cetak / simpan PDF
+    <main
+      className={`${styles.shell} ${newIntakeSurfaceActive ? styles.shellIntake : ""}`}
+      lang="id"
+      data-theme="light"
+    >
+      {!newIntakeSurfaceActive ? (
+        <header
+          className={`${styles.topbar} ${styles.noPrint}`}
+          style={
+            step === 0 && !exiting
+              ? { position: "absolute", opacity: 0, pointerEvents: "none" }
+              : undefined
+          }
+        >
+          <Link href="/" className={styles.brand}>
+            <Image
+              src="/logo-nuave-horizontal.png"
+              width={152}
+              height={48}
+              priority
+              alt="Nuave"
+            />
+          </Link>
+          <div className={styles.topActions}>
+            <Button variant="secondary" size="sm" onClick={startOver}>
+              Mulai ulang
             </Button>
-          ) : null}
-        </div>
-      </header>
+            {report && varianceSettled ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <IconDownload /> Cetak / simpan PDF
+              </Button>
+            ) : null}
+          </div>
+        </header>
+      ) : null}
 
       {step > 0 && step < 4 && !newIntakeSurfaceActive ? (
         <nav

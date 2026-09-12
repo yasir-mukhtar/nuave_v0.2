@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-01
+> Updated: 2026-09-12
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -13,6 +13,24 @@ real Indonesian report through the actual product path and judge whether it
 contains a finding worth paying for.
 
 ## Active presentation-layer work
+
+The founder approved repairing the existing Spec 007 intake screens on
+2026-09-12 after identifying their mismatch with the September 5 approved
+[experience handoff](./drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md) and
+[workbench](./drafts/nuave-intake-design-workbench.html). The bounded
+[S2 repair](../specs/007-intake-airbnb-revamp/S2_REPAIR_PLAN.md) is on
+`codex/spec-007-approved-s2-repair`, based on `origin/main` at `505ccd4`.
+Scope, Branch, Offerings, Review, and the shared Question Review frame are
+available at `/audit/v2/intake-preview?demo=1` with fictional data and no model
+calls. The route without `demo=1` retains the existing controller.
+
+The [repair verification](../specs/007-intake-airbnb-revamp/S2_REPAIR_VERIFICATION.md)
+passed offline: 836 unit tests, 91 browser tests, and both builds. Next is
+founder visual review. The old S3–S5 recovery handoff is paused: first
+reconcile the approved service channels, customer reasons, competitors,
+scope-conditioned preparation, and data/routing contract. The production
+intake surface remains empty; this local repair does not complete or activate
+the full new intake.
 
 The founder-approved UI-stack migration is active on the dedicated
 `feat/ui-stack-migration` branch from baseline `1f28bdd`. Its canonical design
