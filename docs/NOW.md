@@ -31,18 +31,19 @@ simulated downloadable start handoff. It does not execute an audit or report.
 The [verification record](../specs/007-intake-airbnb-revamp/END_TO_END_INTAKE_VERIFICATION.md)
 records actual checks and remaining limits. On 2026-09-12, Yasir reviewed the
 latest local preview and approved its logic, layout, and flow. The next smallest
-action is to prepare the accepted branch's PR for review. Local HEAD and GitHub
-both resolve to `5821d2f`; commit and push are complete. No PR exists yet for
-this branch.
+action is preparing the accepted branch's PR for review and the Spec 008 G1 facts/context
+boundary. Local HEAD and GitHub were rechecked at `5821d2f`; commit and push
+are complete. No PR was returned for this branch.
 The [next-agent handover](./drafts/CLI_HANDOFF_COMPLETE_LOCAL_INTAKE_2026-09-12.md)
 records the implementation branch, recovery instructions and verified results.
 The founder subsequently authorized committing and pushing this branch; no merge
 or deployment is authorized by that request.
 Founder acceptance of the local preview is complete. Live-provider validation
-and production activation remain pending. Separately, prepare the
-bounded intake-to-engine integration spec, reconciling Spec 008 question
-generation before implementation; prove that connection offline before an
-explicitly authorized Spec 003 real report run. Production intake, payment, providers, reporting, and deployment
+and production activation remain pending. The next technical dependency is
+Spec 008 R5 G1, informed by the accepted-intake
+[boundary review](../specs/008-recommendation-eligible-question-generation/G1_INTAKE_BOUNDARY_REVIEW.md).
+R5 remains the sole execution plan; its pilot gate precedes later production
+plumbing. Production intake, payment, providers, reporting, and deployment
 are unchanged by this local deliverable.
 
 The founder-approved UI-stack migration is active on the dedicated
@@ -128,7 +129,7 @@ Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/0
 is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
-which owns the gate ledger; next step there is R5's G0 baseline reconciliation.
+which owns the gate ledger. G0 is complete; G1 facts/context is next.
 The package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
 evaluation gates still require their own explicit founder authorization.
 

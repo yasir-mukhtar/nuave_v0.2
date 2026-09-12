@@ -10,14 +10,14 @@
 `codex/complete-local-intake`.** Its current local worktree is
 `/private/tmp/nuave-intake-complete`; continue there after checking its status.
 The founder explicitly authorized committing and pushing this work after the
-initial handover. Local HEAD and GitHub's `codex/complete-local-intake` both
-resolve to `5821d2fb70fe8217182683aba5e5a951544f4b8f` (`feat(intake): complete
-local intake journey`). The implementation worktree was clean before this
-documentation follow-up. Commit and push are complete; no PR exists yet.
+initial handover. Rechecked after Yasir's correction: local HEAD and GitHub's
+`codex/complete-local-intake` both resolve to
+`5821d2fb70fe8217182683aba5e5a951544f4b8f` (`feat(intake): complete local intake
+journey`). The implementation worktree was clean before this documentation
+follow-up. Commit and push are complete; no PR was returned for this branch.
 
-If recovery is needed, fetch `origin/codex/complete-local-intake` and verify
-that it includes `5821d2f`. Preserve the dirty root checkout; use a separate
-worktree.
+If recovery is needed, fetch `origin/codex/complete-local-intake` and verify that
+it includes `5821d2f`. Preserve the dirty root checkout; use a separate worktree.
 The screenshots and logs listed below are still outside Git and may not survive
 cleanup of `/private/tmp`. Nothing was merged or deployed.
 
@@ -275,10 +275,11 @@ Commit/push are complete at `5821d2f`; review the complete branch diff and
 verification evidence and prepare the pull request for review. Merge remains
 a separate founder decision because main triggers deployment.
 
-Separately, prepare the bounded integration specification connecting
-confirmed intake facts and approved questions to the existing audit/report
-engine. Reconcile the Spec 008 question-generation boundary before implementing
-that connection. Prove the connection offline first; the subsequent explicitly
+The next technical dependency is the existing Spec 008 R5 G1 facts/context
+adapter. Its [boundary review](../../specs/008-recommendation-eligible-question-generation/G1_INTAKE_BOUNDARY_REVIEW.md)
+maps the accepted intake to that approved work; R5 remains the sole execution
+plan. G1 is dormant preparation, not authorization to connect live generation
+or audit execution. Do not bypass R5's pilot gate to implement later plumbing. Prove the connection offline first; the subsequent explicitly
 authorized real run must pass the Spec 003 report-quality gate. Do not redesign
 the accepted intake or treat the JSON handoff as a report.
 Further code changes require focused regressions and a fresh full verify before

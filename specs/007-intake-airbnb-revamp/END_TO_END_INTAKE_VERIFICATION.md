@@ -174,5 +174,7 @@ blocker; the small “6 pertanyaan” count can wrap on a narrow group header, a
 remaining cosmetic detail. Yasir subsequently approved the latest preview
 for logic, layout, and flow on 2026-09-12. No live-provider run, production
 activation, or live report is claimed. The next smallest useful action is
-PR preparation. Local HEAD and GitHub both resolve to `5821d2f`; the
-implementation is committed and pushed. No PR exists yet for the branch.
+PR preparation and Spec 008 G1 facts/context preparation. Rechecked after the
+founder's correction: local HEAD and GitHub both resolve to `5821d2f`, and the
+implementation worktree was clean before this documentation follow-up. The
+implementation is committed and pushed; no PR was returned for the branch.
