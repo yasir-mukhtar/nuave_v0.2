@@ -12,6 +12,7 @@ import type { QuestionFactsV3 } from "./question-facts-v3";
 import {
   buildV3WriterContext,
   QUESTION_CONTEXT_VERSION,
+  V3_CONTEXT_MAP,
 } from "./question-context-v3";
 
 // ---------------------------------------------------------------------------
@@ -72,6 +73,12 @@ export const V3_ENTITY_TYPES = [
   "platform",
   "professional",
 ] as const;
+/**
+ * The response market may assert only the confirmed competitive role. When the
+ * facts carry no confirmed role, the honest value is "unknown" — an absent role
+ * is never permission to invent one.
+ */
+export const V3_MARKET_ENTITY_TYPES = [...V3_ENTITY_TYPES, "unknown"] as const;
 export type V3EntityType = (typeof V3_ENTITY_TYPES)[number];
 
 export const V3_DIMENSION_PROVENANCES = [
@@ -92,19 +99,28 @@ const dimensionSchema = z.object({
 });
 const candidateSchema = z.object({
   choice: z.string().trim().min(1).max(V3_CHOICE_MAX_CHARS),
-  // Provenance hints are optional: missing contextRefs/dimensionIds default
-  // to empty and never reject an otherwise mechanically valid text (§8.3).
+  // Provenance hints are required arrays: an explicit empty array is valid
+  // and distinct from a missing one, which is a structural failure (F5).
+  // Duplicates are rejected because they pretend grounding the response
+  // does not have.
   contextRefs: z
     .array(z.string().trim().min(1).max(40))
     .max(V3_MAX_CONTEXT_REFS)
-    .default([]),
-  dimensionIds: z.array(z.string()).max(V3_MAX_DIMENSION_IDS).default([]),
+    .refine((refs) => new Set(refs).size === refs.length, {
+      message: "Duplicate context reference.",
+    }),
+  dimensionIds: z
+    .array(z.string())
+    .max(V3_MAX_DIMENSION_IDS)
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "Duplicate dimension reference.",
+    }),
   text: z.string().trim().min(1).max(V3_TEXT_MAX_CHARS),
 });
 const richResponseSchema = z
   .object({
     market: z.object({
-      entityType: z.enum(V3_ENTITY_TYPES),
+      entityType: z.enum(V3_MARKET_ENTITY_TYPES),
       category: z.string().trim().min(1).max(80),
       dimensions: z.array(dimensionSchema).max(V3_MAX_DIMENSIONS),
     }),
@@ -187,17 +203,27 @@ function slotCoverageFailure(
       detail: "market dimension IDs must be unique",
     };
   for (const entry of value.unnamed) {
+    // A context reference must name a field this slot is permitted to see;
+    // a reference to a valid field the slot cannot use is misleading metadata
+    // even though the vocabulary is closed. Supply checks happen in the
+    // finalizer where the projected facts are available.
+    const permitted = new Set<string>([
+      ...(V3_CONTEXT_MAP.find((p) => p.slotId === entry.slotId)?.fields ?? []),
+      "market.dimensions",
+    ]);
     for (const candidate of [entry.primary, entry.reserve]) {
       if (
         candidate.dimensionIds.some((id) => !dimensionIds.has(id)) ||
         candidate.contextRefs.some(
-          (ref) => !V3_CONTEXT_REF_FIELDS.includes(ref as V3ContextRef),
+          (ref) =>
+            !V3_CONTEXT_REF_FIELDS.includes(ref as V3ContextRef) ||
+            !permitted.has(ref),
         )
       )
         return {
           ok: false,
           failure: "unresolved_references",
-          detail: `candidate for ${entry.slotId} references an unknown dimension or context field`,
+          detail: `candidate for ${entry.slotId} references an unknown dimension, an unknown context field, or a context field the slot is not permitted to use`,
         };
     }
   }
@@ -277,7 +303,7 @@ export const V3_RICH_WRITER_INSTRUCTION = [
   ...SHARED_SEMANTIC_INSTRUCTION,
   "Return one compact market object, then primary and reserve candidates for the six unnamed slots, then one final text for each named slot — sixteen texts total.",
   "The market object names the confirmed category and competitive entity type plus at most eight ordinary decision dimensions a customer in this market actually weighs. Label each dimension in at most 80 characters and record its provenance: confirmed_abstraction for a confirmed input abstraction, buyer_constraint for a confirmed buyer constraint, or category_inference for an ordinary category-level inference. Dimensions are consumer decision criteria, never claims that any business has them.",
-  "Each unnamed candidate records a choice description of at most 140 characters, at most three context references from the permitted vocabulary, zero to three market dimension IDs, and the final question or request text.",
+  "Each unnamed candidate records a choice description of at most 140 characters, at most three context references from the permitted vocabulary, zero to three market dimension IDs, and the final question or request text. The contextRefs and dimensionIds arrays are always required; return an empty array when nothing applies, and never repeat a reference.",
   "Reserve candidates must express a materially different consumer decision for the same slot, not a rewording of the primary.",
   ...AUDIT_MEASUREMENT_MATRIX.map(slotLine),
   "Return only the structured response. No answers, rationales, predicted results, or marketing claims.",
@@ -309,10 +335,20 @@ export type V3RequestSettings = {
   schemaMode: "json_schema_strict";
   maxOutputTokens: number;
   /** Proposed evaluation-side per-attempt timeout; the inspected v2 fetch has
-   * none. Frozen in the evaluation packet; live defaults stay unchanged. */
+   * none. Frozen in the evaluation packet; live defaults stay unchanged.
+   * Ownership note: this constant declares the budget only — the evaluation
+   * transport owns the actual AbortSignal; nothing here enforces transport
+   * behavior by itself. */
   timeoutMs: number;
   /** Automatic SDK/transport retries stay disabled; every attempt counts. */
   retries: 0;
+  /** Sampling parameters are omitted from the request so the provider defaults
+   * apply; they are pinned here as "omitted" so a later operator does not
+   * silently add them. */
+  sampling: { temperature: "omitted"; topP: "omitted" };
+  /** No session/affinity headers beyond the standard Authorization bearer;
+   * declared so a later operator does not invent them. */
+  sessionHeaders: "authorization_only";
 };
 
 /** The evaluation-packet settings; not a grant to spend and not a live
@@ -332,6 +368,8 @@ export const V3_PROPOSED_EVALUATION_SETTINGS: V3RequestSettings = {
   maxOutputTokens: 4_096,
   timeoutMs: 60_000,
   retries: 0,
+  sampling: { temperature: "omitted", topP: "omitted" },
+  sessionHeaders: "authorization_only",
 };
 
 /**
@@ -417,7 +455,7 @@ export const V3_RICH_RESPONSE_JSON_SCHEMA = {
     market: {
       type: "object",
       properties: {
-        entityType: { type: "string", enum: [...V3_ENTITY_TYPES] },
+        entityType: { type: "string", enum: [...V3_MARKET_ENTITY_TYPES] },
         category: { type: "string", maxLength: 80 },
         dimensions: {
           type: "array",
@@ -492,7 +530,7 @@ export const V3_RICH_RESPONSE_JSON_SCHEMA = {
         },
         text: { type: "string", maxLength: V3_TEXT_MAX_CHARS },
       },
-      required: ["choice", "text"],
+      required: ["choice", "contextRefs", "dimensionIds", "text"],
       additionalProperties: false,
     },
   },
@@ -511,3 +549,70 @@ export const V3_SIMPLE_RESPONSE_JSON_SCHEMA = {
   required: ["questions"],
   additionalProperties: false,
 } as const;
+
+/**
+ * Offline compatibility check for the provider-side strict JSON schema: every
+ * object node must declare all properties required and forbid extras, every
+ * $ref must resolve inside the document, and only supported node keys may be
+ * used. Frozen so a later operator does not have to invent the check; it runs
+ * against the static schema object — it never calls the provider.
+ */
+export function checkV3ProviderSchemaCompatibility(schema: unknown): string[] {
+  const issues: string[] = [];
+  const root = schema as Record<string, unknown>;
+  const allowedKeys = new Set([
+    "$defs",
+    "$ref",
+    "additionalProperties",
+    "enum",
+    "items",
+    "maxItems",
+    "maxLength",
+    "minItems",
+    "minLength",
+    "pattern",
+    "properties",
+    "required",
+    "type",
+  ]);
+  const walk = (node: unknown, path: string) => {
+    if (!node || typeof node !== "object") {
+      issues.push(`${path}: schema node is not an object`);
+      return;
+    }
+    const record = node as Record<string, unknown>;
+    for (const key of Object.keys(record))
+      if (!allowedKeys.has(key))
+        issues.push(`${path}: unsupported schema key "${key}"`);
+    if (typeof record.$ref === "string") {
+      const target = record.$ref.replace(/^#\/\$defs\//, "");
+      const defs = root.$defs as Record<string, unknown> | undefined;
+      if (!record.$ref.startsWith("#/$defs/") || !defs?.[target])
+        issues.push(`${path}: unresolvable reference "${record.$ref}"`);
+      return;
+    }
+    if (record.type === "object") {
+      const properties = (record.properties ?? {}) as Record<string, unknown>;
+      const required = (record.required ?? []) as string[];
+      for (const key of Object.keys(properties))
+        if (!required.includes(key))
+          issues.push(`${path}: property "${key}" is not listed in required`);
+      if (record.additionalProperties !== false)
+        issues.push(
+          `${path}: object schema must set additionalProperties:false`,
+        );
+      for (const [key, child] of Object.entries(properties))
+        walk(child, `${path}.${key}`);
+      return;
+    }
+    if (record.type === "array") {
+      if (!record.items) issues.push(`${path}: array schema is missing items`);
+      else walk(record.items, `${path}[]`);
+      return;
+    }
+    if (!["string", "integer", "number", "boolean"].includes(`${record.type}`))
+      issues.push(`${path}: unsupported or missing type "${record.type}"`);
+  };
+  walk(schema, "$");
+  return issues;
+}

@@ -80,24 +80,29 @@ describe("rich response parsing", () => {
     expect(parsed.ok).toBe(true);
   });
 
-  it("accepts candidates whose provenance fields are missing", () => {
-    const response = richResponseOf();
-    const stripped = JSON.parse(JSON.stringify(response)) as Record<
+  it("rejects missing required provenance arrays (F5); explicit empty arrays pass", () => {
+    const stripped = JSON.parse(JSON.stringify(richResponseOf())) as Record<
       string,
       unknown
     >;
     for (const entry of stripped.unnamed as Record<string, unknown>[]) {
       delete (entry.primary as Record<string, unknown>).contextRefs;
       delete (entry.primary as Record<string, unknown>).dimensionIds;
-      delete (entry.reserve as Record<string, unknown>).contextRefs;
-      delete (entry.reserve as Record<string, unknown>).dimensionIds;
     }
-    const parsed = parseV3RichResponse(stripped);
-    expect(parsed.ok).toBe(true);
-    if (parsed.ok) {
-      expect(parsed.response.unnamed[0].primary.contextRefs).toEqual([]);
-      expect(parsed.response.unnamed[0].primary.dimensionIds).toEqual([]);
+    expect(parseV3RichResponse(stripped).ok).toBe(false);
+
+    // Explicit empty arrays are valid within bounds.
+    const emptied = JSON.parse(JSON.stringify(richResponseOf())) as Record<
+      string,
+      unknown
+    >;
+    for (const entry of emptied.unnamed as Record<string, unknown>[]) {
+      (entry.primary as Record<string, unknown>).contextRefs = [];
+      (entry.primary as Record<string, unknown>).dimensionIds = [];
+      (entry.reserve as Record<string, unknown>).contextRefs = [];
+      (entry.reserve as Record<string, unknown>).dimensionIds = [];
     }
+    expect(parseV3RichResponse(emptied).ok).toBe(true);
   });
 
   it("rejects malformed and truncated schema shapes", () => {

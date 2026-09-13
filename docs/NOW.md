@@ -142,16 +142,18 @@ which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
 via PRs #48 and #50). **The G1 dormant facts/context adapter merged via PR #59
 on 2026-09-13** (merge `687f340`) and is deployed but still dormant — it has no
 runtime consumer, changes no live provider behavior, and customer question
-dispatch remains v2. **G2 is prepared and offline-verified** on
-`codex/spec008-g2-evaluation-freeze` (draft PR pending review): a dormant v3
-rich/simple writer prototype, bounded finalizer/fallback, the frozen
+dispatch remains v2. **G2 is corrected and offline-verified** on
+`codex/spec008-g2-evaluation-freeze` (draft PR #65): a dormant v3
+rich/simple writer prototype, bounded finalizer/fallback, and the frozen
 evaluation packet
 ([`G2_EVALUATION_PACKET.md`](../specs/008-recommendation-eligible-question-generation/G2_EVALUATION_PACKET.md)),
-and executable §8.3 decision-rule tests. It awaits independent acceptance; it
-is not an empirical quality pass, and provider feasibility is unproven. The
+re-frozen at v2 after the independent F1–F10 review, with executable §8.3
+decision-rule tests. It awaits independent re-review and acceptance; it is
+not an empirical quality pass, and provider feasibility is unproven. The
 package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
 evaluation gates still require their own explicit founder authorization — the
-next action is G2 independent review, then a separately authorized G2P pilot.
+next action is G2 independent re-review, then a separately authorized G2P
+pilot.
 
 ## What is known
 

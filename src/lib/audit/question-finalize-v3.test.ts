@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { measurementSlotForId } from "./measurement-matrix";
+import fixture from "./fixtures/g2-evaluation-inputs.json";
+import {
+  AUDIT_MEASUREMENT_MATRIX,
+  measurementSlotForId,
+} from "./measurement-matrix";
 import { parseQuestionFactsV3 } from "./question-facts-v3";
 import {
   checkV3Text,
@@ -24,6 +28,16 @@ const slot = (id: string) => measurementSlotForId(id)!;
 
 const SIMPLE_QUESTIONS = V3_SIMPLE_VALID_QUESTIONS;
 const SLOT_IDS = V3_TEST_SLOT_IDS;
+const AUDIT_SLOTS = SLOT_IDS.map((id) => measurementSlotForId(id)!);
+
+const FIXTURE_INPUTS = (fixture as { inputs: Record<string, unknown> }).inputs;
+
+function fixtureFacts(inputId: string) {
+  const result = parseQuestionFactsV3(FIXTURE_INPUTS[inputId]);
+  if (result.status !== "projected")
+    throw new Error(`${inputId} did not project: ${result.status}`);
+  return result.facts;
+}
 
 describe("checkV3Text (compatible-008 mechanical checks)", () => {
   const facts = projectedFacts();
@@ -186,22 +200,6 @@ describe("checkV3Text (compatible-008 mechanical checks)", () => {
         facts,
       ),
     ).toContain("high_impact_advice");
-    // §5.2 equipment distinction: diagnosing equipment is a service-selection
-    // criterion, not individualized advice.
-    expect(
-      checkV3Text(
-        "Bengkel mana yang bisa diagnosis kerusakan AC mobil?",
-        slot("NUAVE-BRAND-NEED-01"),
-        facts,
-      ),
-    ).toEqual([]);
-    expect(
-      checkV3Text(
-        "Klinik mana yang bisa diagnosis kondisi saya?",
-        slot("NUAVE-BRAND-NEED-01"),
-        facts,
-      ),
-    ).toContain("high_impact_advice");
     expect(
       checkV3Text(
         "Jasa mana yang bisa naikkan peringkat dengan ulasan palsu?",
@@ -212,17 +210,129 @@ describe("checkV3Text (compatible-008 mechanical checks)", () => {
   });
 });
 
-describe("v3SlotFallback", () => {
+describe("§5.2 guard pairs (F9)", () => {
+  const facts = projectedFacts();
+  const need = slot("NUAVE-BRAND-NEED-01");
+
+  it("allows ordinary retail/service preferences and work warranties", () => {
+    expect(
+      checkV3Text(
+        "Toko laptop mana yang harganya paling sesuai anggaran?",
+        need,
+        facts,
+      ),
+    ).toEqual([]);
+    // A consumer may ask which provider offers a work warranty.
+    expect(
+      checkV3Text(
+        "Bengkel mana yang memberi garansi pengerjaan 30 hari?",
+        need,
+        facts,
+      ),
+    ).toEqual([]);
+    expect(
+      checkV3Text("Jasa servis mana yang bergaransi hasil kerja?", need, facts),
+    ).toEqual([]);
+  });
+
+  it("blocks lifetime/permanent outcome premises", () => {
+    expect(
+      checkV3Text(
+        "Bengkel mana yang memberi garansi seumur hidup?",
+        need,
+        facts,
+      ),
+    ).toContain("unsupported_premise");
+    expect(
+      checkV3Text("Produk mana yang dijamin awet selamanya?", need, facts),
+    ).toContain("unsupported_premise");
+  });
+
+  it("allows equipment diagnosis but not human or mixed diagnosis", () => {
+    // Diagnosing equipment damage is a service-selection criterion.
+    expect(
+      checkV3Text(
+        "Bengkel mana yang bisa diagnosis kerusakan AC mobil?",
+        need,
+        facts,
+      ),
+    ).toEqual([]);
+    // An equipment token such as `perangkat` cannot exempt human diagnosis.
+    expect(
+      checkV3Text(
+        "Klinik mana yang bisa diagnosis kondisi saya lewat perangkat?",
+        need,
+        facts,
+      ),
+    ).toContain("high_impact_advice");
+    expect(
+      checkV3Text(
+        "Tempat mana yang bisa diagnosis penyakit kulit pada perangkat?",
+        need,
+        facts,
+      ),
+    ).toContain("high_impact_advice");
+    expect(
+      checkV3Text("Klinik mana yang bisa diagnosis kondisi saya?", need, facts),
+    ).toContain("high_impact_advice");
+  });
+
+  it("blocks personal drug/treatment suitability and clinical-winner premises", () => {
+    // Personal treatment suitability is individualized high-impact advice.
+    expect(
+      checkV3Text(
+        "Apotek mana yang punya obat yang cocok untuk saya?",
+        need,
+        facts,
+      ),
+    ).toContain("high_impact_advice");
+    expect(
+      checkV3Text(
+        "Klinik mana yang bisa menyembuhkan penyakit diabetes?",
+        need,
+        facts,
+      ),
+    ).toContain("unsupported_premise");
+    // Clinical-winner premise inside a confirmed regulated category.
+    const regulated = fixtureFacts("D7");
+    expect(
+      checkV3Text("Klinik gigi mana yang paling aman?", need, regulated),
+    ).toContain("unsupported_premise");
+    // Ordinary service discovery in the same category stays allowed.
+    expect(
+      checkV3Text(
+        "Klinik gigi mana saja yang menerima pasien baru di Depok?",
+        need,
+        regulated,
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("v3SlotFallback (F10)", () => {
   const facts = projectedFacts();
 
   it("produces valid, distinct, recommendation-eligible texts for all ten slots", () => {
     const texts = AUDIT_SLOTS.map((s) => v3SlotFallback(facts, s));
-    for (const [i, s] of AUDIT_SLOTS.entries())
-      expect(checkV3Text(texts[i], s, facts)).toEqual([]);
-    expect(new Set(texts.map((t) => t.toLowerCase())).size).toBe(texts.length);
+    for (const [i, s] of AUDIT_SLOTS.entries()) {
+      expect(texts[i].text, `${s.id} missing`).toBeTruthy();
+      expect(checkV3Text(texts[i].text!, s, facts), `${s.id} issues`).toEqual(
+        [],
+      );
+    }
+    const all = texts.map((t) => t.text!.toLowerCase());
+    expect(new Set(all).size).toBe(texts.length);
+    // Real occasion in slot 2, supported offering in slot 4, concrete-option
+    // comparison in slot 6 — all slot-safe and recommendation-eligible. The
+    // unnamed slot sees only identity-free offerings: "Kopi Susu Sudut"
+    // carries the brand token, so the permitted offering is "Americano".
+    expect(texts[1].text).toContain("nugas");
+    expect(texts[3].text).toMatch(/Americano|espresso|Biji kopi/);
+    expect(texts[3].text).not.toContain("Kopi Sudut");
+    expect(texts[5].text).toContain("bandingkan");
     // Named fallbacks carry the required identities.
-    expect(texts[8]).toContain("Kopi Sudut");
-    expect(texts[8]).toContain("Kedai Pagi");
+    expect(texts[8].text).toContain("Kopi Sudut");
+    expect(texts[8].text).toContain("Kedai Pagi");
   });
 
   it("a reviewed override is still checked like any other text", () => {
@@ -231,13 +341,83 @@ describe("v3SlotFallback", () => {
       slot("NUAVE-BRAND-NEED-01"),
       "Apakah Kopi Sudut enak?",
     );
-    expect(checkV3Text(unsafe, slot("NUAVE-BRAND-NEED-01"), facts)).toContain(
-      "identity_leakage",
-    );
+    expect(
+      checkV3Text(unsafe.text!, slot("NUAVE-BRAND-NEED-01"), facts),
+    ).toContain("identity_leakage");
+  });
+
+  it("fallbacks stay role/scope-aware across the frozen categories", () => {
+    const cases: [string, Record<string, RegExp>][] = [
+      // Service with home visits.
+      [
+        "D1",
+        {
+          slot2: /AC|servis/i,
+          slot4: /freon|perbaikan|perawatan/i,
+          slot9: /Bengkel Dingin Sejahtera/,
+        },
+      ],
+      // Product-scoped sparse facts — product role nouns, not venue/service.
+      ["D8", { slot1: /merek|pilihan/i, slot9: /botol/i }],
+      // Branch scope keeps the scoped identity in named slots.
+      ["H1", { slot9: /AC Pro/, namedIdentity: /BersihAC/ }],
+      // Regulated discovery: pasien baru / layanan tersedia, never therapy fit.
+      [
+        "D7",
+        {
+          slot1: /pasien baru|dipertimbangkan|tersedia/i,
+          named: /Klinik Gigi Senyum/,
+        },
+      ],
+    ];
+    for (const [inputId, expectations] of cases) {
+      const f = fixtureFacts(inputId);
+      const all = AUDIT_MEASUREMENT_MATRIX.map((s, i) => ({
+        slot: s,
+        fb: v3SlotFallback(f, s),
+        i,
+      }));
+      for (const { slot: s, fb, i } of all) {
+        expect(fb.text, `${inputId} slot ${s.id}`).toBeTruthy();
+        expect(
+          checkV3Text(fb.text!, s, f),
+          `${inputId} slot ${s.id} issues`,
+        ).toEqual([]);
+        void i;
+      }
+      if (expectations.slot1)
+        expect(all[0].fb.text).toMatch(expectations.slot1);
+      if (expectations.slot2)
+        expect(all[1].fb.text).toMatch(expectations.slot2);
+      if (expectations.slot4)
+        expect(all[3].fb.text).toMatch(expectations.slot4);
+      if (expectations.slot9)
+        expect(all[8].fb.text).toMatch(expectations.slot9);
+      if (expectations.named)
+        expect(all[6].fb.text).toMatch(expectations.named);
+      if (expectations.namedIdentity)
+        expect(all[6].fb.text).toMatch(expectations.namedIdentity);
+    }
+  });
+
+  it("returns missing rather than inventing when facts cannot anchor a slot", () => {
+    // No confirmed comparison target: the direct-comparison slot must report
+    // missing, never a fabricated name.
+    const noComparison = projectedFacts({
+      comparators: { mode: "category-alternatives", names: [] },
+    });
+    const fb = v3SlotFallback(noComparison, slot("NUAVE-BRAND-ACTION-01"));
+    // Either the category-level comparison name exists or the slot reports
+    // missing — it must never return null-silent or an unidentifiable text.
+    if (fb.text) {
+      expect(
+        checkV3Text(fb.text, slot("NUAVE-BRAND-ACTION-01"), noComparison),
+      ).toEqual([]);
+    } else {
+      expect(fb.missing).toBe("comparison");
+    }
   });
 });
-
-const AUDIT_SLOTS = SLOT_IDS.map((id) => measurementSlotForId(id)!);
 
 describe("finalizeV3RichResponse", () => {
   const facts = projectedFacts();
@@ -251,6 +431,7 @@ describe("finalizeV3RichResponse", () => {
     if (result.status !== "completed") return;
     expect(result.diagnostics.pass).toBe("primary_selection");
     expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(64);
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
     expect(
       result.prompts
         .filter((p) => p.order <= 6)
@@ -275,6 +456,10 @@ describe("finalizeV3RichResponse", () => {
     )!;
     expect(prompt.origin).toBe("reserve");
     expect(prompt.text).not.toContain("Kopi Sudut");
+    // Unaffected slots keep their primary text exactly.
+    expect(
+      result.prompts.find((p) => p.slotId === "NUAVE-BRAND-NEED-02")!.origin,
+    ).toBe("primary");
   });
 
   it("applies a reviewed slot fallback when both candidates are invalid", () => {
@@ -295,20 +480,19 @@ describe("finalizeV3RichResponse", () => {
     )!;
     expect(prompt.origin).toBe("slot_fallback");
     expect(result.diagnostics.pass).toBe("fallback_selection");
+    expect(result.diagnostics.affectedSlots).toEqual(["NUAVE-BRAND-NEED-01"]);
     expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(
       64 + 729,
     );
   });
 
-  it("rejects duplicate final texts across the whole pack", () => {
+  it("repairs a genuine duplicate conflict locally with a minimal substitution", () => {
     const response = richResponseOf({
       "NUAVE-BRAND-NEED-01": {
         primary: "Kedai kopi mana saja yang layak masuk shortlist nugas?",
         reserve: "Kedai kopi mana saja yang layak masuk shortlist nugas?",
       },
     });
-    // Slot 5's default primary equals the injected duplicate, so slot 1 must
-    // resolve to a distinct fallback text.
     const parsed = parseV3RichResponse(response);
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
@@ -319,9 +503,12 @@ describe("finalizeV3RichResponse", () => {
       p.text.toLowerCase().replace(/\s+/g, " ").trim(),
     );
     expect(new Set(normalized).size).toBe(10);
+    // Minimal repair: at most one slot moves off its primary.
+    const offPrimary = result.prompts.filter((p) => p.origin !== "primary");
+    expect(offPrimary.length).toBeLessThanOrEqual(1);
   });
 
-  it("recovers a missing named text through the reviewed named fallback", () => {
+  it("repairs an invalid named text locally — not by full pack replacement", () => {
     const response = richResponseOf(
       {},
       { "NUAVE-BRAND-VALIDATION-02": "Apakah tempat ini direkomendasikan?" },
@@ -337,10 +524,11 @@ describe("finalizeV3RichResponse", () => {
     )!;
     expect(prompt.origin).toBe("slot_fallback");
     expect(prompt.text).toContain("Kopi Sudut");
+    expect(result.diagnostics.pass).toBe("primary_selection");
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
   });
 
   it("keeps the 64/729 portfolio bounds", () => {
-    // All primaries and reserves invalid → pass 2 covers 3^6 = 729 portfolios.
     const allBad = richResponseOf(
       Object.fromEntries(
         SLOT_IDS.slice(0, 6).map((id) => [
@@ -359,48 +547,30 @@ describe("finalizeV3RichResponse", () => {
       64 + 729,
     );
     expect(result.diagnostics.portfoliosEvaluated).toBeGreaterThan(64);
-  });
-
-  it("falls back to the shared deterministic pack when a named slot cannot resolve", () => {
-    // One named slot unresolvable: its original and its reviewed fallback are
-    // both invalid, so no portfolio can complete and the shared pack is used
-    // once (built from code-owned deterministic fragments only).
-    const response = richResponseOf(
-      {},
-      { "NUAVE-BRAND-VALIDATION-01": "Tanpa nama bisnis di sini?" },
-    );
-    const parsed = parseV3RichResponse(response);
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) return;
-    const result = finalizeV3RichResponse(facts, parsed.response, {
-      reviewedSlotFallbacks: {
-        "NUAVE-BRAND-VALIDATION-01": "Masih tanpa nama bisnis?",
-      },
-    });
-    expect(result.status).toBe("completed");
-    if (result.status !== "completed") return;
-    expect(result.diagnostics.pass).toBe("full_fallback");
-    expect(result.prompts.every((p) => p.origin === "full_fallback")).toBe(
-      true,
-    );
+    // One fallback per affected slot — no recursive repair.
+    expect(
+      result.prompts
+        .filter((p) => p.order <= 6)
+        .every((p) => p.origin === "slot_fallback"),
+    ).toBe(true);
   });
 
   it("returns temporarily-unavailable when even the deterministic pack cannot pass", () => {
-    // A brand name containing "?" projects fine, but it makes every named
-    // deterministic fragment fail the form check (the identity token embeds a
-    // second "?"). Named originals that never mention the brand leave nothing
-    // to resolve.
+    // A "?" inside the confirmed need makes the slot-2/3 fallback texts fail
+    // the form check. The response's unnamed candidates are all invalid, so
+    // selection exhausts into the shared full fallback — which itself cannot
+    // produce a valid pack. The honest outcome is the established failure,
+    // never a claimed usable pack.
     const envelope = testFactsEnvelope();
-    envelope.intake.confirmed.brand.name = "Kopi?";
+    envelope.intake.confirmed.customerReasons = ["kenapa tempat ini?"];
     const factsResult = parseQuestionFactsV3(envelope);
     if (factsResult.status !== "projected")
       throw new Error(`expected projected, got ${factsResult.status}`);
     const response = richResponseOf(
-      {},
       Object.fromEntries(
-        SLOT_IDS.slice(6).map((id) => [
+        SLOT_IDS.slice(0, 6).map((id) => [
           id,
-          "Apakah bisnis ini layak direkomendasikan?",
+          { primary: "Apakah Kopi Sudut enak?", reserve: "Kopi Sudut mana?" },
         ]),
       ),
     );
@@ -408,6 +578,55 @@ describe("finalizeV3RichResponse", () => {
     if (!parsed.ok) throw new Error("fixture should parse");
     const result = finalizeV3RichResponse(factsResult.facts, parsed.response);
     expect(result.status).toBe("generation_temporarily_unavailable");
+    if (result.status === "generation_temporarily_unavailable")
+      expect(result.diagnostics.fullFallbackUsed).toBe(true);
+  });
+
+  it("returns the correction outcome when the confirmed facts cannot anchor safe fallbacks", () => {
+    // The category itself carries the brand token; the projection strips it
+    // from unnamed slot contexts, so no safe fallback text can be built.
+    // That insufficiency is a correction outcome, not a fabricated text.
+    const envelope = testFactsEnvelope();
+    envelope.intake.confirmed.brand.name = "Sudut";
+    envelope.intake.confirmed.category = "Sudut coffee";
+    const factsResult = parseQuestionFactsV3(envelope);
+    if (factsResult.status !== "projected")
+      throw new Error(`expected projected, got ${factsResult.status}`);
+    const response = richResponseOf(
+      Object.fromEntries(
+        SLOT_IDS.slice(0, 6).map((id) => [
+          id,
+          { primary: "Apakah Sudut enak?", reserve: "Sudut mana?" },
+        ]),
+      ),
+    );
+    const parsed = parseV3RichResponse(response);
+    if (!parsed.ok) throw new Error("fixture should parse");
+    const result = finalizeV3RichResponse(factsResult.facts, parsed.response);
+    expect(result.status).toBe("input_correction_required");
+  });
+
+  it("a market object that invents an unconfirmed role invalidates every candidate", () => {
+    const envelope = testFactsEnvelope();
+    // Strip the confirmed role: the market must say "unknown", not invent one.
+    delete (envelope as { factsContext?: Record<string, unknown> })
+      .factsContext;
+    const factsResult = parseQuestionFactsV3(envelope);
+    if (factsResult.status !== "projected")
+      throw new Error(`expected projected, got ${factsResult.status}`);
+    const response = richResponseOf();
+    const parsed = parseV3RichResponse(response);
+    if (!parsed.ok) throw new Error("fixture should parse");
+    // The response asserts "venue" but the facts confirm none — grounding
+    // fails for every candidate; recovery is by truthful slot fallback.
+    const result = finalizeV3RichResponse(factsResult.facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(
+      result.prompts
+        .filter((p) => p.order <= 6)
+        .every((p) => p.origin === "slot_fallback"),
+    ).toBe(true);
   });
 });
 
@@ -415,7 +634,6 @@ describe("P/M/C attribution (§8.1)", () => {
   const facts = projectedFacts();
 
   it("P ignores reserves and coverage; M and C use them", () => {
-    // Slot 1 primary invalid, reserve valid, covering a new dimension.
     const response = richResponseOf({
       "NUAVE-BRAND-NEED-01": {
         primary: "Apakah Kopi Sudut enak untuk nugas?",
@@ -444,7 +662,6 @@ describe("P/M/C attribution (§8.1)", () => {
   });
 
   it("C prefers dimension coverage where M stays primary-only", () => {
-    // All candidates valid; reserves cover a second dimension.
     const response = richResponseOf();
     for (const entry of response.unnamed) {
       entry.primary.dimensionIds = ["nugas"];
@@ -488,6 +705,17 @@ describe("finalizeV3SimpleResponse", () => {
     expect(result.prompts[0].origin).toBe("slot_fallback");
     // The simple control has no reserves.
     expect(result.prompts.filter((p) => p.origin === "reserve")).toEqual([]);
+  });
+
+  it("repairs a duplicate named text the same way as rich", () => {
+    const questions = [...SIMPLE_QUESTIONS];
+    // Named text identical to unnamed text → conflict repaired locally.
+    questions[6] = questions[0];
+    const result = finalizeV3SimpleResponse(facts, { questions });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    const normalized = result.prompts.map((p) => p.text.toLowerCase());
+    expect(new Set(normalized).size).toBe(10);
   });
 });
 
@@ -539,7 +767,7 @@ describe("runV3Generation (§4.2 orchestration over injected transport)", () => 
     expect("attempts" in result && result.attempts).toBe(1);
   });
 
-  it("recovers a transport failure through the shared fallback budget", async () => {
+  it("provider failure → exactly one shared full-fallback pack, truthful origins", async () => {
     const result = await runV3Generation({
       factsInput: envelope,
       variant: "rich",
@@ -550,23 +778,55 @@ describe("runV3Generation (§4.2 orchestration over injected transport)", () => 
     expect(result.status).toBe("completed");
     expect("attempts" in result && result.attempts).toBe(1);
     if (result.status === "completed") {
-      const origins = result.pack.prompts.map((p) => p.origin);
+      // Truthful: every origin is full_fallback — never a reported primary.
       expect(
-        origins.every((o) => o === "slot_fallback" || o === "full_fallback"),
+        result.pack.prompts.every((p) => p.origin === "full_fallback"),
       ).toBe(true);
+      expect(result.pack.diagnostics.fullFallbackUsed).toBe(true);
+      expect(result.pack.diagnostics.pass).toBe("full_fallback");
       expect(result.pack.diagnostics.failedAttempts[0].stage).toBe("transport");
+      expect(result.pack.diagnostics.serialization.serializationComplete).toBe(
+        false,
+      );
     }
   });
 
-  it("recovers a structurally malformed response the same way", async () => {
+  it("structural failure → the same single shared full-fallback attempt", async () => {
     const result = await runV3Generation({
       factsInput: envelope,
       variant: "rich",
       transport: async () => ({ broken: true }),
     });
     expect(result.status).toBe("completed");
-    if (result.status === "completed")
+    if (result.status === "completed") {
       expect(result.pack.diagnostics.failedAttempts[0].stage).toBe("parse");
+      expect(
+        result.pack.prompts.every((p) => p.origin === "full_fallback"),
+      ).toBe(true);
+      expect(result.pack.diagnostics.fullFallbackUsed).toBe(true);
+    }
+  });
+
+  it("a truncating finish reason is preserved as a serialization failure", async () => {
+    const result = await runV3Generation({
+      factsInput: envelope,
+      variant: "simple",
+      transport: async () => ({
+        value: { questions: SIMPLE_QUESTIONS },
+        finishReason: "max_output_tokens",
+      }),
+    });
+    expect(result.status).toBe("completed");
+    if (result.status === "completed") {
+      expect(result.pack.diagnostics.serialization).toEqual({
+        responseReceived: true,
+        serializationComplete: false,
+        finishReason: "max_output_tokens",
+      });
+      expect(result.pack.diagnostics.failedAttempts[0].stage).toBe(
+        "serialization",
+      );
+    }
   });
 
   it("completes the simple variant through the same orchestration", async () => {
@@ -606,13 +866,17 @@ describe("evidence record", () => {
     });
     // Canonical metadata is code-owned: prompts carry matrix values.
     for (const prompt of first.prompts) {
-      const slot = measurementSlotForId(prompt.slotId)!;
-      expect(prompt.measurementPurpose).toBe(slot.measurementPurpose);
-      expect(prompt.order).toBe(slot.order);
+      const s = measurementSlotForId(prompt.slotId)!;
+      expect(prompt.measurementPurpose).toBe(s.measurementPurpose);
+      expect(prompt.order).toBe(s.order);
     }
     // Provenance lists the supplied/permitted context per slot.
     expect(
       first.evidence.contextProvenance["NUAVE-BRAND-NEED-01"].permittedFields,
     ).toContain("category");
+    // Writer hints stay separate from independent judgments.
+    expect(
+      first.evidence.writerHints["NUAVE-BRAND-NEED-01"].choice,
+    ).toBeTruthy();
   });
 });
