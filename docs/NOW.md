@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-12
+> Updated: 2026-09-13
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -23,11 +23,13 @@ validation, and provider-call contracts. The canonical design authority is
 The founder authorized completing the entire local intake on 2026-09-12,
 including all three scope branches, every facts Review edit, Question Review,
 and a safe local start handoff, and accepted the local preview's logic,
-layout, and flow. The implementation is on `codex/complete-local-intake`
-(PR #58), governed by the September 5 approved
+layout, and flow. The implementation **merged to `main` via PR #58** on
+2026-09-13, governed by the September 5 approved
 [handoff](./drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md) and workbench. The local
 entry is `/audit/new-intake`, enabled only by the server flag
-`NUAVE_NEW_INTAKE_PREVIEW_ENABLED=true`. It uses deterministic preparation and
+`NUAVE_NEW_INTAKE_PREVIEW_ENABLED=true`, which remains unset in the deployed
+worker — the new route stays disabled in production. It uses deterministic
+preparation and
 question adapters, bypasses local login/payment, and stops at an explicitly
 simulated downloadable start handoff. It does not execute an audit or report.
 
@@ -118,12 +120,12 @@ baselines. Spec 007's lettered packages (A1–A4, B1, C1, D1, E1) are merged —
 the package ledger in
 [`EXECUTION_PLAN.md`](../specs/007-intake-airbnb-revamp/EXECUTION_PLAN.md)
 records each landing — and the R-27 intake-recovery tranche merged via PR #49.
-The intake-experience rebuild itself is **unmerged** and continues as two
-preserved review candidates: draft PR #58 (`codex/complete-local-intake`, the
-complete local intake implementation) and draft PR #60
-(`codex/spec-007-approved-s2-repair`, the earlier five-screen S2 repair slice,
-preserved for review). Neither is on `main`; production intake behavior is
-unchanged.
+The intake-experience rebuild itself **merged via PR #58**
+(`codex/complete-local-intake`, the complete local intake implementation) on
+2026-09-13; its `/audit/new-intake` route remains disabled in production
+behind `NUAVE_NEW_INTAKE_PREVIEW_ENABLED`, so production intake behavior is
+unchanged. Draft PR #60 (`codex/spec-007-approved-s2-repair`, the earlier
+five-screen S2 repair slice) remains open as a preserved review candidate.
 
 The current bounded work remains Spec 003: the OpenCode Go migration
 and production-method lock are implemented and automated checks are green; the
@@ -135,9 +137,10 @@ is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
 which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
-via PRs #48 and #50); the next dependency-ready gate is G1. A dormant G1
-facts/context adapter exists on the unmerged `codex/spec008-g1-adapter` branch
-(draft PR #59); it stays dormant and changes no live provider behavior. The
+via PRs #48 and #50). The dormant G1 facts/context adapter on the unmerged
+`codex/spec008-g1-adapter` branch (draft PR #59) is implemented and
+independently reviewed and is being prepared for the founder's integration
+decision; it stays dormant and changes no live provider behavior. The
 package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
 evaluation gates still require their own explicit founder authorization.
 
