@@ -280,6 +280,7 @@ export default function AuditWorkflow({
   const [exiting, setExiting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const extractionInFlightRef = useRef<string | null>(null);
+  const budgetRequest = useRef<Promise<number> | null>(null);
   // This is a client-flow marker only. It never authorizes the extraction API.
   const paymentSatisfiedRef = useRef(false);
 
@@ -498,35 +499,38 @@ export default function AuditWorkflow({
 
   useEffect(() => {
     let cancelled = false;
-    void (async () => {
-      try {
-        const response = await fetch("/api/audit/extract", {
-          method: "GET",
-          cache: "no-store",
-        });
-        const data = (await response.json()) as Partial<AuditBudget> & {
-          error?: string;
-        };
-        if (
-          !response.ok ||
-          data.limit_usd !== AUDIT_COST_LIMIT_USD ||
-          typeof data.carryover_cost_usd !== "number" ||
-          data.carryover_cost_usd < 0 ||
-          data.carryover_cost_usd > AUDIT_COST_LIMIT_USD
-        ) {
-          throw new Error(data.error || "Budget bootstrap failed.");
-        }
+    budgetRequest.current ??= (async () => {
+      const response = await fetch("/api/audit/extract", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const data = (await response.json()) as Partial<AuditBudget> & {
+        error?: string;
+      };
+      if (
+        !response.ok ||
+        data.limit_usd !== AUDIT_COST_LIMIT_USD ||
+        typeof data.carryover_cost_usd !== "number" ||
+        data.carryover_cost_usd < 0 ||
+        data.carryover_cost_usd > AUDIT_COST_LIMIT_USD
+      ) {
+        throw new Error(data.error || "Budget bootstrap failed.");
+      }
+      return data.carryover_cost_usd;
+    })();
+    budgetRequest.current
+      .then((carryover) => {
         if (!cancelled) {
-          setCarryoverCostUsd(data.carryover_cost_usd);
+          setCarryoverCostUsd(carryover);
           setBudgetReady(true);
         }
-      } catch (cause) {
+      })
+      .catch((cause) => {
         if (!cancelled) {
           setBudgetReady(false);
           setError(safeError("bootstrap", cause));
         }
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
