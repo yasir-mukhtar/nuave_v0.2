@@ -20,6 +20,27 @@ baseline while preserving the existing intake, audit, report, fixture,
 validation, and provider-call contracts. The canonical design authority is
 [`docs/DESIGN.md`](./DESIGN.md).
 
+The founder authorized completing the entire local intake on 2026-09-12,
+including all three scope branches, every facts Review edit, Question Review,
+and a safe local start handoff, and accepted the local preview's logic,
+layout, and flow. The implementation is on `codex/complete-local-intake`
+(PR #58), governed by the September 5 approved
+[handoff](./drafts/NUAVE_INTAKE_EXPERIENCE_HANDOFF.md) and workbench. The local
+entry is `/audit/new-intake`, enabled only by the server flag
+`NUAVE_NEW_INTAKE_PREVIEW_ENABLED=true`. It uses deterministic preparation and
+question adapters, bypasses local login/payment, and stops at an explicitly
+simulated downloadable start handoff. It does not execute an audit or report.
+
+The [verification record](../specs/007-intake-airbnb-revamp/END_TO_END_INTAKE_VERIFICATION.md)
+records the local implementation's checks and limits. Live-provider validation
+and production activation remain pending. The accepted frozen-input contract
+is documented in the Spec 008 G1
+[boundary review](../specs/008-recommendation-eligible-question-generation/G1_INTAKE_BOUNDARY_REVIEW.md).
+The existing dormant G1 adapter remains a separate review candidate as recorded
+below. R5 owns its gate sequence, including the pilot before later production
+plumbing. The current production intake remains in place; this local preview
+does not replace it or change payment, provider, execution, or report behavior.
+
 Wave 1 of the Phase 6 design pass
 ([`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)) shipped
 alongside it on 2026-08-20: P0 foundation and P1 landing are verified (see its
