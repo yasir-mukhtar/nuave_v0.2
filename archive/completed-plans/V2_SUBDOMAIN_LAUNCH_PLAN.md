@@ -10,10 +10,10 @@ Put this repository (`nuave_v0.2`) on the internet at **`v2.nuave.ai`**, in
 Indonesian, with the audit tool behind an access code. `nuave.ai` is not touched
 at all.
 
-| URL | Serves | Changes in this task |
-| --- | --- | --- |
-| `nuave.ai` + `www.nuave.ai` | v1 (Framer landing + existing app) | **Nothing** |
-| `v2.nuave.ai` | this repo, first-ever deploy | Everything below |
+| URL                         | Serves                             | Changes in this task |
+| --------------------------- | ---------------------------------- | -------------------- |
+| `nuave.ai` + `www.nuave.ai` | v1 (Framer landing + existing app) | **Nothing**          |
+| `v2.nuave.ai`               | this repo, first-ever deploy       | Everything below     |
 
 After this task the founder edits the landing page directly on a live site, then
 auth and brief intake get planned separately.
@@ -30,7 +30,7 @@ auth and brief intake get planned separately.
    access code the founder hands out manually. The audit makes real paid API
    calls and must never be reachable without the code.
 4. **Subdomain, not the apex.** This supersedes
-   [`DOMAIN_TRANSITION_PLAN.md`](./DOMAIN_TRANSITION_PLAN.md), which flips the
+   [`DOMAIN_TRANSITION_PLAN.md`](../superseded-plans/DOMAIN_TRANSITION_PLAN.md), which flips the
    apex and moves v1 to `monitor.nuave.ai`. That plan is **parked, not
    cancelled** — its Phase 2b access-gate design is reused verbatim below. Do not
    execute its Phase 1, 3, or 4.
@@ -149,18 +149,19 @@ DNS is untouched in this phase; everything happens on `*.vercel.app`.
    framework Next.js, Node 22 (matches `.nvmrc` and `engines`).
 2. Environment variables (Production **and** Preview):
 
-   | Variable | Value |
-   | --- | --- |
-   | `NUAVE_ACCESS_CODE` | a long, non-guessable string |
-   | `OPENAI_API_KEY` | real key, server-only |
-   | `OPENAI_AUDIT_MODEL` | `gpt-5.6-luna` |
-   | `NUAVE_PROVIDER` | blank for OpenAI, or `gemini` for the free path |
-   | `GEMINI_API_KEY` | only if `NUAVE_PROVIDER=gemini` |
-   | `NUAVE_FIXTURE_PREVIEW_ENABLED` | `true` |
-   | `NUAVE_FIXTURE_FORCE_REPORT_FAILURE` | blank |
-   | `OPENAI_AUDIT_CARRYOVER_COST_USD` | `0.4357` (carries the accounted spend from `NOW.md`) |
+   | Variable                             | Value                                                |
+   | ------------------------------------ | ---------------------------------------------------- |
+   | `NUAVE_ACCESS_CODE`                  | a long, non-guessable string                         |
+   | `OPENAI_API_KEY`                     | real key, server-only                                |
+   | `OPENAI_AUDIT_MODEL`                 | `gpt-5.6-luna`                                       |
+   | `NUAVE_PROVIDER`                     | blank for OpenAI, or `gemini` for the free path      |
+   | `GEMINI_API_KEY`                     | only if `NUAVE_PROVIDER=gemini`                      |
+   | `NUAVE_FIXTURE_PREVIEW_ENABLED`      | `true`                                               |
+   | `NUAVE_FIXTURE_FORCE_REPORT_FAILURE` | blank                                                |
+   | `OPENAI_AUDIT_CARRYOVER_COST_USD`    | `0.4357` (carries the accounted spend from `NOW.md`) |
 
    No `NEXT_PUBLIC_` variants of any of these.
+
 3. Deploy. Confirm the build passes and the Indonesian landing renders.
 4. Re-run the Phase 2 gate against the deployed preview URL, not just locally.
 
@@ -203,12 +204,12 @@ against a USD 5 ceiling.
 
 ## Rollback
 
-| Problem | Undo |
-| --- | --- |
-| Anything in Phase 1–2 | `git revert` the commit; nothing is deployed yet |
-| Bad deploy | Vercel → Deployments → promote the previous one |
+| Problem               | Undo                                                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| Anything in Phase 1–2 | `git revert` the commit; nothing is deployed yet                                                      |
+| Bad deploy            | Vercel → Deployments → promote the previous one                                                       |
 | Site broken after DNS | Remove `v2.nuave.ai` from the Vercel project and delete the DNS record; `nuave.ai` was never involved |
-| Access code leaked | Change `NUAVE_ACCESS_CODE` in Vercel and redeploy; every existing cookie stops matching |
+| Access code leaked    | Change `NUAVE_ACCESS_CODE` in Vercel and redeploy; every existing cookie stops matching               |
 
 ---
 

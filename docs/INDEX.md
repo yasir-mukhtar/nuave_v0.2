@@ -27,25 +27,25 @@ decision log does not become a permanent hidden override.
 
 ## Canonical product documents
 
-| Document | Governs | Status |
-|---|---|---|
-| [`VISION.md`](./VISION.md) | Why Nuave exists and the principles all downstream work follows | Canonical |
-| [`PRODUCT.md`](./PRODUCT.md) | Current customer, offer, promise, journey, scope, and success signals | Canonical |
-| [`AUDIT.md`](./AUDIT.md) | Measurement, evidence, report, and data-handling method | Canonical |
-| [`VOICE.md`](./VOICE.md) | Indonesian writing contract for questions, reports, and customer copy | Canonical (founder-approved 2026-08-17) |
-| [`NOW.md`](./NOW.md) | Current objective, deployment state, facts, blockers, and next action | Current operating state |
-| [`DESIGN.md`](./DESIGN.md) | Current UI stack, visual language, interaction, accessibility, and component boundaries | Canonical current design authority |
-| [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions | Canonical history |
-| [`WORKFLOW.md`](./WORKFLOW.md) | Document creation, specifications, worker handoffs, and verification | Canonical working method |
+| Document                               | Governs                                                                                 | Status                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------- |
+| [`VISION.md`](./VISION.md)             | Why Nuave exists and the principles all downstream work follows                         | Canonical                               |
+| [`PRODUCT.md`](./PRODUCT.md)           | Current customer, offer, promise, journey, scope, and success signals                   | Canonical                               |
+| [`AUDIT.md`](./AUDIT.md)               | Measurement, evidence, report, and data-handling method                                 | Canonical                               |
+| [`VOICE.md`](./VOICE.md)               | Indonesian writing contract for questions, reports, and customer copy                   | Canonical (founder-approved 2026-08-17) |
+| [`NOW.md`](./NOW.md)                   | Current objective, deployment state, facts, blockers, and next action                   | Current operating state                 |
+| [`DESIGN.md`](./DESIGN.md)             | Current UI stack, visual language, interaction, accessibility, and component boundaries | Canonical current design authority      |
+| [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions                              | Canonical history                       |
+| [`WORKFLOW.md`](./WORKFLOW.md)         | Document creation, specifications, worker handoffs, and verification                    | Canonical working method                |
 
 ## Current development plan
 
-| Document | Governs | Status |
-|---|---|---|
-| [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) | Thin v2 journey, integration sequence, quality gates, and launch readiness | Founder-approved direction; each implementation phase still requires an approved spec |
-| [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md) | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007 |
-| [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md) | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries | Current founder-approved product contract; implementation still requires an approved spec |
-| [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack | Working product context |
+| Document                                                         | Governs                                                                                                                            | Status                                                                                    |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md)                     | Thin v2 journey, integration sequence, quality gates, and launch readiness                                                         | Founder-approved direction; each implementation phase still requires an approved spec     |
+| [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md)             | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007                    |
+| [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md)                   | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries                                            | Current founder-approved product contract; implementation still requires an approved spec |
+| [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack                                                                         | Working product context                                                                   |
 
 ## Touchpoint plans
 
@@ -53,38 +53,38 @@ decision log does not become a permanent hidden override.
 touchpoint, in customer order. These are detailed behavior plans, not approved
 specifications — implementation still requires a spec.
 
-| Plan | Touchpoint |
-|---|---|
-| [`journey/00-overview.md`](./journey/00-overview.md) | The whole sequence at a glance |
-| [`journey/01-order-preview.md`](./journey/01-order-preview.md) | Order Preview |
-| [`journey/02-payment.md`](./journey/02-payment.md) | Payment |
-| [`journey/03-business-facts.md`](./journey/03-business-facts.md) | Business Facts |
-| [`journey/04-questions.md`](./journey/04-questions.md) | Questions |
-| [`journey/05-audit-run.md`](./journey/05-audit-run.md) | Audit Run |
-| [`journey/06-audit-report.md`](./journey/06-audit-report.md) | Audit Report |
+| Plan                                                             | Touchpoint                     |
+| ---------------------------------------------------------------- | ------------------------------ |
+| [`journey/00-overview.md`](./journey/00-overview.md)             | The whole sequence at a glance |
+| [`journey/01-order-preview.md`](./journey/01-order-preview.md)   | Order Preview                  |
+| [`journey/02-payment.md`](./journey/02-payment.md)               | Payment                        |
+| [`journey/03-business-facts.md`](./journey/03-business-facts.md) | Business Facts                 |
+| [`journey/04-questions.md`](./journey/04-questions.md)           | Questions                      |
+| [`journey/05-audit-run.md`](./journey/05-audit-run.md)           | Audit Run                      |
+| [`journey/06-audit-report.md`](./journey/06-audit-report.md)     | Audit Report                   |
 
 ## Customer-facing content
 
 [`content/`](./content/) holds copy sources, not implementation. The published
 pages live in `src/`.
 
-| Document | Holds |
-|---|---|
-| [`content/landing-copy.md`](./content/landing-copy.md) | Working landing copy source |
-| [`content/order-preview-copy.md`](./content/order-preview-copy.md) | Order Preview page copy and section order |
-| [`content/audit-report-sample-wip.md`](./content/audit-report-sample-wip.md) | Founder-edited report sample, work in progress |
+| Document                                                                                   | Holds                                                     |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| [`content/landing-copy.md`](./content/landing-copy.md)                                     | Working landing copy source                               |
+| [`content/order-preview-copy.md`](./content/order-preview-copy.md)                         | Order Preview page copy and section order                 |
+| [`content/audit-report-sample-wip.md`](./content/audit-report-sample-wip.md)               | Founder-edited report sample, work in progress            |
 | [`content/WEBSITE_STRUCTURE_CONTENT_PLAN.md`](./content/WEBSITE_STRUCTURE_CONTENT_PLAN.md) | Site structure, routes, and legal/compliance content plan |
-| [`content/website/`](./content/website/) | `FAQ`, `TERMS`, `PRIVACY`, and `SUPPORT` page copy |
+| [`content/website/`](./content/website/)                                                   | `FAQ`, `TERMS`, `PRIVACY`, and `SUPPORT` page copy        |
 
 ## Working documents
 
-| Directory | Holds | Rule |
-|---|---|---|
-| [`briefs/`](./briefs/) | Decision-session prompts and implementation briefs | A brief is an input to a decision or a fix, never an approved specification |
-| [`drafts/`](./drafts/) | Unapproved candidate documents and plans | Do not implement from a draft |
-| [`reviews/prompts/`](./reviews/prompts/) | Adversarial-review and fix prompts, one per phase | Reusable inputs |
-| [`reviews/findings/`](./reviews/findings/) | What each review actually found | Evidence of a completed review, not standing instructions |
-| [`templates/`](./templates/) | `SPEC`, `VERIFICATION`, and `WORKER_PROMPT` starting points | Copy, do not edit in place |
+| Directory                                  | Holds                                                       | Rule                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [`briefs/`](./briefs/)                     | Decision-session prompts and implementation briefs          | A brief is an input to a decision or a fix, never an approved specification |
+| [`drafts/`](./drafts/)                     | Unapproved candidate documents and plans                    | Do not implement from a draft                                               |
+| [`reviews/prompts/`](./reviews/prompts/)   | Adversarial-review and fix prompts, one per phase           | Reusable inputs                                                             |
+| [`reviews/findings/`](./reviews/findings/) | What each review actually found                             | Evidence of a completed review, not standing instructions                   |
+| [`templates/`](./templates/)               | `SPEC`, `VERIFICATION`, and `WORKER_PROMPT` starting points | Copy, do not edit in place                                                  |
 
 Future Module 07 access-mechanism work starts from
 [`briefs/REPORT_ACCESS_RECOVERY.md`](./briefs/REPORT_ACCESS_RECOVERY.md). It is a
@@ -94,8 +94,8 @@ decision-session prompt, not an approved implementation specification.
 
 Create these only when their decisions are needed:
 
-| Document | Purpose | When needed |
-|---|---|---|
+| Document      | Purpose                                                                     | When needed                    |
+| ------------- | --------------------------------------------------------------------------- | ------------------------------ |
 | `docs/GTM.md` | Target segment, positioning, acquisition, offer testing, and evidence rules | Before outreach or launch work |
 
 ## Specifications
@@ -107,14 +107,14 @@ defines the specification lifecycle.
 Each specification lives at `specs/NNN-short-name/SPEC.md` and lists the exact
 context an agent must read. Do not implement a draft specification.
 
-| Package | Outcome | Status |
-|---|---|---|
-| [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md) | Fixture-backed landing-to-report preview with unmistakably simulated checkout | Verified (2026-08-17); realigned by Spec 002 |
-| [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md) | Indonesian audit and report contracts, journey realigned to the canonical sequence | Verified (2026-08-17) |
-| [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md) | Live engine connected, first real Indonesian report, report-quality gate verdict | Approved; implementing — **the current objective** |
-| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md) | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form | Superseded by Spec 007 |
-| [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md) | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md) |
-| [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md) | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance | Approved (founder-approved 2026-08-30); A4 documents reconciled |
+| Package                                                                                                               | Outcome                                                                                                                                               | Status                                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)                                         | Fixture-backed landing-to-report preview with unmistakably simulated checkout                                                                         | Verified (2026-08-17); realigned by Spec 002                                                                                                                                                                                                  |
+| [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md)                                     | Indonesian audit and report contracts, journey realigned to the canonical sequence                                                                    | Verified (2026-08-17)                                                                                                                                                                                                                         |
+| [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md)                                       | Live engine connected, first real Indonesian report, report-quality gate verdict                                                                      | Approved; implementing — **the current objective**                                                                                                                                                                                            |
+| [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md)                                                   | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form                                                  | Superseded by Spec 007                                                                                                                                                                                                                        |
+| [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)                                                 | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens                                               | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md)                                                                                                                              |
+| [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md)                                               | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance     | Approved (founder-approved 2026-08-30); lettered packages and R-27 intake recovery merged; intake-experience rebuild unmerged (draft PRs #58, #60)                                                                                            |
 | [`008-recommendation-eligible-question-generation`](../specs/008-recommendation-eligible-question-generation/SPEC.md) | Recommendation-eligible semantic target for generated questions: natural Indonesian consumer decisions with genuine entity-recommendation opportunity | Approved (founder-approved 2026-09-11); execution authority is [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md), whose ledger owns gate status |
 
 ## Reference and history
@@ -132,14 +132,14 @@ context an agent must read. Do not implement a draft specification.
 
 ## Default context by task
 
-| Task | Read first | Then read |
-|---|---|---|
-| Orient to current work | `AGENTS.md`, `README.md`, `docs/NOW.md` | The active spec named by `NOW.md` |
-| Draft a canonical document | `AGENTS.md`, its document brief | Only the sources listed in the brief |
-| Implement a capability | `AGENTS.md`, approved `SPEC.md` | Only the spec's required context and relevant code |
-| Verify implementation | `AGENTS.md`, approved `SPEC.md`, verification template | The diff, relevant code, and test output |
-| Make a product decision | `VISION.md`, `PRODUCT.md` | Relevant evidence and decision-log entries |
-| Work on audit logic | `AUDIT.md`, active spec | Referenced audit code and tests |
-| Work on one touchpoint | `JOURNEY_CONTRACT.md`, the matching `journey/` plan | The active spec and referenced code |
-| Write customer-facing copy | `VOICE.md`, the matching `content/` source | `PRODUCT.md` for claim boundaries |
-| Work on a design or presentation change | `AGENTS.md`, `docs/DESIGN.md` | The owning product, journey, voice, audit, or approved-spec contract for any behavior or meaning the change touches |
+| Task                                    | Read first                                             | Then read                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Orient to current work                  | `AGENTS.md`, `README.md`, `docs/NOW.md`                | The active spec named by `NOW.md`                                                                                   |
+| Draft a canonical document              | `AGENTS.md`, its document brief                        | Only the sources listed in the brief                                                                                |
+| Implement a capability                  | `AGENTS.md`, approved `SPEC.md`                        | Only the spec's required context and relevant code                                                                  |
+| Verify implementation                   | `AGENTS.md`, approved `SPEC.md`, verification template | The diff, relevant code, and test output                                                                            |
+| Make a product decision                 | `VISION.md`, `PRODUCT.md`                              | Relevant evidence and decision-log entries                                                                          |
+| Work on audit logic                     | `AUDIT.md`, active spec                                | Referenced audit code and tests                                                                                     |
+| Work on one touchpoint                  | `JOURNEY_CONTRACT.md`, the matching `journey/` plan    | The active spec and referenced code                                                                                 |
+| Write customer-facing copy              | `VOICE.md`, the matching `content/` source             | `PRODUCT.md` for claim boundaries                                                                                   |
+| Work on a design or presentation change | `AGENTS.md`, `docs/DESIGN.md`                          | The owning product, journey, voice, audit, or approved-spec contract for any behavior or meaning the change touches |

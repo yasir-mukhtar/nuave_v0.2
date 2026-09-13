@@ -72,22 +72,26 @@ verification is against its acceptance criteria.
   P1 landing (see its `VERIFICATION.md`). Wave 2 (P2–P7) is gated on the
   report-quality gate per the package's `EXECUTION_PLAN.md`.
 - [`007-intake-airbnb-revamp/SPEC.md`](./007-intake-airbnb-revamp/SPEC.md)
-  — status **Approved** (founder-approved 2026-08-30). The runnable V1 journey
-  end to end with real business data: canonical measurement matrix (6 unnamed +
-  4 named), workflow and data authority, the simulated-payment boundary, safe
-  source handling, and the end-to-end acceptance run. Five implementation
-  blockers, A through E; A is first and R-04 fixes its internal order.
-  Sequencing, gates, and package status live in the package's
-  [`EXECUTION_PLAN.md`](./007-intake-airbnb-revamp/EXECUTION_PLAN.md).
+  — status **Approved** (founder-approved 2026-08-30); implementation in
+  progress. The runnable V1 journey end to end with real business data:
+  canonical measurement matrix (6 unnamed + 4 named), workflow and data
+  authority, the simulated-payment boundary, safe source handling, and the
+  end-to-end acceptance run. All lettered packages (A1–A4, B1, C1, D1, E1) and
+  the R-27 intake-recovery tranche are merged — the package's
+  [`EXECUTION_PLAN.md`](./007-intake-airbnb-revamp/EXECUTION_PLAN.md) ledger
+  records each landing. The intake-experience rebuild continues unmerged on
+  draft PRs #58 and #60.
 - [`008-recommendation-eligible-question-generation/SPEC.md`](./008-recommendation-eligible-question-generation/SPEC.md)
   — status **Approved** (founder-approved 2026-09-11). The semantic target
   for generated questions: natural Indonesian consumer decisions with genuine
   entity-recommendation opportunity. Execution authority is
   [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](./008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md)
   (adopted 2026-09-11); the package's older `EXECUTION_PLAN.md` is superseded
-  and now only redirects to R5. Implementation has not started — the next step
-  is R5's G0 baseline reconciliation, then the R5 gate sequence; paid provider
-  evaluation gates still require their own explicit authorization.
+  and now only redirects to R5. Gate **G0 (baseline reconciliation) is
+  complete** — merged via PRs #48 and #50 — and G1 is dependency-ready; a
+  dormant facts/context adapter exists on unmerged draft PR #59. The R5 gate
+  sequence continues from the package ledger; paid provider evaluation gates
+  still require their own explicit authorization.
 
 [`../docs/NOW.md`](../docs/NOW.md) names the current outcome and next action. If
 no active spec is named, the next task is to prepare or approve one rather than
