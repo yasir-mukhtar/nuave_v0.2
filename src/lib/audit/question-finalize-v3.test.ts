@@ -309,7 +309,7 @@ describe("§5.2 guard pairs (F9)", () => {
   });
 });
 
-describe("v3SlotFallback (F10)", () => {
+describe("v3SlotFallback (F10/R5)", () => {
   const facts = projectedFacts();
 
   it("produces valid, distinct, recommendation-eligible texts for all ten slots", () => {
@@ -326,13 +326,75 @@ describe("v3SlotFallback (F10)", () => {
     // comparison in slot 6 — all slot-safe and recommendation-eligible. The
     // unnamed slot sees only identity-free offerings: "Kopi Susu Sudut"
     // carries the brand token, so the permitted offering is "Americano".
-    expect(texts[1].text).toContain("nugas");
+    expect(texts[1].text).toMatch(/^saat membutuhkan tempat nugas/i);
     expect(texts[3].text).toMatch(/Americano|espresso|Biji kopi/);
     expect(texts[3].text).not.toContain("Kopi Sudut");
     expect(texts[5].text).toContain("bandingkan");
     // Named fallbacks carry the required identities.
     expect(texts[8].text).toContain("Kopi Sudut");
     expect(texts[8].text).toContain("Kedai Pagi");
+  });
+
+  it("a supplied problem becomes a natural occasion, not a 'membutuhkan' noun", () => {
+    // "AC di rumah tidak dingin" is a problem statement: the occasion is the
+    // situation itself, never "membutuhkan AC di rumah tidak dingin".
+    const f = fixtureFacts("D1");
+    const situation = v3SlotFallback(f, slot("NUAVE-BRAND-NEED-02"));
+    expect(situation.text).toMatch(/saat ac di rumah tidak dingin/i);
+    expect(situation.text).not.toMatch(/membutuhkan ac di rumah/i);
+    // The need-fit slot asks a materially different consumer decision — the
+    // second confirmed need, not the same need re-prefixed.
+    const needFit = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-01"));
+    expect(needFit.text).toMatch(/teknisi.*datang ke rumah/i);
+    expect(needFit.text).not.toBe(situation.text);
+  });
+
+  it("a sparse consumer product gets a genuine occasion and a supported use case", () => {
+    const f = fixtureFacts("D8");
+    const situation = v3SlotFallback(f, slot("NUAVE-BRAND-NEED-02"));
+    // An ordinary category occasion — it must not imply the target's
+    // availability and must not just re-prefix the need.
+    expect(situation.text).toMatch(/saat membutuhkan botol minum aluminium/i);
+    const offering = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-02"));
+    expect(offering.text).toMatch(/menawarkan|pemakaian harian/i);
+  });
+
+  it("an offering-scoped product never 'provides itself'", () => {
+    // D4's audited identity is the product itself; brand fit becomes fit for
+    // an ordinary use of the category.
+    const f = fixtureFacts("D4");
+    const brandFit = v3SlotFallback(f, slot("NUAVE-BRAND-VALIDATION-01"));
+    expect(brandFit.text).toMatch(/SegarBotol Tahan Panas 750/);
+    expect(brandFit.text).toMatch(/cocok untuk/i);
+    expect(brandFit.text).not.toMatch(
+      /menyediakan|menawarkan|menjual.*SegarBotol/i,
+    );
+  });
+
+  it("platform functionality is a provided feature, never an accepted order", () => {
+    const f = fixtureFacts("D5");
+    const offering = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-02"));
+    expect(offering.text).toMatch(/menyediakan fitur/i);
+    expect(offering.text).not.toMatch(/menerima pesanan|menerima order/i);
+    const brandFit = v3SlotFallback(f, slot("NUAVE-BRAND-VALIDATION-01"));
+    expect(brandFit.text).toMatch(/memiliki fitur/i);
+  });
+
+  it("regulated discovery consumes safetyRestrictions and keeps slot purposes", () => {
+    const f = fixtureFacts("D7");
+    const texts = AUDIT_MEASUREMENT_MATRIX.map((s) => v3SlotFallback(f, s));
+    for (const [i, s] of AUDIT_MEASUREMENT_MATRIX.entries()) {
+      expect(texts[i].text, `${s.id} missing`).toBeTruthy();
+      expect(checkV3Text(texts[i].text!, s, f), `${s.id} issues`).toEqual([]);
+    }
+    // Administrative/public discovery only — no therapy suitability, no
+    // clinical winner, no promised cure.
+    expect(texts[0].text).toMatch(/menerima pasien baru/i);
+    expect(texts.join(" ")).not.toMatch(/menyembuhkan|paling aman|terapi/i);
+    // Slot 8 still tests explicit recommendation — not merely new-patient
+    // acceptance.
+    expect(texts[7].text).toMatch(/layak direkomendasikan/i);
+    expect(texts[7].text).not.toMatch(/menerima pasien baru/i);
   });
 
   it("a reviewed override is still checked like any other text", () => {
@@ -346,21 +408,41 @@ describe("v3SlotFallback (F10)", () => {
     ).toContain("identity_leakage");
   });
 
-  it("fallbacks stay role/scope-aware across the frozen categories", () => {
+  it("fallbacks stay role/scope-aware across the development categories", () => {
+    // Branch scope keeps the scoped identity in named slots — an inline
+    // development envelope (the fresh H1–H4 envelopes are never rendered
+    // here or anywhere in tests).
+    const branchEnv = testFactsEnvelope();
+    const confirmed = branchEnv.intake.confirmed as {
+      scope: string;
+      target: { name: string; detail: string } | null;
+    };
+    confirmed.scope = "cabang";
+    confirmed.target = {
+      name: "Kopi Sudut Bekasi",
+      detail: "Jl. Raya Bekasi 1, Bekasi",
+    };
+    const branchFacts = parseQuestionFactsV3(branchEnv);
+    if (branchFacts.status !== "projected")
+      throw new Error("branch envelope should project");
+    const branchNamed = v3SlotFallback(
+      branchFacts.facts,
+      slot("NUAVE-BRAND-VALIDATION-01"),
+    );
+    expect(branchNamed.text).toContain("Kopi Sudut Bekasi");
+
     const cases: [string, Record<string, RegExp>][] = [
       // Service with home visits.
       [
         "D1",
         {
           slot2: /AC|servis/i,
-          slot4: /freon|perbaikan|perawatan/i,
+          slot4: /freon|perbaikan|perawatan|lokasi pelanggan/i,
           slot9: /Bengkel Dingin Sejahtera/,
         },
       ],
       // Product-scoped sparse facts — product role nouns, not venue/service.
       ["D8", { slot1: /merek|pilihan/i, slot9: /botol/i }],
-      // Branch scope keeps the scoped identity in named slots.
-      ["H1", { slot9: /AC Pro/, namedIdentity: /BersihAC/ }],
       // Regulated discovery: pasien baru / layanan tersedia, never therapy fit.
       [
         "D7",
@@ -395,8 +477,6 @@ describe("v3SlotFallback (F10)", () => {
         expect(all[8].fb.text).toMatch(expectations.slot9);
       if (expectations.named)
         expect(all[6].fb.text).toMatch(expectations.named);
-      if (expectations.namedIdentity)
-        expect(all[6].fb.text).toMatch(expectations.namedIdentity);
     }
   });
 
@@ -506,6 +586,84 @@ describe("finalizeV3RichResponse", () => {
     // Minimal repair: at most one slot moves off its primary.
     const offPrimary = result.prompts.filter((p) => p.origin !== "primary");
     expect(offPrimary.length).toBeLessThanOrEqual(1);
+  });
+
+  it("resolves a later named conflict by substituting the earlier slot's fallback (R6)", () => {
+    // Slots 7/8 share one valid original that is also slot 8's own fallback
+    // text. Forward-only resolution fails: slot 8 has no option left. The
+    // bounded resolver substitutes slot 7's safe fallback instead, keeping
+    // slot 8's text — and no unrelated unnamed slot is marked affected.
+    const shared =
+      "Apakah Kopi Sudut layak dipertimbangkan untuk Kedai kopi di Jakarta Selatan?";
+    const slot7Fallback = v3SlotFallback(
+      facts,
+      slot("NUAVE-BRAND-VALIDATION-01"),
+    ).text!;
+    expect(slot7Fallback).not.toBe(shared);
+    const response = richResponseOf(
+      {},
+      {
+        "NUAVE-BRAND-VALIDATION-01": shared,
+        "NUAVE-BRAND-VALIDATION-02": shared,
+      },
+    );
+    const parsed = parseV3RichResponse(response);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = finalizeV3RichResponse(facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    const p7 = result.prompts.find(
+      (p) => p.slotId === "NUAVE-BRAND-VALIDATION-01",
+    )!;
+    const p8 = result.prompts.find(
+      (p) => p.slotId === "NUAVE-BRAND-VALIDATION-02",
+    )!;
+    // Only slot 7 moved — to its own fallback; slot 8 keeps the shared text.
+    expect(p7.origin).toBe("slot_fallback");
+    expect(p7.text).toBe(slot7Fallback);
+    expect(p8.origin).toBe("primary");
+    expect(p8.text).toBe(shared);
+    // A named-only conflict marks no unnamed slot as affected.
+    expect(result.diagnostics.affectedSlots).toEqual([]);
+    const normalized = result.prompts.map((p) => p.text.toLowerCase());
+    expect(new Set(normalized).size).toBe(10);
+  });
+
+  it("marks only the actual conflict participants as affected (R6)", () => {
+    // Slots 1 and 5 share ALL valid options — every primary and reserve is
+    // the same text. The infeasibility belongs to exactly those two slots;
+    // unaffected slots keep their selected wording exactly.
+    const duplicate = "Kedai kopi mana saja yang layak masuk shortlist nugas?";
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": { primary: duplicate, reserve: duplicate },
+      "NUAVE-BRAND-COMPARISON-01": { primary: duplicate, reserve: duplicate },
+    });
+    const parsed = parseV3RichResponse(response);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = finalizeV3RichResponse(facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-COMPARISON-01",
+    ]);
+    // One fallback option per affected slot resolves the conflict; the other
+    // four unnamed slots keep their exact primary text.
+    const normalized = result.prompts.map((p) => p.text.toLowerCase());
+    expect(new Set(normalized).size).toBe(10);
+    expect(
+      result.prompts
+        .filter((p) => p.order <= 6)
+        .filter((p) => p.origin === "slot_fallback").length,
+    ).toBe(1);
+    expect(
+      result.prompts.find((p) => p.slotId === "NUAVE-BRAND-SOLUTION-01")!.text,
+    ).toBe("Untuk nugas nyaman, kedai kopi apa yang cocok?");
+    expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(
+      64 + 729,
+    );
   });
 
   it("repairs an invalid named text locally — not by full pack replacement", () => {
@@ -714,6 +872,34 @@ describe("finalizeV3SimpleResponse", () => {
     const result = finalizeV3SimpleResponse(facts, { questions });
     expect(result.status).toBe("completed");
     if (result.status !== "completed") return;
+    const normalized = result.prompts.map((p) => p.text.toLowerCase());
+    expect(new Set(normalized).size).toBe(10);
+  });
+
+  it("resolves the shared named-original conflict by replacing only slot 7 (R6)", () => {
+    // The same reproduction as the rich test, through the simple path: the
+    // earlier named slot moves to its own fallback; slot 8 keeps the text.
+    const shared =
+      "Apakah Kopi Sudut layak dipertimbangkan untuk Kedai kopi di Jakarta Selatan?";
+    const questions = [...SIMPLE_QUESTIONS];
+    questions[6] = shared; // NUAVE-BRAND-VALIDATION-01
+    questions[7] = shared; // NUAVE-BRAND-VALIDATION-02
+    const result = finalizeV3SimpleResponse(facts, { questions });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    const p7 = result.prompts.find(
+      (p) => p.slotId === "NUAVE-BRAND-VALIDATION-01",
+    )!;
+    const p8 = result.prompts.find(
+      (p) => p.slotId === "NUAVE-BRAND-VALIDATION-02",
+    )!;
+    expect(p7.origin).toBe("slot_fallback");
+    expect(p7.text).toBe(
+      v3SlotFallback(facts, slot("NUAVE-BRAND-VALIDATION-01")).text,
+    );
+    expect(p8.origin).toBe("primary");
+    expect(p8.text).toBe(shared);
+    expect(result.diagnostics.affectedSlots).toEqual([]);
     const normalized = result.prompts.map((p) => p.text.toLowerCase());
     expect(new Set(normalized).size).toBe(10);
   });

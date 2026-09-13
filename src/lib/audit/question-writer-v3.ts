@@ -7,7 +7,11 @@ import {
   AUDIT_MEASUREMENT_MATRIX,
   type CanonicalMeasurementSlot,
 } from "./measurement-matrix";
-import { OPENCODEGO_BASE_URL } from "./opencodego";
+import {
+  OPENCODEGO_BASE_URL,
+  OPENCODEGO_SESSION_HEADER,
+  OPENCODEGO_USER_AGENT,
+} from "./opencodego";
 import type { QuestionFactsV3 } from "./question-facts-v3";
 import {
   buildV3WriterContext,
@@ -19,13 +23,13 @@ import {
 // Contract versions (code-owned; bump with any meaningful change)
 // ---------------------------------------------------------------------------
 
-export const V3_WRITER_CONTRACT_VERSION = "nuave.question-writer.v3.1";
+export const V3_WRITER_CONTRACT_VERSION = "nuave.question-writer.v3.2";
 export const V3_RICH_INSTRUCTION_VERSION =
-  "nuave.question-writer-instruction.v3.1-rich";
+  "nuave.question-writer-instruction.v3.2-rich";
 export const V3_SIMPLE_INSTRUCTION_VERSION =
-  "nuave.question-writer-instruction.v3.1-simple";
-export const V3_RICH_SCHEMA_VERSION = "nuave.question-schema.v3.1-rich";
-export const V3_SIMPLE_SCHEMA_VERSION = "nuave.question-schema.v3.1-simple";
+  "nuave.question-writer-instruction.v3.2-simple";
+export const V3_RICH_SCHEMA_VERSION = "nuave.question-schema.v3.2-rich";
+export const V3_SIMPLE_SCHEMA_VERSION = "nuave.question-schema.v3.2-simple";
 /** R5 §5.1: the compatible punctuation amendment applies to v3 paths only. */
 export const V3_GUARD_POLICY = "compatible-008" as const;
 export const V3_EVIDENCE_POLICY_VERSION = "nuave.question-evidence.v3";
@@ -346,10 +350,28 @@ export type V3RequestSettings = {
    * apply; they are pinned here as "omitted" so a later operator does not
    * silently add them. */
   sampling: { temperature: "omitted"; topP: "omitted" };
-  /** No session/affinity headers beyond the standard Authorization bearer;
-   * declared so a later operator does not invent them. */
-  sessionHeaders: "authorization_only";
+  /** The accepted OpenCode Go transport method declared by
+   * V3_OPENCODEGO_TRANSPORT — Authorization bearer, JSON Content-Type,
+   * `x-opencode-session` with a fresh random ID per one-shot call, and
+   * `User-Agent: nuave-audit/1.0` (the same `opencodeGoTransportHeaders`
+   * helper every accepted transport uses). */
+  sessionHeaders: "opencodego_transport";
 };
+
+/** The accepted OpenCode Go transport contract for the frozen evaluation,
+ * declared from the same constants the production transports use so the
+ * packet and the accepted helper can never drift silently. */
+export const V3_OPENCODEGO_TRANSPORT = {
+  /** Established elsewhere by the accepted adapter: `Bearer OPENCODEGO_API_KEY`. */
+  authorization: "Authorization bearer",
+  contentType: "application/json",
+  sessionHeader: OPENCODEGO_SESSION_HEADER,
+  /** One-shot calls send a fresh random session ID (crypto.randomUUID()). */
+  sessionId: "fresh_random_per_call",
+  userAgent: OPENCODEGO_USER_AGENT,
+  /** Code-owned emitter of the session/user-agent headers. */
+  headersHelper: "opencodeGoTransportHeaders",
+} as const;
 
 /** The evaluation-packet settings; not a grant to spend and not a live
  * default. `question-eval-g2.ts` freezes the authoritative record. */
@@ -369,7 +391,7 @@ export const V3_PROPOSED_EVALUATION_SETTINGS: V3RequestSettings = {
   timeoutMs: 60_000,
   retries: 0,
   sampling: { temperature: "omitted", topP: "omitted" },
-  sessionHeaders: "authorization_only",
+  sessionHeaders: "opencodego_transport",
 };
 
 /**

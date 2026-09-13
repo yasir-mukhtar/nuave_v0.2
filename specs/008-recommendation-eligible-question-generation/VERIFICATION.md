@@ -2,8 +2,9 @@
 
 > Status: G0 recorded in R5; the G1 adapter is **merged and deployed via PR #59**
 > (merge `687f340`, 2026-09-13) but remains dormant with no runtime consumer.
-> **G2 is corrected and offline-verified** on `codex/spec008-g2-evaluation-freeze`
-> after the independent F1–F10 review and awaits independent acceptance; it is
+> **G2 is in second correction** on `codex/spec008-g2-evaluation-freeze`
+> after the independent R1–R6 re-review and awaits offline gate plus
+> independent acceptance; it is
 > not an empirical quality pass and proves no provider feasibility. No G2 merge,
 > route integration, provider call, or release is claimed.
 > Index owner:
@@ -15,10 +16,10 @@ provenance now and will link concrete evidence per gate as work lands.
 
 ## Adoption provenance
 
-| Artifact | Role | Source SHA-256 |
-| --- | --- | --- |
-| `NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md` | Sole current implementation/execution authority for Spec 008 | `6fa504d8e7e9e8b0985cebbb77556fd51b56c3eca9fc36a7a320ad8dd3338f44` |
-| `NUAVE_SPEC_008_ADVERSARIAL_REVIEW_5.md` | Final adversarial review of R5; verdict "proceed to G0–G2P, no broad R6 rewrite" | `6fecf01f95bf824957e2e723f2259063c188145a762a5bbcacaa3fd51186f62c` |
+| Artifact                                   | Role                                                                             | Source SHA-256                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md` | Sole current implementation/execution authority for Spec 008                     | `6fa504d8e7e9e8b0985cebbb77556fd51b56c3eca9fc36a7a320ad8dd3338f44` |
+| `NUAVE_SPEC_008_ADVERSARIAL_REVIEW_5.md`   | Final adversarial review of R5; verdict "proceed to G0–G2P, no broad R6 rewrite" | `6fecf01f95bf824957e2e723f2259063c188145a762a5bbcacaa3fd51186f62c` |
 
 - R5 was committed byte-identical to the supplied source (SHA-256 verified at
   adoption, 2026-09-11). Later ledger edits live in R5's own §9 record.
@@ -223,21 +224,24 @@ G1 adapter. Each confirmed case is now a committed regression test in
    remains a genuine limitation. No competitor is selected, joined, or given
    an inferred role, and no required screen was added.
 
-### G2 dormant prototype and frozen evaluation packet — 2026-09-13 (corrected)
+### G2 dormant prototype and frozen evaluation packet — 2026-09-13 (second correction)
 
 - Worktree: `/Users/yasir/nuave-worktrees/spec008-g2`; branch
   `codex/spec008-g2-evaluation-freeze`, created from `main@687f340` (the
-  post-#59 merge). Reviewed head `460443e`; this section now describes the
-  corrected candidate returned for independent re-review.
+  post-#59 merge). First correction reviewed at head `77ac321`; this section
+  now describes the second corrected candidate returned for independent
+  re-review.
 - Scope: dormant v3 writer prototype + bounded finalizer/fallback + frozen
   evaluation packet + executable §8.3 decision rules. No route, UI, report,
   config, dispatch, provider, or dependency change. Customer dispatch remains
   v2; nothing in production routes through these modules.
-- Correction: the returned candidate was independently reviewed (F1–F10) and
-  corrected in place on this branch. The review's comparison-rule, evidence,
-  resource, input-freeze, schema, component, recovery, guard, and fallback
-  findings are addressed in the modules below; `G2_EVALUATION_PACKET.md` is
-  re-frozen at `nuave.g2-evaluation-packet.v2`.
+- Second correction: the first corrected candidate was independently
+  re-reviewed (R1–R6) and corrected in place on this branch. The
+  re-review's transport-contract, exact-binding, release-decision,
+  resource-sample, fallback-form, and conflict-repair findings are
+  addressed in the modules below; `G2_EVALUATION_PACKET.md` is re-frozen at
+  `nuave.g2-evaluation-packet.v3`. The first correction's F1–F10
+  resolutions are preserved.
 - Implementation:
   - `src/lib/audit/question-writer-v3.ts` — versioned rich (16 texts incl.
     reserves + dimension/context metadata) and simple (10 final strings,
@@ -249,17 +253,28 @@ G1 adapter. Each confirmed case is now a committed regression test in
     permission to invent. Includes an offline provider-schema compatibility
     check and explicit evaluation settings pins (`V3_PROPOSED_EVALUATION_SETTINGS`:
     4096 output cap, 60s deadline, zero retries, concurrency one; sampling
-    omitted). Transport-independent request builders consume G1's
+    omitted). `V3_OPENCODEGO_TRANSPORT` declares the accepted transport
+    contract (Authorization bearer, `application/json`, fresh
+    `x-opencode-session` per call, `User-Agent: nuave-audit/1.0`) from the
+    same code-owned `opencodeGoTransportHeaders` constants the production
+    adapter uses. Transport-independent request builders consume G1's
     `buildV3WriterContext`.
   - `src/lib/audit/question-finalize-v3.ts` — mechanical finalizer: all
     R5 §5 guard pairs under confirmed category/safety context (guarantees,
     superlatives, regulated categories, diagnosis — including `perangkat`
     not exempting human/mixed diagnosis — personal treatment, high-impact
     advice), context-reference resolution against permitted and supplied
-    projection fields, valid-only selection with conflict-aware repair over
-    the resolvable subproblem, role/scope-aware deterministic fallbacks
-    (real occasion in slot 2, supported offering in slot 4, concrete-option
-    comparison in slot 6), honest missing-fact outcomes
+    projection fields, valid-only selection with bounded named-slot
+    backtracking (each named slot has at most two choices; a later conflict
+    can substitute an earlier slot's reviewed fallback), true affected-slot
+    identification via pairwise participation over the resolvable
+    subproblem with every participation check counted in
+    `portfoliosEvaluated`, purpose-preserving deterministic fallbacks that
+    consume the shared `safetyRestrictions` projection (real occasion
+    framing in slot 2, role-appropriate offering/use-case wording in slot 4,
+    channels as qualifying criteria rather than order claims,
+    regulated-category discovery kept administrative — never treatment
+    suitability), honest missing-fact outcomes
     (`input_correction_required` when confirmed material is absent;
     `generation_temporarily_unavailable` when material exists but no valid
     pack can be formed), truthful `full_fallback` origins/count, one shared
@@ -277,18 +292,38 @@ G1 adapter. Each confirmed case is now a committed regression test in
     2026-09-13 OpenCode Go usage-allowance rates), `G2_TRANSPORT_OWNERSHIP`,
     the single global `G2_SELECTION_POLICY` ("default"/M), and the decision
     functions `evaluateG2Pilot`, `evaluateG2HeldOutRetention`,
-    `evaluateG2Release`, and `evaluateG2EvidencePolicy` (the dormant
-    missing-execution-evidence check). Comparison is per matched
-    input+pass pair over the six unnamed texts: material win = usable rich
-    plus unusable simple or ≥0.5 unnamed-mean advantage; any pair-level
-    regression fails the applicable decision; businesses count once.
+    `evaluateG2Release`, and `g2ExecutionEvidenceDecision` (the dormant
+    missing-execution-evidence check). Attempt records bind real
+    fingerprints — envelope, facts, pack, and per-text SHA-256 plus the
+    frozen selection policy and version pins — and attribution rows
+    reconcile exactly to scheduled captures (missing, duplicate, extra,
+    mismatched, or nonexistent-portfolio rows are rejected). Comparison is
+    per matched input+pass pair over the six unnamed texts: material win =
+    usable rich plus unusable simple or ≥0.5 unnamed-mean advantage; any
+    pair-level regression fails the applicable decision; businesses count
+    once. The release evaluator requires all 16 selected-v3 packs usable,
+    compares mean naturalness across all ten texts per paired input
+    (11 rich-allocation pairs, all 16 under simple-by-amendment), enforces
+    the §8.2.5 integrated pilot-replay and release-attribution gates, and
+    reports selected-v3 resource samples (mean, nearest-rank p95) distinct
+    from allocation totals and held-out increments. Usage accounting
+    (`nuave.g2-usage-accounting.v2`) prices cached-read and cached-write
+    input portions separately — never double-charged — with validated
+    nonnegative finite integer counters.
   - `src/lib/audit/question-v3-testkit.ts` — shared test fixtures/helpers:
     confirmed-fact envelopes, judgment/attempt-record builders, pilot
     alias-aware frozen-input hashing, missing-attempt and attribution
     builders.
   - `src/lib/audit/fixtures/g2-evaluation-inputs.json` — 12 minimized
     fictional intake envelopes (D1–D8, H1–H4), each projecting through the
-    G1 adapter; pilot inputs alias D1/D3/D5/D8.
+    G1 adapter; pilot inputs alias D1/D3/D5/D8. H1–H4 are fresh v2
+    envelopes of the same four approved archetypes: the v1 held-out set
+    was retired after its deterministic fallback forms were rendered and
+    inspected during correction and independent re-review (exposure record
+    in `G2_FROZEN_INPUT_MANIFEST.retiredInputs`, manifest version
+    `nuave.g2-frozen-inputs.v2`). No fallback or model output was
+    generated, rendered, inspected, or tuned against the fresh envelopes;
+    development inputs carry all form tests.
   - `src/lib/audit/questions-id.ts` — behavior-preserving additive seams:
     exported `INDONESIAN_PRIVATE_DATA_PATTERNS`,
     `INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS`,
@@ -309,20 +344,30 @@ G1 adapter. Each confirmed case is now a committed regression test in
     malformed/truncated/duplicate/missing-slot/invalid-reference handling,
     required-vs-empty provenance arrays, unknown-role binding, provider-schema
     compatibility, privacy/identity withholding, safety markers.
-  - `question-finalize-v3.test.ts` — 37 tests: valid-only selection, P/M/C
-    policies, named resolution, conflict-aware repair, guard pairs across
-    categories/scopes, projection-aware fallback forms across the frozen
-    input set, truthful full-fallback and failure semantics, deterministic
-    scoring and evidence records.
-  - `question-eval-g2.test.ts` — 35 tests: all six §8.3 counterexamples,
+  - `question-finalize-v3.test.ts` — 45 tests: valid-only selection, P/M/C
+    policies, named resolution, bounded named-slot backtracking with
+    earlier-slot fallback substitution, true affected-slot identification
+    with counted participation checks, conflict-aware repair, guard pairs
+    across categories/scopes, purpose-preserving fallback forms on
+    development inputs (occasion framing, offering/channel semantics,
+    regulated-safety discovery), truthful full-fallback and failure
+    semantics, deterministic scoring and evidence records.
+  - `question-eval-g2.test.ts` — 64 tests: all six §8.3 counterexamples,
     matched-pair comparison semantics (0.5 boundary, unusable/missing simple,
     named-only non-wins, repeat regression), complete record/judgment
-    validation, frozen-input fingerprint binding, resource accounting
-    (missing/nonfinite/over-limit observations, failures included, held-out
-    vs overall samples), component-attribution exclusions, release-level
-    checks, and the missing-evidence policy.
-- Focused regression: 85 new G2 tests plus the surrounding audit/test surface
-  (`npx vitest run src/lib/audit tests/` — 902 tests across 69 files) — all
+    validation, exact fingerprint binding (envelope/facts/pack/text,
+    selection policy, version pins), attribution reconciliation
+    (missing/duplicate/extra/mismatched/nonexistent-portfolio rows
+    rejected), accepted-transport contract assertion against the code-owned
+    helper, cached-read/cached-write usage accounting, resource accounting
+    (missing/nonfinite/over-limit observations, failures included, sample
+    dilution, mean-cost ceiling, held-out vs overall vs selected-v3
+    samples), component-attribution exclusions, release-level checks
+    (all-16 usable, per-input v2 naturalness comparison, repeat grouping,
+    both allocations, §8.2.5 mandatory gates), and the missing-evidence
+    policy.
+- Focused regression: 122 G2 tests plus the surrounding audit/test surface
+  (`npx vitest run src/lib/audit tests/` — 939 tests across 69 files) — all
   pass; v2 behavior unchanged.
 - Complete change review performed on the full diff: no route/UI/report/
   config/dispatch changes, no provider calls, no temporary diagnostics or
@@ -334,15 +379,16 @@ G1 adapter. Each confirmed case is now a committed regression test in
   from `git write-tree`/`rev-parse` on the committed content. Preview
   provenance is also corrected: the PR preview deploys the **PR head**
   checkout, whereas `validate` tests the GitHub-produced merge tree.
-- Full gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` on the corrected
-  candidate — typecheck, formatting and typography passed; lint zero errors
-  with the same 17 pre-existing warnings; **1175 unit tests across 91 files**;
-  `next build` and OpenNext/Cloudflare builds; **89 + 3 + 3 browser tests**;
-  exit 0, `Offline verification passed.` The tested tree was recorded via
-  `git write-tree` before the run (`20dbe49d4f5e6a659a938e68d68d3c3359ded7eb`);
-  the committed head differs only by this verification-record fill-in.
-  Complete log and hashes are preserved in the `g2-correction-evidence/`
-  directory outside Git.
+- Full gate (second correction): **PASS**, `NUAVE_E2E_PORT=3600 npm run
+  verify` on the second-corrected candidate — typecheck, formatting and
+  typography passed; lint zero errors with the same 17 pre-existing
+  warnings; **1212 unit tests across 91 files**; `next build` and
+  OpenNext/Cloudflare builds; **89 + 3 + 3 browser tests**; exit 0,
+  `Offline verification passed.` The tested tree was recorded via
+  `git write-tree` before the run
+  (`5db3801ceeb54da8dcd1bebb551e753efe49e908`); the committed head differs
+  only by this verification-record fill-in. Complete log and hashes are
+  preserved in the `g2-second-correction-evidence/` directory outside Git.
 - Decision-rule tests prove decision mechanics only. They use synthetic bad
   examples and assert no empirical quality. Provider feasibility, naturalness
   outcomes, and cost/latency behavior remain unmeasured until the separately
@@ -355,18 +401,25 @@ G1 adapter. Each confirmed case is now a committed regression test in
   (2026-09-13, no application defect), then **merged to `main` via PR #59**
   (merge `687f340`, tree `1e0bae2f`) and deployed (worker `nuave-v2` version
   `a2279ec7-109d-4d43-8ecd-026cc669e8a0`); it remains dormant with no runtime
-  consumer. **G2 corrected and offline-verified on
+  consumer. **G2 second correction in progress on
   `codex/spec008-g2-evaluation-freeze`** — dormant prototype, frozen packet
-  v2, executable decision rules — after the independent F1–F10 review;
-  awaiting independent re-review/acceptance.
+  v3, executable decision rules, fresh v2 held-out inputs — after the
+  independent R1–R6 re-review; awaiting offline gate and independent
+  re-review/acceptance.
 - Date: 2026-09-13
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
 - Published head: recorded on the G2 draft PR after push.
-- G2 correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` —
+- G2 first-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` —
   1175 unit tests in 91 files, 89+3+3 browser tests, both builds, exit 0,
   `Offline verification passed.` Tested tree
   `20dbe49d4f5e6a659a938e68d68d3c3359ded7eb`; complete log in
   `g2-correction-evidence/` outside Git.
+- G2 second-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run
+  verify` — 1212 unit tests in 91 files, 89+3+3 browser tests, both builds,
+  lint 0 errors / 17 baseline warnings, exit 0, `Offline verification
+  passed.` Tested tree
+  `5db3801ceeb54da8dcd1bebb551e753efe49e908`; complete log in
+  `g2-second-correction-evidence/` outside Git.
 - Next: independent G2 acceptance review, then a separately authorized G2P
   pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
   dispatch stays v2.

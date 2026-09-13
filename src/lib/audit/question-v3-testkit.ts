@@ -11,13 +11,30 @@ import {
   type V3Candidate,
   type V3RichResponse,
 } from "./question-writer-v3";
+import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 import {
   G2_FROZEN_INPUT_MANIFEST,
+  G2_SELECTION_POLICY,
   g2EnvelopeFingerprint,
+  g2PackFingerprint,
+  g2TextFingerprint,
+  validateG2FrozenInputs,
   type G2Attribution,
   type G2AttemptRecord,
   type G2TextJudgment,
 } from "./question-eval-g2";
+import {
+  V3_FALLBACK_VERSION,
+  V3_FINALIZER_VERSION,
+  V3_SELECTOR_VERSION,
+} from "./question-finalize-v3";
+import {
+  V3_GUARD_POLICY,
+  V3_RICH_INSTRUCTION_VERSION,
+  V3_RICH_SCHEMA_VERSION,
+  V3_SIMPLE_INSTRUCTION_VERSION,
+  V3_SIMPLE_SCHEMA_VERSION,
+} from "./question-writer-v3";
 
 export const V3_TEST_SLOT_IDS = [
   "NUAVE-BRAND-NEED-01",
@@ -188,20 +205,36 @@ export const V3_SIMPLE_VALID_QUESTIONS = [
 export const g2Hash = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-/** The frozen input index evaluators bind against: inputId → envelope hash.
- * Pilot inputIds resolve through the manifest's intentional aliases to the
- * development envelopes they reuse. In tests the envelopes come from the
- * committed fixture; synthetic records may instead carry their own declared
- * envelope hash. */
+/** The frozen input index evaluators bind against: inputId → the
+ * manifest-declared envelope hash plus the canonical projected-facts
+ * fingerprint. The manifest hash is the frozen contract — attempts bind to
+ * it, and `validateG2FrozenInputs` proves the committed fixture still hashes
+ * to the declared values (called here so a drifted fixture fails loudly in
+ * tests rather than silently rebinding). Pilot inputIds resolve through the
+ * manifest's intentional aliases to the development envelopes they reuse. */
 export function g2InputIndex(
   envelopes: Record<string, unknown>,
-): Record<string, { envelopeSha256: string }> {
-  const index = Object.fromEntries(
-    Object.entries(envelopes).map(([inputId, envelope]) => [
-      inputId,
-      { envelopeSha256: g2EnvelopeFingerprint(envelope) },
-    ]),
-  );
+): Record<string, { envelopeSha256: string; factsFingerprint: string }> {
+  const manifestErrors = validateG2FrozenInputs(envelopes);
+  if (manifestErrors.length)
+    throw new Error(`frozen input drift: ${manifestErrors.join("; ")}`);
+  const factsFingerprintFor = (envelope: unknown) => {
+    const facts = parseQuestionFactsV3(envelope);
+    if (facts.status !== "projected")
+      throw new Error("test fixture envelope does not project");
+    return facts.facts.binding.factsFingerprint;
+  };
+  const index: Record<
+    string,
+    { envelopeSha256: string; factsFingerprint: string }
+  > = {};
+  for (const entry of G2_FROZEN_INPUT_MANIFEST.inputs) {
+    if (entry.set === "pilot") continue;
+    index[entry.inputId] = {
+      envelopeSha256: entry.envelopeSha256,
+      factsFingerprint: factsFingerprintFor(envelopes[entry.inputId]),
+    };
+  }
   const aliases = G2_FROZEN_INPUT_MANIFEST.pilotEnvelopeAliases as Record<
     string,
     string
@@ -209,24 +242,12 @@ export function g2InputIndex(
   for (const [pilotId, envelopeId] of Object.entries(aliases)) {
     const envelope = envelopes[envelopeId];
     if (envelope)
-      index[pilotId] = { envelopeSha256: g2EnvelopeFingerprint(envelope) };
+      index[pilotId] = {
+        envelopeSha256: g2EnvelopeFingerprint(envelope),
+        factsFingerprint: factsFingerprintFor(envelope),
+      };
   }
   return index;
-}
-
-/** Envelope hash used by a scheduled attempt under the pilot alias rules. */
-export function g2EnvelopeHashForInput(
-  inputId: string,
-  envelopes: Record<string, unknown>,
-): string {
-  const aliases = G2_FROZEN_INPUT_MANIFEST.pilotEnvelopeAliases as Record<
-    string,
-    string
-  >;
-  const envelopeId = aliases[inputId] ?? inputId;
-  const envelope = envelopes[envelopeId];
-  if (!envelope) throw new Error(`no frozen envelope for ${inputId}`);
-  return g2EnvelopeFingerprint(envelope);
 }
 
 const JUDGED_SLOT_IDS = [...V3_UNNAMED_SLOT_IDS, ...V3_NAMED_SLOT_IDS] as const;
@@ -241,7 +262,7 @@ export function passingJudgment(
 ): G2TextJudgment {
   return {
     slotId,
-    textFingerprint: g2Hash(text),
+    textFingerprint: g2TextFingerprint(slotId, text),
     naturalness: 3,
     commercialChoice: true,
     entityDemand: true,
@@ -266,21 +287,71 @@ export function passingJudgments(
   );
 }
 
-/** A completed, usable, fully-judged synthetic attempt record. */
+/** The frozen v3 version pins an attempt record must declare (evaluator
+ * compares them exactly). */
+export function g2V3AttemptVersions(
+  variant: "rich" | "simple",
+): Record<string, string> {
+  return {
+    instruction:
+      variant === "rich"
+        ? V3_RICH_INSTRUCTION_VERSION
+        : V3_SIMPLE_INSTRUCTION_VERSION,
+    schema:
+      variant === "rich" ? V3_RICH_SCHEMA_VERSION : V3_SIMPLE_SCHEMA_VERSION,
+    guardPolicy: V3_GUARD_POLICY,
+    selector: V3_SELECTOR_VERSION,
+    fallback: V3_FALLBACK_VERSION,
+    finalizer: V3_FINALIZER_VERSION,
+  };
+}
+
+const CANONICAL_SLOT_ORDER = AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.id);
+
+/** A completed, usable, fully-judged synthetic attempt record with real
+ * bindings: the envelope hash and canonical facts fingerprint come from the
+ * frozen input index, and the pack/text fingerprints resolve to the exact
+ * final texts supplied — the same convention the finalizer's evidence
+ * records use. */
 export function attemptRecord(
   scheduled: {
     inputId: string;
     variant: "rich" | "simple" | "v2";
     pass: 1 | 2;
   },
-  envelopes: Record<string, unknown>,
-  extra: Partial<G2AttemptRecord> = {},
+  index: Record<string, { envelopeSha256: string; factsFingerprint: string }>,
+  extra: Partial<G2AttemptRecord> & {
+    finalTexts?: string[] | null;
+    naturalness?: number;
+  } = {},
 ): G2AttemptRecord {
   const manifest = G2_FROZEN_INPUT_MANIFEST.inputs.find(
     (entry) => entry.inputId === scheduled.inputId,
   );
   if (!manifest) throw new Error(`unfrozen input ${scheduled.inputId}`);
-  const texts = extra.texts === undefined ? passingJudgments() : extra.texts;
+  const binding = index[scheduled.inputId];
+  if (!binding) throw new Error(`no index entry for ${scheduled.inputId}`);
+  const {
+    finalTexts: finalTextsOption,
+    naturalness,
+    texts: textsOption,
+    ...rest
+  } = extra;
+  const finalTexts =
+    finalTextsOption === undefined
+      ? V3_SIMPLE_VALID_QUESTIONS
+      : finalTextsOption;
+  const factsFingerprint = rest.factsFingerprint ?? binding.factsFingerprint;
+  const texts =
+    textsOption === undefined
+      ? finalTexts
+        ? CANONICAL_SLOT_ORDER.map((slotId, i) =>
+            passingJudgment(slotId, finalTexts[i], {
+              naturalness: naturalness ?? 3,
+            }),
+          )
+        : null
+      : textsOption;
   return {
     inputId: scheduled.inputId,
     businessKey: manifest.businessKey,
@@ -290,16 +361,34 @@ export function attemptRecord(
     status: "completed",
     serializationComplete: true,
     fullFallback: false,
-    inputFingerprint: g2EnvelopeHashForInput(scheduled.inputId, envelopes),
-    factsFingerprint: "test-facts-fingerprint",
-    packFingerprint: "test-pack-fingerprint",
+    inputFingerprint: binding.envelopeSha256,
+    factsFingerprint,
+    packFingerprint: finalTexts
+      ? g2PackFingerprint(factsFingerprint, finalTexts)
+      : null,
+    finalTexts,
     texts,
+    selectionPolicy:
+      scheduled.variant === "rich"
+        ? G2_SELECTION_POLICY
+        : scheduled.variant === "simple"
+          ? "primary"
+          : "v2-actual",
+    versions:
+      scheduled.variant === "v2"
+        ? { writer: "question-writer-v2" }
+        : g2V3AttemptVersions(scheduled.variant),
     distinctUnnamedDecisions: 6,
     implicitOpportunityWithoutFormula: 2,
     namedPurposeIntact: true,
-    usage: { inputTokens: 4000, cachedInputTokens: 0, outputTokens: 600 },
+    usage: {
+      inputTokens: 4000,
+      cachedReadInputTokens: 0,
+      cachedWriteInputTokens: 0,
+      outputTokens: 600,
+    },
     latencyMs: 8_000,
-    ...extra,
+    ...rest,
   };
 }
 
@@ -311,13 +400,14 @@ export function missingAttemptRecord(
     variant: "rich" | "simple" | "v2";
     pass: 1 | 2;
   },
-  envelopes: Record<string, unknown>,
-  extra: Partial<G2AttemptRecord> = {},
+  index: Record<string, { envelopeSha256: string; factsFingerprint: string }>,
+  extra: Partial<G2AttemptRecord> & { naturalness?: number } = {},
 ): G2AttemptRecord {
-  return attemptRecord(scheduled, envelopes, {
+  return attemptRecord(scheduled, index, {
     status: "generation_temporarily_unavailable",
     serializationComplete: false,
     packFingerprint: null,
+    finalTexts: null,
     texts: null,
     distinctUnnamedDecisions: 0,
     implicitOpportunityWithoutFormula: 0,
@@ -326,24 +416,26 @@ export function missingAttemptRecord(
   });
 }
 
+/** An attribution row bound to an actual rich attempt: M is the recorded
+ * pack under the frozen selection policy. */
 export function attributionRecord(
-  inputId: string,
-  pass: 1 | 2 = 1,
+  attempt: G2AttemptRecord,
   extra: Partial<G2Attribution> = {},
 ): G2Attribution {
-  const manifest = G2_FROZEN_INPUT_MANIFEST.inputs.find(
-    (entry) => entry.inputId === inputId,
-  );
   return {
-    inputId,
-    businessKey: manifest?.businessKey ?? inputId,
-    pass,
+    inputId: attempt.inputId,
+    businessKey: attempt.businessKey,
+    pass: attempt.pass,
     variant: "rich",
-    packFingerprints: { P: "p", M: "m", C: "c" },
-    pToMRescuedSlots: 0,
+    packFingerprints: {
+      P: g2Hash([attempt.inputId, attempt.pass, "P"]),
+      M: attempt.packFingerprint,
+      C: g2Hash([attempt.inputId, attempt.pass, "C"]),
+    },
+    pToMRescuedSlots: [],
     mCausedFinalRegression: false,
     mMechanicallyValid: true,
-    cOverMMaterialGains: 0,
+    cOverMMaterialGains: [],
     cOverMLabelOnlyChanges: 0,
     cCausedFinalRegression: false,
     ...extra,

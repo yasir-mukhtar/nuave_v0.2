@@ -45,9 +45,9 @@ import {
   type V3WriterVariant,
 } from "./question-writer-v3";
 
-export const V3_FINALIZER_VERSION = "nuave.question-finalizer.v3.1";
-export const V3_SELECTOR_VERSION = "nuave.question-selector.v3.1";
-export const V3_FALLBACK_VERSION = "nuave.question-fallback.v3.1";
+export const V3_FINALIZER_VERSION = "nuave.question-finalizer.v3.2";
+export const V3_SELECTOR_VERSION = "nuave.question-selector.v3.2";
+export const V3_FALLBACK_VERSION = "nuave.question-fallback.v3.2";
 
 const UNNAMED_SLOTS = AUDIT_MEASUREMENT_MATRIX.filter(
   (slot) => slot.auditedBrandIdentity === "forbidden",
@@ -371,12 +371,18 @@ type FallbackMaterial = {
   entity: string | null;
   entityShort: string | null;
   areaScope: string;
-  need: string;
+  /** Customer needs projected for this slot (empty when unpermitted). */
+  needs: string[];
   offering: string;
-  constraint: string;
-  channel: "on_premise" | "on_customer" | "delivery" | "online" | null;
+  constraints: string[];
+  channels: ("on_premise" | "on_customer" | "delivery" | "online")[];
   comparisonName: string | null;
   namedIdentity: string;
+  /** The confirmed entity scope is a single offering — the named identity IS
+   * the product, so "provides itself" phrasing is wrong. */
+  offeringScoped: boolean;
+  /** Confirmed competitive role ("" when unconfirmed). */
+  role: string;
   regulated: boolean;
   newcomer: string;
   axis: string;
@@ -467,9 +473,12 @@ function fallbackMaterial(
     );
   const channels = stringList(
     ctx.serviceChannels,
-  ) as FallbackMaterial["channel"][];
+  ) as FallbackMaterial["channels"];
   const comparison = ctx.comparison as { name?: string | null } | null;
-  const scope = ctx.entityScope as { name?: string | null } | null;
+  const scope = ctx.entityScope as {
+    kind?: string;
+    name?: string | null;
+  } | null;
   const brand = compact(facts.identity.brand);
   const brandRequired = slot.auditedBrandIdentity === "required";
   if (brandRequired && !brand) return { ok: false, missing: "identity" };
@@ -483,8 +492,12 @@ function fallbackMaterial(
   const comparisonName = comparison?.name?.trim() ?? null;
   if (slot.comparisonTargetIdentity === "required" && !comparisonName)
     return { ok: false, missing: "comparison" };
+  // Regulated status comes from the shared G1 safetyRestrictions field, which
+  // every slot's projection carries — not the per-slot categorySafety context
+  // key most slots are not permitted to receive.
   const regulated = Boolean(
-    typeof ctx.categorySafety === "string" && ctx.categorySafety.trim(),
+    typeof projected.safetyRestrictions === "string" &&
+    projected.safetyRestrictions.trim(),
   );
   const newcomer =
     /klinik|dokter|rumah\s+sakit|puskesmas|apotek|laboratorium|fisioterapi|optik|bidan/i.test(
@@ -500,12 +513,14 @@ function fallbackMaterial(
       entity,
       entityShort: short,
       areaScope: areas.length ? ` di ${areas.join(" atau ")}` : "",
-      need: needs[0] ?? "",
+      needs,
       offering: offerings[0] ?? "",
-      constraint: constraints[0] ?? "",
-      channel: channels[0] ?? null,
+      constraints,
+      channels,
       comparisonName,
       namedIdentity,
+      offeringScoped: scope?.kind === "offering",
+      role,
       regulated,
       newcomer,
       axis: V3_ROLE_AXIS[role] ?? "kebutuhan masing-masing",
@@ -513,13 +528,175 @@ function fallbackMaterial(
   };
 }
 
-/** Need text that already reads like an occasion keeps its wording. */
-function occasionLead(need: string): string {
-  return /^(?:saat|ketika|butuh|perlu|ingin|mau|mencari|sedang|kalau)\b/i.test(
-    need.trim(),
-  )
-    ? need.trim()
-    : `membutuhkan ${need.trim()}`;
+/** A need that already reads like an occasion or desire keeps its wording. */
+const V3_OCCASION_MARKERS =
+  /^(?:saat|ketika|kalau|sedang|butuh|perlu|ingin|mau|mencari|cari|membutuhkan|memerlukan|punya|mempunyai)\b/i;
+/** A need written as a problem/situation statement ("AC di rumah tidak
+ * dingin") rather than a desired thing — it frames the occasion directly and
+ * must never sit after "membutuhkan". */
+const V3_STATEMENT_MARKERS =
+  /\b(?:tidak|belum|lambat|rusak|bingung|sulit|susah|boros|bocor|macet|mampet|error|gagal|mati|bermasalah|menumpuk|sering|harus|perlu|terlalu|kurang|penuh|habis|kosong|ketinggalan|tertunda|ribet|repot)\b/i;
+/** A constraint phrased as a provider capability ("menerima pasien baru") —
+ * usable as a "yang {constraint}" qualifier, never as a comparison axis. */
+const V3_CAPABILITY_START =
+  /^(?:menerima|menyediakan|melayani|bisa|memiliki|punya|menawarkan|tersedia|mengirim|menjemput|menangani|membuka|menjual)\b/i;
+/** A scope limitation ("hanya tersedia sebagai layanan online") — describes a
+ * reach limit, not a consumer criterion; never used as a choice axis. */
+const V3_LIMITATION_START =
+  /^(?:hanya|tidak|tanpa|belum|maksimal|maks\.|maksimum)\b/i;
+/** The newcomer-acceptance criterion regulated slot 1 already uses; later
+ * regulated slots pick a different constraint so decisions stay distinct. */
+const V3_NEWCOMER_CONSTRAINT = /^menerima\s+(?:pasien|pelanggan)\s+baru\b/i;
+
+/** Hypothetical ordinary occasions for the role's category — permitted by R5
+ * as a category-level occasion; never asserts the target provides it. */
+const V3_ROLE_OCCASION: Record<string, string> = {
+  product: "dibawa beraktivitas",
+  platform: "mengelola pekerjaan atau usaha",
+  professional: "mengurus kebutuhan administrasi atau legal",
+  retailer: "belanja kebutuhan sehari-hari",
+  service: "perbaikan atau perawatan rutin",
+  venue: "berkumpul atau bekerja di luar",
+};
+/** Ordinary category use cases for offering/use-case slots when the confirmed
+ * offering name is itself identity-bearing and excluded from the context. */
+const V3_ROLE_USE_CASE: Record<string, string> = {
+  product: "pemakaian harian",
+  platform: "pekerjaan operasional",
+  professional: "kebutuhan administrasi",
+  retailer: "kebutuhan belanja rutin",
+  service: "kebutuhan perawatan",
+  venue: "mampir atau bekerja",
+};
+
+function needIsStatement(need: string): boolean {
+  const t = need.trim();
+  return !V3_OCCASION_MARKERS.test(t) && V3_STATEMENT_MARKERS.test(t);
+}
+
+/** Natural occasion framing for a confirmed need: supplied problems and
+ * occasion phrases keep their wording ("Saat AC di rumah tidak dingin"); a
+ * desired thing becomes "Saat membutuhkan X" only when X is a desired thing. */
+function occasionFrame(need: string): string {
+  const t = need.trim();
+  return V3_OCCASION_MARKERS.test(t) || V3_STATEMENT_MARKERS.test(t)
+    ? `Saat ${t}`
+    : `Saat membutuhkan ${t}`;
+}
+
+/** The need as a noun-phrase topic for "Untuk X" frames. */
+function needAsTopic(need: string): string {
+  return need
+    .trim()
+    .replace(
+      /^(?:butuh|perlu|ingin|mau|mencari|cari|membutuhkan|memerlukan)\s+/i,
+      "",
+    );
+}
+
+/** A confirmed channel as a second qualifying criterion — it qualifies the
+ * consumer's choice, it never claims an order was placed. Platforms are
+ * already online so "online" adds no distinguishing criterion there; an
+ * on-premise-only channel is the default assumption, not a criterion. */
+function channelQualifier(
+  role: string,
+  channels: FallbackMaterial["channels"],
+): string | null {
+  for (const channel of ["delivery", "on_customer", "online"] as const) {
+    if (!channels.includes(channel)) continue;
+    if (channel === "delivery") return "juga melayani pesan antar";
+    if (channel === "on_customer")
+      return "juga bisa datang ke lokasi pelanggan";
+    if (role !== "platform")
+      return role === "product" || role === "retailer"
+        ? "juga bisa dipesan secara online"
+        : "juga bisa melayani secara online";
+  }
+  return null;
+}
+
+/** The same channel as a service-mode criterion for statement-shaped needs. */
+function channelCriterion(
+  role: string,
+  channels: FallbackMaterial["channels"],
+): string | null {
+  for (const channel of ["delivery", "on_customer", "online"] as const) {
+    if (!channels.includes(channel)) continue;
+    if (channel === "delivery") return "layanan antar";
+    if (channel === "on_customer") return "layanan di lokasi pelanggan";
+    if (role !== "platform") return "layanan online";
+  }
+  return null;
+}
+
+/** A constraint usable as a consumer criterion, classified by how it reads. */
+function criterionConstraint(
+  m: FallbackMaterial,
+): { kind: "capability" | "noun"; text: string } | null {
+  const capability = m.constraints.find((c) => V3_CAPABILITY_START.test(c));
+  if (capability) return { kind: "capability", text: capability };
+  const noun = m.constraints.find((c) => !V3_LIMITATION_START.test(c));
+  if (noun) return { kind: "noun", text: noun };
+  return null;
+}
+
+/** The semantic contract every built or reviewed fallback text must satisfy
+ * for its slot — explicit so a reviewed form is checked against the slot's
+ * measurement purpose, not merely regex inclusion or string uniqueness.
+ * Anchors are sanity rails only; they prove the purpose element is present,
+ * not that the wording is good — text quality stays with independent review. */
+export const V3_SLOT_FALLBACK_CONTRACT: Record<
+  CanonicalMeasurementSlot["category"],
+  { purpose: string; anchor: RegExp }
+> = {
+  category_recommendation: {
+    purpose: "which options exist in this category and context",
+    anchor: /(?:apa|mana)\s+saja|layak|menerima|pilihan/i,
+  },
+  situation: {
+    purpose: "a real occasion that leads someone to look",
+    anchor: /^(?:saat|ketika|kalau|sedang)\b/i,
+  },
+  need_fit: {
+    purpose: "a specific need and what suits it",
+    anchor: /cocok|sesuai|menerima|menyediakan|bisa|dihubungi/i,
+  },
+  offering_use_case: {
+    purpose: "one concrete offering or use case",
+    anchor: /menyediakan|menawarkan|menjual|melayani|memiliki|untuk/i,
+  },
+  shortlist: {
+    purpose: "a short list a customer would consider",
+    anchor: /daftar pilihan|dipertimbangkan|shortlist|masuk/i,
+  },
+  open_comparison: {
+    purpose: "comparison among realistic unnamed options",
+    anchor: /bandingkan|sebutkan|dibandingkan/i,
+  },
+  brand_fit: {
+    purpose: "whether the business suits a stated need",
+    anchor: /apakah|cocok|menerima|menyediakan|menawarkan|memiliki/i,
+  },
+  explicit_recommendation: {
+    purpose: "whether the business is explicitly recommended",
+    anchor: /rekomend|layak dipertimbangkan|layak dipilih/i,
+  },
+  direct_comparison: {
+    purpose: "the business against the comparison target",
+    anchor: /bandingkan|dibandingkan|versus|vs\b/i,
+  },
+  fit_misfit: {
+    purpose: "who it suits, who it does not, trade-offs",
+    anchor: /cocok|memilih|layanan|kebutuhan/i,
+  },
+};
+
+/** True when a fallback text carries the slot's contractual purpose element. */
+export function v3FallbackHonorsContract(
+  text: string,
+  slot: CanonicalMeasurementSlot,
+): boolean {
+  return V3_SLOT_FALLBACK_CONTRACT[slot.category].anchor.test(text.trim());
 }
 
 /**
@@ -545,6 +722,8 @@ export function v3SlotFallback(
   const eNoun = m.entityShort ?? "pilihan";
   const inScope = m.areaScope;
 
+  const need0 = m.needs[0] ?? "";
+  const useCase = V3_ROLE_USE_CASE[m.role] ?? `kebutuhan ${m.category}`;
   switch (slot.category) {
     case "category_recommendation":
       return {
@@ -559,23 +738,75 @@ export function v3SlotFallback(
           text: `Saat memerlukan layanan ${m.category}, ${eNoun} mana yang tersedia${inScope}?`,
           missing: null,
         };
-      if (m.need)
+      if (need0)
         return {
-          text: `Saat ${occasionLead(m.need)}, ${E} mana yang cocok${inScope}?`,
+          text: `${occasionFrame(need0)}, ${E} mana yang cocok${inScope}?`,
           missing: null,
         };
+      // No confirmed need: an ordinary hypothetical category occasion —
+      // permitted by R5 and never asserts the target provides it.
       return {
-        text: `Saat membutuhkan ${m.category}, ${eNoun} mana yang cocok${inScope}?`,
+        text: `Saat membutuhkan ${m.category} untuk ${V3_ROLE_OCCASION[m.role] ?? "kebutuhan rutin"}, ${eNoun} mana yang cocok${inScope}?`,
         missing: null,
       };
     }
     case "need_fit": {
-      const criterion = m.need || m.constraint || `kebutuhan ${m.category}`;
-      const noun = criterion.includes(m.category) ? eNoun : E;
+      // "A specific need and what suits it" — a materially different consumer
+      // decision from the slot-2 occasion, never the same need re-prefixed.
+      if (m.regulated) {
+        const admin = m.constraints.find(
+          (c) => V3_CAPABILITY_START.test(c) && !V3_NEWCOMER_CONSTRAINT.test(c),
+        );
+        return {
+          text: admin
+            ? `${eNoun} mana yang ${admin}${inScope}?`
+            : `${eNoun} apa yang bisa dihubungi untuk layanan ${m.category}${inScope}?`,
+          missing: null,
+        };
+      }
+      const secondNeed = m.needs[1];
+      if (secondNeed)
+        return {
+          text: `${occasionFrame(secondNeed)}, ${E} apa yang cocok${inScope}?`,
+          missing: null,
+        };
+      const topic =
+        need0 && !needIsStatement(need0) ? needAsTopic(need0) : null;
+      const criterion = criterionConstraint(m);
+      if (criterion?.kind === "capability")
+        return {
+          text: `${E} mana yang ${criterion.text}${inScope}?`,
+          missing: null,
+        };
+      if (criterion?.kind === "noun" && topic)
+        return {
+          text: `Untuk ${topic} dengan ${criterion.text}, ${E} apa yang cocok${inScope}?`,
+          missing: null,
+        };
+      if (criterion?.kind === "noun" && need0)
+        return {
+          text: `${occasionFrame(need0)}, ${E} apa yang cocok dengan ${criterion.text}${inScope}?`,
+          missing: null,
+        };
+      const channelQ = channelQualifier(m.role, m.channels);
+      if (channelQ && topic)
+        return {
+          text: `Untuk ${topic} yang ${channelQ}, ${E} apa yang cocok${inScope}?`,
+          missing: null,
+        };
+      const channelC = channelCriterion(m.role, m.channels);
+      if (channelC && need0)
+        return {
+          text: `${occasionFrame(need0)}, ${E} apa yang cocok untuk ${channelC}${inScope}?`,
+          missing: null,
+        };
+      if (channelQ && !need0)
+        return {
+          text: `Untuk ${useCase}, ${E} apa yang cocok dan ${channelQ}${inScope}?`,
+          missing: null,
+        };
       return {
-        text: m.regulated
-          ? `Untuk ${criterion}, ${noun} apa yang menerima ${m.newcomer}${inScope}?`
-          : `Untuk ${criterion}, ${noun} apa yang cocok${inScope}?`,
+        text: `Untuk ${topic ?? useCase}, ${E} apa yang cocok dengan ${m.axis} yang sesuai${inScope}?`,
         missing: null,
       };
     }
@@ -591,70 +822,126 @@ export function v3SlotFallback(
             text: `${eNoun} mana yang menawarkan produk seperti ${m.offering}${inScope}?`,
             missing: null,
           };
-        if (m.channel === "delivery")
+        // Software functionality is not accepting an order: a platform's
+        // offering is a feature it provides, not a purchase channel.
+        if (m.role === "platform")
           return {
-            text: `${E} mana yang bisa mengirimkan ${m.offering}${inScope}?`,
+            text: `${E} mana yang menyediakan fitur ${m.offering}?`,
             missing: null,
           };
-        if (m.channel === "online")
-          return {
-            text: `${E} mana yang bisa menerima pesanan ${m.offering} secara online${inScope}?`,
-            missing: null,
-          };
-        if (m.channel === "on_customer")
-          return {
-            text: `${E} mana yang bisa melayani ${m.offering} di lokasi pelanggan${inScope}?`,
-            missing: null,
-          };
+        const serve =
+          m.role === "retailer"
+            ? "menjual"
+            : m.role === "service" || m.role === "professional"
+              ? "melayani"
+              : "menyediakan";
+        // A confirmed channel qualifies the choice as a second criterion; it
+        // never composes an order onto an offering that cannot be ordered.
+        const channelTail =
+          serve === "melayani"
+            ? m.channels.includes("online")
+              ? " secara online"
+              : m.channels.includes("on_customer")
+                ? " di lokasi pelanggan"
+                : m.channels.includes("delivery")
+                  ? " dengan layanan antar-jemput"
+                  : ""
+            : m.channels.includes("delivery")
+              ? " dan bisa melayani pesan antar"
+              : m.channels.includes("online")
+                ? " dan bisa menerima pesanan secara online"
+                : m.channels.includes("on_customer")
+                  ? " dan bisa melayani di lokasi pelanggan"
+                  : "";
         return {
-          text: `${E} mana yang menyediakan ${m.offering}${inScope}?`,
+          text: `${E} mana yang ${serve} ${m.offering}${channelTail}${inScope}?`,
           missing: null,
         };
       }
+      // The confirmed offering name can itself be identity-bearing (a scoped
+      // product) and absent from the unnamed context; an ordinary category
+      // use case still anchors a concrete decision without implying the
+      // target's availability.
       return {
         text: projectedEntityIsProduct(m)
-          ? `${eNoun} mana yang layak dipilih untuk ${m.category}${inScope}?`
+          ? `${eNoun} mana yang menawarkan ${m.category} untuk ${useCase}${inScope}?`
           : `${eNoun} mana yang menyediakan layanan ${m.category}${inScope}?`,
         missing: null,
       };
     }
     case "shortlist": {
-      const axis = m.constraint || m.axis;
+      if (m.regulated)
+        return {
+          text: `${E} mana saja yang masuk daftar pilihan berdasarkan layanan yang tersedia${inScope}?`,
+          missing: null,
+        };
+      const criterion = criterionConstraint(m);
       return {
-        text: m.regulated
-          ? `${E} mana saja yang masuk daftar pilihan berdasarkan layanan yang tersedia${inScope}?`
-          : `${E} mana saja yang layak masuk daftar pilihan berdasarkan ${axis}${inScope}?`,
+        text:
+          criterion?.kind === "capability"
+            ? `${E} mana saja yang ${criterion.text} dan layak masuk daftar pilihan${inScope}?`
+            : `${E} mana saja yang layak masuk daftar pilihan ${criterion?.kind === "noun" ? `dengan ${criterion.text}` : `berdasarkan ${criterion?.text ?? m.axis}`}${inScope}?`,
         missing: null,
       };
     }
     case "open_comparison": {
-      const axis = m.constraint || m.axis;
+      if (m.regulated)
+        return {
+          text: `Sebutkan dan bandingkan beberapa ${E}${inScope} berdasarkan layanan yang tersedia.`,
+          missing: null,
+        };
+      const criterion = criterionConstraint(m);
       return {
-        text: m.regulated
-          ? `Sebutkan dan bandingkan beberapa ${E}${inScope} berdasarkan layanan yang tersedia.`
-          : `Sebutkan dan bandingkan beberapa ${E}${inScope} berdasarkan ${axis}.`,
+        text:
+          criterion?.kind === "capability"
+            ? `Sebutkan dan bandingkan beberapa ${E} yang ${criterion.text}${inScope}.`
+            : `Sebutkan dan bandingkan beberapa ${E}${inScope} ${criterion?.kind === "noun" ? `dengan ${criterion.text}` : `berdasarkan ${criterion?.text ?? m.axis}`}.`,
         missing: null,
       };
     }
-    case "brand_fit":
+    case "brand_fit": {
+      if (m.regulated)
+        return {
+          text: `Apakah ${m.namedIdentity} menerima ${m.newcomer} untuk ${m.offering || `layanan ${m.category}`}${inScope}?`,
+          missing: null,
+        };
+      if (m.offeringScoped)
+        // The scoped identity IS the offering — it cannot provide itself;
+        // brand fit becomes fit for an ordinary use of the category.
+        return {
+          text: `Apakah ${m.namedIdentity} cocok untuk ${useCase}?`,
+          missing: null,
+        };
       return {
-        text: m.regulated
-          ? `Apakah ${m.namedIdentity} menerima ${m.newcomer} untuk ${m.offering || `layanan ${m.category}`}${inScope}?`
-          : `Apakah ${m.namedIdentity} menyediakan ${m.offering || `layanan ${m.category}`}${inScope}?`,
+        text: `Apakah ${m.namedIdentity} ${
+          m.role === "platform"
+            ? `memiliki fitur ${m.offering || `untuk ${m.category}`}`
+            : m.role === "product"
+              ? `menawarkan ${m.offering || `produk ${m.category}`}`
+              : `menyediakan ${m.offering || `layanan ${m.category}`}`
+        }${inScope}?`,
         missing: null,
       };
+    }
     case "explicit_recommendation":
+      // Regulated cases still test explicit recommendation — on the provider
+      // as a service choice, never on therapy outcome or safety.
       return {
         text: m.regulated
-          ? `Apakah ${m.namedIdentity} menerima ${m.newcomer}${inScope}?`
+          ? `Apakah ${m.namedIdentity} layak direkomendasikan untuk layanan ${m.category}${inScope}?`
           : `Apakah ${m.namedIdentity} layak dipertimbangkan untuk ${m.category}${inScope}?`,
         missing: null,
       };
-    case "direct_comparison":
+    case "direct_comparison": {
+      // A comparison needs an axis a consumer can weigh — a provider
+      // capability or a scope limit is not one; regulated discovery compares
+      // administrative availability only.
+      const axis = m.regulated ? "layanan yang tersedia" : m.axis;
       return {
-        text: `Bandingkan ${m.namedIdentity} dengan ${m.comparisonName} berdasarkan ${m.constraint || m.axis}.`,
+        text: `Bandingkan ${m.namedIdentity} dengan ${m.comparisonName} berdasarkan ${axis}.`,
         missing: null,
       };
+    }
     case "fit_misfit":
       return {
         text: m.regulated
@@ -680,17 +967,36 @@ function usableSlotFallback(
   slot: CanonicalMeasurementSlot,
   reviewed?: string,
 ): { text: string | null; missing: string | null; issues: V3CheckRule[] } {
+  const usable = (text: string | null) => {
+    if (!text) return null;
+    const issues = checkV3Text(text, slot, facts);
+    // Mechanical checks plus the explicit semantic contract: a text that
+    // passes every guard but does not carry the slot's purpose element is
+    // unexecutable as that slot's question.
+    if (!issues.length && !v3FallbackHonorsContract(text, slot))
+      issues.push("unexecutable");
+    return issues.length ? null : issues;
+  };
   const first = v3SlotFallback(facts, slot, reviewed);
   if (!first.text) return { ...first, issues: [] };
-  const issues = checkV3Text(first.text, slot, facts);
-  if (!issues.length) return { ...first, issues };
+  const firstIssues = usable(first.text);
+  if (firstIssues) return { ...first, issues: firstIssues };
   const builtin = v3SlotFallback(facts, slot);
   if (builtin.text && builtin.text !== first.text) {
-    const builtinIssues = checkV3Text(builtin.text, slot, facts);
-    if (!builtinIssues.length)
+    const builtinIssues = usable(builtin.text);
+    if (builtinIssues)
       return { text: builtin.text, missing: null, issues: builtinIssues };
   }
-  return { ...first, issues };
+  // Neither the reviewed override nor the built-in is usable: report the
+  // reviewed form's failure so the attempt records an invalid fallback, not
+  // a silently safe-looking pack.
+  return {
+    text: first.text,
+    missing: null,
+    issues: checkV3Text(first.text, slot, facts).length
+      ? checkV3Text(first.text, slot, facts)
+      : ["unexecutable"],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -765,10 +1071,46 @@ function scoreBeats(candidate: number[], best: number[]) {
 }
 
 /**
+ * Resolve the named picks for one unnamed combination with bounded
+ * backtracking (each named slot carries at most two options — the response
+ * text and its one reviewed fallback — so at most 2⁴ paths are tried). When
+ * a later named slot's options all collide with an earlier pick, the earlier
+ * slot's own fallback is substituted; a conflict is repaired locally, never
+ * by discarding the pack.
+ */
+function resolveNamed(
+  named: NamedChoice[],
+  used: Set<string>,
+): PickedNamed[] | null {
+  const localUsed = new Set(used);
+  const picked: PickedNamed[] = [];
+  const go = (k: number): boolean => {
+    if (k === named.length) return true;
+    const choice = named[k];
+    for (const option of choice.options) {
+      const key = normalize(option.text);
+      if (option.issues.length === 0 && !localUsed.has(key)) {
+        localUsed.add(key);
+        picked.push({
+          slot: choice.slot,
+          text: option.text,
+          origin: option.origin,
+          originalIssues: choice.options[0].issues,
+        });
+        if (go(k + 1)) return true;
+        localUsed.delete(key);
+        picked.pop();
+      }
+    }
+    return false;
+  };
+  return go(0) ? picked : null;
+}
+
+/**
  * Evaluate one enumerated combination: all unnamed options valid and
- * pairwise-distinct, then each named slot resolves to its first valid option
- * that does not collide with an already-selected text. Named conflicts are
- * repaired by the same local mechanism as unnamed ones.
+ * pairwise-distinct, then named slots resolve by bounded backtracking so a
+ * later conflict can substitute an earlier slot's safe fallback.
  */
 function evaluateCombo(
   combo: SlotOption[],
@@ -777,21 +1119,8 @@ function evaluateCombo(
   if (combo.some((option) => option.issues.length > 0)) return null;
   const used = new Set(combo.map((option) => normalize(option.text)));
   if (used.size !== combo.length) return null;
-  const picked: PickedNamed[] = [];
-  for (const choice of named) {
-    const option = choice.options.find(
-      (candidate) =>
-        candidate.issues.length === 0 && !used.has(normalize(candidate.text)),
-    );
-    if (!option) return null;
-    used.add(normalize(option.text));
-    picked.push({
-      slot: choice.slot,
-      text: option.text,
-      origin: option.origin,
-      originalIssues: choice.options[0].issues,
-    });
-  }
+  const picked = resolveNamed(named, used);
+  if (!picked) return null;
   return { unnamed: combo, named: picked };
 }
 
@@ -833,21 +1162,26 @@ function selectPortfolio(
 /**
  * Whether a consistent selection exists over `resolvable` unnamed slots with
  * one slot pinned to a given option — plus resolvable named slots. This is
- * the participation check for genuine cross-slot conflicts.
+ * the participation check for genuine cross-slot conflicts. Returns the
+ * number of combinations evaluated so the caller can count this search in
+ * `portfoliosEvaluated` — participation checks are bounded search, not a
+ * hidden unrestricted pass.
  */
 function consistentSelection(
   optionLists: SlotOption[][],
   resolvable: number[],
   named: NamedChoice[],
   fixed: { index: number; optionIndex: number },
-): boolean {
+): { found: boolean; evaluated: number } {
   const index = new Array(resolvable.length).fill(0);
   const total = resolvable.reduce((n, k) => n * optionLists[k].length, 1);
   const pinnedAt = resolvable.indexOf(fixed.index);
+  let evaluated = 0;
   for (let i = 0; i < total; i++) {
     if (index[pinnedAt] === fixed.optionIndex) {
       const combo = resolvable.map((k, j) => optionLists[k][index[j]]);
-      if (evaluateCombo(combo, named)) return true;
+      evaluated += 1;
+      if (evaluateCombo(combo, named)) return { found: true, evaluated };
     }
     for (let j = resolvable.length - 1; j >= 0; j--) {
       index[j] += 1;
@@ -855,50 +1189,98 @@ function consistentSelection(
       index[j] = 0;
     }
   }
-  return false;
+  return { found: false, evaluated };
 }
 
 /**
  * Affected slots (§4.2 step 5): a slot earns its single reviewed fallback
- * when every visible option is individually invalid, or when none of its
- * valid options can participate in a consistent selection over the other
- * resolvable slots — a genuine cross-slot conflict. A different slot being
- * unresolvable does not by itself mark this slot affected; a named slot
- * with no valid option is its own failure, handled by the caller's
- * full-fallback path. Unaffected slots keep their selected text exactly.
+ * when every visible option is individually invalid, or when it actually
+ * participates in the cross-slot conflict — two resolvable slots whose every
+ * valid option pair collides, or an unnamed slot whose every valid option
+ * collides with every valid option of a named slot. When the infeasibility
+ * is a larger cycle rather than a direct collision, the participation check
+ * marks every resolvable slot honestly. Unaffected slots keep their selected
+ * text exactly; a named slot with no valid option is a named failure the
+ * caller's full-fallback path handles.
  */
 function affectedSlotIndexes(
   optionLists: SlotOption[][],
   named: NamedChoice[],
-): number[] {
-  const affected: number[] = [];
+): { affected: number[]; evaluated: number } {
+  const affected = new Set<number>();
   const resolvable: number[] = [];
   optionLists.forEach((list, i) => {
     if (list.some((option) => option.issues.length === 0)) resolvable.push(i);
-    else affected.push(i);
+    else affected.add(i);
   });
-  if (!resolvable.length) return affected;
+  if (!resolvable.length)
+    return { affected: [...affected].sort((a, b) => a - b), evaluated: 0 };
   const namedResolvable = named.filter((choice) =>
     choice.options.some((option) => option.issues.length === 0),
   );
+  // A named slot with no valid option cannot be repaired by unnamed
+  // fallbacks; the infeasibility belongs to the caller's full-fallback path.
+  if (namedResolvable.length !== named.length)
+    return { affected: [...affected].sort((a, b) => a - b), evaluated: 0 };
+
+  // Genuine conflict participants only: slot i is affected when every valid
+  // option it has collides with every valid option of another resolvable
+  // slot or named choice — a true pairwise conflict, not a bystander.
+  const validKeys = (list: SlotOption[]) =>
+    list
+      .filter((option) => option.issues.length === 0)
+      .map((option) => normalize(option.text));
+  const mutuallyExclusive = (a: string[], b: string[]) =>
+    a.length > 0 && b.length > 0 && a.every((x) => b.every((y) => x === y));
+  for (const i of resolvable) {
+    const mine = validKeys(optionLists[i]);
+    for (const j of resolvable) {
+      if (j <= i) continue;
+      if (mutuallyExclusive(mine, validKeys(optionLists[j]))) {
+        affected.add(i);
+        affected.add(j);
+      }
+    }
+    for (const choice of namedResolvable) {
+      if (
+        mutuallyExclusive(
+          mine,
+          choice.options
+            .filter((option) => option.issues.length === 0)
+            .map((option) => normalize(option.text)),
+        )
+      )
+        affected.add(i);
+    }
+  }
+  if (affected.size)
+    return { affected: [...affected].sort((a, b) => a - b), evaluated: 0 };
+
+  // No pairwise collision explains the infeasibility (a >2-slot collision
+  // cycle, or named-unnamed interplay): participation check — a slot is
+  // affected only when none of its valid options can appear in any
+  // consistent selection.
+  let evaluated = 0;
   for (const i of resolvable) {
     const validOptionIndexes = optionLists[i]
       .map((option, j) => ({ option, j }))
       .filter(({ option }) => option.issues.length === 0)
       .map(({ j }) => j);
-    if (
-      validOptionIndexes.length &&
-      validOptionIndexes.every(
-        (j) =>
-          !consistentSelection(optionLists, resolvable, namedResolvable, {
-            index: i,
-            optionIndex: j,
-          }),
-      )
-    )
-      affected.push(i);
+    let participates = false;
+    for (const j of validOptionIndexes) {
+      const result = consistentSelection(optionLists, resolvable, named, {
+        index: i,
+        optionIndex: j,
+      });
+      evaluated += result.evaluated;
+      if (result.found) {
+        participates = true;
+        break;
+      }
+    }
+    if (validOptionIndexes.length && !participates) affected.add(i);
   }
-  return affected;
+  return { affected: [...affected].sort((a, b) => a - b), evaluated };
 }
 
 /** Score vectors compared lexicographically (lower is better). The final
@@ -1342,10 +1724,11 @@ export function finalizeV3RichResponse(
   }
 
   const affected = affectedSlotIndexes(visible, named);
-  diagnostics.affectedSlots = affected.map((i) => UNNAMED_SLOTS[i].id);
-  if (affected.length) {
+  diagnostics.affectedSlots = affected.affected.map((i) => UNNAMED_SLOTS[i].id);
+  diagnostics.portfoliosEvaluated += affected.evaluated;
+  if (affected.affected.length) {
     const withFallbacks = visible.map((list, i) => {
-      if (!affected.includes(i)) return list;
+      if (!affected.affected.includes(i)) return list;
       const fallback = usableSlotFallback(
         facts,
         UNNAMED_SLOTS[i],
@@ -1442,10 +1825,11 @@ export function finalizeV3SimpleResponse(
   }
 
   const affected = affectedSlotIndexes(optionLists, named);
-  diagnostics.affectedSlots = affected.map((i) => UNNAMED_SLOTS[i].id);
-  if (affected.length) {
+  diagnostics.affectedSlots = affected.affected.map((i) => UNNAMED_SLOTS[i].id);
+  diagnostics.portfoliosEvaluated += affected.evaluated;
+  if (affected.affected.length) {
     const withFallbacks = optionLists.map((list, i) => {
-      if (!affected.includes(i)) return list;
+      if (!affected.affected.includes(i)) return list;
       const fallback = usableSlotFallback(
         facts,
         UNNAMED_SLOTS[i],

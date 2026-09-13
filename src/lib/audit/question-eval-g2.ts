@@ -8,19 +8,26 @@
 import { createHash } from "node:crypto";
 import { AUDIT_MEASUREMENT_MATRIX } from "./measurement-matrix";
 import {
-  V3_PROPOSED_EVALUATION_SETTINGS,
-  type V3RequestSettings,
-} from "./question-writer-v3";
-import {
+  V3_FINALIZER_VERSION,
   V3_FALLBACK_VERSION,
   V3_SELECTOR_VERSION,
 } from "./question-finalize-v3";
+import {
+  V3_GUARD_POLICY,
+  V3_PROPOSED_EVALUATION_SETTINGS,
+  V3_RICH_INSTRUCTION_VERSION,
+  V3_RICH_SCHEMA_VERSION,
+  V3_SIMPLE_INSTRUCTION_VERSION,
+  V3_SIMPLE_SCHEMA_VERSION,
+  V3_WRITER_CONTRACT_VERSION,
+  type V3RequestSettings,
+} from "./question-writer-v3";
 
-export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v2";
-export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v2";
+export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v3";
+export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v3";
 export const G2_RUBRIC_VERSION = "nuave.g2-review-rubric.v2";
-export const G2_FROZEN_INPUTS_VERSION = "nuave.g2-frozen-inputs.v1";
-export const G2_USAGE_ACCOUNTING_VERSION = "nuave.g2-usage-accounting.v1";
+export const G2_FROZEN_INPUTS_VERSION = "nuave.g2-frozen-inputs.v2";
+export const G2_USAGE_ACCOUNTING_VERSION = "nuave.g2-usage-accounting.v2";
 
 const UNNAMED_SLOT_IDS = AUDIT_MEASUREMENT_MATRIX.filter(
   (slot) => slot.auditedBrandIdentity === "forbidden",
@@ -188,18 +195,90 @@ export const G2_FROZEN_INPUT_MANIFEST = {
   version: G2_FROZEN_INPUTS_VERSION,
   fixturePath: "src/lib/audit/fixtures/g2-evaluation-inputs.json",
   inputs: [
-    { inputId: "D1", businessKey: "dev-ac-service", set: "development" },
-    { inputId: "D2", businessKey: "dev-coffee-venue", set: "development" },
-    { inputId: "D3", businessKey: "dev-laptop-retail", set: "development" },
-    { inputId: "D4", businessKey: "dev-product-brand", set: "development" },
-    { inputId: "D5", businessKey: "dev-b2b-saas", set: "development" },
-    { inputId: "D6", businessKey: "dev-professional", set: "development" },
-    { inputId: "D7", businessKey: "dev-regulated-dental", set: "development" },
-    { inputId: "D8", businessKey: "dev-sparse-product", set: "development" },
-    { inputId: "H1", businessKey: "heldout-branch-service", set: "held_out" },
-    { inputId: "H2", businessKey: "heldout-limited-retail", set: "held_out" },
-    { inputId: "H3", businessKey: "heldout-remote-pro", set: "held_out" },
-    { inputId: "H4", businessKey: "heldout-regulated-sparse", set: "held_out" },
+    {
+      inputId: "D1",
+      businessKey: "dev-ac-service",
+      set: "development",
+      envelopeSha256:
+        "051092d0638450cf95a2dfc51d1e0f4a0276a4a9a2ffd4bcb5de355b1fa5edb2",
+    },
+    {
+      inputId: "D2",
+      businessKey: "dev-coffee-venue",
+      set: "development",
+      envelopeSha256:
+        "db89ce5bd17955e3ed6a6630bc50d2c3925eb6a53aee3712799be0811cb70473",
+    },
+    {
+      inputId: "D3",
+      businessKey: "dev-laptop-retail",
+      set: "development",
+      envelopeSha256:
+        "7a0df0746b2210efc3b3d932896e891563ac9acb38ee4bd5587e5a412c958f37",
+    },
+    {
+      inputId: "D4",
+      businessKey: "dev-product-brand",
+      set: "development",
+      envelopeSha256:
+        "9dd48da5d4f24009e0182e19937e30a831f0274a4d7878c651bcd58bcf4aad7a",
+    },
+    {
+      inputId: "D5",
+      businessKey: "dev-b2b-saas",
+      set: "development",
+      envelopeSha256:
+        "e886b9879398aa4d45d909138df4c4872637b0667f12ab9033566995ce48aabd",
+    },
+    {
+      inputId: "D6",
+      businessKey: "dev-professional",
+      set: "development",
+      envelopeSha256:
+        "ac1ee1b75fd15ed2a4003c1fb707dd5bf6930a7b07102cf283b753e6c53415c4",
+    },
+    {
+      inputId: "D7",
+      businessKey: "dev-regulated-dental",
+      set: "development",
+      envelopeSha256:
+        "9180008b95466c13097f632adedd20c0f3b4c286d7ed4fc9fe6cb7cc00a3312b",
+    },
+    {
+      inputId: "D8",
+      businessKey: "dev-sparse-product",
+      set: "development",
+      envelopeSha256:
+        "03bbe58116937b52a2c1fe86c1da260b3c64209b21e3f735e75db410fa12d926",
+    },
+    {
+      inputId: "H1",
+      businessKey: "heldout-branch-service",
+      set: "held_out",
+      envelopeSha256:
+        "31ab8c47651ac576948393a94878e9e1261a5ff403422d0f7d5a082db87b6eeb",
+    },
+    {
+      inputId: "H2",
+      businessKey: "heldout-limited-retail",
+      set: "held_out",
+      envelopeSha256:
+        "36022442cdfc2121255f4163f5ae27cfa8d9d9966762b912eb9db81362850508",
+    },
+    {
+      inputId: "H3",
+      businessKey: "heldout-remote-pro",
+      set: "held_out",
+      envelopeSha256:
+        "712deb78745b747b754bf5e4bf0d669b433049f234e87e188a4ce04d96a2e375",
+    },
+    {
+      inputId: "H4",
+      businessKey: "heldout-regulated-sparse",
+      set: "held_out",
+      envelopeSha256:
+        "248fd2cc64f267449bdb456ab5026685d822784a16b9b9a0ce3eea0b57f00a28",
+    },
     // Pilot inputs intentionally reuse development envelopes; their business
     // keys stay pilot-scoped so pilot wins never count as development wins.
     { inputId: "G2P-AC", businessKey: "pilot-ac", set: "pilot" },
@@ -218,12 +297,120 @@ export const G2_FROZEN_INPUT_MANIFEST = {
     "G2P-B2B": "D5",
     "G2P-SPARSE": "D8",
   },
+  /** The v1 held-out envelopes were retired from untouched held-out status:
+   * their deterministic fallback forms were rendered during the independent
+   * re-review (correction and review artifacts, 2026-09-13), which counts as
+   * output exposure under §8.2's retirement clause even though no provider
+   * outputs were generated. They remain development/regression evidence only;
+   * v2 freezes fresh envelopes of the same four approved archetypes, and no
+   * fallback/model output was generated or inspected for the fresh inputs. */
+  retiredInputs: [
+    {
+      inputId: "H1",
+      retiredEnvelopeSha256:
+        "b22a4aeabd63a55d2279582c209cb155adbb00321f28ebfaefbecaec6ff627a8",
+      retiredAt: "2026-09-13",
+      reason:
+        "fallback forms rendered during independent re-review; retained as development/regression evidence only",
+    },
+    {
+      inputId: "H2",
+      retiredEnvelopeSha256:
+        "4e4dc43f40701d7cb9e17fd7bd3851277f9d6239eaadbfc1d367a889e4e05043",
+      retiredAt: "2026-09-13",
+      reason:
+        "fallback forms rendered during independent re-review; retained as development/regression evidence only",
+    },
+    {
+      inputId: "H3",
+      retiredEnvelopeSha256:
+        "6441fdacc587f085e4728aa9bc9a7e944154b872378eba3e16330e5d61294099",
+      retiredAt: "2026-09-13",
+      reason:
+        "fallback forms rendered during independent re-review; retained as development/regression evidence only",
+    },
+    {
+      inputId: "H4",
+      retiredEnvelopeSha256:
+        "55beb88e219e8ce62a0043cce0358fc942c62d8cf0b275501d323f3d53facf57",
+      retiredAt: "2026-09-13",
+      reason:
+        "fallback forms rendered during independent re-review; retained as development/regression evidence only",
+    },
+  ],
 } as const;
 
 /** SHA-256 over the canonical JSON of one frozen envelope — the value an
  * attempt record must carry as `inputFingerprint`. */
 export function g2EnvelopeFingerprint(envelope: unknown): string {
   return createHash("sha256").update(JSON.stringify(envelope)).digest("hex");
+}
+
+/** The R5 hash convention shared with the finalizer's evidence record:
+ * per-text `SHA-256([slotId, text])` and pack `SHA-256([factsFingerprint,
+ * [[slotId, text]…]])` in canonical slot order. These bind judgments to the
+ * exact captured final texts — an arbitrary nonempty string never verifies. */
+export function g2TextFingerprint(slotId: string, text: string): string {
+  return createHash("sha256")
+    .update(JSON.stringify([slotId, text]))
+    .digest("hex");
+}
+export function g2PackFingerprint(
+  factsFingerprint: string,
+  finalTexts: string[],
+): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify([
+        factsFingerprint,
+        CANONICAL_SLOT_IDS.map((slotId, i) => [slotId, finalTexts[i]]),
+      ]),
+    )
+    .digest("hex");
+}
+
+/** Cross-check the fixture against the manifest: every frozen input's
+ * declared envelope hash must equal `g2EnvelopeFingerprint` of the committed
+ * envelope, and each pilot alias must resolve to the same envelope its
+ * development target does. This is what makes the input set frozen — a
+ * fixture edit that changes a hash without updating the manifest fails
+ * here, so an attempt cannot silently bind to an unrecorded envelope. */
+export function validateG2FrozenInputs(
+  envelopes: Record<string, unknown>,
+): string[] {
+  const errors: string[] = [];
+  const resolved = new Map<string, string>();
+  for (const entry of G2_FROZEN_INPUT_MANIFEST.inputs) {
+    if (entry.set === "pilot") continue;
+    const envelope = envelopes[entry.inputId];
+    if (!envelope) {
+      errors.push(`frozen input ${entry.inputId} has no committed envelope`);
+      continue;
+    }
+    const hash = g2EnvelopeFingerprint(envelope);
+    resolved.set(entry.inputId, hash);
+    if (hash !== entry.envelopeSha256)
+      errors.push(
+        `frozen input ${entry.inputId} envelope hashes to ${hash}, not the manifest's ${entry.envelopeSha256}`,
+      );
+  }
+  const aliases = G2_FROZEN_INPUT_MANIFEST.pilotEnvelopeAliases as Record<
+    string,
+    string
+  >;
+  for (const [pilotId, developmentId] of Object.entries(aliases)) {
+    const envelope = envelopes[developmentId];
+    if (!envelope) {
+      errors.push(
+        `pilot input ${pilotId} aliases missing envelope ${developmentId}`,
+      );
+      continue;
+    }
+    const hash = g2EnvelopeFingerprint(envelope);
+    if (resolved.get(developmentId) !== hash)
+      errors.push(`pilot input ${pilotId} alias resolution is inconsistent`);
+  }
+  return errors;
 }
 
 // ---------------------------------------------------------------------------
@@ -260,15 +447,51 @@ export const G2_USAGE_ACCOUNTING = {
   outputUsdPer1MTokens: 1.2,
 } as const;
 
-/** Usage-accounted dollars for one attempt under the frozen accounting. */
-export function g2UsageCostUsd(usage: {
+/** Usage counters as the accepted telemetry normalization defines them:
+ * `inputTokens` is total input; the cached-read and cache-write portions are
+ * separately priced and subtracted to get the ordinary (full-rate) input —
+ * matching `telemetry.ts`, never charging cached tokens twice. */
+export type G2Usage = {
   inputTokens: number;
-  cachedInputTokens: number;
+  cachedReadInputTokens: number;
+  cachedWriteInputTokens: number;
   outputTokens: number;
-}): number {
+};
+
+/** True when the counters are nonnegative finite integers with consistent
+ * totals — cached portions can never exceed total input. */
+export function g2UsageIsValid(usage: G2Usage | null): boolean {
+  if (!usage) return false;
+  const counters = [
+    usage.inputTokens,
+    usage.cachedReadInputTokens,
+    usage.cachedWriteInputTokens,
+    usage.outputTokens,
+  ];
+  if (
+    counters.some((v) => !Number.isFinite(v) || v < 0 || !Number.isInteger(v))
+  )
+    return false;
   return (
-    (usage.inputTokens * G2_USAGE_ACCOUNTING.inputUsdPer1MTokens +
-      usage.cachedInputTokens * G2_USAGE_ACCOUNTING.cachedReadUsdPer1MTokens +
+    usage.cachedReadInputTokens + usage.cachedWriteInputTokens <=
+    usage.inputTokens
+  );
+}
+
+/** Usage-accounted dollars for one attempt under the frozen accounting. */
+export function g2UsageCostUsd(usage: G2Usage): number {
+  const ordinaryInputTokens = Math.max(
+    0,
+    usage.inputTokens -
+      usage.cachedReadInputTokens -
+      usage.cachedWriteInputTokens,
+  );
+  return (
+    (ordinaryInputTokens * G2_USAGE_ACCOUNTING.inputUsdPer1MTokens +
+      usage.cachedReadInputTokens *
+        G2_USAGE_ACCOUNTING.cachedReadUsdPer1MTokens +
+      usage.cachedWriteInputTokens *
+        G2_USAGE_ACCOUNTING.cachedWriteUsdPer1MTokens +
       usage.outputTokens * G2_USAGE_ACCOUNTING.outputUsdPer1MTokens) /
     1_000_000
   );
@@ -288,6 +511,10 @@ export const G2_RESOURCE_LIMITS = {
   maxSerializedRequestChars: 28_000,
   maxEstimatedInputTokens: 12_000,
   perAttemptUsageCeilingUsd: 0.02,
+  /** Mean generation-cost ceiling over the selected-v3 sample, set equal to
+   * the frozen per-attempt ceiling — the defensible bound for a mean that
+   * must hold attempt-by-attempt anyway. */
+  meanGenerationUsageCeilingUsd: 0.02,
   pilotTotalUsageCeilingUsd: 0.2,
   releaseNewCallsUsageCeilingUsd: 0.64,
   meanLatencyCeilingMs: 30_000,
@@ -310,7 +537,8 @@ export const G2_TRANSPORT_OWNERSHIP = {
     "no SDK/transport retries; a failed attempt is the recorded outcome, manual re-attempt is a new scheduled attempt",
   sampling:
     "temperature/top_p are omitted from the request; provider defaults apply",
-  sessionHeaders: "Authorization bearer only; no session-affinity headers",
+  sessionHeaders:
+    "accepted OpenCode Go transport — Authorization bearer, application/json, x-opencode-session with a fresh random ID per one-shot call, and User-Agent nuave-audit/1.0, emitted by the code-owned opencodeGoTransportHeaders helper",
 } as const;
 
 /** The one global rich selection policy supplying Decision A (R5 §4.2).
@@ -479,8 +707,19 @@ export type G2AttemptRecord = {
   factsFingerprint: string;
   /** SHA-256 of the final pack, when one exists. */
   packFingerprint: string | null;
+  /** The exact final pack texts in canonical slot order — the capture every
+   * pack/text fingerprint must resolve to. Null when no final pack exists. */
+  finalTexts: string[] | null;
   /** Per-text independent judgments; null when no final pack exists. */
   texts: G2TextJudgment[] | null;
+  /** The selection policy this attempt ran under. The selected rich contract
+   * is always the one frozen policy (G2_SELECTION_POLICY); simple v3 runs
+   * primary-only; v2 keeps its actual recorded policy. */
+  selectionPolicy: "primary" | "default" | "coverage" | "v2-actual";
+  /** Exact instruction/schema/guard/selector/fallback/finalizer versions the
+   * attempt ran under; v3 attempts must equal the frozen pins exactly, so an
+   * old rejected candidate cannot masquerade as a matching capture. */
+  versions: Record<string, string>;
   distinctUnnamedDecisions: number;
   /** Unnamed texts whose satisfying answer implicitly names businesses —
    * without needing an explicit recommendation formula. */
@@ -489,11 +728,7 @@ export type G2AttemptRecord = {
   /** Provider-reported usage. null only when nothing was ever sent; a sent
    * attempt that returned no telemetry fails resource accounting rather
    * than passing silently. */
-  usage: {
-    inputTokens: number;
-    cachedInputTokens: number;
-    outputTokens: number;
-  } | null;
+  usage: G2Usage | null;
   /** Attempt latency including failures and timeouts; required for every
    * scheduled attempt that was attempted. */
   latencyMs: number | null;
@@ -508,19 +743,31 @@ export type G2Attribution = {
   businessKey: string;
   pass: 1 | 2;
   variant: "rich";
-  /** Pack fingerprints for the P/M/C portfolios of this attempt. */
+  /** Pack fingerprints for the P/M/C portfolios of this attempt. M is the
+   * recorded selection under the frozen policy, so it must equal the
+   * attempt's own packFingerprint; P and C resolve against this attempt's
+   * replay captures — a nonexistent/null portfolio earns no credit. */
   packFingerprints: { P: string | null; M: string | null; C: string | null };
-  /** Slots where P could not keep a valid primary but M kept original text
-   * (mechanical rescue or avoided fallback). */
-  pToMRescuedSlots: number;
+  /** Exact slot IDs where P could not keep a valid primary but M kept
+   * original text (mechanical rescue or avoided fallback). */
+  pToMRescuedSlots: string[];
   /** True when M's final text regressed versus P on any rescued slot. */
   mCausedFinalRegression: boolean;
   /** M produced a mechanically valid pack — the precondition for any
    * C-over-M wording/decision gain to count. */
   mMechanicallyValid: boolean;
   /** Independently reviewed material consumer-decision/wording gains of C
-   * over a mechanically valid M. Label-only changes do not count. */
-  cOverMMaterialGains: number;
+   * over a mechanically valid M, each bound to the exact slot, the two
+   * distinct final texts, and the independent review record — kept separate
+   * from writer hints. Identical final wording with only metadata changes
+   * produces identical fingerprints and is rejected. */
+  cOverMMaterialGains: {
+    slotId: string;
+    mTextFingerprint: string;
+    cTextFingerprint: string;
+    /** Reference to the independent review record for this exact gain. */
+    reviewRef: string;
+  }[];
   /** Reviewed C–M differences that were label-only; recorded so the
    * distinction is auditable, never credited. */
   cOverMLabelOnlyChanges: number;
@@ -584,11 +831,39 @@ export function validateG2TextJudgments(
   return errors;
 }
 
+/** The frozen per-variant version/policy pins every v3 attempt must carry —
+ * instruction and schema differ per variant; selector/fallback/finalizer are
+ * shared. Exact equality keeps a rejected candidate from masquerading as a
+ * matching capture under stale version labels. */
+const G2_V3_ATTEMPT_PINS = {
+  rich: {
+    instruction: V3_RICH_INSTRUCTION_VERSION,
+    schema: V3_RICH_SCHEMA_VERSION,
+    guardPolicy: V3_GUARD_POLICY,
+    selector: V3_SELECTOR_VERSION,
+    fallback: V3_FALLBACK_VERSION,
+    finalizer: V3_FINALIZER_VERSION,
+  },
+  simple: {
+    instruction: V3_SIMPLE_INSTRUCTION_VERSION,
+    schema: V3_SIMPLE_SCHEMA_VERSION,
+    guardPolicy: V3_GUARD_POLICY,
+    selector: V3_SELECTOR_VERSION,
+    fallback: V3_FALLBACK_VERSION,
+    finalizer: V3_FINALIZER_VERSION,
+  },
+} as const;
+
 /** Validate one attempt record's envelope semantics (bounds, fingerprints,
- * and judgment completeness). */
+ * judgment completeness) and resolve its bindings against the frozen input
+ * index: the envelope hash, the canonical projected-facts fingerprint, and
+ * the exact captured final texts/pack under the R5 hash convention. */
 export function validateG2AttemptRecord(
   record: G2AttemptRecord,
-  inputIndex: Record<string, { envelopeSha256: string }>,
+  inputIndex: Record<
+    string,
+    { envelopeSha256: string; factsFingerprint: string }
+  >,
 ): string[] {
   const errors = validateG2TextJudgments(record.texts);
   const manifestEntry = G2_FROZEN_INPUT_MANIFEST.inputs.find(
@@ -611,19 +886,87 @@ export function validateG2AttemptRecord(
     errors.push(
       `attempt ${attemptKey(record)} has no frozen envelope to bind against`,
     );
-  else if (record.inputFingerprint !== expected.envelopeSha256)
-    errors.push(
-      `attempt ${attemptKey(record)} inputFingerprint does not match the frozen envelope hash`,
-    );
+  else {
+    if (record.inputFingerprint !== expected.envelopeSha256)
+      errors.push(
+        `attempt ${attemptKey(record)} inputFingerprint does not match the frozen envelope hash`,
+      );
+    // The facts fingerprint must be the canonical G1 projection of the exact
+    // frozen envelope — the index carries the resolved value, so an
+    // arbitrary string never verifies.
+    if (record.factsFingerprint !== expected.factsFingerprint)
+      errors.push(
+        `attempt ${attemptKey(record)} factsFingerprint does not match the canonical projection of the frozen envelope`,
+      );
+  }
   if (typeof record.factsFingerprint !== "string" || !record.factsFingerprint)
     errors.push(`attempt ${attemptKey(record)} missing factsFingerprint`);
-  if (
-    record.status === "completed" &&
-    (!record.packFingerprint || !record.texts)
+
+  // Exact policy/version binding: a v3 attempt must declare the one frozen
+  // selection policy and the exact version pins it ran under.
+  if (record.variant === "rich" || record.variant === "simple") {
+    const pins = G2_V3_ATTEMPT_PINS[record.variant];
+    const expectedPolicy =
+      record.variant === "rich" ? G2_SELECTION_POLICY : "primary";
+    if (record.selectionPolicy !== expectedPolicy)
+      errors.push(
+        `attempt ${attemptKey(record)} selectionPolicy "${record.selectionPolicy}" must be the frozen "${expectedPolicy}"`,
+      );
+    for (const [key, pin] of Object.entries(pins))
+      if (record.versions?.[key] !== pin)
+        errors.push(
+          `attempt ${attemptKey(record)} versions.${key} "${record.versions?.[key] ?? "missing"}" must equal the frozen "${pin}"`,
+        );
+  } else if (
+    typeof record.versions?.writer !== "string" ||
+    !record.versions.writer
   )
     errors.push(
-      `completed attempt ${attemptKey(record)} must carry a pack fingerprint and text judgments`,
+      `attempt ${attemptKey(record)} must record the actual v2 writer identity in versions.writer`,
     );
+
+  // Text/pack binding: when a final pack exists, every judgment fingerprint
+  // and the pack fingerprint must resolve to the exact captured texts.
+  const hasPack = record.finalTexts !== null;
+  if (record.status === "completed" && (!hasPack || !record.texts))
+    errors.push(
+      `completed attempt ${attemptKey(record)} must carry finalTexts, a pack fingerprint, and text judgments`,
+    );
+  if (record.status !== "completed" && (hasPack || record.packFingerprint))
+    errors.push(
+      `non-completed attempt ${attemptKey(record)} cannot carry final texts or a pack fingerprint`,
+    );
+  if (hasPack) {
+    const texts = record.finalTexts!;
+    if (texts.length !== CANONICAL_SLOT_IDS.length)
+      errors.push(
+        `attempt ${attemptKey(record)} finalTexts must contain exactly ${CANONICAL_SLOT_IDS.length} texts in canonical order`,
+      );
+    else {
+      if (
+        record.packFingerprint !==
+        g2PackFingerprint(record.factsFingerprint, texts)
+      )
+        errors.push(
+          `attempt ${attemptKey(record)} packFingerprint does not resolve to the captured final pack`,
+        );
+      for (const [i, judgment] of (record.texts ?? []).entries()) {
+        if (
+          judgment.slotId === CANONICAL_SLOT_IDS[i] &&
+          judgment.textFingerprint !==
+            g2TextFingerprint(judgment.slotId, texts[i])
+        )
+          errors.push(
+            `attempt ${attemptKey(record)} judgment ${judgment.slotId} textFingerprint does not resolve to the captured final text`,
+          );
+      }
+    }
+  }
+  if (record.status === "completed" && !record.packFingerprint)
+    errors.push(
+      `completed attempt ${attemptKey(record)} must carry a pack fingerprint`,
+    );
+
   if (
     !Number.isInteger(record.distinctUnnamedDecisions) ||
     record.distinctUnnamedDecisions < 0 ||
@@ -647,17 +990,10 @@ export function validateG2AttemptRecord(
     (!Number.isFinite(record.latencyMs) || record.latencyMs < 0)
   )
     errors.push(`attempt ${attemptKey(record)} non-finite latencyMs`);
-  if (record.usage !== null) {
-    for (const key of [
-      "inputTokens",
-      "cachedInputTokens",
-      "outputTokens",
-    ] as const) {
-      const value = record.usage[key];
-      if (!Number.isFinite(value) || value < 0)
-        errors.push(`attempt ${attemptKey(record)} non-finite usage.${key}`);
-    }
-  }
+  if (record.usage !== null && !g2UsageIsValid(record.usage))
+    errors.push(
+      `attempt ${attemptKey(record)} invalid usage counters (nonnegative finite integers; cached portions cannot exceed total input)`,
+    );
   return errors;
 }
 
@@ -667,7 +1003,10 @@ export function validateG2AttemptRecord(
 export function validateG2AttemptSchedule(
   expected: readonly G2ScheduledAttempt[],
   records: G2AttemptRecord[],
-  inputIndex: Record<string, { envelopeSha256: string }>,
+  inputIndex: Record<
+    string,
+    { envelopeSha256: string; factsFingerprint: string }
+  >,
 ): string[] {
   const errors: string[] = [];
   const seen = new Map<string, G2AttemptRecord>();
@@ -684,6 +1023,115 @@ export function validateG2AttemptSchedule(
     if (!expectedKeys.has(key))
       errors.push(`extra unscheduled attempt record ${key}`);
   return errors;
+}
+
+/** Reconcile P/M/C attribution rows to the scheduled rich attempts exactly:
+ * one row per scheduled rich input/pass, matching business/variant/pass, and
+ * every portfolio fingerprint resolving to that same attempt's captures —
+ * M equals the recorded pack under the frozen policy; a null or unrelated
+ * portfolio earns no credit. Returns the valid rows separately so no
+ * component credit is granted from invalid rows. */
+export function validateG2Attribution(
+  rows: G2Attribution[],
+  expectedRich: readonly G2ScheduledAttempt[],
+  attempts: G2AttemptRecord[],
+): { errors: string[]; valid: G2Attribution[] } {
+  const errors: string[] = [];
+  const seen = new Map<string, G2Attribution>();
+  const valid: G2Attribution[] = [];
+  const attemptByKey = new Map<string, G2AttemptRecord>(
+    attempts.map((a) => [`${a.inputId}:${a.pass}`, a] as const),
+  );
+  for (const row of rows) {
+    const key = `${row.inputId}:${row.pass}`;
+    if (seen.has(key)) {
+      errors.push(`duplicate P/M/C attribution for ${key}`);
+      continue;
+    }
+    seen.set(key, row);
+    const rowErrors: string[] = [];
+    const scheduled = expectedRich.find(
+      (a) => a.inputId === row.inputId && a.pass === row.pass,
+    );
+    if (!scheduled)
+      rowErrors.push(
+        `unscheduled P/M/C attribution for ${key} (no scheduled rich attempt)`,
+      );
+    const attempt = attemptByKey.get(key);
+    if (row.variant !== "rich")
+      rowErrors.push(`attribution ${key} must carry variant "rich"`);
+    if (attempt && row.businessKey !== attempt.businessKey)
+      rowErrors.push(
+        `attribution ${key} businessKey "${row.businessKey}" mismatches the attempt's "${attempt.businessKey}"`,
+      );
+    // M is the recorded selection under the frozen policy — it must equal
+    // the attempt's own pack fingerprint; a nonexistent portfolio earns
+    // nothing.
+    if (
+      attempt?.packFingerprint &&
+      row.packFingerprints.M !== attempt.packFingerprint
+    )
+      rowErrors.push(
+        `attribution ${key} M portfolio fingerprint does not resolve to the attempt's recorded pack`,
+      );
+    if (!attempt?.packFingerprint && row.packFingerprints.M !== null)
+      rowErrors.push(
+        `attribution ${key} claims an M portfolio for an attempt with no pack`,
+      );
+    // Rescued slots: exact canonical unnamed slot IDs, unique, and only
+    // creditable when M actually produced a pack.
+    const rescued = new Set<string>();
+    for (const slotId of row.pToMRescuedSlots) {
+      if (!(UNNAMED_SLOT_IDS as readonly string[]).includes(slotId))
+        rowErrors.push(`attribution ${key} rescued non-unnamed slot ${slotId}`);
+      else if (rescued.has(slotId))
+        rowErrors.push(`attribution ${key} duplicates rescued slot ${slotId}`);
+      else rescued.add(slotId);
+    }
+    if (row.pToMRescuedSlots.length && !row.packFingerprints.M)
+      rowErrors.push(
+        `attribution ${key} claims rescued slots without an M portfolio`,
+      );
+    // Material gains: exact slot binding, distinct final texts (identical
+    // wording with metadata-only changes produces identical fingerprints and
+    // is rejected), and a required independent review reference.
+    for (const gain of row.cOverMMaterialGains) {
+      if (!(UNNAMED_SLOT_IDS as readonly string[]).includes(gain.slotId))
+        rowErrors.push(
+          `attribution ${key} material gain on non-unnamed slot ${gain.slotId}`,
+        );
+      if (!gain.mTextFingerprint || !gain.cTextFingerprint)
+        rowErrors.push(
+          `attribution ${key} material gain on ${gain.slotId} lacks the exact M/C text fingerprints`,
+        );
+      else if (gain.mTextFingerprint === gain.cTextFingerprint)
+        rowErrors.push(
+          `attribution ${key} material gain on ${gain.slotId} has identical M/C final wording — a label-only change earns no credit`,
+        );
+      if (!gain.reviewRef?.trim())
+        rowErrors.push(
+          `attribution ${key} material gain on ${gain.slotId} lacks an independent review reference`,
+        );
+    }
+    if (row.cOverMMaterialGains.length) {
+      if (!row.mMechanicallyValid)
+        rowErrors.push(
+          `attribution ${key} claims material gains on a mechanically invalid M`,
+        );
+      if (!row.packFingerprints.C)
+        rowErrors.push(
+          `attribution ${key} claims material gains without a C portfolio`,
+        );
+    }
+    if (rowErrors.length) errors.push(...rowErrors);
+    else valid.push(row);
+  }
+  for (const scheduled of expectedRich)
+    if (!seen.has(`${scheduled.inputId}:${scheduled.pass}`))
+      errors.push(
+        `missing P/M/C attribution for rich attempt ${scheduled.inputId} pass ${scheduled.pass}`,
+      );
+  return { errors, valid };
 }
 
 // ---------------------------------------------------------------------------
@@ -726,6 +1174,15 @@ export function attemptUsable(a: G2AttemptRecord): boolean {
         !t.selectedTextFlagged,
     )
   );
+}
+
+/** Mean naturalness over all ten texts — the §8.2 v2-comparison measure,
+ * grouped per frozen input over its scheduled repeats. A missing or
+ * non-completed pack scores zero. */
+export function meanAllNaturalness(a: G2AttemptRecord): number {
+  if (a.status !== "completed" || !a.texts) return 0;
+  if (a.texts.length !== CANONICAL_SLOT_IDS.length) return 0;
+  return a.texts.reduce((sum, t) => sum + t.naturalness, 0) / a.texts.length;
 }
 
 /** Mean over the six unnamed naturalness scores only. A missing or
@@ -828,10 +1285,13 @@ function nearestRankP95(values: number[]): number {
 }
 
 /** Absolute limits over a set of attempts: per-attempt token/latency/usage
- * bounds, mean and nearest-rank-p95 latency, and the aggregate ceiling. */
+ * bounds, mean and nearest-rank-p95 latency, the frozen mean-generation-cost
+ * ceiling, and the aggregate ceiling when one is supplied. Pass `null` for
+ * the aggregate ceiling when the sample is a variant/selected-v3 subset
+ * whose total is governed by the pooled ceiling instead. */
 export function assessG2AbsoluteResources(
   attempts: G2AttemptRecord[],
-  totalUsageCeilingUsd: number,
+  totalUsageCeilingUsd: number | null,
 ): G2ResourceAssessment {
   const failures: string[] = [];
   const latencies: number[] = [];
@@ -848,8 +1308,10 @@ export function assessG2AbsoluteResources(
           `attempt ${key} latency ${a.latencyMs}ms exceeds the ${G2_RESOURCE_LIMITS.perAttemptTimeoutMs}ms timeout ceiling`,
         );
     }
-    if (!a.usage) {
-      failures.push(`attempt ${key} is missing required token telemetry`);
+    if (!a.usage || !g2UsageIsValid(a.usage)) {
+      failures.push(
+        `attempt ${key} is missing required token telemetry or has invalid counters`,
+      );
     } else {
       if (a.usage.outputTokens > G2_RESOURCE_LIMITS.perAttemptMaxOutputTokens)
         failures.push(
@@ -887,7 +1349,18 @@ export function assessG2AbsoluteResources(
     failures.push(
       `p95 latency ${Math.round(p95)}ms exceeds the ${G2_RESOURCE_LIMITS.p95LatencyCeilingMs}ms ceiling`,
     );
-  if (totalCost !== null && totalCost > totalUsageCeilingUsd)
+  if (
+    meanCost !== null &&
+    meanCost > G2_RESOURCE_LIMITS.meanGenerationUsageCeilingUsd
+  )
+    failures.push(
+      `mean usage $${meanCost.toFixed(4)} exceeds the $${G2_RESOURCE_LIMITS.meanGenerationUsageCeilingUsd} mean-generation-cost ceiling`,
+    );
+  if (
+    totalUsageCeilingUsd !== null &&
+    totalCost !== null &&
+    totalCost > totalUsageCeilingUsd
+  )
     failures.push(
       `total usage $${totalCost.toFixed(4)} exceeds the $${totalUsageCeilingUsd} aggregate ceiling`,
     );
@@ -915,9 +1388,9 @@ export function assessG2IncrementalResources(
   const costsOf = (list: G2AttemptRecord[]) => {
     const costs: number[] = [];
     for (const a of list) {
-      if (!a.usage) {
+      if (!a.usage || !g2UsageIsValid(a.usage)) {
         failures.push(
-          `attempt ${attemptKey(a)} is missing required token telemetry`,
+          `attempt ${attemptKey(a)} is missing required token telemetry or has invalid counters`,
         );
         continue;
       }
@@ -1017,18 +1490,29 @@ export function evaluateG2Pilot(input: {
   attempts: G2AttemptRecord[];
   preferences: G2PreferenceRecord[];
   attribution: G2Attribution[];
-  /** Frozen input envelopes keyed by inputId (envelopeSha256 of each). */
-  inputs: Record<string, { envelopeSha256: string }>;
+  /** Frozen input index: inputId → envelope hash + canonical projected-facts
+   * fingerprint. */
+  inputs: Record<string, { envelopeSha256: string; factsFingerprint: string }>;
 }): {
+  /** Decision A's quality result over the records present. */
   decisionA: boolean;
   reservesRetained: boolean;
   coverageRetained: boolean;
+  /** Every required record present and valid — schedule, fingerprints,
+   * preferences, attribution. Missing/invalid required evidence prevents
+   * `retain` even when the quality calculation itself passes. */
+  evidenceComplete: boolean;
+  /** The overall pilot retain: Decision A's quality result AND complete
+   * valid evidence — never an "all gates passed" reading when required
+   * evidence is missing or invalid. */
+  retain: boolean;
   metrics: Record<string, number | null>;
   failures: string[];
 } {
   const failures: string[] = [];
+  const evidenceErrors: string[] = [];
 
-  failures.push(
+  evidenceErrors.push(
     ...validateG2AttemptSchedule(
       G2_PILOT_SCHEDULE.attempts,
       input.attempts,
@@ -1045,20 +1529,25 @@ export function evaluateG2Pilot(input: {
   for (const scheduled of G2_PILOT_INPUTS) {
     const count = prefSeen.get(scheduled.inputId) ?? 0;
     if (count === 0)
-      failures.push(
+      evidenceErrors.push(
         `missing blinded pack-preference record for ${scheduled.inputId}`,
       );
     else if (count > 1)
-      failures.push(
+      evidenceErrors.push(
         `duplicate blinded pack-preference records for ${scheduled.inputId}`,
       );
     prefSeen.delete(scheduled.inputId);
   }
   for (const extra of prefSeen.keys())
-    failures.push(`pack-preference record for unscheduled input ${extra}`);
+    evidenceErrors.push(
+      `pack-preference record for unscheduled input ${extra}`,
+    );
 
   const richAttempts = input.attempts.filter((a) => a.variant === "rich");
   const simpleAttempts = input.attempts.filter((a) => a.variant === "simple");
+
+  // Decision A quality gates over the records present.
+  const qualityFailures: string[] = [];
 
   // Serialization: all five scheduled rich responses complete without
   // truncation. Fallback never counts as serialization success.
@@ -1066,7 +1555,7 @@ export function evaluateG2Pilot(input: {
     (a) => a.serializationComplete,
   ).length;
   if (serializationComplete < G2_THRESHOLDS.pilotSerializationCompleteMin)
-    failures.push(
+    qualityFailures.push(
       `rich serialization ${serializationComplete} < ${G2_THRESHOLDS.pilotSerializationCompleteMin}`,
     );
 
@@ -1074,7 +1563,7 @@ export function evaluateG2Pilot(input: {
   // scheduled rich packs); material wins count distinct businesses.
   const usablePacks = richAttempts.filter(attemptUsable).length;
   if (usablePacks < G2_THRESHOLDS.pilotUsablePacksMin)
-    failures.push(
+    qualityFailures.push(
       `usable rich packs ${usablePacks} < ${G2_THRESHOLDS.pilotUsablePacksMin}`,
     );
 
@@ -1084,7 +1573,7 @@ export function evaluateG2Pilot(input: {
   );
   const wins = businessResults.filter((r) => r.wins).length;
   if (wins < G2_THRESHOLDS.pilotMaterialWinBusinessesMin)
-    failures.push(
+    qualityFailures.push(
       `distinct pilot material wins ${wins} < ${G2_THRESHOLDS.pilotMaterialWinBusinessesMin}`,
     );
   // Non-regression is per matched attempt, not per business mean: any pair
@@ -1093,11 +1582,16 @@ export function evaluateG2Pilot(input: {
     r.pairs.some((p) => p.regression),
   ).length;
   if (regressions > 0)
-    failures.push(
+    qualityFailures.push(
       `${regressions} pilot businesses show pair-level naturalness regression`,
     );
 
-  const absolute = assessG2AbsoluteResources(
+  // Absolute resource statistics are enforced per variant — a slow rich
+  // sample cannot hide inside the pooled mean — plus the pooled aggregate
+  // ceiling over all scheduled attempts including failures.
+  const richAbsolute = assessG2AbsoluteResources(richAttempts, null);
+  const simpleAbsolute = assessG2AbsoluteResources(simpleAttempts, null);
+  const pooled = assessG2AbsoluteResources(
     input.attempts,
     G2_RESOURCE_LIMITS.pilotTotalUsageCeilingUsd,
   );
@@ -1105,35 +1599,43 @@ export function evaluateG2Pilot(input: {
     richAttempts,
     simpleAttempts,
   );
-  failures.push(...absolute.failures, ...incremental.failures);
+  qualityFailures.push(
+    ...richAbsolute.failures.map((f) => `rich: ${f}`),
+    ...simpleAbsolute.failures.map((f) => `simple: ${f}`),
+    ...pooled.failures,
+    ...incremental.failures,
+  );
 
-  const decisionA = failures.length === 0;
+  const decisionA = qualityFailures.length === 0;
 
   // Decision B: reserves need ≥1 M–P mechanical rescue without regression OR
   // an independently justified C–M benefit; coverage additionally requires
   // ≥1 reviewed material gain on a mechanically valid M. Mechanical rescue
   // alone cannot justify coverage; label-only C–M changes earn nothing.
+  // Attribution rows reconcile exactly to the scheduled rich attempts; only
+  // valid rows earn component credit.
   const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
     (a) => a.variant === "rich",
   );
-  const attributionKeys = new Set(
-    input.attribution.map((a) => `${a.inputId}:${a.pass}`),
+  const attribution = validateG2Attribution(
+    input.attribution,
+    expectedRich,
+    input.attempts,
   );
-  for (const scheduled of expectedRich)
-    if (!attributionKeys.has(`${scheduled.inputId}:${scheduled.pass}`))
-      failures.push(
-        `missing P/M/C attribution for rich attempt ${scheduled.inputId} pass ${scheduled.pass}`,
-      );
-  const rescued = input.attribution.reduce((n, a) => n + a.pToMRescuedSlots, 0);
-  const rescueRegression = input.attribution.some(
+  evidenceErrors.push(...attribution.errors);
+  const rescued = attribution.valid.reduce(
+    (n, a) => n + a.pToMRescuedSlots.length,
+    0,
+  );
+  const rescueRegression = attribution.valid.some(
     (a) => a.mCausedFinalRegression,
   );
   // Only gains on a mechanically valid M count.
-  const materialGains = input.attribution.reduce(
-    (n, a) => n + (a.mMechanicallyValid ? a.cOverMMaterialGains : 0),
+  const materialGains = attribution.valid.reduce(
+    (n, a) => n + (a.mMechanicallyValid ? a.cOverMMaterialGains.length : 0),
     0,
   );
-  const coverageRegression = input.attribution.some(
+  const coverageRegression = attribution.valid.some(
     (a) => a.cCausedFinalRegression,
   );
   const reservesRetained =
@@ -1141,10 +1643,15 @@ export function evaluateG2Pilot(input: {
     (materialGains >= 1 && !coverageRegression);
   const coverageRetained = materialGains >= 1 && !coverageRegression;
 
+  const evidenceComplete = evidenceErrors.length === 0;
+  failures.push(...evidenceErrors, ...qualityFailures);
+
   return {
     decisionA,
     reservesRetained,
     coverageRetained,
+    evidenceComplete,
+    retain: decisionA && evidenceComplete,
     metrics: {
       richAttempts: richAttempts.length,
       serializationComplete,
@@ -1152,9 +1659,11 @@ export function evaluateG2Pilot(input: {
       distinctPilotWins: wins,
       pToMRescuedSlots: rescued,
       cOverMMaterialGains: materialGains,
-      meanLatencyMs: absolute.metrics.meanLatencyMs,
-      p95LatencyMs: absolute.metrics.p95LatencyMs,
-      totalCostUsd: absolute.metrics.totalCostUsd,
+      richMeanLatencyMs: richAbsolute.metrics.meanLatencyMs,
+      simpleMeanLatencyMs: simpleAbsolute.metrics.meanLatencyMs,
+      meanLatencyMs: pooled.metrics.meanLatencyMs,
+      p95LatencyMs: pooled.metrics.p95LatencyMs,
+      totalCostUsd: pooled.metrics.totalCostUsd,
     },
     failures,
   };
@@ -1175,7 +1684,7 @@ export const G2_HELD_OUT_SCHEDULE: G2ScheduledAttempt[] = [
 
 export function evaluateG2HeldOutRetention(input: {
   attempts: G2AttemptRecord[];
-  inputs: Record<string, { envelopeSha256: string }>;
+  inputs: Record<string, { envelopeSha256: string; factsFingerprint: string }>;
 }): {
   retain: boolean;
   metrics: Record<string, number | null>;
@@ -1251,20 +1760,43 @@ export function evaluateG2HeldOutRetention(input: {
 // ---------------------------------------------------------------------------
 
 /** The release-level decision checks over the complete scheduled record set
- * for one allocation: exact schedule reconciliation, absolute resource
- * limits over all attempts (failures and fallbacks included), and the
- * frozen writer-contribution thresholds. Held-out matched increments stay
- * in `evaluateG2HeldOutRetention` — this is the overall selected-v3 sample. */
+ * for one allocation (§8.2): exact schedule reconciliation, all 16
+ * selected-v3 packs usable, per-input v2 naturalness comparison over all ten
+ * texts, the frozen writer-contribution thresholds, §8.2.5 mandatory
+ * regression/attribution evidence, absolute resource limits over all
+ * scheduled attempts, and the selected-v3 sample's own mean/p95/mean-cost
+ * ceilings — distinct from the five-pair held-out incremental comparison in
+ * `evaluateG2HeldOutRetention`. Mandatory §8.2.5 inputs that are absent are
+ * listed as missing evidence and the result cannot pass. The G6
+ * browser/history/rollback and v2-baseline checks remain separately
+ * evaluated later; this function implements the offline decision math only. */
 export function evaluateG2Release(input: {
   attempts: G2AttemptRecord[];
   allocation: keyof typeof G2_RELEASE_SCHEDULES;
-  inputs: Record<string, { envelopeSha256: string }>;
+  inputs: Record<string, { envelopeSha256: string; factsFingerprint: string }>;
+  /** §8.2.5 mandatory replay evidence: the matching pilot captures rerun
+   * through the integrated finalizers. Absent → release cannot pass. */
+  pilotReplay?: {
+    /** Decision A (and the no-regression quality result for a simple
+     * amendment) preserved on replay. */
+    decisionAPreserved: boolean;
+    /** Decision B preserved on replay — required when rich is retained;
+     * null for the simple allocation (removed components have no
+     * attribution gate). */
+    decisionBPreserved: boolean | null;
+  };
+  /** §8.2.5 release P/M/C attribution on the scheduled rich captures —
+   * mandatory when rich is retained. */
+  releaseAttribution?: G2Attribution[];
 }): {
   pass: boolean;
+  /** §8.2.5 mandatory evidence absent from the input. */
+  missingMandatoryEvidence: string[];
   metrics: Record<string, number | null>;
   failures: string[];
 } {
   const failures: string[] = [];
+  const missingMandatoryEvidence: string[] = [];
   const schedule = G2_RELEASE_SCHEDULES[input.allocation];
   failures.push(
     ...validateG2AttemptSchedule(
@@ -1274,10 +1806,57 @@ export function evaluateG2Release(input: {
     ),
   );
 
+  const selectedVariant =
+    input.allocation === "richSelected" ? "rich" : "simple";
   const v3Attempts = input.attempts.filter(
-    (a) =>
-      a.variant === (input.allocation === "richSelected" ? "rich" : "simple"),
+    (a) => a.variant === selectedVariant,
   );
+
+  // §8.2.1 absolute quality: all 16 selected-v3 attempts produce usable
+  // final packs under bounded recovery — usable outside winning inputs is
+  // not optional.
+  const unusableSelected = v3Attempts.filter((a) => !attemptUsable(a));
+  if (unusableSelected.length)
+    failures.push(
+      `${unusableSelected.length} of ${schedule.counts.selectedV3} selected-v3 packs are not usable`,
+    );
+
+  // §8.2.2 v2 comparison: mean naturalness across all ten texts, grouped by
+  // each frozen input over its scheduled repeats — selected v3 non-worse
+  // than matching actual v2 on every paired input. Rich pairs D1–D8 over
+  // their scheduled repeats; the simple allocation pairs all 16. Held-out
+  // rich attempts have no v2 pairs — absolute quality still applies.
+  const pairedInputIds = [
+    ...new Set(
+      schedule.attempts.filter((a) => a.variant === "v2").map((a) => a.inputId),
+    ),
+  ];
+  let v2ComparisonsChecked = 0;
+  for (const inputId of pairedInputIds) {
+    const v3Group = input.attempts.filter(
+      (a) => a.inputId === inputId && a.variant === selectedVariant,
+    );
+    const v2Group = input.attempts.filter(
+      (a) => a.inputId === inputId && a.variant === "v2",
+    );
+    if (!v3Group.length || !v2Group.length) {
+      failures.push(
+        `v2 comparison for ${inputId} lacks a scheduled v3/v2 pair`,
+      );
+      continue;
+    }
+    const v3Mean =
+      v3Group.reduce((s, a) => s + meanAllNaturalness(a), 0) / v3Group.length;
+    const v2Mean =
+      v2Group.reduce((s, a) => s + meanAllNaturalness(a), 0) / v2Group.length;
+    v2ComparisonsChecked += 1;
+    if (v3Mean < v2Mean - EPS)
+      failures.push(
+        `selected-v3 mean naturalness ${v3Mean.toFixed(3)} on ${inputId} is worse than v2's ${v2Mean.toFixed(3)}`,
+      );
+  }
+
+  // §8.2.3 writer contribution.
   const structurallyComplete = v3Attempts.filter(
     (a) => a.serializationComplete,
   ).length;
@@ -1301,31 +1880,106 @@ export function evaluateG2Release(input: {
       `full-fallback packs ${fullFallbacks} exceed the frozen maximum ${G2_THRESHOLDS.releaseFullFallbackMax}`,
     );
 
+  // §8.2.5 regression and attribution — mandatory gates, not optional.
+  if (!input.pilotReplay)
+    missingMandatoryEvidence.push(
+      "pilotReplay — matching pilot captures rerun through integrated finalizers (§8.2.5)",
+    );
+  else {
+    if (!input.pilotReplay.decisionAPreserved)
+      failures.push(
+        "pilot replay does not preserve Decision A (or the simple-allocation quality result)",
+      );
+    if (
+      input.allocation === "richSelected" &&
+      !input.pilotReplay.decisionBPreserved
+    )
+      failures.push(
+        "pilot replay does not preserve Decision B for the retained rich contract",
+      );
+  }
+  if (input.allocation === "richSelected") {
+    if (!input.releaseAttribution)
+      missingMandatoryEvidence.push(
+        "releaseAttribution — release P/M/C attribution on scheduled rich captures (§8.2.5)",
+      );
+    else {
+      const expectedRich = schedule.attempts.filter(
+        (a) => a.variant === "rich",
+      );
+      const attribution = validateG2Attribution(
+        input.releaseAttribution,
+        expectedRich,
+        input.attempts,
+      );
+      failures.push(...attribution.errors);
+      const benefits = attribution.valid.reduce(
+        (n, a) => n + a.pToMRescuedSlots.length + a.cOverMMaterialGains.length,
+        0,
+      );
+      if (benefits < 1)
+        failures.push(
+          "release attribution shows no relevant observed component benefit (≥1 required)",
+        );
+      if (
+        attribution.valid.some(
+          (a) => a.mCausedFinalRegression || a.cCausedFinalRegression,
+        )
+      )
+        failures.push(
+          "release attribution shows a component-caused final-text regression",
+        );
+    }
+  }
+
+  // §8.2.7 resources: absolute limits over every scheduled attempt
+  // (failures, timeouts, and recovery latency included), plus the selected-v3
+  // sample's own mean/p95/mean-cost ceilings — the sample cannot hide inside
+  // pooled controls. The held-out incremental ratios stay in
+  // `evaluateG2HeldOutRetention`.
   const absolute = assessG2AbsoluteResources(
     input.attempts,
     G2_RESOURCE_LIMITS.releaseNewCallsUsageCeilingUsd,
   );
-  failures.push(...absolute.failures);
+  const selectedSample = assessG2AbsoluteResources(v3Attempts, null);
+  failures.push(
+    ...absolute.failures,
+    ...selectedSample.failures.map((f) => `selected-v3: ${f}`),
+  );
 
   return {
-    pass: failures.length === 0,
+    pass: failures.length === 0 && missingMandatoryEvidence.length === 0,
+    missingMandatoryEvidence,
     metrics: {
       attempts: input.attempts.length,
+      selectedV3Attempts: v3Attempts.length,
+      usableSelectedV3: v3Attempts.length - unusableSelected.length,
+      v2ComparisonsChecked,
       structurallyComplete,
       modelWrittenPacks,
       fullFallbacks,
       meanLatencyMs: absolute.metrics.meanLatencyMs,
       p95LatencyMs: absolute.metrics.p95LatencyMs,
       totalCostUsd: absolute.metrics.totalCostUsd,
+      selectedV3MeanLatencyMs: selectedSample.metrics.meanLatencyMs,
+      selectedV3P95LatencyMs: selectedSample.metrics.p95LatencyMs,
+      selectedV3MeanCostUsd: selectedSample.metrics.meanCostUsd,
     },
     failures,
   };
 }
 
-/** Version/identity pins so the pilot's configuration hash is reproducible. */
+/** Version/identity pins so the evaluation's configuration is reproducible. */
 export const G2_VERSION_PINS = {
+  writerContract: V3_WRITER_CONTRACT_VERSION,
+  richInstruction: V3_RICH_INSTRUCTION_VERSION,
+  simpleInstruction: V3_SIMPLE_INSTRUCTION_VERSION,
+  richSchema: V3_RICH_SCHEMA_VERSION,
+  simpleSchema: V3_SIMPLE_SCHEMA_VERSION,
+  guardPolicy: V3_GUARD_POLICY,
   selector: V3_SELECTOR_VERSION,
   fallback: V3_FALLBACK_VERSION,
+  finalizer: V3_FINALIZER_VERSION,
   packet: G2_EVAL_PACKET_VERSION,
   decisionPolicy: G2_DECISION_POLICY_VERSION,
   rubric: G2_RUBRIC_VERSION,

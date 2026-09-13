@@ -1,7 +1,7 @@
 {
-  "version": "nuave.g2-frozen-inputs.v1",
+  "version": "nuave.g2-frozen-inputs.v2",
   "frozenAt": "2026-09-13",
-  "note": "Fictional sufficient-facts envelopes for the frozen G2 evaluation schedule (R5 §8.1/§8.2). No real business data; .example.id hosts are reserved documentation domains. Pilot inputs reuse development envelopes via G2_FROZEN_INPUT_MANIFEST.pilotEnvelopeAliases. D7 and H4 use the legacy brief envelope because only that path carries regulated_category_notes (categorySafety); all others use the accepted local intake envelope.",
+  "note": "Fictional sufficient-facts envelopes for the frozen G2 evaluation schedule (R5 §8.1/§8.2). No real business data; .example.id hosts are reserved documentation domains. Pilot inputs reuse development envelopes via G2_FROZEN_INPUT_MANIFEST.pilotEnvelopeAliases. D7 and H4 use the legacy brief envelope because only that path carries regulated_category_notes (categorySafety); all others use the accepted local intake envelope. v2 replaces the exposed v1 H1–H4 envelopes (retirement recorded in G2_FROZEN_INPUT_MANIFEST.retiredInputs) with fresh envelopes of the same four approved archetypes; no fallback or model output was generated, rendered, inspected, or tuned against these fresh inputs.",
   "inputs": {
     "D1": {
       "requestId": "g2eval-d1",
@@ -279,26 +279,26 @@
         "factVersion": 1,
         "confirmed": {
           "brand": {
-            "name": "BersihAC",
-            "primarySource": "https://bersihac.example.id"
+            "name": "Bengkel Motor Laju",
+            "primarySource": "https://bengkellaju.example.id"
           },
           "scope": "cabang",
           "target": {
-            "name": "BersihAC Depok",
-            "detail": "Jl. Margonda Raya 12, Depok"
+            "name": "Bengkel Motor Laju Ciledug",
+            "detail": "Jl. Ciledug Raya 45, Tangerang"
           },
-          "category": "jasa servis AC",
-          "offerings": ["perbaikan AC", "perawatan berkala AC"],
-          "customerReasons": ["AC kantor perlu perawatan rutin"],
-          "serviceChannels": [{ "channel": "on_customer" }],
-          "market": { "reach": "sekitar", "areas": ["Depok"] },
-          "comparators": { "mode": "named", "names": ["AC Pro"] },
-          "publicFact": "Cabang Depok melayani area sekitar Margonda."
+          "category": "bengkel servis motor",
+          "offerings": ["servis rutin motor", "ganti oli dan tune-up"],
+          "customerReasons": ["motor perlu servis rutin sebelum dipakai kerja"],
+          "serviceChannels": [{ "channel": "on_premise" }],
+          "market": { "reach": "sekitar", "areas": ["Tangerang"] },
+          "comparators": { "mode": "named", "names": ["Bengkel Motor Maju"] },
+          "publicFact": "Cabang Ciledug menerima servis tanpa janji temu."
         }
       },
       "factsContext": {
         "entityType": "service",
-        "businessType": "jasa servis AC multi-cabang"
+        "businessType": "bengkel motor multi-cabang"
       }
     },
     "H2": {
@@ -308,24 +308,26 @@
         "factVersion": 1,
         "confirmed": {
           "brand": {
-            "name": "Aneka Komputer",
-            "primarySource": "https://anekakomputer.example.id"
+            "name": "Toko Sepeda Tunas",
+            "primarySource": "https://sepedatunas.example.id"
           },
           "scope": "brand",
           "target": null,
-          "category": "toko komputer",
-          "offerings": ["komputer rakitan", "sparepart komputer"],
-          "customerReasons": ["butuh komputer rakitan sesuai anggaran"],
+          "category": "toko sepeda",
+          "offerings": ["sepeda anak dan dewasa", "servis ringan sepeda"],
+          "customerReasons": [
+            "ingin melihat dan mencoba sepeda langsung sebelum membeli"
+          ],
           "serviceChannels": [{ "channel": "on_premise" }],
-          "market": { "reach": "sekitar", "areas": ["Yogyakarta"] },
-          "comparators": { "mode": "named", "names": ["Komputama"] },
-          "publicFact": "Hanya melayani pembelian langsung di toko."
+          "market": { "reach": "sekitar", "areas": ["Surakarta"] },
+          "comparators": { "mode": "named", "names": ["Sepeda Barokah"] },
+          "publicFact": "Pembelian hanya dilayani di toko; belum ada pengiriman."
         }
       },
       "factsContext": {
         "entityType": "retailer",
-        "businessType": "toko komputer lokal",
-        "accessConstraints": ["pengambilan hanya di toko"]
+        "businessType": "toko sepeda lokal",
+        "accessConstraints": ["transaksi hanya di toko"]
       }
     },
     "H3": {
@@ -335,41 +337,46 @@
         "factVersion": 1,
         "confirmed": {
           "brand": {
-            "name": "Desain Arsitek Nu",
-            "primarySource": "https://desainnu.example.id"
+            "name": "Penerjemah Laras",
+            "primarySource": "https://penerjemahlaras.example.id"
           },
           "scope": "brand",
           "target": null,
-          "category": "jasa desain arsitektur",
-          "offerings": ["desain renovasi rumah", "gambar kerja"],
-          "customerReasons": ["perlu desain renovasi dari jarak jauh"],
+          "category": "jasa penerjemah tersumpah",
+          "offerings": [
+            "terjemahan tersumpah dokumen resmi",
+            "legalisasi hasil terjemahan"
+          ],
+          "customerReasons": [
+            "perlu terjemahan tersumpah ijazah untuk lamaran luar negeri"
+          ],
           "serviceChannels": [{ "channel": "online" }],
           "market": { "reach": "seluruh", "areas": [] },
-          "comparators": { "mode": "named", "names": ["Studio Denah"] },
-          "publicFact": "Konsultasi awal dilakukan secara daring."
+          "comparators": { "mode": "named", "names": ["Biro Terjemah Mitra"] },
+          "publicFact": "Dokumen dikirim dan diterima secara daring."
         }
       },
       "factsContext": {
-        "entityType": "professional",
-        "businessType": "studio arsitektur remote"
+        "entityType": "service",
+        "businessType": "biro penerjemah tersumpah remote"
       }
     },
     "H4": {
       "requestId": "g2eval-h4",
       "factsRevision": 1,
       "brief": {
-        "brand_name": "Fisio Gerak",
-        "entity_scope": "Fisio Gerak",
-        "brand_type": "klinik fisioterapi",
-        "category": "klinik fisioterapi",
-        "market_context": "klinik fisioterapi di Jakarta Timur",
-        "target_customer": "pasien pasca cedera",
-        "official_sources": ["https://fisiogerak.example.id"],
-        "verified_offerings": ["fisioterapi pasca cedera"],
-        "verified_customer_needs": ["rehabilitasi setelah cedera olahraga"],
-        "verified_decision_criteria": ["menerima pasien baru"],
+        "brand_name": "Praktik Psikolog Tumbuh",
+        "entity_scope": "Praktik Psikolog Tumbuh",
+        "brand_type": "praktik psikolog",
+        "category": "praktik psikolog",
+        "market_context": "praktik psikolog di Surabaya",
+        "target_customer": "dewasa muda yang mencari konseling",
+        "official_sources": ["https://psikologtumbuh.example.id"],
+        "verified_offerings": ["konseling psikologis dewasa"],
+        "verified_customer_needs": ["ingin konsultasi kesehatan mental"],
+        "verified_decision_criteria": ["menerima klien baru"],
         "verified_competitor": {
-          "name": "Fisio Sehat",
+          "name": "Konseling Arah",
           "scope": "",
           "source_url": ""
         },
@@ -380,15 +387,15 @@
         "customer_supplied_facts": [],
         "known_accuracy_questions": [],
         "usp": "",
-        "regulated_category_notes": "Kategori kesehatan teregulasi: hanya informasi layanan publik; jangan menilai terapi atau kecocokan pasien.",
+        "regulated_category_notes": "Kategori kesehatan mental teregulasi: hanya informasi layanan publik; jangan menilai kecocokan terapi atau diagnosis.",
         "language": "en-US",
         "agency_name": "",
         "agency_logo_data_url": ""
       },
       "factsContext": {
-        "entityType": "service",
-        "businessType": "klinik fisioterapi",
-        "marketContext": { "reach": "local", "areas": ["Jakarta Timur"] },
+        "entityType": "professional",
+        "businessType": "praktik psikolog",
+        "marketContext": { "reach": "local", "areas": ["Surabaya"] },
         "serviceChannels": ["on_premise"],
         "accessConstraints": []
       }
