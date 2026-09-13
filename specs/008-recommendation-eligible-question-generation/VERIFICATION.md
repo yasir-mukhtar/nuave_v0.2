@@ -282,8 +282,14 @@ G1 adapter. Each confirmed case is now a committed regression test in
 - Complete change review performed on the full diff: no route/UI/report/
   config/dispatch changes, no provider calls, no temporary diagnostics or
   bypasses.
-- Full gate: `NUAVE_E2E_PORT=<port> npm run verify` on the published head —
-  result recorded in the G2 report; complete log preserved in the
+- Full gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` on the final
+  tracked candidate — typecheck, formatting and typography passed; lint zero
+  errors with the same 17 pre-existing warnings; **1145 unit tests across 91
+  files**; `next build` and OpenNext/Cloudflare builds; **89 + 3 + 3 browser
+  tests**; exit 0, `Offline verification passed.` An earlier attempt on the
+  identical tree hit a Turbopack dev-server task-restore panic mid-e2e (an
+  infrastructure crash, not a code failure); after clearing `.next` the full
+  gate re-ran clean. Complete logs are preserved in the
   `g2-offline-freeze-evidence/` directory outside Git.
 - Decision-rule tests prove decision mechanics only. They use synthetic bad
   examples and assert no empirical quality. Provider feasibility, naturalness
@@ -303,8 +309,9 @@ G1 adapter. Each confirmed case is now a committed regression test in
 - Date: 2026-09-13
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
 - Published head: recorded on the G2 draft PR after push.
-- G2 gate: `NUAVE_E2E_PORT=<port> npm run verify` — result and counts in the
-  G2 report (complete log in `g2-offline-freeze-evidence/` outside Git).
+- G2 gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` — 1145 unit tests
+  in 91 files, 89+3+3 browser tests, both builds, exit 0 (complete log in
+  `g2-offline-freeze-evidence/` outside Git).
 - Next: independent G2 acceptance review, then a separately authorized G2P
   pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
   dispatch stays v2.
