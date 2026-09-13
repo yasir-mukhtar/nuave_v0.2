@@ -1,9 +1,11 @@
 # Spec 008 — verification and evidence index
 
-> Status: G0 recorded in R5; the G1 adapter is implemented, independently
-> reviewed (2026-09-13), and published on draft PR #59 for the founder's
-> integration decision. Final offline verification result is recorded below;
-> no G1 merge, route integration, or release is claimed.
+> Status: G0 recorded in R5; the G1 adapter is **merged and deployed via PR #59**
+> (merge `687f340`, 2026-09-13) but remains dormant with no runtime consumer.
+> **G2 is prepared and offline-verified** on `codex/spec008-g2-evaluation-freeze`
+> and awaits independent acceptance; it is not an empirical quality pass and
+> proves no provider feasibility. No G2 merge, route integration, provider call,
+> or release is claimed.
 > Index owner:
 > [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](./NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md)
 > §9–§10 (execution ledger and acceptance evidence index).
@@ -221,22 +223,91 @@ G1 adapter. Each confirmed case is now a committed regression test in
    remains a genuine limitation. No competitor is selected, joined, or given
    an inferred role, and no required screen was added.
 
+### G2 dormant prototype and frozen evaluation packet — 2026-09-13
+
+- Worktree: `/Users/yasir/nuave-worktrees/spec008-g2`; branch
+  `codex/spec008-g2-evaluation-freeze`, created from `main@687f340` (the
+  post-#59 merge).
+- Scope: dormant v3 writer prototype + bounded finalizer/fallback + frozen
+  evaluation packet + executable §8.3 decision rules. No route, UI, report,
+  config, dispatch, provider, or dependency change. Customer dispatch remains
+  v2; nothing in production routes through these modules.
+- Implementation:
+  - `src/lib/audit/question-writer-v3.ts` — versioned rich (16 texts incl.
+    reserves + dimension/context metadata) and simple (10 final strings,
+    canonical order) writer contracts, strict candidate schema with defaults
+    for optional provenance, code-owned mechanical checks (identity, purpose,
+    comparison relation, safety/privacy markers), transport-independent
+    request builders consuming G1's `buildV3WriterContext`.
+  - `src/lib/audit/question-finalize-v3.ts` — mechanical finalizer: valid-only
+    selection, primary/minimum-repair/coverage portfolio policies, named
+    comparison resolution, bounded slot/mixed/full fallback, deterministic
+    scoring, evidence/provenance record, injected transport orchestration for
+    offline testing.
+  - `src/lib/audit/question-eval-g2.ts` — frozen packet structures:
+    `G2_PILOT_INPUTS`/`G2_PILOT_SCHEDULE` (§8.1), `G2_RELEASE_INPUTS`/
+    `G2_RELEASE_ALLOCATION` (§8.2), blinding/rubric/usability rules,
+    `G2_RESOURCE_LIMITS` and `V3_PROPOSED_EVALUATION_SETTINGS`, and the
+    `evaluateG2Pilot` / `evaluateG2HeldOutRetention` decision functions.
+  - `src/lib/audit/question-v3-testkit.ts` — shared test fixtures/helpers.
+  - `src/lib/audit/questions-id.ts` — behavior-preserving additive seams:
+    exported `INDONESIAN_PRIVATE_DATA_PATTERNS`,
+    `INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS`,
+    `INDONESIAN_PROVIDER_SAFETY_PATTERNS`, and
+    `hasIndonesianComparisonRelationForIdentities`; the original
+    `hasIndonesianComparisonRelation` delegates to it unchanged.
+  - `src/lib/audit/question-facts-v3.test.ts` — dormancy invariant extended to
+    permit the dormant G2 modules as importers while still rejecting runtime
+    consumers.
+- Frozen packet document:
+  [`G2_EVALUATION_PACKET.md`](./G2_EVALUATION_PACKET.md) — case sets, input
+  partitions, blinded review procedure, decision rules, provider/settings
+  pins, numeric limits, versions, amendment rules. Content hashes recorded in
+  the G2 report evidence directory.
+- Tests (offline, synthetic fixtures only):
+  - `question-writer-v3.test.ts` — 13 tests: request construction, schema
+    malformed/truncated/duplicate/missing-slot/invalid-reference handling,
+    missing-provenance defaulting, privacy/identity withholding, safety
+    markers.
+  - `question-finalize-v3.test.ts` — 28 tests: valid-only selection, P/M/C
+    policies, named resolution, bounded slot/mixed/full fallback, duplicate
+    and invalid handling, deterministic scoring and evidence records.
+  - `question-eval-g2.test.ts` — 14 tests: all six §8.3 counterexamples,
+    positive controls, threshold boundaries (including the exact 0.3 delta
+    edge with epsilon tolerance), H1 business deduplication, §8.1 pack
+    counting over the AC repeat.
+- Focused regression: 247 tests across 12 files (v2 question stack, matrix,
+  G1 adapter, intake compatibility, port checks) — all pass; v2 behavior
+  unchanged.
+- Complete change review performed on the full diff: no route/UI/report/
+  config/dispatch changes, no provider calls, no temporary diagnostics or
+  bypasses.
+- Full gate: `NUAVE_E2E_PORT=<port> npm run verify` on the published head —
+  result recorded in the G2 report; complete log preserved in the
+  `g2-offline-freeze-evidence/` directory outside Git.
+- Decision-rule tests prove decision mechanics only. They use synthetic bad
+  examples and assert no empirical quality. Provider feasibility, naturalness
+  outcomes, and cost/latency behavior remain unmeasured until the separately
+  authorized G2P pilot.
+
 ## Verification record
 
-- Result: G1 adapter implemented and offline-verified, revised for the eight
-  independent-review findings above, then independently reviewed on the merged
-  tree on 2026-09-13 with no application defect found. The founder authorized
-  preparing, committing, and pushing the merged result on draft PR #59; merge,
-  route integration, and release remain pending and are not claimed here.
+- Result: G1 adapter implemented, offline-verified, revised for the eight
+  independent-review findings, independently reviewed on the merged tree
+  (2026-09-13, no application defect), then **merged to `main` via PR #59**
+  (merge `687f340`, tree `1e0bae2f`) and deployed (worker `nuave-v2` version
+  `a2279ec7-109d-4d43-8ecd-026cc669e8a0`); it remains dormant with no runtime
+  consumer. **G2 prepared and offline-verified on
+  `codex/spec008-g2-evaluation-freeze`** — dormant prototype, frozen packet,
+  executable decision rules; awaiting independent acceptance.
 - Date: 2026-09-13
-- Base: `ac3cc50a822b9901bfcafddf7ccf3f188553c5f9` (main, post-#58)
-- Published head: recorded on PR #59 after push.
-- Preparation gate: **PASS**, `NUAVE_E2E_PORT=3500 npm run verify`
-  (1089 unit tests in 88 files, 89+3+3 browser tests, both builds; complete
-  log in the preparation evidence directory outside Git).
-- Next: the founder's integration decision on #59, then G2's offline
-  evaluation freeze. G2/G2P retain R5's sequence and authorization gates; no
-  G3–G5 plumbing or v3 activation is authorized by G1.
+- Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
+- Published head: recorded on the G2 draft PR after push.
+- G2 gate: `NUAVE_E2E_PORT=<port> npm run verify` — result and counts in the
+  G2 report (complete log in `g2-offline-freeze-evidence/` outside Git).
+- Next: independent G2 acceptance review, then a separately authorized G2P
+  pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
+  dispatch stays v2.
 
 ## Files changed in this G1 branch (vs `main`)
 

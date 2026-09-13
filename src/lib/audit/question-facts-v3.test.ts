@@ -433,10 +433,38 @@ describe("R5 context permission and dormant dispatch", () => {
           /\.(ts|tsx)$/.test(p) &&
           !p.endsWith(".test.ts") &&
           !p.endsWith(".test.tsx") &&
-          !/question-(facts|context)-v3\.ts$/.test(p),
+          !/question-(facts|context)-v3\.ts$/.test(p) &&
+          // Dormant Spec 008 G2 modules are the only allowed consumers; they
+          // remain unreachable from any runtime dispatch path themselves.
+          !/question-(writer|finalize)-v3\.ts$/.test(p) &&
+          !/question-eval-g2\.ts$/.test(p) &&
+          !/question-v3-testkit\.ts$/.test(p),
       )
       .filter((p) =>
         /(?:from|import\s*\()[^\n]*question-(facts|context)-v3/.test(
+          readFileSync(p, "utf8"),
+        ),
+      );
+    expect(consumers).toEqual([]);
+  });
+  it("keeps the dormant G2 modules unreachable from runtime code", () => {
+    function files(path: string): string[] {
+      return readdirSync(path, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? files(join(path, e.name)) : [join(path, e.name)],
+      );
+    }
+    const consumers = files("src")
+      .filter(
+        (p) =>
+          /\.(ts|tsx)$/.test(p) &&
+          !p.endsWith(".test.ts") &&
+          !p.endsWith(".test.tsx") &&
+          !/question-(writer|finalize)-v3\.ts$/.test(p) &&
+          !/question-eval-g2\.ts$/.test(p) &&
+          !/question-v3-testkit\.ts$/.test(p),
+      )
+      .filter((p) =>
+        /(?:from|import\s*\()[^\n]*question-(writer|finalize)-v3|question-eval-g2|question-v3-testkit/.test(
           readFileSync(p, "utf8"),
         ),
       );
