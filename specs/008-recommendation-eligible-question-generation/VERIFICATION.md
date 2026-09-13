@@ -401,14 +401,17 @@ G1 adapter. Each confirmed case is now a committed regression test in
   (2026-09-13, no application defect), then **merged to `main` via PR #59**
   (merge `687f340`, tree `1e0bae2f`) and deployed (worker `nuave-v2` version
   `a2279ec7-109d-4d43-8ecd-026cc669e8a0`); it remains dormant with no runtime
-  consumer. **G2 second correction in progress on
-  `codex/spec008-g2-evaluation-freeze`** — dormant prototype, frozen packet
-  v3, executable decision rules, fresh v2 held-out inputs — after the
-  independent R1–R6 re-review; awaiting offline gate and independent
+  consumer. **G2 second correction offline-verified and published on
+  `codex/spec008-g2-evaluation-freeze`** (head `28b5343`) — dormant
+  prototype, frozen packet v3, executable decision rules, fresh v2 held-out
+  inputs — after the independent R1–R6 re-review; awaiting independent
   re-review/acceptance.
 - Date: 2026-09-13
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
-- Published head: recorded on the G2 draft PR after push.
+- Published head: `28b534306144de09e9a3fe739839ab8d7b6f8f94` (tree
+  `b1de1b55adeccc1a2e4c510e400ca73c19128f5e`) on draft PR #65; `validate`
+  PASS 6m56s on merge checkout `9ac6a37b…`, PR preview PASS 1m27s on the PR
+  head.
 - G2 first-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` —
   1175 unit tests in 91 files, 89+3+3 browser tests, both builds, exit 0,
   `Offline verification passed.` Tested tree
