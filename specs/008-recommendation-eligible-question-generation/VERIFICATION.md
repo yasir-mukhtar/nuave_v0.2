@@ -1,7 +1,9 @@
 # Spec 008 — verification and evidence index
 
-> Status: G0 recorded in R5; G1 adapter implemented in a dedicated working tree.
-> Final offline verification result is recorded below; no G1 merge or release is claimed.
+> Status: G0 recorded in R5; the G1 adapter is implemented, independently
+> reviewed (2026-09-13), and published on draft PR #59 for the founder's
+> integration decision. Final offline verification result is recorded below;
+> no G1 merge, route integration, or release is claimed.
 > Index owner:
 > [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](./NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md)
 > §9–§10 (execution ledger and acceptance evidence index).
@@ -31,11 +33,16 @@ provenance now and will link concrete evidence per gate as work lands.
 
 ### G1 dormant facts/context boundary — 2026-09-12
 
-- Worktree: `/private/tmp/nuave-spec008-g1`; branch
-  `codex/spec008-g1-adapter`, from refreshed `origin/main@505ccd4`.
-- The accepted intake is separately committed/pushed at `5821d2f` on
-  `codex/complete-local-intake`, not merged into this baseline. Its source was
-  read without importing its UI or changing that worktree.
+- Worktree: `/Users/yasir/nuave-worktrees/spec008-g1`; branch
+  `codex/spec008-g1-adapter`, originally from refreshed `origin/main@505ccd4`
+  and merged onto `main@ac3cc50` (post-#58) on 2026-09-13 for integration
+  preparation.
+- The accepted intake was separately committed/pushed at `5821d2f` on
+  `codex/complete-local-intake` when this section was first recorded; it has
+  since merged to `main` via PR #58 (`ac3cc50`). The committed snapshots were
+  re-derived through main's real `freezeLocalIntake` and remain equal
+  (`tests/g1-intake-compatibility.test.ts`). Its source was read without
+  importing its UI or changing that worktree.
 - Implementation: `src/lib/audit/question-facts-v3.ts` and
   `src/lib/audit/question-context-v3.ts`; tests:
   `src/lib/audit/question-facts-v3.test.ts`.
@@ -48,7 +55,8 @@ provenance now and will link concrete evidence per gate as work lands.
   Fixture SHA-256:
   `e969d16af919d024819622af14b3a94d5d74165bc13270cae3593405b164bf6c`.
 - Playwright accepts `NUAVE_E2E_PORT` (default remains 3000) so this branch's
-  full gate can use 3300 without stopping the unrelated existing service.
+  full gate can use an isolated port without stopping unrelated services;
+  earlier gates used 3300/3400 and the 2026-09-13 preparation gate used 3500.
 
 #### Parsing and projection contract
 
@@ -121,6 +129,23 @@ restrictions remain code-owned; a projection is not semantic certification.
   `e1-runnable-journey.spec.ts` Gate 1 (identity-scan heading timeout); that
   spec passed in isolation and the rerun passed in full — the dormant adapters
   have no runtime consumers.
+- Independent review gate: **PASS**, 2026-09-13 on the orchestrator-reconstructed
+  merged tree `677d0ee15ace4f3820de06c0cb51b8ee0318cebf` (main `ac3cc50` +
+  branch content + doc resolutions). 1097 unit tests in 89 files — the
+  committed suite plus 14 temporary review cases (6 serializer checks, 8
+  probes) that were not all committed — and 89+3+3 browser tests; both builds;
+  exit 0. The first review run flaked once on `offline-network.spec.ts`
+  mobile navigation (`aria-expanded` timeout); the spec passed 5/5 in
+  isolation and the full rerun passed. The flake attribution is recorded as
+  intermittent, not proven suite load; both runs' logs are preserved in the
+  review evidence directory outside Git.
+- The six reviewed serializer checks are retained as the ordinary committed
+  suite file `tests/g1-intake-compatibility.test.ts`; the eight additional
+  review probes remain external evidence only.
+- Preparation gate: **PASS**, `NUAVE_E2E_PORT=3500 npm run verify` on the
+  published merged head — 1089 unit tests in 88 files, 89+3+3 browser tests,
+  both builds, exit 0, `Offline verification passed.` Logs and the resolution
+  patch are preserved in the preparation evidence directory outside Git.
 - Complete change review and whitespace checks passed; documentation links and
   the three serialized fixture scopes were checked. Verification's temporary
   build environment was restored. No diagnostic scripts were added to Git.
@@ -198,27 +223,29 @@ G1 adapter. Each confirmed case is now a committed regression test in
 
 ## Verification record
 
-- Result: G1 adapter implemented and offline-verified locally, then revised for
-  the eight independent-review findings above. Founder previously authorized
-  commit and push of the pre-review branch; merge and release remain pending,
-  and no new commit or push is claimed for this revision.
-- Date: 2026-09-12
-- Working-tree base: `505ccd49ce857e8726bf85e796edf10f5738878c`
-- Post-review-fix gate: **PASS**, `NUAVE_E2E_PORT=3400 npm run verify`
-  (895 unit tests, 84 browser tests, both builds; log
-  `/private/tmp/nuave-spec008-g1-verify-reviewfix.log`).
-- Next: review the review-fix evidence and resolve concrete role/comparison
-  contract gaps before affected downstream integration. G2/G2P retain R5's
-  sequence and authorization gates; no G3–G5 plumbing or v3 activation is
-  authorized by G1.
+- Result: G1 adapter implemented and offline-verified, revised for the eight
+  independent-review findings above, then independently reviewed on the merged
+  tree on 2026-09-13 with no application defect found. The founder authorized
+  preparing, committing, and pushing the merged result on draft PR #59; merge,
+  route integration, and release remain pending and are not claimed here.
+- Date: 2026-09-13
+- Base: `ac3cc50a822b9901bfcafddf7ccf3f188553c5f9` (main, post-#58)
+- Published head: recorded on PR #59 after push.
+- Preparation gate: **PASS**, `NUAVE_E2E_PORT=3500 npm run verify`
+  (1089 unit tests in 88 files, 89+3+3 browser tests, both builds; complete
+  log in the preparation evidence directory outside Git).
+- Next: the founder's integration decision on #59, then G2's offline
+  evaluation freeze. G2/G2P retain R5's sequence and authorization gates; no
+  G3–G5 plumbing or v3 activation is authorized by G1.
 
-## Files changed in this G1 worktree
+## Files changed in this G1 branch (vs `main`)
 
 - `src/lib/audit/question-facts-v3.ts`
 - `src/lib/audit/question-context-v3.ts`
 - `src/lib/audit/question-facts-v3.test.ts`
 - `src/lib/audit/fixtures/intake-g1-snapshots.json`
-- `playwright.config.ts`
+- `tests/spec008-review-port.test.ts` (review-preserved port/env check)
+- `tests/g1-intake-compatibility.test.ts` (reviewed serializer checks, retained)
 - `docs/NOW.md`
 - `docs/DECISION_LOG.md` (review-fix round: slot-9 relation and role decision)
 - `specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`

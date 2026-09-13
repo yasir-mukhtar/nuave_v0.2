@@ -11,7 +11,7 @@ import { journeyWebServer } from "./tests/e2e/shared-config";
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch:
-    /(fixture-journey|landing-audit-handoff|live-audit-variance|b1-workflow-authority|offline-network|e1-runnable-journey|e1-postpayment-journey|wave1-workflow-lifecycle|intake-preview-journey|intake-screen-contract)\.spec\.ts/,
+    /(fixture-journey|landing-audit-handoff|live-audit-variance|b1-workflow-authority|offline-network|e1-runnable-journey|e1-postpayment-journey|wave1-workflow-lifecycle|intake-preview-journey|intake-screen-contract|new-intake-journey)\.spec\.ts/,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -24,5 +24,6 @@ export default defineConfig({
   },
   webServer: journeyWebServer(Number(process.env.NUAVE_E2E_PORT ?? "3000"), {
     NUAVE_FIXTURE_PREVIEW_ENABLED: "true",
+    NUAVE_NEW_INTAKE_PREVIEW_ENABLED: "true",
   }),
 });

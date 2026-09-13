@@ -106,16 +106,16 @@ protection is unavailable on this plan.
 
 ## Package overview
 
-| Package | Scope | Track | Depends on | Blocks |
-|---|---|---|---|---|
-| **A1** Measurement authority | R-01, R-02, R-06, R-04 steps 1–2, R-13's projection. Composition stays 5/5 | A | Nothing | A2 |
-| **A2** Downstream consumers | R-03's report, UI, fixture, and script sections; R-08 | A | A1 | A3 |
-| **A3** Composition flip | R-04 step 4: 6/4, R-05's ten templates, R-07 and the instruction bump, R-10's edit enforcement, R-06 rule 6 case (b) | A | A2 | B, A4 |
-| **A4** Document reconciliation | R-09 — the tracked documents and `SKILL.md` | A | A3 | Nothing |
-| **D1** Safe source handling | R-21, R-22, R-23 | D | Nothing | C |
-| **B1** Workflow and data authority | R-11 through R-18 | B | A3 | C |
-| **C1** Payment boundary | R-19, R-20 | B | B1, D1 | E |
-| **E1** Journey and acceptance | R-24 through R-28, the end-to-end scenario | B | C1 | — |
+| Package                            | Scope                                                                                                                | Track | Depends on | Blocks  |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----- | ---------- | ------- |
+| **A1** Measurement authority       | R-01, R-02, R-06, R-04 steps 1–2, R-13's projection. Composition stays 5/5                                           | A     | Nothing    | A2      |
+| **A2** Downstream consumers        | R-03's report, UI, fixture, and script sections; R-08                                                                | A     | A1         | A3      |
+| **A3** Composition flip            | R-04 step 4: 6/4, R-05's ten templates, R-07 and the instruction bump, R-10's edit enforcement, R-06 rule 6 case (b) | A     | A2         | B, A4   |
+| **A4** Document reconciliation     | R-09 — the tracked documents and `SKILL.md`                                                                          | A     | A3         | Nothing |
+| **D1** Safe source handling        | R-21, R-22, R-23                                                                                                     | D     | Nothing    | C       |
+| **B1** Workflow and data authority | R-11 through R-18                                                                                                    | B     | A3         | C       |
+| **C1** Payment boundary            | R-19, R-20                                                                                                           | B     | B1, D1     | E       |
+| **E1** Journey and acceptance      | R-24 through R-28, the end-to-end scenario                                                                           | B     | C1         | —       |
 
 ---
 
@@ -147,8 +147,8 @@ migrated or deleted with its test, with the choice stated.
 **Objective.** Every remaining consumer of the legacy five-category model reads
 from the matrix, and report semantics live in the measurement definition.
 
-**Requirements.** R-03's *Report and interpretation*, *UI and customer-facing*,
-*Scripts*, and *Fixtures and tests* sections; R-08.
+**Requirements.** R-03's _Report and interpretation_, _UI and customer-facing_,
+_Scripts_, and _Fixtures and tests_ sections; R-08.
 
 **Files.** `report-prompt-contract.ts`, `ReportView.tsx`, `AuditStages.tsx`,
 `ExampleReportPreview.tsx`, `ReportPagePreview.tsx`, `QuestionsPreview.tsx`,
@@ -191,7 +191,7 @@ invalid 6/4; slot 9 rejects a question that drops the comparison relation;
 **Objective.** The tracked documents state the 6/4 model, not the 5/5 one.
 
 **Requirements.** R-09. Docs only; no code. Parallel-safe and blocks nothing,
-but it runs *after* A3 so the documents describe what shipped.
+but it runs _after_ A3 so the documents describe what shipped.
 
 **Exit gate.** Every document R-09 lists is reconciled; `AUDIT.md` is amended,
 since a spec cannot override it on measurement method; `SKILL.md` is rewritten
@@ -293,16 +293,16 @@ The orchestrator updates this table when a package's pull request merges. It is
 the durable record — a new session reads it instead of re-deriving state from
 `git log`.
 
-| Package | Status | PR | Landed | Notes |
-|---|---|---|---|---|
-| A1 | Not started | — | — | Worker prompt ready |
-| A2 | Not started | — | — | |
-| A3 | Not started | — | — | |
-| A4 | Not started | — | — | |
-| D1 | Not started | — | — | Startable now |
-| B1 | Not started | — | — | |
-| C1 | Not started | — | — | |
-| E1 | Not started | — | — | |
+| Package | Status | PR  | Landed     | Notes                                                                                                                                    |
+| ------- | ------ | --- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| A1      | Merged | #36 | 2026-08-31 | Verified — see `VERIFICATION.md`                                                                                                         |
+| A2      | Merged | #37 | 2026-08-31 | Downstream report/UI/fixture consumers read the matrix                                                                                   |
+| A3      | Merged | #38 | 2026-08-31 | Canonical 6/4 composition flipped on                                                                                                     |
+| A4      | Merged | #42 | 2026-09-01 | R-09 authorities reconciled; docs only                                                                                                   |
+| D1      | Merged | #35 | 2026-09-01 | Safe source handling                                                                                                                     |
+| B1      | Merged | #39 | 2026-09-01 | Workflow and data authority                                                                                                              |
+| C1      | Merged | #40 | 2026-09-01 | Simulated payment enforced before extraction                                                                                             |
+| E1      | Merged | #43 | 2026-09-02 | Runnable journey; R-27 recovery tranche followed via #49 (2026-09-11). Intake-experience rebuild continues unmerged on draft PRs #58/#60 |
 
 ## Worker prompt status
 
