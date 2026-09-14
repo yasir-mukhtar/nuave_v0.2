@@ -1,0 +1,404 @@
+{
+  "version": "nuave.g2-frozen-inputs.v2",
+  "frozenAt": "2026-09-13",
+  "note": "Fictional sufficient-facts envelopes for the frozen G2 evaluation schedule (R5 §8.1/§8.2). No real business data; .example.id hosts are reserved documentation domains. Pilot inputs reuse development envelopes via G2_FROZEN_INPUT_MANIFEST.pilotEnvelopeAliases. D7 and H4 use the legacy brief envelope because only that path carries regulated_category_notes (categorySafety); all others use the accepted local intake envelope. v2 replaces the exposed v1 H1–H4 envelopes (retirement recorded in G2_FROZEN_INPUT_MANIFEST.retiredInputs) with fresh envelopes of the same four approved archetypes; no fallback or model output was generated, rendered, inspected, or tuned against these fresh inputs.",
+  "inputs": {
+    "D1": {
+      "requestId": "g2eval-d1",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Servis AC Jaya",
+            "primarySource": "https://servisacjaya.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "jasa servis AC",
+          "offerings": [
+            "perbaikan AC tidak dingin",
+            "isi ulang freon",
+            "perawatan rutin AC"
+          ],
+          "customerReasons": [
+            "AC di rumah tidak dingin",
+            "butuh teknisi yang bisa datang ke rumah"
+          ],
+          "serviceChannels": [{ "channel": "on_customer" }],
+          "market": { "reach": "sekitar", "areas": ["Jakarta Selatan"] },
+          "comparators": {
+            "mode": "named",
+            "names": ["Bengkel Dingin Sejahtera"]
+          },
+          "publicFact": "Melayani panggilan perbaikan AC rumah dan kantor kecil."
+        }
+      },
+      "factsContext": {
+        "entityType": "service",
+        "businessType": "penyedia jasa servis AC rumahan",
+        "accessConstraints": ["menerima jadwal kunjungan hari yang sama"]
+      }
+    },
+    "D2": {
+      "requestId": "g2eval-d2",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Kopi Sudut",
+            "primarySource": "https://kopisudut.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "kedai kopi",
+          "offerings": ["espresso", "americano", "meja kerja dengan wifi"],
+          "customerReasons": ["tempat nugas yang nyaman"],
+          "serviceChannels": [
+            { "channel": "on_premise" },
+            { "channel": "delivery" }
+          ],
+          "market": { "reach": "sekitar", "areas": ["Jakarta Selatan"] },
+          "comparators": { "mode": "named", "names": ["Kopi Pagi"] },
+          "publicFact": "Buka setiap hari sampai malam."
+        }
+      },
+      "factsContext": {
+        "entityType": "venue",
+        "businessType": "kedai kopi"
+      }
+    },
+    "D3": {
+      "requestId": "g2eval-d3",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Lensa Komputer",
+            "primarySource": "https://lensakomputer.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "toko laptop",
+          "offerings": [
+            "laptop berbagai merek",
+            "aksesori laptop",
+            "servis ringan laptop"
+          ],
+          "customerReasons": ["perlu laptop untuk kerja dan kuliah"],
+          "serviceChannels": [
+            { "channel": "on_premise" },
+            { "channel": "online" }
+          ],
+          "market": {
+            "reach": "beberapa",
+            "areas": ["Bandung", "Cimahi"]
+          },
+          "comparators": { "mode": "named", "names": ["Gadget Prima"] },
+          "publicFact": "Menjual laptop dari beberapa merek resmi."
+        }
+      },
+      "factsContext": {
+        "entityType": "retailer",
+        "businessType": "toko ritel laptop multi-merek",
+        "accessConstraints": ["pengiriman hanya dalam kota"]
+      }
+    },
+    "D4": {
+      "requestId": "g2eval-d4",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "SegarBotol",
+            "primarySource": "https://segarbotol.example.id"
+          },
+          "scope": "produk",
+          "target": {
+            "name": "SegarBotol Tahan Panas 750",
+            "detail": "botol stainless 750 ml"
+          },
+          "category": "botol minum",
+          "offerings": ["SegarBotol Tahan Panas 750"],
+          "customerReasons": ["botol yang awet untuk dibawa beraktivitas"],
+          "serviceChannels": [{ "channel": "online" }],
+          "market": { "reach": "seluruh", "areas": [] },
+          "comparators": { "mode": "named", "names": ["HydraBotol"] },
+          "publicFact": "Terbuat dari stainless steel food grade."
+        }
+      },
+      "factsContext": {
+        "entityType": "product",
+        "businessType": "merek botol minum"
+      }
+    },
+    "D5": {
+      "requestId": "g2eval-d5",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "NotaFlow",
+            "primarySource": "https://notaflow.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "aplikasi invoice",
+          "offerings": [
+            "pembuatan invoice otomatis",
+            "pelacakan pembayaran",
+            "pengingat jatuh tempo"
+          ],
+          "customerReasons": [
+            "invoice manual lambat",
+            "butuh pengingat pembayaran untuk klien"
+          ],
+          "serviceChannels": [{ "channel": "online" }],
+          "market": { "reach": "seluruh", "areas": [] },
+          "comparators": { "mode": "named", "names": ["FakturGo"] },
+          "publicFact": "Dipakai oleh UMKM dan freelancer."
+        }
+      },
+      "factsContext": {
+        "entityType": "platform",
+        "businessType": "B2B SaaS untuk administrasi invoice",
+        "accessConstraints": ["hanya tersedia sebagai layanan online"]
+      }
+    },
+    "D6": {
+      "requestId": "g2eval-d6",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Konsultan Pajak Rara",
+            "primarySource": "https://pajakrara.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "konsultan pajak",
+          "offerings": ["lapor SPT tahunan", "konsultasi pajak UMKM"],
+          "customerReasons": ["bingung lapor pajak tahunan"],
+          "serviceChannels": [{ "channel": "online" }],
+          "market": { "reach": "seluruh", "areas": [] },
+          "comparators": {
+            "mode": "named",
+            "names": ["Pajakku Konsultan"]
+          },
+          "publicFact": "Berpengalaman menangani UMKM sejak 2018."
+        }
+      },
+      "factsContext": {
+        "entityType": "professional",
+        "businessType": "konsultan pajak independen"
+      }
+    },
+    "D7": {
+      "requestId": "g2eval-d7",
+      "factsRevision": 1,
+      "brief": {
+        "brand_name": "Klinik Gigi Senyum",
+        "entity_scope": "Klinik Gigi Senyum",
+        "brand_type": "klinik gigi",
+        "category": "klinik gigi",
+        "market_context": "klinik gigi umum di Depok",
+        "target_customer": "keluarga yang membutuhkan perawatan gigi rutin",
+        "official_sources": ["https://kliniksenyum.example.id"],
+        "verified_offerings": ["pembersihan karang gigi", "tambal gigi"],
+        "verified_customer_needs": ["gigi berlubang perlu ditambal"],
+        "verified_decision_criteria": [
+          "menerima pasien baru",
+          "bisa daftar online"
+        ],
+        "verified_competitor": {
+          "name": "Klinik Gigi Ceria",
+          "scope": "",
+          "source_url": ""
+        },
+        "similar_businesses": [],
+        "brand_name_variants": [],
+        "priority_offering": "pembersihan karang gigi",
+        "conversion_action": "buat janji lewat situs",
+        "customer_supplied_facts": [],
+        "known_accuracy_questions": [],
+        "usp": "",
+        "regulated_category_notes": "Kategori layanan kesehatan teregulasi: hanya penemuan layanan publik; bukan penilaian terapi atau kecocokan pasien.",
+        "language": "en-US",
+        "agency_name": "",
+        "agency_logo_data_url": ""
+      },
+      "factsContext": {
+        "entityType": "service",
+        "businessType": "klinik gigi",
+        "marketContext": { "reach": "local", "areas": ["Depok"] },
+        "serviceChannels": ["on_premise", "online"],
+        "accessConstraints": ["menerima pasien baru"]
+      }
+    },
+    "D8": {
+      "requestId": "g2eval-d8",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Alumina",
+            "primarySource": "https://alumina.example.id"
+          },
+          "scope": "produk",
+          "target": {
+            "name": "Alumina Ringan",
+            "detail": "botol aluminium 500 ml"
+          },
+          "category": "botol minum aluminium",
+          "offerings": ["Alumina Ringan"],
+          "customerReasons": [],
+          "serviceChannels": [{ "channel": "online" }],
+          "market": { "reach": "seluruh", "areas": [] },
+          "comparators": {
+            "mode": "category-alternatives",
+            "names": []
+          },
+          "publicFact": "Botol aluminium ringan untuk dibawa."
+        }
+      },
+      "factsContext": {
+        "entityType": "product",
+        "businessType": "merek botol minum"
+      }
+    },
+    "H1": {
+      "requestId": "g2eval-h1",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Bengkel Motor Laju",
+            "primarySource": "https://bengkellaju.example.id"
+          },
+          "scope": "cabang",
+          "target": {
+            "name": "Bengkel Motor Laju Ciledug",
+            "detail": "Jl. Ciledug Raya 45, Tangerang"
+          },
+          "category": "bengkel servis motor",
+          "offerings": ["servis rutin motor", "ganti oli dan tune-up"],
+          "customerReasons": ["motor perlu servis rutin sebelum dipakai kerja"],
+          "serviceChannels": [{ "channel": "on_premise" }],
+          "market": { "reach": "sekitar", "areas": ["Tangerang"] },
+          "comparators": { "mode": "named", "names": ["Bengkel Motor Maju"] },
+          "publicFact": "Cabang Ciledug menerima servis tanpa janji temu."
+        }
+      },
+      "factsContext": {
+        "entityType": "service",
+        "businessType": "bengkel motor multi-cabang"
+      }
+    },
+    "H2": {
+      "requestId": "g2eval-h2",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Toko Sepeda Tunas",
+            "primarySource": "https://sepedatunas.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "toko sepeda",
+          "offerings": ["sepeda anak dan dewasa", "servis ringan sepeda"],
+          "customerReasons": [
+            "ingin melihat dan mencoba sepeda langsung sebelum membeli"
+          ],
+          "serviceChannels": [{ "channel": "on_premise" }],
+          "market": { "reach": "sekitar", "areas": ["Surakarta"] },
+          "comparators": { "mode": "named", "names": ["Sepeda Barokah"] },
+          "publicFact": "Pembelian hanya dilayani di toko; belum ada pengiriman."
+        }
+      },
+      "factsContext": {
+        "entityType": "retailer",
+        "businessType": "toko sepeda lokal",
+        "accessConstraints": ["transaksi hanya di toko"]
+      }
+    },
+    "H3": {
+      "requestId": "g2eval-h3",
+      "intake": {
+        "version": "nuave-local-intake-input-v1",
+        "factVersion": 1,
+        "confirmed": {
+          "brand": {
+            "name": "Penerjemah Laras",
+            "primarySource": "https://penerjemahlaras.example.id"
+          },
+          "scope": "brand",
+          "target": null,
+          "category": "jasa penerjemah tersumpah",
+          "offerings": [
+            "terjemahan tersumpah dokumen resmi",
+            "legalisasi hasil terjemahan"
+          ],
+          "customerReasons": [
+            "perlu terjemahan tersumpah ijazah untuk lamaran luar negeri"
+          ],
+          "serviceChannels": [{ "channel": "online" }],
+          "market": { "reach": "seluruh", "areas": [] },
+          "comparators": { "mode": "named", "names": ["Biro Terjemah Mitra"] },
+          "publicFact": "Dokumen dikirim dan diterima secara daring."
+        }
+      },
+      "factsContext": {
+        "entityType": "service",
+        "businessType": "biro penerjemah tersumpah remote"
+      }
+    },
+    "H4": {
+      "requestId": "g2eval-h4",
+      "factsRevision": 1,
+      "brief": {
+        "brand_name": "Praktik Psikolog Tumbuh",
+        "entity_scope": "Praktik Psikolog Tumbuh",
+        "brand_type": "praktik psikolog",
+        "category": "praktik psikolog",
+        "market_context": "praktik psikolog di Surabaya",
+        "target_customer": "dewasa muda yang mencari konseling",
+        "official_sources": ["https://psikologtumbuh.example.id"],
+        "verified_offerings": ["konseling psikologis dewasa"],
+        "verified_customer_needs": ["ingin konsultasi kesehatan mental"],
+        "verified_decision_criteria": ["menerima klien baru"],
+        "verified_competitor": {
+          "name": "Konseling Arah",
+          "scope": "",
+          "source_url": ""
+        },
+        "similar_businesses": [],
+        "brand_name_variants": [],
+        "priority_offering": "",
+        "conversion_action": "",
+        "customer_supplied_facts": [],
+        "known_accuracy_questions": [],
+        "usp": "",
+        "regulated_category_notes": "Kategori kesehatan mental teregulasi: hanya informasi layanan publik; jangan menilai kecocokan terapi atau diagnosis.",
+        "language": "en-US",
+        "agency_name": "",
+        "agency_logo_data_url": ""
+      },
+      "factsContext": {
+        "entityType": "professional",
+        "businessType": "praktik psikolog",
+        "marketContext": { "reach": "local", "areas": ["Surabaya"] },
+        "serviceChannels": ["on_premise"],
+        "accessConstraints": []
+      }
+    }
+  }
+}

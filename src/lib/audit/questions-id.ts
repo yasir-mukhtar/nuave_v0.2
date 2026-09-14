@@ -352,15 +352,16 @@ function hasIdentityChoice(
 }
 
 /**
- * R-10's closed comparison-relation predicate. Both identities must be
- * present, then one of the matrix-owned forms must hold: a direct marker, an
- * identity pair joined by `atau`, or the `antara` + `lebih` bracketed form.
- * Markers are compared as whole normalized tokens; a marker elsewhere in the
- * sentence is not enough for the identity-choice form.
+ * R-10's closed comparison-relation predicate over explicit identity lists.
+ * Both identity sets must be present, then one of the matrix-owned forms must
+ * hold: a direct marker, an identity pair joined by `atau`, or the `antara` +
+ * `lebih` bracketed form. Markers are compared as whole normalized tokens; a
+ * marker elsewhere in the sentence is not enough for the identity-choice form.
  */
-export function hasIndonesianComparisonRelation(
+export function hasIndonesianComparisonRelationForIdentities(
   text: string,
-  brief: MinimizedIndonesianBrief,
+  brandIdentities: string[],
+  comparisonIdentity: string,
 ) {
   const comparisonSlot = AUDIT_MEASUREMENT_MATRIX.find(
     (slot) => "comparisonRelationMarkers" in slot,
@@ -369,8 +370,6 @@ export function hasIndonesianComparisonRelation(
     return false;
   }
 
-  const brandIdentities = [brief.brand_name, ...brief.brand_name_variants];
-  const comparisonIdentity = comparisonTargetIdentity(brief);
   const tokens = normalizedTokens(text);
   if (
     !brandIdentities.some((identity) => containsTokenRun(tokens, identity)) ||
@@ -403,6 +402,22 @@ export function hasIndonesianComparisonRelation(
   }
 
   return markers.bracketed.every((marker) => tokens.includes(marker));
+}
+
+/**
+ * R-10's closed comparison-relation predicate for the minimized v2 brief.
+ * Delegates to the identity-list form with the brief's brand identities and
+ * the comparison target (or the approved category-level fallback).
+ */
+export function hasIndonesianComparisonRelation(
+  text: string,
+  brief: MinimizedIndonesianBrief,
+) {
+  return hasIndonesianComparisonRelationForIdentities(
+    text,
+    [brief.brand_name, ...brief.brand_name_variants],
+    comparisonTargetIdentity(brief),
+  );
 }
 
 /** True when the question text names the audited business, a known variant,
@@ -835,18 +850,21 @@ export function repairIndonesianSuggestion(
 // Narrow blocker list (R-35)
 // ---------------------------------------------------------------------------
 
-const INDONESIAN_PRIVATE_DATA_PATTERNS = [
+// Exported for the dormant Spec 008 compatible-008 guard prototype: the v3
+// candidate checks reuse these exact safety boundaries rather than maintaining
+// a second copy. The v2 writer/validator behavior is unchanged.
+export const INDONESIAN_PRIVATE_DATA_PATTERNS = [
   /\b(?:\+?62[\s-]?|0)8[0-9][\s-]?[0-9]{6,10}\b/,
   /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/,
   /\b\d{16}\b/,
   /\b(?:nomor\s+(?:ktp|rekening|kartu|paspor)|nomer\s+ktp)\b/i,
 ];
 
-const INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS = [
+export const INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS = [
   /\b(?:diagnosa|diagnosis|resep\s+obat|dosis|obat\s+(?:untuk|saya)|konsultasi\s+(?:medis|dokter|psikolog|hukum|pajak)|nasihat\s+(?:hukum|medis|keuangan)|perencanaan\s+keuangan\s+pribadi|klaim\s+asuransi|investasi\s+pribadi|somasi|gugatan)\b/i,
 ];
 
-const INDONESIAN_PROVIDER_SAFETY_PATTERNS = [
+export const INDONESIAN_PROVIDER_SAFETY_PATTERNS = [
   /\b(?:review\s+palsu|ulasan\s+palsu|manipulasi\s+peringkat|naikkan\s+peringkat|peringkat\s+palsu|jual\s+obat\s+terlarang|judi\s+online|eksploitasi\s+anak|pornografi)\b/i,
   /\b(?:fake\s+review|manipulate\s+ranking|boost\s+ranking|fabricated\s+review)\b/i,
 ];

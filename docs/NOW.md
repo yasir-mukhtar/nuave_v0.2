@@ -76,9 +76,11 @@ pull request — before the `deploy` job builds with `@opennextjs/cloudflare`
 and deploys to the `nuave-v2` worker. Pull requests also get an isolated
 `nuave-pr-<number>` preview worker via `.github/workflows/pr-preview.yml`,
 built with dummy provider credentials only. The most recently deployed commit
-at this update is `e8df42818510ef6768e3cfa377ae74536851dcb1` (CI run
-`34725425535`, 2026-09-13; validate, verify-main-origin, and deploy all green —
-the #57 security merge: Next 16.3.5 plus patched sharp/postcss paths). Every
+at this update is `687f340343aa5be547d03e7d6fe23a9f5262a2df` (CI run
+`34748606452`, 2026-09-13; validate, verify-main-origin, and deploy all green —
+the #59 G1 dormant-adapter merge: worker `nuave-v2` version
+`a2279ec7-109d-4d43-8ecd-026cc669e8a0`; the adapter is deployed but has no
+runtime consumer). Every
 merged PR redeploys `nuave-v2`. The production provider configuration is pinned to
 `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
 `OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
@@ -137,12 +139,28 @@ is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
 which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
-via PRs #48 and #50). The dormant G1 facts/context adapter on the unmerged
-`codex/spec008-g1-adapter` branch (draft PR #59) is implemented and
-independently reviewed and is being prepared for the founder's integration
-decision; it stays dormant and changes no live provider behavior. The
+via PRs #48 and #50). **The G1 dormant facts/context adapter merged via PR #59
+on 2026-09-13** (merge `687f340`) and is deployed but still dormant — it has no
+runtime consumer, changes no live provider behavior, and customer question
+dispatch remains v2. **G2 is in its fifth correction** on
+`codex/spec008-g2-evaluation-freeze` (draft PR #65): a dormant v3
+rich/simple writer prototype, bounded finalizer/fallback, and the frozen
+evaluation packet
+([`G2_EVALUATION_PACKET.md`](../specs/008-recommendation-eligible-question-generation/G2_EVALUATION_PACKET.md)),
+re-frozen at v6 after the independent fourth re-review (each offline
+replay now binds to the exact parsed source response by a
+derivation-emitted fingerprint — an identical M selection no longer
+proves the same source — and the required component gates derive from the
+adopted reserve-bearing contract rather than caller flags), preserving the
+R1–R6 and prior T1–T3/T1a–T3 corrections and the fresh v2 held-out
+inputs. It
+awaits independent re-review and acceptance; it is not an
+empirical quality pass,
+and provider feasibility is unproven. The
 package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
-evaluation gates still require their own explicit founder authorization.
+evaluation gates still require their own explicit founder authorization — the
+next action is G2 independent re-review, then a separately authorized G2P
+pilot.
 
 ## What is known
 
