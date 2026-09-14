@@ -428,17 +428,17 @@ G1 adapter. Each confirmed case is now a committed regression test in
   (2026-09-13, no application defect), then **merged to `main` via PR #59**
   (merge `687f340`, tree `1e0bae2f`) and deployed (worker `nuave-v2` version
   `a2279ec7-109d-4d43-8ecd-026cc669e8a0`); it remains dormant with no runtime
-  consumer. **G2 second correction offline-verified and published on
-  `codex/spec008-g2-evaluation-freeze`** (head `28b5343`) — dormant
-  prototype, frozen packet v3, executable decision rules, fresh v2 held-out
-  inputs — after the independent R1–R6 re-review; awaiting independent
-  re-review/acceptance.
+  consumer. **G2 third correction offline-verified and published on
+  `codex/spec008-g2-evaluation-freeze`** (head `dda4a6c`) — dormant
+  prototype, frozen packet v4, executable decision rules, fresh v2 held-out
+  inputs — after the independent second re-review (T1–T3); awaiting
+  independent re-review/acceptance.
 - Date: 2026-09-13
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
-- Published head: `28b534306144de09e9a3fe739839ab8d7b6f8f94` (tree
-  `b1de1b55adeccc1a2e4c510e400ca73c19128f5e`) on draft PR #65; `validate`
-  PASS 6m56s on merge checkout `9ac6a37b…`, PR preview PASS 1m27s on the PR
-  head.
+- Published head: `dda4a6cd931f079c5b897dad410160d3911af233` (tree
+  `d3a5aa5a7bf04dd6517d74e92469d911fc54a58c`) on draft PR #65; `validate`
+  PASS 5m41s on merge checkout `5d30e339…`, PR preview PASS 1m25s on the PR
+  head. Second-correction published head was `28b5343` (+docs `91779de`).
 - G2 first-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` —
   1175 unit tests in 91 files, 89+3+3 browser tests, both builds, exit 0,
   `Offline verification passed.` Tested tree
@@ -450,6 +450,11 @@ G1 adapter. Each confirmed case is now a committed regression test in
   passed.` Tested tree
   `5db3801ceeb54da8dcd1bebb551e753efe49e908`; complete log in
   `g2-second-correction-evidence/` outside Git.
+- G2 third-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify`
+  — 1222 unit tests in 91 files, 89+3+3 browser tests, both builds, lint 0
+  errors / 17 baseline warnings, exit 0, `Offline verification passed.`
+  Tested tree `2f8978a731efdbb356c29a6b9c574c04d95dd856`; complete log in
+  `g2-third-correction-evidence/` outside Git.
 - Next: independent G2 acceptance review, then a separately authorized G2P
   pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
   dispatch stays v2.
