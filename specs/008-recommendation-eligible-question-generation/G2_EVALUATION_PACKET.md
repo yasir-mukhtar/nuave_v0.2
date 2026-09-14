@@ -1,4 +1,4 @@
-# G2 evaluation packet — frozen offline (2026-09-13, third correction)
+# G2 evaluation packet — frozen offline (2026-09-14, fourth correction)
 
 Status: **corrected and re-frozen for independent re-review**. This packet is
 the versioned evaluation contract required by R5 §8. It is offline-only: it
@@ -7,26 +7,32 @@ Every number below is a proposed limit for later authorization, not a grant to
 spend and not measured performance. Exact fallback wording and evaluation
 examples remain subject to independent review before G2 acceptance.
 
-This third revision corrects the candidate against the independent second
-re-review (T1–T3): attribution rows bind the exact rich attempt by
-input/variant/pass and resolve every P/M/C claim against captured final
-texts, origins, and fingerprints; attempt records additionally carry the
-canonical request-configuration fingerprint (provider/model, sampling
-omission, schema mode, cap, timeout, transport contract, instruction/schema
-identity — never credentials) and per-slot final origins; the combined pilot
-outcome is explicit (`retain` / `amendment_required` / `not_retained`), and
-release attribution requires demonstrated benefit for each component actually
-retained. The slot-fallback contract no longer applies a keyword anchor —
-reviewed overrides are revalidated by the same mechanical checks only — and
-multi-slot conflict repair now finds the true infeasibility participants via
-a bounded matching analysis alongside invalid slots. The second revision
-(R1–R6: transport contract, real fingerprint bindings, honest §8.2 decisions,
-split usage accounting, purpose-preserving fallback forms, bounded named
-backtracking) and the first revision (F1–F10 resolutions) are preserved.
+This fourth revision corrects the candidate against the independent third
+re-review (T1a/T1b/T2/T3): Decision B restores R5 §8.1's approved
+alternatives — reserves are supported by ≥1 recorded M–P mechanical
+rescue/avoided fallback without final-text regression **or** an
+independently justified C–M benefit, while coverage still requires its own
+reviewed C–M gain; release attribution is evaluated per component actually
+retained under the adopted configuration. Every P/M/C capture is now
+structurally validated (canonical lengths/order, allowed origins with
+policy/slot compatibility, nonempty texts) and must resolve to the recorded
+offline `replay` produced by `deriveV3Attribution` under identical
+guards/fallbacks — replay.M equals the attempt's recorded pack and every
+capture equals its replay portfolio exactly. Attempt and release counters
+derive from the recorded finalization origins, so substituted fallback text
+never counts as model-written and full fallback is all-or-nothing. D2/D6
+fallback wording now separates one coherent remote-ordering need from the
+explanation-versus-concrete-service pair, and the conflict-repair graph's
+node-to-slot translation is correct when invalid slots precede or
+interleave conflict groups. The third revision (T1–T3: exact
+input/variant/pass attribution binding, request-configuration fingerprints,
+the explicit three-way combined outcome, keyword-anchor removal, bounded
+matching repair), the second revision (R1–R6), and the first revision
+(F1–F10) are preserved.
 
 Code-owned authority: `src/lib/audit/question-eval-g2.ts`
-(`nuave.g2-evaluation-packet.v4`, decision policy
-`nuave.g2-decision-policy.v4`, rubric `nuave.g2-review-rubric.v2`, frozen
+(`nuave.g2-evaluation-packet.v5`, decision policy
+`nuave.g2-decision-policy.v5`, rubric `nuave.g2-review-rubric.v2`, frozen
 inputs `nuave.g2-frozen-inputs.v2`, usage accounting
 `nuave.g2-usage-accounting.v2`). This document describes that executable
 record; approved R5 remains authoritative — a disagreement between the module
@@ -195,22 +201,31 @@ both are inadequate, stop. Ties never retain complexity.
 ### §8.1 Decision B — components
 
 - Reserves retained iff ≥1 recorded M-over-P mechanical rescue/avoided
-  fallback with no M-caused final-text regression (P/M/C replayed offline
-  from each rich response under identical guards/fallbacks, bound to the
-  exact attempt by input/variant/pass). A rescue resolves to the recorded
-  P-to-M difference: the slot lost its original text under P (slot or full
-  fallback) while M kept an original candidate. A C−M benefit is evidence
-  about the coverage component and never substitutes for reserves.
+  fallback with no M-caused final-text regression **or** ≥1 independently
+  justified C−M benefit — R5 §8.1's explicit alternative (P/M/C replayed
+  offline from each rich response under identical guards/fallbacks, bound
+  to the exact attempt by input/variant/pass). A rescue resolves to the
+  recorded P-to-M difference: the slot lost its original text under P
+  (slot or full fallback) while M kept an original candidate. Each benefit
+  route is gated on its own regression — a rescue counts only when M
+  caused no final-text regression; a gain only when C caused none and the
+  reviewed benefit is real.
 - Coverage retained iff ≥1 independently reviewed material consumer-decision
   or wording gain in C−M on a mechanically valid M, with no C-caused
   regression. Mechanical-only rescue cannot justify coverage; label-only
   changes earn nothing; reserve-only rescue does not earn coverage.
 
 Each attribution row carries the P/M/C replay **captures** — the canonical
-final texts, per-slot origins, and pack fingerprint of each portfolio — so
-every claimed fingerprint, rescue, and gain resolves to actual recorded
-texts of the same rich response. Null, unrelated, identical, or merely
-relabelled portfolios earn no component credit.
+final texts, per-slot origins, and pack fingerprint of each portfolio —
+plus the recorded offline `replay` (`deriveV3Attribution` under identical
+guards/fallbacks) they resolve against: replay.M must equal the attempt's
+recorded pack, anchoring the replay to the same rich response, and every
+non-null capture must equal its replay portfolio exactly. Captures are
+structurally validated — canonical lengths and order, allowed origins with
+policy/slot compatibility (P never uses reserves, named slots carry none,
+full fallback is all-or-nothing), and nonempty final texts. Null,
+unrelated, identical, empty, or merely relabelled portfolios earn no
+component credit, and a self-consistent hash can never invent a replay.
 
 The combined pilot outcome is explicit: `retain` requires Decision A quality
 **and** complete valid evidence **and** retained reserves for the frozen M
@@ -245,15 +260,20 @@ release acceptance is emitted while any mandatory input is missing:
    across the eight development inputs** (D1–D8, with preselected repeats on
    D1/D3/D5) and pairs v3 against them per input; the simple-by-amendment
    allocation pairs all 16. No held-out v2 pairs are invented.
-3. **Writer-contribution thresholds**: ≥15/16 structurally complete records,
-   ≥14/16 packs retaining ≥5 model-written unnamed texts, ≤2 full-fallback
-   packs.
+3. **Writer-contribution thresholds** (derived from the recorded finalization
+   origins — substituted fallback text never counts as model-written, and
+   records whose flags or judgments contradict those origins are rejected,
+   never reconciled): ≥15/16 structurally complete records, ≥14/16 packs
+   retaining ≥5 model-written unnamed texts, ≤2 full-fallback packs.
 4. **§8.2.5 integrated gates**: the §8.1 pilot replay must pass on the same
-   corrected rules, and the release P/M/C attribution must show ≥1 recorded
-   P-to-M rescue without regression for the retained reserves component —
-   an aggregate benefit count or C−M gains alone cannot justify retained
-   coverage — both evaluated as explicit mandatory gates, not implied by
-   record cleanliness.
+   corrected rules, and the release P/M/C attribution must show ≥1 relevant
+   observed benefit without regression for **each component actually
+   retained** under the adopted configuration — a recorded P-to-M rescue
+   or an independently justified C−M gain supports reserves; only a
+   reviewed C−M gain supports coverage. An unretained component's
+   regression is recorded, never an automatic failure, and an aggregate
+   benefit count can never justify a component it did not earn. Reserve
+   attribution uses the same R5 §8.1 alternatives as the pilot.
 5. **§8.2.7 resource samples**: absolute limits over **all** attempts in the
    allocation (failures, timeouts, and fallback latency included), plus
    selected-v3 means and empirical nearest-rank p95 over the selected 16 —
@@ -354,12 +374,13 @@ Pinned versions (`G2_VERSION_PINS` plus request versions): writer contract
 `nuave.question-schema.v3.2-rich/-simple`; projection
 `nuave.question-facts.v3.1`; context `nuave.question-context.v3.1` (G1
 projection/context versions are unchanged and stay pinned); guard
-policy `compatible-008`; selector `nuave.question-selector.v3.3`; fallback
-`nuave.question-fallback.v3.3`; finalizer `nuave.question-finalizer.v3.3`;
+policy `compatible-008`; selector `nuave.question-selector.v3.4`; fallback
+`nuave.question-fallback.v3.4`; finalizer `nuave.question-finalizer.v3.4`;
 evidence `nuave.question-evidence.v3`; packet/decision/rubric/frozen-input/
-usage-accounting versions above. The v3.3/v4 bumps distinguish this
-third-correction candidate — a record claiming v3.1 identity is the old
-rejected candidate, and v3.2/v3 identities mark the second candidate.
+usage-accounting versions above. The v3.4/v5 bumps distinguish this
+fourth-correction candidate — a record claiming v3.1 identity is the old
+rejected candidate, v3.2/v3 marks the second candidate, and v3.3/v4 the
+third.
 
 Held-out retirement record (`G2_FROZEN_INPUT_MANIFEST.retiredInputs`): the
 v1 H1–H4 envelopes are retired from untouched held-out status — their

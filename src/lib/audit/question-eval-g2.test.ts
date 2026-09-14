@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./fixtures/g2-evaluation-inputs.json";
 import { measurementSlotForId } from "./measurement-matrix";
-import { checkV3Candidate, checkV3Text } from "./question-finalize-v3";
+import {
+  checkV3Candidate,
+  checkV3Text,
+  deriveV3Attribution,
+} from "./question-finalize-v3";
 import {
   OPENCODEGO_BASE_URL,
   OPENCODEGO_SESSION_HEADER,
@@ -238,14 +242,14 @@ describe("frozen packet shape", () => {
     expect(G2_USAGE_ACCOUNTING.outputUsdPer1MTokens).toBe(1.2);
   });
 
-  it("pins the changed contract identities at v3.3/v4 packets", () => {
+  it("pins the changed contract identities at v3.4/v5 packets", () => {
     expect(G2_VERSION_PINS.writerContract).toContain("v3.2");
     expect(G2_VERSION_PINS.richInstruction).toContain("v3.2");
-    expect(G2_VERSION_PINS.fallback).toContain("v3.3");
-    expect(G2_VERSION_PINS.selector).toContain("v3.3");
+    expect(G2_VERSION_PINS.fallback).toContain("v3.4");
+    expect(G2_VERSION_PINS.selector).toContain("v3.4");
     expect(G2_VERSION_PINS.frozenInputs).toBe("nuave.g2-frozen-inputs.v2");
-    expect(G2_VERSION_PINS.packet).toBe("nuave.g2-evaluation-packet.v4");
-    expect(G2_VERSION_PINS.decisionPolicy).toBe("nuave.g2-decision-policy.v4");
+    expect(G2_VERSION_PINS.packet).toBe("nuave.g2-evaluation-packet.v5");
+    expect(G2_VERSION_PINS.decisionPolicy).toBe("nuave.g2-decision-policy.v5");
     expect(G2_VERSION_PINS.usageAccounting).toBe(
       "nuave.g2-usage-accounting.v2",
     );
@@ -566,6 +570,36 @@ describe("attempt/judgment validation (F2)", () => {
     expect(pair.simpleUsable).toBe(false);
     expect(pair.materialWin).toBe(true); // usable rich + unusable simple
   });
+
+  it("contradictory origins, fallback flags, and model-written judgments never validate (T1b)", () => {
+    // Ten full_fallback origins, fullFallback false, ten model-written
+    // judgments — the counters must agree with the recorded finalization
+    // or the record is rejected, never silently reconciled.
+    const record = attemptRecord(
+      { inputId: "G2P-B2B", variant: "rich", pass: 1 },
+      INPUTS,
+      { finalOrigins: Array(10).fill("full_fallback") },
+    );
+    const errors = validateG2AttemptRecord(record, INPUTS);
+    expect(
+      errors.some((e) => e.includes("fullFallback flag contradicts")),
+    ).toBe(true);
+    expect(
+      errors.filter((e) => e.includes("modelWritten")).length,
+    ).toBeGreaterThanOrEqual(10);
+    // Reserve origins under the simple contract or on a named slot are
+    // not finalization outcomes either.
+    const simpleReserve = attemptRecord(
+      { inputId: "G2P-AC", variant: "simple", pass: 1 },
+      INPUTS,
+      {
+        finalOrigins: [...Array(9).fill("primary"), "reserve"] as never,
+      },
+    );
+    const simpleErrors = validateG2AttemptRecord(simpleReserve, INPUTS);
+    expect(simpleErrors.some((e) => e.includes("simple contract"))).toBe(true);
+    expect(simpleErrors.some((e) => e.includes("named slot"))).toBe(true);
+  });
 });
 
 describe("P/M/C attribution reconciliation (R2)", () => {
@@ -848,6 +882,200 @@ describe("P/M/C attribution reconciliation (R2)", () => {
     expect(res.errors.some((e) => e.includes("M capture"))).toBe(true);
     expect(res.valid).toHaveLength(4);
   });
+
+  it("rejects unknown origins, reserves in P or named slots, and partial full fallback in captures (T1b)", () => {
+    const attempts = pilotAttempts();
+    const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
+      (a) => a.variant === "rich",
+    );
+    const attempt = attempts.find(
+      (a) => a.variant === "rich" && a.inputId === "G2P-B2B",
+    )!;
+    // P capture carrying a made-up origin string — a hash over consistent
+    // text cannot launder it into reserve credit.
+    const unknownOrigin = attributionRecord(attempt);
+    unknownOrigin.captures.P = {
+      ...portfolioCapture(attempt, attempt.finalTexts!),
+      origins: Array.from({ length: 10 }, (_, i) =>
+        i === 0 ? "unknown-origin" : "primary",
+      ) as never,
+    };
+    unknownOrigin.replay!.P = unknownOrigin.captures.P;
+    unknownOrigin.pToMRescuedSlots = ["NUAVE-BRAND-NEED-01"];
+    // P claims a reserve origin — the primary-only portfolio never selects
+    // reserves, so this is not a replay outcome.
+    const pReserve = attributionRecord(attempt);
+    pReserve.captures.P = {
+      ...portfolioCapture(attempt, attempt.finalTexts!),
+      origins: Array.from({ length: 10 }, (_, i) =>
+        i === 1 ? "reserve" : "primary",
+      ) as never,
+    };
+    pReserve.replay!.P = pReserve.captures.P;
+    // A named slot claims a reserve origin — named slots carry none.
+    const namedReserve = attributionRecord(attempt);
+    namedReserve.captures.M = {
+      ...portfolioCapture(attempt, attempt.finalTexts!),
+      origins: Array.from({ length: 10 }, (_, i) =>
+        i === 6 ? "reserve" : "primary",
+      ) as never,
+    };
+    namedReserve.replay!.M = namedReserve.captures.M;
+    // Full fallback mixed with ordinary origins — never a finalization.
+    const partialFull = attributionRecord(attempt);
+    partialFull.captures.M = {
+      ...portfolioCapture(attempt, attempt.finalTexts!),
+      origins: Array.from({ length: 10 }, (_, i) =>
+        i < 3 ? "full_fallback" : "primary",
+      ) as never,
+    };
+    partialFull.replay!.M = partialFull.captures.M;
+    for (const [row, fragment] of [
+      [unknownOrigin, "not a finalization origin"],
+      [pReserve, "never selects reserves"],
+      [namedReserve, "named slots carry no reserves"],
+      [partialFull, "all-or-nothing"],
+    ] as const) {
+      const res = validateG2Attribution([row], [expectedRich[1]], attempts);
+      expect(
+        res.errors.some((e) => e.includes(fragment)),
+        fragment,
+      ).toBe(true);
+      expect(res.valid).toHaveLength(0);
+    }
+  });
+
+  it("rejects an empty claimed-improved text even with a self-consistent hash (T1b)", () => {
+    // A recomputed hash proves only text consistency — an empty portfolio
+    // entry was never a finished replay capture and earns no coverage.
+    const attempts = pilotAttempts();
+    const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
+      (a) => a.variant === "rich",
+    );
+    const attempt = attempts.find(
+      (a) => a.variant === "rich" && a.inputId === "G2P-B2B",
+    )!;
+    const row = attributionRecord(attempt);
+    const cTexts = [...attempt.finalTexts!];
+    cTexts[0] = "";
+    row.captures.C = portfolioCapture(attempt, cTexts);
+    row.replay!.C = row.captures.C;
+    row.cOverMMaterialGains = [
+      {
+        slotId: "NUAVE-BRAND-NEED-01",
+        mTextFingerprint: g2TextFingerprint(
+          "NUAVE-BRAND-NEED-01",
+          attempt.finalTexts![0],
+        ),
+        cTextFingerprint: g2TextFingerprint("NUAVE-BRAND-NEED-01", ""),
+        reviewRef: "review-empty",
+      },
+    ];
+    const res = validateG2Attribution([row], [expectedRich[1]], attempts);
+    expect(res.errors.some((e) => e.includes("empty final text"))).toBe(true);
+    expect(res.valid).toHaveLength(0);
+  });
+
+  it("requires the recorded offline replay for every capture and claim (T1b)", () => {
+    const attempts = pilotAttempts();
+    const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
+      (a) => a.variant === "rich",
+    );
+    const attempt = attempts.find(
+      (a) => a.variant === "rich" && a.inputId === "G2P-B2B",
+    )!;
+    // A rescue claim without any replay record cannot resolve to a real
+    // P-to-M difference of this response.
+    const noReplay = attributionRecord(attempt);
+    delete noReplay.replay;
+    noReplay.pToMRescuedSlots = ["NUAVE-BRAND-NEED-01"];
+    // A capture that is not what the replay produced — internally
+    // consistent hash, wrong provenance.
+    const foreign = attributionRecord(attempt);
+    foreign.captures.P = portfolioCapture(attempt, [
+      ...attempt.finalTexts!.slice(0, 9),
+      "Teks yang tidak berasal dari replay ini?",
+    ]);
+    // A replay whose M is not this response's recorded pack.
+    const wrongResponse = attributionRecord(attempt);
+    wrongResponse.replay = {
+      ...wrongResponse.replay!,
+      M: portfolioCapture(attempt, [
+        "Respons lain sama sekali?",
+        ...attempt.finalTexts!.slice(1),
+      ]),
+    };
+    for (const [row, fragment] of [
+      [noReplay, "without the recorded offline P/M/C replay"],
+      [foreign, "does not equal the recorded replay portfolio"],
+      [wrongResponse, "replay is not of this response"],
+    ] as const) {
+      const res = validateG2Attribution([row], [expectedRich[1]], attempts);
+      expect(
+        res.errors.some((e) => e.includes(fragment)),
+        fragment,
+      ).toBe(true);
+      expect(res.valid).toHaveLength(0);
+    }
+  });
+
+  it("accepts a row built from a real deriveV3Attribution replay of the recorded response (T1b)", () => {
+    // A genuine rich response: slot 1's primary leaks the identity so P
+    // must substitute, while M keeps the reserve — a real rescue the
+    // replay itself produces, alongside synthetic arithmetic controls.
+    const facts = projectedFacts();
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": {
+        primary: "Kopi Sudut enak?",
+        reserve: "Kedai kopi mana yang cocok untuk bekerja di Jakarta Selatan?",
+      },
+    });
+    const parsed = parseV3RichResponse(response);
+    if (!parsed.ok) throw new Error("fixture should parse");
+    const derived = deriveV3Attribution(facts, parsed.response);
+    expect(derived.P.status).toBe("completed");
+    expect(derived.M.status).toBe("completed");
+    expect(derived.C.status).toBe("completed");
+    if (derived.P.status !== "completed" || derived.M.status !== "completed")
+      return;
+    const mResult = derived.M;
+    const mTexts = mResult.prompts.map((prompt) => prompt.text);
+    const mOrigins = mResult.prompts.map((prompt) => prompt.origin);
+    // P substituted slot 1; M kept its reserve — the real P-to-M rescue.
+    expect(mOrigins[0]).toBe("reserve");
+    expect(derived.P.prompts[0].origin).toBe("slot_fallback");
+    const scheduled = G2_PILOT_SCHEDULE.attempts.find(
+      (a) => a.variant === "rich" && a.inputId === "G2P-AC" && a.pass === 1,
+    )!;
+    const attempt = attemptRecord(scheduled, INPUTS, {
+      // The replay ran under these projected facts — the attempt records
+      // the same facts fingerprint so captures bind to this response.
+      factsFingerprint: facts.binding.factsFingerprint,
+      finalTexts: mTexts,
+      finalOrigins: mOrigins,
+      texts: mTexts.map((text, i) => ({
+        slotId: mResult.prompts[i].slotId,
+        textFingerprint: g2TextFingerprint(mResult.prompts[i].slotId, text),
+        naturalness: 3,
+        commercialChoice: true,
+        entityDemand: true,
+        roleScopeFit: true,
+        fairOpenness: true,
+        singleUnderstandableRequest: true,
+        criteriaDiscipline: true,
+        adheresInput: true,
+        selectedTextFlagged: false,
+        modelWritten: mOrigins[i] === "primary" || mOrigins[i] === "reserve",
+      })),
+    });
+    const row = attributionRecord(attempt);
+    row.captures = derived.captures;
+    row.replay = derived.captures;
+    row.pToMRescuedSlots = ["NUAVE-BRAND-NEED-01"];
+    const res = validateG2Attribution([row], [scheduled], [attempt]);
+    expect(res.errors).toEqual([]);
+    expect(res.valid).toHaveLength(1);
+  });
 });
 
 describe("comparison rule (F1)", () => {
@@ -1098,10 +1326,11 @@ describe("§8.3 frozen counterexamples", () => {
     expect(result.coverageRetained).toBe(false); // label-only earns nothing
   });
 
-  it("2b. a C–M gain without any M–P rescue never retains reserves", () => {
-    // Coverage evidence is coverage evidence: a reviewed C–M gain supports
-    // the coverage component only. The frozen M contract cannot retain its
-    // reserves on it — A alone plus zero M–P benefit is amendment_required.
+  it("2b. an independently justified C–M gain supports reserves under R5's explicit alternative — even with no M–P rescue", () => {
+    // R5 §8.1: reserves require "≥1 M–P mechanical rescue/avoided
+    // fallback without final-text regression, OR independently justified
+    // C–M benefit". One reviewed gain on mechanically valid M without
+    // regression is an approved benefit route for reserves and coverage.
     const pilot = passingPilot();
     const attempt = pilot.attempts.find(
       (a) => a.variant === "rich" && a.inputId === "G2P-B2B",
@@ -1120,9 +1349,9 @@ describe("§8.3 frozen counterexamples", () => {
     expect(result.decisionA).toBe(true);
     expect(result.evidenceComplete).toBe(true);
     expect(result.coverageRetained).toBe(true);
-    expect(result.reservesRetained).toBe(false);
-    expect(result.retain).toBe(false);
-    expect(result.outcome).toBe("amendment_required");
+    expect(result.reservesRetained).toBe(true);
+    expect(result.retain).toBe(true);
+    expect(result.outcome).toBe("retain");
   });
 
   it("2c. C–M gains on a mechanically invalid M do not count", () => {
@@ -1644,10 +1873,10 @@ describe("release evaluator (R3)", () => {
     );
   });
 
-  it("coverage gains alone cannot retain the reserves component at release", () => {
-    // Every row shows a reviewed C–M gain but zero P-to-M rescues — the
-    // aggregate gain count cannot substitute for the retained component's
-    // own demonstrated benefit.
+  it("independently reviewed C–M gains support the retained reserves component at release (R5 §8.1 alternative)", () => {
+    // Every row shows a reviewed C–M gain but zero P-to-M rescues — under
+    // R5's explicit alternative the gain route is a relevant benefit for
+    // reserves, so release attribution passes for the retained component.
     const attempts = releaseAttempts("richSelected");
     const result = evaluateG2Release({
       attempts,
@@ -1665,11 +1894,93 @@ describe("release evaluator (R3)", () => {
           ),
         ),
     });
+    expect(result.pass).toBe(true);
+    expect(result.metrics.cOverMMaterialGains).toBe(16);
+  });
+
+  it("reserve-only rescue cannot retain coverage at release; an unretained component's regression is recorded, not automatic failure", () => {
+    // Retained coverage requires the reviewed-gain route — a rescue-only
+    // attribution fails it. When coverage was never retained (the default
+    // under the M contract), a C regression is a recorded finding, not a
+    // release failure.
+    const attempts = releaseAttempts("richSelected");
+    const rescueOnly = (a: (typeof attempts)[number]) =>
+      rescueAttribution(
+        a,
+        "NUAVE-BRAND-NEED-02",
+        "Teks fallback primer yang tidak lagi sejalan dengan konteks.",
+      );
+    const coverageRetained = evaluateG2Release({
+      attempts,
+      allocation: "richSelected",
+      inputs: INPUTS,
+      pilotReplay: {
+        decisionAPreserved: true,
+        decisionBPreserved: true,
+        retainedComponents: { reserves: true, coverage: true },
+      },
+      releaseAttribution: attempts
+        .filter((a) => a.variant === "rich")
+        .map(rescueOnly),
+    });
+    expect(coverageRetained.pass).toBe(false);
+    expect(
+      coverageRetained.failures.some((f) => f.includes("coverage component")),
+    ).toBe(true);
+    const cRegressed = evaluateG2Release({
+      attempts,
+      allocation: "richSelected",
+      inputs: INPUTS,
+      pilotReplay: {
+        decisionAPreserved: true,
+        decisionBPreserved: true,
+        retainedComponents: { reserves: true, coverage: false },
+      },
+      releaseAttribution: attempts
+        .filter((a) => a.variant === "rich")
+        .map((a) => ({ ...rescueOnly(a), cCausedFinalRegression: true })),
+    });
+    expect(cRegressed.pass).toBe(true);
+  });
+
+  it("fallback-substituted packs count as fallback, never model-written (T1b)", () => {
+    // Fifteen all-full-fallback packs plus one mixed-origin pack: the
+    // counters derive from recorded origins, so this can never read as
+    // sixteen model-written packs and zero full fallbacks — and a
+    // partially-fallback origin list is not a finalization outcome at all.
+    let richIndex = 0;
+    const attempts = releaseAttempts("richSelected", (a) => {
+      if (a.variant !== "rich") return a;
+      richIndex += 1;
+      if (richIndex <= 15)
+        return {
+          ...a,
+          finalOrigins: Array(10).fill("full_fallback") as never,
+          fullFallback: true,
+          texts: a.texts!.map((j) => ({ ...j, modelWritten: false })),
+        };
+      return {
+        ...a,
+        finalOrigins: ["full_fallback", ...Array(9).fill("primary")] as never,
+        texts: a.texts!.map((j, i) => ({
+          ...j,
+          modelWritten: i !== 0,
+        })),
+      };
+    });
+    const result = evaluateG2Release({
+      attempts,
+      allocation: "richSelected",
+      inputs: INPUTS,
+      pilotReplay: { decisionAPreserved: true, decisionBPreserved: true },
+      releaseAttribution: releaseAttributionWithRescue(attempts),
+    });
     expect(result.pass).toBe(false);
-    expect(result.failures.some((f) => f.includes("reserves component"))).toBe(
+    expect(result.failures.some((f) => f.includes("model-written"))).toBe(true);
+    expect(result.failures.some((f) => f.includes("full-fallback"))).toBe(true);
+    expect(result.failures.some((f) => f.includes("all-or-nothing"))).toBe(
       true,
     );
-    expect(result.metrics.cOverMMaterialGains).toBe(16);
   });
 
   it("selected-v3 sample statistics are enforced separately from pooled totals", () => {

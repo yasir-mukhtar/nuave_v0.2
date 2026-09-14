@@ -450,7 +450,9 @@ export function portfolioCapture(
  * pack under the frozen selection policy — the same texts and origins the
  * attempt itself recorded. P and C default to an internally consistent
  * replay of the same texts (all-primary origins): identical portfolios
- * that can honestly claim no component credit. */
+ * that can honestly claim no component credit. The `replay` record is the
+ * same synthetic portfolios — an arithmetic-only control; real
+ * replay-provenance controls build the row from `deriveV3Attribution`. */
 export function attributionRecord(
   attempt: G2AttemptRecord,
   extra: Partial<G2Attribution> = {},
@@ -462,20 +464,22 @@ export function attributionRecord(
         attempt.finalOrigins ?? undefined,
       )
     : null;
+  const captures: G2Attribution["captures"] = {
+    P: attempt.finalTexts
+      ? portfolioCapture(attempt, attempt.finalTexts)
+      : null,
+    M: mCapture,
+    C: attempt.finalTexts
+      ? portfolioCapture(attempt, attempt.finalTexts)
+      : null,
+  };
   return {
     inputId: attempt.inputId,
     businessKey: attempt.businessKey,
     pass: attempt.pass,
     variant: "rich",
-    captures: {
-      P: attempt.finalTexts
-        ? portfolioCapture(attempt, attempt.finalTexts)
-        : null,
-      M: mCapture,
-      C: attempt.finalTexts
-        ? portfolioCapture(attempt, attempt.finalTexts)
-        : null,
-    },
+    captures,
+    replay: { ...captures },
     pToMRescuedSlots: [],
     mCausedFinalRegression: false,
     mMechanicallyValid: attempt.finalTexts !== null,
@@ -505,6 +509,7 @@ export function rescueAttribution(
   ) as V3Origin[];
   const row = attributionRecord(attempt);
   row.captures.P = portfolioCapture(attempt, pTexts, pOrigins);
+  row.replay = { ...row.replay!, P: row.captures.P };
   row.pToMRescuedSlots = [slotId];
   return row;
 }
@@ -525,6 +530,7 @@ export function gainAttribution(
   cTexts[i] = cText;
   const row = attributionRecord(attempt);
   row.captures.C = portfolioCapture(attempt, cTexts);
+  row.replay = { ...row.replay!, C: row.captures.C };
   row.cOverMMaterialGains = [
     {
       slotId,

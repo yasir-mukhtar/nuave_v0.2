@@ -487,6 +487,46 @@ describe("v3SlotFallback (F10/R5)", () => {
     }
   });
 
+  it("D2 slot 3 asks one coherent delivery need — not a presence need joined with delivery", () => {
+    // The confirmed delivery channel supports choosing a café for coffee
+    // without visiting; slot 2 already covers working there, slot 4 the
+    // concrete espresso offering. Slot 3 must be one need, not "mampir
+    // atau bekerja" qualified by pesan antar.
+    const f = fixtureFacts("D2");
+    const needFit = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-01"));
+    expect(
+      checkV3Text(needFit.text!, slot("NUAVE-BRAND-SOLUTION-01"), f),
+    ).toEqual([]);
+    expect(needFit.text).toMatch(/pesan antar/i);
+    expect(needFit.text).toMatch(/tidak bisa datang langsung/i);
+    expect(needFit.text).not.toMatch(/mampir|bekerja|nugas/i);
+    const occasion = v3SlotFallback(f, slot("NUAVE-BRAND-NEED-02"));
+    const offering = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-02"));
+    // Three distinct decisions: visiting to work, ordering remotely,
+    // the concrete espresso offering.
+    expect(new Set([occasion.text, needFit.text, offering.text]).size).toBe(3);
+  });
+
+  it("D6 slots 3 and 4 ask distinct decisions — explaining the task vs the concrete filing service", () => {
+    // Slot 3 abstracts the supplied confusion into choosing a consultant
+    // who explains the filing steps; slot 4 asks who offers the concrete
+    // online SPT filing service. Public provider discovery only — no tax
+    // advice, records, or service-quality claims.
+    const f = fixtureFacts("D6");
+    const needFit = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-01"));
+    const offering = v3SlotFallback(f, slot("NUAVE-BRAND-SOLUTION-02"));
+    expect(
+      checkV3Text(needFit.text!, slot("NUAVE-BRAND-SOLUTION-01"), f),
+    ).toEqual([]);
+    expect(
+      checkV3Text(offering.text!, slot("NUAVE-BRAND-SOLUTION-02"), f),
+    ).toEqual([]);
+    expect(needFit.text).toMatch(/memahami/i);
+    expect(offering.text).toMatch(/melayani/i);
+    expect(offering.text).toMatch(/online/i);
+    expect(needFit.text).not.toBe(offering.text);
+  });
+
   it("returns missing rather than inventing when facts cannot anchor a slot", () => {
     // No confirmed comparison target: the direct-comparison slot must report
     // missing, never a fabricated name.
@@ -759,6 +799,100 @@ describe("finalizeV3RichResponse", () => {
       2,
     );
     // Bystanders never moved: the remaining slots keep their primaries.
+    result.prompts
+      .filter((p) => !result.diagnostics.affectedSlots.includes(p.slotId))
+      .forEach((p) => expect(p.origin).toBe("primary"));
+    expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(
+      64 + 729,
+    );
+  });
+
+  it("marks the right slots when an invalid slot precedes a later conflict", () => {
+    // Slot 1 has only identity-invalid candidates; slots 5/6 share one
+    // otherwise valid text. The invalid slot shifts every later option
+    // out of the compact matching graph's numbering — detection must
+    // still mark the true participants: slots 1/5/6, never bystanders.
+    const shared = "Kedai kopi mana saja yang layak masuk shortlist nugas?";
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": {
+        primary: "Kopi Sudut enak?",
+        reserve: "Kopi Sudut nyaman?",
+      },
+      "NUAVE-BRAND-COMPARISON-01": { primary: shared, reserve: shared },
+      "NUAVE-BRAND-COMPARISON-02": { primary: shared, reserve: shared },
+    });
+    const parsed = parseV3RichResponse(response);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = finalizeV3RichResponse(facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.pass).toBe("fallback_selection");
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-COMPARISON-01",
+      "NUAVE-BRAND-COMPARISON-02",
+    ]);
+    const affected = result.prompts.filter((p) =>
+      result.diagnostics.affectedSlots.includes(p.slotId),
+    );
+    // Two substitutions: one for the invalid slot, one for the pair —
+    // the other pair participant keeps the shared text.
+    expect(affected.filter((p) => p.origin === "slot_fallback")).toHaveLength(
+      2,
+    );
+    expect(affected.map((p) => p.text)).toContain(shared);
+    // Every bystander keeps its exact primary text.
+    result.prompts
+      .filter((p) => !result.diagnostics.affectedSlots.includes(p.slotId))
+      .forEach((p) => expect(p.origin).toBe("primary"));
+    expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(
+      64 + 729,
+    );
+  });
+
+  it("marks the right slots when an invalid slot sits between conflict groups", () => {
+    // Slots 1/2 share A, slot 3 is invalid, slots 4/5 share B — defect
+    // kinds interleave across the whole pack, so compact graph indexes
+    // diverge from option-list indexes in both directions.
+    const A = "Kedai kopi mana yang cocok untuk bekerja di Jakarta Selatan?";
+    const B = "Kedai kopi mana yang cocok untuk berkumpul di Jakarta Selatan?";
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": { primary: A, reserve: A },
+      "NUAVE-BRAND-NEED-02": { primary: A, reserve: A },
+      "NUAVE-BRAND-SOLUTION-01": {
+        primary: "Kopi Sudut enak?",
+        reserve: "Kopi Sudut nyaman?",
+      },
+      "NUAVE-BRAND-SOLUTION-02": { primary: B, reserve: B },
+      "NUAVE-BRAND-COMPARISON-01": { primary: B, reserve: B },
+    });
+    const parsed = parseV3RichResponse(response);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = finalizeV3RichResponse(facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-NEED-02",
+      "NUAVE-BRAND-SOLUTION-01",
+      "NUAVE-BRAND-SOLUTION-02",
+      "NUAVE-BRAND-COMPARISON-01",
+    ]);
+    const affected = result.prompts.filter((p) =>
+      result.diagnostics.affectedSlots.includes(p.slotId),
+    );
+    // Three substitutions: one per conflict pair, one for the invalid
+    // slot. Each pair keeps its shared text on the other participant.
+    expect(affected.filter((p) => p.origin === "slot_fallback")).toHaveLength(
+      3,
+    );
+    const texts = affected.map((p) => p.text);
+    expect(texts).toContain(A);
+    expect(texts).toContain(B);
     result.prompts
       .filter((p) => !result.diagnostics.affectedSlots.includes(p.slotId))
       .forEach((p) => expect(p.origin).toBe("primary"));
@@ -1092,6 +1226,38 @@ describe("finalizeV3SimpleResponse", () => {
     expect(result.diagnostics.fullFallbackUsed).toBe(false);
     expect(result.prompts[2].text).toBe(SIMPLE_QUESTIONS[2]);
     expect(result.prompts[2].origin).toBe("primary");
+    const normalized = result.prompts.map((p) => p.text.toLowerCase());
+    expect(new Set(normalized).size).toBe(10);
+  });
+
+  it("marks the right slots when an invalid slot precedes a later conflict (simple)", () => {
+    // Slot 1's only candidate is invalid; slots 5/6 share one otherwise
+    // valid text. The shifted numbering must still resolve to slots
+    // 1/5/6 — two substitutions, eight bystanders untouched.
+    const shared = "Kedai kopi mana saja yang layak masuk shortlist nugas?";
+    const questions = [...SIMPLE_QUESTIONS];
+    questions[0] = "Kopi Sudut enak?";
+    questions[4] = shared;
+    questions[5] = shared;
+    const result = finalizeV3SimpleResponse(facts, { questions });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-COMPARISON-01",
+      "NUAVE-BRAND-COMPARISON-02",
+    ]);
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
+    const affected = result.prompts.filter((p) =>
+      result.diagnostics.affectedSlots.includes(p.slotId),
+    );
+    expect(affected.filter((p) => p.origin === "slot_fallback")).toHaveLength(
+      2,
+    );
+    expect(affected.map((p) => p.text)).toContain(shared);
+    result.prompts
+      .filter((p) => !result.diagnostics.affectedSlots.includes(p.slotId))
+      .forEach((p) => expect(p.origin).toBe("primary"));
     const normalized = result.prompts.map((p) => p.text.toLowerCase());
     expect(new Set(normalized).size).toBe(10);
   });

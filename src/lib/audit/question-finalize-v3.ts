@@ -45,9 +45,9 @@ import {
   type V3WriterVariant,
 } from "./question-writer-v3";
 
-export const V3_FINALIZER_VERSION = "nuave.question-finalizer.v3.3";
-export const V3_SELECTOR_VERSION = "nuave.question-selector.v3.3";
-export const V3_FALLBACK_VERSION = "nuave.question-fallback.v3.3";
+export const V3_FINALIZER_VERSION = "nuave.question-finalizer.v3.4";
+export const V3_SELECTOR_VERSION = "nuave.question-selector.v3.4";
+export const V3_FALLBACK_VERSION = "nuave.question-fallback.v3.4";
 
 const UNNAMED_SLOTS = AUDIT_MEASUREMENT_MATRIX.filter(
   (slot) => slot.auditedBrandIdentity === "forbidden",
@@ -614,22 +614,6 @@ function needTopic(need: string): { text: string; task: boolean } | null {
   return null;
 }
 
-/** The channel as a service-mode adverb for task topics — "untuk lapor
- * pajak tahunan secara online" qualifies how the need is served, never
- * claiming an order was placed. */
-function channelAdverb(
-  role: string,
-  channels: FallbackMaterial["channels"],
-): string | null {
-  for (const channel of ["delivery", "on_customer", "online"] as const) {
-    if (!channels.includes(channel)) continue;
-    if (channel === "delivery") return "dengan layanan antar";
-    if (channel === "on_customer") return "di lokasi pelanggan";
-    if (role !== "platform") return "secara online";
-  }
-  return null;
-}
-
 /** A confirmed channel as a second qualifying criterion — it qualifies the
  * consumer's choice, it never claims an order was placed. Platforms are
  * already online so "online" adds no distinguishing criterion there; an
@@ -822,18 +806,26 @@ export function v3SlotFallback(
           text: `Untuk ${topic.text} yang ${channelQ}, ${E} apa yang cocok${inScope}?`,
           missing: null,
         };
-      // A situation-word need ("bingung lapor pajak tahunan") becomes the
-      // task it names, qualified by the service channel — a different
-      // decision from slot 2's occasion, not the same occasion re-prefixed.
-      const adverb = channelAdverb(m.role, m.channels);
-      if (topic?.task && adverb)
+      // A situation-word need ("bingung lapor pajak tahunan") abstracts to
+      // choosing a provider who explains the task's steps — a different
+      // decision from slot 4's concrete service offering, not the same
+      // provider-for-the-same-service through the same channel.
+      if (topic?.task)
         return {
-          text: `Untuk ${topic.text} ${adverb}, ${E} apa yang cocok${inScope}?`,
+          text: `Untuk memahami ${topic.text}, ${E} apa yang cocok${inScope}?`,
           missing: null,
         };
       if (criterion?.kind === "noun")
         return {
           text: `Untuk ${useCase}, ${E} apa yang cocok dengan ${criterion.text}${inScope}?`,
+          missing: null,
+        };
+      // A venue the consumer reaches remotely: the coherent decision is
+      // ordering the category when one cannot visit — never joining a
+      // presence need ("mampir atau bekerja") with a delivery channel.
+      if (m.role === "venue" && remoteChannel && channelQ)
+        return {
+          text: `Saat tidak bisa datang langsung, ${E} apa yang cocok yang ${channelQ}${inScope}?`,
           missing: null,
         };
       if (channelQ)
@@ -1289,11 +1281,14 @@ function affectedSlotIndexes(
     return [...affected].sort((a, b) => a - b);
 
   // Demand nodes: each resolvable unnamed slot and each resolvable named
-  // choice, each adjacent to its valid options' normalized texts.
+  // choice, each adjacent to its valid options' normalized texts. The node
+  // index is the adjacency position — `unnamedNode` maps node → original
+  // slot so unmatched demand nodes translate back to the right slot even
+  // when invalid slots were omitted from the graph.
   const adjacency: Set<string>[] = [];
   const unnamedNode = new Map<number, number>();
   for (const i of resolvable) {
-    unnamedNode.set(i, adjacency.length);
+    unnamedNode.set(adjacency.length, i);
     adjacency.push(
       new Set(
         optionLists[i]

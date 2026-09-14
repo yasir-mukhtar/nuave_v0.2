@@ -2,9 +2,9 @@
 
 > Status: G0 recorded in R5; the G1 adapter is **merged and deployed via PR #59**
 > (merge `687f340`, 2026-09-13) but remains dormant with no runtime consumer.
-> **G2 is in third correction** on `codex/spec008-g2-evaluation-freeze`
-> after the independent second re-review (T1–T3) and awaits offline gate plus
-> independent acceptance; it is
+> **G2 is in fourth correction** on `codex/spec008-g2-evaluation-freeze`
+> after the independent third re-review (T1a/T1b/T2/T3) and awaits independent
+> acceptance; it is
 > not an empirical quality pass and proves no provider feasibility. No G2 merge,
 > route integration, provider call, or release is claimed.
 > Index owner:
@@ -224,24 +224,30 @@ G1 adapter. Each confirmed case is now a committed regression test in
    remains a genuine limitation. No competitor is selected, joined, or given
    an inferred role, and no required screen was added.
 
-### G2 dormant prototype and frozen evaluation packet — 2026-09-13 (third correction)
+### G2 dormant prototype and frozen evaluation packet — 2026-09-14 (fourth correction)
 
 - Worktree: `/Users/yasir/nuave-worktrees/spec008-g2`; branch
   `codex/spec008-g2-evaluation-freeze`, created from `main@687f340` (the
-  post-#59 merge). Second correction reviewed at head `91779de`; this
-  section now describes the third corrected candidate returned for
+  post-#59 merge). Third correction reviewed at head `8bdecf6`; this
+  section now describes the fourth corrected candidate returned for
   independent re-review.
 - Scope: dormant v3 writer prototype + bounded finalizer/fallback + frozen
   evaluation packet + executable §8.3 decision rules. No route, UI, report,
   config, dispatch, provider, or dependency change. Customer dispatch remains
   v2; nothing in production routes through these modules.
-- Third correction: the second corrected candidate was independently
-  re-reviewed (T1–T3) and corrected in place on this branch. The
-  re-review's attribution-binding, fallback-contract, and multi-slot
-  conflict findings are addressed in the modules below;
+- Fourth correction: the third corrected candidate was independently
+  re-reviewed (T1a/T1b/T2/T3) and corrected in place on this branch. R5
+  §8.1's OR-component rule is restored (reserves supported by an M–P
+  rescue/avoided fallback OR an independently justified C–M benefit;
+  release attribution evaluates only the components actually retained);
+  P/M/C captures are structurally validated and must resolve to the
+  recorded `deriveV3Attribution` replay of the same response; contribution
+  counters derive from recorded finalization origins; D2/D6 fallback
+  wording separates distinct decisions; and the conflict graph's
+  node-to-slot translation handles interleaved defects.
   `G2_EVALUATION_PACKET.md` is re-frozen at
-  `nuave.g2-evaluation-packet.v4`. The F1–F10 and R1–R6 resolutions are
-  preserved.
+  `nuave.g2-evaluation-packet.v5`. The F1–F10, R1–R6, and prior T1–T3
+  resolutions are preserved.
 - Implementation:
   - `src/lib/audit/question-writer-v3.ts` — versioned rich (16 texts incl.
     reserves + dimension/context metadata) and simple (10 final strings,
@@ -397,7 +403,7 @@ G1 adapter. Each confirmed case is now a committed regression test in
   provenance is also corrected: the PR preview deploys the **PR head**
   checkout, whereas `validate` tests the GitHub-produced merge tree.
 - Full gate (second correction): **PASS**, `NUAVE_E2E_PORT=3600 npm run
-  verify` on the second-corrected candidate — typecheck, formatting and
+verify` on the second-corrected candidate — typecheck, formatting and
   typography passed; lint zero errors with the same 17 pre-existing
   warnings; **1212 unit tests across 91 files**; `next build` and
   OpenNext/Cloudflare builds; **89 + 3 + 3 browser tests**; exit 0,
@@ -407,7 +413,7 @@ G1 adapter. Each confirmed case is now a committed regression test in
   only by this verification-record fill-in. Complete log and hashes are
   preserved in the `g2-second-correction-evidence/` directory outside Git.
 - Full gate (third correction): **PASS**, `NUAVE_E2E_PORT=3600 npm run
-  verify` on the third-corrected candidate — typecheck, formatting and
+verify` on the third-corrected candidate — typecheck, formatting and
   typography passed; lint zero errors with the same 17 pre-existing
   warnings; **1222 unit tests across 91 files**; `next build` and
   OpenNext/Cloudflare builds; **89 + 3 + 3 browser tests**; exit 0,
@@ -445,9 +451,9 @@ G1 adapter. Each confirmed case is now a committed regression test in
   `20dbe49d4f5e6a659a938e68d68d3c3359ded7eb`; complete log in
   `g2-correction-evidence/` outside Git.
 - G2 second-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run
-  verify` — 1212 unit tests in 91 files, 89+3+3 browser tests, both builds,
+verify` — 1212 unit tests in 91 files, 89+3+3 browser tests, both builds,
   lint 0 errors / 17 baseline warnings, exit 0, `Offline verification
-  passed.` Tested tree
+passed.` Tested tree
   `5db3801ceeb54da8dcd1bebb551e753efe49e908`; complete log in
   `g2-second-correction-evidence/` outside Git.
 - G2 third-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify`

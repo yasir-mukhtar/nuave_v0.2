@@ -25,8 +25,8 @@ import {
   type V3RequestSettings,
 } from "./question-writer-v3";
 
-export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v4";
-export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v4";
+export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v5";
+export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v5";
 export const G2_RUBRIC_VERSION = "nuave.g2-review-rubric.v2";
 export const G2_FROZEN_INPUTS_VERSION = "nuave.g2-frozen-inputs.v2";
 export const G2_USAGE_ACCOUNTING_VERSION = "nuave.g2-usage-accounting.v2";
@@ -814,6 +814,19 @@ export type G2Attribution = {
     M: G2PortfolioCapture | null;
     C: G2PortfolioCapture | null;
   };
+  /** The recorded offline P/M/C replay of this attempt's response —
+   * `deriveV3Attribution` output under identical guards/fallbacks and the
+   * same request configuration. Its M portfolio must equal the attempt's
+   * recorded pack (anchoring the replay to the same response); every
+   * non-null capture must equal the corresponding replay portfolio
+   * exactly. Required whenever a P or C capture is recorded or a
+   * rescue/gain is claimed — a hash alone proves text consistency, not
+   * that an arbitrary or empty portfolio was produced by that replay. */
+  replay?: {
+    P: G2PortfolioCapture | null;
+    M: G2PortfolioCapture | null;
+    C: G2PortfolioCapture | null;
+  };
   /** Exact slot IDs where P could not keep a valid primary but M kept
    * original text (mechanical rescue or avoided fallback). */
   pToMRescuedSlots: string[];
@@ -849,6 +862,14 @@ export type G2PreferenceRecord = {
 // ---------------------------------------------------------------------------
 // Record validation (F2)
 // ---------------------------------------------------------------------------
+
+/** Every origin the integrated finalizer can record (V3Origin). */
+const G2_FINAL_ORIGINS: readonly string[] = [
+  "primary",
+  "reserve",
+  "slot_fallback",
+  "full_fallback",
+];
 
 const attemptKey = (a: { inputId: string; variant: string; pass: number }) =>
   `${a.inputId}:${a.variant}:${a.pass}`;
@@ -1003,25 +1024,60 @@ export function validateG2AttemptRecord(
       `non-completed attempt ${attemptKey(record)} cannot carry final texts or a pack fingerprint`,
     );
   // Origins are the recorded mechanical outcome of the same selection —
-  // required exactly when a final pack exists, in canonical order.
-  const ORIGINS: readonly string[] = [
-    "primary",
-    "reserve",
-    "slot_fallback",
-    "full_fallback",
-  ];
+  // required exactly when a final pack exists, in canonical order, and
+  // internally consistent with every recorded contribution counter:
+  // full fallback is all-or-nothing (a partial full_fallback list is not
+  // a finalization outcome), named slots and the simple contract carry
+  // no reserves, and substituted fallback text is never model-written.
   if (hasPack) {
+    const origins = record.finalOrigins;
     if (
-      !record.finalOrigins ||
-      record.finalOrigins.length !== CANONICAL_SLOT_IDS.length ||
-      record.finalOrigins.some((origin) => !ORIGINS.includes(origin))
+      !origins ||
+      origins.length !== CANONICAL_SLOT_IDS.length ||
+      origins.some((origin) => !G2_FINAL_ORIGINS.includes(origin))
     )
       errors.push(
         `attempt ${attemptKey(record)} must record exactly ${CANONICAL_SLOT_IDS.length} canonical final origins`,
       );
+    else {
+      const anyFull = origins.includes("full_fallback");
+      if (anyFull && !origins.every((o) => o === "full_fallback"))
+        errors.push(
+          `attempt ${attemptKey(record)} mixes full_fallback with other origins — full fallback is all-or-nothing`,
+        );
+      if (record.fullFallback !== origins.every((o) => o === "full_fallback"))
+        errors.push(
+          `attempt ${attemptKey(record)} fullFallback flag contradicts the recorded origins`,
+        );
+      origins.forEach((origin, i) => {
+        if (origin === "reserve" && i >= UNNAMED_SLOT_IDS.length)
+          errors.push(
+            `attempt ${attemptKey(record)} records a reserve origin on named slot ${CANONICAL_SLOT_IDS[i]} — named slots carry no reserves`,
+          );
+        if (origin === "reserve" && record.variant === "simple")
+          errors.push(
+            `attempt ${attemptKey(record)} records a reserve origin under the simple contract, which has no reserves`,
+          );
+      });
+      // Substituted/paraphrased repairs do not qualify as model-written
+      // (§8.2.3): the judgment's flag must agree with the origin.
+      for (const [i, judgment] of (record.texts ?? []).entries()) {
+        if (i >= origins.length) break;
+        const modelOrigin =
+          origins[i] === "primary" || origins[i] === "reserve";
+        if (judgment.modelWritten !== modelOrigin)
+          errors.push(
+            `attempt ${attemptKey(record)} judgment ${judgment.slotId} modelWritten=${judgment.modelWritten} contradicts the recorded ${origins[i]} origin`,
+          );
+      }
+    }
   } else if (record.finalOrigins !== null)
     errors.push(
       `attempt ${attemptKey(record)} cannot carry final origins without a final pack`,
+    );
+  if (!hasPack && record.fullFallback)
+    errors.push(
+      `attempt ${attemptKey(record)} claims fullFallback without a final pack`,
     );
   // Request-configuration binding: v3 attempts run under the one frozen
   // canonical configuration; a v2 record carries its actual recorded hash.
@@ -1188,29 +1244,124 @@ export function validateG2Attribution(
       rowErrors.push(
         `attribution ${key} businessKey "${row.businessKey}" mismatches the attempt's "${attempt.businessKey}"`,
       );
-    // Every non-null capture must resolve to this attempt's facts: the pack
-    // fingerprint is recomputed over the captured texts so an unrelated or
-    // fabricated portfolio never verifies.
-    for (const policy of ["P", "M", "C"] as const) {
-      const capture = row.captures[policy];
-      if (!capture) continue;
+    // Every non-null capture must be structurally valid — canonical
+    // lengths/order, allowed origins with policy/slot compatibility (P
+    // never uses reserves; named slots never carry reserves; full
+    // fallback is all-or-nothing), nonempty final texts — and resolve to
+    // this attempt's facts: the pack fingerprint is recomputed over the
+    // captured texts so an unrelated or fabricated portfolio never
+    // verifies.
+    const captureErrors = (
+      label: string,
+      policy: "P" | "M" | "C",
+      capture: G2PortfolioCapture,
+    ) => {
       if (
         capture.finalTexts.length !== CANONICAL_SLOT_IDS.length ||
         capture.origins.length !== CANONICAL_SLOT_IDS.length
       ) {
         rowErrors.push(
-          `attribution ${key} capture ${policy} must carry exactly ${CANONICAL_SLOT_IDS.length} final texts and origins in canonical order`,
+          `attribution ${key} ${label} ${policy} must carry exactly ${CANONICAL_SLOT_IDS.length} final texts and origins in canonical order`,
         );
-        continue;
+        return;
       }
+      capture.origins.forEach((origin, i) => {
+        if (!G2_FINAL_ORIGINS.includes(origin))
+          rowErrors.push(
+            `attribution ${key} ${label} ${policy} records "${origin}" on ${CANONICAL_SLOT_IDS[i]} — not a finalization origin`,
+          );
+        else if (origin === "reserve" && i >= UNNAMED_SLOT_IDS.length)
+          rowErrors.push(
+            `attribution ${key} ${label} ${policy} records a reserve origin on named slot ${CANONICAL_SLOT_IDS[i]} — named slots carry no reserves`,
+          );
+        else if (origin === "reserve" && policy === "P")
+          rowErrors.push(
+            `attribution ${key} ${label} P records a reserve origin on ${CANONICAL_SLOT_IDS[i]} — the primary-only portfolio never selects reserves`,
+          );
+      });
+      if (
+        capture.origins.includes("full_fallback") &&
+        !capture.origins.every((o) => o === "full_fallback")
+      )
+        rowErrors.push(
+          `attribution ${key} ${label} ${policy} mixes full_fallback with other origins — full fallback is all-or-nothing`,
+        );
+      if (capture.finalTexts.some((text) => !text?.trim()))
+        rowErrors.push(
+          `attribution ${key} ${label} ${policy} carries an empty final text — an incomplete portfolio is not a finished replay capture`,
+        );
       if (
         attempt &&
         capture.packFingerprint !==
           g2PackFingerprint(attempt.factsFingerprint, capture.finalTexts)
       )
         rowErrors.push(
-          `attribution ${key} capture ${policy} pack fingerprint does not resolve to the captured texts under this attempt's facts`,
+          `attribution ${key} ${label} ${policy} pack fingerprint does not resolve to the captured texts under this attempt's facts`,
         );
+    };
+    for (const policy of ["P", "M", "C"] as const) {
+      const capture = row.captures[policy];
+      if (capture) captureErrors("capture", policy, capture);
+    }
+    // Replay resolution: P and C captures and every component claim must
+    // resolve to the recorded offline P/M/C replay of this same response
+    // (deriveV3Attribution under identical guards/fallbacks). replay.M
+    // equalling the attempt's recorded pack anchors the replay to this
+    // response; each non-null capture must equal its replay portfolio
+    // exactly — a self-consistent hash cannot invent a replay.
+    const needsReplay =
+      row.captures.P !== null ||
+      row.captures.C !== null ||
+      row.pToMRescuedSlots.length > 0 ||
+      row.cOverMMaterialGains.length > 0 ||
+      row.cOverMLabelOnlyChanges > 0;
+    if (needsReplay && !row.replay)
+      rowErrors.push(
+        `attribution ${key} records P/C captures or component claims without the recorded offline P/M/C replay they must resolve against`,
+      );
+    if (row.replay) {
+      for (const policy of ["P", "M", "C"] as const) {
+        const replay = row.replay[policy];
+        if (replay) captureErrors("replay", policy, replay);
+      }
+      if (attempt?.finalTexts) {
+        if (!row.replay.M)
+          rowErrors.push(
+            `attribution ${key} replay lacks the M portfolio for an attempt with a recorded pack`,
+          );
+        else if (
+          row.replay.M.packFingerprint !== attempt.packFingerprint ||
+          row.replay.M.finalTexts.some(
+            (text, i) => text !== attempt.finalTexts![i],
+          ) ||
+          row.replay.M.origins.some(
+            (origin, i) => origin !== attempt.finalOrigins?.[i],
+          )
+        )
+          rowErrors.push(
+            `attribution ${key} replay M does not equal the attempt's recorded pack — the replay is not of this response`,
+          );
+      } else if (row.replay.M !== null)
+        rowErrors.push(
+          `attribution ${key} replay claims an M portfolio for an attempt with no pack`,
+        );
+      for (const policy of ["P", "M", "C"] as const) {
+        const capture = row.captures[policy];
+        if (!capture) continue;
+        const replay = row.replay[policy];
+        if (!replay)
+          rowErrors.push(
+            `attribution ${key} capture ${policy} has no corresponding replay portfolio`,
+          );
+        else if (
+          capture.packFingerprint !== replay.packFingerprint ||
+          capture.finalTexts.some((text, i) => text !== replay.finalTexts[i]) ||
+          capture.origins.some((origin, i) => origin !== replay.origins[i])
+        )
+          rowErrors.push(
+            `attribution ${key} capture ${policy} does not equal the recorded replay portfolio`,
+          );
+      }
     }
     // M is the recorded selection under the frozen policy — its captured
     // texts and origins must equal the attempt's own record exactly. An
@@ -1836,13 +1987,15 @@ export function evaluateG2Pilot(input: {
 
   const decisionA = qualityFailures.length === 0;
 
-  // Decision B keeps the two components separate. Reserves are the M-over-P
-  // difference: ≥1 recorded mechanical rescue without regression — a C–M
-  // gain is evidence about the coverage component and never substitutes.
-  // Coverage requires ≥1 reviewed material gain on a mechanically valid M
-  // with no C regression; mechanical rescue alone cannot justify coverage,
-  // and label-only C–M changes earn nothing. Attribution rows reconcile
-  // exactly to the scheduled rich attempts; only valid rows earn credit.
+  // Decision B keeps the two components separate and applies R5 §8.1's
+  // approved alternatives exactly: reserves are supported by ≥1 recorded
+  // M–P mechanical rescue/avoided fallback without final-text regression
+  // OR by an independently justified C–M benefit — each benefit route is
+  // gated on its own regression. Coverage requires ≥1 independently
+  // reviewed material gain on a mechanically valid M with no C regression;
+  // mechanical rescue alone cannot justify coverage, and label-only C–M
+  // changes earn nothing. Attribution rows reconcile exactly to the
+  // scheduled rich attempts; only valid rows earn credit.
   const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
     (a) => a.variant === "rich",
   );
@@ -1867,8 +2020,10 @@ export function evaluateG2Pilot(input: {
   const coverageRegression = attribution.valid.some(
     (a) => a.cCausedFinalRegression,
   );
-  const reservesRetained = rescued >= 1 && !rescueRegression;
-  const coverageRetained = materialGains >= 1 && !coverageRegression;
+  const rescueSupported = rescued >= 1 && !rescueRegression;
+  const gainSupported = materialGains >= 1 && !coverageRegression;
+  const reservesRetained = rescueSupported || gainSupported;
+  const coverageRetained = gainSupported;
 
   const evidenceComplete = evidenceErrors.length === 0;
   failures.push(...evidenceErrors, ...qualityFailures);
@@ -2019,6 +2174,11 @@ export function evaluateG2Release(input: {
      * null for the simple allocation (removed components have no
      * attribution gate). */
     decisionBPreserved: boolean | null;
+    /** The components the adopted rich configuration actually retains —
+     * reserves are part of the frozen M contract; coverage is retained
+     * only when the pilot's Decision B kept it. Absent → reserves only;
+     * never a silent per-business switch to C. */
+    retainedComponents?: { reserves: boolean; coverage: boolean };
   };
   /** §8.2.5 release P/M/C attribution on the scheduled rich captures —
    * mandatory when rich is retained. */
@@ -2100,17 +2260,26 @@ export function evaluateG2Release(input: {
     failures.push(
       `selected-v3 structurally complete packs ${structurallyComplete} < ${G2_THRESHOLDS.releaseStructurallyCompleteMin}`,
     );
+  // Contribution counters derive from the recorded finalization origins —
+  // substituted fallback text never counts as model-written (§8.2.3), and
+  // contradictory origin/flag records are already rejected above.
   const modelWrittenPacks = v3Attempts.filter(
     (a) =>
-      a.texts !== null &&
-      a.texts.slice(0, UNNAMED_SLOT_IDS.length).filter((t) => t.modelWritten)
-        .length >= G2_THRESHOLDS.releaseModelWrittenUnnamedMinPerPack,
+      a.finalOrigins !== null &&
+      a.finalOrigins
+        .slice(0, UNNAMED_SLOT_IDS.length)
+        .filter((o) => o === "primary" || o === "reserve").length >=
+        G2_THRESHOLDS.releaseModelWrittenUnnamedMinPerPack,
   ).length;
   if (modelWrittenPacks < G2_THRESHOLDS.releaseModelWrittenPacksMin)
     failures.push(
       `packs with ≥${G2_THRESHOLDS.releaseModelWrittenUnnamedMinPerPack} model-written unnamed texts ${modelWrittenPacks} < ${G2_THRESHOLDS.releaseModelWrittenPacksMin}`,
     );
-  const fullFallbacks = v3Attempts.filter((a) => a.fullFallback).length;
+  const fullFallbacks = v3Attempts.filter(
+    (a) =>
+      a.finalOrigins !== null &&
+      a.finalOrigins.every((o) => o === "full_fallback"),
+  ).length;
   if (fullFallbacks > G2_THRESHOLDS.releaseFullFallbackMax)
     failures.push(
       `full-fallback packs ${fullFallbacks} exceed the frozen maximum ${G2_THRESHOLDS.releaseFullFallbackMax}`,
@@ -2149,32 +2318,42 @@ export function evaluateG2Release(input: {
         input.attempts,
       );
       failures.push(...attribution.errors);
-      // Benefit without regression for each component actually retained.
-      // Under the rich allocation the retained contract is M — its reserves
-      // component must show ≥1 recorded P-to-M rescue with no M regression.
-      // A reviewed C–M gain is evidence about the coverage component only;
-      // an aggregate benefit count can never substitute one component's
-      // benefit for another's, and coverage is not silently retained.
+      // §8.2.5: benefit without regression for each component actually
+      // retained under the adopted configuration — an unretained
+      // component's regression is recorded, never an automatic failure,
+      // and reserve-only rescue cannot retain coverage. Each benefit
+      // route is gated on its own regression (R5 §8.1 alternatives: an
+      // M–P rescue OR an independently justified C–M benefit supports
+      // reserves; only a reviewed C–M gain supports coverage).
+      const retained = input.pilotReplay?.retainedComponents ?? {
+        reserves: true,
+        coverage: false,
+      };
       const rescued = attribution.valid.reduce(
         (n, a) => n + a.pToMRescuedSlots.length,
         0,
+      );
+      const rescueRegression = attribution.valid.some(
+        (a) => a.mCausedFinalRegression,
       );
       const materialGains = attribution.valid.reduce(
         (n, a) => n + (a.mMechanicallyValid ? a.cOverMMaterialGains.length : 0),
         0,
       );
+      const coverageRegression = attribution.valid.some(
+        (a) => a.cCausedFinalRegression,
+      );
       releaseComponentMetrics.rescuedSlots = rescued;
       releaseComponentMetrics.materialGains = materialGains;
-      if (
-        rescued < 1 ||
-        attribution.valid.some((a) => a.mCausedFinalRegression)
-      )
+      const rescueSupported = rescued >= 1 && !rescueRegression;
+      const gainSupported = materialGains >= 1 && !coverageRegression;
+      if (retained.reserves && !rescueSupported && !gainSupported)
         failures.push(
-          "release attribution shows no relevant M-over-P benefit for the retained reserves component (≥1 recorded rescue, no regression required)",
+          "release attribution shows no relevant benefit for the retained reserves component (≥1 recorded M–P rescue or ≥1 independently justified C–M gain, each without regression on its route, required)",
         );
-      if (attribution.valid.some((a) => a.cCausedFinalRegression))
+      if (retained.coverage && !gainSupported)
         failures.push(
-          "release attribution shows a coverage-caused final-text regression",
+          "release attribution shows no relevant C-over-M benefit for the retained coverage component (≥1 independently reviewed material gain on mechanically valid M without a C-caused regression required)",
         );
     }
   }
