@@ -25,8 +25,8 @@ import {
   type V3RequestSettings,
 } from "./question-writer-v3";
 
-export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v5";
-export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v5";
+export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v6";
+export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v6";
 export const G2_RUBRIC_VERSION = "nuave.g2-review-rubric.v2";
 export const G2_FROZEN_INPUTS_VERSION = "nuave.g2-frozen-inputs.v2";
 export const G2_USAGE_ACCOUNTING_VERSION = "nuave.g2-usage-accounting.v2";
@@ -583,6 +583,20 @@ export function g2RequestConfigFingerprint(variant: "rich" | "simple"): string {
     .digest("hex");
 }
 
+/** The component-evidence requirements bound to the adopted configuration —
+ * derived from the same code-owned frozen request/selection configuration
+ * (`G2_V3_REQUEST_CONFIG` / `g2RequestConfigFingerprint`) the attempt
+ * records are validated against, never from a caller flag. The frozen rich
+ * contract's schema carries a required reserve on every unnamed slot, so
+ * reserves are always a retained component under `richSelected`; a
+ * `retainedComponents` declaration contradicting this is rejected rather
+ * than trusted. Coverage is retainable only through the §8.1
+ * independently-justified C–M alternative when the adopted release
+ * declares it. */
+export const G2_ADOPTED_COMPONENT_REQUIREMENTS = {
+  reserves: true,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Blinded review procedure, rubric, and usable-pack definition (§8.4 rules)
 // ---------------------------------------------------------------------------
@@ -764,6 +778,16 @@ export type G2AttemptRecord = {
    * records the fingerprint of its actual recorded configuration. Never
    * contains credentials. */
   requestConfigFingerprint: string;
+  /** SHA-256 of the complete parsed source response the attempt finalized —
+   * emitted by the same pure derivation that produces the P/M/C replay. The
+   * selected M pack alone cannot identify the source: the selector discards
+   * unused reserves and metadata, so two different responses can produce an
+   * identical M. Rich attempts record the fingerprint of their parsed
+   * response or an explicit `null` when no usable source response exists
+   * (timeout/provider/parse failure); simple and v2 attempts record `null`.
+   * A null source can still land on the established shared fallback
+   * outcome, but earns no replay or component credit. */
+  sourceResponseFingerprint: string | null;
   /** Exact instruction/schema/guard/selector/fallback/finalizer versions the
    * attempt ran under; v3 attempts must equal the frozen pins exactly, so an
    * old rejected candidate cannot masquerade as a matching capture. */
@@ -816,16 +840,19 @@ export type G2Attribution = {
   };
   /** The recorded offline P/M/C replay of this attempt's response —
    * `deriveV3Attribution` output under identical guards/fallbacks and the
-   * same request configuration. Its M portfolio must equal the attempt's
-   * recorded pack (anchoring the replay to the same response); every
-   * non-null capture must equal the corresponding replay portfolio
-   * exactly. Required whenever a P or C capture is recorded or a
+   * same request configuration. `sourceResponseFingerprint` is emitted by
+   * the derivation from the complete parsed response and must equal the
+   * attempt's recorded source identity: an identical M selection does not
+   * identify the source response, so the replay binds by this fingerprint
+   * instead. Every non-null capture must equal the corresponding replay
+   * portfolio exactly. Required whenever a P or C capture is recorded or a
    * rescue/gain is claimed — a hash alone proves text consistency, not
    * that an arbitrary or empty portfolio was produced by that replay. */
   replay?: {
     P: G2PortfolioCapture | null;
     M: G2PortfolioCapture | null;
     C: G2PortfolioCapture | null;
+    sourceResponseFingerprint: string | null;
   };
   /** Exact slot IDs where P could not keep a valid primary but M kept
    * original text (mechanical rescue or avoided fallback). */
@@ -1079,6 +1106,38 @@ export function validateG2AttemptRecord(
     errors.push(
       `attempt ${attemptKey(record)} claims fullFallback without a final pack`,
     );
+  // Source-response identity (R5 §8.1 P/M/C binding): a rich attempt records
+  // the fingerprint of the complete parsed response — emitted by the same
+  // pure derivation the replay comes from — or an explicit null when no
+  // usable source exists. A null source can still land on the shared
+  // fallback outcome, but model-selected origins or a serialization success
+  // without a source are contradictions.
+  if (record.variant === "rich") {
+    const source = record.sourceResponseFingerprint;
+    if (source !== null && (typeof source !== "string" || source.length === 0))
+      errors.push(
+        `attempt ${attemptKey(record)} must record the source-response fingerprint of the complete parsed response, or an explicit null when no usable source response exists`,
+      );
+    else if (source === null) {
+      if (record.serializationComplete)
+        errors.push(
+          `attempt ${attemptKey(record)} claims serializationComplete without a source-response identity`,
+        );
+      if (
+        hasPack &&
+        record.finalOrigins?.some((origin) => origin !== "full_fallback")
+      )
+        errors.push(
+          `attempt ${attemptKey(record)} records model-selected origins but no source-response identity — a pack without a source can only be the shared fallback outcome`,
+        );
+    } else if (!record.serializationComplete)
+      errors.push(
+        `attempt ${attemptKey(record)} records a source-response fingerprint without serializationComplete — the fingerprint is of the parsed response, which cannot exist when parsing failed`,
+      );
+  } else if (record.sourceResponseFingerprint !== null)
+    errors.push(
+      `attempt ${attemptKey(record)} cannot carry a source-response fingerprint — only rich attempts have a rich source response`,
+    );
   // Request-configuration binding: v3 attempts run under the one frozen
   // canonical configuration; a v2 record carries its actual recorded hash.
   if (record.variant === "rich" || record.variant === "simple") {
@@ -1320,6 +1379,23 @@ export function validateG2Attribution(
         `attribution ${key} records P/C captures or component claims without the recorded offline P/M/C replay they must resolve against`,
       );
     if (row.replay) {
+      // Source-response identity: the replay's derivation-emitted
+      // fingerprint of the complete parsed response must equal the
+      // attempt's recorded identity. Identical M output is not proof — the
+      // selector discards unused reserves and metadata, so a different
+      // response's replay cannot stand in for this attempt's.
+      const replaySource = row.replay.sourceResponseFingerprint;
+      if (
+        replaySource !== null &&
+        (typeof replaySource !== "string" || replaySource.length === 0)
+      )
+        rowErrors.push(
+          `attribution ${key} replay must record the source-response fingerprint emitted by the derivation, or an explicit null`,
+        );
+      else if (attempt && replaySource !== attempt.sourceResponseFingerprint)
+        rowErrors.push(
+          `attribution ${key} replay resolves to a different source response than this attempt recorded — an identical M selection does not establish the same source`,
+        );
       for (const policy of ["P", "M", "C"] as const) {
         const replay = row.replay[policy];
         if (replay) captureErrors("replay", policy, replay);
@@ -1363,6 +1439,19 @@ export function validateG2Attribution(
           );
       }
     }
+    // Honest absence: an attempt that recorded no usable source response
+    // (timeout/provider/parse failure) still lands on the established
+    // shared fallback outcome, but its row can never earn replay or
+    // component credit.
+    if (
+      attempt?.sourceResponseFingerprint === null &&
+      (row.pToMRescuedSlots.length > 0 ||
+        row.cOverMMaterialGains.length > 0 ||
+        row.cOverMLabelOnlyChanges > 0)
+    )
+      rowErrors.push(
+        `attribution ${key} claims component credit on an attempt that recorded no usable source response — the shared fallback outcome earns no replay credit`,
+      );
     // M is the recorded selection under the frozen policy — its captured
     // texts and origins must equal the attempt's own record exactly. An
     // attempt with no pack admits no M portfolio.
@@ -2175,9 +2264,10 @@ export function evaluateG2Release(input: {
      * attribution gate). */
     decisionBPreserved: boolean | null;
     /** The components the adopted rich configuration actually retains —
-     * reserves are part of the frozen M contract; coverage is retained
-     * only when the pilot's Decision B kept it. Absent → reserves only;
-     * never a silent per-business switch to C. */
+     * reserves are part of the frozen M contract and cannot be declared
+     * away (`G2_ADOPTED_COMPONENT_REQUIREMENTS`); coverage is retained
+     * only when the pilot's Decision B kept it and is declared here.
+     * Absent → reserves only; never a silent per-business switch to C. */
     retainedComponents?: { reserves: boolean; coverage: boolean };
   };
   /** §8.2.5 release P/M/C attribution on the scheduled rich captures —
@@ -2325,10 +2415,28 @@ export function evaluateG2Release(input: {
       // route is gated on its own regression (R5 §8.1 alternatives: an
       // M–P rescue OR an independently justified C–M benefit supports
       // reserves; only a reviewed C–M gain supports coverage).
-      const retained = input.pilotReplay?.retainedComponents ?? {
-        reserves: true,
-        coverage: false,
+      //
+      // The requirements derive from the same code-owned adopted
+      // request/selection configuration the attempts are validated
+      // against — the frozen rich contract carries a required reserve on
+      // every unnamed slot, so reserves evidence can never be declared
+      // away. Coverage is retained only when the pilot's Decision B kept
+      // it and is declared here; a declaration of `reserves: false` (or
+      // a declaration that omits reserves) is incompatible with the
+      // recorded configuration and is rejected, never silently trusted.
+      const declaredComponents = input.pilotReplay?.retainedComponents;
+      const retained = {
+        reserves: G2_ADOPTED_COMPONENT_REQUIREMENTS.reserves,
+        coverage: declaredComponents?.coverage === true,
       };
+      if (
+        declaredComponents !== undefined &&
+        declaredComponents.reserves !==
+          G2_ADOPTED_COMPONENT_REQUIREMENTS.reserves
+      )
+        failures.push(
+          "pilot replay retainedComponents declares reserves not retained — the adopted rich request contract is reserve-bearing, so the declaration cannot remove the required reserves evidence",
+        );
       const rescued = attribution.valid.reduce(
         (n, a) => n + a.pToMRescuedSlots.length,
         0,

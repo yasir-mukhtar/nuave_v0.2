@@ -389,6 +389,22 @@ export function attemptRecord(
       scheduled.variant === "v2"
         ? g2Hash(["v2-actual-request-config", scheduled.inputId])
         : g2RequestConfigFingerprint(scheduled.variant),
+    // A packed rich attempt records the deterministic synthetic identity of
+    // its fabricated source response — internally consistent so replay rows
+    // built from this attempt bind correctly. A source-free or non-rich
+    // record carries an explicit null. Real-derivation controls pass the
+    // `sourceFingerprint` their `deriveV3Attribution` run emitted.
+    sourceResponseFingerprint:
+      scheduled.variant === "rich" && finalTexts
+        ? g2Hash([
+            "g2-synthetic-source-response",
+            scheduled.inputId,
+            scheduled.pass,
+            factsFingerprint,
+            finalTexts,
+            finalOrigins,
+          ])
+        : null,
     versions:
       scheduled.variant === "v2"
         ? { writer: "question-writer-v2" }
@@ -451,7 +467,8 @@ export function portfolioCapture(
  * attempt itself recorded. P and C default to an internally consistent
  * replay of the same texts (all-primary origins): identical portfolios
  * that can honestly claim no component credit. The `replay` record is the
- * same synthetic portfolios — an arithmetic-only control; real
+ * same synthetic portfolios carrying the attempt's recorded
+ * source-response identity — an arithmetic-only control; real
  * replay-provenance controls build the row from `deriveV3Attribution`. */
 export function attributionRecord(
   attempt: G2AttemptRecord,
@@ -479,7 +496,10 @@ export function attributionRecord(
     pass: attempt.pass,
     variant: "rich",
     captures,
-    replay: { ...captures },
+    replay: {
+      ...captures,
+      sourceResponseFingerprint: attempt.sourceResponseFingerprint,
+    },
     pToMRescuedSlots: [],
     mCausedFinalRegression: false,
     mMechanicallyValid: attempt.finalTexts !== null,

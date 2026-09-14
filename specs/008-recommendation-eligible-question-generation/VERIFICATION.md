@@ -224,30 +224,30 @@ G1 adapter. Each confirmed case is now a committed regression test in
    remains a genuine limitation. No competitor is selected, joined, or given
    an inferred role, and no required screen was added.
 
-### G2 dormant prototype and frozen evaluation packet — 2026-09-14 (fourth correction)
+### G2 dormant prototype and frozen evaluation packet — 2026-09-14 (fifth correction)
 
 - Worktree: `/Users/yasir/nuave-worktrees/spec008-g2`; branch
   `codex/spec008-g2-evaluation-freeze`, created from `main@687f340` (the
-  post-#59 merge). Third correction reviewed at head `8bdecf6`; this
-  section now describes the fourth corrected candidate returned for
+  post-#59 merge). Fourth correction reviewed at head `05ddc47`; this
+  section now describes the fifth corrected candidate returned for
   independent re-review.
 - Scope: dormant v3 writer prototype + bounded finalizer/fallback + frozen
   evaluation packet + executable §8.3 decision rules. No route, UI, report,
   config, dispatch, provider, or dependency change. Customer dispatch remains
   v2; nothing in production routes through these modules.
-- Fourth correction: the third corrected candidate was independently
-  re-reviewed (T1a/T1b/T2/T3) and corrected in place on this branch. R5
-  §8.1's OR-component rule is restored (reserves supported by an M–P
-  rescue/avoided fallback OR an independently justified C–M benefit;
-  release attribution evaluates only the components actually retained);
-  P/M/C captures are structurally validated and must resolve to the
-  recorded `deriveV3Attribution` replay of the same response; contribution
-  counters derive from recorded finalization origins; D2/D6 fallback
-  wording separates distinct decisions; and the conflict graph's
-  node-to-slot translation handles interleaved defects.
-  `G2_EVALUATION_PACKET.md` is re-frozen at
-  `nuave.g2-evaluation-packet.v5`. The F1–F10, R1–R6, and prior T1–T3
-  resolutions are preserved.
+- Fifth correction: the fourth corrected candidate was independently
+  re-reviewed (E1/E2) and corrected in place on this branch. The offline
+  replay now carries the derivation-emitted `sourceResponseFingerprint` of
+  the complete parsed response and must equal the attempt's recorded
+  source identity — an identical M selection no longer proves the same
+  source — and an attempt that recorded no usable source (explicit null)
+  still lands on the shared fallback outcome but earns no replay or
+  component credit. The §8.2.5 component gates derive their required
+  evidence from the adopted reserve-bearing request contract, so a
+  `retainedComponents` declaration that omits or contradicts reserves is
+  rejected. `G2_EVALUATION_PACKET.md` is re-frozen at
+  `nuave.g2-evaluation-packet.v6`. The F1–F10, R1–R6, and prior T1–T3 and
+  T1a–T3 resolutions are preserved.
 - Implementation:
   - `src/lib/audit/question-writer-v3.ts` — versioned rich (16 texts incl.
     reserves + dimension/context metadata) and simple (10 final strings,
@@ -444,19 +444,18 @@ verify` on the fourth-corrected candidate — typecheck, formatting and
   (2026-09-13, no application defect), then **merged to `main` via PR #59**
   (merge `687f340`, tree `1e0bae2f`) and deployed (worker `nuave-v2` version
   `a2279ec7-109d-4d43-8ecd-026cc669e8a0`); it remains dormant with no runtime
-  consumer. **G2 fourth correction offline-verified and published on
+  consumer. **G2 fifth correction offline-verified and published on
   `codex/spec008-g2-evaluation-freeze`** — dormant prototype, frozen packet
-  v5, executable decision rules, fresh v2 held-out inputs — after the
-  independent third re-review (T1a/T1b/T2/T3); awaiting independent
+  v6, executable decision rules, fresh v2 held-out inputs — after the
+  independent fourth re-review (E1/E2); awaiting independent
   re-review/acceptance.
 - Date: 2026-09-14
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
-- Published head: `4f8f8d5302a65b1ce04744a888d2349ecf121b98` (tree
-  `b4bb9c440cd6065a1908abc4527aa478dcf83d93` — identical to the tested
-  tree) on draft PR #65; CI results in `g2-fourth-correction-evidence/
-  CI-RECORD.md`. Third-correction published head was `dda4a6cd…` (+docs
-  `8bdecf69…`); second-correction published head was `28b5343` (+docs
-  `91779de`).
+- Published head: (filled after commit) on draft PR #65; CI results in
+  `g2-fifth-correction-evidence/CI-RECORD.md`. Fourth-correction published
+  head was `4f8f8d5…` (+docs `05ddc47…`); third-correction published head
+  was `dda4a6cd…` (+docs `8bdecf69…`); second-correction published head
+  was `28b5343` (+docs `91779de`).
 - G2 first-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` —
   1175 unit tests in 91 files, 89+3+3 browser tests, both builds, exit 0,
   `Offline verification passed.` Tested tree
@@ -478,6 +477,10 @@ passed.` Tested tree
   errors / 17 baseline warnings, exit 0, `Offline verification passed.`
   Tested tree `b4bb9c440cd6065a1908abc4527aa478dcf83d93`; complete log in
   `g2-fourth-correction-evidence/` outside Git.
+- G2 fifth-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify`
+  — (counts filled from the recorded log), exit 0, `Offline verification
+  passed.` Tested tree (filled from `git write-tree` before the run);
+  complete log in `g2-fifth-correction-evidence/` outside Git.
 - Next: independent G2 acceptance review, then a separately authorized G2P
   pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
   dispatch stays v2.

@@ -142,18 +142,18 @@ which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
 via PRs #48 and #50). **The G1 dormant facts/context adapter merged via PR #59
 on 2026-09-13** (merge `687f340`) and is deployed but still dormant — it has no
 runtime consumer, changes no live provider behavior, and customer question
-dispatch remains v2. **G2 is in its fourth correction** on
+dispatch remains v2. **G2 is in its fifth correction** on
 `codex/spec008-g2-evaluation-freeze` (draft PR #65): a dormant v3
 rich/simple writer prototype, bounded finalizer/fallback, and the frozen
 evaluation packet
 ([`G2_EVALUATION_PACKET.md`](../specs/008-recommendation-eligible-question-generation/G2_EVALUATION_PACKET.md)),
-re-frozen at v5 after the independent third re-review (R5 §8.1's OR rule
-restored for the reserves component; P/M/C captures structurally validated
-and resolved against the recorded `deriveV3Attribution` replay; contribution
-counters derived from recorded finalization origins; coherent D2 remote-
-ordering and distinct D6 explanation/service fallback needs; correct
-conflict-graph index translation for interleaved defects), preserving the
-R1–R6 and prior T1–T3 corrections and the fresh v2 held-out inputs. It
+re-frozen at v6 after the independent fourth re-review (each offline
+replay now binds to the exact parsed source response by a
+derivation-emitted fingerprint — an identical M selection no longer
+proves the same source — and the required component gates derive from the
+adopted reserve-bearing contract rather than caller flags), preserving the
+R1–R6 and prior T1–T3/T1a–T3 corrections and the fresh v2 held-out
+inputs. It
 awaits independent re-review and acceptance; it is not an
 empirical quality pass,
 and provider feasibility is unproven. The

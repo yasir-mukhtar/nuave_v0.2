@@ -2113,11 +2113,22 @@ export function deriveV3Attribution(
           ),
         }
       : null;
+  const captures = { P: capture(P), M: capture(M), C: capture(C) };
+  // The source-response identity: SHA-256 over the canonical JSON of the
+  // complete parsed rich response — primaries AND unused reserves, named
+  // texts, and market/selection metadata. Two different responses can
+  // select an identical M pack, so an M hash can never prove which source
+  // response ran; the recorded attempt binds the replay by this identity.
+  const sourceFingerprint = hash(response);
   return {
     P,
     M,
     C,
-    captures: { P: capture(P), M: capture(M), C: capture(C) },
+    captures,
+    /** The record-ready replay object a G2Attribution row must carry: the
+     * same derived portfolios plus the source-response fingerprint. */
+    replay: { ...captures, sourceResponseFingerprint: sourceFingerprint },
+    sourceFingerprint,
     fingerprints: { P: fingerprint(P), M: fingerprint(M), C: fingerprint(C) },
   };
 }
