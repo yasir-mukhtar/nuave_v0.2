@@ -451,7 +451,8 @@ verify` on the fourth-corrected candidate — typecheck, formatting and
   re-review/acceptance.
 - Date: 2026-09-14
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
-- Published head: (filled after commit) on draft PR #65; CI results in
+- Published head: `bee498d…` (tree `e9e2324…` — identical to the tested
+  tree) on draft PR #65; CI results in
   `g2-fifth-correction-evidence/CI-RECORD.md`. Fourth-correction published
   head was `4f8f8d5…` (+docs `05ddc47…`); third-correction published head
   was `dda4a6cd…` (+docs `8bdecf69…`); second-correction published head
@@ -478,8 +479,10 @@ passed.` Tested tree
   Tested tree `b4bb9c440cd6065a1908abc4527aa478dcf83d93`; complete log in
   `g2-fourth-correction-evidence/` outside Git.
 - G2 fifth-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify`
-  — (counts filled from the recorded log), exit 0, `Offline verification
-  passed.` Tested tree (filled from `git write-tree` before the run);
+  — 1237 unit tests in 91 files, 89+3+3 browser tests, both builds, lint 0
+  errors / 17 baseline warnings, exit 0, `Offline verification passed.`
+  Tested tree `e9e232496f1f01468f689a9bbd847450174cfa33` (recorded via
+  `git write-tree` before the run; committed code tree identical);
   complete log in `g2-fifth-correction-evidence/` outside Git.
 - Next: independent G2 acceptance review, then a separately authorized G2P
   pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
