@@ -17,16 +17,19 @@ import {
   G2_SELECTION_POLICY,
   g2EnvelopeFingerprint,
   g2PackFingerprint,
+  g2RequestConfigFingerprint,
   g2TextFingerprint,
   validateG2FrozenInputs,
   type G2Attribution,
   type G2AttemptRecord,
+  type G2PortfolioCapture,
   type G2TextJudgment,
 } from "./question-eval-g2";
 import {
   V3_FALLBACK_VERSION,
   V3_FINALIZER_VERSION,
   V3_SELECTOR_VERSION,
+  type V3Origin,
 } from "./question-finalize-v3";
 import {
   V3_GUARD_POLICY,
@@ -335,12 +338,19 @@ export function attemptRecord(
     finalTexts: finalTextsOption,
     naturalness,
     texts: textsOption,
+    finalOrigins: finalOriginsOption,
     ...rest
   } = extra;
   const finalTexts =
     finalTextsOption === undefined
       ? V3_SIMPLE_VALID_QUESTIONS
       : finalTextsOption;
+  const finalOrigins =
+    finalOriginsOption === undefined
+      ? finalTexts
+        ? (CANONICAL_SLOT_ORDER.map(() => "primary") as V3Origin[])
+        : null
+      : finalOriginsOption;
   const factsFingerprint = rest.factsFingerprint ?? binding.factsFingerprint;
   const texts =
     textsOption === undefined
@@ -367,6 +377,7 @@ export function attemptRecord(
       ? g2PackFingerprint(factsFingerprint, finalTexts)
       : null,
     finalTexts,
+    finalOrigins,
     texts,
     selectionPolicy:
       scheduled.variant === "rich"
@@ -374,6 +385,10 @@ export function attemptRecord(
         : scheduled.variant === "simple"
           ? "primary"
           : "v2-actual",
+    requestConfigFingerprint:
+      scheduled.variant === "v2"
+        ? g2Hash(["v2-actual-request-config", scheduled.inputId])
+        : g2RequestConfigFingerprint(scheduled.variant),
     versions:
       scheduled.variant === "v2"
         ? { writer: "question-writer-v2" }
@@ -416,28 +431,107 @@ export function missingAttemptRecord(
   });
 }
 
+/** A replay-capture record: the exact final texts, per-slot origins, and
+ * the pack fingerprint they hash to under the attempt's facts — internally
+ * consistent by construction, never a bare label hash. */
+export function portfolioCapture(
+  attempt: G2AttemptRecord,
+  finalTexts: string[],
+  origins: V3Origin[] = finalTexts.map(() => "primary" as V3Origin),
+): G2PortfolioCapture {
+  return {
+    packFingerprint: g2PackFingerprint(attempt.factsFingerprint, finalTexts),
+    finalTexts,
+    origins,
+  };
+}
+
 /** An attribution row bound to an actual rich attempt: M is the recorded
- * pack under the frozen selection policy. */
+ * pack under the frozen selection policy — the same texts and origins the
+ * attempt itself recorded. P and C default to an internally consistent
+ * replay of the same texts (all-primary origins): identical portfolios
+ * that can honestly claim no component credit. */
 export function attributionRecord(
   attempt: G2AttemptRecord,
   extra: Partial<G2Attribution> = {},
 ): G2Attribution {
+  const mCapture = attempt.finalTexts
+    ? portfolioCapture(
+        attempt,
+        attempt.finalTexts,
+        attempt.finalOrigins ?? undefined,
+      )
+    : null;
   return {
     inputId: attempt.inputId,
     businessKey: attempt.businessKey,
     pass: attempt.pass,
     variant: "rich",
-    packFingerprints: {
-      P: g2Hash([attempt.inputId, attempt.pass, "P"]),
-      M: attempt.packFingerprint,
-      C: g2Hash([attempt.inputId, attempt.pass, "C"]),
+    captures: {
+      P: attempt.finalTexts
+        ? portfolioCapture(attempt, attempt.finalTexts)
+        : null,
+      M: mCapture,
+      C: attempt.finalTexts
+        ? portfolioCapture(attempt, attempt.finalTexts)
+        : null,
     },
     pToMRescuedSlots: [],
     mCausedFinalRegression: false,
-    mMechanicallyValid: true,
+    mMechanicallyValid: attempt.finalTexts !== null,
     cOverMMaterialGains: [],
     cOverMLabelOnlyChanges: 0,
     cCausedFinalRegression: false,
     ...extra,
   };
+}
+
+/** A genuine mechanical-rescue attribution row: the attempt's own M record
+ * kept original text at `slotId` while the P replay capture shows the same
+ * slot falling back to `pFallbackText`. To model the reserve doing the
+ * work, build the attempt with `finalOrigins` marking the slot "reserve". */
+export function rescueAttribution(
+  attempt: G2AttemptRecord,
+  slotId: string,
+  pFallbackText: string,
+): G2Attribution {
+  const i = (CANONICAL_SLOT_ORDER as readonly string[]).indexOf(slotId);
+  if (i < 0 || i >= 6 || !attempt.finalTexts)
+    throw new Error("rescue needs an unnamed slot on a packed attempt");
+  const pTexts = [...attempt.finalTexts];
+  pTexts[i] = pFallbackText;
+  const pOrigins = (attempt.finalOrigins ?? []).map((origin, j) =>
+    j === i ? ("slot_fallback" as V3Origin) : origin,
+  ) as V3Origin[];
+  const row = attributionRecord(attempt);
+  row.captures.P = portfolioCapture(attempt, pTexts, pOrigins);
+  row.pToMRescuedSlots = [slotId];
+  return row;
+}
+
+/** A genuine independently-reviewed C–M material gain: the C replay capture
+ * carries `cText` at `slotId` where M kept the attempt's recorded text, and
+ * the gain row binds the two real text fingerprints and the review record. */
+export function gainAttribution(
+  attempt: G2AttemptRecord,
+  slotId: string,
+  cText: string,
+  reviewRef: string,
+): G2Attribution {
+  const i = (CANONICAL_SLOT_ORDER as readonly string[]).indexOf(slotId);
+  if (i < 0 || i >= 6 || !attempt.finalTexts)
+    throw new Error("gain needs an unnamed slot on a packed attempt");
+  const cTexts = [...attempt.finalTexts];
+  cTexts[i] = cText;
+  const row = attributionRecord(attempt);
+  row.captures.C = portfolioCapture(attempt, cTexts);
+  row.cOverMMaterialGains = [
+    {
+      slotId,
+      mTextFingerprint: g2TextFingerprint(slotId, attempt.finalTexts[i]),
+      cTextFingerprint: g2TextFingerprint(slotId, cText),
+      reviewRef,
+    },
+  ];
+  return row;
 }

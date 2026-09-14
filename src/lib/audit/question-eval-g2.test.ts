@@ -43,12 +43,14 @@ import {
   G2_TRANSPORT_OWNERSHIP,
   G2_UNNAMED_PROPERTY_JUDGMENTS,
   G2_USAGE_ACCOUNTING,
+  g2RequestConfigFingerprint,
   g2UsageCostUsd,
   g2UsageIsValid,
   g2TextFingerprint,
   G2_USABLE_PACK,
   G2_VERSION_PINS,
   meanAllNaturalness,
+  validateG2AttemptRecord,
   validateG2AttemptSchedule,
   validateG2Attribution,
   validateG2FrozenInputs,
@@ -57,12 +59,15 @@ import {
 import {
   attemptRecord,
   attributionRecord,
+  gainAttribution,
   g2Hash,
   g2InputIndex,
   g2V3AttemptVersions,
   missingAttemptRecord,
   passingJudgments,
+  portfolioCapture,
   projectedFacts,
+  rescueAttribution,
   richResponseOf,
   V3_SIMPLE_VALID_QUESTIONS,
 } from "./question-v3-testkit";
@@ -160,6 +165,22 @@ function releaseAttributionFor(attempts: G2AttemptRecord[]) {
     .map((a) => attributionRecord(a));
 }
 
+/** Release attribution with one genuine recorded P-to-M rescue on the first
+ * rich attempt — the minimum retained-reserves benefit. */
+function releaseAttributionWithRescue(attempts: G2AttemptRecord[]) {
+  return attempts
+    .filter((a) => a.variant === "rich")
+    .map((a, i) =>
+      i === 0
+        ? rescueAttribution(
+            a,
+            "NUAVE-BRAND-NEED-01",
+            "Kedai kopi apa saja yang layak dipertimbangkan di Jakarta Selatan?",
+          )
+        : attributionRecord(a),
+    );
+}
+
 describe("frozen packet shape", () => {
   it("freezes the §8.1 pilot set: four businesses + AC repeat, ≤10 calls", () => {
     expect(G2_PILOT_INPUTS).toHaveLength(4);
@@ -217,12 +238,14 @@ describe("frozen packet shape", () => {
     expect(G2_USAGE_ACCOUNTING.outputUsdPer1MTokens).toBe(1.2);
   });
 
-  it("pins the changed contract identities at v3.2/v3 packets", () => {
+  it("pins the changed contract identities at v3.3/v4 packets", () => {
     expect(G2_VERSION_PINS.writerContract).toContain("v3.2");
     expect(G2_VERSION_PINS.richInstruction).toContain("v3.2");
-    expect(G2_VERSION_PINS.fallback).toContain("v3.2");
-    expect(G2_VERSION_PINS.selector).toContain("v3.2");
+    expect(G2_VERSION_PINS.fallback).toContain("v3.3");
+    expect(G2_VERSION_PINS.selector).toContain("v3.3");
     expect(G2_VERSION_PINS.frozenInputs).toBe("nuave.g2-frozen-inputs.v2");
+    expect(G2_VERSION_PINS.packet).toBe("nuave.g2-evaluation-packet.v4");
+    expect(G2_VERSION_PINS.decisionPolicy).toBe("nuave.g2-decision-policy.v4");
     expect(G2_VERSION_PINS.usageAccounting).toBe(
       "nuave.g2-usage-accounting.v2",
     );
@@ -503,6 +526,32 @@ describe("attempt/judgment validation (F2)", () => {
     expect(attemptUsable(missingFlag)).toBe(false);
   });
 
+  it("a v3 attempt must bind to the frozen request configuration (T1)", () => {
+    const attempt = attemptRecord(
+      { inputId: "G2P-AC", variant: "rich", pass: 1 },
+      INPUTS,
+    );
+    expect(validateG2AttemptRecord(attempt, INPUTS)).toEqual([]);
+    // A wrong request configuration — different model/cap/sampling posture —
+    // fails the binding even when every other pin is correct.
+    const wrongConfig = {
+      ...attempt,
+      requestConfigFingerprint: g2Hash("a-different-request-config"),
+    };
+    expect(
+      validateG2AttemptRecord(wrongConfig, INPUTS).some((e) =>
+        e.includes("requestConfigFingerprint"),
+      ),
+    ).toBe(true);
+    // The frozen fingerprint itself is stable and variant-scoped.
+    expect(g2RequestConfigFingerprint("rich")).not.toBe(
+      g2RequestConfigFingerprint("simple"),
+    );
+    expect(attempt.requestConfigFingerprint).toBe(
+      g2RequestConfigFingerprint("rich"),
+    );
+  });
+
   it("a missing pack scores zero and is unusable", () => {
     const missing = missingAttemptRecord(
       { inputId: "G2P-AC", variant: "simple", pass: 1 },
@@ -580,26 +629,30 @@ describe("P/M/C attribution reconciliation (R2)", () => {
     const rows = attempts
       .filter((a) => a.variant === "rich")
       .map((a) => attributionRecord(a));
-    // M must equal the attempt's recorded pack fingerprint.
-    rows[0].packFingerprints.M = g2Hash("a different pack");
+    // An M capture whose texts are not the attempt's recorded final texts
+    // fails the exact M binding.
+    const attempt0 = attempts.find((a) => a.variant === "rich")!;
+    rows[0].captures.M = portfolioCapture(attempt0, [
+      ...attempt0.finalTexts!.slice(0, 9),
+      "Teks lain yang tidak terekam?",
+    ]);
     const res = validateG2Attribution(rows, expectedRich, attempts);
-    expect(res.errors.some((e) => e.includes("M portfolio fingerprint"))).toBe(
-      true,
-    );
+    expect(res.errors.some((e) => e.includes("M capture"))).toBe(true);
     expect(res.valid).toHaveLength(4); // the invalid row earns nothing
 
     const noPackRows = attempts
       .filter((a) => a.variant === "rich")
       .map((a) =>
         attributionRecord(a, {
-          packFingerprints: { P: g2Hash("p"), M: null, C: null },
+          captures: { P: null, M: null, C: null },
+          mMechanicallyValid: false,
           pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"],
         }),
       );
     const noPack = validateG2Attribution(noPackRows, expectedRich, attempts);
-    expect(
-      noPack.errors.some((e) => e.includes("without an M portfolio")),
-    ).toBe(true);
+    expect(noPack.errors.some((e) => e.includes("P-to-M difference"))).toBe(
+      true,
+    );
   });
 
   it("identical final wording with only metadata changes earns nothing", () => {
@@ -703,6 +756,97 @@ describe("P/M/C attribution reconciliation (R2)", () => {
     expect(res.errors.some((e) => e.includes("duplicates rescued slot"))).toBe(
       true,
     );
+    // The surviving claim still fails: the default identical P/M captures
+    // record no P-to-M difference on that slot.
+    expect(res.errors.some((e) => e.includes("P-to-M difference"))).toBe(true);
+  });
+
+  it("an interleaved simple record can never overwrite the rich attempt (T1)", () => {
+    // The counterexample: a simple record at the same input/pass used to
+    // shadow the rich record because the lookup key dropped the variant.
+    const attempts = pilotAttempts();
+    const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
+      (a) => a.variant === "rich",
+    );
+    const rows = attempts
+      .filter((a) => a.variant === "rich")
+      .map((a) =>
+        rescueAttribution(
+          a,
+          "NUAVE-BRAND-NEED-01",
+          "Kedai kopi apa saja yang layak dipertimbangkan di Jakarta Selatan?",
+        ),
+      );
+    // Order invariance: interleaving simple/v2 records before the rich ones
+    // changes nothing — the row binds by input+variant+pass.
+    const interleaved = [...attempts].sort((a, b) =>
+      a.variant === "simple" ? -1 : b.variant === "simple" ? 1 : 0,
+    );
+    const res = validateG2Attribution(rows, expectedRich, interleaved);
+    expect(res.errors).toEqual([]);
+    expect(res.valid).toHaveLength(5);
+
+    // A missing-pack simple record at the same input/pass never makes an
+    // existing rich M disappear.
+    const withMissingSimple = [
+      ...attempts.filter(
+        (a) => !(a.variant === "simple" && a.inputId === "G2P-AC"),
+      ),
+      missingAttemptRecord(
+        { inputId: "G2P-AC", variant: "simple", pass: 1 },
+        INPUTS,
+      ),
+    ];
+    const res2 = validateG2Attribution(rows, expectedRich, withMissingSimple);
+    expect(res2.errors).toEqual([]);
+    expect(res2.valid).toHaveLength(5);
+  });
+
+  it("an attribution row cannot bind to a different variant's texts (T1)", () => {
+    // The row's M capture must equal the RICH attempt's recorded texts —
+    // presenting the simple attempt's pack under the same input/pass fails.
+    const attempts = pilotAttempts((a) =>
+      a.variant === "simple" && a.inputId === "G2P-AC" && a.pass === 1
+        ? attemptRecord(
+            { inputId: "G2P-AC", variant: "simple", pass: 1 },
+            INPUTS,
+            {
+              finalTexts: [
+                "Sederhana satu?",
+                "Sederhana dua?",
+                "Sederhana tiga?",
+                "Sederhana empat?",
+                "Sederhana lima?",
+                "Sederhana enam?",
+                "Apakah Kopi Sudut cocok untuk sederhana tujuh?",
+                "Apakah Kopi Sudut layak direkomendasikan untuk sederhana delapan?",
+                "Bandingkan Kopi Sudut dengan Kedai Pagi untuk sederhana sembilan.",
+                "Siapa yang cocok memilih Kopi Sudut untuk sederhana sepuluh?",
+              ],
+            },
+          )
+        : a,
+    );
+    const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
+      (a) => a.variant === "rich",
+    );
+    const simpleAttempt = attempts.find(
+      (a) => a.variant === "simple" && a.inputId === "G2P-AC" && a.pass === 1,
+    )!;
+    const rows = attempts
+      .filter((a) => a.variant === "rich")
+      .map((a) => attributionRecord(a));
+    // Swap the AC row's M capture for the SIMPLE variant's texts — the exact
+    // variant binding rejects it.
+    const acRow = rows.find((r) => r.inputId === "G2P-AC" && r.pass === 1)!;
+    acRow.captures.M = portfolioCapture(
+      simpleAttempt,
+      simpleAttempt.finalTexts!,
+      simpleAttempt.finalOrigins ?? undefined,
+    );
+    const res = validateG2Attribution(rows, expectedRich, attempts);
+    expect(res.errors.some((e) => e.includes("M capture"))).toBe(true);
+    expect(res.valid).toHaveLength(4);
   });
 });
 
@@ -816,20 +960,18 @@ describe("positive controls", () => {
     )!;
     pilot.attribution = pilot.attribution.map((row) => {
       if (row.inputId === "G2P-AC" && row.pass === 1)
-        return attributionRecord(acAttempt, {
-          pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"],
-        });
+        return rescueAttribution(
+          acAttempt,
+          "NUAVE-BRAND-NEED-01",
+          "Kedai kopi apa saja yang layak dipertimbangkan di Jakarta Selatan?",
+        );
       if (row.inputId === "G2P-RETAIL")
-        return attributionRecord(retailAttempt, {
-          cOverMMaterialGains: [
-            {
-              slotId: "NUAVE-BRAND-NEED-02",
-              mTextFingerprint: g2Hash("m-final-wording"),
-              cTextFingerprint: g2Hash("different-c-final-wording"),
-              reviewRef: "independent-review-1",
-            },
-          ],
-        });
+        return gainAttribution(
+          retailAttempt,
+          "NUAVE-BRAND-NEED-02",
+          "Saat perlu tempat rapat santai, kedai kopi mana yang bisa dipesan mendadak?",
+          "independent-review-1",
+        );
       return row;
     });
     const result = evaluateG2Pilot(pilot);
@@ -837,6 +979,7 @@ describe("positive controls", () => {
     expect(result.decisionA).toBe(true);
     expect(result.evidenceComplete).toBe(true);
     expect(result.retain).toBe(true);
+    expect(result.outcome).toBe("retain");
     expect(result.reservesRetained).toBe(true);
     expect(result.coverageRetained).toBe(true);
     expect(result.metrics.distinctPilotWins).toBe(4);
@@ -853,19 +996,31 @@ describe("positive controls", () => {
     expect(result.evidenceComplete).toBe(false);
     // But the combined decision cannot pass — no "all gates passed" reading.
     expect(result.retain).toBe(false);
+    expect(result.outcome).toBe("not_retained");
     expect(result.reservesRetained).toBe(false);
     expect(result.coverageRetained).toBe(false);
   });
 
   it("an invalid attribution row grants no component credit (R2)", () => {
     const pilot = passingPilot();
-    // One row claims a C–M gain but its M fingerprint does not resolve to
-    // the attempt's recorded pack — the row is invalid and earns nothing.
+    // One row claims a C–M gain but its M capture texts are not the
+    // attempt's recorded final texts — the row is invalid and earns nothing.
     pilot.attribution = pilot.attribution.map((row, i) =>
       i === 0
         ? {
             ...row,
-            packFingerprints: { ...row.packFingerprints, M: g2Hash("other") },
+            captures: {
+              ...row.captures,
+              M: portfolioCapture(
+                pilot.attempts.find(
+                  (a) =>
+                    a.variant === "rich" &&
+                    a.inputId === row.inputId &&
+                    a.pass === row.pass,
+                )!,
+                [...V3_SIMPLE_VALID_QUESTIONS.slice(0, 9), "Teks lain?"],
+              ),
+            },
             cOverMMaterialGains: [
               {
                 slotId: "NUAVE-BRAND-NEED-01",
@@ -904,10 +1059,18 @@ describe("§8.3 frozen counterexamples", () => {
           )
         : a,
     );
-    pilot.attribution = pilot.attribution.map((row) => ({
-      ...row,
-      pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"],
-    }));
+    pilot.attribution = pilot.attribution.map((row) =>
+      rescueAttribution(
+        pilot.attempts.find(
+          (a) =>
+            a.variant === "rich" &&
+            a.inputId === row.inputId &&
+            a.pass === row.pass,
+        )!,
+        "NUAVE-BRAND-NEED-01",
+        "Kedai kopi apa saja yang layak dipertimbangkan di Jakarta Selatan?",
+      ),
+    );
     const result = evaluateG2Pilot(pilot);
     expect(result.metrics.pToMRescuedSlots).toBe(5);
     expect(result.decisionA).toBe(false);
@@ -917,8 +1080,16 @@ describe("§8.3 frozen counterexamples", () => {
   it("2. metadata-only coverage earns no retention (Decision B)", () => {
     const pilot = passingPilot();
     pilot.attribution = pilot.attribution.map((row) => ({
-      ...row,
-      pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"],
+      ...rescueAttribution(
+        pilot.attempts.find(
+          (a) =>
+            a.variant === "rich" &&
+            a.inputId === row.inputId &&
+            a.pass === row.pass,
+        )!,
+        "NUAVE-BRAND-NEED-01",
+        "Kedai kopi apa saja yang layak dipertimbangkan di Jakarta Selatan?",
+      ),
       cOverMLabelOnlyChanges: 2,
     }));
     const result = evaluateG2Pilot(pilot);
@@ -927,28 +1098,31 @@ describe("§8.3 frozen counterexamples", () => {
     expect(result.coverageRetained).toBe(false); // label-only earns nothing
   });
 
-  it("2b. C–M benefit without M–P rescue still supports reserves", () => {
+  it("2b. a C–M gain without any M–P rescue never retains reserves", () => {
+    // Coverage evidence is coverage evidence: a reviewed C–M gain supports
+    // the coverage component only. The frozen M contract cannot retain its
+    // reserves on it — A alone plus zero M–P benefit is amendment_required.
     const pilot = passingPilot();
     const attempt = pilot.attempts.find(
       (a) => a.variant === "rich" && a.inputId === "G2P-B2B",
     )!;
     pilot.attribution = pilot.attribution.map((row) =>
       row.inputId === "G2P-B2B"
-        ? attributionRecord(attempt, {
-            cOverMMaterialGains: [
-              {
-                slotId: "NUAVE-BRAND-NEED-01",
-                mTextFingerprint: g2Hash("m-wording"),
-                cTextFingerprint: g2Hash("c-wording"),
-                reviewRef: "review-2",
-              },
-            ],
-          })
+        ? gainAttribution(
+            attempt,
+            "NUAVE-BRAND-NEED-01",
+            "Saat perlu tempat rapat santai, kedai kopi mana yang bisa dipesan mendadak?",
+            "review-2",
+          )
         : row,
     );
     const result = evaluateG2Pilot(pilot);
-    expect(result.reservesRetained).toBe(true);
+    expect(result.decisionA).toBe(true);
+    expect(result.evidenceComplete).toBe(true);
     expect(result.coverageRetained).toBe(true);
+    expect(result.reservesRetained).toBe(false);
+    expect(result.retain).toBe(false);
+    expect(result.outcome).toBe("amendment_required");
   });
 
   it("2c. C–M gains on a mechanically invalid M do not count", () => {
@@ -958,8 +1132,13 @@ describe("§8.3 frozen counterexamples", () => {
     )!;
     pilot.attribution = pilot.attribution.map((row) =>
       row.inputId === "G2P-AC" && row.pass === 1
-        ? attributionRecord(attempt, {
-            mMechanicallyValid: false,
+        ? {
+            ...attributionRecord(attempt, {
+              // M is absent while the attempt has a pack — the row is
+              // inconsistent and invalid before any gain is examined.
+              captures: { P: null, M: null, C: row.captures.C },
+              mMechanicallyValid: false,
+            }),
             cOverMMaterialGains: [
               {
                 slotId: "NUAVE-BRAND-NEED-01",
@@ -968,7 +1147,7 @@ describe("§8.3 frozen counterexamples", () => {
                 reviewRef: "review-3",
               },
             ],
-          })
+          }
         : row,
     );
     const result = evaluateG2Pilot(pilot);
@@ -1298,9 +1477,7 @@ describe("release evaluator (R3)", () => {
       allocation: "richSelected",
       inputs: INPUTS,
       pilotReplay: { decisionAPreserved: true, decisionBPreserved: true },
-      releaseAttribution: releaseAttributionFor(attempts).map((row, i) =>
-        i === 0 ? { ...row, pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"] } : row,
-      ),
+      releaseAttribution: releaseAttributionWithRescue(attempts),
     });
     expect(result.failures).toEqual([]);
     expect(result.missingMandatoryEvidence).toEqual([]);
@@ -1446,9 +1623,7 @@ describe("release evaluator (R3)", () => {
       allocation: "richSelected",
       inputs: INPUTS,
       pilotReplay: { decisionAPreserved: false, decisionBPreserved: true },
-      releaseAttribution: releaseAttributionFor(attempts).map((row, i) =>
-        i === 0 ? { ...row, pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"] } : row,
-      ),
+      releaseAttribution: releaseAttributionWithRescue(attempts),
     });
     expect(result.pass).toBe(false);
     expect(result.failures.some((f) => f.includes("pilot replay"))).toBe(true);
@@ -1464,9 +1639,37 @@ describe("release evaluator (R3)", () => {
       releaseAttribution: releaseAttributionFor(attempts), // all empty
     });
     expect(result.pass).toBe(false);
-    expect(result.failures.some((f) => f.includes("component benefit"))).toBe(
+    expect(result.failures.some((f) => f.includes("reserves component"))).toBe(
       true,
     );
+  });
+
+  it("coverage gains alone cannot retain the reserves component at release", () => {
+    // Every row shows a reviewed C–M gain but zero P-to-M rescues — the
+    // aggregate gain count cannot substitute for the retained component's
+    // own demonstrated benefit.
+    const attempts = releaseAttempts("richSelected");
+    const result = evaluateG2Release({
+      attempts,
+      allocation: "richSelected",
+      inputs: INPUTS,
+      pilotReplay: { decisionAPreserved: true, decisionBPreserved: true },
+      releaseAttribution: attempts
+        .filter((a) => a.variant === "rich")
+        .map((a) =>
+          gainAttribution(
+            a,
+            "NUAVE-BRAND-NEED-02",
+            "Saat perlu tempat rapat santai, kedai kopi mana yang bisa dipesan mendadak?",
+            "release-review-1",
+          ),
+        ),
+    });
+    expect(result.pass).toBe(false);
+    expect(result.failures.some((f) => f.includes("reserves component"))).toBe(
+      true,
+    );
+    expect(result.metrics.cOverMMaterialGains).toBe(16);
   });
 
   it("selected-v3 sample statistics are enforced separately from pooled totals", () => {
@@ -1480,9 +1683,7 @@ describe("release evaluator (R3)", () => {
       allocation: "richSelected",
       inputs: INPUTS,
       pilotReplay: { decisionAPreserved: true, decisionBPreserved: true },
-      releaseAttribution: releaseAttributionFor(attempts).map((row, i) =>
-        i === 0 ? { ...row, pToMRescuedSlots: ["NUAVE-BRAND-NEED-01"] } : row,
-      ),
+      releaseAttribution: releaseAttributionWithRescue(attempts),
     });
     expect(result.pass).toBe(false);
     expect(

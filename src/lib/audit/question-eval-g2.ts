@@ -11,9 +11,11 @@ import {
   V3_FINALIZER_VERSION,
   V3_FALLBACK_VERSION,
   V3_SELECTOR_VERSION,
+  type V3Origin,
 } from "./question-finalize-v3";
 import {
   V3_GUARD_POLICY,
+  V3_OPENCODEGO_TRANSPORT,
   V3_PROPOSED_EVALUATION_SETTINGS,
   V3_RICH_INSTRUCTION_VERSION,
   V3_RICH_SCHEMA_VERSION,
@@ -23,8 +25,8 @@ import {
   type V3RequestSettings,
 } from "./question-writer-v3";
 
-export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v3";
-export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v3";
+export const G2_EVAL_PACKET_VERSION = "nuave.g2-evaluation-packet.v4";
+export const G2_DECISION_POLICY_VERSION = "nuave.g2-decision-policy.v4";
 export const G2_RUBRIC_VERSION = "nuave.g2-review-rubric.v2";
 export const G2_FROZEN_INPUTS_VERSION = "nuave.g2-frozen-inputs.v2";
 export const G2_USAGE_ACCOUNTING_VERSION = "nuave.g2-usage-accounting.v2";
@@ -546,6 +548,41 @@ export const G2_TRANSPORT_OWNERSHIP = {
  * selector choice. */
 export const G2_SELECTION_POLICY = "default" as const;
 
+/** The canonical request configuration a v3 attempt must declare it ran
+ * under: provider/model, schema mode, output cap, timeout, retry/sampling
+ * posture, the accepted transport contract, and the exact
+ * instruction/schema identities — the settings object itself plus the
+ * variant pins. Credentials are never part of this record (the transport
+ * contract names the bearer scheme, not a key). A small canonical record;
+ * the attempt binds to it by hash. */
+export const G2_V3_REQUEST_CONFIG = {
+  rich: {
+    settings: G2_EVALUATION_SETTINGS,
+    transport: V3_OPENCODEGO_TRANSPORT,
+    instructionVersion: V3_RICH_INSTRUCTION_VERSION,
+    schemaVersion: V3_RICH_SCHEMA_VERSION,
+    contractVersion: V3_WRITER_CONTRACT_VERSION,
+    selectionPolicy: G2_SELECTION_POLICY,
+  },
+  simple: {
+    settings: G2_EVALUATION_SETTINGS,
+    transport: V3_OPENCODEGO_TRANSPORT,
+    instructionVersion: V3_SIMPLE_INSTRUCTION_VERSION,
+    schemaVersion: V3_SIMPLE_SCHEMA_VERSION,
+    contractVersion: V3_WRITER_CONTRACT_VERSION,
+    selectionPolicy: "primary",
+  },
+} as const;
+
+/** SHA-256 over the canonical JSON of the variant's frozen request
+ * configuration — the value a v3 attempt must carry as
+ * `requestConfigFingerprint`. */
+export function g2RequestConfigFingerprint(variant: "rich" | "simple"): string {
+  return createHash("sha256")
+    .update(JSON.stringify(G2_V3_REQUEST_CONFIG[variant]))
+    .digest("hex");
+}
+
 // ---------------------------------------------------------------------------
 // Blinded review procedure, rubric, and usable-pack definition (§8.4 rules)
 // ---------------------------------------------------------------------------
@@ -712,10 +749,21 @@ export type G2AttemptRecord = {
   finalTexts: string[] | null;
   /** Per-text independent judgments; null when no final pack exists. */
   texts: G2TextJudgment[] | null;
+  /** Per-slot origin of each final text in canonical order — the recorded
+   * mechanical outcome of the attempt's selection. Null when no final pack
+   * exists. */
+  finalOrigins: V3Origin[] | null;
   /** The selection policy this attempt ran under. The selected rich contract
    * is always the one frozen policy (G2_SELECTION_POLICY); simple v3 runs
    * primary-only; v2 keeps its actual recorded policy. */
   selectionPolicy: "primary" | "default" | "coverage" | "v2-actual";
+  /** SHA-256 of the canonical request configuration the attempt ran under —
+   * provider/model, sampling omission, schema mode, output cap, timeout,
+   * transport contract, and instruction/schema identities. v3 attempts must
+   * equal the frozen `g2RequestConfigFingerprint(variant)`; a v2 attempt
+   * records the fingerprint of its actual recorded configuration. Never
+   * contains credentials. */
+  requestConfigFingerprint: string;
   /** Exact instruction/schema/guard/selector/fallback/finalizer versions the
    * attempt ran under; v3 attempts must equal the frozen pins exactly, so an
    * old rejected candidate cannot masquerade as a matching capture. */
@@ -734,6 +782,19 @@ export type G2AttemptRecord = {
   latencyMs: number | null;
 };
 
+/** One replayed portfolio captured offline from a single rich response:
+ * the exact canonical final texts, each slot's recorded origin, and the
+ * pack fingerprint that must resolve to those texts under the attempt's
+ * facts fingerprint. This is the smallest capture representation that lets
+ * P, M, and C claims resolve to the same rich response — a hash alone could
+ * not prove which texts/origins produced it. */
+export type G2PortfolioCapture = {
+  /** Must equal g2PackFingerprint(attempt.factsFingerprint, finalTexts). */
+  packFingerprint: string;
+  finalTexts: string[];
+  origins: V3Origin[];
+};
+
 /** §8.1 P/M/C attribution derived offline from each rich response, bound to
  * the exact attempt and the exact portfolio fingerprints it produced. One
  * global selection policy supplies Decision A; this is evidence, never a
@@ -743,11 +804,16 @@ export type G2Attribution = {
   businessKey: string;
   pass: 1 | 2;
   variant: "rich";
-  /** Pack fingerprints for the P/M/C portfolios of this attempt. M is the
-   * recorded selection under the frozen policy, so it must equal the
-   * attempt's own packFingerprint; P and C resolve against this attempt's
-   * replay captures — a nonexistent/null portfolio earns no credit. */
-  packFingerprints: { P: string | null; M: string | null; C: string | null };
+  /** The P/M/C replay captures of this attempt's response. M is the
+   * recorded selection under the frozen policy, so its texts and origins
+   * must equal the attempt's own capture exactly; P and C resolve against
+   * these captures — a null, unrelated, identical, or merely relabelled
+   * portfolio earns no component credit. */
+  captures: {
+    P: G2PortfolioCapture | null;
+    M: G2PortfolioCapture | null;
+    C: G2PortfolioCapture | null;
+  };
   /** Exact slot IDs where P could not keep a valid primary but M kept
    * original text (mechanical rescue or avoided fallback). */
   pToMRescuedSlots: string[];
@@ -936,6 +1002,44 @@ export function validateG2AttemptRecord(
     errors.push(
       `non-completed attempt ${attemptKey(record)} cannot carry final texts or a pack fingerprint`,
     );
+  // Origins are the recorded mechanical outcome of the same selection —
+  // required exactly when a final pack exists, in canonical order.
+  const ORIGINS: readonly string[] = [
+    "primary",
+    "reserve",
+    "slot_fallback",
+    "full_fallback",
+  ];
+  if (hasPack) {
+    if (
+      !record.finalOrigins ||
+      record.finalOrigins.length !== CANONICAL_SLOT_IDS.length ||
+      record.finalOrigins.some((origin) => !ORIGINS.includes(origin))
+    )
+      errors.push(
+        `attempt ${attemptKey(record)} must record exactly ${CANONICAL_SLOT_IDS.length} canonical final origins`,
+      );
+  } else if (record.finalOrigins !== null)
+    errors.push(
+      `attempt ${attemptKey(record)} cannot carry final origins without a final pack`,
+    );
+  // Request-configuration binding: v3 attempts run under the one frozen
+  // canonical configuration; a v2 record carries its actual recorded hash.
+  if (record.variant === "rich" || record.variant === "simple") {
+    if (
+      record.requestConfigFingerprint !==
+      g2RequestConfigFingerprint(record.variant)
+    )
+      errors.push(
+        `attempt ${attemptKey(record)} requestConfigFingerprint does not equal the frozen ${record.variant} request configuration`,
+      );
+  } else if (
+    typeof record.requestConfigFingerprint !== "string" ||
+    !record.requestConfigFingerprint
+  )
+    errors.push(
+      `attempt ${attemptKey(record)} must record its actual request configuration fingerprint`,
+    );
   if (hasPack) {
     const texts = record.finalTexts!;
     if (texts.length !== CANONICAL_SLOT_IDS.length)
@@ -1039,11 +1143,24 @@ export function validateG2Attribution(
   const errors: string[] = [];
   const seen = new Map<string, G2Attribution>();
   const valid: G2Attribution[] = [];
+  // Attribution binds to the exact scheduled RICH attempt — input, variant,
+  // and pass. An interleaved simple or v2 record at the same input/pass is a
+  // different key and can never overwrite or shadow the rich attempt.
   const attemptByKey = new Map<string, G2AttemptRecord>(
-    attempts.map((a) => [`${a.inputId}:${a.pass}`, a] as const),
+    attempts.map((a) => [attemptKey(a), a] as const),
   );
+  const textAt = (capture: G2PortfolioCapture, slotId: string) =>
+    capture.finalTexts[
+      (CANONICAL_SLOT_IDS as readonly string[]).indexOf(slotId)
+    ];
+  const originAt = (capture: G2PortfolioCapture, slotId: string) =>
+    capture.origins[(CANONICAL_SLOT_IDS as readonly string[]).indexOf(slotId)];
   for (const row of rows) {
-    const key = `${row.inputId}:${row.pass}`;
+    const key = attemptKey({
+      inputId: row.inputId,
+      variant: row.variant,
+      pass: row.pass,
+    });
     if (seen.has(key)) {
       errors.push(`duplicate P/M/C attribution for ${key}`);
       continue;
@@ -1051,50 +1168,120 @@ export function validateG2Attribution(
     seen.set(key, row);
     const rowErrors: string[] = [];
     const scheduled = expectedRich.find(
-      (a) => a.inputId === row.inputId && a.pass === row.pass,
+      (a) =>
+        a.inputId === row.inputId &&
+        a.pass === row.pass &&
+        a.variant === "rich",
     );
     if (!scheduled)
       rowErrors.push(
         `unscheduled P/M/C attribution for ${key} (no scheduled rich attempt)`,
       );
-    const attempt = attemptByKey.get(key);
     if (row.variant !== "rich")
       rowErrors.push(`attribution ${key} must carry variant "rich"`);
-    if (attempt && row.businessKey !== attempt.businessKey)
+    const attempt = attemptByKey.get(key);
+    if (!attempt)
+      rowErrors.push(
+        `attribution ${key} has no recorded rich attempt to bind against`,
+      );
+    else if (row.businessKey !== attempt.businessKey)
       rowErrors.push(
         `attribution ${key} businessKey "${row.businessKey}" mismatches the attempt's "${attempt.businessKey}"`,
       );
-    // M is the recorded selection under the frozen policy — it must equal
-    // the attempt's own pack fingerprint; a nonexistent portfolio earns
-    // nothing.
-    if (
-      attempt?.packFingerprint &&
-      row.packFingerprints.M !== attempt.packFingerprint
-    )
+    // Every non-null capture must resolve to this attempt's facts: the pack
+    // fingerprint is recomputed over the captured texts so an unrelated or
+    // fabricated portfolio never verifies.
+    for (const policy of ["P", "M", "C"] as const) {
+      const capture = row.captures[policy];
+      if (!capture) continue;
+      if (
+        capture.finalTexts.length !== CANONICAL_SLOT_IDS.length ||
+        capture.origins.length !== CANONICAL_SLOT_IDS.length
+      ) {
+        rowErrors.push(
+          `attribution ${key} capture ${policy} must carry exactly ${CANONICAL_SLOT_IDS.length} final texts and origins in canonical order`,
+        );
+        continue;
+      }
+      if (
+        attempt &&
+        capture.packFingerprint !==
+          g2PackFingerprint(attempt.factsFingerprint, capture.finalTexts)
+      )
+        rowErrors.push(
+          `attribution ${key} capture ${policy} pack fingerprint does not resolve to the captured texts under this attempt's facts`,
+        );
+    }
+    // M is the recorded selection under the frozen policy — its captured
+    // texts and origins must equal the attempt's own record exactly. An
+    // attempt with no pack admits no M portfolio.
+    if (attempt?.finalTexts) {
+      if (!row.captures.M)
+        rowErrors.push(
+          `attribution ${key} lacks the M capture for an attempt with a recorded pack`,
+        );
+      else if (
+        row.captures.M.packFingerprint !== attempt.packFingerprint ||
+        row.captures.M.finalTexts.some(
+          (text, i) => text !== attempt.finalTexts![i],
+        ) ||
+        row.captures.M.origins.some(
+          (origin, i) => origin !== attempt.finalOrigins?.[i],
+        )
+      )
+        rowErrors.push(
+          `attribution ${key} M capture does not equal the attempt's recorded final texts, origins, and pack fingerprint`,
+        );
+    } else if (row.captures.M !== null)
       rowErrors.push(
-        `attribution ${key} M portfolio fingerprint does not resolve to the attempt's recorded pack`,
+        `attribution ${key} claims an M capture for an attempt with no pack`,
       );
-    if (!attempt?.packFingerprint && row.packFingerprints.M !== null)
+    // A completed capture from the integrated finalizer is mechanically
+    // valid by construction; mMechanicallyValid is exactly "M exists".
+    if (row.mMechanicallyValid !== (row.captures.M !== null))
       rowErrors.push(
-        `attribution ${key} claims an M portfolio for an attempt with no pack`,
+        `attribution ${key} mMechanicallyValid must equal the presence of the M capture`,
       );
-    // Rescued slots: exact canonical unnamed slot IDs, unique, and only
-    // creditable when M actually produced a pack.
+    // Rescued slots: exact canonical unnamed slot IDs, unique, and each one
+    // must resolve to the recorded P-to-M difference — under the P capture
+    // the slot lost its original text (slot/full fallback) while under M it
+    // kept an original candidate (primary or reserve). A null P or a slot
+    // where both kept the same text earns no credit.
     const rescued = new Set<string>();
     for (const slotId of row.pToMRescuedSlots) {
-      if (!(UNNAMED_SLOT_IDS as readonly string[]).includes(slotId))
+      if (!(UNNAMED_SLOT_IDS as readonly string[]).includes(slotId)) {
         rowErrors.push(`attribution ${key} rescued non-unnamed slot ${slotId}`);
-      else if (rescued.has(slotId))
+        continue;
+      }
+      if (rescued.has(slotId)) {
         rowErrors.push(`attribution ${key} duplicates rescued slot ${slotId}`);
-      else rescued.add(slotId);
+        continue;
+      }
+      rescued.add(slotId);
+      const { P, M } = row.captures;
+      const mKeptOriginal =
+        M &&
+        (originAt(M, slotId) === "primary" ||
+          originAt(M, slotId) === "reserve");
+      const pLostOriginal =
+        P &&
+        (originAt(P, slotId) === "slot_fallback" ||
+          originAt(P, slotId) === "full_fallback");
+      if (
+        !P ||
+        !M ||
+        !mKeptOriginal ||
+        !pLostOriginal ||
+        textAt(P, slotId) === textAt(M, slotId)
+      )
+        rowErrors.push(
+          `attribution ${key} rescued slot ${slotId} does not resolve to a recorded P-to-M difference (P fell back while M kept original text)`,
+        );
     }
-    if (row.pToMRescuedSlots.length && !row.packFingerprints.M)
-      rowErrors.push(
-        `attribution ${key} claims rescued slots without an M portfolio`,
-      );
-    // Material gains: exact slot binding, distinct final texts (identical
-    // wording with metadata-only changes produces identical fingerprints and
-    // is rejected), and a required independent review reference.
+    // Material gains: exact slot binding, each fingerprint resolved to the
+    // actual M/C captured texts (identical wording produces identical
+    // fingerprints and is rejected), and a required independent review
+    // reference.
     for (const gain of row.cOverMMaterialGains) {
       if (!(UNNAMED_SLOT_IDS as readonly string[]).includes(gain.slotId))
         rowErrors.push(
@@ -1108,6 +1295,29 @@ export function validateG2Attribution(
         rowErrors.push(
           `attribution ${key} material gain on ${gain.slotId} has identical M/C final wording — a label-only change earns no credit`,
         );
+      else {
+        const { M, C } = row.captures;
+        if (
+          M &&
+          C &&
+          (UNNAMED_SLOT_IDS as readonly string[]).includes(gain.slotId)
+        ) {
+          if (
+            gain.mTextFingerprint !==
+            g2TextFingerprint(gain.slotId, textAt(M, gain.slotId))
+          )
+            rowErrors.push(
+              `attribution ${key} material gain on ${gain.slotId} M fingerprint does not resolve to the captured M text`,
+            );
+          if (
+            gain.cTextFingerprint !==
+            g2TextFingerprint(gain.slotId, textAt(C, gain.slotId))
+          )
+            rowErrors.push(
+              `attribution ${key} material gain on ${gain.slotId} C fingerprint does not resolve to the captured C text`,
+            );
+        }
+      }
       if (!gain.reviewRef?.trim())
         rowErrors.push(
           `attribution ${key} material gain on ${gain.slotId} lacks an independent review reference`,
@@ -1118,7 +1328,7 @@ export function validateG2Attribution(
         rowErrors.push(
           `attribution ${key} claims material gains on a mechanically invalid M`,
         );
-      if (!row.packFingerprints.C)
+      if (!row.captures.C)
         rowErrors.push(
           `attribution ${key} claims material gains without a C portfolio`,
         );
@@ -1127,7 +1337,15 @@ export function validateG2Attribution(
     else valid.push(row);
   }
   for (const scheduled of expectedRich)
-    if (!seen.has(`${scheduled.inputId}:${scheduled.pass}`))
+    if (
+      !seen.has(
+        attemptKey({
+          inputId: scheduled.inputId,
+          variant: "rich",
+          pass: scheduled.pass,
+        }),
+      )
+    )
       errors.push(
         `missing P/M/C attribution for rich attempt ${scheduled.inputId} pass ${scheduled.pass}`,
       );
@@ -1502,10 +1720,20 @@ export function evaluateG2Pilot(input: {
    * preferences, attribution. Missing/invalid required evidence prevents
    * `retain` even when the quality calculation itself passes. */
   evidenceComplete: boolean;
-  /** The overall pilot retain: Decision A's quality result AND complete
-   * valid evidence — never an "all gates passed" reading when required
-   * evidence is missing or invalid. */
+  /** The overall pilot retain for the frozen M rich contract: Decision A's
+   * quality result AND complete valid evidence AND Decision B's reserves
+   * benefit. A alone cannot retain a contract whose reserves component fails
+   * B — that outcome is `amendment_required`, never a silently adopted
+   * reserves-free request. */
   retain: boolean;
+  /** The honest combined outcome:
+   * - "retain": A passed, evidence complete, reserves demonstrated benefit.
+   * - "amendment_required": A passed and evidence is complete but the
+   *   frozen contract's reserves component shows no benefit — a
+   *   reserves-free or coverage contract is a different contract needing
+   *   its own evaluation, not an automatic outcome.
+   * - "not_retained": A failed or required evidence is missing/invalid. */
+  outcome: "retain" | "amendment_required" | "not_retained";
   metrics: Record<string, number | null>;
   failures: string[];
 } {
@@ -1608,12 +1836,13 @@ export function evaluateG2Pilot(input: {
 
   const decisionA = qualityFailures.length === 0;
 
-  // Decision B: reserves need ≥1 M–P mechanical rescue without regression OR
-  // an independently justified C–M benefit; coverage additionally requires
-  // ≥1 reviewed material gain on a mechanically valid M. Mechanical rescue
-  // alone cannot justify coverage; label-only C–M changes earn nothing.
-  // Attribution rows reconcile exactly to the scheduled rich attempts; only
-  // valid rows earn component credit.
+  // Decision B keeps the two components separate. Reserves are the M-over-P
+  // difference: ≥1 recorded mechanical rescue without regression — a C–M
+  // gain is evidence about the coverage component and never substitutes.
+  // Coverage requires ≥1 reviewed material gain on a mechanically valid M
+  // with no C regression; mechanical rescue alone cannot justify coverage,
+  // and label-only C–M changes earn nothing. Attribution rows reconcile
+  // exactly to the scheduled rich attempts; only valid rows earn credit.
   const expectedRich = G2_PILOT_SCHEDULE.attempts.filter(
     (a) => a.variant === "rich",
   );
@@ -1638,20 +1867,26 @@ export function evaluateG2Pilot(input: {
   const coverageRegression = attribution.valid.some(
     (a) => a.cCausedFinalRegression,
   );
-  const reservesRetained =
-    (rescued >= 1 && !rescueRegression) ||
-    (materialGains >= 1 && !coverageRegression);
+  const reservesRetained = rescued >= 1 && !rescueRegression;
   const coverageRetained = materialGains >= 1 && !coverageRegression;
 
   const evidenceComplete = evidenceErrors.length === 0;
   failures.push(...evidenceErrors, ...qualityFailures);
+
+  const retain = decisionA && evidenceComplete && reservesRetained;
+  const outcome = retain
+    ? ("retain" as const)
+    : decisionA && evidenceComplete
+      ? ("amendment_required" as const)
+      : ("not_retained" as const);
 
   return {
     decisionA,
     reservesRetained,
     coverageRetained,
     evidenceComplete,
-    retain: decisionA && evidenceComplete,
+    retain,
+    outcome,
     metrics: {
       richAttempts: richAttempts.length,
       serializationComplete,
@@ -1797,6 +2032,7 @@ export function evaluateG2Release(input: {
 } {
   const failures: string[] = [];
   const missingMandatoryEvidence: string[] = [];
+  const releaseComponentMetrics = { rescuedSlots: 0, materialGains: 0 };
   const schedule = G2_RELEASE_SCHEDULES[input.allocation];
   failures.push(
     ...validateG2AttemptSchedule(
@@ -1913,21 +2149,32 @@ export function evaluateG2Release(input: {
         input.attempts,
       );
       failures.push(...attribution.errors);
-      const benefits = attribution.valid.reduce(
-        (n, a) => n + a.pToMRescuedSlots.length + a.cOverMMaterialGains.length,
+      // Benefit without regression for each component actually retained.
+      // Under the rich allocation the retained contract is M — its reserves
+      // component must show ≥1 recorded P-to-M rescue with no M regression.
+      // A reviewed C–M gain is evidence about the coverage component only;
+      // an aggregate benefit count can never substitute one component's
+      // benefit for another's, and coverage is not silently retained.
+      const rescued = attribution.valid.reduce(
+        (n, a) => n + a.pToMRescuedSlots.length,
         0,
       );
-      if (benefits < 1)
-        failures.push(
-          "release attribution shows no relevant observed component benefit (≥1 required)",
-        );
+      const materialGains = attribution.valid.reduce(
+        (n, a) => n + (a.mMechanicallyValid ? a.cOverMMaterialGains.length : 0),
+        0,
+      );
+      releaseComponentMetrics.rescuedSlots = rescued;
+      releaseComponentMetrics.materialGains = materialGains;
       if (
-        attribution.valid.some(
-          (a) => a.mCausedFinalRegression || a.cCausedFinalRegression,
-        )
+        rescued < 1 ||
+        attribution.valid.some((a) => a.mCausedFinalRegression)
       )
         failures.push(
-          "release attribution shows a component-caused final-text regression",
+          "release attribution shows no relevant M-over-P benefit for the retained reserves component (≥1 recorded rescue, no regression required)",
+        );
+      if (attribution.valid.some((a) => a.cCausedFinalRegression))
+        failures.push(
+          "release attribution shows a coverage-caused final-text regression",
         );
     }
   }
@@ -1958,6 +2205,8 @@ export function evaluateG2Release(input: {
       structurallyComplete,
       modelWrittenPacks,
       fullFallbacks,
+      pToMRescuedSlots: releaseComponentMetrics.rescuedSlots,
+      cOverMMaterialGains: releaseComponentMetrics.materialGains,
       meanLatencyMs: absolute.metrics.meanLatencyMs,
       p95LatencyMs: absolute.metrics.p95LatencyMs,
       totalCostUsd: absolute.metrics.totalCostUsd,

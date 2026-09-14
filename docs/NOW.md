@@ -142,17 +142,19 @@ which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
 via PRs #48 and #50). **The G1 dormant facts/context adapter merged via PR #59
 on 2026-09-13** (merge `687f340`) and is deployed but still dormant — it has no
 runtime consumer, changes no live provider behavior, and customer question
-dispatch remains v2. **G2 is in its second correction** on
+dispatch remains v2. **G2 is in its third correction** on
 `codex/spec008-g2-evaluation-freeze` (draft PR #65): a dormant v3
 rich/simple writer prototype, bounded finalizer/fallback, and the frozen
 evaluation packet
 ([`G2_EVALUATION_PACKET.md`](../specs/008-recommendation-eligible-question-generation/G2_EVALUATION_PACKET.md)),
-re-frozen at v3 after the independent R1–R6 re-review (accepted transport
-contract, exact evidence bindings, honest release decisions, cached-token
-usage accounting, purpose-preserving fallback forms, bounded conflict
-repair), with executable §8.3 decision-rule tests and fresh v2 held-out
-inputs replacing the exposed v1 set. It awaits offline verification and
-independent re-review and acceptance; it is not an empirical quality pass,
+re-frozen at v4 after the independent second re-review (exact
+variant-scoped attribution with captured P/M/C texts/origins, canonical
+request-configuration binding, an explicit `retain`/`amendment_required`/
+`not_retained` outcome, purpose-based fallback contract without a keyword
+gate, and matching-based multi-slot conflict repair), preserving the
+independent R1–R6 corrections and the fresh v2 held-out inputs. It awaits
+offline verification and independent re-review and acceptance; it is not an
+empirical quality pass,
 and provider feasibility is unproven. The
 package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
 evaluation gates still require their own explicit founder authorization — the

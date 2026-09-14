@@ -1,4 +1,4 @@
-# G2 evaluation packet — frozen offline (2026-09-13, second correction)
+# G2 evaluation packet — frozen offline (2026-09-13, third correction)
 
 Status: **corrected and re-frozen for independent re-review**. This packet is
 the versioned evaluation contract required by R5 §8. It is offline-only: it
@@ -7,20 +7,26 @@ Every number below is a proposed limit for later authorization, not a grant to
 spend and not measured performance. Exact fallback wording and evaluation
 examples remain subject to independent review before G2 acceptance.
 
-This second revision corrects the candidate against the independent re-review
-(R1–R6): the declared transport contract now matches the accepted OpenCode Go
-helper, attempt/attribution records bind real fingerprints instead of
-arbitrary nonempty strings, the release evaluator computes the missing §8.2
-decisions honestly, usage accounting separates cached-read and cached-write
-portions, the built-in fallback forms preserve slot purpose, and named
-conflict repair uses bounded backtracking over true conflict participants.
-The first revision (F1–F10 resolutions: comparison rule, complete-evidence
-validation, executable input freeze, strict generation shape, guard pairs,
-recovery semantics) is preserved.
+This third revision corrects the candidate against the independent second
+re-review (T1–T3): attribution rows bind the exact rich attempt by
+input/variant/pass and resolve every P/M/C claim against captured final
+texts, origins, and fingerprints; attempt records additionally carry the
+canonical request-configuration fingerprint (provider/model, sampling
+omission, schema mode, cap, timeout, transport contract, instruction/schema
+identity — never credentials) and per-slot final origins; the combined pilot
+outcome is explicit (`retain` / `amendment_required` / `not_retained`), and
+release attribution requires demonstrated benefit for each component actually
+retained. The slot-fallback contract no longer applies a keyword anchor —
+reviewed overrides are revalidated by the same mechanical checks only — and
+multi-slot conflict repair now finds the true infeasibility participants via
+a bounded matching analysis alongside invalid slots. The second revision
+(R1–R6: transport contract, real fingerprint bindings, honest §8.2 decisions,
+split usage accounting, purpose-preserving fallback forms, bounded named
+backtracking) and the first revision (F1–F10 resolutions) are preserved.
 
 Code-owned authority: `src/lib/audit/question-eval-g2.ts`
-(`nuave.g2-evaluation-packet.v3`, decision policy
-`nuave.g2-decision-policy.v3`, rubric `nuave.g2-review-rubric.v2`, frozen
+(`nuave.g2-evaluation-packet.v4`, decision policy
+`nuave.g2-decision-policy.v4`, rubric `nuave.g2-review-rubric.v2`, frozen
 inputs `nuave.g2-frozen-inputs.v2`, usage accounting
 `nuave.g2-usage-accounting.v2`). This document describes that executable
 record; approved R5 remains authoritative — a disagreement between the module
@@ -142,6 +148,16 @@ different consumer decision or wording on a mechanically valid M text earns
 credit; a changed dimension label/ID on the same final wording earns none.
 No synthetic example counts as an empirical win.
 
+Attempt-record bindings (`G2AttemptRecord`, validated by
+`validateG2AttemptRecord`): beyond the envelope/facts/pack/text fingerprints,
+each attempt carries `finalOrigins` (the per-slot mechanical outcome of its
+selection, in canonical order) and `requestConfigFingerprint` — the SHA-256
+of the variant's canonical request configuration
+(`G2_V3_REQUEST_CONFIG`: the frozen settings object, the accepted transport
+contract, instruction/schema/contract versions, and the selection policy).
+A v3 attempt must equal the frozen fingerprint exactly; a v2 attempt records
+its actual configuration hash. Credentials are never part of the record.
+
 ## 3. Decision rules
 
 ### §8.1 Decision A — whole contract (`evaluateG2Pilot`)
@@ -178,15 +194,30 @@ both are inadequate, stop. Ties never retain complexity.
 
 ### §8.1 Decision B — components
 
-- Reserves retained iff ≥1 M→P mechanical rescue/avoided fallback **or** an
-  independently justified C−M benefit, each with no component-caused
-  final-text regression (P/M/C replayed offline from each rich response
-  under identical guards/fallbacks, bound to the exact attempt and one fixed
-  candidate variant).
+- Reserves retained iff ≥1 recorded M-over-P mechanical rescue/avoided
+  fallback with no M-caused final-text regression (P/M/C replayed offline
+  from each rich response under identical guards/fallbacks, bound to the
+  exact attempt by input/variant/pass). A rescue resolves to the recorded
+  P-to-M difference: the slot lost its original text under P (slot or full
+  fallback) while M kept an original candidate. A C−M benefit is evidence
+  about the coverage component and never substitutes for reserves.
 - Coverage retained iff ≥1 independently reviewed material consumer-decision
   or wording gain in C−M on a mechanically valid M, with no C-caused
   regression. Mechanical-only rescue cannot justify coverage; label-only
   changes earn nothing; reserve-only rescue does not earn coverage.
+
+Each attribution row carries the P/M/C replay **captures** — the canonical
+final texts, per-slot origins, and pack fingerprint of each portfolio — so
+every claimed fingerprint, rescue, and gain resolves to actual recorded
+texts of the same rich response. Null, unrelated, identical, or merely
+relabelled portfolios earn no component credit.
+
+The combined pilot outcome is explicit: `retain` requires Decision A quality
+**and** complete valid evidence **and** retained reserves for the frozen M
+contract; `amendment_required` when A and evidence pass but the reserves
+component shows no benefit (a reserves-free or coverage contract is a
+different contract needing its own evaluation — never silently adopted);
+`not_retained` otherwise.
 
 ### §8.2 held-out retention (`evaluateG2HeldOutRetention`)
 
@@ -210,16 +241,19 @@ release acceptance is emitted while any mandatory input is missing:
 2. **Per-input v2 naturalness comparison over all ten texts**
    (`meanAllNaturalness`, grouped by each frozen input over its scheduled
    repeats): selected v3 must be non-worse than the matching actual v2 for
-   every paired input. Rich allocation pairs the 11 inputs that carry
-   scheduled v2 attempts (D1–D8 + D1/D3/D5 repeats); the simple-by-amendment
+   every paired input. The rich allocation carries **11 actual-v2 attempts
+   across the eight development inputs** (D1–D8, with preselected repeats on
+   D1/D3/D5) and pairs v3 against them per input; the simple-by-amendment
    allocation pairs all 16. No held-out v2 pairs are invented.
 3. **Writer-contribution thresholds**: ≥15/16 structurally complete records,
    ≥14/16 packs retaining ≥5 model-written unnamed texts, ≤2 full-fallback
    packs.
 4. **§8.2.5 integrated gates**: the §8.1 pilot replay must pass on the same
-   corrected rules, and the release P/M/C attribution must show at least one
-   observed component benefit — both evaluated as explicit mandatory gates,
-   not implied by record cleanliness.
+   corrected rules, and the release P/M/C attribution must show ≥1 recorded
+   P-to-M rescue without regression for the retained reserves component —
+   an aggregate benefit count or C−M gains alone cannot justify retained
+   coverage — both evaluated as explicit mandatory gates, not implied by
+   record cleanliness.
 5. **§8.2.7 resource samples**: absolute limits over **all** attempts in the
    allocation (failures, timeouts, and fallback latency included), plus
    selected-v3 means and empirical nearest-rank p95 over the selected 16 —
@@ -320,12 +354,12 @@ Pinned versions (`G2_VERSION_PINS` plus request versions): writer contract
 `nuave.question-schema.v3.2-rich/-simple`; projection
 `nuave.question-facts.v3.1`; context `nuave.question-context.v3.1` (G1
 projection/context versions are unchanged and stay pinned); guard
-policy `compatible-008`; selector `nuave.question-selector.v3.2`; fallback
-`nuave.question-fallback.v3.2`; finalizer `nuave.question-finalizer.v3.2`;
+policy `compatible-008`; selector `nuave.question-selector.v3.3`; fallback
+`nuave.question-fallback.v3.3`; finalizer `nuave.question-finalizer.v3.3`;
 evidence `nuave.question-evidence.v3`; packet/decision/rubric/frozen-input/
-usage-accounting versions above. The v3.2 bump distinguishes this corrected
-candidate from the rejected one — a record claiming v3.1 identity is the
-old candidate, not this packet.
+usage-accounting versions above. The v3.3/v4 bumps distinguish this
+third-correction candidate — a record claiming v3.1 identity is the old
+rejected candidate, and v3.2/v3 identities mark the second candidate.
 
 Held-out retirement record (`G2_FROZEN_INPUT_MANIFEST.retiredInputs`): the
 v1 H1–H4 envelopes are retired from untouched held-out status — their

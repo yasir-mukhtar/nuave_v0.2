@@ -388,9 +388,16 @@ describe("v3SlotFallback (F10/R5)", () => {
       expect(checkV3Text(texts[i].text!, s, f), `${s.id} issues`).toEqual([]);
     }
     // Administrative/public discovery only — no therapy suitability, no
-    // clinical winner, no promised cure.
+    // clinical winner, no promised cure. The mechanical checks run on the
+    // actual fallback strings.
     expect(texts[0].text).toMatch(/menerima pasien baru/i);
-    expect(texts.join(" ")).not.toMatch(/menyembuhkan|paling aman|terapi/i);
+    for (const t of texts)
+      expect(t.text).not.toMatch(/menyembuhkan|paling aman|terapi/i);
+    // The regulated pack keeps the category noun throughout administrative
+    // discovery — no bare "jasa"/"pilihan" that loses what is being sought.
+    expect(texts[1].text).toMatch(/klinik gigi/i);
+    expect(texts[2].text).toMatch(/klinik gigi/i);
+    expect(texts[3].text).toMatch(/klinik gigi/i);
     // Slot 8 still tests explicit recommendation — not merely new-patient
     // acceptance.
     expect(texts[7].text).toMatch(/layak direkomendasikan/i);
@@ -666,6 +673,165 @@ describe("finalizeV3RichResponse", () => {
     );
   });
 
+  it("repairs a shared two-option cycle with the minimum necessary substitutions", () => {
+    // Slots 1–3 each offer the same two individually valid alternatives
+    // {A, B}; every other candidate is distinct. Two texts cannot fill three
+    // slots, so at least one fallback is required — and one is sufficient.
+    // Only the three participants may be marked affected.
+    const A = "Kedai kopi mana yang cocok untuk bekerja di Jakarta Selatan?";
+    const B = "Kedai kopi mana yang cocok untuk berkumpul di Jakarta Selatan?";
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": { primary: A, reserve: B },
+      "NUAVE-BRAND-NEED-02": { primary: A, reserve: B },
+      "NUAVE-BRAND-SOLUTION-01": { primary: A, reserve: B },
+    });
+    const parsed = parseV3RichResponse(response);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = finalizeV3RichResponse(facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.pass).toBe("fallback_selection");
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-NEED-02",
+      "NUAVE-BRAND-SOLUTION-01",
+    ]);
+    // Exactly one slot fallback repairs the cycle: the other two
+    // participants keep real candidate texts A and B.
+    const participants = result.prompts.filter((p) =>
+      result.diagnostics.affectedSlots.includes(p.slotId),
+    );
+    const texts = participants.map((p) => p.text);
+    expect(texts).toContain(A);
+    expect(texts).toContain(B);
+    expect(
+      participants.filter((p) => p.origin === "slot_fallback"),
+    ).toHaveLength(1);
+    // Every unaffected slot keeps its selected text exactly.
+    result.prompts
+      .filter((p) => !result.diagnostics.affectedSlots.includes(p.slotId))
+      .forEach((p) => expect(p.origin).toBe("primary"));
+    // Two passes inside the approved bounds: ≤64 initial + one ≤729 pass.
+    expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(
+      64 + 729,
+    );
+  });
+
+  it("repairs a conflict group and an independently invalid slot in the same second pass", () => {
+    // Slots 1–3 form the shared {A, B} cycle while slot 4's primary and
+    // reserve are both invalid. Detection must find both defect kinds in one
+    // analysis — the early invalid slot must not hide the conflict group,
+    // and one fallback per affected slot (two kinds, four slots) must
+    // suffice without ever replacing the whole pack.
+    const A = "Kedai kopi mana yang cocok untuk bekerja di Jakarta Selatan?";
+    const B = "Kedai kopi mana yang cocok untuk berkumpul di Jakarta Selatan?";
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": { primary: A, reserve: B },
+      "NUAVE-BRAND-NEED-02": { primary: A, reserve: B },
+      "NUAVE-BRAND-SOLUTION-01": { primary: A, reserve: B },
+      "NUAVE-BRAND-SOLUTION-02": {
+        primary: "Kopi Sudut enak?",
+        reserve: "Kopi Sudut nyaman?",
+      },
+    });
+    const parsed = parseV3RichResponse(response);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = finalizeV3RichResponse(facts, parsed.response);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.pass).toBe("fallback_selection");
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-NEED-02",
+      "NUAVE-BRAND-SOLUTION-01",
+      "NUAVE-BRAND-SOLUTION-02",
+    ]);
+    const affected = result.prompts.filter((p) =>
+      result.diagnostics.affectedSlots.includes(p.slotId),
+    );
+    // Two substitutions: one for the three-slot cycle, one for the invalid
+    // slot. The other two cycle participants keep A and B.
+    expect(affected.filter((p) => p.origin === "slot_fallback")).toHaveLength(
+      2,
+    );
+    // Bystanders never moved: the remaining slots keep their primaries.
+    result.prompts
+      .filter((p) => !result.diagnostics.affectedSlots.includes(p.slotId))
+      .forEach((p) => expect(p.origin).toBe("primary"));
+    expect(result.diagnostics.portfoliosEvaluated).toBeLessThanOrEqual(
+      64 + 729,
+    );
+  });
+
+  it("accepts a reviewed slot fallback without any contracted keyword", () => {
+    // "Sarankan …" is a valid direct request that the retired keyword anchor
+    // would have missed; the remaining checks are purely mechanical.
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": {
+        primary: "Kopi Sudut enak?",
+        reserve: "Kopi Sudut nyaman?",
+      },
+    });
+    const parsed = parseV3RichResponse(response);
+    if (!parsed.ok) throw new Error("fixture should parse");
+    const result = finalizeV3RichResponse(facts, parsed.response, {
+      reviewedSlotFallbacks: {
+        "NUAVE-BRAND-NEED-01": "Sarankan tiga kedai kopi di Jakarta Selatan.",
+      },
+    });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    const prompt = result.prompts.find(
+      (p) => p.slotId === "NUAVE-BRAND-NEED-01",
+    )!;
+    expect(prompt.text).toBe("Sarankan tiga kedai kopi di Jakarta Selatan.");
+    expect(prompt.origin).toBe("slot_fallback");
+  });
+
+  it("still rejects a reviewed fallback that fails mechanical checks", () => {
+    const response = richResponseOf({
+      "NUAVE-BRAND-NEED-01": {
+        primary: "Kopi Sudut enak?",
+        reserve: "Kopi Sudut nyaman?",
+      },
+    });
+    const parsed = parseV3RichResponse(response);
+    if (!parsed.ok) throw new Error("fixture should parse");
+    const result = finalizeV3RichResponse(facts, parsed.response, {
+      reviewedSlotFallbacks: {
+        "NUAVE-BRAND-NEED-01": "Kopi Sudut enak?",
+      },
+    });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    // The reviewed text itself leaks the target identity — mechanical
+    // rejection falls through to the built-in deterministic form.
+    const prompt = result.prompts.find(
+      (p) => p.slotId === "NUAVE-BRAND-NEED-01",
+    )!;
+    expect(prompt.text).not.toBe("Kopi Sudut enak?");
+    expect(prompt.origin).toBe("slot_fallback");
+  });
+
+  it("keeps an already-framed occasion intact instead of doubling the marker", () => {
+    const envelope = testFactsEnvelope();
+    const occasion = "Saat bekerja dari kafe butuh suasana tenang";
+    envelope.intake.confirmed.customerReasons = [occasion];
+    const factsResult = parseQuestionFactsV3(envelope);
+    if (factsResult.status !== "projected")
+      throw new Error(`expected projected, got ${factsResult.status}`);
+    const fallback = v3SlotFallback(
+      factsResult.facts,
+      slot("NUAVE-BRAND-NEED-02"),
+    );
+    expect(fallback.text).toContain(occasion);
+    expect(fallback.text).not.toMatch(/saat\s+saat/i);
+  });
+
   it("repairs an invalid named text locally — not by full pack replacement", () => {
     const response = richResponseOf(
       {},
@@ -900,6 +1066,32 @@ describe("finalizeV3SimpleResponse", () => {
     expect(p8.origin).toBe("primary");
     expect(p8.text).toBe(shared);
     expect(result.diagnostics.affectedSlots).toEqual([]);
+    const normalized = result.prompts.map((p) => p.text.toLowerCase());
+    expect(new Set(normalized).size).toBe(10);
+  });
+
+  it("marks only true participants when a conflict and an invalid slot coincide", () => {
+    // Slots 1–2 collide on one text while slot 4's single candidate is
+    // invalid; slot 3's text is unrelated. Both defect kinds are found in
+    // one pass, slot 3 is never marked, and each affected slot is repaired
+    // by its own fallback — no full-pack replacement.
+    const questions = [...SIMPLE_QUESTIONS];
+    questions[0] =
+      "Kedai kopi mana yang cocok untuk bekerja di Jakarta Selatan?";
+    questions[1] =
+      "Kedai kopi mana yang cocok untuk bekerja di Jakarta Selatan?";
+    questions[3] = "Kopi Sudut enak?";
+    const result = finalizeV3SimpleResponse(facts, { questions });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
+    expect(result.diagnostics.affectedSlots).toEqual([
+      "NUAVE-BRAND-NEED-01",
+      "NUAVE-BRAND-NEED-02",
+      "NUAVE-BRAND-SOLUTION-02",
+    ]);
+    expect(result.diagnostics.fullFallbackUsed).toBe(false);
+    expect(result.prompts[2].text).toBe(SIMPLE_QUESTIONS[2]);
+    expect(result.prompts[2].origin).toBe("primary");
     const normalized = result.prompts.map((p) => p.text.toLowerCase());
     expect(new Set(normalized).size).toBe(10);
   });

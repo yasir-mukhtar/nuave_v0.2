@@ -2,8 +2,8 @@
 
 > Status: G0 recorded in R5; the G1 adapter is **merged and deployed via PR #59**
 > (merge `687f340`, 2026-09-13) but remains dormant with no runtime consumer.
-> **G2 is in second correction** on `codex/spec008-g2-evaluation-freeze`
-> after the independent R1–R6 re-review and awaits offline gate plus
+> **G2 is in third correction** on `codex/spec008-g2-evaluation-freeze`
+> after the independent second re-review (T1–T3) and awaits offline gate plus
 > independent acceptance; it is
 > not an empirical quality pass and proves no provider feasibility. No G2 merge,
 > route integration, provider call, or release is claimed.
@@ -224,24 +224,24 @@ G1 adapter. Each confirmed case is now a committed regression test in
    remains a genuine limitation. No competitor is selected, joined, or given
    an inferred role, and no required screen was added.
 
-### G2 dormant prototype and frozen evaluation packet — 2026-09-13 (second correction)
+### G2 dormant prototype and frozen evaluation packet — 2026-09-13 (third correction)
 
 - Worktree: `/Users/yasir/nuave-worktrees/spec008-g2`; branch
   `codex/spec008-g2-evaluation-freeze`, created from `main@687f340` (the
-  post-#59 merge). First correction reviewed at head `77ac321`; this section
-  now describes the second corrected candidate returned for independent
-  re-review.
+  post-#59 merge). Second correction reviewed at head `91779de`; this
+  section now describes the third corrected candidate returned for
+  independent re-review.
 - Scope: dormant v3 writer prototype + bounded finalizer/fallback + frozen
   evaluation packet + executable §8.3 decision rules. No route, UI, report,
   config, dispatch, provider, or dependency change. Customer dispatch remains
   v2; nothing in production routes through these modules.
-- Second correction: the first corrected candidate was independently
-  re-reviewed (R1–R6) and corrected in place on this branch. The
-  re-review's transport-contract, exact-binding, release-decision,
-  resource-sample, fallback-form, and conflict-repair findings are
-  addressed in the modules below; `G2_EVALUATION_PACKET.md` is re-frozen at
-  `nuave.g2-evaluation-packet.v3`. The first correction's F1–F10
-  resolutions are preserved.
+- Third correction: the second corrected candidate was independently
+  re-reviewed (T1–T3) and corrected in place on this branch. The
+  re-review's attribution-binding, fallback-contract, and multi-slot
+  conflict findings are addressed in the modules below;
+  `G2_EVALUATION_PACKET.md` is re-frozen at
+  `nuave.g2-evaluation-packet.v4`. The F1–F10 and R1–R6 resolutions are
+  preserved.
 - Implementation:
   - `src/lib/audit/question-writer-v3.ts` — versioned rich (16 texts incl.
     reserves + dimension/context metadata) and simple (10 final strings,
@@ -267,14 +267,17 @@ G1 adapter. Each confirmed case is now a committed regression test in
     projection fields, valid-only selection with bounded named-slot
     backtracking (each named slot has at most two choices; a later conflict
     can substitute an earlier slot's reviewed fallback), true affected-slot
-    identification via pairwise participation over the resolvable
-    subproblem with every participation check counted in
-    `portfoliosEvaluated`, purpose-preserving deterministic fallbacks that
-    consume the shared `safetyRestrictions` projection (real occasion
-    framing in slot 2, role-appropriate offering/use-case wording in slot 4,
-    channels as qualifying criteria rather than order claims,
-    regulated-category discovery kept administrative — never treatment
-    suitability), honest missing-fact outcomes
+    identification via a bounded bipartite matching analysis over the
+    resolvable subproblem (the slots left unmatched in some maximum matching
+    — invalid slots and genuine conflict groups are found in one pass and
+    bystanders are never marked), purpose-preserving deterministic fallbacks
+    that consume the shared `safetyRestrictions` projection (real occasion
+    framing in slot 2 — an already-framed need is kept intact, never
+    "Saat Saat", and regulated categories take a plausible ordinary occasion
+    that keeps the category noun — role-appropriate offering/use-case
+    wording in slot 4, channels as qualifying criteria rather than order
+    claims, regulated-category discovery kept administrative — never
+    treatment suitability), honest missing-fact outcomes
     (`input_correction_required` when confirmed material is absent;
     `generation_temporarily_unavailable` when material exists but no valid
     pack can be formed), truthful `full_fallback` origins/count, one shared
@@ -295,15 +298,20 @@ G1 adapter. Each confirmed case is now a committed regression test in
     `evaluateG2Release`, and `g2ExecutionEvidenceDecision` (the dormant
     missing-execution-evidence check). Attempt records bind real
     fingerprints — envelope, facts, pack, and per-text SHA-256 plus the
-    frozen selection policy and version pins — and attribution rows
-    reconcile exactly to scheduled captures (missing, duplicate, extra,
+    frozen selection policy, version pins, per-slot `finalOrigins`, and the
+    canonical `requestConfigFingerprint` (frozen request configuration:
+    settings, transport contract, instruction/schema/contract versions —
+    never credentials) — and attribution rows reconcile exactly to scheduled
+    rich captures by input/variant/pass, with every P/M/C claim resolving to
+    the captured final texts/origins/fingerprints (missing, duplicate, extra,
     mismatched, or nonexistent-portfolio rows are rejected). Comparison is
     per matched input+pass pair over the six unnamed texts: material win =
     usable rich plus unusable simple or ≥0.5 unnamed-mean advantage; any
     pair-level regression fails the applicable decision; businesses count
     once. The release evaluator requires all 16 selected-v3 packs usable,
     compares mean naturalness across all ten texts per paired input
-    (11 rich-allocation pairs, all 16 under simple-by-amendment), enforces
+    (11 actual-v2 attempts across the eight development inputs under rich
+    selection, all 16 under simple-by-amendment), enforces
     the §8.2.5 integrated pilot-replay and release-attribution gates, and
     reports selected-v3 resource samples (mean, nearest-rank p95) distinct
     from allocation totals and held-out increments. Usage accounting
@@ -344,15 +352,17 @@ G1 adapter. Each confirmed case is now a committed regression test in
     malformed/truncated/duplicate/missing-slot/invalid-reference handling,
     required-vs-empty provenance arrays, unknown-role binding, provider-schema
     compatibility, privacy/identity withholding, safety markers.
-  - `question-finalize-v3.test.ts` — 45 tests: valid-only selection, P/M/C
+  - `question-finalize-v3.test.ts` — 51 tests: valid-only selection, P/M/C
     policies, named resolution, bounded named-slot backtracking with
-    earlier-slot fallback substitution, true affected-slot identification
-    with counted participation checks, conflict-aware repair, guard pairs
+    earlier-slot fallback substitution, matching-based affected-slot
+    identification (shared two-option cycles, conflict-plus-invalid-slot
+    mixes, bystander preservation), conflict-aware repair, guard pairs
     across categories/scopes, purpose-preserving fallback forms on
-    development inputs (occasion framing, offering/channel semantics,
-    regulated-safety discovery), truthful full-fallback and failure
-    semantics, deterministic scoring and evidence records.
-  - `question-eval-g2.test.ts` — 64 tests: all six §8.3 counterexamples,
+    development inputs (occasion framing without marker doubling,
+    category-preserving regulated discovery, offering/channel semantics),
+    reviewed-override mechanical revalidation, truthful full-fallback and
+    failure semantics, deterministic scoring and evidence records.
+  - `question-eval-g2.test.ts` — 68 tests: all six §8.3 counterexamples,
     matched-pair comparison semantics (0.5 boundary, unusable/missing simple,
     named-only non-wins, repeat regression), complete record/judgment
     validation, exact fingerprint binding (envelope/facts/pack/text,
@@ -365,9 +375,16 @@ G1 adapter. Each confirmed case is now a committed regression test in
     samples), component-attribution exclusions, release-level checks
     (all-16 usable, per-input v2 naturalness comparison, repeat grouping,
     both allocations, §8.2.5 mandatory gates), and the missing-evidence
-    policy.
-- Focused regression: 122 G2 tests plus the surrounding audit/test surface
-  (`npx vitest run src/lib/audit tests/` — 939 tests across 69 files) — all
+    policy. The third correction adds variant-scoped rich-attempt binding
+    (an interleaved simple record cannot shadow it), exact P/M/C capture
+    resolution (texts/origins/pack fingerprints must verify against the
+    recorded captures — a rescue requires the recorded P-to-M difference),
+    request-configuration fingerprints, and the explicit combined outcome
+    (`retain` requires A + complete evidence + retained reserves; A with
+    zero component benefit is `amendment_required`, never a silently
+    adopted reserves-free request).
+- Focused regression: 132 G2 tests plus the surrounding audit/test surface
+  (`npx vitest run src/lib/audit tests/` — 949 tests across 69 files) — all
   pass; v2 behavior unchanged.
 - Complete change review performed on the full diff: no route/UI/report/
   config/dispatch changes, no provider calls, no temporary diagnostics or
@@ -389,6 +406,16 @@ G1 adapter. Each confirmed case is now a committed regression test in
   (`5db3801ceeb54da8dcd1bebb551e753efe49e908`); the committed head differs
   only by this verification-record fill-in. Complete log and hashes are
   preserved in the `g2-second-correction-evidence/` directory outside Git.
+- Full gate (third correction): **PASS**, `NUAVE_E2E_PORT=3600 npm run
+  verify` on the third-corrected candidate — typecheck, formatting and
+  typography passed; lint zero errors with the same 17 pre-existing
+  warnings; **1222 unit tests across 91 files**; `next build` and
+  OpenNext/Cloudflare builds; **89 + 3 + 3 browser tests**; exit 0,
+  `Offline verification passed.` The tested tree was recorded via
+  `git write-tree` before the run
+  (`2f8978a731efdbb356c29a6b9c574c04d95dd856`); the committed head differs
+  only by this verification-record fill-in. Complete log and hashes are
+  preserved in the `g2-third-correction-evidence/` directory outside Git.
 - Decision-rule tests prove decision mechanics only. They use synthetic bad
   examples and assert no empirical quality. Provider feasibility, naturalness
   outcomes, and cost/latency behavior remain unmeasured until the separately
