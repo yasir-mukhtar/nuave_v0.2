@@ -422,6 +422,16 @@ verify` on the third-corrected candidate — typecheck, formatting and
   (`2f8978a731efdbb356c29a6b9c574c04d95dd856`); the committed head differs
   only by this verification-record fill-in. Complete log and hashes are
   preserved in the `g2-third-correction-evidence/` directory outside Git.
+- Full gate (fourth correction): **PASS**, `NUAVE_E2E_PORT=3600 npm run
+verify` on the fourth-corrected candidate — typecheck, formatting and
+  typography passed; lint zero errors with the same 17 pre-existing
+  warnings; **1234 unit tests across 91 files**; `next build` and
+  OpenNext/Cloudflare builds; **89 + 3 + 3 browser tests**; exit 0,
+  `Offline verification passed.` The tested tree was recorded via
+  `git write-tree` before the run
+  (`b4bb9c440cd6065a1908abc4527aa478dcf83d93`); the committed head differs
+  only by this verification-record fill-in. Complete log and hashes are
+  preserved in the `g2-fourth-correction-evidence/` directory outside Git.
 - Decision-rule tests prove decision mechanics only. They use synthetic bad
   examples and assert no empirical quality. Provider feasibility, naturalness
   outcomes, and cost/latency behavior remain unmeasured until the separately
@@ -434,17 +444,19 @@ verify` on the third-corrected candidate — typecheck, formatting and
   (2026-09-13, no application defect), then **merged to `main` via PR #59**
   (merge `687f340`, tree `1e0bae2f`) and deployed (worker `nuave-v2` version
   `a2279ec7-109d-4d43-8ecd-026cc669e8a0`); it remains dormant with no runtime
-  consumer. **G2 third correction offline-verified and published on
-  `codex/spec008-g2-evaluation-freeze`** (head `dda4a6c`) — dormant
-  prototype, frozen packet v4, executable decision rules, fresh v2 held-out
-  inputs — after the independent second re-review (T1–T3); awaiting
-  independent re-review/acceptance.
-- Date: 2026-09-13
+  consumer. **G2 fourth correction offline-verified and published on
+  `codex/spec008-g2-evaluation-freeze`** — dormant prototype, frozen packet
+  v5, executable decision rules, fresh v2 held-out inputs — after the
+  independent third re-review (T1a/T1b/T2/T3); awaiting independent
+  re-review/acceptance.
+- Date: 2026-09-14
 - Base: `687f340343aa5be547d03e7d6fe23a9f5262a2df` (main, post-#59 merge)
-- Published head: `dda4a6cd931f079c5b897dad410160d3911af233` (tree
-  `d3a5aa5a7bf04dd6517d74e92469d911fc54a58c`) on draft PR #65; `validate`
-  PASS 5m41s on merge checkout `5d30e339…`, PR preview PASS 1m25s on the PR
-  head. Second-correction published head was `28b5343` (+docs `91779de`).
+- Published head: `4f8f8d5302a65b1ce04744a888d2349ecf121b98` (tree
+  `b4bb9c440cd6065a1908abc4527aa478dcf83d93` — identical to the tested
+  tree) on draft PR #65; CI results in `g2-fourth-correction-evidence/
+  CI-RECORD.md`. Third-correction published head was `dda4a6cd…` (+docs
+  `8bdecf69…`); second-correction published head was `28b5343` (+docs
+  `91779de`).
 - G2 first-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify` —
   1175 unit tests in 91 files, 89+3+3 browser tests, both builds, exit 0,
   `Offline verification passed.` Tested tree
@@ -461,6 +473,11 @@ passed.` Tested tree
   errors / 17 baseline warnings, exit 0, `Offline verification passed.`
   Tested tree `2f8978a731efdbb356c29a6b9c574c04d95dd856`; complete log in
   `g2-third-correction-evidence/` outside Git.
+- G2 fourth-correction gate: **PASS**, `NUAVE_E2E_PORT=3600 npm run verify`
+  — 1234 unit tests in 91 files, 89+3+3 browser tests, both builds, lint 0
+  errors / 17 baseline warnings, exit 0, `Offline verification passed.`
+  Tested tree `b4bb9c440cd6065a1908abc4527aa478dcf83d93`; complete log in
+  `g2-fourth-correction-evidence/` outside Git.
 - Next: independent G2 acceptance review, then a separately authorized G2P
   pilot. G3–G5 plumbing and any v3 activation remain unauthorized; customer
   dispatch stays v2.
