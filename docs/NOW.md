@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-01
+> Updated: 2026-09-06
 > Stage: pre-customer, building the pipeline
 
 ## Current objective
@@ -305,8 +305,15 @@ remain intentionally pending.
 
 ## Do now
 
-Follow the phase gates in [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md). The
-current bounded sequence is:
+On `feat/airbnb-intake-rebuild` (PR #46), the founder-accepted 2026-09-06
+fence is: scrutinize the question writer as a bounded package **before**
+connecting live generation to the new intake. Pickup:
+[`drafts/QUESTION_WRITER_FENCE_2026-09-06.md`](./drafts/QUESTION_WRITER_FENCE_2026-09-06.md).
+Do not treat this as permission to rewrite the instruction, add tokens, or
+make another live call.
+
+The longer Phase 3 sequence in [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md)
+is unchanged. That bounded sequence remains:
 
 1. Treat Specs 001 and 002 as the verified fixture/Indonesian-contract
    baselines. Spec 002's verified baseline at `83ad34c` is 274/274 audit unit

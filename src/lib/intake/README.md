@@ -1,5 +1,11 @@
 # New intake module (isolated, Phase 1–6A)
 
+Live question generation stays disconnected from this module until the
+2026-09-06 writer fence passes (or Gate 3 walks with generation still
+disconnected). Pickup:
+[`docs/drafts/QUESTION_WRITER_FENCE_2026-09-06.md`](../../../docs/drafts/QUESTION_WRITER_FENCE_2026-09-06.md).
+Do not import `questions-id-provider.ts` from here.
+
 Location decision: `src/lib/intake/` was chosen over a route-colocated module
 because the journey shell (`IntakeJourney`) and canonical screen order
 (`screens.ts`) are router-independent logic. `lib/` keeps them importable by

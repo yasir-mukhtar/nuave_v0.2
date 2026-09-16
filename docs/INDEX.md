@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-01
+> Updated: 2026-09-06
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -46,6 +46,7 @@ decision log does not become a permanent hidden override.
 | [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md) | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007 |
 | [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md) | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries | Current founder-approved product contract; implementation still requires an approved spec |
 | [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack | Working product context |
+| [`drafts/QUESTION_WRITER_FENCE_2026-09-06.md`](./drafts/QUESTION_WRITER_FENCE_2026-09-06.md) | Pickup for the 2026-09-06 writer fence: Kopi Sudut scores, Step 1, do-not-connect rule | Working handoff; not a spec |
 
 ## Touchpoint plans
 
@@ -142,3 +143,4 @@ context an agent must read. Do not implement a draft specification.
 | Work on one touchpoint | `JOURNEY_CONTRACT.md`, the matching `journey/` plan | The active spec and referenced code |
 | Write customer-facing copy | `VOICE.md`, the matching `content/` source | `PRODUCT.md` for claim boundaries |
 | Work on a design or presentation change | `AGENTS.md`, `docs/DESIGN.md` | The owning product, journey, voice, audit, or approved-spec contract for any behavior or meaning the change touches |
+| Scrutinize or change Indonesian question generation | `docs/drafts/QUESTION_WRITER_FENCE_2026-09-06.md`, `DECISION_LOG.md` (2026-09-06) | `questions-id-provider.ts` instruction, `measurement-matrix.ts`, Step 1 in `questions-id.ts`; do not connect live writer to `src/lib/intake/` |

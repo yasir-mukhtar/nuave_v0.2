@@ -531,7 +531,8 @@ describe("identity-leakage and unsupported-premise rules", () => {
 
   it("repairs an unsupported-premise slot without touching the rest", () => {
     const assuming = [...frozenTen];
-    assuming[4] = "Bandingkan kedai kopi paling populer di Bandung.";
+    assuming[4] =
+      "Karena kedai kopi paling populer di Bandung, bandingkan pilihannya.";
     const repaired = repairIndonesianSuggestion(assuming, kopiBrief);
     expect(repaired).not.toBeNull();
     expect(repaired?.warnings).toContain("slot_safety_repair:5");
@@ -978,5 +979,159 @@ describe("additive isolation", () => {
       ]),
     );
     expect(contracts.PROMPT_CONTRACT_VERSION).toBe("deterministic-v4-en");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Projection + validator repair (Astra step 1, 2026-09-06)
+// ---------------------------------------------------------------------------
+
+function emptyNeedBrief(
+  overrides: Partial<MinimizedIndonesianBrief> = {},
+): MinimizedIndonesianBrief {
+  return {
+    ...kopiBrief,
+    customer_context: "",
+    customer_needs: [],
+    decision_considerations: [],
+    known_accuracy_questions: [],
+    ...overrides,
+  };
+}
+
+describe("question projection repair", () => {
+  it("renders Cabang: Depok as di Depok, never di Cabang: Depok", () => {
+    const brief: BusinessBrief = {
+      brand_name: "Kopi Sudut",
+      entity_scope: "Cabang: Depok",
+      brand_type: "local cafe",
+      category: "Kedai kopi susu",
+      market_context: "Depok",
+      target_customer: "",
+      official_sources: [],
+      verified_offerings: ["Kopi susu"],
+      verified_customer_needs: ["Ngopi enak dekat kantor"],
+      verified_decision_criteria: [],
+      verified_competitor: { name: "", scope: "", source_url: "" },
+      brand_name_variants: [],
+      priority_offering: "",
+      conversion_action: "",
+      customer_supplied_facts: [],
+      known_accuracy_questions: [],
+      usp: "",
+      regulated_category_notes: "",
+      language: "en-US",
+      agency_name: "",
+      agency_logo_data_url: "",
+    };
+
+    const minimized = minimizeIndonesianBrief(brief);
+    expect(minimized.scope).toBe("Depok");
+    expect(minimized.scope).not.toMatch(/cabang/i);
+
+    const pack = buildDeterministicIndonesianPack(minimized);
+    expect(pack.join("\n")).toMatch(/di Depok/);
+    expect(pack.join("\n")).not.toMatch(/di Cabang/i);
+    expect(pack.join("\n")).not.toMatch(/Cabang:/);
+  });
+
+  it("renders Produk: Kopi susu as Kopi susu without the Produk: label", () => {
+    const brief: BusinessBrief = {
+      brand_name: "Kopi Sudut",
+      entity_scope: "Produk: Kopi susu",
+      brand_type: "local cafe",
+      category: "Kedai kopi susu",
+      market_context: "Indonesia",
+      target_customer: "",
+      official_sources: [],
+      verified_offerings: ["Kopi susu"],
+      verified_customer_needs: [],
+      verified_decision_criteria: [],
+      verified_competitor: { name: "", scope: "", source_url: "" },
+      brand_name_variants: [],
+      priority_offering: "",
+      conversion_action: "",
+      customer_supplied_facts: [],
+      known_accuracy_questions: [],
+      usp: "",
+      regulated_category_notes: "",
+      language: "en-US",
+      agency_name: "",
+      agency_logo_data_url: "",
+    };
+
+    const minimized = minimizeIndonesianBrief(brief);
+    expect(minimized.scope).toBe("Kopi susu");
+    expect(minimized.scope).not.toMatch(/produk/i);
+  });
+
+  it("does not disguise a missing need as kebutuhan pelanggan or calon pelanggan", () => {
+    const pack = buildDeterministicIndonesianPack(emptyNeedBrief());
+    const joined = pack.join("\n");
+    expect(joined).not.toMatch(/kebutuhan pelanggan/i);
+    expect(joined).not.toMatch(/calon pelanggan/i);
+    expect(pack).toHaveLength(10);
+    expect(validateIndonesianQuestionPack(pack, emptyNeedBrief())).toEqual([]);
+  });
+
+  it("asks from within a situation instead of asking about customers", () => {
+    const question = deterministicIndonesianQuestion(emptyNeedBrief(), 2);
+    expect(question).not.toMatch(/Dalam situasi apa/i);
+    expect(question).not.toMatch(/biasanya mencari/i);
+  });
+});
+
+describe("question-form validator alignment", () => {
+  it("accepts a self-contained direct request without a question mark", () => {
+    const pack = [...frozenTen];
+    pack[7] = "Rekomendasiin Kopi Taman Senja untuk kerja di Dago.";
+    expect(validateIndonesianQuestionPack(pack, kopiBrief)).toEqual([]);
+  });
+
+  it("still rejects an empty or multi-question request", () => {
+    const empty = [...frozenTen];
+    empty[7] = "   ";
+    expect(validateIndonesianQuestionPack(empty, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 8, rule: "empty" }),
+      ]),
+    );
+
+    const twoQuestions = [...frozenTen];
+    twoQuestions[7] = "Rekomendasiin Kopi Taman Senja? Apa ratingnya juga?";
+    expect(validateIndonesianQuestionPack(twoQuestions, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 8, rule: "question_form" }),
+      ]),
+    );
+  });
+});
+
+describe("unsupported-premise role check", () => {
+  it("allows asking for a desired superlative without asserting it of the business", () => {
+    const pack = [...frozenTen];
+    pack[0] = "Kedai kopi termurah di Dago, Bandung apa?";
+    expect(validateIndonesianQuestionPack(pack, kopiBrief)).toEqual([]);
+  });
+
+  it("still rejects an asserted unconfirmed superlative about the audited business", () => {
+    const pack = [...frozenTen];
+    pack[6] =
+      "Karena Kopi Taman Senja termurah di Dago, apakah cocok untuk kerja?";
+    expect(validateIndonesianQuestionPack(pack, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 7, rule: "unsupported_premise" }),
+      ]),
+    );
+  });
+
+  it("still rejects a superlative claim used as a known fact", () => {
+    const pack = [...frozenTen];
+    pack[3] = "Kedai kopi terbaik di Bandung untuk WFC yang mana?";
+    expect(validateIndonesianQuestionPack(pack, kopiBrief)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ slot: 4, rule: "unsupported_premise" }),
+      ]),
+    );
   });
 });

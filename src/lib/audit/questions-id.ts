@@ -120,6 +120,21 @@ export type MinimizedIndonesianBrief = {
 };
 
 /**
+ * Strip intake entity-type labels (`Cabang:`, `Produk:`, `Brand:`) so customer
+ * questions receive the geographic or offering value only. A bare type with no
+ * value (e.g. `Cabang:`) is not a usable market phrase.
+ */
+export function projectCustomerFacingScope(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const labeled = trimmed.match(
+    /^(cabang|produk|brand|bisnis|seluruh\s+brand)\s*:\s*(.*)$/i,
+  );
+  if (labeled) return labeled[2].trim();
+  return trimmed;
+}
+
+/**
  * Projection adapter from the existing verified English brief shape. The
  * Indonesian contract treats the comparison business as optional, so the
  * minimized brief carries `comparison_business: null` only when the source
@@ -133,7 +148,9 @@ export function minimizeIndonesianBrief(
   return {
     brand_name: brief.brand_name,
     brand_name_variants: brief.brand_name_variants,
-    scope: brief.entity_scope.trim() || brief.market_context,
+    scope:
+      projectCustomerFacingScope(brief.entity_scope) ||
+      projectCustomerFacingScope(brief.market_context),
     category: brief.category,
     offerings: [
       ...(brief.priority_offering.trim() ? [brief.priority_offering] : []),
@@ -546,32 +563,36 @@ export function deterministicIndonesianQuestion(
     competitor || categoryComparisonFallbackName(brief.category || "ini");
   const customerPart = customer ? ` untuk ${customer}` : "";
   const inScopePart = scope ? ` di ${scope}` : "";
-  const needPart = firstSafe(needs, brief, "kebutuhan pelanggan");
-  const criteria = firstSafe(
-    brief.decision_considerations,
-    brief,
-    "kebutuhan pelanggan",
-  );
+  const needPart = firstSafe(needs, brief, "");
+  const criteria = firstSafe(brief.decision_considerations, brief, "");
+  const needClause = needPart ? ` untuk ${needPart}` : "";
+  const criteriaClause = criteria ? ` berdasarkan ${criteria}` : "";
 
   switch (slot) {
     case 1:
       return `Rekomendasi ${category}${inScopePart}${customerPart} apa saja?`;
     case 2:
-      return `Dalam situasi apa ${customer || "calon pelanggan"} biasanya mencari ${category}${inScopePart}?`;
+      return customer
+        ? `Saya ${customer}${inScopePart}. ${category} apa yang bisa dicoba?`
+        : `Saya cari ${category}${inScopePart}. Pilihan apa yang bisa dicoba?`;
     case 3:
-      return `Untuk ${needPart}, ${category} apa yang cocok${inScopePart}${customerPart}?`;
+      return needPart
+        ? `Untuk ${needPart}, ${category} apa yang cocok${inScopePart}${customerPart}?`
+        : `${category} apa yang cocok${inScopePart}${customerPart}?`;
     case 4:
       return `Di mana saya bisa menemukan ${offering || category}${inScopePart}${customerPart}?`;
     case 5:
-      return `Pilihan ${category} mana yang layak masuk daftar pertimbangan berdasarkan ${criteria}${inScopePart}?`;
+      return `Pilihan ${category} mana yang layak masuk daftar pertimbangan${criteriaClause}${inScopePart}?`;
     case 6:
-      return `Apa perbedaan pilihan ${category}${inScopePart} berdasarkan ${criteria}${customerPart}?`;
+      return `Apa perbedaan pilihan ${category}${inScopePart}${criteriaClause}${customerPart}?`;
     case 7:
-      return `Apakah ${brand} cocok untuk ${needPart}${inScopePart}${customerPart}?`;
+      return `Apakah ${brand} cocok${needClause}${inScopePart}${customerPart}?`;
     case 8:
-      return `Apakah ${brand} layak direkomendasikan untuk ${customer || "kebutuhan pelanggan"}${inScopePart}?`;
+      return customer
+        ? `Apakah ${brand} layak direkomendasikan untuk ${customer}${inScopePart}?`
+        : `Apakah ${brand} layak direkomendasikan${inScopePart}?`;
     case 9:
-      return `Bandingkan ${brand} dengan ${comparisonTarget} berdasarkan ${criteria}${inScopePart}?`;
+      return `Bandingkan ${brand} dengan ${comparisonTarget}${criteriaClause}${inScopePart}?`;
     case 10:
       return `Siapa yang cocok memilih ${brand}, siapa yang mungkin kurang cocok, dan apa trade-offnya${inScopePart}?`;
     default:
@@ -624,6 +645,51 @@ const INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS = [
   /\b(?:best|safest|most\s+trusted|top[- ]rated)\b/i,
   /\b(?:dijamin|jaminan|dipastikan)\b/i,
 ];
+
+const INDONESIAN_ASSERTED_PREMISE_CUES = [
+  /\bkarena\b/i,
+  /\bsebab\b/i,
+  /\boleh karena\b/i,
+  /\bmengingat\b/i,
+  /\bdengan\s+(?:wifi|wi-?fi|fasilitas|rating|ulasan|harga)\b/i,
+];
+
+/**
+ * A superlative is an unsupported premise only when the sentence treats it as
+ * a known property (assertion) rather than a desired search criterion.
+ * Asking "kedai termurah apa?" requests a ranking; "karena X termurah…"
+ * asserts one.
+ */
+function assertsUnsupportedPremise(question: string) {
+  if (
+    !INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS.some((pattern) =>
+      pattern.test(question),
+    )
+  ) {
+    return false;
+  }
+  if (
+    INDONESIAN_ASSERTED_PREMISE_CUES.some((pattern) => pattern.test(question))
+  ) {
+    return true;
+  }
+  // "X terbaik yang mana / di mana" treats the superlative as a known class.
+  if (
+    /\b(?:yang\s+mana|di\s+mana)\b/i.test(question) &&
+    /\b(?:terbaik|teraman|termurah|terpercaya|terlaris|ternyaman|terlengkap|terpopuler|paling\s+\w+|best|safest|top[- ]rated)\b/i.test(
+      question,
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function failsSingleRequestForm(normalized: string) {
+  const marks = (normalized.match(/\?/g) ?? []).length;
+  if (marks > 1) return true;
+  return false;
+}
 
 const INDONESIAN_UNEXECUTABLE_MIN_LENGTH = 8;
 
@@ -680,14 +746,11 @@ export function validateCanonicalIndonesianQuestionPack(
         message: `Pertanyaan ${slot.order} terlalu singkat untuk dijalankan sebagai pertanyaan mandiri.`,
       });
     }
-    if (
-      !normalized.endsWith("?") ||
-      (question.match(/\?/g) ?? []).length !== 1
-    ) {
+    if (failsSingleRequestForm(normalized)) {
       issues.push({
         slot: slot.order,
         rule: "question_form",
-        message: `Pertanyaan ${slot.order} harus berupa satu pertanyaan dengan tanda tanya di akhir.`,
+        message: `Pertanyaan ${slot.order} harus berupa satu permintaan mandiri.`,
       });
     }
 
@@ -739,11 +802,7 @@ export function validateCanonicalIndonesianQuestionPack(
         message: `Pertanyaan ${slot.order} harus membandingkan bisnis Anda dengan bisnis pembanding.`,
       });
     }
-    if (
-      INDONESIAN_UNSUPPORTED_PREMISE_PATTERNS.some((pattern) =>
-        pattern.test(question),
-      )
-    ) {
+    if (assertsUnsupportedPremise(question)) {
       issues.push({
         slot: slot.order,
         rule: "unsupported_premise",
