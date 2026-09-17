@@ -258,8 +258,11 @@ The model must:
    conversation.
 8. Include the location or market only when it materially scopes the answer.
 9. Prefer concrete requests over abstract meta-questions.
-10. Give the ten questions different customer jobs; do not produce superficial
-    paraphrases of the same request.
+10. Use natural questions appropriate to the product's actual customer needs.
+    The same need may appear more than once; do not force ten different jobs
+    or six distinct unnamed decisions. Preserve each slot's purpose and
+    existing exact-duplicate checks. See the
+    [2026-09-16 founder decision](../DECISION_LOG.md#2026-09-16--natural-questions-may-address-the-same-need).
 11. Keep the audited business and its identifying clues out of slots 1–6, whose
     brand and comparison-target identities are forbidden by the matrix.
 12. Name the audited business clearly in slots 7–10, whose brand identity is
@@ -840,7 +843,8 @@ For every pack record:
 - category and location relevance;
 - whether each question represents its assigned customer decision;
 - naturalness of Indonesian vocabulary, register, and sentence shape;
-- whether the questions are meaningfully different rather than paraphrases;
+- whether the wording is natural and relevant; shared need alone is not a
+  failure and no distinct-decision quota applies;
 - unsupported premises or invented facts;
 - accidental business-name leakage;
 - whether useful unknown facts are asked openly rather than assumed;
@@ -957,8 +961,9 @@ The touchpoint is ready for implementation verification when:
    suggestion.
 3. The model instruction requires context-specific natural Indonesian and does
    not use universal fill-in-the-blanks sentence templates.
-4. The default suggestion covers ten distinct customer jobs with six unnamed
-   slots and four named slots, following the canonical matrix.
+4. The default suggestion contains ten natural, relevant questions with six
+   unnamed slots and four named slots, following the canonical matrix.
+   Questions may share customer needs; distinct-need counts do not gate acceptance.
 5. Unknown public facts may be investigated without being asserted as true.
 6. A missing comparison business uses a truthful unnamed alternative and does
    not block generation.

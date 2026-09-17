@@ -1,7 +1,13 @@
 # Nuave now
 
-> Updated: 2026-09-13
+> Updated: 2026-09-17
 > Stage: pre-customer, building the pipeline
+
+For ongoing question-generation work, resume from
+[`NUAVE-PROMPTS-2026-09-17`](./checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md):
+the winning approach is recovered, a GLM response is captured, and founder
+wording edits are recorded. Its [next task](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md)
+is an offline integration draft, not another model-selection exercise.
 
 ## Current objective
 
@@ -136,13 +142,65 @@ Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/0
 is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
-which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
-via PRs #48 and #50). The dormant G1 facts/context adapter on the unmerged
-`codex/spec008-g1-adapter` branch (draft PR #59) is implemented and
-independently reviewed and is being prepared for the founder's integration
-decision; it stays dormant and changes no live provider behavior. The
-package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
-evaluation gates still require their own explicit founder authorization.
+which owns the gate ledger, with the
+[2026-09-16 founder amendment](./DECISION_LOG.md#2026-09-16--natural-questions-may-address-the-same-need):
+natural questions may address the same need; the six-distinct-decisions gate
+is removed. **G0 and G1 are closed**, with G1 merged through PR #59 and still
+dormant. The original ten-attempt G2P pilot has the frozen historical result
+`not_retained`. Its later local prototype repair is mechanically accepted;
+revised question quality remains under review. No new live run is approved.
+
+The founder has reviewed the small naturalness sample: supplied Q3/Q4
+rewrites and rejected Q5. The
+[recovered accepted generation prompt](./references/WINNING_QUESTION_GENERATION_PROMPT_2026-09-07.md)
+is now the quality reference for a separate, local GLM-5.3 Flash API
+connection check. On 2026-09-17 its first authorized single request reached
+the 60-second client timeout; no usable response was captured locally. That
+authorization is consumed. Founder-supplied provider screenshots subsequently
+matched the request timestamp and show settled GLM-5.3 Flash usage: a displayed
+charge of USD 0.0004, 1,063 output tokens, and 66.708 seconds total duration,
+including 55.381 seconds labelled routing overhead and three provider-side
+attempts. The provider timing extends beyond our client timeout; that first
+attempt's generated text was not captured locally.
+
+The separately authorized second request used the same frozen prompt and a
+180-second timeout. It returned HTTP 200 with a complete response in 53.263
+seconds: twelve candidate questions, `finish_reason: stop`, and a settled
+charge of USD 0.000371. The runner retained `UNSUCCESSFUL` because the returned
+model string was `zai/glm-5.3-flash`, versus requested `glm-5.3-flash`. A public
+catalog lookup identifies Z.ai as the provider but supplies no aliases, so
+the exact mapping remains unconfirmed. Connection and response capture are
+demonstrated; model-name acceptance remains separate. The runner also reads
+the wrong billing field; the saved response contains the documented nested
+`cheaper_inference.billing.billed_cost_usd`. Both issues can be investigated
+without another generation request.
+
+The founder's feedback on the twelve questions is **“Mostly—some questions
+need edits.”** Exact Q1/Q3 replacements are now recorded in the
+[decision log](./DECISION_LOG.md#2026-09-17--founder-wording-edits-to-the-captured-glm-invoice-sample).
+No further edits or drops were supplied; approval of the complete set is not
+inferred. The orchestrator has prepared an offline worker handoff for a concrete
+integration draft and unsent request specimen using the recovered prompt.
+Next: reconcile the twelve-unnamed-candidate experiment with the ten-slot
+product and actual local review boundary, including the narrow R5 amendments
+required before implementation. The handoff is prepared but not dispatched;
+it authorizes no application changes or paid calls.
+Both live-request authorizations are consumed. No further generation is
+authorized, and all original evidence and runner outcomes remain unchanged.
+
+Further fallback drafting remains paused. This connection check preserves
+the source experiment's twelve-candidate format and does not activate the
+product's ten-question path or pass G2P. The accepted prompt and preserved
+GLM migration are separate artifacts: draft PR #47 retains the old writer
+instruction, while G2P used Luna. Exact wording feedback and source-recovery
+facts are recorded in the decision log.
+
+The distinct-decision allocator remains withdrawn; shared need is not a
+blocker. Existing purpose, facts/context, identity and safety requirements
+still apply pending explicit reconciliation of any conflict. Runtime code,
+provider configuration and frozen historical packets have not changed. The
+package's older `EXECUTION_PLAN.md` remains superseded; paid evaluation still
+requires explicit authorization.
 
 ## What is known
 

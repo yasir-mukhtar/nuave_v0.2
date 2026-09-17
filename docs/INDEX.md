@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-01
+> Updated: 2026-09-17
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -46,6 +46,14 @@ decision log does not become a permanent hidden override.
 | [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md)             | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007                    |
 | [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md)                   | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries                                            | Current founder-approved product contract; implementation still requires an approved spec |
 | [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack                                                                         | Working product context                                                                   |
+
+## Question-generation checkpoint
+
+For question-generation work, first read the dated
+[`NUAVE-PROMPTS-2026-09-17` checkpoint](./checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md).
+It preserves the winning source, tested request, captured questions, founder
+feedback and next drafting task. It records settled direction and evidence;
+it does not replace the authority chain or approve implementation.
 
 ## Touchpoint plans
 

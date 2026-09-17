@@ -7,6 +7,12 @@
 > Owner: Founder / implementation orchestrator.
 > Purpose: One standalone contract and execution ledger for work across sessions and devices.
 
+> Founder amendment, 2026-09-16: natural questions may address the same need;
+> the six-distinct-decisions acceptance requirement is removed. See
+> [the settled decision](../../docs/DECISION_LOG.md#2026-09-16--natural-questions-may-address-the-same-need).
+> The changes below govern future work; frozen earlier evaluations retain
+> their original rules and results. Writer/evaluator implementation is pending.
+
 ## 1. Authority and revision decisions
 
 Adopt this packet for Spec 008 through the repository workflow. Applicable repository instructions and unrelated product contracts remain authoritative. G0 reconciles affected product documents and redirects stale plan pointers; previous revisions become provenance, not competing execution instructions. Do not reconstruct unavailable original experiments as evidence.
@@ -39,7 +45,7 @@ Every unnamed question or request must:
 3. Match the confirmed competitive role and offering scope. An ordinary suitable peer must be a direct possible answer without introducing another purchasing task. The target need not satisfy every preference, appear, or win.
 4. Leave fair opportunity for competitors. Avoid target-only prices, slogans, proprietary features, restrictive feature combinations, or unnecessary location precision.
 5. Be one independently understandable, plausible Indonesian consumer question or direct request. Naturalness comes from the decision and wording; slang and interrogative grammar are not prerequisites.
-6. Use zero to three material criteria, normally one to three, without invented personas, corporate phrasing, overload, or six paraphrases of one decision.
+6. Use zero to three material criteria, normally one to three, without invented personas, corporate phrasing or overload. Natural questions may address the same need or purchasing decision; that overlap alone is not a failure. Do not invent distinct needs merely to create variation.
 
 Entity demand and answer level are separate judgments. A multi-brand laptop retailer competes with retailers; a laptop brand/product can compete with brands/models. A service provider is not interchangeable with an equipment brand. The word `rekomendasi` is neither necessary nor sufficient. Category inference permits ordinary buyer preferences, never invented entity facts about identity, geography, channels, offerings, price, availability, policies, certification, reputation, or outcomes.
 
@@ -107,7 +113,7 @@ Use ordinary modules in the existing generation area. The initial rich hypothesi
 | References/text | Bounded resolving IDs, no missing/duplicate slots or dimension IDs; preserve current visible text limits. The inspected baseline allows at most 700 characters; G0 verifies all effective limits. |
 | Code-owned | Canonical/report metadata, versions, identity registry, fingerprints, and origins. |
 
-The writer abstracts the market, identifies consumer decisions, and realizes text in one response. Request compact decisions, not hidden reasoning, exhaustive target-signal inventories, or semantic pass booleans. Malformed required structure invalidates the response; a validly structured candidate with a demonstrated text violation may be rejected individually.
+The writer abstracts the market, identifies consumer decisions, and realizes text in one response. Request compact decisions, not hidden reasoning, exhaustive target-signal inventories, or semantic pass booleans. Alternatives may express the same need in different natural wording; no distinct-need quota applies to primaries or reserves. Malformed required structure invalidates the response; a validly structured candidate with a demonstrated text violation may be rejected individually.
 
 G2 freezes provider/model, sampling, schema mode, timeout, output-token cap, and instruction/schema versions. Verify current configuration instead of assuming the historically reported 2,048-token v2 cap or a particular provider. Do not silently raise limits or substitute a provider. §8 decides which production contract earns retention.
 
@@ -207,7 +213,7 @@ Narrow overbroad token checks: a requested preference is not a claim that the au
 | Retailer answer level | Ask for stores to consider when buying a laptop. | Asking only which laptop model to buy when auditing a retailer. |
 | AC service answer level | Ask for providers to inspect/clean/repair an AC. | Asking only which AC brand to buy when auditing a service. |
 
-The product/model questions become legitimate when that is the confirmed competitive scope. Independent review also covers informational requests, forced recommendation phrasing, context-free choices, target fingerprints, personas, overload, paraphrases, and misleading metadata. Labels cannot certify these. Test guard pairs across finalization, edits, approval, and locked execution using the actual policy dispatch.
+The product/model questions become legitimate when that is the confirmed competitive scope. Independent review also covers informational requests, forced recommendation phrasing, context-free choices, target fingerprints, personas, overload, unnatural filler, and misleading metadata. Shared need or a natural rephrasing alone is not a defect. Labels cannot certify these. Test guard pairs across finalization, edits, approval, and locked execution using the actual policy dispatch.
 
 ## 6. Recovery, policy delivery, and compatibility
 
@@ -302,7 +308,9 @@ Freeze inputs, variant instructions, rubric/decision rules, configurations, nume
 
 Reviewers must be independent of the writer/implementer. Blind variant identity; review exact final text and confirmed facts, then canonical purposes, then metadata for diagnosis. The founder adjudicates disputed critical judgments. Arrange independent review through the approved workflow; any paid reviewer-model calls need their own existing/new authorization. Naturalness: **0 implausible; 1 needs rewriting; 2 plausible with minor issues; 3 natural/clear**.
 
-**Usable final pack:** all structural/identity/slot/purpose/safety requirements pass; every unnamed text satisfies §2.1; six materially distinct consumer decisions; every text scores ≥2; named purposes remain intact; and at least one unnamed request offers a legitimate implicit recommendation opportunity without needing an explicit recommendation formula. This is an evaluation criterion, not a keyword quota or runtime semantic gate.
+**Usable final pack:** all structural/identity/slot/purpose/safety requirements pass; every unnamed text satisfies §2.1; every text scores ≥2; named purposes remain intact; and at least one unnamed request offers a legitimate implicit recommendation opportunity without needing an explicit recommendation formula. There is no minimum count of distinct needs or consumer decisions. Overlap alone cannot fail a pack, trigger retry, or require input correction. Any retained distinct-decision count is descriptive only. These are evaluation criteria, not keyword quotas or runtime semantic gates.
+
+At meaningful quality checkpoints, show the founder a small set of exact questions with matching business context before sharing agent verdicts. Preserve the founder's wording feedback separately from earlier reviewer answers. The 2026-09-16 invoice examples in the decision log guide naturalness without imposing a universal colloquial style. A need statement followed by its related question may constitute one request.
 
 **Comparison rule, used unchanged at pilot and held-out retention:** rich must produce usable packs for all scheduled attempts. Its mean unnamed naturalness must not be lower on any matched attempt. A material win is a usable rich pack where simple is unusable, or an unnamed mean advantage of ≥0.5 with all required properties intact. A business counts once regardless of repeats; at least one attempt must win and every scheduled repeat must meet non-regression. A missing final pack scores zero for comparison and is unusable; an available but defective pack is scored honestly. Fewer fallbacks alone, better labels, and pilot replay are not customer-quality wins.
 

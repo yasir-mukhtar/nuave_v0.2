@@ -2,9 +2,25 @@
 
 > Status: **Working product context for the ten-question prompt pack**
 >
-> Updated: 2026-09-01
+> Updated: 2026-09-17
 
 ## Purpose
+
+Before changing generation instructions or proposing a different method, read
+the [`NUAVE-PROMPTS-2026-09-17` checkpoint](./checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md)
+and the latest founder decisions. Preserve the accepted source and exact
+wording feedback; identify proposed departures explicitly. The checkpoint
+includes portable evidence and the next bounded task.
+
+The founder-accepted approach and examples are preserved in the
+[exact winning experiment prompt](./references/WINNING_QUESTION_GENERATION_PROMPT_2026-09-07.md),
+recovered from **Winning Prompt Generation Approach** on 2026-09-16. Use it
+as the quality reference alongside the latest founder feedback in the
+[decision log](./DECISION_LOG.md). Its experimental twelve-candidate output
+format is not a product composition change, and its diversity guidance is
+subject to the founder's later no-quota amendment. This document's shipped
+runtime description below is not evidence that the winning prompt has been
+integrated.
 
 This document defines how to generate a ten-question AI visibility prompt pack
 for one verified business. The audited business is the buyer's own business.

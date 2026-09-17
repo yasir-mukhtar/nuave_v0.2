@@ -34,6 +34,7 @@ later polish remain gated by the build order.
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
 | Specification lifecycle and active packages | [`specs/README.md`](./specs/README.md) |
 | How to generate a prompt pack for one business | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
+| Resume question generation without losing the accepted approach | [`NUAVE-PROMPTS-2026-09-17` checkpoint](./docs/checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md) |
 | Dated product decisions | [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) |
 | Indonesian writing contract for customer copy | [`docs/VOICE.md`](./docs/VOICE.md) |
 | What each customer touchpoint must do | [`docs/journey/`](./docs/journey/) |

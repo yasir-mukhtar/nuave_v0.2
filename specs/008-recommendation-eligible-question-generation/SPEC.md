@@ -2,10 +2,12 @@
 
 > Status: **Approved** (founder-approved 2026-09-11)
 > Owner: Founder / orchestrator
-> Updated: 2026-09-11
+> Updated: 2026-09-16
 > Implements: a deeper semantic target for Nuave-generated questions: natural Indonesian consumer decisions with genuine entity-recommendation opportunity
 
 This specification changes **how Nuave generates the suggested question pack**. It does not change the audited entity, the canonical ten-slot composition, the report method, or the customer's existing wording-edit contract unless this spec explicitly says so.
+
+The [founder decision of 2026-09-16](../../docs/DECISION_LOG.md#2026-09-16--natural-questions-may-address-the-same-need) removes the distinct-need quota. Shared need alone is not a quality failure; naturalness and the fixed slot purposes remain required. This amendment applies prospectively and does not rewrite frozen evaluation results.
 
 ## Required context
 
@@ -56,7 +58,7 @@ When Nuave prepares its suggested pack:
 - the decision is commercially real: the consumer is choosing, finding, buying, hiring, visiting, obtaining, shortlisting, or comparing something businesses compete to provide;
 - the question remains competitively open rather than encoding the audited business's exact profile;
 - the language sounds like a plausible Indonesian consumer in that category and context;
-- the six unnamed questions cover meaningfully different decision situations rather than six paraphrases of recommendation intent; and
+- the six unnamed questions are natural and relevant, allowing the same need or purchasing decision to appear more than once without a diversity quota; and
 - the four named questions continue to serve their existing canonical measurement purposes.
 
 The concise semantic target is:
@@ -141,8 +143,8 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **R-14 — Natural realization:** final questions are written only after the consumer decision situation is sound. Naturalness is not a cleanup pass that adds slang to a synthetic decision.
 - **R-15 — Indonesian register:** the writer may use neutral, conversational, slightly colloquial, or naturally code-switched Indonesian according to category and audience. It must not mechanically inject slang, English, or rough grammar.
 - **R-16 — Candidate and selection separation:** unnamed-question generation and final portfolio selection are separate responsibilities. The implementation must be able to reject one candidate without discarding the semantic target or silently accepting a weak mechanically valid sentence.
-- **R-17 — Semantic diversity:** final selection prioritizes different decision situations/intent families over paraphrase diversity. Exact-string distinctness alone is insufficient.
-- **R-18 — Portfolio quality:** the six unnamed questions are evaluated both individually and as a set. An individually valid candidate may be omitted if it adds little decision coverage beyond selected questions.
+- **R-17 — Natural relevance without forced diversity:** final selection does not require different needs or intent families. Same-need alternatives are permitted; exact-string distinctness alone still does not prove naturalness or quality.
+- **R-18 — Portfolio quality:** evaluate the six unnamed questions individually and as a set for naturalness, relevance and their assigned purposes. Shared need alone is not a reason to reject a candidate or pack. Do not replace it with a forced occasion or persona merely to increase coverage.
 
 ### Canonical measurement compatibility
 
@@ -177,7 +179,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 ### Evaluation
 
 - **R-36 — Fixed cross-category evaluation corpus:** before production flip, maintain a privacy-safe repository corpus covering at least local service, local venue/hospitality, retail/store, consumer product/brand, B2B/SaaS, and professional service. Include a regulated/high-impact boundary case for safety behavior.
-- **R-37 — Negative corpus:** include explicit must-reject examples for natural-but-informational questions, recommendation-shaped but unnatural questions, target fingerprinting, recommendation-keyword monoculture, paraphrase-only diversity, criteria overload, website-language contamination, target optimization, overly broad market questions, artificial persona injection, an inferred market dimension incorrectly asserted as an entity fact, and an unsupported named-entity superlative/guarantee.
+- **R-37 — Negative corpus:** include explicit must-reject examples for natural-but-informational questions, recommendation-shaped but unnatural questions, target fingerprinting, forced recommendation-keyword phrasing, unnatural filler, criteria overload, website-language contamination, target optimization, overly broad market questions, artificial persona injection, an inferred market dimension incorrectly asserted as an entity fact, and an unsupported named-entity superlative/guarantee. A natural rephrasing of the same need is not a must-reject example.
 - **R-38 — Baseline comparison:** the evaluation must run the current approach and the candidate approach against the same fixtures/rubric so improvement is attributable rather than impressionistic.
 - **R-39 — Human judgment remains required:** automated tests can prove contracts and known failure cases, but founder/reviewer judgment is required for naturalness and whether the resulting portfolio plausibly represents Indonesian consumer decisions.
 
@@ -208,7 +210,7 @@ The generated questions must remain concise enough to read and edit comfortably.
 - **AC-04 — Competitive openness:** target-fingerprint fixtures do not reproduce the target's unique feature bundle, exact target-only price, proprietary claim, or other effective identifier in unnamed questions.
 - **AC-04A — Inference versus fact:** a generic category-level decision dimension may be inferred and used as a consumer preference without being falsely marked verified; the same mechanism must reject/assertion-block invented facts about a named entity, exact market price, reputation, availability, certification, policy, or outcome.
 - **AC-05 — Criteria discipline:** unnamed generated situations use no more than three decision criteria and do not create synthetic exhaustive requests.
-- **AC-06 — Semantic diversity:** the final six unnamed questions for each acceptance fixture cover meaningfully distinct consumer decision situations; paraphrases of the same choice do not satisfy this criterion.
+- **AC-06 — No forced need diversity:** repeated needs or purchasing decisions do not by themselves fail a candidate or pack. There is no distinct-decision minimum. Every text must still satisfy the other quality, purpose, identity and safety criteria; existing exact-duplicate checks remain.
 - **AC-07 — Naturalness:** a founder/reviewer sample across every corpus archetype is judged plausible Indonesian consumer language without systematic template feel, fake slang, or website-copy contamination.
 - **AC-08 — Matrix preservation:** all ten final questions retain canonical slot order, 6/4 composition, identity rules, slot-9 relation, and existing report assessment classes. Frozen report fixtures produce unchanged denominators/interpretation.
 - **AC-09 — Problematic slots repaired:** slot 2, slot 4, and slot 6 examples in the acceptance corpus remain true to their canonical measurement purposes while producing entity-level answer opportunity.
