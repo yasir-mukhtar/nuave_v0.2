@@ -9,11 +9,17 @@ import { INDONESIAN_RUN_STATUS_LABELS } from "@/lib/audit/report-labels";
 import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import type { ReportRecoveryState } from "@/lib/audit/report-recovery";
 import type { PromptRunStatus } from "@/lib/audit/stream";
-import type { AuditObservation, PromptPack } from "@/lib/audit/types";
+import type { AuditObservation } from "@/lib/audit/types";
 import { type RunUnfinishedState } from "./AuditStages";
 import styles from "./audit.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;
+
+/** The progress list only needs locating ids and the exact approved texts —
+ * canonical packs, GLM packs and the wire-thin direct-ten pack all satisfy it. */
+type RunPack = {
+  prompts: readonly { prompt_id: string; question: string }[];
+};
 
 export default function AuditRunStep({
   pack,
@@ -25,7 +31,7 @@ export default function AuditRunStep({
   reportRecovery,
   onRetryReport,
 }: {
-  pack: PromptPack;
+  pack: RunPack;
   statuses: Record<string, PromptRunStatus>;
   observations: AuditObservation[];
   busy: Busy;

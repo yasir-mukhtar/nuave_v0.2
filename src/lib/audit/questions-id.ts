@@ -835,18 +835,23 @@ export function repairIndonesianSuggestion(
 // Narrow blocker list (R-35)
 // ---------------------------------------------------------------------------
 
-const INDONESIAN_PRIVATE_DATA_PATTERNS = [
+export const INDONESIAN_PRIVATE_DATA_PATTERNS = [
   /\b(?:\+?62[\s-]?|0)8[0-9][\s-]?[0-9]{6,10}\b/,
   /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/,
   /\b\d{16}\b/,
   /\b(?:nomor\s+(?:ktp|rekening|kartu|paspor)|nomer\s+ktp)\b/i,
 ];
 
-const INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS = [
-  /\b(?:diagnosa|diagnosis|resep\s+obat|dosis|obat\s+(?:untuk|saya)|konsultasi\s+(?:medis|dokter|psikolog|hukum|pajak)|nasihat\s+(?:hukum|medis|keuangan)|perencanaan\s+keuangan\s+pribadi|klaim\s+asuransi|investasi\s+pribadi|somasi|gugatan)\b/i,
+/** The bare diagnosis token is kept as a v2 default (unchanged semantics);
+ * consumers with an approved narrower contract may scope it separately. */
+export const INDONESIAN_DIAGNOSIS_PATTERN = /\b(?:diagnosa|diagnosis)\b/i;
+
+export const INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS = [
+  /\b(?:resep\s+obat|dosis|obat\s+(?:untuk|saya)|konsultasi\s+(?:medis|dokter|psikolog|hukum|pajak)|nasihat\s+(?:hukum|medis|keuangan)|perencanaan\s+keuangan\s+pribadi|klaim\s+asuransi|investasi\s+pribadi|somasi|gugatan)\b/i,
+  INDONESIAN_DIAGNOSIS_PATTERN,
 ];
 
-const INDONESIAN_PROVIDER_SAFETY_PATTERNS = [
+export const INDONESIAN_PROVIDER_SAFETY_PATTERNS = [
   /\b(?:review\s+palsu|ulasan\s+palsu|manipulasi\s+peringkat|naikkan\s+peringkat|peringkat\s+palsu|jual\s+obat\s+terlarang|judi\s+online|eksploitasi\s+anak|pornografi)\b/i,
   /\b(?:fake\s+review|manipulate\s+ranking|boost\s+ranking|fabricated\s+review)\b/i,
 ];

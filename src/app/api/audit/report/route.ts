@@ -6,6 +6,7 @@ import {
   businessBriefSchema,
   promptSchema,
   type AuditCallTelemetry,
+  type AuditPrompt,
 } from "@/lib/audit/types";
 import {
   assertReportGenerationGate,
@@ -20,15 +21,40 @@ import {
   AuditBudgetError,
   AuditCallExecutionError,
 } from "@/lib/audit/telemetry";
+import { parseAuditQuestionMethod } from "@/lib/audit/locked-question-pack";
+import {
+  auditLiveExecutionAuthorized,
+  glmExperimentEnabled,
+} from "@/lib/intake/glm-local";
+import { generateSyntheticLocalReport } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
 
-const requestSchema = z.object({
+const sharedRequestFields = {
   brief: businessBriefSchema,
-  prompts: z.array(promptSchema).length(10),
   observations: z.array(auditObservationSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
   budget: auditBudgetSchema,
+} as const;
+
+const canonicalRequestSchema = z.object({
+  ...sharedRequestFields,
+  question_method: z.literal("canonical").default("canonical"),
+  prompts: z.array(promptSchema).length(10),
+});
+
+/** Spec 009 direct-ten wire shape — only the locating id, the exact approved
+ * text, and the human-review marker travel the boundary. */
+const directTenPromptSchema = z.object({
+  prompt_id: z.string(),
+  question: z.string().trim().min(1).max(700),
+  review_status: z.literal("needs_human_review"),
+});
+
+const directTenRequestSchema = z.object({
+  ...sharedRequestFields,
+  question_method: z.literal("direct-ten"),
+  prompts: z.array(directTenPromptSchema).length(10),
 });
 
 type DiagnosticAuditCallTelemetry = AuditCallTelemetry & {
@@ -49,14 +75,55 @@ function reportDiagnostics(calls: AuditCallTelemetry[]) {
 export async function POST(request: Request) {
   let successfulReportCalls: AuditCallTelemetry[] = [];
   try {
-    const input = requestSchema.parse(await request.json());
-    assertLiveProviderCredentialsConfigured();
+    const rawInput = (await request.json()) as unknown;
+    const rawMethod =
+      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
+        ? ((rawInput as Record<string, unknown>).question_method ?? "canonical")
+        : "canonical";
+    const questionMethod = parseAuditQuestionMethod(rawMethod);
+    if (!questionMethod) {
+      return NextResponse.json(
+        { error: "Unrecognized question_method." },
+        { status: 422 },
+      );
+    }
+    // Spec 009 R-08: direct-ten is founder-local only — outside the local
+    // experiment flag on a non-production server it fails closed before
+    // schema work, credentials, or any provider call. Canonical unaffected.
+    if (questionMethod === "direct-ten" && !glmExperimentEnabled()) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    // Spec 009 local mode: same substitute rule as /api/audit/run — the
+    // labeled synthetic generator drives the real pipeline until
+    // NUAVE_AUDIT_LIVE_AUTHORIZED switches this flow to live provider calls.
+    const substituteProvider =
+      questionMethod === "direct-ten" && !auditLiveExecutionAuthorized();
+    const input = (
+      questionMethod === "direct-ten"
+        ? directTenRequestSchema
+        : canonicalRequestSchema
+    ).parse(rawInput);
+    if (!substituteProvider) assertLiveProviderCredentialsConfigured();
     // R-19 is enforced here before synthesis and again inside the pipeline so
     // direct library/script callers cannot bypass the ten-of-ten gate.
-    assertReportGenerationGate({ ...input, language: "id" });
+    // The method dispatcher inside the lock boundary owns final interpretation;
+    // direct-ten wire prompts are deliberately thin (id/question/review_status).
+    const lockedInput = {
+      ...input,
+      prompts: input.prompts as AuditPrompt[],
+      language: "id" as const,
+      question_method: questionMethod,
+      // Server-internal only: the substitute's observations carry the
+      // synthetic fixture label, which the evidence gate admits solely under
+      // this flag — never by client request.
+      ...(substituteProvider ? { allow_synthetic_evidence: true } : {}),
+    };
+    assertReportGenerationGate(lockedInput);
     const report = await createValidatedAuditReport(
-      { ...input, language: "id" },
-      liveGenerateReportContent,
+      lockedInput,
+      substituteProvider
+        ? generateSyntheticLocalReport
+        : liveGenerateReportContent,
       (calls) => {
         successfulReportCalls = calls;
       },

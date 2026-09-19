@@ -21,6 +21,11 @@ import {
   RATE_LIMITED_MESSAGE,
   RATE_LIMIT_UNAVAILABLE_MESSAGE,
 } from "@/lib/audit/rate-limit";
+import {
+  auditLiveExecutionAuthorized,
+  glmExperimentEnabled,
+} from "@/lib/intake/glm-local";
+import { syntheticLocalExtraction } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
 
@@ -115,6 +120,40 @@ export async function POST(request: Request) {
     const input = extractionRequestSchema
       .extend({ budget: auditBudgetSchema })
       .parse({ ...record, website_url: normalizedSource.normalizedUrl });
+
+    // Spec 009 founder-local reading phase: `local_mode` marks the local
+    // session and the SERVER selects the preparation mode — "synthetic"
+    // pins the labeled substitute; "auto" takes the real extraction only
+    // under the explicit live authorization and stays offline otherwise.
+    // The mode exists only inside the local experiment flag; any other
+    // value — or the flag off — fails closed before credentials or any
+    // provider call. `preparation_mode` is the response's explicit
+    // provenance; the returned telemetry rides the session's audit budget
+    // either way (zero-cost labeled in the substitute).
+    if (record.local_mode !== undefined) {
+      if (
+        !glmExperimentEnabled() ||
+        (record.local_mode !== "auto" && record.local_mode !== "synthetic")
+      ) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      const live =
+        record.local_mode === "auto" && auditLiveExecutionAuthorized();
+      if (!live) {
+        return NextResponse.json({
+          ...syntheticLocalExtraction(input),
+          preparation_mode: "synthetic-local",
+        });
+      }
+      // Same protected boundary as the normal path: credentials are asserted
+      // before any call — an authorized session without keys stops honestly,
+      // never silently falls back to the substitute.
+      assertLiveProviderCredentialsConfigured();
+      return NextResponse.json({
+        ...(await liveExtractBusinessDraft(input)),
+        preparation_mode: "live",
+      });
+    }
 
     // Validate the complete request before touching the protected provider
     // boundary. Invalid source/input requests therefore make zero calls.

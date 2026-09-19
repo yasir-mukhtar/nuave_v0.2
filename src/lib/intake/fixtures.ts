@@ -46,7 +46,7 @@ export type IntakeFixture = {
   entry: IntakeScreenId;
 };
 
-export type FixtureId = "F1" | "F2" | "F3" | "F4" | "F5" | "F6";
+export type FixtureId = "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "GLM";
 
 /** Source derivation + routable path metadata (not part of the pinned shape). */
 export type FixtureMeta = {
@@ -592,6 +592,120 @@ const F6: IntakeFixture = buildFixture("s-crawl", {
   ),
 });
 
+/* ------------------------------------------------------------------ */
+/* GLM — Fictional laundry fixture for the local founder experiment     */
+/* (LOCAL_FOUNDER_TEST_HANDOFF.md, 2026-09-17). Same manual/fixture     */
+/* preparation semantics as every other fixture — nothing here implies  */
+/* live extraction.                                                     */
+/* ------------------------------------------------------------------ */
+
+const GLM_OFFERINGS: FixtureScreenState = (() => {
+  const offerings = [
+    "Cuci kering lipat kiloan",
+    "Cuci express selesai 6 jam",
+    "Setrika saja",
+    "Cuci bed cover dan selimut",
+    "Antar-jemput laundry",
+  ].map((label, i) => item(`offering-${i + 1}`, label, true));
+  return state(
+    offerings,
+    onIds(offerings),
+    "Confirm mode: 5 detected chips pre-on for the fictional laundry.",
+  );
+})();
+
+const GLM_CUSTOMERS: FixtureScreenState = (() => {
+  const chips: Array<[string, boolean]> = [
+    ["Cucian selesai cepat tanpa antre", true],
+    ["Harga masuk akal untuk cucian rutin", true],
+    ["Antar-jemput biar tidak repot", true],
+    ["Pakaian wangi, bersih, dan rapi", true],
+    ["Cuci sepatu dan tas", false],
+    ["Dry cleaning untuk bahan khusus", false],
+  ];
+  const prepared = chips.map(([label, on], i) =>
+    item(`customer-chip-${i + 1}`, label, on),
+  );
+  return state(prepared, onIds(prepared), "4 on / 2 off as mocked.");
+})();
+
+const GLM_MARKET: FixtureScreenState = (() => {
+  const prepared = [
+    item("market-type-nearby", "Sekitar satu area", true),
+    item("market-type-cities", "Beberapa area", false),
+    item("market-type-national", "Seluruh Indonesia", false),
+    item("market-type-abroad", "Indonesia dan luar negeri", false),
+    item("city-1", "Jakarta Selatan", true),
+  ];
+  return state(
+    prepared,
+    onIds(prepared),
+    "Single area chip carried from the fictional source.",
+  );
+})();
+
+const GLM_COMPETITORS: FixtureScreenState = (() => {
+  const rows = [
+    "Laundry Kiloan Melati — laundry kiloan di area yang sama",
+    "Laundry Express Cerah — chain laundry express",
+  ].map((label, i) => item(`competitor-${i + 1}`, label, true));
+  return state(
+    rows,
+    onIds(rows),
+    "Two kept names: comparison stays unresolved, so the pack runs the category-alternatives relation.",
+  );
+})();
+
+const GLM: IntakeFixture = buildFixture("s-crawl", {
+  "s-crawl": CRAWL_OK,
+  "s-brand": brandCard(
+    "Laundry Ceria",
+    "LC",
+    "laundryceria.id",
+    "Laundry kiloan fiktif di Jakarta Selatan dengan layanan antar-jemput dan cuci express.",
+  ),
+  "s-brand-fix": state(
+    [
+      item("fix-name", "Laundry Ceria", false),
+      itemDetail("fix-source", "laundryceria.id", "", false),
+    ],
+    [],
+    "Prefill carries the current card; both fields editable; name required, source optional.",
+  ),
+  "s-scope": state(
+    [
+      item("scope-whole-brand", "Seluruh brand Laundry Ceria", true),
+      item("scope-branch", "Cabang tertentu", false),
+      item("scope-product", "Layanan tertentu", false),
+    ],
+    ["scope-whole-brand"],
+    "Scope = whole brand (non-regulated fictional laundry).",
+  ),
+  "s-branch": empty("Conditional: not shown for whole-brand scope."),
+  "s-product": empty("Conditional: not shown for whole-brand scope."),
+  "s-category": state(
+    [
+      item("category-laundry-kiloan", "Laundry kiloan", true),
+      item("category-laundry-express", "Laundry express", false),
+      item("category-dry-cleaning", "Dry cleaning", false),
+    ],
+    ["category-laundry-kiloan"],
+    "Strongest-supported suggestion preselected.",
+  ),
+  "s-offerings": GLM_OFFERINGS,
+  "s-customers": GLM_CUSTOMERS,
+  "s-service": serviceState(["service-location", "service-delivery"]),
+  "s-market": GLM_MARKET,
+  "s-competitors": GLM_COMPETITORS,
+  "s-facts": FACTS_EMPTY,
+  "s-review": state(
+    [],
+    [],
+    "All blocks satisfied via dynamic rows; no advisory rows.",
+  ),
+  "s-questions": QUESTIONS_POST,
+});
+
 export const INTAKE_FIXTURES: Record<FixtureId, IntakeFixture> = {
   F1,
   F2,
@@ -599,6 +713,7 @@ export const INTAKE_FIXTURES: Record<FixtureId, IntakeFixture> = {
   F4,
   F5,
   F6,
+  GLM,
 };
 
 export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
@@ -704,6 +819,25 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
       "S6 src/lib/audit/telemetry.ts extract:2 ceiling + forced-failure spec: one retry then manual fallback; failure states always offer retry + manual, never a dead end.",
     path: [
       "s-crawl",
+      "s-scope",
+      "s-category",
+      "s-offerings",
+      "s-customers",
+      "s-service",
+      "s-market",
+      "s-competitors",
+      "s-facts",
+      "s-review",
+    ],
+  },
+  GLM: {
+    id: "GLM",
+    label: "Fictional laundry (GLM local experiment)",
+    source:
+      "Fictional Laundry Ceria context for the founder-only GLM path (LOCAL_FOUNDER_TEST_HANDOFF.md 2026-09-17): whole-brand laundry kiloan, Jakarta Selatan, unresolved comparison → category-alternatives.",
+    path: [
+      "s-crawl",
+      "s-brand",
       "s-scope",
       "s-category",
       "s-offerings",

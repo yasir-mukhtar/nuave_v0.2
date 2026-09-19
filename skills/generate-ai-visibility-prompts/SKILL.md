@@ -1,9 +1,19 @@
 ---
 name: generate-ai-visibility-prompts
-description: Generate, revise, or quality-check a structured ten-question AI visibility prompt pack for one verified Indonesian business, using Spec 007's canonical matrix with six unnamed and four named slots. Questions are written in natural Indonesian for later independent execution in ChatGPT, across local services, ecommerce, B2B, software, professional services, or other reviewed categories. Do not use it to execute questions, analyze answers, calculate scores, or write the audit report.
+description: Generate, revise, or quality-check natural Indonesian recommendation-eligible questions for one confirmed business. Follow Spec 009 for ten directly generated unnamed questions with human review; use the retained Spec 007 matrix only for explicitly historical work. Do not execute questions, analyze answers, calculate scores, or write the audit report.
 ---
 
 # Generate Brand AI Visibility Prompts
+
+**Current method, 2026-09-18:** follow the
+[approved Spec 009](../../specs/009-recommendation-eligible-audit/SPEC.md) and
+[exact accepted source](../../docs/references/WINNING_QUESTION_GENERATION_PROMPT_2026-09-07.md)
+with its repeated-needs amendment. Produce ten unnamed questions directly;
+preserve the source's consumer-choice reasoning. No purpose allocation, 6/4
+split, required comparator, diversity quota or punctuation-count gate. Human
+review still decides naturalness. This skill is not permission for provider
+calls. The matrix instructions below apply only to explicitly legacy work;
+they must not be appended to the new instruction or its validation contract.
 
 Create one reviewable ten-question prompt pack for one exact, verified business.
 Write the questions in natural Indonesian, as a real Indonesian customer would

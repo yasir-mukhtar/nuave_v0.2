@@ -1,5 +1,14 @@
-/** Offline preview boundary. Never imports a provider or executes an audit. */
+/** Offline preview boundary. Never imports a provider or executes an audit.
+ * GLM branches validate wording only: the Spec 009 direct-ten pack answers to
+ * the flat unnamed-text rules; the dormant glm-slots pack keeps the v3 slot
+ * rules for its historical data. Preparation requests go through the server
+ * adapter, never here. */
 import { AUDIT_MEASUREMENT_MATRIX } from "../audit/measurement-matrix";
+import { DIRECT_TEN_PROMPT_IDS } from "../audit/locked-question-pack";
+
+// The locating ids live in the audit lock boundary; re-exported so existing
+// intake-side imports keep one definition.
+export { DIRECT_TEN_PROMPT_IDS };
 import {
   buildDeterministicIndonesianPack,
   categoryComparisonFallbackName,
@@ -9,8 +18,17 @@ import {
   validateCanonicalIndonesianQuestionPack,
   type MinimizedIndonesianBrief,
 } from "../audit/questions-id";
+import type { QuestionFactsV3 } from "../audit/question-facts-v3";
+import { validateIndonesianQuestionPackV3 } from "../audit/questions-id-glm";
+import { validateDirectTenQuestionPack } from "../audit/questions-id-direct-ten";
 import { parseSourceInput } from "../audit/source-input";
-import { promptPackSchema, type PromptPack } from "../audit/types";
+import {
+  businessBriefSchema,
+  promptPackSchema,
+  type BusinessBrief,
+  type PromptPack,
+} from "../audit/types";
+import { z } from "zod";
 import type { PreparedItem } from "./fixtures";
 import type { IntakeScreenId } from "./screens";
 import {
@@ -18,45 +36,125 @@ import {
   deriveReviewRowsFromState,
   isReviewApprovable,
   type IntakeState,
-  type ReviewRow,
 } from "./state";
+import {
+  fingerprintOf,
+  isLocalIntakeFingerprintValid,
+  LOCAL_INTAKE_INPUT_VERSION,
+  SERVICE_CHANNELS,
+  type FrozenLocalIntake,
+} from "./frozen-intake";
 
-export const LOCAL_INTAKE_INPUT_VERSION = "nuave-local-intake-input-v1";
+export { isLocalIntakeFingerprintValid, LOCAL_INTAKE_INPUT_VERSION };
+export type { FrozenLocalIntake };
 export const LOCAL_QUESTION_PACK_VERSION = "nuave-local-questions-v1";
 
-const SERVICE_CHANNELS = {
-  "service-location": "on_premise",
-  "service-customer": "on_customer",
-  "service-delivery": "delivery",
-  "service-online": "online",
-} as const;
-type ServiceChannel = (typeof SERVICE_CHANNELS)[keyof typeof SERVICE_CHANNELS];
-
-/** Exact customer-confirmed meanings, independent of the older engine brief.
- * In particular optional reasons stay empty, and channels / comparators stay
- * arrays. Nothing is invented merely to satisfy BusinessBrief's older minima.
- */
-export type FrozenLocalIntake = {
-  version: typeof LOCAL_INTAKE_INPUT_VERSION;
-  factVersion: number;
-  fingerprint: string;
-  reviewRows: ReviewRow[];
-  confirmed: {
-    brand: { name: string; primarySource: string };
-    scope: IntakeState["scope"];
-    target: { name: string; detail: string } | null;
-    category: string;
-    offerings: string[];
-    customerReasons: string[];
-    serviceChannels: { channel: ServiceChannel; label: string }[];
-    market: {
-      reach: NonNullable<IntakeState["market"]["kind"]>;
-      areas: string[];
-    };
-    comparators: { mode: "named" | "category-alternatives"; names: string[] };
-    publicFact: string;
-  };
+/** Provenance the GLM experiment keeps verbatim: both model identifiers stay
+ * distinct, a mismatch verdict is never relabeled as acceptance, and no
+ * prefix stripping is applied anywhere. */
+export type GlmPackProvenance = {
+  requestId: string;
+  /** The generation method this pack came from — explicit, never inferred. */
+  method: "direct-ten" | "glm-slots";
+  requestedModel: string;
+  returnedModel: string | null;
+  responseId: string | null;
+  /** `returnedModel !== requestedModel`; inspection is not acceptance. */
+  modelMismatch: boolean;
+  transport: "synthetic-stub" | "cheaper-inference";
 };
+
+/** Server preparation outcome consumed by the questions effect. `synthetic`
+ * stays explicit so a stub response is never mistaken for provider output. */
+export type GlmQuestionsOutcome =
+  | {
+      status: "ok";
+      questions: string[];
+      facts: QuestionFactsV3;
+      provenance: GlmPackProvenance;
+      cost: { billedUsd: number | null; available: boolean };
+      /** Provider-side sections preserved for inspection (direct-ten only). */
+      examination?: {
+        marketInterpretation: string;
+        selfCritique: string;
+        intentLabels: (string | null)[];
+      };
+    }
+  | {
+      status: "validation_failed";
+      questions: string[];
+      issues: string[];
+      provenance: GlmPackProvenance;
+      cost: { billedUsd: number | null; available: boolean };
+      examination?: {
+        marketInterpretation: string;
+        selfCritique: string;
+        intentLabels: (string | null)[];
+      };
+    }
+  | {
+      status: "correction_required";
+      issues: { field: string; code: string; target: string | null }[];
+    }
+  | {
+      status: "invalid_request";
+      detail: string;
+    }
+  | {
+      status: "failed";
+      reason: string;
+      detail: string;
+      provenance: GlmPackProvenance;
+    };
+
+export type GlmPackGeneration = {
+  kind: "glm-experimental-local" | "glm-direct-ten-local";
+  /** Real provider calls made for this pack. A synthetic stub made none. */
+  providerCalls: 0 | 1;
+  auditExecuted: false;
+  provenance: GlmPackProvenance;
+  billedCostUsd: number | null;
+  /** The projected facts this pack was validated against (safe fields only). */
+  facts: QuestionFactsV3;
+};
+
+/** The approved v3 contract omits `self_check` for GLM packs: mechanical
+ * validation cannot prove those claims, so the object is absent rather than
+ * stamped with booleans no check established. Deterministic packs keep the
+ * legacy self_check shape unchanged. */
+export type GlmLocalPromptPack = Omit<PromptPack, "self_check">;
+const glmPromptPackSchema = promptPackSchema.omit({ self_check: true });
+
+/** Spec 009 direct-ten pack boundary: ten purpose-free texts with stable
+ * locating IDs. Prompt entries carry NO category, role, rationale, branded
+ * flag or inputs_used — stamping legacy matrix metadata onto the new texts
+ * would fake a contract they never had. The method version is explicit so
+ * downstream boundaries never mistake this for a slot pack. */
+export const DIRECT_TEN_METHOD_VERSION = "nuave-glm-direct-ten-v1" as const;
+const directTenPromptPackSchema = z.object({
+  status: z.literal("draft_for_review"),
+  prompt_pack_version: z.string(),
+  method: z.literal(DIRECT_TEN_METHOD_VERSION),
+  language: z.literal("id-ID"),
+  target_product: z.literal("ChatGPT"),
+  brand: promptPackSchema.shape.brand,
+  summary: z.object({
+    total_prompts: z.literal(10),
+    unbranded_prompts: z.literal(10),
+    branded_prompts: z.literal(0),
+  }),
+  prompts: z
+    .array(
+      z.object({
+        prompt_id: z.string(),
+        question: z.string().trim().min(1).max(700),
+        review_status: z.literal("needs_human_review"),
+      }),
+    )
+    .length(10),
+  warnings: z.array(z.string()),
+});
+export type DirectTenPromptPack = z.infer<typeof directTenPromptPackSchema>;
 
 export type LocalQuestionPack = {
   version: typeof LOCAL_QUESTION_PACK_VERSION;
@@ -66,20 +164,23 @@ export type LocalQuestionPack = {
   input: FrozenLocalIntake;
   /** Existing validator/generator input; the full snapshot above is retained. */
   generationInput: MinimizedIndonesianBrief;
-  promptPack: PromptPack;
+  promptPack: PromptPack | GlmLocalPromptPack | DirectTenPromptPack;
+  /** The exact generated texts, kept separately from edited wording. */
   originals: string[];
-  generation: {
-    kind: "deterministic-local";
-    providerCalls: 0;
-    auditExecuted: false;
-  };
+  generation:
+    | {
+        kind: "deterministic-local";
+        providerCalls: 0;
+        auditExecuted: false;
+      }
+    | GlmPackGeneration;
 };
 
 export type LocalStartHandoff = {
   version: "nuave-local-start-v1";
-  mode: "local-simulation";
+  mode: "local-simulation" | "glm-experimental-local" | "glm-direct-ten-local";
   auditExecuted: false;
-  providerCalls: 0;
+  providerCalls: number;
   input: FrozenLocalIntake;
   questions: LocalQuestionPack;
 };
@@ -90,17 +191,6 @@ function immutable<T>(value: T): T {
     Object.freeze(value);
   }
   return value;
-}
-
-/** Deterministic equality key, deliberately collision-free rather than a hash.
- * It stays local with the snapshot, never in URLs, events, logs, or analytics. */
-function fingerprintOf(
-  input: Pick<FrozenLocalIntake, "confirmed" | "reviewRows">,
-) {
-  return JSON.stringify({
-    confirmed: input.confirmed,
-    reviewRows: input.reviewRows,
-  });
 }
 
 export function freezeLocalIntake(
@@ -275,14 +365,38 @@ function generationInputOf(input: FrozenLocalIntake): MinimizedIndonesianBrief {
 
 function questionIssues(pack: LocalQuestionPack): string[] {
   const texts = pack.promptPack.prompts.map((prompt) => prompt.question);
-  const issues = validateCanonicalIndonesianQuestionPack(
-    texts,
-    pack.generationInput,
-  ).map((issue) => issue.message);
-  if (indonesianPackBlockers(texts, pack.generationInput).length > 0) {
+  const issues: string[] = [];
+  const generation = pack.generation;
+  const directTen = generation.kind === "glm-direct-ten-local";
+  if (directTen) {
+    // Direct-ten packs answer only to the flat rules: ten unnamed texts,
+    // retained safety/identity protections, no purpose or composition gate.
     issues.push(
-      "Gunakan pertanyaan tentang bisnis dan keputusan pelanggan, tanpa informasi pribadi atau sensitif.",
+      ...validateDirectTenQuestionPack(texts, generation.facts).map(
+        (issue) => issue.message,
+      ),
     );
+  } else if (generation.kind === "glm-experimental-local") {
+    // GLM packs answer to the same v3 rules as generation output; the v2
+    // terminal-question-mark gate does not apply. Private-data, high-impact
+    // and provider-safety checks run inside the v3 validator.
+    issues.push(
+      ...validateIndonesianQuestionPackV3(texts, generation.facts).map(
+        (issue) => issue.message,
+      ),
+    );
+  } else {
+    issues.push(
+      ...validateCanonicalIndonesianQuestionPack(
+        texts,
+        pack.generationInput,
+      ).map((issue) => issue.message),
+    );
+    if (indonesianPackBlockers(texts, pack.generationInput).length > 0) {
+      issues.push(
+        "Gunakan pertanyaan tentang bisnis dan keputusan pelanggan, tanpa informasi pribadi atau sensitif.",
+      );
+    }
   }
   const target = pack.input.confirmed.target;
   const brandTokens = normalizeIndonesianIdentity(
@@ -297,9 +411,13 @@ function questionIssues(pack: LocalQuestionPack): string[] {
         normalizeIndonesianIdentity(target.name).split(" ").includes(token),
     );
   texts.forEach((text, index) => {
-    const slot = AUDIT_MEASUREMENT_MATRIX[index];
+    // Direct-ten: every text is unnamed — the comparator and scoped-identity
+    // checks apply to all ten, not only to slots that forbid them.
+    const unnamedApplies =
+      directTen ||
+      AUDIT_MEASUREMENT_MATRIX[index]?.comparisonTargetIdentity === "forbidden";
     if (
-      slot?.comparisonTargetIdentity === "forbidden" &&
+      unnamedApplies &&
       pack.input.confirmed.comparators.names.some((name) =>
         containsIndonesianComparisonIdentity(text, name),
       )
@@ -308,8 +426,11 @@ function questionIssues(pack: LocalQuestionPack): string[] {
         `Pertanyaan ${index + 1} tidak boleh menyebut bisnis pembanding.`,
       );
     }
+    const brandForbidden =
+      directTen ||
+      AUDIT_MEASUREMENT_MATRIX[index]?.auditedBrandIdentity === "forbidden";
     if (
-      slot?.auditedBrandIdentity === "forbidden" &&
+      brandForbidden &&
       target &&
       pack.input.confirmed.scope === "cabang" &&
       containsIndonesianComparisonIdentity(text, target.name)
@@ -319,7 +440,7 @@ function questionIssues(pack: LocalQuestionPack): string[] {
       );
     }
     if (
-      slot?.auditedBrandIdentity === "forbidden" &&
+      brandForbidden &&
       target &&
       brandedProduct &&
       containsIndonesianComparisonIdentity(text, target.name)
@@ -328,24 +449,47 @@ function questionIssues(pack: LocalQuestionPack): string[] {
         `Pertanyaan ${index + 1} tidak boleh menyebut nama produk yang mengungkap brand Anda.`,
       );
     }
-    const prompt = pack.promptPack.prompts[index];
-    if (
-      !slot ||
-      prompt.prompt_id !== slot.id ||
-      prompt.category !== slot.category ||
-      prompt.role !== slot.generatorSlotDescription ||
-      prompt.branded !== (slot.auditedBrandIdentity === "required")
-    ) {
-      issues.push(
-        "Tujuan dan urutan pertanyaan harus tetap sesuai paket Nuave.",
-      );
+    if (directTen) {
+      const prompt = pack.promptPack.prompts[index];
+      if (prompt.prompt_id !== DIRECT_TEN_PROMPT_IDS[index]) {
+        issues.push(
+          "Urutan dan identitas pertanyaan harus tetap sesuai paket Nuave.",
+        );
+      }
+    } else {
+      const slot = AUDIT_MEASUREMENT_MATRIX[index];
+      const prompt = pack.promptPack.prompts[index] as
+        (typeof pack.promptPack.prompts)[number] | undefined;
+      if (
+        !slot ||
+        !prompt ||
+        prompt.prompt_id !== slot.id ||
+        (prompt as { category?: string }).category !== slot.category ||
+        (prompt as { role?: string }).role !== slot.generatorSlotDescription ||
+        (prompt as { branded?: boolean }).branded !==
+          (slot.auditedBrandIdentity === "required")
+      ) {
+        issues.push(
+          "Tujuan dan urutan pertanyaan harus tetap sesuai paket Nuave.",
+        );
+      }
     }
   });
-  if (!promptPackSchema.safeParse(pack.promptPack).success)
+  const packSchema =
+    pack.generation.kind === "glm-direct-ten-local"
+      ? directTenPromptPackSchema
+      : pack.generation.kind === "glm-experimental-local"
+        ? glmPromptPackSchema
+        : promptPackSchema;
+  if (!packSchema.safeParse(pack.promptPack).success)
     issues.push("Paket pertanyaan belum lengkap.");
+  const summaryOk = directTen
+    ? pack.promptPack.summary.unbranded_prompts === 10 &&
+      pack.promptPack.summary.branded_prompts === 0
+    : pack.promptPack.summary.unbranded_prompts === 6 &&
+      pack.promptPack.summary.branded_prompts === 4;
   if (
-    pack.promptPack.summary.unbranded_prompts !== 6 ||
-    pack.promptPack.summary.branded_prompts !== 4 ||
+    !summaryOk ||
     JSON.stringify(pack.generationInput) !==
       JSON.stringify(generationInputOf(pack.input))
   )
@@ -418,6 +562,75 @@ export function prepareLocalQuestions(
       }
     }
   }
+  return buildLocalPack(input, texts, {
+    kind: "deterministic-local",
+    providerCalls: 0,
+    auditExecuted: false,
+  });
+}
+
+/** Shared pack body for both preparation kinds. GLM packs omit `self_check`
+ * entirely — no mechanical check established those claims for model output,
+ * so the object is absent per the approved v3 contract rather than stamped
+ * with unearned booleans. */
+function buildLocalPack(
+  input: FrozenLocalIntake,
+  texts: string[],
+  generation: LocalQuestionPack["generation"],
+): LocalQuestionPack {
+  if (input.fingerprint !== fingerprintOf(input))
+    throw new Error(
+      "Informasi bisnis berubah. Konfirmasi kembali sebelum membuat pertanyaan.",
+    );
+  const generationInput = generationInputOf(input);
+  const facts = input.confirmed;
+  const directTen = generation.kind === "glm-direct-ten-local";
+  const glm = generation.kind === "glm-experimental-local";
+  const promptPackBase = {
+    status: "draft_for_review" as const,
+    prompt_pack_version: `${LOCAL_QUESTION_PACK_VERSION}:f${input.factVersion}:r0`,
+    language: "id-ID" as const,
+    target_product: "ChatGPT" as const,
+    brand: {
+      brand_name: facts.brand.name,
+      entity_scope:
+        facts.scope === "brand"
+          ? `Seluruh brand ${facts.brand.name}`
+          : `${facts.scope === "cabang" ? "Cabang" : "Produk"}: ${targetText(input)}`,
+      brand_type: "",
+      category: facts.category,
+      market_context: marketText(input),
+      target_customer: facts.customerReasons.join("; "),
+    },
+    summary: {
+      total_prompts: 10 as const,
+      unbranded_prompts: 6,
+      branded_prompts: 4,
+    },
+    prompts: AUDIT_MEASUREMENT_MATRIX.map((slot) => ({
+      prompt_id: slot.id,
+      category: slot.category,
+      role: slot.generatorSlotDescription,
+      branded: slot.auditedBrandIdentity === "required",
+      question: texts[slot.order - 1],
+      rationale: slot.measurementPurpose,
+      inputs_used: [...slot.allowedContextFields],
+      review_status: "needs_human_review" as const,
+    })),
+    warnings: [
+      glm
+        ? generation.provenance.transport === "synthetic-stub"
+          ? "Uji coba GLM lokal: pertanyaan berasal dari respons sintetis berlabel, bukan keluaran provider. Audit belum dijalankan."
+          : "Uji coba GLM lokal: pertanyaan disiapkan lewat satu panggilan provider; audit belum dijalankan."
+        : "Simulasi lokal: pertanyaan disiapkan tanpa panggilan AI; audit belum dijalankan.",
+    ],
+  };
+  const directTenWarning =
+    generation.kind === "glm-direct-ten-local"
+      ? generation.provenance.transport === "synthetic-stub"
+        ? "Uji coba GLM lokal (sepuluh pertanyaan langsung): pertanyaan berasal dari respons sintetis berlabel, bukan keluaran provider. Audit belum dijalankan."
+        : "Uji coba GLM lokal (sepuluh pertanyaan langsung): pertanyaan disiapkan lewat satu panggilan provider; audit belum dijalankan."
+      : null;
   const pack: LocalQuestionPack = {
     version: LOCAL_QUESTION_PACK_VERSION,
     factVersion: input.factVersion,
@@ -426,57 +639,67 @@ export function prepareLocalQuestions(
     input,
     generationInput,
     originals: [...texts],
-    generation: {
-      kind: "deterministic-local",
-      providerCalls: 0,
-      auditExecuted: false,
-    },
-    promptPack: {
-      status: "draft_for_review",
-      prompt_pack_version: `${LOCAL_QUESTION_PACK_VERSION}:f${input.factVersion}:r0`,
-      language: "id-ID",
-      target_product: "ChatGPT",
-      brand: {
-        brand_name: facts.brand.name,
-        entity_scope:
-          facts.scope === "brand"
-            ? `Seluruh brand ${facts.brand.name}`
-            : `${facts.scope === "cabang" ? "Cabang" : "Produk"}: ${targetText(input)}`,
-        brand_type: "",
-        category: facts.category,
-        market_context: marketText(input),
-        target_customer: facts.customerReasons.join("; "),
-      },
-      summary: { total_prompts: 10, unbranded_prompts: 6, branded_prompts: 4 },
-      prompts: AUDIT_MEASUREMENT_MATRIX.map((slot) => ({
-        prompt_id: slot.id,
-        category: slot.category,
-        role: slot.generatorSlotDescription,
-        branded: slot.auditedBrandIdentity === "required",
-        question: texts[slot.order - 1],
-        rationale: slot.measurementPurpose,
-        inputs_used: [...slot.allowedContextFields],
-        review_status: "needs_human_review",
-      })),
-      self_check: {
-        ten_prompts: true,
-        one_prompt_per_slot: true,
-        canonical_composition: true,
-        no_brand_leakage: true,
-        verified_inputs_only: true,
-        verified_competitor_only: true,
-        single_entity_scope: true,
-        category_safety_pass: true,
-        independent_natural_questions: true,
-      },
-      warnings: [
-        "Simulasi lokal: pertanyaan disiapkan tanpa panggilan AI; audit belum dijalankan.",
-      ],
-    },
+    generation,
+    promptPack: directTen
+      ? {
+          status: "draft_for_review" as const,
+          prompt_pack_version: `${LOCAL_QUESTION_PACK_VERSION}:f${input.factVersion}:r0`,
+          method: DIRECT_TEN_METHOD_VERSION,
+          language: "id-ID" as const,
+          target_product: "ChatGPT" as const,
+          brand: promptPackBase.brand,
+          summary: {
+            total_prompts: 10 as const,
+            unbranded_prompts: 10 as const,
+            branded_prompts: 0 as const,
+          },
+          prompts: DIRECT_TEN_PROMPT_IDS.map((prompt_id, index) => ({
+            prompt_id,
+            question: texts[index]!,
+            review_status: "needs_human_review" as const,
+          })),
+          warnings: [directTenWarning!],
+        }
+      : glm
+        ? promptPackBase
+        : {
+            ...promptPackBase,
+            self_check: {
+              ten_prompts: true,
+              one_prompt_per_slot: true,
+              canonical_composition: true,
+              no_brand_leakage: true,
+              verified_inputs_only: true,
+              verified_competitor_only: true,
+              single_entity_scope: true,
+              category_safety_pass: true,
+              independent_natural_questions: true,
+            },
+          },
   };
   const issues = questionIssues(pack);
   if (issues.length) throw new Error(issues.join(" "));
   return immutable(pack);
+}
+
+/** Build a local pack from a successful experimental-GLM server outcome.
+ * The client revalidates the returned texts under the same v3 rules — a pack
+ * only forms when the pack contract actually passes. */
+export function prepareGlmLocalPack(
+  input: FrozenLocalIntake,
+  outcome: Extract<GlmQuestionsOutcome, { status: "ok" }>,
+): LocalQuestionPack {
+  return buildLocalPack(input, outcome.questions, {
+    kind:
+      outcome.provenance.method === "direct-ten"
+        ? "glm-direct-ten-local"
+        : "glm-experimental-local",
+    providerCalls: outcome.provenance.transport === "synthetic-stub" ? 0 : 1,
+    auditExecuted: false,
+    provenance: outcome.provenance,
+    billedCostUsd: outcome.cost.billedUsd,
+    facts: outcome.facts,
+  });
 }
 
 export function updateLocalQuestion(
@@ -484,8 +707,13 @@ export function updateLocalQuestion(
   slotId: string,
   wording: string,
 ): { ok: true; pack: LocalQuestionPack } | { ok: false; issues: string[] } {
-  const slot = AUDIT_MEASUREMENT_MATRIX.find((entry) => entry.id === slotId);
-  if (!slot)
+  // Direct-ten texts are located by their stable pack ID; legacy packs keep
+  // the matrix slot lookup. Both still revalidate the whole pack below.
+  const found =
+    pack.generation.kind === "glm-direct-ten-local"
+      ? pack.promptPack.prompts.some((prompt) => prompt.prompt_id === slotId)
+      : AUDIT_MEASUREMENT_MATRIX.some((entry) => entry.id === slotId);
+  if (!found)
     return {
       ok: false,
       issues: ["Pertanyaan tidak ditemukan dalam paket ini."],
@@ -494,6 +722,8 @@ export function updateLocalQuestion(
   const next: LocalQuestionPack = {
     ...pack,
     revision,
+    // The prompt union spreads to a mixed shape; only question text and the
+    // version change here, and questionIssues revalidates immediately after.
     promptPack: {
       ...pack.promptPack,
       prompt_pack_version: `${LOCAL_QUESTION_PACK_VERSION}:f${pack.factVersion}:r${revision}`,
@@ -502,12 +732,75 @@ export function updateLocalQuestion(
           ? { ...prompt, question: wording.trim() }
           : { ...prompt },
       ),
-    },
+    } as LocalQuestionPack["promptPack"],
   };
   const issues = questionIssues(next);
   return issues.length
     ? { ok: false, issues }
     : { ok: true, pack: immutable(next) };
+}
+
+/** Bounded structural check on a stored GLM generation record. The pack's
+ * wording is revalidated by the shared checks afterwards; this only confirms
+ * the provenance fields are present, self-consistent, and tied to the frozen
+ * input they were projected from. */
+function parseGlmGeneration(
+  value: unknown,
+  input: FrozenLocalIntake,
+): GlmPackGeneration | null {
+  if (!value || typeof value !== "object") return null;
+  const generation = value as Record<string, unknown>;
+  const provenance = generation.provenance;
+  const facts = generation.facts;
+  if (
+    (generation.kind !== "glm-experimental-local" &&
+      generation.kind !== "glm-direct-ten-local") ||
+    generation.auditExecuted !== false ||
+    (generation.providerCalls !== 0 && generation.providerCalls !== 1) ||
+    !(
+      generation.billedCostUsd === null ||
+      typeof generation.billedCostUsd === "number"
+    ) ||
+    !provenance ||
+    typeof provenance !== "object" ||
+    !facts ||
+    typeof facts !== "object"
+  )
+    return null;
+  const prov = provenance as Record<string, unknown>;
+  // Kind/method consistency is part of the boundary: a stored record whose
+  // provenance method does not match its generation kind is rejected rather
+  // than silently reinterpreted.
+  const expectedMethod =
+    generation.kind === "glm-direct-ten-local" ? "direct-ten" : "glm-slots";
+  if (
+    prov.method !== expectedMethod ||
+    typeof prov.requestId !== "string" ||
+    !/^[a-zA-Z0-9_-]{1,80}$/.test(prov.requestId) ||
+    typeof prov.requestedModel !== "string" ||
+    !prov.requestedModel.trim() ||
+    !(prov.returnedModel === null || typeof prov.returnedModel === "string") ||
+    !(prov.responseId === null || typeof prov.responseId === "string") ||
+    prov.modelMismatch !==
+      (prov.returnedModel !== null &&
+        prov.returnedModel !== prov.requestedModel) ||
+    (prov.transport !== "synthetic-stub" &&
+      prov.transport !== "cheaper-inference") ||
+    // Provenance consistency: the stub never made a provider call; a live
+    // transport record claims exactly one.
+    (prov.transport === "synthetic-stub"
+      ? generation.providerCalls !== 0
+      : generation.providerCalls !== 1)
+  )
+    return null;
+  const identity = (facts as Record<string, unknown>).identity;
+  if (
+    !identity ||
+    typeof identity !== "object" ||
+    (identity as Record<string, unknown>).brand !== input.confirmed.brand.name
+  )
+    return null;
+  return generation as unknown as GlmPackGeneration;
 }
 
 /** Session restore uses the same fixed metadata / wording checks as start.
@@ -527,13 +820,92 @@ export function parseLocalQuestionPack(
     (stored.revision as number) < 0
   )
     return null;
-  const parsed = promptPackSchema.safeParse(stored.promptPack);
+  const generationKind =
+    stored.generation && typeof stored.generation === "object"
+      ? (stored.generation as Record<string, unknown>).kind
+      : undefined;
+  // GLM packs parse under their own contracts — self_check absent by design;
+  // deterministic packs keep the legacy schema. An unknown kind is rejected
+  // outright rather than parsed under a legacy contract.
+  const schemaFor =
+    generationKind === "glm-direct-ten-local"
+      ? directTenPromptPackSchema
+      : generationKind === "glm-experimental-local"
+        ? glmPromptPackSchema
+        : generationKind === "deterministic-local"
+          ? promptPackSchema
+          : null;
+  if (!schemaFor) return null;
+  const parsed = schemaFor.safeParse(stored.promptPack);
   if (
     !parsed.success ||
     parsed.data.prompt_pack_version !==
       `${LOCAL_QUESTION_PACK_VERSION}:f${input.factVersion}:r${stored.revision}`
   )
     return null;
+  if (
+    generationKind === "glm-experimental-local" ||
+    generationKind === "glm-direct-ten-local"
+  ) {
+    const generation = parseGlmGeneration(stored.generation, input);
+    if (!generation) return null;
+    const directTen = generationKind === "glm-direct-ten-local";
+    // A GLM pack cannot be re-derived deterministically; restore the exact
+    // stored wording (schema-checked above) and revalidate under its method's
+    // rules. Direct-ten texts are located by their stable pack IDs.
+    const texts = directTen
+      ? DIRECT_TEN_PROMPT_IDS.map(
+          (promptId) =>
+            parsed.data.prompts.find((prompt) => prompt.prompt_id === promptId)
+              ?.question ?? "",
+        )
+      : AUDIT_MEASUREMENT_MATRIX.map(
+          (slot) =>
+            parsed.data.prompts.find((prompt) => prompt.prompt_id === slot.id)
+              ?.question ?? "",
+        );
+    if (texts.some((text) => !text)) return null;
+    // The generated originals persist separately from edited wording — a
+    // restore must never rebuild them from the current texts.
+    const originals =
+      Array.isArray(stored.originals) &&
+      stored.originals.length === 10 &&
+      stored.originals.every(
+        (text) => typeof text === "string" && text.trim().length > 0,
+      )
+        ? (stored.originals as string[])
+        : null;
+    if (
+      !originals ||
+      (directTen
+        ? validateDirectTenQuestionPack(originals, generation.facts).length
+        : validateIndonesianQuestionPackV3(originals, generation.facts).length)
+    )
+      return null;
+    try {
+      const rebuilt = buildLocalPack(input, texts, generation);
+      if (
+        JSON.stringify(parsed.data.brand) !==
+        JSON.stringify(rebuilt.promptPack.brand)
+      )
+        return null;
+      const pack = {
+        ...rebuilt,
+        revision: stored.revision as number,
+        promptPack: parsed.data,
+        originals,
+      };
+      if (
+        questionIssues(pack).length ||
+        !isLocalQuestionPackCurrent(pack, input)
+      )
+        return null;
+      return immutable(pack);
+    } catch {
+      return null;
+    }
+  }
+  if (generationKind !== "deterministic-local") return null;
   try {
     const original = prepareLocalQuestions(input);
     if (
@@ -578,12 +950,100 @@ export function createLocalStartHandoff(
     );
   const issues = questionIssues(pack);
   if (issues.length) throw new Error(issues.join(" "));
+  const glm = pack.generation.kind === "glm-experimental-local";
+  const directTen = pack.generation.kind === "glm-direct-ten-local";
   return immutable({
     version: "nuave-local-start-v1",
-    mode: "local-simulation",
+    // The experimental pack is never relabeled as the deterministic
+    // zero-provider-call simulation.
+    mode: directTen
+      ? "glm-direct-ten-local"
+      : glm
+        ? "glm-experimental-local"
+        : "local-simulation",
     auditExecuted: false,
-    providerCalls: 0,
+    providerCalls: pack.generation.providerCalls,
     input,
     questions: pack,
+  });
+}
+
+/** Honest projection of this session's confirmed intake into the verified
+ * brief shape the audit boundaries require. Every field derives from the
+ * frozen confirmed record — nothing is hardcoded per business. Fields the
+ * founder explicitly left unconfirmed stay explicit rather than being filled
+ * with plausible text; schema-required fields fall back to confirmed values
+ * only (target, category, confirmed channels or reach). */
+export function sessionConfirmedBrief(
+  confirmed: FrozenLocalIntake["confirmed"],
+): BusinessBrief {
+  const unconfirmed = confirmed.publicFact
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => sentence.includes("belum dikonfirmasi"));
+  const marketContext =
+    confirmed.market.reach === "seluruh"
+      ? "seluruh Indonesia"
+      : confirmed.market.reach === "luar"
+        ? "Indonesia dan luar negeri"
+        : confirmed.market.areas.join(", ") || "area sekitar bisnis";
+  const reasons = confirmed.customerReasons;
+  const targetCustomer =
+    reasons[0] ?? `pelanggan ${confirmed.category} di ${marketContext}`;
+  const channelLabels = confirmed.serviceChannels.map(({ label }) => label);
+  const decisionCriteria =
+    reasons.length > 1
+      ? reasons.slice(1)
+      : channelLabels.length
+        ? channelLabels
+        : [targetCustomer];
+  const offerings = confirmed.offerings.length
+    ? confirmed.offerings
+    : confirmed.target
+      ? [confirmed.target.name]
+      : [confirmed.category];
+  const competitorName =
+    confirmed.comparators.names[0] ??
+    `alternatif lain di kategori ${confirmed.category}`;
+  // `primarySource` is the raw entered text; the brief requires the
+  // normalized public URL. Intake validation guarantees it parses — an
+  // unparseable value fails closed at the schema rather than sneaking a bad
+  // URL into the audit boundaries.
+  const primarySource =
+    parseSourceInput(confirmed.brand.primarySource)?.normalizedUrl ??
+    confirmed.brand.primarySource;
+  return businessBriefSchema.parse({
+    brand_name: confirmed.brand.name,
+    entity_scope:
+      confirmed.scope === "brand"
+        ? `Seluruh brand ${confirmed.brand.name}`
+        : confirmed.target
+          ? `${confirmed.scope === "cabang" ? "Cabang" : "Produk"}: ${confirmed.target.name}${confirmed.target.detail ? ` — ${confirmed.target.detail}` : ""}`
+          : confirmed.scope,
+    // Derived only from the confirmed category; no legal form is asserted.
+    brand_type: confirmed.category.includes("Advisori")
+      ? "Firma advisori"
+      : confirmed.category,
+    category: confirmed.category,
+    market_context: marketContext,
+    target_customer: targetCustomer,
+    official_sources: [primarySource],
+    verified_offerings: offerings,
+    verified_customer_needs: reasons.length ? reasons : [targetCustomer],
+    verified_decision_criteria: decisionCriteria,
+    verified_competitor: {
+      name: competitorName,
+      scope: "",
+      source_url: "",
+    },
+    brand_name_variants: [],
+    priority_offering: "",
+    conversion_action: "",
+    customer_supplied_facts: confirmed.publicFact ? [confirmed.publicFact] : [],
+    known_accuracy_questions: unconfirmed,
+    usp: "",
+    regulated_category_notes: "",
+    language: "en-US",
+    agency_name: "",
+    agency_logo_data_url: "",
   });
 }

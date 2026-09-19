@@ -161,6 +161,13 @@ the same sequence.
 | **5 — Real checkout** | Implement and verify Rp99.000 Midtrans checkout, the 30-day quote, QRIS, bank transfer, GoPay, DANA, and approved remedies | Manual transfer outside Midtrans, subscriptions, credits |
 | **6 — Cohesion pass** | Complete 00 and harmonize web, report, PDF, email, failure, and support presentation | New dashboard, monitoring, account, or agency scope without a proven need |
 
+**September 19 amendment:** the founder prioritized completing the continuous
+founder-local audit experience despite the current report falling short.
+Spec 009's approved amendment governs that continuation; report usefulness and
+format improvements are deferred, while evidence integrity and working exports
+remain required. The Phase 3 quality gate is not a pass or a blocker of that
+local functional work. Later commercial/delivery phases remain separately gated.
+
 An agent receives work from the active approved specification for its phase,
 not directly from a complete target-state touchpoint plan.
 

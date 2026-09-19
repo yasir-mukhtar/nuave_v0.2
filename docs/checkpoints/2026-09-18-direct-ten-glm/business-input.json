@@ -1,0 +1,117 @@
+{
+  "status": "fictional fixture — NOT an authorized live input",
+  "note": "Laundry Ceria fixture data (INTAKE_FIXTURES.GLM). Real founder business context is pending; a real request must be rebuilt from that confirmed intake.",
+  "frozenIntake": {
+    "version": "nuave-local-intake-input-v1",
+    "factVersion": 1,
+    "fingerprint": "{\"confirmed\":{\"brand\":{\"name\":\"Laundry Ceria\",\"primarySource\":\"laundryceria.id\"},\"scope\":\"brand\",\"target\":null,\"category\":\"Laundry kiloan\",\"offerings\":[\"Cuci kering lipat kiloan\",\"Cuci express selesai 6 jam\",\"Setrika saja\",\"Cuci bed cover dan selimut\",\"Antar-jemput laundry\"],\"customerReasons\":[\"Cucian selesai cepat tanpa antre\",\"Harga masuk akal untuk cucian rutin\",\"Antar-jemput biar tidak repot\",\"Pakaian wangi, bersih, dan rapi\"],\"serviceChannels\":[{\"channel\":\"on_premise\",\"label\":\"Di lokasi bisnis Anda\"},{\"channel\":\"delivery\",\"label\":\"Dikirim ke pelanggan\"}],\"market\":{\"reach\":\"sekitar\",\"areas\":[\"Jakarta Selatan\"]},\"comparators\":{\"mode\":\"named\",\"names\":[\"Laundry Kiloan Melati — laundry kiloan di area yang sama\",\"Laundry Express Cerah — chain laundry express\"]},\"publicFact\":\"\"},\"reviewRows\":[{\"key\":\"brand\",\"label\":\"Brand\",\"value\":\"Laundry Ceria · laundryceria.id\",\"target\":\"s-brand\"},{\"key\":\"scope\",\"label\":\"Fokus audit\",\"value\":\"Seluruh brand Laundry Ceria\",\"target\":\"s-scope\"},{\"key\":\"category\",\"label\":\"Kategori\",\"value\":\"Laundry kiloan\",\"target\":\"s-category\"},{\"key\":\"offerings\",\"label\":\"Produk dan layanan\",\"value\":\"Cuci kering lipat kiloan, Cuci express selesai 6 jam, Setrika saja, Cuci bed cover dan selimut, Antar-jemput laundry\",\"target\":\"s-offerings\"},{\"key\":\"customers\",\"label\":\"Alasan pelanggan\",\"value\":\"Cucian selesai cepat tanpa antre, Harga masuk akal untuk cucian rutin, Antar-jemput biar tidak repot, Pakaian wangi, bersih, dan rapi\",\"target\":\"s-customers\"},{\"key\":\"service\",\"label\":\"Cara layanan\",\"value\":\"Di lokasi bisnis Anda, Dikirim ke pelanggan\",\"target\":\"s-service\"},{\"key\":\"market\",\"label\":\"Pasar\",\"value\":\"Sekitar satu area · Jakarta Selatan\",\"target\":\"s-market\"},{\"key\":\"competitors\",\"label\":\"Pembanding\",\"value\":\"Laundry Kiloan Melati — laundry kiloan di area yang sama, Laundry Express Cerah — chain laundry express\",\"target\":\"s-competitors\"},{\"key\":\"facts\",\"label\":\"Hal yang wajib benar\",\"value\":\"Tidak ditambahkan\",\"target\":\"s-facts\"}]}",
+    "confirmed": {
+      "brand": {
+        "name": "Laundry Ceria",
+        "primarySource": "laundryceria.id"
+      },
+      "scope": "brand",
+      "target": null,
+      "category": "Laundry kiloan",
+      "offerings": [
+        "Cuci kering lipat kiloan",
+        "Cuci express selesai 6 jam",
+        "Setrika saja",
+        "Cuci bed cover dan selimut",
+        "Antar-jemput laundry"
+      ],
+      "customerReasons": [
+        "Cucian selesai cepat tanpa antre",
+        "Harga masuk akal untuk cucian rutin",
+        "Antar-jemput biar tidak repot",
+        "Pakaian wangi, bersih, dan rapi"
+      ],
+      "serviceChannels": [
+        {
+          "channel": "on_premise",
+          "label": "Di lokasi bisnis Anda"
+        },
+        {
+          "channel": "delivery",
+          "label": "Dikirim ke pelanggan"
+        }
+      ],
+      "market": {
+        "reach": "sekitar",
+        "areas": [
+          "Jakarta Selatan"
+        ]
+      },
+      "comparators": {
+        "mode": "named",
+        "names": [
+          "Laundry Kiloan Melati — laundry kiloan di area yang sama",
+          "Laundry Express Cerah — chain laundry express"
+        ]
+      },
+      "publicFact": ""
+    },
+    "reviewRows": [
+      {
+        "key": "brand",
+        "label": "Brand",
+        "value": "Laundry Ceria · laundryceria.id",
+        "target": "s-brand"
+      },
+      {
+        "key": "scope",
+        "label": "Fokus audit",
+        "value": "Seluruh brand Laundry Ceria",
+        "target": "s-scope"
+      },
+      {
+        "key": "category",
+        "label": "Kategori",
+        "value": "Laundry kiloan",
+        "target": "s-category"
+      },
+      {
+        "key": "offerings",
+        "label": "Produk dan layanan",
+        "value": "Cuci kering lipat kiloan, Cuci express selesai 6 jam, Setrika saja, Cuci bed cover dan selimut, Antar-jemput laundry",
+        "target": "s-offerings"
+      },
+      {
+        "key": "customers",
+        "label": "Alasan pelanggan",
+        "value": "Cucian selesai cepat tanpa antre, Harga masuk akal untuk cucian rutin, Antar-jemput biar tidak repot, Pakaian wangi, bersih, dan rapi",
+        "target": "s-customers"
+      },
+      {
+        "key": "service",
+        "label": "Cara layanan",
+        "value": "Di lokasi bisnis Anda, Dikirim ke pelanggan",
+        "target": "s-service"
+      },
+      {
+        "key": "market",
+        "label": "Pasar",
+        "value": "Sekitar satu area · Jakarta Selatan",
+        "target": "s-market"
+      },
+      {
+        "key": "competitors",
+        "label": "Pembanding",
+        "value": "Laundry Kiloan Melati — laundry kiloan di area yang sama, Laundry Express Cerah — chain laundry express",
+        "target": "s-competitors"
+      },
+      {
+        "key": "facts",
+        "label": "Hal yang wajib benar",
+        "value": "Tidak ditambahkan",
+        "target": "s-facts"
+      }
+    ]
+  },
+  "minimizedWriterBrief": "Confirmed business information for one audited business.\nNama: Laundry Ceria\nKategori: Laundry kiloan\nCakupan: Seluruh brand Laundry Ceria\nPenawaran: Cuci kering lipat kiloan; Cuci express selesai 6 jam; Setrika saja; Cuci bed cover dan selimut; Antar-jemput laundry\nArea layanan: Jakarta Selatan\nSaluran layanan: layanan di lokasi bisnis; pengiriman ke pelanggan\nKebutuhan pelanggan: Cucian selesai cepat tanpa antre; Harga masuk akal untuk cucian rutin; Antar-jemput biar tidak repot; Pakaian wangi, bersih, dan rapi\nNama lain / pembanding yang juga tidak boleh disebut: Laundry Kiloan Melati — laundry kiloan di area yang sama; Laundry Express Cerah — chain laundry express\nTidak diketahui: harga, kualitas layanan, fitur lain yang tidak tercantum. Jangan mengarang fakta tentang bisnis ini.",
+  "factsProjection": {
+    "requestId": "direct-ten-specimen-2026-09-18",
+    "status": "projected",
+    "fingerprint": "d6ccff10c4bcf483a4e2725c7e479336f44582c4fad243005dc925b65d3c6b5c"
+  }
+}

@@ -9,8 +9,9 @@ import {
   liveGenerateReportContent,
 } from "./provider";
 import {
-  canonicalLockedQuestionPack,
   lockedObservationBindingErrors,
+  lockedQuestionPackForMethod,
+  type AuditQuestionMethod,
 } from "./locked-question-pack";
 import {
   isHistoricalPromptPack,
@@ -55,6 +56,8 @@ import {
   minimizeIndonesianBrief,
   validateCanonicalIndonesianQuestionPack,
 } from "./questions-id";
+import { validateDirectTenQuestions } from "./questions-id-direct-ten";
+import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "./types";
 
 export type ReportPipelineInput = {
   brief: BusinessBrief;
@@ -65,13 +68,24 @@ export type ReportPipelineInput = {
   language?: "en" | "id";
   /** Internal replay marker for one of the two immutable historical fixtures. */
   historical_fixture_id?: HistoricalPromptPackId;
+  /** Explicit question-method selector. Never inferred — the server record
+   * carries it and an absent value means the historical canonical method. */
+  question_method?: AuditQuestionMethod;
+  /** Server-internal flag for the labeled founder-local fixture path. Never
+   * part of the wire schema: when set, every observation must be labeled
+   * synthetic-local-fixture, so the flag proves labeling rather than
+   * laundering unlabeled evidence past the production-method check. */
+  allow_synthetic_evidence?: boolean;
 };
 
 function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
   assertSafeComparisonBusinessUrls(input.brief);
   return {
     ...input,
-    prompts: canonicalLockedQuestionPack(input.prompts, input.brief, {
+    prompts: lockedQuestionPackForMethod({
+      prompts: input.prompts,
+      brief: input.brief,
+      questionMethod: input.question_method ?? "canonical",
       historicalFixtureId: input.historical_fixture_id,
     }).prompts,
   };
@@ -139,9 +153,26 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
       observations,
       brief: canonical.brief,
       historicalFixtureId: canonical.historical_fixture_id,
+      questionMethod: canonical.question_method,
     }),
   );
-  if (!isHistoricalPromptPack(prompts, canonical.historical_fixture_id)) {
+  const questionMethod = canonical.question_method ?? "canonical";
+  if (questionMethod === "direct-ten") {
+    const minimized = minimizeIndonesianBrief(canonical.brief);
+    errors.push(
+      ...validateDirectTenQuestions(
+        prompts.map((prompt) => prompt.question),
+        {
+          brief: minimized,
+          comparators: minimized.comparison_business
+            ? [minimized.comparison_business.name]
+            : [],
+        },
+      ).map((issue) => issue.message),
+    );
+  } else if (
+    !isHistoricalPromptPack(prompts, canonical.historical_fixture_id)
+  ) {
     errors.push(
       ...validateCanonicalIndonesianQuestionPack(
         prompts.map((prompt) => prompt.question),
@@ -162,7 +193,18 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
     );
   }
 
-  errors.push(...productionObservationMethodErrors(observations));
+  if (canonical.allow_synthetic_evidence === true) {
+    const unlabeled = observations.filter(
+      (observation) => observation.system !== SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+    );
+    if (unlabeled.length) {
+      errors.push(
+        `Synthetic-evidence mode requires every observation to be labeled ${SYNTHETIC_LOCAL_FIXTURE_SYSTEM}; ${unlabeled.length} observation(s) claim another system.`,
+      );
+    }
+  } else {
+    errors.push(...productionObservationMethodErrors(observations));
+  }
 
   if (errors.length) {
     throw new ReportPipelineError(
@@ -216,6 +258,7 @@ function normalizeAndRepairReport(
     input.observations,
     input.brief,
     input.historical_fixture_id,
+    input.question_method,
   );
 
   const rawSources = rawContent.details.reduce(
@@ -257,6 +300,7 @@ function normalizeAndRepairReport(
     input.observations,
     input.brief,
     input.historical_fixture_id,
+    input.question_method,
   );
   if (priorityRepair.removed_orders.length) {
     diagnostics.add("unsupported_priority_removed");
@@ -271,6 +315,7 @@ function normalizeAndRepairReport(
     input.brief,
     input.language,
     input.historical_fixture_id,
+    input.question_method,
   );
   qualityRepair.diagnostics.forEach((diagnostic) =>
     diagnostics.add(diagnostic),
@@ -330,6 +375,7 @@ export async function createValidatedAuditReport(
     lockedInput.observations,
     lockedInput.brief,
     lockedInput.historical_fixture_id,
+    lockedInput.question_method,
   );
   if (evidenceErrors.length) {
     throw new ReportPipelineError(
@@ -400,6 +446,7 @@ export async function createValidatedAuditReport(
           lockedInput.observations,
           lockedInput.brief,
           lockedInput.historical_fixture_id,
+          lockedInput.question_method,
         ),
       ];
       if (retryIntegrityErrors.length) {
@@ -439,6 +486,7 @@ export async function createValidatedAuditReport(
     },
     isIndonesian ? INDONESIAN_AUDIT_REPORT_LABELS : undefined,
     lockedInput.historical_fixture_id,
+    lockedInput.question_method,
   );
   if (isIndonesian) {
     const builtFieldErrors = indonesianReportBuiltFieldErrors(report);

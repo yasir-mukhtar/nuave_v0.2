@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseSourceInput } from "./source-input";
+import type { AuditQuestionMethod } from "./locked-question-pack";
 
 /** The ten categories in the canonical measurement matrix (R-01). */
 export const promptCategories = [
@@ -26,9 +27,19 @@ export const legacyPromptCategories = [
 ] as const;
 export type LegacyPromptCategory = (typeof legacyPromptCategories)[number];
 
+/**
+ * Spec 009 direct-ten: purpose-free questions carry no matrix category at
+ * all — `unassigned` is the honest value, never a slot interpretation. The
+ * canonical lock still rejects it (its slots require matrix categories), so
+ * legacy packs cannot drift into it.
+ */
+export const DIRECT_TEN_PROMPT_CATEGORY = "unassigned" as const;
+export type DirectTenPromptCategory = typeof DIRECT_TEN_PROMPT_CATEGORY;
+
 export const promptCategorySchema = z.union([
   z.enum(promptCategories),
   z.enum(legacyPromptCategories),
+  z.literal(DIRECT_TEN_PROMPT_CATEGORY),
 ]);
 
 export const appearanceStatuses = [
@@ -207,6 +218,10 @@ export const promptPackSchema = z.object({
   warnings: z.array(z.string()),
 });
 
+/** Honest `system` label for the founder-local fixture observation path. */
+export const SYNTHETIC_LOCAL_FIXTURE_SYSTEM =
+  "synthetic-local-fixture" as const;
+
 export const auditObservationSchema = z.object({
   prompt_id: z.string(),
   category: promptCategorySchema,
@@ -223,6 +238,9 @@ export const auditObservationSchema = z.object({
     "Google Gemini API",
     "Groq + Tavily",
     "OpenRouter",
+    // Labeled local fixture only — never satisfies the protected production
+    // observation-method check, so it can never be mistaken for live evidence.
+    "synthetic-local-fixture",
   ]),
   requested_model: z.string(),
   returned_model: z.string(),
@@ -380,12 +398,14 @@ export type BusinessBrief = z.infer<typeof businessBriefSchema>;
 export type ExtractionDraft = z.infer<typeof extractionDraftSchema>;
 type ParsedAuditPrompt = z.infer<typeof promptSchema>;
 export type AuditPrompt = Omit<ParsedAuditPrompt, "category"> & {
-  category: CanonicalPromptCategory | LegacyPromptCategory;
+  category:
+    CanonicalPromptCategory | LegacyPromptCategory | DirectTenPromptCategory;
 };
 export type PromptPack = z.infer<typeof promptPackSchema>;
 type ParsedAuditObservation = z.infer<typeof auditObservationSchema>;
 export type AuditObservation = Omit<ParsedAuditObservation, "category"> & {
-  category: CanonicalPromptCategory | LegacyPromptCategory;
+  category:
+    CanonicalPromptCategory | LegacyPromptCategory | DirectTenPromptCategory;
 };
 export type AuditCallTelemetry = z.infer<typeof auditCallTelemetrySchema>;
 export type AuditBudget = z.infer<typeof auditBudgetSchema>;
@@ -404,6 +424,9 @@ export type AuditReport = ReportContent & {
   provenance: {
     report_prompt_version: string;
     prompt_contract_version: string;
+    /** Explicit question method the report was built under (Spec 009);
+     * absent only for reports predating the method contract. */
+    question_method?: AuditQuestionMethod;
     requested_report_model: string;
     returned_report_model: string;
     report_response_id: string;

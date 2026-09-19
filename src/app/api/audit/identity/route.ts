@@ -15,6 +15,12 @@ import {
   RATE_LIMITED_MESSAGE,
   RATE_LIMIT_UNAVAILABLE_MESSAGE,
 } from "@/lib/audit/rate-limit";
+import {
+  auditLiveExecutionAuthorized,
+  glmExperimentEnabled,
+} from "@/lib/intake/glm-local";
+import { syntheticLocalIdentity } from "@/lib/audit/local-direct-ten-audit";
+import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "@/lib/audit/types";
 
 export const runtime = "nodejs";
 
@@ -65,7 +71,8 @@ export async function GET(request: Request) {
     if (rateLimitDecision === "limited") return rateLimitResponse();
   }
 
-  const source = new URL(request.url).searchParams.get("source") ?? "";
+  const params = new URL(request.url).searchParams;
+  const source = params.get("source") ?? "";
   const parsedSource = parseSourceInput(source);
   if (!parsedSource) {
     return NextResponse.json(
@@ -75,6 +82,52 @@ export async function GET(request: Request) {
       },
       { status: 400 },
     );
+  }
+
+  // Spec 009 founder-local reading phase: `local_mode` marks the local
+  // session and the SERVER selects the preparation mode — "synthetic" pins
+  // the labeled substitute; "auto" takes the real source fetch only under
+  // the explicit live authorization and stays offline otherwise. The mode
+  // exists only inside the local experiment flag; any other value — or the
+  // flag off — fails closed before any fetch. `preparation_mode` in the
+  // response is the explicit provenance of whichever path served.
+  const localMode = params.get("local_mode");
+  if (localMode !== null) {
+    if (
+      !glmExperimentEnabled() ||
+      (localMode !== "auto" && localMode !== "synthetic")
+    ) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const live = localMode === "auto" && auditLiveExecutionAuthorized();
+    if (!live) {
+      return NextResponse.json({
+        ...syntheticLocalIdentity(parsedSource),
+        substitute: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+        preparation_mode: "synthetic-local",
+      });
+    }
+    try {
+      const identity = await fetchSourceIdentity(parsedSource, {
+        destinationRateLimiter:
+          bindings.identityDestination ?? LOCAL_DESTINATION_RATE_LIMITER,
+      });
+      return NextResponse.json({ ...identity, preparation_mode: "live" });
+    } catch (error) {
+      if (
+        error instanceof SafeSourceFetchError &&
+        error.code === "RATE_LIMITED"
+      ) {
+        return rateLimitResponse();
+      }
+      if (
+        error instanceof SafeSourceFetchError &&
+        error.code === "RATE_LIMIT_UNAVAILABLE"
+      ) {
+        return rateLimitResponse(503);
+      }
+      return sourceUnavailableResponse();
+    }
   }
 
   try {

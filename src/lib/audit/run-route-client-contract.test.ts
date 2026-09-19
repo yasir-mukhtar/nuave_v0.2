@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  AUDIT_CLIENT_CONTRACT_VERSION,
   AUDIT_CLIENT_UPDATE_REQUIRED_CODE,
   AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,
 } from "./client-contract";
@@ -48,4 +49,31 @@ describe("POST /api/audit/run client contract guard", () => {
       expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("POST /api/audit/run direct-ten founder-local guard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
+  });
+
+  it("fails closed with 404 and zero provider work outside the local flag", async () => {
+    const response = await POST(
+      new Request("https://nuave.test/api/audit/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          question_method: "direct-ten",
+          prompts: [],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(
+      providerMocks.assertLiveProviderCredentialsConfigured,
+    ).not.toHaveBeenCalled();
+    expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
+  });
 });

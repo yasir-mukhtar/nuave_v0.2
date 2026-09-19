@@ -20,6 +20,7 @@ const ALLOWED_SERVER_OVERRIDES = new Set([
   "NUAVE_FIXTURE_PREVIEW_ENABLED",
   "NUAVE_FIXTURE_FORCE_REPORT_FAILURE",
   "NUAVE_NEW_INTAKE_PREVIEW_ENABLED",
+  "NUAVE_GLM_LOCAL_EXPERIMENT",
 ]);
 
 /**
@@ -48,6 +49,12 @@ export function offlineE2EServerEnv(
     NUAVE_PROVIDER: "opencodego",
     NUAVE_QUESTION_PROVIDER: "opencodego",
     NUAVE_LIVE_PROVIDER_TESTING: "0",
+    // The GLM experiment can never reach a live transport in e2e.
+    NUAVE_GLM_LIVE_AUTHORIZED: "0",
+    // The audit run/report boundaries can never execute a live provider call
+    // in e2e — the labeled synthetic substitute is the only transport.
+    NUAVE_AUDIT_LIVE_AUTHORIZED: "0",
+    CHEAPERINFERENCE_API_KEY: "",
     OPENCODEGO_API_KEY: "",
     OPENAI_API_KEY: "",
     GEMINI_API_KEY: "",
@@ -65,8 +72,11 @@ export function journeyWebServer(
   env: Record<string, string> = {},
 ): PlaywrightTestConfig["webServer"] {
   return {
-    command: `npm run dev -- --port ${port}`,
-    url: `http://localhost:${port}`,
+    // Interface-level founder-local confinement: the preview listens on the
+    // IPv4 loopback only, never on a LAN-reachable interface (next dev's
+    // default hostname is 0.0.0.0).
+    command: `npm run dev -- --port ${port} --hostname 127.0.0.1`,
+    url: `http://127.0.0.1:${port}`,
     reuseExistingServer: false,
     timeout: 120_000,
     env: offlineE2EServerEnv(env),

@@ -10,7 +10,7 @@ export async function grantAccess(page: Page): Promise<void> {
     {
       name: "nuave_access",
       value: E2E_ACCESS_CODE,
-      domain: "localhost",
+      domain: "127.0.0.1",
       path: "/",
     },
   ]);

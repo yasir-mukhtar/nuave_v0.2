@@ -1,0 +1,16 @@
+{
+  "fixtureOnly": true,
+  "notice": "Fictional business for a local API integration test; these are not claims about a real business.",
+  "brandName": "ContohInvoice",
+  "category": "Aplikasi untuk membuat invoice",
+  "customer": "Pemilik usaha kecil yang perlu membuat invoice untuk pelanggan",
+  "offering": "Membuat invoice secara otomatis dari rincian transaksi yang dimasukkan pengguna",
+  "customerNeed": "Membuat invoice dengan cepat tanpa menyusun dokumen secara manual",
+  "unknown": [
+    "Harga",
+    "Wilayah layanan",
+    "Integrasi pembayaran",
+    "Kepatuhan pajak",
+    "Fitur lain"
+  ]
+}

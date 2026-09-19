@@ -1,4 +1,5 @@
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
+import { DIRECT_TEN_PROMPT_CATEGORY } from "./types";
 import {
   classifyIndonesianQuestion,
   minimizeIndonesianBrief,
@@ -15,6 +16,24 @@ export type CanonicalLockedQuestionPack = {
   prompts: AuditPrompt[];
   by_id: ReadonlyMap<string, AuditPrompt>;
 };
+
+/** Spec 009 direct-ten locating ids — stable binding identifiers only; the
+ * position carries no purpose, category or report meaning. Shared with the
+ * intake pack boundary (local-questions.ts re-uses this list). */
+export const DIRECT_TEN_PROMPT_IDS = Array.from(
+  { length: 10 },
+  (_, index) => `NUAVE-DT-${String(index + 1).padStart(2, "0")}`,
+);
+
+/** Explicit method selector for every lock/run/report boundary. An unknown
+ * value fails closed here — before any provider work. */
+export type AuditQuestionMethod = "canonical" | "direct-ten";
+
+export function parseAuditQuestionMethod(
+  value: unknown,
+): AuditQuestionMethod | null {
+  return value === "direct-ten" || value === "canonical" ? value : null;
+}
 
 function normalizedPromptId(value: string) {
   return value.trim();
@@ -134,14 +153,108 @@ export function canonicalLockedQuestionPack(
   };
 }
 
+/**
+ * Spec 009 direct-ten locked-pack boundary.
+ *
+ * Ten purpose-free texts lock under their own contract: stable NUAVE-DT ids
+ * in order, exact non-empty question text, and an honest per-question
+ * branded classification derived from the minimized brief (a human edit that
+ * names the business records branded=true rather than pretending the method
+ * guarantees otherwise). No slot category, role, rationale, inputs_used,
+ * comparison requirement or measurement purpose is manufactured — category
+ * is the explicit `unassigned`, and the descriptive fields stay empty rather
+ * than carrying text that would imply a purpose.
+ */
+export function canonicalLockedDirectTenPack(
+  prompts: readonly Pick<
+    AuditPrompt,
+    "prompt_id" | "question" | "review_status"
+  >[],
+  brief: BusinessBrief,
+): CanonicalLockedQuestionPack {
+  if (prompts.length !== 10) {
+    throw new Error(
+      `A locked direct-ten question pack requires exactly ten questions; received ${prompts.length}.`,
+    );
+  }
+
+  const ids = prompts.map((prompt) => normalizedPromptId(prompt.prompt_id));
+  if (ids.some((id) => !id || id.length > 160)) {
+    throw new Error("Every locked question requires a valid prompt_id.");
+  }
+  if (new Set(ids).size !== ids.length) {
+    throw new Error(
+      "Locked prompt_ids must be unique before execution begins.",
+    );
+  }
+  if (ids.some((id, index) => id !== DIRECT_TEN_PROMPT_IDS[index])) {
+    throw new Error(
+      "Direct-ten locked questions must use the NUAVE-DT-01…NUAVE-DT-10 locating ids in order.",
+    );
+  }
+
+  const minimized = minimizeIndonesianBrief(brief);
+  const locked = prompts.map((prompt, index) => {
+    const question = prompt.question.trim();
+    if (!question) {
+      throw new Error(`Locked question ${index + 1} has no question text.`);
+    }
+    return {
+      prompt_id: DIRECT_TEN_PROMPT_IDS[index]!,
+      category: DIRECT_TEN_PROMPT_CATEGORY,
+      role: "",
+      branded:
+        classifyIndonesianQuestion(question, minimized) ===
+        "menyebut_bisnis_anda",
+      question,
+      rationale: "",
+      inputs_used: [],
+      review_status: "needs_human_review" as const,
+    } satisfies AuditPrompt;
+  });
+
+  return {
+    prompts: locked,
+    by_id: new Map(locked.map((prompt) => [prompt.prompt_id, prompt])),
+  };
+}
+
+/** One method-aware lock boundary: dispatch is explicit, never inferred.
+ * Wire-thin direct-ten prompts (id/question/review_status only) are accepted
+ * because the direct-ten lock reads exactly those fields; the canonical path
+ * still requires full AuditPrompt records and rejects missing slot metadata. */
+export function lockedQuestionPackForMethod(input: {
+  prompts:
+    | readonly Pick<AuditPrompt, "prompt_id" | "question" | "review_status">[]
+    | AuditPrompt[];
+  brief: BusinessBrief;
+  questionMethod: AuditQuestionMethod;
+  historicalFixtureId?: HistoricalPromptPackId;
+}): CanonicalLockedQuestionPack {
+  if (input.questionMethod === "direct-ten") {
+    return canonicalLockedDirectTenPack(input.prompts, input.brief);
+  }
+  return canonicalLockedQuestionPack(
+    input.prompts as AuditPrompt[],
+    input.brief,
+    {
+      historicalFixtureId: input.historicalFixtureId,
+    },
+  );
+}
+
 /** Exact evidence-to-question correspondence for resume/report boundaries. */
 export function lockedObservationBindingErrors(input: {
   prompts: AuditPrompt[];
   observations: AuditObservation[];
   brief: BusinessBrief;
   historicalFixtureId?: HistoricalPromptPackId;
+  questionMethod?: AuditQuestionMethod;
 }): string[] {
-  const pack = canonicalLockedQuestionPack(input.prompts, input.brief, {
+  const pack = lockedQuestionPackForMethod({
+    prompts: input.prompts,
+    brief: input.brief,
+    questionMethod: input.questionMethod ?? "canonical",
     historicalFixtureId: input.historicalFixtureId,
   });
   const errors: string[] = [];
@@ -184,8 +297,12 @@ export function completedLockedObservationSetErrors(input: {
   observations: AuditObservation[];
   brief: BusinessBrief;
   historicalFixtureId?: HistoricalPromptPackId;
+  questionMethod?: AuditQuestionMethod;
 }): string[] {
-  const pack = canonicalLockedQuestionPack(input.prompts, input.brief, {
+  const pack = lockedQuestionPackForMethod({
+    prompts: input.prompts,
+    brief: input.brief,
+    questionMethod: input.questionMethod ?? "canonical",
     historicalFixtureId: input.historicalFixtureId,
   });
   const errors = lockedObservationBindingErrors(input);

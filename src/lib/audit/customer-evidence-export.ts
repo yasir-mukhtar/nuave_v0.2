@@ -17,6 +17,7 @@ export function makeCustomerEvidenceExport(
   prompts: AuditPrompt[],
   observations: AuditObservation[],
   report: AuditReport,
+  provenance?: Record<string, string | number | boolean | null>,
 ) {
   const evidence = makeEvidenceExport(brief, prompts, observations, report);
   const {
@@ -35,6 +36,7 @@ export function makeCustomerEvidenceExport(
 
   return {
     ...evidence,
+    ...(provenance ? { provenance } : {}),
     observations: customerObservations,
     report: validatedReport,
   };

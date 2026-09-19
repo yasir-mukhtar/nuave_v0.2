@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  auditCallTelemetrySchema,
+  type AuditCallTelemetry,
+} from "../audit/types";
 import type { IntakeFixture } from "./fixtures";
 import type { IntakeState } from "./state";
 import { INTAKE_SCREEN_ORDER, type IntakeScreenId } from "./screens";
@@ -16,6 +20,13 @@ export type LocalSession = {
   confirmed: IntakeScreenId[];
   identityReady: boolean;
   pack: LocalQuestionPack | null;
+  /** Identity/extraction boundary telemetry from the reading phase — folded
+   * into the audit session's budget ledger so authorized preparation spend
+   * is never lost across a reload. Absent on deterministic fixtures. */
+  preparationCalls?: AuditCallTelemetry[];
+  /** Which preparation path served this session — explicit provenance from
+   * the boundary, surfaced in the audit record and evidence export. */
+  preparationMode?: "synthetic-local" | "live";
 };
 
 const text = z.string().max(2000);
@@ -96,6 +107,8 @@ const sessionSchema = z
     confirmed: z.array(screen).max(15),
     identityReady: z.boolean(),
     pack: z.unknown(),
+    preparationCalls: z.array(auditCallTelemetrySchema).max(10).optional(),
+    preparationMode: z.enum(["synthetic-local", "live"]).optional(),
   })
   .strict();
 

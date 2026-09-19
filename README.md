@@ -1,5 +1,9 @@
 # Nuave
 
+**Resuming the September 19 checkpoint on another laptop?** Start with
+[`docs/RESUME_DEVELOPMENT.md`](./docs/RESUME_DEVELOPMENT.md). This branch combines
+the implementation and current handoff; old absolute paths are historical.
+
 Nuave is an AI visibility audit for small and medium Indonesian businesses,
 used by the owner or person accountable for marketing. It shows how that
 business appears across defined AI-assisted searches, then delivers the
@@ -14,10 +18,16 @@ clearly simulated checkout, and `https://v2.nuave.ai` is live as a noindex,
 direct-link-only deployment. The former access-code gate has been removed under
 the founder's recorded interim-exposure acceptance; a minimal server-side
 rate/cost guard is still required before any public link sharing. The current
-objective in [`docs/NOW.md`](./docs/NOW.md) is to run the first
-founder-supervised real Indonesian report through the integrated live engine
-and put it through the report-quality gate. Real payment, durable delivery, and
-later polish remain gated by the build order.
+objective in [`docs/NOW.md`](./docs/NOW.md) is to complete one continuous local
+audit experience from business input to report download. The founder has judged
+the current report not useful enough and deferred format/usefulness improvements
+so they no longer block this functional work. The accepted direct-ten questions
+have completed a real audit and report on the retained-pack path. The ordinary
+intake is now connected to that engine and has passed the local flow checks
+with labeled test responses, including the founder's PDF review. Next is one
+complete fresh-session test with real providers, under a new explicit paid-call
+authorization. The [orchestrator handoff](./docs/checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
+preserves the current state. Commercial release is separate.
 
 ## Start here
 
@@ -28,12 +38,14 @@ later polish remain gated by the build order.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Active specification | [`specs/003-live-report-quality-gate/SPEC.md`](./specs/003-live-report-quality-gate/SPEC.md) |
+| Current bounded implementation | [`specs/009-recommendation-eligible-audit/SPEC.md`](./specs/009-recommendation-eligible-audit/SPEC.md) — natural questions through downloadable report; advances the existing live-report quality gate |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
 | Specification lifecycle and active packages | [`specs/README.md`](./specs/README.md) |
 | How to generate a prompt pack for one business | [`docs/PROMPT_GENERATION_CONTEXT.md`](./docs/PROMPT_GENERATION_CONTEXT.md) |
+| Resume from the completed real audit/report milestone | [`NUAVE-LIVE-REPORT-2026-09-19` checkpoint](./docs/checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md) |
+| Resume question generation without losing the accepted approach | [`NUAVE-PROMPTS-2026-09-17` checkpoint](./docs/checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md) |
 | Dated product decisions | [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) |
 | Indonesian writing contract for customer copy | [`docs/VOICE.md`](./docs/VOICE.md) |
 | What each customer touchpoint must do | [`docs/journey/`](./docs/journey/) |
@@ -86,10 +98,11 @@ run a few unbranded questions on a prospect before any contact
 ```
 
 The current build starts with a fixture-backed version of this whole journey,
-including an unmistakably simulated checkout and report destination. The first
-founder-supervised live report and its quality gate come next. Durable private
-delivery and real checkout are added only after that report proves worth paying
-for.
+including an unmistakably simulated checkout and report destination. The
+founder-supervised direct-ten live report now exists and falls short of the
+founder's standard. The approved next step is completing the continuous local
+audit flow with that report, with report improvements deferred. Durable private
+delivery and real checkout remain outside this bounded continuation.
 
 The settled commercial direction does not make the current fixture a real
 checkout: production payment still requires its approved implementation

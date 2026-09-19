@@ -384,6 +384,95 @@ export function reconcileOnCommit(
   };
 }
 
+/** Entered-business fixture built from the real identity/extraction boundary
+ * results. The entered name is authoritative; prepared candidates come only
+ * from the draft's source-evidenced lists — a labeled substitute draft
+ * carries none, so every context screen then asks the buyer. A known
+ * fixture's rich example data is never presented as facts for an entered
+ * URL, and prepared candidates stay unselected until the buyer confirms. */
+export function prepareBoundaryIdentity(
+  base: IntakeFixture,
+  name: string,
+  identity: { canonicalUrl: string; displayName: string },
+  draft: {
+    category: string;
+    verified_offerings: string[];
+    verified_customer_needs: string[];
+    similar_businesses?: { name?: string }[];
+  } | null,
+): IntakeFixture {
+  const trimmedName = name.trim();
+  const parsed = parseSourceInput(identity.canonicalUrl);
+  if (!trimmedName) throw new Error("Masukkan nama brand.");
+  if (!parsed)
+    throw new Error("Masukkan situs web resmi atau akun Instagram yang valid.");
+  const result = withoutContext(base);
+  result.screens["s-branch"] = structuredClone(EMPTY);
+  result.screens["s-product"] = structuredClone(EMPTY);
+  result.screens["s-review"] = structuredClone(EMPTY);
+  result.entry = "s-crawl";
+  result.screens["s-crawl"] = structuredClone(EMPTY);
+  result.screens["s-brand"] = {
+    prepared: [
+      {
+        id: "brand-card",
+        label: trimmedName,
+        detail: parsed.normalizedUrl,
+        on: true,
+      },
+    ],
+    selected: [],
+    note: `${trimmedName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()}::Informasi awal dari nama dan sumber yang Anda masukkan.`,
+  };
+  result.screens["s-brand-fix"] = {
+    prepared: [
+      { id: "fix-name", label: trimmedName, on: false },
+      { id: "fix-source", label: parsed.normalizedUrl, on: false },
+    ],
+    selected: [],
+  };
+  const candidate = (
+    screen: IntakeScreenId,
+    prefix: string,
+    labels: string[],
+  ) => {
+    const clean = labels
+      .map((label) => label.trim())
+      .filter((label) => label.length > 0)
+      .slice(0, 12);
+    result.screens[screen] = {
+      prepared: clean.map((label, index) => ({
+        id: `${prefix}-${index + 1}`,
+        label,
+        on: true,
+      })),
+      selected: [],
+    };
+  };
+  if (draft) {
+    candidate("s-category", "category-boundary", [draft.category]);
+    candidate("s-offerings", "offering-boundary", draft.verified_offerings);
+    candidate(
+      "s-customers",
+      "customer-boundary",
+      draft.verified_customer_needs,
+    );
+    candidate(
+      "s-competitors",
+      "competitor-boundary",
+      (draft.similar_businesses ?? [])
+        .map((business) => business.name ?? "")
+        .filter((label) => label.trim().length > 0),
+    );
+  }
+  return result;
+}
+
 /** Validates an identity for the local adapter. Success makes no website-reading claim. */
 export function prepareLocalIdentity(
   base: IntakeFixture,

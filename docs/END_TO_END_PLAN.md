@@ -1,7 +1,7 @@
 # Nuave v2 end-to-end development plan
 
 > Status: **Current development plan — founder-approved direction**
-> Updated: 2026-08-12
+> Updated: 2026-09-19
 > Governs: build sequence, integration boundaries, quality gates, and release
 > readiness for the thin v2 journey
 >
@@ -62,9 +62,11 @@ the bounded return path requires an account.
    deterministic fixture data and an explicitly simulated checkout. Real audit,
    persistence, jobs, delivery, and payment replace those boundaries one at a
    time.
-8. **The report-quality gate remains decisive.** After the first complete real
-   Indonesian report, stop if it contains no finding worth paying for. Do not
-   hide a weak product behind polish or payment infrastructure.
+8. **Complete the audit flow before improving the current report.** On
+   2026-09-19 the founder judged the report not useful enough but explicitly
+   prioritized end-to-end audit completion. Continue the founder-local flow
+   under the Spec 009 amendment using the current report. The quality standard
+   remains unmet and commercial release is not authorized by this exception.
 9. **Payment before personalized preparation.** The free preview uses only
    bounded public metadata. Verified payment unlocks prepared business facts
    and question suggestions, while the explicit approved-question start action
@@ -562,9 +564,14 @@ The report must:
 - retain failures and limitations visibly; and
 - render the same facts in the PDF whenever that derived artifact is available.
 
-If the gate fails, stop. Improve questions, observation analysis, evidence
-normalization, or report synthesis and repeat this phase. Do not proceed to real
-persistence, payment, or polish merely because the software ran.
+**September 19 sequencing amendment:** the first direct-ten report did not
+meet the founder's usefulness standard. The founder explicitly deferred report
+improvements and prioritized completing the continuous local audit experience.
+The [Spec 009 amendment](../specs/009-recommendation-eligible-audit/SPEC.md#2026-09-19-amendment--finish-the-continuous-audit-experience)
+authorizes that functional work with the current report. Do not stop it to tune
+questions, synthesis, excerpts or layout. Keep evidence integrity and working
+exports required. Record the quality gate as unmet/deferred, not passed; real
+payment, hosted delivery and commercial release remain separately governed.
 
 ### Phase 4 — Durable orders, jobs, and private reports
 

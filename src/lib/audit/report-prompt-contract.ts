@@ -7,6 +7,7 @@ import {
   type ReportAssessmentClass,
 } from "./measurement-matrix";
 import type { AuditPrompt } from "./types";
+import type { AuditQuestionMethod } from "./locked-question-pack";
 
 function assessmentClassInstruction(
   assessmentClass: ReportAssessmentClass,
@@ -42,6 +43,22 @@ export const REPORT_ASSESSMENT_INSTRUCTIONS = [
   ...REPORT_ASSESSMENT_CLASSES.map(assessmentClassInstruction),
   ...AUDIT_MEASUREMENT_MATRIX.map(slotInstruction),
   "When a completed answer does not support the slot's assessment path, use the corresponding not_assessed or not_observed value; never infer a result from a label, source URL, or mere name mention.",
+] as const;
+
+/**
+ * Spec 009 direct-ten report interpretation. This method has no matrix: ten
+ * unnamed questions are judged from their own retained answers. All three
+ * dimensions stay eligible per answer; code-side normalization still enforces
+ * the shared appearance gate (a dimension cannot be assessed when the audited
+ * business did not visibly appear).
+ */
+export const DIRECT_TEN_REPORT_ASSESSMENT_INSTRUCTIONS = [
+  "The question pack uses the direct-ten method: ten unnamed questions asked independently. There is no measurement matrix, slot, category, role, or fixed purpose for these prompt IDs — judge each answer on its own terms.",
+  "For a FAILED observation, set recommendation, comparison, and information all to not_assessed.",
+  "The recommendation path uses recommended or not_recommended only for an explicit suggestion or endorsement of the audited business; a factual answer, contact path, or mere mention is not a recommendation.",
+  "The comparison path uses client_preferred, competitor_preferred, or compared_no_preference only when the answer actually compares the audited business with an alternative; otherwise use not_observed.",
+  "The information path uses confirmed, incomplete, or conflicting only when the answer assesses a public fact about the audited business; otherwise use not_assessed.",
+  "When a completed answer does not support a dimension, use the corresponding not_assessed or not_observed value; never infer a result from a label, source URL, or mere name mention.",
 ] as const;
 
 export type ReportPromptMeasurement = {
@@ -96,6 +113,10 @@ export function reportPromptMeasurements(
   return prompts.map((prompt) => reportPromptMeasurement(prompt.prompt_id));
 }
 
-export function reportAssessmentInstructions(): string[] {
-  return [...REPORT_ASSESSMENT_INSTRUCTIONS];
+export function reportAssessmentInstructions(
+  questionMethod?: AuditQuestionMethod,
+): string[] {
+  return questionMethod === "direct-ten"
+    ? [...DIRECT_TEN_REPORT_ASSESSMENT_INSTRUCTIONS]
+    : [...REPORT_ASSESSMENT_INSTRUCTIONS];
 }

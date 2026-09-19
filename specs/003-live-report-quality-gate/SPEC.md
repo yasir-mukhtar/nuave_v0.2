@@ -17,6 +17,17 @@
 > Indonesian report. It is a **Draft**: nothing in it is approved for
 > implementation.
 
+## September 19 sequencing amendment
+
+The founder judged the real direct-ten report not useful enough and explicitly
+prioritized completing the end-to-end audit experience before report format/
+usefulness improvements. The [Spec 009 amendment](../009-recommendation-eligible-audit/SPEC.md#2026-09-19-amendment--finish-the-continuous-audit-experience)
+governs that local continuation. This spec's stop-and-improve quality gate must
+not block that functional work; its quality standard remains unmet/deferred,
+not passed. Evidence integrity, explicit approvals and later commercial release
+requirements remain. Do not reopen earlier provider/evaluation work to complete
+the current task.
+
 ## Required context
 
 Read in order:

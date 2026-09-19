@@ -50,3 +50,6 @@ experiments/buyer-decision-questions/protocol-v3/results/
 experiments/buyer-decision-questions/protocol-v3/review/data.js
 experiments/buyer-decision-questions/protocol-v4/results/
 experiments/buyer-decision-questions/protocol-v4/review/data.js
+
+# GLM local experiment: frozen attempt artifacts + raw provider evidence (owner-only, never committed)
+.local-evidence/
