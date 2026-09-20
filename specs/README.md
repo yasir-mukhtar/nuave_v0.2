@@ -46,6 +46,13 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
+- [`010-gated-new-audit-flow/SPEC.md`](./010-gated-new-audit-flow/SPEC.md)
+  — **Approved** (2026-09-19, r3): the new direct-ten journey becomes the
+  public `/audit` entry on v2.nuave.ai (no login — accepted trial risk); local-only guards
+  become deployed configuration; disk-based single-send protection becomes
+  Cloudflare rate limits; the old flow is archived. Report usefulness stays
+  deferred until this is verified.
+
 - [`009-recommendation-eligible-audit/SPEC.md`](./009-recommendation-eligible-audit/SPEC.md)
   — **Approved** (2026-09-18), current bounded implementation: ten directly
   generated unnamed questions, human editing/approval, grounded execution and

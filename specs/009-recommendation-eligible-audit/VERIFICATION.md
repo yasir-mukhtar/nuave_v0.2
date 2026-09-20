@@ -9,6 +9,192 @@ for that continuation. The continuous-flow code corrections are accepted;
 the founder's PDF review now permits advancing from offline AC-10 to a
 complete real end-to-end test, which still needs explicit paid authorization.
 
+## Complete real end-to-end test — proposal, 2026-09-19
+
+**Status: authorized and executed on 2026-09-19 — see
+[the execution record](#complete-real-end-to-end-test--execution-2026-09-19)
+below this proposal.** The proposal text is kept as written before the run.
+Prepared by the
+incoming orchestrator on the portable checkout (`codex/pause-checkpoint-2026-09-19`,
+HEAD `18d860b`, which contains the accepted implementation). The only working
+tree change is the uncommitted e2e env-isolation fix in
+`tests/e2e/shared-config.ts` from the sync session; it is unrelated and retained.
+
+**Scope (one fresh session, every stage real):** `/audit/new-intake?glm=1` on a
+loopback `next dev -p 3031 -H 127.0.0.1` server → enter business name + source
+URL → real identity fetch + one live Luna extraction → founder reviews and
+confirms facts → one fresh GLM 5.3 Flash direct-ten generation → founder edits
+at least one question and explicitly approves → ten independent grounded Luna
+observations → one report synthesis → normal "Cetak / simpan PDF" and
+"Unduh bukti JSON" controls. Expected successful path: **1 GLM + 1 extraction +
+10 observations + 1 report = 13 provider requests**, plus the source HTTP fetch.
+
+**Verified limits (code, not new promises):**
+
+- GLM: exactly one send per frozen attempt — `attempt.consumed` is created
+  before the request; zero client retries; 180 s wait
+  (`INDONESIAN_QUESTION_GLM_CLIENT_WAIT_MS`). A failed generation ends the
+  test; another generation needs a new authorization.
+- Extraction: `AUDIT_STAGE_CALL_LIMITS.extract = 2` (one automatic retry).
+- Observations: `MAX_ATTEMPTS_PER_QUESTION = 3`, stage ceiling 30 logical
+  calls; non-retryable verdicts stop a question early; backoff ≤ 20 s.
+- Report: one workflow = initial synthesis + at most one language repair
+  (`report-pipeline.ts`, `language_retry_performed`). The separate stage
+  allowance of 3 bounds manual "Coba lagi" retries of a failed report; it does
+  not add a third call to a single workflow.
+- SDK transport: no `maxRetries`/`timeout` override, so installed defaults
+  apply (2 transport retries, 600 s per attempt). These can add HTTP requests
+  and supplier billing that the ledger never sees. Theoretical envelope
+  (2 + 30 + 3) × 3 = 105 Luna HTTP attempts + 1 GLM; the prior run used 11.
+- Money guard: `reserveAuditCall` refuses when accounted + reserved > USD 5
+  against a client-supplied ledger with configured carryover floor. Set
+  `OPENAI_AUDIT_CARRYOVER_COST_USD=0.60020316` (latest recorded ledger). This
+  is not a supplier billing cap.
+
+**Expected accounted usage (estimate, not a bound):** GLM ≈ USD 0.0005–0.001
+(prior settled 0.000496 for 3,007 in / 1,148 out). Luna extraction ≈ USD
+0.01–0.03 including one search. Ten observations + report: prior real run
+recorded 158,799 in / 14,799 out and 12 searches for USD 0.16450316. Total
+≈ **USD 0.20–0.35**; ledger after ≈ USD 0.80–0.95 of 5. Search count is
+advisory (`max_tool_calls: 1` returned 12 searches last time), billed at the
+code's assumed USD 0.01 each.
+
+**Operational facts to disclose:**
+
+- The live GLM path only sends against a frozen intake/request hash pair
+  (`verifyFrozenAttempt`). `freezeGlmLiveAttempt` has no route or script;
+  it is only called from tests. In the browser flow the first live attempt
+  therefore fails closed with `attempt_not_frozen` (zero sends, zero cost).
+  Procedure: capture the exact posted intake from that failed request, freeze
+  it with a private one-off call to the exported function into the run's
+  `.secrets/` evidence dir (`NUAVE_GLM_EVIDENCE_DIR`), then the founder clicks
+  "Coba lagi" for the single send. This binds the session's own confirmed
+  facts; it does not substitute a pack.
+- This machine's `.env.local` has `OPENCODEGO_API_KEY` but no
+  `CHEAPERINFERENCE_API_KEY`; the fresh generation cannot run here until the
+  founder supplies it, or the run happens on the original machine.
+- The app persists GLM raw response bytes to the evidence dir; it does not
+  persist raw Luna observation bodies. The normal JSON export retains exact
+  questions, full answers, sources, model and time and will be copied into
+  the dated `.secrets/` dir with the confirmed brief and both hashes.
+
+**Rules during the run:** built-in automatic retries only; at most one manual
+report retry; no second audit run; stop on missing credentials, provider
+failure or budget refusal; never switch model/provider or substitute synthetic
+answers; turn both live flags off after completion or failure. Report quality
+is judged separately afterward (AC-08 stays deferred).
+
+**Founder inputs still needed before authorization:** which real business
+and source URL (a fresh Masryef generation is acceptable; the earlier accepted
+pack stays evidence only), which machine/credential, and the explicit
+sentence: "Authorized: one live extraction, one GLM generation, ten
+observations and one report for <business>, under the limits above."
+
+## Complete real end-to-end test — execution, 2026-09-19
+
+**Authorization (founder, verbatim):** "Authorized: one live extraction, one GLM
+generation, ten observations and one report for <business>, under the limits
+above." Business: **Masryef**, source `https://masryef.com`, fresh generation.
+The founder added `CHEAPERINFERENCE_API_KEY` to `.env.local` on this machine.
+
+**Result: the authorized fresh-session journey completed end to end in the
+founder's browser.** Founder statement after the report appeared: "The audit
+is done successfully." Timeline, counts and costs below come from the recorded
+request/response bodies in the private evidence directory
+`.secrets/spec009-masryef-e2e-2026-09-19/` (ignored, owner-only), not from
+memory. All costs are application-accounted estimates, not confirmed billing.
+
+**Authorized run — provider requests (13, exactly as proposed):**
+
+| Stage | Requests | Model | Accounted USD | Notes |
+| --- | --- | --- | --- | --- |
+| Live extraction (`POST /api/audit/extract`, 05:09:22 UTC) | 1 | `gpt-5.6-luna` | 0.02049528 | 2 searches; site could not be fetched, so confirmed facts are labelled buyer-supplied |
+| GLM direct-ten generation (`POST /api/audit/glm-questions`, 05:16:23 UTC) | 1 | `glm-5.3-flash` requested and returned, `modelMismatch: false`, transport `cheaper-inference` | 0.000449 (supplier-reported) | 2,830 in / 1,005 out; HTTP 200; body preserved |
+| Ten observations (one `POST /api/audit/run`, 05:30:52–05:32:19 UTC) | 10 | `gpt-5.6-luna` ×10 | 0.14144226 | 11 searches; 119,686 in / 11,888 out; every question completed on attempt 1 |
+| Report (one `POST /api/audit/report`, 05:32:19–05:32:27 UTC) | 1 | `gpt-5.6-luna` | 0.00932410 | 31,465 in / 1,215 out; no language repair |
+| **Total** | **13** |  | **≈ 0.1717** (Luna 0.17126164 + GLM 0.000449) | within the USD 0.20–0.35 estimate |
+
+Zero automatic or manual retries at any stage. Exactly one run POST and one
+report POST exist in the log. Non-provider requests: one identity fetch
+(05:09:20), one fail-closed GLM attempt (`attempt_not_frozen`, 05:11:04, zero
+sends), and budget reads (`GET /api/audit/extract`, returning only the ledger).
+
+**Question provenance:** frozen intake sha256 `bfc8ca5cc3894f57…`, frozen
+request sha256 `9d76c127a2e42da0…`; `attempt.consumed` exists and is preserved.
+`pack.input` equals the frozen intake. All ten generated originals appear
+verbatim in the raw GLM body. The founder edited question 10 from "…apa ya
+pembeda utamanya…" to "…apa ya **kriteria** utamanya yang perlu dilihat sebelum
+kontrak?"; that exact text is in the run request body, in observation
+`NUAVE-DT-10`, and in the exported JSON. `question_method: "direct-ten"` on
+both run and report requests.
+
+**Report outcome (sample statement, not a business judgment):** counts
+`unbranded_recommended 0 / unbranded_mentioned 0 / unbranded_total 10 /
+failed 0`. Conclusion: "Masryef tidak ditemukan atau direkomendasikan dalam
+sepuluh jawaban yang diuji. …Hasil ini hanya berlaku untuk sampel pengujian
+ini, bukan penilaian permanen."
+
+**Downloads through the normal controls:** "Unduh bukti JSON" produced
+`downloads/2026-09-19T05-39-27-467Z-nuave-local-audit-evidence.json`
+(148,607 bytes, sha256 `9a654a0b93525d49…`; ten prompts, ten observations with
+full answers and sources, brief, report, provenance). "Cetak / simpan PDF" →
+Save as PDF produced `downloads/masryef-report-founder-saved.pdf` (452,637
+bytes, sha256 `7f9953572bb4acbe…`, 17 pages). **Back and reload** after the
+report: the report stayed on screen and the log shows no API request after
+05:32:27 other than the JSON download.
+
+**Layout defect found and fixed after the run:** the founder's screenshots
+showed the web report squeezed into the intake journey's 600 px column with
+letter-by-letter wrapping (metrics, headings, body), and the same constraint
+applied to the 17-page PDF. Cause: `.shell` in
+`src/lib/intake/journey.module.css` (`max-width: 600px; overflow-wrap:
+anywhere`) wrapped `ReportView`, which is designed for the
+`min(74rem, 100% - 3rem)` report column. Fix: one rule,
+`.shell:has([data-local-audit-stage="done"]) { max-width: none;
+padding-bottom: 32px; overflow-wrap: normal; }`, so only the finished report
+leaves the intake column. Verified with hot reload on the real Masryef report
+(no request left the page) and with a 1,400 px synthetic-report screenshot
+(shell `max-width: none`, report stage 1,336 px). This is a presentation fix;
+report content, method and AC-08 are unchanged.
+
+**Incidents during the session (all recorded, none repeated):**
+
+1. **Unauthorized-by-scope legacy run, 04:54–04:58 UTC.** The founder opened
+   `127.0.0.1:3031` directly and reached the old `/audit/v2` flow, which the
+   local live flags do not gate. My launcher had not blanked provider keys for
+   that route. It ran 1 extraction, old 6/4 question generation, 10
+   observations, 1 report and a 2-observation variance check: 15 provider
+   requests, **USD 0.20805696** accounted. No GLM send occurred. The founder was
+   told immediately and chose to continue. For the rest of the session a
+   loopback recording proxy blocked the landing, `/audit/v2`, `prompts`,
+   `variance` and non-direct-ten run/report routes (verified 403 before the
+   founder touched the browser).
+2. **Guard too strict.** The first "Mulai audit" click stopped at "Pengendali
+   biaya tidak tersedia" because the guard blocked the budget read; no paid
+   call. Fixed by allowing the ledger read only.
+3. **Browser crash and session recovery.** An in-place patch attempt crashed
+   Chrome. The session was restored from Chrome's session-storage backup
+   (`nuave.localIntake.v1`); on one restore the page tried to prepare
+   questions again and correctly received `attempt_consumed` — the second send
+   was refused by the consumed marker, as designed. The generated pack was
+   restored from the same session's evidence, never regenerated.
+
+**Ledger:** carryover before the session USD 0.60020316; authorized run
++0.17126164 Luna (+0.000449 GLM, separate supplier); legacy incident
++0.20805696. Recorded ledger after the session **≈ USD 0.9795 of 5**.
+
+**Acceptance reading:** the ordinary fresh-business journey — live
+preparation, confirmed facts, one fresh direct-ten generation, human edit and
+explicit approval, ten grounded observations, one report, working JSON and PDF
+downloads, Back/reload without another run — is now demonstrated once with real
+providers. Spec 009 is not marked globally verified on transport success alone;
+**AC-08 (report usefulness) remains deferred** by the founder's decision and is
+the next bounded report task. Offline gate: `npm run verify` passed on an
+isolated copy of this working tree (1,241 unit tests, 96 + 3 + 3 browser tests,
+both builds); in the live checkout the e2e stage could not start only because
+the recording dev server still held Next's dist-dir lock. No commit, push,
+merge or publication was made.
+
 ## Founder PDF review and test priority — 2026-09-19
 
 The founder reported: “I've seen the PDF report” and identified desired

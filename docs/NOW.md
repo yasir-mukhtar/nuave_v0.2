@@ -24,8 +24,28 @@ instruction and one brief; keep human editing/approval; connect the same pack
 to actual grounded audit and report/download. Fixed purposes and the 6/4 split
 do not govern this method. Historical records retain their own contracts.
 
-**Next action:** prepare the [complete real end-to-end test scope](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-step--complete-real-end-to-end-test)
-for explicit paid-call approval. The founder has now seen the PDF and reaffirmed
+**Latest result (2026-09-19):** the founder authorized and completed the
+[complete real end-to-end test](../specs/009-recommendation-eligible-audit/VERIFICATION.md#complete-real-end-to-end-test--execution-2026-09-19)
+for Masryef in one fresh browser session: live preparation, confirmed facts,
+one fresh GLM 5.3 Flash direct-ten generation, an edited and explicitly approved
+question pack, ten grounded observations, one report, JSON and PDF downloads,
+and Back/reload without another run — 13 provider requests, ≈ USD 0.17
+accounted, zero retries. Masryef appeared in 0 of 10 sampled answers. One
+unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
+recorded in the same section. A one-rule CSS fix now lets the finished report
+leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
+
+**Next action:** implement [Spec 010 — the new flow becomes the public
+trial journey on v2.nuave.ai](../specs/010-gated-new-audit-flow/SPEC.md)
+(Approved 2026-09-19, revision 4 — reviewer-marked ready): no login —
+public access is an accepted trial risk; per-IP Cloudflare rate limits, one
+off switch, legacy methods rejected, server-selected live/synthetic mode,
+Cloudflare rate limits instead of disk-based single-send files, `/audit` opens
+the new journey blank, old flow archived, one PR and one authorized live test on
+the deployed site. Report usefulness (AC-08) waits until Spec 010 is verified. The completed run's private JSON keeps the ten real
+answers so report work can reuse them without new provider calls. The earlier
+proposal scope was prepared from the
+[current step](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-step--complete-real-end-to-end-test). The founder has now seen the PDF and reaffirmed
 that the workflow should be ready for end-to-end testing before report-format
 iteration. The three code corrections are accepted; the orchestrator verified
 a new-business Chrome journey, actual JSON download and Back/reload preservation

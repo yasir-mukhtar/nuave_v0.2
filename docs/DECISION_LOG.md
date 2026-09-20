@@ -6,6 +6,39 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-19 — new flow becomes the public trial journey on v2.nuave.ai without login
+
+**SETTLED — founder-approved.** The founder decided the new direct-ten audit
+journey becomes the only flow on the deployed site, reachable from `/` and
+`/audit`, with **no authentication**: "Adding Google login is out of scope.
+Let the audit journey open to public, assuming nobody would open the URL
+v2.nuave.ai and intentionally abuse it. If there is a low hanging fruit
+solution, I'd like to do that." An earlier same-day preference for Google
+login via the existing v1 Supabase project was superseded by this decision
+before any implementation.
+
+**Accepted risk:** the site is publicly accessible during the trial. One
+complete journey costs ≈ USD 0.17–0.35 of provider usage (2026-09-19 measured
+basis). Protection is deliberately minimal: per-IP Cloudflare rate limits
+(2 generations, 2 runs, 3 reports per 60 s), existing per-request ceilings
+(≤ 2 extraction, ≤ 30 observation calls, ≤ 3 report calls, USD 5 accounted
+session ceiling), and one switch (`NUAVE_NEW_AUDIT_ENABLED`) that stops the
+whole audit before any provider work. These reduce bursts and accidents; they
+are not a hard spending cap and do not stop a determined abuser. The founder
+monitors provider billing during the trial.
+
+**Decisions inside the change:** legacy question methods (`canonical`,
+`glm-slots`, omitted method) are rejected with `400` at the shared routes
+rather than kept dormant; the old flow (pages, components, `prompts`,
+`variance`, their tests) moves to `archive/2026-09-19-legacy-audit-flow/`;
+the disk-based single-send freeze is retained only for local evidence runs
+(`NUAVE_GLM_EVIDENCE_DIR`) and replaced on Workers by the per-IP limits plus
+client locks; generation attempts are recorded in the session so failed and
+interrupted (possibly-billed) attempts are visible in the export totals.
+
+Report usefulness remains deferred until this work is verified (Spec 010).
+[Spec 010](../specs/010-gated-new-audit-flow/SPEC.md) carries the contract.
+
 ## 2026-09-19 — complete the audit experience before improving the report
 
 **SETTLED — founder-approved priority change.** After the live-report checkpoint,

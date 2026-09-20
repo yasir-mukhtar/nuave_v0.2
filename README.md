@@ -141,8 +141,15 @@ tree valid locally but makes `npm ci` fail the in-sync check on every machine,
 including CI — a failure that has already been fixed and reintroduced twice.
 Confirm with `npm ci --dry-run` before committing a lockfile change.
 
-Copy `.env.example` to `.env.local`, add `OPENCODEGO_API_KEY`, and open
-<http://localhost:3000/audit>. The protected production configuration is
+Copy `.env.example` to `.env.local`, add `OPENCODEGO_API_KEY` and
+`CHEAPERINFERENCE_API_KEY`, set `NUAVE_NEW_AUDIT_ENABLED=true` and
+`NUAVE_AUDIT_MODE=synthetic` (or `live` for a real paid run), and open
+<http://localhost:3000/audit>. The audit journey is publicly reachable when
+the switch is on — there is no login; during the trial the founder monitors
+provider billing and can set the switch off to stop every audit endpoint
+before provider work. The deployed worker also uses per-IP Cloudflare rate
+limits (`wrangler.jsonc`) as a burst brake. The protected production
+configuration is
 `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
 `OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
 `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
