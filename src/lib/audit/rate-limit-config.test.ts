@@ -36,17 +36,17 @@ describe("Worker rate-limit configuration", () => {
       // Spec 010 R-03: per-IP burst protection on the paid stages.
       {
         name: "GLM_CALLER_RATE_LIMITER",
-        namespace_id: "2073412865",
+        namespace_id: "301",
         simple: { limit: 2, period: 60 },
       },
       {
         name: "AUDIT_RUN_CALLER_RATE_LIMITER",
-        namespace_id: "2091558471",
+        namespace_id: "302",
         simple: { limit: 2, period: 60 },
       },
       {
         name: "AUDIT_REPORT_CALLER_RATE_LIMITER",
-        namespace_id: "2130826490",
+        namespace_id: "303",
         simple: { limit: 3, period: 60 },
       },
     ]);
