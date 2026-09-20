@@ -1,28 +1,55 @@
 import { NextResponse } from "next/server";
 import {
-  glmExperimentEnabled,
-  parseGlmQuestionMethod,
-  prepareGlmQuestionsForIntake,
-} from "@/lib/intake/glm-local";
+  auditLiveCredentialsResponse,
+  auditSwitchResponse,
+} from "@/lib/audit/deployment-gate";
+import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
+import { prepareGlmQuestionsForIntake } from "@/lib/intake/glm-local";
 
 export const runtime = "nodejs";
 
 /**
- * Founder-only local GLM question experiment (handoff 2026-09-17; Spec 009
- * direct-ten method added 2026-09-18). Returns 404 unless
- * NUAVE_GLM_LOCAL_EXPERIMENT is set on a non-production server — deployed
- * production can never reach it. The default transport is the labeled
- * synthetic stub; a live provider request additionally requires
- * NUAVE_GLM_LIVE_AUTHORIZED plus a server-side credential. `method` is
- * explicit — an unknown method fails before any provider work. Nothing about
- * the request or response is logged here; the raw envelope stays server-side.
+ * GLM question generation for the public audit journey (Spec 010). Check
+ * order per R-02b: the NUAVE_NEW_AUDIT_ENABLED switch answers 404 before the
+ * body is read; `method` accepts only "direct-ten" (the dormant "glm-slots"
+ * and anything else are 400); the GLM caller-IP rate limiter runs next; then
+ * live-mode credentials. In synthetic mode the labeled stub transport runs;
+ * in live mode a missing credential stops the stage without falling back.
+ * Nothing about the request or response is logged here; the raw envelope
+ * stays server-side.
  */
 export async function POST(request: Request) {
-  if (!glmExperimentEnabled()) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
+
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object" || !("intake" in body)) {
+  const record =
+    body && typeof body === "object" && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : null;
+  // Method acceptance runs before any further body validation or provider
+  // work. The approved Spec 009 method is the only one the public route
+  // serves; "glm-slots" and unknown values are rejected outright.
+  if (record?.method !== "direct-ten") {
+    return NextResponse.json(
+      {
+        status: "invalid_request",
+        detail: 'unknown question-generation method — expected "direct-ten"',
+      },
+      { status: 400 },
+    );
+  }
+
+  const rateLimited = await enforceAuditCallerRateLimit(
+    request,
+    (bindings) => bindings.glmCaller,
+  );
+  if (rateLimited) return rateLimited;
+
+  const credentialsError = auditLiveCredentialsResponse("question generation");
+  if (credentialsError) return credentialsError;
+
+  if (!record || !("intake" in record)) {
     return NextResponse.json(
       {
         status: "invalid_request",
@@ -31,27 +58,9 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const record = body as Record<string, unknown>;
-  // The approved Spec 009 method is the default the local UI requests; the
-  // dormant slot method stays reachable only when named explicitly. An
-  // unrecognized method fails here, before any transport work.
-  const method =
-    record.method === undefined
-      ? "direct-ten"
-      : parseGlmQuestionMethod(record.method);
-  if (!method) {
-    return NextResponse.json(
-      {
-        status: "invalid_request",
-        detail:
-          'unknown question-generation method — expected "direct-ten" or "glm-slots"',
-      },
-      { status: 400 },
-    );
-  }
+
   const outcome = await prepareGlmQuestionsForIntake({
     intake: record.intake,
-    method,
     stubBehavior: record.stubBehavior,
   });
   return NextResponse.json(outcome);

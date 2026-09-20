@@ -10,17 +10,15 @@ import {
   auditBudgetSchema,
   auditObservationSchema,
   businessBriefSchema,
-  promptSchema,
 } from "@/lib/audit/types";
+import { liveExecuteAuditPrompt } from "@/lib/audit/provider";
 import {
-  assertLiveProviderCredentialsConfigured,
-  liveExecuteAuditPrompt,
-} from "@/lib/audit/provider";
-import {
-  indonesianPackBlockers,
-  minimizeIndonesianBrief,
-  validateCanonicalIndonesianQuestionPack,
-} from "@/lib/audit/questions-id";
+  auditLiveCredentialsResponse,
+  auditMode,
+  auditSwitchResponse,
+} from "@/lib/audit/deployment-gate";
+import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
+import { minimizeIndonesianBrief } from "@/lib/audit/questions-id";
 import { validateDirectTenQuestions } from "@/lib/audit/questions-id-direct-ten";
 import {
   lockedObservationBindingErrors,
@@ -34,10 +32,6 @@ import {
 } from "@/lib/audit/production-observation-method";
 import { runAuditObservations } from "@/lib/audit/run-orchestrator";
 import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
-import {
-  auditLiveExecutionAuthorized,
-  glmExperimentEnabled,
-} from "@/lib/intake/glm-local";
 import { executeSyntheticLocalObservation } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
@@ -49,14 +43,6 @@ const sharedRequestFields = {
   budget: auditBudgetSchema,
   resume_observations: z.array(auditObservationSchema).max(10).optional(),
 } as const;
-
-const canonicalRequestSchema = z.object({
-  ...sharedRequestFields,
-  // Absent = historical canonical client; an explicit "canonical" is the
-  // same method named deliberately.
-  question_method: z.literal("canonical").default("canonical"),
-  prompts: z.array(promptSchema).length(10),
-});
 
 /** Spec 009 direct-ten wire shape: the pack boundary carries only the stable
  * locating id, the exact approved text, and the human-review marker. No slot
@@ -74,8 +60,45 @@ const directTenRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  // Spec 010 R-01/R-02b: the switch answers 404 before the body is read.
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
   try {
     const rawInput = (await request.json()) as unknown;
+
+    // R-02a: the public run boundary accepts only "direct-ten". An omitted
+    // method no longer defaults to canonical; canonical, glm-slots and any
+    // unknown value are 400 before schema work, rate limiting, credentials
+    // or provider work. The legacy canonical branch was archived with the
+    // old flow (R-09).
+    const rawMethod =
+      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
+        ? (rawInput as Record<string, unknown>).question_method
+        : undefined;
+    const questionMethod = parseAuditQuestionMethod(rawMethod);
+    if (questionMethod !== "direct-ten") {
+      return NextResponse.json(
+        {
+          error:
+            'Unrecognized question_method — the audit accepts only "direct-ten".',
+        },
+        { status: 400 },
+      );
+    }
+
+    // R-03: per-IP burst protection on the run boundary.
+    const rateLimited = await enforceAuditCallerRateLimit(
+      request,
+      (bindings) => bindings.runCaller,
+    );
+    if (rateLimited) return rateLimited;
+
+    // R-02: server-selected mode. In live mode a missing credential stops the
+    // stage before body validation — never a silent synthetic fallback.
+    const credentialsError = auditLiveCredentialsResponse("observations");
+    if (credentialsError) return credentialsError;
+    const substituteProvider = auditMode() === "synthetic";
+
     const clientContractVersion =
       rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
         ? (rawInput as Record<string, unknown>).client_contract_version
@@ -90,38 +113,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Explicit method dispatch — never inferred. An absent value is the
-    // historical canonical pack; an unknown value fails closed before any
-    // parse, credential check, or provider work.
-    const rawMethod =
-      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
-        ? ((rawInput as Record<string, unknown>).question_method ?? "canonical")
-        : "canonical";
-    const questionMethod = parseAuditQuestionMethod(rawMethod);
-    if (!questionMethod) {
-      return NextResponse.json(
-        { error: "Unrecognized question_method." },
-        { status: 422 },
-      );
-    }
-    // Spec 009 R-08: the direct-ten method is founder-local only. Outside the
-    // local experiment flag on a non-production server it fails closed —
-    // before schema work, credentials, or any provider call. Canonical is
-    // unaffected.
-    if (questionMethod === "direct-ten" && !glmExperimentEnabled()) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    // Spec 009 local mode: direct-ten runs the labeled synthetic substitute at
-    // this same boundary until the founder explicitly authorizes live provider
-    // execution (NUAVE_AUDIT_LIVE_AUTHORIZED). The substitute needs no
-    // credentials; the live path asserts them as usual.
-    const substituteProvider =
-      questionMethod === "direct-ten" && !auditLiveExecutionAuthorized();
-    const input = (
-      questionMethod === "direct-ten"
-        ? directTenRequestSchema
-        : canonicalRequestSchema
-    ).parse(rawInput);
+    const input = directTenRequestSchema.parse(rawInput);
     assertSafeComparisonBusinessUrls(input.brief);
 
     // Lock identity and exact text before credentials or any paid provider work.
@@ -133,32 +125,18 @@ export async function POST(request: Request) {
     const lockedPrompts = lockedPack.prompts;
     const minimized = minimizeIndonesianBrief(input.brief);
     const questions = lockedPrompts.map((prompt) => prompt.question);
-    const questionErrors =
-      questionMethod === "direct-ten"
-        ? validateDirectTenQuestions(questions, {
-            brief: minimized,
-            comparators: minimized.comparison_business
-              ? [minimized.comparison_business.name]
-              : [],
-          })
-        : validateCanonicalIndonesianQuestionPack(questions, minimized);
-    const blockers =
-      questionMethod === "direct-ten"
-        ? []
-        : indonesianPackBlockers(questions, minimized);
-    if (questionErrors.length || blockers.length) {
+    const questionErrors = validateDirectTenQuestions(questions, {
+      brief: minimized,
+      comparators: minimized.comparison_business
+        ? [minimized.comparison_business.name]
+        : [],
+    });
+    if (questionErrors.length) {
       return NextResponse.json(
-        {
-          error: [
-            ...questionErrors.map((issue) => issue.message),
-            ...blockers,
-          ].join(" "),
-        },
+        { error: questionErrors.map((issue) => issue.message).join(" ") },
         { status: 422 },
       );
     }
-
-    if (!substituteProvider) assertLiveProviderCredentialsConfigured();
 
     const resume = input.resume_observations ?? [];
     const resumeErrors: string[] = [];

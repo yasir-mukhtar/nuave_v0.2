@@ -18,14 +18,19 @@ import { POST } from "../../app/api/audit/run/route";
 describe("POST /api/audit/run client contract guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NUAVE_NEW_AUDIT_ENABLED = "1";
+    process.env.NUAVE_AUDIT_MODE = "synthetic";
   });
 
   it.each([undefined, "older-live-audit-stream"])(
     "rejects stale client contract %s before provider setup",
     async (clientContractVersion) => {
       const body = clientContractVersion
-        ? { client_contract_version: clientContractVersion }
-        : {};
+        ? {
+            client_contract_version: clientContractVersion,
+            question_method: "direct-ten",
+          }
+        : { question_method: "direct-ten" };
       const response = await POST(
         new Request("https://nuave.test/api/audit/run", {
           method: "POST",
@@ -51,13 +56,13 @@ describe("POST /api/audit/run client contract guard", () => {
   );
 });
 
-describe("POST /api/audit/run direct-ten founder-local guard", () => {
+describe("POST /api/audit/run switch guard (Spec 010 R-01)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
+    delete process.env.NUAVE_NEW_AUDIT_ENABLED;
   });
 
-  it("fails closed with 404 and zero provider work outside the local flag", async () => {
+  it("fails closed with 404 and zero provider work when the switch is off", async () => {
     const response = await POST(
       new Request("https://nuave.test/api/audit/run", {
         method: "POST",

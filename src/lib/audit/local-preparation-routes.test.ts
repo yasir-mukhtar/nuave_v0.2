@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AUDIT_COST_LIMIT_USD,
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
@@ -6,13 +6,14 @@ import {
 } from "./types";
 
 /**
- * Spec 009 continuous-flow correction: the founder-local reading phase no
- * longer names its transport. `local_mode=auto` lets the SERVER pick —
- * the real source fetch / extraction only under the explicit live
- * authorization, the labeled substitute otherwise. `local_mode=synthetic`
- * pins the substitute even when authorized. Anything else fails closed.
- * All provider/source-fetch functions are mocked — zero network, zero
- * credentials, zero provider calls in this file.
+ * Spec 010 preparation routes: NUAVE_NEW_AUDIT_ENABLED gates identity and
+ * extract (404 before anything else), and the server-selected
+ * NUAVE_AUDIT_MODE picks the execution path — "synthetic" serves the labeled
+ * substitutes, "live" runs the real fetch/extraction and requires the
+ * provider credentials plus CHEAPERINFERENCE_API_KEY, stopping with a stage
+ * error when any is missing. A legacy `local_mode` request parameter can no
+ * longer change the mode. All provider/source-fetch functions are mocked —
+ * zero network, zero credentials, zero provider calls in this file.
  */
 
 const providerMocks = vi.hoisted(() => ({
@@ -29,7 +30,10 @@ const sourceMocks = vi.hoisted(() => ({
 vi.mock("@/lib/audit/source-identity", () => sourceMocks);
 
 import { GET as identityGET } from "../../app/api/audit/identity/route";
-import { POST as extractPOST } from "../../app/api/audit/extract/route";
+import {
+  GET as extractGET,
+  POST as extractPOST,
+} from "../../app/api/audit/extract/route";
 
 const SOURCE = "https://batiklaras.example";
 
@@ -139,17 +143,34 @@ function identityRequest(localMode?: string) {
   );
 }
 
+function liveMode() {
+  vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+  vi.stubEnv("CHEAPERINFERENCE_API_KEY", "test-key");
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.NUAVE_GLM_LOCAL_EXPERIMENT = "1";
-  delete process.env.NUAVE_AUDIT_LIVE_AUTHORIZED;
+  vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "1");
+  vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+  vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
   sourceMocks.fetchSourceIdentity.mockResolvedValue(liveIdentity());
   providerMocks.liveExtractBusinessDraft.mockResolvedValue(liveDraft());
 });
 
-describe("GET /api/audit/identity local_mode dispatch", () => {
-  it("auto without live authorization serves the labeled substitute", async () => {
-    const response = await identityGET(identityRequest("auto"));
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe("GET /api/audit/identity server-selected mode", () => {
+  it("switch off answers 404 before any fetch", async () => {
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "");
+    const response = await identityGET(identityRequest());
+    expect(response.status).toBe(404);
+    expect(sourceMocks.fetchSourceIdentity).not.toHaveBeenCalled();
+  });
+
+  it("synthetic mode serves the labeled substitute", async () => {
+    const response = await identityGET(identityRequest());
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.preparation_mode).toBe("synthetic-local");
@@ -158,9 +179,9 @@ describe("GET /api/audit/identity local_mode dispatch", () => {
     expect(sourceMocks.fetchSourceIdentity).not.toHaveBeenCalled();
   });
 
-  it("auto with live authorization fetches the real source once", async () => {
-    process.env.NUAVE_AUDIT_LIVE_AUTHORIZED = "1";
-    const response = await identityGET(identityRequest("auto"));
+  it("live mode fetches the real source once", async () => {
+    liveMode();
+    const response = await identityGET(identityRequest());
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.preparation_mode).toBe("live");
@@ -168,28 +189,49 @@ describe("GET /api/audit/identity local_mode dispatch", () => {
     expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
   });
 
-  it("synthetic pins the substitute even when live is authorized", async () => {
-    process.env.NUAVE_AUDIT_LIVE_AUTHORIZED = "1";
+  it("a local_mode parameter cannot change the server-selected mode", async () => {
+    liveMode();
+    // Legacy "synthetic" request parameter is ignored — the server mode wins.
     const response = await identityGET(identityRequest("synthetic"));
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.preparation_mode).toBe("synthetic-local");
-    expect(sourceMocks.fetchSourceIdentity).not.toHaveBeenCalled();
+    expect(data.preparation_mode).toBe("live");
+    expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
   });
 
-  it("unknown mode and missing flag fail closed before any fetch", async () => {
-    const bad = await identityGET(identityRequest("bogus"));
-    expect(bad.status).toBe(404);
-    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
-    const noFlag = await identityGET(identityRequest("auto"));
-    expect(noFlag.status).toBe(404);
+  it("live mode with a missing credential stops the stage — no fetch", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
+    const response = await identityGET(identityRequest());
+    expect(response.status).toBe(503);
+    const data = await response.json();
+    expect(data.code).toBe("LIVE_CREDENTIALS_MISSING");
+    expect(String(data.error)).toContain("identity");
     expect(sourceMocks.fetchSourceIdentity).not.toHaveBeenCalled();
   });
 });
 
-describe("POST /api/audit/extract local_mode dispatch", () => {
-  it("auto without live authorization returns the labeled substitute draft", async () => {
-    const response = await extractPOST(extractRequest("auto"));
+describe("POST /api/audit/extract server-selected mode", () => {
+  it("switch off answers 404 before body parsing or provider work", async () => {
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "");
+    const response = await extractPOST(extractRequest());
+    expect(response.status).toBe(404);
+    expect(providerMocks.liveExtractBusinessDraft).not.toHaveBeenCalled();
+    expect(
+      providerMocks.assertLiveProviderCredentialsConfigured,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("switch off answers 404 on the budget read as well", async () => {
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "");
+    const response = await extractGET(
+      new Request("https://nuave.test/api/audit/extract"),
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("synthetic mode returns the labeled substitute draft", async () => {
+    const response = await extractPOST(extractRequest());
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.preparation_mode).toBe("synthetic-local");
@@ -208,9 +250,18 @@ describe("POST /api/audit/extract local_mode dispatch", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("auto with live authorization runs the real extraction once", async () => {
-    process.env.NUAVE_AUDIT_LIVE_AUTHORIZED = "1";
-    const response = await extractPOST(extractRequest("auto"));
+  it("a legacy local_mode field cannot pin the substitute in live mode", async () => {
+    liveMode();
+    const response = await extractPOST(extractRequest("synthetic"));
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.preparation_mode).toBe("live");
+    expect(providerMocks.liveExtractBusinessDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it("live mode runs the real extraction once", async () => {
+    liveMode();
+    const response = await extractPOST(extractRequest());
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.preparation_mode).toBe("live");
@@ -224,38 +275,29 @@ describe("POST /api/audit/extract local_mode dispatch", () => {
     ).toHaveBeenCalled();
   });
 
-  it("synthetic pins the substitute even when live is authorized", async () => {
-    process.env.NUAVE_AUDIT_LIVE_AUTHORIZED = "1";
-    const response = await extractPOST(extractRequest("synthetic"));
-    expect(response.status).toBe(200);
+  it("live mode + missing credentials stops, never falls back", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
+    const response = await extractPOST(extractRequest());
+    expect(response.status).toBe(503);
     const data = await response.json();
-    expect(data.preparation_mode).toBe("synthetic-local");
+    expect(data.preparation_mode).toBeUndefined();
+    expect(String(data.error)).toContain("extraction");
     expect(providerMocks.liveExtractBusinessDraft).not.toHaveBeenCalled();
   });
 
-  it("auto + authorized + missing credentials stops, never falls back", async () => {
-    process.env.NUAVE_AUDIT_LIVE_AUTHORIZED = "1";
+  it("live mode + missing provider credential stops naming the stage", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "test-key");
     providerMocks.assertLiveProviderCredentialsConfigured.mockImplementation(
       () => {
         throw new Error("OPENCODEGO_API_KEY is not configured");
       },
     );
-    const response = await extractPOST(extractRequest("auto"));
-    expect(response.status).not.toBe(200);
+    const response = await extractPOST(extractRequest());
+    expect(response.status).toBe(503);
     const data = await response.json();
-    expect(data.preparation_mode).toBeUndefined();
+    expect(String(data.error)).toContain("extraction");
     expect(providerMocks.liveExtractBusinessDraft).not.toHaveBeenCalled();
-  });
-
-  it("unknown mode and missing flag fail closed before any provider work", async () => {
-    const bad = await extractPOST(extractRequest("bogus"));
-    expect(bad.status).toBe(404);
-    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
-    const noFlag = await extractPOST(extractRequest("auto"));
-    expect(noFlag.status).toBe(404);
-    expect(providerMocks.liveExtractBusinessDraft).not.toHaveBeenCalled();
-    expect(
-      providerMocks.assertLiveProviderCredentialsConfigured,
-    ).not.toHaveBeenCalled();
   });
 });

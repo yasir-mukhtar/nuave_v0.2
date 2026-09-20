@@ -4,7 +4,6 @@ import {
   auditObservationSchema,
   auditBudgetSchema,
   businessBriefSchema,
-  promptSchema,
   type AuditCallTelemetry,
   type AuditPrompt,
 } from "@/lib/audit/types";
@@ -13,19 +12,18 @@ import {
   createValidatedAuditReport,
   ReportPipelineError,
 } from "@/lib/audit/report-pipeline";
+import { liveGenerateReportContent } from "@/lib/audit/provider";
 import {
-  assertLiveProviderCredentialsConfigured,
-  liveGenerateReportContent,
-} from "@/lib/audit/provider";
+  auditLiveCredentialsResponse,
+  auditMode,
+  auditSwitchResponse,
+} from "@/lib/audit/deployment-gate";
+import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
 } from "@/lib/audit/telemetry";
 import { parseAuditQuestionMethod } from "@/lib/audit/locked-question-pack";
-import {
-  auditLiveExecutionAuthorized,
-  glmExperimentEnabled,
-} from "@/lib/intake/glm-local";
 import { generateSyntheticLocalReport } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
@@ -36,12 +34,6 @@ const sharedRequestFields = {
   safety_identifier: z.string().min(8).max(64),
   budget: auditBudgetSchema,
 } as const;
-
-const canonicalRequestSchema = z.object({
-  ...sharedRequestFields,
-  question_method: z.literal("canonical").default("canonical"),
-  prompts: z.array(promptSchema).length(10),
-});
 
 /** Spec 009 direct-ten wire shape — only the locating id, the exact approved
  * text, and the human-review marker travel the boundary. */
@@ -73,37 +65,44 @@ function reportDiagnostics(calls: AuditCallTelemetry[]) {
 }
 
 export async function POST(request: Request) {
+  // Spec 010 R-01/R-02b: the switch answers 404 before the body is read.
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
   let successfulReportCalls: AuditCallTelemetry[] = [];
   try {
     const rawInput = (await request.json()) as unknown;
+    // R-02a: only "direct-ten" is accepted — an omitted method no longer
+    // defaults to canonical, and canonical/unknown values are 400 before
+    // schema work, rate limiting, credentials or provider work.
     const rawMethod =
       rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
-        ? ((rawInput as Record<string, unknown>).question_method ?? "canonical")
-        : "canonical";
+        ? (rawInput as Record<string, unknown>).question_method
+        : undefined;
     const questionMethod = parseAuditQuestionMethod(rawMethod);
-    if (!questionMethod) {
+    if (questionMethod !== "direct-ten") {
       return NextResponse.json(
-        { error: "Unrecognized question_method." },
-        { status: 422 },
+        {
+          error:
+            'Unrecognized question_method — the audit accepts only "direct-ten".',
+        },
+        { status: 400 },
       );
     }
-    // Spec 009 R-08: direct-ten is founder-local only — outside the local
-    // experiment flag on a non-production server it fails closed before
-    // schema work, credentials, or any provider call. Canonical unaffected.
-    if (questionMethod === "direct-ten" && !glmExperimentEnabled()) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    // Spec 009 local mode: same substitute rule as /api/audit/run — the
-    // labeled synthetic generator drives the real pipeline until
-    // NUAVE_AUDIT_LIVE_AUTHORIZED switches this flow to live provider calls.
-    const substituteProvider =
-      questionMethod === "direct-ten" && !auditLiveExecutionAuthorized();
-    const input = (
-      questionMethod === "direct-ten"
-        ? directTenRequestSchema
-        : canonicalRequestSchema
-    ).parse(rawInput);
-    if (!substituteProvider) assertLiveProviderCredentialsConfigured();
+
+    // R-03: per-IP burst protection on the report boundary.
+    const rateLimited = await enforceAuditCallerRateLimit(
+      request,
+      (bindings) => bindings.reportCaller,
+    );
+    if (rateLimited) return rateLimited;
+
+    // R-02: server-selected mode; a missing live credential stops the stage
+    // before body validation — never a silent synthetic fallback.
+    const credentialsError = auditLiveCredentialsResponse("report generation");
+    if (credentialsError) return credentialsError;
+    const substituteProvider = auditMode() === "synthetic";
+
+    const input = directTenRequestSchema.parse(rawInput);
     // R-19 is enforced here before synthesis and again inside the pipeline so
     // direct library/script callers cannot bypass the ten-of-ten gate.
     // The method dispatcher inside the lock boundary owns final interpretation;
@@ -130,8 +129,8 @@ export async function POST(request: Request) {
     );
     return NextResponse.json({
       report,
-      // The real /audit client carries this exact server-produced report
-      // telemetry into the immediately following variance request. It is not
+      // The real /audit client folds this exact server-produced report
+      // telemetry into the same-session evidence ledger. It is not
       // trusted for method assertions, but it preserves the same-session cost
       // ledger without rerunning completed observations. Recoverable internal
       // report diagnostics ride on report-stage telemetry so browser-session

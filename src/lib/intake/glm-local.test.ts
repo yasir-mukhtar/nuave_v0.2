@@ -8,15 +8,14 @@ import { mkdtempSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import specimen from "../audit/fixtures/glm-request-specimen.json";
 import { INTAKE_FIXTURES } from "./fixtures";
 import { resolveJourneyPath } from "./navigation";
 import { freezeLocalIntake } from "./local-questions";
 import { createIntakeState, setScopeAnswer } from "./state";
+import { auditMode, newAuditEnabled } from "../audit/deployment-gate";
 import {
   createSyntheticGlmTransport,
   freezeGlmLiveAttempt,
-  glmExperimentEnabled,
   glmLiveAuthorized,
   liveGlmTransport,
   prepareGlmQuestionsForIntake,
@@ -42,82 +41,41 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("glmExperimentEnabled / glmLiveAuthorized", () => {
-  it("is off by default and unreachable in production", () => {
-    expect(glmExperimentEnabled()).toBe(false);
-    vi.stubEnv("NUAVE_GLM_LOCAL_EXPERIMENT", "true");
-    expect(glmExperimentEnabled()).toBe(true);
+describe("newAuditEnabled / auditMode / glmLiveAuthorized (Spec 010 R-01/R-02)", () => {
+  it("the switch is off by default and no longer tied to the build mode", () => {
+    expect(newAuditEnabled()).toBe(false);
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "true");
+    expect(newAuditEnabled()).toBe(true);
+    // The deployment switch governs — production is reachable when it is on.
     vi.stubEnv("NODE_ENV", "production");
-    expect(glmExperimentEnabled()).toBe(false);
-    expect(glmLiveAuthorized()).toBe(false);
+    expect(newAuditEnabled()).toBe(true);
   });
 
-  it("requires flag, authorization, and a server credential for live", () => {
-    vi.stubEnv("NUAVE_GLM_LOCAL_EXPERIMENT", "true");
+  it("auditMode defaults to synthetic and selects live only on the exact value", () => {
+    expect(auditMode()).toBe("synthetic");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    expect(auditMode()).toBe("live");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "canonical");
+    expect(auditMode()).toBe("synthetic");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "Live");
+    expect(auditMode()).toBe("synthetic");
+  });
+
+  it("live send requires live mode and a server credential", () => {
     expect(glmLiveAuthorized()).toBe(false);
-    vi.stubEnv("NUAVE_GLM_LIVE_AUTHORIZED", "true");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     expect(glmLiveAuthorized()).toBe(false);
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "test-key");
+    expect(glmLiveAuthorized()).toBe(true);
+    // Live mode works the same in a production build — no NODE_ENV gate.
+    vi.stubEnv("NODE_ENV", "production");
     expect(glmLiveAuthorized()).toBe(true);
   });
 });
 
 describe("prepareGlmQuestionsForIntake", () => {
-  it("runs the real request builder and returns ten valid texts from the labeled stub", async () => {
-    const intake = frozenLaundry();
-    const seen: unknown[] = [];
-    const counting: GlmQuestionTransport = {
-      kind: "synthetic-stub",
-      call: async (body) => {
-        seen.push(body);
-        const factsResult = await import("../audit/question-facts-v3").then(
-          ({ parseQuestionFactsV3 }) =>
-            parseQuestionFactsV3({
-              requestId: "probe",
-              intake: {
-                version: intake.version,
-                factVersion: intake.factVersion,
-                confirmed: intake.confirmed,
-              },
-            }),
-        );
-        if (factsResult.status !== "projected")
-          throw new Error("facts did not project");
-        return createSyntheticGlmTransport({
-          method: "glm-slots",
-          facts: factsResult.facts,
-        }).call(body);
-      },
-    };
-    const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
-      intake,
-      transport: counting,
-    });
-    // Exactly one transport call per attempt — no retry machinery anywhere.
-    expect(seen).toHaveLength(1);
-    const request = seen[0] as Record<string, unknown>;
-    expect(request.model).toBe(specimen.request.model);
-    expect(request.reasoning_effort).toBe("low");
-    expect(request.max_tokens).toBe(4096);
-    expect(JSON.stringify(request).includes("Laundry Ceria")).toBe(true);
-    expect(outcome.status).toBe("ok");
-    if (outcome.status !== "ok") return;
-    expect(outcome.questions).toHaveLength(10);
-    expect(outcome.facts.identity.brand).toBe("Laundry Ceria");
-    expect(outcome.provenance).toMatchObject({
-      requestedModel: "glm-5.3-flash",
-      returnedModel: "glm-5.3-flash",
-      modelMismatch: false,
-      transport: "synthetic-stub",
-    });
-    expect(outcome.provenance.requestId).toMatch(/^local-glm-/);
-    expect(outcome.cost).toEqual({ billedUsd: null, available: false });
-  });
-
   it("keeps the mismatch verdict while leaving the text inspectable", async () => {
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: frozenLaundry(),
       stubBehavior: "mismatch",
     });
@@ -129,21 +87,8 @@ describe("prepareGlmQuestionsForIntake", () => {
     expect(outcome.questions).toHaveLength(10);
   });
 
-  it("reports malformed output as a truthful failure without retry", async () => {
-    const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
-      intake: frozenLaundry(),
-      stubBehavior: "malformed",
-    });
-    expect(outcome.status).toBe("failed");
-    if (outcome.status !== "failed") return;
-    expect(outcome.reason).toBe("extraction_missing_marker");
-    expect(outcome.detail).toContain("## 2.");
-  });
-
   it("reports a timeout as a transport failure without retry", async () => {
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: frozenLaundry(),
       stubBehavior: "timeout",
     });
@@ -160,7 +105,6 @@ describe("prepareGlmQuestionsForIntake", () => {
       confirmed: { ...intake.confirmed, category: "Bengkel motor" },
     };
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: tampered,
     });
     expect(outcome.status).toBe("invalid_request");
@@ -175,7 +119,6 @@ describe("prepareGlmQuestionsForIntake", () => {
       reviewRows: corrupted.reviewRows,
     });
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: corrupted,
     });
     expect(outcome.status).toBe("correction_required");
@@ -192,59 +135,12 @@ describe("prepareGlmQuestionsForIntake", () => {
       }),
     };
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: frozenLaundry(),
       transport: failing,
     });
     expect(outcome.status).toBe("failed");
     if (outcome.status !== "failed") return;
     expect(outcome.reason).toBe("provider_error");
-  });
-
-  it("reports a returned-but-invalid pack as validation_failed with the texts", async () => {
-    const invalid: GlmQuestionTransport = {
-      kind: "synthetic-stub",
-      call: async () => ({
-        httpStatus: 200,
-        body: {
-          id: "chatcmpl-stub-invalid",
-          model: "glm-5.3-flash",
-          choices: [
-            {
-              finish_reason: "stop",
-              message: {
-                role: "assistant",
-                content: [
-                  "## 1. Market interpretation",
-                  "",
-                  "Sintetis.",
-                  "",
-                  "## 2. Slot questions",
-                  "",
-                  ...Array.from(
-                    { length: 10 },
-                    (_, i) => `${i + 1}. Laundry Ceria paling murah kan?`,
-                  ),
-                  "",
-                  "## 3. Self-critique",
-                  "",
-                  "Sintetis.",
-                ].join("\n"),
-              },
-            },
-          ],
-        },
-      }),
-    };
-    const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
-      intake: frozenLaundry(),
-      transport: invalid,
-    });
-    expect(outcome.status).toBe("validation_failed");
-    if (outcome.status !== "validation_failed") return;
-    expect(outcome.questions).toHaveLength(10);
-    expect(outcome.issues.length).toBeGreaterThan(0);
   });
 });
 
@@ -270,13 +166,11 @@ describe("prepareGlmQuestionsForIntake — direct-ten method (Spec 009)", () => 
         if (factsResult.status !== "projected")
           throw new Error("facts did not project");
         return createSyntheticGlmTransport({
-          method: "direct-ten",
           facts: factsResult.facts,
         }).call(body);
       },
     };
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "direct-ten",
       intake,
       transport: counting,
     });
@@ -309,7 +203,6 @@ describe("prepareGlmQuestionsForIntake — direct-ten method (Spec 009)", () => 
       ),
     ).toBe(true);
     expect(outcome.provenance).toMatchObject({
-      method: "direct-ten",
       requestedModel: "glm-5.3-flash",
       returnedModel: "glm-5.3-flash",
       modelMismatch: false,
@@ -324,7 +217,6 @@ describe("prepareGlmQuestionsForIntake — direct-ten method (Spec 009)", () => 
 
   it("reports malformed direct-ten output as a truthful failure without retry", async () => {
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "direct-ten",
       intake: frozenLaundry(),
       stubBehavior: "malformed",
     });
@@ -371,7 +263,6 @@ describe("prepareGlmQuestionsForIntake — direct-ten method (Spec 009)", () => 
       }),
     };
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "direct-ten",
       intake: frozenLaundry(),
       transport: named,
     });
@@ -381,18 +272,6 @@ describe("prepareGlmQuestionsForIntake — direct-ten method (Spec 009)", () => 
     // Every position is unnamed in this method — all ten flag the same rule.
     expect(outcome.issues.length).toBeGreaterThanOrEqual(10);
     expect(outcome.issues[0]).toContain("tidak boleh menyebut bisnis Anda");
-  });
-});
-
-describe("parseGlmQuestionMethod", () => {
-  it("accepts the two named methods and rejects anything else", async () => {
-    const { parseGlmQuestionMethod } = await import("./glm-local");
-    expect(parseGlmQuestionMethod("direct-ten")).toBe("direct-ten");
-    expect(parseGlmQuestionMethod("glm-slots")).toBe("glm-slots");
-    expect(parseGlmQuestionMethod("glm")).toBeNull();
-    expect(parseGlmQuestionMethod("")).toBeNull();
-    expect(parseGlmQuestionMethod(undefined)).toBeNull();
-    expect(parseGlmQuestionMethod("DIRECT-TEN")).toBeNull();
   });
 });
 
@@ -417,8 +296,9 @@ describe("B3 — mismatch never masks a missing or blank response ID", () => {
     kind: "synthetic-stub",
     call: async () => ({ httpStatus: 200, body }),
   });
-  // An otherwise valid sectioned ten-question envelope — only the envelope
-  // fields under test vary.
+  // An otherwise well-formed sectioned ten-question envelope — only the
+  // envelope fields under test vary. The brand-named texts keep the pack
+  // inspectable but invalid under the direct-ten unnamed rule.
   const sectionedBody = (over: Record<string, unknown>) => ({
     id: "chatcmpl-x",
     model: "glm-5.3-flash",
@@ -432,18 +312,12 @@ describe("B3 — mismatch never masks a missing or blank response ID", () => {
             "",
             "Interpretasi.",
             "",
-            "## 2. Slot questions",
+            "## 2. Candidate questions",
             "",
-            "1. a?",
-            "2. b?",
-            "3. c?",
-            "4. d?",
-            "5. e?",
-            "6. f?",
-            "7. g?",
-            "8. h?",
-            "9. i?",
-            "10. j?",
+            ...Array.from(
+              { length: 10 },
+              (_, i) => `${i + 1}. Laundry Ceria paling murah kan?`,
+            ),
             "",
             "## 3. Self-critique",
             "",
@@ -462,7 +336,6 @@ describe("B3 — mismatch never masks a missing or blank response ID", () => {
       if (id === undefined) delete (body as Record<string, unknown>).id;
       else body.id = id;
       const outcome = await prepareGlmQuestionsForIntake({
-        method: "glm-slots",
         intake: frozenLaundry(),
         transport: stubResponse(body),
       });
@@ -475,7 +348,6 @@ describe("B3 — mismatch never masks a missing or blank response ID", () => {
 
   it("mismatch + valid id keeps the mismatch verdict and stays inspectable", async () => {
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: frozenLaundry(),
       transport: stubResponse(
         sectionedBody({
@@ -498,8 +370,7 @@ describe("B3 — mismatch never masks a missing or blank response ID", () => {
 
 describe("B1 — single authorized live attempt", () => {
   const liveEnv = () => {
-    vi.stubEnv("NUAVE_GLM_LOCAL_EXPERIMENT", "true");
-    vi.stubEnv("NUAVE_GLM_LIVE_AUTHORIZED", "true");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
   };
   const spyTransport = (seen: unknown[], body: unknown) => {
     const transport: GlmQuestionTransport = {
@@ -524,7 +395,7 @@ describe("B1 — single authorized live attempt", () => {
             "",
             "Interpretasi.",
             "",
-            "## 2. Slot questions",
+            "## 2. Candidate questions",
             "",
             "1. a?",
             "2. b?",
@@ -550,7 +421,6 @@ describe("B1 — single authorized live attempt", () => {
     liveEnv();
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
     const outcome = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake: frozenLaundry(),
     });
     expect(outcome.status).toBe("failed");
@@ -565,7 +435,6 @@ describe("B1 — single authorized live attempt", () => {
     const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
     const intake = frozenLaundry();
     const frozen = await freezeGlmLiveAttempt({
-      method: "glm-slots",
       intake,
       evidenceDir: dir,
     });
@@ -581,13 +450,11 @@ describe("B1 — single authorized live attempt", () => {
     // Two concurrent attempts race the atomic consume — exactly one sends.
     const [first, second] = await Promise.all([
       prepareGlmQuestionsForIntake({
-        method: "glm-slots",
         intake,
         transport,
         evidenceDir: dir,
       }),
       prepareGlmQuestionsForIntake({
-        method: "glm-slots",
         intake,
         transport,
         evidenceDir: dir,
@@ -601,7 +468,6 @@ describe("B1 — single authorized live attempt", () => {
     expect(consumed).toBeDefined();
     // An explicit later retry is another call but never another send.
     const again = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake,
       transport,
       evidenceDir: dir,
@@ -618,7 +484,6 @@ describe("B1 — single authorized live attempt", () => {
     const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
     const intake = frozenLaundry();
     await freezeGlmLiveAttempt({
-      method: "glm-slots",
       intake,
       evidenceDir: dir,
     });
@@ -635,14 +500,12 @@ describe("B1 — single authorized live attempt", () => {
       },
     };
     const first = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake,
       transport: timingOut,
       evidenceDir: dir,
     });
     expect(first.status).toBe("failed");
     const retry = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake,
       transport: timingOut,
       evidenceDir: dir,
@@ -662,7 +525,6 @@ describe("B1 — single authorized live attempt", () => {
     const transport = spyTransport(seen, okBody);
     // No frozen artifacts at all.
     const missing = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake,
       transport,
       evidenceDir: dir,
@@ -678,12 +540,10 @@ describe("B1 — single authorized live attempt", () => {
       reviewRows: other.reviewRows,
     });
     await freezeGlmLiveAttempt({
-      method: "glm-slots",
       intake: other,
       evidenceDir: dir,
     });
     const changed = await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake,
       transport,
       evidenceDir: dir,
@@ -700,14 +560,12 @@ describe("B1 — single authorized live attempt", () => {
     const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
     const intake = frozenLaundry();
     await freezeGlmLiveAttempt({
-      method: "glm-slots",
       intake,
       evidenceDir: dir,
     });
     const seen: unknown[] = [];
     const transport = spyTransport(seen, { note: "non-JSON-able" });
     await prepareGlmQuestionsForIntake({
-      method: "glm-slots",
       intake,
       transport,
       evidenceDir: dir,
@@ -725,5 +583,50 @@ describe("B1 — single authorized live attempt", () => {
     expect(outcome.bodyPreserved).toBe(true);
     expect(statSync(join(dir, bodyFile)).mode & 0o777).toBe(0o600);
     expect(statSync(join(dir, outcomeFile)).mode & 0o777).toBe(0o600);
+  });
+});
+
+describe("R-06 — providerContact and billed cost on failed outcomes", () => {
+  it("marks a transport failure as 'sent' — provider execution unknown", async () => {
+    const outcome = await prepareGlmQuestionsForIntake({
+      intake: frozenLaundry(),
+      stubBehavior: "timeout",
+    });
+    expect(outcome.status).toBe("failed");
+    if (outcome.status !== "failed") return;
+    expect(outcome.providerContact).toBe("sent");
+  });
+
+  it("marks a failed provider HTTP response as 'responded' and keeps its settled cost", async () => {
+    const failing: GlmQuestionTransport = {
+      kind: "cheaper-inference",
+      call: async () => ({
+        httpStatus: 500,
+        body: {
+          cheaper_inference: { billing: { billed_cost_usd: "0.000496" } },
+        },
+      }),
+    };
+    const outcome = await prepareGlmQuestionsForIntake({
+      intake: frozenLaundry(),
+      transport: failing,
+    });
+    expect(outcome.status).toBe("failed");
+    if (outcome.status !== "failed") return;
+    expect(outcome.reason).toBe("http_error");
+    expect(outcome.providerContact).toBe("responded");
+    expect(outcome.cost).toEqual({ billedUsd: 0.000496, available: true });
+  });
+
+  it("marks pre-send refusals as 'none' — credential gate sends nothing", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
+    const outcome = await prepareGlmQuestionsForIntake({
+      intake: frozenLaundry(),
+    });
+    expect(outcome.status).toBe("failed");
+    if (outcome.status !== "failed") return;
+    expect(outcome.reason).toBe("live_credential_missing");
+    expect(outcome.providerContact).toBe("none");
   });
 });

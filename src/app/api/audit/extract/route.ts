@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractionRequestSchema, auditBudgetSchema } from "@/lib/audit/types";
+import { liveExtractBusinessDraft } from "@/lib/audit/provider";
 import {
-  assertLiveProviderCredentialsConfigured,
-  liveExtractBusinessDraft,
-} from "@/lib/audit/provider";
+  auditLiveCredentialsResponse,
+  auditMode,
+  auditSwitchResponse,
+} from "@/lib/audit/deployment-gate";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
@@ -21,10 +23,6 @@ import {
   RATE_LIMITED_MESSAGE,
   RATE_LIMIT_UNAVAILABLE_MESSAGE,
 } from "@/lib/audit/rate-limit";
-import {
-  auditLiveExecutionAuthorized,
-  glmExperimentEnabled,
-} from "@/lib/intake/glm-local";
 import { syntheticLocalExtraction } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
@@ -64,6 +62,10 @@ async function enforceExtractionRateLimit(
 }
 
 export async function GET(request: Request) {
+  // Spec 010 R-01/R-02b: the switch answers 404 before anything else.
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
+
   const rateLimitError = await enforceExtractionRateLimit(request);
   if (rateLimitError) return rateLimitError;
 
@@ -87,8 +89,20 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  // Spec 010 R-01/R-02b: switch → rate limit → mode/credentials → body
+  // validation → provider work.
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
+
   const rateLimitError = await enforceExtractionRateLimit(request);
   if (rateLimitError) return rateLimitError;
+
+  // Server-selected mode only — no request parameter can change it. In live
+  // mode a missing credential stops the stage before body validation, never
+  // falling back to the substitute.
+  const mode = auditMode();
+  const credentialsError = auditLiveCredentialsResponse("extraction");
+  if (credentialsError) return credentialsError;
 
   try {
     const body = (await request.json()) as unknown;
@@ -121,44 +135,20 @@ export async function POST(request: Request) {
       .extend({ budget: auditBudgetSchema })
       .parse({ ...record, website_url: normalizedSource.normalizedUrl });
 
-    // Spec 009 founder-local reading phase: `local_mode` marks the local
-    // session and the SERVER selects the preparation mode — "synthetic"
-    // pins the labeled substitute; "auto" takes the real extraction only
-    // under the explicit live authorization and stays offline otherwise.
-    // The mode exists only inside the local experiment flag; any other
-    // value — or the flag off — fails closed before credentials or any
-    // provider call. `preparation_mode` is the response's explicit
-    // provenance; the returned telemetry rides the session's audit budget
-    // either way (zero-cost labeled in the substitute).
-    if (record.local_mode !== undefined) {
-      if (
-        !glmExperimentEnabled() ||
-        (record.local_mode !== "auto" && record.local_mode !== "synthetic")
-      ) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-      const live =
-        record.local_mode === "auto" && auditLiveExecutionAuthorized();
-      if (!live) {
-        return NextResponse.json({
-          ...syntheticLocalExtraction(input),
-          preparation_mode: "synthetic-local",
-        });
-      }
-      // Same protected boundary as the normal path: credentials are asserted
-      // before any call — an authorized session without keys stops honestly,
-      // never silently falls back to the substitute.
-      assertLiveProviderCredentialsConfigured();
+    // Spec 010 R-02: synthetic mode serves the labeled substitute at this
+    // same boundary; live mode runs the real extraction. `preparation_mode`
+    // is the response's explicit provenance either way. A legacy `local_mode`
+    // field is ignored — the server selects the mode.
+    if (mode === "synthetic") {
       return NextResponse.json({
-        ...(await liveExtractBusinessDraft(input)),
-        preparation_mode: "live",
+        ...syntheticLocalExtraction(input),
+        preparation_mode: "synthetic-local",
       });
     }
-
-    // Validate the complete request before touching the protected provider
-    // boundary. Invalid source/input requests therefore make zero calls.
-    assertLiveProviderCredentialsConfigured();
-    return NextResponse.json(await liveExtractBusinessDraft(input));
+    return NextResponse.json({
+      ...(await liveExtractBusinessDraft(input)),
+      preparation_mode: "live",
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

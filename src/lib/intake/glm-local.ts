@@ -6,48 +6,46 @@
  * caller — and never bundled for the client.
  *
  * Pipeline: frozen local intake → parseQuestionFactsV3 → one minimized brief
- * (direct-ten) or the legacy per-slot context (glm-slots) → request builder →
- * one transport call → assess → strict extract → validate. Missing or
- * invalid facts come back as corrections; nothing is invented.
+ * → direct-ten request builder → one transport call → assess → strict
+ * extract → validate. Missing or invalid facts come back as corrections;
+ * nothing is invented.
  *
- * `method` is explicit: "direct-ten" is the approved Spec 009 flow;
- * "glm-slots" is the dormant matrix prototype kept for its own records.
- * An unknown method fails before any provider work and never silently takes
- * a legacy path.
+ * `method` is explicit: "direct-ten" is the approved Spec 009 flow and the
+ * only one the public route serves (Spec 010 R-02a); the dormant "glm-slots"
+ * matrix prototype was archived with the old flow (R-09).
  *
- * One request per authorized attempt. No automatic retries, no fallback pack,
- * no logging of prompts or responses, no credential handling here beyond the
- * server env the live transport reads at call time. The default transport is
- * a labeled synthetic stub; the live transport only runs when
- * NUAVE_GLM_LIVE_AUTHORIZED is set with a server-side key — it is unset for
- * this task, so nothing here performs a real provider call.
+ * One request per attempt. No automatic retries, no fallback pack, no logging
+ * of prompts or responses, no credential handling here beyond the server env
+ * the live transport reads at call time. The default transport is a labeled
+ * synthetic stub; the live transport runs only when the server-selected mode
+ * is "live" (NUAVE_AUDIT_MODE, Spec 010 R-02) with a server-side key.
+ *
+ * Spec 010 R-05: a live send touches the filesystem only for local evidence
+ * runs — when `evidenceDir` is passed or NUAVE_GLM_EVIDENCE_DIR is set. With
+ * neither, the frozen-attempt/`attempt.consumed` gate and the response-body
+ * evidence writes are skipped entirely (Cloudflare Workers has no disk).
  */
 import { createHash } from "node:crypto";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { auditMode, glmKeyPresent } from "../audit/deployment-gate";
 import {
   parseQuestionFactsV3,
   type QuestionFactsV3,
 } from "../audit/question-facts-v3";
-import { buildV3WriterContext } from "../audit/question-context-v3";
 import {
   assessCheaperInferenceIndonesianResponse,
-  buildCheaperInferenceIndonesianQuestionRequest,
   cheaperInferenceBilledCostUsd,
-  extractIndonesianSlotQuestions,
   INDONESIAN_QUESTION_GLM_CLIENT_WAIT_MS,
   INDONESIAN_QUESTION_GLM_ENDPOINT,
   INDONESIAN_QUESTION_GLM_MODEL,
-  validateIndonesianQuestionPackV3,
 } from "../audit/questions-id-glm";
 import {
   buildDirectTenQuestionRequest,
   buildDirectTenWriterBrief,
   extractDirectTenQuestions,
   validateDirectTenQuestionPack,
-  type DirectTenExtractionResult,
 } from "../audit/questions-id-direct-ten";
-import { categoryComparisonFallbackName } from "../audit/questions-id";
 import {
   isLocalIntakeFingerprintValid,
   LOCAL_INTAKE_INPUT_VERSION,
@@ -79,62 +77,19 @@ const GLM_STUB_BEHAVIORS: readonly GlmStubBehavior[] = [
 ];
 
 /** The question-generation method a preparation request runs. "direct-ten"
- * is the approved Spec 009 contract; "glm-slots" is the dormant matrix
- * prototype kept functional for its own historical records. */
-export type GlmQuestionMethod = "direct-ten" | "glm-slots";
-const GLM_QUESTION_METHODS: readonly GlmQuestionMethod[] = [
-  "direct-ten",
-  "glm-slots",
-];
-export function parseGlmQuestionMethod(
-  value: unknown,
-): GlmQuestionMethod | null {
-  return GLM_QUESTION_METHODS.includes(value as GlmQuestionMethod)
-    ? (value as GlmQuestionMethod)
-    : null;
-}
+ * is the approved Spec 009 contract and the only method left after the
+ * "glm-slots" matrix prototype was archived with the old flow (Spec 010
+ * R-09). The explicit field stays on the wire and in provenance so legacy
+ * session records carrying a "glm-slots" pack remain honestly labeled. */
+export type GlmQuestionMethod = "direct-ten";
 
-/** The experiment exists only outside production builds and only when the
- * server flag is set — deployed production can never reach the route. */
-export function glmExperimentEnabled(): boolean {
-  return (
-    process.env.NODE_ENV !== "production" &&
-    ["true", "1"].includes(process.env.NUAVE_GLM_LOCAL_EXPERIMENT ?? "")
-  );
-}
+export { glmKeyPresent };
 
-/** The founder set live authorization — the key may still be missing, in
- * which case the attempt stops instead of falling back to the stub. */
-export function glmLiveRequested(): boolean {
-  return (
-    glmExperimentEnabled() &&
-    ["true", "1"].includes(process.env.NUAVE_GLM_LIVE_AUTHORIZED ?? "")
-  );
-}
-
-/** Spec 009 R-08: live observation/report provider calls for direct-ten need
- * their own explicit authorization, separate from question generation. When
- * unset, the founder-local routes run labeled provider substitutes through the
- * same real boundaries. Never true in production. */
-export function auditLiveExecutionAuthorized(): boolean {
-  return (
-    glmExperimentEnabled() &&
-    ["true", "1"].includes(process.env.NUAVE_AUDIT_LIVE_AUTHORIZED ?? "")
-  );
-}
-
-export function glmKeyPresent(): boolean {
-  return (
-    typeof process.env.CHEAPERINFERENCE_API_KEY === "string" &&
-    process.env.CHEAPERINFERENCE_API_KEY.trim().length > 0
-  );
-}
-
-/** A real provider request needs the experiment flag, an explicit live
- * authorization, and a server-side credential — all three. Unset for this
- * task; the synthetic stub is the only reachable transport by default. */
+/** A real provider request needs the server-selected live mode and a
+ * server-side credential — both. The synthetic stub is the default
+ * transport in every other configuration. */
 export function glmLiveAuthorized(): boolean {
-  return glmLiveRequested() && glmKeyPresent();
+  return auditMode() === "live" && glmKeyPresent();
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -149,20 +104,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * refresh, retry, or post-timeout calls can never send again. Raw response
  * bytes and the outcome are preserved in the owner-only evidence dir. */
 
-function glmEvidenceDir(
-  explicit: string | undefined,
-  method: GlmQuestionMethod,
-): string {
+function glmEvidenceDir(explicit: string | undefined): string {
   return (
     explicit ??
     process.env.NUAVE_GLM_EVIDENCE_DIR ??
-    join(
-      process.cwd(),
-      ".local-evidence",
-      // Method-scoped so a new frozen attempt can never overwrite or
-      // consume the legacy attempt's preserved artifacts.
-      method === "direct-ten" ? "glm-direct-ten" : "glm",
-    )
+    join(process.cwd(), ".local-evidence", "glm-direct-ten")
   );
 }
 
@@ -266,7 +212,6 @@ async function recordLiveEvidence(
  * A live send is only possible against these artifacts. */
 export async function freezeGlmLiveAttempt(input: {
   intake: unknown;
-  method: GlmQuestionMethod;
   evidenceDir?: string;
 }): Promise<
   | {
@@ -277,13 +222,13 @@ export async function freezeGlmLiveAttempt(input: {
     }
   | { status: "failed"; detail: string }
 > {
-  const built = buildFromIntake(input.intake, input.method);
+  const built = buildFromIntake(input.intake);
   if (!built.ok)
     return {
       status: "failed",
       detail: `intake did not resolve to a request (${built.outcome.status})`,
     };
-  const dir = glmEvidenceDir(input.evidenceDir, input.method);
+  const dir = glmEvidenceDir(input.evidenceDir);
   await mkdir(dir, { recursive: true, mode: 0o700 });
   // Compact serialization: each .json file's own SHA-256 equals its sidecar —
   // `shasum -a 256 frozen-request.json` reproduces the binding hash.
@@ -324,38 +269,6 @@ function marketAreaText(facts: {
   return facts.marketContext.areas.join(" dan ") || "area sekitar";
 }
 
-/** Labeled synthetic question texts for the stub — not provider output and
- * never presented as such. Wording interpolates the projected facts so the
- * demo stays valid when the founder adjusts confirmed values. */
-function syntheticQuestionTexts(facts: {
-  identity: { brand: string };
-  category: string;
-  comparison: { kind: string; name: string | null };
-  marketContext: {
-    reach: string | null;
-    areas: string[];
-    description: string | null;
-  };
-}): string[] {
-  const brand = facts.identity.brand;
-  const category = facts.category;
-  const area = marketAreaText(facts);
-  const target =
-    facts.comparison.name ?? categoryComparisonFallbackName(facts.category);
-  return [
-    `Tempat ${category} apa yang cocok untuk cucian rutin keluarga di ${area}?`,
-    `Kalau lagi butuh cucian selesai cepat tanpa antre lama, ${category} mana di ${area} yang enak dipakai?`,
-    `Buat pelanggan sibuk yang butuh ${category} dengan layanan antar-jemput di ${area}, kriteria apa yang sebaiknya dipakai untuk milih?`,
-    `Untuk cucian besar seperti bed cover dan selimut, layanan ${category} apa yang biasanya dicari orang di ${area}?`,
-    `Tolong shortlist ${category} di ${area} yang cocok untuk kebutuhan cucian mingguan.`,
-    `Apa saja bedanya ${category} di ${area} kalau dilihat dari harga, kecepatan, dan opsi antar-jemput?`,
-    `Apakah ${brand} cocok untuk pelanggan yang butuh cucian cepat selesai di ${area}?`,
-    `Kalau disuruh milih ${category} buat langganan rutin, ${brand} masuk akal nggak?`,
-    `Bagaimana ${brand} dibandingkan ${target} untuk cucian rutin di ${area}?`,
-    `${brand} cocoknya buat pelanggan seperti apa — misalnya yang butuh antar-jemput dibanding yang antar sendiri?`,
-  ];
-}
-
 /** Labeled synthetic texts for the direct-ten stub: ten unnamed questions —
  * never the audited brand, an alias, or a comparator name. Wording still
  * interpolates the projected facts so the demo stays valid when the founder
@@ -394,18 +307,10 @@ function syntheticDirectTenTexts(facts: {
 }
 
 function syntheticResponseBody(
-  facts: Parameters<typeof syntheticQuestionTexts>[0],
+  facts: Parameters<typeof syntheticDirectTenTexts>[0],
   behavior: GlmStubBehavior,
-  method: GlmQuestionMethod,
 ) {
-  const questionSection =
-    method === "direct-ten"
-      ? "## 2. Candidate questions"
-      : "## 2. Slot questions";
-  const texts =
-    method === "direct-ten"
-      ? syntheticDirectTenTexts(facts)
-      : syntheticQuestionTexts(facts);
+  const texts = syntheticDirectTenTexts(facts);
   const malformed =
     behavior === "malformed"
       ? `## 1. Market interpretation\n\nSintetis.\n\n## 3. Self-critique\n\nSintetis; bagian pertanyaan sengaja dihilangkan.`
@@ -414,7 +319,7 @@ function syntheticResponseBody(
           "",
           "Respons sintetis uji coba lokal — bukan keluaran model.",
           "",
-          questionSection,
+          "## 2. Candidate questions",
           "",
           ...texts.map((question, index) => `${index + 1}. ${question}`),
           "",
@@ -445,9 +350,8 @@ function syntheticResponseBody(
  * exercising the same envelope/assessment/extraction path as a real call. It
  * makes no network request and records no real cost. */
 export function createSyntheticGlmTransport(input: {
-  facts: Parameters<typeof syntheticQuestionTexts>[0];
+  facts: Parameters<typeof syntheticDirectTenTexts>[0];
   behavior?: GlmStubBehavior;
-  method: GlmQuestionMethod;
 }): GlmQuestionTransport {
   const behavior = input.behavior ?? "ok";
   return {
@@ -462,15 +366,15 @@ export function createSyntheticGlmTransport(input: {
       }
       return {
         httpStatus: 200,
-        body: syntheticResponseBody(input.facts, behavior, input.method),
+        body: syntheticResponseBody(input.facts, behavior),
       };
     },
   };
 }
 
-/** The real single-request transport. Only reachable when
- * NUAVE_GLM_LIVE_AUTHORIZED is set AND a server-side credential exists —
- * never the default, never retried, never called by this task. */
+/** The real single-request transport. Only reachable when the server-selected
+ * mode is "live" AND a server-side credential exists — never the default,
+ * never retried. */
 export const liveGlmTransport: GlmQuestionTransport = {
   kind: "cheaper-inference",
   call: async (requestBody) => {
@@ -517,7 +421,6 @@ export const liveGlmTransport: GlmQuestionTransport = {
  * the send path, so the frozen request is provably the same body. */
 function buildFromIntake(
   intake: unknown,
-  method: GlmQuestionMethod,
 ):
   | { ok: true; facts: QuestionFactsV3; requestBody: unknown }
   | { ok: false; outcome: GlmQuestionsOutcome } {
@@ -570,28 +473,36 @@ function buildFromIntake(
   return {
     ok: true,
     facts,
-    requestBody:
-      method === "direct-ten"
-        ? buildDirectTenQuestionRequest(buildDirectTenWriterBrief(facts))
-        : buildCheaperInferenceIndonesianQuestionRequest(
-            buildV3WriterContext(facts),
-          ),
+    requestBody: buildDirectTenQuestionRequest(
+      buildDirectTenWriterBrief(facts),
+    ),
   };
 }
 
-/** Run one preparation attempt over the frozen intake. `transport` injects
- * the envelope for tests; when omitted the adapter picks the live transport
- * only under explicit live authorization, else the labeled stub. A live
+/** Cost record for a failed attempt: keeps the provider's settled billing
+ * when the returned body carried it; honestly unavailable otherwise (R-06). */
+function failedCost(body: unknown): {
+  billedUsd: number | null;
+  available: boolean;
+} {
+  const billedUsd = cheaperInferenceBilledCostUsd(body);
+  return { billedUsd, available: billedUsd !== null };
+}
+
+/** Run one preparation attempt over the confirmed intake. `transport`
+ * injects the envelope for tests; when omitted the adapter picks the live
+ * transport only in the server-selected live mode, else the labeled stub.
+ * For local evidence runs (evidenceDir or NUAVE_GLM_EVIDENCE_DIR set) a live
  * attempt additionally requires the frozen artifacts, then is atomically
- * consumed before the single send — nothing can send twice. */
+ * consumed before the single send — nothing can send twice. Without an
+ * evidence dir the disk gate is skipped entirely (Spec 010 R-05). */
 export async function prepareGlmQuestionsForIntake(input: {
   intake: unknown;
-  method: GlmQuestionMethod;
   stubBehavior?: unknown;
   transport?: GlmQuestionTransport;
   evidenceDir?: string;
 }): Promise<GlmQuestionsOutcome> {
-  const method = input.method;
+  const method: GlmQuestionMethod = "direct-ten";
   const requestId = `local-glm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const provenanceFor = (
     kind: GlmPackProvenance["transport"],
@@ -608,19 +519,20 @@ export async function prepareGlmQuestionsForIntake(input: {
       assessment.returnedModel !== assessment.requestedModel,
     transport: kind,
   });
-  const built = buildFromIntake(input.intake, method);
+  const built = buildFromIntake(input.intake);
   if (!built.ok) return built.outcome;
   const { facts, requestBody } = built;
-  const liveRequested = glmLiveRequested();
-  // Authorized-live without its server credential stops outright — it never
+  const liveRequested = auditMode() === "live";
+  // Live mode without its server credential stops outright — it never
   // silently falls back to the synthetic stub.
   if (!input.transport && liveRequested && !glmKeyPresent()) {
     return {
       status: "failed",
       reason: "live_credential_missing",
       detail:
-        "NUAVE_GLM_LIVE_AUTHORIZED is set but CHEAPERINFERENCE_API_KEY is missing — stopped without sending; the synthetic stub was not substituted",
+        'NUAVE_AUDIT_MODE is "live" but CHEAPERINFERENCE_API_KEY is missing — question generation stopped without sending; the synthetic stub was not substituted',
       provenance: provenanceFor("cheaper-inference"),
+      providerContact: "none",
     };
   }
   const transport =
@@ -634,13 +546,22 @@ export async function prepareGlmQuestionsForIntake(input: {
           )
             ? (input.stubBehavior as GlmStubBehavior)
             : "ok",
-          method,
         }));
   const liveAttempt = liveRequested || transport.kind === "cheaper-inference";
-  const dir = glmEvidenceDir(input.evidenceDir, method);
+  // Spec 010 R-05: the frozen-attempt/consume/evidence disk gate exists only
+  // for local evidence runs — an explicit evidenceDir or
+  // NUAVE_GLM_EVIDENCE_DIR. With neither set no filesystem call is attempted:
+  // no default .local-evidence directory is even resolved on this path.
+  const evidenceDir =
+    input.evidenceDir ??
+    (process.env.NUAVE_GLM_EVIDENCE_DIR?.trim() || undefined);
   let requestHash = "";
-  if (liveAttempt) {
-    const gate = await verifyFrozenAttempt(dir, input.intake, requestBody);
+  if (liveAttempt && evidenceDir !== undefined) {
+    const gate = await verifyFrozenAttempt(
+      evidenceDir,
+      input.intake,
+      requestBody,
+    );
     requestHash = gate.requestHash;
     if (!gate.ok)
       return {
@@ -648,22 +569,24 @@ export async function prepareGlmQuestionsForIntake(input: {
         reason: gate.reason,
         detail: gate.detail,
         provenance: provenanceFor(transport.kind),
+        providerContact: "none",
       };
     // Atomically consumed before the send — a duplicate, concurrent call,
     // refresh, retry or post-timeout reuse can never send again.
-    if (!(await consumeGlmAttempt(dir, gate.requestHash)))
+    if (!(await consumeGlmAttempt(evidenceDir, gate.requestHash)))
       return {
         status: "failed",
         reason: "attempt_consumed",
         detail:
           "the authorized live attempt was already consumed — a second send is never made",
         provenance: provenanceFor(transport.kind),
+        providerContact: "none",
       };
   }
   const envelope = await transport.call(requestBody);
-  if (liveAttempt) {
+  if (liveAttempt && evidenceDir !== undefined) {
     try {
-      await recordLiveEvidence(dir, requestHash, envelope);
+      await recordLiveEvidence(evidenceDir, requestHash, envelope);
     } catch {
       return {
         status: "failed",
@@ -671,6 +594,10 @@ export async function prepareGlmQuestionsForIntake(input: {
         detail:
           "the response arrived but could not be preserved to restricted local evidence",
         provenance: provenanceFor(transport.kind),
+        // The provider response did arrive — a confirmed call whose settled
+        // cost stays on the record when the body carried billing data.
+        providerContact: "responded",
+        cost: failedCost(envelope.body),
       };
     }
   }
@@ -687,6 +614,9 @@ export async function prepareGlmQuestionsForIntake(input: {
         envelope.transportError ??
         `transport returned HTTP ${envelope.httpStatus}`,
       provenance,
+      // The request was sent but no provider response came back — execution
+      // unknown, exactly like a dropped client response (R-06).
+      providerContact: "sent",
     };
   }
   // A returned-model mismatch keeps its verdict but still permits inspection
@@ -706,6 +636,8 @@ export async function prepareGlmQuestionsForIntake(input: {
       reason: assessment.reason,
       detail: assessment.detail,
       provenance,
+      providerContact: "responded",
+      cost: failedCost(envelope.body),
     };
   }
   const choice = isRecord(envelope.body)
@@ -718,43 +650,30 @@ export async function prepareGlmQuestionsForIntake(input: {
     : isRecord(message) && typeof message.content === "string"
       ? message.content
       : "";
-  const extraction =
-    method === "direct-ten"
-      ? extractDirectTenQuestions(assistantText)
-      : extractIndonesianSlotQuestions(assistantText);
+  const extraction = extractDirectTenQuestions(assistantText);
   if (!extraction.ok) {
     return {
       status: "failed",
       reason: `extraction_${extraction.reason}`,
       detail: extraction.detail,
       provenance,
+      providerContact: "responded",
+      cost: failedCost(envelope.body),
     };
   }
-  const issues = (
-    method === "direct-ten"
-      ? validateDirectTenQuestionPack(extraction.questions, facts)
-      : validateIndonesianQuestionPackV3(extraction.questions, facts)
-  ).map((issue) => issue.message);
+  const issues = validateDirectTenQuestionPack(extraction.questions, facts).map(
+    (issue) => issue.message,
+  );
   const billedUsd = assessment.ok
     ? assessment.billedCostUsd
     : cheaperInferenceBilledCostUsd(envelope.body);
   const cost = { billedUsd, available: billedUsd !== null };
-  // Direct-ten preserves the provider's own sections for inspection; the
-  // legacy slot extraction has none to carry.
-  const examination =
-    method === "direct-ten"
-      ? (() => {
-          const dt = extraction as Extract<
-            DirectTenExtractionResult,
-            { ok: true }
-          >;
-          return {
-            marketInterpretation: dt.marketInterpretation,
-            selfCritique: dt.selfCritique,
-            intentLabels: dt.intentLabels,
-          };
-        })()
-      : undefined;
+  // Direct-ten preserves the provider's own sections for inspection.
+  const examination = {
+    marketInterpretation: extraction.marketInterpretation,
+    selfCritique: extraction.selfCritique,
+    intentLabels: extraction.intentLabels,
+  };
   if (issues.length) {
     return {
       status: "validation_failed",

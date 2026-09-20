@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "./client-contract";
 import { AuditRunEventParser } from "./stream";
 import {
@@ -21,6 +21,29 @@ vi.mock("@/lib/audit/provider", () => providerMocks);
 
 import { POST as runPOST } from "../../app/api/audit/run/route";
 import { POST as reportPOST } from "../../app/api/audit/report/route";
+import { POST as glmQuestionsPOST } from "../../app/api/audit/glm-questions/route";
+import { INTAKE_FIXTURES } from "../intake/fixtures";
+import { resolveJourneyPath } from "../intake/navigation";
+import { freezeLocalIntake } from "../intake/local-questions";
+import { createIntakeState, setScopeAnswer } from "../intake/state";
+
+const glmFixture = INTAKE_FIXTURES.GLM;
+
+function frozenGlmIntake() {
+  const state = setScopeAnswer(
+    createIntakeState(glmFixture),
+    "scope-whole-brand",
+  );
+  return freezeLocalIntake(
+    state,
+    glmFixture,
+    resolveJourneyPath({
+      entry: "read",
+      scope: state.scope,
+      brandNeedsFix: false,
+    }),
+  );
+}
 
 const DIRECT_TEN_IDS = Array.from(
   { length: 10 },
@@ -135,8 +158,8 @@ const RUN_BODY = () => ({
 describe("POST /api/audit/run direct-ten local substitutes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.NUAVE_GLM_LOCAL_EXPERIMENT = "1";
-    delete process.env.NUAVE_AUDIT_LIVE_AUTHORIZED;
+    process.env.NUAVE_NEW_AUDIT_ENABLED = "1";
+    process.env.NUAVE_AUDIT_MODE = "synthetic";
   });
 
   it("runs the real boundary with the labeled substitute — zero credentials or live calls", async () => {
@@ -167,8 +190,8 @@ describe("POST /api/audit/run direct-ten local substitutes", () => {
     expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
   });
 
-  it("still 404s when the local experiment flag is off — zero calls", async () => {
-    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
+  it("still 404s when the new-audit switch is off — zero calls", async () => {
+    delete process.env.NUAVE_NEW_AUDIT_ENABLED;
     const response = await runPOST(
       new Request("https://nuave.test/api/audit/run", {
         method: "POST",
@@ -187,8 +210,8 @@ describe("POST /api/audit/run direct-ten local substitutes", () => {
 describe("POST /api/audit/report direct-ten local substitutes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.NUAVE_GLM_LOCAL_EXPERIMENT = "1";
-    delete process.env.NUAVE_AUDIT_LIVE_AUTHORIZED;
+    process.env.NUAVE_NEW_AUDIT_ENABLED = "1";
+    process.env.NUAVE_AUDIT_MODE = "synthetic";
   });
 
   it("synthesizes through the real pipeline with the labeled substitute", async () => {
@@ -235,8 +258,8 @@ describe("POST /api/audit/report direct-ten local substitutes", () => {
     expect(providerMocks.liveGenerateReportContent).not.toHaveBeenCalled();
   });
 
-  it("still 404s when the local experiment flag is off — zero calls", async () => {
-    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
+  it("still 404s when the new-audit switch is off — zero calls", async () => {
+    delete process.env.NUAVE_NEW_AUDIT_ENABLED;
     const response = await reportPOST(
       new Request("https://nuave.test/api/audit/report", {
         method: "POST",
@@ -267,8 +290,8 @@ describe("POST /api/audit/report direct-ten local substitutes", () => {
 describe("POST /api/audit/run resume evidence gates (Spec 009 resume fix)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.NUAVE_GLM_LOCAL_EXPERIMENT = "1";
-    delete process.env.NUAVE_AUDIT_LIVE_AUTHORIZED;
+    process.env.NUAVE_NEW_AUDIT_ENABLED = "1";
+    process.env.NUAVE_AUDIT_MODE = "synthetic";
   });
 
   function runRequest(resumeObservations: AuditObservation[]) {
@@ -318,12 +341,143 @@ describe("POST /api/audit/run resume evidence gates (Spec 009 resume fix)", () =
     expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
   });
 
-  it("flag off 404s even with a resume payload — zero provider work", async () => {
-    delete process.env.NUAVE_GLM_LOCAL_EXPERIMENT;
+  it("switch off 404s even with a resume payload — zero provider work", async () => {
+    delete process.env.NUAVE_NEW_AUDIT_ENABLED;
     const prompts = wirePrompts();
     const response = await runRequest([
       syntheticObservation(prompts[0] as AuditPrompt),
     ]);
     expect(response.status).toBe(404);
+  });
+});
+
+describe("Spec 010 R-01/R-02a — switch and question_method gates", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NUAVE_NEW_AUDIT_ENABLED = "1";
+    process.env.NUAVE_AUDIT_MODE = "synthetic";
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function jsonPost(url: string, body: unknown) {
+    return new Request(`https://nuave.test${url}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("switch off answers 404 on run, report and glm-questions before the body is read", async () => {
+    delete process.env.NUAVE_NEW_AUDIT_ENABLED;
+
+    const run = await runPOST(
+      new Request("https://nuave.test/api/audit/run", {
+        method: "POST",
+        body: "{ not json",
+      }),
+    );
+    const report = await reportPOST(
+      new Request("https://nuave.test/api/audit/report", {
+        method: "POST",
+        body: "{ not json",
+      }),
+    );
+    const glm = await glmQuestionsPOST(
+      new Request("https://nuave.test/api/audit/glm-questions", {
+        method: "POST",
+        body: "{ not json",
+      }),
+    );
+
+    expect(run.status).toBe(404);
+    expect(report.status).toBe(404);
+    expect(glm.status).toBe(404);
+    expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
+    expect(providerMocks.liveGenerateReportContent).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, "canonical", "glm-slots", "unknown-method"])(
+    "run rejects question_method %j with 400 — zero provider work",
+    async (method) => {
+      const response = await runPOST(
+        jsonPost("/api/audit/run", {
+          ...RUN_BODY(),
+          // JSON.stringify drops an undefined value — a truly omitted method.
+          question_method: method,
+        }),
+      );
+      expect(response.status).toBe(400);
+      expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
+      expect(
+        providerMocks.assertLiveProviderCredentialsConfigured,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([undefined, "canonical", "glm-slots", "unknown-method"])(
+    "report rejects question_method %j with 400 — zero provider work",
+    async (method) => {
+      const body: Record<string, unknown> = {
+        client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+        brief: brief(),
+        prompts: wirePrompts(),
+        observations: [],
+        safety_identifier: "local-direct-ten-fixture",
+        budget: {
+          limit_usd: AUDIT_COST_LIMIT_USD,
+          carryover_cost_usd: 0,
+          calls: [],
+        },
+      };
+      if (method !== undefined) body.question_method = method;
+      const response = await reportPOST(jsonPost("/api/audit/report", body));
+      expect(response.status).toBe(400);
+      expect(providerMocks.liveGenerateReportContent).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["glm-slots", "unknown-method"])(
+    "glm-questions rejects method %j with 400",
+    async (method) => {
+      const response = await glmQuestionsPOST(
+        jsonPost("/api/audit/glm-questions", {
+          method,
+          intake: frozenGlmIntake(),
+        }),
+      );
+      expect(response.status).toBe(400);
+    },
+  );
+
+  it("glm-questions rejects an omitted method with 400", async () => {
+    const response = await glmQuestionsPOST(
+      jsonPost("/api/audit/glm-questions", { intake: frozenGlmIntake() }),
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("synthetic mode runs the labeled stub with zero provider fetches", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const response = await glmQuestionsPOST(
+      jsonPost("/api/audit/glm-questions", {
+        method: "direct-ten",
+        intake: frozenGlmIntake(),
+      }),
+    );
+    expect(response.status).toBe(200);
+    const outcome = (await response.json()) as {
+      status: string;
+      questions?: string[];
+      provenance?: { transport?: string; method?: string };
+    };
+    expect(outcome.status).toBe("ok");
+    expect(outcome.questions).toHaveLength(10);
+    expect(outcome.provenance?.transport).toBe("synthetic-stub");
+    expect(outcome.provenance?.method).toBe("direct-ten");
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

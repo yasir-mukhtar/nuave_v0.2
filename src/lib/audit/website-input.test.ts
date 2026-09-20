@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   INVALID_WEBSITE_INPUT_MESSAGE,
   normalizeWebsiteInput,
@@ -71,6 +71,15 @@ describe("extraction route uses the same source decision", () => {
     providerMocks.assertConfigured.mockReset();
     providerMocks.extract.mockReset();
     providerMocks.extract.mockResolvedValue({ draft: {}, telemetry: [] });
+    // Spec 010: the route is gated by the new-audit switch; the live path
+    // asserts stage credentials before body validation.
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "1");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it.each(["masryef.com", "@masryef", "https://instagram.com/masryef"])(
@@ -108,7 +117,9 @@ describe("extraction route uses the same source decision", () => {
         code: "INVALID_SOURCE_INPUT",
         telemetry: [],
       });
-      expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
+      // Credentials are asserted before body validation (R-02b order), but
+      // no provider call is ever made for a rejected source.
+      expect(providerMocks.assertConfigured).toHaveBeenCalledTimes(1);
       expect(providerMocks.extract).not.toHaveBeenCalled();
     },
   );
