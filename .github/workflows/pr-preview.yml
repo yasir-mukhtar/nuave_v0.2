@@ -44,11 +44,10 @@ jobs:
       - name: Prepare safe preview build env
         run: |
           cat > .env.production.local <<'EOF'
-          NUAVE_PROVIDER=opencodego
-          NUAVE_QUESTION_PROVIDER=opencodego
-          OPENCODEGO_API_KEY=dummy-pr-preview-key
+          NUAVE_PROVIDER=openai
+          NUAVE_QUESTION_PROVIDER=openai
           OPENAI_API_KEY=dummy-pr-preview-key
-          OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
+          OPENAI_BASE_URL=https://api.openai.com/v1
           OPENAI_AUDIT_MODEL=gpt-5.6-luna
           OPENAI_AUDIT_REASONING_EFFORT=low
           NUAVE_NEW_AUDIT_ENABLED=true
