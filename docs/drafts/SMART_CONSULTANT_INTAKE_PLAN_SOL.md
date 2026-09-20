@@ -1,158 +1,121 @@
-# Smart consultant intake — independent implementation plan
+# Smart consultant intake — revised implementation plan
 
-> Status: **Independent candidate for founder review — not implementation authority**
+> Status: **Revised candidate for founder review — not implementation authority**
 > Owner: Founder / orchestrator
 > Updated: 2026-09-20
+> Revision: R2, incorporating `docs/reviews/findings/smart-consultant-intake-plan-review-2026-09-20.md`
 > Repository baseline: `origin/main` at `4e6b2cf`
-> Proposed outcome: replace the fixed business questionnaire with an evidence-backed, summary-first confirmation journey
-> Independence note: authored without reading or modifying the concurrent `codex/confirmation-first-intake-plan` worktree or its candidate
+> Proposed outcome: replace the fixed business questionnaire with a prepared, summary-first confirmation journey
 
-This plan translates the founder's desired experience into a bounded path that can be specified, implemented, and verified without rebuilding the working question, audit, or report pipeline. It does not approve implementation, live provider calls, deployment, or a canonical product-contract change. Those actions retain their existing approval gates.
+This revision keeps the original Smart Consultant plan as the implementation backbone and adopts the independent review's pragmatic changes: Indonesian extraction text, optional competitors and customer context, one happy-path confirmation, explicit contract amendments, a pre-code look at retained real drafts, and failure-layer diagnosis. It removes per-item evidence matching, name-matching research, the mandatory second confirmation, and the oversized verification matrix.
 
-## 1. Decision summary
+Publishing this plan does not approve implementation, live provider calls, merge, deployment, or canonical product changes. Those actions retain their existing gates.
 
-Nuave should behave like a prepared consultant, not an empty questionnaire:
+## 1. Finish line
 
-1. The customer enters the brand name and one supported public business URL.
-2. Nuave reads the available public material once and prepares a structured understanding.
-3. Nuave presents that understanding in one compact, evidence-labelled summary.
-4. One explicit confirmation accepts all visible, non-conflicting proposals.
-5. Nuave asks only the consequential questions it could not answer responsibly.
-6. Those questions use cards, chips, or short choices; typing is the fallback when no option fits.
-7. The customer sees one final compact review before Nuave generates questions.
-8. The existing frozen-intake, question-generation, audit-run, and report boundaries remain the downstream path.
+Nuave should behave like a prepared consultant:
 
-The first release should use the existing identity fetch and one existing extraction request. It should not add another model call, a general crawler, a second provider, a chat interface, or a parallel intake system.
-
-## 2. Why this work is needed
-
-The product direction already says that Nuave should prepare the business draft and leave the customer mainly to check and correct it. The current runtime has much of the infrastructure, but not that experience:
-
-- `/audit` starts correctly with brand name and URL.
-- `GET /api/audit/identity` reads source metadata.
-- `POST /api/audit/extract` performs one domain-restricted model extraction and returns a rich draft.
-- `prepareBoundaryIdentity()` keeps only category, offerings, customer needs, and comparison names; it discards market context, target customer, decision criteria, evidence, warnings, identity details, and other useful preparation.
-- Live prepared candidates remain unselected, so the user must tap facts Nuave already found.
-- The route always visits roughly nine or ten stable fact screens after preparation.
-- The current Review screen summarizes answers the customer has already supplied; it is not the first presentation of Nuave's understanding.
-- The confirmed-intake projection cannot carry a distinct target customer or buyer criteria into direct-ten question generation.
-- Synthetic end-to-end tests deliberately exercise an empty extraction and manual completion, so they prove pipeline continuity but not the desired prepared-confirmation experience.
-
-The result is a real reading pipeline feeding a polite questionnaire.
-
-## 3. Desired customer outcome
-
-After entering a brand and URL, a customer with a reasonably readable public source should be able to say:
-
-> "Nuave sudah memahami sebagian besar bisnis saya. Saya hanya perlu memastikan, memilih fokus audit, dan memperbaiki satu-dua hal yang kurang tepat."
-
-For a sufficiently populated whole-brand case, the target journey is:
+1. The customer enters a brand name and one supported public business URL.
+2. Nuave reads the available public material once and prepares a short understanding.
+3. Nuave presents that understanding with an explicit audit-focus choice.
+4. Nuave asks only for required meanings that are still empty.
+5. The customer confirms the visible brief once and Nuave prepares the ten audit questions.
+6. Existing question review, explicit audit-start approval, observations, report, and downloads remain unchanged.
 
 ```text
 Nama brand + URL
-  → Nuave membaca sumber
-  → "Ini yang Nuave pahami" + pilih fokus audit
-  → Ya, sudah tepat
-  → answer only unresolved material questions, if any
-  → final confirmation
-  → prepare audit questions
+  → membaca sumber
+  → Ini yang Nuave pahami + pilih fokus audit
+  → required-empty clarifications only, when needed
+  → Sudah sesuai — buat pertanyaan audit
+  → existing question review → audit → report
 ```
 
-Success is not that every business follows the shortest route. Success is that Nuave never asks the customer to reconstruct information it already extracted, and every additional question has an obvious reason.
+For a sufficiently populated whole-brand case, the acceptance target is:
 
-## 4. Experience principles
+- zero typed characters after `Periksa`;
+- at most four substantive decisions before question review;
+- no more than five selection/continue actions after initial entry;
+- one business-information confirmation, not a summary confirmation followed by a duplicate final review.
 
-### 4.1 Prepared consultant, not omniscient authority
+For the rich fixture, the four-decision ceiling covers scope, service channel, market reach, and final confirmation. Its market reach must not require a separate area choice; local/area-based behavior is covered by the partial-business case. Every selection that changes confirmed meaning counts even when several controls share one clarification stage. Question editing and explicit audit-start approval remain separate.
 
-Nuave presents a draft, not a verdict. Customer-facing language should say:
+## 2. Scope and non-scope
 
-> "Berdasarkan website, calon pelanggan kemungkinan memahami bisnis Anda seperti ini."
+### In scope
 
-It should not say that an interpretation is a verified business fact merely because a model returned it.
-
-### 4.2 Public understanding and intended reality remain distinct
-
-The prepared snapshot records what the public source communicated. The confirmed draft records what the customer says is accurate and intended.
-
-A correction must not erase the original prepared value. The difference may be useful evidence later, but using that difference in the report is outside this plan and requires its own approved report behavior.
-
-### 4.3 Confirmation is explicit but not repetitive
-
-A proposal may appear preselected because Nuave is recommending it for confirmation. It does not become confirmed until the customer uses the batch confirmation or saves a correction.
-
-The customer should not need to select every extracted offering and then press `Lanjut` on a separate screen for each information category.
-
-### 4.4 Ask only questions that change the audit
-
-A clarification is shown only when all of the following are true:
-
-- the meaning is required for the chosen audit scope or materially improves question relevance;
-- Nuave has no responsible ready-to-confirm proposal, or the available sources conflict;
-- the customer has not already confirmed an equivalent answer; and
-- the answer cannot be represented honestly as unknown.
-
-Optional unknown information remains unknown. It does not create another required screen.
-
-### 4.5 Click first, type only as an escape hatch
-
-Use, in order:
-
-1. one batch confirmation;
-2. a single-select or multi-select set derived from the business;
-3. a small fixed choice set where the answer is private intent;
-4. `Tidak ada yang cocok` or `Tambah sendiri` for text entry.
-
-An open-ended chat prompt is not the primary interaction. It would move the questionnaire into a chat box without reducing cognitive work.
-
-Every text fallback and correction field must use bounded lengths and extend the existing sensitive-data screening before the value is committed, persisted, or sent to a model. A summary-first UI must not create new unguarded free-text paths.
-
-### 4.6 Trust through evidence, not numerical confidence
-
-Customer-facing proposals use plain provenance states:
-
-- **Ditemukan di website** — supported by an extraction evidence record from the submitted domain;
-- **Saran Nuave** — a bounded interpretation or comparison suggestion;
-- **Ditambahkan oleh Anda** — customer supplied;
-- **Perlu dipastikan** — required but unsupported or ambiguous;
-- **Sumber berbeda** — conflicting public values require a choice.
-
-Do not display a percentage confidence score. The current extraction does not establish calibrated confidence, and numerical precision would not help the correction task.
-
-## 5. Scope
-
-This plan includes:
-
-- the public `/audit` business-intake path after brand name and URL;
-- retaining and mapping the useful identity and extraction output;
+- the public `/audit` business intake after name and URL;
+- retaining useful `SourceIdentity` and `ExtractionDraft` output instead of dropping it;
+- concise natural Indonesian preparation text;
 - one summary-first understanding screen;
-- batch confirmation of visible proposals;
-- an adaptive clarification queue;
-- click-first correction controls and text fallbacks;
-- whole-brand, one-product/service, and one-location scope behavior;
-- preservation of prepared versus customer-confirmed meaning;
-- a semantically complete frozen handoff to direct-ten question generation;
-- session restoration and stale-session handling;
-- representative unit, component, and browser tests;
-- one explicitly authorized live preparation/usability check after offline acceptance.
+- explicit whole-brand, location, or product/service focus;
+- preselected proposals that remain unconfirmed until the customer acts;
+- deterministic clarification for required-and-empty meanings only;
+- click-first corrections with guarded text fallbacks;
+- optional customer context, decision criteria, competitors, and public facts;
+- separate prepared and customer-confirmed values;
+- a versioned frozen handoff that carries confirmed target customer and decision considerations when present;
+- same-tab resume, stale-session rejection, and no-duplicate-request protections;
+- focused offline tests and one separately authorized live preparation review.
 
-## 6. Non-scope
+### Not in scope
 
-The first implementation must not add or redesign:
+- a general crawler, JavaScript browser service, or reading extra pages in the first release;
+- another model call, provider, semantic reviewer, or fallback chain;
+- a chatbot or open-ended conversational intake;
+- Google Maps, login scraping, broad social discovery, or arbitrary linked domains;
+- payment, orders, authentication, durable storage, or cross-device resume;
+- question-generation instruction, model, observation, report, or scoring changes;
+- report findings based on differences between prepared and confirmed facts;
+- a dashboard, CRM, analytics vendor, monitoring, or subscriptions;
+- public rollout, paid calls, merge, or deployment without explicit authorization.
 
-- a general crawler or browser-rendering service;
-- multiple extraction providers or automatic provider fallback;
-- additional model calls merely to summarize the existing extraction;
-- question-generation instructions or the direct-ten method;
-- observation execution, report synthesis, scoring, or report presentation;
-- payment, orders, authentication, cross-device resume, or durable customer storage;
-- Google Maps support, broad social discovery, or automatic search for extra official accounts;
-- a dashboard, monitoring, CRM, or analytics platform;
-- automatic report findings based on differences between prepared and confirmed facts;
-- public rollout, paid calls, or deployment without the existing founder authorization.
+Retrieval improvements are considered only after one live preparation shows that information present on the source was lost by retrieval rather than mapping or presentation.
 
-## 7. Target journey
+## 3. Verified baseline
 
-### 7.1 Entry
+The current runtime already has the expensive plumbing:
+
+- `/audit` starts with brand name and URL.
+- `GET /api/audit/identity` safely reads source metadata.
+- `POST /api/audit/extract` performs one domain-restricted extraction and returns a structured draft.
+- `prepareBoundaryIdentity()` retains only category, offerings, customer needs, and comparison names; it drops market context, target customer, decision criteria, USP, evidence, warnings, and discovered identity details.
+- Live candidates arrive unselected, so the customer re-taps values Nuave already found.
+- The fixed route visits roughly nine or ten fact screens and then reviews the customer's own answers.
+- The local facts projection hardcodes `targetCustomer: null` and `buyerConstraints: []`, although the direct-ten writer can use both.
+- A legacy compatibility adapter derives target customer and decision criteria from semantically different values to satisfy old schema minima.
+- The extraction prompt currently requests explanatory text in English.
+- Synthetic end-to-end extraction intentionally returns an empty draft, so current tests prove continuity but not the prepared-confirmation experience.
+
+The result is a real reading pipeline feeding a polite questionnaire.
+
+## 4. Product amendments requiring approval
+
+The desired experience conflicts with active intake rules. The eventual specification must carry these replacements explicitly, and approved decisions must be recorded once in `docs/DECISION_LOG.md`.
+
+| Current rule | Proposed replacement |
+|---|---|
+| The September 5 journey contract fixes the linear route and forbids skips based on extraction state. | The visible prepared summary owns confirmation. Separate correction controls or a clarification stage appear only for explicit focus/target choice, required empty meaning, or requested edit. |
+| Each conceptual screen is committed separately with `Lanjut`. | One explicit action confirms every visible active proposal. Display or preselection alone never confirms it. |
+| Provenance is hidden from the intake shell. | Use three plain field-based labels: **Dari website Anda**, **Saran Nuave**, and **Dari Anda**. Keep technical confidence hidden. |
+| Comparator mode is required: named competitors or explicit no-direct mode. | Competitors are optional. Unknown is distinct from “there are no competitors”; no named competitor is required by direct-ten generation. |
+| Optional customer reasons and public fact still receive mandatory screens. | Put optional context behind `Tambah detail`; absence never creates a clarification or blocks questions. |
+| `s-review` always follows all fact screens as a separate confirmation. | The understanding summary is the review. After corrections or clarifications, return to that same summary and confirm once. |
+
+Retain these existing protections:
+
+- exact intended business and one supported source are required;
+- scope is an explicit customer choice, never silently inferred;
+- location/product scope requires one exact target;
+- whole-brand/location requires at least one offering; product target fulfills the offering meaning for product scope;
+- service channels and market reach/area remain required because the current question handoff uses them;
+- material confirmed changes invalidate the question pack;
+- approving facts never starts observations;
+- `NUAVE_NEW_AUDIT_ENABLED` remains the single emergency off switch; do not add a parallel intake-flag matrix.
+
+## 5. Target experience
+
+### 5.1 Entry and reading
 
 Keep the current neutral entry:
 
@@ -160,508 +123,403 @@ Keep the current neutral entry:
 - `Link website`
 - `Periksa`
 
-Both remain required. Source validation and SSRF/rate-limit protections remain unchanged.
+Keep one honest reading state. It may say that Nuave is checking the source and preparing business information, but must not imply success before the boundaries return. Synthetic mode remains unmistakably labelled as not reading the source.
 
-### 7.2 Reading
+A source that cannot be read is a failure state, not an empty successful understanding.
 
-Keep one honest processing state. Its messages must describe only work actually performed:
+### 5.2 `Ini yang Nuave pahami`
 
-- checking the submitted source;
-- identifying the business;
-- preparing products, customer context, market, and alternatives when supported.
+Keep the summary short enough to read—normally five or six rows, not a dashboard:
 
-Synthetic mode must continue to say that no source was read. A loading animation must not imply successful extraction before the boundary returns.
+1. **Business** — submitted name, discovered name when different, canonical source.
+2. **Audit focus** — whole brand, one location, or one product/service.
+3. **Category and main offers** — primary category and selected principal offerings.
+4. **How and where customers receive it** — service channels and market reach/area.
+5. **Optional customer context** — target customer, needs, or considerations only when prepared or deliberately added.
+6. **Optional alternatives and important fact** — comparison suggestions and one must-be-correct public fact behind `Tambah detail`.
 
-### 7.3 Understanding summary
+Do not show internal schema names, confidence percentages, unsupported praise, or a generic AI biography.
 
-The first stable screen after successful preparation is **`Ini yang Nuave pahami`**. It shows compact sections rather than a long editable form:
+### 5.3 Identity without a matching algorithm
 
-1. **Business identity**
-   - submitted name;
-   - discovered display name when different;
-   - canonical source;
-   - source description or icon when safely available;
-   - an explicit identity warning when the source did not support the submitted name.
-2. **Audit focus**
-   - one explicit choice: whole brand, one location, or one product/service;
-   - extracted offerings become product choices;
-   - detected locations appear when responsibly available, otherwise the location fallback is explained.
-3. **Business category and offers**
-   - primary category proposal;
-   - selected principal offerings;
-   - additional extracted offerings behind a disclosure.
-4. **Customer context**
-   - likely target customer;
-   - needs or situations that prompt a search;
-   - decision considerations, when supported.
-5. **Market and service context**
-   - extracted market wording as a proposal;
-   - service channels remain a compact fixed-choice clarification if extraction cannot support them.
-6. **Alternatives**
-   - up to three suggested comparable businesses;
-   - category-alternative mode when no responsible named suggestion exists.
-7. **Unknowns and conflicts**
-   - only material required gaps;
-   - source conflicts that must be resolved;
-   - optional unknowns are disclosed compactly, not turned into required questions.
+Show the name the customer typed. When the source returns a different display name, show it as a second selectable option with the typed name preselected.
 
-Identity mismatch detection is new work. The current identity `confidence` boolean only reports that a display name was found; it does not establish that the submitted and discovered names refer to the same entity. The specification must define a conservative deterministic comparison and route uncertain cases to confirmation rather than treating `confidence: true` as a match.
+The customer sees both before confirmation. Selecting or retaining one settles the identity. Do not build fuzzy name matching or block solely because the strings differ. Block only when the source could not be read or no valid name/source remains.
 
-The active summary is conditioned on the selected focus. Changing focus updates which proposals are active before confirmation; it does not confirm or discard anything by itself. **Ya, sudah tepat** remains unavailable until a focus is selected and every visible conflict is resolved.
+Owner-entered identity stays labelled **Dari Anda**; a discovered display name stays **Dari website Anda** even after acceptance.
 
-Primary action:
+### 5.4 Focus and targets
 
-- **Ya, sudah tepat** — confirms every visible active non-conflicting proposal exactly as displayed.
-
-Secondary action:
-
-- **Perbaiki bagian tertentu** — exposes card-level correction controls without leaving the understanding context.
-
-Batch confirmation cannot include hidden values. Collapsed additional offerings are not confirmed unless their selected state is visible before confirmation.
-
-### 7.4 Audit-focus behavior
-
-Audit scope remains an explicit customer decision inside the understanding summary because it is intent, not a fact Nuave should silently infer:
+Scope is explicit intent inside the summary:
 
 - Brand secara keseluruhan
 - Satu lokasi
 - Satu produk atau layanan
 
-For product scope, extracted offerings become product choices before a text fallback appears.
+For product scope, reuse extracted offerings as product choices before showing a text fallback.
 
-For location scope, detected locations may be offered when responsibly available. The first release may retain manual name and distinguishing address when no structured location candidate exists. It must state that Nuave could not identify a specific location rather than presenting an empty list as successful preparation.
+For location scope, offer a location only when existing preparation responsibly provides one. The current extraction has no reliable location list, so the first release may use a focused name-and-address fallback. State that Nuave could not identify a specific location; do not show an unexplained empty choice list.
 
-### 7.5 Clarification queue
+Changing scope updates active summary rows from retained preparation. It does not copy whole-brand coverage into a branch or silently discard unrelated facts.
 
-After scope is chosen, derive a short queue from unresolved active meanings.
+### 5.5 Clarify required empty meanings only
 
-Examples:
+The gap rule is deliberately simple:
 
-- category has two plausible proposals → choose one;
-- local market is evident but exact area is missing → choose or add the area;
-- no service-channel proposal exists → select one or more fixed options;
-- no comparison business exists → choose category alternatives or add one.
+> Ask only when an active required meaning is empty.
 
-Conflicts are resolved on the understanding summary before batch confirmation; they do not enter the post-confirmation clarification queue.
+The first release does not create a clarification because evidence text failed to match, optional context is absent, a suggestion was omitted, or a confidence score is low.
 
-The queue is recalculated after a correction. It is not a fixed route and does not silently skip a required meaning.
+Typical clarifications:
 
-The customer sees progress as a small count such as `2 hal perlu dipastikan`, not the current four-chapter representation of a fixed questionnaire.
+- no usable category;
+- no offering for whole-brand/location scope;
+- no selected product/location target for its scope;
+- no service channel;
+- no market reach, or no area for an area-based reach.
 
-### 7.6 Final confirmation
+Render unresolved items in one persistent `Perlu dipastikan` stage, not one route screen per field. Each item explains in one sentence why it affects the audit and offers business-specific or fixed choices before `Tidak ada yang cocok`.
 
-Show one compact final projection of the confirmed active meanings. Every row remains directly editable. The primary action remains **`Buat pertanyaan audit`**.
+After clarification, return to the same summary. There is no additional final-review screen.
 
-The final confirmation must not introduce a new field or value. It is the exact projection that will be frozen and sent to question generation.
+### 5.6 One confirmation
 
-## 8. Minimal prepared-understanding contract
+When required meanings are valid, the primary action is:
 
-Do not route the raw provider response directly into React components. Introduce one small application-owned prepared-understanding value at the existing extraction-to-intake seam.
+> **Sudah sesuai — buat pertanyaan audit**
 
-A field needs only these semantics:
+It atomically confirms every visible active proposal exactly as shown, freezes that version, and starts question preparation. Hidden, collapsed-unselected, optional-missing, or inactive values do not enter confirmed state.
+
+If corrections or clarifications changed the draft, the updated summary remains visible before this action. Questions still receive their own review, editing, and approval before audit start.
+
+## 6. Required and optional meanings
+
+| Meaning | First-release behavior |
+|---|---|
+| Identity and primary source | Required. Show entered and discovered names when different; customer confirmation chooses the intended identity. |
+| Scope | Required explicit choice. Never inferred from homepage prominence. |
+| Location/product target | Required only for its scope. Product reuses offerings; location has an honest manual fallback when no candidate exists. |
+| Category | Required. Preselect extracted category; ask only when empty or customer chooses to edit. |
+| Offerings | At least one for whole-brand/location. Product target fulfills this meaning for product scope. Avoid collecting the full catalogue. |
+| Service channels | Required fixed multi-select until extraction provides a trustworthy structured field. |
+| Market reach/area | Required. Use prepared market wording when available; area-based reach requires an area. |
+| Target customer and customer needs | Optional. Show when prepared; `Tambah detail` when absent. Never force a persona or demographic description. |
+| Decision considerations | Optional. Keep buyer preference distinct from business capability. |
+| Competitors | Optional. Show suggestions when present; unknown is valid and non-blocking. Never equate unknown with no competitors. |
+| Must-be-correct fact/differentiator | Optional, owner-attributed, with existing sensitive-text protections. |
+
+The direct-ten writer already represents absent customer context as unknown and does not require a named competitor. If later question-quality evidence shows an optional meaning must become required, that is a separate product decision.
+
+## 7. Preparation and data continuity
+
+### 7.1 Inspect retained real drafts before code
+
+Before finalizing the specification or summary rows, inspect the extraction drafts retained from already authorized runs:
+
+- record which fields are populated, empty, or misleading;
+- note whether evidence records are useful enough for an optional source disclosure;
+- check whether target customer/context would be absent on most cases;
+- record only field-level observations and counts in public planning—never raw business/provider content.
+
+The known private evidence folders exist, but they are ignored/restricted and were not readable in this planning environment. An authorized reviewer with access should perform this check. If no usable retained draft is available, request one preparation-only call under a new explicit allowance before implementation—not after the interface is built.
+
+This inspection may simplify which optional rows appear. It must not expand the first release into a five-business evaluation or a retrieval rewrite.
+
+### 7.2 Indonesian extraction display text
+
+Change the production extraction instruction from English explanatory text to concise natural Indonesian while preserving official brand names, product names, place names, URLs, and exact source evidence as published.
+
+This uses the existing extraction call. It is not a translation call or model change. Add a rich deterministic fixture assertion that market, customer, and differentiator display text is Indonesian while official names remain unchanged.
+
+### 7.3 Minimal prepared-understanding shape
+
+Do not route raw provider responses into React. Add one small application-owned representation:
 
 ```ts
 type PreparedMeaning<T> = {
   proposed: T | null;
-  basis: "observed" | "suggested" | "unknown" | "conflict";
-  evidence: EvidenceReference[];
+  origin: "website" | "nuave";
   alternatives: T[];
+  applicability: "whole" | "target";
+};
+
+type ConfirmedMeaning<T> = {
+  value: T;
+  origin: PreparedMeaning<T>["origin"] | "owner";
 };
 ```
 
-This is not a generalized knowledge graph. It exists only to preserve information the current extraction already returns and to support honest confirmation. A list field uses one `PreparedMeaning` per displayed item so offerings with different evidence or status are not collapsed into one field-level label.
+Prepared values never have owner origin. A customer selection that accepts an unchanged proposal retains its prepared origin; typed or edited meaning becomes `owner` in confirmed state.
 
-The session keeps two separate values:
+Keep separately:
 
-- `preparedUnderstanding` — immutable result of the current source-version preparation;
-- `confirmed` — customer-approved active meaning used by questions and audit.
+- `preparedUnderstanding` — immutable for the accepted source version;
+- `confirmed` — active customer-approved meaning;
+- the original extraction evidence/warnings — retained for restricted evidence and an optional summary-level `Lihat sumber`, not for per-item gating.
 
-Customer edits update `confirmed` and its provenance. They do not mutate `preparedUnderstanding`.
+### 7.4 Three field-based provenance labels
 
-### 8.1 Initial field mapping
+No per-item evidence matching is required in the first release.
+
+| Label | Field-based rule |
+|---|---|
+| **Dari website Anda** | Submitted-source identity metadata and extracted fields defined as public business facts, such as category, offerings, market wording, official names, and variants. |
+| **Saran Nuave** | `target_customer`, customer needs/decision considerations when interpretive, `usp`, `similar_businesses`, and any normalized summary wording. |
+| **Dari Anda** | Anything the customer typed, selected as a correction, or edited. |
+
+Keep source URLs available behind one small disclosure when the extraction returned evidence. Do not downgrade a non-empty required proposal or ask the customer again because model-authored evidence wording did not exactly match normalized Indonesian display text.
+
+### 7.5 Field map
 
 | Customer meaning | Existing source | First-release treatment |
 |---|---|---|
-| Submitted identity | entry + `SourceIdentity` | Show submitted and discovered identity; require resolution only on mismatch/ambiguity |
-| Official source | canonical identity URL + extraction sources | Keep submitted canonical source; do not add unverified official links |
-| Category | `ExtractionDraft.category` + evidence | Visible proposed primary category; alternatives only if later supported |
-| Offerings/product candidates | `verified_offerings` | Visible and selected as proposals; product scope reuses them as target choices |
-| Target customer | `target_customer` | Preserve as distinct: observed when evidence supports it, otherwise suggested or unknown; never collapse into customer needs |
-| Customer needs | `verified_customer_needs` | Proposed chips or short rows |
-| Decision considerations | `verified_decision_criteria` | Proposed chips; remain distinct from service channels |
-| Market | `market_context` + evidence | Show wording; ask a structured reach/area clarification only when the downstream contract needs it |
-| Comparison candidates | `similar_businesses` | Preserve name and source URL; offer category-alternative fallback |
-| Name variants | `brand_name_variants` | Retain for question identity protection; show only when useful for correction |
-| Differentiator | `usp` + evidence | Optional proposed public fact; do not require it |
-| Conversion action | `conversion_action` | Retain only if a current downstream consumer uses it; otherwise omit from UI and handoff |
-| Accuracy questions/warnings | `known_accuracy_questions`, `warnings` | Convert only material actionable items into conflicts or clarifications; do not dump provider prose into UI |
-| Evidence | `evidence[]` | Attach relevant source reference to each displayed proposal; keep copied content minimal |
-| Customer-only public fact | none | Starts empty and optional |
-| Service channels | no reliable current extraction field | One compact fixed-choice clarification; do not infer silently in the first release |
-| Locations | no reliable current list | Use a supported candidate only when available; otherwise focused manual fallback |
+| Identity | entry + `SourceIdentity` | Show typed and discovered names; typed preselected when different |
+| Source | canonical identity URL | Keep the submitted canonical source; no automatic extra official links |
+| Category | `category` | Visible preselected proposal |
+| Offerings/product targets | `verified_offerings` | Visible preselected items; reused as product choices |
+| Target customer | `target_customer` | Optional **Saran Nuave** |
+| Customer needs | `verified_customer_needs` | Optional suggestions/chips |
+| Decision considerations | `verified_decision_criteria` | Optional suggestions, distinct from capabilities |
+| Market | `market_context` | Proposed wording; compact structured reach/area choice only when required |
+| Comparison candidates | `similar_businesses` | Optional suggestions preserving source URL; never web-verified by implication |
+| Name variants | `brand_name_variants` | Retain for identity protection; display only when useful |
+| Differentiator | `usp` | Optional **Saran Nuave**; no superiority claim |
+| Conversion action | `conversion_action` | Keep only if an existing downstream consumer uses it |
+| Warnings/accuracy questions | `warnings`, `known_accuracy_questions` | Convert only a concrete required-empty or source-failure issue; never dump provider prose |
+| Service channels | no reliable structured field | Compact required fixed choices |
+| Locations | no reliable list | Honest focused manual fallback in first release |
+| Public must-be-correct fact | none | Optional owner input behind `Tambah detail` |
 
-### 8.2 Evidence matching
+### 7.6 Confirmation, versioning, and no fabricated completeness
 
-Evidence records are matched to a proposal by an approved field-name map and conservative normalized-value equality. The specification must define that map per field. Initial normalization should be deterministic only: Unicode normalization, trim, whitespace collapse, and locale-insensitive case folding. Do not use a second model call, fuzzy similarity, or substring matching to upgrade a proposal to **Ditemukan di website**. List values are matched item by item.
+`Sudah sesuai — buat pertanyaan audit`:
 
-If no supporting evidence can be matched:
+1. copies every visible selected active proposal into confirmed state;
+2. preserves field origin;
+3. excludes optional empty, hidden, inactive, and unselected values;
+4. validates required meanings for the explicit scope;
+5. advances the exact frozen version to question generation.
 
-- factual fields become **Saran Nuave** or **Perlu dipastikan**, not **Ditemukan di website**;
-- a required unsupported value enters the clarification queue;
-- an optional unsupported value is omitted or shown as a suggestion;
-- provider warnings never become customer facts.
+Advance `LOCAL_INTAKE_INPUT_VERSION` and the server-side local-schema literal together. Update the GLM preparation adapter, question-pack persistence, payload builders, and focused tests. Reject old in-progress intake/pack state with a fresh confirmation requirement; preserve completed historical evidence and reports under their original contract.
 
-Distinct supported values for the same single-value field form a conflict. A warning alone may request review but must not invent the conflicting alternative.
-
-The application does not need to expose exact excerpts in the primary summary. A small source disclosure is enough. Raw provider bodies remain subject to the existing restricted-evidence rules.
-
-## 9. Confirmation and routing rules
-
-### 9.1 Batch confirmation
-
-`Ya, sudah tepat` performs one atomic transition:
-
-1. copy every visible selected proposal into confirmed state;
-2. attach its basis and source references;
-3. leave unknown fields unconfirmed and fail closed if an unresolved conflict somehow reaches this transition;
-4. compute active requirements from the explicit scope;
-5. create the clarification queue;
-6. advance to the first unresolved material question or final confirmation.
-
-It makes no provider call.
-
-### 9.2 Required meanings
-
-The active minimum remains bounded:
-
-- exact brand and primary public source;
-- explicit audit scope;
-- exact location or product target when that scope is chosen;
-- customer-language category;
-- at least one offering for whole-brand/location, or the selected product target;
-- at least one service channel;
-- market reach, plus area when area-based;
-- named comparison candidates or explicit category alternatives.
-
-Customer needs, target customer, and decision considerations materially improve question relevance. They should be prepared and confirmed when available, but an unsupported value must not be invented. If the approved specification decides one is mandatory for useful questions, the clarification uses suggested choices plus a text fallback rather than a blank text area.
-
-The optional public fact remains optional and should be reachable from **Tambah informasi penting** on final confirmation, not a mandatory empty screen.
-
-### 9.3 Dependency changes
-
-Preserve the current dependency discipline:
-
-- identity/source change creates a new preparation version and invalidates all unconfirmed prepared values;
-- scope change invalidates only target-dependent confirmations;
-- product/location target change re-evaluates category, offerings, customer context, market, and comparison relevance;
-- category change re-evaluates offerings and comparisons;
-- material confirmed changes invalidate the generated question pack;
-- Back or Cancel restores the last committed snapshot.
-
-Do not force the customer through every unaffected editor after one correction. Return to the summary with only newly unresolved meanings highlighted.
-
-### 9.4 Honest unknowns
-
-Do not satisfy an older schema minimum with semantically different data. In particular:
+Remove semantically false compatibility fallbacks:
 
 - service channels are not buyer decision criteria;
 - category plus market is not a confirmed target customer;
-- a category fallback comparator is not a named competitor;
-- an entered brand name is not a discovered identity.
+- unknown competitor is not a customer claim of no competitors;
+- entered name is not independently discovered identity.
 
-If a downstream boundary still requires one of these values, either obtain it through one focused clarification or update the boundary to represent an explicit unknown. Do not manufacture completeness in an adapter.
+If an old boundary requires a missing meaning, represent it as unknown or obtain it through a required clarification. Do not manufacture completeness.
 
-## 10. Implementation approach
+## 8. Corrections and dependency rules
 
-All implementation should land as one complete product PR because every merge to `main` deploys. Intermediate commits may be reviewable, but no partial summary/data migration should be merged into the live journey.
+Reuse the current correction mechanics rather than building a second state system:
 
-### Work block A — approve the behavior contract
+- identity/source change creates a new preparation version;
+- scope change invalidates only target-dependent confirmations;
+- product/location target change re-evaluates target-specific category, offerings, market, and context;
+- category change re-evaluates offerings and optional comparison suggestions;
+- material confirmed change invalidates the generated question pack;
+- Save returns to the updated summary;
+- Back/Cancel restores the last committed version;
+- reload or duplicate clicks never repeat settled provider work.
 
-Before code:
+Every text fallback uses bounded lengths and existing sensitive-data screening before commit, persistence, or model use.
 
-1. Record the founder decision that summary-first confirmation supersedes the current fixed-screen skip rule.
-2. Resolve the open decisions in section 16.
-3. Create the next available numbered specification from `docs/templates/SPEC.md`.
-4. Mark it **Approved** before implementation.
-5. Keep this plan as review evidence; do not silently promote it to canonical authority.
+## 9. Implementation sequence
 
-Done when the user outcome, active required meanings, batch-confirm semantics, fallback behavior, and acceptance criteria are approved.
+Use one approved specification and one complete product PR because every merge to `main` deploys. Intermediate commits may be reviewed locally, but no half-connected journey lands on `main`.
 
-### Work block B — preserve the prepared understanding
+### Step 0 — evidence and founder decisions
 
-Likely code surfaces:
+1. Inspect retained real extraction drafts as described in §7.1.
+2. Approve or amend the replacements in §4 and decisions in §12.
+3. Create the next available numbered spec from `docs/templates/SPEC.md`.
+4. Mark the spec **Approved** before code.
 
+### Work block A — stop losing data
+
+Likely surfaces:
+
+- `src/lib/audit/openai.ts`
 - `src/lib/intake/preparation.ts`
 - `src/lib/intake/state.ts`
-- `src/lib/intake/fixtures.ts` or a replacement test fixture module
-- `src/lib/audit/types.ts` only where the existing extraction contract needs a bounded correction
 - `src/lib/intake/local-session.ts`
+- focused preparation/state tests
 
-Deliverables:
+Deliver:
 
-- application-owned prepared-understanding type;
-- lossless mapping of relevant `SourceIdentity` and `ExtractionDraft` fields;
-- field-level basis/evidence/unknown/conflict semantics;
-- separate immutable prepared and mutable confirmed snapshots;
-- a new session version that rejects incompatible old state safely;
-- unit tests proving no fixture facts leak into an entered business.
+- Indonesian extraction display text;
+- full relevant draft and discovered identity carried through;
+- proposals preselected but unconfirmed;
+- prepared and confirmed snapshots separated;
+- no fixture-specific facts in entered-business state;
+- old browser state rejected safely.
 
-No customer-facing route changes should be merged separately from the complete PR.
+A founder can inspect this checkpoint locally even if it still uses existing editors; it must not merge separately.
 
-### Work block C — replace the linear questionnaire with summary plus clarifications
+### Work block B — summary, focus, and required-empty clarification
 
-Likely code surfaces:
+Likely surfaces:
 
 - `src/lib/intake/IntakeJourney.tsx`
 - `src/lib/intake/navigation.ts`
 - `src/lib/intake/screens-bab1.tsx`
 - `src/lib/intake/screens-bab2.tsx`
-- focused new components under `src/lib/intake/` or existing product-selection primitives
-- existing intake CSS/tokens only as needed
+- existing product-selection primitives and intake styles
 
-Reuse current controls and correction screens where possible. The current category, offering, market, comparison, and target editors are useful as focused correction surfaces. They should no longer define the mandatory normal route.
+Deliver:
 
-Deliverables:
+- short understanding summary;
+- explicit focus/target choice;
+- inline or existing per-row correction surfaces;
+- one `Perlu dipastikan` stage for required empty meanings;
+- optional details behind `Tambah detail`;
+- one confirmation action that starts question preparation;
+- keyboard, focus, and accessible-name behavior preserved through existing shadcn/Base UI controls.
 
-- understanding summary;
-- batch confirmation;
-- explicit scope selection;
-- adaptive clarification queue;
-- inline/per-card correction;
-- compact final confirmation;
-- truthful progress and failure copy;
-- keyboard and screen-reader behavior equivalent to the existing accessible controls.
+### Work block C — exact handoff
 
-### Work block D — make the downstream handoff semantically complete
-
-Likely code surfaces:
+Likely surfaces:
 
 - `src/lib/intake/frozen-intake.ts`
 - `src/lib/intake/local-questions.ts`
 - `src/lib/intake/glm-local.ts`
 - `src/lib/audit/question-facts-v3.ts`
-- affected request validation, payload builders, persistence parsers, and focused tests
+- request validation, payload builders, persistence parsers, and focused tests
 
-Deliverables:
+Deliver:
 
-- confirmed target customer, needs, and decision considerations remain distinct;
-- advance `LOCAL_INTAKE_INPUT_VERSION` and the server-side `question-facts-v3.ts` local-schema literal together;
-- revise the persisted question-pack/session contract where it embeds the old frozen input, so an old pack or audit record is rejected rather than reinterpreted;
-- update the GLM preparation adapter and every test/payload builder that validates the frozen wire shape;
-- choose an explicit backward policy: preserve completed old evidence as historical data, but require a fresh confirmation/preparation for an old in-progress intake rather than migrating its meaning silently;
-- question generation receives every confirmed meaning it knows how to use;
-- unknowns remain explicit;
-- no service-channel/category fallbacks masquerade as different facts;
-- fingerprinting and fact-version invalidation still bind questions to the exact visible final confirmation;
-- no change to the direct-ten instruction, models, provider, observation method, or report method.
+- confirmed target customer, needs, and criteria remain distinct when present;
+- optional absence remains unknown;
+- extend frozen comparator mode with `unknown` and map it to the existing unresolved comparison meaning; it no longer blocks direct-ten generation or claims category alternatives/no competitors on the customer's behalf;
+- frozen input/server literal and persisted pack versions advance together;
+- exactly what the summary confirmed reaches the writer;
+- no direct-ten instruction, provider, observation, or report change.
 
-### Work block E — verification and one live preparation review
+### Work block D — offline verification and one live preparation
 
-Offline first:
+1. Run focused tests while iterating.
+2. Run `npm run validate:fast`.
+3. Run `npm run verify` before branch handoff.
+4. Inspect the complete diff and generated artifacts.
+5. Only after explicit authorization, perform one live identity + extraction preparation for a founder-chosen public business; do not continue to questions/audit unless separately authorized.
 
-1. focused unit and component tests;
-2. browser scenarios in section 12;
-3. `npm run validate:fast` during iteration;
-4. `npm run verify` before branch handoff;
-5. full diff and generated-artifact review.
+For any missing information in the live check, classify the failing layer:
 
-Only after offline acceptance and explicit founder authorization:
+1. absent from the website;
+2. source access/fetch failed;
+3. extraction missed available content;
+4. mapping dropped extracted content;
+5. summary hid mapped content.
 
-- run one live identity + extraction preparation for a named public business;
-- stop before question generation unless separately authorized;
-- founder reviews accuracy, provenance labels, correction effort, and typed-character count;
-- record provider calls, cost, source, date, corrections, and outcome;
-- do not publish the business or findings.
+Fix only the named layer and add one regression example. Do not repeatedly tune the prompt or add page retrieval without evidence that extraction lost available source information.
 
-## 11. Failure and recovery
+## 10. Failure and recovery
 
-| Situation | Customer experience | Preserved state | Prohibited behavior |
-|---|---|---|---|
-| Source is invalid | Field-level URL correction | Entered name | No provider call; no guessed URL |
-| Identity source cannot be fetched | Explain that the source could not be read; retry or change source | Entered values and prior committed session | Do not show "brand found" |
-| Identity/extraction is rate-limited or its limiter is unavailable | Show the existing Indonesian wait/unavailable state and an explicit retry; do not fall through to manual as if reading succeeded | Entered values, committed session, and any completed preparation stage | Do not make a provider call after rejection or hide `429`/`503` as an empty draft |
-| Extraction returns no usable draft | Show the confirmed identity and a compact minimal clarification set | Identity, telemetry, source | Do not render an apparently populated summary or import fixture facts |
-| Extraction is partial | Show supported proposals and only material gaps | Every supported proposal | Do not discard successful extraction because one field is missing |
-| Submitted and discovered names differ | Show both and require a choice/correction | Both values and source | Do not silently prefer either |
-| Sources conflict | Show the conflicting values and ask which is current | Evidence references | Do not choose the cleaner value automatically |
-| No branch is detected | Focused branch name + distinguishing address fallback | Whole-business understanding | Do not imply that no branches exist |
-| No product is detected | Offer extracted offerings if available, then text fallback | Whole-business understanding | Do not force product scope to continue without an exact target |
-| No comparison candidate is credible | Offer category alternatives | Category and market | Do not invent a named competitor |
-| Refresh during preparation | Resume the same request state or show an honest interrupted state under existing limits | Stable committed state and telemetry | Do not silently repeat a paid extraction |
-| Old session schema is restored | Explain that preparation must be restarted; retain safe entry values where practical | Brand and URL if safely parseable | Do not reinterpret old state as the new contract |
-| Correction changes material meaning | Invalidate questions and show what needs reconfirmation | Prepared snapshot and unaffected confirmations | Do not keep a stale approved pack |
+| Situation | Required behavior |
+|---|---|
+| Invalid source | Field-level correction; no provider call and no guessed URL |
+| Source unreadable | Explain failure; retry or change source; never show a found-business summary |
+| `429`/`503` rate-limit state | Preserve entry/stable work, show wait/unavailable message and explicit retry; no downstream provider call |
+| Empty extraction | Keep readable identity and show the compact required-empty clarification set; no fixture facts |
+| Partial extraction | Keep every prepared value; ask only for required empty meanings |
+| Typed/discovered names differ | Show both; typed name preselected; one visible confirmation settles it |
+| No product candidate | Offer extracted offerings if available, then focused text fallback |
+| No location candidate | Focused name/address fallback without discarding whole-business preparation |
+| No competitor suggestion | Continue without asking; unknown stays unknown |
+| Correction changes material meaning | Invalidate stale questions and highlight affected summary rows |
+| Refresh/Back/double-click | Restore stable state; do not silently repeat preparation or generation |
+| Old in-progress session | Retain safe name/URL when practical, discard incompatible meaning, and require fresh preparation/confirmation |
+| Audit already started/completed | Preserve its exact frozen inputs, observations, report, and downloads; never migrate it |
+| Sensitive free text | Stop before persistence/model use and apply the existing restriction path |
 
-## 12. Verification matrix
+## 11. Minimal verification and acceptance
 
-### 12.1 Unit and contract tests
+The eventual specification should use a compact outcome-focused set.
 
-- rich extraction maps every supported meaning and evidence reference;
-- partial extraction preserves supported fields and marks only real gaps;
-- empty/synthetic extraction imports no business facts;
-- discovered/submitted identity mismatch creates a conflict;
-- prepared proposals are visible and selected but unconfirmed before batch action;
-- batch confirmation includes exactly the values shown;
-- hidden or collapsed-unselected values are excluded;
-- clarification queue contains only active unresolved required meanings;
-- whole-brand, location, and product dependencies invalidate only affected meanings;
-- prepared and confirmed snapshots remain separate;
-- stale session and frozen-wire versions fail safely;
-- frozen input reproduces final confirmation exactly;
-- target customer, needs, and criteria reach question facts without semantic substitution;
-- every new text fallback applies length and sensitive-data guards before commit/persistence;
-- identity/extraction `429` and `503` responses preserve stable work and make no downstream provider request;
-- a material correction invalidates the pack fingerprint.
+### AC-01 — rich whole-brand effort
 
-### 12.2 Component/accessibility tests
+From blank name/URL entry and intercepted rich identity/extraction responses:
 
-- provenance labels have accessible names and do not rely on color;
-- summary sections and correction disclosures have logical heading order;
-- batch confirmation is keyboard-operable;
-- conflict and unknown states move focus to the responsible control;
-- chips/cards expose selected and confirmation state correctly;
-- Back/Cancel returns to the previous committed understanding;
-- desktop and 350–390 px mobile layouts do not hide confirmed values or actions.
+- the ordinary `/audit` route shows a populated Indonesian summary;
+- the customer types nothing after `Periksa`;
+- the journey stays within four substantive decisions and five selection/continue actions;
+- one confirmation proceeds to question review.
 
-### 12.3 Browser scenarios
+The rich payload contains supported identity, category, at least two offerings, a nationwide or international market context that needs no area choice, and optional customer/decision context. Browser tests intercept the existing boundaries and still exercise production mapping/state; no live-selectable test switch is added. A separate partial local-business case covers area selection without weakening the rich-case budget.
 
-The current synthetic extraction intentionally returns an empty draft, so it cannot prove the prepared-confirmation path. Browser tests should intercept the existing identity and extraction requests with deterministic rich, partial, conflict, and empty response payloads. Those payloads must still pass through the production client mapping and state transitions. Do not add a runtime query parameter, production-only test branch, or synthetic response that can be selected in live mode.
+### AC-02 — exact visible continuity
 
-Define the **rich** payload as one supported identity plus evidence-backed category, at least two offerings, target customer, customer need, decision consideration, market context, and one comparison suggestion. Define partial/conflict payloads explicitly beside it so "rich" is not left to each test author's judgment.
+Exactly the visible selected values confirmed on the summary reach:
 
-1. **Rich whole-brand preparation**
-   - enter name + URL;
-   - see populated understanding;
-   - confirm in one action;
-   - choose/confirm scope and any compact private-intent choices;
-   - reach final confirmation with zero additional typed characters.
-2. **Partial local business**
-   - supported category/offers remain populated;
-   - only missing reach/area or service meaning is asked;
-   - no duplicate category/offering question appears.
-3. **Product scope**
-   - choose one extracted offering as the product target;
-   - general offerings screen is not shown;
-   - downstream facts concern that target.
-4. **Location scope without detected locations**
-   - one focused name/address fallback appears;
-   - all unaffected prepared understanding remains intact.
-5. **Identity conflict**
-   - both names are visible;
-   - final confirmation is blocked until resolved.
-6. **Empty extraction/manual fallback**
-   - no fictional or fixture fact appears;
-   - minimum clarification path still reaches final confirmation.
-7. **Correction and resume**
-   - edit one summary card, reload, and return without another extraction;
-   - generated questions invalidate only after a material saved change.
-8. **Failure/retry accounting**
-   - one preparation attempt per accepted source version;
-   - interrupted/retried attempts remain in telemetry;
-   - no hidden provider request.
+- confirmed intake;
+- frozen input;
+- question facts;
+- direct-ten writer context.
 
-### 12.4 Experience budget
+Target customer and decision considerations reach the writer when confirmed. Hidden, inactive, optional-empty, rejected, and unselected values do not.
 
-For this budget, a **content stage** is one top-level journey state. The clarification queue is one persistent `Perlu dipastikan` stage containing the unresolved cards; it must not become one route screen per field. A **substantive decision** is a selection or correction that changes confirmed business meaning; navigation buttons do not count.
+### AC-03 — partial and empty preparation
 
-For the rich whole-brand browser fixture, automated assertions should enforce:
+Only active required empty meanings are clarified. Optional customer context, competitors, and public fact never block. Entered businesses never receive fixture facts.
 
-- exactly two required text fields before preparation;
-- zero typed characters after `Periksa`;
-- no more than three customer-visible content stages between reading and question review: understanding, at most one clarification stage, and final confirmation;
-- no more than four substantive decisions after reading, including focus and batch confirmation;
-- no repeated request for a meaning already visible and batch-confirmed;
-- one extraction request for one accepted source version.
+### AC-04 — scopes
 
-For product scope with extracted offerings, zero additional typing remains the target. Location scope may use the focused address fallback until structured location extraction is separately justified. Partial fixtures have no arbitrary decision-count target, but every clarification card must map to one active unresolved requirement.
+- Product scope selects an extracted offering without typing when available.
+- Location scope shows the honest manual fallback when no location candidate exists.
+- Target-specific state never inherits unsupported whole-brand coverage.
 
-## 13. Measurement without a new analytics system
+### AC-05 — correction, recovery, and cost
 
-The initial trial can be judged through automated action budgets and founder-observed sessions. Do not add an analytics vendor for this work.
+Reload, Back, duplicate click, and correction do not repeat settled provider requests. Material edits invalidate stale question packs. Old incompatible sessions fail safely. Rate-limit and interrupted states preserve honest telemetry and prior stable work.
 
-Record for each authorized usability run:
+### AC-06 — existing complete path
 
-- typed characters after initial name and URL;
-- number of substantive choices after preparation;
-- number and type of corrected proposals;
-- time from extraction completion to final confirmation;
-- fields most often missing or wrong;
-- whether the generated questions reflect the confirmed customer context;
-- preparation provider calls and cost;
-- whether the customer says the summary represented what the website currently communicates.
+Question review/edit → explicit audit approval → ten observations → report → JSON/PDF controls remains intact. `npm run verify` passes offline.
 
-If remote funnel collection is later approved, reuse the existing privacy-safe event allowlist and send only screen/state IDs, counts, booleans, and timing. Never send brand names, URLs, answer text, source content, or correction text as analytics.
+### AC-07 — founder walkthrough
 
-## 14. Rollout and repository safety
+On desktop and phone, the founder answers:
 
-- Refresh `origin/main` immediately before creating the implementation branch and again before final review.
-- Use the next available spec number; do not assume one while another agent may be drafting.
-- Preserve concurrent user and agent work. Never overwrite another candidate plan or implementation branch.
-- Build the complete replacement on one dedicated branch and one PR because `main` deploys after merge.
-- PR previews remain synthetic and must visibly say so.
-- Existing `NUAVE_NEW_AUDIT_ENABLED` remains the emergency off switch; do not create a permanent flag matrix for two intake implementations.
-- Before merge, bump/revise the intake session contract so old state cannot corrupt the new journey.
-- After merge, perform no live provider test without a separately stated allowance.
-- If the live preparation review finds material misinformation or excessive correction, use the existing off switch under founder authority and prepare a reviewed revert; do not silently restore an undocumented parallel journey.
-- Remove obsolete fixed-route code only after the replacement passes verification. Archive only when repository instructions require it; do not delete historical evidence.
+> "Does this feel like confirming a consultant's prepared understanding rather than filling a form?"
 
-## 15. Main risks and mitigations
+Record typed characters, substantive decisions, corrections, time to question review, provider calls, cost, and the failing layer for every missing material fact. Zero typing alone is not a pass if the summary is misleading.
 
-| Risk | Consequence | Mitigation |
-|---|---|---|
-| Domain-restricted web search misses source content | Empty or incomplete understanding | Partial-draft path; focused clarifications; do not add a crawler before evidence justifies it |
-| Prefilled proposals create false trust | Customer batch-confirms an incorrect fact | Provenance labels, visible selection, conflicts excluded from batch confirm, easy correction |
-| Summary hides too much detail | Customer cannot spot a wrong assumption | Material values remain visible; disclosure only for additional non-active items |
-| Adaptive routing silently skips required meaning | Weak or invalid question input | Derive queue from explicit active requirements; final frozen-input validation remains authoritative |
-| Existing brief minima encourage fabricated completeness | Irrelevant or misleading questions | Preserve semantic fields; clarify or represent unknown instead of substituting another meaning |
-| Scope expansion into extraction infrastructure | Long, risky rewrite | First release uses the current identity fetch and one extraction request |
-| Separate implementations drift | Higher maintenance and inconsistent sessions | Replace the route in one complete PR; reuse existing editors and controls |
-| Session migration breaks resume | Lost trial work | Explicit session version; safe rejection/restart; test reload and stale state |
-| Branch/product cases delay the whole outcome | Confirmation-first never ships | Reuse offerings for product; allow honest focused location fallback in first release |
-| Live testing spends or exposes data unexpectedly | Cost/privacy incident | Offline gate first; one named preparation-only authorization; private evidence; no publication |
+New summary/correction components must retain keyboard operation, focus handling, logical headings, and non-color-only labels. Assert those properties where new UI is introduced rather than creating a separate accessibility program.
 
-## 16. Founder decisions required before specification approval
+## 12. Founder decisions before specification approval
 
-The plan recommends the default shown for each decision.
+The plan recommends:
 
-1. **Supersede the fixed-screen skip rule?**
-   - Recommended: yes. Required meanings stay enforced, but prepared and confirmed meanings do not create separate mandatory screens.
-2. **Allow one batch confirmation for every visible selected proposal?**
-   - Recommended: yes. Hidden, unknown, and conflicting values are excluded.
-3. **Accept the current extraction mechanism for the first release?**
-   - Recommended: yes. Keep direct identity metadata plus one domain-restricted OpenAI extraction; evaluate a crawler only from observed failures.
-4. **Restore target customer and decision considerations as distinct confirmed meanings?**
-   - Recommended: yes. They materially affect question relevance and must not be replaced by needs or service channels.
-5. **Accept manual location fallback in the first release?**
-   - Recommended: yes. Product scope reuses offerings; structured location extraction should not block the core experience.
-6. **Make one customer-context meaning required when extraction has none?**
-   - Recommended: require one click-first customer need or target-context answer before questions, because the product's usefulness depends on realistic discovery intent. The specification should settle the exact minimum.
-7. **Adopt the rich-case experience budget in section 12.4?**
-   - Recommended: yes. It gives the implementation an observable customer-effort constraint rather than only a visual target.
+1. **Replace the fixed route with summary + required-empty clarification:** yes.
+2. **Use one visible batch confirmation and no duplicate final review on the happy path:** yes.
+3. **Use three field-based provenance labels with no per-item evidence matching:** yes.
+4. **Make competitors optional and preserve unknown distinct from none:** yes.
+5. **Keep customer context and decision criteria optional in the first release:** yes; inspect retained drafts before reconsidering.
+6. **Use the current identity/extraction mechanism and one existing extraction call:** yes; retrieval work only after a named live failure.
+7. **Accept product-from-offerings and manual location fallback for the first release:** yes.
+8. **Adopt the rich-case effort budget in AC-01:** yes.
 
-## 17. Acceptance gates for the eventual specification
+Once approved, record the replacements in `docs/DECISION_LOG.md`, update only directly conflicting active journey rules, and create one bounded next-numbered specification. Update `docs/NOW.md` only when this actually becomes the current implementation task.
 
-The approved specification should include at least these observable outcomes:
+## 13. Risks and controls
 
-- **AC-01 — Minimal entry:** public `/audit` asks only brand name and supported public URL before preparation.
-- **AC-02 — Prepared summary:** a rich extraction produces one evidence-labelled understanding summary before any fact questionnaire.
-- **AC-03 — Batch confirmation:** one action confirms exactly all visible selected non-conflicting proposals.
-- **AC-04 — Rich-case effort:** whole-brand rich preparation requires zero typing after entry and stays within the section 12.4 stage budget.
-- **AC-05 — Adaptive clarification:** only active unresolved material meanings are requested; confirmed values are not asked again.
-- **AC-06 — Product scope:** extracted offerings are available as product targets without retyping.
-- **AC-07 — Honest location fallback:** absent location candidates produce one focused manual fallback without discarding unrelated preparation.
-- **AC-08 — Provenance:** every displayed proposal is labelled as observed, suggested, customer-added, unknown, or conflicting; no unsupported item is labelled found.
-- **AC-09 — Semantic handoff:** final confirmation, frozen intake, question facts, and question-writer context retain the same active meanings, including target customer and decision considerations when confirmed.
-- **AC-10 — No fabricated completeness:** missing semantics stay unknown or cause a focused clarification; no adapter substitutes a semantically different field.
-- **AC-11 — Cost boundary:** one accepted source version causes at most the existing bounded extraction attempt/retry behavior and no new summary call.
-- **AC-12 — Recovery:** partial extraction, conflict, failure, correction, Back, and reload preserve stable work and never replay settled provider work silently.
-- **AC-13 — Isolation:** entered businesses never receive fictional fixture facts, and synthetic mode remains unmistakably labelled.
-- **AC-14 — Regression gate:** question approval, audit execution, report generation, JSON/PDF controls, cost telemetry, and existing off/rate-limit protections remain intact.
-- **AC-15 — Human review:** the founder completes desktop and mobile rich/partial walkthroughs and explicitly judges whether the journey feels like confirming a prepared consultant's work rather than filling a form.
+| Risk | Control |
+|---|---|
+| Thin extraction undermines the consultant experience | Inspect retained drafts first; one authorized live preparation; classify the failing layer before changing retrieval |
+| Preselection encourages careless acceptance | Keep five or six summary rows, visible selections, plain origin labels, and easy correction |
+| Field-based provenance overstates interpretation | Classify target customer, decision criteria, USP, comparison suggestions, and normalized prose as **Saran Nuave** |
+| Adaptive routing skips required meaning | Required list is deterministic; final freeze validates it |
+| Compatibility adapter invents useful-looking context | Remove semantic substitution; preserve unknown or ask only when truly required |
+| Branch/location work delays the outcome | Product reuses offerings; location uses an honest focused fallback |
+| Session changes corrupt active work | Advance versions together; reject incompatible in-progress state; preserve completed old runs |
+| Intake work delays report usefulness | Keep one spec, one PR, seven acceptance outcomes, and one live preparation check |
 
-## 18. Recommended next action
+## 14. Next action
 
-Review this candidate alongside the independently authored alternative without merging their prose. Decide section 16 explicitly, then ask the orchestrator to produce one reconciled, next-numbered draft specification with stable requirements and acceptance criteria.
+The founder reviews §4 and answers §12. An authorized reviewer inspects retained real extraction drafts and records only field-level observations. The orchestrator then writes the next-numbered draft specification directly from this plan and the accepted decisions—without another general strategy round.
 
-Do not begin implementation directly from this plan. The smallest useful implementation authority is an approved specification for one outcome:
+Do not implement directly from this plan. The bounded specification outcome is:
 
-> After brand name and URL, Nuave presents an evidence-backed understanding that a well-read business can confirm without further typing, and asks only the unresolved facts needed to prepare useful audit questions.
+> After brand name and URL, Nuave shows a short Indonesian understanding that a well-read business can confirm without further typing, asks only for required empty meanings, and sends exactly the visible confirmed brief into the existing question-review and audit path.
