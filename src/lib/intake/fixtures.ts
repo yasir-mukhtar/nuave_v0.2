@@ -493,7 +493,7 @@ const F4: IntakeFixture = buildFixture("s-brand", {
       itemDetail("fix-source", "kopisudut.id", "", false),
     ],
     [],
-    "Corrected card data; 'Periksa lagi' re-reads via s-crawl and resolves to the rich card.",
+    "Corrected card data; 'Periksa' re-reads via s-crawl and resolves to the rich card.",
   ),
   "s-crawl": empty(
     "Re-read after brand fix; resolves the corrected source, then returns to the refreshed card.",

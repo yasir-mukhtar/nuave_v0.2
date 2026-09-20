@@ -169,19 +169,21 @@ describe("s-brand (Konfirmasi Editorial, founder decision 2026-09-04)", () => {
   });
 });
 
-describe("s-brand-fix (Koreksi, founder decision 2026-09-04)", () => {
+describe("s-brand-fix neutral entry and correction copy", () => {
   const html = renderBab1("s-brand-fix");
 
-  it("uses the approved headline and supporting copy", () => {
-    expect(html).toContain("Perbaiki brand");
-    expect(html).toContain("Ubah nama atau sumber jika hasilnya belum tepat.");
+  it("uses the approved neutral copy", () => {
+    expect(html).toContain("Brand apa yang ingin Anda audit?");
+    expect(html).toContain("Masukkan nama brand dan link website-nya.");
+    expect(html).not.toContain("Perbaiki brand");
+    expect(html).not.toContain("Gunakan tautan publik bisnis");
   });
 
-  it("prefills Nama brand and Sumber bisnis fields", () => {
+  it("prefills Nama brand and Link website fields", () => {
     expect(html).toContain('value="Kopi Sudut"');
     expect(html).toContain('value="kopisudut.id"');
     expect(html).toContain("Nama brand");
-    expect(html).toContain("Sumber bisnis");
+    expect(html).toContain("Link website");
   });
 
   it("leaves correction actions to the persistent shell footer", () => {
@@ -190,8 +192,8 @@ describe("s-brand-fix (Koreksi, founder decision 2026-09-04)", () => {
 
   it("empty fixture renders empty prefills without crashing", () => {
     const empty = renderBab1("s-brand-fix", {});
-    expect(empty).toContain("Perbaiki brand");
-    expect(empty).toContain("Sumber bisnis");
+    expect(empty).toContain("Brand apa yang ingin Anda audit?");
+    expect(empty).toContain("Link website");
   });
 });
 

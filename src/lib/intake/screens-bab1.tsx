@@ -245,9 +245,9 @@ function BrandFixScreen({
   const draft = answers.brandFixDraft;
   useValidity(isScreenAnswerValid("s-brand-fix", answers), nav);
   return (
-    <Screen heading="Perbaiki brand">
+    <Screen heading="Brand apa yang ingin Anda audit?">
       <p className={`${styles.lead} type-copy-lg`}>
-        Ubah nama atau sumber jika hasilnya belum tepat.
+        Masukkan nama brand dan link website-nya.
       </p>
       <div className={styles.fieldStack}>
         <label className={styles.field}>
@@ -267,7 +267,7 @@ function BrandFixScreen({
           />
         </label>
         <label className={styles.field}>
-          <span className="type-label">Sumber bisnis</span>
+          <span className="type-label">Link website</span>
           <Input
             value={draft.source}
             autoComplete="url"
@@ -282,9 +282,6 @@ function BrandFixScreen({
             }
           />
         </label>
-        <p className={`${styles.hint} type-copy-sm`}>
-          Gunakan tautan publik bisnis, seperti situs web atau profil bisnis.
-        </p>
       </div>
     </Screen>
   );

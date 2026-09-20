@@ -249,7 +249,7 @@ test("entered business: identity/extraction boundaries → buyer facts → appro
     .getByRole("textbox", { name: "Nama brand", exact: true })
     .fill("Batik Laras");
   await page
-    .getByRole("textbox", { name: "Sumber bisnis", exact: true })
+    .getByRole("textbox", { name: "Link website", exact: true })
     .fill("https://batiklaras.example");
   await primary(page).click();
   // The entered business — not the fixture — is now the active context.

@@ -43,7 +43,7 @@ test("landing CTA reaches the new audit journey on the empty business step", asy
     page.getByRole("textbox", { name: "Nama brand", exact: true }),
   ).toHaveValue("");
   await expect(
-    page.getByRole("textbox", { name: "Sumber bisnis", exact: true }),
+    page.getByRole("textbox", { name: "Link website", exact: true }),
   ).toHaveValue("");
   // No fixture business or fixture-preview wording appears on the entry.
   await expect(

@@ -6,6 +6,20 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-20 — use one neutral brand-entry screen for first entry and correction
+
+**SETTLED — founder-approved.** The shared brand name and website step uses the
+same neutral copy for a first audit and for later correction:
+
+- heading: **Brand apa yang ingin Anda audit?**
+- supporting copy: **Masukkan nama brand dan link website-nya.**
+- fields: **Nama brand** and **Link website**
+- primary action: **Periksa**
+
+This supersedes the correction-only “Perbaiki brand” and “Periksa lagi”
+framing. Existing entry, re-reading, cancellation, validation and persistence
+behavior stays unchanged.
+
 ## 2026-09-20 — audit provider switches to direct OpenAI; OpenCode Go dropped
 
 **SETTLED — founder-approved.** The founder's OpenCode Go subscription lapsed

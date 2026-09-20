@@ -166,7 +166,7 @@ describe("shell committed state and Review transactions", () => {
     await at("s-review");
     click("Edit brand");
     click("Correct source");
-    click("Periksa lagi");
+    click("Periksa");
     await at("s-brand");
     click("Simpan");
     await at("s-review");
@@ -283,7 +283,7 @@ describe("shell committed state and Review transactions", () => {
     click("Edit brand");
     click("Correct source");
     click("Correct identity");
-    click("Periksa lagi");
+    click("Periksa");
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toContain(
         "Local preparation failed",
@@ -335,7 +335,7 @@ describe("blank public entry (Spec 010 R-08)", () => {
     // Empty fields block the entry button until the owner fills them.
     expect(
       screen
-        .getByRole("button", { name: "Periksa lagi" })
+        .getByRole("button", { name: "Periksa" })
         .getAttribute("data-continue-disabled"),
     ).toBe("true");
   });
@@ -344,7 +344,7 @@ describe("blank public entry (Spec 010 R-08)", () => {
     render(<IntakeJourney ScreenSlot={Controls} blank />);
     await at("s-brand-fix");
     click("Correct identity");
-    click("Periksa lagi");
+    click("Periksa");
     await at("s-brand");
     expect(answers().brandCorrected).toEqual({
       name: "Studio Benang",
@@ -358,7 +358,7 @@ describe("blank public entry (Spec 010 R-08)", () => {
     const app = render(<IntakeJourney ScreenSlot={Controls} blank />);
     await at("s-brand-fix");
     click("Correct identity");
-    click("Periksa lagi");
+    click("Periksa");
     await at("s-brand");
     app.unmount();
     render(<IntakeJourney ScreenSlot={Controls} fixtureOverride={fixture} />);
@@ -372,7 +372,7 @@ describe("blank public entry (Spec 010 R-08)", () => {
     const app = render(<IntakeJourney ScreenSlot={Controls} blank />);
     await at("s-brand-fix");
     click("Correct identity");
-    click("Periksa lagi");
+    click("Periksa");
     await at("s-brand");
     click("Lanjut");
     await at("s-scope");

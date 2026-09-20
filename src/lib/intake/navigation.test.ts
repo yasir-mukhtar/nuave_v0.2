@@ -192,6 +192,7 @@ describe("chapter progress model", () => {
 describe("shell copy lookups (deck §6)", () => {
   it("pins the settled Continue labels", () => {
     expect(continueLabelFor("s-scope")).toBe("Lanjut");
+    expect(continueLabelFor("s-brand-fix")).toBe("Periksa");
     expect(continueLabelFor("s-review")).toBe("Buat pertanyaan audit");
     expect(continueLabelFor("s-questions")).toBe("Mulai audit");
   });

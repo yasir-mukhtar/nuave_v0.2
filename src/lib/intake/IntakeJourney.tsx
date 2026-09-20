@@ -943,8 +943,7 @@ export default function IntakeJourney({
         )
           return {
             ...m,
-            failure:
-              "Isi nama brand dan situs atau profil Instagram bisnis yang valid.",
+            failure: "Isi nama brand dan link website yang valid.",
           };
         return {
           ...m,

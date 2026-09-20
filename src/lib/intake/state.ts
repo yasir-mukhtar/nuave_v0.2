@@ -62,9 +62,9 @@ export type IntakeState = {
   scopeOptionId: string | null;
   /** False until the owner explicitly picks (data contract §1.1 rule 3). */
   scopeCommitted: boolean;
-  /** Committed brand correction (s-brand-fix Periksa lagi); null = prepared. */
+  /** Committed brand identity, entered or corrected (s-brand-fix Periksa); null = prepared. */
   brandCorrected: { name: string; source: string } | null;
-  /** Staged brand-fix draft (uncommitted until Periksa lagi; Batal resets). */
+  /** Staged brand-entry/correction draft (uncommitted until Periksa; Batal resets). */
   brandFixDraft: { name: string; source: string };
   /** s-branch XOR s-product (inactive branch stays null, never hidden). */
   branch: SingleSelectAnswer;
@@ -587,7 +587,7 @@ export function resetBrandFixDraft(
   return { ...state, brandFixDraft: readFixPrefill(fixture) };
 }
 
-/** Periksa lagi: commit the staged correction as the confirmed identity. */
+/** Periksa: commit the staged entry/correction as the confirmed identity. */
 export function commitBrandFix(state: IntakeState): IntakeState {
   return {
     ...state,

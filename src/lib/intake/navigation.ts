@@ -190,23 +190,19 @@ export function chapterFills(
 /* ── Shell copy lookups (deck §6 — settled strings only) ── */
 
 export type IntakeContinueLabel =
-  | "Lanjut"
-  | "Buat pertanyaan audit"
-  | "Mulai audit"
-  | "Periksa lagi"
-  | "Simpan";
+  "Lanjut" | "Buat pertanyaan audit" | "Mulai audit" | "Periksa" | "Simpan";
 
 export function continueLabelFor(
   screenId: IntakeScreenId,
 ): IntakeContinueLabel {
-  if (screenId === "s-brand-fix") return "Periksa lagi";
+  if (screenId === "s-brand-fix") return "Periksa";
   if (screenId === "s-review") return "Buat pertanyaan audit";
   if (screenId === "s-questions") return "Mulai audit";
   return "Lanjut";
 }
 
 /** Screens with no shell bottom bar: system status (s-crawl) and the
- *  correction screen (s-brand-fix), which owns its own Batal / Periksa lagi. */
+ *  brand entry/correction screen (s-brand-fix), which owns its own Batal / Periksa. */
 export function isBareScreen(screenId: IntakeScreenId): boolean {
   return screenId === "s-crawl" || screenId === "s-brand-fix";
 }
