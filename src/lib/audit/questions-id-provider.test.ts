@@ -176,6 +176,9 @@ describe("question-writer provider configuration", () => {
     expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
 
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "openai");
+    expect(liveIndonesianQuestionProviderName()).toBe("openai");
+
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "gemini");
     expect(() => liveIndonesianQuestionProviderName()).toThrow(/testing-only/);
   });
 });

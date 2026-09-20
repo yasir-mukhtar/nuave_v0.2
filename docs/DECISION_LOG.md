@@ -1,10 +1,36 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-19
+> Updated: 2026-09-20
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-20 — audit provider switches to direct OpenAI; OpenCode Go dropped
+
+**SETTLED — founder-approved.** The founder's OpenCode Go subscription lapsed
+and live audit stages began failing with 401s. The founder asked to switch to
+Cheaper Inference while keeping Luna, then supplied OpenAI API credits.
+Probing established the decisive facts:
+
+- Cheaper Inference serves `gpt-5.6-luna` on chat completions **and** a
+  Responses-shaped endpoint, but **silently ignores the `web_search` tool** —
+  no `web_search_call` items, no grounding, no citations. It therefore cannot
+  run the search-grounded extraction/observation stages the audit is built on.
+- `gpt-5.6-luna` is a real OpenAI model; on `api.openai.com` it executes
+  `web_search` and returns grounded answers.
+
+**Decision:** production serves the audit stages (extraction, observations,
+report) and the question writer through **OpenAI's own Responses API**:
+`NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,
+`OPENAI_BASE_URL=https://api.openai.com/v1`, `OPENAI_AUDIT_MODEL=gpt-5.6-luna`,
+`OPENAI_AUDIT_REASONING_EFFORT=low`, credential `OPENAI_API_KEY`. GLM question
+generation keeps using Cheaper Inference (`glm-5.3-flash`) — it needs no web
+search and stays much cheaper there. This supersedes the 2026-08-21 OpenCode
+Go transport lock while preserving GPT-5.6 Luna, low reasoning, required web
+search, Indonesian output, exact provenance, and one-provider-per-audit
+discipline. `liveAuditProvider`/`liveIndonesianQuestionProviderName` now admit
+`openai` alongside `opencodego`; all other providers remain testing-only.
 
 ## 2026-09-19 — new flow becomes the public trial journey on v2.nuave.ai without login
 
