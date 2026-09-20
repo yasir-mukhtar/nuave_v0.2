@@ -387,7 +387,9 @@ export const liveGlmTransport: GlmQuestionTransport = {
         },
         body: JSON.stringify(requestBody),
         signal: AbortSignal.timeout(INDONESIAN_QUESTION_GLM_CLIENT_WAIT_MS),
-        redirect: "error",
+        // "manual": workerd rejects "error"; a redirect surfaces as a non-2xx
+        // status and is handled as a failure like any other.
+        redirect: "manual",
       });
       // Preserve exact response bytes; the parsed body may be null for
       // non-JSON responses — both reach the evidence file.
