@@ -137,7 +137,7 @@ describe("validated report pipeline", () => {
     });
   });
 
-  it("rejects a mixed OpenAI + OpenCode observation set before synthesis", async () => {
+  it("rejects an observation set mixing two approved transports", async () => {
     const mixed = goldenCompletedObservations.map((observation, index) =>
       index === 0
         ? { ...observation, system: "OpenAI Responses API" as const }
@@ -149,30 +149,26 @@ describe("validated report pipeline", () => {
 
     await expect(
       createValidatedAuditReport({ ...input, observations: mixed }, generate),
-    ).rejects.toThrow(
-      /recorded system OpenAI Responses API; expected OpenCode Go Responses API/,
-    );
+    ).rejects.toThrow(/mixes approved transports/);
     expect(generate).not.toHaveBeenCalled();
   });
 
-  it("rejects ten old direct-OpenAI observations before synthesis", async () => {
-    const oldDirectOpenAI = goldenCompletedObservations.map((observation) => ({
+  it("accepts ten direct-OpenAI observations as production evidence", async () => {
+    const directOpenAI = goldenCompletedObservations.map((observation) => ({
       ...observation,
       system: "OpenAI Responses API" as const,
     }));
     const generate = vi.fn(async () =>
-      result(protectedReportContent(), "should-not-run"),
+      result(protectedReportContent(), "report-content"),
     ) as unknown as ReportGenerator;
 
     await expect(
       createValidatedAuditReport(
-        { ...input, observations: oldDirectOpenAI },
+        { ...input, observations: directOpenAI },
         generate,
       ),
-    ).rejects.toThrow(
-      /recorded system OpenAI Responses API; expected OpenCode Go Responses API/,
-    );
-    expect(generate).not.toHaveBeenCalled();
+    ).resolves.toBeDefined();
+    expect(generate).toHaveBeenCalledTimes(1);
   });
 
   it("rejects returned-model drift from the protected requested model", () => {

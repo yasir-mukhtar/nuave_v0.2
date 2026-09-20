@@ -149,7 +149,10 @@ export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
   // invariant decides whether this observation is evaluable. Keeping this at
   // the shared live boundary makes run, resume, report and variance consume the
   // same evidence semantics while retry.ts retains the original telemetry.
-  if (name === "opencodego" && corrected.run_status === "completed") {
+  if (
+    PRODUCTION_LIVE_PROVIDERS.has(name) &&
+    corrected.run_status === "completed"
+  ) {
     const errors = protectedObservationAttemptErrors(corrected);
     if (errors.length) {
       return {

@@ -3,6 +3,12 @@ import { OPENCODEGO_AUDIT_MODEL, OPENCODEGO_SYSTEM } from "./opencodego";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM, type AuditObservation } from "./types";
 
 export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
+/** Founder-approved production transports for observation evidence (DECISION_LOG
+ * 2026-08-21 OpenCode Go; 2026-09-20 direct OpenAI). Both serve gpt-5.6-luna
+ * with hosted web search; every other label stays a rejection. */
+export const PRODUCTION_OBSERVATION_SYSTEMS: ReadonlySet<
+  AuditObservation["system"]
+> = new Set(["OpenAI Responses API", OPENCODEGO_SYSTEM]);
 export const PRODUCTION_OBSERVATION_REQUESTED_MODEL = OPENCODEGO_AUDIT_MODEL;
 export const PRODUCTION_OBSERVATION_INSTRUCTION_VERSION =
   DEFAULT_OBSERVATION_INSTRUCTION_VERSION;
@@ -24,11 +30,11 @@ export function protectedObservationAttemptErrors(
 ): string[] {
   const errors: string[] = [];
 
-  if (observation.system !== PRODUCTION_OBSERVATION_SYSTEM) {
+  if (!PRODUCTION_OBSERVATION_SYSTEMS.has(observation.system)) {
     errors.push(
       prefix(
         observation,
-        `recorded system ${observation.system}; expected ${PRODUCTION_OBSERVATION_SYSTEM}.`,
+        `recorded system ${observation.system}; expected ${[...PRODUCTION_OBSERVATION_SYSTEMS].join(" or ")}.`,
       ),
     );
   }
@@ -153,6 +159,17 @@ export function productionObservationMethodErrors(
 ): string[] {
   const errors = observations.flatMap(protectedObservationAttemptErrors);
   const responseOwners = new Map<string, string>();
+
+  const approvedSystems = new Set(
+    observations
+      .map((observation) => observation.system)
+      .filter((system) => PRODUCTION_OBSERVATION_SYSTEMS.has(system)),
+  );
+  if (approvedSystems.size > 1) {
+    errors.push(
+      `Observation set mixes approved transports ${[...approvedSystems].join(" + ")}; one audit must run on a single provider transport.`,
+    );
+  }
 
   for (const observation of observations) {
     if (observation.run_status !== "completed" || !observation.response_id) {
