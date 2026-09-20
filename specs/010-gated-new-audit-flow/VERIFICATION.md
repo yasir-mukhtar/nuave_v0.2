@@ -58,3 +58,61 @@ redirect exist — `/audit/v2`, `/audit/fixture`, `/audit/spec004`,
     ├ ○ /sitemap.xml
     ├ ○ /support
     └ ○ /terms
+
+## AC-11 — one authorized live run (masryef.com, 2026-09-20)
+
+Authorized scope: one live extraction, one GLM generation, ten observations,
+one report. Executed against `https://v2.nuave.ai/audit` on the deployed
+worker (direct OpenAI, `gpt-5.6-luna`, Responses API + hosted web search).
+Raw request/response captures: `.secrets/spec010-masryef-live-2026-09-20/`
+(git-ignored evidence).
+
+### Outcome
+
+Report generated successfully (HTTP 200, `resp_0a588757…`, 11.5 s,
+$0.0094). `accuracy_status: no_clear_issues`; conclusion (Bahasa):
+Masryef was not found or recommended in any of the ten tested answers —
+recorded as an unmet visibility opportunity, not a permanent result.
+All ten observations carry `system: "OpenAI Responses API"`,
+requested/returned model `gpt-5.6-luna`, `run_status: completed`,
+non-empty response IDs, and passed the execute-time protected invariant
+(including ≥1 real web-search call each).
+
+### Confirmed provider calls and cost
+
+| Stage | Calls | Cost (USD) |
+|---|---|---|
+| Extraction (extract) | 8 | 0.11838 |
+| GLM question generation | 3 | 0.00128 |
+| Observations (direct-ten run) | 10 | 0.15238 |
+| Report synthesis | 1 | 0.00938 |
+| **Total** | **22** | **0.28142** |
+
+### Pre-provider rejections (0 calls, $0)
+
+- `POST /api/audit/identity` 503 at 02:46 — provider gate rejected
+  `NUAVE_PROVIDER=openai` before any provider work (fixed by PR #69).
+- `POST /api/audit/glm-questions` at 03:52 — workerd fetch threw on
+  `redirect: "error"` before the provider call (fixed by PR #70).
+- `POST /api/audit/extract` 403 at 04:38 — per-IP rate limit.
+- `POST /api/audit/report` 422 at 04:47 — provenance gate still pinned to
+  the OpenCode Go system label (fixed by PR #71). The same captured
+  request body was replayed after deploy and produced the report above;
+  the report stage therefore consumed exactly one provider call.
+
+### Honest overrun note
+
+The authorization scoped one extraction and one GLM generation. Repeated
+driver restarts during production bug-fixing re-ran intake, producing
+8 extractions and 3 GLM attempts (one GLM attempt returned HTTP 200 with
+an unparseable line — a real billed call — followed by one explicit
+user-confirmed retry). No second observation run and no second report
+call were made. Overrun: 7 extractions + 2 GLM attempts ≈ $0.11.
+
+### Fixes shipped during this run
+
+- PR #69 — provider gates admit `openai` in production.
+- PR #70 — GLM live transport `redirect: "manual"` for workerd.
+- PR #71 — protected observation method approves `OpenAI Responses API`
+  alongside OpenCode Go, rejects mixed-system sets; execute-time
+  invariant applies to OpenAI.
