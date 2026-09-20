@@ -3,11 +3,7 @@ import path from "node:path";
 
 const ROOTS = ["src/app", "src/components", "src/styles"];
 const EXTENSIONS = new Set([".css", ".ts", ".tsx"]);
-const CSS_RAW_TYPE_ALLOWLIST = new Set([
-  // Fixture/spec preview surfaces are intentionally isolated from the live product.
-  "src/app/audit/fixture/fixture.module.css",
-  "src/app/audit/spec004/spec004.module.css",
-]);
+const CSS_RAW_TYPE_ALLOWLIST = new Set();
 
 const failures = [];
 

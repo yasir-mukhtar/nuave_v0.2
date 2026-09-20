@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-01
+> Updated: 2026-09-19
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -46,6 +46,22 @@ decision log does not become a permanent hidden override.
 | [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md)             | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007                    |
 | [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md)                   | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries                                            | Current founder-approved product contract; implementation still requires an approved spec |
 | [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack                                                                         | Working product context                                                                   |
+
+## Latest progress checkpoint
+
+[`NUAVE-LIVE-REPORT-2026-09-19`](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md)
+preserves the accepted direct-ten questions reaching a real audit and report,
+founder feedback on progress and pace, private evidence locations, remaining
+limits and the next smallest action. Use it to resume without repeating the
+completed work. It is a dated record, not a new implementation authorization.
+
+## Question-generation checkpoint
+
+For question-generation work, first read the dated
+[`NUAVE-PROMPTS-2026-09-17` checkpoint](./checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md).
+It preserves the winning source, tested request, captured questions, founder
+feedback and next drafting task. It records settled direction and evidence;
+it does not replace the authority chain or approve implementation.
 
 ## Touchpoint plans
 
@@ -100,6 +116,14 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
+**Current bounded implementation:** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
+is approved for the recommendation-eligible intake-to-report path. Its September
+19 amendment prioritizes the continuous local audit experience and defers
+report-quality improvement. Use its
+[fresh-session handoffs](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md).
+It replaces conflicting fixed-slot and R5 gate requirements for the new method;
+the older packages below remain references for their unaffected/historical scope.
+
 [`WORKFLOW.md`](./WORKFLOW.md) defines document creation, specifications,
 worker delegation, and verification. [`../specs/README.md`](../specs/README.md)
 defines the specification lifecycle.
@@ -111,7 +135,7 @@ context an agent must read. Do not implement a draft specification.
 | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)                                         | Fixture-backed landing-to-report preview with unmistakably simulated checkout                                                                         | Verified (2026-08-17); realigned by Spec 002                                                                                                                                                                                                  |
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md)                                     | Indonesian audit and report contracts, journey realigned to the canonical sequence                                                                    | Verified (2026-08-17)                                                                                                                                                                                                                         |
-| [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md)                                       | Live engine connected, first real Indonesian report, report-quality gate verdict                                                                      | Approved; implementing — **the current objective**                                                                                                                                                                                            |
+| [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md)                                       | Live engine connected, first real Indonesian report, report-quality gate verdict                                                                      | Approved; report quality unmet/deferred while Spec 009 completes the local audit flow                                                                                                                                                                                            |
 | [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md)                                                   | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form                                                  | Superseded by Spec 007                                                                                                                                                                                                                        |
 | [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)                                                 | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens                                               | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md)                                                                                                                              |
 | [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md)                                               | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance     | Approved (founder-approved 2026-08-30); lettered packages and R-27 intake recovery merged; intake-experience rebuild unmerged (draft PRs #58, #60)                                                                                            |

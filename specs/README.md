@@ -46,6 +46,21 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
+- [`010-gated-new-audit-flow/SPEC.md`](./010-gated-new-audit-flow/SPEC.md)
+  — **Approved** (2026-09-19, r3): the new direct-ten journey becomes the
+  public `/audit` entry on v2.nuave.ai (no login — accepted trial risk); local-only guards
+  become deployed configuration; disk-based single-send protection becomes
+  Cloudflare rate limits; the old flow is archived. Report usefulness stays
+  deferred until this is verified.
+
+- [`009-recommendation-eligible-audit/SPEC.md`](./009-recommendation-eligible-audit/SPEC.md)
+  — **Approved** (2026-09-18), current bounded implementation: ten directly
+  generated unnamed questions, human editing/approval, grounded execution and
+  downloadable report. Supersedes conflicting fixed-slot/6–4 and R5 gate
+  requirements for this method; legacy records retain their contracts.
+  Two worker blocks (150 / 210 active minutes), with founder question and
+  report judgments. No paid call or production activation included.
+
 - [`001-simulated-journey-shell/SPEC.md`](./001-simulated-journey-shell/SPEC.md)
   — status **Verified** (2026-08-17; founder completed the AC-21 human trust
   review). Its fixture journey was later realigned by Spec 002; this package

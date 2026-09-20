@@ -51,8 +51,8 @@ jobs:
           OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
           OPENAI_AUDIT_MODEL=gpt-5.6-luna
           OPENAI_AUDIT_REASONING_EFFORT=low
-          NUAVE_FIXTURE_PREVIEW_ENABLED=true
-          NUAVE_FIXTURE_FORCE_REPORT_FAILURE=false
+          NUAVE_NEW_AUDIT_ENABLED=true
+          NUAVE_AUDIT_MODE=synthetic
           EOF
 
       - name: Build OpenNext worker
@@ -97,9 +97,9 @@ jobs:
 
           **Landing page:** ${PREVIEW_URL}
 
-          **Full fixture journey:** ${PREVIEW_URL}/audit/fixture
+          **Audit journey (synthetic):** ${PREVIEW_URL}/audit
 
-          This preview is isolated from production. Live AI-provider credentials are disabled; use the fixture journey to review the audit/report UI safely.
+          This preview is isolated from production. Live AI-provider credentials are disabled; the audit journey runs its labeled synthetic substitutes.
 
           Updated from commit \`${GITHUB_SHA}\`."
 
@@ -123,7 +123,7 @@ jobs:
             echo '## Nuave PR preview'
             echo
             echo "- Landing: ${PREVIEW_URL}"
-            echo "- Fixture journey: ${PREVIEW_URL}/audit/fixture"
+            echo "- Audit journey (synthetic): ${PREVIEW_URL}/audit"
             echo
             echo 'Provider-backed audit calls are intentionally disabled in this preview.'
           } >> "${GITHUB_STEP_SUMMARY}"

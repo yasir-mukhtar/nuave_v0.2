@@ -1,16 +1,143 @@
 # Nuave now
 
-> Updated: 2026-09-13
+> Updated: 2026-09-19
 > Stage: pre-customer, building the pipeline
+
+**Portable pause checkpoint:** code and current instructions are combined on
+`codex/pause-checkpoint-2026-09-19`. On another laptop, use
+[RESUME_DEVELOPMENT.md](./RESUME_DEVELOPMENT.md) and this checkout as the current
+project. The separate original-machine paths below are historical locations.
+Remote publication and final verification are recorded in the pause handoff;
+this note alone does not claim that a push has completed. Private evidence and
+credentials remain outside the public repository.
+
+**Latest checkpoint:** [NUAVE-LIVE-REPORT-2026-09-19](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
+The founder called the completed real path great progress, noted that reaching
+it took too long, and requested this milestone be preserved. This records
+progress and pace feedback. The subsequent founder verdict is that the report
+is not yet useful enough; completing the audit experience now takes priority.
+
+**Current bounded implementation:** [Spec 009 — recommendation-eligible
+questions through a downloadable report](../specs/009-recommendation-eligible-audit/SPEC.md)
+is **Approved**. Generate ten unnamed questions directly from the winning
+instruction and one brief; keep human editing/approval; connect the same pack
+to actual grounded audit and report/download. Fixed purposes and the 6/4 split
+do not govern this method. Historical records retain their own contracts.
+
+**Latest result (2026-09-19):** the founder authorized and completed the
+[complete real end-to-end test](../specs/009-recommendation-eligible-audit/VERIFICATION.md#complete-real-end-to-end-test--execution-2026-09-19)
+for Masryef in one fresh browser session: live preparation, confirmed facts,
+one fresh GLM 5.3 Flash direct-ten generation, an edited and explicitly approved
+question pack, ten grounded observations, one report, JSON and PDF downloads,
+and Back/reload without another run — 13 provider requests, ≈ USD 0.17
+accounted, zero retries. Masryef appeared in 0 of 10 sampled answers. One
+unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
+recorded in the same section. A one-rule CSS fix now lets the finished report
+leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
+
+**Next action:** implement [Spec 010 — the new flow becomes the public
+trial journey on v2.nuave.ai](../specs/010-gated-new-audit-flow/SPEC.md)
+(Approved 2026-09-19, revision 4 — reviewer-marked ready): no login —
+public access is an accepted trial risk; per-IP Cloudflare rate limits, one
+off switch, legacy methods rejected, server-selected live/synthetic mode,
+Cloudflare rate limits instead of disk-based single-send files, `/audit` opens
+the new journey blank, old flow archived, one PR and one authorized live test on
+the deployed site. Report usefulness (AC-08) waits until Spec 010 is verified. The completed run's private JSON keeps the ten real
+answers so report work can reuse them without new provider calls. The earlier
+proposal scope was prepared from the
+[current step](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-step--complete-real-end-to-end-test). The founder has now seen the PDF and reaffirmed
+that the workflow should be ready for end-to-end testing before report-format
+iteration. The three code corrections are accepted; the orchestrator verified
+a new-business Chrome journey, actual JSON download and Back/reload preservation
+without another run/report request. No further worker coding round is needed
+on current evidence. Report improvements remain deferred.
+
+The worker reports final `npm run verify` passing (1,241 unit tests, 102 browser
+tests, both builds). Independent review passed 31 focused tests and checked the
+actual Chrome session, JSON artifact and server log. The test-generated PDF
+has the expected content, but still does not prove the native save dialog.
+[Latest review evidence](../specs/009-recommendation-eligible-audit/VERIFICATION.md#continuous-flow-correction-review--2026-09-19)
+separates these outcomes. Offline AC-10 is accepted for advancing to the real
+test, combining these checks with the founder-reported PDF review. The founder's
+saved PDF was not independently inspected by the orchestrator. AC-08 usefulness
+is deferred, not passed; the complete fresh-session live flow is not yet proven.
+No agent was dispatched.
+
+**Orchestrator transfer:** the founder wants another agent to take over at
+this milestone. The [current orchestrator handoff](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
+contains the exact locations, accepted results, remaining real-test scope and
+permission boundaries. It is ready for the founder to give to the next agent;
+no transfer or automatic dispatch has occurred.
+
+The connected retained-pack browser run completed ten unchanged questions and
+one report on 2026-09-18: all 11 provider requests succeeded, without retries.
+Live access is off and that one-run authorization is consumed. The latest
+continuation carries the ordinary session directly to audit/report and retains
+its business, approved questions and completed result across normal navigation.
+The founder's PDF review closes the manual check for advancing to a real test;
+it is not report-quality acceptance.
+
+The **four-item offline completion handoff remains accepted**. The live run
+establishes actual execution, not report-quality acceptance. Short unhelpful
+evidence excerpts and other observations are recorded for later review in the
+deferred note; no application fixes or extra provider calls were made.
+
+The worker reports ~70/90 extension minutes and final `npm run verify` passing
+(1,209 unit tests, 97 browser tests, both builds). Independent review passed
+86 focused tests, exercised the browser's run/report requests (both HTTP 200,
+zero provider calls), and inspected the nine-page PDF and JSON. The previous
+1/1 regression is now covered and passes as 1/10. Full verification was reported
+by the worker, not independently repeated by the orchestrator. This is an
+offline handoff acceptance, not Spec 009 Verified status or branch publication.
+
+Implementation: `/Users/yasir/nuave-worktrees/spec009-block-a`. The live server
+is stopped. A separate explicitly offline preview now uses loopback port 3031
+for the founder's PDF check, with live flags off and provider keys blank.
+Its log/PID and downloaded test JSON are in `/tmp/nuave-continuous-final-review/`.
+Private results, full answers, customer
+JSON and a labeled PDF review copy are retained under a dated private
+`.secrets/` evidence directory on the original checkout (its name is withheld
+from the public repository). Embedded-browser download/print did
+not yield files: the JSON uses the existing exporter offline with captured
+inputs; the PDF is a separate review layout of the same report, not a live
+product print verification. [Verification](../specs/009-recommendation-eligible-audit/VERIFICATION.md#authorized-live-execution--2026-09-18)
+records this limitation, usage and evidence. [Deferred notes](../specs/009-recommendation-eligible-audit/DEFERRED_NOTES.md)
+retain observations without expanding this work.
+
+The founder accepted all ten real retained-business questions unchanged: “Yes this is
+good enough, beyond what we achieved in the 6/4 formula. Move forward.” AC-04
+remains passed; do not regenerate or reopen question quality. The accepted
+generation was one `glm-5.3-flash` call, HTTP 200/stop, USD 0.000496 settled;
+its allowance is consumed. The separately authorized audit/report allowance is
+also consumed. This run added USD 0.16450316 of accounted usage; the ledger
+including prior USD 0.4357 is now USD 0.60020316. These are application estimates,
+not confirmed provider billing. No commit, push, merge, deployment or
+production activation is authorized.
+
+The [winning-source checkpoint](./checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md)
+and exact founder feedback remain evidence. The local GLM transport, edit
+persistence and original-text protections are reusable work, not proof that
+the adapted instruction preserved the accepted generation approach.
+
+Earlier preserved live evidence: one real `glm-5.3-flash` request for fictional Laundry
+Ceria completed HTTP 200/stop and settled USD 0.000782. Ten questions were
+captured, but the app returned `validation_failed`; no approved pack, audit or
+report resulted. The worker reports live mode off and the server restored to
+synthetic demo mode. The authorization is consumed. See the
+[execution record](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_RESULT.md)
+and [review](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_REVIEW.md).
+The prototype's latest verification was 188 independently run intake tests;
+the inspected full log passed 1159 unit tests, both builds and 97 browser
+tests. These are implementation checks, not a naturalness or release pass.
 
 ## Current objective
 
-Phase 3 of [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), specified by
-[`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md):
-the protected live engine is now integrated on the OpenCode Go production
-method. The remaining Phase 3 gate is to produce the first founder-supervised
-real Indonesian report through the actual product path and judge whether it
-contains a finding worth paying for.
+Complete the continuous audit experience under the approved Spec 009 amendment.
+The founder's report-quality verdict is **not useful enough yet**; improvement
+is deferred and does not block this functional integration. Preserve the
+current report, truthful evidence/counts, explicit approvals and working
+exports. The Phase 3 quality standard remains a later obligation; it has not
+passed. Commercial integration and production activation remain separate.
 
 ## Presentation layer
 
@@ -136,13 +263,71 @@ Separately, [`specs/008-recommendation-eligible-question-generation`](../specs/0
 is **approved** (2026-09-11): it sets a recommendation-eligible semantic target
 for generated questions. Its sole execution authority is
 [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md),
-which owns the gate ledger. **G0 baseline reconciliation is complete** (merged
-via PRs #48 and #50). The dormant G1 facts/context adapter on the unmerged
-`codex/spec008-g1-adapter` branch (draft PR #59) is implemented and
-independently reviewed and is being prepared for the founder's integration
-decision; it stays dormant and changes no live provider behavior. The
-package's older `EXECUTION_PLAN.md` is superseded. R5's paid provider
-evaluation gates still require their own explicit founder authorization.
+which owns the gate ledger, with the
+[2026-09-16 founder amendment](./DECISION_LOG.md#2026-09-16--natural-questions-may-address-the-same-need):
+natural questions may address the same need; the six-distinct-decisions gate
+is removed. **G0 and G1 are closed**, with G1 merged through PR #59 and still
+dormant. The original ten-attempt G2P pilot has the frozen historical result
+`not_retained`. Its later local prototype repair is mechanically accepted;
+revised question quality remains under review. No new live run is approved.
+
+The founder has reviewed the small naturalness sample: supplied Q3/Q4
+rewrites and rejected Q5. The
+[recovered accepted generation prompt](./references/WINNING_QUESTION_GENERATION_PROMPT_2026-09-07.md)
+is now the quality reference for a separate, local GLM-5.3 Flash API
+connection check. On 2026-09-17 its first authorized single request reached
+the 60-second client timeout; no usable response was captured locally. That
+authorization is consumed. Founder-supplied provider screenshots subsequently
+matched the request timestamp and show settled GLM-5.3 Flash usage: a displayed
+charge of USD 0.0004, 1,063 output tokens, and 66.708 seconds total duration,
+including 55.381 seconds labelled routing overhead and three provider-side
+attempts. The provider timing extends beyond our client timeout; that first
+attempt's generated text was not captured locally.
+
+The separately authorized second request used the same frozen prompt and a
+180-second timeout. It returned HTTP 200 with a complete response in 53.263
+seconds: twelve candidate questions, `finish_reason: stop`, and a settled
+charge of USD 0.000371. The runner retained `UNSUCCESSFUL` because the returned
+model string was `zai/glm-5.3-flash`, versus requested `glm-5.3-flash`. A public
+catalog lookup identifies Z.ai as the provider but supplies no aliases, so
+the exact mapping remains unconfirmed. Connection and response capture are
+demonstrated; model-name acceptance remains separate. The runner also reads
+the wrong billing field; the saved response contains the documented nested
+`cheaper_inference.billing.billed_cost_usd`. Both issues can be investigated
+without another generation request.
+
+The founder's feedback on the twelve questions is **“Mostly—some questions
+need edits.”** Exact Q1/Q3 replacements are now recorded in the
+[decision log](./DECISION_LOG.md#2026-09-17--founder-wording-edits-to-the-captured-glm-invoice-sample).
+No further edits or drops were supplied; approval of the complete set is not
+inferred. The dormant prototype and its third correction have returned on
+`codex/glm-dormant-prototype-2026-09-17`, based on `687f340`. Independent
+re-review preserves closure of the response-ID, comparison and dormancy
+findings and confirms exact request fidelity. All 17 previous guard probes now
+behave correctly, but both exceptions still admit the subject/claim mismatches in the
+[latest implementation review and handoff](./drafts/glm-local-integration-2026-09-17/IMPLEMENTATION_REVIEW_4.md).
+Further general correction rounds are paused under the founder's time-boxing
+direction. The local founder-test UI is now available with synthetic responses;
+the [focused live-readiness handoff](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_REVIEW.md)
+records the remaining issues in that implemented path. The winning
+approach and GLM choice remain settled. Production activation and paid calls
+are not authorized; the prior findings remain visible rather than marked fixed.
+Both live-request authorizations are consumed. No further generation is
+authorized, and all original evidence and runner outcomes remain unchanged.
+
+Further fallback drafting remains paused. This connection check preserves
+the source experiment's twelve-candidate format and does not activate the
+product's ten-question path or pass G2P. The accepted prompt and preserved
+GLM migration are separate artifacts: draft PR #47 retains the old writer
+instruction, while G2P used Luna. Exact wording feedback and source-recovery
+facts are recorded in the decision log.
+
+The distinct-decision allocator remains withdrawn; shared need is not a
+blocker. Existing purpose, facts/context, identity and safety requirements
+still apply pending explicit reconciliation of any conflict. Runtime code,
+provider configuration and frozen historical packets have not changed. The
+package's older `EXECUTION_PLAN.md` remains superseded; paid evaluation still
+requires explicit authorization.
 
 ## What is known
 
@@ -356,29 +541,20 @@ evaluation gates still require their own explicit founder authorization.
 
 ## Do now
 
-Follow the phase gates in [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md). The
-current bounded sequence is:
-
-1. Treat Specs 001 and 002 as the verified fixture/Indonesian-contract
-   baselines. Spec 002's verified baseline at `83ad34c` is 274/274 audit unit
-   tests (18 files), 82/82 fixture-journey unit tests (4 files), and 33/33 e2e
-   tests; check and build passed.
-2. Treat the 2026-08-21 OpenCode Go migration as implemented but not as the
-   Spec 003 quality-gate pass. The protected path is locked to OpenCode Go,
-   GPT-5.6 Luna, low reasoning, the method-specific search rules, and the
-   Indonesian question/observation/report contracts; current automated
-   verification is recorded in Spec 003 `VERIFICATION.md`.
-3. Run the first founder-supervised paid real audit through the actual `/audit`
-   product path without changing the production method mid-run. Do not replace
-   this with a script-only provider exercise.
-4. Apply the report-quality gate to that rendered Indonesian report and its
-   evidence. Stop and fix the method if it holds no finding worth paying for.
-5. Only after the gate, add durable private delivery, real payment and remedies,
-   the remaining product-wide polish, and customer exposure in the planned
-   order.
+1. Prepare one complete real-flow approval scope, including fresh GLM
+   generation and question approval. Correct the worker proposal's synthetic-
+   generation assumption and retry/cost wording before requesting paid access.
+2. After explicit authorization, test the ordinary intake through real
+   preparation, approved questions, ten grounded answers and report/download.
+   Retain the evidence export so report presentation can be iterated later.
+3. Keep report usefulness/format deferred, including the founder's request for
+   prominent exact questions and full actual answers. No commit, live call or new worker
+   implementation is authorized by this review.
 
 ## Not now
 
+- report usefulness, excerpt/action quality and format redesign — deferred by
+  the founder on 2026-09-19 while the continuous audit flow is completed;
 - real payment, durable jobs, and durable report persistence — after the
   report-quality gate; an explicitly simulated checkout and destination are in
   scope for the fixture journey;
@@ -407,10 +583,13 @@ touches the product.
 
 ## Done for this cycle
 
-This cycle ends when the pipeline runs from intake form to downloadable
-Indonesian report without human rescue, one real report has been produced by it,
-and that report has been read against the report-quality gate with a written
-verdict on whether it holds a finding worth paying for.
+This functional cycle ends when one new-business browser session reaches the
+current Indonesian report and normal PDF/JSON download without manual file
+handoffs, with exact approved-input continuity and the offline verification
+gate passing. Distinguish offline readiness from any subsequently authorized
+live confirmation. The earlier real report and the founder's insufficient-
+usefulness verdict remain recorded; improving that report is deferred and is
+not a completion gate for this cycle.
 
 Material changes to customer, offer, promise, or scope belong in
 [`DECISION_LOG.md`](./DECISION_LOG.md). Earlier vertical-specific and

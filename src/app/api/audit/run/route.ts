@@ -10,40 +10,95 @@ import {
   auditBudgetSchema,
   auditObservationSchema,
   businessBriefSchema,
-  promptSchema,
 } from "@/lib/audit/types";
+import { liveExecuteAuditPrompt } from "@/lib/audit/provider";
 import {
-  assertLiveProviderCredentialsConfigured,
-  liveExecuteAuditPrompt,
-} from "@/lib/audit/provider";
+  auditLiveCredentialsResponse,
+  auditMode,
+  auditSwitchResponse,
+} from "@/lib/audit/deployment-gate";
+import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
+import { minimizeIndonesianBrief } from "@/lib/audit/questions-id";
+import { validateDirectTenQuestions } from "@/lib/audit/questions-id-direct-ten";
 import {
-  indonesianPackBlockers,
-  minimizeIndonesianBrief,
-  validateCanonicalIndonesianQuestionPack,
-} from "@/lib/audit/questions-id";
-import {
-  canonicalLockedQuestionPack,
   lockedObservationBindingErrors,
+  lockedQuestionPackForMethod,
+  parseAuditQuestionMethod,
 } from "@/lib/audit/locked-question-pack";
 import { assertSafeComparisonBusinessUrls } from "@/lib/audit/similar-businesses";
-import { productionObservationMethodErrors } from "@/lib/audit/production-observation-method";
+import {
+  productionObservationMethodErrors,
+  syntheticLocalObservationMethodErrors,
+} from "@/lib/audit/production-observation-method";
 import { runAuditObservations } from "@/lib/audit/run-orchestrator";
 import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
+import { executeSyntheticLocalObservation } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
 
-const requestSchema = z.object({
+const sharedRequestFields = {
   client_contract_version: z.literal(AUDIT_CLIENT_CONTRACT_VERSION),
   brief: businessBriefSchema,
-  prompts: z.array(promptSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
   budget: auditBudgetSchema,
   resume_observations: z.array(auditObservationSchema).max(10).optional(),
+} as const;
+
+/** Spec 009 direct-ten wire shape: the pack boundary carries only the stable
+ * locating id, the exact approved text, and the human-review marker. No slot
+ * metadata exists to send, and none may be fabricated client-side. */
+const directTenPromptSchema = z.object({
+  prompt_id: z.string(),
+  question: z.string().trim().min(1).max(700),
+  review_status: z.literal("needs_human_review"),
+});
+
+const directTenRequestSchema = z.object({
+  ...sharedRequestFields,
+  question_method: z.literal("direct-ten"),
+  prompts: z.array(directTenPromptSchema).length(10),
 });
 
 export async function POST(request: Request) {
+  // Spec 010 R-01/R-02b: the switch answers 404 before the body is read.
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
   try {
     const rawInput = (await request.json()) as unknown;
+
+    // R-02a: the public run boundary accepts only "direct-ten". An omitted
+    // method no longer defaults to canonical; canonical, glm-slots and any
+    // unknown value are 400 before schema work, rate limiting, credentials
+    // or provider work. The legacy canonical branch was archived with the
+    // old flow (R-09).
+    const rawMethod =
+      rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
+        ? (rawInput as Record<string, unknown>).question_method
+        : undefined;
+    const questionMethod = parseAuditQuestionMethod(rawMethod);
+    if (questionMethod !== "direct-ten") {
+      return NextResponse.json(
+        {
+          error:
+            'Unrecognized question_method — the audit accepts only "direct-ten".',
+        },
+        { status: 400 },
+      );
+    }
+
+    // R-03: per-IP burst protection on the run boundary.
+    const rateLimited = await enforceAuditCallerRateLimit(
+      request,
+      (bindings) => bindings.runCaller,
+    );
+    if (rateLimited) return rateLimited;
+
+    // R-02: server-selected mode. In live mode a missing credential stops the
+    // stage before body validation — never a silent synthetic fallback.
+    const credentialsError = auditLiveCredentialsResponse("observations");
+    if (credentialsError) return credentialsError;
+    const substituteProvider = auditMode() === "synthetic";
+
     const clientContractVersion =
       rawInput && typeof rawInput === "object" && !Array.isArray(rawInput)
         ? (rawInput as Record<string, unknown>).client_contract_version
@@ -58,34 +113,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const input = requestSchema.parse(rawInput);
+    const input = directTenRequestSchema.parse(rawInput);
     assertSafeComparisonBusinessUrls(input.brief);
 
     // Lock identity and exact text before credentials or any paid provider work.
-    const lockedPack = canonicalLockedQuestionPack(input.prompts, input.brief);
+    const lockedPack = lockedQuestionPackForMethod({
+      prompts: input.prompts,
+      brief: input.brief,
+      questionMethod,
+    });
     const lockedPrompts = lockedPack.prompts;
     const minimized = minimizeIndonesianBrief(input.brief);
-    const questionErrors = validateCanonicalIndonesianQuestionPack(
-      lockedPrompts.map((prompt) => prompt.question),
-      minimized,
-    );
-    const blockers = indonesianPackBlockers(
-      lockedPrompts.map((prompt) => prompt.question),
-      minimized,
-    );
-    if (questionErrors.length || blockers.length) {
+    const questions = lockedPrompts.map((prompt) => prompt.question);
+    const questionErrors = validateDirectTenQuestions(questions, {
+      brief: minimized,
+      comparators: minimized.comparison_business
+        ? [minimized.comparison_business.name]
+        : [],
+    });
+    if (questionErrors.length) {
       return NextResponse.json(
-        {
-          error: [
-            ...questionErrors.map((issue) => issue.message),
-            ...blockers,
-          ].join(" "),
-        },
+        { error: questionErrors.map((issue) => issue.message).join(" ") },
         { status: 422 },
       );
     }
-
-    assertLiveProviderCredentialsConfigured();
 
     const resume = input.resume_observations ?? [];
     const resumeErrors: string[] = [];
@@ -103,15 +154,22 @@ export async function POST(request: Request) {
       }
       resumedIds.add(observation.prompt_id);
     }
+    const completedResume = resume.filter(
+      (observation) => observation.run_status === "completed",
+    );
     resumeErrors.push(
       ...lockedObservationBindingErrors({
         prompts: lockedPrompts,
         observations: resume,
         brief: input.brief,
+        questionMethod,
       }),
-      ...productionObservationMethodErrors(
-        resume.filter((observation) => observation.run_status === "completed"),
-      ),
+      // The resume-evidence method gate matches the execution mode: the
+      // founder-local substitute path accepts only labeled synthetic-local
+      // observations; live and canonical keep the protected production gate.
+      ...(substituteProvider
+        ? syntheticLocalObservationMethodErrors(completedResume)
+        : productionObservationMethodErrors(completedResume)),
     );
     if (resumeErrors.length) {
       return NextResponse.json(
@@ -146,9 +204,14 @@ export async function POST(request: Request) {
             brief: input.brief,
             safety_identifier: input.safety_identifier,
             budget,
-            execute: liveExecuteAuditPrompt,
+            execute: substituteProvider
+              ? executeSyntheticLocalObservation
+              : liveExecuteAuditPrompt,
             emit: send,
-            resume: { observations: resume },
+            resume: {
+              observations: resume,
+              allowSynthetic: substituteProvider,
+            },
             signal: request.signal,
           });
         } catch (error) {

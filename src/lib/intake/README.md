@@ -1,8 +1,10 @@
 # Complete local intake journey
 
-The isolated `/audit/new-intake` entry starts with reading and brand confirmation.
-Enable it with `NUAVE_NEW_INTAKE_PREVIEW_ENABLED=true`. It makes no provider,
-authentication, payment, audit, or report request.
+The public `/audit` entry (Spec 010 R-08) runs this journey: the blank start
+opens on the empty business name + source step, and `?fixture=` seeds exist
+only for the synthetic-mode test harness. `/audit/new-intake` redirects here.
+The server gate (`NUAVE_NEW_AUDIT_ENABLED` + `NUAVE_AUDIT_MODE`) decides
+whether real provider boundaries or their labeled substitutes answer.
 
 `IntakeJourney.tsx` owns committed answers, the current working answer, stable
 Back history, Review edit transactions, preparation, questions, and local start.

@@ -21,11 +21,11 @@ const GUARDED_FILES = [
   new URL("./events.ts", import.meta.url),
   new URL("./screens-bab1.tsx", import.meta.url),
   new URL("./screens-bab2.tsx", import.meta.url),
+  // Spec 010 R-08: /audit is the public entry; /audit/new-intake only
+  // redirects to it.
+  new URL("../../app/audit/page.tsx", import.meta.url),
+  new URL("../../app/audit/audit-intake.client.tsx", import.meta.url),
   new URL("../../app/audit/new-intake/page.tsx", import.meta.url),
-  new URL(
-    "../../app/audit/new-intake/intake-screens.client.tsx",
-    import.meta.url,
-  ),
 ];
 
 /** Interactive screen files: must render in the App Router, not crash it. */
@@ -63,6 +63,8 @@ function isAllowedImportSpecifier(specifier: string): boolean {
   return (
     specifier === "react" ||
     specifier === "next" ||
+    // Next.js primitives (next/navigation redirect, next/image, ...).
+    specifier.startsWith("next/") ||
     specifier === "@tabler/icons-react" ||
     specifier.startsWith("@/components/ui/") ||
     specifier.startsWith("@/components/product/selection/") ||

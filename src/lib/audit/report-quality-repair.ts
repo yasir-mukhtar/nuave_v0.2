@@ -1,10 +1,8 @@
 import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 import type { ReportDiagnosticCode } from "./report-recovery";
-import {
-  measurementSlotForPromptId,
-  reportMeasurementSemantics,
-  type HistoricalPromptPackId,
-} from "./measurement-matrix";
+import type { HistoricalPromptPackId } from "./measurement-matrix";
+import type { AuditQuestionMethod } from "./locked-question-pack";
+import { reportAssessmentClassesFor } from "./contracts";
 
 const PROHIBITED_REPORT_CLAIMS = [
   /\b(?:number|no\.?)[ -]?1\b|\b(?:permanent(?:ly)?|always) rank|\btop-ranked\b/i,
@@ -76,35 +74,39 @@ function safeEvidenceNote(language: "en" | "id" | undefined) {
     : "The answer excerpt above comes directly from the retained test evidence.";
 }
 
-function detailAssessmentClass(
+function detailAssessmentClasses(
   detail: ReportContent["details"][number],
   observations: AuditObservation[],
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ) {
   const observation = observations.find(
     (item) => item.prompt_id === detail.prompt_id,
   );
-  const slot = measurementSlotForPromptId(detail.prompt_id);
-  return observation && slot
-    ? reportMeasurementSemantics(
-        slot,
-        observation.category,
-        observation.branded,
+  return observation
+    ? reportAssessmentClassesFor({
+        promptId: detail.prompt_id,
+        observation,
         historicalFixtureId,
-      ).reportAssessmentClass
-    : null;
+        questionMethod,
+      })
+    : [];
 }
 
 function repairedAccuracyStatus(
   content: ReportContent,
   observations: AuditObservation[],
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ) {
   const information = content.details
-    .filter(
-      (detail) =>
-        detailAssessmentClass(detail, observations, historicalFixtureId) ===
-        "information",
+    .filter((detail) =>
+      detailAssessmentClasses(
+        detail,
+        observations,
+        historicalFixtureId,
+        questionMethod,
+      ).includes("information"),
     )
     .map((detail) => detail.information);
   if (information.includes("conflicting")) return "needs_correction" as const;
@@ -131,6 +133,7 @@ export function sanitizeRecoverableReportQuality(
   brief: BusinessBrief,
   language?: "en" | "id",
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ): ReportQualityRepair {
   const diagnostics = new Set<ReportDiagnosticCode>();
   const knownPromptIds = new Set(observations.map((item) => item.prompt_id));
@@ -195,10 +198,13 @@ export function sanitizeRecoverableReportQuality(
 
   let accuracy_status = content.accuracy_status;
   const information = details
-    .filter(
-      (detail) =>
-        detailAssessmentClass(detail, observations, historicalFixtureId) ===
-        "information",
+    .filter((detail) =>
+      detailAssessmentClasses(
+        detail,
+        observations,
+        historicalFixtureId,
+        questionMethod,
+      ).includes("information"),
     )
     .map((detail) => detail.information);
   const accuracyIsContradictory =
@@ -213,6 +219,7 @@ export function sanitizeRecoverableReportQuality(
       { ...content, details },
       observations,
       historicalFixtureId,
+      questionMethod,
     );
     diagnostics.add("minimum_report_fallback_used");
   }

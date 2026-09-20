@@ -427,20 +427,48 @@ describe("R5 context permission and dormant dispatch", () => {
         e.isDirectory() ? files(join(path, e.name)) : [join(path, e.name)],
       );
     }
+    // The dormant set: the v3 facts/context modules plus the dormant GLM
+    // prototype and its instruction module. Only they may import each other;
+    // tests are the sanctioned consumers and are excluded.
+    const dormantModule =
+      /question-(?:facts|context)-v3\.ts$|questions-id-glm(?:-instruction)?\.ts$/;
+    const importsDormant = (source: string) =>
+      /(?:from|import\s*\()[^\n]*question-(?:facts|context)-v3|(?:from|import\s*\()[^\n]*questions-id-glm/.test(
+        source,
+      );
     const consumers = files("src")
       .filter(
         (p) =>
           /\.(ts|tsx)$/.test(p) &&
           !p.endsWith(".test.ts") &&
           !p.endsWith(".test.tsx") &&
-          !/question-(facts|context)-v3\.ts$/.test(p),
+          !dormantModule.test(p),
       )
-      .filter((p) =>
-        /(?:from|import\s*\()[^\n]*question-(facts|context)-v3/.test(
-          readFileSync(p, "utf8"),
-        ),
-      );
-    expect(consumers).toEqual([]);
+      .filter((p) => importsDormant(readFileSync(p, "utf8")));
+    // The founder-only local experiment names its callers explicitly
+    // (LOCAL_FOUNDER_TEST_HANDOFF.md 2026-09-17): the server adapter runs the
+    // request builder, the pack store applies the same v3 wording rules, and
+    // the Spec 009 direct-ten module reuses the shared transport/provenance
+    // mechanics. Any other runtime consumer still fails this guard.
+    expect(consumers.sort()).toEqual([
+      "src/lib/audit/questions-id-direct-ten.ts",
+      "src/lib/intake/glm-local.ts",
+      "src/lib/intake/local-questions.ts",
+    ]);
+
+    // An external runtime importer of the GLM module or its instruction
+    // helper would fail this guard — demonstrated on synthetic import lines.
+    expect(
+      importsDormant(
+        'import { buildCheaperInferenceIndonesianQuestionRequest } from "@/lib/audit/questions-id-glm";',
+      ),
+    ).toBe(true);
+    expect(
+      importsDormant(
+        'import { GLM_INSTRUCTION_HEAD } from "./questions-id-glm-instruction";',
+      ),
+    ).toBe(true);
+    expect(importsDormant('import { x } from "./questions-id";')).toBe(false);
   });
 });
 

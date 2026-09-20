@@ -6,7 +6,9 @@ test.beforeEach(async ({ page }) => {
   await grantAccess(page);
 });
 
-for (const path of ["/", "/audit", "/audit/fixture"] as const) {
+// Spec 010 R-09: the archived /audit/fixture and /audit/spec004 preview
+// pages are gone — only the public surfaces remain under the network guard.
+for (const path of ["/", "/audit"] as const) {
   test(`${path} makes no unexpected third-party request`, async ({ page }) => {
     const requests = collectRequests(page);
     await page.goto(path, { waitUntil: "domcontentloaded" });
@@ -14,27 +16,6 @@ for (const path of ["/", "/audit", "/audit/fixture"] as const) {
     await assertNoUnexpectedExternalRequests(page, requests);
   });
 }
-
-test("/audit/spec004 is a hard-offline preview with no audit API request", async ({
-  page,
-}) => {
-  const requests = collectRequests(page);
-  await page.goto("/audit/spec004", { waitUntil: "domcontentloaded" });
-  await expect(
-    page.getByText(/Pratinjau offline Spec 004/),
-  ).toBeVisible();
-  await page.waitForTimeout(300);
-
-  await assertNoUnexpectedExternalRequests(page, requests);
-  const auditApiRequests = requests.filter((url) => {
-    try {
-      return new URL(url).pathname.startsWith("/api/audit/");
-    } catch {
-      return false;
-    }
-  });
-  expect(auditApiRequests).toEqual([]);
-});
 
 test("mobile nav exposes aria-controls only while its menu target exists", async ({
   page,

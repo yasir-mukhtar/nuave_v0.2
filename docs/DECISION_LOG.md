@@ -1,10 +1,143 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-01
+> Updated: 2026-09-19
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-19 — new flow becomes the public trial journey on v2.nuave.ai without login
+
+**SETTLED — founder-approved.** The founder decided the new direct-ten audit
+journey becomes the only flow on the deployed site, reachable from `/` and
+`/audit`, with **no authentication**: "Adding Google login is out of scope.
+Let the audit journey open to public, assuming nobody would open the URL
+v2.nuave.ai and intentionally abuse it. If there is a low hanging fruit
+solution, I'd like to do that." An earlier same-day preference for Google
+login via the existing v1 Supabase project was superseded by this decision
+before any implementation.
+
+**Accepted risk:** the site is publicly accessible during the trial. One
+complete journey costs ≈ USD 0.17–0.35 of provider usage (2026-09-19 measured
+basis). Protection is deliberately minimal: per-IP Cloudflare rate limits
+(2 generations, 2 runs, 3 reports per 60 s), existing per-request ceilings
+(≤ 2 extraction, ≤ 30 observation calls, ≤ 3 report calls, USD 5 accounted
+session ceiling), and one switch (`NUAVE_NEW_AUDIT_ENABLED`) that stops the
+whole audit before any provider work. These reduce bursts and accidents; they
+are not a hard spending cap and do not stop a determined abuser. The founder
+monitors provider billing during the trial.
+
+**Decisions inside the change:** legacy question methods (`canonical`,
+`glm-slots`, omitted method) are rejected with `400` at the shared routes
+rather than kept dormant; the old flow (pages, components, `prompts`,
+`variance`, their tests) moves to `archive/2026-09-19-legacy-audit-flow/`;
+the disk-based single-send freeze is retained only for local evidence runs
+(`NUAVE_GLM_EVIDENCE_DIR`) and replaced on Workers by the per-IP limits plus
+client locks; generation attempts are recorded in the session so failed and
+interrupted (possibly-billed) attempts are visible in the export totals.
+
+Report usefulness remains deferred until this work is verified (Spec 010).
+[Spec 010](../specs/010-gated-new-audit-flow/SPEC.md) carries the contract.
+
+## 2026-09-19 — complete the audit experience before improving the report
+
+**SETTLED — founder-approved priority change.** After the live-report checkpoint,
+the founder said:
+
+> The report isnt that useful now. I can improve the format later. But now what we need to rush to complete is the end-to-end audit experience, despite the report is not match our standard yet.
+
+Record the report-usefulness verdict as **not yet useful enough**, not pending
+and not passed. Defer report format/usefulness improvements and remove that
+quality verdict as a prerequisite for completing the continuous audit flow.
+The immediate deliverable is one founder-local journey: enter a business/source,
+prepare and confirm its facts, generate/edit/approve ten questions, run the
+same approved pack, read the current report, and download PDF/evidence without
+manual file preparation or switching to the retained-case demo.
+
+This amends the stop-and-improve sequence in the Phase 3 plan and Spec 009's
+AC-08 for this bounded flow-completion work. The report-quality standard remains
+a later obligation. Preserve truthful counts, original evidence, explicit
+approval, ten evaluable answers, provider isolation, budget controls and honest
+failure handling. An unhelpful report is not permission to fabricate a better
+one or claim failed calls succeeded.
+
+Continue the existing implementation through the founder-relayed worker.
+No report redesign, generation-method debate or unrelated fixes in this task.
+Existing payment/hosted-delivery simulation and local-only scope remain; this
+instruction does not authorize a new paid call, commercial release, commit,
+push, merge or deployment. The [Spec 009 amendment](../specs/009-recommendation-eligible-audit/SPEC.md#2026-09-19-amendment--finish-the-continuous-audit-experience)
+and [current handoff](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-worker-task--continuous-audit-flow)
+carry the concrete continuation.
+
+## 2026-09-19 — preserve the first completed direct-ten live-report checkpoint
+
+**SETTLED — founder-requested record.** The founder said:
+
+> It's a great progress (despite I think too slow that we achieved this after a week). But lets make this moment as a check point that we can remember in the future.
+
+Preserve this as [NUAVE-LIVE-REPORT-2026-09-19](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md):
+the accepted questions now have a completed real audit and report, with exact
+evidence and remaining limits retained. Record the positive progress assessment
+and dissatisfaction with pace together. This is not report-quality acceptance,
+Spec 009 Verified status, or permission for another run, implementation round,
+commit, publication or deployment. Continue from the saved result with a bounded
+next action and keep unrelated issues in the existing deferred note.
+
+## 2026-09-18 — authorize one real audit and report from the accepted pack
+
+**SETTLED — founder-approved and consumed.** The founder replied “authorized”
+to the orchestrator's corrected one-run proposal: ten accepted questions and
+one report workflow on OpenCode Go / `gpt-5.6-luna` / low, with the existing
+automatic retries and USD 5 accounted-usage guard. The founder was told that
+this guard is not a guaranteed provider billing cap. No generation, second
+run, model switch, publishing, customer delivery or deployment is included.
+
+The run completed with 11 successful provider requests and no retries; live
+access is off. This authorizes the execution, not acceptance of report quality.
+The [execution record](../specs/009-recommendation-eligible-audit/VERIFICATION.md#authorized-live-execution--2026-09-18)
+contains usage and export limitations. The founder next reviews the real
+report for AC-08. Further paid runs require a new explicit scope.
+
+## 2026-09-18 — approve 90 minutes to finish only the remaining Block B work
+
+**SETTLED — founder-approved.** In response to the proposed 90-minute completion
+extension, the founder said:
+
+> Yes of course, allowed. But be focus and fast, do not go chasing other goal or issues other than what already determined. Store issues found along the way (if any) in an .md note that we can revisit later.
+
+Release **90 additional active minutes including implementation and final
+verification**, on the existing worker branch/worktree. Finish only the four
+determined items: accepted-pack browser connection to the live audit/report
+boundaries, recommendation counts across ten evaluable answers, report-only
+PDF, and an accurate bounded live-call/cost proposal. Preserve the ten accepted
+questions and completed implementation. Record extension time separately;
+this does not reset or erase earlier work/time.
+
+Put unrelated observations in
+[`DEFERRED_NOTES.md`](../specs/009-recommendation-eligible-audit/DEFERRED_NOTES.md)
+without chasing them or adding them to this delivery's acceptance criteria.
+Orchestrator review follows the same bounded scope. The founder still relays
+the handoff and return; no automatic delegation or duplicate implementation.
+This approves development and offline checks. Paid provider calls, commit,
+push, merge, deployment and production activation remain separately gated.
+
+## 2026-09-18 — accept the retained-business direct-ten questions and release Block B
+
+**SETTLED — founder-approved.** After seeing the actual ten retained-business questions
+and their business context, the founder said: “Yes this is good enough, beyond
+what we achieved in the 6/4 formula. Move forward.” All ten questions are
+accepted unchanged; no human edits were supplied. This passes Spec 009's real
+question checkpoint (AC-04) for this specific pack and releases offline Block B
+under its existing 210-minute budget. It does not establish general performance
+superiority or completion of the product path.
+
+The [verification record](../specs/009-recommendation-eligible-audit/VERIFICATION.md)
+identifies the accepted pack, exact text/input/method binding and private
+acceptance receipt. Preserve the captured response and consumed generation
+attempt; do not regenerate. The old-preview URL and numeric-string billing
+issue remain bounded implementation carryovers. Paid audit/report calls need
+their own explicit scope and authorization; no commit, push, merge or deployment
+is authorized. The founder continues to relay the worker handoff and return.
 
 | Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Label      | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Revisit trigger                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -79,6 +212,288 @@ old rows to make history cleaner; add a superseding row.
 | 2026-08-30 | Ship V1 identity fetching **without DNS pinning**, accepting the residual DNS-rebinding/SSRF risk. Pinning a fetch to a pre-validated IP is not practical on the current Cloudflare Workers runtime, so identity fetching ships with the complete R-22 control set — HTTP/HTTPS only, rejection of reserved, private, loopback, link-local and metadata ranges for IPv4 and IPv6, revalidation of every redirect hop, at most 3 hops, 5 s per request and 10 s total, a 512 KB streamed response cap, restricted content types, no credential forwarding, and the same protection for icon fetching — plus the R-23 Workers Rate Limiting bindings. This is a V1 tradeoff, **not** a claim that DNS rebinding has been technically eliminated, and not a claim that Cloudflare blocks a hostname that resolves to private space; that behavior is unverified.                                                                                                                           | SETTLED    | The decision rests on the current deployment having no private-network connectivity or equivalent internal HTTP target: the Worker's only binding is `ASSETS`, there is no Workers VPC, Tunnel, Hyperdrive, Durable Object or KV, and Workers exposes no VM-style metadata service, so the high-impact SSRF target does not exist. The realistic residual is abuse of Nuave as a public fetch proxy, which the rate-limiting bindings mitigate.                                                                                                                       | Workers VPC, Tunnel, Hyperdrive, another private-network mechanism, or materially different endpoint exposure is introduced; or live evidence shows this threat model is wrong.                                                                                                                                                                   |
 | 2026-08-30 | The comparison target is proposed **without an additional provider or web call**. When extraction returns a usable `similar_businesses` entry, the first one is shown on the comparison screen as a labelled proposal the customer must accept, edit, or replace — it is never written into the brief unseen. When extraction returns none, the screen asks the customer to name the comparison target and offers one acceptable fallback: the category-level alternative, `alternatif lain di kategori <kategori>`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | SETTLED    | Spec 007 R-13 required a deterministic derivation and did not define one, so two implementers would have built different things — one inventing a category mapping, one spending a model call, one leaving a required field unfillable. A second call inside the paid flow adds cost and a new failure mode for a field the customer is being shown anyway, and `verified_competitor.name` is required, so the empty case needs an answer the customer can always give.                                                                                               | Real journeys show customers stalling on the comparison screen, or the fallback target visibly weakens slot 9's comparison.                                                                                                                                                                                                                       |
 | 2026-09-12 | For Spec 008 v3 slot 9 (`direct_comparison`), multiple confirmed comparators with no designated target run on the category-alternatives relation (`alternatif lain di kategori <kategori>`); a later **optional** intake control will let the customer designate the direct-comparison target. Competitive role (`entityType`) is sourced only from the existing optional `factsContext` seam — no intake question yet.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | SETTLED    | R5 left the multi-comparator slot-9 relation and the role source open; the adapter may not select, join, or infer either. The category-alternatives fallback is the already-approved comparison form, and optional-only controls preserve the no-universally-required-fields rule.                                                                                                                                                                                                                                                                                    | The intake designation control ships, or generated evidence shows the category fallback materially weakens slot 9's comparison.                                                                                                                                                                                                                   |
+
+## 2026-09-16 — natural questions may address the same need
+
+**SETTLED — founder-approved in the Nuave orchestration task.** Natural,
+relevant customer questions may address the same underlying need. Repeated
+needs or purchasing decisions alone must not block acceptance. Remove the
+requirement for six materially distinct unnamed decisions, and do not require
+ten different customer jobs. Do not invent needs, occasions or comparison
+formats merely to satisfy a diversity quota.
+
+The founder rejected “Saat membuat invoice manual mulai lambat, aplikasi
+invoice mana yang cocok?” as unnatural, considered the automatic-invoice
+question more plausible, and supplied these exact preferred examples:
+
+1. “Saya butuh solusi untuk bikin invoice cepet. Ada aplikasi yang bisa kamu rekomendasiin?”
+2. “Ada ngga aplikasi atau website untuk bikin invoice otomatis?”
+
+These are approved naturalness examples for this context, not universal
+templates, mandatory slang, numeric reviewer scores or approval of an entire
+pack. A short need statement followed by its question can express one consumer
+request. The founder explained that needs around a product can be narrow, so
+forcing different needs is not a useful acceptance condition.
+
+This supersedes conflicting diversity requirements in Spec 008 R5 §§2.1/8,
+SPEC R-17/R-18/AC-06 and the Questions guide. Apply it equally to rich/simple
+generation and fallback; candidate alternatives need not invent a different
+need. Distinct-decision counts may remain descriptive but cannot determine
+usability, rejection or retry. No substitute diversity quota is approved.
+
+Keep ten canonical slots, six unnamed/four named, their purposes and identity
+rules, naturalness, concrete entity relevance, factual/context permissions,
+safety, and exact-duplicate checks. No change to report calculations, provider
+budgets, the distinct-business comparison threshold or P/M/C evidence rules
+is authorized. Same-need wording can provide a real wording improvement;
+labels alone still do not establish one.
+
+Show the founder small sets of actual questions with their business context
+at meaningful quality checkpoints, before presenting the agents' verdicts.
+Record feedback against exact wording. Preserve previous captures, review
+answers and frozen-policy results; any future reassessment must identify this
+amended contract separately. The original G2P result remains historical
+`not_retained`; this decision is not a new pilot pass.
+
+Revisit only if real question/report evidence demonstrates a specific quality
+problem beyond shared need. Runtime writer/evaluator updates remain worker
+implementation work; this entry does not deploy them or authorize paid calls.
+
+## 2026-09-16 — recover the accepted prompt and record founder wording feedback
+
+The founder identified **Winning Prompt Generation Approach** as the source
+of the accepted generation approach, reiterated satisfaction with the earlier
+GLM-5.3 / GLM-5.3 Flash results, and requested a trace of why the recent work
+had degraded. The [exact accepted experiment prompt](./references/WINNING_QUESTION_GENERATION_PROMPT_2026-09-07.md)
+is now preserved in the repository with its conversation provenance. Preserve
+that quality reference; the same-day no-diversity-quota amendment above still
+governs. The current investigation is not a new model-selection exercise.
+
+For the returned founder sample, the founder supplied these exact revisions:
+
+- Q3: “Saya lagi nyari kafe yang nyaman buat nugas di Jaksel. Ada rekomendasi?”
+- Q4: “Laptop saya mulai lemot. Kayaknya butuh beli baru. Cariin dong toko laptop di Bandung/Cimahi yang bagus.”
+- Q5: **Drop.** The founder rejected “Untuk layanan dan kemudahan akses
+  seperti apa Klinik Gigi Senyum cocok, dan kapan sebaiknya pasien memilih
+  klinik gigi lain di Depok?” as something nobody would ask.
+
+Record these as naturalness feedback on these texts, not a new universal
+sentence template, numerical rubric score, or approval of the complete pack.
+Dropping Q5 does not silently remove its matrix slot or adjudicate the
+separate pending dental-review fields.
+
+Investigation confirmed that the September 7 GLM-5.3 Flash writer decision
+and implementation survive on `feat/cheaperinference-glm-5-3-flash`
+(`2dbd86737cf3f652733e21a90991bb342e3dae04`, draft PR #47), separate from
+main. That work retains the old generation instruction. The later G2P pilot
+used Luna with different instructions; its result cannot establish that the
+founder's GLM approach failed. Original model-specific response captures
+were not recovered from the supplied conversation.
+
+Orchestrator next action: reconcile the accepted source and existing GLM
+integration with the current implementation requirements before issuing more
+fallback-rewrite work. Further sample drafting is paused for that
+reconciliation. Preserve earlier captures and results. This record does not
+authorize implementation, a model switch in production, or new paid calls.
+
+## 2026-09-17 — founder wording edits to the captured GLM invoice sample
+
+The second local GLM-5.3 Flash connection attempt returned twelve invoice
+questions for fictional ContohInvoice. The founder's overall feedback was
+**“Mostly—some questions need edits.”** The founder then supplied these exact
+replacements, using the original candidate numbers:
+
+- **Q1:** “Aplikasi buat bikin invoice untuk usaha kecil enaknya pakai apa ya?”
+- **Q3:** “Bikin invoice tiap bulan capek kalau manual. Biasanya UMKM pakai aplikasi apa sih?”
+
+These are wording preferences for these two questions. Relative to the
+captured response, Q1 removes “yang” before “enaknya”; Q3 removes “orang”
+before “UMKM”. Carry the exact revisions into the integration handoff as
+naturalness examples. Do not generalize them into word bans or mandatory
+sentence templates. No further edits or drops were supplied, and approval of
+the entire twelve-question set is not inferred.
+
+Preserve the original response as observed evidence; founder revisions remain
+separate. The accepted source prompt and no-diversity-quota amendment still
+govern. This feedback does not resolve the provider model-name discrepancy,
+change the product question composition, or authorize further paid requests.
+
+## 2026-09-17 — preserve the winning-prompt milestone as a checkpoint
+
+The founder requested a durable checkpoint so future sessions can recover
+this moment if work drifts. Record
+[`NUAVE-PROMPTS-2026-09-17`](./checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md)
+as the reference for the accepted generation source, GLM connection capture,
+and exact founder feedback. Include the tested fictional input/request and
+twelve original questions in the repository, with founder edits separate;
+keep credentials and raw provider/account metadata outside it.
+
+Future question-generation work starts from this checkpoint and the latest
+decisions. Preserve the accepted approach, selected GLM writer direction and
+no-diversity-quota amendment. Any proposed departure must be explicit and
+reasoned; mechanical compliance is not evidence that question quality improved.
+Do not silently reconstruct the prompt from R5 or restart model selection.
+
+The recorded milestone is connection/response capture with the founder's
+“mostly” feedback and two exact edits, not a passed G2P or production integration. The model alias,
+billing extraction and twelve-to-ten product adaptation remain as documented.
+The portable next step is an offline integration draft and unsent request
+specimen. This checkpoint grants no additional paid-call or release authority.
+Later explicit founder decisions may supersede it; preserve the dated record
+and link the new decision rather than rewriting its historical outcome.
+
+## 2026-09-17 — time-box the next founder test
+
+After repeated dormant-validator correction rounds, the founder challenged
+the delay in reaching a functional product test and agreed that time-boxing
+was the right next step. The founder asked for an action plan. The immediate
+priority is now a working local founder test of confirmed facts → GLM →
+editable questions. Stop expanding general validator hardening as the
+prerequisite for preparing that controlled test. Preserve the findings as
+known limitations; do not rewrite them as fixed or claim G2P has passed.
+
+The orchestrator prepared the concrete
+[local founder-test handoff](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_HANDOFF.md):
+a proposed 120-minute implementation session, 20-minute focused review, then
+a founder test. The detailed scope and timing are prepared for dispatch, not
+claimed as already executed or individually approved in this conversation.
+Passing that handoff to the worker authorizes the specified offline local
+experiment and its narrow sequencing exception before G2P; it does not
+authorize production plumbing or release. The next milestone after question
+review is one complete audit/report journey.
+
+The winning source, GLM writer choice, founder wording and no-diversity-quota
+amendment remain settled. Keep the default preview and deployed product
+unchanged. A test deadline does not excuse false provenance, secret exposure,
+unapproved spending or a false completion claim. No new provider request,
+commit, push, merge or deployment is authorized by this planning request.
+The two prior paid-request authorizations remain consumed. Prepare the
+concrete live test first and obtain authorization only for that action.
+
+## 2026-09-17 — local founder-test UI accepted; move to live preparation
+
+After the synthetic local demo was made available, the founder said:
+“Okay good enough, lets move on”. Treat the local interface as accepted for
+this milestone and stop further UI/wording iteration here. This feedback
+does not establish the quality of real GLM output: the demo used labeled
+synthetic responses.
+
+Next is the existing [45-minute live-readiness correction](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_REVIEW.md),
+limited to B1–B3: the frozen single-send attempt, original-text/metadata
+preservation, and response-ID handling. Preserve the accepted interface,
+prompt and model. Prepare the concrete live request for founder authorization;
+this acceptance does not authorize a paid call or production release.
+
+## 2026-09-18 — authorize one frozen GLM request through the local UI
+
+After independent closure of B1–B3, the founder answered **“Authorized”** to
+the request for the existing worker to make one paid GLM-5.3 Flash generation
+through the local UI for fictional Laundry Ceria, then return the questions
+for founder review. The presented estimate was about USD 0.004, explicitly
+not a guaranteed cap; the scope has a 180-second client wait, zero client
+retries and stops before audit execution.
+
+This authorizes the single attempt in the
+[accepted execution scope](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_REVIEW.md),
+bound to intake SHA-256
+`7b82b585bae93ec539375c0eee7aec9c519e48edb2c532e14919920d3f5ceddb`
+and outbound request SHA-256
+`32356cbacf97610cfd927a4ff90cc0c65c83e6ee358e8e311aaaeaf46c0b9e29`.
+Use the reviewed implementation and existing key by name only in the server
+environment; no further confirmation is needed for this exact action.
+
+At authorization recording, the artifacts still match and the consumed
+marker is absent. This is permission to execute, not a claim of execution.
+Do not reset the marker, retry after timeout/failure, change the request or
+model, start observations/report generation, commit, push, merge or deploy.
+Prior smoke-test authorizations remain separately consumed. This permission
+does not approve generated question quality or activate production.
+
+## 2026-09-18 — authorized UI request captured; allowance consumed
+
+Execution evidence confirms one real GLM-5.3 Flash response for fictional
+Laundry Ceria: HTTP 200/stop, response `gen-1789685244-h9NLCCkHFyzekfBLpIqh`,
+settled USD 0.000782, marker consumed at 2026-09-17 22:47:22 UTC. The exact
+outbound request hash matches the authorization. Ten questions are captured;
+the UI returned `validation_failed`, not an approved pack. No audit/report
+followed. No additional provider request is authorized by the original grant.
+
+The worker changed the frozen intake record/sidecar after a pre-send
+`input_changed` rejection. This departed from the explicit handoff even
+though the actual API request remained identical. The
+[review record](./drafts/glm-local-integration-2026-09-17/LOCAL_FOUNDER_TEST_REVIEW.md)
+preserves both input hashes and distinguishes the worker's diagnosis from
+independently confirmed evidence. This outcome record does not retrospectively
+authorize that intake replacement or approve question quality. The worker
+reports live mode disabled; the restored synthetic demo is not a new live run.
+
+## 2026-09-18 — recommendation-eligible generation replaces fixed question purposes
+
+The founder instructed: “I would like to focus entirely on implementing the
+‘recommendation-eligible’ approach rather than giving each prompt fixed slots
+with functional purpose.” The founder requested a high-level plan and worker
+opinion, to be returned through the founder for alignment before implementation.
+
+For the new method, the founder-accepted question-generation prompt and the
+no-forced-diversity amendment govern generation quality. Fixed functional
+slots, mandatory coverage of their purposes and the 6/4 allocation are no
+longer constraints on the design. Do not reintroduce them as hidden categories,
+required intent mixes or validation rules. Existing downstream dependencies
+must be addressed rather than used to reshape natural questions back into
+the old matrix. Preserve privacy, safety, honest business facts and evidence.
+
+This supersedes conflicting fixed-purpose requirements for the new method in
+the older question context, journey 04, Spec 007/008 and R5. It does not claim
+that the shipped code or historical reports already use the new method.
+Historical records retain their recorded measurement semantics.
+
+The [high-level plan](./drafts/RECOMMENDATION_ELIGIBLE_PLAN_2026-09-18.md)
+proposes an all-unnamed default and twelve candidates with ten selected for
+execution. These details remain proposals for alignment, not additional
+founder decisions. GLM-5.3 Flash remains the selected question writer; the
+audit-answer provider is unchanged. The next task is the bounded worker
+opinion. No implementation, new paid call, commit, push, merge or deployment
+is authorized by this planning request; prior live allowances are consumed.
+
+## 2026-09-18 — approve the bounded recommendation-eligible delivery
+
+**SETTLED — founder-approved.** After the orchestrator compared the worker's
+proposal and recommended a combined plan, the founder said: “Good judgement.
+I agree with your plan. The worker agent too.” The founder requested a revised
+plan for fresh orchestrator/worker sessions, clearly bounded and time boxed,
+with founder testing at important judgment points.
+
+The approved flow is **one confirmed brief → ten directly generated unnamed
+questions → human editing and approval → ten independent grounded answers →
+downloadable report**. This resolves the earlier proposals: no twelve-to-ten
+selection step and no mandatory 6/4 split. Direct-ten is an explicit count-only
+adaptation of the recovered source; human quality review remains. The returned
+worker opinion still favored twelve/select-ten, so it is review evidence, not
+unanimous agreement on that detail.
+
+No fixed purposes, compulsory comparison, distinct-need quota or punctuation
+count governs the new method. Competitor input is optional. Keep the accepted
+source reasoning, natural Indonesian, open recommendation opportunity,
+privacy/safety and honest evidence. GLM-5.3 Flash remains the question writer;
+the grounded audit-answer provider is unchanged. Use actual evidence for
+report counts and recommendations; preserve historical packs under their own
+method rather than fabricating legacy categories on new questions.
+
+[Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md) is the approved
+bounded implementation contract. Its two worker blocks are capped at 150 and
+210 active minutes, including their checks. The founder judges real questions
+before the second block and the real report at completion. Deadline overruns
+return working progress and concrete blockers; extensions are explicit.
+
+Offline implementation begins in the requested fresh sessions. This revision
+session changes documentation only. New generation and audit/report calls
+each need explicit scoped authorization; old allowances remain consumed. No
+commit, push, merge, deployment or production activation is authorized.
+
+This prospectively supersedes conflicting matrix, editing, report and R5 gate
+requirements for the new method. Old G2 results and shipped behavior are not
+relabelled as passed or migrated. [Fresh-session handoffs](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md)
+carry the approved scope; no further general alignment round is required.
 
 ## Supersession annotations
 

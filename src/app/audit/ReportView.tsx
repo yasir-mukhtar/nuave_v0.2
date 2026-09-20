@@ -36,12 +36,26 @@ function measurementLabel(promptId: string) {
   );
 }
 
+/**
+ * Direct-ten prompt IDs own no matrix slot. When none resolves, the label is
+ * derived from the assessed dimension the detail actually carries — the same
+ * order the report treats as primary (recommendation, then comparison, then
+ * information). Canonical prompts always resolve a slot, so this fallback can
+ * only ever describe direct-ten evidence.
+ */
+function directTenAssessmentClass(detail: ReportDetail) {
+  if (detail.recommendation !== "not_assessed") return "recommendation";
+  if (detail.comparison !== "not_observed") return "comparison";
+  if (detail.information !== "not_assessed") return "information";
+  return undefined;
+}
+
 function resultLabel(detail: ReportDetail) {
   if (detail.run === "failed") return "Belum berhasil diuji";
   if (detail.appearance === "absent") return "Tidak disebut";
-  const assessmentClass = measurementSlotForPromptId(
-    detail.prompt_id,
-  )?.reportAssessmentClass;
+  const assessmentClass =
+    measurementSlotForPromptId(detail.prompt_id)?.reportAssessmentClass ??
+    directTenAssessmentClass(detail);
   switch (assessmentClass) {
     case "comparison":
       if (detail.comparison === "client_preferred")

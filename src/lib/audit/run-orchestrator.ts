@@ -10,7 +10,10 @@ import {
   assertLiveProviderCredentialsConfigured,
   isLiveProviderCall,
 } from "./provider";
-import { productionObservationMethodErrors } from "./production-observation-method";
+import {
+  productionObservationMethodErrors,
+  syntheticLocalObservationMethodErrors,
+} from "./production-observation-method";
 import {
   MAX_ATTEMPTS_PER_QUESTION,
   MAX_AUTOMATIC_RETRIES_PER_QUESTION,
@@ -39,7 +42,15 @@ export async function runAuditObservations(input: {
   emit: RunEmit;
   sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
   now?: () => number;
-  resume?: { observations: AuditObservation[] };
+  resume?: {
+    observations: AuditObservation[];
+    /** Resume-evidence method gate. Default ("production") requires the
+     * protected live observation method on every completed observation.
+     * "synthetic-local" — set only by the founder-local substitute route —
+     * requires the labeled fixture system instead; it never weakens the
+     * production gate for live or canonical runs. */
+    allowSynthetic?: boolean;
+  };
   signal?: AbortSignal;
 }): Promise<AuditRunSummary> {
   const { prompts, brief, safety_identifier, budget, execute, emit, resume } =
@@ -47,14 +58,20 @@ export async function runAuditObservations(input: {
   throwIfAuditAborted(input.signal);
 
   const resumedObservations = resume?.observations ?? [];
-  const resumeMethodErrors = productionObservationMethodErrors(
-    resumedObservations.filter(
-      (observation) => observation.run_status === "completed",
-    ),
+  const completedResume = resumedObservations.filter(
+    (observation) => observation.run_status === "completed",
   );
+  const resumeMethodErrors =
+    resume?.allowSynthetic === true
+      ? syntheticLocalObservationMethodErrors(completedResume)
+      : productionObservationMethodErrors(completedResume);
   if (resumeMethodErrors.length) {
     throw new Error(
-      `Resume observations do not match the current protected production observation method. ${resumeMethodErrors.join(" ")}`,
+      `Resume observations do not match the ${
+        resume?.allowSynthetic === true
+          ? "labeled local substitute"
+          : "current protected production"
+      } observation method. ${resumeMethodErrors.join(" ")}`,
     );
   }
   if (isLiveProviderCall(execute)) {

@@ -1,7 +1,7 @@
 # Nuave audit method
 
 > Status: **Current audit method**
-> Updated: 2026-09-01
+> Updated: 2026-09-18
 >
 > Customer context: Nuave's customer is the owner or marketing decision-maker
 > of a small or medium Indonesian business, ordering an audit of the business
@@ -10,6 +10,17 @@
 > from [`VISION.md`](./VISION.md); where they disagree, the vision governs.
 
 ## Purpose
+
+**Approved method amendment (2026-09-18):** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
+owns the new ten-unnamed recommendation-eligible method. Its scope, question
+rules and report denominators supersede the matrix, 6/4 split, fixed purposes
+and R5 gates below for that method. Human-approved texts run independently;
+the answering request must not receive hidden target identity. Report mention
+and explicit recommendation from actual evidence, with no position-derived
+coverage claims. Ten evaluable observations remain required; untested is not
+zero, and historical methods remain separate. Privacy, grounded evidence and
+delivery protections continue. Implementation and live validation are pending.
+
 
 The raw audit should turn real public information and observed AI responses
 into a short, honest report an Indonesian business decision-maker can read in

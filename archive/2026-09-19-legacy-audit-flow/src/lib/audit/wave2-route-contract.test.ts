@@ -94,6 +94,9 @@ function questionProviderBody() {
 }
 
 function stubProtectedQuestionMethod() {
+  vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "1");
+  vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+  vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
   vi.stubEnv("NUAVE_PROVIDER", "opencodego");
   vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
   vi.stubEnv("OPENCODEGO_API_KEY", "offline-test-key");
@@ -225,12 +228,17 @@ describe("Wave 2 real route contract (K-09)", () => {
       );
     });
 
+    // Spec 010 R-02a: the run boundary now accepts only "direct-ten" — the
+    // canonical pack returned by /api/audit/prompts is rejected with 400
+    // before any provider work. The canonical branch is archived with the
+    // old flow in R-09.
     const runResponse = await runPOST(
       new Request("http://localhost/api/audit/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          question_method: "canonical",
           brief,
           prompts: reviewedPrompts,
           safety_identifier: "wave2-route-test",
@@ -244,19 +252,15 @@ describe("Wave 2 real route contract (K-09)", () => {
       }),
     );
 
-    expect(runResponse.status).toBe(200);
-    const stream = await runResponse.text();
-    expect(stream).toContain('"type":"run_completed"');
-    expect(providerMocks.execute).toHaveBeenCalledTimes(10);
-    expect(
-      providerMocks.execute.mock.calls.map(([input]) => input.prompt.question),
-    ).toEqual(
-      reviewedPrompts.map((prompt: { question: string }) => prompt.question),
-    );
-    expect(budgetCallCounts).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(runResponse.status).toBe(400);
+    expect(await runResponse.json()).toMatchObject({
+      error: expect.stringContaining("question_method"),
+    });
+    expect(providerMocks.execute).not.toHaveBeenCalled();
+    expect(budgetCallCounts).toEqual([]);
   });
 
-  it("rejects a compact comparison-business edit before any run provider call", async () => {
+  it("rejects a canonical pack with a compact comparison-business edit — 400 before any run provider call", async () => {
     const brief = confirmedBrief({
       name: "Kopi Pesaing",
       scope: "Depok",
@@ -277,12 +281,16 @@ describe("Wave 2 real route contract (K-09)", () => {
     editedPrompts[0].question =
       "Ada rekomendasi klinik gigi seperti KopiPesaing di Depok?";
 
+    // Spec 010 R-02a: the canonical method is rejected outright — the
+    // comparison-content rule now lives behind the unreachable legacy
+    // branch pending archive (R-09).
     const runResponse = await runPOST(
       new Request("http://localhost/api/audit/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          question_method: "canonical",
           brief,
           prompts: editedPrompts,
           safety_identifier: "wave3-compact-competitor",
@@ -296,15 +304,15 @@ describe("Wave 2 real route contract (K-09)", () => {
       }),
     );
 
-    expect(runResponse.status).toBe(422);
+    expect(runResponse.status).toBe(400);
     expect(await runResponse.json()).toMatchObject({
-      error: expect.stringContaining("tidak boleh menyebut bisnis pembanding"),
+      error: expect.stringContaining("question_method"),
     });
     expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
     expect(providerMocks.execute).not.toHaveBeenCalled();
   });
 
-  it("rejects an exact short comparison-business edit before any run provider call", async () => {
+  it("rejects a canonical pack with an exact short comparison-business edit — 400 before any run provider call", async () => {
     const brief = confirmedBrief({
       name: "XO",
       scope: "Depok",
@@ -331,6 +339,7 @@ describe("Wave 2 real route contract (K-09)", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          question_method: "canonical",
           brief,
           prompts: editedPrompts,
           safety_identifier: "wave3-short-competitor",
@@ -344,9 +353,9 @@ describe("Wave 2 real route contract (K-09)", () => {
       }),
     );
 
-    expect(runResponse.status).toBe(422);
+    expect(runResponse.status).toBe(400);
     expect(await runResponse.json()).toMatchObject({
-      error: expect.stringContaining("tidak boleh menyebut bisnis pembanding"),
+      error: expect.stringContaining("question_method"),
     });
     expect(providerMocks.assertConfigured).not.toHaveBeenCalled();
     expect(providerMocks.execute).not.toHaveBeenCalled();

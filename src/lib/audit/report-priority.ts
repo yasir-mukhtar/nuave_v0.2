@@ -1,5 +1,6 @@
 import { validateReportContent } from "./contracts";
 import type { HistoricalPromptPackId } from "./measurement-matrix";
+import type { AuditQuestionMethod } from "./locked-question-pack";
 import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
 
 function observedGapError(order: number) {
@@ -18,6 +19,7 @@ function priorityIsSupported(
   observations: AuditObservation[],
   brief: BusinessBrief,
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ) {
   const knownIds = new Set(observations.map((item) => item.prompt_id));
   if (priority.evidence_prompt_ids.some((id) => !knownIds.has(id))) {
@@ -29,6 +31,7 @@ function priorityIsSupported(
     observations,
     brief,
     historicalFixtureId,
+    questionMethod,
   );
   return !errors.includes(observedGapError(priority.order));
 }
@@ -49,6 +52,7 @@ export function sanitizeUnsupportedReportPriorities(
   observations: AuditObservation[],
   brief: BusinessBrief,
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ): ReportPrioritySanitization {
   const removedOrders: number[] = [];
   const surviving = content.priorities.filter((priority) => {
@@ -58,6 +62,7 @@ export function sanitizeUnsupportedReportPriorities(
       observations,
       brief,
       historicalFixtureId,
+      questionMethod,
     );
     if (!supported) removedOrders.push(priority.order);
     return supported;

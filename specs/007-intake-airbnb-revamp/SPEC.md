@@ -1,5 +1,11 @@
 # Spec 007: Runnable V1 audit journey
 
+**Scoped supersession, 2026-09-18:** [Spec 009](../009-recommendation-eligible-audit/SPEC.md)
+replaces fixed-slot composition, purpose-preserving editing and position-based
+report interpretation for the new recommendation-eligible method. Other intake,
+privacy and journey requirements remain. The matrix below continues to define
+the legacy method and must not be silently applied to new-method packs.
+
 > Status: **Approved** (founder-approved 2026-08-30)
 > Owner: Founder
 > Updated: 2026-08-30

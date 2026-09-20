@@ -74,17 +74,22 @@ function collectSources(response: Response): Source[] {
 }
 
 /**
- * Protected OpenCode-Go observation call with request cancellation threaded to
- * the OpenAI-compatible SDK. This is deliberately observation-only: extraction
- * and report generation are not long-running browser streams in Wave 1.
+ * The complete protected observation request for one locked question.
+ *
+ * Spec 009 answering boundary: the only question-dependent content is the
+ * developer instruction plus the exact approved question text as the user
+ * message. No brief, business identity, comparator, slot metadata, or any
+ * other answer can enter this request because the builder receives no such
+ * value — the isolation is structural, not just conventional. Exported pure
+ * so the boundary is testable without a provider call.
  */
-export async function executeAbortableProtectedObservation(
-  input: QuestionExecuteInput,
-): Promise<AuditObservation> {
-  throwIfAuditAborted(input.signal);
-  const requestedModel = auditModel();
-  const request = {
-    model: requestedModel,
+export function protectedObservationRequest(input: {
+  question: string;
+  safety_identifier: string;
+  requested_model: string;
+}) {
+  return {
+    model: input.requested_model,
     reasoning: { effort: auditReasoningEffort("low") },
     store: false,
     service_tier: "default" as const,
@@ -102,9 +107,26 @@ export async function executeAbortableProtectedObservation(
           DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
         ),
       },
-      { role: "user" as const, content: input.prompt.question },
+      { role: "user" as const, content: input.question },
     ],
   } satisfies CostControlledResponseParams;
+}
+
+/**
+ * Protected OpenCode-Go observation call with request cancellation threaded to
+ * the OpenAI-compatible SDK. This is deliberately observation-only: extraction
+ * and report generation are not long-running browser streams in Wave 1.
+ */
+export async function executeAbortableProtectedObservation(
+  input: QuestionExecuteInput,
+): Promise<AuditObservation> {
+  throwIfAuditAborted(input.signal);
+  const requestedModel = auditModel();
+  const request = protectedObservationRequest({
+    question: input.prompt.question,
+    safety_identifier: input.safety_identifier,
+    requested_model: requestedModel,
+  });
   const reservedCost = reserveAuditCall({
     budget: input.budget,
     stage: "observation",

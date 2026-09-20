@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { INTAKE_FIXTURES } from "./fixtures";
 import {
   deriveContextFixture,
+  prepareBoundaryIdentity,
   prepareLocalIdentity,
   reconcileOnCommit,
 } from "./preparation";
@@ -226,5 +227,88 @@ describe("local identity correction", () => {
       "different.example.com",
     );
     expect(wrongSource.screens["s-offerings"].prepared).toEqual([]);
+  });
+});
+
+describe("prepareBoundaryIdentity (Spec 009 entered-business reading)", () => {
+  it("keeps only the entered identity when the boundary draft carries no facts", () => {
+    const fixture = prepareBoundaryIdentity(
+      base,
+      "Batik Laras",
+      {
+        canonicalUrl: "https://batiklaras.example/",
+        displayName: "Batik Laras",
+      },
+      null,
+    );
+    expect(fixture.entry).toBe("s-crawl");
+    expect(fixture.screens["s-brand"].prepared[0]).toMatchObject({
+      label: "Batik Laras",
+      detail: "https://batiklaras.example/",
+    });
+    // Nothing is invented: every context screen asks the buyer directly.
+    for (const screen of [
+      "s-category",
+      "s-offerings",
+      "s-customers",
+      "s-competitors",
+      "s-branch",
+      "s-product",
+    ] as const)
+      expect(fixture.screens[screen].prepared).toEqual([]);
+    // A known fixture's rich example is never presented as the entered
+    // business's facts.
+    expect(fixture.screens["s-brand"].note).not.toContain("Kedai kopi");
+  });
+
+  it("prepares candidates only from fields the boundary draft evidences", () => {
+    const fixture = prepareBoundaryIdentity(
+      base,
+      "Batik Laras",
+      {
+        canonicalUrl: "https://batiklaras.example/",
+        displayName: "Batik Laras",
+      },
+      {
+        category: "Batik tulis",
+        verified_offerings: ["Kain batik", "Batik seragam"],
+        verified_customer_needs: ["Hadiah resmi"],
+        similar_businesses: [{ name: "Batik Contoh" }],
+      },
+    );
+    expect(
+      fixture.screens["s-category"].prepared.map((item) => item.label),
+    ).toEqual(["Batik tulis"]);
+    expect(
+      fixture.screens["s-offerings"].prepared.map((item) => item.label),
+    ).toEqual(["Kain batik", "Batik seragam"]);
+    expect(
+      fixture.screens["s-customers"].prepared.map((item) => item.label),
+    ).toEqual(["Hadiah resmi"]);
+    expect(
+      fixture.screens["s-competitors"].prepared.map((item) => item.label),
+    ).toEqual(["Batik Contoh"]);
+    // Prepared candidates stay unselected until the buyer confirms.
+    expect(fixture.screens["s-category"].selected).toEqual([]);
+    expect(fixture.screens["s-offerings"].selected).toEqual([]);
+  });
+
+  it("fails closed on a missing name or unparseable source", () => {
+    expect(() =>
+      prepareBoundaryIdentity(
+        base,
+        "   ",
+        { canonicalUrl: "https://batiklaras.example/", displayName: "" },
+        null,
+      ),
+    ).toThrow();
+    expect(() =>
+      prepareBoundaryIdentity(
+        base,
+        "Batik Laras",
+        { canonicalUrl: "bukan-url", displayName: "" },
+        null,
+      ),
+    ).toThrow();
   });
 });

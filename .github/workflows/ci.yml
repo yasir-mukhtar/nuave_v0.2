@@ -63,7 +63,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run fixture-journey browser tests
+      - name: Run browser tests
         run: npm run test:e2e
 
   verify-main-origin:
@@ -159,9 +159,9 @@ jobs:
           OPENAI_BASE_URL=https://opencode.ai/zen/go/v1
           OPENAI_AUDIT_MODEL=gpt-5.6-luna
           OPENAI_AUDIT_REASONING_EFFORT=low
-          NUAVE_FIXTURE_PREVIEW_ENABLED=${{ secrets.NUAVE_FIXTURE_PREVIEW_ENABLED }}
-          NUAVE_FIXTURE_FORCE_REPORT_FAILURE=${{ secrets.NUAVE_FIXTURE_FORCE_REPORT_FAILURE }}
-          OPENAI_AUDIT_CARRYOVER_COST_USD=${{ secrets.OPENAI_AUDIT_CARRYOVER_COST_USD }}
+          NUAVE_NEW_AUDIT_ENABLED=true
+          NUAVE_AUDIT_MODE=live
+          CHEAPERINFERENCE_API_KEY=${{ secrets.CHEAPERINFERENCE_API_KEY }}
           EOF
 
       - name: Build validated OpenNext worker

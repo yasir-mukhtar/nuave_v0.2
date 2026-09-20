@@ -20,7 +20,37 @@ import {
   measurementSlotForPromptId,
   reportMeasurementSemantics,
   type HistoricalPromptPackId,
+  type ReportAssessmentClass,
 } from "./measurement-matrix";
+import type { AuditQuestionMethod } from "./locked-question-pack";
+
+/**
+ * Every report-assessment path a prompt is eligible for under its method.
+ * Canonical prompts resolve to exactly their matrix slot's class; direct-ten
+ * prompts have no slots — every dimension is judged from the actual answer
+ * (still appearance-gated downstream). An unknown or missing prompt resolves
+ * to no classes at all, which fails closed rather than inventing a path.
+ */
+export function reportAssessmentClassesFor(input: {
+  promptId: string;
+  observation?: AuditObservation;
+  historicalFixtureId?: HistoricalPromptPackId;
+  questionMethod?: AuditQuestionMethod;
+}): ReportAssessmentClass[] {
+  if (input.questionMethod === "direct-ten") {
+    return ["recommendation", "comparison", "information"];
+  }
+  const slot = measurementSlotForPromptId(input.promptId);
+  if (!slot || !input.observation) return [];
+  return [
+    reportMeasurementSemantics(
+      slot,
+      input.observation.category,
+      input.observation.branded,
+      input.historicalFixtureId,
+    ).reportAssessmentClass,
+  ];
+}
 
 export {
   AUDIT_MEASUREMENT_MATRIX,
@@ -138,6 +168,9 @@ export type AuditReportLabelPack = {
     unbrandedTotal: number;
     brandedTotal: number;
     coverageLabel: string;
+    /** Whether the retained evidence actually executed web search. A labeled
+     * synthetic run did not, and the summary must not claim it did. */
+    webSearchExecuted: boolean;
   }) => string;
 };
 
@@ -171,8 +204,9 @@ export const ENGLISH_AUDIT_REPORT_LABELS: AuditReportLabelPack = {
     unbrandedTotal,
     brandedTotal,
     coverageLabel,
+    webSearchExecuted,
   }) =>
-    `We tested ${totalQuestions} questions one at a time through ${systemPart}${modelPart} with web search. ${unbrandedTotal} questions did not name the business in the question. ${brandedTotal} questions named the business. ${coverageLabel} A mention is not a recommendation, and a failed test is not a negative result.`,
+    `We tested ${totalQuestions} questions one at a time through ${systemPart}${modelPart}${webSearchExecuted ? " with web search" : " without web search"}. ${unbrandedTotal} questions did not name the business in the question. ${brandedTotal} questions named the business. ${coverageLabel} A mention is not a recommendation, and a failed test is not a negative result.`,
 };
 
 function hasPromptContextValue(value: BusinessBrief[keyof BusinessBrief]) {
@@ -328,16 +362,95 @@ function exactAnswerExcerpt(rawAnswer: string) {
   return clipped.slice(0, lastSpace > 0 ? lastSpace : 320).trim();
 }
 
+const DETAIL_COPY = {
+  en: {
+    failed: {
+      finding: "This question could not be completed.",
+      evidence_note: "No answer was available to assess.",
+    },
+    absent: {
+      finding: (brand: string) => `${brand} did not appear in this answer.`,
+      evidence_note: "The retained answer does not name the business.",
+    },
+    competitor_preferred: {
+      finding: "The answer preferred another option in this comparison.",
+      evidence_note:
+        "The retained answer names the business and states the preference.",
+    },
+    client_preferred: {
+      finding: "The answer preferred the business in this comparison.",
+      evidence_note:
+        "The retained answer names the business and states the preference.",
+    },
+    conflicting: {
+      finding: "The answer reported conflicting business information.",
+      evidence_note:
+        "The retained answer identifies the conflicting information.",
+    },
+    incomplete: {
+      finding: "The answer found incomplete business information.",
+      evidence_note: "The retained answer identifies the missing information.",
+    },
+    recommended: {
+      finding: "The answer named and recommended the business.",
+      evidence_note: "The retained answer contains the recommendation.",
+    },
+    mentioned_not_recommended: {
+      finding: "The answer named the business without recommending it.",
+      evidence_note: "The retained answer contains the business mention.",
+    },
+  },
+  // plain-id-v1 house style, matching the founder-approved fixture copy
+  // (fixture-journey/adapter.ts detailCopyFor).
+  id: {
+    failed: {
+      finding: "Pertanyaan ini tidak dapat diuji.",
+      evidence_note: "Tidak ada jawaban yang bisa dinilai.",
+    },
+    absent: {
+      finding: (brand: string) => `${brand} tidak muncul dalam jawaban ini.`,
+      evidence_note: "Jawaban yang disimpan tidak menyebut bisnis.",
+    },
+    competitor_preferred: {
+      finding: "Jawaban mengunggulkan pilihan lain dalam perbandingan ini.",
+      evidence_note:
+        "Jawaban yang disimpan menyebut bisnis dan menyatakan pilihan itu.",
+    },
+    client_preferred: {
+      finding: "Jawaban mengunggulkan bisnis dalam perbandingan ini.",
+      evidence_note:
+        "Jawaban yang disimpan menyebut bisnis dan menyatakan pilihan itu.",
+    },
+    conflicting: {
+      finding: "Jawaban melaporkan informasi bisnis yang bertentangan.",
+      evidence_note:
+        "Jawaban yang disimpan memuat informasi yang saling bertentangan.",
+    },
+    incomplete: {
+      finding: "Jawaban menemukan informasi bisnis yang belum lengkap.",
+      evidence_note:
+        "Jawaban yang disimpan memuat informasi yang belum lengkap.",
+    },
+    recommended: {
+      finding: "Jawaban menyebut dan merekomendasikan bisnis.",
+      evidence_note: "Jawaban yang disimpan memuat rekomendasi untuk bisnis.",
+    },
+    mentioned_not_recommended: {
+      finding: "Jawaban menyebut bisnis tanpa merekomendasikannya.",
+      evidence_note: "Jawaban yang disimpan memuat penyebutan bisnis.",
+    },
+  },
+} as const;
+
 function deterministicDetailCopy(input: {
   observation: AuditObservation;
   brief: BusinessBrief;
   assessment: ReportSynthesis["assessments"][number];
+  language?: "en" | "id";
 }) {
+  const copy = input.language === "id" ? DETAIL_COPY.id : DETAIL_COPY.en;
   if (input.observation.run_status === "failed") {
-    return {
-      finding: "This question could not be completed.",
-      evidence_note: "No answer was available to assess.",
-    };
+    return { ...copy.failed };
   }
   const appeared = containsIdentity(input.observation.raw_answer, [
     input.brief.brand_name,
@@ -345,47 +458,26 @@ function deterministicDetailCopy(input: {
   ]);
   if (!appeared) {
     return {
-      finding: `${input.brief.brand_name} did not appear in this answer.`,
-      evidence_note: "The retained answer does not name the business.",
+      finding: copy.absent.finding(input.brief.brand_name),
+      evidence_note: copy.absent.evidence_note,
     };
   }
   if (input.assessment.comparison === "competitor_preferred") {
-    return {
-      finding: "The answer preferred another option in this comparison.",
-      evidence_note:
-        "The retained answer names the business and states the preference.",
-    };
+    return { ...copy.competitor_preferred };
   }
   if (input.assessment.comparison === "client_preferred") {
-    return {
-      finding: "The answer preferred the business in this comparison.",
-      evidence_note:
-        "The retained answer names the business and states the preference.",
-    };
+    return { ...copy.client_preferred };
   }
   if (input.assessment.information === "conflicting") {
-    return {
-      finding: "The answer reported conflicting business information.",
-      evidence_note:
-        "The retained answer identifies the conflicting information.",
-    };
+    return { ...copy.conflicting };
   }
   if (input.assessment.information === "incomplete") {
-    return {
-      finding: "The answer found incomplete business information.",
-      evidence_note: "The retained answer identifies the missing information.",
-    };
+    return { ...copy.incomplete };
   }
   if (input.assessment.recommendation === "recommended") {
-    return {
-      finding: "The answer named and recommended the business.",
-      evidence_note: "The retained answer contains the recommendation.",
-    };
+    return { ...copy.recommended };
   }
-  return {
-    finding: "The answer named the business without recommending it.",
-    evidence_note: "The retained answer contains the business mention.",
-  };
+  return { ...copy.mentioned_not_recommended };
 }
 
 export function assembleReportContent(
@@ -393,6 +485,8 @@ export function assembleReportContent(
   observations: AuditObservation[],
   brief: BusinessBrief,
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
+  language?: "en" | "id",
 ): ReportContent {
   const promptIds = new Set(observations.map((item) => item.prompt_id));
   const assessmentIds = new Set(
@@ -421,7 +515,7 @@ export function assembleReportContent(
       recommendation: assessment.recommendation,
       comparison: assessment.comparison,
       information: assessment.information,
-      ...deterministicDetailCopy({ observation, brief, assessment }),
+      ...deterministicDetailCopy({ observation, brief, assessment, language }),
       answer_excerpt: exactAnswerExcerpt(observation.raw_answer),
       source_urls: observation.sources.map((source) => source.url),
     };
@@ -454,6 +548,7 @@ export function assembleReportContent(
     observations,
     brief,
     historicalFixtureId,
+    questionMethod,
   );
 }
 
@@ -462,6 +557,7 @@ export function normalizeReportEvidence(
   observations: AuditObservation[],
   brief: BusinessBrief,
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ): ReportContent {
   const observationByPrompt = new Map(
     observations.map((observation) => [observation.prompt_id, observation]),
@@ -470,7 +566,12 @@ export function normalizeReportEvidence(
   const details = content.details.map((detail) => {
     const observation = observationByPrompt.get(detail.prompt_id);
     if (!observation) return detail;
-    const measurementSlot = measurementSlotForPromptId(detail.prompt_id);
+    const assessmentClasses = reportAssessmentClassesFor({
+      promptId: detail.prompt_id,
+      observation,
+      historicalFixtureId,
+      questionMethod,
+    });
     const run = observation.run_status;
     const appearance =
       run === "failed"
@@ -487,14 +588,6 @@ export function normalizeReportEvidence(
     const permittedSources = new Set(
       observation.sources.map((source) => source.url),
     );
-    const semantics = measurementSlot
-      ? reportMeasurementSemantics(
-          measurementSlot,
-          observation.category,
-          observation.branded,
-          historicalFixtureId,
-        )
-      : null;
 
     return {
       ...detail,
@@ -502,20 +595,27 @@ export function normalizeReportEvidence(
       appearance,
       recommendation:
         run === "failed" ||
-        semantics?.reportAssessmentClass !== "recommendation" ||
-        appearance !== "mentioned"
+        !assessmentClasses.includes("recommendation") ||
+        // Canonical semantics gate every dimension on a visible appearance.
+        // Direct-ten (R-07) reports appearance and explicit recommendation
+        // separately across evaluable answers: an absent answer can still be
+        // judged not_recommended, while a "recommended" claim without the
+        // brand visible stays impossible and is withheld as not_assessed.
+        (appearance !== "mentioned" &&
+          (questionMethod !== "direct-ten" ||
+            detail.recommendation === "recommended"))
           ? "not_assessed"
           : detail.recommendation,
       comparison:
         run === "failed"
           ? "not_assessed"
-          : semantics?.reportAssessmentClass !== "comparison" ||
+          : !assessmentClasses.includes("comparison") ||
               appearance !== "mentioned"
             ? "not_observed"
             : detail.comparison,
       information:
         run === "failed" ||
-        semantics?.reportAssessmentClass !== "information" ||
+        !assessmentClasses.includes("information") ||
         appearance !== "mentioned"
           ? "not_assessed"
           : detail.information,
@@ -762,33 +862,25 @@ export function validateReportContent(
   observations: AuditObservation[],
   brief: BusinessBrief,
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ): string[] {
   const errors: string[] = [];
   errors.push(...prohibitedClaimErrors(content));
   const promptIds = new Set(observations.map((item) => item.prompt_id));
-  const measurementSlots = new Map(
-    observations.flatMap((observation) => {
-      const slot = measurementSlotForPromptId(observation.prompt_id);
-      if (!slot) {
+  const assessmentClassesByPrompt = new Map(
+    observations.map((observation) => {
+      const classes = reportAssessmentClassesFor({
+        promptId: observation.prompt_id,
+        observation,
+        historicalFixtureId,
+        questionMethod,
+      });
+      if (questionMethod !== "direct-ten" && !classes.length) {
         errors.push(
           `Observation ${observation.prompt_id} does not map to a canonical measurement slot.`,
         );
-        return [];
       }
-      return [
-        [
-          observation.prompt_id,
-          {
-            slot,
-            semantics: reportMeasurementSemantics(
-              slot,
-              observation.category,
-              observation.branded,
-              historicalFixtureId,
-            ),
-          },
-        ] as const,
-      ];
+      return [observation.prompt_id, classes] as const;
     }),
   );
   const validateIds = (ids: string[], label: string) => {
@@ -822,9 +914,8 @@ export function validateReportContent(
       (item) => item.prompt_id === detail.prompt_id,
     );
     if (!observation) return;
-    const measurementBinding = measurementSlots.get(detail.prompt_id);
-    if (!measurementBinding) return;
-    const { semantics } = measurementBinding;
+    const assessmentClasses =
+      assessmentClassesByPrompt.get(detail.prompt_id) ?? [];
     if (detail.prompt_id !== observations[index]?.prompt_id) {
       errors.push(`Detailed findings are out of order at ${detail.prompt_id}.`);
     }
@@ -833,31 +924,31 @@ export function validateReportContent(
         `${detail.prompt_id} report run status does not match the retained observation.`,
       );
     }
-    // The matrix owns the active interpretation path for this canonical slot.
-    const assessmentClass = semantics.reportAssessmentClass;
+    // Each method owns the assessment paths a prompt is eligible for; the
+    // appearance/answer integrity checks below apply to every method.
     if (observation.run_status === "completed") {
       if (
-        assessmentClass !== "recommendation" &&
+        !assessmentClasses.includes("recommendation") &&
         detail.recommendation !== "not_assessed"
       ) {
         errors.push(
-          `${detail.prompt_id} carries recommendation semantics outside its matrix assessment path.`,
+          `${detail.prompt_id} carries recommendation semantics outside its report assessment path.`,
         );
       }
       if (
-        assessmentClass !== "comparison" &&
+        !assessmentClasses.includes("comparison") &&
         detail.comparison !== "not_observed"
       ) {
         errors.push(
-          `${detail.prompt_id} carries comparison semantics outside its matrix assessment path.`,
+          `${detail.prompt_id} carries comparison semantics outside its report assessment path.`,
         );
       }
       if (
-        assessmentClass !== "information" &&
+        !assessmentClasses.includes("information") &&
         detail.information !== "not_assessed"
       ) {
         errors.push(
-          `${detail.prompt_id} carries information semantics outside its matrix assessment path.`,
+          `${detail.prompt_id} carries information semantics outside its report assessment path.`,
         );
       }
     }
@@ -959,15 +1050,12 @@ export function validateReportContent(
         (item) => item.prompt_id === promptId,
       );
       if (!detail || !observation) return false;
-      const slot = measurementSlotForPromptId(promptId);
-      const semantics = slot
-        ? reportMeasurementSemantics(
-            slot,
-            observation.category,
-            observation.branded,
-            historicalFixtureId,
-          )
-        : null;
+      const classes = reportAssessmentClassesFor({
+        promptId,
+        observation,
+        historicalFixtureId,
+        questionMethod,
+      });
       return (
         detail.run === "failed" ||
         detail.appearance === "absent" ||
@@ -975,7 +1063,7 @@ export function validateReportContent(
         detail.information === "conflicting" ||
         detail.comparison === "competitor_preferred" ||
         (!observation.branded &&
-          semantics?.reportAssessmentClass === "recommendation" &&
+          classes.includes("recommendation") &&
           detail.recommendation === "not_recommended")
       );
     });
@@ -1020,16 +1108,14 @@ export function validateReportContent(
       const observation = observations.find(
         (item) => item.prompt_id === detail.prompt_id,
       );
-      const slot = measurementSlotForPromptId(detail.prompt_id);
       return (
         observation !== undefined &&
-        slot !== undefined &&
-        reportMeasurementSemantics(
-          slot,
-          observation.category,
-          observation.branded,
+        reportAssessmentClassesFor({
+          promptId: detail.prompt_id,
+          observation,
           historicalFixtureId,
-        ).reportAssessmentClass === "information"
+          questionMethod,
+        }).includes("information")
       );
     })
     .map((detail) => detail.information);
@@ -1092,7 +1178,11 @@ function deriveSystemParts(observations: AuditObservation[]): {
     ),
   ];
   const models = [
-    ...new Set(completed.map((item) => item.returned_model).filter(Boolean)),
+    ...new Set(
+      completed
+        .map((item) => item.returned_model)
+        .filter((model) => model && !systems.includes(model)),
+    ),
   ];
   return {
     systemPart: systems.length ? systems.join(" and ") : "model unavailable",
@@ -1100,9 +1190,18 @@ function deriveSystemParts(observations: AuditObservation[]): {
   };
 }
 
+/** Whether the retained evidence actually executed a web search. */
+function webSearchExecuted(observations: AuditObservation[]): boolean {
+  return observations.some(
+    (observation) =>
+      observation.run_status === "completed" &&
+      observation.telemetry.some((call) => call.web_search_calls > 0),
+  );
+}
+
 function deriveSystemLabel(observations: AuditObservation[]): string {
   const { systemPart, modelPart } = deriveSystemParts(observations);
-  return `${systemPart}${modelPart} with web search`;
+  return `${systemPart}${modelPart}${webSearchExecuted(observations) ? " with web search" : ""}`;
 }
 
 export function buildAuditReport(
@@ -1115,27 +1214,27 @@ export function buildAuditReport(
   },
   labels: AuditReportLabelPack = ENGLISH_AUDIT_REPORT_LABELS,
   historicalFixtureId?: HistoricalPromptPackId,
+  questionMethod?: AuditQuestionMethod,
 ): AuditReport {
   const details = new Map(
     content.details.map((detail) => [detail.prompt_id, detail]),
   );
   const detailFor = (id: string) => details.get(id);
   const records = observations.map((observation) => {
-    const slot = measurementSlotForPromptId(observation.prompt_id);
-    if (!slot) {
+    const assessmentClasses = reportAssessmentClassesFor({
+      promptId: observation.prompt_id,
+      observation,
+      historicalFixtureId,
+      questionMethod,
+    });
+    if (questionMethod !== "direct-ten" && !assessmentClasses.length) {
       throw new Error(
         `Observation ${observation.prompt_id} does not map to a canonical measurement slot.`,
       );
     }
     return {
       observation,
-      slot,
-      semantics: reportMeasurementSemantics(
-        slot,
-        observation.category,
-        observation.branded,
-        historicalFixtureId,
-      ),
+      assessmentClasses,
       detail: detailFor(observation.prompt_id),
     };
   });
@@ -1150,8 +1249,8 @@ export function buildAuditReport(
   const completedBranded = branded.filter(
     ({ observation }) => observation.run_status === "completed",
   );
-  const discoveryRecords = unbranded.filter(
-    ({ semantics }) => semantics.reportAssessmentClass === "recommendation",
+  const discoveryRecords = unbranded.filter(({ assessmentClasses }) =>
+    assessmentClasses.includes("recommendation"),
   );
 
   const failed = observations.length - completed.length;
@@ -1201,16 +1300,29 @@ export function buildAuditReport(
   const assessableRecords = records.filter(
     ({ detail }) => detail?.appearance === "mentioned",
   );
-  const recommendationAssessed = assessableRecords.filter(
-    ({ detail, semantics }) =>
-      semantics.reportAssessmentClass === "recommendation" &&
-      (["recommended", "not_recommended"] as const).includes(
-        detail?.recommendation as "recommended" | "not_recommended",
-      ),
+  // R-07: direct-ten reports explicit recommendations across all evaluable
+  // answers — appearance is a separate observed fact, not a pre-filter that
+  // hides "not recommended" outcomes. The denominator is every completed,
+  // eligible answer: a not_assessed outcome is an honest assessment result
+  // and must not silently shrink it. Canonical keeps the appearance-gated
+  // denominator so historical numbers stay comparable.
+  const recommendationRecords =
+    questionMethod === "direct-ten"
+      ? records.filter(
+          ({ observation }) => observation.run_status === "completed",
+        )
+      : assessableRecords;
+  const recommendationAssessed = recommendationRecords.filter(
+    ({ detail, assessmentClasses }) =>
+      assessmentClasses.includes("recommendation") &&
+      (questionMethod === "direct-ten" ||
+        (["recommended", "not_recommended"] as const).includes(
+          detail?.recommendation as "recommended" | "not_recommended",
+        )),
   );
   const comparisonAssessed = assessableRecords.filter(
-    ({ detail, semantics }) =>
-      semantics.reportAssessmentClass === "comparison" &&
+    ({ detail, assessmentClasses }) =>
+      assessmentClasses.includes("comparison") &&
       (
         [
           "client_preferred",
@@ -1225,8 +1337,8 @@ export function buildAuditReport(
       ),
   );
   const informationAssessed = assessableRecords.filter(
-    ({ detail, semantics }) =>
-      semantics.reportAssessmentClass === "information" &&
+    ({ detail, assessmentClasses }) =>
+      assessmentClasses.includes("information") &&
       (["confirmed", "incomplete", "conflicting"] as const).includes(
         detail?.information as "confirmed" | "incomplete" | "conflicting",
       ),
@@ -1353,6 +1465,7 @@ export function buildAuditReport(
     unbrandedTotal: unbranded.length,
     brandedTotal: branded.length,
     coverageLabel: facts.coverage.label,
+    webSearchExecuted: webSearchExecuted(observations),
   });
 
   return {
@@ -1365,6 +1478,7 @@ export function buildAuditReport(
       report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
       prompt_contract_version:
         reportCall.prompt_contract_version ?? labels.promptContractVersion,
+      question_method: questionMethod,
       requested_report_model: reportCall.requested_model,
       returned_report_model: reportCall.returned_model,
       report_response_id: reportCall.response_id,

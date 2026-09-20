@@ -1,6 +1,6 @@
 import { DEFAULT_OBSERVATION_INSTRUCTION_VERSION } from "./contracts";
 import { OPENCODEGO_AUDIT_MODEL, OPENCODEGO_SYSTEM } from "./opencodego";
-import type { AuditObservation } from "./types";
+import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM, type AuditObservation } from "./types";
 
 export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
 export const PRODUCTION_OBSERVATION_REQUESTED_MODEL = OPENCODEGO_AUDIT_MODEL;
@@ -168,5 +168,39 @@ export function productionObservationMethodErrors(
     }
   }
 
+  return errors;
+}
+
+/**
+ * Substitute-mode counterpart of the protected production invariant.
+ *
+ * The founder-local substitute path (direct-ten without live authorization)
+ * accepts resumed evidence only when every observation positively carries the
+ * labeled local fixture system — the same label the report pipeline requires
+ * under `allow_synthetic_evidence`. Unlabeled, real-provider, or mixed claims
+ * fail closed: a substitute run can never absorb evidence that pretends to be
+ * something else, and protected live validation stays the only other door.
+ */
+export function syntheticLocalObservationMethodErrors(
+  observations: AuditObservation[],
+): string[] {
+  const errors: string[] = [];
+  for (const observation of observations) {
+    const fields = [
+      ["system", observation.system],
+      ["requested model", observation.requested_model],
+      ["returned model", observation.returned_model],
+    ] as const;
+    for (const [label, value] of fields) {
+      if (value !== SYNTHETIC_LOCAL_FIXTURE_SYSTEM) {
+        errors.push(
+          prefix(
+            observation,
+            `${label} ${value || "missing"}; the labeled local substitute path accepts only ${SYNTHETIC_LOCAL_FIXTURE_SYSTEM} observations.`,
+          ),
+        );
+      }
+    }
+  }
   return errors;
 }

@@ -23,6 +23,8 @@ import {
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
+import type { HistoricalPromptPackId } from "./measurement-matrix";
+import type { AuditQuestionMethod } from "./locked-question-pack";
 import { AuditCallExecutionError, failedCallTelemetry } from "./telemetry";
 
 // Free-tier Google Gemini provider for local testing. No credit card, and the
@@ -458,6 +460,9 @@ export async function generateReportContent(
     observations: AuditObservation[];
     safety_identifier: string;
     budget: AuditBudget;
+    historical_fixture_id?: HistoricalPromptPackId;
+    question_method?: AuditQuestionMethod;
+    language?: "en" | "id";
   },
   revision?: {
     draft: ReportContent;
@@ -475,7 +480,7 @@ export async function generateReportContent(
     "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
     `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION}.`,
     ...reportWritingInstructions(),
-    ...reportAssessmentInstructions(),
+    ...reportAssessmentInstructions(input.question_method),
     "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",
     "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
     "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
@@ -502,7 +507,10 @@ export async function generateReportContent(
   const userContent = JSON.stringify({
     verified_brief: { ...input.brief, agency_logo_data_url: "[not sent]" },
     prompts: input.prompts,
-    measurement_definitions: reportPromptMeasurements(input.prompts),
+    // Direct-ten prompt IDs own no matrix definitions.
+    ...(input.question_method === "direct-ten"
+      ? {}
+      : { measurement_definitions: reportPromptMeasurements(input.prompts) }),
     observations: input.observations.map(({ telemetry, ...observation }) => {
       void telemetry;
       return observation;
@@ -552,9 +560,18 @@ export async function generateReportContent(
       web_search_calls: 0,
     });
     const content = normalizeReportEvidence(
-      assembleReportContent(synthesis, input.observations, input.brief),
+      assembleReportContent(
+        synthesis,
+        input.observations,
+        input.brief,
+        input.historical_fixture_id,
+        input.question_method,
+        input.language,
+      ),
       input.observations,
       input.brief,
+      input.historical_fixture_id,
+      input.question_method,
     );
     return {
       content,

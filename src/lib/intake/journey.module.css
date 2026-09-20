@@ -9,6 +9,11 @@
   overflow-wrap: anywhere;
   outline: none;
 }
+.shell:has([data-local-audit-stage="done"]) {
+  max-width: none;
+  padding-bottom: 32px;
+  overflow-wrap: normal;
+}
 .header {
   margin-bottom: 24px;
 }

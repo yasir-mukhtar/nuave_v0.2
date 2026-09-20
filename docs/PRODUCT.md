@@ -1,13 +1,23 @@
 # Nuave product
 
 > Status: **Current product direction**
-> Updated: 2026-09-01
+> Updated: 2026-09-18
 >
 > This document describes the current customer, offer, promise, journey, and
 > non-goals. It derives from [`VISION.md`](./VISION.md), which states why Nuave
 > exists and what it believes. Where the two disagree, the vision governs.
 
 ## Product in one sentence
+
+**Approved method amendment (2026-09-18):** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
+replaces the fixed-slot parts of question review and reporting for the new
+method. Suggest ten unnamed recommendation-eligible questions directly; permit
+free wording edits and explicit human approval. No 6/4 allocation or purpose
+to preserve. Report actual appearance and recommendation separately across
+the ten evaluable answers; untested named recognition is not zero performance.
+This is approved for local implementation, not production activation. The
+legacy matrix passages below apply only to the older method and its records.
+
 
 Nuave is an AI visibility audit for small and medium Indonesian businesses. It
 shows the person responsible for marketing how the business appears in defined

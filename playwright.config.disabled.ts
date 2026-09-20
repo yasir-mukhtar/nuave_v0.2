@@ -2,10 +2,10 @@ import { defineConfig } from "@playwright/test";
 import { journeyWebServer } from "./tests/e2e/shared-config";
 
 /**
- * Preview-disabled browser suite: neither fixture flag is set, so the
- * fixture route must render the safe unavailable state even when fixture
- * session state is present, and the landing page must keep its normal
- * actions. No client input can enable the protected preview.
+ * Switch-off browser suite (Spec 010 AC-01/AC-09): NUAVE_NEW_AUDIT_ENABLED
+ * stays unset, so `/audit` renders "Audit tidak tersedia saat ini.", the
+ * archived legacy routes answer 404, and the landing page keeps its normal
+ * actions. No client input can enable the public audit journey.
  */
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -16,7 +16,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3100",
+    baseURL: "http://127.0.0.1:3100",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

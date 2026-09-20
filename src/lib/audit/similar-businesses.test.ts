@@ -7,7 +7,6 @@ import {
   normalizeSimilarBusinesses,
   sanitizeAiSimilarBusinesses,
 } from "./similar-businesses";
-import { deriveComparisonProposal } from "./workflow-authority";
 import { businessBriefSchema } from "./types";
 
 describe("similar-business intake", () => {
@@ -38,15 +37,9 @@ describe("similar-business intake", () => {
     const normalized = normalizeSimilarBusinesses(brief.similar_businesses);
     expect(normalized[0]?.source_url).toBe("https://amanieadvisors.com/");
     expect(brief.verified_competitor.name).toBe("");
-    expect(deriveComparisonProposal(brief)).toEqual({
-      kind: "suggestion",
-      name: "amanieadvisors.com",
-      scope: "",
-      source_url: "https://amanieadvisors.com/",
-    });
   });
 
-  it("preserves an AI-supplied name as a proposal until the user acts", () => {
+  it("keeps an AI-supplied name in the brief without confirming a target", () => {
     const brief = {
       ...goldenBrief,
       verified_competitor: { name: "", scope: "", source_url: "" },
@@ -58,12 +51,6 @@ describe("similar-business intake", () => {
         },
       ],
     };
-    expect(deriveComparisonProposal(brief)).toEqual({
-      kind: "suggestion",
-      name: "Amanie Advisors",
-      scope: "",
-      source_url: "https://amanieadvisors.com/",
-    });
     expect(brief.verified_competitor.name).toBe("");
   });
 

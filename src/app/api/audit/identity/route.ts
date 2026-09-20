@@ -15,6 +15,13 @@ import {
   RATE_LIMITED_MESSAGE,
   RATE_LIMIT_UNAVAILABLE_MESSAGE,
 } from "@/lib/audit/rate-limit";
+import {
+  auditLiveCredentialsResponse,
+  auditMode,
+  auditSwitchResponse,
+} from "@/lib/audit/deployment-gate";
+import { syntheticLocalIdentity } from "@/lib/audit/local-direct-ten-audit";
+import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "@/lib/audit/types";
 
 export const runtime = "nodejs";
 
@@ -48,6 +55,10 @@ function sourceUnavailableResponse() {
 }
 
 export async function GET(request: Request) {
+  // Spec 010 R-01/R-02b: the switch answers 404 before anything else.
+  const switchedOff = auditSwitchResponse();
+  if (switchedOff) return switchedOff;
+
   const bindings = getAuditRateLimitBindings();
   if (!bindings.contextAvailable && process.env.NODE_ENV === "production") {
     return rateLimitResponse(503);
@@ -65,7 +76,15 @@ export async function GET(request: Request) {
     if (rateLimitDecision === "limited") return rateLimitResponse();
   }
 
-  const source = new URL(request.url).searchParams.get("source") ?? "";
+  // Spec 010 R-02: server-selected mode only — a legacy `local_mode` query
+  // parameter is ignored. In live mode a missing credential stops the stage
+  // before parameter validation, never falling back to the substitute.
+  const mode = auditMode();
+  const credentialsError = auditLiveCredentialsResponse("identity");
+  if (credentialsError) return credentialsError;
+
+  const params = new URL(request.url).searchParams;
+  const source = params.get("source") ?? "";
   const parsedSource = parseSourceInput(source);
   if (!parsedSource) {
     return NextResponse.json(
@@ -77,12 +96,22 @@ export async function GET(request: Request) {
     );
   }
 
+  // Synthetic mode serves the labeled substitute at this same boundary;
+  // `preparation_mode` is the response's explicit provenance.
+  if (mode === "synthetic") {
+    return NextResponse.json({
+      ...syntheticLocalIdentity(parsedSource),
+      substitute: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+      preparation_mode: "synthetic-local",
+    });
+  }
+
   try {
     const identity = await fetchSourceIdentity(parsedSource, {
       destinationRateLimiter:
         bindings.identityDestination ?? LOCAL_DESTINATION_RATE_LIMITER,
     });
-    return NextResponse.json(identity);
+    return NextResponse.json({ ...identity, preparation_mode: "live" });
   } catch (error) {
     if (
       error instanceof SafeSourceFetchError &&

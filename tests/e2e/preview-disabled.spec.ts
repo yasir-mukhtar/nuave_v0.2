@@ -3,8 +3,6 @@ import {
   assertNoSideEffects,
   collectRequests,
   grantAccess,
-  seedFixtureState,
-  v3ReadyState,
 } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
@@ -12,47 +10,54 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("preview disabled", () => {
-  test("new intake remains unavailable without its server flag", async ({
+  test("the audit entry is unavailable without the server switch (AC-01)", async ({
     page,
   }) => {
     const requests = collectRequests(page);
+    // The former preview path redirects to the single public entry, which is
+    // safely unavailable while NUAVE_NEW_AUDIT_ENABLED is off.
     await page.goto("/audit/new-intake?fixture=F1&demo=1");
+    await expect(page).toHaveURL(/\/audit(\?|$)/);
     await expect(
       page.getByRole("heading", {
-        name: "Pratinjau intake baru tidak tersedia saat ini.",
+        name: "Audit tidak tersedia saat ini.",
       }),
     ).toBeVisible();
     await expect(page.locator("[data-new-intake-shell]")).toHaveCount(0);
+    // The direct entry is equally unavailable.
+    await page.goto("/audit");
+    await expect(
+      page.getByRole("heading", {
+        name: "Audit tidak tersedia saat ini.",
+      }),
+    ).toBeVisible();
     await assertNoSideEffects(page, requests);
   });
-  test("the fixture route is unavailable even with the furthest v3 fixture state seeded (AC-02)", async ({
+  test("the archived legacy routes are gone — 404 whether or not the switch is on (AC-09)", async ({
     page,
+    request,
   }) => {
     const requests = collectRequests(page);
-    // Seed the furthest valid v3 state: no client state may enable the
-    // protected preview when the server has it switched off.
-    seedFixtureState(page, v3ReadyState());
-    await page.goto("/audit/fixture");
-    await expect(
-      page.getByRole("heading", {
-        name: "Pratinjau contoh tidak tersedia saat ini.",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Kembali ke halaman utama Nuave" }),
-    ).toBeVisible();
-    // No fixture journey surface leaks through.
-    await expect(
-      page.getByRole("heading", {
-        name: "Pratinjau pesanan untuk Kopi Taman Senja",
-      }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole("button", { name: "Cek bisnis saya di AI" }),
-    ).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Mulai ulang" })).toHaveCount(
-      0,
-    );
+    // The old intake/question/variance flow no longer exists as routes.
+    for (const path of [
+      "/audit/v2",
+      "/audit/v2/intake-preview",
+      "/audit/fixture",
+      "/audit/spec004",
+      "/audit/local-report",
+    ]) {
+      const response = await page.goto(path);
+      expect(response?.status(), `${path} must be gone`).toBe(404);
+    }
+    // The archived API routes answer 404 as well.
+    for (const path of [
+      "/api/audit/prompts",
+      "/api/audit/variance",
+      "/api/audit/local-audit",
+    ]) {
+      const response = await request.post(path, { data: {} });
+      expect(response.status(), `${path} must be gone`).toBe(404);
+    }
     await assertNoSideEffects(page, requests);
   });
 

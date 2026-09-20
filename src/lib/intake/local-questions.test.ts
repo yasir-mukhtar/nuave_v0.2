@@ -1,15 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { AUDIT_MEASUREMENT_MATRIX } from "../audit/measurement-matrix";
+import { parseSourceInput } from "../audit/source-input";
 import { validateCanonicalIndonesianQuestionPack } from "../audit/questions-id";
+import type { PromptPack } from "../audit/types";
 import { INTAKE_FIXTURES } from "./fixtures";
 import { resolveJourneyPath } from "./navigation";
+import { prepareGlmQuestionsForIntake } from "./glm-local";
 import {
   createLocalStartHandoff,
+  DIRECT_TEN_METHOD_VERSION,
+  DIRECT_TEN_PROMPT_IDS,
   freezeLocalIntake,
   isLocalQuestionPackCurrent,
   parseLocalQuestionPack,
+  prepareGlmLocalPack,
   prepareLocalQuestions,
   updateLocalQuestion,
+  type DirectTenPromptPack,
+  type GlmQuestionsOutcome,
+  type LocalQuestionPack,
 } from "./local-questions";
 import {
   createIntakeState,
@@ -100,14 +109,20 @@ describe("local question and start handoff", () => {
           pack.generationInput,
         ),
       ).toEqual([]);
-      expect(pack.promptPack.prompts.map((prompt) => prompt.category)).toEqual(
-        AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.category),
-      );
       expect(
-        pack.promptPack.prompts.filter((prompt) => !prompt.branded),
+        (pack.promptPack as PromptPack).prompts.map(
+          (prompt) => prompt.category,
+        ),
+      ).toEqual(AUDIT_MEASUREMENT_MATRIX.map((slot) => slot.category));
+      expect(
+        (pack.promptPack as PromptPack).prompts.filter(
+          (prompt) => !prompt.branded,
+        ),
       ).toHaveLength(6);
       expect(
-        pack.promptPack.prompts.filter((prompt) => prompt.branded),
+        (pack.promptPack as PromptPack).prompts.filter(
+          (prompt) => prompt.branded,
+        ),
       ).toHaveLength(4);
       expect(createLocalStartHandoff(pack, input)).toMatchObject({
         mode: "local-simulation",
@@ -122,14 +137,14 @@ describe("local question and start handoff", () => {
           false,
         );
         expect(
-          pack.promptPack.prompts
+          (pack.promptPack as PromptPack).prompts
             .filter((prompt) => prompt.branded)
             .every((prompt) =>
               prompt.question.includes("Langganan Kopi Sudut"),
             ),
         ).toBe(true);
         expect(
-          pack.promptPack.prompts
+          (pack.promptPack as PromptPack).prompts
             .filter((prompt) => !prompt.branded)
             .every(
               (prompt) => !prompt.question.includes("Langganan Kopi Sudut"),
@@ -141,7 +156,7 @@ describe("local question and start handoff", () => {
           "Jalan Melati 12, Jakarta Selatan",
         );
         expect(
-          pack.promptPack.prompts
+          (pack.promptPack as PromptPack).prompts
             .filter((prompt) => prompt.branded)
             .every((prompt) => prompt.question.includes("Gerai Selatan")),
         ).toBe(true);
@@ -212,12 +227,12 @@ describe("local question and start handoff", () => {
     expect(first.promptPack.brand.entity_scope).toContain("Jalan Melati 12");
     expect(second.promptPack.brand.entity_scope).toContain("Jalan Kenanga 80");
     expect(
-      first.promptPack.prompts
+      (first.promptPack as PromptPack).prompts
         .filter((item) => item.branded)
         .every((item) => item.question.includes("Jalan Melati 12")),
     ).toBe(true);
     expect(
-      second.promptPack.prompts
+      (second.promptPack as PromptPack).prompts
         .filter((item) => item.branded)
         .every((item) => item.question.includes("Jalan Kenanga 80")),
     ).toBe(true);
@@ -351,7 +366,8 @@ describe("local question and start handoff", () => {
         value.promptPack.brand.category = "Kategori berbeda";
       },
       (value: typeof pack) => {
-        value.promptPack.prompts[0].category = "direct_comparison";
+        (value.promptPack as PromptPack).prompts[0].category =
+          "direct_comparison";
       },
       (value: typeof pack) => {
         value.promptPack.prompts[0].question = "Di mana Kopi Sudut berada?";
@@ -404,7 +420,7 @@ describe("local question and start handoff", () => {
       "Kopi Susu Sudut",
     );
     expect(
-      pack.promptPack.prompts
+      (pack.promptPack as PromptPack).prompts
         .filter((item) => !item.branded)
         .every((item) => !item.question.includes("Kopi Susu Sudut")),
     ).toBe(true);
@@ -415,5 +431,219 @@ describe("local question and start handoff", () => {
         "Di mana saya bisa menemukan Kopi Susu Sudut?",
       ).ok,
     ).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* GLM experimental pack — the founder-only local path applies the same */
+/* v3 rules to generated text and edits.                                */
+/* ------------------------------------------------------------------ */
+
+function frozenGlm() {
+  const glmFixture = INTAKE_FIXTURES.GLM;
+  const state = setScopeAnswer(
+    createIntakeState(glmFixture),
+    "scope-whole-brand",
+  );
+  return freezeLocalIntake(
+    state,
+    glmFixture,
+    resolveJourneyPath({
+      entry: "read",
+      scope: state.scope,
+      brandNeedsFix: false,
+    }),
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Spec 009 direct-ten pack — ten purpose-free unnamed texts under the  */
+/* flat boundary; no matrix metadata, purposes, or composition gates.   */
+/* ------------------------------------------------------------------ */
+
+async function directTenOutcome(): Promise<
+  Extract<GlmQuestionsOutcome, { status: "ok" }>
+> {
+  const outcome = await prepareGlmQuestionsForIntake({
+    intake: frozenGlm(),
+  });
+  if (outcome.status !== "ok")
+    throw new Error(`stub outcome: ${outcome.status}`);
+  return outcome;
+}
+
+describe("direct-ten local pack (Spec 009)", () => {
+  it("builds a flat pack: stable IDs, no legacy metadata, honest synthetic warning", async () => {
+    const input = frozenGlm();
+    const outcome = await directTenOutcome();
+    const pack = prepareGlmLocalPack(input, outcome);
+    expect(pack.generation).toMatchObject({
+      kind: "glm-direct-ten-local",
+      providerCalls: 0,
+      auditExecuted: false,
+    });
+    if (pack.generation.kind !== "glm-direct-ten-local") return;
+    expect(pack.generation.provenance.method).toBe("direct-ten");
+    expect(pack.generation.provenance.transport).toBe("synthetic-stub");
+    expect(pack.originals).toEqual(outcome.questions);
+    const promptPack = pack.promptPack as DirectTenPromptPack;
+    expect(promptPack.method).toBe(DIRECT_TEN_METHOD_VERSION);
+    expect(promptPack.summary).toEqual({
+      total_prompts: 10,
+      unbranded_prompts: 10,
+      branded_prompts: 0,
+    });
+    // No self_check and no matrix fields anywhere on the new contract.
+    expect("self_check" in promptPack).toBe(false);
+    for (const prompt of promptPack.prompts) {
+      expect(Object.keys(prompt).sort()).toEqual([
+        "prompt_id",
+        "question",
+        "review_status",
+      ]);
+    }
+    expect(promptPack.prompts.map((prompt) => prompt.prompt_id)).toEqual(
+      DIRECT_TEN_PROMPT_IDS,
+    );
+    expect(promptPack.warnings[0]).toContain("respons sintetis");
+    expect(promptPack.warnings[0]).toContain("bukan keluaran provider");
+  });
+
+  it("saves a multi-sentence edit, marks it changed, and preserves the original", async () => {
+    const input = frozenGlm();
+    const pack = prepareGlmLocalPack(input, await directTenOutcome());
+    const wording =
+      "Lagi cari laundry kiloan buat rutinitas keluarga. Yang bisa antar-jemput di Jakarta Selatan lebih enak dipakai.";
+    const edit = updateLocalQuestion(pack, DIRECT_TEN_PROMPT_IDS[0]!, wording);
+    expect(edit.ok).toBe(true);
+    if (!edit.ok) return;
+    expect(edit.pack.promptPack.prompts[0].question).toBe(wording);
+    expect(edit.pack.originals[0]).toBe(pack.originals[0]);
+    expect(edit.pack.originals[0]).not.toBe(wording);
+    // A legacy matrix slot ID cannot locate a direct-ten text.
+    expect(
+      updateLocalQuestion(pack, AUDIT_MEASUREMENT_MATRIX[0].id, wording).ok,
+    ).toBe(false);
+  });
+
+  it("rejects an edit naming the audited business at any position", async () => {
+    const input = frozenGlm();
+    const pack = prepareGlmLocalPack(input, await directTenOutcome());
+    const before = JSON.stringify(pack);
+    const edit = updateLocalQuestion(
+      pack,
+      DIRECT_TEN_PROMPT_IDS[7]!,
+      "Apakah Laundry Ceria cocok untuk cucian keluarga?",
+    );
+    expect(edit.ok).toBe(false);
+    if (edit.ok) return;
+    expect(edit.issues.join(" ")).toContain("tidak boleh menyebut bisnis Anda");
+    expect(JSON.stringify(pack)).toBe(before);
+  });
+
+  it("restores edited wording and originals, then invalidates on a facts change", async () => {
+    const input = frozenGlm();
+    const pack = prepareGlmLocalPack(input, await directTenOutcome());
+    const edit = updateLocalQuestion(
+      pack,
+      DIRECT_TEN_PROMPT_IDS[1]!,
+      "Kalau buru-buru, laundry kiloan mana di Jakarta Selatan yang bisa antar-jemput?",
+    );
+    expect(edit.ok).toBe(true);
+    if (!edit.ok) return;
+    const restored = parseLocalQuestionPack(
+      JSON.parse(JSON.stringify(edit.pack)),
+      input,
+    );
+    expect(restored).not.toBeNull();
+    expect(restored?.generation.kind).toBe("glm-direct-ten-local");
+    expect(restored?.revision).toBe(1);
+    expect(restored?.promptPack.prompts[1].question).toBe(
+      "Kalau buru-buru, laundry kiloan mana di Jakarta Selatan yang bisa antar-jemput?",
+    );
+    expect(restored?.originals[1]).toBe(pack.originals[1]);
+    expect(restored?.originals[1]).not.toBe(
+      restored?.promptPack.prompts[1].question,
+    );
+    expect("self_check" in restored!.promptPack).toBe(false);
+    const glmFixture = INTAKE_FIXTURES.GLM;
+    const changedState = {
+      ...setScopeAnswer(createIntakeState(glmFixture), "scope-whole-brand"),
+      facts: { text: "Melayani antar-jemput setiap hari." },
+      factVersion: 2,
+    };
+    const changed = freezeLocalIntake(
+      changedState,
+      glmFixture,
+      resolveJourneyPath({
+        entry: "read",
+        scope: changedState.scope,
+        brandNeedsFix: false,
+      }),
+    );
+    expect(isLocalQuestionPackCurrent(restored, changed)).toBe(false);
+  });
+
+  it("rejects a stored pack whose method/kind do not agree", async () => {
+    const input = frozenGlm();
+    const pack = prepareGlmLocalPack(input, await directTenOutcome());
+    const stored = JSON.parse(JSON.stringify(pack)) as LocalQuestionPack;
+    (
+      stored.generation as { provenance: { method: string } }
+    ).provenance.method = "glm-slots";
+    expect(parseLocalQuestionPack(stored, input)).toBeNull();
+    // A matrix-shaped promptPack is not a direct-ten pack.
+    const matrixShaped = JSON.parse(JSON.stringify(pack)) as LocalQuestionPack;
+    matrixShaped.promptPack = prepareLocalQuestions(frozen()).promptPack;
+    expect(parseLocalQuestionPack(matrixShaped, input)).toBeNull();
+  });
+
+  it("labels the handoff as the direct-ten mode and never executes an audit", async () => {
+    const input = frozenGlm();
+    const pack = prepareGlmLocalPack(input, await directTenOutcome());
+    const handoff = createLocalStartHandoff(pack, input);
+    expect(handoff.mode).toBe("glm-direct-ten-local");
+    expect(handoff.auditExecuted).toBe(false);
+    expect(handoff.providerCalls).toBe(0);
+  });
+});
+
+describe("sessionConfirmedBrief (Spec 009 brief projection)", () => {
+  it("projects only confirmed facts into the audit brief shape", async () => {
+    const { sessionConfirmedBrief } = await import("./local-questions");
+    const input = frozen();
+    const brief = sessionConfirmedBrief(input.confirmed);
+    expect(brief.brand_name).toBe(input.confirmed.brand.name);
+    // The brief carries the normalized public URL, never the raw typed text.
+    expect(brief.official_sources).toEqual([
+      expect.stringMatching(/^https?:\/\//),
+    ]);
+    expect(brief.official_sources[0]).toBe(
+      parseSourceInput(input.confirmed.brand.primarySource)!.normalizedUrl,
+    );
+    expect(brief.category).toBe(input.confirmed.category);
+    expect(brief.verified_offerings.length).toBeGreaterThan(0);
+    // Buyer-supplied facts are labeled, never merged into observed fields.
+    if (input.confirmed.publicFact)
+      expect(brief.customer_supplied_facts).toEqual([
+        input.confirmed.publicFact,
+      ]);
+    // Nothing the buyer never confirmed is invented.
+    expect(brief.agency_name).toBe("");
+    expect(brief.usp).toBe("");
+    expect(brief.conversion_action).toBe("");
+    expect(brief.language).toBe("en-US");
+  });
+
+  it("keeps unconfirmed comparator knowledge as a category-level placeholder", async () => {
+    const { sessionConfirmedBrief } = await import("./local-questions");
+    const input = frozen();
+    const brief = sessionConfirmedBrief({
+      ...input.confirmed,
+      comparators: { mode: "category-alternatives", names: [] },
+    });
+    expect(brief.verified_competitor.name).toContain("alternatif");
+    expect(brief.verified_competitor.name).toContain(input.confirmed.category);
+    expect(brief.verified_competitor.source_url).toBe("");
   });
 });

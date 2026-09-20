@@ -15,8 +15,8 @@ const config = JSON.parse(
   }>;
 };
 
-describe("D1 Worker rate-limit configuration", () => {
-  it("declares exactly the three approved independent 60-second limiters", () => {
+describe("Worker rate-limit configuration", () => {
+  it("declares exactly the six approved independent 60-second limiters", () => {
     expect(config.ratelimits).toEqual([
       {
         name: "IDENTITY_CALLER_RATE_LIMITER",
@@ -33,12 +33,28 @@ describe("D1 Worker rate-limit configuration", () => {
         namespace_id: "1945116857",
         simple: { limit: 5, period: 60 },
       },
+      // Spec 010 R-03: per-IP burst protection on the paid stages.
+      {
+        name: "GLM_CALLER_RATE_LIMITER",
+        namespace_id: "301",
+        simple: { limit: 2, period: 60 },
+      },
+      {
+        name: "AUDIT_RUN_CALLER_RATE_LIMITER",
+        namespace_id: "302",
+        simple: { limit: 2, period: 60 },
+      },
+      {
+        name: "AUDIT_REPORT_CALLER_RATE_LIMITER",
+        namespace_id: "303",
+        simple: { limit: 3, period: 60 },
+      },
     ]);
     expect(
       new Set(config.ratelimits?.map((binding) => binding.name)).size,
-    ).toBe(3);
+    ).toBe(6);
     expect(
       new Set(config.ratelimits?.map((binding) => binding.namespace_id)).size,
-    ).toBe(3);
+    ).toBe(6);
   });
 });

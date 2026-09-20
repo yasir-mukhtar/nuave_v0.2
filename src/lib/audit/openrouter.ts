@@ -20,6 +20,8 @@ import {
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
+import type { HistoricalPromptPackId } from "./measurement-matrix";
+import type { AuditQuestionMethod } from "./locked-question-pack";
 import { AuditCallExecutionError, failedCallTelemetry } from "./telemetry";
 
 // Free-tier audit provider: OpenRouter (`:free` model slugs), NO web search.
@@ -605,6 +607,8 @@ export async function generateReportContent(
     safety_identifier: string;
     budget: AuditBudget;
     language?: "en" | "id";
+    historical_fixture_id?: HistoricalPromptPackId;
+    question_method?: AuditQuestionMethod;
   },
   revision?: { draft: ReportContent; violations: string[] },
 ): Promise<{
@@ -636,16 +640,18 @@ export async function generateReportContent(
     const system = [
       "You are a senior analyst writing Nuave AI Visibility Reports.",
       ...reportWritingInstructions(),
-      ...reportAssessmentInstructions(),
+      ...reportAssessmentInstructions(input.question_method),
     ].join("\n");
+    const measurementDefinitions =
+      input.question_method === "direct-ten"
+        ? ""
+        : `\nMatrix-owned measurement definitions:\n${JSON.stringify(reportPromptMeasurements(input.prompts), null, 2)}\n`;
     const user = `Brand brief:
 ${JSON.stringify({ ...input.brief, agency_logo_data_url: "[not sent]" }, null, 2)}
 
 Audit prompts:
 ${JSON.stringify(input.prompts, null, 2)}
-
-Matrix-owned measurement definitions:
-${JSON.stringify(reportPromptMeasurements(input.prompts), null, 2)}
+${measurementDefinitions}
 
 Audit observations:
 ${observationsJson}
@@ -683,9 +689,18 @@ Return exactly one assessment for each supplied prompt ID. Return no more than f
       prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
     });
     const content = normalizeReportEvidence(
-      assembleReportContent(synthesis, input.observations, input.brief),
+      assembleReportContent(
+        synthesis,
+        input.observations,
+        input.brief,
+        input.historical_fixture_id,
+        input.question_method,
+        input.language,
+      ),
       input.observations,
       input.brief,
+      input.historical_fixture_id,
+      input.question_method,
     );
     return {
       content,
