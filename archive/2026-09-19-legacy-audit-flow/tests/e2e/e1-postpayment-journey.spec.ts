@@ -608,7 +608,11 @@ test("chapter navigation respects the conditional product path", async ({
   expect((await readWorkflow(page)).brief.entity_scope).toBe("Produk: Kopi botol");
 });
 
-test("the real landing entry reaches the completed report journey", async ({
+// Spec 010 R-08: the landing hero no longer embeds the identity/payment
+// journey — its CTA leads to the new /audit intake (covered by
+// audit-entry.spec.ts). This case exercised the removed landing handoff and
+// stays skipped until R-09 (block 4) archives the old flow.
+test.skip("the real landing entry reaches the completed report journey", async ({
   page,
 }) => {
   const calls = await stubFullJourneyApis(page);

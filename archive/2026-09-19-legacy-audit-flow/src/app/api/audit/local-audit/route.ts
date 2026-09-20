@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  auditLiveExecutionAuthorized,
-  glmExperimentEnabled,
-} from "@/lib/intake/glm-local";
+import { auditMode, newAuditEnabled } from "@/lib/audit/deployment-gate";
 import {
   loadRetainedDirectTenPack,
   retainedConfirmedBrief,
@@ -19,7 +16,10 @@ export const runtime = "nodejs";
  * must resubmit the exact accepted wording before any run.
  */
 export async function GET() {
-  if (!glmExperimentEnabled()) {
+  // Founder-local evidence reader: stays local-only until the old flow is
+  // archived (Spec 010 R-09) — the new audit switch must be on AND the build
+  // must not be production.
+  if (!newAuditEnabled() || process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   try {
@@ -35,7 +35,7 @@ export async function GET() {
         question_method: "direct-ten",
         // Whether this session would execute real provider calls at the
         // /api/audit/run + /report boundaries or the labeled substitutes.
-        live_authorized: auditLiveExecutionAuthorized(),
+        live_authorized: auditMode() === "live",
       },
     });
   } catch (error) {
@@ -52,9 +52,9 @@ export async function GET() {
 }
 
 /**
- * Founder-only local direct-ten audit (Spec 009 Block B). Same guard as the
- * GLM experiment route: 404 unless NUAVE_GLM_LOCAL_EXPERIMENT is set on a
- * non-production server.
+ * Founder-only local direct-ten audit (Spec 009 Block B). Guarded the same
+ * way as GET: the new audit switch must be on and the build must not be
+ * production.
  *
  * The body may carry `questions` — the session's approved texts, which must
  * equal the retained accepted pack verbatim or the run refuses. Everything
@@ -65,7 +65,7 @@ export async function GET() {
  * never imports a live provider binding.
  */
 export async function POST(request: Request) {
-  if (!glmExperimentEnabled()) {
+  if (!newAuditEnabled() || process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   try {

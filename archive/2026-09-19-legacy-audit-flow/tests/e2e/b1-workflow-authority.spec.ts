@@ -7,6 +7,14 @@ import {
 import { createWorkflowMeta } from "../../src/lib/audit/workflow-authority";
 import { grantAccess } from "./helpers";
 
+// Spec 010 R-08: `/audit` now serves the new intake journey — this spec
+// covers the archived old workflow and stays skipped until R-09 (block 4)
+// moves it together with the old code.
+test.skip(
+  true,
+  "Spec 010 block 4 archives the old /audit workflow this spec covers.",
+);
+
 const SOURCE = "https://example.com/";
 
 function draft(overrides: Record<string, unknown> = {}) {

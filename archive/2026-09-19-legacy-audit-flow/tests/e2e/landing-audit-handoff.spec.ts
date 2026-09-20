@@ -13,6 +13,15 @@ import {
   v3ReadyState,
 } from "./helpers";
 
+// Spec 010 R-08: the landing hero no longer embeds the identity/payment
+// journey and `/audit` serves the new intake — this spec covers the archived
+// old handoff and stays skipped until R-09 (block 4) moves it with the old
+// code. The new hero → /audit entry is covered by audit-entry.spec.ts.
+test.skip(
+  true,
+  "Spec 010 block 4 archives the old /audit handoff this spec covers.",
+);
+
 const SOURCE = "https://example.com/";
 
 function extractionDraft(overrides: Record<string, unknown> = {}) {
