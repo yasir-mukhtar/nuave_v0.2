@@ -11,7 +11,11 @@ import {
 import { IconCheck, IconCircle } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { parseSourceInput } from "@/lib/audit/source-input";
-import { INTAKE_FIXTURES, type IntakeFixture } from "./fixtures";
+import {
+  EMPTY_INTAKE_FIXTURE,
+  INTAKE_FIXTURES,
+  type IntakeFixture,
+} from "./fixtures";
 import {
   chapterFills,
   continueLabelFor,
@@ -57,6 +61,7 @@ import { LocalQuestionsScreen } from "./questions-screen";
 import {
   LOCAL_INTAKE_STORAGE_KEY,
   parseLocalSession,
+  type GenerationAttempt,
   type LocalSession,
 } from "./local-session";
 import {
@@ -84,6 +89,13 @@ type Props = {
    * the page. Preparation still goes through the local API route. */
   glmExperiment?: boolean;
   glmStubBehavior?: string;
+  /** Spec 010 R-08: the public blank start — no fixture business is seeded;
+   * the journey opens on the empty name + source step and only restores
+   * sessions that began blank. */
+  blank?: boolean;
+  /** Spec 010 R-08: the server-selected live deployment — real provider
+   * calls run, so the "local trial / no AI calls" notices must not render. */
+  live?: boolean;
   /** The continuous direct-ten audit stage, injected by the page boundary.
    * The journey orchestrates it but stays free of audit-UI imports; when it
    * is absent the approved questions still render for review. */
@@ -93,6 +105,9 @@ type Props = {
     autoStart: boolean;
     preparationCalls?: AuditCallTelemetry[];
     preparationMode?: "synthetic-local" | "live" | null;
+    /** Spec 010 R-06 ledger — every generation attempt this session started;
+     * the stage folds it into the evidence export and the report notice. */
+    generationAttempts?: GenerationAttempt[];
     onExit: () => void;
     onRestart: () => void;
   }>;
@@ -123,6 +138,10 @@ type Model = {
   /** Returned GLM texts + their issues, shown for inspection on a failed
    * validation — a failed check is displayed, never silently replaced. */
   glmInspection: { questions: string[]; issues: string[] } | null;
+  /** Spec 010 R-06: the last question-generation request produced no usable
+   * response — the pack may exist and may have been billed. Shown as the
+   * honest interrupted state; never auto-retried. */
+  generationInterrupted: boolean;
 };
 
 function activePath(answers: IntakeState) {
@@ -132,11 +151,12 @@ function activePath(answers: IntakeState) {
     brandNeedsFix: false,
   });
 }
-function freshSession(fixture: IntakeFixture): LocalSession {
+function freshSession(fixture: IntakeFixture, blank: boolean): LocalSession {
   const seeded = createIntakeState(fixture);
   return {
     version: 1,
     fixture,
+    origin: blank ? "blank" : "fixture",
     answers: {
       ...seeded,
       scopeCommitted: false,
@@ -144,21 +164,23 @@ function freshSession(fixture: IntakeFixture): LocalSession {
       branch: { selectedId: null, custom: [] },
       product: { selectedId: null, custom: [] },
     },
-    current: "s-crawl",
+    // A blank journey opens on the empty name/source step — there is no
+    // prepared source to read, so no reading pass runs on mount.
+    current: blank ? "s-brand-fix" : "s-crawl",
     visited: [],
     confirmed: [],
     identityReady: false,
     pack: null,
   };
 }
-function freshModel(fixture: IntakeFixture): Model {
-  const session = freshSession(fixture);
+function freshModel(fixture: IntakeFixture, blank: boolean): Model {
+  const session = freshSession(fixture, blank);
   return {
     session,
     working: session.answers,
     edit: null,
     correction: null,
-    busy: "reading",
+    busy: blank ? null : "reading",
     failure: null,
     pendingIdentity: null,
     readAttempt: 0,
@@ -166,6 +188,7 @@ function freshModel(fixture: IntakeFixture): Model {
     handoff: null,
     audit: null,
     glmInspection: null,
+    generationInterrupted: false,
   };
 }
 function questionInput(session: LocalSession) {
@@ -176,13 +199,74 @@ function questionInput(session: LocalSession) {
   );
 }
 
+/** Spec 010 R-06: the exact interrupted-state copy — the pack may exist and
+ * may have been billed; nothing is claimed either way. */
+const GENERATION_INTERRUPTED_MESSAGE =
+  "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima.";
+
+/** R-06 attempt classification: only a request that reached the provider
+ * stage records an attempt. Pre-provider rejections — `invalid_request`,
+ * `correction_required`, and `failed` outcomes the server marked
+ * `providerContact: "none"` (missing credential, frozen-attempt refusals) —
+ * record nothing: zero calls, zero cost. A `failed` outcome marked "sent"
+ * (transport invoked, no provider response) keeps execution "unknown";
+ * "responded" (or a legacy record without the field) is confirmed and keeps
+ * the provider-billed cost when the response carried one. */
+function glmAttemptFromOutcome(
+  startedAt: string,
+  outcome: GlmQuestionsOutcome,
+): GenerationAttempt | null {
+  switch (outcome.status) {
+    case "ok":
+      return {
+        started_at: startedAt,
+        outcome: "succeeded",
+        execution: "confirmed",
+        cost_usd: outcome.cost.billedUsd,
+      };
+    case "validation_failed":
+      return {
+        started_at: startedAt,
+        outcome: "failed",
+        execution: "confirmed",
+        cost_usd: outcome.cost.billedUsd,
+      };
+    case "failed": {
+      const contact = outcome.providerContact ?? "responded";
+      if (contact === "none") return null;
+      if (contact === "sent")
+        return {
+          started_at: startedAt,
+          outcome: "failed",
+          execution: "unknown",
+          cost_usd: null,
+        };
+      return {
+        started_at: startedAt,
+        outcome: "failed",
+        execution: "confirmed",
+        cost_usd: outcome.cost?.billedUsd ?? null,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
 /** One explicit preparation attempt = one POST to the experimental local
  * route. No client-side retry: a refresh never replays this (busy state is
- * never persisted), and Coba lagi is an explicit new attempt. */
+ * never persisted), and "Buat pertanyaan lagi"/"Coba lagi" is an explicit
+ * new attempt. Every attempt that reached the provider stage comes back with
+ * its R-06 ledger record; `interrupted` marks the no-response case that must
+ * render the honest interrupted state. */
 async function requestGlmQuestions(
   input: FrozenLocalIntake,
   stubBehavior: string | undefined,
-): Promise<GlmQuestionsOutcome> {
+): Promise<{
+  outcome: GlmQuestionsOutcome;
+  attempt: GenerationAttempt | null;
+  interrupted: boolean;
+}> {
   const emptyProvenance = {
     requestId: "",
     method: "direct-ten" as const,
@@ -191,6 +275,19 @@ async function requestGlmQuestions(
     responseId: null,
     modelMismatch: false,
     transport: "synthetic-stub" as const,
+  };
+  const unreachable = (detail: string): GlmQuestionsOutcome => ({
+    status: "failed",
+    reason: "unavailable",
+    detail,
+    provenance: emptyProvenance,
+  });
+  const startedAt = new Date().toISOString();
+  const interruptedAttempt: GenerationAttempt = {
+    started_at: startedAt,
+    outcome: "interrupted",
+    execution: "unknown",
+    cost_usd: null,
   };
   let response: Response;
   try {
@@ -205,25 +302,44 @@ async function requestGlmQuestions(
       }),
     });
   } catch {
+    // The request may have executed and been billed — the response never
+    // reached the browser, so the attempt's execution stays unknown.
     return {
-      status: "failed",
-      reason: "unavailable",
-      detail: "experimental local route unreachable",
-      provenance: emptyProvenance,
+      outcome: unreachable("experimental local route unreachable"),
+      attempt: interruptedAttempt,
+      interrupted: true,
     };
   }
   const outcome = (await response
     .json()
     .catch(() => null)) as GlmQuestionsOutcome | null;
   if (!outcome || typeof outcome !== "object" || !("status" in outcome)) {
+    if (!response.ok) {
+      // A route-level rejection (404 switch off, 400 method, 429/503
+      // rate-limit) ran before any provider work — no attempt is recorded.
+      return {
+        outcome: unreachable(
+          `experimental route returned HTTP ${response.status}`,
+        ),
+        attempt: null,
+        interrupted: false,
+      };
+    }
+    // A 2xx response without a readable outcome: the request may have
+    // executed server-side — interrupted, never silently counted.
     return {
-      status: "failed",
-      reason: "unavailable",
-      detail: `experimental route returned HTTP ${response.status}`,
-      provenance: emptyProvenance,
+      outcome: unreachable(
+        `experimental route returned HTTP ${response.status}`,
+      ),
+      attempt: interruptedAttempt,
+      interrupted: true,
     };
   }
-  return outcome;
+  return {
+    outcome,
+    attempt: glmAttemptFromOutcome(startedAt, outcome),
+    interrupted: false,
+  };
 }
 
 /** The entered business goes through the real identity/extraction
@@ -337,11 +453,16 @@ export default function IntakeJourney({
   failQuestionsOnce = false,
   glmExperiment = false,
   glmStubBehavior,
+  blank = false,
+  live = false,
   AuditStage,
 }: Props) {
-  const initialFixture = (fixtureOverride ??
-    INTAKE_FIXTURES.F1) as IntakeFixture;
-  const [model, setModel] = useState<Model>(() => freshModel(initialFixture));
+  const initialFixture = (
+    blank ? EMPTY_INTAKE_FIXTURE : (fixtureOverride ?? INTAKE_FIXTURES.F1)
+  ) as IntakeFixture;
+  const [model, setModel] = useState<Model>(() =>
+    freshModel(initialFixture, blank),
+  );
   const [hydrated, setHydrated] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [validity, setValidity] = useState<Record<string, boolean>>({});
@@ -381,7 +502,11 @@ export default function IntakeJourney({
         const restored = parseLocalSession(
           sessionStorage.getItem(LOCAL_INTAKE_STORAGE_KEY),
         );
-        if (restored) {
+        // Sessions restore only into a matching start: a stored fixture
+        // session must never seed the public blank entry, and a blank
+        // session must never replace an explicit fixture seed.
+        const restoredOrigin = restored?.origin ?? "fixture";
+        if (restored && (restoredOrigin === "blank") === blank) {
           let pack = null;
           if (restored.pack)
             pack = parseLocalQuestionPack(
@@ -416,7 +541,7 @@ export default function IntakeJourney({
               ? { autoStart: false }
               : null;
           setModel({
-            ...freshModel(accepted.fixture),
+            ...freshModel(accepted.fixture, blank),
             session: accepted,
             working: accepted.answers,
             busy: accepted.current === "s-crawl" ? "reading" : null,
@@ -431,7 +556,7 @@ export default function IntakeJourney({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [blank]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -453,6 +578,11 @@ export default function IntakeJourney({
     let cancelled = false;
     const task = model.busy;
     const captured = model;
+    // Spec 010 R-06: the attempt record and the interrupted flag must reach
+    // the catch below even when pack-building throws after a response —
+    // an accounted attempt is never lost because a later step failed.
+    let generationAttempt: GenerationAttempt | null = null;
+    let generationInterrupted = false;
     // Deterministic adapters are async boundaries; the GLM experiment awaits
     // its one local-route request inside the same stale/cancel handling.
     Promise.resolve()
@@ -547,7 +677,10 @@ export default function IntakeJourney({
           const input = questionInput(captured.session);
           let pack;
           if (glmExperiment) {
-            const outcome = await requestGlmQuestions(input, glmStubBehavior);
+            const result = await requestGlmQuestions(input, glmStubBehavior);
+            generationAttempt = result.attempt;
+            generationInterrupted = result.interrupted;
+            const outcome = result.outcome;
             if (outcome.status === "ok") {
               pack = prepareGlmLocalPack(input, outcome);
             } else {
@@ -580,10 +713,21 @@ export default function IntakeJourney({
             m === captured
               ? {
                   ...m,
-                  session: { ...m.session, pack, current: "s-questions" },
+                  session: {
+                    ...m.session,
+                    pack,
+                    current: "s-questions",
+                    generation_attempts: generationAttempt
+                      ? [
+                          ...(m.session.generation_attempts ?? []),
+                          generationAttempt,
+                        ]
+                      : m.session.generation_attempts,
+                  },
                   busy: null,
                   failure: null,
                   glmInspection: null,
+                  generationInterrupted: false,
                   questionAttempt: m.questionAttempt + 1,
                 }
               : m,
@@ -598,14 +742,32 @@ export default function IntakeJourney({
                   ...m,
                   busy: null,
                   failure:
-                    error instanceof Error
-                      ? error.message
-                      : "Belum berhasil. Silakan coba lagi.",
+                    task === "questions" && generationInterrupted
+                      ? GENERATION_INTERRUPTED_MESSAGE
+                      : error instanceof Error
+                        ? error.message
+                        : "Belum berhasil. Silakan coba lagi.",
+                  generationInterrupted:
+                    task === "questions"
+                      ? generationInterrupted
+                      : m.generationInterrupted,
                   glmInspection:
                     task === "questions"
                       ? (((error as { inspection?: Model["glmInspection"] })
                           .inspection ?? null) as Model["glmInspection"])
                       : m.glmInspection,
+                  // The attempt ledger survives the failure — a reload still
+                  // carries it into the evidence export.
+                  session:
+                    task === "questions" && generationAttempt
+                      ? {
+                          ...m.session,
+                          generation_attempts: [
+                            ...(m.session.generation_attempts ?? []),
+                            generationAttempt,
+                          ],
+                        }
+                      : m.session,
                   readAttempt: m.readAttempt + (task === "reading" ? 1 : 0),
                   questionAttempt:
                     m.questionAttempt + (task === "questions" ? 1 : 0),
@@ -673,6 +835,7 @@ export default function IntakeJourney({
           working: m.session.answers,
           busy: null,
           failure: null,
+          generationInterrupted: false,
         };
       const applicable = activePath(m.session.answers);
       const visited = m.session.visited.filter(
@@ -810,6 +973,7 @@ export default function IntakeJourney({
           busy: "questions",
           failure: null,
           glmInspection: null,
+          generationInterrupted: false,
         };
       }
       if (at === "s-questions") {
@@ -959,12 +1123,13 @@ export default function IntakeJourney({
       busy: current === "s-crawl" ? "reading" : "questions",
       failure: null,
       glmInspection: null,
+      generationInterrupted: false,
     }));
   };
   const restart = () => {
     // A new journey never inherits the prior session's audit record.
     clearLocalAuditRecord();
-    setModel(freshModel(initialFixture));
+    setModel(freshModel(initialFixture, blank));
     setAttempts(0);
   };
   const canBack =
@@ -1011,13 +1176,17 @@ export default function IntakeJourney({
       {model.audit &&
       AuditStage &&
       session.pack?.generation.kind === "glm-direct-ten-local" ? (
-        <section className={styles.content} aria-label="Audit lokal">
+        <section
+          className={styles.content}
+          aria-label={live ? "Audit" : "Audit lokal"}
+        >
           <AuditStage
             pack={session.pack}
             input={questionInput(session)}
             autoStart={model.audit.autoStart}
             preparationCalls={session.preparationCalls ?? []}
             preparationMode={session.preparationMode ?? null}
+            generationAttempts={session.generation_attempts ?? []}
             onExit={cancelOrBack}
             onRestart={restart}
           />
@@ -1072,55 +1241,73 @@ export default function IntakeJourney({
               : "Menyiapkan pertanyaan audit"}
           </h1>
           {model.failure ? (
-            <>
-              <p role="alert" className={`type-copy ${styles.error}`}>
-                {model.failure}
-              </p>
-              {model.glmInspection && (
-                <div
-                  className="grid gap-3"
-                  data-glm-inspection="failed-validation"
-                >
-                  <p className="type-copy-sm text-muted-foreground">
-                    Teks yang dikembalikan (belum disetujui, tidak menggantikan
-                    apa pun):
-                  </p>
-                  <ol className="m-0 list-decimal pl-6">
-                    {model.glmInspection.questions.map((question, index) => (
-                      <li key={index} className="type-copy-sm">
-                        {question}
-                      </li>
-                    ))}
-                  </ol>
-                  <ul className="m-0 list-disc pl-6">
-                    {model.glmInspection.issues.map((issue, index) => (
-                      <li key={index} className="type-copy-sm text-destructive">
-                        {issue}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <div className={styles.actions}>
-                <Button onClick={retry} className={styles.primary}>
-                  Coba lagi
-                </Button>
-                <Button
-                  variant="outline"
-                  className={styles.primary}
-                  onClick={() =>
-                    reading ? goTo("s-brand-fix") : cancelOrBack()
-                  }
-                >
-                  {reading ? "Ubah sumber" : "Kembali ke informasi brand"}
-                </Button>
-                {model.correction && (
-                  <Button variant="ghost" onClick={cancelOrBack}>
-                    Batal
+            model.generationInterrupted ? (
+              // Spec 010 R-06: the honest interrupted state — one explicit
+              // new-attempt button, never an automatic retry.
+              <>
+                <p role="alert" className={`type-copy ${styles.error}`}>
+                  {model.failure}
+                </p>
+                <div className={styles.actions}>
+                  <Button onClick={retry} className={styles.primary}>
+                    Buat pertanyaan lagi
                   </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p role="alert" className={`type-copy ${styles.error}`}>
+                  {model.failure}
+                </p>
+                {model.glmInspection && (
+                  <div
+                    className="grid gap-3"
+                    data-glm-inspection="failed-validation"
+                  >
+                    <p className="type-copy-sm text-muted-foreground">
+                      Teks yang dikembalikan (belum disetujui, tidak
+                      menggantikan apa pun):
+                    </p>
+                    <ol className="m-0 list-decimal pl-6">
+                      {model.glmInspection.questions.map((question, index) => (
+                        <li key={index} className="type-copy-sm">
+                          {question}
+                        </li>
+                      ))}
+                    </ol>
+                    <ul className="m-0 list-disc pl-6">
+                      {model.glmInspection.issues.map((issue, index) => (
+                        <li
+                          key={index}
+                          className="type-copy-sm text-destructive"
+                        >
+                          {issue}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-              </div>
-            </>
+                <div className={styles.actions}>
+                  <Button onClick={retry} className={styles.primary}>
+                    Coba lagi
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={styles.primary}
+                    onClick={() =>
+                      reading ? goTo("s-brand-fix") : cancelOrBack()
+                    }
+                  >
+                    {reading ? "Ubah sumber" : "Kembali ke informasi brand"}
+                  </Button>
+                  {model.correction && (
+                    <Button variant="ghost" onClick={cancelOrBack}>
+                      Batal
+                    </Button>
+                  )}
+                </div>
+              </>
+            )
           ) : (
             <>
               <ul
@@ -1160,9 +1347,11 @@ export default function IntakeJourney({
             </>
           )}
           <p className={`type-copy-sm ${styles.notice}`}>
-            {glmExperiment
-              ? "Uji coba GLM lokal: persiapan memakai pengganti sintetis berlabel di batas nyata; pertanyaan lewat satu permintaan ke rute eksperimental."
-              : "Uji coba lokal memakai contoh deterministik. Sumber tidak diakses dan tidak ada panggilan AI."}
+            {live
+              ? "Versi uji coba — hasil berlaku untuk bisnis yang diuji saja."
+              : glmExperiment
+                ? "Uji coba GLM lokal: persiapan memakai pengganti sintetis berlabel di batas nyata; pertanyaan lewat satu permintaan ke rute eksperimental."
+                : "Uji coba lokal memakai contoh deterministik. Sumber tidak diakses dan tidak ada panggilan AI."}
           </p>
           {isProcessing && (model.correction || !reading) && (
             <Button variant="ghost" onClick={cancelOrBack}>
@@ -1235,7 +1424,11 @@ export default function IntakeJourney({
       )}
       {!model.handoff && !reading && !model.audit && (
         <p className={`type-copy-sm ${styles.localNote}`}>
-          Contoh lokal · tidak menjalankan audit AI
+          {blank || live
+            ? "Versi uji coba — hasil berlaku untuk bisnis yang diuji saja."
+            : glmExperiment
+              ? "Versi uji coba — audit memakai pengganti sintetis berlabel."
+              : "Contoh lokal · tidak menjalankan audit AI"}
         </p>
       )}
     </main>

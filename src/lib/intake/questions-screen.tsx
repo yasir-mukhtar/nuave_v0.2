@@ -61,10 +61,9 @@ export function LocalQuestionsScreen({
           data-glm-method={pack.generation.provenance.method}
         >
           <p>
-            Uji coba GLM lokal
             {pack.generation.provenance.transport === "synthetic-stub"
-              ? " — respons sintetis berlabel, bukan keluaran provider."
-              : " — satu panggilan provider."}{" "}
+              ? "Uji coba GLM lokal — respons sintetis berlabel, bukan keluaran provider."
+              : "Versi uji coba — satu panggilan provider."}{" "}
             Audit belum dijalankan.
           </p>
           <p>

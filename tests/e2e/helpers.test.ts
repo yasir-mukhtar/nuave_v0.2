@@ -5,7 +5,7 @@ describe("sideEffectViolations", () => {
   it("allows local navigation and asset requests", () => {
     expect(
       sideEffectViolations([
-        "http://localhost:3000/audit/fixture",
+        "http://localhost:3000/audit",
         "http://localhost:3000/_next/static/chunk.js",
         "http://localhost:3000/preview-step-1.png",
       ]),

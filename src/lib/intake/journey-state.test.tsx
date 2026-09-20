@@ -315,3 +315,77 @@ describe("shell committed state and Review transactions", () => {
     expect(screen.queryByRole("heading", { name: "s-brand" })).toBeNull();
   });
 });
+
+describe("blank public entry (Spec 010 R-08)", () => {
+  it("opens on the empty business step and never restores a fixture session", async () => {
+    // A stored fixture-seeded session must not leak into a blank start.
+    seedReview();
+    render(<IntakeJourney ScreenSlot={Controls} blank />);
+    await at("s-brand-fix");
+    expect(answers().brandFixDraft).toEqual({ name: "", source: "" });
+    // The stored fixture session is overwritten once hydration settles —
+    // the parked blank state is raw JSON here because parseLocalSession
+    // intentionally rejects a pre-identity session on restore.
+    await waitFor(() => {
+      const raw = JSON.parse(
+        sessionStorage.getItem(LOCAL_INTAKE_STORAGE_KEY) ?? "null",
+      ) as { origin?: string } | null;
+      expect(raw?.origin).toBe("blank");
+    });
+    // Empty fields block the entry button until the owner fills them.
+    expect(
+      screen
+        .getByRole("button", { name: "Periksa lagi" })
+        .getAttribute("data-continue-disabled"),
+    ).toBe("true");
+  });
+
+  it("enters name and source, then lands on the read brand card", async () => {
+    render(<IntakeJourney ScreenSlot={Controls} blank />);
+    await at("s-brand-fix");
+    click("Correct identity");
+    click("Periksa lagi");
+    await at("s-brand");
+    expect(answers().brandCorrected).toEqual({
+      name: "Studio Benang",
+      source: "example.com",
+    });
+    click("Lanjut");
+    await at("s-scope");
+  });
+
+  it("a fixture start never restores a stored blank session", async () => {
+    const app = render(<IntakeJourney ScreenSlot={Controls} blank />);
+    await at("s-brand-fix");
+    click("Correct identity");
+    click("Periksa lagi");
+    await at("s-brand");
+    app.unmount();
+    render(<IntakeJourney ScreenSlot={Controls} fixtureOverride={fixture} />);
+    await at("s-brand");
+    // The fixture journey seeded its own card — the entered business is gone.
+    expect(saved().origin).toBe("fixture");
+    expect(answers().brandCorrected).toBeNull();
+  });
+
+  it("restores a committed blank session under the blank start", async () => {
+    const app = render(<IntakeJourney ScreenSlot={Controls} blank />);
+    await at("s-brand-fix");
+    click("Correct identity");
+    click("Periksa lagi");
+    await at("s-brand");
+    click("Lanjut");
+    await at("s-scope");
+    click("Choose whole brand");
+    click("Lanjut");
+    await at("s-category");
+    app.unmount();
+    render(<IntakeJourney ScreenSlot={Controls} blank />);
+    await at("s-category");
+    expect(saved().origin).toBe("blank");
+    expect(answers().brandCorrected).toEqual({
+      name: "Studio Benang",
+      source: "example.com",
+    });
+  });
+});

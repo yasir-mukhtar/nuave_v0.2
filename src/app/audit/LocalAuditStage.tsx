@@ -6,7 +6,12 @@ import { IconLoader2 } from "@tabler/icons-react";
 import { AuditNotice } from "@/components/product/AuditNotice";
 import AuditRunStep from "@/app/audit/AuditRunStep";
 import ReportView from "@/app/audit/ReportView";
-import { makeCustomerEvidenceExport } from "@/lib/audit/customer-evidence-export";
+import {
+  auditSessionProvenance,
+  makeCustomerEvidenceExport,
+  promptsWithOriginals,
+  type GenerationAttemptRecord,
+} from "@/lib/audit/customer-evidence-export";
 import { canonicalLockedDirectTenPack } from "@/lib/audit/locked-question-pack";
 import {
   AuditRunEventParser,
@@ -39,13 +44,12 @@ import {
 } from "@/lib/intake/local-audit-session";
 import {
   AUDIT_COST_LIMIT_USD,
-  SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
   type AuditCallTelemetry,
   type AuditObservation,
   type AuditReport,
   type BusinessBrief,
 } from "@/lib/audit/types";
-import type { RunUnfinishedState } from "./AuditStages";
+import type { RunUnfinishedState } from "./run-state";
 
 type Busy = "run" | "report" | null;
 
@@ -98,6 +102,7 @@ export default function LocalAuditStage({
   autoStart,
   preparationCalls = [],
   preparationMode = null,
+  generationAttempts = [],
   onExit,
   onRestart,
 }: {
@@ -110,6 +115,9 @@ export default function LocalAuditStage({
   preparationCalls?: AuditCallTelemetry[];
   /** The boundary-reported preparation mode for this session. */
   preparationMode?: "synthetic-local" | "live" | null;
+  /** Spec 010 R-06: the session's GLM generation-attempt ledger, carried
+   * from the intake session record into the export totals (R-07). */
+  generationAttempts?: GenerationAttemptRecord[];
   onExit: () => void;
   onRestart: () => void;
 }) {
@@ -530,9 +538,29 @@ export default function LocalAuditStage({
     ...(record?.runCalls ?? []),
     ...(record?.reportCalls ?? []),
   ];
-  const providerCalls = allCalls.filter(
-    (call) => call.requested_model !== SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
-  ).length;
+  // The successful pack's generation provenance — only a real provider
+  // transport counts its attempts as provider calls or surfaces the
+  // generation record; a synthetic-stub or deterministic pack omits it
+  // (Spec 010 R-07).
+  const packGeneration =
+    (pack.generation.kind === "glm-direct-ten-local" ||
+      pack.generation.kind === "glm-experimental-local") &&
+    pack.generation.provenance.transport === "cheaper-inference"
+      ? {
+          requested_model: pack.generation.provenance.requestedModel,
+          returned_model: pack.generation.provenance.returnedModel,
+          response_id: pack.generation.provenance.responseId,
+          transport: pack.generation.provenance.transport,
+          billed_cost_usd: pack.generation.billedCostUsd,
+          model_mismatch: pack.generation.provenance.modelMismatch,
+        }
+      : null;
+  const accounting = auditSessionProvenance({
+    calls: allCalls,
+    attempts: generationAttempts,
+    generation: packGeneration,
+  });
+  const providerCalls = accounting.provider_calls;
 
   const downloadJson = () => {
     if (!record?.report || !record.brief) return;
@@ -542,9 +570,18 @@ export default function LocalAuditStage({
     } catch {
       return;
     }
+    // Spec 010 R-07: the generated text rides alongside the exact approved
+    // wording — `original_question`/`edited` indexed by the pack's locating
+    // prompt_id; `question` stays the approved text.
+    const originalByPromptId = new Map(
+      pack.promptPack.prompts.map((prompt, index) => [
+        prompt.prompt_id,
+        pack.originals[index] ?? prompt.question,
+      ]),
+    );
     const evidence = makeCustomerEvidenceExport(
       record.brief,
-      locked,
+      promptsWithOriginals(locked, originalByPromptId),
       record.observations,
       record.report,
       {
@@ -557,6 +594,11 @@ export default function LocalAuditStage({
         question_method: "direct-ten",
         synthetic: providerCalls === 0,
         provider_calls: providerCalls,
+        accounted_cost_usd: accounting.accounted_cost_usd,
+        uncertain_attempts: accounting.uncertain_attempts,
+        unknown_cost_attempts: accounting.unknown_cost_attempts,
+        generation_attempts: accounting.generation_attempts,
+        ...(accounting.generation ? { generation: accounting.generation } : {}),
         preparation_mode: record.preparationMode,
       },
     );
@@ -589,10 +631,20 @@ export default function LocalAuditStage({
                 {input.confirmed.brand.name}.
               </AuditNotice>
             ) : (
-              <AuditNotice tone="info" title="Audit lokal — panggilan nyata">
+              <AuditNotice tone="info" title="Audit — panggilan provider nyata">
                 Laporan ini dihasilkan dari {providerCalls} panggilan provider
-                nyata melalui jalur audit yang sama, atas izin eksplisit
-                pendiri.
+                nyata melalui jalur audit yang sama. Estimasi aplikasi untuk
+                biaya tercatat: USD {accounting.accounted_cost_usd.toFixed(4)}.
+                {accounting.uncertain_attempts > 0 ||
+                accounting.unknown_cost_attempts > 0 ? (
+                  <>
+                    {" "}
+                    Tercatat {accounting.uncertain_attempts} percobaan pembuatan
+                    pertanyaan dengan hasil tidak pasti dan{" "}
+                    {accounting.unknown_cost_attempts} percobaan dengan biaya
+                    tidak diketahui.
+                  </>
+                ) : null}
               </AuditNotice>
             )
           }
@@ -619,11 +671,18 @@ export default function LocalAuditStage({
             {input.confirmed.brand.name}. Audit berjalan selama halaman ini
             terbuka.
           </p>
-          <AuditNotice tone="info" title="Audit lokal berlabel">
-            Jawaban dan laporan memakai penyedia sintetis berlabel sampai izin
-            live diberikan secara eksplisit. Ini membuktikan alurnya — bukan
-            visibilitas {input.confirmed.brand.name}.
-          </AuditNotice>
+          {preparationMode === "live" ? (
+            <AuditNotice tone="info" title="Versi uji coba">
+              Pertanyaan diuji lewat panggilan provider nyata; hasil berlaku
+              untuk {input.confirmed.brand.name} yang diuji saja.
+            </AuditNotice>
+          ) : (
+            <AuditNotice tone="info" title="Audit lokal berlabel">
+              Jawaban dan laporan memakai penyedia sintetis berlabel sampai izin
+              live diberikan secara eksplisit. Ini membuktikan alurnya — bukan
+              visibilitas {input.confirmed.brand.name}.
+            </AuditNotice>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => void execute()} data-local-audit-run="start">
               Mulai audit

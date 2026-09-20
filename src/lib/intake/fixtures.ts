@@ -852,6 +852,22 @@ export const FIXTURE_META: Record<FixtureId, FixtureMeta> = {
 };
 
 /**
+ * Spec 010 R-08: the public journey's blank start. Every canonical screen is
+ * present but empty, so `createIntakeState` seeds no business facts and the
+ * owner answers from the empty name/source step. Not a `?fixture=` id — only
+ * `IntakeJourney`'s blank mode uses it, and an entered business replaces it
+ * through the identity boundary like any other base fixture.
+ */
+const BLANK_SCREENS = {} as Record<IntakeScreenId, FixtureScreenState>;
+for (const id of INTAKE_SCREEN_ORDER) {
+  BLANK_SCREENS[id] = { prepared: [], selected: [] };
+}
+export const EMPTY_INTAKE_FIXTURE: IntakeFixture = buildFixture(
+  "s-brand-fix",
+  BLANK_SCREENS,
+);
+
+/**
  * True when every screen on the fixture path exists in the fixture, the path
  * terminates at s-review, and every visited screen carries a forward route
  * (next path entry or, for s-review, review-confirm). No dead end by construction.

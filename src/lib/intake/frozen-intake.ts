@@ -13,6 +13,18 @@ export const SERVICE_CHANNELS = {
   "service-delivery": "delivery",
   "service-online": "online",
 } as const;
+/** Display labels for the static channel choices — the service screen renders
+ * these verbatim and a blank (non-fixture) journey has no prepared items, so
+ * freezing resolves channel labels here instead of the prepared index. */
+export const SERVICE_CHANNEL_LABELS: Record<
+  keyof typeof SERVICE_CHANNELS,
+  string
+> = {
+  "service-location": "Di lokasi bisnis Anda",
+  "service-customer": "Di lokasi pelanggan",
+  "service-delivery": "Dikirim ke pelanggan",
+  "service-online": "Digunakan secara online",
+};
 export type ServiceChannel =
   (typeof SERVICE_CHANNELS)[keyof typeof SERVICE_CHANNELS];
 

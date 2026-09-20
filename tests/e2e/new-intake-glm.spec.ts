@@ -2,11 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 /**
- * Founder-only local GLM experiment (LOCAL_FOUNDER_TEST_HANDOFF.md
- * 2026-09-17; Spec 009 direct-ten method since 2026-09-18): the page opts in
- * per journey via `?glm=1`, and the server requires NUAVE_GLM_LOCAL_EXPERIMENT.
- * The transport is the labeled synthetic stub — no real provider call happens
- * anywhere in this spec.
+ * Spec 010 R-08: the public `/audit` journey in `synthetic` mode. The
+ * `?fixture=`/`?glm=1`/`?glm-stub=` harness parameters exist only for this
+ * offline suite — the server runs with NUAVE_NEW_AUDIT_ENABLED and
+ * NUAVE_AUDIT_MODE=synthetic, so every boundary answers with the labeled
+ * synthetic substitute. No real provider call happens anywhere in this spec.
  */
 const shell = (page: Page) => page.locator("[data-new-intake-shell]");
 const primary = (page: Page) =>
@@ -52,7 +52,7 @@ function trackRequests(page: Page) {
 
 /** Every GLM fixture screen arrives pre-confirmed; only scope needs a tap. */
 async function toReview(page: Page, suffix: string) {
-  await page.goto(`/audit/new-intake${suffix}`);
+  await page.goto(`/audit${suffix}`);
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
   await primary(page).click();
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-scope");
@@ -237,11 +237,14 @@ test("entered business: identity/extraction boundaries → buyer facts → appro
       (window as unknown as { __printCalls: number }).__printCalls += 1;
     };
   });
-  await page.goto("/audit/new-intake?glm=1");
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  // Enter a different business: the correction goes through the real
-  // identity/extraction boundaries, answered by labeled substitutes.
-  await page.getByRole("button", { name: "Ubah", exact: true }).click();
+  // Spec 010 R-08: the public entry opens on the empty business step — the
+  // entered business goes straight through the real identity/extraction
+  // boundaries, answered by labeled substitutes in this suite.
+  await page.goto("/audit?glm=1");
+  await expect(shell(page)).toHaveAttribute(
+    "data-new-intake-shell",
+    "s-brand-fix",
+  );
   await page
     .getByRole("textbox", { name: "Nama brand", exact: true })
     .fill("Batik Laras");

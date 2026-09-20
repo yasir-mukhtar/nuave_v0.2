@@ -41,6 +41,7 @@ import {
   fingerprintOf,
   isLocalIntakeFingerprintValid,
   LOCAL_INTAKE_INPUT_VERSION,
+  SERVICE_CHANNEL_LABELS,
   SERVICE_CHANNELS,
   type FrozenLocalIntake,
 } from "./frozen-intake";
@@ -105,6 +106,16 @@ export type GlmQuestionsOutcome =
       reason: string;
       detail: string;
       provenance: GlmPackProvenance;
+      /** Spec 010 R-06 accounting: how far this attempt reached against the
+       * provider — "responded": an HTTP response came back, success or HTTP
+       * failure (a confirmed provider call); "sent": the transport was
+       * invoked but nothing returned (execution unknown, like a dropped
+       * client response); "none": rejected before any provider work. Absent
+       * on legacy-shaped records. */
+      providerContact?: "responded" | "sent" | "none";
+      /** Provider-reported billed cost when the failed response carried
+       * billing data — the attempt keeps it for accounting; otherwise null. */
+      cost?: { billedUsd: number | null; available: boolean };
     };
 
 export type GlmPackGeneration = {
@@ -247,7 +258,12 @@ export function freezeLocalIntake(
     const channel = SERVICE_CHANNELS[id as keyof typeof SERVICE_CHANNELS];
     if (!channel)
       throw new Error("Konfirmasi kembali cara layanan bisnis Anda.");
-    return { channel, label: selected("s-service", id).label.trim() };
+    const prepared = index.get("s-service")?.find((entry) => entry.id === id);
+    const label =
+      prepared?.label.trim() ||
+      SERVICE_CHANNEL_LABELS[id as keyof typeof SERVICE_CHANNEL_LABELS] ||
+      selected("s-service", id).label.trim();
+    return { channel, label };
   });
   const reach = state.market.kind;
   if (!reach) throw new Error("Konfirmasi jangkauan pasar Anda.");
@@ -621,7 +637,7 @@ function buildLocalPack(
       glm
         ? generation.provenance.transport === "synthetic-stub"
           ? "Uji coba GLM lokal: pertanyaan berasal dari respons sintetis berlabel, bukan keluaran provider. Audit belum dijalankan."
-          : "Uji coba GLM lokal: pertanyaan disiapkan lewat satu panggilan provider; audit belum dijalankan."
+          : "Versi uji coba: pertanyaan disiapkan lewat satu panggilan provider; audit belum dijalankan."
         : "Simulasi lokal: pertanyaan disiapkan tanpa panggilan AI; audit belum dijalankan.",
     ],
   };
@@ -629,7 +645,7 @@ function buildLocalPack(
     generation.kind === "glm-direct-ten-local"
       ? generation.provenance.transport === "synthetic-stub"
         ? "Uji coba GLM lokal (sepuluh pertanyaan langsung): pertanyaan berasal dari respons sintetis berlabel, bukan keluaran provider. Audit belum dijalankan."
-        : "Uji coba GLM lokal (sepuluh pertanyaan langsung): pertanyaan disiapkan lewat satu panggilan provider; audit belum dijalankan."
+        : "Versi uji coba (sepuluh pertanyaan langsung): pertanyaan disiapkan lewat satu panggilan provider; audit belum dijalankan."
       : null;
   const pack: LocalQuestionPack = {
     version: LOCAL_QUESTION_PACK_VERSION,

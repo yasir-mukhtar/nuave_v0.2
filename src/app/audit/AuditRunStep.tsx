@@ -10,7 +10,7 @@ import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import type { ReportRecoveryState } from "@/lib/audit/report-recovery";
 import type { PromptRunStatus } from "@/lib/audit/stream";
 import type { AuditObservation } from "@/lib/audit/types";
-import { type RunUnfinishedState } from "./AuditStages";
+import { type RunUnfinishedState } from "./run-state";
 import styles from "./audit.module.css";
 
 type Busy = "extract" | "prompts" | "run" | "report" | null;

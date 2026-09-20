@@ -26,8 +26,12 @@ async function shot(page: Page, info: TestInfo, name: string) {
   ).toBe(true);
 }
 
-async function entry(page: Page, scope: keyof typeof scopeNames, suffix = "") {
-  await page.goto(`/audit/new-intake${suffix}`);
+async function entry(
+  page: Page,
+  scope: keyof typeof scopeNames,
+  suffix = "?fixture=F1",
+) {
+  await page.goto(`/audit${suffix}`);
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
   await primary(page).click();
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-scope");
@@ -335,7 +339,7 @@ test("market areas validate, nationwide and international clear them, and no-dir
 test("wrong brand correction commits only after reading and Back skips processing", async ({
   page,
 }) => {
-  await page.goto("/audit/new-intake");
+  await page.goto("/audit?fixture=F1");
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
   await page.getByRole("button", { name: "Ubah", exact: true }).click();
   await page
@@ -365,7 +369,7 @@ test("empty location and product preparation offer valid manual target controls"
     if (message.type() === "error") errors.push(message.text());
   });
   for (const scope of ["cabang", "produk"] as const) {
-    await page.goto("/audit/new-intake?fixture=F2");
+    await page.goto("/audit?fixture=F2");
     await page.evaluate(() => sessionStorage.clear());
     await page.reload();
     await entry(page, scope, "?fixture=F2");
@@ -401,7 +405,7 @@ test("empty location and product preparation offer valid manual target controls"
 test("unavailable reading stays failed on retry until the owner corrects its identity and source", async ({
   page,
 }) => {
-  await page.goto("/audit/new-intake?fixture=F6");
+  await page.goto("/audit?fixture=F6");
   await expect(shell(page).getByRole("alert")).toBeVisible();
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-crawl");
   await expect(
@@ -438,7 +442,7 @@ test("unavailable reading stays failed on retry until the owner corrects its ide
 test("question failure returns unchanged Review and retry prepares a startable pack", async ({
   page,
 }) => {
-  await entry(page, "brand", "?failure=questions");
+  await entry(page, "brand", "?fixture=F1&failure=questions");
   await toReview(page);
   const review = await shell(page).innerText();
   await primary(page).click();
