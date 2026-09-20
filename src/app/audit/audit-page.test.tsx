@@ -98,7 +98,7 @@ describe("/audit entry (Spec 010 R-08)", () => {
     const html = renderToStaticMarkup(element);
     expect(html).toContain('data-new-intake-shell="s-brand-fix"');
     expect(html).toContain("Nama brand");
-    expect(html).toContain("Sumber bisnis");
+    expect(html).toContain("Link website");
     expect(html).toContain("Versi uji coba");
   });
 });

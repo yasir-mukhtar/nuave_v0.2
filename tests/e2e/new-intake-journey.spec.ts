@@ -346,7 +346,7 @@ test("wrong brand correction commits only after reading and Back skips processin
     .getByRole("textbox", { name: "Nama brand", exact: true })
     .fill("Kedai Fiktif Pagi");
   await page
-    .getByRole("textbox", { name: "Sumber bisnis", exact: true })
+    .getByRole("textbox", { name: "Link website", exact: true })
     .fill("https://kedaifiktif.example");
   await primary(page).click();
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
@@ -430,7 +430,7 @@ test("unavailable reading stays failed on retry until the owner corrects its ide
     .getByRole("textbox", { name: "Nama brand", exact: true })
     .fill("Kedai Fiktif Pagi");
   await page
-    .getByRole("textbox", { name: "Sumber bisnis", exact: true })
+    .getByRole("textbox", { name: "Link website", exact: true })
     .fill("https://kedaifiktif.example");
   await primary(page).click();
   await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
