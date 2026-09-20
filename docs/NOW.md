@@ -207,12 +207,14 @@ at this update is `e8df42818510ef6768e3cfa377ae74536851dcb1` (CI run
 `34725425535`, 2026-09-13; validate, verify-main-origin, and deploy all green —
 the #57 security merge: Next 16.3.5 plus patched sharp/postcss paths). Every
 merged PR redeploys `nuave-v2`. The production provider configuration is pinned to
-`NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
-`OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
+`NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,
+`OPENAI_BASE_URL=https://api.openai.com/v1`,
 `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
 `OPENAI_AUDIT_REASONING_EFFORT=low`. The canonical server credential is
-`OPENCODEGO_API_KEY`; because the implementation reuses the OpenAI SDK as a
-Responses-compatible adapter, CI also aliases the same secret to
+`OPENAI_API_KEY`; the OpenAI SDK talks to OpenAI's own Responses API, which
+serves Luna with hosted web search. (OpenCode Go was dropped when its
+subscription lapsed; Cheaper Inference serves Luna but silently ignores
+`web_search`.) Previously CI aliased the OpenCode Go secret to
 `OPENAI_API_KEY` inside the gitignored build env. That alias is an SDK/build
 compatibility detail, not a second production credential. The founder reports
 the required GitHub configuration is set. Other required deployment values
@@ -393,11 +395,12 @@ requires explicit authorization.
   extraction, human fact confirmation, ten-question prompt review, independent
   OpenCode Go Responses-compatible execution with GPT-5.6 Luna and web search, final-format
   report generation, A4 print/PDF, and complete JSON evidence export.
-- The protected Phase 3 production path is OpenCode Go end to end:
-  `NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`, endpoint
-  `https://opencode.ai/zen/go/v1`, model `gpt-5.6-luna`, and reasoning `low`.
-  `OPENCODEGO_API_KEY` is the canonical credential. `OPENAI_API_KEY` may be
-  populated internally/build-time only for the existing OpenAI SDK adapter.
+- The protected Phase 3 production path is OpenAI direct end to end:
+  `NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`, endpoint
+  `https://api.openai.com/v1`, model `gpt-5.6-luna`, and reasoning `low`.
+  `OPENAI_API_KEY` is the canonical credential. (OpenCode Go was dropped when
+  its subscription lapsed; Cheaper Inference serves Luna but ignores
+  `web_search`.)
   Direct OpenAI, Gemini, Groq/Tavily, and OpenRouter are testing-only and are
   rejected by the protected path in production.
 - The production method uses no web search for Indonesian question generation;

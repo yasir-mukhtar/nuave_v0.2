@@ -150,14 +150,14 @@ provider billing and can set the switch off to stop every audit endpoint
 before provider work. The deployed worker also uses per-IP Cloudflare rate
 limits (`wrangler.jsonc`) as a burst brake. The protected production
 configuration is
-`NUAVE_PROVIDER=opencodego`, `NUAVE_QUESTION_PROVIDER=opencodego`,
-`OPENAI_BASE_URL=https://opencode.ai/zen/go/v1`,
+`NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,
+`OPENAI_BASE_URL=https://api.openai.com/v1`,
 `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, and
-`OPENAI_AUDIT_REASONING_EFFORT=low`. Nuave uses the existing OpenAI SDK as the
-Responses-compatible adapter for OpenCode Go. `OPENCODEGO_API_KEY` is the
-canonical production credential; `OPENAI_API_KEY` is populated only
-internally or at build time as the SDK compatibility alias and is not a second
-production credential.
+`OPENAI_AUDIT_REASONING_EFFORT=low`. Nuave uses the OpenAI SDK directly
+against OpenAI's Responses API, which serves Luna with hosted web search.
+`OPENAI_API_KEY` is the canonical production credential. (The earlier OpenCode
+Go proxy was dropped after its subscription lapsed; Cheaper Inference serves
+Luna but ignores the `web_search` tool, so it cannot ground observations.)
 
 The protected method uses one bounded no-search call for Indonesian question
 generation; official-domain-restricted web search for business extraction;
