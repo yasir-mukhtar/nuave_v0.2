@@ -187,13 +187,14 @@ export function indonesianQuestionProviderName(): IndonesianQuestionProviderName
 
 /**
  * Question-writer provider for the protected live path (`/api/audit/prompts`).
- * Fails closed to the founder-approved OpenCode Go transport serving
- * GPT-5.6 Luna (DECISION_LOG 2026-08-21). Other providers are testing-only and
- * require `NUAVE_LIVE_PROVIDER_TESTING=1` outside production.
+ * Fails closed to the founder-approved transports serving GPT-5.6 Luna:
+ * OpenAI direct (DECISION_LOG 2026-09-20) or the earlier OpenCode Go proxy
+ * (DECISION_LOG 2026-08-21). Other providers are testing-only and require
+ * `NUAVE_LIVE_PROVIDER_TESTING=1` outside production.
  */
 export function liveIndonesianQuestionProviderName(): IndonesianQuestionProviderName {
   const name = indonesianQuestionProviderName();
-  if (name === "opencodego") return "opencodego";
+  if (name === "opencodego" || name === "openai") return name;
   // R-13 (O-10, Phase 3 fix-round-2 adversarial review): see the identical
   // guard and rationale in `provider.ts`'s `liveAuditProvider`.
   if (
@@ -203,7 +204,7 @@ export function liveIndonesianQuestionProviderName(): IndonesianQuestionProvider
     return name;
   }
   throw new Error(
-    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to OpenCode Go (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
+    `NUAVE_QUESTION_PROVIDER="${name}" is testing-only; the protected live question path fails closed to the approved live providers (gpt-5.6-luna via OpenAI or OpenCode Go). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 

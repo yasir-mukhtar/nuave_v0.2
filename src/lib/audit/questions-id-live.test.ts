@@ -130,15 +130,15 @@ describe("live Indonesian prompt generation (Spec 003 work package A route path)
   it("ignores the testing escape in production and rejects an alternate question provider before fetch", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
-    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "test-dummy-key");
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "gemini");
+    vi.stubEnv("GEMINI_API_KEY", "test-dummy-key");
     const fetchMock = vi.fn(async () => jsonResponse(responsesBody));
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
       buildLiveIndonesianPromptPack({ brief: dentalBrief }),
     ).rejects.toThrow(
-      'NUAVE_QUESTION_PROVIDER="openai" is testing-only; the protected live question path fails closed to OpenCode Go',
+      'NUAVE_QUESTION_PROVIDER="gemini" is testing-only; the protected live question path fails closed',
     );
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });

@@ -21,16 +21,16 @@ describe("protected live path fails closed to the founder-approved provider (Spe
     vi.unstubAllEnvs();
   });
 
-  it("locks the live audit path to OpenCode Go", () => {
+  it("locks the live audit path to the approved production providers", () => {
     vi.stubEnv("NUAVE_PROVIDER", "opencodego");
     expect(liveAuditProvider()).toBe("opencodego");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    expect(liveAuditProvider()).toBe("openai");
   });
 
-  it("fails closed when the production provider is missing or a testing-only provider is selected", () => {
+  it("fails closed when a testing-only provider is selected; an unset provider defaults to OpenAI", () => {
     vi.stubEnv("NUAVE_PROVIDER", "");
-    expect(() => liveAuditProvider()).toThrow(/testing-only/);
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    expect(() => liveAuditProvider()).toThrow(/testing-only/);
+    expect(liveAuditProvider()).toBe("openai");
     vi.stubEnv("NUAVE_PROVIDER", "gemini");
     expect(() => liveAuditProvider()).toThrow(/testing-only/);
     vi.stubEnv("NUAVE_PROVIDER", "groq");
@@ -38,11 +38,11 @@ describe("protected live path fails closed to the founder-approved provider (Spe
   });
 
   it("allows testing-only providers on the live path only with the explicit testing flag", () => {
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
-    expect(liveAuditProvider()).toBe("openai");
     vi.stubEnv("NUAVE_PROVIDER", "gemini");
+    vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
     expect(liveAuditProvider()).toBe("gemini");
+    vi.stubEnv("NUAVE_PROVIDER", "groq");
+    expect(liveAuditProvider()).toBe("groq");
   });
 
   it("ignores the testing flag and fails closed when NODE_ENV=production (O-10)", () => {
@@ -61,9 +61,11 @@ describe("protected live path fails closed to the founder-approved provider (Spe
     expect(activeAuditProvider()).toBe("groq");
   });
 
-  it("locks the live question path to OpenCode Go", () => {
+  it("locks the live question path to the approved production providers", () => {
     vi.stubEnv("NUAVE_QUESTION_PROVIDER", "opencodego");
     expect(liveIndonesianQuestionProviderName()).toBe("opencodego");
+    vi.stubEnv("NUAVE_QUESTION_PROVIDER", "openai");
+    expect(liveIndonesianQuestionProviderName()).toBe("openai");
   });
 
   it("fails the live question path closed when NUAVE_QUESTION_PROVIDER selects Gemini", () => {

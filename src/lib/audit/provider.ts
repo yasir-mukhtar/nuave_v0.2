@@ -78,9 +78,14 @@ export function activeAuditProvider(): AuditProviderName {
   );
 }
 
+const PRODUCTION_LIVE_PROVIDERS = new Set<AuditProviderName>([
+  "opencodego",
+  "openai",
+]);
+
 export function liveAuditProvider(): AuditProviderName {
   const name = activeAuditProvider();
-  if (name === "opencodego") return "opencodego";
+  if (PRODUCTION_LIVE_PROVIDERS.has(name)) return name;
   if (
     process.env.NUAVE_LIVE_PROVIDER_TESTING === "1" &&
     process.env.NODE_ENV !== "production"
@@ -88,7 +93,7 @@ export function liveAuditProvider(): AuditProviderName {
     return name;
   }
   throw new Error(
-    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to OpenCode Go (gpt-5.6-luna). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
+    `NUAVE_PROVIDER="${name}" is testing-only; the protected live path fails closed to the approved live providers (gpt-5.6-luna via OpenAI or OpenCode Go). Set NUAVE_LIVE_PROVIDER_TESTING=1 only for tests and local runners — it is always ignored when NODE_ENV=production.`,
   );
 }
 
