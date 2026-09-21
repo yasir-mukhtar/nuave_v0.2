@@ -1,6 +1,6 @@
 # Spec 011: Smart consultant prepared intake
 
-> Status: **Approved** — founder direction dated 2026-09-21; incorporates the independent R2 review at commit `ca82d89`
+> Status: **Approved** — founder-confirmed on 2026-09-21; incorporates the independent R2 review at commit `ca82d89`
 > Owner: Founder / orchestrator
 > Updated: 2026-09-21
 > Implements: `docs/PRODUCT.md` — business confirmation that starts from Nuave's prepared understanding and preserves human approval
@@ -54,7 +54,7 @@ The founder has approved the following behavior for this specification:
 7. Existing identity plus one extraction call remains the preparation mechanism. No retrieval expansion occurs without a named live failure.
 8. The representative rich case is a local Indonesian business: zero typing after `Periksa`, one summary screen, at most two substantive customer decisions, and one confirmation before question review.
 9. The existing extraction output is extended in the same call with service channels, market reach, and market areas; unsupported values remain empty.
-10. `Brand secara keseluruhan` is the visible default focus proposal. It is not confirmed until the customer uses the final confirmation action.
+10. `Brand secara keseluruhan` is the visible default focus proposal. It is a `Saran Nuave`, not website-derived evidence, and is not confirmed until the customer uses the final confirmation action.
 
 No additional founder decision is required by this specification.
 
@@ -78,6 +78,17 @@ The founder records only a field-level note outside private evidence, marking ea
 - whether any retained field states how customers receive the service or product.
 
 This inspection is evidence about the current extractor, not permission to copy raw evidence into Git. If no retained response is available, implementation stops and asks the founder whether to authorize one preparation-only call. It does not read credentials and does not proceed to question generation.
+
+## Pre-implementation R-23 sizing gate
+
+Before changing runtime code, the implementation worker performs a read-only sizing pass for R-23. The worker traces every active consumer of the current compatibility `BusinessBrief`, including question preparation, audit-run requests, report requests, persistence, exports, and historical-record readers, then returns a short sizing note.
+
+Classify the work as:
+
+- **bounded** when honest optional values can be carried by the v2 frozen intake, `QuestionFactsV3`, and a direct-ten-specific/versioned request boundary without changing observation or report payloads, persisted audit records, report schemas, or historical readers; or
+- **cross-cutting** when removing the compatibility fallbacks requires any of those downstream contracts to change.
+
+If bounded, R-23 remains in this implementation. If cross-cutting, split the legacy `BusinessBrief` cleanup into a separately reviewed follow-up. Spec 011 still ships the prepared summary and carries confirmed target customer and decision considerations through frozen v2, `QuestionFactsV3`, and the direct-ten writer brief. Existing compatibility fallbacks may remain temporarily only inside the legacy bridge, must be enumerated in verification, and must not populate prepared, confirmed, frozen, facts-projection, or writer state. R-27 remains controlling: this product PR does not become an audit-run or report redesign.
 
 ## Problem
 
@@ -174,7 +185,7 @@ The summary is one responsive screen, not a dashboard and not a stack of unrelat
 | Row | Visible behavior | Initial proposal | Row provenance before customer change |
 |---|---|---|---|
 | Business | Show the typed name, the discovered name when different, and the canonical source. The typed name is selected initially. | Typed name plus discovered option when available. | Selected typed/edited identity: `Dari Anda`; selected discovered identity: `Dari website Anda`. |
-| Audit focus | Show choices for `Brand secara keseluruhan`, `Satu lokasi`, and `Satu produk atau layanan`. | `Brand secara keseluruhan` selected. | `Dari website Anda`; becomes `Dari Anda` after a customer change. |
+| Audit focus | Show choices for `Brand secara keseluruhan`, `Satu lokasi`, and `Satu produk atau layanan`. | `Brand secara keseluruhan` selected. | `Saran Nuave`; becomes `Dari Anda` after a customer change. |
 | Category and main offerings | Show the prepared category and selected principal offerings with an `Ubah` affordance. Do not ask for a full catalogue. | Extracted category and offerings. | `Dari website Anda`; becomes `Dari Anda` after any row correction. |
 | Service channels | Show all four existing channel choices directly in the row and preselect extracted supported channels. | Extracted channels or none. | `Dari website Anda`; becomes `Dari Anda` after any change. |
 | Market reach | Show all four existing reach choices directly in the row and preselect extracted reach. | Extracted reach or none. | `Dari website Anda`; becomes `Dari Anda` after any change. |
@@ -222,7 +233,9 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 ### Preparation and extraction
 
-- **R-00 — Founder-only evidence note:** The pre-implementation evidence gate above must be completed before code changes. The worker records only that the note was received; the worker does not read `.secrets` or private evidence.
+- **R-00A — Founder-only evidence note:** The pre-implementation evidence gate above must be completed before code changes. The worker records only that the note was received; the worker does not read `.secrets` or private evidence.
+
+- **R-00B — Size R-23 first:** Before runtime implementation, the worker must submit the R-23 sizing note defined above, enumerate every current fallback and downstream consumer, and classify the cleanup as bounded or cross-cutting. No implementation begins until this classification is recorded.
 
 - **R-01 — Existing call boundary:** Entry uses the existing identity request and exactly one existing extraction request. This specification adds no provider request. Existing retry behavior for an invalid/truncated structured response may remain; an empty new optional field never triggers a retry.
 
@@ -365,7 +378,7 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 - **R-22 — Exact downstream projection:** The exact confirmed v2 values, not prepared leftovers, reach the frozen input, `QuestionFactsV3`, the direct-ten writer brief, and the existing audit/report handoff. Hidden, inactive, rejected, unselected, and optional-empty values do not. Confirmed target customer and decision considerations appear in the writer brief when present.
 
-- **R-23 — No fabricated completeness:** Remove these substitutions from the active direct-ten path:
+- **R-23 — No fabricated completeness:** The prepared, confirmed, frozen-v2, `QuestionFactsV3`, and direct-ten writer paths must never create these substitutions:
   - service channels as decision criteria;
   - category plus market as target customer;
   - target customer duplicated as customer needs;
@@ -375,7 +388,9 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
   - entered name treated as independently discovered identity; and
   - category treated as a verified business/legal type.
 
-  Where the older `BusinessBrief` minimum conflicts with honest optional absence, use a direct-ten-specific request schema or equivalent versioned boundary that permits explicit unknown/empty values. Do not weaken historical legacy validation and do not place invented placeholder facts into writer or report context.
+  First complete R-00B. If the sizing result is **bounded**, remove these substitutions from the active direct-ten audit/report path and use a direct-ten-specific request schema or equivalent versioned boundary that permits explicit unknown/empty values. Do not weaken historical legacy validation.
+
+  If the sizing result is **cross-cutting**, defer only the old `BusinessBrief` compatibility cleanup to a separately approved follow-up. In that case this implementation still removes fabrication from prepared/confirmed/frozen/facts/writer state, carries target customer and decision considerations exactly, preserves the existing run/report contracts under R-27, and records every temporarily retained legacy fallback plus its consumer in `VERIFICATION.md`. No retained compatibility fallback may be shown to the customer, frozen as confirmed meaning, or sent to the direct-ten writer as fact.
 
 - **R-24 — Material correction:** A material change after question generation increments the fact version, invalidates the stale question pack, and requires a fresh question preparation and approval. Cancel/Back restores the last committed stable summary. Identity/source change creates a new preparation version and may make one new existing preparation call only after the customer explicitly selects `Periksa`.
 
@@ -424,6 +439,8 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 ## Acceptance criteria
 
+- **AC-00 — Pre-code gates:** Before runtime code changes, the founder field-level extraction note is recorded without exposing private evidence, and the worker's R-23 sizing note enumerates the compatibility fallbacks and every active downstream consumer. The note classifies R-23 as bounded or cross-cutting. A cross-cutting result identifies the exact follow-up boundary and temporarily retained legacy fallback sites before implementation proceeds.
+
 - **AC-01 — Rich local one-screen path:** Given the ordinary blank `/audit` entry and intercepted live-shaped identity/extraction responses for a fictional local Indonesian business, when the customer enters brand/URL and selects `Periksa`, then:
   - the next customer-decision screen is `Ini yang Nuave pahami.`;
   - the fixture provides category, at least two offerings, at least one service channel, `market_reach = sekitar`, and exactly one proposed local area;
@@ -458,7 +475,7 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 ## Open questions
 
-None. The founder evidence note in R-00 is an execution prerequisite, not an unresolved product decision.
+None. The founder evidence note in R-00A and the worker sizing note in R-00B are execution prerequisites, not unresolved product decisions.
 
 ## Implementation notes
 
@@ -477,11 +494,12 @@ The current `s-review` implementation may be repurposed as the prepared summary,
 ### Work order inside one implementation branch and one product PR
 
 1. **Evidence gate:** receive the founder's field-level note; do not inspect `.secrets`.
-2. **Stop losing data:** extend extraction, map the complete relevant draft, add immutable prepared understanding, preselect proposals, and add versioned state.
-3. **Build the one-screen experience:** summary rows, default focus, inline channel/reach/area choices, optional details, and consolidated required-gap stage.
-4. **Make the handoff exact:** frozen v2, origins, optional fields, comparator unknown, facts/writer projection, honest direct-ten audit/report boundary, stale-state handling.
-5. **Verify offline:** focused tests, `npm run validate:fast`, then `npm run verify`.
-6. **Founder walkthrough:** only after explicit preparation authorization; same tab for desktop/mobile; stop before question generation unless separately authorized.
+2. **Size R-23 without coding:** trace the compatibility brief through question preparation, audit run, report, persistence, exports, and historical readers; return the bounded/cross-cutting classification.
+3. **Stop losing data:** extend extraction, map the complete relevant draft, add immutable prepared understanding, preselect proposals, and add versioned state.
+4. **Build the one-screen experience:** summary rows, default focus, inline channel/reach/area choices, optional details, and consolidated required-gap stage.
+5. **Make the handoff exact:** frozen v2, origins, optional fields, comparator unknown, and exact facts/writer projection. Implement the legacy-fallback cleanup only when R-00B classified it as bounded; otherwise document and defer that cleanup while preserving R-27.
+6. **Verify offline:** focused tests, `npm run validate:fast`, then `npm run verify`.
+7. **Founder walkthrough:** only after explicit preparation authorization; same tab for desktop/mobile; stop before question generation unless separately authorized.
 
 No half-connected version lands on `main`. Every merge deploys, so the implementation is reviewed as one complete product PR.
 

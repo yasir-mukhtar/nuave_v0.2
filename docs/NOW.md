@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-19
+> Updated: 2026-09-21
 > Stage: pre-customer, building the pipeline
 
 **Portable pause checkpoint:** code and current instructions are combined on
@@ -17,12 +17,13 @@ it took too long, and requested this milestone be preserved. This records
 progress and pace feedback. The subsequent founder verdict is that the report
 is not yet useful enough; completing the audit experience now takes priority.
 
-**Current bounded implementation:** [Spec 009 — recommendation-eligible
-questions through a downloadable report](../specs/009-recommendation-eligible-audit/SPEC.md)
-is **Approved**. Generate ten unnamed questions directly from the winning
-instruction and one brief; keep human editing/approval; connect the same pack
-to actual grounded audit and report/download. Fixed purposes and the 6/4 split
-do not govern this method. Historical records retain their own contracts.
+**Current bounded implementation:** [Spec 011 — Smart consultant prepared
+intake](../specs/011-smart-consultant-intake/SPEC.md) is **Approved**, explicitly
+confirmed by the founder on 2026-09-21. Replace the fixed questionnaire with
+one prepared summary, one confirmation before question review, and clarification
+only for genuinely missing required meanings. `Brand secara keseluruhan` is a
+`Saran Nuave`, not website-derived evidence. Specs 009 and 010 remain the
+protected downstream question/audit/report foundation.
 
 **Latest result (2026-09-19):** the founder authorized and completed the
 [complete real end-to-end test](../specs/009-recommendation-eligible-audit/VERIFICATION.md#complete-real-end-to-end-test--execution-2026-09-19)
@@ -35,22 +36,15 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** implement [Spec 010 — the new flow becomes the public
-trial journey on v2.nuave.ai](../specs/010-gated-new-audit-flow/SPEC.md)
-(Approved 2026-09-19, revision 4 — reviewer-marked ready): no login —
-public access is an accepted trial risk; per-IP Cloudflare rate limits, one
-off switch, legacy methods rejected, server-selected live/synthetic mode,
-Cloudflare rate limits instead of disk-based single-send files, `/audit` opens
-the new journey blank, old flow archived, one PR and one authorized live test on
-the deployed site. Report usefulness (AC-08) waits until Spec 010 is verified. The completed run's private JSON keeps the ten real
-answers so report work can reuse them without new provider calls. The earlier
-proposal scope was prepared from the
-[current step](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-step--complete-real-end-to-end-test). The founder has now seen the PDF and reaffirmed
-that the workflow should be ready for end-to-end testing before report-format
-iteration. The three code corrections are accepted; the orchestrator verified
-a new-business Chrome journey, actual JSON download and Back/reload preservation
-without another run/report request. No further worker coding round is needed
-on current evidence. Report improvements remain deferred.
+**Next action:** complete the two pre-code gates for Spec 011, then implement it.
+First, the founder records a field-level `filled` / `empty` / `wrong` note from
+one retained extraction response without exposing `.secrets`. Second, the worker
+performs the read-only R-23 sizing pass across the compatibility brief, audit
+run, report, persistence, exports, and historical readers. If R-23 is
+cross-cutting, split the legacy fallback cleanup and still ship the prepared
+summary plus exact target-customer and decision-consideration propagation. No
+live provider call is included. After the gates, use one bounded product PR and
+run `npm run validate:fast` followed by `npm run verify` offline.
 
 The worker reports final `npm run verify` passing (1,241 unit tests, 102 browser
 tests, both builds). Independent review passed 31 focused tests and checked the
@@ -132,12 +126,12 @@ tests. These are implementation checks, not a naturalness or release pass.
 
 ## Current objective
 
-Complete the continuous audit experience under the approved Spec 009 amendment.
-The founder's report-quality verdict is **not useful enough yet**; improvement
-is deferred and does not block this functional integration. Preserve the
-current report, truthful evidence/counts, explicit approvals and working
-exports. The Phase 3 quality standard remains a later obligation; it has not
-passed. Commercial integration and production activation remain separate.
+Implement the founder-approved Spec 011 prepared-understanding intake after its
+two pre-code gates. Preserve the existing direct-ten question review, explicit
+audit start, ten observations, current report, JSON/PDF controls, cost accounting,
+persistence, historical records, and sole emergency switch. Do not let the R-23
+compatibility cleanup silently expand this intake task into an audit-run or
+report redesign.
 
 ## Presentation layer
 
@@ -544,15 +538,15 @@ requires explicit authorization.
 
 ## Do now
 
-1. Prepare one complete real-flow approval scope, including fresh GLM
-   generation and question approval. Correct the worker proposal's synthetic-
-   generation assumption and retry/cost wording before requesting paid access.
-2. After explicit authorization, test the ordinary intake through real
-   preparation, approved questions, ten grounded answers and report/download.
-   Retain the evidence export so report presentation can be iterated later.
-3. Keep report usefulness/format deferred, including the founder's request for
-   prominent exact questions and full actual answers. No commit, live call or new worker
-   implementation is authorized by this review.
+1. Founder inspects one retained extraction response and records only the
+   field-level `filled`, `empty`, or `wrong` note required by Spec 011. Workers
+   do not open `.secrets`.
+2. Worker sizes R-23 before coding, enumerating every compatibility fallback and
+   downstream consumer and classifying the cleanup as bounded or cross-cutting.
+3. After both gates, implement Spec 011, verify offline, and request separate
+   authorization for one preparation-only live walkthrough. Use one browser tab
+   with device emulation for desktop/mobile and stop before question generation
+   unless separately authorized.
 
 ## Not now
 

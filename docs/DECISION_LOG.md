@@ -1,10 +1,54 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-20
+> Updated: 2026-09-21
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-21 — approve and promote the Smart Consultant prepared intake
+
+**SETTLED — founder-approved.** The founder explicitly confirms
+[Spec 011](../specs/011-smart-consultant-intake/SPEC.md) as **Approved** and
+promotes it as the next bounded implementation. After brand name, website URL,
+and `Periksa`, Nuave presents one prepared summary headed **Ini yang Nuave
+pahami.** The customer primarily reviews, selects, corrects, and confirms;
+typing is an escape hatch.
+
+`Brand secara keseluruhan` is the visible default audit-focus proposal. It is a
+**Saran Nuave**, not website-derived evidence. Service channels, market reach,
+and market areas are added to the existing extraction output in the same call;
+unsupported fields stay empty. The happy path has one business-information
+confirmation before question review and no duplicate final review. Optional
+customer context, needs, decision considerations, alternatives, differentiator,
+and public fact remain optional; comparator `unknown` remains unresolved rather
+than claiming no competitors or category alternatives.
+
+Two gates precede runtime work. First, the founder inspects one retained
+extraction response and records only whether each relevant field is `filled`,
+`empty`, or `wrong`, especially whether market text names a place and whether
+it says how customers receive the service or product. Workers and reviewers do
+not open `.secrets` or receive private evidence. Second, the worker sizes R-23
+before coding by tracing the compatibility `BusinessBrief` through question
+preparation, audit run, report, persistence, exports, and historical readers.
+
+If removing invented-completeness fallbacks is bounded to frozen v2,
+`QuestionFactsV3`, and a direct-ten-specific/versioned boundary, include it in
+Spec 011. If it requires changing run/report payloads, persisted audit records,
+report schemas, or historical readers, split that legacy compatibility cleanup
+into a separately reviewed follow-up. The Spec 011 product PR still ships the
+prepared summary and carries confirmed target customer and decision
+considerations through frozen v2, facts projection, and the direct-ten writer.
+Temporarily retained compatibility fallbacks remain only in the legacy bridge,
+are enumerated in verification, and never enter prepared, confirmed, frozen,
+facts-projection, or writer state. Existing question review, audit execution,
+report meaning, downloads, cost, persistence, and historical runs remain
+unchanged.
+
+`specs/README.md` and `docs/NOW.md` name Spec 011 as active authority. This
+decision authorizes the approved specification and offline implementation after
+the two gates; it does not authorize opening private evidence, a provider call,
+merge, deployment, or production activation.
 
 ## 2026-09-20 — use one neutral brand-entry screen for first entry and correction
 
