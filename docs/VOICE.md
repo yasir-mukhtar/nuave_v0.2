@@ -4,6 +4,7 @@
 > Approved: 2026-08-17 (founder, via Spec 002 R-24/R-25)
 > Version: writing-standard-v2 (Indonesian) · Created: 2026-08-17
 > Owner: Orchestrator
+> Report-label amendment: 2026-09-22, founder decisions D-05/D-07 in Spec 012; documentation only
 > Supersedes: `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md` (v1 draft)
 >
 > This document is the canonical Indonesian writing contract for
@@ -39,7 +40,7 @@ verbatim, even when it does not follow the general prose rules.
 | Meaning | Prefer (customer-facing) | Avoid |
 |---|---|---|
 | Your business (prose) | **brand Anda** | bisnis Anda (outside the settled labels below) |
-| Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari 10 pertanyaan** · **Tidak diuji** · **Download PDF** | any paraphrase or spelling variant of these five |
+| Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari 10 pertanyaan** · **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan** · **Tidak diuji** · **Download PDF** | any paraphrase or spelling variant of these six |
 | Prospective customer | **calon pelanggan** | calon klien, calon customer, customer potensial, bare "customer" |
 | Existing customer | **pelanggan** | klien, customer |
 | The AI model as the answering/deciding actor | **model AI** | bare "AI" where it means the model ("disebut oleh model AI", "diuji ke model AI") |
@@ -66,7 +67,8 @@ Notes:
 - **`brand Anda` vs `bisnis Anda`:** `brand Anda` is the default for general
   prose. The settled labels that keep `bisnis Anda` are **Tanpa menyebut
   bisnis Anda**, **Menyebut bisnis Anda**, **Bisnis Anda muncul di X dari 10
-  pertanyaan**, and the **X/10**-style count (e.g. **4/10**). Do NOT "fix"
+  pertanyaan**, **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan**,
+  and the **X/10**-style count (e.g. **4/10**). Do NOT "fix"
   those labels to `brand Anda`, and do NOT use `brand Anda` inside a phrase
   that is meant to be the settled label.
 - **`model AI` vs `AI`:** use `model AI` only where the AI system is the thing
@@ -201,17 +203,28 @@ The voice is constant; the register and vocabulary shift per surface.
 
 #### 7.4 Report (evidence-led register)
 
-- Lead with the direct count and denominator (headline + `4/10`), with the two
-  composition measures directly beneath it.
-- Use the three evidence layers with stable labels: **Yang ditemukan** ·
-  **Artinya bagi Anda** · **Yang dapat dilakukan**.
-- Exact labels: **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** ·
-  **Tidak diuji** · **Download PDF**.
+- Direct-ten reports lead with **Bisnis Anda muncul di X dari 10 pertanyaan**
+  and **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan**. Do not repeat
+  the same unnamed count or add untested named/comparison/information tiles.
+  Historical methods retain their own composition measures and denominators.
+- For direct-ten, use this section order on screen and PDF: **Hasil singkat**,
+  **Jawaban model AI**, **Analisis Nuave**, **Yang dapat dilakukan**,
+  **Tentang audit ini**. The three evidence layers stay distinct; historical
+  reports may retain **Yang ditemukan** / **Artinya bagi Anda**.
+- Exact composition/status/export labels remain **Tanpa menyebut bisnis Anda**,
+  **Menyebut bisnis Anda**, **Tidak diuji**, and **Download PDF**. The PDF label
+  is the shared default for every report, not a direct-ten-only override.
 - Other named businesses are **bisnis lain yang disebut**, never "competitors"
   without verified context.
 - Keep the snapshot limitation beside the summary, not in fine print. Keep the
   artifact title in English (**AI Visibility Report**) with the body in
   Indonesian. Exact excerpts, questions, names, and sources stay verbatim.
+
+The founder-settled report direction is specified in
+[Spec 012](../specs/012-evidence-first-report/SPEC.md). Its recovery state says
+analysis is unfinished and offers copy/explicit retry only; it is not a
+finished report with download controls. These guidance amendments do not claim
+runtime implementation or change the existing `plain-id-v1` writing limits.
 
 #### 7.5 Transactional email (plain, formal register)
 

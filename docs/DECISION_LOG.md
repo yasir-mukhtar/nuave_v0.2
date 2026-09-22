@@ -1,10 +1,44 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-20
+> Updated: 2026-09-22
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-22 — promote Astra v3.1 report direction; all eight decisions settled
+
+**SETTLED — founder-approved.** The founder directed promotion of the tech
+lead's published v3.1 at `316ac5b` into the next numbered specification and
+confirmed that all eight decisions, including G4, are settled. The published
+[plan](./drafts/NUAVE_REPORT_REDESIGN_IMPLEMENTATION_PLAN_ASTRA.md),
+[iteration prompt](./drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_ITERATION_PROMPT.md),
+[v2 Founder answers](./drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_V2_REVIEW.md), and
+[v3 review](./drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_V3_REVIEW.md) are the
+decision evidence. [Spec 012](../specs/012-evidence-first-report/SPEC.md) is the
+**In review** implementation contract, not an implementation pass.
+
+| Decision | Settled direction |
+|---|---|
+| D-01 | All ten exact questions/full answers are visible immediately; no collapse controls (G2). |
+| D-02 | Bounded Markdown, exact raw view and copy; preserve the retained answer. |
+| D-03 | One to ten findings and one to ten actions for completed new direct-ten reports; never pad. |
+| D-04 | Presentation PR A starts from current main without waiting for Spec 011. Shared content/header B1 and template/recovery B2 wait for its verified merge; B2 consumes integrated A/B1. |
+| D-05 | Exact labels: `Bisnis Anda muncul di X dari 10 pertanyaan`, `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, `Download PDF`. G3 fixes the shared toolbar default for every report. |
+| D-06 | Final usefulness failure after repair with ten usable observations permits only retained questions/answers, sources/provenance, and unfinished-analysis recovery; findings empty, actions empty, or both qualify. No surviving analysis or partial report. |
+| D-07 | Screen and PDF have the same order and one DOM tree; no appendix or duplicate print answer tree. |
+| D-08 | G4, confirmed 2026-09-22: recovery has copy and explicit report retry within existing limits, with no print/PDF/JSON save path. |
+
+The reading order is **Hasil singkat → Jawaban model AI → Analisis Nuave →
+Yang dapat dilakukan → Tentang audit ini**. These decisions supersede the
+earlier blanket report-work deferral and conflicting direct-ten content/order
+rules. Historical methods retain their semantics. The accompanying amendments
+reconcile `PRODUCT.md`, `AUDIT.md`, `VOICE.md`, journey 06, and Spec 010's
+**Observation/report failure** row. A/B1 retain current recovery until B2.
+Spec approval must explicitly cover the proposed exact Markdown pins and
+code-owned template contract before their implementation. No runtime,
+dependency, live-provider, merge, or deployment work is authorized by this
+documentation promotion.
 
 ## 2026-09-20 — use one neutral brand-entry screen for first entry and correction
 

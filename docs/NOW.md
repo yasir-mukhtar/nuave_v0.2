@@ -1,7 +1,22 @@
 # Nuave now
 
-> Updated: 2026-09-19
+> Updated: 2026-09-22 (report specification status only)
 > Stage: pre-customer, building the pipeline
+
+**Current report task (2026-09-22):** published Astra v3.1 at `316ac5b` is
+promoted to [Spec 012 — Evidence-first AI Visibility Report — Astra](../specs/012-evidence-first-report/SPEC.md),
+**In review**. All eight founder decisions are settled, including G4: the
+answers-only recovery state supports copy/explicit retry and has no
+print/PDF/JSON save path. Block 0's report guidance and Spec 010 failure-table
+amendments are recorded. This is documentation only; no runtime, provider,
+dependency, deployment, or report-quality verification is claimed.
+
+**Next report action:** review and approve Spec 012's implementation contract,
+including exact Markdown pins and the concrete non-corrective templates.
+Then PR A starts from current main without waiting for Spec 011. B1/B2 start
+only after its verified merge; B2 consumes integrated A/B1. The prior blanket
+report-work deferral is superseded for this scope. The dated checkpoints below
+retain their historical evidence and do not override this current report task.
 
 **Portable pause checkpoint:** code and current instructions are combined on
 `codex/pause-checkpoint-2026-09-19`. On another laptop, use
@@ -17,7 +32,7 @@ it took too long, and requested this milestone be preserved. This records
 progress and pace feedback. The subsequent founder verdict is that the report
 is not yet useful enough; completing the audit experience now takes priority.
 
-**Current bounded implementation:** [Spec 009 — recommendation-eligible
+**Earlier bounded implementation (2026-09-19):** [Spec 009 — recommendation-eligible
 questions through a downloadable report](../specs/009-recommendation-eligible-audit/SPEC.md)
 is **Approved**. Generate ten unnamed questions directly from the winning
 instruction and one brief; keep human editing/approval; connect the same pack
@@ -35,7 +50,7 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** implement [Spec 010 — the new flow becomes the public
+**Earlier next action (2026-09-19):** implement [Spec 010 — the new flow becomes the public
 trial journey on v2.nuave.ai](../specs/010-gated-new-audit-flow/SPEC.md)
 (Approved 2026-09-19, revision 4 — reviewer-marked ready): no login —
 public access is an accepted trial risk; per-IP Cloudflare rate limits, one
@@ -132,12 +147,12 @@ tests. These are implementation checks, not a naturalness or release pass.
 
 ## Current objective
 
-Complete the continuous audit experience under the approved Spec 009 amendment.
-The founder's report-quality verdict is **not useful enough yet**; improvement
-is deferred and does not block this functional integration. Preserve the
-current report, truthful evidence/counts, explicit approvals and working
-exports. The Phase 3 quality standard remains a later obligation; it has not
-passed. Commercial integration and production activation remain separate.
+Complete review of Spec 012's report implementation contract under the eight
+settled founder decisions. The founder's report-quality verdict remains
+**not useful enough yet**; this documentation does not pass that gate. Preserve
+truthful evidence/counts, explicit approvals, accounting, historical records
+and finished-report exports. A/B1/B2 sequence runtime changes after spec
+approval. Commercial integration and production activation remain separate.
 
 ## Presentation layer
 
@@ -544,20 +559,19 @@ requires explicit authorization.
 
 ## Do now
 
-1. Prepare one complete real-flow approval scope, including fresh GLM
-   generation and question approval. Correct the worker proposal's synthetic-
-   generation assumption and retry/cost wording before requesting paid access.
-2. After explicit authorization, test the ordinary intake through real
-   preparation, approved questions, ten grounded answers and report/download.
-   Retain the evidence export so report presentation can be iterated later.
-3. Keep report usefulness/format deferred, including the founder's request for
-   prominent exact questions and full actual answers. No commit, live call or new worker
-   implementation is authorized by this review.
+1. Review Spec 012's requirements and acceptance matrix, especially the pure
+   adapter, exact dependency pins, code-owned templates and all three final
+   usefulness-failure cases. Do not reopen the eight settled decisions.
+2. After specification approval, begin only PR A's allowed presentation work
+   from current main. Record the base SHA and verify the adapter before UI/CSS.
+3. Record Spec 011's verified merge and actual boundary before B1/B2. Reuse
+   authorized retained evidence for the human rubric; no new live call is
+   authorized by this documentation task.
 
 ## Not now
 
-- report usefulness, excerpt/action quality and format redesign — deferred by
-  the founder on 2026-09-19 while the continuous audit flow is completed;
+- runtime report redesign before Spec 012 approval; B1/B2 before the verified
+  Spec 011 dependency; new provider calls without their separate authorization;
 - real payment, durable jobs, and durable report persistence — after the
   report-quality gate; an explicitly simulated checkout and destination are in
   scope for the fixture journey;

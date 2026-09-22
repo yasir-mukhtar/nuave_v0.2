@@ -46,15 +46,30 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
+- [`012-evidence-first-report/SPEC.md`](./012-evidence-first-report/SPEC.md)
+  — **In review** (2026-09-22), Astra v3.1 promotion. All eight founder decisions
+  are settled: full visible answers, bounded Markdown, useful one-to-ten
+  findings/actions, A/B1/B2 sequencing, exact labels, answers-only recovery,
+  same-tree screen/PDF order, and no recovery save path. Approve its concrete
+  contract/pins/templates before runtime work. A starts from current main;
+  B1/B2 wait for the verified Spec 011 merge. No implementation is claimed.
+
+  Number 011 is already occupied by
+  [Smart consultant prepared intake](https://github.com/yasir-mukhtar/nuave_v0.2/blob/194f0f44e7f6c7f8bc3270b97a2ac9f887b830e4/specs/011-smart-consultant-intake/SPEC.md)
+  on the intake branch. That inspected snapshot is not proof of a verified
+  merge; consume the actual merged package before B1/B2.
+
 - [`010-gated-new-audit-flow/SPEC.md`](./010-gated-new-audit-flow/SPEC.md)
-  — **Approved** (2026-09-19, r3): the new direct-ten journey becomes the
+  — **Approved** (2026-09-19, r4; recovery amendment 2026-09-22): the new
+  direct-ten journey becomes the
   public `/audit` entry on v2.nuave.ai (no login — accepted trial risk); local-only guards
   become deployed configuration; disk-based single-send protection becomes
-  Cloudflare rate limits; the old flow is archived. Report usefulness stays
-  deferred until this is verified.
+  Cloudflare rate limits; the old flow is archived. Its bounded answers-only
+  recovery amendment is implemented by Spec 012 B2, not by this docs change;
+  the later founder report-work decision supersedes the blanket deferral.
 
 - [`009-recommendation-eligible-audit/SPEC.md`](./009-recommendation-eligible-audit/SPEC.md)
-  — **Approved** (2026-09-18), current bounded implementation: ten directly
+  — **Approved** (2026-09-18), preceding bounded implementation: ten directly
   generated unnamed questions, human editing/approval, grounded execution and
   downloadable report. Supersedes conflicting fixed-slot/6–4 and R5 gate
   requirements for this method; legacy records retain their contracts.

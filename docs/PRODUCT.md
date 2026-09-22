@@ -78,13 +78,24 @@ provisional until strangers respond to it.
 
 ## How results are reported
 
+**Direct-ten report amendment (2026-09-22, founder-settled):** show the exact
+labels **Bisnis Anda muncul di X dari 10 pertanyaan** and **Bisnis Anda
+direkomendasikan di Y dari 10 pertanyaan**, each using the validated denominator
+of ten. Then show all ten exact approved questions and full retained answers,
+always visible, followed by Nuave analysis and actions. The order is **Hasil
+singkat → Jawaban model AI → Analisis Nuave → Yang dapat dilakukan → Tentang
+audit ini** on screen and PDF. Avoid duplicate unnamed-count and untested tiles.
+[Spec 012](../specs/012-evidence-first-report/SPEC.md) owns the implementation
+contract; this direction does not claim the redesign is implemented.
+
 The headline is the direct observed appearance count with its denominator, for
 example **Bisnis Anda muncul di 4 dari 10 pertanyaan** and **4/10**. This is the
 Nuave score for that audit. It is not a percentage forecast, permanent rank,
 or claim about every AI answer.
 
-Beneath the overall count, appearance in **Tanpa menyebut bisnis Anda** and
-recognition in **Menyebut bisnis Anda** keep separate denominators. The report
+For historical mixed-name methods, beneath the overall count, appearance in
+**Tanpa menyebut bisnis Anda** and recognition in **Menyebut bisnis Anda** keep
+separate denominators. The report
 also keeps recommendation, comparison, and public-information assessment
 separate. This prevents recognition after the customer supplied the business
 name from being presented as spontaneous discovery.
@@ -193,14 +204,14 @@ named recipient can return to, containing:
 
 - results only after 10/10 observations are evaluable;
 - the overall appearance count out of ten and its direct score;
-- separate name/no-name, recommendation, comparison, and public-information
-  measures with their own eligible denominators;
+- a separate recommendation count out of ten for direct-ten; historical
+  name/no-name and other assessed dimensions keep their recorded denominators;
 - what was tested;
 - where the business appeared and did not appear;
 - relevant competitor observations;
 - inaccurate, inconsistent, or missing public information;
-- one to five material findings, with one or two strong findings sufficient;
-- one to five evidence-backed actions; and
+- one to ten material findings and one to ten evidence-backed actions for new
+  direct-ten reports, never padded; historical methods retain their contracts;
 - sources, limitations, and the recommended re-check point.
 
 The report is produced by the pipeline, not assembled by hand. A run that needs
@@ -211,6 +222,16 @@ failed work is retried or founder support intervenes. No partial report is
 delivered. If the complete, validated web report is ready but PDF generation
 fails, deliver the web report and retry or troubleshoot the PDF artifact from
 the same immutable report version. Never rerun observations to repair a PDF.
+
+For direct-ten, if useful analysis still fails after repair with ten usable
+observations, the owner may read and copy the retained questions/answers with
+an unfinished-analysis notice and explicitly retry the report within existing
+limits. Findings empty, actions empty, or both trigger this recovery. No
+surviving analysis, partial report, or print/PDF/JSON save path is delivered.
+This founder-approved exception is owned by Spec 012 B2 and the explicit
+Spec 010 failure-table amendment; it does not relax the ten-observation gate.
+Finished direct-ten reports print the same screen tree in the same order,
+without an appendix or duplicate answer tree.
 
 The report must also work as a shareable decision artifact: the primary reader
 can use it to explain the evidence and recommended actions to the person who

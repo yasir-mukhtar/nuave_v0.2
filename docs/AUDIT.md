@@ -1,7 +1,7 @@
 # Nuave audit method
 
 > Status: **Current audit method**
-> Updated: 2026-09-18
+> Updated: 2026-09-22 (founder-settled report amendment; runtime implementation pending)
 >
 > Customer context: Nuave's customer is the owner or marketing decision-maker
 > of a small or medium Indonesian business, ordering an audit of the business
@@ -213,7 +213,57 @@ confirm that identity and questions were valid, and do not invent a cause.
 
 ## Report format
 
-Use this five-section sequence for every report:
+### Direct-ten reports
+
+**Founder-settled amendment, 2026-09-22:**
+[Spec 012](../specs/012-evidence-first-report/SPEC.md) promotes Astra v3.1's
+eight decisions. Its concrete implementation contract is in review; this
+amendment records approved product direction, not an implementation pass.
+It supersedes the older report order, item limits, excerpt-first presentation,
+and mixed-name summary below for the direct-ten method only.
+
+1. **Hasil singkat:** `Bisnis Anda muncul di X dari 10 pertanyaan` and
+   `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, from validated
+   measures, plus quiet completion, conclusion, and the snapshot limitation.
+   Recommendation remains out of ten even when individual answers are not
+   assessed. Do not duplicate the unnamed measure or add untested tiles.
+2. **Jawaban model AI:** all ten exact approved questions and complete retained
+   answers, always visible in approved order. Render bounded Markdown with raw
+   view and exact copy; there are no collapse controls. Distinguish appearance,
+   recommendation, and unassessed statuses. Keep sources and observation
+   date/model with each answer. Body URLs are inert; only the separate retained
+   HTTP(S) sources list has active evidence links. No raw HTML or remote assets.
+3. **Analisis Nuave:** one to ten useful, supported findings with every exact
+   question reference. No arbitrary first excerpt or repeated action.
+4. **Yang dapat dilakukan:** one to ten supported actions, each with concrete
+   work, why, basis, suggested owner, and completion check. Never pad either
+   section. B2's precisely validated code-owned preservation/verification
+   exception may support a non-corrective action without inventing a gap;
+   ordinary corrective actions retain the observed-gap rule.
+5. **Tentang audit ini:** recorded scope, observation surface/model/date range
+   and timezone, method/limits, and a separately labeled report-creation date.
+   No synthesized method story or invented optional business facts.
+
+Screen and PDF use this order and one DOM tree, with every question/answer
+once. Use print CSS, no appendix or duplicate print renderer. Keep **Download
+PDF** as the shared toolbar default for every report. Preserve completed-report
+JSON and evidence versions; no new observation or source-fetch request is
+needed for reading, copying, navigation, print, Back, or reload.
+
+After repair, a new direct-ten report is complete only if both findings and
+actions retain at least one supported item. If either is empty and ten usable
+observations remain, show questions/answers, sources/provenance, an unfinished
+notice, copy, and explicit report retry within existing limits. Never expose
+surviving/rejected analysis, classifications from rejected synthesis, a partial
+report, or a print/PDF/JSON save path. Founder-confirmed G4 settles this last
+boundary. Incomplete, unsafe, or invalid observation sets retain existing
+failure/restriction handling. Spec 010's explicit recovery amendment and Spec
+012 B2 own this behavior; A/B1 preserve current recovery until B2 lands.
+
+### Historical report format
+
+Historical methods retain the following sequence and recorded denominators;
+do not convert old evidence to direct-ten or regenerate it on read:
 
 1. **Main Result:** report identity, tested scope, the direct appearance count
    out of ten and its separate name/no-name components, separate
@@ -264,19 +314,19 @@ denominators from the exact locked questions, not from the suggested matrix.
 ### Plain-language writing standard
 
 Customer-facing reports are written in Indonesian. The versioned writing
-contract in
+contract is in
 [`report-language.ts`](../src/lib/audit/report-language.ts). That file is the
 single runtime source for section word limits, sentence length, and wording to
 avoid. Increase the writing-standard version when those rules materially
 change.
 
 - Write in Indonesian, for a non-technical business decision-maker.
-- The word limits and banned-jargon list are currently calibrated for English
-  only. An Indonesian contract version is required before an Indonesian report
-  can be checked properly.
-- Settle and review that Indonesian writing contract in its own dedicated
-  product-language session. This report-content plan does not pre-approve
-  Indonesian headlines, explanations, or tone beyond explicitly settled labels.
+- The active Indonesian runtime contract is `plain-id-v1`; preserve its
+  existing sentence guidance and hard ceiling. English total-field limits do
+  not become new Indonesian limits through this report redesign.
+- Review new Nuave-authored copy under `VOICE.md` and the relevant numbered
+  spec. The explicitly settled report labels remain verbatim; their approval
+  does not approve every future explanation or template automatically.
 - Put the result or action first and supporting detail after it.
 - Prefer common words, active voice, one idea per sentence, and no filler.
 - Apply the configured limits only to Nuave-written explanations. Do not shorten
@@ -291,8 +341,8 @@ New outputs identify both `nuave-report-v3` and the writing-standard version.
 The evidence export retains those versions and the complete underlying
 evidence.
 
-Use direct counts and denominators. Report appearance in **Tanpa menyebut
-bisnis Anda**, recognition in **Menyebut bisnis Anda**, recommendation,
+Use direct counts and denominators. For historical mixed-name methods, report
+appearance in **Tanpa menyebut bisnis Anda**, recognition in **Menyebut bisnis Anda**, recommendation,
 comparison, and information assessment separately. Use the final name/no-name
 composition for the first two denominators. For recommendation, comparison,
 and information, use only the questions where that dimension was meaningfully
@@ -304,8 +354,8 @@ for example **Bisnis Anda muncul di 4 dari 10 pertanyaan** and **4/10**. This is
 the Nuave score for that audit. It is not a percentage forecast, permanent
 ranking, or peer benchmark.
 
-Show appearance in **Tanpa menyebut bisnis Anda** and recognition in
-**Menyebut bisnis Anda** directly beneath the overall count, each with its own
+For those historical methods, show appearance in **Tanpa menyebut bisnis Anda**
+and recognition in **Menyebut bisnis Anda** directly beneath the overall count, each with its own
 denominator. Never present recognition after the question supplied the business
 name as spontaneous discovery. Recommendation, comparison, and information
 assessment also keep their eligible denominators.
@@ -325,10 +375,11 @@ tested scope, evidence, limitations, source types, or correction path. Keep the 
 must render the same generated report version rather than a second
 interpretation.
 
-The primary report action is labeled **Download PDF**. A complete evidence
-export may remain available as a lower-hierarchy secondary action. The screen
+For a completed report, the primary action is labeled **Download PDF**. A
+complete evidence export may remain available as a lower-hierarchy secondary action. The screen
 and PDF may use layouts suited to their medium, but both must render the same
-facts, evidence, actions, and report version.
+facts, evidence, actions, and report version. Direct-ten additionally requires
+the same reading order and single DOM tree described above.
 
 Web-report validation and PDF rendering are separate artifact states. A
 complete validated web report may be delivered while the PDF is failed or
@@ -364,17 +415,20 @@ before treating the generated report as usable sample evidence:
   named businesses;
 - failed, contradictory, and missing results remain visible;
 - all ten observations are evaluable before the report is delivered;
-- the overall appearance count out of ten matches the retained answers and the
-  separate name/no-name components are visible directly beneath it;
+- the overall appearance count out of ten matches the retained answers;
+  direct-ten shows its separate recommendation count out of ten, while
+  historical mixed-name reports retain their name/no-name components;
 - no statement implies permanent ranking, consumer-interface equivalence, a
   peer benchmark that has not been earned, or a forecast of future results;
 - no service-quality, treatment, safety, lead, or revenue claim is made;
 - each action is specific, evidence-backed, realistically controllable, and has
   an owner and completion check;
-- the report contains between one and five evidence-backed actions and none is
-  present merely to fill the section;
-- the report contains between one and five material findings, and accepts one
-  or two strong findings without filler;
+- new direct-ten reports contain one to ten evidence-backed actions and one
+  to ten material findings, without filler; historical methods keep their
+  recorded limits, and existing delivered reports are not rewritten;
+- all ten exact direct-ten questions and full answers are visible before
+  analysis; an unfinished answers-only state contains no surviving analysis
+  or save path and is never reported as a completed report;
 - any maintenance or further-investigation action is labelled honestly and
   does not present an untested aspect as an observed problem;
 - permissions cover any external use of business identity, quotes,

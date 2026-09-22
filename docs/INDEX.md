@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-19
+> Updated: 2026-09-22
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -116,10 +116,19 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-**Current bounded implementation:** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
+**Current report specification:** [Spec 012 — Evidence-first AI Visibility
+Report — Astra](../specs/012-evidence-first-report/SPEC.md) is **In review**.
+It promotes published v3.1 and records all eight settled founder decisions.
+Review its concrete requirements, exact Markdown pins, templates and acceptance
+contract before runtime implementation. A is independent of Spec 011; B1/B2
+require its verified merge. Block 0's canonical report and Spec 010 recovery
+amendments are documentation, not a claim that the redesign has shipped.
+
+**Earlier bounded implementation:** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
 is approved for the recommendation-eligible intake-to-report path. Its September
-19 amendment prioritizes the continuous local audit experience and defers
-report-quality improvement. Use its
+19 amendment prioritized the continuous local audit experience and deferred
+report-quality improvement. The 2026-09-22 report decision supersedes that
+deferral for Spec 012's scope. Use Spec 009's
 [fresh-session handoffs](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md).
 It replaces conflicting fixed-slot and R5 gate requirements for the new method;
 the older packages below remain references for their unaffected/historical scope.
