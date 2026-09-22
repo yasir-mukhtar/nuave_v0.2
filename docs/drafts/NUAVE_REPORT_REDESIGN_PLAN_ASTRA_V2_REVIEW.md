@@ -160,8 +160,19 @@ choices:
 3. **Print order.** Whether the PDF mirrors the screen order or keeps the
    answers as an appendix.
 
+## Founder answers — 2026-09-22
+
+The three blocking decisions above are now settled. Apply them in v3 and
+record them in block 0. Do not reopen them.
+
+| # | Decision | Founder answer | What v3 must do |
+|---|---|---|---|
+| 1 | Labels | Keep the settled appearance label. Use the same shape for the recommendation count: **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan**. The PDF button reverts to **Download PDF**. | Replace every `Brand Anda disebut di X dari 10 jawaban` / `direkomendasikan di Y dari 10 jawaban` with the two labels above. Add a `VOICE.md` amendment task to block 0 that settles the new recommendation label. Replace "retain `Cetak / simpan PDF`" with "revert the toolbar label to the settled `Download PDF`" and note it as a PR A toolbar-prop change, not a voice change. |
+| 2 | Recovery | **Yes.** When repair removes every finding and action, the customer may see the ten retained model answers with a clear note that the analysis is not finished. | Keep the §6.7 evidence-reader design. Add to block 0 an explicit **Spec 010 amendment** to its failure table for the observation/report failure row, so the spec and the plan agree. Keep it in PR B2 per F6, and keep the rule that no partial *report* is delivered: the reader shows retained answers only, never findings or actions. |
+| 3 | Print order | **Same order as the screen.** No appendix. | Rewrite §6.8: the PDF prints the screen tree in screen order using print CSS only. Remove the `Lampiran` structure and the duplicate aria-hidden print tree from the plan. Keep the pagination rules (headings stay with content, long answers may break, short blocks together when practical). Update AC08, AC10, E13's implication, and the print fixtures. |
+
 ## Requested changes before specification
 
-Apply F1, F2, F3, F5, F6 in a v3 of the plan; F4, F7, F8 may be applied in v3
-or carried into the numbered spec. Record the three decisions above in
-block 0 with the founder's answers.
+Apply F1, F2, F3, F5, F6 and the three founder answers in a v3 of the plan;
+F4, F7, F8 may be applied in v3 or carried into the numbered spec. Add a
+`Changelog v2 → v3` under the header.
