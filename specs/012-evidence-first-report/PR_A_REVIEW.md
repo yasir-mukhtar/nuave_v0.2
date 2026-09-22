@@ -379,3 +379,21 @@ sentence.
 pre-existing header-nav defect goes to B1. Native Save dialog and Linux CI
 remain unverified, as recorded. No commit, push, PR, merge, deployment or
 live provider call was made by this review.
+
+## Founder check on the real September 19 record (2026-09-22)
+
+The complete retained record of the 2026-09-19 direct-ten run was recovered
+from the saved Chrome profile's session storage (final state: `done`,
+direct-ten, ten completed observations with telemetry, report generated
+2026-09-19T05:32:27Z) and loaded into PR A's page on a local server in
+synthetic mode with blank provider keys. Zero requests were made during the
+load. The new body rendered: both count sentences (0 of 10, 0 of 10), ten full
+answers in order with Markdown formatting, inert body URLs, three actions,
+method section; A4 print produced 52 pages. The founder viewed the result and
+judged the report "good enough for now". Business content stays in the
+owner-only evidence folder; none is recorded here.
+
+Two observations for later work, not PR A defects: sessions saved before the
+Spec 010 `origin` marker are only restored through the fixture entry mode; and
+model-written link tails such as `?utm_source=openai` print verbatim, which is
+faithful but noisy.
