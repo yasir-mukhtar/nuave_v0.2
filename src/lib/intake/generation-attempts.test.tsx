@@ -156,14 +156,16 @@ describe("R-06 — generation attempts ledger and interrupted state", () => {
       ),
     );
     // The failed-but-answered attempt is on the ledger — confirmed, with cost.
-    expect(saved().generation_attempts).toEqual([
-      {
-        started_at: expect.any(String),
-        outcome: "failed",
-        execution: "confirmed",
-        cost_usd: 0.0012,
-      },
-    ]);
+    await waitFor(() =>
+      expect(saved().generation_attempts).toEqual([
+        {
+          started_at: expect.any(String),
+          outcome: "failed",
+          execution: "confirmed",
+          cost_usd: 0.0012,
+        },
+      ]),
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
@@ -201,14 +203,16 @@ describe("R-06 — generation attempts ledger and interrupted state", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Coba lagi" })).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(saved().generation_attempts).toEqual([
-      {
-        started_at: expect.any(String),
-        outcome: "interrupted",
-        execution: "unknown",
-        cost_usd: null,
-      },
-    ]);
+    await waitFor(() =>
+      expect(saved().generation_attempts).toEqual([
+        {
+          started_at: expect.any(String),
+          outcome: "interrupted",
+          execution: "unknown",
+          cost_usd: null,
+        },
+      ]),
+    );
 
     fireEvent.click(
       screen.getByRole("button", { name: "Buat pertanyaan lagi" }),
