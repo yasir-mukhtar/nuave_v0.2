@@ -316,6 +316,55 @@ describe("shell committed state and Review transactions", () => {
   });
 });
 
+describe("intake browser history ownership", () => {
+  it.each([
+    { label: "a fragment entry", state: null },
+    { label: "another navigation's entry", state: { otherNavigation: true } },
+    {
+      label: "an explicitly unmarked entry",
+      state: { nuaveLocalIntake: false },
+    },
+  ])("ignores popstate for $label", async ({ state }) => {
+    const original = seedReview(true);
+    render(<IntakeJourney ScreenSlot={Controls} />);
+    await at("s-review");
+    click("Edit fact");
+    click("Change fact");
+    await at("s-facts");
+    const push = vi.spyOn(window.history, "pushState");
+
+    fireEvent.popState(window, { state });
+
+    expect(screen.getByRole("heading", { name: "s-facts" })).toBeTruthy();
+    expect(answers().facts.text).toBe("Ada pilihan tanpa gula.");
+    expect(saved().answers).toEqual(original.answers);
+    expect(saved().pack).toEqual(original.pack);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("marked browser Back cancels the edit and preserves the stable history entry", async () => {
+    const original = seedReview(true);
+    render(<IntakeJourney ScreenSlot={Controls} />);
+    await at("s-review");
+    click("Edit fact");
+    click("Change fact");
+    await at("s-facts");
+    const push = vi.spyOn(window.history, "pushState");
+
+    fireEvent.popState(window, { state: { nuaveLocalIntake: true } });
+
+    await at("s-review");
+    expect(answers()).toEqual(original.answers);
+    expect(saved().answers).toEqual(original.answers);
+    expect(saved().pack).toEqual(original.pack);
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith(
+      expect.objectContaining({ nuaveLocalIntake: true }),
+      "",
+    );
+  });
+});
+
 describe("blank public entry (Spec 010 R-08)", () => {
   it("opens on the empty business step and never restores a fixture session", async () => {
     // A stored fixture-seeded session must not leak into a blank start.

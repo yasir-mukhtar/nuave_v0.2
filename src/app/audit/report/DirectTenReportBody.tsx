@@ -43,7 +43,7 @@ export function DirectTenReportBody({
   const { answers, references, measures } = presentation;
   return (
     <div className={styles.body} data-direct-ten-report>
-      <section className={styles.section} id="summary">
+      <section className={styles.section} id="summary" tabIndex={-1}>
         <ReportSectionHeading number="01" className={styles.sectionHeading}>
           Hasil singkat
         </ReportSectionHeading>
@@ -67,7 +67,7 @@ export function DirectTenReportBody({
           berarti direkomendasikan.
         </p>
       </section>
-      <section className={styles.section} id="detail">
+      <section className={styles.section} id="detail" tabIndex={-1}>
         <ReportSectionHeading number="02" className={styles.sectionHeading}>
           Jawaban model AI
         </ReportSectionHeading>
@@ -79,7 +79,7 @@ export function DirectTenReportBody({
           <ReportAnswer key={answer.id} answer={answer} />
         ))}
       </section>
-      <section className={styles.section} id="findings">
+      <section className={styles.section} id="findings" tabIndex={-1}>
         <ReportSectionHeading number="03" className={styles.sectionHeading}>
           Analisis Nuave
         </ReportSectionHeading>
@@ -117,7 +117,7 @@ export function DirectTenReportBody({
           </div>
         )}
       </section>
-      <section className={styles.section} id="priorities">
+      <section className={styles.section} id="priorities" tabIndex={-1}>
         <ReportSectionHeading number="04" className={styles.sectionHeading}>
           Yang dapat dilakukan
         </ReportSectionHeading>
@@ -161,7 +161,7 @@ export function DirectTenReportBody({
             ))}
         </ol>
       </section>
-      <section className={styles.section} id="method">
+      <section className={styles.section} id="method" tabIndex={-1}>
         <ReportSectionHeading number="05" className={styles.sectionHeading}>
           Tentang audit ini
         </ReportSectionHeading>

@@ -863,7 +863,10 @@ export default function IntakeJourney({
       { ...window.history.state, nuaveLocalIntake: true },
       "",
     );
-    const handler = () => {
+    const handler = (event: PopStateEvent) => {
+      // Fragment navigation also fires popstate; only our marked entries
+      // represent Back within the intake journey.
+      if (event.state?.nuaveLocalIntake !== true) return;
       cancelOrBack();
       window.history.pushState(
         { ...window.history.state, nuaveLocalIntake: true },

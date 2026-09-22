@@ -746,6 +746,55 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   const snapshot = await page.evaluate(() =>
     sessionStorage.getItem("nuave.localIntakeAudit.v1"),
   );
+  const contents = page.getByRole("navigation", { name: "Report contents" });
+  async function checkContentsNavigation(directTen: boolean) {
+    const requestsBefore = [...requests.entries()];
+    const urlBefore = page.url();
+    const historyLength = await page.evaluate(() => history.length);
+    for (const activation of ["mouse", "keyboard"] as const) {
+      for (const id of [
+        "summary",
+        "findings",
+        "priorities",
+        "detail",
+        "method",
+      ]) {
+        const link = contents.locator(`a[href="#${id}"]`);
+        const target = page.locator(`#${id}`);
+        await expect(target).toHaveCount(1);
+        if (activation === "mouse") {
+          await link.click();
+        } else {
+          await link.focus();
+          await page.keyboard.press("Enter");
+        }
+        await expect(
+          page.locator('[data-local-audit-stage="done"]'),
+        ).toBeVisible();
+        await expect(report).toHaveCount(directTen ? 1 : 0);
+        await expect(target).toBeFocused();
+        await expect(
+          target.getByRole("heading", { level: 2 }).first(),
+        ).toBeInViewport();
+        if (directTen) {
+          expect(
+            await target.evaluate((el) => getComputedStyle(el).outlineStyle),
+          ).not.toBe("none");
+          expect(
+            await target.evaluate((el) =>
+              parseFloat(getComputedStyle(el).outlineWidth),
+            ),
+          ).toBeGreaterThan(0);
+        }
+        expect(page.url()).toBe(urlBefore);
+        expect(await page.evaluate(() => history.length)).toBe(historyLength);
+        expect([...requests.entries()]).toEqual(requestsBefore);
+        expect(requests.get("POST /api/audit/run")).toBe(1);
+        expect(requests.get("POST /api/audit/report")).toBe(1);
+      }
+    }
+  }
+  await checkContentsNavigation(true);
   await page
     .getByRole("button", { name: "Teks asli pertanyaan 1", exact: true })
     .click();
@@ -842,6 +891,36 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
       sessionStorage.getItem("nuave.localIntakeAudit.v1"),
     ),
   ).toBe(snapshot);
+  await page.reload();
+  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  await checkContentsNavigation(true);
+  // Contents navigation adds no history entry: real browser Back still
+  // returns to the approved questions and reopening uses the saved report.
+  const requestsBeforeBack = [...requests.entries()];
+  await page.goBack();
+  await expect(shell(page)).toHaveAttribute(
+    "data-new-intake-shell",
+    "s-questions",
+  );
+  await expect(report).toHaveCount(0);
+  await primary(page).click();
+  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  expect([...requests.entries()]).toEqual(requestsBeforeBack);
+
+  // The same contents links also work with the retained historical renderer.
+  // Change only the fictional report's rendering discriminator, then restore it.
+  await page.evaluate(() => {
+    const key = "nuave.localIntakeAudit.v1";
+    const saved = JSON.parse(sessionStorage.getItem(key)!);
+    saved.report.provenance.question_method = "canonical";
+    sessionStorage.setItem(key, JSON.stringify(saved));
+  });
+  await page.reload();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible();
+  await checkContentsNavigation(false);
+  await page.evaluate((saved) => {
+    sessionStorage.setItem("nuave.localIntakeAudit.v1", saved!);
+  }, snapshot);
   await page.reload();
   await expect(report.locator("[data-answer-body]")).toHaveCount(10);
   expect(requests.get("POST /api/audit/run")).toBe(1);
