@@ -140,3 +140,30 @@ file the spec names exists. The proposed pins are the current latest releases:
 
 Nothing new to decide. After S1–S4 are applied, say "approve Spec 012" and the
 status line flips to **Approved**. PR A can then start from current `main`.
+
+## Re-check after revision 1 (`afacda5`)
+
+All six findings are applied and verified against the baseline:
+
+- **S1:** `NOW.md` restores both live-flow items as items 1–2, keeps the
+  Spec 012 pointer short, states that Spec 011 owns intake state and Spec 012
+  owns report state, and records the merge order (intake first, rebase once).
+- **S2:** recovery print suppression, its AC-17 clause, and the failure-table
+  row are removed. D-08 now reads "no Nuave print/PDF/JSON controls or export
+  route; browser-native printing is unchanged".
+- **S3:** R-03 and template V use `Tidak dinilai dari jawaban yang tersedia`
+  at question level; `Tidak diuji` is reserved for aggregate labels.
+- **S4:** templates never enter any model request. B2 allows an empty
+  `priorities` list in direct-ten synthesis only; the final report-content
+  minimum stays one; code selects at most one eligible P or V after repair.
+  The adapter "candidate plumbing" is gone from the B2 allowlist.
+- **S5:** `report-labels.ts` and its test are in the PR A allowlist with the
+  `download_pdf` value change.
+- **S6:** the constants Astra cites (`sentence_target_max_words: 20`,
+  `sentence_hard_ceiling_words: 25`) are confirmed by
+  `report-language-id.test.ts` at `4e6b2cf`; `report-language.ts` itself is
+  stored in a form git reports as binary, which is why my first inspection
+  could not read it.
+
+**Verdict: ready for founder approval.** No further review round is needed
+before PR A.
