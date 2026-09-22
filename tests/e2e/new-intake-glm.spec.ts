@@ -170,9 +170,7 @@ test("GLM path: confirmed fictional business → ten questions → edit → appr
   expect(evidence.prompts[0].question).toBe(wording);
 
   // PDF control fires the print path; capture the real print output.
-  await page
-    .getByRole("button", { name: "Cetak / simpan PDF", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
   expect(
     await page.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,
@@ -371,9 +369,7 @@ test("entered business: identity/extraction boundaries → buyer facts → appro
 
   // The normal product controls produce this session's artifacts: the PDF
   // control fires the print path and the current report page is captured.
-  await page
-    .getByRole("button", { name: "Cetak / simpan PDF", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
   expect(
     await page.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,
@@ -648,3 +644,207 @@ async function shot(
     fullPage: true,
   });
 }
+
+test("Spec 012: retained Markdown answers, exact copy, references, reflow and one print tree", async ({
+  page,
+}, info) => {
+  test.setTimeout(120_000);
+  const requests = trackRequests(page);
+  const external: string[] = [];
+  page.on("request", (request) => {
+    if (!new URL(request.url()).hostname.match(/^(127\.0\.0\.1|localhost)$/))
+      external.push(request.url());
+  });
+  await page.addInitScript(() => {
+    Object.assign(window, { __printCalls: 0, __copiedAnswer: "" });
+    window.print = () => {
+      (window as unknown as { __printCalls: number }).__printCalls++;
+    };
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (window as unknown as { __copiedAnswer: string }).__copiedAnswer =
+            text;
+        },
+      },
+    });
+  });
+  await toReview(page, "?fixture=GLM&glm=1");
+  await primary(page).click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await primary(page).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  // Replace only fictional retained presentation evidence. No new runtime
+  // harness, provider send, schema field or request projection is introduced.
+  const raw = await page.evaluate(() => {
+    const key = "nuave.localIntakeAudit.v1";
+    const saved = JSON.parse(sessionStorage.getItem(key)!);
+    saved.observations.forEach(
+      (
+        o: { raw_answer: string; sources: { title: string; url: string }[] },
+        i: number,
+      ) => {
+        o.raw_answer =
+          `AWAL-JAWABAN-${i + 1}. Ya.\r\n\r\n## Keterangan lengkap ${i + 1}\r\n\r\nCafé  lokal — dua  spasi tetap dalam teks asli.\r\n\r\n` +
+          (i === 0
+            ? Array.from(
+                { length: 12 },
+                (_, n) =>
+                  `Paragraf ${n + 1}: Ini jawaban fiktif yang panjang untuk memeriksa pergantian halaman. Informasi ini memerlukan pemeriksaan sumber dan tidak membuktikan kualitas layanan.\r\n\r\n`,
+              ).join("") +
+              "| Layanan | Batasan |\r\n| --- | --- |\r\n| Contoh | " +
+              "https://source.example/" +
+              "panjang".repeat(28) +
+              " |\r\n\r\n- satu\r\n  - anak pertama\r\n  - anak kedua\r\n- [x] penanda selesai\r\n- [ ] penanda belum selesai\r\n\r\n```text\r\nhttps://source.example/kode\r\n```\r\n\r\n[Label sumber](https://source.example/)\r\n\r\n![Gambar](https://source.example/tracker.png)\r\n\r\n<script>window.__unsafeReport = true</script>\r\n\r\n"
+            : "") +
+          `Namun, batas akhir jawaban ${i + 1} harus dibaca. AKHIR-JAWABAN-${i + 1}.`;
+        o.sources = [
+          { title: "Sumber fiktif tersimpan", url: "https://source.example/" },
+        ];
+      },
+    );
+    saved.report.key_findings[0].evidence_prompt_ids = saved.observations
+      .slice(0, 2)
+      .map((o: { prompt_id: string }) => o.prompt_id);
+    saved.report.priorities[0].evidence_prompt_ids = saved.observations
+      .slice(0, 2)
+      .map((o: { prompt_id: string }) => o.prompt_id);
+    sessionStorage.setItem(key, JSON.stringify(saved));
+    return saved.observations.map(
+      (o: { question: string; raw_answer: string }) => ({
+        question: o.question,
+        answer: o.raw_answer,
+      }),
+    );
+  });
+  await page.reload();
+  const report = page.locator("[data-direct-ten-report]");
+  await expect(report).toBeVisible();
+  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  for (let i = 1; i <= 10; i++) {
+    expect(await page.locator(`#report-question-${i}`).textContent()).toBe(
+      raw[i - 1].question,
+    );
+    await expect(
+      report.locator(`[data-report-answer="${i}"] [data-answer-body]`),
+    ).toContainText(`AKHIR-JAWABAN-${i}.`);
+  }
+  await expect(
+    report.locator(
+      "[data-answer-body] a, [data-answer-body] img, [data-answer-body] input, [data-answer-body] script, [data-answer-body] [id]",
+    ),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __unsafeReport?: boolean }).__unsafeReport,
+    ),
+  ).toBeUndefined();
+  expect(external).toEqual([]);
+  const snapshot = await page.evaluate(() =>
+    sessionStorage.getItem("nuave.localIntakeAudit.v1"),
+  );
+  await page
+    .getByRole("button", { name: "Teks asli pertanyaan 1", exact: true })
+    .click();
+  expect(await page.locator("[data-raw-answer]").textContent()).toBe(
+    raw[0].answer,
+  );
+  await page
+    .getByRole("button", {
+      name: "Salin pertanyaan dan jawaban 1",
+      exact: true,
+    })
+    .click();
+  const copied = await page.evaluate(
+    () => (window as unknown as { __copiedAnswer: string }).__copiedAnswer,
+  );
+  expect(copied).toContain(raw[0].question);
+  expect(copied).toContain(raw[0].answer);
+  const reference = page
+    .locator('#findings a[href="#report-question-2"]')
+    .first();
+  await reference.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#report-question-2")).toBeFocused();
+  expect(
+    await page
+      .locator("#report-question-2")
+      .evaluate((el) => getComputedStyle(el).outlineStyle),
+  ).not.toBe("none");
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.locator("#summary").scrollIntoViewIfNeeded();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({ path: info.outputPath(`report-${width}.png`) });
+    await page.locator("#report-question-1").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: info.outputPath(`answer-${width}.png`) });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.evaluate(() => {
+    document.body.style.zoom = "2";
+  });
+  await page.locator("#summary").scrollIntoViewIfNeeded();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: info.outputPath("report-200-percent.png") });
+  await page.evaluate(() => {
+    document.body.style.zoom = "";
+  });
+  expect(
+    await page
+      .getByRole("button", {
+        name: "Salin pertanyaan dan jawaban 1",
+        exact: true,
+      })
+      .evaluate((el) => el.getBoundingClientRect().height),
+  ).toBeGreaterThanOrEqual(44);
+  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __printCalls: number }).__printCalls,
+    ),
+  ).toBe(1);
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator("[data-raw-answer]")).toBeHidden();
+  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  for (const answer of await report.locator("[data-answer-body]").all())
+    await expect(answer).toBeVisible();
+  await page.pdf({
+    path: info.outputPath("report-print-a4.pdf"),
+    format: "A4",
+    printBackground: true,
+  });
+  await page.emulateMedia({ media: "screen" });
+  const download = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Unduh bukti JSON", exact: true })
+    .click();
+  const exported = JSON.parse(
+    await readFile((await (await download).path())!, "utf8"),
+  );
+  expect(
+    exported.observations.map((o: { raw_answer: string }) => o.raw_answer),
+  ).toEqual(raw.map((o: { answer: string }) => o.answer));
+  expect(exported.report).not.toHaveProperty("operational_telemetry");
+  expect(exported.observations[0]).not.toHaveProperty("telemetry");
+  expect(
+    await page.evaluate(() =>
+      sessionStorage.getItem("nuave.localIntakeAudit.v1"),
+    ),
+  ).toBe(snapshot);
+  await page.reload();
+  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  expect(requests.get("POST /api/audit/run")).toBe(1);
+  expect(requests.get("POST /api/audit/report")).toBe(1);
+  expect(external).toEqual([]);
+});

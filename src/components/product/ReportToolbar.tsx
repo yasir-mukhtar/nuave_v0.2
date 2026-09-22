@@ -17,7 +17,7 @@ type ReportToolbarProps = {
 export function ReportToolbar({
   onDownloadPdf,
   onDownloadJson,
-  pdfLabel = "Cetak / simpan PDF",
+  pdfLabel = "Download PDF",
   jsonLabel = "Unduh bukti JSON",
   className,
 }: ReportToolbarProps) {
