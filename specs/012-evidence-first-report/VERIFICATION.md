@@ -1,11 +1,15 @@
 # Verification: Spec 012 — PR A evidence-first report presentation
 
-> Result: **Offline pass** — PR A only
+> Result: **PR A merged; independent review passed; Spec 012 remains in progress (B1/B2 pending)**
 > Implementation: Codex; independent review: Claude ([review record](./PR_A_REVIEW.md)); follow-up self-verification: Codex
 > Date: 2026-09-22
 > Approved specification: `9c5d4c0f5e1ec3d59f5fd90c4f5d88ee1e1a7174` on `docs/astra-report-redesign-plan`
 > Branch: `codex/spec-012-pr-a` (verified before commit)
 > Base: `4e6b2cf6302a0679aa7820d163b214ac8b486e1f`
+> PR #74 merge commit: `d08b9e90e20930377873fe2fd79e2489ab9c39a6`
+> Founder check: On 2026-09-22, the founder reviewed the real September 19 record in the new layout and judged it "good enough for now".
+> Local artifacts: named temporary fictional evidence was removed during closeout; real-report check results remain in owner-only storage.
+> Main workflow: [run 35712356136](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/35712356136) passed the merged-PR gate, but `validate` failed at `src/lib/intake/generation-attempts.test.tsx:204` (1 failed / 1,173 passed); deployment was skipped. No retry was made because the authorized exception named line 159. The post-deployment live-site check remains blocked.
 
 ## Scope reviewed
 

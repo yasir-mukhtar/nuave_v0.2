@@ -139,6 +139,12 @@ current report, truthful evidence/counts, explicit approvals and working
 exports. The Phase 3 quality standard remains a later obligation; it has not
 passed. Commercial integration and production activation remain separate.
 
+Report state (Spec 012): PR A merged on 2026-09-22
+(`d08b9e90e20930377873fe2fd79e2489ab9c39a6`). B1 starts only after
+Spec 011's verified merge per R-19. Carried to B1: the protected header
+contents-nav anchors still trigger intake Back; the header nav labels/order
+predate the new body; and verbatim `?utm_source=` link tails in printed answers.
+
 ## Presentation layer
 
 The founder-approved UI-stack migration is **merged** on `main` (PR #22): it
