@@ -29,6 +29,7 @@ import {
 } from "@/lib/audit/report-labels";
 import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import styles from "./audit.module.css";
+import { DirectTenReportBody } from "./report/DirectTenReportBody";
 
 function measurementLabel(promptId: string) {
   return (
@@ -182,14 +183,15 @@ export default function ReportView({
   onDownloadJson: () => void;
   previewNotice?: React.ReactNode;
 }) {
+  const isDirectTen = report.provenance?.question_method === "direct-ten";
   const observationById = new Map(
-    observations.map((item) => [item.prompt_id, item]),
+    (isDirectTen ? [] : observations).map((item) => [item.prompt_id, item]),
   );
   const detailById = new Map(
-    report.details.map((item) => [item.prompt_id, item]),
+    (isDirectTen ? [] : report.details).map((item) => [item.prompt_id, item]),
   );
   const testNumberById = new Map(
-    observations.map((item, index) => [
+    (isDirectTen ? [] : observations).map((item, index) => [
       item.prompt_id,
       String(index + 1).padStart(2, "0"),
     ]),
@@ -273,330 +275,349 @@ export default function ReportView({
           </nav>
         </header>
 
-        <section className={styles.reportSection} id="summary">
-          <SectionHeading number="01">Hasil utama</SectionHeading>
-          <div className={styles.resultGrid}>
-            <div className={styles.mainResult}>
-              <strong>
-                {indonesianCountLabel(
-                  report.measures.overall.appeared,
-                  report.measures.overall.total,
-                )}
-              </strong>
-              <span>
-                {indonesianHeadline(report.measures.overall.appeared)}
-              </span>
-            </div>
-            <div>
-              <strong>
-                {indonesianCountLabel(
-                  report.measures.unbranded.appeared,
-                  report.measures.unbranded.total,
-                )}
-              </strong>
-              <span>{INDONESIAN_REPORT_LABELS.without_business_name}</span>
-            </div>
-            <div>
-              <strong>
-                {indonesianCountLabel(
-                  report.measures.branded.appeared,
-                  report.measures.branded.total,
-                )}
-              </strong>
-              <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
-            </div>
-            <div>
-              <strong>
-                {report.measures.overall.total - report.counts.failed}
-              </strong>
-              <span>
-                dari {report.measures.overall.total} pertanyaan berhasil diuji
-              </span>
-            </div>
-          </div>
-          <dl className={styles.dimensionList}>
-            <div>
-              <dt>Rekomendasi</dt>
-              <dd>
-                {indonesianMeasureLabel(
-                  report.measures.recommendation.assessed,
-                  () =>
-                    `Direkomendasikan di ${report.measures.recommendation.recommended} dari ${report.measures.recommendation.assessed} pertanyaan yang dinilai`,
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Perbandingan</dt>
-              <dd>
-                {indonesianMeasureLabel(
-                  report.measures.comparison.assessed,
-                  () =>
-                    `Diunggulkan di ${report.measures.comparison.client_preferred} dari ${report.measures.comparison.assessed} pertanyaan yang dinilai`,
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Informasi publik</dt>
-              <dd>
-                {indonesianMeasureLabel(
-                  report.measures.information.assessed,
-                  () =>
-                    `${report.measures.information.confirmed} terkonfirmasi, ${report.measures.information.incomplete} belum lengkap, ${report.measures.information.conflicting} bertentangan dari ${report.measures.information.assessed} pertanyaan yang dinilai`,
-                )}
-              </dd>
-            </div>
-          </dl>
-          <div className={styles.executiveTakeaway}>
-            <p>Artinya</p>
-            <div>
-              <p className={styles.conclusion}>{report.conclusion}</p>
-              <Badge
-                variant={
-                  report.accuracy_status === "no_clear_issues"
-                    ? "default"
-                    : "secondary"
-                }
-                className={
-                  report.accuracy_status === "no_clear_issues"
-                    ? "border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]"
-                    : "border-[var(--amber)] bg-[var(--amber-light)] text-[var(--amber)]"
-                }
-              >
-                Informasi publik: {accuracyLabel}
-              </Badge>
-            </div>
-          </div>
-          {report.observed_competitors.length ? (
-            <div className={styles.executiveTakeaway}>
-              <p>Bisnis lain yang teramati</p>
-              <div>
-                {report.observed_competitors.map((competitor) => (
-                  <p
-                    key={`${competitor.name}-${competitor.evidence_prompt_ids.join("-")}`}
-                  >
-                    <strong>{competitor.name}</strong> —{" "}
-                    {competitorRelationshipLabels[competitor.relationship]}.
-                    Berdasarkan pertanyaan{" "}
-                    {testReferences(
-                      competitor.evidence_prompt_ids,
-                      testNumberById,
+        {isDirectTen ? (
+          <DirectTenReportBody report={report} observations={observations} />
+        ) : (
+          <>
+            <section className={styles.reportSection} id="summary">
+              <SectionHeading number="01">Hasil utama</SectionHeading>
+              <div className={styles.resultGrid}>
+                <div className={styles.mainResult}>
+                  <strong>
+                    {indonesianCountLabel(
+                      report.measures.overall.appeared,
+                      report.measures.overall.total,
                     )}
-                    .
-                  </p>
-                ))}
+                  </strong>
+                  <span>
+                    {indonesianHeadline(report.measures.overall.appeared)}
+                  </span>
+                </div>
+                <div>
+                  <strong>
+                    {indonesianCountLabel(
+                      report.measures.unbranded.appeared,
+                      report.measures.unbranded.total,
+                    )}
+                  </strong>
+                  <span>{INDONESIAN_REPORT_LABELS.without_business_name}</span>
+                </div>
+                <div>
+                  <strong>
+                    {indonesianCountLabel(
+                      report.measures.branded.appeared,
+                      report.measures.branded.total,
+                    )}
+                  </strong>
+                  <span>{INDONESIAN_REPORT_LABELS.with_business_name}</span>
+                </div>
+                <div>
+                  <strong>
+                    {report.measures.overall.total - report.counts.failed}
+                  </strong>
+                  <span>
+                    dari {report.measures.overall.total} pertanyaan berhasil
+                    diuji
+                  </span>
+                </div>
               </div>
-            </div>
-          ) : null}
-          <AuditNotice
-            tone="warning"
-            title="Hasil ini dapat berubah"
-            className={`${styles.snapshotAlert} ${styles.editorialAlert}`}
-          >
-            Laporan ini menunjukkan sepuluh jawaban AI pada tanggal di atas.
-            Model, tanggal, lokasi, atau percakapan berbeda dapat memberi
-            jawaban berbeda.
-          </AuditNotice>
-        </section>
-
-        <section className={styles.reportSection} id="findings">
-          <SectionHeading number="02">Temuan utama</SectionHeading>
-          <ol className={styles.findings}>
-            {report.key_findings.map((finding, index) => {
-              const evidence = finding.evidence_prompt_ids
-                .map((id) => detailById.get(id))
-                .find((detail) => Boolean(detail?.answer_excerpt));
-              const action = report.priorities.find((priority) =>
-                priority.evidence_prompt_ids.some((id) =>
-                  finding.evidence_prompt_ids.includes(id),
-                ),
-              );
-              return (
-                <li key={finding.title}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <div>
-                    <h3>{finding.title}</h3>
-                    {evidence ? (
-                      <>
-                        <h4>Yang ditemukan</h4>
-                        <blockquote>{evidence.answer_excerpt}</blockquote>
-                      </>
-                    ) : null}
-                    <h4>Artinya bagi Anda</h4>
-                    <p>{finding.explanation}</p>
-                    {action ? (
-                      <>
-                        <h4>Yang dapat dilakukan</h4>
-                        <p>{action.action}</p>
-                      </>
-                    ) : null}
-                  </div>
-                  <small>
-                    Berdasarkan pertanyaan:{" "}
-                    {testReferences(
-                      finding.evidence_prompt_ids,
-                      testNumberById,
+              <dl className={styles.dimensionList}>
+                <div>
+                  <dt>Rekomendasi</dt>
+                  <dd>
+                    {indonesianMeasureLabel(
+                      report.measures.recommendation.assessed,
+                      () =>
+                        `Direkomendasikan di ${report.measures.recommendation.recommended} dari ${report.measures.recommendation.assessed} pertanyaan yang dinilai`,
                     )}
-                  </small>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-
-        <section className={styles.reportSection} id="priorities">
-          <SectionHeading number="03">Langkah berikutnya</SectionHeading>
-          <ol className={styles.priorities}>
-            {[...report.priorities]
-              .sort((a, b) => a.order - b.order)
-              .map((priority) => (
-                <li
-                  key={`${priority.order}-${priority.action}`}
-                  className={styles.priorityItem}
-                >
-                  <div className={styles.priorityTop}>
-                    <span className={styles.priorityNumber}>
-                      {String(priority.order).padStart(2, "0")}
-                    </span>
-                    <Badge
-                      variant={
-                        priority.timing === "do_first" ? "default" : "secondary"
-                      }
-                    >
-                      {priority.timing === "do_first"
-                        ? "Kerjakan dulu"
-                        : "Kerjakan berikutnya"}
-                    </Badge>
-                  </div>
-                  <h3>{priority.action}</h3>
-                  <dl>
-                    <div>
-                      <dt>Mengapa</dt>
-                      <dd>{priority.why}</dd>
-                    </div>
-                    <div>
-                      <dt>Berdasarkan</dt>
-                      <dd>
-                        {priority.basis} Pertanyaan{" "}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Perbandingan</dt>
+                  <dd>
+                    {indonesianMeasureLabel(
+                      report.measures.comparison.assessed,
+                      () =>
+                        `Diunggulkan di ${report.measures.comparison.client_preferred} dari ${report.measures.comparison.assessed} pertanyaan yang dinilai`,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Informasi publik</dt>
+                  <dd>
+                    {indonesianMeasureLabel(
+                      report.measures.information.assessed,
+                      () =>
+                        `${report.measures.information.confirmed} terkonfirmasi, ${report.measures.information.incomplete} belum lengkap, ${report.measures.information.conflicting} bertentangan dari ${report.measures.information.assessed} pertanyaan yang dinilai`,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <div className={styles.executiveTakeaway}>
+                <p>Artinya</p>
+                <div>
+                  <p className={styles.conclusion}>{report.conclusion}</p>
+                  <Badge
+                    variant={
+                      report.accuracy_status === "no_clear_issues"
+                        ? "default"
+                        : "secondary"
+                    }
+                    className={
+                      report.accuracy_status === "no_clear_issues"
+                        ? "border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]"
+                        : "border-[var(--amber)] bg-[var(--amber-light)] text-[var(--amber)]"
+                    }
+                  >
+                    Informasi publik: {accuracyLabel}
+                  </Badge>
+                </div>
+              </div>
+              {report.observed_competitors.length ? (
+                <div className={styles.executiveTakeaway}>
+                  <p>Bisnis lain yang teramati</p>
+                  <div>
+                    {report.observed_competitors.map((competitor) => (
+                      <p
+                        key={`${competitor.name}-${competitor.evidence_prompt_ids.join("-")}`}
+                      >
+                        <strong>{competitor.name}</strong> —{" "}
+                        {competitorRelationshipLabels[competitor.relationship]}.
+                        Berdasarkan pertanyaan{" "}
                         {testReferences(
-                          priority.evidence_prompt_ids,
+                          competitor.evidence_prompt_ids,
                           testNumberById,
                         )}
                         .
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Penanggung jawab</dt>
-                      <dd>{ownerLabels[priority.owner]}</dd>
-                    </div>
-                    <div>
-                      <dt>Selesai ketika</dt>
-                      <dd>{priority.done_when}</dd>
-                    </div>
-                  </dl>
-                  {priority.caveat ? (
-                    <p className={styles.caveat}>{priority.caveat}</p>
-                  ) : null}
-                </li>
-              ))}
-          </ol>
-        </section>
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              <AuditNotice
+                tone="warning"
+                title="Hasil ini dapat berubah"
+                className={`${styles.snapshotAlert} ${styles.editorialAlert}`}
+              >
+                Laporan ini menunjukkan sepuluh jawaban AI pada tanggal di atas.
+                Model, tanggal, lokasi, atau percakapan berbeda dapat memberi
+                jawaban berbeda.
+              </AuditNotice>
+            </section>
 
-        <section className={styles.reportSection} id="detail">
-          <SectionHeading number="04">Hasil tiap pertanyaan</SectionHeading>
-          <p className={styles.sectionLead}>
-            Buka satu pertanyaan untuk melihat pertanyaan, kutipan jawaban,
-            sumber, dan waktu pemeriksaan.
-          </p>
-          <div className={`${styles.detailsScreen} ${styles.noPrint}`}>
-            {report.details.map((detail, index) => {
-              const observation = observationById.get(detail.prompt_id);
-              return (
-                <Accordion
-                  key={detail.prompt_id}
-                  className={styles.detailDisclosure}
-                >
-                  <AccordionItem value={detail.prompt_id} className="border-0">
-                    <AccordionTrigger className={styles.detailTrigger}>
-                      <span className={styles.detailIndex}>
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className={styles.detailTitle}>
-                        <small>
-                          {observation
-                            ? measurementLabel(observation.prompt_id)
-                            : "Pertanyaan"}
-                        </small>
-                        <strong>{resultLabel(detail)}</strong>
-                      </span>
-                      <code>{detail.prompt_id}</code>
-                    </AccordionTrigger>
-                    <AccordionContent className={styles.detailBody}>
+            <section className={styles.reportSection} id="findings">
+              <SectionHeading number="02">Temuan utama</SectionHeading>
+              <ol className={styles.findings}>
+                {report.key_findings.map((finding, index) => {
+                  const evidence = finding.evidence_prompt_ids
+                    .map((id) => detailById.get(id))
+                    .find((detail) => Boolean(detail?.answer_excerpt));
+                  const action = report.priorities.find((priority) =>
+                    priority.evidence_prompt_ids.some((id) =>
+                      finding.evidence_prompt_ids.includes(id),
+                    ),
+                  );
+                  return (
+                    <li key={finding.title}>
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <div>
+                        <h3>{finding.title}</h3>
+                        {evidence ? (
+                          <>
+                            <h4>Yang ditemukan</h4>
+                            <blockquote>{evidence.answer_excerpt}</blockquote>
+                          </>
+                        ) : null}
+                        <h4>Artinya bagi Anda</h4>
+                        <p>{finding.explanation}</p>
+                        {action ? (
+                          <>
+                            <h4>Yang dapat dilakukan</h4>
+                            <p>{action.action}</p>
+                          </>
+                        ) : null}
+                      </div>
+                      <small>
+                        Berdasarkan pertanyaan:{" "}
+                        {testReferences(
+                          finding.evidence_prompt_ids,
+                          testNumberById,
+                        )}
+                      </small>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+
+            <section className={styles.reportSection} id="priorities">
+              <SectionHeading number="03">Langkah berikutnya</SectionHeading>
+              <ol className={styles.priorities}>
+                {[...report.priorities]
+                  .sort((a, b) => a.order - b.order)
+                  .map((priority) => (
+                    <li
+                      key={`${priority.order}-${priority.action}`}
+                      className={styles.priorityItem}
+                    >
+                      <div className={styles.priorityTop}>
+                        <span className={styles.priorityNumber}>
+                          {String(priority.order).padStart(2, "0")}
+                        </span>
+                        <Badge
+                          variant={
+                            priority.timing === "do_first"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {priority.timing === "do_first"
+                            ? "Kerjakan dulu"
+                            : "Kerjakan berikutnya"}
+                        </Badge>
+                      </div>
+                      <h3>{priority.action}</h3>
+                      <dl>
+                        <div>
+                          <dt>Mengapa</dt>
+                          <dd>{priority.why}</dd>
+                        </div>
+                        <div>
+                          <dt>Berdasarkan</dt>
+                          <dd>
+                            {priority.basis} Pertanyaan{" "}
+                            {testReferences(
+                              priority.evidence_prompt_ids,
+                              testNumberById,
+                            )}
+                            .
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Penanggung jawab</dt>
+                          <dd>{ownerLabels[priority.owner]}</dd>
+                        </div>
+                        <div>
+                          <dt>Selesai ketika</dt>
+                          <dd>{priority.done_when}</dd>
+                        </div>
+                      </dl>
+                      {priority.caveat ? (
+                        <p className={styles.caveat}>{priority.caveat}</p>
+                      ) : null}
+                    </li>
+                  ))}
+              </ol>
+            </section>
+
+            <section className={styles.reportSection} id="detail">
+              <SectionHeading number="04">Hasil tiap pertanyaan</SectionHeading>
+              <p className={styles.sectionLead}>
+                Buka satu pertanyaan untuk melihat pertanyaan, kutipan jawaban,
+                sumber, dan waktu pemeriksaan.
+              </p>
+              <div className={`${styles.detailsScreen} ${styles.noPrint}`}>
+                {report.details.map((detail, index) => {
+                  const observation = observationById.get(detail.prompt_id);
+                  return (
+                    <Accordion
+                      key={detail.prompt_id}
+                      className={styles.detailDisclosure}
+                    >
+                      <AccordionItem
+                        value={detail.prompt_id}
+                        className="border-0"
+                      >
+                        <AccordionTrigger className={styles.detailTrigger}>
+                          <span className={styles.detailIndex}>
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span className={styles.detailTitle}>
+                            <small>
+                              {observation
+                                ? measurementLabel(observation.prompt_id)
+                                : "Pertanyaan"}
+                            </small>
+                            <strong>{resultLabel(detail)}</strong>
+                          </span>
+                          <code>{detail.prompt_id}</code>
+                        </AccordionTrigger>
+                        <AccordionContent className={styles.detailBody}>
+                          <DetailContent
+                            detail={detail}
+                            observation={observation}
+                          />
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  );
+                })}
+              </div>
+              <div className={styles.detailsPrint} aria-hidden="true">
+                {report.details.map((detail, index) => {
+                  const observation = observationById.get(detail.prompt_id);
+                  return (
+                    <section
+                      key={detail.prompt_id}
+                      className={styles.printDetail}
+                    >
+                      <div className={styles.printDetailTitle}>
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        <div>
+                          <small>
+                            {observation
+                              ? measurementLabel(observation.prompt_id)
+                              : "Pertanyaan"}
+                          </small>
+                          <h3>{resultLabel(detail)}</h3>
+                        </div>
+                        <code>{detail.prompt_id}</code>
+                      </div>
                       <DetailContent
                         detail={detail}
                         observation={observation}
                       />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              );
-            })}
-          </div>
-          <div className={styles.detailsPrint} aria-hidden="true">
-            {report.details.map((detail, index) => {
-              const observation = observationById.get(detail.prompt_id);
-              return (
-                <section key={detail.prompt_id} className={styles.printDetail}>
-                  <div className={styles.printDetailTitle}>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div>
-                      <small>
-                        {observation
-                          ? measurementLabel(observation.prompt_id)
-                          : "Pertanyaan"}
-                      </small>
-                      <h3>{resultLabel(detail)}</h3>
-                    </div>
-                    <code>{detail.prompt_id}</code>
-                  </div>
-                  <DetailContent detail={detail} observation={observation} />
-                </section>
-              );
-            })}
-          </div>
-        </section>
+                    </section>
+                  );
+                })}
+              </div>
+            </section>
 
-        <section className={styles.reportSection} id="method">
-          <SectionHeading number="05">Cara kerja audit</SectionHeading>
-          <div className={styles.methodGrid}>
-            <p>{report.method_summary}</p>
-            <ul className={styles.methodList}>
-              <li>
-                Ekspor bukti menyimpan setiap pertanyaan, jawaban lengkap,
-                sumber, waktu, model, dan hasil.
-              </li>
-              <li>
-                API ini bukan aplikasi ChatGPT konsumen. Jawaban dapat berubah
-                menurut model, waktu, lokasi, dan percakapan.
-              </li>
-              <li>
-                Disebut bukan berarti direkomendasikan. Pertanyaan yang gagal
-                diuji bukan hasil negatif.
-              </li>
-              <li>
-                Laporan ini menunjukkan hasil pengujian ini. Laporan ini tidak
-                membuktikan sebab atau menjamin rekomendasi di masa depan.
-              </li>
-            </ul>
-          </div>
-          <AuditNotice
-            tone="info"
-            title="Gunakan laporan ini untuk memilih satu langkah"
-            className={styles.editorialAlert}
-          >
-            Periksa informasi publik terlebih dahulu. Buat satu perubahan yang
-            berguna, lalu ulangi pengujian yang sama.
-          </AuditNotice>
-        </section>
+            <section className={styles.reportSection} id="method">
+              <SectionHeading number="05">Cara kerja audit</SectionHeading>
+              <div className={styles.methodGrid}>
+                <p>{report.method_summary}</p>
+                <ul className={styles.methodList}>
+                  <li>
+                    Ekspor bukti menyimpan setiap pertanyaan, jawaban lengkap,
+                    sumber, waktu, model, dan hasil.
+                  </li>
+                  <li>
+                    API ini bukan aplikasi ChatGPT konsumen. Jawaban dapat
+                    berubah menurut model, waktu, lokasi, dan percakapan.
+                  </li>
+                  <li>
+                    Disebut bukan berarti direkomendasikan. Pertanyaan yang
+                    gagal diuji bukan hasil negatif.
+                  </li>
+                  <li>
+                    Laporan ini menunjukkan hasil pengujian ini. Laporan ini
+                    tidak membuktikan sebab atau menjamin rekomendasi di masa
+                    depan.
+                  </li>
+                </ul>
+              </div>
+              <AuditNotice
+                tone="info"
+                title="Gunakan laporan ini untuk memilih satu langkah"
+                className={styles.editorialAlert}
+              >
+                Periksa informasi publik terlebih dahulu. Buat satu perubahan
+                yang berguna, lalu ulangi pengujian yang sama.
+              </AuditNotice>
+            </section>
+          </>
+        )}
 
         <footer className={styles.reportFooter}>
           <span>{brief.brand_name}</span>

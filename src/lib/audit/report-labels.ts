@@ -18,7 +18,7 @@ export const INDONESIAN_REPORT_LABELS = {
   count_template: "{count}/{denominator}",
   not_tested: "Tidak diuji",
   /** Browser print dialog; customers may choose Save as PDF there. */
-  download_pdf: "Cetak / simpan PDF",
+  download_pdf: "Download PDF",
 } as const;
 
 export const INDONESIAN_RUN_STATUS_KEYS = [
