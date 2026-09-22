@@ -1,24 +1,24 @@
 # Spec 012: Evidence-first AI Visibility Report — Astra
 
-> Status: **In review**
+> Status: **Approved** — founder instruction 2026-09-22: "approve Spec 012", after independent review 1 (S1–S6) was applied and re-checked at `afacda5`
 > Owner: Founder / orchestrator; specification author: Astra
-> Updated: 2026-09-22 (revision 1: S1–S6 applied; founder approval pending)
+> Updated: 2026-09-22 (revision 1: S1–S6 applied; founder-approved)
 > Implements: `docs/PRODUCT.md` — see what AI says about your business and choose evidence-backed work
 > Promotes: Astra report redesign plan **v3.1**, published at `316ac5bf090fca23dfcd8043782bfaabbc696777`
 > Scope of this change: documentation only; no runtime, dependency, fixture, provider, or deployment changes
 
 All eight founder decisions below are settled. This document is the reviewable
-implementation contract requested by block 0 of the plan. Its **In review**
-status awaits founder approval of the corrected implementation contract; it
-does not reopen those decisions. The tech lead approved the exact dependency
+implementation contract requested by block 0 of the plan. It is
+**Approved** by the founder on 2026-09-22 after review 1; approval does not
+reopen those decisions. The tech lead approved the exact dependency
 pins and approved the templates subject to S3/S4, now applied below.
-Implementation starts only after the founder approves this numbered spec. No
-individual PR constitutes acceptance of the whole report redesign.
+Implementation of PR A may start from current `main`. No individual PR
+constitutes acceptance of the whole report redesign.
 
 ## Revision 1: independent review S1–S6
 
 Applied [SPEC_REVIEW_1.md](./SPEC_REVIEW_1.md), reviewed against `be8187a`.
-The status stays **In review** until founder approval.
+The founder approved the corrected spec on 2026-09-22.
 
 | Finding | Resolution |
 |---|---|
@@ -283,7 +283,7 @@ and [remark-gfm metadata](https://registry.npmjs.org/remark-gfm/4.0.1), read
 2026-09-22. Pin approval does not constitute a completed Node 22/Next/OpenNext
 build or runtime verification.
 
-After founder approval of this spec, A may use these approved pins in
+A may use these approved pins in
 `package.json`/`package-lock.json`. Follow README's lockfile procedure and
 verify Node 22, Next/OpenNext builds, and safe-renderer behavior offline. A
 different version or additional renderer/plugin dependency requires a reviewed
@@ -670,8 +670,7 @@ existing contact authorization.
 
 No founder product decision remains open. Review 1 records tech-lead approval
 of R-06's exact pins and R-13's templates subject to S3/S4, now applied. The
-founder still needs to approve this corrected spec; its status remains
-**In review**. The implementation owner records the actual Spec 011
+founder approved this corrected spec on 2026-09-22. The implementation owner records the actual Spec 011
 merge/verification and R-23 boundary before B1/B2, and follows R-19's
 documentation integration order. These checks do not reopen D-01–D-08 or
 block A development once the spec is approved.
@@ -703,8 +702,8 @@ risks/criteria above; retain existing cost/no-repeat protections.
 
 ### Execution and review order
 
-1. Obtain founder approval of this corrected spec, retaining review 1's
-   technical approvals for R-06/R-13. For documentation integration, merge the
+1. Founder approval was given on 2026-09-22; review 1's technical approvals
+   for R-06/R-13 stand. For documentation integration, merge the
    intake branch first and rebase this branch once under R-19. A development
    may start from current main after spec approval; record its SHA and any
    isolation conflict. Create

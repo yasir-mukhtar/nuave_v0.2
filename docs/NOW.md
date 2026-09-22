@@ -4,9 +4,9 @@
 > Stage: pre-customer, building the pipeline
 
 **Report pointer (2026-09-22):** [Spec 012 — Astra](../specs/012-evidence-first-report/SPEC.md)
-remains **In review** after S1–S6 fixes. All eight founder decisions are settled;
-review 1 records the technical approvals. Next report action: founder approval
-of the corrected spec. This documentation changes no runtime or live-call authority.
+is **Approved** (founder, 2026-09-22) after S1–S6 fixes. All eight founder
+decisions are settled; review 1 records the technical approvals. Next report
+action: start PR A from current `main`. This documentation changes no runtime or live-call authority.
 
 Spec 011 owns intake state; Spec 012 owns report state. The two live-flow tasks
 below remain active; only the report-work deferral was superseded. For merging,
@@ -144,8 +144,8 @@ tests. These are implementation checks, not a naturalness or release pass.
 ## Current objective
 
 Continue the live-flow preparation and authorized end-to-end check below,
-with Spec 011 owning intake state. In parallel, complete founder approval of
-Spec 012's corrected report contract. The report-quality verdict remains
+with Spec 011 owning intake state. In parallel, PR A of the approved
+Spec 012 report contract may begin. The report-quality verdict remains
 **not useful enough yet**; this documentation does not pass that gate or grant
 live-call authority. Preserve truthful evidence/counts, explicit approvals,
 accounting, historical records and finished-report exports. Commercial
@@ -562,10 +562,9 @@ requires explicit authorization.
 2. After explicit authorization, test the ordinary intake through real
    preparation, approved questions, ten grounded answers and report/download.
    Retain the evidence export so report presentation can be iterated later.
-3. Obtain founder approval of the corrected Spec 012. Review 1's exact-pin
-   approval and template approval subject to S3/S4 are recorded; those fixes
-   are now applied. Keep the status **In review** until the founder approves.
-4. After spec approval, begin only PR A's allowed presentation work from current
+3. Spec 012 is approved (founder, 2026-09-22). Review 1's exact-pin approval
+   and template approval are recorded; the S3/S4 fixes are applied.
+4. Begin only PR A's allowed presentation work from current
    main. Record the base SHA and verify the adapter before UI/CSS. No need to
    wait for Spec 011 to begin A development.
 5. For documentation integration, merge the intake branch first and rebase

@@ -16,7 +16,8 @@ confirmed that all eight decisions, including G4, are settled. The published
 [v2 Founder answers](./drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_V2_REVIEW.md), and
 [v3 review](./drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_V3_REVIEW.md) are the
 decision evidence. [Spec 012](../specs/012-evidence-first-report/SPEC.md) is the
-**In review** implementation contract, not an implementation pass.
+implementation contract, **Approved** by the founder on 2026-09-22 after
+independent review 1 (S1–S6) was applied; approval is not an implementation pass.
 
 | Decision | Settled direction |
 |---|---|

@@ -47,11 +47,11 @@ verification is against its acceptance criteria.
 ## Active specifications
 
 - [`012-evidence-first-report/SPEC.md`](./012-evidence-first-report/SPEC.md)
-  — **In review** (2026-09-22), Astra v3.1 promotion. All eight founder decisions
+  — **Approved** (founder, 2026-09-22, after review 1), Astra v3.1 promotion. All eight founder decisions
   are settled: full visible answers, bounded Markdown, useful one-to-ten
   findings/actions, A/B1/B2 sequencing, exact labels, answers-only recovery,
-  same-tree screen/PDF order, and no recovery save path. Approve its concrete
-  contract/pins/templates before runtime work. A starts from current main;
+  same-tree screen/PDF order, and no recovery save path. Pins and templates
+  were approved in review 1. A starts from current main;
   B1/B2 wait for the verified Spec 011 merge. No implementation is claimed.
 
   Number 011 is already occupied by

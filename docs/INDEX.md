@@ -117,7 +117,8 @@ Create these only when their decisions are needed:
 ## Specifications
 
 **Current report specification:** [Spec 012 — Evidence-first AI Visibility
-Report — Astra](../specs/012-evidence-first-report/SPEC.md) is **In review**.
+Report — Astra](../specs/012-evidence-first-report/SPEC.md) is **Approved**
+(founder, 2026-09-22, after review 1).
 It promotes published v3.1 and records all eight settled founder decisions.
 Review its concrete requirements, exact Markdown pins, templates and acceptance
 contract before runtime implementation. A is independent of Spec 011; B1/B2
