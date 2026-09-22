@@ -267,7 +267,8 @@ export async function extractBusinessDraft(input: {
   const systemInstruction = [
     "Extract a review draft using only public facts supported by the supplied official website.",
     "Do not infer praise, reputation, quality, target demographics, outcomes, or competitor facts.",
-    "Write all explanatory text in clear, natural English. Preserve official brand names, product names, and place names as published.",
+    "Tulis semua teks penjelasan secara ringkas dan alami dalam Bahasa Indonesia. Pertahankan nama resmi, nama produk, nama tempat, URL, dan kutipan bukti persis seperti sumbernya.",
+    "Isi service_channels hanya bila situs menyatakan cara layanan: on_premise, on_customer, delivery, online. market_reach hanya sekitar, beberapa, seluruh, luar, atau string kosong. market_areas hanya area layanan yang diterbitkan; alamat kontak saja bukan cakupan. Jangan simpulkan dari kategori atau market_context.",
     "Leave unsupported scalar fields empty and unsupported arrays empty.",
     "For each material extracted value add an evidence record with the exact field, value, source URL, and a short note.",
     "The values are suggestions for human confirmation, not verified facts.",
@@ -353,6 +354,9 @@ function extractionManualFallback(
     brand_type: "",
     category: input.category,
     market_context: input.market_context,
+    service_channels: [],
+    market_reach: "",
+    market_areas: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],
@@ -379,7 +383,7 @@ function extractionManualFallback(
 
 export async function executeAuditPrompt(input: {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief: import("./direct-ten-context-v2").AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
 }): Promise<AuditObservation> {

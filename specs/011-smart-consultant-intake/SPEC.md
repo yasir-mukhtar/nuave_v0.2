@@ -1,13 +1,15 @@
 # Spec 011: Smart consultant prepared intake
 
-> Status: **Approved** — founder-confirmed on 2026-09-21; incorporates the independent R2 review at commit `ca82d89`
+> Status: **Approved** — founder-confirmed on 2026-09-21; truthful downstream boundary and historical hold approved on 2026-09-22; incorporates the independent R2 review at commit `ca82d89`
 > Owner: Founder / orchestrator
-> Updated: 2026-09-21
+> Updated: 2026-09-22
 > Implements: `docs/PRODUCT.md` — business confirmation that starts from Nuave's prepared understanding and preserves human approval
 > Supersedes for the active `/audit` business-intake portion: conflicting fixed linear fact-screen, mandatory-comparator, per-screen confirmation, and duplicate final-review behavior from the earlier intake implementation
-> Preserves: Spec 009/010 question review, explicit audit-start approval, observations, report, JSON/PDF downloads, cost accounting, persistence, and the `NUAVE_NEW_AUDIT_ENABLED` emergency switch
+> Preserves: Spec 009/010 question review, explicit audit-start approval, observation method, measurement/evidence rules, report schema/layout, cost controls, and the `NUAVE_NEW_AUDIT_ENABLED` emergency switch; new-session context/export contracts and historical delivery behavior change only as specified below
 
 This specification is the implementation authority for the prepared-understanding intake. The draft plan and its two reviews remain decision evidence, not implementation instructions.
+
+The [2026-09-22 founder decision](../../docs/DECISION_LOG.md#2026-09-22--accept-the-spec-011-truthful-boundary-and-historical-hold) closes the report/export review gate. The accepted R-00B result is **Cross-cutting**: truthful new-session run/report/storage/export context is required in this implementation; only legacy-only code removal is deferred. Old started/completed records are preserved with delivery and provider retries held. Earlier local sizing/review notes retain their original pending-approval wording as decision evidence; this amended specification and the dated decision govern implementation.
 
 ## Required context
 
@@ -15,9 +17,10 @@ Read in order:
 
 1. `AGENTS.md`
 2. This specification
-3. `docs/PRODUCT.md`, sections **Customer**, **Customer journey → Business confirmation**, **Question review**, and **What happens behind the scenes**
+3. `docs/PRODUCT.md`, sections **Customer**, **How results are reported**, **Customer journey → Business confirmation**, **Question review**, **Audit**, **Delivery**, and **What happens behind the scenes**
 4. `docs/DESIGN.md`, sections **Approved stack**, **Motion and accessibility**, and **Design judgment**
-5. Relevant implementation only:
+5. `docs/AUDIT.md`, sections **Measurement statement**, **Turn evidence into findings**, **Handle missing and weak evidence**, **Report format**, **Report acceptance checklist**, and **Data boundaries**
+6. Relevant implementation only:
    - `src/lib/audit/types.ts`
    - `src/lib/audit/openai.ts`
    - `src/lib/audit/gemini.ts`
@@ -31,6 +34,10 @@ Read in order:
    - `src/lib/intake/glm-local.ts`
    - `src/lib/audit/question-facts-v3.ts`
    - `src/lib/audit/questions-id-direct-ten.ts`
+   - `src/app/audit/LocalAuditStage.tsx` and `ReportView.tsx`
+   - `src/lib/intake/local-audit-session.ts`
+   - `src/lib/audit/locked-question-pack.ts`, `report-pipeline.ts`, `contracts.ts`, and `customer-evidence-export.ts`
+   - active observation/report provider adapters and their retry/repair callers
    - the active intake screens and focused tests under `src/lib/intake/`
    - affected `/api/audit/identity`, `/api/audit/extract`, question-preparation, run, and report request validators only when required by the versioned handoff
 
@@ -55,14 +62,17 @@ The founder has approved the following behavior for this specification:
 8. The representative rich case is a local Indonesian business: zero typing after `Periksa`, one summary screen, at most two substantive customer decisions, and one confirmation before question review.
 9. The existing extraction output is extended in the same call with service channels, market reach, and market areas; unsupported values remain empty.
 10. `Brand secara keseluruhan` is the visible default focus proposal. It is a `Saran Nuave`, not website-derived evidence, and is not confirmed until the customer uses the final confirmation action.
+11. Every new v2 audit uses one versioned projection of exact confirmed values and origins through run/report validation, synthesis, deterministic interpretation, persistence, and customer export. Optional meanings remain absent; no legacy filler is permitted anywhere in this new path.
+12. New report interpretation may change because fabricated input is removed. Customer JSON advances to a truthful versioned context. The observation method, measurement/evidence rules, report output schema/layout, and approval/cost controls remain protected.
+13. Old started/completed v1 records remain unchanged in their existing browser-session storage. This release holds their in-app report display, JSON/PDF delivery, observation resume, and report retry. Already downloaded files remain unchanged. This is the accepted release behavior, not a pending implementation gate or a promise of permanent backup. Historical reactivation requires a separate founder decision.
 
 No additional founder decision is required by this specification.
 
 ## Pre-implementation evidence gate
 
-Before a worker changes code, the founder must inspect one retained extraction response in `.secrets/`. The worker and reviewer must not open `.secrets/`, copy the response, or receive private/provider content.
+**Complete locally; do not repeat.** The founder supplied the sanitized `EXTRACTION_FIELD_NOTE.md` before this amendment. The evidence supports keeping the three structured extraction additions. Workers verify receipt and preservation of the note; they do not inspect extraction again. The worker and reviewer must not open `.secrets/`, copy a response, or receive private/provider content.
 
-The founder records only a field-level note outside private evidence, marking each inspected field as `filled`, `empty`, or `wrong`. At minimum the note covers:
+The completed gate required only a field-level note outside private evidence, marking each inspected field as `filled`, `empty`, or `wrong`. Its required coverage was:
 
 - discovered brand name;
 - category;
@@ -77,18 +87,20 @@ The founder records only a field-level note outside private evidence, marking ea
 - whether the market text names a place; and
 - whether any retained field states how customers receive the service or product.
 
-This inspection is evidence about the current extractor, not permission to copy raw evidence into Git. If no retained response is available, implementation stops and asks the founder whether to authorize one preparation-only call. It does not read credentials and does not proceed to question generation.
+The sanitized note must remain untracked, unstaged, uncommitted, and unpushed. If it is missing or differs from the handoff hash, stop and report the discrepancy; do not regenerate it or make a replacement provider call. This gate does not authorize private-evidence access or live question generation.
 
 ## Pre-implementation R-23 sizing gate
 
-Before changing runtime code, the implementation worker performs a read-only sizing pass for R-23. The worker traces every active consumer of the current compatibility `BusinessBrief`, including question preparation, audit-run requests, report requests, persistence, exports, and historical-record readers, then returns a short sizing note.
+**Complete and founder-accepted on 2026-09-22.** The local `R23_SIZING_NOTE.md` traced the compatibility `BusinessBrief` through question preparation, audit-run requests, report requests, persistence, exports, and historical readers. The separate `REPORT_EXPORT_BOUNDARY_REVIEW.md` established that report synthesis receives fallback-filled context and JSON exposes it. Do not repeat these reviews as a prerequisite to coding.
 
-Classify the work as:
+The sizing classification used these definitions:
 
 - **bounded** when honest optional values can be carried by the v2 frozen intake, `QuestionFactsV3`, and a direct-ten-specific/versioned request boundary without changing observation or report payloads, persisted audit records, report schemas, or historical readers; or
 - **cross-cutting** when removing the compatibility fallbacks requires any of those downstream contracts to change.
 
-If bounded, R-23 remains in this implementation. If cross-cutting, split the legacy `BusinessBrief` cleanup into a separately reviewed follow-up. Spec 011 still ships the prepared summary and carries confirmed target customer and decision considerations through frozen v2, `QuestionFactsV3`, and the direct-ten writer brief. Existing compatibility fallbacks may remain temporarily only inside the legacy bridge, must be enumerated in verification, and must not populate prepared, confirmed, frozen, facts-projection, or writer state. R-27 remains controlling: this product PR does not become an audit-run or report redesign.
+The accepted result is **Cross-cutting**, with a **large** complete downstream boundary. Spec 011 must ship the prepared summary and exact confirmed-to-writer handoff together with truthful versioned run/report inputs, saved audit context, customer JSON, and print display. Removing fallback exposure from new reports/exports cannot be deferred. R-27 permits only the necessary input-meaning, comparator-matching, export-version, and historical-hold changes; it does not authorize a report layout, scoring, or observation-method redesign.
+
+Defer only removal of legacy-only `BusinessBrief` builders/types/validators, historical matrix adapters, old canonical/GLM-slot paths, and receipt-bound retained-pack helpers that no new v2 path can reach. Strict old readers remain for preservation and binding checks. Existing legacy substitutions may remain as literal stored v1 values; they may not be reconstructed or used for new synthesis, output, or provider work. The historical hold is settled under R-21. The local sizing/review notes remain untracked, unstaged, uncommitted, and unpushed; no temporary exposure exception is approved.
 
 ## Problem
 
@@ -147,6 +159,8 @@ They should not have to reconstruct facts already present on their website. They
 - Optional customer context, alternatives, differentiator, and public fact.
 - Row-level provenance and owner-source transition after customer edits.
 - Exact freezing, origin preservation, safe schema versioning, stale-state rejection, and downstream projection.
+- Versioned truthful direct-ten run/report inputs, report synthesis and deterministic interpretation, saved audit context, JSON export, and print display for new v2 sessions.
+- Exact preservation and customer-output/provider-retry hold for already-started/completed v1 records, with separate readers and storage isolation.
 - Focused unit/browser coverage, offline repository verification, and one separately authorized preparation-only founder walkthrough.
 
 ## Non-scope
@@ -155,12 +169,13 @@ They should not have to reconstruct facts already present on their website. They
 - Reading extra website pages beyond the current extraction behavior.
 - Google Maps, login-only sources, broad social discovery, arbitrary linked-domain discovery, or branch search.
 - A conversational/chat intake.
-- Payment, account, authentication, checkout, delivery, dashboard, CRM, analytics-vendor, or cross-device-resume work.
-- Changes to the direct-ten writer instruction, question model, question review/edit contract, observation method, report content, report layout, scoring, export meaning, or re-check behavior.
+- Payment, account, authentication, checkout, durable/private delivery infrastructure, dashboard, CRM, analytics-vendor, or cross-device-resume work.
+- Changes to the direct-ten writer instruction, question model, question review/edit contract, observation method, report output schema/layout, scoring, or re-check behavior. Report input meaning, exact named-comparator matching, and JSON context/version change only to meet R-22/R-23/R-27.
+- Broad report usefulness/content redesign, legacy-only code deletion, historical reactivation, or migration/regeneration of old records.
 - A report finding based on differences between prepared and confirmed values.
 - Per-chip evidence labels, evidence-to-value matching, confidence percentages, conflict inference, or fuzzy brand-name matching.
 - Production deployment, merge, public rollout, or any live provider call without separate explicit founder authorization.
-- Updates to `docs/PRODUCT.md`, `docs/NOW.md`, or `docs/DECISION_LOG.md` inside this specification task.
+- Further product-policy changes beyond the accepted amendment. Record implementation/verification status under `docs/WORKFLOW.md`; do not revise parent product promises to fit code.
 
 ## Experience
 
@@ -233,9 +248,9 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 ### Preparation and extraction
 
-- **R-00A — Founder-only evidence note:** The pre-implementation evidence gate above must be completed before code changes. The worker records only that the note was received; the worker does not read `.secrets` or private evidence.
+- **R-00A — Founder-only evidence note:** Completed locally. Verify the supplied sanitized note and preserve it outside Git; do not repeat extraction inspection, read `.secrets`, or make a replacement call.
 
-- **R-00B — Size R-23 first:** Before runtime implementation, the worker must submit the R-23 sizing note defined above, enumerate every current fallback and downstream consumer, and classify the cleanup as bounded or cross-cutting. No implementation begins until this classification is recorded.
+- **R-00B — Accepted sizing and boundary:** The recorded classification is Cross-cutting. The founder accepted the report/export review, required truthful new-session downstream context, and approved the historical hold on 2026-09-22. These pre-code decisions are complete. Implement the amended boundary; defer only legacy-only removal and historical reactivation. Do not reopen sizing or treat older pending-approval notes as a new blocker.
 
 - **R-01 — Existing call boundary:** Entry uses the existing identity request and exactly one existing extraction request. This specification adds no provider request. Existing retry behavior for an invalid/truncated structured response may remain; an empty new optional field never triggers a retry.
 
@@ -369,16 +384,30 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
   - `LOCAL_INTAKE_INPUT_VERSION` and the server-side literal in `question-facts-v3.ts`;
   - the persisted question-pack version because it embeds the frozen input;
   - the local intake session schema/storage version because its state shape and route change;
-  - `FACTS_PROJECTION_VERSION` because local projection semantics change; and
-  - any direct-ten request-contract literal whose parser changes.
+  - `FACTS_PROJECTION_VERSION` because local projection semantics change;
+  - the versioned direct-ten audit context and run/report request discriminators;
+  - the saved audit record schema/storage key for truthful v2 context; and
+  - customer JSON to `nuave-evidence-v5`, carrying confirmed context instead of a fallback-filled legacy brief.
 
-  Do not change the direct-ten writer-instruction version because this specification does not change that instruction.
+  Keep strict old schemas/readers separate and preserve existing v1 storage keys/bytes before v2 initialization. Reject old run/report request variants before provider work. New request parsers must not silently reinterpret an old `brief` as truthful context. Do not change the direct-ten writer-instruction version. Identify the report context version in provenance and bump the report-prompt version when its instruction changes; retain the report output schema.
 
-- **R-21 — Safe old-state behavior:** Reject incompatible pre-confirmation intake and unstarted question-pack state. At most, recover the plain typed name and a valid normalized source as a fresh entry; never restore old prepared/confirmed meaning. If an audit has already started or completed, preserve its exact old frozen input, approved pack, observations, report, and downloads under the old contract in read-only/resume form. Never migrate or regenerate it merely to fit v2.
+- **R-21 — Historical preservation and hold:** Reject incompatible pre-confirmation intake and unstarted question-pack state. At most, recover the plain typed name and a valid normalized source as a fresh entry; never restore old prepared/confirmed meaning. For an already-started/completed v1 audit:
+  - preserve the exact serialized intake and audit-record pair, frozen input/fingerprint, approved pack/originals/edits, saved brief, observations, report, provenance, and cost ledger;
+  - use the old strict reader only for preservation and binding checks; never rebuild its brief, migrate/regenerate it, or delete a valid old pair because v2 validation rejects it;
+  - make no automatic provider or budget request on restoration;
+  - hold in-app report display, JSON/PDF delivery, observation resume, and report-only retry; enforce the provider hold at the server boundary as well as the UI;
+  - show a clear Indonesian availability state without displaying old business claims or promising a recovery date; a deliberate fresh entry may start a new audit, never an automatic conversion or rerun; and
+  - keep old storage isolated when new v2 work begins. Existing downloaded files remain untouched. Preservation is limited to the existing browser session, not a durable backup or new retention promise.
 
-- **R-22 — Exact downstream projection:** The exact confirmed v2 values, not prepared leftovers, reach the frozen input, `QuestionFactsV3`, the direct-ten writer brief, and the existing audit/report handoff. Hidden, inactive, rejected, unselected, and optional-empty values do not. Confirmed target customer and decision considerations appear in the writer brief when present.
+  This hold is the founder-approved behavior for this release. Historical delivery/resume is separately deferred and is not a remaining implementation gate. New v2 sessions retain normal report display, download, and controlled resume/retry behavior.
 
-- **R-23 — No fabricated completeness:** The prepared, confirmed, frozen-v2, `QuestionFactsV3`, and direct-ten writer paths must never create these substitutions:
+- **R-22 — Exact downstream projection:** The exact confirmed v2 values and origins reach the frozen input, `QuestionFactsV3`, the direct-ten writer brief, and one explicitly versioned direct-ten audit context. Hidden, inactive, rejected, unselected, and optional-empty values do not. Confirmed target customer, needs, and decision considerations remain distinct; the target and considerations appear in the writer when present.
+
+  The new context carries only confirmed identity/source/aliases, focus/target, category, active offerings, service channels, reach/areas, optional customer meanings, comparator mode/all named comparators, differentiator, and public fact. Preserve origin wherever a report claim uses the value. Business/legal type remains absent unless independently supported; category never supplies it. Report synthesis receives confirmed context, not a blanket claim that all inputs are independently verified.
+
+  Use that same saved context for run/report validation, lock/identity checks, synthesis and repair, deterministic interpretation, interrupted-run resume, report retry, report display/print, and JSON export. Persist the exact context and ordered approved-question binding before execution; never rebuild them from mutable intake or a legacy bridge on retry. Preserve original questions, edits, observations, provenance, and cost ledgers. All confirmed named comparators remain available for identity protection and evidence-based matching; unknown and explicit category alternatives provide no named company to report as an observed competitor.
+
+- **R-23 — No fabricated completeness:** Prepared, confirmed, frozen-v2, `QuestionFactsV3`, direct-ten writer, and new run/report/storage/export paths must never create these substitutions:
   - service channels as decision criteria;
   - category plus market as target customer;
   - target customer duplicated as customer needs;
@@ -388,9 +417,11 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
   - entered name treated as independently discovered identity; and
   - category treated as a verified business/legal type.
 
-  First complete R-00B. If the sizing result is **bounded**, remove these substitutions from the active direct-ten audit/report path and use a direct-ten-specific request schema or equivalent versioned boundary that permits explicit unknown/empty values. Do not weaken historical legacy validation.
+  The accepted Cross-cutting result requires a truthful versioned direct-ten boundary for every new session. No new v2 run/report request, saved record, report input, deterministic interpretation, or customer export uses fallback-filled `BusinessBrief`. Empty/unknown values remain explicit absence, not sentinel prose in a required verified-fact field. Do not weaken historical legacy validation.
 
-  If the sizing result is **cross-cutting**, defer only the old `BusinessBrief` compatibility cleanup to a separately approved follow-up. In that case this implementation still removes fabrication from prepared/confirmed/frozen/facts/writer state, carries target customer and decision considerations exactly, preserves the existing run/report contracts under R-27, and records every temporarily retained legacy fallback plus its consumer in `VERIFICATION.md`. No retained compatibility fallback may be shown to the customer, frozen as confirmed meaning, or sent to the direct-ten writer as fact.
+  Apply the truthful boundary to every report adapter enabled for v2. An unsupported testing-only adapter must reject v2 before provider work rather than receive a compatibility brief. Protected observation model messages remain the exact approved question plus the existing neutral instruction. No report retry/repair, pack convenience field, or restoration path may reintroduce filler or project legacy values back into v2 state.
+
+  Legacy substitutions may survive only as unchanged stored v1 values under R-21's hold and in unreachable legacy-only code awaiting separate removal. Enumerate those sites and actual remaining consumers in `VERIFICATION.md`; prove that none serves new synthesis or customer output. Cleanup of obsolete code is deferred; removing new-path exposure is not.
 
 - **R-24 — Material correction:** A material change after question generation increments the fact version, invalidates the stale question pack, and requires a fresh question preparation and approval. Cancel/Back restores the last committed stable summary. Identity/source change creates a new preparation version and may make one new existing preparation call only after the customer explicitly selects `Periksa`.
 
@@ -400,7 +431,11 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 - **R-26 — Sole off switch:** `NUAVE_NEW_AUDIT_ENABLED` remains the only emergency off switch for the audit journey and routes. Do not add a smart-intake feature flag or a second flag matrix. Existing server-selected live/synthetic mode remains, but it is not a second emergency switch.
 
-- **R-27 — Downstream preservation:** Question review/edit, explicit audit approval, ten observations, report generation, JSON/PDF controls, cost display, and their persistence behavior remain functionally unchanged. This work must not alter question wording policy, audit execution, report interpretation, or export semantics.
+- **R-27 — Protected behavior and accepted changes:** Preserve question review/edit, explicit audit approval, ten observations, observation model messages/method, measurement/evidence rules, 10/10 delivery gates, report output schema/layout, budget/retry controls, cost display, and the sole off switch. New v2 sessions retain report generation, JSON/PDF controls, persistence, and explicit recovery using their exact saved context.
+
+  The founder permits the necessary changes to run/report input contracts, new report input meaning and resulting interpretation, exact named-comparator matching, saved-context contracts, and JSON context/version. A report can differ for the same observations because fabricated inputs have been removed; do not describe report interpretation or export semantics as unchanged. R-21's historical output/provider hold is also an explicit accepted behavior change. These exceptions do not authorize changing question wording policy, scoring, observation execution, report layout, or broad report usefulness work.
+
+  Keep existing customer-export exclusions for internal call telemetry, provider failure diagnostics, and legacy report metrics. Preserving the internal cost ledger does not authorize exporting that whole ledger; retain only the existing customer-facing provenance and cost summary alongside the new confirmed context.
 
 ## Failure and recovery
 
@@ -423,12 +458,14 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 | Refresh, Back, or double-click | Restore the last stable state and never silently repeat a settled provider request. |
 | `429` or `503` | Preserve stable work, show the existing wait/unavailable message and explicit retry, and make no downstream provider call. |
 | Incompatible old intake/pack | Reject it and require fresh preparation/confirmation, optionally retaining only safe name/source. |
-| Audit already started/completed | Preserve exact old input, questions, observations, report, and downloads under their original version; never migrate them. |
+| V1 audit already started/completed | Preserve exact old serialized records and provenance. Show the historical availability state; hold report display, JSON/PDF, observation resume, and report retry. No migration, deletion, automatic network work, or rebuilt brief. |
+| Old client attempts run/report work | Reject its old request version before provider work, even if UI controls were bypassed. Preserve the sole off-switch and existing cost/rate protections. |
+| New v2 run interrupted or report fails | Explicit recovery uses the saved exact v2 context, approved wording, completed observations, and ledger; execute only missing permitted work. |
 
 ## Evidence, data, privacy, and cost
 
 - Use only the public business source supplied for the audit and the existing restricted-domain extraction behavior.
-- The preparation draft is a proposal. It is not a verified fact until the customer uses the single confirmation action.
+- The preparation draft is a proposal. The single confirmation establishes selected customer-confirmed meaning; it does not independently verify owner-supplied or Nuave-proposed claims. Preserve origin through report context and export.
 - Preserve exact official names, product/service names, place names, URLs, and source evidence. Do not manufacture evidence or imply that comparison suggestions were found on the website.
 - Provenance is field/row based, not inferred by matching model-authored evidence text.
 - Do not collect customer records, credentials, contact details unrelated to the audit, payment data, medical/legal/financial records, or sensitive free text.
@@ -439,7 +476,7 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 ## Acceptance criteria
 
-- **AC-00 — Pre-code gates:** Before runtime code changes, the founder field-level extraction note is recorded without exposing private evidence, and the worker's R-23 sizing note enumerates the compatibility fallbacks and every active downstream consumer. The note classifies R-23 as bounded or cross-cutting. A cross-cutting result identifies the exact follow-up boundary and temporarily retained legacy fallback sites before implementation proceeds.
+- **AC-00 — Pre-code gates:** The sanitized extraction note is received locally, the sizing note records Cross-cutting with fallback/consumer inventory, and the report/export boundary review plus founder acceptance are recorded. The 2026-09-22 decision satisfies the acceptance gate. Preserve local evidence notes; do not repeat private inspection or seek approval already given. The required implementation includes truthful new downstream context and the historical hold; only legacy-only removal and historical reactivation are deferred.
 
 - **AC-01 — Rich local one-screen path:** Given the ordinary blank `/audit` entry and intercepted live-shaped identity/extraction responses for a fictional local Indonesian business, when the customer enters brand/URL and selects `Periksa`, then:
   - the next customer-decision screen is `Ini yang Nuave pahami.`;
@@ -451,7 +488,7 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
   - `Perlu dipastikan` is not visited; and
   - one `Sudah sesuai — buat pertanyaan audit` action opens question review without a duplicate business review.
 
-- **AC-02 — Exact values and origins:** Given prepared website and Nuave suggestions plus customer edits, when the summary is confirmed, then the exact visible selected values and row origins reach the v2 frozen intake, facts projection, and writer brief. Target customer and decision considerations reach the writer when confirmed. Hidden, inactive, rejected, unselected, and optional-empty values do not. A customer-edited row is owner-sourced. Comparator unknown maps to unresolved and claims neither no competitors nor category alternatives.
+- **AC-02 — Exact values and origins:** Given prepared website and Nuave suggestions plus customer edits, when the summary is confirmed, then the exact visible selected values and row origins reach the v2 frozen intake, facts projection, writer brief, and saved downstream context. Target customer and decision considerations reach the writer when confirmed. Hidden, inactive, rejected, unselected, and optional-empty values do not. A customer-edited row is owner-sourced. Comparator unknown maps to unresolved and claims neither no competitors nor category alternatives.
 
 - **AC-03 — Partial and empty preparation:** Given partial or empty extraction, when the summary renders, then focus, service channels, reach, and conditional area remain directly selectable on the summary; only missing category, offering, or active target can open the consolidated `Perlu dipastikan` stage. Optional absence never blocks. An entered business receives no fixture facts.
 
@@ -463,19 +500,31 @@ All controls retain keyboard operation, visible focus, programmatic labels, logi
 
 - **AC-05 — Extraction contract and language:** Given OpenAI and Gemini extraction tests, when a supported website supplies delivery/access and a local service area, then the three structured fields parse within the exact enums, explanatory text is concise Indonesian, official names/place names/URLs/evidence remain unchanged, and the same call count is retained. When unsupported, the fields are empty and no optional-field retry occurs. Manual/synthetic fallbacks include empty values for all three fields.
 
-- **AC-06 — Recovery, versioning, and cost:** Reload, Back, double-click, and non-material disclosure actions do not repeat paid work. Material edits invalidate stale packs. V1 pre-confirmation sessions/packs are rejected; already-started/completed old audits remain available under their exact old contract. Rate-limit/interrupted states retain honest telemetry and prior stable work. `NUAVE_NEW_AUDIT_ENABLED` remains the sole off switch.
+- **AC-06 — Recovery, versioning, and cost:** Reload, Back, double-click, and non-material disclosure actions do not repeat paid work. Material edits invalidate stale packs. New v2 interrupted-run resume and report-only retry use their exact saved context/questions/observations/ledger. Rate-limit/interrupted states retain honest telemetry and stable work. `NUAVE_NEW_AUDIT_ENABLED` remains the sole off switch.
+  - Reject v1 pre-confirmation/unstarted state; preserve literal fictional pre-change started/completed intake/audit pairs with non-null briefs, originals/edits, ten-observation reports, and cost/provenance ledgers byte-for-byte in storage.
+  - Cover completed, zero/partially observed, interrupted, report-failed, and pre-provider-failure states; apply the hold once execution has started, even with zero observations. Restoration performs no provider/budget requests, displays no old report, and enables no old JSON/print/resume/retry action.
+  - Direct old-version run/report requests fail before provider work. Existing downloaded files are outside mutation scope.
+  - Old readers/strict validators and explicit historical fixture IDs remain valid. V2 initialization, incompatible state, and fingerprint/question mismatches never overwrite/delete a valid old pair. Test old/new coexistence and maximum supported field/fingerprint sizes without truncating meaning.
 
 - **AC-07 — Existing path and founder judgment:**
   - Focused tests pass.
   - `npm run validate:fast` passes offline.
   - `npm run verify` passes offline with dummy credentials and no live provider calls.
-  - Question review/edit → explicit audit approval → ten observations → report → JSON/PDF controls remains intact.
+  - For a newly confirmed v2 session, question review/edit → explicit audit approval → ten observations → report → JSON/PDF controls remains intact, including reload/Back and explicit recovery without duplicate work. Historical behavior is assessed against AC-06's accepted hold.
   - After separate authorization for one live preparation, the founder performs desktop and mobile walkthroughs in the same browser tab, using browser device emulation for mobile unless a second preparation call is explicitly authorized. The walkthrough records typed characters, substantive decisions, corrections, readiness time, identity/extraction calls, extraction cost, and the failing layer for every missing material fact. The preparation-only authorization stops before pressing the final action unless question generation is separately authorized.
   - The founder answers: “Does this feel like confirming a consultant's prepared understanding rather than filling a form?” Zero typing is not sufficient if the summary is misleading.
 
+- **AC-08 — Truthful report and export boundary:** Fictional cases with absent optional target/needs/criteria/type, comparator unknown, explicit category alternatives, multiple named comparators, product focus, and distinct confirmed values prove:
+  - no invented substitution reaches request validation, lock/minimizer, any v2-enabled report provider, synthesis/repair/retry, deterministic matching, saved audit context, or customer JSON/print display;
+  - all and only confirmed named comparators are eligible for named-competitor matching against actual observations; an alternative-category phrase is not a named company;
+  - protected observation messages and approved question text remain unchanged by the new context transport;
+  - `nuave-evidence-v5` exports exact saved confirmed context/origins, questions/originals/edits, observations, report, and existing customer-facing provenance/cost summary without a legacy brief or newly exposed internal diagnostics; reload/export comparisons ignore only documented volatile fields such as `exported_at`;
+  - new reports retain the current output schema/layout, ten details, evidence/measurement gates, and print mechanism; print checks cover DOM/content and rendering, not an untested OS save dialog; and
+  - tests inspect actual request/export payloads, not just TypeScript types or comments. Old tests generated by the new builder alone do not prove historical preservation.
+
 ## Open questions
 
-None. The founder evidence note in R-00A and the worker sizing note in R-00B are execution prerequisites, not unresolved product decisions.
+None for this implementation. R-00A, R-00B, the downstream boundary, and the historical hold are settled. Any future reactivation of historical delivery/resume needs a separate decision; it does not block the approved new-session implementation.
 
 ## Implementation notes
 
@@ -487,19 +536,21 @@ The smallest complete implementation is expected to touch these surfaces and the
 - preparation/state/persistence: `src/lib/intake/preparation.ts`, `src/lib/intake/state.ts`, `src/lib/intake/local-session.ts`, `src/lib/intake/frozen-intake.ts`;
 - summary and navigation: `src/lib/intake/IntakeJourney.tsx`, `src/lib/intake/navigation.ts`, `src/lib/intake/screens-bab1.tsx`, `src/lib/intake/screens-bab2.tsx`, and existing intake styles/components;
 - exact handoff: `src/lib/intake/local-questions.ts`, `src/lib/intake/glm-local.ts`, `src/lib/audit/question-facts-v3.ts`, and affected request validators/payload builders;
+- truthful run/report context: `src/app/audit/LocalAuditStage.tsx`, `src/app/api/audit/run/route.ts`, `src/app/api/audit/report/route.ts`, `src/lib/audit/locked-question-pack.ts`, shared context/contract types, report pipeline/provider/repair consumers;
+- saved records, exports, and historical hold: `src/lib/intake/local-audit-session.ts`, old-version intake/pack readers, `src/lib/audit/contracts.ts`, `src/lib/audit/customer-evidence-export.ts`, and `src/app/audit/ReportView.tsx`;
 - intercepted-request browser tests for rich local, partial, empty, product, and location cases.
 
 The current `s-review` implementation may be repurposed as the prepared summary, or an equivalent bounded screen may replace it. In either case, there must be exactly one business-summary/review surface and no second final review.
 
 ### Work order inside one implementation branch and one product PR
 
-1. **Evidence gate:** receive the founder's field-level note; do not inspect `.secrets`.
-2. **Size R-23 without coding:** trace the compatibility brief through question preparation, audit run, report, persistence, exports, and historical readers; return the bounded/cross-cutting classification.
+1. **Verify the accepted handoff:** branch/working tree, preserved local notes, and this amendment. Do not repeat extraction inspection or sizing.
+2. **Protect old state first:** establish literal fictional v1 intake/audit fixture pairs, strict old readers, isolated storage, and the historical hold before changing version defaults.
 3. **Stop losing data:** extend extraction, map the complete relevant draft, add immutable prepared understanding, preselect proposals, and add versioned state.
 4. **Build the one-screen experience:** summary rows, default focus, inline channel/reach/area choices, optional details, and consolidated required-gap stage.
-5. **Make the handoff exact:** frozen v2, origins, optional fields, comparator unknown, and exact facts/writer projection. Implement the legacy-fallback cleanup only when R-00B classified it as bounded; otherwise document and defer that cleanup while preserving R-27.
-6. **Verify offline:** focused tests, `npm run validate:fast`, then `npm run verify`.
-7. **Founder walkthrough:** only after explicit preparation authorization; same tab for desktop/mobile; stop before question generation unless separately authorized.
+5. **Complete the truthful handoff:** frozen v2, origins, optional fields, comparator unknown, exact facts/writer projection, and versioned run/report/storage/export context. Preserve protected observation messages; close synthesis, deterministic matching, retry/resume, JSON, and print exposure together. Defer only legacy-only removal.
+6. **Verify offline:** focused regression and browser cases including historical preservation/hold, then `npm run validate:fast` and `npm run verify`. Record actual versions, remaining legacy consumers, and evidence in `VERIFICATION.md`.
+7. **Founder walkthrough:** only after explicit preparation authorization; same tab for desktop/mobile; stop before question generation unless separately authorized. A full live audit and release require their own authorization.
 
 No half-connected version lands on `main`. Every merge deploys, so the implementation is reviewed as one complete product PR.
 

@@ -38,7 +38,7 @@ preserves the current state. Commercial release is separate.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Current bounded implementation | [`specs/009-recommendation-eligible-audit/SPEC.md`](./specs/009-recommendation-eligible-audit/SPEC.md) — natural questions through downloadable report; advances the existing live-report quality gate |
+| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — prepared summary and truthful new-session report/export context; approved historical hold |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |

@@ -4,6 +4,7 @@ import {
   auditModel,
   auditReasoningEffort,
   executeAuditPrompt,
+  generateReportContent,
   extractBusinessDraft,
   extractionDraftOrManualFallback,
   normalizeSourceTitle,
@@ -25,6 +26,61 @@ import {
   type BusinessBrief,
 } from "./types";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
+import {
+  DIRECT_TEN_CONTEXT_VERSION,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
+
+describe("v2 report model request", () => {
+  it("sends exact confirmed context and authority instead of a filled verified brief", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "dummy-offline-key");
+    mockResponsesParse.mockReset();
+    mockResponsesParse.mockRejectedValue(
+      new Error("offline stop after request capture"),
+    );
+    const context: DirectTenAuditContext = {
+      version: DIRECT_TEN_CONTEXT_VERSION,
+      identity: {
+        name: "Toko Fiksi",
+        source: "https://toko-fiksi.example/",
+        sourceOrigin: "owner",
+        aliases: [],
+        origin: "owner",
+      },
+      focus: { value: { kind: "brand" }, origin: "nuave" },
+      category: { value: "toko", origin: "website" },
+      offerings: { value: ["barang fiksi"], origin: "website" },
+      serviceChannels: { value: ["delivery"], origin: "website" },
+      market: { value: { reach: "seluruh", areas: [] }, origin: "owner" },
+      comparators: { value: { mode: "unknown" }, origin: "nuave" },
+    };
+    await expect(
+      generateReportContent({
+        brief: context,
+        prompts: [],
+        observations: [],
+        safety_identifier: "offline-v2-report-test",
+        budget: fixtureBudget,
+        language: "id",
+        question_method: "direct-ten",
+      }),
+    ).rejects.toThrow();
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+    const request = mockResponsesParse.mock.calls[0]![0] as {
+      input: { content: string }[];
+    };
+    const user = JSON.parse(request.input[1]!.content) as Record<
+      string,
+      unknown
+    >;
+    expect(user).toHaveProperty("confirmed_context");
+    expect(user).not.toHaveProperty("verified_brief");
+    expect(JSON.stringify(user)).toContain("Toko Fiksi");
+    expect(JSON.stringify(user)).toContain("owner");
+    expect(JSON.stringify(user)).not.toContain("not specified");
+    vi.unstubAllEnvs();
+  });
+});
 
 // Mock the OpenAI SDK so the live observation path can be exercised without a
 // network call. vi.hoisted keeps the mocks reachable from the hoisted factory.
@@ -161,6 +217,9 @@ describe("website extraction fallback", () => {
         brand_type: "Extracted type",
         category: "Extracted category",
         market_context: "Extracted market",
+        service_channels: ["delivery"],
+        market_reach: "sekitar",
+        market_areas: ["Jakarta Selatan"],
         target_customer: "Extracted customer",
         official_sources: [input.website_url],
         verified_offerings: ["Extracted offer"],

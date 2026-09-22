@@ -1,4 +1,9 @@
 import type { AuditObservation, AuditPrompt, BusinessBrief } from "./types";
+import {
+  contextIdentityGuard,
+  isDirectTenAuditContext,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
 import { DIRECT_TEN_PROMPT_CATEGORY } from "./types";
 import {
   classifyIndonesianQuestion,
@@ -170,7 +175,7 @@ export function canonicalLockedDirectTenPack(
     AuditPrompt,
     "prompt_id" | "question" | "review_status"
   >[],
-  brief: BusinessBrief,
+  brief: BusinessBrief | DirectTenAuditContext,
 ): CanonicalLockedQuestionPack {
   if (prompts.length !== 10) {
     throw new Error(
@@ -193,7 +198,9 @@ export function canonicalLockedDirectTenPack(
     );
   }
 
-  const minimized = minimizeIndonesianBrief(brief);
+  const minimized = isDirectTenAuditContext(brief)
+    ? contextIdentityGuard(brief)
+    : minimizeIndonesianBrief(brief);
   const locked = prompts.map((prompt, index) => {
     const question = prompt.question.trim();
     if (!question) {
@@ -227,12 +234,15 @@ export function lockedQuestionPackForMethod(input: {
   prompts:
     | readonly Pick<AuditPrompt, "prompt_id" | "question" | "review_status">[]
     | AuditPrompt[];
-  brief: BusinessBrief;
+  brief: BusinessBrief | DirectTenAuditContext;
   questionMethod: AuditQuestionMethod;
   historicalFixtureId?: HistoricalPromptPackId;
 }): CanonicalLockedQuestionPack {
   if (input.questionMethod === "direct-ten") {
     return canonicalLockedDirectTenPack(input.prompts, input.brief);
+  }
+  if (isDirectTenAuditContext(input.brief)) {
+    throw new Error("V2 context cannot use the historical canonical method.");
   }
   return canonicalLockedQuestionPack(
     input.prompts as AuditPrompt[],
@@ -247,7 +257,7 @@ export function lockedQuestionPackForMethod(input: {
 export function lockedObservationBindingErrors(input: {
   prompts: AuditPrompt[];
   observations: AuditObservation[];
-  brief: BusinessBrief;
+  brief: BusinessBrief | DirectTenAuditContext;
   historicalFixtureId?: HistoricalPromptPackId;
   questionMethod?: AuditQuestionMethod;
 }): string[] {
@@ -295,7 +305,7 @@ export function lockedObservationBindingErrors(input: {
 export function completedLockedObservationSetErrors(input: {
   prompts: AuditPrompt[];
   observations: AuditObservation[];
-  brief: BusinessBrief;
+  brief: BusinessBrief | DirectTenAuditContext;
   historicalFixtureId?: HistoricalPromptPackId;
   questionMethod?: AuditQuestionMethod;
 }): string[] {

@@ -37,13 +37,13 @@ test("landing CTA reaches the new audit journey on the empty business step", asy
   await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
 
   await expect(page).toHaveURL(/\/audit$/);
-  const shell = page.locator("[data-new-intake-shell]");
-  await expect(shell).toHaveAttribute("data-new-intake-shell", "s-brand-fix");
+  const shell = page.locator('[data-intake-screen="entry"]');
+  await expect(shell).toBeVisible();
   await expect(
-    page.getByRole("textbox", { name: "Nama brand", exact: true }),
+    page.getByRole("textbox", { name: "Nama bisnis", exact: true }),
   ).toHaveValue("");
   await expect(
-    page.getByRole("textbox", { name: "Link website", exact: true }),
+    page.getByRole("textbox", { name: "URL website publik", exact: true }),
   ).toHaveValue("");
   // No fixture business or fixture-preview wording appears on the entry.
   await expect(
@@ -52,29 +52,21 @@ test("landing CTA reaches the new audit journey on the empty business step", asy
   await assertNoSideEffects(page, requests);
 });
 
-test("the former preview path redirects to /audit and keeps harness parameters", async ({
+test("the former preview path redirects to /audit without seeding old fixture facts", async ({
   page,
 }) => {
   await page.goto("/audit/new-intake?fixture=GLM&glm=1");
   await expect(page).toHaveURL(/\/audit\?fixture=GLM&glm=1$/);
-  const shell = page.locator("[data-new-intake-shell]");
-  await expect(shell).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await expect(
-    page.getByRole("heading", { name: "Laundry Ceria", exact: true }),
-  ).toBeVisible();
+  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  await expect(page.getByText("Laundry Ceria")).toHaveCount(0);
 });
 
-test("the fixture seed is only reachable through the harness parameter", async ({
+test("an old fixture parameter still opens empty v2 entry", async ({
   page,
 }) => {
-  const shell = page.locator("[data-new-intake-shell]");
-  // The public default — even in synthetic mode — starts on empty fields.
   await page.goto("/audit");
-  await expect(shell).toHaveAttribute("data-new-intake-shell", "s-brand-fix");
-  // An explicit synthetic fixture seed opens the seeded brand card.
+  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
   await page.goto("/audit?fixture=F1");
-  await expect(shell).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await expect(
-    page.getByRole("heading", { name: "Kopi Sudut", exact: true }),
-  ).toBeVisible();
+  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  await expect(page.getByText("Kopi Sudut")).toHaveCount(0);
 });

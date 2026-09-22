@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "./client-contract";
+import {
+  DIRECT_TEN_CONTEXT_VERSION,
+  DIRECT_TEN_REPORT_CONTRACT_VERSION,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
 import { AuditRunEventParser } from "./stream";
 import {
   AUDIT_COST_LIMIT_USD,
@@ -22,27 +27,40 @@ vi.mock("@/lib/audit/provider", () => providerMocks);
 import { POST as runPOST } from "../../app/api/audit/run/route";
 import { POST as reportPOST } from "../../app/api/audit/report/route";
 import { POST as glmQuestionsPOST } from "../../app/api/audit/glm-questions/route";
-import { INTAKE_FIXTURES } from "../intake/fixtures";
-import { resolveJourneyPath } from "../intake/navigation";
-import { freezeLocalIntake } from "../intake/local-questions";
-import { createIntakeState, setScopeAnswer } from "../intake/state";
-
-const glmFixture = INTAKE_FIXTURES.GLM;
+import {
+  smartFingerprint,
+  SMART_INTAKE_INPUT_VERSION,
+} from "../intake/smart-intake-contract";
 
 function frozenGlmIntake() {
-  const state = setScopeAnswer(
-    createIntakeState(glmFixture),
-    "scope-whole-brand",
-  );
-  return freezeLocalIntake(
-    state,
-    glmFixture,
-    resolveJourneyPath({
-      entry: "read",
-      scope: state.scope,
-      brandNeedsFix: false,
-    }),
-  );
+  const base = {
+    version: SMART_INTAKE_INPUT_VERSION,
+    factVersion: 1,
+    context: context(),
+  };
+  return { ...base, fingerprint: smartFingerprint(base) };
+}
+
+function context(): DirectTenAuditContext {
+  return {
+    version: DIRECT_TEN_CONTEXT_VERSION,
+    identity: {
+      name: "Kopi Nuave",
+      source: "https://kopinuave.example/",
+      sourceOrigin: "owner",
+      aliases: ["Nuave Coffee"],
+      origin: "owner",
+    },
+    focus: { value: { kind: "brand" }, origin: "nuave" },
+    category: { value: "kedai kopi", origin: "website" },
+    offerings: { value: ["kopi"], origin: "website" },
+    serviceChannels: { value: ["on_premise"], origin: "website" },
+    market: {
+      value: { reach: "sekitar", areas: ["Jakarta"] },
+      origin: "website",
+    },
+    comparators: { value: { mode: "unknown" }, origin: "nuave" },
+  };
 }
 
 const DIRECT_TEN_IDS = Array.from(
@@ -148,7 +166,7 @@ function syntheticObservation(prompt: {
 const RUN_BODY = () => ({
   client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
   question_method: "direct-ten",
-  brief: brief(),
+  context: context(),
   prompts: wirePrompts(),
   safety_identifier: "local-direct-ten-fixture",
   budget: { limit_usd: AUDIT_COST_LIMIT_USD, carryover_cost_usd: 0, calls: [] },
@@ -190,6 +208,19 @@ describe("POST /api/audit/run direct-ten local substitutes", () => {
     expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
   });
 
+  it("rejects the old brief request before provider work", async () => {
+    const { context: _context, ...request } = RUN_BODY();
+    const response = await runPOST(
+      new Request("https://nuave.test/api/audit/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...request, brief: brief() }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
+  });
+
   it("still 404s when the new-audit switch is off — zero calls", async () => {
     delete process.env.NUAVE_NEW_AUDIT_ENABLED;
     const response = await runPOST(
@@ -224,9 +255,9 @@ describe("POST /api/audit/report direct-ten local substitutes", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          client_contract_version: DIRECT_TEN_REPORT_CONTRACT_VERSION,
           question_method: "direct-ten",
-          brief: brief(),
+          context: context(),
           prompts,
           observations,
           safety_identifier: "local-direct-ten-fixture",
@@ -265,7 +296,7 @@ describe("POST /api/audit/report direct-ten local substitutes", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          client_contract_version: DIRECT_TEN_REPORT_CONTRACT_VERSION,
           question_method: "direct-ten",
           brief: brief(),
           prompts: wirePrompts(),
@@ -421,8 +452,8 @@ describe("Spec 010 R-01/R-02a — switch and question_method gates", () => {
     "report rejects question_method %j with 400 — zero provider work",
     async (method) => {
       const body: Record<string, unknown> = {
-        client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
-        brief: brief(),
+        client_contract_version: DIRECT_TEN_REPORT_CONTRACT_VERSION,
+        context: context(),
         prompts: wirePrompts(),
         observations: [],
         safety_identifier: "local-direct-ten-fixture",

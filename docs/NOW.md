@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-21
+> Updated: 2026-09-22
 > Stage: pre-customer, building the pipeline
 
 **Portable pause checkpoint:** code and current instructions are combined on
@@ -18,12 +18,34 @@ progress and pace feedback. The subsequent founder verdict is that the report
 is not yet useful enough; completing the audit experience now takes priority.
 
 **Current bounded implementation:** [Spec 011 — Smart consultant prepared
-intake](../specs/011-smart-consultant-intake/SPEC.md) is **Approved**, explicitly
-confirmed by the founder on 2026-09-21. Replace the fixed questionnaire with
-one prepared summary, one confirmation before question review, and clarification
+intake](../specs/011-smart-consultant-intake/SPEC.md) is **Approved**, initially
+confirmed on 2026-09-21 and amended by the founder on 2026-09-22. Replace the
+fixed questionnaire with one prepared summary, one confirmation before question review, and clarification
 only for genuinely missing required meanings. `Brand secara keseluruhan` is a
-`Saran Nuave`, not website-derived evidence. Specs 009 and 010 remain the
-protected downstream question/audit/report foundation.
+`Saran Nuave`, not website-derived evidence. New sessions also require truthful
+versioned run/report/storage/export context, with no compatibility filler.
+Specs 009 and 010 remain the protected question/observation/measurement/report-
+layout foundation, subject to Spec 011's explicit context and historical-hold
+amendment.
+The implementation is complete in this local working tree and has passed its
+offline verification gate. On 2026-09-22 the founder relayed the independent
+reviewer's final **PASS** after the recovery revisions: 27 focused tests and
+six mocked recovery cases passed, with all prior findings closed. The full
+gate/build/browser results remain implementation-agent evidence. The spec
+remains **Approved** pending an actual rendered-PDF check and the separately
+authorized founder preparation walkthrough/judgment; this is not a live release.
+[Verification evidence](../specs/011-smart-consultant-intake/VERIFICATION.md)
+records the versions, historical hold, attributed checks, and limits.
+
+**Pre-code gates closed (2026-09-22):** R-00A's sanitized note was received;
+R-00B is **Cross-cutting**; the separate report/export review and founder
+acceptance are complete. The founder approved the larger truthful new-session
+boundary and the historical hold. Preserve old started/completed v1 records
+unchanged, but hold their in-app report/JSON/PDF delivery and provider resume/
+retry. Previously downloaded files remain unchanged. Preservation uses current
+browser-session storage and is not a permanent backup. This hold is settled
+release behavior; historical reactivation is a separate follow-up. See the
+[accepted decision](./DECISION_LOG.md#2026-09-22--accept-the-spec-011-truthful-boundary-and-historical-hold).
 
 **Latest result (2026-09-19):** the founder authorized and completed the
 [complete real end-to-end test](../specs/009-recommendation-eligible-audit/VERIFICATION.md#complete-real-end-to-end-test--execution-2026-09-19)
@@ -36,15 +58,17 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** complete the two pre-code gates for Spec 011, then implement it.
-First, the founder records a field-level `filled` / `empty` / `wrong` note from
-one retained extraction response without exposing `.secrets`. Second, the worker
-performs the read-only R-23 sizing pass across the compatibility brief, audit
-run, report, persistence, exports, and historical readers. If R-23 is
-cross-cutting, split the legacy fallback cleanup and still ship the prepared
-summary plus exact target-customer and decision-consideration propagation. No
-live provider call is included. After the gates, use one bounded product PR and
-run `npm run validate:fast` followed by `npm run verify` offline.
+**Next action:** use the
+[acceptance worker prompt](../specs/011-smart-consultant-intake/ACCEPTANCE_WORKER_PROMPT.md)
+to inspect an actual PDF from the fictional offline flow and prepare a concrete
+live-walkthrough authorization request. The founder supplies the business/URL
+and separately authorizes one preparation attempt, including disclosure of the
+existing technical extraction retry. Review desktop/mobile in the same live
+tab; stop before final confirmation/question generation. Then use the
+[acceptance reviewer prompt](../specs/011-smart-consultant-intake/ACCEPTANCE_REVIEWER_PROMPT.md)
+to assess only the new evidence. No additional live audit/report call is needed
+for these checks. Historical reactivation and legacy-only cleanup remain
+deferred. The four local evidence/review notes remain outside Git.
 
 The worker reports final `npm run verify` passing (1,241 unit tests, 102 browser
 tests, both builds). Independent review passed 31 focused tests and checked the
@@ -126,12 +150,16 @@ tests. These are implementation checks, not a naturalness or release pass.
 
 ## Current objective
 
-Implement the founder-approved Spec 011 prepared-understanding intake after its
-two pre-code gates. Preserve the existing direct-ten question review, explicit
-audit start, ten observations, current report, JSON/PDF controls, cost accounting,
-persistence, historical records, and sole emergency switch. Do not let the R-23
-compatibility cleanup silently expand this intake task into an audit-run or
-report redesign.
+Complete the remaining acceptance checks for the amended Spec 011
+prepared-understanding intake and truthful new-session path through
+report/download. Implementation, offline verification, and independent recovery
+review are complete; rendered-PDF evidence and the authorized founder
+preparation walkthrough/judgment remain pending. Preserve direct-ten question review, explicit
+audit start, observation method, measurement/evidence rules, report schema/
+layout, cost controls, and the sole emergency switch. New context/storage/JSON
+contracts and resulting report interpretation change only to remove fabricated
+input. Preserve old records under the accepted output/retry hold. Do not expand
+this into legacy deletion, historical reactivation, or a report redesign.
 
 ## Presentation layer
 
@@ -538,18 +566,20 @@ requires explicit authorization.
 
 ## Do now
 
-1. Founder inspects one retained extraction response and records only the
-   field-level `filled`, `empty`, or `wrong` note required by Spec 011. Workers
-   do not open `.secrets`.
-2. Worker sizes R-23 before coding, enumerating every compatibility fallback and
-   downstream consumer and classifying the cleanup as bounded or cross-cutting.
-3. After both gates, implement Spec 011, verify offline, and request separate
-   authorization for one preparation-only live walkthrough. Use one browser tab
-   with device emulation for desktop/mobile and stop before question generation
-   unless separately authorized.
+1. Preserve the reviewed implementation and four local evidence/review notes.
+   Inspect an actual rendered PDF from the fictional offline product flow and
+   record the artifact and visual results.
+2. Obtain the founder's business/URL and separate authorization for one live
+   preparation, disclosing the existing automatic technical retry. Use one
+   tab for desktop/mobile, stop before final confirmation/question generation,
+   and record the founder's prepared-understanding judgment.
+3. Have the reviewer assess the new acceptance evidence. Return the decision
+   to the orchestrator for acceptance-status closeout; no commit, publication,
+   deployment, or additional live call is authorized by that review.
 
 ## Not now
 
+- legacy-only code deletion and historical v1 delivery/resume reactivation;
 - report usefulness, excerpt/action quality and format redesign — deferred by
   the founder on 2026-09-19 while the continuous audit flow is completed;
 - real payment, durable jobs, and durable report persistence — after the
@@ -580,10 +610,11 @@ touches the product.
 
 ## Done for this cycle
 
-This functional cycle ends when one new-business browser session reaches the
-current Indonesian report and normal PDF/JSON download without manual file
-handoffs, with exact approved-input continuity and the offline verification
-gate passing. Distinguish offline readiness from any subsequently authorized
+This functional cycle ends when one newly confirmed v2 browser session reaches
+the Indonesian report and normal PDF/JSON download without manual file
+handoffs or fabricated context, with exact approved-input continuity, old
+record preservation/hold, and the offline verification gate passing.
+Distinguish offline readiness from any subsequently authorized
 live confirmation. The earlier real report and the founder's insufficient-
 usefulness verdict remain recorded; improving that report is deferred and is
 not a completion gate for this cycle.

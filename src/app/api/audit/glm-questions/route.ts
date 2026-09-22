@@ -5,6 +5,7 @@ import {
 } from "@/lib/audit/deployment-gate";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import { prepareGlmQuestionsForIntake } from "@/lib/intake/glm-local";
+import { SMART_INTAKE_INPUT_VERSION } from "@/lib/intake/smart-intake-contract";
 
 export const runtime = "nodejs";
 
@@ -39,7 +40,6 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-
   const rateLimited = await enforceAuditCallerRateLimit(
     request,
     (bindings) => bindings.glmCaller,
@@ -48,6 +48,21 @@ export async function POST(request: Request) {
 
   const credentialsError = auditLiveCredentialsResponse("question generation");
   if (credentialsError) return credentialsError;
+
+  if (
+    record?.intake &&
+    typeof record.intake === "object" &&
+    (record.intake as { version?: unknown }).version !==
+      SMART_INTAKE_INPUT_VERSION
+  ) {
+    return NextResponse.json(
+      {
+        status: "invalid_request",
+        detail: "Versi konfirmasi bisnis ini sudah lama. Mulai audit baru.",
+      },
+      { status: 409 },
+    );
+  }
 
   if (!record || !("intake" in record)) {
     return NextResponse.json(

@@ -23,6 +23,7 @@ import {
   OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN,
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
   REPORT_SYNTHESIS_PROMPT_VERSION,
+  REPORT_SYNTHESIS_PROMPT_VERSION_V2,
   assembleReportContent,
   type ObservationInstructionVersion,
 } from "./contracts";
@@ -31,6 +32,7 @@ import {
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
+import { contextForReportModel } from "./direct-ten-context-v2";
 import { isOpenCodeGoBaseUrl, opencodeGoTransportHeaders } from "./opencodego";
 import type { HistoricalPromptPackId } from "./measurement-matrix";
 import type { AuditQuestionMethod } from "./locked-question-pack";
@@ -218,6 +220,9 @@ export function extractionDraftOrManualFallback(
     brand_type: "",
     category: input.category,
     market_context: input.market_context,
+    service_channels: [],
+    market_reach: "",
+    market_areas: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],
@@ -320,7 +325,9 @@ function extractionRequest(
           "Suggest at most three genuinely comparable businesses only when you can supply a specific public website or Instagram profile URL with high confidence from existing model knowledge. Never include the audited business itself. Never guess or fabricate a business or URL; return an empty list when uncertain.",
           "Do not add similar_businesses items to evidence, and do not claim they were found on the official website unless the website actually supports that.",
           "Web search remains restricted to the supplied official domain; do not imply that competitor URLs were web-verified by this extraction call.",
-          "Write all explanatory text in clear, natural English. Preserve official brand names, product names, and place names as published.",
+          "Tulis semua teks penjelasan secara ringkas dan alami dalam Bahasa Indonesia. Pertahankan nama resmi, nama produk, nama tempat, URL, dan kutipan bukti persis seperti sumbernya.",
+          "Isi service_channels hanya dengan cara pelanggan menerima produk atau layanan yang dinyatakan oleh situs: on_premise, on_customer, delivery, online. Kosongkan bila tidak didukung.",
+          "Isi market_reach hanya dengan sekitar, beberapa, seluruh, luar, atau string kosong; isi market_areas dengan paling banyak delapan nama area layanan yang benar-benar diterbitkan bisnis. Alamat kontak saja bukan bukti cakupan layanan. Jangan simpulkan dari kategori umum atau market_context.",
           "Leave unsupported scalar fields empty and unsupported arrays empty.",
           ...(input.identity_unverified
             ? [
@@ -468,7 +475,8 @@ function collectSources(response: Response): Source[] {
 
 export async function executeAuditPrompt(input: {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief:
+    BusinessBrief | import("./direct-ten-context-v2").DirectTenAuditContext;
   safety_identifier: string;
   budget: AuditBudget;
 }): Promise<AuditObservation> {
@@ -577,7 +585,7 @@ export async function executeAuditPrompt(input: {
 
 export async function generateReportContent(
   input: {
-    brief: BusinessBrief;
+    brief: import("./direct-ten-context-v2").AuditSubject;
     prompts: AuditPrompt[];
     observations: AuditObservation[];
     safety_identifier: string;
@@ -597,6 +605,7 @@ export async function generateReportContent(
   response_id: string;
   telemetry: AuditCallTelemetry[];
 }> {
+  const v2Context = "version" in input.brief ? input.brief : null;
   const requestedModel = auditModel();
   const request = {
     model: requestedModel,
@@ -614,9 +623,13 @@ export async function generateReportContent(
         role: "developer" as const,
         content: [
           input.language === "id"
-            ? "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari brief terverifikasi dan jawaban pengujian yang diberikan."
-            : "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
-          `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION}.`,
+            ? v2Context
+              ? "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari konteks pilihan pelanggan yang dikonfirmasi beserta asal tiap makna, dan jawaban pengujian. Konfirmasi pelanggan tidak memverifikasi klaim secara independen."
+              : "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari brief terverifikasi dan jawaban pengujian yang diberikan."
+            : v2Context
+              ? "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the customer-confirmed context, its field origins, and the tested answers. Confirmation does not independently verify a claim."
+              : "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
+          `Use synthesis contract ${v2Context ? REPORT_SYNTHESIS_PROMPT_VERSION_V2 : REPORT_SYNTHESIS_PROMPT_VERSION}.`,
           ...reportWritingInstructions(),
           "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",
           "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
@@ -640,10 +653,14 @@ export async function generateReportContent(
       {
         role: "user" as const,
         content: JSON.stringify({
-          verified_brief: {
-            ...input.brief,
-            agency_logo_data_url: "[not sent]",
-          },
+          ...(v2Context
+            ? { confirmed_context: contextForReportModel(v2Context) }
+            : {
+                verified_brief: {
+                  ...input.brief,
+                  agency_logo_data_url: "[not sent]",
+                },
+              }),
           prompts: input.prompts,
           // Direct-ten prompt IDs own no matrix definitions; sending any
           // would fabricate semantics the method does not have.

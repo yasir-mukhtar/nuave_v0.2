@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-19
+> Updated: 2026-09-22
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -116,13 +116,14 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-**Current bounded implementation:** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
-is approved for the recommendation-eligible intake-to-report path. Its September
-19 amendment prioritizes the continuous local audit experience and defers
-report-quality improvement. Use its
-[fresh-session handoffs](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md).
-It replaces conflicting fixed-slot and R5 gate requirements for the new method;
-the older packages below remain references for their unaffected/historical scope.
+**Current bounded implementation:** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
+is approved for the prepared summary and truthful new-session report/export
+boundary. Its 2026-09-22 amendment accepts the Cross-cutting sizing result and
+historical output/retry hold; the pre-code gates are complete. Use its
+[implementation handoff](../specs/011-smart-consultant-intake/IMPLEMENTATION_PROMPT.md).
+Specs 009/010 remain the protected question, observation, measurement, and report-
+layout foundation except for this explicit context/historical amendment.
+Report usefulness redesign and legacy-only removal remain deferred.
 
 [`WORKFLOW.md`](./WORKFLOW.md) defines document creation, specifications,
 worker delegation, and verification. [`../specs/README.md`](../specs/README.md)
@@ -133,6 +134,7 @@ context an agent must read. Do not implement a draft specification.
 
 | Package                                                                                                               | Outcome                                                                                                                                               | Status                                                                                                                                                                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`011-smart-consultant-intake`](../specs/011-smart-consultant-intake/SPEC.md) | One prepared summary and truthful confirmed context through reports/downloads; preserved old records with output/retry held | Approved (2026-09-21; boundary amendment 2026-09-22); current implementation; pre-code gates complete |
 | [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)                                         | Fixture-backed landing-to-report preview with unmistakably simulated checkout                                                                         | Verified (2026-08-17); realigned by Spec 002                                                                                                                                                                                                  |
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md)                                     | Indonesian audit and report contracts, journey realigned to the canonical sequence                                                                    | Verified (2026-08-17)                                                                                                                                                                                                                         |
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md)                                       | Live engine connected, first real Indonesian report, report-quality gate verdict                                                                      | Approved; report quality unmet/deferred while Spec 009 completes the local audit flow                                                                                                                                                                                            |

@@ -47,13 +47,17 @@ verification is against its acceptance criteria.
 ## Active specifications
 
 - [`011-smart-consultant-intake/SPEC.md`](./011-smart-consultant-intake/SPEC.md)
-  — **Approved** (founder-confirmed 2026-09-21): replace the fixed intake
-  questionnaire with one prepared summary, a Nuave-proposed whole-brand
+  — **Approved** (2026-09-21; boundary amendment accepted 2026-09-22): replace
+  the fixed intake questionnaire with one prepared summary, a Nuave-proposed whole-brand
   default, inline focus/service/reach/area choices, clarification only for
   genuinely missing required meanings, and one confirmation before question
-  review. Implementation begins only after the founder extraction note and the
-  read-only R-23 sizing gate. If the legacy `BusinessBrief` cleanup proves
-  cross-cutting, split that cleanup rather than expanding audit/report scope.
+  review. Evidence/sizing/boundary gates are complete: **Cross-cutting**, with
+  truthful versioned new-session run/report/storage/export context required
+  in this implementation. Old v1 records remain unchanged under an approved
+  customer-output/provider-retry hold. Defer legacy-only deletion and historical
+  reactivation. Observation method, measurement/evidence rules, report
+  schema/layout, and cost controls remain protected. Use the package's
+  [`IMPLEMENTATION_PROMPT.md`](./011-smart-consultant-intake/IMPLEMENTATION_PROMPT.md).
 
 - [`010-gated-new-audit-flow/SPEC.md`](./010-gated-new-audit-flow/SPEC.md)
   — **Approved** (2026-09-19, r3): the new direct-ten journey becomes the

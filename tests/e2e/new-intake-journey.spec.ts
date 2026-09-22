@@ -1,461 +1,473 @@
-import { expect, test, type Page, type TestInfo } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { expect, test, type Page } from "@playwright/test";
 
-const shell = (page: Page) => page.locator("[data-new-intake-shell]");
-const current = (page: Page) =>
-  shell(page).getAttribute("data-new-intake-shell");
-const primary = (page: Page) =>
-  page.locator("footer").getByRole("button").last();
-const back = (page: Page) =>
-  page.locator("footer").getByRole("button", { name: /Kembali|Batal/ });
-const scopeNames = {
-  brand: "Brand secara keseluruhan",
-  cabang: "Satu lokasi",
-  produk: "Satu produk atau layanan",
-} as const;
+const richDraft = {
+  brand_name: "Kedai Fiksi",
+  entity_scope: "",
+  brand_type: "",
+  category: "kedai kopi",
+  market_context: "Narasi pasar bukan data terstruktur",
+  service_channels: ["on_premise", "delivery"],
+  market_reach: "sekitar",
+  market_areas: ["Bandung"],
+  target_customer: "pekerja sekitar",
+  official_sources: ["https://kedai-fiksi.example/"],
+  verified_offerings: ["kopi susu", "roti"],
+  verified_customer_needs: ["minuman dekat kantor"],
+  verified_decision_criteria: ["lokasi"],
+  similar_businesses: [{ name: "Kedai Tetangga" }],
+  brand_name_variants: [],
+  priority_offering: "",
+  conversion_action: "",
+  customer_supplied_facts: [],
+  known_accuracy_questions: [],
+  usp: "",
+  regulated_category_notes: "",
+  evidence: [],
+  warnings: [],
+};
 
-async function shot(page: Page, info: TestInfo, name: string) {
-  await page.screenshot({
-    path: info.outputPath(`${name}.png`),
-    fullPage: true,
+async function enter(page: Page, rich = true) {
+  if (rich) {
+    await page.route("**/api/audit/identity?**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          canonical_url: "https://kedai-fiksi.example/",
+          display_name: "Kedai Fiksi",
+          preparation_mode: "synthetic-local",
+        }),
+      }),
+    );
+    await page.route("**/api/audit/extract", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          draft: richDraft,
+          telemetry: [],
+          preparation_mode: "synthetic-local",
+        }),
+      }),
+    );
+  }
+  await page.goto("/audit");
+  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
+  await page
+    .getByRole("textbox", { name: "URL website publik" })
+    .fill("https://kedai-fiksi.example/");
+  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
+  ).toBeVisible();
+}
+
+test("failed extraction keeps validated identity and forwards its call ledger on retry", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  const extractionBodies: Record<string, unknown>[] = [];
+  const failedCall = {
+    stage: "extract",
+    attempt: 1,
+    status: "failed",
+    started_at: "2026-09-22T00:00:00.000Z",
+    completed_at: "2026-09-22T00:00:01.000Z",
+    latency_ms: 1000,
+    requested_model: "fictional-model",
+    returned_model: "fictional-model",
+    response_id: "fictional-extract-failure",
+    service_tier: "",
+    usage: {
+      input_tokens: 10,
+      cached_input_tokens: 0,
+      cache_write_input_tokens: 0,
+      output_tokens: 0,
+      reasoning_output_tokens: 0,
+      total_tokens: 10,
+    },
+    web_search_calls: 0,
+    accounted_cost_usd: 0.01,
+    cost_basis: "provider_usage",
+    pricing_version: "fictional",
+    failure_reason: "transient",
+  };
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/api/audit/"))
+      calls.push(`${request.method()} ${path}`);
+    if (path === "/api/audit/extract" && request.method() === "POST")
+      extractionBodies.push(request.postDataJSON() as Record<string, unknown>);
+  });
+  await page.route("**/api/audit/identity?**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        canonical_url: "https://kedai-fiksi.example/",
+        display_name: "Kedai Fiksi",
+        preparation_mode: "synthetic-local",
+      }),
+    }),
+  );
+  let failed = false;
+  await page.route("**/api/audit/extract", (route) => {
+    if (!failed) {
+      failed = true;
+      return route.fulfill({
+        status: 502,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: "Ekstraksi sementara gagal.",
+          telemetry: [failedCall],
+        }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        draft: richDraft,
+        telemetry: [],
+        preparation_mode: "synthetic-local",
+      }),
+    });
+  });
+  await page.goto("/audit");
+  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
+  await page
+    .getByRole("textbox", { name: "URL website publik" })
+    .fill("https://kedai-fiksi.example/");
+  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await expect(page.getByText("Ekstraksi sementara gagal.")).toBeVisible();
+  const saved = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  );
+  expect(saved.identity.canonicalUrl).toBe("https://kedai-fiksi.example/");
+  expect(saved.preparationCalls).toMatchObject([failedCall]);
+  await page.reload();
+  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
+  ).toBeVisible();
+  expect(
+    calls.filter((call) => call === "GET /api/audit/identity"),
+  ).toHaveLength(1);
+  expect(
+    calls.filter((call) => call === "POST /api/audit/extract"),
+  ).toHaveLength(2);
+  expect(
+    (extractionBodies[1]!.budget as { calls: unknown[] }).calls,
+  ).toMatchObject([failedCall]);
+});
+
+test("reload during question generation retains an unknown attempt and never auto-retries", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      calls.push(request.method());
+  });
+  await enter(page);
+  await page.route("**/api/audit/glm-questions", () => new Promise(() => {}));
+  const started = page.waitForRequest("**/api/audit/glm-questions");
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await started;
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Siapkan pertanyaan audit" }),
+  ).toBeVisible();
+  const saved = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  );
+  expect(saved.generationAttempts).toMatchObject([
+    { outcome: "interrupted", execution: "unknown", cost_usd: null },
+  ]);
+  expect(calls).toHaveLength(1);
+});
+
+test("a sensitive optional edit retains the last safe summary value", async ({
+  page,
+}) => {
+  await enter(page);
+  const differentiator = page.getByRole("textbox", { name: /Pembeda bisnis/ });
+  await differentiator.fill("Racikan kopi khas");
+  await differentiator.fill("nomor rekening 12345");
+  await expect(
+    page.getByText("Informasi sensitif terdeteksi", { exact: false }),
+  ).toBeVisible();
+  await expect(differentiator).toHaveValue("Racikan kopi khas");
+  const saved = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  );
+  expect(saved.selection.differentiator).toBe("Racikan kopi khas");
+  expect(JSON.stringify(saved)).not.toContain("nomor rekening");
+});
+
+test("every manually selected comparator stays visible, correctable and removable", async ({
+  page,
+}) => {
+  await enter(page);
+  await page.getByRole("radio", { name: "Bisnis yang saya pilih" }).check();
+  await page
+    .getByRole("textbox", { name: "Nama pembanding lain" })
+    .fill("Kedai Baru");
+  await page.getByRole("button", { name: "Tambah", exact: true }).click();
+  const selected = page.getByRole("textbox", { name: "Pembanding terpilih 1" });
+  await expect(selected).toHaveValue("Kedai Baru");
+  await selected.fill("Kedai Pilihan");
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  const frozen = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  );
+  expect(frozen.frozen.context.comparators.value).toEqual({
+    mode: "named",
+    names: ["Kedai Pilihan"],
+  });
+  await page
+    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Pembanding terpilih 1" }),
+  ).toHaveValue("Kedai Pilihan");
+  await page
+    .getByRole("button", { name: "Hapus pembanding Kedai Pilihan" })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Pembanding terpilih 1" }),
+  ).toHaveCount(0);
+});
+
+test("rich reading reaches one summary and question review without more typing", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/api/audit/"))
+      calls.push(`${request.method()} ${new URL(request.url()).pathname}`);
+  });
+  await enter(page);
+  await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Brand secara keseluruhan" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }),
+  ).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Bandung" })).toBeChecked();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(calls).toEqual([
+    "GET /api/audit/identity",
+    "POST /api/audit/extract",
+    "POST /api/audit/glm-questions",
+  ]);
+  await page
+    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+    .click();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(
+    calls.filter((call) => call === "POST /api/audit/glm-questions"),
+  ).toHaveLength(1);
+});
+
+test("partial extraction opens one clarification while channel and reach stay on summary", async ({
+  page,
+}) => {
+  await enter(page, false);
+  await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Lengkapi yang perlu dipastikan" }),
+  ).toBeVisible();
+  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
+  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
+  await page
+    .getByRole("button", { name: "Lengkapi yang perlu dipastikan" })
+    .click();
+  await expect(page.locator('[data-smart-summary="clarify"]')).toBeVisible();
+  const category = page.locator(
+    'section[aria-label="Kategori dan penawaran utama"]',
+  );
+  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
+  await category
+    .getByRole("textbox", { name: "Penawaran lain" })
+    .fill("kopi susu");
+  await category
+    .getByRole("textbox", { name: "Penawaran lain" })
+    .press("Enter");
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+});
+
+test("product and location choices freeze only their active meaning", async ({
+  page,
+}) => {
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  await enter(page);
+  await page.getByRole("button", { name: "Satu produk atau layanan" }).click();
+  await page.getByRole("radio", { name: "roti" }).click();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(contexts[0]).toMatchObject({
+    focus: { value: { kind: "produk", name: "roti" } },
+    offerings: { value: ["roti"] },
+  });
+  await page
+    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+    .click();
+  await page.getByRole("button", { name: "Satu lokasi" }).click();
+  await page.getByRole("textbox", { name: "Nama lokasi" }).fill("Cabang Timur");
+  await page
+    .getByRole("textbox", { name: "Alamat lokasi" })
+    .fill("Jl. Contoh 12");
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(contexts[1]).toMatchObject({
+    focus: {
+      value: { kind: "cabang", name: "Cabang Timur", address: "Jl. Contoh 12" },
+    },
+    offerings: { value: ["kopi susu", "roti"] },
+    market: null,
+  });
+});
+
+test("material correction invalidates the old questions; cancel keeps the committed pack", async ({
+  page,
+}) => {
+  const questions: unknown[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      questions.push(request.postDataJSON());
+  });
+  await enter(page);
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await page
+    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+    .click();
+  const category = page.locator(
+    'section[aria-label="Kategori dan penawaran utama"]',
+  );
+  await category.getByRole("button", { name: "Ubah" }).click();
+  await category.getByRole("textbox", { name: "Kategori" }).fill("warung kopi");
+  await page.getByRole("button", { name: "Batalkan perubahan" }).click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(questions).toHaveLength(1);
+  await page
+    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+    .click();
+  await category.getByRole("button", { name: "Ubah" }).click();
+  await category.getByRole("textbox", { name: "Kategori" }).fill("warung kopi");
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(questions).toHaveLength(2);
+  expect(
+    (questions[1] as { intake: { factVersion: number } }).intake.factVersion,
+  ).toBe(2);
+});
+
+test("identity correction requires explicit Periksa and a new reading", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  page.on("request", (request) => {
+    if (
+      ["/api/audit/identity", "/api/audit/extract"].includes(
+        new URL(request.url()).pathname,
+      )
+    )
+      calls.push(new URL(request.url()).pathname);
+  });
+  await enter(page, false);
+  await page.getByRole("button", { name: "Ubah nama atau website" }).click();
+  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  expect(calls).toHaveLength(2);
+  await page
+    .getByRole("textbox", { name: "Nama bisnis" })
+    .fill("Kedai Fiksi Baru");
+  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
+  ).toBeVisible();
+  expect(calls).toHaveLength(4);
+});
+
+test("named comparators require selection; alternatives carry no company names", async ({
+  page,
+}) => {
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  await enter(page);
+  await page.getByRole("radio", { name: "Bisnis yang saya pilih" }).click();
+  await page.getByRole("checkbox", { name: "Kedai Tetangga" }).click();
+  await page
+    .getByRole("textbox", { name: "Nama pembanding lain" })
+    .fill("Warung Fiksi");
+  await page.getByRole("button", { name: "Tambah", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(contexts[0]).toMatchObject({
+    comparators: {
+      value: { mode: "named", names: ["Kedai Tetangga", "Warung Fiksi"] },
+      origin: "owner",
+    },
+  });
+  await page
+    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+    .click();
+  await page
+    .getByRole("radio", { name: /Tidak ada pembanding langsung/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(contexts[1]).toMatchObject({
+    comparators: { value: { mode: "category-alternatives" } },
   });
   expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-}
-
-async function entry(
-  page: Page,
-  scope: keyof typeof scopeNames,
-  suffix = "?fixture=F1",
-) {
-  await page.goto(`/audit${suffix}`);
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-scope");
-  await expect(primary(page)).toHaveAttribute("aria-disabled", "true");
-  await page.getByRole("radio", { name: scopeNames[scope] }).click();
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    scope === "brand"
-      ? "s-category"
-      : scope === "cabang"
-        ? "s-branch"
-        : "s-product",
-  );
-}
-
-async function completeOwner(page: Page, state: string) {
-  if (["s-branch", "s-product", "s-category"].includes(state)) {
-    const selected = page.getByRole("radio", { checked: true });
-    if (!(await selected.count()))
-      await page.getByRole("radio").first().click();
-  }
-  if (
-    state === "s-service" &&
-    !(await page.getByRole("checkbox", { checked: true }).count())
-  )
-    await page.getByRole("checkbox").first().click();
-  if (state === "s-market")
-    await page.getByRole("radio", { name: "Seluruh Indonesia" }).click();
-  if (
-    state === "s-competitors" &&
-    !(await page.getByRole("checkbox", { checked: true }).count())
-  )
-    await page
-      .getByRole("checkbox", {
-        name: "Tidak ada pesaing langsung yang saya tahu",
-        exact: true,
-      })
-      .click();
-}
-
-async function toReview(page: Page, info?: TestInfo, prefix = "journey") {
-  const visited: string[] = [];
-  for (let count = 0; count < 15; count++) {
-    const state = await current(page);
-    if (state === "s-review") return visited;
-    if (!state) throw new Error("Intake shell is missing");
-    visited.push(state);
-    await completeOwner(page, state);
-    if (info)
-      await shot(
-        page,
-        info,
-        `${prefix}-${String(count).padStart(2, "0")}-${state}`,
-      );
-    await expect(primary(page)).toHaveAttribute("aria-disabled", "false");
-    await primary(page).click();
-    await expect(shell(page)).not.toHaveAttribute(
-      "data-new-intake-shell",
-      state,
-    );
-  }
-  throw new Error("The normal controls did not reach Review");
-}
-
-async function questions(page: Page) {
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-review",
-  );
-  await primary(page).click();
-  await expect(
-    page.getByRole("heading", {
-      name: "Periksa pertanyaan audit",
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-}
-
-async function downloadHandoff(page: Page) {
-  await primary(page).click();
-  await expect(
-    page.getByRole("heading", { name: "Serah terima lokal siap", exact: true }),
-  ).toBeVisible();
-  const pending = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Unduh serah terima", exact: true })
-    .click();
-  const downloaded = await pending;
-  const path = await downloaded.path();
-  return JSON.parse(await readFile(path!, "utf8"));
-}
-
-test.beforeEach(async ({ page, baseURL }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.route("**/*", (route) => {
-    const url = new URL(route.request().url());
-    if (
-      url.origin !== new URL(baseURL!).origin ||
-      url.pathname.startsWith("/api/")
-    )
-      return route.abort();
-    return route.continue();
-  });
-});
-
-for (const scope of ["brand", "cabang", "produk"] as const) {
-  test(`normal controls complete the ${scope} route and exact local handoff`, async ({
-    page,
-  }, info) => {
-    const requests: string[] = [];
-    page.on("request", (request) => {
-      if (new URL(request.url()).pathname.startsWith("/api/"))
-        requests.push(request.url());
-    });
-    await entry(page, scope);
-    const visited = await toReview(page, info, scope);
-    expect(visited.includes("s-branch")).toBe(scope === "cabang");
-    expect(visited.includes("s-product")).toBe(scope === "produk");
-    expect(visited.includes("s-offerings")).toBe(scope !== "produk");
-    await expect(
-      page.getByText("Pratinjau lima layar", { exact: true }),
-    ).toHaveCount(0);
-    const reviewText = await shell(page).innerText();
-    await shot(page, info, `${scope}-review`);
-    await questions(page);
-    await shot(page, info, `${scope}-questions`);
-    const handoff = await downloadHandoff(page);
-    expect(handoff).toMatchObject({
-      mode: "local-simulation",
-      auditExecuted: false,
-      providerCalls: 0,
-    });
-    expect(handoff.input.confirmed.scope).toBe(scope);
-    expect(handoff.questions.inputFingerprint).toBe(handoff.input.fingerprint);
-    expect(handoff.questions.factVersion).toBe(handoff.input.factVersion);
-    expect(handoff.questions.promptPack.prompts).toHaveLength(10);
-    for (const row of handoff.input.reviewRows)
-      expect(reviewText).toContain(row.value);
-    expect(handoff.input.confirmed.market).toEqual({
-      reach: "seluruh",
-      areas: [],
-    });
-    expect(requests).toEqual([]);
-    await shot(page, info, `${scope}-start`);
-  });
-}
-
-test("saved question edits survive Back, Next and refresh; intake changes replace stale questions", async ({
-  page,
-}) => {
-  await entry(page, "brand");
-  await toReview(page);
-  await questions(page);
-  const wording =
-    "Pilihan kedai kopi apa yang cocok untuk pelanggan di seluruh Indonesia?";
-  await page
-    .getByRole("button", { name: "Ubah pertanyaan 1", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Pertanyaan 1", exact: true })
-    .fill(wording);
-  await expect(primary(page)).toHaveAttribute("aria-disabled", "true");
-  await page.getByRole("button", { name: "Simpan", exact: true }).click();
-  await back(page).click();
-  await questions(page);
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
-  await page.reload();
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
-  await back(page).click();
-  await page
-    .getByRole("button", { name: "Ubah Hal yang wajib benar", exact: true })
-    .click();
-  await page
-    .getByRole("textbox")
-    .fill("Kemasan biji kopi tersedia dalam ukuran 250 gram.");
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-review",
-  );
-  await questions(page);
-  await expect(page.locator('[data-question-slot="1"]')).not.toContainText(
-    wording,
-  );
-  const handoff = await downloadHandoff(page);
-  expect(handoff.input.confirmed.publicFact).toBe(
-    "Kemasan biji kopi tersedia dalam ukuran 250 gram.",
-  );
-  expect(handoff.questions.inputFingerprint).toBe(handoff.input.fingerprint);
-});
-
-test("every Review owner supports unchanged Save and Cancel; scope edits reconfirm only dependents", async ({
-  page,
-}) => {
-  await entry(page, "cabang");
-  await toReview(page);
-  const owners = await page
-    .getByRole("button", { name: /^Ubah / })
-    .allTextContents();
-  const labels = await page
-    .getByRole("button", { name: /^Ubah / })
-    .evaluateAll((buttons) =>
-      buttons.map((button) => button.getAttribute("aria-label")!),
-    );
-  expect(owners.length).toBeGreaterThanOrEqual(10);
-  for (const label of labels) {
-    const original = await shell(page).innerText();
-    await page.getByRole("button", { name: label, exact: true }).click();
-    await expect(shell(page)).not.toHaveAttribute(
-      "data-new-intake-shell",
-      "s-review",
-    );
-    await back(page).click();
-    await expect(shell(page)).toHaveAttribute(
-      "data-new-intake-shell",
-      "s-review",
-    );
-    expect(await shell(page).innerText()).toBe(original);
-    await page.getByRole("button", { name: label, exact: true }).click();
-    await primary(page).click();
-    await expect(shell(page)).toHaveAttribute(
-      "data-new-intake-shell",
-      "s-review",
-    );
-    expect(await shell(page).innerText()).toBe(original);
-  }
-  await page
-    .getByRole("button", { name: "Ubah Fokus audit", exact: true })
-    .click();
-  await page.getByRole("radio", { name: scopeNames.produk }).click();
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-product",
-  );
-  const visited = await toReview(page);
-  expect(visited).not.toContain("s-offerings");
-  expect(visited).not.toContain("s-branch");
-  await expect(
-    page.getByRole("button", { name: "Ubah Produk dan layanan", exact: true }),
-  ).toHaveCount(0);
-  await questions(page);
-  const handoff = await downloadHandoff(page);
-  expect(handoff.input.confirmed.scope).toBe("produk");
-  expect(handoff.input.confirmed.offerings).toEqual([]);
-});
-
-test("market areas validate, nationwide and international clear them, and no-direct mode excludes names", async ({
-  page,
-}) => {
-  await entry(page, "brand");
-  await toReview(page);
-  await page.getByRole("button", { name: "Ubah Pasar", exact: true }).click();
-  await page.getByRole("radio", { name: "Sekitar satu area" }).click();
-  await expect(primary(page)).toHaveAttribute("aria-disabled", "true");
-  await page
-    .getByRole("textbox", { name: "Tambah area lain", exact: true })
-    .fill("Yogyakarta");
-  await page.getByRole("button", { name: "Tambahkan", exact: true }).click();
-  await primary(page).click();
-  await toReview(page);
-  await expect(
-    page.getByRole("button", { name: "Ubah Pasar", exact: true }),
-  ).toContainText("Yogyakarta");
-  await page.getByRole("button", { name: "Ubah Pasar", exact: true }).click();
-  await page.getByRole("radio", { name: "Beberapa area" }).click();
-  await expect(primary(page)).toHaveAttribute("aria-disabled", "true");
-  for (const area of ["Malang", "Surabaya"]) {
-    await page
-      .getByRole("textbox", { name: "Tambah area lain", exact: true })
-      .fill(area);
-    await page.getByRole("button", { name: "Tambahkan", exact: true }).click();
-  }
-  await primary(page).click();
-  await toReview(page);
-  await page.getByRole("button", { name: "Ubah Pasar", exact: true }).click();
-  await page.getByRole("radio", { name: "Indonesia dan luar negeri" }).click();
-  await expect(
-    page.getByRole("textbox", { name: "Tambah area lain", exact: true }),
-  ).toBeHidden();
-  await primary(page).click();
-  await toReview(page);
-  await page
-    .getByRole("button", { name: "Ubah Pembanding", exact: true })
-    .click();
-  await page
-    .getByRole("checkbox", {
-      name: "Tidak ada pesaing langsung yang saya tahu",
-      exact: true,
-    })
-    .click();
-  await primary(page).click();
-  await toReview(page);
-  await questions(page);
-  const handoff = await downloadHandoff(page);
-  expect(handoff.input.confirmed.market).toEqual({ reach: "luar", areas: [] });
-  expect(handoff.input.confirmed.comparators).toEqual({
-    mode: "category-alternatives",
-    names: [],
-  });
-});
-
-test("wrong brand correction commits only after reading and Back skips processing", async ({
-  page,
-}) => {
-  await page.goto("/audit?fixture=F1");
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await page.getByRole("button", { name: "Ubah", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Nama brand", exact: true })
-    .fill("Kedai Fiktif Pagi");
-  await page
-    .getByRole("textbox", { name: "Link website", exact: true })
-    .fill("https://kedaifiktif.example");
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await expect(
-    page.getByRole("heading", { name: "Kedai Fiktif Pagi", exact: true }),
-  ).toBeVisible();
-  await primary(page).click();
-  await back(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await expect(
-    page.getByRole("heading", { name: "Kedai Fiktif Pagi", exact: true }),
-  ).toBeVisible();
-});
-
-test("empty location and product preparation offer valid manual target controls", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
-  });
-  for (const scope of ["cabang", "produk"] as const) {
-    await page.goto("/audit?fixture=F2");
-    await page.evaluate(() => sessionStorage.clear());
-    await page.reload();
-    await entry(page, scope, "?fixture=F2");
-    await expect(page.getByRole("radio")).toHaveCount(0);
-    await expect(primary(page)).toHaveAttribute("aria-disabled", "true");
-    await page
-      .getByRole("textbox", {
-        name: scope === "cabang" ? "Nama lokasi" : "Nama produk atau layanan",
-        exact: true,
-      })
-      .fill(scope === "cabang" ? "Gerai Melati" : "Paket langganan mingguan");
-    if (scope === "cabang")
-      await page
-        .getByRole("textbox", {
-          name: "Alamat atau area yang membedakan lokasi",
-          exact: true,
-        })
-        .fill("Jalan Melati 12, Yogyakarta");
-    await page.getByRole("button", { name: "Tambah", exact: true }).click();
-    await primary(page).click();
-    await expect(shell(page)).toHaveAttribute(
-      "data-new-intake-shell",
-      "s-category",
-    );
-    expect(errors).toEqual([]);
-    await back(page).click();
-    await expect(page.getByRole("radio", { checked: true })).toContainText(
-      scope === "cabang" ? "Gerai Melati" : "Paket langganan mingguan",
-    );
-  }
-});
-
-test("unavailable reading stays failed on retry until the owner corrects its identity and source", async ({
-  page,
-}) => {
-  await page.goto("/audit?fixture=F6");
-  await expect(shell(page).getByRole("alert")).toBeVisible();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-crawl");
-  await expect(
-    page.getByRole("heading", {
-      name: "Kami menemukan brand ini",
-      exact: true,
-    }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "Coba lagi", exact: true }).click();
-  await expect(shell(page).getByRole("alert")).toContainText(
-    "Nama brand belum tersedia",
-  );
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-crawl");
-  await expect(
-    page.getByRole("heading", {
-      name: "Kami menemukan brand ini",
-      exact: true,
-    }),
-  ).toHaveCount(0);
-  await page.getByRole("button", { name: "Ubah sumber", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Nama brand", exact: true })
-    .fill("Kedai Fiktif Pagi");
-  await page
-    .getByRole("textbox", { name: "Link website", exact: true })
-    .fill("https://kedaifiktif.example");
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await expect(
-    page.getByRole("heading", { name: "Kedai Fiktif Pagi", exact: true }),
-  ).toBeVisible();
-});
-
-test("question failure returns unchanged Review and retry prepares a startable pack", async ({
-  page,
-}) => {
-  await entry(page, "brand", "?fixture=F1&failure=questions");
-  await toReview(page);
-  const review = await shell(page).innerText();
-  await primary(page).click();
-  await expect(shell(page).getByRole("alert")).toBeVisible();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Kembali ke informasi brand", exact: true })
-    .click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-review",
-  );
-  expect(await shell(page).innerText()).toBe(review);
-  await questions(page);
-  expect((await downloadHandoff(page)).auditExecuted).toBe(false);
+    (contexts[1]!.comparators as { value: Record<string, unknown> }).value,
+  ).not.toHaveProperty("names");
 });

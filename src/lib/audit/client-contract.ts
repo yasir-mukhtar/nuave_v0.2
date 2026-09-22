@@ -1,4 +1,4 @@
-export const AUDIT_CLIENT_CONTRACT_VERSION = "live-audit-stream-v1" as const;
+export const AUDIT_CLIENT_CONTRACT_VERSION = "live-audit-stream-v2" as const;
 
 export const AUDIT_CLIENT_UPDATE_REQUIRED_CODE =
   "AUDIT_CLIENT_UPDATE_REQUIRED" as const;

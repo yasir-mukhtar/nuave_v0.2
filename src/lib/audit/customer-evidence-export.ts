@@ -1,4 +1,5 @@
 import { makeEvidenceExport } from "./contracts";
+import type { DirectTenAuditContext } from "./direct-ten-context-v2";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
   type AuditCallTelemetry,
@@ -142,5 +143,38 @@ export function makeCustomerEvidenceExport(
     ...(provenance ? { provenance } : {}),
     observations: customerObservations,
     report: validatedReport,
+  };
+}
+
+/** New sessions export the saved confirmed meaning, without a compatibility brief. */
+export function makeSmartCustomerEvidenceExport(
+  context: DirectTenAuditContext,
+  prompts: AuditPrompt[],
+  observations: AuditObservation[],
+  report: AuditReport,
+  provenance?: Record<string, unknown>,
+) {
+  const evidence = makeEvidenceExport(context, prompts, observations, report);
+  const {
+    facts: _facts,
+    counts: _counts,
+    operational_telemetry: _telemetry,
+    ...validatedReport
+  } = evidence.report;
+  return {
+    export_version: "nuave-evidence-v5" as const,
+    exported_at: evidence.exported_at,
+    disclosure: evidence.disclosure,
+    context,
+    prompts,
+    observations: evidence.observations.map(
+      ({
+        failure_reason: _failureReason,
+        telemetry: _observationTelemetry,
+        ...observation
+      }) => observation,
+    ),
+    report: validatedReport,
+    ...(provenance ? { provenance } : {}),
   };
 }

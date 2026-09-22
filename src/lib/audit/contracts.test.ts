@@ -18,6 +18,10 @@ import {
   validateReportLanguageRevision,
 } from "./report-language";
 import { businessBriefSchema, promptPackSchema } from "./types";
+import {
+  DIRECT_TEN_CONTEXT_VERSION,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
 import type {
   AuditObservation,
   AuditPrompt,
@@ -94,6 +98,97 @@ const observations: AuditObservation[] = prompts.map((prompt, index) => ({
   failure_reason: "",
   telemetry: [],
 }));
+
+describe("v2 deterministic comparator matching", () => {
+  const base: DirectTenAuditContext = {
+    version: DIRECT_TEN_CONTEXT_VERSION,
+    identity: {
+      name: "Toko Fiksi",
+      source: "https://toko-fiksi.example/",
+      sourceOrigin: "owner",
+      aliases: [],
+      origin: "owner",
+    },
+    focus: { value: { kind: "brand" }, origin: "nuave" },
+    category: { value: "toko", origin: "website" },
+    offerings: { value: ["barang fiksi"], origin: "website" },
+    serviceChannels: { value: ["delivery"], origin: "website" },
+    market: { value: { reach: "seluruh", areas: [] }, origin: "owner" },
+    comparators: {
+      value: { mode: "named", names: ["Pembanding Satu", "Pembanding Dua"] },
+      origin: "owner",
+    },
+  };
+  it("retains both observed confirmed names but no unconfirmed company", () => {
+    const observed = observations.map((item, index) => ({
+      ...item,
+      raw_answer:
+        index === 0
+          ? "Pembanding Satu hadir."
+          : index === 1
+            ? "Pembanding Dua hadir."
+            : item.raw_answer,
+    }));
+    const content = reportContent();
+    content.observed_competitors = [
+      {
+        name: "Pembanding Satu",
+        relationship: "mentioned",
+        evidence_prompt_ids: [prompts[0]!.prompt_id],
+      },
+      {
+        name: "Pembanding Dua",
+        relationship: "mentioned",
+        evidence_prompt_ids: [prompts[1]!.prompt_id],
+      },
+      {
+        name: "Perusahaan Tidak Dipilih",
+        relationship: "mentioned",
+        evidence_prompt_ids: [prompts[0]!.prompt_id],
+      },
+    ];
+    const normalized = normalizeReportEvidence(
+      content,
+      observed,
+      base,
+      undefined,
+      "direct-ten",
+    );
+    expect(normalized.observed_competitors.map((item) => item.name)).toEqual([
+      "Pembanding Satu",
+      "Pembanding Dua",
+    ]);
+    const alternatives: DirectTenAuditContext = {
+      ...base,
+      comparators: {
+        value: { mode: "category-alternatives" },
+        origin: "owner",
+      },
+    };
+    expect(
+      normalizeReportEvidence(
+        content,
+        observed,
+        alternatives,
+        undefined,
+        "direct-ten",
+      ).observed_competitors,
+    ).toEqual([]);
+    const unknown: DirectTenAuditContext = {
+      ...base,
+      comparators: { value: { mode: "unknown" }, origin: "nuave" },
+    };
+    expect(
+      normalizeReportEvidence(
+        content,
+        observed,
+        unknown,
+        undefined,
+        "direct-ten",
+      ).observed_competitors,
+    ).toEqual([]);
+  });
+});
 
 function reportContent(): ReportContent {
   return {

@@ -148,6 +148,15 @@ export const extractionDraftSchema = z.object({
   brand_type: z.string(),
   category: z.string(),
   market_context: z.string(),
+  service_channels: z
+    .array(z.enum(["on_premise", "on_customer", "delivery", "online"]))
+    .max(4)
+    .refine((values) => new Set(values).size === values.length)
+    .default([]),
+  market_reach: z
+    .enum(["sekitar", "beberapa", "seluruh", "luar", ""])
+    .default(""),
+  market_areas: z.array(z.string().trim().min(1).max(160)).max(8).default([]),
   target_customer: z.string(),
   official_sources: z.array(z.string()),
   verified_offerings: z.array(z.string()),

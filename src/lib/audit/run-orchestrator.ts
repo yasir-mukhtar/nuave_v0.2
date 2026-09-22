@@ -3,8 +3,8 @@ import type {
   AuditCallTelemetry,
   AuditObservation,
   AuditPrompt,
-  BusinessBrief,
 } from "./types";
+import type { AuditSubject } from "./direct-ten-context-v2";
 import type { AuditRunEvent } from "./stream";
 import {
   assertLiveProviderCredentialsConfigured,
@@ -35,7 +35,7 @@ export type AuditRunSummary = {
 
 export async function runAuditObservations(input: {
   prompts: AuditPrompt[];
-  brief: BusinessBrief;
+  brief: AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
   execute: (input: QuestionExecuteInput) => Promise<AuditObservation>;

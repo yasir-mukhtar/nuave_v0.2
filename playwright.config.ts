@@ -12,7 +12,7 @@ import { journeyWebServer } from "./tests/e2e/shared-config";
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch:
-    /(audit-entry|offline-network|new-intake-journey|new-intake-glm)\.spec\.ts/,
+    /(audit-entry|offline-network|new-intake-journey|new-intake-glm|smart-intake)\.spec\.ts/,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

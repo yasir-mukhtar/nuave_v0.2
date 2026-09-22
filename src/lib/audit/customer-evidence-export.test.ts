@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   auditSessionProvenance,
   makeCustomerEvidenceExport,
+  makeSmartCustomerEvidenceExport,
   promptsWithOriginals,
   type GenerationAttemptRecord,
   type GenerationProvenance,
@@ -14,8 +15,57 @@ import {
   type AuditReport,
   type BusinessBrief,
 } from "./types";
+import {
+  DIRECT_TEN_CONTEXT_VERSION,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
 
 describe("customer evidence export", () => {
+  it("exports v5 with exact confirmed context and no legacy brief or operational diagnostics", () => {
+    const context: DirectTenAuditContext = {
+      version: DIRECT_TEN_CONTEXT_VERSION,
+      identity: {
+        name: "Toko Fiksi",
+        source: "https://toko-fiksi.example/",
+        sourceOrigin: "owner",
+        aliases: [],
+        origin: "owner",
+      },
+      focus: { value: { kind: "brand" }, origin: "nuave" },
+      category: { value: "toko", origin: "website" },
+      offerings: { value: ["barang fiksi"], origin: "website" },
+      serviceChannels: { value: ["delivery"], origin: "website" },
+      market: { value: { reach: "seluruh", areas: [] }, origin: "owner" },
+      comparators: { value: { mode: "unknown" }, origin: "nuave" },
+    };
+    const report = {
+      facts: { legacy: true },
+      counts: { legacy: true },
+      operational_telemetry: { private: true },
+      measures: { overall: { appeared: 0, total: 10 } },
+    } as unknown as AuditReport;
+    const observations = [
+      {
+        prompt_id: "NUAVE-DT-01",
+        question: "Pertanyaan?",
+        telemetry: [{ response_id: "private" }],
+        failure_reason: "private",
+      },
+    ] as unknown as AuditObservation[];
+    const exported = makeSmartCustomerEvidenceExport(
+      context,
+      [],
+      observations,
+      report,
+      { accounted_cost_usd: 0 },
+    );
+    expect(exported.export_version).toBe("nuave-evidence-v5");
+    expect(exported.context).toEqual(context);
+    expect(exported).not.toHaveProperty("brief");
+    expect(JSON.stringify(exported)).not.toContain("private");
+    expect(exported.report).not.toHaveProperty("facts");
+    expect(exported.report).not.toHaveProperty("counts");
+  });
   it("keeps validated measures and observable evidence while omitting competing/internal projections", () => {
     const report = {
       facts: {

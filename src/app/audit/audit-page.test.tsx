@@ -1,7 +1,5 @@
-import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { INTAKE_FIXTURES } from "@/lib/intake/fixtures";
 import AuditIntakeClient from "./audit-intake.client";
 import AuditPage from "./page";
 import NewIntakeRedirectPage from "./new-intake/page";
@@ -43,16 +41,12 @@ describe("/audit entry (Spec 010 R-08)", () => {
     });
     expect(element.type).toBe(AuditIntakeClient);
     expect(props(element)).toMatchObject({
-      fixture: undefined,
-      blank: true,
       live: true,
-      glmExperiment: true,
-      failQuestionsOnce: false,
       glmStubBehavior: undefined,
     });
   });
 
-  it("synthetic mode keeps the fixture harness parameters", async () => {
+  it("synthetic mode keeps only the stub behavior harness parameter", async () => {
     vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "true");
     vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
     const element = await AuditPage({
@@ -63,14 +57,11 @@ describe("/audit entry (Spec 010 R-08)", () => {
         "glm-stub": "timeout",
       }),
     });
-    expect(props(element).fixture).toBe(INTAKE_FIXTURES.GLM);
     expect(props(element)).toMatchObject({
-      blank: false,
       live: false,
-      glmExperiment: true,
-      failQuestionsOnce: true,
       glmStubBehavior: "timeout",
     });
+    expect(props(element)).not.toHaveProperty("fixture");
   });
 
   it("synthetic mode without a fixture parameter starts blank too", async () => {
@@ -78,9 +69,7 @@ describe("/audit entry (Spec 010 R-08)", () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
     const element = await AuditPage({ searchParams: Promise.resolve({}) });
     expect(props(element)).toMatchObject({
-      blank: true,
       live: false,
-      glmExperiment: false,
     });
   });
 
@@ -88,7 +77,7 @@ describe("/audit entry (Spec 010 R-08)", () => {
     vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "1");
     vi.stubEnv("NUAVE_AUDIT_MODE", "livve");
     const element = await AuditPage({ searchParams: Promise.resolve({}) });
-    expect(props(element)).toMatchObject({ live: false, blank: true });
+    expect(props(element)).toMatchObject({ live: false });
   });
 
   it("renders the blank journey on the empty business step", async () => {
@@ -96,10 +85,8 @@ describe("/audit entry (Spec 010 R-08)", () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     const element = await AuditPage({ searchParams: Promise.resolve({}) });
     const html = renderToStaticMarkup(element);
-    expect(html).toContain('data-new-intake-shell="s-brand-fix"');
-    expect(html).toContain("Nama brand");
-    expect(html).toContain("Link website");
-    expect(html).toContain("Versi uji coba");
+    expect(html).toContain("Menyiapkan sesi audit");
+    expect(props(element)).toMatchObject({ live: true });
   });
 });
 

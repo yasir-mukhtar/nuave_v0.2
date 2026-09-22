@@ -1,10 +1,75 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-21
+> Updated: 2026-09-22
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-22 — accept the Spec 011 truthful boundary and historical hold
+
+**SETTLED — founder-approved.** After the R-00B sizing, separate report/export
+boundary review, and a plain-language explanation of the scope and historical
+access tradeoff, the founder accepted the recommendation: “I agree with your
+recommendation totally. Lets do that. Move forward.” This supersedes the
+2026-09-21 instruction to defer cross-cutting downstream compatibility work
+while keeping report/export meaning and historical delivery unchanged.
+
+The accepted R-00B classification is **Cross-cutting**. The complete truthful
+boundary is **large** relative to an intake adapter; this is a size estimate,
+not a delivery-time commitment. The existing compatibility brief invents
+required values that enter report synthesis and customer JSON, and can affect
+deterministic comparator matching. Isolating only the question writer or
+hiding a summary row cannot remove that exposure. No temporary exception to
+keep exposing fallback values is approved.
+
+[Spec 011](../specs/011-smart-consultant-intake/SPEC.md) now includes the prepared
+summary and exact confirmation/frozen/facts/writer handoff **together with** a
+versioned truthful direct-ten context for run/report requests, every enabled
+report adapter, deterministic interpretation, saved audit records, recovery,
+customer JSON, and print display. Optional values remain absent. Target
+customer, needs, decision considerations, channels, category, and business type
+remain distinct; unknown comparator never becomes an alternative or named
+company. Report context retains the authority of website, Nuave-proposed, and
+owner-supplied meanings rather than labeling them all independently verified.
+
+Removing fabricated input may change new report interpretation. Customer JSON
+advances to `nuave-evidence-v5` with truthful confirmed context. These changes
+are accepted; observation messages/method, approved questions, measurement and
+evidence rules, report output schema/layout, 10/10 gates, cost controls, and
+explicit audit approval remain protected. Removing legacy-only code may be
+deferred; removing fallback exposure from the new path may not.
+
+**Historical behavior for this release:** preserve already-started/completed
+v1 records exactly in their existing browser-session storage, including frozen
+input, approved/original/edited questions, saved brief, observations, report,
+provenance, and cost ledger. Hold their in-app report display, JSON/PDF
+delivery, observation resume, and report retry. Reject old request variants
+before provider work and show a clear availability state. Never migrate,
+regenerate, overwrite, or silently delete a valid old record to fit v2.
+Already downloaded files remain unchanged. This preserves existing session
+data; it does not create permanent storage, a backup, or a recovery promise.
+The hold is settled release behavior, not a pending implementation gate.
+Historical reactivation needs separate founder approval and is deferred.
+
+R-00A was received through the sanitized local note. R-00B and the separate
+boundary review are complete and accepted. The existing extraction/sizing/
+review notes remain unchanged, untracked, unstaged, uncommitted, and unpushed.
+Their original pending-approval wording is historical evidence; this decision
+and the amended spec govern the next implementation. Do not repeat private
+extraction inspection or the sizing review.
+
+The next work is one complete product branch/PR for the amended Spec 011,
+starting with fictional old-state preservation fixtures, followed by the
+prepared summary and truthful downstream path. Focused checks,
+`npm run validate:fast`, and `npm run verify` must pass offline. Legacy-only
+removal, historical reactivation, report usefulness/layout redesign, durable
+delivery, and commercial-launch work remain separate. This acceptance
+authorizes specification alignment, the implementation handoff, and subsequent
+offline implementation. It does not authorize secrets/private-evidence
+inspection, a live provider call, commit, push, merge, or deployment. The
+preparation-only live walkthrough and any later full live audit each need
+separate explicit authorization.
 
 ## 2026-09-21 — approve and promote the Smart Consultant prepared intake
 
