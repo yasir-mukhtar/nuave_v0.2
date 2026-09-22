@@ -256,21 +256,30 @@ export default function ReportView({
           <nav className={styles.reportContents} aria-label="Report contents">
             <span>Isi laporan</span>
             <ol>
-              <li>
-                <a href="#summary">Hasil utama</a>
-              </li>
-              <li>
-                <a href="#findings">Temuan utama</a>
-              </li>
-              <li>
-                <a href="#priorities">Langkah berikutnya</a>
-              </li>
-              <li>
-                <a href="#detail">Hasil tiap pertanyaan</a>
-              </li>
-              <li>
-                <a href="#method">Cara kerja audit</a>
-              </li>
+              {[
+                ["summary", "Hasil utama"],
+                ["findings", "Temuan utama"],
+                ["priorities", "Langkah berikutnya"],
+                ["detail", "Hasil tiap pertanyaan"],
+                ["method", "Cara kerja audit"],
+              ].map(([id, label]) => (
+                <li key={id}>
+                  <a
+                    href={`#${id}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      const section = document.getElementById(id);
+                      if (!section) return;
+                      // Historical sections also use this report-local nav.
+                      section.tabIndex = -1;
+                      section.focus({ preventScroll: true });
+                      section.scrollIntoView({ block: "start" });
+                    }}
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))}
             </ol>
           </nav>
         </header>
