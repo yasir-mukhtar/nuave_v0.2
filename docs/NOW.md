@@ -3,20 +3,16 @@
 > Updated: 2026-09-22 (report specification status only)
 > Stage: pre-customer, building the pipeline
 
-**Current report task (2026-09-22):** published Astra v3.1 at `316ac5b` is
-promoted to [Spec 012 — Evidence-first AI Visibility Report — Astra](../specs/012-evidence-first-report/SPEC.md),
-**In review**. All eight founder decisions are settled, including G4: the
-answers-only recovery state supports copy/explicit retry and has no
-print/PDF/JSON save path. Block 0's report guidance and Spec 010 failure-table
-amendments are recorded. This is documentation only; no runtime, provider,
-dependency, deployment, or report-quality verification is claimed.
+**Report pointer (2026-09-22):** [Spec 012 — Astra](../specs/012-evidence-first-report/SPEC.md)
+remains **In review** after S1–S6 fixes. All eight founder decisions are settled;
+review 1 records the technical approvals. Next report action: founder approval
+of the corrected spec. This documentation changes no runtime or live-call authority.
 
-**Next report action:** review and approve Spec 012's implementation contract,
-including exact Markdown pins and the concrete non-corrective templates.
-Then PR A starts from current main without waiting for Spec 011. B1/B2 start
-only after its verified merge; B2 consumes integrated A/B1. The prior blanket
-report-work deferral is superseded for this scope. The dated checkpoints below
-retain their historical evidence and do not override this current report task.
+Spec 011 owns intake state; Spec 012 owns report state. The two live-flow tasks
+below remain active; only the report-work deferral was superseded. For merging,
+land the intake branch first, then rebase this documentation branch once and
+reconcile the shared operating documents. A development may start from current
+main after spec approval; B1/B2 wait for the verified Spec 011 merge.
 
 **Portable pause checkpoint:** code and current instructions are combined on
 `codex/pause-checkpoint-2026-09-19`. On another laptop, use
@@ -147,12 +143,13 @@ tests. These are implementation checks, not a naturalness or release pass.
 
 ## Current objective
 
-Complete review of Spec 012's report implementation contract under the eight
-settled founder decisions. The founder's report-quality verdict remains
-**not useful enough yet**; this documentation does not pass that gate. Preserve
-truthful evidence/counts, explicit approvals, accounting, historical records
-and finished-report exports. A/B1/B2 sequence runtime changes after spec
-approval. Commercial integration and production activation remain separate.
+Continue the live-flow preparation and authorized end-to-end check below,
+with Spec 011 owning intake state. In parallel, complete founder approval of
+Spec 012's corrected report contract. The report-quality verdict remains
+**not useful enough yet**; this documentation does not pass that gate or grant
+live-call authority. Preserve truthful evidence/counts, explicit approvals,
+accounting, historical records and finished-report exports. Commercial
+integration and production activation remain separate.
 
 ## Presentation layer
 
@@ -559,14 +556,23 @@ requires explicit authorization.
 
 ## Do now
 
-1. Review Spec 012's requirements and acceptance matrix, especially the pure
-   adapter, exact dependency pins, code-owned templates and all three final
-   usefulness-failure cases. Do not reopen the eight settled decisions.
-2. After specification approval, begin only PR A's allowed presentation work
-   from current main. Record the base SHA and verify the adapter before UI/CSS.
-3. Record Spec 011's verified merge and actual boundary before B1/B2. Reuse
-   authorized retained evidence for the human rubric; no new live call is
-   authorized by this documentation task.
+1. Prepare one complete real-flow approval scope, including fresh GLM
+   generation and question approval. Correct the worker proposal's synthetic-
+   generation assumption and retry/cost wording before requesting paid access.
+2. After explicit authorization, test the ordinary intake through real
+   preparation, approved questions, ten grounded answers and report/download.
+   Retain the evidence export so report presentation can be iterated later.
+3. Obtain founder approval of the corrected Spec 012. Review 1's exact-pin
+   approval and template approval subject to S3/S4 are recorded; those fixes
+   are now applied. Keep the status **In review** until the founder approves.
+4. After spec approval, begin only PR A's allowed presentation work from current
+   main. Record the base SHA and verify the adapter before UI/CSS. No need to
+   wait for Spec 011 to begin A development.
+5. For documentation integration, merge the intake branch first and rebase
+   `docs/astra-report-redesign-plan` once. Reconcile `NOW.md`, `DECISION_LOG.md`,
+   `INDEX.md`, and `specs/README.md`, preserving intake and report state. Record
+   Spec 011's verified merge and actual boundary before B1/B2. Reuse authorized
+   retained evidence for the report rubric; this task authorizes no live call.
 
 ## Not now
 

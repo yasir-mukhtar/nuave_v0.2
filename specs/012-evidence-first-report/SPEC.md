@@ -2,17 +2,32 @@
 
 > Status: **In review**
 > Owner: Founder / orchestrator; specification author: Astra
-> Updated: 2026-09-22
+> Updated: 2026-09-22 (revision 1: S1–S6 applied; founder approval pending)
 > Implements: `docs/PRODUCT.md` — see what AI says about your business and choose evidence-backed work
 > Promotes: Astra report redesign plan **v3.1**, published at `316ac5bf090fca23dfcd8043782bfaabbc696777`
 > Scope of this change: documentation only; no runtime, dependency, fixture, provider, or deployment changes
 
 All eight founder decisions below are settled. This document is the reviewable
 implementation contract requested by block 0 of the plan. Its **In review**
-status concerns the concrete requirements, dependency pins, templates, and
-verification contract; it does not reopen those decisions. Implementation
-starts only after this numbered spec is approved. No individual PR constitutes
-acceptance of the whole report redesign.
+status awaits founder approval of the corrected implementation contract; it
+does not reopen those decisions. The tech lead approved the exact dependency
+pins and approved the templates subject to S3/S4, now applied below.
+Implementation starts only after the founder approves this numbered spec. No
+individual PR constitutes acceptance of the whole report redesign.
+
+## Revision 1: independent review S1–S6
+
+Applied [SPEC_REVIEW_1.md](./SPEC_REVIEW_1.md), reviewed against `be8187a`.
+The status stays **In review** until founder approval.
+
+| Finding | Resolution |
+|---|---|
+| S1 | Restore both live-flow items beside report work in `NOW.md`; keep its report pointer short. Spec 011 owns intake state and Spec 012 owns report state. Merge the intake branch first, then rebase this documentation branch once and reconcile shared operating documents. |
+| S2 | G4 removes Nuave download controls/export routes only. Remove recovery print suppression and its acceptance/failure cases; leave browser-native printing alone. |
+| S3 | Use `Tidak dinilai dari jawaban yang tersedia` for detail-level non-assessment and template V. Reserve `Tidak diuji` for aggregate empty-denominator labels and existing historical contracts. |
+| S4 | No templates in model requests, including language-only retries. B2 allows zero priorities in direct-ten synthesis only; code selects at most one eligible P/V after repair and any permitted language revision. Finished-report minimum one is unchanged. |
+| S5 | Add the PDF label constant in `report-labels.ts` and its test to PR A's narrow allowlist, alongside the shared toolbar default. |
+| S6 | Confirmed the runtime calibration at `4e6b2cf`: advisory ceiling 20 words, no floor, hard ceiling 25, no Indonesian field totals. Correct R-11 and require B1 to recheck the constants on its integration base. |
 
 ## Required context
 
@@ -127,7 +142,7 @@ This task does not authorize runtime work, live calls, merge, or deployment.
 | D-05 | Exact labels: `Bisnis Anda muncul di X dari 10 pertanyaan`, `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, `Download PDF`. G3 changes the shared toolbar default. | R-03, R-08; A; `VOICE.md` amendment |
 | D-06 | If the final useful-report gate fails after repair with ten usable observations, show answers only. Findings empty, actions empty, or both trigger it. No surviving analysis is exposed. | R-14–R-15; B2; Spec 010 amendment |
 | D-07 | PDF follows screen order, using the same DOM tree and print CSS. No appendix or hidden duplicate answer tree. | R-08; A |
-| D-08 | G4, founder-confirmed 2026-09-22: answers-only recovery permits copy and explicit report retry, with no print/PDF/JSON save path. | R-15; B2 |
+| D-08 | G4, founder-confirmed 2026-09-22: answers-only recovery permits copy and explicit report retry, with no Nuave print/PDF/JSON controls or export route. Browser-native printing is unchanged (S2). | R-15; B2 |
 
 All eight decisions are recorded in [DECISION_LOG.md](../../docs/DECISION_LOG.md).
 This change also reconciles `PRODUCT.md`, `AUDIT.md`, `VOICE.md`, journey 06,
@@ -135,9 +150,10 @@ and Spec 010, and routes the spec from `NOW.md`, `INDEX.md`, and `specs/README.m
 Older plan references to optional collapse, a direct-ten-only PDF-label
 override, “v3,” or seven decisions are superseded by G2/G3 and this table.
 
-Block 0's remaining approval checks are concrete: approve the pins in R-06
-before changing dependencies, and review the exact B2 template objects and
-eligibility contract in R-13. No runtime implementation is claimed here.
+Block 0's technical approvals are recorded in review 1: the R-06 exact pins
+are approved, and the R-13 templates are approved subject to S3/S4, applied in
+this revision. Founder approval of this spec remains pending. No runtime
+implementation is claimed here.
 
 ## Experience
 
@@ -212,9 +228,11 @@ with visible numerator/denominator. Show zero honestly. Keep a quiet
 limitation; completion is not performance. Do not repeat the same count in an
 unnamed tile or show empty named/comparison/info tiles. Each answer separately
 distinguishes mention/absence, explicit recommendation/non-recommendation,
-and `Tidak diuji` for an unassessed dimension. A factual mention is not a
-recommendation. Relevant comparison/information statuses may be shown, without
-inventing an assessment. Direct-ten recommendation remains out of all ten even
+and `Tidak dinilai dari jawaban yang tersedia` for an unassessed dimension.
+Reserve `Tidak diuji` for aggregate empty-denominator labels and existing
+historical contracts. A factual mention is not a recommendation. Relevant
+comparison/information statuses may be shown without inventing an assessment.
+Direct-ten recommendation remains out of all ten even
 if nine answers are `not_assessed`; historical methods retain their own rules.
 
 **R-04 — Complete answer, permanently visible.** Render every
@@ -254,18 +272,20 @@ Clipboard failure leaves selectable original text and a truthful notice; it
 does not fall back to a provider request. Raw-view controls are separate from
 the always-visible answer and excluded from print to avoid a duplicate body.
 
-**R-06 — Dependency gate.** Proposed exact pins are `react-markdown@10.1.0`
-and `remark-gfm@4.0.1`, without ranges. Official package metadata identifies
+**R-06 — Dependency gate.** The tech lead approved exact pins
+`react-markdown@10.1.0` and `remark-gfm@4.0.1` in
+[review 1](./SPEC_REVIEW_1.md#approvals-this-review-grants-tech-lead-scope),
+without ranges. Official package metadata identifies
 both as ESM using unified 11; react-markdown accepts React and React types
 `>=18`, compatible with this repository's React 19.2.3/types 19.2.7 at the peer
 constraint level. See the [react-markdown metadata](https://registry.npmjs.org/react-markdown/10.1.0)
 and [remark-gfm metadata](https://registry.npmjs.org/remark-gfm/4.0.1), read
-2026-09-22. This is a compatibility proposal, not a completed Node 22/Next
-build or a claim these are the latest versions.
+2026-09-22. Pin approval does not constitute a completed Node 22/Next/OpenNext
+build or runtime verification.
 
-The spec approver must explicitly approve both pins before A changes
-`package.json`/`package-lock.json`. Then follow README's lockfile procedure and
-verify Node 22, client/server build, and safe-renderer behavior offline. A
+After founder approval of this spec, A may use these approved pins in
+`package.json`/`package-lock.json`. Follow README's lockfile procedure and
+verify Node 22, Next/OpenNext builds, and safe-renderer behavior offline. A
 different version or additional renderer/plugin dependency requires a reviewed
 spec amendment. No dependency was installed by this documentation task.
 
@@ -295,6 +315,12 @@ integrity/unavailable result rather than plausible names or links.
 update conflicting call-site overrides only if discovered and reviewed within
 the toolbar-label scope. Keep finished-report JSON secondary and unchanged.
 
+Also change `INDONESIAN_REPORT_LABELS.download_pdf` in
+`src/lib/audit/report-labels.ts` to **Download PDF** and update its assertion
+in `report-labels.test.ts`. The currently unused key must not retain the old
+`Cetak / simpan PDF` wording or a test that enshrines it. These two narrow
+changes are part of A, not deferred to B1.
+
 Direct-ten prints the same DOM tree in the same section order. Each question
 and complete answer appears once, with one anchor ID. No print-only renderer,
 hidden duplicate answer tree, portal, appendix, or clone in `beforeprint`.
@@ -318,8 +344,11 @@ global typography or indirectly restyle A's protected header.
 
 **R-10 — Count bounds without a quota.** Widen the existing findings and
 priorities maxima and `priority.order` maximum from five to ten in the shared
-schema and all derived/provider schema uses. Keep minimum one at initial
-synthesis. Ten and order ten pass; eleven and order eleven fail. Do not truncate
+schema and all derived/provider schema uses. B1 keeps the existing minimum one
+at initial synthesis. B2 then permits zero priorities in the direct-ten
+synthesis contract only, as R-13 specifies; the final report-content minimum
+remains one, and findings and historical synthesis keep their minima. Ten and
+order ten pass; eleven and order eleven fail. Do not truncate
 valid items in the renderer. Three supported, distinct findings/actions remain
 three. New instruction/usefulness rules are direct-ten-only; accepting a wider
 shared schema does not reinterpret or regenerate older records.
@@ -341,9 +370,15 @@ Material late caveats, contradictory evidence, and unassessed dimensions must
 survive interpretation. Generic advice and repeated findings are not padding
 for a minimum. Human usefulness review supplements deterministic checks.
 
-Keep `plain-id-v1` and its existing per-sentence writing limits: the 12–20 word
-target is guidance and the 25-word ceiling is enforced as currently defined.
-Do not import English total-field limits as new Indonesian limits. Exact
+Keep `plain-id-v1` and the runtime's existing per-sentence writing limits.
+Inspection at `4e6b2cf` confirms `INDONESIAN_REPORT_LANGUAGE_CALIBRATION` in
+`src/lib/audit/report-language.ts`: `sentence_target_min_words: null`,
+`sentence_target_max_words: 20`, `sentence_hard_ceiling_words` references
+`REPORT_MAX_SENTENCE_WORDS = 25`, and `field_word_limits: null`. Guidance is
+20 words or fewer, with no floor; the hard ceiling is 25. B1 must reconfirm
+these executable constants on its integration base and correct this description
+if they differ, without changing language behavior. Do not rely on stale
+12–20-word comments or import English total-field limits. Exact
 questions, answers, names, and source text are exempt. Protect existing
 language-only retry invariants: classifications, IDs, source/excerpt facts,
 action order/timing/owner, and evidence must not change. No new critique call.
@@ -378,15 +413,28 @@ existing observed-gap validation for ordinary model-authored corrective
 priorities. Add the following bounded direct-ten exception; neither a word
 heuristic nor a model-supplied “maintenance” flag can activate it.
 
-Before the initial synthesis call, build at most two candidate objects per
-completed observation with a visible audited-business mention, using the
-existing identity-matching semantics. Use only retained IDs, exact questions,
-approved ordinals, observations, and existing confirmed identity. Do not wait
-for pending classifications to build the candidates or make a second call.
-The request presents candidates alongside their exact question/answer so the
-model can return an exact eligible object if the initial minimum requires one.
-Eligibility is independently checked after normalization; it is never trusted
-from the model's choice.
+B2 permits **zero to ten priorities in direct-ten synthesis**, including a
+language-only revision. In `types.ts`, derive a method-specific synthesis
+schema from the shared contract and override only the priority minimum to
+zero. Use the matching contract for structured output and response parsing.
+Keep the final `reportContentSchema.priorities` minimum at one, findings'
+minimum at one, and historical synthesis unchanged. This is an intermediate
+generation contract, not a persisted report-schema change. Instructions tell
+the model to return `priorities: []` when no observed gap supports an action.
+It is never forced to invent a gap or produce a maintenance template.
+
+Template candidates never enter the initial prompt or any language-only retry
+prompt/draft. Apply the existing normalization and ordinary corrective-priority
+support/quality repair first. Complete any already permitted language-only
+revision using that model-authored draft, allowing an empty priority list in
+the direct-ten retry-shape check and preserving existing retry integrity and
+cost limits. An empty priority list never triggers a retry on its own; only
+the existing language violations can use the permitted language-retry budget.
+Only after that work, code constructs/selects at most one eligible
+P or V below. Use retained IDs, exact questions, approved ordinals, normalized
+classifications, observations, and confirmed identity with the existing
+identity-matching semantics. No model selects, returns, edits, or approves the
+code-owned action; no extra call or candidate-payload plumbing is introduced.
 
 The candidate's entire persisted shape is the existing priority shape below.
 `{n}` is the human ordinal (1–10), and `{id}` is that observation's actual ID.
@@ -399,7 +447,7 @@ it or injecting it into a length-limited Nuave prose field.
 | `timing` | `do_next` | `do_next` |
 | `action` | `Pemeliharaan: periksa dan pertahankan informasi publik yang mendukung rekomendasi pada jawaban pertanyaan {n}.` | `Pemeriksaan lanjutan: cocokkan informasi tentang brand dalam jawaban pertanyaan {n} dengan sumber resmi Anda.` |
 | `why` | `Jawaban ini merekomendasikan brand Anda. Pemeriksaan membantu Anda mempertahankan informasi yang benar tanpa menganggap semua informasi sudah lengkap.` | `Jawaban ini menyebut brand Anda, tetapi kebenaran informasinya belum dinilai.` |
-| `basis` | `Rekomendasi terlihat pada jawaban pertanyaan {n}.` | `Penilaian informasi pada pertanyaan {n} adalah Tidak diuji.` |
+| `basis` | `Rekomendasi terlihat pada jawaban pertanyaan {n}.` | `Penilaian informasi pada pertanyaan {n}: Tidak dinilai dari jawaban yang tersedia.` |
 | `owner` | `business_owner` | `business_owner` |
 | `done_when` | `Informasi tentang brand dalam jawaban sudah diperiksa pada sumber resmi; fakta yang sesuai dan perlu dikonfirmasi dicatat.` | `Setiap informasi tentang brand dalam jawaban ditandai sesuai, perlu konfirmasi, atau tidak tercantum pada sumber resmi.` |
 | `evidence_prompt_ids` | `[{id}]` | `[{id}]` |
@@ -412,42 +460,42 @@ predicate for this evidence. P additionally requires `recommendation ===
 not have been retained: the action asks the owner to check their official
 information; it does not claim Nuave checked a source or found a defect.
 
-Validate any submitted exception by exact equality with a recomputed eligible
-object: all strings, enums, reference IDs/order, and field set must match;
-only the display `order` may receive the normal contiguous renumbering. Reject
-unknown IDs, added/edited template fields, and positive-only corrective advice.
-Do not silently rewrite a forged object into a passing template. Keep the
-known existing fields; no saved discriminator, score, template ID, or flag.
+Every model-authored priority passes the ordinary observed-gap path, even if
+it copies a template or supplies a template-like flag. The exception is used
+only by the subsequent code-owned insertion. Validate that inserted action by
+exact equality with a recomputed eligible object: all strings, enums,
+reference IDs/order, and the field set must match; only display `order` may
+receive normal contiguous renumbering. Check field sets before a parser could
+strip extra keys. Unknown IDs, edited/extra fields, or a forged tag cannot pass
+the exception. Unsupported model priorities are discarded by the existing
+repair; a forged object is never rewritten into an accepted template.
+Non-recoverable integrity failures still stop the pipeline. Keep the existing
+saved fields, without a discriminator, score, template ID, or flag.
 
-Check field sets before any parser could silently strip additional keys. The
-normal corrective-gap path and the exact-object exception are separate checks;
-approximate wording never makes an ordinary priority a template. A failed
-exception is discarded under existing unsupported-priority repair, not repaired
-into an accepted object. Existing non-recoverable integrity failures still stop
-the pipeline.
+After repair and any language-only revision, keep supported corrective actions
+as usual. If none survive and integrity checks pass, select at most one
+eligible code-owned candidate, preferring P then V and the earliest approved
+ordinal within that type. Construct it from code even when synthesis returns
+`priorities: []`. Never append one as filler to a supported action list, and
+never pad findings. Check the inserted text locally against the unchanged
+writing contract without sending it back to a model. The builder and selector
+are deterministic request-local logic, not another synthesis or persistence
+layer. The final minimum gate runs after insertion.
 
-After ordinary corrective-priority support/quality repair, keep supported
-corrective actions as usual. If none survive and integrity checks pass,
-independently select at most one eligible code-owned candidate, preferring
-P then V and the earliest approved ordinal within that type. Reconstruct it
-from code, including when synthesis omitted a usable candidate. Never append
-one as filler to an already useful action list, and never pad findings. A
-language-only retry must preserve a chosen candidate exactly; reject changed
-template fields before accepting revised content. The builder and selector are
-deterministic request-local logic, not another synthesis or persistence layer.
-
-These are concrete template proposals within an already settled product
-decision. Their inclusion does not prove usefulness: an irrelevant candidate
-fails AC-18's human rubric. If these bounded candidates cannot support useful
+The tech lead approved these templates subject to S3's detail-level label and
+S4's code-only insertion; both conditions are applied here. This approval does
+not prove usefulness: an irrelevant candidate fails AC-18's human rubric.
+If these bounded candidates cannot support useful
 work in the retained evidence, report that limitation; do not broaden the
 exception or invent a defect to pass the minimum.
 
 **R-14 — Final usefulness gate.** For newly synthesized direct-ten reports,
-after evidence normalization, existing support/quality repair, constrained
-candidate handling, and any already permitted language-only revision, require
+after evidence normalization, existing support/quality repair, any already
+permitted language-only revision, and code-owned candidate handling, require
 at least one surviving supported finding and at least one supported action,
-each within ten. Evaluate again after a successful language revision. If
-findings are empty OR actions are empty, do not call `buildAuditReport` or
+each within ten. Any successful language revision is revalidated before
+candidate selection and final completion. If findings are empty OR actions are
+empty, do not call `buildAuditReport` or
 return a report-ready success. Do not backfill a finding, expose the surviving
 section, or change an answer/classification to manufacture support. This gate
 does not revalidate or rewrite previously delivered reports at read time.
@@ -483,15 +531,10 @@ notice, copy, and permitted retry appear in the recovery content. No rejected
 classification, conclusion, finding, action, comparator summary, score,
 report-ready announcement, print/PDF/JSON button, download callback, or export
 route is attached. The existing report JSON serializer is not called. G4 is
-settled; do not add a recovery export as a convenience.
-
-Browser-native print cannot be disabled as a browser capability. Scope recovery
-print CSS to omit its answer content and controls and leave only the unfinished
-notice; verify that invoking browser print does not produce a recovery report.
-This is presentation behavior, not a security claim about preventing copying
-or browser saves. It neither creates a second answer tree nor changes finished
-report printing. If ten usable observations were not established, use the
-existing failure/recovery path without this reader or a partial report.
+settled; do not add a recovery export as a convenience. This restriction covers
+Nuave's controls and export routes; leave browser-native printing alone.
+If ten usable observations were not established, use the existing
+failure/recovery path without this reader or a partial report.
 
 ### Preserved behavior and integration
 
@@ -524,6 +567,16 @@ answer exact. Routine choices within this spec do not reopen D-01–D-08.
 
 **R-19 — Fixed integration sequence.** A starts from then-current
 `origin/main`, recording its SHA and differences from the investigation base.
+
+For this documentation branch, merge the Spec 011 intake branch first, then
+rebase `docs/astra-report-redesign-plan` once before merging it. Both branches
+edit `docs/NOW.md`, `docs/DECISION_LOG.md`, `docs/INDEX.md`, and `specs/README.md`;
+reconcile their changes instead of replacing those files wholesale. Spec 011
+owns intake state; Spec 012 owns report state. Keep the two live-flow tasks in
+`NOW.md` alongside report work. Only the report-work deferral was superseded.
+This documentation integration order does not block PR A development from
+current main after founder spec approval and does not authorize either merge.
+
 B1 and B2 start only from main containing the verified Spec 011 result, with
 its merge SHA and verification evidence recorded. Inspect its actual R-23
 outcome; do not assume the older remote snapshot already contains `AuditSubject`.
@@ -545,7 +598,6 @@ verified B1 and A. B2 template/recovery issues do not block B1's bounded work.
 | Clipboard unavailable | Selectable exact raw text and failure notice | No request or misleading copied confirmation |
 | No retained sources/comparator | Full answers visible; source absence explained, optional comparator summary omitted | No claim that no search/alternatives existed |
 | Finished-report PDF/browser save fails | Same validated report remains usable | Repeat print from same record; no report/observation regeneration |
-| Recovery browser print invoked | Unfinished notice only; no answers/report artifact | No print/export implementation for this state |
 
 This explicitly refines Spec 010's **Observation/report failure** row only for
 the R-14/R-15 case. A/B1 retain baseline recovery until B2 implements it. No
@@ -575,23 +627,23 @@ combined result requires every criterion and the human usefulness gate.
 |---|---|---|
 | **AC-01** | Given valid direct-ten records, first render and reload show all ten exact approved questions and whole answers in order, without interaction, excerpt substitution, or collapse controls. A `Ya.` opening and a later qualifying paragraph both remain complete. | R-01–R-04; A |
 | **AC-02** | Before UI edits, pure-adapter tests cover separate missing observation/detail/raw-answer cases, duplicate IDs on each side, extra/unknown IDs, independent reordering, invalid evidence references, and valid non-lexical IDs. Invalid bindings fail explicitly; valid strings/order/inputs remain unchanged. | R-02; A |
-| **AC-03** | Given zero appearance, mention-only, and one recommendation plus nine `not_assessed` answers, summary/status tests keep the distinctions. The last case explicitly reads numerator 1 / denominator 10 from measures; a corrupt denominator fails. No redundant tile or rank appears. | R-03; A |
+| **AC-03** | Given zero appearance, mention-only, and one recommendation plus nine `not_assessed` answers, summary/status tests keep the distinctions. The last case explicitly reads numerator 1 / denominator 10 from measures; a corrupt denominator fails. Per-question non-assessment says `Tidak dinilai dari jawaban yang tersedia`; `Tidak diuji` remains the aggregate empty-denominator/historical label. No redundant tile or rank appears. | R-03; A |
 | **AC-04** | Given headings, nested lists, tables, code, long URLs, images, HTML/script, tasks, autolinks, reference links, and a body URL also in sources, no body link/control executes or resource loads. Every substantive text/qualifier remains readable; only retained safe HTTP(S) source entries are active. | R-05–R-07; A |
 | **AC-05** | Given CRLF, repeated spaces, punctuation, Unicode, and an exact long question, raw view and copied question/answer substrings equal stored strings; JSON stays identical. Clipboard failure is truthful and leaves selectable raw text. | R-05, R-17; A |
 | **AC-06** | A finding/action citing multiple questions has a working keyboard/focus link to every correct heading. There is one anchor per question, no arbitrary first quote, no per-question repeated analysis paragraph, and no action duplication in findings. | R-04, R-07; A |
 | **AC-07** | Given an empty comparator structure with other names in raw text, the summary is absent without an exhaustive claim. A valid comparator shows its actual relationship/references and limited-scope note; invalid references fail explicitly. | R-07; A |
 | **AC-08** | Desktop/mobile, 320px/reflow, 200% zoom, focus/keyboard and target-size review pass. Each question/answer appears once in A4 PDF from both toolbar and browser print, in screen order. Extract PDF text and inspect every page for clipped text, orphan headings and table/URL/list reflow. Raw-view-open print also has only one answer copy. | R-08–R-09; A |
-| **AC-09** | Historical/absent-method records with direct-ten-looking IDs/counts select their old renderer and original denominators. Every shared toolbar consumer says `Download PDF` and retains the callback; the two affected exact-label e2e locator occurrences are updated without weakening no-repeat checks. | R-01, R-08; A |
+| **AC-09** | Historical/absent-method records with direct-ten-looking IDs/counts select their old renderer and original denominators. Every shared toolbar consumer and `INDONESIAN_REPORT_LABELS.download_pdf` say `Download PDF`; the label unit test and two affected exact-label e2e locators assert that wording. Keep the print callback and no-repeat checks. | R-01, R-08; A |
 | **AC-10** | Reading, raw view, copy, anchors, PDF/JSON, Back, and reload preserve the snapshot and do not increment any provider/request counter. Safe external sources require an explicit click; no preload/fetch occurs. Export fields, versions, and telemetry omissions match the baseline. | R-16–R-17; A, recheck B1/B2 |
 | **AC-11** | Three supported findings/actions stay three. Ten supported items and priority order 10 pass schema/provider-contract tests; eleven items or order 11 fail. B1's existing positive-only action rejection and empty-content delivery/recovery regressions are unchanged. | R-10–R-11; B1 |
-| **AC-12** | Four report adapters use aligned method-specific bounds/non-padding/evidence instructions. Synthesis version changes; protected observations and language-retry evidence/order/timing/owner stay unchanged. B1 does not advertise the B2 exception. | R-11; B1 |
+| **AC-12** | Four report adapters use aligned method-specific bounds/non-padding/evidence instructions. Synthesis version changes; protected observations and language-retry evidence/order/timing/owner stay unchanged. B1 does not advertise the B2 exception. Verify the executable Indonesian sentence-calibration constants on the integration base and reconcile R-11 if needed, preserving behavior. | R-11; B1 |
 | **AC-13** | Given different observation dates/models, later synthesis time, and missing optional intake values, B1 shows honest observation date/range/timezone and model provenance, separate report creation time, correct identity/scope, and no invented optional values. Header/contents order matches the body and verified Spec 011 boundary. | R-12, R-19; B1 |
-| **AC-14** | Given all-positive evidence with a supported finding, B2 can produce one exact eligible P action without inventing a gap. Given eligible unassessed information, V can be used. Candidates exist before synthesis; selection is deterministic after normalization and makes no extra call. Supported corrective actions receive no filler template. | R-13; B2 |
-| **AC-15** | Unknown template ID references, edited/extra template fields, invented template tags, and positive-only corrective actions never pass the exception. A retry changing a template field fails integrity; exact legitimate templates survive. No forged object is normalized into a passing one. | R-13; B2 |
+| **AC-14** | Given all-positive evidence with a supported finding, B2 can produce one exact eligible P action without inventing a gap. Given eligible unassessed information, V can be used. Direct-ten initial/retry synthesis accepts `priorities: []`, while final report content still requires one and historical synthesis still rejects zero. No candidate or inserted template enters any model request/draft. Code selects after repair and any permitted language revision without an extra call; supported corrective actions receive no filler template. | R-13; B2 |
+| **AC-15** | All model-authored priorities, including copied templates and flags, undergo ordinary gap validation. Unknown references, edited/extra fields, and forged tags fail exact validation of a code-inserted action; legitimate P/V objects pass. A language-only retry preserves ordinary evidence invariants and receives no inserted template. No forged object is normalized into a passing one. | R-13; B2 |
 | **AC-16** | Test separately: findings empty/actions survive; actions empty/findings survive with no eligible candidate; both empty. With ten usable observations each produces `REPORT_USEFULNESS_FAILURE`, not a report. Recovery shows the complete questions/answers, sources/provenance and notice only, with no surviving analysis, rejected classifications, comparator or report-ready controls. | R-14–R-15; B2 |
-| **AC-17** | In eligible recovery, copy works; no print/PDF/JSON control/callback/export exists; browser print contains the unfinished notice only. Explicit report retry uses retained observations, costs and attempts; double-click, limit, Back/reload and successful retry cases preserve accounting and never rerun completed observations. Incomplete/unsafe/integrity/transport cases do not enter this new reader. | R-15–R-17; B2 |
+| **AC-17** | In eligible recovery, copy works; no Nuave print/PDF/JSON control/callback/export route exists. Explicit report retry uses retained observations, costs and attempts; double-click, limit, Back/reload and successful retry cases preserve accounting and never rerun completed observations. Incomplete/unsafe/integrity/transport cases do not enter this new reader. | R-15–R-17; B2 |
 | **AC-18** | Using the same already authorized retained evidence before/after, the founder completes the human rubric below. Every material item is useful without a quota and supported despite late caveats or owner-fact conflicts. Generic advice or an unsupported claim fails even when code checks pass. No runtime/new-user success is inferred from this spec. | R-10–R-14; combined |
-| **AC-19** | Diff review confirms A/B1/B2 allowlists, recorded base/dependency SHAs, approved pins before installation, no extra state/schema/transport or protected edits, and `npm run verify` passes for each implementation PR and combined result. Expected bad inputs and a fictional personal-data marker exercise the specified unavailable/restrict handling. | R-06, R-18–R-19; each PR |
+| **AC-19** | Diff review confirms A/B1/B2 allowlists, recorded base/dependency SHAs and technical approvals, documented intake-first merge/rebase order with both live-flow tasks preserved, no extra persisted fields/schema migration/transport or protected edits, and `npm run verify` passes for each implementation PR and combined result. Expected bad inputs and a fictional personal-data marker exercise the specified unavailable/restrict handling. | R-06, R-18–R-19; each PR |
 
 ### Human usefulness rubric
 
@@ -616,12 +668,13 @@ existing contact authorization.
 
 ## Open questions
 
-No founder product decision remains open. The spec reviewer/approver must
-record approval or concrete correction of R-06's exact pins and R-13's template
-contract before the corresponding implementation. The implementation owner
-records the actual Spec 011 merge/verification and R-23 boundary before B1/B2;
-this factual dependency does not block A. These checks are not requests to
-reconsider D-01–D-08.
+No founder product decision remains open. Review 1 records tech-lead approval
+of R-06's exact pins and R-13's templates subject to S3/S4, now applied. The
+founder still needs to approve this corrected spec; its status remains
+**In review**. The implementation owner records the actual Spec 011
+merge/verification and R-23 boundary before B1/B2, and follows R-19's
+documentation integration order. These checks do not reopen D-01–D-08 or
+block A development once the spec is approved.
 
 ## Implementation notes
 
@@ -635,9 +688,9 @@ diff review, `npm run verify`, and a scoped verification entry.
 
 | PR | Allowed changes | Protected boundary / completion gate |
 |---|---|---|
-| **A: blocks 1, 2, 4** | New `src/lib/audit/report-presentation.ts` and test; new report-local body/answer/reference/Markdown components and scoped CSS/tests; only imports and method/body wiring in `ReportView.tsx` outside its header/brief; shared `ReportToolbar.tsx` PDF default; narrowly scoped `audit.module.css` selectors if needed; approved two-package pins/lockfile; focused report/browser tests including the label locators in `tests/e2e/new-intake-glm.spec.ts`. | Start from current main. Adapter tests pass before UI/CSS. No edits to `contracts.ts`, `report-pipeline.ts`, `report-priority.ts`, `types.ts`, `customer-evidence-export.ts`, provider files, `LocalAuditStage`, intake/request projections, or header/brief/types/contents (including indirect CSS effects). AC-01–AC-10 and A portion of AC-19 pass. |
+| **A: blocks 1, 2, 4** | New `src/lib/audit/report-presentation.ts` and test; new report-local body/answer/reference/Markdown components and scoped CSS/tests; only imports and method/body wiring in `ReportView.tsx` outside its header/brief; shared `ReportToolbar.tsx` PDF default; only `INDONESIAN_REPORT_LABELS.download_pdf` in `src/lib/audit/report-labels.ts` and its assertion in `report-labels.test.ts`; narrowly scoped `audit.module.css` selectors if needed; approved two-package pins/lockfile; focused report/browser tests including the label locators in `tests/e2e/new-intake-glm.spec.ts`. | Start from current main. Adapter tests pass before UI/CSS. No edits to `contracts.ts`, `report-pipeline.ts`, `report-priority.ts`, `types.ts`, `customer-evidence-export.ts`, provider files, `LocalAuditStage`, intake/request projections, or header/brief/types/contents (including indirect CSS effects). AC-01–AC-10 and A portion of AC-19 pass. |
 | **B1: block 3a** | `types.ts`: only findings/priorities/order bounds and denominator-comment correction; report portions of `openai.ts`, `gemini.ts`, `groq.ts`, `openrouter.ts`, `report-prompt-contract.ts`; `contracts.ts`: synthesis-version constant only; `ReportView.tsx` header/identity/date/contents and existing report presentation files/styles; focused schema/instruction/header tests. | Main contains verified Spec 011; integrated A before final verification. No gap-validator, repair, pipeline, `LocalAuditStage`, exporter, intake/projection, observation or transport changes. Record actual `AuditSubject` boundary. AC-11–AC-13 and inherited A regressions pass. No dependency on B2 behavior. |
-| **B2: block 3b** | New `src/lib/audit/report-noncorrective.ts` and tests for R-13; necessary priority-validation/identity-helper access and synthesis-version changes in `contracts.ts`; `report-priority.ts`, `report-quality-repair.ts`, `report-pipeline.ts`; report-only candidate plumbing/instructions in the four adapters and shared report contract; `report-recovery.ts` failure-code classification; existing `src/app/api/audit/report/route.ts` error plumbing only if needed; small `LocalAuditStage.tsx`/`AuditRunStep.tsx` recovery integration, report reader/adapter observation-only projection and scoped print CSS; focused pipeline/recovery/session tests. | Verified Spec 011 and B1 plus integrated A. No fake report or second reader/store; reuse existing session fields, retry/cost helpers and API error envelope. No intake, observations, transport, exporter, session-schema or report-field migration. AC-14–AC-17 and all inherited regressions pass; combined AC-18/AC-19 complete the spec. |
+| **B2: block 3b** | New `src/lib/audit/report-noncorrective.ts` and tests for R-13; necessary priority-validation/identity-helper access and synthesis-version changes in `contracts.ts`; `report-priority.ts`, `report-quality-repair.ts`, `report-pipeline.ts`; `types.ts`: direct-ten synthesis-only priority minimum zero; four report adapters/shared report contract: the no-gap instruction and matching method-specific synthesis-schema selection only, with no candidate-payload plumbing; `report-recovery.ts` failure-code classification; existing `src/app/api/audit/report/route.ts` error plumbing only if needed; small `LocalAuditStage.tsx`/`AuditRunStep.tsx` recovery integration and report reader/adapter observation-only projection; focused pipeline/recovery/session tests. | Verified Spec 011 and B1 plus integrated A. No fake report or second reader/store; reuse existing session fields, retry/cost helpers and API error envelope. No intake, observations, transport, exporter, session-schema or report-field migration. AC-14–AC-17 and all inherited regressions pass; combined AC-18/AC-19 complete the spec. |
 
 Useful existing suites: `src/lib/audit/direct-ten-audit.test.ts`,
 `report-excerpt.test.ts`, `report-labels.test.ts`, `report-gaps.test.ts`,
@@ -650,8 +703,11 @@ risks/criteria above; retain existing cost/no-repeat protections.
 
 ### Execution and review order
 
-1. Approve this spec, explicitly recording R-06 pins and R-13 template review.
-   Record A's fresh main SHA and any isolation conflict. Create
+1. Obtain founder approval of this corrected spec, retaining review 1's
+   technical approvals for R-06/R-13. For documentation integration, merge the
+   intake branch first and rebase this branch once under R-19. A development
+   may start from current main after spec approval; record its SHA and any
+   isolation conflict. Create
    `specs/012-evidence-first-report/VERIFICATION.md` only when implementation
    begins, using the repository template.
 2. A: implement/test the pure adapter, then body/Markdown/references, then
@@ -659,8 +715,10 @@ risks/criteria above; retain existing cost/no-repeat protections.
 3. After Spec 011 is verified and merged, record its SHA/R-23 result, integrate
    A as specified, and complete B1 bounds/instructions/header. Verify B1 with
    baseline repair/recovery unchanged.
-4. B2: implement exact candidates and validators, then final gate/error
-   classification and the observation-only recovery projection. Verify all
+4. B2: allow zero priorities in direct-ten synthesis and update the no-gap
+   instruction, then implement code-only candidate insertion after repair and
+   any permitted language revision. Add the final gate/error classification
+   and observation-only recovery projection. Verify all
    three empty-section cases, code/telemetry persistence, retry ceilings, and G4.
 5. Verify the integrated report and each actual PDF page; conduct the private
    before/after human rubric. Record per-criterion outcomes and limitations.
