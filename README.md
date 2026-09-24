@@ -24,10 +24,14 @@ the current report not useful enough and deferred format/usefulness improvements
 so they no longer block this functional work. The accepted direct-ten questions
 have completed a real audit and report on the retained-pack path. The ordinary
 intake is now connected to that engine and has passed the local flow checks
-with labeled test responses, including the founder's PDF review. Next is one
-complete fresh-session test with real providers, under a new explicit paid-call
-authorization. The [orchestrator handoff](./docs/checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
-preserves the current state. Commercial release is separate.
+with labeled test responses, including the founder's PDF review. Spec 011 is
+Verified on its preserved working-tree manifest. The combined main candidate has
+[independent integration PASS](./specs/011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md).
+Its [local PR package](./specs/011-smart-consultant-intake/PR_READINESS.md) is ready
+for publication approval; required GitHub CI and production release remain
+separate. No further live call is authorized by this work. The
+[September 19 handoff](./docs/checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
+retains the earlier milestone; `docs/NOW.md` governs the current next action.
 
 ## Start here
 
@@ -38,7 +42,7 @@ preserves the current state. Commercial release is separate.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Current bounded implementation | [`specs/009-recommendation-eligible-audit/SPEC.md`](./specs/009-recommendation-eligible-audit/SPEC.md) — natural questions through downloadable report; advances the existing live-report quality gate |
+| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — Verified; combined main candidate independently reviewed; PR publication approval and CI pending; historical hold retained |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |

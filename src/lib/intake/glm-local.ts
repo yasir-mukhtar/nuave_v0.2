@@ -31,6 +31,7 @@ import { join } from "node:path";
 import { auditMode, glmKeyPresent } from "../audit/deployment-gate";
 import {
   parseQuestionFactsV3,
+  projectQuestionFactsV2,
   type QuestionFactsV3,
 } from "../audit/question-facts-v3";
 import {
@@ -51,6 +52,10 @@ import {
   LOCAL_INTAKE_INPUT_VERSION,
   type FrozenLocalIntake,
 } from "./frozen-intake";
+import {
+  parseFrozenSmartIntake,
+  SMART_INTAKE_INPUT_VERSION,
+} from "./smart-intake-contract";
 import type { GlmPackProvenance, GlmQuestionsOutcome } from "./local-questions";
 
 export type GlmTransportEnvelope = {
@@ -426,6 +431,44 @@ function buildFromIntake(
 ):
   | { ok: true; facts: QuestionFactsV3; requestBody: unknown }
   | { ok: false; outcome: GlmQuestionsOutcome } {
+  if (isRecord(intake) && intake.version === SMART_INTAKE_INPUT_VERSION) {
+    const frozen = parseFrozenSmartIntake(intake);
+    if (!frozen) {
+      return {
+        ok: false,
+        outcome: {
+          status: "invalid_request",
+          detail: "v2 confirmed intake fingerprint or shape is invalid",
+        },
+      };
+    }
+    const projected = projectQuestionFactsV2({
+      context: frozen.context,
+      factVersion: frozen.factVersion,
+    });
+    if (projected.status === "INVALID_REQUEST") {
+      return {
+        ok: false,
+        outcome: {
+          status: "invalid_request",
+          detail: "v2 confirmed context was rejected",
+        },
+      };
+    }
+    if (projected.status === "INPUT_CORRECTION_REQUIRED") {
+      return {
+        ok: false,
+        outcome: { status: "correction_required", issues: projected.issues },
+      };
+    }
+    return {
+      ok: true,
+      facts: projected.facts,
+      requestBody: buildDirectTenQuestionRequest(
+        buildDirectTenWriterBrief(projected.facts),
+      ),
+    };
+  }
   if (
     !isRecord(intake) ||
     intake.version !== LOCAL_INTAKE_INPUT_VERSION ||

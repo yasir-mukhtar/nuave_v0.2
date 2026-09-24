@@ -1,4 +1,5 @@
-import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
+import type { AuditObservation, ReportContent } from "./types";
+import { subjectBrandName, type AuditSubject } from "./direct-ten-context-v2";
 import type { ReportDiagnosticCode } from "./report-recovery";
 import type { HistoricalPromptPackId } from "./measurement-matrix";
 import type { AuditQuestionMethod } from "./locked-question-pack";
@@ -31,7 +32,7 @@ function hasProhibitedClaim(value: string) {
 
 function neutralConclusion(
   content: ReportContent,
-  brief: BusinessBrief,
+  brief: AuditSubject,
   language: "en" | "id" | undefined,
 ) {
   const completed = content.details.filter(
@@ -41,9 +42,9 @@ function neutralConclusion(
     (detail) => detail.appearance === "mentioned",
   ).length;
   if (language === "id") {
-    return `Audit selesai. ${brief.brand_name} disebut dalam ${appeared} dari ${completed.length} jawaban yang berhasil diuji. Lihat hasil tiap pertanyaan untuk bukti lengkap.`;
+    return `Audit selesai. ${subjectBrandName(brief)} disebut dalam ${appeared} dari ${completed.length} jawaban yang berhasil diuji. Lihat hasil tiap pertanyaan untuk bukti lengkap.`;
   }
-  return `The audit is complete. ${brief.brand_name} appeared in ${appeared} of ${completed.length} successfully tested answers. See each question result for the retained evidence.`;
+  return `The audit is complete. ${subjectBrandName(brief)} appeared in ${appeared} of ${completed.length} successfully tested answers. See each question result for the retained evidence.`;
 }
 
 function safeDetailFinding(
@@ -130,7 +131,7 @@ export type ReportQualityRepair = {
 export function sanitizeRecoverableReportQuality(
   content: ReportContent,
   observations: AuditObservation[],
-  brief: BusinessBrief,
+  brief: AuditSubject,
   language?: "en" | "id",
   historicalFixtureId?: HistoricalPromptPackId,
   questionMethod?: AuditQuestionMethod,

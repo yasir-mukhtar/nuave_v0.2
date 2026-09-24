@@ -17,11 +17,16 @@ import {
  */
 
 const providerMocks = vi.hoisted(() => ({
+  liveAuditProvider: vi.fn(() => "openai"),
   assertLiveProviderCredentialsConfigured: vi.fn(),
   liveExtractBusinessDraft: vi.fn(),
 }));
 
 vi.mock("@/lib/audit/provider", () => providerMocks);
+vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./source-excerpt")>()),
+  fetchWebsiteExcerpt: vi.fn(async () => null),
+}));
 
 const sourceMocks = vi.hoisted(() => ({
   fetchSourceIdentity: vi.fn(),
@@ -30,6 +35,7 @@ const sourceMocks = vi.hoisted(() => ({
 vi.mock("@/lib/audit/source-identity", () => sourceMocks);
 
 import { GET as identityGET } from "../../app/api/audit/identity/route";
+import { fetchWebsiteExcerpt } from "./source-excerpt";
 import {
   GET as extractGET,
   POST as extractPOST,
@@ -274,6 +280,23 @@ describe("POST /api/audit/extract server-selected mode", () => {
       providerMocks.assertLiveProviderCredentialsConfigured,
     ).toHaveBeenCalled();
   });
+
+  it.each(["gemini", "groq", "openrouter"])(
+    "testing-only %s does not claim to consume an excerpt",
+    async (provider) => {
+      liveMode();
+      providerMocks.liveAuditProvider.mockReturnValueOnce(provider);
+      const response = await extractPOST(extractRequest());
+      expect(response.status).toBe(200);
+      expect((await response.json()).source_excerpt_status).toBe(
+        "not-attempted",
+      );
+      expect(fetchWebsiteExcerpt).not.toHaveBeenCalled();
+      expect(
+        providerMocks.liveExtractBusinessDraft.mock.calls[0][0],
+      ).not.toHaveProperty("public_source_data");
+    },
+  );
 
   it("live mode + missing credentials stops, never falls back", async () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");

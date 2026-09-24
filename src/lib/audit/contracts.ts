@@ -7,6 +7,13 @@ import type {
   ReportContent,
   ReportSynthesis,
 } from "./types";
+import {
+  isDirectTenAuditContext,
+  subjectAliases,
+  subjectBrandName,
+  subjectNamedComparators,
+  type AuditSubject,
+} from "./direct-ten-context-v2";
 import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
 import { summarizeAuditTelemetry } from "./telemetry";
 import {
@@ -67,6 +74,7 @@ export {
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
 export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v4";
+export const REPORT_SYNTHESIS_PROMPT_VERSION_V2 = "report-synthesis-v5-context";
 
 /**
  * Versioned neutral observation instructions (Spec 003 R-14).
@@ -95,6 +103,7 @@ export const DEFAULT_OBSERVATION_INSTRUCTION_VERSION: ObservationInstructionVers
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID;
 
 export type ReportCallProvenance = {
+  report_prompt_version?: string;
   requested_model: string;
   returned_model: string;
   response_id: string;
@@ -444,7 +453,7 @@ const DETAIL_COPY = {
 
 function deterministicDetailCopy(input: {
   observation: AuditObservation;
-  brief: BusinessBrief;
+  brief: AuditSubject;
   assessment: ReportSynthesis["assessments"][number];
   language?: "en" | "id";
 }) {
@@ -453,12 +462,12 @@ function deterministicDetailCopy(input: {
     return { ...copy.failed };
   }
   const appeared = containsIdentity(input.observation.raw_answer, [
-    input.brief.brand_name,
-    ...input.brief.brand_name_variants,
+    subjectBrandName(input.brief),
+    ...subjectAliases(input.brief),
   ]);
   if (!appeared) {
     return {
-      finding: copy.absent.finding(input.brief.brand_name),
+      finding: copy.absent.finding(subjectBrandName(input.brief)),
       evidence_note: copy.absent.evidence_note,
     };
   }
@@ -483,7 +492,7 @@ function deterministicDetailCopy(input: {
 export function assembleReportContent(
   synthesis: ReportSynthesis,
   observations: AuditObservation[],
-  brief: BusinessBrief,
+  brief: AuditSubject,
   historicalFixtureId?: HistoricalPromptPackId,
   questionMethod?: AuditQuestionMethod,
   language?: "en" | "id",
@@ -520,13 +529,14 @@ export function assembleReportContent(
       source_urls: observation.sources.map((source) => source.url),
     };
   });
-  const competitorPromptIds = observations
-    .filter((observation) =>
-      containsIdentity(observation.raw_answer, [
-        brief.verified_competitor.name,
-      ]),
-    )
-    .map((observation) => observation.prompt_id);
+  const observedCompetitors = subjectNamedComparators(brief).flatMap((name) => {
+    const evidence_prompt_ids = observations
+      .filter((observation) => containsIdentity(observation.raw_answer, [name]))
+      .map((observation) => observation.prompt_id);
+    return evidence_prompt_ids.length
+      ? [{ name, relationship: "mentioned" as const, evidence_prompt_ids }]
+      : [];
+  });
 
   return normalizeReportEvidence(
     {
@@ -534,15 +544,7 @@ export function assembleReportContent(
       accuracy_status: synthesis.accuracy_status,
       key_findings: synthesis.key_findings,
       priorities: synthesis.priorities,
-      observed_competitors: competitorPromptIds.length
-        ? [
-            {
-              name: brief.verified_competitor.name,
-              relationship: "mentioned",
-              evidence_prompt_ids: competitorPromptIds,
-            },
-          ]
-        : [],
+      observed_competitors: observedCompetitors,
       details,
     },
     observations,
@@ -555,14 +557,14 @@ export function assembleReportContent(
 export function normalizeReportEvidence(
   content: ReportContent,
   observations: AuditObservation[],
-  brief: BusinessBrief,
+  brief: AuditSubject,
   historicalFixtureId?: HistoricalPromptPackId,
   questionMethod?: AuditQuestionMethod,
 ): ReportContent {
   const observationByPrompt = new Map(
     observations.map((observation) => [observation.prompt_id, observation]),
   );
-  const clientIdentities = [brief.brand_name, ...brief.brand_name_variants];
+  const clientIdentities = [subjectBrandName(brief), ...subjectAliases(brief)];
   const details = content.details.map((detail) => {
     const observation = observationByPrompt.get(detail.prompt_id);
     if (!observation) return detail;
@@ -631,7 +633,12 @@ export function normalizeReportEvidence(
 
   const observed_competitors = content.observed_competitors
     .filter(
-      (competitor) => !containsIdentity(competitor.name, clientIdentities),
+      (competitor) =>
+        !containsIdentity(competitor.name, clientIdentities) &&
+        (!isDirectTenAuditContext(brief) ||
+          subjectNamedComparators(brief).some(
+            (name) => normalize(name) === normalize(competitor.name),
+          )),
     )
     .map((competitor) => {
       const evidence_prompt_ids = [
@@ -860,7 +867,7 @@ export function validatePromptPack(
 export function validateReportContent(
   content: ReportContent,
   observations: AuditObservation[],
-  brief: BusinessBrief,
+  brief: AuditSubject,
   historicalFixtureId?: HistoricalPromptPackId,
   questionMethod?: AuditQuestionMethod,
 ): string[] {
@@ -904,9 +911,10 @@ export function validateReportContent(
   ) {
     errors.push("Each question must have exactly one detailed finding.");
   }
-  const brandSignals = [brief.brand_name, ...brief.brand_name_variants].filter(
-    Boolean,
-  );
+  const brandSignals = [
+    subjectBrandName(brief),
+    ...subjectAliases(brief),
+  ].filter(Boolean);
   content.details.forEach((detail, index) => {
     if (!promptIds.has(detail.prompt_id))
       errors.push(`Unknown detailed finding: ${detail.prompt_id}.`);
@@ -1072,8 +1080,16 @@ export function validateReportContent(
     }
   });
 
-  const clientIdentities = [brief.brand_name, ...brief.brand_name_variants];
+  const clientIdentities = [subjectBrandName(brief), ...subjectAliases(brief)];
   content.observed_competitors.forEach((competitor) => {
+    if (
+      isDirectTenAuditContext(brief) &&
+      !subjectNamedComparators(brief).some(
+        (name) => normalize(name) === normalize(competitor.name),
+      )
+    ) {
+      errors.push(`Observed competitor ${competitor.name} was not confirmed.`);
+    }
     if (containsIdentity(competitor.name, clientIdentities)) {
       errors.push(
         `Observed competitor ${competitor.name} duplicates the audited brand.`,
@@ -1475,7 +1491,8 @@ export function buildAuditReport(
     generated_at: new Date().toISOString(),
     system_label: systemLabel,
     provenance: {
-      report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
+      report_prompt_version:
+        reportCall.report_prompt_version ?? REPORT_SYNTHESIS_PROMPT_VERSION,
       prompt_contract_version:
         reportCall.prompt_contract_version ?? labels.promptContractVersion,
       question_method: questionMethod,
@@ -1504,8 +1521,31 @@ export function buildAuditReport(
   };
 }
 
+type EvidenceEnvelope = {
+  export_version: string;
+  exported_at: string;
+  disclosure: string;
+  prompts: AuditPrompt[];
+  observations: AuditObservation[];
+  report: AuditReport;
+};
+
 export function makeEvidenceExport(
   brief: BusinessBrief,
+  prompts: AuditPrompt[],
+  observations: AuditObservation[],
+  report: AuditReport,
+): EvidenceEnvelope & { brief: BusinessBrief };
+export function makeEvidenceExport(
+  brief: Extract<AuditSubject, { version: "nuave-direct-ten-context-v2" }>,
+  prompts: AuditPrompt[],
+  observations: AuditObservation[],
+  report: AuditReport,
+): EvidenceEnvelope & {
+  context: Extract<AuditSubject, { version: "nuave-direct-ten-context-v2" }>;
+};
+export function makeEvidenceExport(
+  brief: AuditSubject,
   prompts: AuditPrompt[],
   observations: AuditObservation[],
   report: AuditReport,
@@ -1517,16 +1557,21 @@ export function makeEvidenceExport(
           observations.find((item) => item.run_status === "completed")
             ?.system ?? observations[0].system,
         );
+  const v2 = isDirectTenAuditContext(brief);
   return {
-    export_version: "nuave-evidence-v4",
+    export_version: v2 ? "nuave-evidence-v5" : "nuave-evidence-v4",
     exported_at: new Date().toISOString(),
     disclosure: `Observations come from ${systemName} and do not exactly reproduce the consumer ChatGPT interface.`,
-    brief: {
-      ...brief,
-      agency_logo_data_url: brief.agency_logo_data_url
-        ? "[device-local logo omitted]"
-        : "",
-    },
+    ...(v2
+      ? { context: brief }
+      : {
+          brief: {
+            ...brief,
+            agency_logo_data_url: brief.agency_logo_data_url
+              ? "[device-local logo omitted]"
+              : "",
+          },
+        }),
     prompts,
     observations,
     report,

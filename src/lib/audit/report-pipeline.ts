@@ -1,6 +1,7 @@
 import {
   buildAuditReport,
   normalizeReportEvidence,
+  REPORT_SYNTHESIS_PROMPT_VERSION_V2,
   validateReportContent,
 } from "./contracts";
 import {
@@ -47,6 +48,12 @@ import type {
   ReportContent,
 } from "./types";
 import {
+  contextIdentityGuard,
+  isDirectTenAuditContext,
+  subjectNamedComparators,
+  type AuditSubject,
+} from "./direct-ten-context-v2";
+import {
   AuditBudgetError,
   AuditCallExecutionError,
   effectiveAuditCarryoverCostUsd,
@@ -60,7 +67,7 @@ import { validateDirectTenQuestions } from "./questions-id-direct-ten";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "./types";
 
 export type ReportPipelineInput = {
-  brief: BusinessBrief;
+  brief: AuditSubject;
   prompts: AuditPrompt[];
   observations: AuditObservation[];
   safety_identifier: string;
@@ -79,7 +86,9 @@ export type ReportPipelineInput = {
 };
 
 function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
-  assertSafeComparisonBusinessUrls(input.brief);
+  if (!isDirectTenAuditContext(input.brief)) {
+    assertSafeComparisonBusinessUrls(input.brief);
+  }
   return {
     ...input,
     prompts: lockedQuestionPackForMethod({
@@ -158,21 +167,26 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
   );
   const questionMethod = canonical.question_method ?? "canonical";
   if (questionMethod === "direct-ten") {
-    const minimized = minimizeIndonesianBrief(canonical.brief);
+    const minimized = isDirectTenAuditContext(canonical.brief)
+      ? contextIdentityGuard(canonical.brief)
+      : minimizeIndonesianBrief(canonical.brief);
     errors.push(
       ...validateDirectTenQuestions(
         prompts.map((prompt) => prompt.question),
         {
           brief: minimized,
-          comparators: minimized.comparison_business
-            ? [minimized.comparison_business.name]
-            : [],
+          comparators: subjectNamedComparators(canonical.brief),
         },
       ).map((issue) => issue.message),
     );
   } else if (
     !isHistoricalPromptPack(prompts, canonical.historical_fixture_id)
   ) {
+    if (isDirectTenAuditContext(canonical.brief)) {
+      throw new ReportPipelineError(
+        "V2 context requires direct-ten questions.",
+      );
+    }
     errors.push(
       ...validateCanonicalIndonesianQuestionPack(
         prompts.map((prompt) => prompt.question),
@@ -218,6 +232,10 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
 }
 
 export type ReportGenerator = typeof liveGenerateReportContent;
+type LegacyReportGenerator = (
+  input: Omit<ReportPipelineInput, "brief"> & { brief: BusinessBrief },
+  revision?: { draft: ReportContent; violations: string[] },
+) => ReturnType<ReportGenerator>;
 export type ReportTelemetrySink = (calls: AuditCallTelemetry[]) => void;
 
 export class ReportPipelineError extends Error {
@@ -347,17 +365,28 @@ function languageErrorsFor(input: ReportPipelineInput, content: ReportContent) {
     : validateReportLanguage(content);
 }
 
+export function createValidatedAuditReport(
+  input: Omit<ReportPipelineInput, "brief"> & { brief: BusinessBrief },
+  generate: LegacyReportGenerator,
+  onSuccessTelemetry?: ReportTelemetrySink,
+): Promise<AuditReport>;
+export function createValidatedAuditReport(
+  input: ReportPipelineInput,
+  generate?: ReportGenerator,
+  onSuccessTelemetry?: ReportTelemetrySink,
+): Promise<AuditReport>;
 export async function createValidatedAuditReport(
   input: ReportPipelineInput,
-  generate: ReportGenerator = liveGenerateReportContent,
+  generate: ReportGenerator | LegacyReportGenerator = liveGenerateReportContent,
   onSuccessTelemetry?: ReportTelemetrySink,
 ): Promise<AuditReport> {
+  const generateForBoundInput = generate as ReportGenerator;
   const lockedInput = canonicalReportInput(input);
   if (isLiveProviderCall(generate)) {
     assertLiveProviderCredentialsConfigured();
   }
   assertReportGenerationGate(lockedInput);
-  const initial = await generate(lockedInput);
+  const initial = await generateForBoundInput(lockedInput);
   const reportCalls: AuditCallTelemetry[] = [...initial.telemetry];
   let final = initial;
   let repaired = normalizeAndRepairReport(
@@ -400,7 +429,7 @@ export async function createValidatedAuditReport(
       diagnostics.add("language_warning");
     } else {
       try {
-        final = await generate(
+        final = await generateForBoundInput(
           {
             ...lockedInput,
             budget: {
@@ -472,6 +501,9 @@ export async function createValidatedAuditReport(
     lockedInput.observations,
     {
       requested_model: final.requested_model,
+      ...(isDirectTenAuditContext(lockedInput.brief)
+        ? { report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION_V2 }
+        : {}),
       returned_model: final.returned_model,
       response_id: final.response_id,
       initial_response_id: initial.response_id,

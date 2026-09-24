@@ -527,7 +527,7 @@ export const OPENROUTER_OBSERVATION_INSTRUCTION = [
 
 export async function executeAuditPrompt(input: {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief: import("./direct-ten-context-v2").AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
 }): Promise<AuditObservation> {

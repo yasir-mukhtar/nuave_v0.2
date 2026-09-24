@@ -232,7 +232,8 @@ describe("evidence-first body", () => {
   });
   it.each([undefined, "canonical", "glm-indonesian-slots"] as const)(
     "keeps the historical renderer/denominator for method %s",
-    (method) => {
+    async (method) => {
+      const user = userEvent.setup();
       const fixture = presentationFixture();
       Object.assign(fixture.report.provenance, { question_method: method });
       fixture.report.measures.recommendation.assessed = 3;
@@ -248,6 +249,36 @@ describe("evidence-first body", () => {
       expect(
         screen.getByRole("button", { name: "Download PDF" }),
       ).toBeVisible();
+      // Exercise retained rendering directly, without reopening held v1 sessions.
+      const before = JSON.stringify(fixture);
+      const urlBefore = window.location.href;
+      const historyLength = window.history.length;
+      const contents = screen.getByRole("navigation", {
+        name: "Report contents",
+      });
+      for (const id of [
+        "summary",
+        "findings",
+        "priorities",
+        "detail",
+        "method",
+      ]) {
+        const target = container.querySelector<HTMLElement>(`#${id}`)!;
+        const scroll = vi.fn();
+        target.scrollIntoView = scroll;
+        const link = contents.querySelector<HTMLAnchorElement>(
+          `a[href="#${id}"]`,
+        )!;
+        await user.click(link);
+        expect(target).toHaveFocus();
+        link.focus();
+        await user.keyboard("{Enter}");
+        expect(target).toHaveFocus();
+        expect(scroll).toHaveBeenCalledTimes(2);
+        expect(window.location.href).toBe(urlBefore);
+        expect(window.history.length).toBe(historyLength);
+      }
+      expect(JSON.stringify(fixture)).toBe(before);
     },
   );
   it("changes the shared default while preserving PDF and JSON callbacks", async () => {

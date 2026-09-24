@@ -4,6 +4,7 @@ import {
   auditModel,
   auditReasoningEffort,
   executeAuditPrompt,
+  generateReportContent,
   extractBusinessDraft,
   extractionDraftOrManualFallback,
   normalizeSourceTitle,
@@ -25,6 +26,66 @@ import {
   type BusinessBrief,
 } from "./types";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
+import { extractBusinessDraft as extractGeminiDraft } from "./gemini";
+import {
+  initialSmartSelection,
+  prepareUnderstanding,
+} from "../intake/smart-intake-contract";
+import {
+  DIRECT_TEN_CONTEXT_VERSION,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
+
+describe("v2 report model request", () => {
+  it("sends exact confirmed context and authority instead of a filled verified brief", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "dummy-offline-key");
+    mockResponsesParse.mockReset();
+    mockResponsesParse.mockRejectedValue(
+      new Error("offline stop after request capture"),
+    );
+    const context: DirectTenAuditContext = {
+      version: DIRECT_TEN_CONTEXT_VERSION,
+      identity: {
+        name: "Toko Fiksi",
+        source: "https://toko-fiksi.example/",
+        sourceOrigin: "owner",
+        aliases: [],
+        origin: "owner",
+      },
+      focus: { value: { kind: "brand" }, origin: "nuave" },
+      category: { value: "toko", origin: "website" },
+      offerings: { value: ["barang fiksi"], origin: "website" },
+      serviceChannels: { value: ["delivery"], origin: "website" },
+      market: { value: { reach: "seluruh", areas: [] }, origin: "owner" },
+      comparators: { value: { mode: "unknown" }, origin: "nuave" },
+    };
+    await expect(
+      generateReportContent({
+        brief: context,
+        prompts: [],
+        observations: [],
+        safety_identifier: "offline-v2-report-test",
+        budget: fixtureBudget,
+        language: "id",
+        question_method: "direct-ten",
+      }),
+    ).rejects.toThrow();
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+    const request = mockResponsesParse.mock.calls[0]![0] as {
+      input: { content: string }[];
+    };
+    const user = JSON.parse(request.input[1]!.content) as Record<
+      string,
+      unknown
+    >;
+    expect(user).toHaveProperty("confirmed_context");
+    expect(user).not.toHaveProperty("verified_brief");
+    expect(JSON.stringify(user)).toContain("Toko Fiksi");
+    expect(JSON.stringify(user)).toContain("owner");
+    expect(JSON.stringify(user)).not.toContain("not specified");
+    vi.unstubAllEnvs();
+  });
+});
 
 // Mock the OpenAI SDK so the live observation path can be exercised without a
 // network call. vi.hoisted keeps the mocks reachable from the hoisted factory.
@@ -161,6 +222,9 @@ describe("website extraction fallback", () => {
         brand_type: "Extracted type",
         category: "Extracted category",
         market_context: "Extracted market",
+        service_channels: ["delivery"],
+        market_reach: "sekitar",
+        market_areas: ["Jakarta Selatan"],
         target_customer: "Extracted customer",
         official_sources: [input.website_url],
         verified_offerings: ["Extracted offer"],
@@ -320,6 +384,241 @@ describe("live website extraction", () => {
     expect(JSON.parse(request.input[1].content)).toMatchObject({
       supplied_brand_name_unverified: true,
     });
+  });
+
+  it("sends the approved location rules to both extraction adapters with their existing settings", async () => {
+    const draft = extractionDraftSchema.parse(parsedDraft);
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: draft }),
+    );
+    await extractBusinessDraft(input);
+    const request = mockResponsesParse.mock.calls[0][0];
+    expect(request).toMatchObject({
+      model: "gpt-5.6-luna",
+      reasoning: { effort: "low" },
+      store: false,
+      service_tier: "default",
+      max_output_tokens: 16000,
+      max_tool_calls: 1,
+      tools: [
+        {
+          type: "web_search",
+          filters: { allowed_domains: ["klinikgigisehat.example"] },
+          search_context_size: "medium",
+        },
+      ],
+      tool_choice: "required",
+      include: ["web_search_call.action.sources"],
+      text: { verbosity: "low" },
+    });
+    const instruction: string = request.input[0].content;
+    for (const rule of [
+      "Gunakan bukti halaman awal terlebih dahulu",
+      "paling banyak satu halaman relevan pada host kanonis",
+      "jangan menebak path",
+      "Jangan gabungkan daftar parsial",
+      "jaringan operasional domestik yang tersebar secara geografis",
+      "Kehadiran nasional tidak berarti pengiriman ke setiap alamat",
+      "kehadiran saat ini di Indonesia dan luar negeri",
+      "Jangan memilih delapan kota pertama atau terbesar",
+      "pertahankan jangkauan yang didukung dan kosongkan market_areas",
+      "Pemesanan online saja bukan penggunaan layanan secara online",
+    ])
+      expect(instruction).toContain(rule);
+
+    vi.stubEnv("GEMINI_API_KEY", "dummy-offline-key");
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        candidates: [{ content: { parts: [{ text: JSON.stringify(draft) }] } }],
+        modelVersion: "dummy-model",
+        responseId: "fictional-parity",
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      await extractGeminiDraft(input);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const body = JSON.parse(String(fetchMock.mock.calls[0][1]!.body));
+      const geminiInstruction: string = body.systemInstruction.parts[0].text;
+      // Compare the actual bounded geographic instruction block, not the
+      // adapters' intentionally different competitor or transport contracts.
+      const geography = instruction.slice(
+        instruction.indexOf("Gunakan bukti halaman awal terlebih dahulu"),
+        instruction.indexOf("Leave unsupported scalar fields empty"),
+      );
+      expect(geography.length).toBeGreaterThan(500);
+      expect(geminiInstruction).toContain(geography.trimEnd());
+      expect(body.tools).toEqual([{ googleSearch: {} }]);
+      expect(body.generationConfig).toMatchObject({
+        temperature: 0.2,
+        maxOutputTokens: 4096,
+        responseMimeType: "application/json",
+      });
+      expect(JSON.parse(body.contents[0].parts[0].text)).toEqual({
+        official_website: input.website_url,
+        supplied_brand_name: input.brand_name,
+        supplied_market_context: input.market_context,
+        supplied_category: input.category,
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+  });
+
+  it("exempts six supported regional areas from retry shortening and retains every area", async () => {
+    const areas = [
+      "Cimahi",
+      "Bandung",
+      "Sumedang",
+      "Garut",
+      "Tasikmalaya",
+      "Cianjur",
+    ];
+    const regional = extractionDraftSchema.parse({
+      ...parsedDraft,
+      market_reach: "beberapa",
+      market_areas: areas,
+      target_customer: "",
+    });
+    mockResponsesParse
+      .mockResolvedValueOnce(
+        extractionResponse({
+          status: "incomplete",
+          incomplete_details: { reason: "max_output_tokens" },
+        }),
+      )
+      .mockResolvedValueOnce(extractionResponse({ output_parsed: regional }));
+    const result = await extractBusinessDraft(input);
+    expect(mockResponsesParse).toHaveBeenCalledTimes(2);
+    const [initial, retry] = mockResponsesParse.mock.calls.map(
+      ([request]) => request,
+    );
+    const extra = retry.input[0].content.slice(
+      initial.input[0].content.indexOf("The values are suggestions"),
+    );
+    expect(extra).toContain("except market_areas");
+    expect(extra).toContain("up to eight supported geographic areas");
+    expect(retry.input[1]).toEqual(initial.input[1]);
+    expect({ ...retry, input: initial.input }).toEqual(initial);
+    const prepared = prepareUnderstanding({
+      typedName: input.brand_name,
+      discoveredName: null,
+      canonicalSource: input.website_url,
+      draft: result.draft,
+    });
+    expect(initialSmartSelection(prepared).marketAreas).toEqual(areas);
+    expect(result.draft.target_customer).toBe("");
+    expect(result.telemetry.map((call) => call.attempt)).toEqual([1, 2]);
+  });
+
+  it("preserves service category and offerings through preparation when channels and reach are unsupported", async () => {
+    const serviceDraft = extractionDraftSchema.parse({
+      ...parsedDraft,
+      brand_name: "Studio Layanan Fiksi",
+      entity_scope: "",
+      brand_type: "",
+      category: "jasa pengembangan perangkat lunak",
+      market_context: "",
+      service_channels: [],
+      market_reach: "",
+      market_areas: [],
+      target_customer: "",
+      official_sources: ["https://studio-layanan.example/"],
+      verified_offerings: ["Pembuatan aplikasi", "Integrasi sistem"],
+    });
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: serviceDraft }),
+    );
+
+    const result = await extractBusinessDraft({
+      ...input,
+      website_url: "https://studio-layanan.example/",
+      brand_name: "Studio Layanan Fiksi",
+      category: "",
+      market_context: "",
+      identity_unverified: true,
+    });
+    const prepared = prepareUnderstanding({
+      typedName: "Studio Layanan Fiksi",
+      discoveredName: "Studio Layanan Fiksi",
+      canonicalSource: "https://studio-layanan.example/",
+      draft: result.draft,
+    });
+    const selection = initialSmartSelection(prepared);
+
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+    expect(result.draft).toEqual(serviceDraft);
+    expect(prepared.category).toEqual({
+      proposed: "jasa pengembangan perangkat lunak",
+      origin: "website",
+    });
+    expect(selection.category).toBe(serviceDraft.category);
+    expect(selection.offerings).toEqual(serviceDraft.verified_offerings);
+    expect(selection.serviceChannels).toEqual([]);
+    expect(selection.marketReach).toBe("");
+    expect(selection.marketAreas).toEqual([]);
+    expect(selection.origins.category).toBe("website");
+    expect(selection.origins.offerings).toBe("website");
+  });
+
+  it("keeps a valid empty extraction and its paid attempt without inventing facts or retrying", async () => {
+    const emptyDraft = extractionDraftSchema.parse({
+      ...parsedDraft,
+      brand_name: "",
+      entity_scope: "",
+      brand_type: "",
+      category: "",
+      market_context: "",
+      service_channels: [],
+      market_reach: "",
+      market_areas: [],
+      target_customer: "",
+      official_sources: ["https://studio-layanan.example/"],
+      verified_offerings: [],
+      customer_supplied_facts: ["Nama dari pemilik", "URL dari pemilik"],
+      known_accuracy_questions: [
+        "Kategori belum diketahui",
+        "Layanan belum diketahui",
+      ],
+      warnings: ["Fakta bisnis belum diperoleh dari sumber resmi."],
+    });
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: emptyDraft }),
+    );
+
+    const result = await extractBusinessDraft({
+      ...input,
+      website_url: "https://studio-layanan.example/",
+      brand_name: "Studio Layanan Fiksi",
+      category: "",
+      market_context: "",
+      identity_unverified: true,
+    });
+    const prepared = prepareUnderstanding({
+      typedName: "Studio Layanan Fiksi",
+      discoveredName: "Studio Layanan Fiksi",
+      canonicalSource: "https://studio-layanan.example/",
+      draft: result.draft,
+    });
+    const selection = initialSmartSelection(prepared);
+
+    expect(mockResponsesParse).toHaveBeenCalledTimes(1);
+    expect(result.draft).toEqual(emptyDraft);
+    expect(result.telemetry).toHaveLength(1);
+    expect(result.telemetry[0]).toMatchObject({
+      stage: "extract",
+      attempt: 1,
+      status: "completed",
+      cost_basis: "provider_usage",
+    });
+    expect(result.telemetry[0]!.accounted_cost_usd).toBeGreaterThan(0);
+    expect(prepared.category.proposed).toBeNull();
+    expect(selection.category).toBe("");
+    expect(selection.offerings).toEqual([]);
+    expect(selection.serviceChannels).toEqual([]);
+    expect(selection.marketReach).toBe("");
+    expect(prepared.sourceLinks).toEqual([]);
   });
 
   it("retries once with a stricter brevity instruction after an output-limit truncation", async () => {

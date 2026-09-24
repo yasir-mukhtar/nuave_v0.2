@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { extractionRequestSchema, auditBudgetSchema } from "@/lib/audit/types";
-import { liveExtractBusinessDraft } from "@/lib/audit/provider";
+import {
+  extractionRequestSchema,
+  auditBudgetSchema,
+  SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
+  type SourceExcerptStatus,
+  type PublicSourceData,
+} from "@/lib/audit/types";
+import {
+  liveExtractBusinessDraft,
+  liveAuditProvider,
+} from "@/lib/audit/provider";
+import {
+  fetchWebsiteExcerpt,
+  SensitiveSourceExcerptError,
+} from "@/lib/audit/source-excerpt";
+import { SafeSourceFetchError } from "@/lib/audit/safe-source-fetch";
 import {
   auditLiveCredentialsResponse,
   auditMode,
@@ -27,13 +41,19 @@ import { syntheticLocalExtraction } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
 
-function extractionRateLimitResponse(status: 429 | 503) {
+function extractionRateLimitResponse(
+  status: 429 | 503,
+  sourceStatus: SourceExcerptStatus = status === 429
+    ? "rate-limited"
+    : "rate-unavailable",
+) {
   return NextResponse.json(
     {
       error:
         status === 503 ? RATE_LIMIT_UNAVAILABLE_MESSAGE : RATE_LIMITED_MESSAGE,
       code: status === 503 ? "RATE_LIMIT_UNAVAILABLE" : "RATE_LIMITED",
       telemetry: [],
+      ...(sourceStatus ? { source_excerpt_status: sourceStatus } : {}),
     },
     { status },
   );
@@ -104,6 +124,7 @@ export async function POST(request: Request) {
   const credentialsError = auditLiveCredentialsResponse("extraction");
   if (credentialsError) return credentialsError;
 
+  let sourceStatus: SourceExcerptStatus = "not-attempted";
   try {
     const body = (await request.json()) as unknown;
     if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -143,13 +164,66 @@ export async function POST(request: Request) {
       return NextResponse.json({
         ...syntheticLocalExtraction(input),
         preparation_mode: "synthetic-local",
+        source_excerpt_status: sourceStatus,
       });
     }
+    let sourceData: PublicSourceData | null = null;
+    const provider = liveAuditProvider();
+    // Testing-only adapters keep their existing path and never claim that they
+    // consumed supplemental input. Both production aliases share OpenAI extraction.
+    if (
+      normalizedSource.sourceType === "website" &&
+      (provider === "openai" || provider === "opencodego")
+    ) {
+      const bindings = getAuditRateLimitBindings();
+      if (
+        (bindings.contextAvailable || process.env.NODE_ENV === "production") &&
+        !bindings.identityDestination
+      ) {
+        return extractionRateLimitResponse(503, "rate-unavailable");
+      }
+      sourceData = await fetchWebsiteExcerpt(input.website_url, {
+        destinationRateLimiter: bindings.identityDestination ?? {
+          limit: async () => ({ success: true }),
+        },
+      });
+      sourceStatus = sourceData ? "included" : "no-usable-text";
+    }
     return NextResponse.json({
-      ...(await liveExtractBusinessDraft(input)),
+      ...(await liveExtractBusinessDraft({
+        ...input,
+        ...(sourceData ? { public_source_data: sourceData } : {}),
+      })),
       preparation_mode: "live",
+      source_excerpt_status: sourceStatus,
     });
   } catch (error) {
+    if (error instanceof SafeSourceFetchError) {
+      if (error.code === "RATE_LIMITED")
+        return extractionRateLimitResponse(429, "rate-limited");
+      if (error.code === "RATE_LIMIT_UNAVAILABLE")
+        return extractionRateLimitResponse(503, "rate-unavailable");
+      return NextResponse.json(
+        {
+          error: SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
+          code: "SOURCE_UNAVAILABLE",
+          source_excerpt_status: "unavailable",
+          telemetry: [],
+        },
+        { status: 400 },
+      );
+    }
+    if (error instanceof SensitiveSourceExcerptError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: "SOURCE_RESTRICTED",
+          source_excerpt_status: "restricted",
+          telemetry: [],
+        },
+        { status: 400 },
+      );
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
@@ -162,13 +236,21 @@ export async function POST(request: Request) {
     }
     if (error instanceof AuditCallExecutionError) {
       return NextResponse.json(
-        { error: error.message, telemetry: error.telemetry },
+        {
+          error: error.message,
+          telemetry: error.telemetry,
+          source_excerpt_status: sourceStatus,
+        },
         { status: error.status },
       );
     }
     if (error instanceof AuditBudgetError) {
       return NextResponse.json(
-        { error: error.message, telemetry: [] },
+        {
+          error: error.message,
+          telemetry: [],
+          source_excerpt_status: sourceStatus,
+        },
         { status: error.status },
       );
     }
@@ -179,6 +261,7 @@ export async function POST(request: Request) {
             ? error.message
             : "Kami tidak dapat menganalisis sumber ini.",
         telemetry: [],
+        source_excerpt_status: sourceStatus,
       },
       { status: 400 },
     );

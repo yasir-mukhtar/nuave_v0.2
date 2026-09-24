@@ -1556,6 +1556,8 @@
     grid-template-columns: 12mm minmax(0, 1fr);
     gap: 6mm;
     margin-bottom: 8mm;
+    break-inside: avoid;
+    break-after: avoid-page;
   }
 
   .sectionHeading h2 {

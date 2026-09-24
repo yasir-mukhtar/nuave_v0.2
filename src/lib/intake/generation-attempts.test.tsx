@@ -171,6 +171,7 @@ describe("R-06 — generation attempts ledger and interrupted state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(saved().generation_attempts).toHaveLength(2));
     const attempts = saved().generation_attempts!;
     expect(attempts).toHaveLength(2);
     // The stub transport records too — confirmed, cost null (R-06 §3).
@@ -220,7 +221,7 @@ describe("R-06 — generation attempts ledger and interrupted state", () => {
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     // Exactly one new request — the successful pack shows as usual.
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(saved().generation_attempts).toHaveLength(2);
+    await waitFor(() => expect(saved().generation_attempts).toHaveLength(2));
     expect(saved().generation_attempts![1]).toMatchObject({
       outcome: "succeeded",
       execution: "confirmed",

@@ -19,6 +19,8 @@ export interface SourceDnsResolvers {
 
 export interface SafeFetchOptions {
   kind: SourceResourceKind;
+  /** Identity remains head-only; preparation may read one bounded document. */
+  htmlScope?: "head" | "document";
   destinationRateLimiter: SourceDestinationRateLimiter;
   fetchImpl?: typeof fetch;
   dns?: SourceDnsResolvers;
@@ -741,7 +743,9 @@ export async function safeFetchPublicResource(
       response.body,
       startedAt + SOURCE_TOTAL_TIMEOUT_MS,
       now,
-      options.kind === "html" ? createHtmlHeadStopper() : undefined,
+      options.kind === "html" && options.htmlScope !== "document"
+        ? createHtmlHeadStopper()
+        : undefined,
     );
     return {
       bytes,

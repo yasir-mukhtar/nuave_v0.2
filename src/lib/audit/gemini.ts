@@ -267,7 +267,14 @@ export async function extractBusinessDraft(input: {
   const systemInstruction = [
     "Extract a review draft using only public facts supported by the supplied official website.",
     "Do not infer praise, reputation, quality, target demographics, outcomes, or competitor facts.",
-    "Write all explanatory text in clear, natural English. Preserve official brand names, product names, and place names as published.",
+    "Tulis semua teks penjelasan secara ringkas dan alami dalam Bahasa Indonesia. Pertahankan nama resmi, nama produk, nama tempat, URL, dan kutipan bukti persis seperti sumbernya.",
+    "Gunakan bukti halaman awal terlebih dahulu. Jika jangkauan saat ini belum didukung atau ambigu, arahkan pencarian domain resmi yang sudah tersedia ke bukti lokasi operasional atau area layanan resmi dengan identitas/domain yang diberikan dan maksud pencarian lokasi/area layanan umum; jangan menebak path atau URL khusus bisnis.",
+    "Pilih paling banyak satu halaman relevan pada host kanonis URL yang diberikan (www dianggap setara): direktori lokasi untuk kehadiran di tempat usaha, pernyataan cakupan untuk klaim pengiriman. Gunakan URL bukti yang benar-benar ditemukan, bukan tautan buatan. Jika pilihan di antara beberapa kandidat ambigu atau halaman tidak dapat dibaca, biarkan makna yang belum didukung tetap kosong. Jangan gabungkan daftar parsial, telusuri cabang satu per satu, gunakan direktori eksternal/domain lain, atau meminta pengambilan halaman maupun pemanggilan model tambahan.",
+    "Isi service_channels hanya dengan cara pelanggan menerima produk atau layanan yang dinyatakan situs: on_premise di tempat usaha, on_customer di lokasi pelanggan, delivery dikirim ke pelanggan, online diterima/digunakan secara online. Pemesanan online saja bukan penggunaan layanan secara online. Kosongkan bila tidak didukung. Kehadiran nasional tidak berarti pengiriman ke setiap alamat; cakupan pengiriman memerlukan bukti tersendiri dan tidak boleh diperluas dari lokasi gerai.",
+    "Untuk seluruh brand, market_reach menggambarkan kehadiran geografis bisnis melalui saluran yang dinyatakan, bukan inventaris semua gerai atau batas pengiriman setiap saluran. Gunakan sekitar untuk kehadiran berpusat pada satu area lokal yang didukung; beberapa untuk kota/wilayah bernama tanpa dukungan kehadiran nasional; seluruh untuk pernyataan ketersediaan nasional saat ini atau jaringan operasional domestik yang tersebar secara geografis dan terdokumentasi; luar untuk bukti kehadiran saat ini di Indonesia dan luar negeri. Jika klasifikasi tidak didukung, gunakan string kosong. Jangan simpulkan dari kategori umum atau market_context.",
+    "Alamat kontak, aspirasi ekspansi, jumlah gerai tanpa penjelasan geografis, nama yang terdengar asing, dan daftar yang melebihi batas saja tidak membuktikan jangkauan lebih luas. Tidak ada ambang jumlah gerai untuk seluruh atau luar. Lokasi operasional yang dipublikasikan mendukung kehadiran di tempat usaha; lokasi kontak saja bukan cakupan layanan.",
+    "Isi market_areas dengan paling banyak delapan nama area geografis yang diterbitkan bisnis, mempertahankan ejaannya. Untuk sekitar, gunakan satu area lokal yang didukung. Untuk beberapa, gunakan deskripsi geografis yang setia pada bukti; banyak gerai dapat berada dalam sedikit area. Gunakan deskripsi wilayah yang lebih luas hanya bila secara eksplisit diterbitkan dan setia pada bukti. Untuk seluruh atau luar, market_areas harus kosong; ukuran atau paginasi direktori saja tidak membuat kehadiran nasional yang didukung menjadi tidak diketahui. Tidak wajib merinci semua gerai atau membuktikan kelengkapan direktori.",
+    "Jika kehadiran yang benar-benar regional tidak dapat diwakili secara setia dalam delapan area yang didukung dan tidak ada deskripsi wilayah lebih luas yang diterbitkan, pertahankan jangkauan yang didukung dan kosongkan market_areas agar pelanggan dapat melengkapinya. Jangan memilih delapan kota pertama atau terbesar, mengarang pengelompokan wilayah, menaikkan jangkauan untuk lolos validasi, atau mengubah fokus audit.",
     "Leave unsupported scalar fields empty and unsupported arrays empty.",
     "For each material extracted value add an evidence record with the exact field, value, source URL, and a short note.",
     "The values are suggestions for human confirmation, not verified facts.",
@@ -353,6 +360,9 @@ function extractionManualFallback(
     brand_type: "",
     category: input.category,
     market_context: input.market_context,
+    service_channels: [],
+    market_reach: "",
+    market_areas: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],
@@ -379,7 +389,7 @@ function extractionManualFallback(
 
 export async function executeAuditPrompt(input: {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief: import("./direct-ten-context-v2").AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
 }): Promise<AuditObservation> {

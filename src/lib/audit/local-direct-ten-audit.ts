@@ -12,6 +12,7 @@ import {
   type ReportGenerator,
 } from "./report-pipeline";
 import { assembleReportContent } from "./contracts";
+import { subjectBrandName } from "./direct-ten-context-v2";
 import type { QuestionExecuteInput } from "./retry";
 import type { ParsedSourceInput } from "./source-input";
 import type { SourceIdentity } from "./source-identity";
@@ -270,6 +271,9 @@ export function syntheticLocalExtraction(input: {
     brand_type: "",
     category: "",
     market_context: "",
+    service_channels: [],
+    market_reach: "",
+    market_areas: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],
@@ -427,7 +431,7 @@ function syntheticDirectTenSynthesis(
 export const generateSyntheticLocalReport: ReportGenerator = async (input) => {
   const synthesis = syntheticDirectTenSynthesis(
     input.observations,
-    input.brief.brand_name,
+    subjectBrandName(input.brief),
   );
   const content = assembleReportContent(
     synthesis,

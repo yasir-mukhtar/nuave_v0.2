@@ -2,6 +2,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { AuditCallTelemetry, BusinessBrief } from "../audit/types";
 import type { ReportRecoveryState } from "../audit/report-recovery";
+import historicalPair from "../../../tests/spec011-v1-records.json";
+import { parseLocalSession } from "./local-session";
+import { parseLocalQuestionPack } from "./local-questions";
+import { readHistoricalAudit } from "./historical-audit";
 import {
   clearLocalAuditRecord,
   LOCAL_AUDIT_STORAGE_KEY,
@@ -61,6 +65,90 @@ describe("localAuditQuestionsKey", () => {
 });
 
 describe("readLocalAuditRecord", () => {
+  it.each([
+    "done",
+    "running",
+    "interrupted",
+    "report-failed",
+    "failed",
+  ] as const)(
+    "recognizes a started historical %s record without mutating either key",
+    (status) => {
+      const audit = JSON.parse(historicalPair.audit) as LocalAuditRecord;
+      audit.status = status;
+      if (status === "running") audit.observations = [];
+      if (status === "failed") audit.observations = [];
+      const rawAudit = JSON.stringify(audit);
+      window.sessionStorage.setItem(
+        "nuave.localIntake.v1",
+        historicalPair.intake,
+      );
+      window.sessionStorage.setItem(LOCAL_AUDIT_STORAGE_KEY, rawAudit);
+      expect(readHistoricalAudit()?.status).toBe(status);
+      expect(window.sessionStorage.getItem("nuave.localIntake.v1")).toBe(
+        historicalPair.intake,
+      );
+      expect(window.sessionStorage.getItem(LOCAL_AUDIT_STORAGE_KEY)).toBe(
+        rawAudit,
+      );
+    },
+  );
+
+  it("holds a started pre-provider failure even when its saved brief is null", () => {
+    const audit = JSON.parse(historicalPair.audit) as LocalAuditRecord;
+    audit.status = "failed";
+    audit.brief = null;
+    audit.observations = [];
+    audit.report = null;
+    const rawAudit = JSON.stringify(audit);
+    window.sessionStorage.setItem(
+      "nuave.localIntake.v1",
+      historicalPair.intake,
+    );
+    window.sessionStorage.setItem(LOCAL_AUDIT_STORAGE_KEY, rawAudit);
+    expect(readHistoricalAudit()?.status).toBe("failed");
+    expect(window.sessionStorage.getItem(LOCAL_AUDIT_STORAGE_KEY)).toBe(
+      rawAudit,
+    );
+  });
+
+  it("preserves the literal pre-change intake/audit pair with its edited wording and ledger", () => {
+    window.sessionStorage.setItem(
+      "nuave.localIntake.v1",
+      historicalPair.intake,
+    );
+    window.sessionStorage.setItem(
+      LOCAL_AUDIT_STORAGE_KEY,
+      historicalPair.audit,
+    );
+    const stored = parseLocalSession(historicalPair.intake);
+    expect(stored).not.toBeNull();
+    const originalPack = (stored?.pack ?? null) as { input?: unknown } | null;
+    const pack = parseLocalQuestionPack(
+      originalPack,
+      originalPack?.input as Parameters<typeof parseLocalQuestionPack>[1],
+    );
+    expect(pack?.originals).toHaveLength(10);
+    expect(pack?.revision).toBe(1);
+    const expected = JSON.parse(historicalPair.audit) as LocalAuditRecord;
+    const restored = readLocalAuditRecord(
+      expected.inputFingerprint,
+      expected.questionsKey,
+    );
+    expect(restored?.brief).toEqual(expected.brief);
+    expect(restored?.observations).toEqual(expected.observations);
+    expect(restored?.report).toEqual(expected.report);
+    expect(restored?.preparationCalls).toEqual(expected.preparationCalls);
+    expect(restored?.runCalls).toEqual(expected.runCalls);
+    expect(restored?.reportCalls).toEqual(expected.reportCalls);
+    expect(window.sessionStorage.getItem("nuave.localIntake.v1")).toBe(
+      historicalPair.intake,
+    );
+    expect(window.sessionStorage.getItem(LOCAL_AUDIT_STORAGE_KEY)).toBe(
+      historicalPair.audit,
+    );
+  });
+
   it("returns the stored record only when fingerprint and wording both bind", () => {
     writeLocalAuditRecord(record({ status: "done" }));
     const restored = readLocalAuditRecord(

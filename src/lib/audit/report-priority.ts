@@ -1,7 +1,8 @@
 import { validateReportContent } from "./contracts";
 import type { HistoricalPromptPackId } from "./measurement-matrix";
 import type { AuditQuestionMethod } from "./locked-question-pack";
-import type { AuditObservation, BusinessBrief, ReportContent } from "./types";
+import type { AuditObservation, ReportContent } from "./types";
+import type { AuditSubject } from "./direct-ten-context-v2";
 
 function observedGapError(order: number) {
   return `Priority ${order} is not tied to an observed gap.`;
@@ -17,7 +18,7 @@ function priorityIsSupported(
   priority: ReportContent["priorities"][number],
   content: ReportContent,
   observations: AuditObservation[],
-  brief: BusinessBrief,
+  brief: AuditSubject,
   historicalFixtureId?: HistoricalPromptPackId,
   questionMethod?: AuditQuestionMethod,
 ) {
@@ -50,7 +51,7 @@ export type ReportPrioritySanitization = {
 export function sanitizeUnsupportedReportPriorities(
   content: ReportContent,
   observations: AuditObservation[],
-  brief: BusinessBrief,
+  brief: AuditSubject,
   historicalFixtureId?: HistoricalPromptPackId,
   questionMethod?: AuditQuestionMethod,
 ): ReportPrioritySanitization {

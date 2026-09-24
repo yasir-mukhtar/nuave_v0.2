@@ -2,6 +2,40 @@ import { z } from "zod";
 import { parseSourceInput } from "./source-input";
 import type { AuditQuestionMethod } from "./locked-question-pack";
 
+/** Preparation metadata only: never part of confirmed, audit or export context. */
+export const sourceExcerptStatusSchema = z.enum([
+  "included",
+  "no-usable-text",
+  "not-attempted",
+  "unavailable",
+  "restricted",
+  "rate-limited",
+  "rate-unavailable",
+]);
+export type SourceExcerptStatus = z.infer<typeof sourceExcerptStatusSchema>;
+export const SOURCE_EXCERPT_EMPTY_NOTICE =
+  "Teks halaman belum cukup untuk menyiapkan informasi bisnis. Periksa draf ini dan lengkapi bagian yang masih kosong.";
+export const SOURCE_EXCERPT_UNAVAILABLE_MESSAGE =
+  "Halaman website belum dapat dibaca untuk menyiapkan informasi bisnis. Coba lagi atau ganti URL.";
+export const SOURCE_EXCERPT_RESTRICTED_MESSAGE =
+  "Informasi sensitif terdeteksi. Persiapan audit dihentikan; hubungi Nuave.";
+
+/** Internal extractor input. Deliberately absent from extractionRequestSchema. */
+export const publicSourceDataSchema = z
+  .object({
+    source_url: z.string().url(),
+    retrieved_at: z.string().datetime(),
+    text: z
+      .string()
+      .refine(
+        (value) =>
+          value.trim().length > 0 &&
+          new TextEncoder().encode(value).byteLength <= 8_000,
+      ),
+  })
+  .strict();
+export type PublicSourceData = z.infer<typeof publicSourceDataSchema>;
+
 /** The ten categories in the canonical measurement matrix (R-01). */
 export const promptCategories = [
   "category_recommendation",
@@ -148,6 +182,15 @@ export const extractionDraftSchema = z.object({
   brand_type: z.string(),
   category: z.string(),
   market_context: z.string(),
+  service_channels: z
+    .array(z.enum(["on_premise", "on_customer", "delivery", "online"]))
+    .max(4)
+    .refine((values) => new Set(values).size === values.length)
+    .default([]),
+  market_reach: z
+    .enum(["sekitar", "beberapa", "seluruh", "luar", ""])
+    .default(""),
+  market_areas: z.array(z.string().trim().min(1).max(160)).max(8).default([]),
   target_customer: z.string(),
   official_sources: z.array(z.string()),
   verified_offerings: z.array(z.string()),

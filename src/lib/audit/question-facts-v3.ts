@@ -1,14 +1,22 @@
-/** Dormant Spec 008 G1 boundary. No provider, React, storage or route imports. */
+/** Pure facts projection. The v1 parser remains for historical callers;
+ * the v2 branch projects exact confirmed direct-ten context. */
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { businessBriefSchema } from "./types";
 import { parseSourceInput } from "./source-input";
+import { isSensitiveIntakeText } from "./sensitive-intake";
+export { isSensitiveIntakeText } from "./sensitive-intake";
+import {
+  directTenContextSchema,
+  type DirectTenAuditContext,
+} from "./direct-ten-context-v2";
 import {
   categoryComparisonFallbackName,
   normalizeIndonesianIdentity,
 } from "./questions-id";
 
 export const FACTS_PROJECTION_VERSION = "nuave.question-facts.v3.1";
+export const FACTS_PROJECTION_VERSION_V2 = "nuave.question-facts.v3.2";
 const text = z.string().trim().max(1000);
 const list = z.array(text).max(20);
 const channel = z.enum(["on_premise", "on_customer", "delivery", "online"]);
@@ -114,7 +122,8 @@ export type Correction = {
   target: string | null;
 };
 export type QuestionFactsV3 = {
-  version: typeof FACTS_PROJECTION_VERSION;
+  version: typeof FACTS_PROJECTION_VERSION | typeof FACTS_PROJECTION_VERSION_V2;
+  confirmedOrigins?: Record<string, "website" | "nuave" | "owner">;
   binding: FactsBinding;
   identity: {
     brand: string;
@@ -131,10 +140,12 @@ export type QuestionFactsV3 = {
   offerings: string[];
   targetCustomer: string | null;
   customerNeeds: string[];
+  differentiator?: string | null;
   buyerConstraints: {
     text: string;
     provenance: "buyer_constraint";
-    permission: "legacy-criteria";
+    permission: "legacy-criteria" | "confirmed-consideration";
+    origin?: "website" | "nuave" | "owner";
   }[];
   /** Confirmed general access/fulfilment constraints, shared to every slot
    * under R5 §3.2. Empty when nothing was confirmed for this subset. */
@@ -151,6 +162,180 @@ export type QuestionFactsV3 = {
   categorySafety: string | null;
   safeFacts: { text: string; provenance: "buyer_supplied" }[];
 };
+
+/** The v2 writer projection reads only selected, customer-confirmed meanings.
+ * No required legacy brief or category/market fallback is constructed. */
+export function projectQuestionFactsV2(input: {
+  context: DirectTenAuditContext;
+  factVersion: number;
+}): FactsResult {
+  const parsed = directTenContextSchema.safeParse(input.context);
+  if (
+    !parsed.success ||
+    !Number.isInteger(input.factVersion) ||
+    input.factVersion < 1
+  ) {
+    return { status: "INVALID_REQUEST", issues: [{ code: "invalid_shape" }] };
+  }
+  const context = parsed.data;
+  const focus = context.focus.value;
+  const source = parseSourceInput(context.identity.source);
+  if (!source)
+    return {
+      status: "INPUT_CORRECTION_REQUIRED",
+      issues: [
+        { field: "identity", code: "invalid_source", target: "identity" },
+      ],
+    };
+  const activeText = [
+    context.identity.name,
+    ...context.identity.aliases,
+    focus.kind === "brand" ? "" : focus.name,
+    focus.kind === "cabang" ? focus.address : "",
+    context.category.value,
+    ...context.offerings.value,
+    ...(context.market?.value.areas ?? []),
+    context.targetCustomer?.value ?? "",
+    ...(context.customerNeeds?.value ?? []),
+    ...(context.decisionConsiderations?.value ?? []),
+    ...(context.comparators.value.mode === "named"
+      ? context.comparators.value.names
+      : []),
+    context.differentiator?.value ?? "",
+    context.publicFact?.value ?? "",
+  ];
+  if (activeText.some((value) => value && unsafe(value))) {
+    return {
+      status: "INPUT_CORRECTION_REQUIRED",
+      issues: [{ field: "confirmed", code: "unsafe", target: "summary" }],
+    };
+  }
+  const sourceUrl = new URL(source.normalizedUrl);
+  const market = context.market?.value;
+  const categoryTokens = new Set(
+    normalizeIndonesianIdentity(context.category.value).split(" "),
+  );
+  const brandTokens = normalizeIndonesianIdentity(context.identity.name)
+    .split(" ")
+    .filter((token) => token.length > 3 && !categoryTokens.has(token));
+  const identifying = (value: string) =>
+    brandTokens.some((token) =>
+      normalizeIndonesianIdentity(value).split(" ").includes(token),
+    );
+  const names =
+    context.comparators.value.mode === "named"
+      ? context.comparators.value.names
+      : [];
+  const facts: QuestionFactsV3 = {
+    version: FACTS_PROJECTION_VERSION_V2,
+    confirmedOrigins: {
+      identity: context.identity.origin,
+      source: context.identity.sourceOrigin,
+      focus: context.focus.origin,
+      category: context.category.origin,
+      offerings: context.offerings.origin,
+      serviceChannels: context.serviceChannels.origin,
+      ...(context.market ? { market: context.market.origin } : {}),
+      ...(context.targetCustomer
+        ? { targetCustomer: context.targetCustomer.origin }
+        : {}),
+      ...(context.customerNeeds
+        ? { customerNeeds: context.customerNeeds.origin }
+        : {}),
+      ...(context.decisionConsiderations
+        ? { decisionConsiderations: context.decisionConsiderations.origin }
+        : {}),
+      comparators: context.comparators.origin,
+      ...(context.differentiator
+        ? { differentiator: context.differentiator.origin }
+        : {}),
+      ...(context.publicFact ? { publicFact: context.publicFact.origin } : {}),
+    },
+    binding: {
+      requestId: "local-glm-prepare",
+      factsRevision: input.factVersion,
+      factsFingerprint: hash({ context, factVersion: input.factVersion }),
+    },
+    identity: {
+      brand: context.identity.name,
+      aliases: context.identity.aliases,
+      targets: unique([
+        ...(focus.kind === "cabang" ? [focus.name] : []),
+        ...(focus.kind === "produk" && identifying(focus.name)
+          ? [focus.name]
+          : []),
+        ...context.offerings.value.filter(identifying),
+      ]),
+      comparators: names,
+      sourceSignals: unique([
+        `${sourceUrl.hostname}${sourceUrl.pathname}`.replace(/\/+$/, ""),
+        sourceUrl.hostname.replace(/^www\./, ""),
+      ]),
+    },
+    entityScope: {
+      kind:
+        focus.kind === "brand"
+          ? "whole-brand"
+          : focus.kind === "produk"
+            ? "offering"
+            : "branch",
+      name: focus.kind === "brand" ? null : focus.name,
+      address: focus.kind === "cabang" ? focus.address : null,
+      detail: null,
+    },
+    category: context.category.value,
+    businessType: null,
+    entityType: null,
+    offerings: context.offerings.value,
+    targetCustomer: context.targetCustomer?.value ?? null,
+    customerNeeds: context.customerNeeds?.value ?? [],
+    differentiator: context.differentiator?.value ?? null,
+    buyerConstraints: (context.decisionConsiderations?.value ?? []).map(
+      (text) => ({
+        text,
+        provenance: "buyer_constraint" as const,
+        permission: "confirmed-consideration" as const,
+        origin: context.decisionConsiderations!.origin,
+      }),
+    ),
+    accessConstraints: [],
+    marketContext: {
+      reach: market
+        ? (
+            {
+              sekitar: "local",
+              beberapa: "selected-areas",
+              seluruh: "national",
+              luar: "international",
+            } as const
+          )[market.reach]
+        : null,
+      areas: market?.areas ?? [],
+      description: null,
+    },
+    serviceChannels: context.serviceChannels.value,
+    comparison:
+      context.comparators.value.mode === "category-alternatives"
+        ? { kind: "category-alternatives", name: null }
+        : names.length === 1
+          ? { kind: "named", name: names[0] }
+          : { kind: "unresolved", name: null },
+    categorySafety: null,
+    safeFacts: context.publicFact
+      ? [{ text: context.publicFact.value, provenance: "buyer_supplied" }]
+      : [],
+  };
+  return {
+    status: "projected",
+    facts,
+    limitations: [
+      "competitive_role_unknown",
+      ...(facts.comparison.kind === "unresolved"
+        ? ["comparison_relation_unresolved" as const]
+        : []),
+    ],
+  };
+}
 export type FactsResult =
   | { status: "INVALID_REQUEST"; issues: { code: "invalid_shape" }[] }
   | { status: "INPUT_CORRECTION_REQUIRED"; issues: Correction[] }
@@ -162,16 +347,7 @@ export type FactsResult =
       )[];
     };
 
-/** Conservative mechanical screen, not a semantic or comprehensive PII classifier.
- * Safe buyer facts remain attributed in adapter state, outside writer context.
- * USP/raw HTML never become fallback fragments. All retained strings pass this
- * boundary; this is not permission to collect personal or regulated records.
- */
-function unsafe(value: string) {
-  return /https?:\/\/|www\.|<[^>]*>|[\w.+-]+@[\w.-]+\.[a-z]{2,}|\d(?:[\s-]?\d){12,18}|(?:\+62|0)8[\d\s-]{7,}|\b(?:api[_ -]?key|access[_ -]?token|password|kata sandi|nomor rekening|nomor ktp|ktp|cvv|cvc|nomor kartu|kartu kredit|credit card|rekam medis|data pasien|riwayat penyakit|medical record|diagnosis (?:saya|pasien)|hiv|aids)\b|(?:hasil|riwayat|kondisi|diagnosis|diagnosa|tes|test|lab|laboratorium|penyakit|gejala|obat)\b[^.\n]{0,60}?\b(?:saya|pribadi|keluarga)\b|\b(?:saya|pribadi|keluarga)\b[^.\n]{0,60}?\b(?:positif|negatif|kanker|diabetes|hiv|aids|didiagnosis|penyakit|stroke|jantung|depresi|gangguan jiwa|mental)\b|\bi (?:have|am|was|tested)\b[^.\n]{0,60}?\b(?:positive|negative|cancer|diabetes|hiv|aids)\b|\bmy\b[^.\n]{0,40}?\b(?:diagnosis|medical record|test result|hiv)\b/i.test(
-    value,
-  );
-}
+const unsafe = isSensitiveIntakeText;
 
 /** Bounded mechanical vocabulary for the R5 §3.2 shared subset: safe general
  * access/fulfilment constraints. It is not a semantic classifier; criteria

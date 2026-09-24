@@ -3,10 +3,13 @@ import { z } from "zod";
 import {
   auditObservationSchema,
   auditBudgetSchema,
-  businessBriefSchema,
   type AuditCallTelemetry,
   type AuditPrompt,
 } from "@/lib/audit/types";
+import {
+  DIRECT_TEN_REPORT_CONTRACT_VERSION,
+  directTenContextSchema,
+} from "@/lib/audit/direct-ten-context-v2";
 import {
   assertReportGenerationGate,
   createValidatedAuditReport,
@@ -29,7 +32,8 @@ import { generateSyntheticLocalReport } from "@/lib/audit/local-direct-ten-audit
 export const runtime = "nodejs";
 
 const sharedRequestFields = {
-  brief: businessBriefSchema,
+  client_contract_version: z.literal(DIRECT_TEN_REPORT_CONTRACT_VERSION),
+  context: directTenContextSchema,
   observations: z.array(auditObservationSchema).length(10),
   safety_identifier: z.string().min(8).max(64),
   budget: auditBudgetSchema,
@@ -43,11 +47,13 @@ const directTenPromptSchema = z.object({
   review_status: z.literal("needs_human_review"),
 });
 
-const directTenRequestSchema = z.object({
-  ...sharedRequestFields,
-  question_method: z.literal("direct-ten"),
-  prompts: z.array(directTenPromptSchema).length(10),
-});
+const directTenRequestSchema = z
+  .object({
+    ...sharedRequestFields,
+    question_method: z.literal("direct-ten"),
+    prompts: z.array(directTenPromptSchema).length(10),
+  })
+  .strict();
 
 type DiagnosticAuditCallTelemetry = AuditCallTelemetry & {
   report_diagnostics?: string[];
@@ -109,6 +115,7 @@ export async function POST(request: Request) {
     // direct-ten wire prompts are deliberately thin (id/question/review_status).
     const lockedInput = {
       ...input,
+      brief: input.context,
       prompts: input.prompts as AuditPrompt[],
       language: "id" as const,
       question_method: questionMethod,

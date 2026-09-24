@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-19
+> Updated: 2026-09-24
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -116,13 +116,62 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-**Current bounded implementation:** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
-is approved for the recommendation-eligible intake-to-report path. Its September
-19 amendment prioritizes the continuous local audit experience and defers
-report-quality improvement. Use its
-[fresh-session handoffs](./checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md).
-It replaces conflicting fixed-slot and R5 gate requirements for the new method;
-the older packages below remain references for their unaffected/historical scope.
+The isolated [main integration candidate](../specs/011-smart-consultant-intake/MAIN_INTEGRATION_RESULT.md)
+combines verified Spec 011 with merged Spec 012 PR A and the later intake/navigation
+fixes. Independent integration review is next; this does not mark all of Spec 012
+Verified or authorize publication. PR #77 fixed the old contents-anchor defect;
+header labels/order and printed URL tails remain separate report work. The
+[PR A record](../specs/012-evidence-first-report/VERIFICATION.md) retains its dated
+scope; B1/B2 and promotion of the report documentation branch remain pending.
+
+**Current bounded implementation:** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
+is **Verified** (2026-09-24) on preserved `2a21f85` plus the reviewed 316-file
+product manifest for the prepared summary and truthful new-session report/export
+boundary. Its 2026-09-22 amendment accepts the Cross-cutting sizing result and
+historical output/retry hold; the pre-code gates are complete. The
+[implementation handoff](../specs/011-smart-consultant-intake/IMPLEMENTATION_PROMPT.md)
+records the implemented scope. The F-03 diagnostic has independent PASS and its
+live allowance is consumed. The founder approved the
+[bounded product correction](../specs/011-smart-consultant-intake/F03_PRODUCT_CORRECTION_SCOPE.md)
+on 2026-09-23. Its [independent re-review](../specs/011-smart-consultant-intake/F03_PRODUCT_CORRECTION_REVIEW_2.md)
+now passes the bounded offline correction. The separately authorized
+[founder walkthrough](../specs/011-smart-consultant-intake/F03_FOUNDER_WALKTHROUGH.md)
+has completed one preparation and stopped before confirmation. The founder's
+earlier 2026-09-24 review accepted everything except lacking completeness. The
+[completeness review](../specs/011-smart-consultant-intake/F03_COMPLETENESS_REVIEW.md)
+confirmed the required/optional behavior; source support for reach was required
+before a code correction could be justified. The reviewed
+[source-support result](../specs/011-smart-consultant-intake/F03_SOURCE_SUPPORT_RESULT.md)
+finds aspirational homepage text retained by selection, with no code fix justified
+by that check. The founder subsequently supplied an official outlets page;
+[its reading](../specs/011-smart-consultant-intake/ACCEPTANCE_EVIDENCE.md#2026-09-24-founder-supplied-official-outlets-source)
+establishes published multi-city outlet evidence. The
+[location-source package](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_PROPOSAL.md)
+was revised after the [orchestrator REVISE](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_PROPOSAL_REVIEW.md)
+and the founder's [broad-presence decision](./DECISION_LOG.md#2026-09-24--whole-brand-reach-means-broad-business-presence).
+The founder then [approved offline implementation](./DECISION_LOG.md#2026-09-24--approve-the-f-03-location-source-implementation),
+including the stated regional limit. Its implementation now has
+[independent offline PASS](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_REVIEW.md)
+on the explicitly preserved baseline `2a21f85`; main integration is separate.
+The subsequently authorized [one-Periksa walkthrough](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_WALKTHROUGH_RESULT.md)
+populated national reach and enabled confirmation without retry. It stopped
+before confirmation. The founder then accepted the reach and prepared summary.
+The [acceptance closeout review](../specs/011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW.md)
+passes AC-00 through AC-08 with its stated limits retained. The combined main
+candidate has [independent integration PASS](../specs/011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md).
+Its [local PR package](../specs/011-smart-consultant-intake/PR_READINESS.md) is
+complete; publication approval, required CI and release remain separate.
+Do not repeat the founder question or infer another live-test gate.
+Neither meaning nor implementation approval needs repeating.
+Target customer remains optional. Follow `NOW.md`; do not rerun preparation,
+the consumed source check, the diagnostic or the completed excerpt-correction
+handoff. The latest walkthrough allowance is also consumed; no further live
+work is authorized. Accounted cost is USD 1.06241155 of 5.
+F-03/AC-07 are closed; F-01 remains closed. Spec 011 is Verified for the preserved
+working tree, with no further acceptance review gate remaining.
+Specs 009/010 remain the protected question, observation, measurement, and report-
+layout foundation except for this explicit context/historical amendment.
+Report usefulness redesign and legacy-only removal remain deferred.
 
 [`WORKFLOW.md`](./WORKFLOW.md) defines document creation, specifications,
 worker delegation, and verification. [`../specs/README.md`](../specs/README.md)
@@ -133,6 +182,7 @@ context an agent must read. Do not implement a draft specification.
 
 | Package                                                                                                               | Outcome                                                                                                                                               | Status                                                                                                                                                                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`011-smart-consultant-intake`](../specs/011-smart-consultant-intake/SPEC.md) | One prepared summary and truthful confirmed context through reports/downloads; preserved old records with output/retry held | Verified (2026-09-24), preserved `2a21f85` working tree plus reviewed 316-file manifest; main integration and PR/release readiness separate |
 | [`001-simulated-journey-shell`](../specs/001-simulated-journey-shell/SPEC.md)                                         | Fixture-backed landing-to-report preview with unmistakably simulated checkout                                                                         | Verified (2026-08-17); realigned by Spec 002                                                                                                                                                                                                  |
 | [`002-indonesian-audit-contract`](../specs/002-indonesian-audit-contract/SPEC.md)                                     | Indonesian audit and report contracts, journey realigned to the canonical sequence                                                                    | Verified (2026-08-17)                                                                                                                                                                                                                         |
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md)                                       | Live engine connected, first real Indonesian report, report-quality gate verdict                                                                      | Approved; report quality unmet/deferred while Spec 009 completes the local audit flow                                                                                                                                                                                            |

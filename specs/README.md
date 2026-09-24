@@ -46,6 +46,53 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
+- [Spec 012 PR A verification](./012-evidence-first-report/VERIFICATION.md)
+  — PR A is merged; PR #77 subsequently fixed report contents navigation.
+  Its complete-answer presentation is retained in the Spec 011 integration
+  candidate. B1/B2, header labels/order, printed URL-tail work and the report
+  documentation-branch promotion remain separate. Whole Spec 012 is not Verified.
+
+- [`011-smart-consultant-intake/SPEC.md`](./011-smart-consultant-intake/SPEC.md)
+  — **Verified** (2026-09-24, preserved `2a21f85` plus reviewed 316-file product
+  manifest; main integration and PR/release readiness separate): replaces
+  the fixed intake questionnaire with one prepared summary, a Nuave-proposed whole-brand
+  default, inline focus/service/reach/area choices, clarification only for
+  genuinely missing required meanings, and one confirmation before question
+  review. Evidence/sizing/boundary gates are complete: **Cross-cutting**, with
+  truthful versioned new-session run/report/storage/export context required
+  in this implementation. Old v1 records remain unchanged under an approved
+  customer-output/provider-retry hold. Defer legacy-only deletion and historical
+  reactivation. Observation method, measurement/evidence rules, report
+  schema/layout, and cost controls remain protected. The package's completed
+  [`IMPLEMENTATION_PROMPT.md`](./011-smart-consultant-intake/IMPLEMENTATION_PROMPT.md)
+  records implementation scope. Evidence history: the F-03 diagnostic has
+  independent PASS and its live allowance is consumed. The founder approved the
+  [bounded product correction](./011-smart-consultant-intake/F03_PRODUCT_CORRECTION_SCOPE.md)
+  on 2026-09-23. The [independent re-review](./011-smart-consultant-intake/F03_PRODUCT_CORRECTION_REVIEW_2.md)
+  passes the bounded offline correction. The separately authorized
+  [founder walkthrough](./011-smart-consultant-intake/F03_FOUNDER_WALKTHROUGH.md)
+  completed one preparation and stopped before confirmation. On 2026-09-24 the
+  founder found completeness lacking and everything else acceptable.
+  The completeness and source-support reviews are complete; historical extraction
+  cause remains unresolved. The founder approved the revised
+  [location-source instruction package](./011-smart-consultant-intake/F03_LOCATION_SOURCE_PROPOSAL.md)
+  on 2026-09-24, using broad business presence and the stated regional limit.
+  Its [independent review](./011-smart-consultant-intake/F03_LOCATION_SOURCE_REVIEW.md)
+  passes the offline correction on preserved baseline `2a21f85`; current-main
+  integration is separate. The subsequently authorized
+  [preparation-only walkthrough](./011-smart-consultant-intake/F03_LOCATION_SOURCE_WALKTHROUGH_RESULT.md)
+  populated reach and enabled confirmation without retry, stopping before
+  confirmation. The founder accepted the reach and prepared summary. The
+  [acceptance closeout review](./011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW.md)
+  passes AC-00 through AC-08, with its stated limits retained. The combined main
+  candidate has [independent integration PASS](./011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md).
+  Its [local PR package](./011-smart-consultant-intake/PR_READINESS.md) is complete;
+  publication approval and required CI are next. Do not repeat founder judgment
+  or paid preparation. Merge and production release remain separate.
+  All live allowances are consumed; accounting is USD 1.06241155 of 5.
+  F-03/AC-07 are closed; F-01 remains closed. No further acceptance gate remains
+  on this preserved baseline.
+
 - [`010-gated-new-audit-flow/SPEC.md`](./010-gated-new-audit-flow/SPEC.md)
   — **Approved** (2026-09-19, r3): the new direct-ten journey becomes the
   public `/audit` entry on v2.nuave.ai (no login — accepted trial risk); local-only guards

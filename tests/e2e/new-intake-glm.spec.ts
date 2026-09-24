@@ -1,533 +1,303 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
-/**
- * Spec 010 R-08: the public `/audit` journey in `synthetic` mode. The
- * `?fixture=`/`?glm=1`/`?glm-stub=` harness parameters exist only for this
- * offline suite — the server runs with NUAVE_NEW_AUDIT_ENABLED and
- * NUAVE_AUDIT_MODE=synthetic, so every boundary answers with the labeled
- * synthetic substitute. No real provider call happens anywhere in this spec.
- */
-const shell = (page: Page) => page.locator("[data-new-intake-shell]");
-const primary = (page: Page) =>
-  page.locator("footer").getByRole("button").last();
-const GLM_ROUTE = "/api/audit/glm-questions";
-/** The continuous direct-ten flow travels these real boundaries; every one
- * answers with the labeled local substitute in this offline environment. */
-const AUDIT_ROUTES = new Set([
-  GLM_ROUTE,
+const allowed = new Set([
   "/api/audit/identity",
   "/api/audit/extract",
+  "/api/audit/glm-questions",
   "/api/audit/run",
   "/api/audit/report",
 ]);
-
 test.beforeEach(async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  // Same external isolation as the deterministic spec; only the founder-local
-  // audit boundaries are reachable, all on their synthetic substitutes.
   await page.route("**/*", (route) => {
     const url = new URL(route.request().url());
     if (
       url.origin !== new URL(baseURL!).origin ||
-      (url.pathname.startsWith("/api/") && !AUDIT_ROUTES.has(url.pathname))
+      (url.pathname.startsWith("/api/") && !allowed.has(url.pathname))
     )
       return route.abort();
     return route.continue();
   });
 });
 
-/** Request counts per "METHOD path" — proves one preparation request, one
- * run stream and one report call, with no silent or duplicate sends. */
-function trackRequests(page: Page) {
-  const requests = new Map<string, number>();
+function track(page: Page) {
+  const calls: Record<string, number> = {};
   page.on("request", (request) => {
     const path = new URL(request.url()).pathname;
-    if (!path.startsWith("/api/")) return;
-    const key = `${request.method()} ${path}`;
-    requests.set(key, (requests.get(key) ?? 0) + 1);
+    if (path.startsWith("/api/"))
+      calls[`${request.method()} ${path}`] =
+        (calls[`${request.method()} ${path}`] ?? 0) + 1;
   });
-  return requests;
+  return calls;
 }
 
-/** Every GLM fixture screen arrives pre-confirmed; only scope needs a tap. */
-async function toReview(page: Page, suffix: string) {
+async function toQuestions(page: Page, suffix = "") {
   await page.goto(`/audit${suffix}`);
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-scope");
-  await page.getByRole("radio", { name: "Brand secara keseluruhan" }).click();
-  await primary(page).click();
-  for (let count = 0; count < 12; count++) {
-    const state = await shell(page).getAttribute("data-new-intake-shell");
-    if (state === "s-review") return;
-    await primary(page).click();
-  }
-  throw new Error("did not reach s-review");
+  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
+  await page
+    .getByRole("textbox", { name: "URL website publik" })
+    .fill("https://kedai-fiksi.example/");
+  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
+  ).toBeVisible();
+  const category = page.locator(
+    'section[aria-label="Kategori dan penawaran utama"]',
+  );
+  await category.getByRole("button", { name: "Ubah" }).click();
+  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
+  await category
+    .getByRole("textbox", { name: "Penawaran lain" })
+    .fill("kopi susu");
+  await category
+    .getByRole("textbox", { name: "Penawaran lain" })
+    .press("Enter");
+  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
+  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
+  ).toBeVisible();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
 }
 
-test("GLM path: confirmed fictional business → ten questions → edit → approved audit → report → downloads", async ({
+test("edited questions and exact v2 context survive reload through report", async ({
   page,
-}, info) => {
-  const requests = trackRequests(page);
-  // Spy the print control before app scripts run — the product PDF is the
-  // browser print output of the report page.
-  await page.addInitScript(() => {
-    (window as unknown as { __printCalls: number }).__printCalls = 0;
-    window.print = () => {
-      (window as unknown as { __printCalls: number }).__printCalls += 1;
-    };
+}) => {
+  const calls = track(page);
+  const payloads: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (
+      ["/api/audit/run", "/api/audit/report"].includes(
+        new URL(request.url()).pathname,
+      )
+    )
+      payloads.push(request.postDataJSON() as Record<string, unknown>);
   });
-  await toReview(page, "?fixture=GLM&glm=1");
-  await primary(page).click();
-  await expect(
-    page.getByRole("heading", {
-      name: "Periksa pertanyaan audit",
-      exact: true,
-    }),
-  ).toBeVisible();
-  // Exactly one request per attempt; the labeled stub served it.
-  expect(requests.get(`POST ${GLM_ROUTE}`)).toBe(1);
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-  await expect(page.locator("[data-glm-provenance]")).toContainText(
-    "respons sintetis berlabel",
-  );
-  await expect(page.locator("[data-glm-provenance]")).toContainText(
-    "Biaya: tidak tersedia",
-  );
-  await shot(page, info, "glm-questions");
-
-  // Founder-style multi-sentence edit saves under the v3 punctuation rule.
+  await toQuestions(page);
   const wording =
-    "Lagi cari laundry kiloan buat rutinitas keluarga. Yang bisa antar-jemput di Jakarta Selatan lebih enak dipakai.";
+    "Pilihan kedai kopi apa yang cocok untuk pekerja di Indonesia?";
   await page
     .getByRole("button", { name: "Ubah pertanyaan 1", exact: true })
     .click();
-  await page
-    .getByRole("textbox", { name: "Pertanyaan 1", exact: true })
-    .fill(wording);
+  await page.getByRole("textbox", { name: "Pertanyaan 1" }).fill(wording);
   await page.getByRole("button", { name: "Simpan", exact: true }).click();
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(
-    "diubah",
-  );
-
-  // Back and refresh preserve the saved edit; no extra request is issued.
-  await page.locator("footer").getByRole("button", { name: "Kembali" }).click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-review",
-  );
-  await primary(page).click();
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
   await page.reload();
   await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
-  // B2: the generated original survives restore — the edit marker persists.
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(
-    "diubah",
-  );
-  expect(requests.get(`POST ${GLM_ROUTE}`)).toBe(1);
-
-  // The explicit approval click IS the audit start: the same session, facts
-  // and exact wording flow into the real run/report boundaries — no handoff
-  // screen and no other business's pack.
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "audit");
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-    { timeout: 30_000 },
-  );
-  await expect(
-    page.getByRole("heading", { name: "Laundry Ceria", exact: true }),
-  ).toBeVisible();
-  // The labeled substitute is displayed as such — never as real visibility.
-  await expect(
-    page.getByRole("heading", { name: "Audit lokal — jawaban sintetis" }),
-  ).toBeVisible();
-  await shot(page, info, "glm-audit-report");
-
-  // The exact approved wording traveled the run boundary unchanged.
-  expect(requests.get("GET /api/audit/extract")).toBe(1);
-  expect(requests.get("POST /api/audit/run")).toBe(1);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
-
-  // JSON download is the current session's evidence export.
-  const pendingJson = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Unduh bukti JSON", exact: true })
-    .click();
-  const evidence = JSON.parse(
-    await readFile((await (await pendingJson).path())!, "utf8"),
-  );
-  expect(evidence.observations).toHaveLength(10);
-  expect(evidence.report).toBeTruthy();
-  expect(evidence.provenance).toMatchObject({
-    question_method: "direct-ten",
-    synthetic: true,
-    provider_calls: 0,
+  await page.getByRole("button", { name: "Mulai audit" }).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 45_000,
   });
-  expect(evidence.prompts[0].question).toBe(wording);
-
-  // PDF control fires the print path; capture the real print output.
-  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
-  expect(
-    await page.evaluate(
-      () => (window as unknown as { __printCalls: number }).__printCalls,
-    ),
-  ).toBe(1);
-  await page.pdf({ path: info.outputPath("glm-audit-report.pdf") });
-
-  // Reload restores the finished report — the paid stages are never replayed.
-  await page.reload();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-  );
-  await expect(
-    page.getByRole("heading", { name: "Laundry Ceria", exact: true }),
-  ).toBeVisible();
-  expect(requests.get("POST /api/audit/run")).toBe(1);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
-
-  // Back returns to the approved questions; the edit is still there.
-  await page
-    .getByRole("button", { name: "Kembali ke pertanyaan", exact: true })
-    .click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-questions",
-  );
-  await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
-  await shot(page, info, "glm-after-audit-back");
-
-  // Return-and-continue: approving again reopens the saved report — the
-  // paid stages are never replayed and the finished record is never cleared.
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "audit");
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-  );
-  await expect(
-    page.getByRole("heading", { name: "Laundry Ceria", exact: true }),
-  ).toBeVisible();
-  expect(requests.get("GET /api/audit/extract")).toBe(1);
-  expect(requests.get("POST /api/audit/run")).toBe(1);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
-});
-
-test("entered business: identity/extraction boundaries → buyer facts → approved audit → report", async ({
-  page,
-}, info) => {
-  const requests = trackRequests(page);
-  const reportBodies: Record<string, unknown>[] = [];
-  page.on("request", (request) => {
-    if (
-      request.method() === "POST" &&
-      new URL(request.url()).pathname === "/api/audit/report"
-    )
-      reportBodies.push(request.postDataJSON() as Record<string, unknown>);
-  });
-  await page.addInitScript(() => {
-    (window as unknown as { __printCalls: number }).__printCalls = 0;
-    window.print = () => {
-      (window as unknown as { __printCalls: number }).__printCalls += 1;
-    };
-  });
-  // Spec 010 R-08: the public entry opens on the empty business step — the
-  // entered business goes straight through the real identity/extraction
-  // boundaries, answered by labeled substitutes in this suite.
-  await page.goto("/audit?glm=1");
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-brand-fix",
-  );
-  await page
-    .getByRole("textbox", { name: "Nama brand", exact: true })
-    .fill("Batik Laras");
-  await page
-    .getByRole("textbox", { name: "Link website", exact: true })
-    .fill("https://batiklaras.example");
-  await primary(page).click();
-  // The entered business — not the fixture — is now the active context.
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-brand");
-  await expect(
-    page.getByRole("heading", { name: "Batik Laras", exact: true }),
-  ).toBeVisible();
-  expect(requests.get("GET /api/audit/identity")).toBe(1);
-  expect(requests.get("POST /api/audit/extract")).toBe(1);
-
-  // The substitute draft carries no invented facts: every context screen is
-  // answered by the buyer.
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "s-scope");
-  await page.getByRole("radio", { name: "Brand secara keseluruhan" }).click();
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-category",
-  );
-  await page
-    .getByRole("textbox", { name: "Tulis kategori sendiri", exact: true })
-    .fill("Batik tulis");
-  await page.getByRole("button", { name: "Pakai", exact: true }).click();
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-offerings",
-  );
-  await page
-    .getByRole("textbox", { name: "Produk atau layanan", exact: true })
-    .fill("Kain batik tulis");
-  await page.getByRole("button", { name: "Tambah", exact: true }).click();
-  await primary(page).click();
-  // Remaining screens: customers optional, service + market + competitors.
-  for (let count = 0; count < 10; count++) {
-    const state = await shell(page).getAttribute("data-new-intake-shell");
-    if (state === "s-review") break;
-    if (state === "s-service") await page.getByRole("checkbox").first().click();
-    if (state === "s-market")
-      await page.getByRole("radio", { name: "Seluruh Indonesia" }).click();
-    if (state === "s-competitors")
-      await page
-        .getByRole("checkbox", {
-          name: "Tidak ada pesaing langsung yang saya tahu",
-          exact: true,
-        })
-        .click();
-    await primary(page).click();
+  async function exportJson() {
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Unduh bukti JSON" }).click();
+    const saved = await download;
+    return JSON.parse(await readFile((await saved.path())!, "utf8")) as Record<
+      string,
+      unknown
+    >;
   }
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-review",
-  );
-  await shot(page, info, "entered-review");
-
-  // Questions: one experimental request, then edit + explicit approval.
-  await primary(page).click();
-  await expect(
-    page.getByRole("heading", {
-      name: "Periksa pertanyaan audit",
-      exact: true,
-    }),
-  ).toBeVisible();
-  expect(requests.get(`POST ${GLM_ROUTE}`)).toBe(1);
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-  const wording =
-    "Rekomendasi penjahit batik tulis untuk seragam kantor di seluruh Indonesia apa ya?";
-  await page
-    .getByRole("button", { name: "Ubah pertanyaan 1", exact: true })
-    .click();
-  await page
-    .getByRole("textbox", { name: "Pertanyaan 1", exact: true })
-    .fill(wording);
-  await page.getByRole("button", { name: "Simpan", exact: true }).click();
-
-  // Approve → audit runs the entered business's exact wording to the report.
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "audit");
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-    { timeout: 30_000 },
-  );
-  await expect(
-    page.getByRole("heading", { name: "Batik Laras", exact: true }),
-  ).toBeVisible();
-  expect(requests.get("POST /api/audit/run")).toBe(1);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
-
-  // The report request carried the session's whole ledger — the substitute
-  // preparation call from the reading phase plus the ten observation calls.
-  const reportBody = reportBodies.at(-1);
-  const ledgerStages = new Set(
-    ((reportBody?.budget as { calls?: { stage: string }[] })?.calls ?? []).map(
-      (call) => call.stage,
-    ),
-  );
-  expect(ledgerStages.has("extract")).toBe(true);
-  expect(ledgerStages.has("observation")).toBe(true);
-
-  const pendingJson = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Unduh bukti JSON", exact: true })
-    .click();
-  const jsonDownload = await pendingJson;
-  await jsonDownload.saveAs(info.outputPath("entered-business-evidence.json"));
-  const evidence = JSON.parse(
-    await readFile(info.outputPath("entered-business-evidence.json"), "utf8"),
-  );
-  expect(evidence.observations).toHaveLength(10);
-  expect(evidence.brief.brand_name).toBe("Batik Laras");
-  expect(evidence.provenance).toMatchObject({
-    question_method: "direct-ten",
-    synthetic: true,
-    preparation_mode: "synthetic-local",
-  });
-  expect(evidence.prompts[0].question).toBe(wording);
-
-  // The normal product controls produce this session's artifacts: the PDF
-  // control fires the print path and the current report page is captured.
-  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
-  expect(
-    await page.evaluate(
-      () => (window as unknown as { __printCalls: number }).__printCalls,
-    ),
-  ).toBe(1);
-  await page.pdf({ path: info.outputPath("entered-business-report.pdf") });
-  await shot(page, info, "entered-report");
-});
-
-test("an interrupted run restores its captured state and resumes without replaying", async ({
-  page,
-}) => {
-  const requests = trackRequests(page);
-  await toReview(page, "?fixture=GLM&glm=1");
-  await primary(page).click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-
-  // Hold the run stream: the attempt stays "running" until the page dies.
-  await page.route("**/api/audit/run", () => new Promise(() => {}));
-  await primary(page).click();
-  await expect(shell(page)).toHaveAttribute("data-new-intake-shell", "audit");
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "running",
+  const beforeReload = await exportJson();
+  expect(beforeReload.prompts).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        question: wording,
+        edited: true,
+        original_question: expect.any(String),
+      }),
+    ]),
   );
   await page.reload();
-
-  // The interrupted state is shown honestly — nothing silently finished.
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "interrupted",
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible();
+  const afterReload = await exportJson();
+  const stable = (value: Record<string, unknown>) => {
+    const { exported_at: _exportedAt, ...rest } = value;
+    return rest;
+  };
+  expect(stable(afterReload)).toEqual(stable(beforeReload));
+  expect(payloads).toHaveLength(2);
+  expect(payloads[0]).toMatchObject({
+    client_contract_version: "live-audit-stream-v2",
+    context: { version: "nuave-direct-ten-context-v2" },
+  });
+  expect(payloads[1]).toMatchObject({
+    client_contract_version: "live-audit-report-v2",
+    context: payloads[0]!.context,
+  });
+  expect(payloads[0]).not.toHaveProperty("brief");
+  expect(payloads[1]).not.toHaveProperty("brief");
+  const confirmedContext = await page.evaluate(
+    () =>
+      JSON.parse(sessionStorage.getItem("nuave.localIntake.v2")!).frozen
+        .context,
   );
-  await expect(
-    page.getByRole("button", { name: "Lanjutkan audit", exact: true }),
-  ).toBeVisible();
-
-  // Resume runs the same boundaries; completed work is never repurchased.
-  await page.unroute("**/api/audit/run");
-  await page
-    .getByRole("button", { name: "Lanjutkan audit", exact: true })
-    .click();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-    { timeout: 30_000 },
-  );
-  expect(requests.get("POST /api/audit/run")).toBe(2);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
+  expect(payloads[0]!.context).toEqual(confirmedContext);
+  expect(beforeReload.context).toEqual(confirmedContext);
+  expect(confirmedContext.market.value).toEqual({
+    reach: "seluruh",
+    areas: [],
+  });
+  expect(confirmedContext).not.toHaveProperty("targetCustomer");
+  expect(calls["GET /api/audit/identity"]).toBe(1);
+  expect(calls["POST /api/audit/extract"]).toBe(1);
+  expect(calls["POST /api/audit/glm-questions"]).toBe(1);
+  expect(calls["POST /api/audit/run"]).toBe(1);
+  expect(calls["POST /api/audit/report"]).toBe(1);
 });
 
-test("a partially captured run resumes its saved observations through the boundary", async ({
+test("reload during an interrupted run requires explicit resume", async ({
   page,
 }) => {
-  const requests = trackRequests(page);
-  const runBodies: { resume_observations?: { system: string }[] }[] = [];
-  page.on("request", (request) => {
-    if (
-      request.method() === "POST" &&
-      new URL(request.url()).pathname === "/api/audit/run"
-    )
-      runBodies.push(
-        request.postDataJSON() as {
-          resume_observations?: { system: string }[];
-        },
-      );
+  const calls = track(page);
+  await toQuestions(page);
+  await page.route("**/api/audit/run", () => new Promise(() => {}));
+  await page.getByRole("button", { name: "Mulai audit" }).click();
+  await expect(
+    page.locator('[data-local-audit-stage="running"]'),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.locator('[data-local-audit-stage="interrupted"]'),
+  ).toBeVisible();
+  expect(calls["POST /api/audit/run"]).toBe(1);
+  await page.unroute("**/api/audit/run");
+  await page.getByRole("button", { name: "Lanjutkan audit" }).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 45_000,
   });
-  await toReview(page, "?fixture=GLM&glm=1");
-  await primary(page).click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  expect(calls["POST /api/audit/run"]).toBe(2);
+  expect(calls["POST /api/audit/report"]).toBe(1);
+});
 
-  // First attempt: relay the real substitute stream but truncate it after
-  // three captured observations — the captured work must survive intact.
+test("partial run resumes three saved observations with exact context", async ({
+  page,
+}) => {
+  const payloads: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/run")
+      payloads.push(request.postDataJSON() as Record<string, unknown>);
+  });
+  await toQuestions(page);
   await page.route("**/api/audit/run", async (route) => {
     const response = await route.fetch();
     const lines = (await response.text()).split("\n").filter(Boolean);
-    const completedAt = lines
-      .map((line, index) => {
-        try {
-          return (JSON.parse(line) as { type: string }).type ===
-            "prompt_completed"
-            ? index
-            : -1;
-        } catch {
-          return -1;
-        }
-      })
+    const done = lines
+      .map((line, index) =>
+        (JSON.parse(line) as { type: string }).type === "prompt_completed"
+          ? index
+          : -1,
+      )
       .filter((index) => index >= 0);
-    const cut = completedAt[2];
     await route.fulfill({
       status: 200,
       contentType: "application/x-ndjson",
-      body: `${lines.slice(0, cut + 1).join("\n")}\n`,
+      body: `${lines.slice(0, done[2]! + 1).join("\n")}\n`,
     });
   });
-  await primary(page).click();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "interrupted",
-    { timeout: 30_000 },
-  );
-
-  // Reload: the bound record — including captured observations — restores.
-  await page.reload();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "interrupted",
-  );
+  await page.getByRole("button", { name: "Mulai audit" }).click();
   await expect(
-    page.getByRole("button", { name: "Lanjutkan audit", exact: true }),
-  ).toBeVisible();
-
-  // Resume sends the saved labeled observations through the real boundary —
-  // the substitute path accepts its own labeled evidence and runs the rest.
+    page.locator('[data-local-audit-stage="interrupted"]'),
+  ).toBeVisible({ timeout: 45_000 });
+  await page.reload();
   await page.unroute("**/api/audit/run");
-  await page
-    .getByRole("button", { name: "Lanjutkan audit", exact: true })
-    .click();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-    { timeout: 30_000 },
-  );
-  const resumeBody = runBodies.at(-1);
-  expect(resumeBody?.resume_observations?.length).toBe(3);
-  expect(
-    resumeBody?.resume_observations?.every(
-      (observation) => observation.system === "synthetic-local-fixture",
-    ),
-  ).toBe(true);
-  expect(requests.get("POST /api/audit/run")).toBe(2);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
+  await page.getByRole("button", { name: "Lanjutkan audit" }).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 45_000,
+  });
+  expect(payloads).toHaveLength(2);
+  expect(payloads[1]!.resume_observations).toHaveLength(3);
+  expect(payloads[1]!.context).toEqual(payloads[0]!.context);
 });
 
-test("a failed report call offers the same-session retry, not a new audit", async ({
+test("failed report allows a report-only retry with saved observations and ledger", async ({
   page,
 }) => {
-  const requests = trackRequests(page);
-  const reportBodies: { budget?: { calls?: { stage: string }[] } }[] = [];
+  const calls = track(page);
+  const payloads: Record<string, unknown>[] = [];
   page.on("request", (request) => {
-    if (
-      request.method() === "POST" &&
-      new URL(request.url()).pathname === "/api/audit/report"
-    )
-      reportBodies.push(
-        request.postDataJSON() as {
-          budget?: { calls?: { stage: string }[] };
-        },
-      );
+    if (new URL(request.url()).pathname === "/api/audit/report")
+      payloads.push(request.postDataJSON() as Record<string, unknown>);
   });
-  await toReview(page, "?fixture=GLM&glm=1");
-  await primary(page).click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-
+  await toQuestions(page);
   let failed = false;
-  await page.route("**/api/audit/report", async (route) => {
-    if (!failed) {
-      failed = true;
-      // A telemetry-less failure still consumes one bounded attempt.
+  await page.route("**/api/audit/report", (route) => {
+    if (failed) return route.fallback();
+    failed = true;
+    return route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Laporan belum dapat dibuat.",
+        code: "REPORT_TRANSIENT_FAILURE",
+        telemetry: [],
+      }),
+    });
+  });
+  await page.getByRole("button", { name: "Mulai audit" }).click();
+  await expect(
+    page.locator('[data-local-audit-stage="report-failed"]'),
+  ).toBeVisible({ timeout: 45_000 });
+  await page.reload();
+  expect(calls["POST /api/audit/report"]).toBe(1);
+  await page.getByRole("button", { name: "Coba buat laporan lagi" }).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 45_000,
+  });
+  expect(calls["POST /api/audit/run"]).toBe(1);
+  expect(calls["POST /api/audit/report"]).toBe(2);
+  expect(payloads[1]!.context).toEqual(payloads[0]!.context);
+  expect(
+    (payloads[1]!.budget as { calls: { stage: string }[] }).calls.filter(
+      (call) => call.stage === "observation",
+    ),
+  ).toHaveLength(10);
+});
+
+test("Back and audit start obey the three-attempt report ceiling without rerunning observations", async ({
+  page,
+}) => {
+  const calls = track(page);
+  await toQuestions(page);
+  await page.route("**/api/audit/report", (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Laporan belum dapat dibuat.",
+        code: "REPORT_TRANSIENT_FAILURE",
+        telemetry: [],
+      }),
+    }),
+  );
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    await page.getByRole("button", { name: "Mulai audit" }).click();
+    await expect(
+      page.locator('[data-local-audit-stage="report-failed"]'),
+    ).toBeVisible({ timeout: 45_000 });
+    expect(calls["POST /api/audit/report"]).toBe(Math.min(attempt, 3));
+    expect(calls["POST /api/audit/run"]).toBe(1);
+    if (attempt < 4) {
+      await page.getByRole("button", { name: "Kembali ke pertanyaan" }).click();
+      await expect(
+        page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
+      ).toBeVisible();
+    }
+  }
+});
+
+for (const unresolvedAttempt of [1, 3]) {
+  test(`reload during unresolved report attempt ${unresolvedAttempt} restores report-only recovery`, async ({
+    page,
+  }) => {
+    const calls = track(page);
+    await toQuestions(page);
+    let reportAttempt = 0;
+    await page.route("**/api/audit/report", (route) => {
+      reportAttempt++;
+      if (reportAttempt === unresolvedAttempt) return new Promise(() => {});
       return route.fulfill({
         status: 500,
         contentType: "application/json",
@@ -537,119 +307,177 @@ test("a failed report call offers the same-session retry, not a new audit", asyn
           telemetry: [],
         }),
       });
-    }
-    // Hold the retry briefly — an unguarded repeated click would overlap.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return route.fallback();
-  });
-  await primary(page).click();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "report-failed",
-    { timeout: 30_000 },
-  );
-  await expect(
-    page.getByRole("button", { name: "Coba buat laporan lagi", exact: true }),
-  ).toBeVisible();
-
-  // A repeated activation in the same tick can never send a second request —
-  // the pre-submit guard is synchronous (the button also unmounts once the
-  // retry is in flight, so even slower repeats cannot reach the handler).
-  await page
-    .getByRole("button", { name: "Coba buat laporan lagi", exact: true })
-    .evaluate((button) => {
-      (button as HTMLButtonElement).click();
-      (button as HTMLButtonElement).click();
     });
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "done",
-    { timeout: 30_000 },
-  );
-  expect(requests.get("POST /api/audit/run")).toBe(1);
-  expect(requests.get("POST /api/audit/report")).toBe(2);
-  // The retry forwarded the session ledger — the ten observation calls — so
-  // recorded spend follows every attempt; the telemetry-less failure added
-  // none but consumed its bounded allowance.
-  const retryBody = reportBodies.at(-1);
-  expect(
-    retryBody?.budget?.calls?.filter((call) => call.stage === "observation"),
-  ).toHaveLength(10);
-});
+    await page.getByRole("button", { name: "Mulai audit" }).click();
+    for (let attempt = 1; attempt < unresolvedAttempt; attempt++) {
+      await expect(
+        page.locator('[data-local-audit-stage="report-failed"]'),
+      ).toBeVisible({ timeout: 45_000 });
+      await page
+        .getByRole("button", { name: "Coba buat laporan lagi" })
+        .click();
+    }
+    await expect
+      .poll(() => calls["POST /api/audit/report"])
+      .toBe(unresolvedAttempt);
+    const saved = await page.evaluate(() =>
+      JSON.parse(sessionStorage.getItem("nuave.localIntakeAudit.v2")!),
+    );
+    expect(saved).toMatchObject({
+      status: "running",
+      reportCallAttempts: unresolvedAttempt,
+      report: null,
+    });
+    expect(saved.observations).toHaveLength(10);
+    expect(saved.observations).toEqual(
+      Array.from({ length: 10 }, () =>
+        expect.objectContaining({ run_status: "completed" }),
+      ),
+    );
 
-test("an unfinished run reports honestly and keeps captured progress", async ({
-  page,
-}) => {
-  const requests = trackRequests(page);
-  await toReview(page, "?fixture=GLM&glm=1");
-  await primary(page).click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+    // A graceful reload may finish the old fetch's rejection handler. Restore
+    // the actual in-flight snapshot before hydration to cover a reload that
+    // terminates the document before that handler can persist a failure.
+    await page.addInitScript((inFlight) => {
+      sessionStorage.setItem(
+        "nuave.localIntakeAudit.v2",
+        JSON.stringify(inFlight),
+      );
+    }, saved);
+    await page.reload();
+    await expect(
+      page.locator('[data-local-audit-stage="report-failed"]'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Lanjutkan audit" }),
+    ).toHaveCount(0);
+    expect(calls["POST /api/audit/run"]).toBe(1);
+    expect(calls["POST /api/audit/report"]).toBe(unresolvedAttempt);
+    expect(
+      await page.evaluate(() =>
+        JSON.parse(sessionStorage.getItem("nuave.localIntakeAudit.v2")!),
+      ),
+    ).toEqual(saved);
+
+    if (unresolvedAttempt === 3) {
+      await expect(
+        page.getByText("Batas pembuatan laporan tercapai"),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Coba buat laporan lagi" }),
+      ).toHaveCount(0);
+      await page.getByRole("button", { name: "Kembali ke pertanyaan" }).click();
+      await page.getByRole("button", { name: "Mulai audit" }).click();
+      await expect(
+        page.getByText("Batas pembuatan laporan tercapai"),
+      ).toBeVisible();
+      expect(calls["POST /api/audit/report"]).toBe(3);
+    } else {
+      await page.unroute("**/api/audit/report");
+      const request = page.waitForRequest("**/api/audit/report");
+      await page
+        .getByRole("button", { name: "Coba buat laporan lagi" })
+        .click();
+      const retry = (await request).postDataJSON();
+      expect(retry.context).toEqual(saved.context);
+      expect(retry.observations).toEqual(saved.observations);
+      expect(retry.budget.calls).toEqual([
+        ...saved.preparationCalls,
+        ...saved.runCalls,
+        ...saved.reportCalls,
+      ]);
+      await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible(
+        {
+          timeout: 45_000,
+        },
+      );
+      expect(calls["POST /api/audit/report"]).toBe(2);
+    }
+    expect(calls["POST /api/audit/run"]).toBe(1);
+    expect(calls["GET /api/audit/extract"]).toBe(1);
+  });
+}
+
+test("unfinished run does not request a report", async ({ page }) => {
+  const calls = track(page);
+  await toQuestions(page);
   await page.route("**/api/audit/run", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/x-ndjson",
-      body: `${JSON.stringify({
-        type: "run_unfinished",
-        completed: 8,
-        failed_prompt_ids: ["NUAVE-DT-09", "NUAVE-DT-10"],
-        message: "Dua pertanyaan tidak dapat dipulihkan secara otomatis.",
-      })}\n`,
+      body: `${JSON.stringify({ type: "run_unfinished", completed: 8, failed_prompt_ids: ["NUAVE-DT-09", "NUAVE-DT-10"], message: "Dua pertanyaan belum selesai." })}\n`,
     }),
   );
-  await primary(page).click();
-  await expect(page.locator("[data-local-audit-stage]")).toHaveAttribute(
-    "data-local-audit-stage",
-    "unfinished",
-    { timeout: 30_000 },
-  );
+  await page.getByRole("button", { name: "Mulai audit" }).click();
   await expect(
-    page.getByText("belum dapat diselesaikan", { exact: false }),
-  ).toBeVisible();
-  // No report call is made before ten evaluable observations exist.
-  expect(requests.get("POST /api/audit/report")).toBeUndefined();
+    page.locator('[data-local-audit-stage="unfinished"]'),
+  ).toBeVisible({ timeout: 45_000 });
+  expect(calls["POST /api/audit/report"]).toBeUndefined();
 });
 
-test("GLM stub failures are truthful and never silently retried", async ({
+test("GLM failure is visible and never silently retried", async ({ page }) => {
+  const calls = track(page);
+  await page.goto("/audit?glm-stub=timeout");
+  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
+  await page
+    .getByRole("textbox", { name: "URL website publik" })
+    .fill("https://kedai-fiksi.example/");
+  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
+  ).toBeVisible();
+  const category = page.locator(
+    'section[aria-label="Kategori dan penawaran utama"]',
+  );
+  await category.getByRole("button", { name: "Ubah" }).click();
+  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
+  await category
+    .getByRole("textbox", { name: "Penawaran lain" })
+    .fill("kopi susu");
+  await category
+    .getByRole("textbox", { name: "Penawaran lain" })
+    .press("Enter");
+  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
+  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
+  await page
+    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
+    .click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.locator("[data-question-slot]")).toHaveCount(0);
+  expect(calls["POST /api/audit/glm-questions"]).toBe(1);
+});
+
+test("a failed budget read is fetched again before an explicit audit retry", async ({
   page,
 }) => {
-  // Clearing via evaluate races the app's own save-on-unload; the init script
-  // clears before hydration on every load in this test only.
-  await page.addInitScript(() => sessionStorage.clear());
-  for (const [behavior, expected] of [
-    ["timeout", "transport"],
-    ["malformed", "extraction"],
-  ] as const) {
-    const requests: string[] = [];
-    page.on("request", (request) => {
-      if (new URL(request.url()).pathname === GLM_ROUTE)
-        requests.push(request.url());
+  const calls = track(page);
+  await toQuestions(page);
+  let failed = false;
+  await page.route("**/api/audit/extract", (route) => {
+    if (route.request().method() !== "GET" || failed) return route.fallback();
+    failed = true;
+    return route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Pengendali biaya tidak tersedia." }),
     });
-    await toReview(page, `?fixture=GLM&glm=1&glm-stub=${behavior}`);
-    await primary(page).click();
-    await expect(shell(page).getByRole("alert")).toBeVisible();
-    await expect(shell(page).getByRole("alert")).toContainText(expected);
-    await expect(page.locator("[data-question-slot]")).toHaveCount(0);
-    // One attempt made one request; nothing retried silently.
-    expect(requests).toHaveLength(1);
-  }
-});
-
-async function shot(
-  page: Page,
-  info: { outputPath: (n: string) => string },
-  name: string,
-) {
-  await page.screenshot({
-    path: info.outputPath(`${name}.png`),
-    fullPage: true,
   });
-}
+  await page.getByRole("button", { name: "Mulai audit" }).click();
+  await expect(page.locator('[data-local-audit-stage="failed"]')).toBeVisible();
+  expect(calls["POST /api/audit/run"]).toBeUndefined();
+  await page.getByRole("button", { name: "Coba lagi" }).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 45_000,
+  });
+  expect(calls["GET /api/audit/extract"]).toBe(2);
+  expect(calls["POST /api/audit/run"]).toBe(1);
+});
 
 test("Spec 012: retained Markdown answers, exact copy, references, reflow and one print tree", async ({
   page,
 }, info) => {
   test.setTimeout(120_000);
-  const requests = trackRequests(page);
+  const calls = track(page);
   const external: string[] = [];
   page.on("request", (request) => {
     if (!new URL(request.url()).hostname.match(/^(127\.0\.0\.1|localhost)$/))
@@ -670,17 +498,16 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
       },
     });
   });
-  await toReview(page, "?fixture=GLM&glm=1");
-  await primary(page).click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-  await primary(page).click();
+  await toQuestions(page);
+  expect(calls["POST /api/audit/run"]).toBeUndefined();
+  await page.getByRole("button", { name: "Mulai audit" }).click();
   await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
     timeout: 30_000,
   });
   // Replace only fictional retained presentation evidence. No new runtime
   // harness, provider send, schema field or request projection is introduced.
   const raw = await page.evaluate(() => {
-    const key = "nuave.localIntakeAudit.v1";
+    const key = "nuave.localIntakeAudit.v2";
     const saved = JSON.parse(sessionStorage.getItem(key)!);
     saved.observations.forEach(
       (
@@ -723,6 +550,12 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   await page.reload();
   const report = page.locator("[data-direct-ten-report]");
   await expect(report).toBeVisible();
+  for (const state of [null, {}, { nuaveLocalIntake: true }]) {
+    await page.evaluate((state) => {
+      window.dispatchEvent(new PopStateEvent("popstate", { state }));
+    }, state);
+    await expect(report).toBeVisible();
+  }
   await expect(report.locator("[data-answer-body]")).toHaveCount(10);
   for (let i = 1; i <= 10; i++) {
     expect(await page.locator(`#report-question-${i}`).textContent()).toBe(
@@ -742,13 +575,19 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
       () => (window as unknown as { __unsafeReport?: boolean }).__unsafeReport,
     ),
   ).toBeUndefined();
+  const source = report
+    .getByRole("link", { name: /Sumber fiktif tersimpan/ })
+    .first();
+  await expect(source).toHaveAttribute("href", "https://source.example/");
+  await expect(source).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(source).toHaveAttribute("referrerpolicy", "no-referrer");
   expect(external).toEqual([]);
   const snapshot = await page.evaluate(() =>
-    sessionStorage.getItem("nuave.localIntakeAudit.v1"),
+    sessionStorage.getItem("nuave.localIntakeAudit.v2"),
   );
   const contents = page.getByRole("navigation", { name: "Report contents" });
   async function checkContentsNavigation(directTen: boolean) {
-    const requestsBefore = [...requests.entries()];
+    const requestsBefore = Object.entries(calls);
     const urlBefore = page.url();
     const historyLength = await page.evaluate(() => history.length);
     for (const activation of ["mouse", "keyboard"] as const) {
@@ -788,9 +627,9 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
         }
         expect(page.url()).toBe(urlBefore);
         expect(await page.evaluate(() => history.length)).toBe(historyLength);
-        expect([...requests.entries()]).toEqual(requestsBefore);
-        expect(requests.get("POST /api/audit/run")).toBe(1);
-        expect(requests.get("POST /api/audit/report")).toBe(1);
+        expect(Object.entries(calls)).toEqual(requestsBefore);
+        expect(calls["POST /api/audit/run"]).toBe(1);
+        expect(calls["POST /api/audit/report"]).toBe(1);
       }
     }
   }
@@ -815,6 +654,8 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   const reference = page
     .locator('#findings a[href="#report-question-2"]')
     .first();
+  await reference.click();
+  await expect(page.locator("#report-question-2")).toBeFocused();
   await reference.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#report-question-2")).toBeFocused();
@@ -884,11 +725,21 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   expect(
     exported.observations.map((o: { raw_answer: string }) => o.raw_answer),
   ).toEqual(raw.map((o: { answer: string }) => o.answer));
+  const retained = JSON.parse(snapshot!);
+  expect(exported.export_version).toBe("nuave-evidence-v5");
+  expect(exported.context).toEqual(retained.context);
+  expect(exported.context.market.value).toEqual({
+    reach: "seluruh",
+    areas: [],
+  });
+  expect(exported.context).not.toHaveProperty("targetCustomer");
+  expect(exported).not.toHaveProperty("brief");
+  expect(exported.report.provenance).toEqual(retained.report.provenance);
   expect(exported.report).not.toHaveProperty("operational_telemetry");
   expect(exported.observations[0]).not.toHaveProperty("telemetry");
   expect(
     await page.evaluate(() =>
-      sessionStorage.getItem("nuave.localIntakeAudit.v1"),
+      sessionStorage.getItem("nuave.localIntakeAudit.v2"),
     ),
   ).toBe(snapshot);
   await page.reload();
@@ -896,34 +747,19 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   await checkContentsNavigation(true);
   // Contents navigation adds no history entry: real browser Back still
   // returns to the approved questions and reopening uses the saved report.
-  const requestsBeforeBack = [...requests.entries()];
+  const requestsBeforeBack = Object.entries(calls);
   await page.goBack();
-  await expect(shell(page)).toHaveAttribute(
-    "data-new-intake-shell",
-    "s-questions",
-  );
+  await expect(
+    page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
+  ).toBeVisible();
   await expect(report).toHaveCount(0);
-  await primary(page).click();
+  await page.getByRole("button", { name: "Mulai audit" }).click();
   await expect(report.locator("[data-answer-body]")).toHaveCount(10);
-  expect([...requests.entries()]).toEqual(requestsBeforeBack);
+  expect(Object.entries(calls)).toEqual(requestsBeforeBack);
 
-  // The same contents links also work with the retained historical renderer.
-  // Change only the fictional report's rendering discriminator, then restore it.
-  await page.evaluate(() => {
-    const key = "nuave.localIntakeAudit.v1";
-    const saved = JSON.parse(sessionStorage.getItem(key)!);
-    saved.report.provenance.question_method = "canonical";
-    sessionStorage.setItem(key, JSON.stringify(saved));
-  });
-  await page.reload();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible();
-  await checkContentsNavigation(false);
-  await page.evaluate((saved) => {
-    sessionStorage.setItem("nuave.localIntakeAudit.v1", saved!);
-  }, snapshot);
-  await page.reload();
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
-  expect(requests.get("POST /api/audit/run")).toBe(1);
-  expect(requests.get("POST /api/audit/report")).toBe(1);
+  // Historical method routing/navigation is exercised at the component
+  // boundary; held v1 sessions never regain public report delivery.
+  expect(calls["POST /api/audit/run"]).toBe(1);
+  expect(calls["POST /api/audit/report"]).toBe(1);
   expect(external).toEqual([]);
 });
