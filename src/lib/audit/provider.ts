@@ -24,6 +24,7 @@ import {
 } from "./opencodego";
 import { protectedObservationAttemptErrors } from "./production-observation-method";
 import { executeAbortableProtectedObservation } from "./protected-observation-provider";
+import { isDirectTenAuditContext } from "./direct-ten-context-v2";
 
 export { OPENCODEGO_BASE_URL, OPENCODEGO_SYSTEM } from "./opencodego";
 
@@ -33,7 +34,7 @@ export type AuditProviderName =
 type LiveProviderBindings = {
   extract: typeof openaiExtract;
   execute: typeof openaiExecute;
-  generate: typeof openaiGenerate;
+  generate: typeof geminiGenerate;
 };
 
 const PROVIDER_BINDINGS = {
@@ -166,12 +167,29 @@ export const liveExecuteAuditPrompt: LiveProviderBindings["execute"] = async (
   return corrected;
 };
 
-export const liveGenerateReportContent: LiveProviderBindings["generate"] =
-  async (input, revision) => {
-    const name = liveAuditProvider();
-    assertLiveProviderCredentialsConfigured();
-    return providerBindings(name).generate(input, revision);
-  };
+export const liveGenerateReportContent: typeof openaiGenerate = async (
+  input,
+  revision,
+) => {
+  const name = liveAuditProvider();
+  if (
+    isDirectTenAuditContext(input.brief) &&
+    name !== "openai" &&
+    name !== "opencodego"
+  ) {
+    throw new Error(
+      `Provider ${name} does not support v2 confirmed report context.`,
+    );
+  }
+  assertLiveProviderCredentialsConfigured();
+  if (isDirectTenAuditContext(input.brief)) {
+    return openaiGenerate(input, revision);
+  }
+  return providerBindings(name).generate(
+    { ...input, brief: input.brief },
+    revision,
+  );
+};
 
 export function isLiveProviderCall(fn: unknown): boolean {
   if (fn === liveExecuteAuditPrompt || fn === liveGenerateReportContent) {

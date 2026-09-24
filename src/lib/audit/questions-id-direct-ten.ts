@@ -18,7 +18,10 @@ import {
   INDONESIAN_QUESTION_GLM_REASONING_EFFORT,
   minimizedBriefFromQuestionFacts,
 } from "./questions-id-glm";
-import type { QuestionFactsV3 } from "./question-facts-v3";
+import {
+  FACTS_PROJECTION_VERSION_V2,
+  type QuestionFactsV3,
+} from "./question-facts-v3";
 import {
   containsIndonesianComparisonIdentity,
   INDONESIAN_HIGH_IMPACT_ADVICE_PATTERNS,
@@ -51,10 +54,25 @@ export const INDONESIAN_QUESTION_DIRECT_TEN_INSTRUCTION_VERSION =
  * Guard-only signals (source URLs, fingerprints) never appear.
  */
 export function buildDirectTenWriterBrief(facts: QuestionFactsV3) {
+  const v2 = facts.version === FACTS_PROJECTION_VERSION_V2;
+  const originLabel = {
+    website: "disiapkan dari sumber publik",
+    nuave: "saran Nuave",
+    owner: "diberikan atau diubah pelanggan",
+  } as const;
+  const withOrigin = (line: string, field: string) => {
+    const origin = v2 ? facts.confirmedOrigins?.[field] : undefined;
+    return origin ? `${line} [asal: ${originLabel[origin]}]` : line;
+  };
   const lines: string[] = [
-    "Confirmed business information for one audited business.",
-    `Nama: ${facts.identity.brand}`,
-    `Kategori: ${facts.category || "(tidak diketahui)"}`,
+    v2
+      ? "Customer-confirmed selections for one audited business. Source labels describe who supplied or proposed each value; customer confirmation does not independently verify it."
+      : "Confirmed business information for one audited business.",
+    withOrigin(`Nama: ${facts.identity.brand}`, "identity"),
+    withOrigin(
+      `Kategori: ${facts.category || "(tidak diketahui)"}`,
+      "category",
+    ),
   ];
   const scopeText =
     facts.entityScope.kind === "whole-brand"
@@ -64,10 +82,12 @@ export function buildDirectTenWriterBrief(facts: QuestionFactsV3) {
         : facts.entityScope.kind === "offering"
           ? `Penawaran${facts.entityScope.name ? ` ${facts.entityScope.name}` : ""}${facts.entityScope.detail ? ` — ${facts.entityScope.detail}` : ""}`
           : "(tidak diketahui)";
-  lines.push(`Cakupan: ${scopeText}`);
+  lines.push(withOrigin(`Cakupan: ${scopeText}`, "focus"));
   if (facts.businessType) lines.push(`Jenis bisnis: ${facts.businessType}`);
   if (facts.offerings.length)
-    lines.push(`Penawaran: ${facts.offerings.join("; ")}`);
+    lines.push(
+      withOrigin(`Penawaran: ${facts.offerings.join("; ")}`, "offerings"),
+    );
   const market =
     facts.marketContext.reach === "national"
       ? "seluruh Indonesia"
@@ -76,7 +96,7 @@ export function buildDirectTenWriterBrief(facts: QuestionFactsV3) {
         : facts.marketContext.areas.length
           ? facts.marketContext.areas.join("; ")
           : null;
-  if (market) lines.push(`Area layanan: ${market}`);
+  if (market) lines.push(withOrigin(`Area layanan: ${market}`, "market"));
   if (facts.marketContext.description)
     lines.push(`Konteks pasar: ${facts.marketContext.description}`);
   if (facts.serviceChannels?.length) {
@@ -87,15 +107,36 @@ export function buildDirectTenWriterBrief(facts: QuestionFactsV3) {
       online: "penggunaan secara online",
     } as const;
     lines.push(
-      `Saluran layanan: ${facts.serviceChannels.map((c) => labels[c]).join("; ")}`,
+      withOrigin(
+        `Saluran layanan: ${facts.serviceChannels.map((c) => labels[c]).join("; ")}`,
+        "serviceChannels",
+      ),
     );
   }
-  if (facts.targetCustomer) lines.push(`Pelanggan: ${facts.targetCustomer}`);
+  if (facts.targetCustomer)
+    lines.push(
+      withOrigin(`Pelanggan: ${facts.targetCustomer}`, "targetCustomer"),
+    );
   if (facts.customerNeeds.length)
-    lines.push(`Kebutuhan pelanggan: ${facts.customerNeeds.join("; ")}`);
+    lines.push(
+      withOrigin(
+        `Kebutuhan pelanggan: ${facts.customerNeeds.join("; ")}`,
+        "customerNeeds",
+      ),
+    );
   if (facts.buyerConstraints.length)
     lines.push(
-      `Preferensi pembeli (bukan klaim tentang bisnis): ${facts.buyerConstraints.map((c) => c.text).join("; ")}`,
+      withOrigin(
+        `Preferensi pembeli (bukan klaim tentang bisnis): ${facts.buyerConstraints.map((c) => c.text).join("; ")}`,
+        "decisionConsiderations",
+      ),
+    );
+  if (v2 && facts.differentiator)
+    lines.push(
+      withOrigin(
+        `Pembeda yang dipilih pelanggan: ${facts.differentiator}`,
+        "differentiator",
+      ),
     );
   if (facts.accessConstraints.length)
     lines.push(
@@ -103,7 +144,10 @@ export function buildDirectTenWriterBrief(facts: QuestionFactsV3) {
     );
   if (facts.safeFacts.length)
     lines.push(
-      `Fakta tambahan dari pembeli: ${facts.safeFacts.map((f) => f.text).join("; ")}`,
+      withOrigin(
+        `Fakta tambahan dari pembeli: ${facts.safeFacts.map((f) => f.text).join("; ")}`,
+        "publicFact",
+      ),
     );
   const doNotName = [
     ...facts.identity.aliases,

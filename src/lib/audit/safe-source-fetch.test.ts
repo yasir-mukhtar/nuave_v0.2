@@ -47,6 +47,24 @@ function safeFetchOptions(
   };
 }
 
+it("opts into the bounded document body while default identity reads stop at head", async () => {
+  const html =
+    "<html><head><title>Fiksi</title></head><body><p>Kopi dan roti.</p></body></html>";
+  const first = await safeFetchPublicResource(
+    "https://kedai-fiksi.example",
+    safeFetchOptions({ fetchImpl: vi.fn(async () => htmlResponse(html)) }),
+  );
+  expect(new TextDecoder().decode(first.bytes)).not.toContain("Kopi dan roti");
+  const document = await safeFetchPublicResource(
+    "https://kedai-fiksi.example",
+    safeFetchOptions({
+      htmlScope: "document",
+      fetchImpl: vi.fn(async () => htmlResponse(html)),
+    }),
+  );
+  expect(new TextDecoder().decode(document.bytes)).toBe(html);
+});
+
 describe("safe public source fetch DNS preflight", () => {
   it("rejects a public A answer when any AAAA answer is private", async () => {
     const fetchImpl = vi.fn<typeof fetch>();

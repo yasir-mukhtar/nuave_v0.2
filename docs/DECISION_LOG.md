@@ -1,10 +1,316 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-20
+> Updated: 2026-09-24
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-24 — record Spec 011 acceptance closure and Verified status
+
+**Orchestrator closeout under existing founder approvals.** The independent
+[acceptance closeout review](../specs/011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW.md)
+returns PASS against AC-00 through AC-08, incorporating the founder's explicit
+acceptance of the live reach and prepared summary. Record **F-03 and AC-07 closed,
+F-01 still closed, and Spec 011 Verified**. No additional acceptance gate remains.
+
+This status applies to preserved HEAD `2a21f85` plus the reviewed uncommitted/
+untracked product identified by the 316-file manifest in the
+[specification verification record](../specs/011-smart-consultant-intake/SPEC.md#verification-record).
+It does not establish current-main integration, PR/CI readiness or release
+authority. Next is a separate bounded scope for the report/test integration
+conflicts; no main integration is performed or authorized by this closeout.
+
+Preserve the review's limits: unresolved historical extraction cause under the
+approved exception, unobserved provider-internal retrieval, the accepted regional
+representation limit and the bounded language assessment with R-03 unchanged.
+The application remains unconfirmed. All live allowances are consumed;
+accounting stays **USD 1.06241155 of 5**. This documentation-only closure repeats
+no tests or live work and grants no new execution or publication authority.
+
+## 2026-09-24 — accept the live reach and prepared summary
+
+The founder answered **“Accept the reach and prepared summary”** after reviewing
+the latest desktop/mobile preparation and being asked whether national reach
+was appropriate and the experience felt like confirming a consultant's prepared
+understanding. This accepts the observed whole-brand proposal and resolves the
+previous completeness concern for this case. Do not request this judgment again.
+
+The [walkthrough result](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_WALKTHROUGH_RESULT.md)
+records the accepted outcome. The application's confirmation was not clicked;
+this review does not submit it or authorize downstream requests. The next action
+is the [independent acceptance closeout](../specs/011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW_PROMPT.md)
+against existing evidence and the approved criteria, without inventing another
+live-test requirement. No new product policy, global language exception or
+current-main integration is approved. Accounting remains USD 1.06241155 of 5.
+F-01 remains closed; F-03/AC-07 await formal closeout; Spec 011 remains Approved
+until that review establishes whether all required criteria are satisfied.
+
+## 2026-09-24 — authorize one location-source preparation walkthrough
+
+**SETTLED — one new live allowance.** The founder replied **“Approved”** to
+the orchestrator's [prepared walkthrough](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_WALKTHROUGH_PROMPT.md)
+after independent offline PASS on preserved baseline `2a21f85`.
+
+Authorize one Periksa from the same nominated homepage, existing identity/icon
+work and bounded document read, and one extraction API request with at most
+its existing eligible technical retry (two paid attempts maximum). Preserve
+the USD 5 total ceiling and USD 1.04786450 minimum historical carryover,
+retaining any higher configured accounting or additional known spend. Reuse
+configured credentials without exposing them. A dedicated local runtime and
+fresh tab may inspect desktop/mobile and source disclosure in the same session.
+Stop before confirmation and all question/observation/report work. No manual
+retry, second click or restart after uncertain dispatch is authorized.
+
+Record actual discovery/proposals, request and cost evidence, and founder
+judgment. Do not prefill reach or substitute the supplied location page for the
+ordinary homepage input. Earlier live allowances stay consumed. Current-main
+integration, code changes, publication, commits and pushes remain outside scope.
+This authorization is not acceptance: F-01 stays closed; F-03/AC-07 stay open;
+Spec 011 stays Approved, not Verified until remaining acceptance is resolved.
+
+**Execution recorded:** the [single preparation](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_WALKTHROUGH_RESULT.md)
+completed without retry and stopped before confirmation. The allowance is
+consumed; cumulative accounting is USD 1.06241155. Founder judgment is pending.
+
+## 2026-09-24 — approve the F-03 location-source implementation
+
+**SETTLED — approved for offline implementation.** The founder replied
+**“approved”** to the revised
+[location-source package](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_PROPOSAL.md),
+including its stated regional-representation limitation. The earlier
+broad-presence meaning is already settled; neither decision needs repeat approval.
+
+Direct the existing extraction search toward relevant official location or
+service-area evidence when homepage evidence does not establish current reach.
+Add no server fetch, model request or retry for valid partial output. Preserve
+the approved model, search settings, source/privacy limits, accounting and
+confirmation. Apply the definitions to OpenAI and testing-only Gemini, and exempt
+supported five-to-eight-area descriptions from generic retry list shortening.
+
+A supported national footprint uses `seluruh` with no active city list and
+does not imply universal delivery. For genuinely regional presence that cannot
+be represented faithfully within eight supported areas, with no published
+broader description, retain supported reach and leave areas unresolved in the
+existing controls. Do not sample an arbitrary subset, invent a grouping or
+promote regional presence to national to satisfy validation. This accepted
+representation limit does not close F-03/AC-07 or waive founder review.
+
+The amended Spec 011 and F-03 correction scope authorize the instruction changes
+and their focused offline regressions. Execute the
+[implementation handoff](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_IMPLEMENTATION_PROMPT.md),
+then obtain independent review. Fresh source/provider calls, live confirmation,
+publication, staging, commits and pushes are outside this approval. All earlier
+live allowances remain consumed. Accounted cost stays USD 1.04786450 of 5,
+including the historical estimate. F-01 stays closed; F-03/AC-07 stay open;
+Spec 011 stays Approved, not Verified.
+
+## 2026-09-24 — whole-brand reach means broad business presence
+
+**SETTLED — founder-approved meaning.** In response to whether whole-brand
+`jangkauan pasar` describes broad business presence or an exact list of served
+areas, the founder selected **“Broad business presence (recommended)”**.
+
+For whole-brand audits, reach describes supported geographic business presence
+through the stated service channels, not an exhaustive outlet inventory. A
+documented national outlet network can support a national reach proposal while
+delivery limits remain separate. It does not mean delivery to every address.
+Actual published locations/availability must support the interpretation; an
+outlet count, ambition, category stereotype or area-list overflow alone does not.
+Local/regional presence must not be promoted to national to avoid the area cap.
+
+The existing national/international representations need no active city list.
+The eight-area cap is not an eight-outlet cap and does not by itself make a
+national footprint unrepresentable. This decision does not approve arbitrary
+area sampling, invented regional grouping, an expanded schema or a specific
+business's confirmed reach. Prepared information still needs customer confirmation.
+Service-channel meanings, row origins and owner-edit provenance are unchanged.
+
+The [location-source proposal](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_PROPOSAL.md)
+is revised against this meaning. The earlier [review](../specs/011-smart-consultant-intake/F03_LOCATION_SOURCE_PROPOSAL_REVIEW.md)
+remains evidence of the first draft's unresolved choice. Do not ask for this
+meaning decision again. Approval of the implementation package, including the
+search instruction and any residual regional-representation rule, remains
+pending. No code change, live call, publication or acceptance closure follows
+from this decision alone. F-01 stays closed; F-03/AC-07 stay open; Spec 011 stays
+Approved, not Verified.
+
+## 2026-09-23 — approve the F-03 product correction
+
+**SETTLED — founder-approved for offline implementation.** The founder replied
+“Approve. Write a short prompt to be executed by the worker” after reviewing
+[F03_PRODUCT_CORRECTION_SCOPE.md](../specs/011-smart-consultant-intake/F03_PRODUCT_CORRECTION_SCOPE.md).
+That scope is now the bounded implementation addendum to Spec 011.
+
+Add one server-owned, safely bounded read of the supplied canonical website
+page and at most 8,000 UTF-8 bytes of literal public business text to the existing
+extraction input before reservation. Preserve identity behavior, hosted search,
+developer instructions, provider/model settings, ledger/cost/retry limits,
+row-level proposal origins and confirmation, and downstream audit/report behavior.
+Do not promote the temporary runner or inspector into product code.
+
+For a safe readable page with no usable excerpt, continue the existing extraction
+without supplemental text and show the scope's limitation notice. Unsafe,
+unreadable, sensitive-content and rate-limit failures stop before paid extraction.
+Keep excerpt selection server-owned and ephemeral; do not add per-value fact
+matching, claim independent verification, or infer absent channels/reach.
+
+The diagnostic's independent PASS supports this correction without resolving
+the historical cause. Its allowance and both extraction slots remain consumed.
+This decision authorizes implementation and offline verification only, followed
+by independent product review. A refreshed founder walkthrough still needs
+separate live authorization. No commit, push, publication, merge, deployment,
+provider contact or historical reactivation is authorized. F-01 remains closed;
+F-03/AC-07 remain open and Spec 011 remains Approved, not Verified.
+
+Execute the [short worker handoff](../specs/011-smart-consultant-intake/F03_PRODUCT_CORRECTION_IMPLEMENTATION_PROMPT.md)
+without seeking repeat approval for this scope.
+
+## 2026-09-22 — authorize the F-03 controlled-input diagnostic
+
+**SETTLED — founder-approved.** The founder replied **“approved”** to the
+orchestrator's controlled-input diagnostic amendment in
+[F03_CONTROLLED_INPUT_PROPOSAL.md](../specs/011-smart-consultant-intake/F03_CONTROLLED_INPUT_PROPOSAL.md).
+This replaces the earlier provider-receipt prerequisite for this diagnostic;
+it does not require another OpenAI capability answer or repeat authorization.
+
+Keep the recorded F-03 attempt **unresolved between source access and
+extraction**. Available observations do not distinguish them. The founder
+accepts that historical uncertainty while authorizing new controlled evidence;
+the empty summary is not accepted and F-03/AC-07 are not closed.
+
+Reassign the existing unused diagnostic allowance to one temporary local
+experiment after focused offline checks pass: safely fetch one nominated
+official page, select at most 8,000 UTF-8 bytes of necessary literal public
+service text, and add it as labeled source data to the extractor's user input.
+Use direct OpenAI Responses, `gpt-5.6-luna`, low reasoning, existing developer
+instructions/schema/hosted-search settings, and the existing cost/retry limits.
+Reserve against the complete request including the added input and preserve
+prior carryover. Permit at most the existing one technical retry for unusable
+structured output; a valid empty draft never triggers another attempt.
+
+There is one reassigned allowance, not an unchanged baseline run plus an
+experiment. No crawl, extra page, model change, paid tuning, undocumented
+results include, provider contact, or private-response inspection is included.
+If the nominated page has no usable passage, stop before paid extraction.
+The temporary runner is separate from ordinary Periksa and does not count as
+the founder product walkthrough. Product/runtime changes require a separately
+bounded correction; the experiment first returns its evidence and proposal.
+
+No questions, observations, reports, intake confirmation, historical changes,
+publication, commit, push, merge, or deployment are authorized by this decision.
+F-01 remains closed and Spec 011 remains Approved, not Verified. Use the
+[worker handoff](../specs/011-smart-consultant-intake/F03_CONTROLLED_INPUT_WORKER_PROMPT.md),
+then the [diagnostic reviewer handoff](../specs/011-smart-consultant-intake/F03_CONTROLLED_INPUT_REVIEWER_PROMPT.md).
+
+## 2026-09-22 — accept the Spec 011 truthful boundary and historical hold
+
+**SETTLED — founder-approved.** After the R-00B sizing, separate report/export
+boundary review, and a plain-language explanation of the scope and historical
+access tradeoff, the founder accepted the recommendation: “I agree with your
+recommendation totally. Lets do that. Move forward.” This supersedes the
+2026-09-21 instruction to defer cross-cutting downstream compatibility work
+while keeping report/export meaning and historical delivery unchanged.
+
+The accepted R-00B classification is **Cross-cutting**. The complete truthful
+boundary is **large** relative to an intake adapter; this is a size estimate,
+not a delivery-time commitment. The existing compatibility brief invents
+required values that enter report synthesis and customer JSON, and can affect
+deterministic comparator matching. Isolating only the question writer or
+hiding a summary row cannot remove that exposure. No temporary exception to
+keep exposing fallback values is approved.
+
+[Spec 011](../specs/011-smart-consultant-intake/SPEC.md) now includes the prepared
+summary and exact confirmation/frozen/facts/writer handoff **together with** a
+versioned truthful direct-ten context for run/report requests, every enabled
+report adapter, deterministic interpretation, saved audit records, recovery,
+customer JSON, and print display. Optional values remain absent. Target
+customer, needs, decision considerations, channels, category, and business type
+remain distinct; unknown comparator never becomes an alternative or named
+company. Report context retains the authority of website, Nuave-proposed, and
+owner-supplied meanings rather than labeling them all independently verified.
+
+Removing fabricated input may change new report interpretation. Customer JSON
+advances to `nuave-evidence-v5` with truthful confirmed context. These changes
+are accepted; observation messages/method, approved questions, measurement and
+evidence rules, report output schema/layout, 10/10 gates, cost controls, and
+explicit audit approval remain protected. Removing legacy-only code may be
+deferred; removing fallback exposure from the new path may not.
+
+**Historical behavior for this release:** preserve already-started/completed
+v1 records exactly in their existing browser-session storage, including frozen
+input, approved/original/edited questions, saved brief, observations, report,
+provenance, and cost ledger. Hold their in-app report display, JSON/PDF
+delivery, observation resume, and report retry. Reject old request variants
+before provider work and show a clear availability state. Never migrate,
+regenerate, overwrite, or silently delete a valid old record to fit v2.
+Already downloaded files remain unchanged. This preserves existing session
+data; it does not create permanent storage, a backup, or a recovery promise.
+The hold is settled release behavior, not a pending implementation gate.
+Historical reactivation needs separate founder approval and is deferred.
+
+R-00A was received through the sanitized local note. R-00B and the separate
+boundary review are complete and accepted. The existing extraction/sizing/
+review notes remain unchanged, untracked, unstaged, uncommitted, and unpushed.
+Their original pending-approval wording is historical evidence; this decision
+and the amended spec govern the next implementation. Do not repeat private
+extraction inspection or the sizing review.
+
+The next work is one complete product branch/PR for the amended Spec 011,
+starting with fictional old-state preservation fixtures, followed by the
+prepared summary and truthful downstream path. Focused checks,
+`npm run validate:fast`, and `npm run verify` must pass offline. Legacy-only
+removal, historical reactivation, report usefulness/layout redesign, durable
+delivery, and commercial-launch work remain separate. This acceptance
+authorizes specification alignment, the implementation handoff, and subsequent
+offline implementation. It does not authorize secrets/private-evidence
+inspection, a live provider call, commit, push, merge, or deployment. The
+preparation-only live walkthrough and any later full live audit each need
+separate explicit authorization.
+
+## 2026-09-21 — approve and promote the Smart Consultant prepared intake
+
+**SETTLED — founder-approved.** The founder explicitly confirms
+[Spec 011](../specs/011-smart-consultant-intake/SPEC.md) as **Approved** and
+promotes it as the next bounded implementation. After brand name, website URL,
+and `Periksa`, Nuave presents one prepared summary headed **Ini yang Nuave
+pahami.** The customer primarily reviews, selects, corrects, and confirms;
+typing is an escape hatch.
+
+`Brand secara keseluruhan` is the visible default audit-focus proposal. It is a
+**Saran Nuave**, not website-derived evidence. Service channels, market reach,
+and market areas are added to the existing extraction output in the same call;
+unsupported fields stay empty. The happy path has one business-information
+confirmation before question review and no duplicate final review. Optional
+customer context, needs, decision considerations, alternatives, differentiator,
+and public fact remain optional; comparator `unknown` remains unresolved rather
+than claiming no competitors or category alternatives.
+
+Two gates precede runtime work. First, the founder inspects one retained
+extraction response and records only whether each relevant field is `filled`,
+`empty`, or `wrong`, especially whether market text names a place and whether
+it says how customers receive the service or product. Workers and reviewers do
+not open `.secrets` or receive private evidence. Second, the worker sizes R-23
+before coding by tracing the compatibility `BusinessBrief` through question
+preparation, audit run, report, persistence, exports, and historical readers.
+
+If removing invented-completeness fallbacks is bounded to frozen v2,
+`QuestionFactsV3`, and a direct-ten-specific/versioned boundary, include it in
+Spec 011. If it requires changing run/report payloads, persisted audit records,
+report schemas, or historical readers, split that legacy compatibility cleanup
+into a separately reviewed follow-up. The Spec 011 product PR still ships the
+prepared summary and carries confirmed target customer and decision
+considerations through frozen v2, facts projection, and the direct-ten writer.
+Temporarily retained compatibility fallbacks remain only in the legacy bridge,
+are enumerated in verification, and never enter prepared, confirmed, frozen,
+facts-projection, or writer state. Existing question review, audit execution,
+report meaning, downloads, cost, persistence, and historical runs remain
+unchanged.
+
+`specs/README.md` and `docs/NOW.md` name Spec 011 as active authority. This
+decision authorizes the approved specification and offline implementation after
+the two gates; it does not authorize opening private evidence, a provider call,
+merge, deployment, or production activation.
 
 ## 2026-09-20 — use one neutral brand-entry screen for first entry and correction
 

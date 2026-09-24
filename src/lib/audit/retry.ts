@@ -1,9 +1,5 @@
-import type {
-  AuditBudget,
-  AuditObservation,
-  AuditPrompt,
-  BusinessBrief,
-} from "./types";
+import type { AuditBudget, AuditObservation, AuditPrompt } from "./types";
+import type { AuditSubject } from "./direct-ten-context-v2";
 
 export const MAX_ATTEMPTS_PER_QUESTION = 3;
 export const MAX_AUTOMATIC_RETRIES_PER_QUESTION = 2;
@@ -121,7 +117,7 @@ export type QuestionRunOutcome =
 
 export type QuestionExecuteInput = {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief: AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
   signal?: AbortSignal;
@@ -194,7 +190,7 @@ function combineAttemptTelemetry(
 
 export async function runQuestionWithRetry(input: {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief: AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
   execute: (input: QuestionExecuteInput) => Promise<AuditObservation>;

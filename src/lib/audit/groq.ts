@@ -491,10 +491,13 @@ Use the search context to fill verified_offerings, verified_customer_needs, veri
 
 export async function executeAuditPrompt(input: {
   prompt: AuditPrompt;
-  brief: BusinessBrief;
+  brief: import("./direct-ten-context-v2").AuditSubject;
   safety_identifier: string;
   budget: AuditBudget;
 }): Promise<AuditObservation> {
+  if ("version" in input.brief) {
+    throw new Error("Groq does not support v2 confirmed context.");
+  }
   const startedAtMs = Date.now();
   const reserved = reservedBudget(input.budget);
   const requestedModel = auditModel();

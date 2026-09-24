@@ -18,9 +18,14 @@ import {
 import type {
   AuditObservation,
   AuditReport,
-  BusinessBrief,
   ReportDetail,
 } from "@/lib/audit/types";
+import {
+  contextMarketLabel,
+  isDirectTenAuditContext,
+  subjectBrandName,
+  type AuditSubject,
+} from "@/lib/audit/direct-ten-context-v2";
 import {
   indonesianCountLabel,
   indonesianHeadline,
@@ -178,12 +183,27 @@ export default function ReportView({
   previewNotice,
 }: {
   report: AuditReport;
-  brief: BusinessBrief;
+  brief: AuditSubject;
   observations: AuditObservation[];
   onDownloadJson: () => void;
   previewNotice?: React.ReactNode;
 }) {
   const isDirectTen = report.provenance?.question_method === "direct-ten";
+  const brandName = subjectBrandName(brief);
+  const scopeLabel = isDirectTenAuditContext(brief)
+    ? brief.focus.value.kind === "brand"
+      ? `Seluruh brand ${brandName}`
+      : brief.focus.value.kind === "produk"
+        ? `Produk atau layanan: ${brief.focus.value.name}`
+        : `Lokasi: ${brief.focus.value.name} — ${brief.focus.value.address}`
+    : brief.entity_scope;
+  const marketLabel = isDirectTenAuditContext(brief)
+    ? contextMarketLabel(brief)
+    : brief.market_context;
+  const logo = isDirectTenAuditContext(brief) ? "" : brief.agency_logo_data_url;
+  const madeBy = isDirectTenAuditContext(brief)
+    ? "Nuave"
+    : brief.agency_name || "Nuave";
   const observationById = new Map(
     (isDirectTen ? [] : observations).map((item) => [item.prompt_id, item]),
   );
@@ -217,15 +237,16 @@ export default function ReportView({
         <header className={styles.reportHero} id="stage-5" tabIndex={-1}>
           <div className={styles.reportTitleBlock}>
             <p className={styles.reportEyebrow}>Laporan visibilitas AI</p>
-            <h1>{brief.brand_name}</h1>
+            <h1>{brandName}</h1>
             <p className={styles.reportSubtitle}>
-              {brief.entity_scope} · {brief.market_context}
+              {scopeLabel}
+              {marketLabel ? ` · ${marketLabel}` : ""}
             </p>
           </div>
           <div className={styles.reportBrand}>
-            {brief.agency_logo_data_url ? (
+            {logo ? (
               <Image
-                src={brief.agency_logo_data_url}
+                src={logo}
                 width={96}
                 height={54}
                 unoptimized
@@ -234,7 +255,7 @@ export default function ReportView({
             ) : null}
             <div>
               <small>Dibuat oleh</small>
-              <strong>{brief.agency_name || "Nuave"}</strong>
+              <strong>{madeBy}</strong>
             </div>
           </div>
           <Separator className={styles.heroRule} />
@@ -629,7 +650,7 @@ export default function ReportView({
         )}
 
         <footer className={styles.reportFooter}>
-          <span>{brief.brand_name}</span>
+          <span>{brandName}</span>
           <span>Audit visibilitas AI Nuave</span>
           <span>
             {new Intl.DateTimeFormat("id-ID", { year: "numeric" }).format(

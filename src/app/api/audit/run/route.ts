@@ -6,11 +6,12 @@ import {
   AUDIT_CLIENT_UPDATE_REQUIRED_MESSAGE,
   isCurrentAuditClientContract,
 } from "@/lib/audit/client-contract";
+import { auditBudgetSchema, auditObservationSchema } from "@/lib/audit/types";
 import {
-  auditBudgetSchema,
-  auditObservationSchema,
-  businessBriefSchema,
-} from "@/lib/audit/types";
+  contextIdentityGuard,
+  contextNamedComparators,
+  directTenContextSchema,
+} from "@/lib/audit/direct-ten-context-v2";
 import { liveExecuteAuditPrompt } from "@/lib/audit/provider";
 import {
   auditLiveCredentialsResponse,
@@ -18,14 +19,12 @@ import {
   auditSwitchResponse,
 } from "@/lib/audit/deployment-gate";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
-import { minimizeIndonesianBrief } from "@/lib/audit/questions-id";
 import { validateDirectTenQuestions } from "@/lib/audit/questions-id-direct-ten";
 import {
   lockedObservationBindingErrors,
   lockedQuestionPackForMethod,
   parseAuditQuestionMethod,
 } from "@/lib/audit/locked-question-pack";
-import { assertSafeComparisonBusinessUrls } from "@/lib/audit/similar-businesses";
 import {
   productionObservationMethodErrors,
   syntheticLocalObservationMethodErrors,
@@ -38,7 +37,7 @@ export const runtime = "nodejs";
 
 const sharedRequestFields = {
   client_contract_version: z.literal(AUDIT_CLIENT_CONTRACT_VERSION),
-  brief: businessBriefSchema,
+  context: directTenContextSchema,
   safety_identifier: z.string().min(8).max(64),
   budget: auditBudgetSchema,
   resume_observations: z.array(auditObservationSchema).max(10).optional(),
@@ -53,11 +52,13 @@ const directTenPromptSchema = z.object({
   review_status: z.literal("needs_human_review"),
 });
 
-const directTenRequestSchema = z.object({
-  ...sharedRequestFields,
-  question_method: z.literal("direct-ten"),
-  prompts: z.array(directTenPromptSchema).length(10),
-});
+const directTenRequestSchema = z
+  .object({
+    ...sharedRequestFields,
+    question_method: z.literal("direct-ten"),
+    prompts: z.array(directTenPromptSchema).length(10),
+  })
+  .strict();
 
 export async function POST(request: Request) {
   // Spec 010 R-01/R-02b: the switch answers 404 before the body is read.
@@ -114,22 +115,19 @@ export async function POST(request: Request) {
     }
 
     const input = directTenRequestSchema.parse(rawInput);
-    assertSafeComparisonBusinessUrls(input.brief);
 
     // Lock identity and exact text before credentials or any paid provider work.
     const lockedPack = lockedQuestionPackForMethod({
       prompts: input.prompts,
-      brief: input.brief,
+      brief: input.context,
       questionMethod,
     });
     const lockedPrompts = lockedPack.prompts;
-    const minimized = minimizeIndonesianBrief(input.brief);
+    const minimized = contextIdentityGuard(input.context);
     const questions = lockedPrompts.map((prompt) => prompt.question);
     const questionErrors = validateDirectTenQuestions(questions, {
       brief: minimized,
-      comparators: minimized.comparison_business
-        ? [minimized.comparison_business.name]
-        : [],
+      comparators: contextNamedComparators(input.context),
     });
     if (questionErrors.length) {
       return NextResponse.json(
@@ -161,7 +159,7 @@ export async function POST(request: Request) {
       ...lockedObservationBindingErrors({
         prompts: lockedPrompts,
         observations: resume,
-        brief: input.brief,
+        brief: input.context,
         questionMethod,
       }),
       // The resume-evidence method gate matches the execution mode: the
@@ -201,7 +199,7 @@ export async function POST(request: Request) {
         try {
           await runAuditObservations({
             prompts: lockedPrompts,
-            brief: input.brief,
+            brief: input.context,
             safety_identifier: input.safety_identifier,
             budget,
             execute: substituteProvider

@@ -11,8 +11,13 @@ const providerMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/audit/provider", () => ({
+  liveAuditProvider: () => "openai",
   assertLiveProviderCredentialsConfigured: providerMocks.assertConfigured,
   liveExtractBusinessDraft: providerMocks.extract,
+}));
+vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./source-excerpt")>()),
+  fetchWebsiteExcerpt: vi.fn(async () => null),
 }));
 
 import { POST } from "../../app/api/audit/extract/route";
