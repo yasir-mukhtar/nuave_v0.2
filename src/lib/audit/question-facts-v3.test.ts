@@ -41,6 +41,28 @@ const legacy = () => ({
 });
 
 describe("G1 actual serialized intake boundary", () => {
+  it.each([
+    "Hasil panen petani lokal untuk keluarga Indonesia.",
+    "Menu sehat keluarga, baik untuk jantung.",
+    "Kontes foto untuk saya dan keluarga.",
+    "Keluarga kami membuka kedai di jantung kota.",
+  ])(
+    "preserves R3 safe wording in legacy confirmed and buyer-supplied text: %s",
+    (text) => {
+      const raw = request();
+      raw.intake.confirmed.publicFact = text;
+      expect(projected(raw).safeFacts).toContainEqual({
+        text,
+        provenance: "buyer_supplied",
+      });
+      const old = legacy();
+      old.brief.customer_supplied_facts = [text];
+      expect(projected(old).safeFacts).toContainEqual({
+        text,
+        provenance: "buyer_supplied",
+      });
+    },
+  );
   it.each([0, 1, 2])(
     "parses the accepted freezeLocalIntake snapshot %i",
     (index) => {

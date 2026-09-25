@@ -302,6 +302,182 @@ async function inspect() {
 }
 
 describe("server excerpt through the active Smart preparation", () => {
+  it.each([
+    "Hasil panen petani lokal untuk keluarga Indonesia.",
+    "Menu sehat keluarga, baik untuk jantung.",
+    "Kontes foto untuk saya dan keluarga.",
+    "Keluarga kami membuka kedai di jantung kota.",
+  ])(
+    "R3 page and copied proposal reach confirmation unchanged: %s",
+    async (text) => {
+      pageHtml = `<head><title>Kedai Pelangi Fiksi</title></head><main><p>${text}</p></main>`;
+      parsedDraft = { ...draft(), verified_offerings: [text] };
+      render(<SmartIntakeJourney live />);
+      await inspect();
+      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      expect(
+        JSON.parse(requests[0].input[1].content).public_source_data.text,
+      ).toBe(text);
+      const saved = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      );
+      expect(saved?.prepared?.offerings).toEqual({
+        proposed: [text],
+        origin: "website",
+      });
+      expect(saved?.selection?.offerings).toEqual([text]);
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Sudah sesuai — buat pertanyaan audit",
+        }),
+      );
+      await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+      const confirmed = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      );
+      expect(confirmed?.frozen?.context.offerings).toEqual({
+        value: [text],
+        origin: "website",
+      });
+      expect(clientBodies.at(-1)?.intake).toEqual(confirmed?.frozen);
+      expect(requests).toHaveLength(1);
+      expect(reserveAuditCall).toHaveBeenCalledTimes(1);
+      expect(pageReads).toBe(2);
+      expect(clientRequests).toHaveLength(3);
+    },
+  );
+
+  it.each([
+    ["sensitive", "Hasil tes darah keluarga saya menunjukkan anemia."],
+    ["cautious P9", "Keluarga kami menyajikan menu sehat untuk jantung."],
+    [
+      "cautious P14",
+      "Keluarga kami menyajikan kopi sejak 1990, positif dan hangat.",
+    ],
+  ])(
+    "%s page stop preserves accounting, clear copy and reload without work",
+    async (_label, text) => {
+      const expected =
+        "Nuave belum dapat menyiapkan informasi dari halaman ini. Sebagian teks mungkin berisi informasi sensitif. Pilih halaman lain yang hanya memuat informasi publik tentang brand Anda.";
+      expect(SOURCE_EXCERPT_RESTRICTED_MESSAGE).toBe(expected);
+      const initial = freshSmartSession();
+      initial.preparationCalls = input().budget.calls;
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify(initial),
+      );
+      pageHtml = `<head><title>Kedai Pelangi Fiksi</title></head><p>${text}</p>`;
+      const mounted = render(<SmartIntakeJourney live />);
+      await inspect();
+      expect((await screen.findByRole("alert")).textContent).toBe(expected);
+      const saved = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      );
+      expect(saved?.preparationCalls).toEqual(initial.preparationCalls);
+      expect(saved?.entry).toEqual({ name: "Kedai Pelangi Fiksi", source });
+      expect(saved?.prepared).toBeNull();
+      expect(saved?.sourceExcerptStatus).toBe("restricted");
+      expect(JSON.stringify(saved)).not.toContain(text);
+      expect(document.body.textContent).not.toContain(text);
+      expect(document.body.textContent).not.toContain("hubungi Nuave");
+      const calls = [...clientRequests];
+      const reads = pageReads;
+      mounted.unmount();
+      render(<SmartIntakeJourney live />);
+      expect((await screen.findByRole("alert")).textContent).toBe(expected);
+      expect(clientRequests).toEqual(calls);
+      expect(pageReads).toBe(reads);
+      expect(requests).toHaveLength(0);
+      expect(reserveAuditCall).not.toHaveBeenCalled();
+      expect(
+        parseSmartSession(
+          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        )?.preparationCalls,
+      ).toEqual(initial.preparationCalls);
+    },
+  );
+
+  it.each([
+    "Hasil tes darah keluarga saya menunjukkan anemia.",
+    "Keluarga kami menyajikan menu sehat untuk jantung.",
+  ])(
+    "later proposal, entered name and owner edit use the distinct stop without saving text: %s",
+    async (text) => {
+      const expected =
+        "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
+      const mounted = render(<SmartIntakeJourney live />);
+      await screen.findByRole("textbox", { name: "Nama bisnis" });
+      fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
+        target: { value: text },
+      });
+      expect((await screen.findByRole("alert")).textContent).toBe(expected);
+      expect(clientRequests).toHaveLength(0);
+      expect(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+      ).not.toContain(text);
+      parsedDraft = { ...draft(), verified_offerings: [text] };
+      await inspect();
+      expect((await screen.findByRole("alert")).textContent).toBe(expected);
+      const rejected = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      );
+      expect(rejected?.prepared).toBeNull();
+      expect(rejected?.preparationCalls).toHaveLength(1);
+      expect(JSON.stringify(rejected)).not.toContain(text);
+      expect(clientRequests).toHaveLength(2);
+      expect(requests).toHaveLength(1);
+      mounted.unmount();
+      // A separate safe preparation exercises the existing owner-edit guard.
+      window.sessionStorage.clear();
+      parsedDraft = draft();
+      render(<SmartIntakeJourney live />);
+      await inspect();
+      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      const before = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY);
+      const calls = [...clientRequests];
+      const row = within(
+        screen.getByRole("region", { name: "Kategori dan penawaran utama" }),
+      );
+      fireEvent.click(row.getByRole("button", { name: "Ubah" }));
+      fireEvent.change(row.getByRole("textbox", { name: "Kategori" }), {
+        target: { value: text },
+      });
+      expect((await screen.findByRole("alert")).textContent).toBe(expected);
+      expect(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(
+        before,
+      );
+      expect(clientRequests).toEqual(calls);
+      expect(document.body.textContent).not.toContain(text);
+      expect(document.body.textContent).not.toContain("hubungi Nuave");
+    },
+  );
+
+  it("accepts an owner correction with the same safe-text rule and owner origin", async () => {
+    render(<SmartIntakeJourney live />);
+    await inspect();
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    const text = "Keluarga kami membuka kedai di jantung kota.";
+    const row = within(
+      screen.getByRole("region", { name: "Kategori dan penawaran utama" }),
+    );
+    fireEvent.click(row.getByRole("button", { name: "Ubah" }));
+    fireEvent.change(row.getByRole("textbox", { name: "Kategori" }), {
+      target: { value: text },
+    });
+    expect(row.getByText("Dari Anda")).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      }),
+    );
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(
+      parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.frozen?.context.category,
+    ).toEqual({ value: text, origin: "owner" });
+    expect(requests).toHaveLength(1);
+  });
+
   // Fictional hosted-search outputs exercise application behavior, not the
   // model's ability to discover a directory or interpret its geographic scope.
   it.each([

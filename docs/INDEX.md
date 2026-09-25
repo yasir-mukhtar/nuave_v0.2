@@ -116,6 +116,16 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
+The approved [privacy-screen follow-up R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
+has an isolated [implementation candidate and worker result](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_RESULT.md)
+from merged main `7f34d69`. Independent implementation review passed; the
+[acceptance closeout](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md)
+records Verified offline status and the proposed publication scope. Founder
+publication approval is next. The
+[retained baseline evidence](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_EVIDENCE.md)
+records the original finding; prior acceptance stays closed. The integration
+sequence below is retained historical context.
+
 The isolated [main integration candidate](../specs/011-smart-consultant-intake/MAIN_INTEGRATION_RESULT.md)
 combines verified Spec 011 with merged Spec 012 PR A and the later intake/navigation
 fixes. Independent integration review is next; this does not mark all of Spec 012

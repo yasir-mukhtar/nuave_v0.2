@@ -54,6 +54,23 @@ govern the task.
 
 The [2026-09-22 founder decision](../../docs/DECISION_LOG.md#2026-09-22--accept-the-spec-011-truthful-boundary-and-historical-hold) closes the report/export review gate. The accepted R-00B result is **Cross-cutting**: truthful new-session run/report/storage/export context is required in this implementation; only legacy-only code removal is deferred. Old started/completed records are preserved with delivery and provider retries held. Earlier local sizing/review notes retain their original pending-approval wording as decision evidence; this amended specification and the dated decision govern implementation.
 
+
+## Privacy-screen amendment — approved 2026-09-25
+
+The founder approved [R3](./PRIVACY_SCREEN_FOLLOWUP_PLAN.md) for bounded offline
+implementation and independent review. Its explicit word groups, whole words,
+one occurrence-specific `jantung kota` exception and two calmer privacy-stop
+messages refine the previous conservative text check. P9/P14 remain accepted
+cautious stops. Source selection, call limits, origins, persistence, historical
+holds and strong secret/record protections stay in force.
+
+The [worker result](./PRIVACY_SCREEN_FOLLOWUP_RESULT.md) records the isolated
+candidate and offline evidence. This amendment is **Verified offline** after
+independent implementation PASS, accepted in the
+[closeout](./PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md). Publication approval is next.
+Prior Verified acceptance and F-01/F-03/AC-07 closure stand; this acceptance does
+not authorize publication or live work.
+
 ## Required context
 
 Read in order:

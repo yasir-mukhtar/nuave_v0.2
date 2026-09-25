@@ -197,7 +197,10 @@ test("a sensitive optional edit retains the last safe summary value", async ({
   await differentiator.fill("Racikan kopi khas");
   await differentiator.fill("nomor rekening 12345");
   await expect(
-    page.getByText("Informasi sensitif terdeteksi", { exact: false }),
+    page.getByText(
+      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
+      { exact: true },
+    ),
   ).toBeVisible();
   await expect(differentiator).toHaveValue("Racikan kopi khas");
   const saved = await page.evaluate(() =>

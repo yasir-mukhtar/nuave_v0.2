@@ -20,6 +20,23 @@ for the bounded instruction change. This amendment changes the instruction-freez
 and request-equivalence clauses below only as stated; source/fetch/privacy and
 all other protected boundaries remain in force.
 
+
+## Privacy-screen amendment — approved 2026-09-25
+
+The founder approved [R3](./PRIVACY_SCREEN_FOLLOWUP_PLAN.md) for bounded offline
+implementation and independent review. Its explicit word groups, whole words,
+one occurrence-specific `jantung kota` exception and two calmer privacy-stop
+messages refine the previous conservative text check. P9/P14 remain accepted
+cautious stops. Source selection, call limits, origins, persistence, historical
+holds and strong secret/record protections stay in force.
+
+The [worker result](./PRIVACY_SCREEN_FOLLOWUP_RESULT.md) records the isolated
+candidate and offline evidence. This amendment is **Verified offline** after
+independent implementation PASS, accepted in the
+[closeout](./PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md). Publication approval is next.
+Prior Verified acceptance and F-01/F-03/AC-07 closure stand; this acceptance does
+not authorize publication or live work.
+
 ## Accepted decision
 
 Implement one bounded addition to real preparation: the server reads the supplied

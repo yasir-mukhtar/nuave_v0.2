@@ -9,7 +9,10 @@ import {
   unsafePublicSource,
 } from "../audit/sensitive-intake";
 import { parseSourceInput } from "../audit/source-input";
-import type { ExtractionDraft } from "../audit/types";
+import {
+  INTAKE_TEXT_RESTRICTED_MESSAGE,
+  type ExtractionDraft,
+} from "../audit/types";
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
@@ -179,9 +182,7 @@ export function prepareUnderstanding(input: {
     unsafeSmartSource(source.normalizedUrl) ||
     draft.evidence.some((item) => unsafeSmartSource(item.source_url))
   ) {
-    throw new Error(
-      "Informasi sensitif terdeteksi. Persiapan audit dihentikan; hubungi Nuave.",
-    );
+    throw new Error(INTAKE_TEXT_RESTRICTED_MESSAGE);
   }
   const areas = unique(draft.market_areas, 8);
   const reach = draft.market_reach || null;
