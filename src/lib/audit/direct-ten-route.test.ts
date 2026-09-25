@@ -6,6 +6,7 @@ import {
   type DirectTenAuditContext,
 } from "./direct-ten-context-v2";
 import { AuditRunEventParser } from "./stream";
+import { makeSmartCustomerEvidenceExport } from "./customer-evidence-export";
 import {
   AUDIT_COST_LIMIT_USD,
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
@@ -171,6 +172,112 @@ const RUN_BODY = () => ({
   safety_identifier: "local-direct-ten-fixture",
   budget: { limit_usd: AUDIT_COST_LIMIT_USD, carryover_cost_usd: 0, calls: [] },
   resume_observations: [],
+});
+
+describe("R3 exact context through existing offline run/report/export contracts", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "1");
+    vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        throw new Error("Network forbidden");
+      }),
+    );
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+  const post = (path: string, body: unknown) =>
+    new Request(`https://nuave.test/api/audit/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  it.each([
+    "Hasil panen petani lokal untuk keluarga Indonesia.",
+    "Menu sehat keluarga, baik untuk jantung.",
+    "Kontes foto untuk saya dan keluarga.",
+    "Keluarga kami membuka kedai di jantung kota.",
+  ])("accepts and exports literal selected wording: %s", async (text) => {
+    const confirmed = context();
+    confirmed.offerings = { value: [text], origin: "website" };
+    confirmed.publicFact = { value: text, origin: "owner" };
+    const response = await runPOST(
+      post("run", { ...RUN_BODY(), context: confirmed }),
+    );
+    expect(response.status).toBe(200);
+    const events = new AuditRunEventParser().push(await response.text());
+    const completed = events.find((event) => event.type === "run_completed");
+    if (completed?.type !== "run_completed")
+      throw new Error("Expected completed synthetic run");
+    expect(completed.observations).toHaveLength(10);
+    const result = await reportPOST(
+      post("report", {
+        question_method: "direct-ten",
+        prompts: wirePrompts(),
+        safety_identifier: "local-direct-ten-fixture",
+        budget: RUN_BODY().budget,
+        client_contract_version: DIRECT_TEN_REPORT_CONTRACT_VERSION,
+        context: confirmed,
+        observations: completed.observations,
+      }),
+    );
+    expect(result.status).toBe(200);
+    const payload = await result.json();
+    const exported = makeSmartCustomerEvidenceExport(
+      confirmed,
+      [],
+      completed.observations,
+      payload.report,
+    );
+    expect(exported.context).toEqual(confirmed);
+    expect(exported.context.offerings.value).toEqual([text]);
+    expect(exported.context.publicFact).toEqual({
+      value: text,
+      origin: "owner",
+    });
+    expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
+    expect(providerMocks.liveGenerateReportContent).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it.each([
+    "Hasil tes darah keluarga saya menunjukkan anemia.",
+    "Keluarga kami menyajikan menu sehat untuk jantung.",
+    "Password: fictional-secret",
+    "hello@example.test",
+    "https://user:pass@kedai.example/",
+    "https://kedai.example/?token=fictional",
+  ])(
+    "rejects forged sensitive context before downstream execution: %s",
+    async (text) => {
+      const forged = context();
+      if (text.startsWith("https:")) forged.identity.source = text;
+      else forged.publicFact = { value: text, origin: "owner" };
+      const body = { ...RUN_BODY(), context: forged };
+      const run = await runPOST(post("run", body));
+      const report = await reportPOST(
+        post("report", {
+          question_method: "direct-ten",
+          context: forged,
+          prompts: wirePrompts(),
+          safety_identifier: "local-direct-ten-fixture",
+          budget: RUN_BODY().budget,
+          client_contract_version: DIRECT_TEN_REPORT_CONTRACT_VERSION,
+          observations: wirePrompts().map(syntheticObservation),
+        }),
+      );
+      for (const response of [run, report]) {
+        expect(response.status).toBe(400);
+        expect(await response.text()).not.toContain(text);
+      }
+      expect(providerMocks.liveExecuteAuditPrompt).not.toHaveBeenCalled();
+      expect(providerMocks.liveGenerateReportContent).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("POST /api/audit/run direct-ten local substitutes", () => {

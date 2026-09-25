@@ -15,6 +15,8 @@ import {
   confirmSmartSelection,
   initialSmartSelection,
   prepareUnderstanding,
+  parseFrozenSmartIntake,
+  unsafeSmartName,
   requiredSmartGaps,
   unsafeSmartSelection,
   unsafeSmartSource,
@@ -54,6 +56,79 @@ function prepared(overrides: Partial<ExtractionDraft> = {}) {
 }
 
 describe("smart intake exact confirmed meaning", () => {
+  it.each([
+    "Hasil panen petani lokal untuk keluarga Indonesia.",
+    "Menu sehat keluarga, baik untuk jantung.",
+    "Kontes foto untuk saya dan keluarga.",
+    "Keluarga kami membuka kedai di jantung kota.",
+  ])(
+    "R3 safe wording survives preparation and every confirmed-text boundary: %s",
+    (text) => {
+      const proposal = prepared({ verified_offerings: [text] });
+      expect(proposal.offerings).toEqual({
+        proposed: [text],
+        origin: "website",
+      });
+      for (const ownerEdit of [false, true]) {
+        const selection = initialSmartSelection(proposal);
+        if (ownerEdit) {
+          selection.offerings = [text];
+          selection.origins.offerings = "owner";
+        }
+        expect(unsafeSmartName(text)).toBe(false);
+        expect(unsafeSmartSelection(selection)).toBe(false);
+        const frozen = confirmSmartSelection(proposal, selection, 1);
+        expect(
+          parseFrozenSmartIntake(JSON.parse(JSON.stringify(frozen))),
+        ).toEqual(frozen);
+        const context = directTenContextSchema.parse(frozen.context);
+        expect(context.offerings).toEqual({
+          value: [text],
+          origin: ownerEdit ? "owner" : "website",
+        });
+        const projection = projectQuestionFactsV2({ context, factVersion: 1 });
+        expect(projection.status).toBe("projected");
+        if (projection.status !== "projected")
+          throw new Error("Expected projection");
+        expect(buildDirectTenWriterBrief(projection.facts)).toContain(text);
+        expect(contextForReportModel(context).confirmed_context).toEqual(
+          context,
+        );
+        expect(
+          makeSmartCustomerEvidenceExport(context, [], [], {} as AuditReport)
+            .context,
+        ).toEqual(context);
+      }
+    },
+  );
+  it.each([
+    "Hasil tes darah keluarga saya menunjukkan anemia.",
+    "Keluarga kami menyajikan menu sehat untuk jantung.",
+    "Keluarga kami menyajikan kopi sejak 1990, positif dan hangat.",
+  ])("stops later proposal, owner selection and forged context: %s", (text) => {
+    expect(() => prepared({ verified_offerings: [text] })).toThrow(
+      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
+    );
+    const proposal = prepared();
+    const selection = initialSmartSelection(proposal);
+    selection.offerings = [text];
+    expect(unsafeSmartSelection(selection)).toBe(true);
+    expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow();
+    const context = confirmSmartSelection(
+      proposal,
+      initialSmartSelection(proposal),
+      1,
+    ).context;
+    const forged = {
+      ...context,
+      offerings: { value: [text], origin: "owner" as const },
+    };
+    expect(directTenContextSchema.safeParse(forged).success).toBe(false);
+    expect(
+      projectQuestionFactsV2({ context: forged, factVersion: 1 }).status,
+    ).toBe("INVALID_REQUEST");
+  });
+
   it.each(["seluruh", "luar"] as const)(
     "preserves %s presence separately from delivery through writer, report context and export",
     (reach) => {

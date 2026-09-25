@@ -10,6 +10,7 @@ import {
   sourceExcerptStatusSchema,
   SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
   SOURCE_EXCERPT_RESTRICTED_MESSAGE,
+  INTAKE_TEXT_RESTRICTED_MESSAGE,
   type AuditCallTelemetry,
   type ExtractionDraft,
 } from "../audit/types";
@@ -126,9 +127,7 @@ export default function SmartIntakeJourney({
     setSession(next);
   };
   function stopSensitiveInput() {
-    setError(
-      "Informasi sensitif terdeteksi. Persiapan audit dihentikan; hubungi Nuave.",
-    );
+    setError(INTAKE_TEXT_RESTRICTED_MESSAGE);
   }
   function newJourney() {
     const next = freshSmartSession();

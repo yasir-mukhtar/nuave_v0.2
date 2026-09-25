@@ -15,7 +15,10 @@ test("sensitive entry text retains the last safe draft without a provider reques
     .getByRole("textbox", { name: "URL website publik" })
     .fill("https://kedai-fiksi.example/?token=private");
   await expect(
-    page.getByText("Informasi sensitif terdeteksi", { exact: false }),
+    page.getByText(
+      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
+      { exact: true },
+    ),
   ).toBeVisible();
   const saved = await page.evaluate(() =>
     sessionStorage.getItem("nuave.localIntake.v2"),

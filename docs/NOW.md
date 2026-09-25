@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-24
+> Updated: 2026-09-25
 > Stage: pre-customer, building the pipeline
 
 **Portable pause checkpoint:** code and current instructions are combined on
@@ -92,7 +92,19 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** obtain publication approval for the completed
+**Next action:** founder publication decision for the verified offline
+[privacy-screen R3 package](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md).
+Independent implementation review passed 287 affected tests plus 14 new probes;
+the matching worker gate passed 1,407 tests, both builds and 32 browser checks.
+The orchestrator accepted PS-01–PS-06 and checked evidence hashes. Main still
+matches reviewed base `7f34d69` (merged PR #78) at closeout. The 21-file proposed
+package has identical reviewed runtime/tests plus documentation closeout.
+Commit, push, draft PR and its automatic synthetic preview/comment await approval;
+merge, production deployment and live calls remain separate. The publication
+checkpoint below is historical. Prior Spec 011 verification and F-01/F-03/AC-07
+closure stand. P9/P14 remain accepted stops; accounting stays USD 1.06241155 of 5.
+
+**Historical pre-publication checkpoint (superseded):** obtain publication approval for the completed
 [local PR package](../specs/011-smart-consultant-intake/PR_READINESS.md): commit
 and push `codex/spec011-main-integration`, open its draft PR against main, and
 allow the automatic isolated synthetic preview and workflow comment. No such

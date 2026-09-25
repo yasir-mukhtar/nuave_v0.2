@@ -1,10 +1,56 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-24
+> Updated: 2026-09-25
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-25 — accept the privacy-screen R3 offline implementation
+
+**Orchestrator closeout under the founder's R3 approval.** Independent
+implementation review returns **PASS** with no actionable findings. Accept
+PS-01–PS-06 as Verified offline for the exact candidate in the
+[acceptance record](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md).
+The reviewer independently passed 287 affected tests plus 14 new probes and
+reused the matching worker canonical gate: 1,407 tests, both builds and 32
+browser checks. The orchestrator checked reports, logs and evidence hashes;
+no tests or live calls were repeated. P9/P14 retain the approved cautious stops.
+
+The reviewed implementation and original evidence remain unchanged. A separate
+publication copy adds documentation closeout only; its reviewed runtime and
+tests are identical. Main still matches reviewed base `7f34d69` at closeout.
+Next is founder approval of the concrete commit/branch-push/draft-PR package,
+including the existing automatic synthetic preview and workflow comment.
+This record grants no publication, merge, production deployment or live-call
+authority. Spec 011 stays Verified; F-01/F-03/AC-07 stay closed; accounting
+remains USD 1.06241155 of 5.
+
+## 2026-09-25 — approve privacy-screen R3 for offline implementation
+
+After relaying an independent **plan-review PASS** with no blocking findings,
+the founder said: **“Approved. Shall I pass it to the worker now?”** This
+approves [R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
+and releases its included worker handoff for bounded offline implementation
+and one focused independent review. The reviewer changed no files and ran no
+tests or live calls; implementation verification remains pending.
+
+The approved correction uses explicit word groups in both Indonesian proximity
+directions and complete-word matching. P9/P14 remain accepted cautious stops;
+P10 exempts only the `jantung kota` occurrence. Strong protections, downstream
+checks, three bounded mixed cases and the two gentler stop/recovery messages
+remain required. The worker runs the plan's targeted checks and one final
+canonical `npm run verify`; the reviewer reuses that gate and reruns affected
+tests unless a concrete change, failure or uncovered risk requires more.
+
+Use an isolated candidate from fresh `origin/main`, preserving the shared
+source checkout and prior evidence. This supersedes the prior absence of
+authority for this specific correction; it does not authorize commits, pushes,
+PR publication, merge, deployment, business-site fetches or live provider calls.
+Spec 011 remains Verified for its prior scope, F-01/F-03/AC-07 remain closed,
+and the new amendment awaits implementation review. Accounting stays
+USD 1.06241155 of 5. No additional plan approval is needed within this scope.
+
 
 ## 2026-09-24 — record Spec 011 acceptance closure and Verified status
 
