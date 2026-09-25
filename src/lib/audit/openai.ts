@@ -31,6 +31,8 @@ import {
 } from "./contracts";
 import {
   reportAssessmentInstructions,
+  reportContentInstructions,
+  reportPriorityCountInstruction,
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
@@ -662,9 +664,13 @@ export async function generateReportContent(
           "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
           "Nuave computes run state, visible brand appearance, excerpts, source links, detail copy, and verified-competitor links in code; do not return those fields.",
           ...reportAssessmentInstructions(input.question_method),
+          ...reportContentInstructions(input.question_method),
           "Use needs_confirmation when a supplied claim still needs verification. Use needs_correction only when the answers show a specific conflict or error. Use no_clear_issues only when no specific issue appears; it does not prove all public information is correct.",
           "Every finding and priority must cite one or more supplied prompt IDs. Every action needs an observable completion check.",
-          "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",
+          reportPriorityCountInstruction(
+            input.question_method,
+            "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",
+          ),
           "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
           "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
           "Return exactly one assessment for each of the ten prompt IDs.",

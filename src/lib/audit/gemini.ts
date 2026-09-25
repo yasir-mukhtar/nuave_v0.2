@@ -20,6 +20,8 @@ import {
 } from "./contracts";
 import {
   reportAssessmentInstructions,
+  reportContentInstructions,
+  reportPriorityCountInstruction,
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
@@ -491,6 +493,7 @@ export async function generateReportContent(
     `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION}.`,
     ...reportWritingInstructions(),
     ...reportAssessmentInstructions(input.question_method),
+    ...reportContentInstructions(input.question_method),
     "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",
     "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
     "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
@@ -501,7 +504,10 @@ export async function generateReportContent(
     "Use information confirmed, incomplete, or conflicting only when the answer assesses a public fact about the audited brand; otherwise use not_assessed.",
     "Use needs_confirmation when a supplied claim still needs verification. Use needs_correction only when the answers show a specific conflict or error. Use no_clear_issues only when no specific issue appears; it does not prove all public information is correct.",
     "Every finding and priority must cite one or more supplied prompt IDs. Every action needs an observable completion check.",
-    "Return no more than five priorities. Each priority must address a supplied failed, absent, not-recommended discovery, incomplete, conflicting, or competitor-preferred result.",
+    reportPriorityCountInstruction(
+      input.question_method,
+      "Return no more than five priorities. Each priority must address a supplied failed, absent, not-recommended discovery, incomplete, conflicting, or competitor-preferred result.",
+    ),
     "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
     "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
     "Return exactly one assessment for each of the ten prompt IDs.",

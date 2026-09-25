@@ -20,6 +20,11 @@ import type {
   AuditReport,
   ReportDetail,
 } from "@/lib/audit/types";
+import { buildReportPresentation } from "@/lib/audit/report-presentation";
+import {
+  formatObservationWindow,
+  observationWindow,
+} from "./report/report-header";
 import {
   contextMarketLabel,
   isDirectTenAuditContext,
@@ -204,6 +209,32 @@ export default function ReportView({
   const madeBy = isDirectTenAuditContext(brief)
     ? "Nuave"
     : brief.agency_name || "Nuave";
+  // Spec 012 R-12: direct-ten header facts come only from the same validated
+  // retained answers the body renders; invalid bindings show no invented date.
+  const presentation = isDirectTen
+    ? buildReportPresentation(report, observations)
+    : null;
+  const readyAnswers =
+    presentation?.status === "ready" ? presentation.answers : null;
+  const observedWindow = readyAnswers
+    ? observationWindow(readyAnswers.map((answer) => answer.observedAt))
+    : null;
+  const distinct = (values: string[]) => [...new Set(values)].join(", ");
+  const contents = isDirectTen
+    ? [
+        ["summary", "Hasil singkat"],
+        ["detail", "Jawaban model AI"],
+        ["findings", "Analisis Nuave"],
+        ["priorities", "Yang dapat dilakukan"],
+        ["method", "Tentang audit ini"],
+      ]
+    : [
+        ["summary", "Hasil utama"],
+        ["findings", "Temuan utama"],
+        ["priorities", "Langkah berikutnya"],
+        ["detail", "Hasil tiap pertanyaan"],
+        ["method", "Cara kerja audit"],
+      ];
   const observationById = new Map(
     (isDirectTen ? [] : observations).map((item) => [item.prompt_id, item]),
   );
@@ -236,54 +267,91 @@ export default function ReportView({
         {previewNotice ? previewNotice : null}
         <header className={styles.reportHero} id="stage-5" tabIndex={-1}>
           <div className={styles.reportTitleBlock}>
-            <p className={styles.reportEyebrow}>Laporan visibilitas AI</p>
+            <p className={styles.reportEyebrow}>
+              {isDirectTen ? "AI Visibility Report" : "Laporan visibilitas AI"}
+            </p>
             <h1>{brandName}</h1>
             <p className={styles.reportSubtitle}>
               {scopeLabel}
               {marketLabel ? ` · ${marketLabel}` : ""}
             </p>
           </div>
-          <div className={styles.reportBrand}>
-            {logo ? (
-              <Image
-                src={logo}
-                width={96}
-                height={54}
-                unoptimized
-                alt="Agency logo"
-              />
-            ) : null}
-            <div>
-              <small>Dibuat oleh</small>
-              <strong>{madeBy}</strong>
+          {isDirectTen ? null : (
+            <div className={styles.reportBrand}>
+              {logo ? (
+                <Image
+                  src={logo}
+                  width={96}
+                  height={54}
+                  unoptimized
+                  alt="Agency logo"
+                />
+              ) : null}
+              <div>
+                <small>Dibuat oleh</small>
+                <strong>{madeBy}</strong>
+              </div>
             </div>
-          </div>
+          )}
           <Separator className={styles.heroRule} />
-          <dl className={styles.scopeGrid}>
-            <div>
-              <dt>Tanggal audit</dt>
-              <dd>
-                {new Intl.DateTimeFormat("id-ID", {
-                  dateStyle: "long",
-                  timeStyle: "short",
-                }).format(new Date(report.generated_at))}
-              </dd>
-            </div>
-            <div>
-              <dt>Pertanyaan yang diperiksa</dt>
-              <dd>{observations.length} pertanyaan independen</dd>
-            </div>
-          </dl>
+          {isDirectTen ? (
+            <dl className={styles.scopeGrid} data-report-header-facts>
+              <div>
+                <dt>Tanggal pengamatan</dt>
+                <dd>
+                  {observedWindow ? (
+                    <time dateTime={observedWindow.start}>
+                      {formatObservationWindow(observedWindow)}
+                    </time>
+                  ) : (
+                    "Tidak tersedia"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Pertanyaan yang diperiksa</dt>
+                <dd>{observations.length} pertanyaan independen</dd>
+              </div>
+              {readyAnswers ? (
+                <>
+                  <div>
+                    <dt>Sistem yang diuji</dt>
+                    <dd>
+                      {distinct(readyAnswers.map((answer) => answer.system))}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Model jawaban</dt>
+                    <dd>
+                      {distinct(
+                        readyAnswers.map((answer) => answer.returnedModel),
+                      )}
+                    </dd>
+                  </div>
+                </>
+              ) : null}
+            </dl>
+          ) : (
+            <dl className={styles.scopeGrid}>
+              <div>
+                <dt>Tanggal audit</dt>
+                <dd>
+                  {new Intl.DateTimeFormat("id-ID", {
+                    dateStyle: "long",
+                    timeStyle: "short",
+                  }).format(new Date(report.generated_at))}
+                </dd>
+              </div>
+              <div>
+                <dt>Pertanyaan yang diperiksa</dt>
+                <dd>{observations.length} pertanyaan independen</dd>
+              </div>
+            </dl>
+          )}
           <nav className={styles.reportContents} aria-label="Report contents">
             <span>Isi laporan</span>
             <ol>
-              {[
-                ["summary", "Hasil utama"],
-                ["findings", "Temuan utama"],
-                ["priorities", "Langkah berikutnya"],
-                ["detail", "Hasil tiap pertanyaan"],
-                ["method", "Cara kerja audit"],
-              ].map(([id, label]) => (
+              {contents.map(([id, label]) => (
                 <li key={id}>
                   <a
                     href={`#${id}`}

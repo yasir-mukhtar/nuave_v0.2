@@ -120,3 +120,46 @@ export function reportAssessmentInstructions(
     ? [...DIRECT_TEN_REPORT_ASSESSMENT_INSTRUCTIONS]
     : [...REPORT_ASSESSMENT_INSTRUCTIONS];
 }
+
+/**
+ * Spec 012 R-10/R-11 (B1): direct-ten findings and actions. The count is a
+ * ceiling, never a quota. This guidance does not describe any exception to
+ * the observed-gap rule for actions; that remains a separate decision.
+ */
+export const DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS = [
+  "Return between one and ten key findings and between one and ten priorities, only as many as the answers support. Three supported, distinct items stay three; never pad with generic advice, repeated findings, or a restated action.",
+  "Each key finding explains a material observation from the answers and what it may mean for the business, qualified by its limits. Cite every prompt ID that supports it.",
+  "Each priority states one concrete action with why, basis (the specific answers it relies on), a suggested owner, done_when (an observable completion check), caveat, and the evidence_prompt_ids it actually uses. Number priorities in order from 1.",
+  "Non-appearance alone does not show a missing page, a website defect, or a cause. Do not diagnose one from absence.",
+  "Treat customer-confirmed context as the customer's selection, not independently verified fact. Do not overwrite it; propose a factual correction only when the answers show a specific conflict with it.",
+  "Keep material late caveats, contradictory evidence, and unassessed dimensions visible in the interpretation; do not drop a qualification that appears later in an answer.",
+] as const;
+
+/** Content guidance for the report method; historical methods keep theirs. */
+export function reportContentInstructions(
+  questionMethod?: AuditQuestionMethod,
+): string[] {
+  return questionMethod === "direct-ten"
+    ? [...DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS]
+    : [];
+}
+
+const HISTORICAL_PRIORITY_COUNT = "Return no more than five priorities.";
+
+/**
+ * Count instruction for the report method. Historical wording is unchanged.
+ * Direct-ten replaces only the count sentence with the widened R-10 ceiling;
+ * the adapter's existing observed-gap clause stays verbatim (B1 keeps it).
+ */
+export function reportPriorityCountInstruction(
+  questionMethod: AuditQuestionMethod | undefined,
+  historical: string,
+): string {
+  if (questionMethod !== "direct-ten") return historical;
+  if (!historical.includes(HISTORICAL_PRIORITY_COUNT))
+    throw new Error("Report count instruction no longer matches its template.");
+  return historical.replace(
+    HISTORICAL_PRIORITY_COUNT,
+    "Return no more than ten key findings and no more than ten priorities.",
+  );
+}

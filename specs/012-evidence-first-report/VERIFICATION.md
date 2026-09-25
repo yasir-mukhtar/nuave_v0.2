@@ -196,3 +196,14 @@ Local evidence (fictional only):
 - `package.json`, `package-lock.json` (approved pins/dependency graph)
 - `specs/012-evidence-first-report/PR_A_REVIEW.md` (independent review, unchanged)
 - `specs/012-evidence-first-report/VERIFICATION.md`
+
+## B1 offline candidate (2026-09-25)
+
+> Result: **worker PASS, offline; focused independent review pending.** Not merged; Spec 012 stays in progress (B2 and AC-18 pending).
+> Base: `8907d96d10ca101f6fdd68c8c77607cd994d83f3` (contains PR #78, PR #74 and privacy PR #79). Branch: `codex/spec012-b1-report-content` (unstaged).
+> Record: [B1_IMPLEMENTATION_RESULT.md](./B1_IMPLEMENTATION_RESULT.md).
+
+- AC-11: findings/priorities/order maximum 10. Three stay three, ten pass, eleven fail, zero stays invalid.
+- AC-12: direct-ten content guidance goes to all four adapters on initial and language-only retry requests, and the observed-gap clause is kept. Synthesis versions are `report-synthesis-v6` / `report-synthesis-v6-context`. Language calibration was rechecked (20/25, no floor, no field totals), with no change.
+- AC-13: the direct-ten header shows the `AI Visibility Report` title, exact brand/scope from `DirectTenAuditContext`, a UTC observation range from retained `observed_at`, and system/answer model. Creation time appears only in `Tentang audit ini`. Contents match body order and stay report-local.
+- Inherited A regressions and request counters are unchanged. `npm run verify` passes: 1,429 unit tests, both builds, 29 + 3 browser tests. An 11-page fictional A4 PDF was inspected page by page with PDFKit. The native Save dialog and native zoom were not exercised.

@@ -1,4 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import { generateReportContent } from "./gemini";
+import {
+  goldenBrief,
+  goldenObservations,
+  goldenPrompts,
+  goldenReportContent,
+} from "./fixtures/report-golden";
+import { DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS } from "./report-prompt-contract";
 import {
   collectSources,
   extractBusinessDraft,
@@ -148,5 +156,64 @@ describe("gemini source titles", () => {
     expect(normalizeSourceTitle(undefined, "https://example.com/x")).toBe(
       "https://example.com/x",
     );
+  });
+});
+
+describe("Spec 012 B1 report request instructions (AC-12)", () => {
+  async function capture(questionMethod?: "direct-ten") {
+    const bodies: string[] = [];
+    vi.stubEnv("GEMINI_API_KEY", "dummy-offline-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: unknown, init?: { body?: unknown }) => {
+        bodies.push(String(init?.body ?? ""));
+        return new Response(
+          JSON.stringify({ error: { message: "offline stop after capture" } }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }),
+    );
+    const input = {
+      brief: goldenBrief,
+      prompts: goldenPrompts,
+      observations: goldenObservations,
+      safety_identifier: "offline-b1-gemini",
+      budget: fixtureBudget,
+      ...(questionMethod ? { question_method: questionMethod } : {}),
+    };
+    await expect(generateReportContent(input)).rejects.toThrow();
+    await expect(
+      generateReportContent(input, {
+        draft: goldenReportContent(),
+        violations: ["kalimat panjang"],
+      }),
+    ).rejects.toThrow();
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    return bodies.map((body) => JSON.parse(body) as unknown);
+  }
+
+  it("sends direct-ten content guidance on initial and retry requests", async () => {
+    const requests = await capture("direct-ten");
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      const text = JSON.stringify(request);
+      for (const line of DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS)
+        expect(text).toContain(JSON.stringify(line).slice(1, -1));
+      expect(text).not.toContain("no more than five priorities");
+      expect(text).toContain(
+        "Return no more than ten key findings and no more than ten priorities. Each priority must address",
+      );
+    }
+    expect(JSON.stringify(requests[1])).toContain("language-only revision");
+  });
+
+  it("keeps historical report instructions unchanged", async () => {
+    const [request] = await capture();
+    const text = JSON.stringify(request);
+    expect(text).not.toContain(
+      JSON.stringify(DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS[0]).slice(1, -1),
+    );
+    expect(text).toContain("Return no more than five priorities.");
   });
 });

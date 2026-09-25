@@ -374,6 +374,12 @@ export const observedCompetitorSchema = z.object({
   evidence_prompt_ids: z.array(z.string()).min(1).max(10),
 });
 
+/**
+ * Spec 012 R-10: up to ten findings and ten priorities (priority order 1–10).
+ * This is a ceiling, not a quota; the minimum of one is unchanged.
+ */
+export const REPORT_CONTENT_MAX_ITEMS = 10;
+
 export const reportContentSchema = z.object({
   conclusion: z.string(),
   accuracy_status: z.enum([
@@ -392,11 +398,11 @@ export const reportContentSchema = z.object({
       }),
     )
     .min(1)
-    .max(5),
+    .max(REPORT_CONTENT_MAX_ITEMS),
   priorities: z
     .array(
       z.object({
-        order: z.number().int().min(1).max(5),
+        order: z.number().int().min(1).max(REPORT_CONTENT_MAX_ITEMS),
         timing: z.enum(["do_first", "do_next"]),
         action: z.string(),
         why: z.string(),
@@ -413,7 +419,7 @@ export const reportContentSchema = z.object({
       }),
     )
     .min(1)
-    .max(5),
+    .max(REPORT_CONTENT_MAX_ITEMS),
   details: z.array(reportDetailSchema).length(10),
 });
 
@@ -529,10 +535,10 @@ export type AuditReport = ReportContent & {
   /**
    * Appeared/assessed-denominator measures (AC-17): "appeared" counts
    * appearance === "mentioned" regardless of recommendation status.
-   * "assessed" applies one rule to all three dimensions — the brand
-   * appeared AND the dimension was judged — so a question the brand was
-   * absent from is outside every assessed denominator, not inside
-   * recommendation's and outside the other two.
+   * Comparison and information are "assessed" only when the brand appeared
+   * AND that dimension was judged. Recommendation follows the same rule for
+   * historical methods; direct-ten (Spec 009 R-07) counts every completed
+   * answer, so its denominator stays ten when all ten answers completed.
    */
   measures: {
     overall: { appeared: number; total: number };

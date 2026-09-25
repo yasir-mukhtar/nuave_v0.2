@@ -17,6 +17,8 @@ import {
 } from "./contracts";
 import {
   reportAssessmentInstructions,
+  reportContentInstructions,
+  reportPriorityCountInstruction,
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
@@ -641,6 +643,7 @@ export async function generateReportContent(
       "You are a senior analyst writing Nuave AI Visibility Reports.",
       ...reportWritingInstructions(),
       ...reportAssessmentInstructions(input.question_method),
+      ...reportContentInstructions(input.question_method),
     ].join("\n");
     const measurementDefinitions =
       input.question_method === "direct-ten"
@@ -671,7 +674,7 @@ Synthesize into a Nuave AI Visibility Report using contract ${REPORT_SYNTHESIS_P
   "assessments": array of { prompt_id: string, recommendation: "recommended"|"not_recommended"|"not_assessed", comparison: "client_preferred"|"competitor_preferred"|"compared_no_preference"|"not_assessed", information: "confirmed"|"incomplete"|"conflicting"|"not_assessed" }
 }
 
-Return exactly one assessment for each supplied prompt ID. Return no more than five priorities. These observations were produced WITHOUT web search, so treat every one of them as a model-knowledge sample, never as evidence about the live web. Keep the writing plain and decisive.`;
+Return exactly one assessment for each supplied prompt ID. ${reportPriorityCountInstruction(input.question_method, "Return no more than five priorities.")} These observations were produced WITHOUT web search, so treat every one of them as a model-knowledge sample, never as evidence about the live web. Keep the writing plain and decisive.`;
 
     const { text, returnedModel, responseId } = await openrouterChat({
       model: requestedModel,
