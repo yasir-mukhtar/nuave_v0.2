@@ -476,7 +476,7 @@ describe("report evidence guardrails", () => {
     );
     expect(report.report_version).toBe("nuave-report-v3");
     expect(report.provenance).toEqual({
-      report_prompt_version: "report-synthesis-v4",
+      report_prompt_version: "report-synthesis-v6",
       prompt_contract_version: "deterministic-v4-en",
       requested_report_model: "gpt-5.6",
       returned_report_model: "gpt-5.6-sol",

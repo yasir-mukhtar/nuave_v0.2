@@ -73,8 +73,11 @@ export {
 } from "./measurement-matrix";
 
 export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
-export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v4";
-export const REPORT_SYNTHESIS_PROMPT_VERSION_V2 = "report-synthesis-v5-context";
+// Spec 012 B1: both synthesis contracts widen findings/priorities to ten
+// (shared schema) and direct-ten adds evidence-led content guidance. v2 is the
+// contract every new confirmed-context report records in its provenance.
+export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v6";
+export const REPORT_SYNTHESIS_PROMPT_VERSION_V2 = "report-synthesis-v6-context";
 
 /**
  * Versioned neutral observation instructions (Spec 003 R-14).

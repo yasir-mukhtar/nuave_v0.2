@@ -264,26 +264,23 @@ describe("structured result dimensions", () => {
     expect(reportContentSchema.safeParse(content).success).toBe(true);
   });
 
-  it("rejects more than five immediate priorities", () => {
+  it("accepts ten immediate priorities and rejects an eleventh (Spec 012 R-10)", () => {
     const content = goldenReportContent();
-    content.priorities.push(
-      {
-        ...content.priorities[2],
-        order: 4,
-        action: "A fourth synthetic action",
-      },
-      {
-        ...content.priorities[2],
-        order: 5,
-        action: "A fifth synthetic action",
-      },
-      {
-        ...content.priorities[2],
-        order: 6,
-        action: "A sixth synthetic action",
-      },
-    );
+    const base = content.priorities[2]!;
+    for (let order = content.priorities.length + 1; order <= 10; order++)
+      content.priorities.push({
+        ...base,
+        order,
+        action: `Synthetic action ${order}`,
+      });
+    expect(content.priorities).toHaveLength(10);
+    expect(reportContentSchema.safeParse(content).success).toBe(true);
 
+    content.priorities.push({
+      ...base,
+      order: 11,
+      action: "An eleventh synthetic action",
+    });
     expect(reportContentSchema.safeParse(content).success).toBe(false);
   });
 

@@ -22,8 +22,8 @@ intake](../specs/011-smart-consultant-intake/SPEC.md) is **Verified** on 2026-09
 for preserved baseline `2a21f85` plus the reviewed 316-file product manifest.
 The [independent acceptance closeout](../specs/011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW.md)
 passes AC-00 through AC-08: **F-03/AC-07 are closed and F-01 remains closed.**
-The combined main candidate has independent integration PASS; PR publication
-approval, required CI and release readiness remain separate. The founder
+The integration was merged through PR #78 as `7f34d69`; privacy R3 followed
+through PR #79 as `8907d96`. Both releases passed main CI and deployment. The founder
 initially confirmed the spec on 2026-09-21 and amended it on 2026-09-22,
 2026-09-23 and 2026-09-24. The implemented path replaces the fixed questionnaire
 with one prepared summary, one confirmation before question review, and clarification
@@ -92,17 +92,27 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** founder publication decision for the verified offline
-[privacy-screen R3 package](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md).
-Independent implementation review passed 287 affected tests plus 14 new probes;
-the matching worker gate passed 1,407 tests, both builds and 32 browser checks.
-The orchestrator accepted PS-01–PS-06 and checked evidence hashes. Main still
-matches reviewed base `7f34d69` (merged PR #78) at closeout. The 21-file proposed
-package has identical reviewed runtime/tests plus documentation closeout.
-Commit, push, draft PR and its automatic synthetic preview/comment await approval;
-merge, production deployment and live calls remain separate. The publication
-checkpoint below is historical. Prior Spec 011 verification and F-01/F-03/AC-07
-closure stand. P9/P14 remain accepted stops; accounting stays USD 1.06241155 of 5.
+**Next action:** publish the accepted offline B1 candidate as a draft PR,
+then obtain independent review of the published diff and required CI. The founder
+explicitly authorized publication on 2026-09-25. Merge, production deployment
+and live calls remain separate.
+
+**Spec 012 B1 accepted:** the [acceptance record](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)
+records the reviewed candidate on `8907d96`: up to ten supported items,
+evidence-led synthesis guidance, and truthful observation dates/header/contents.
+Independent review passed 305 focused tests, four probes and the affected
+browser regression, inspected all 11 PDF pages, and reused the matching worker
+canonical gate: 1,429 tests, both builds and 32 browser checks. The publication
+package preserves reviewed code/tests; only acceptance and routing records are
+added. Required PR CI remains pending on the eventual published head.
+B2, combined verification and the founder's AC-18 usefulness judgment remain
+pending; Spec 012 is Approved/in progress, not Verified. The approved spec is
+pinned at `9c5d4c0`; broader documentation promotion remains separate.
+
+**Privacy R3 released:** PR #79 merged as `8907d96`; main CI, production
+deployment and preview cleanup passed on 2026-09-25. P9/P14 remain accepted
+cautious stops. Spec 011 stays Verified and F-01/F-03/AC-07 stay closed.
+No additional live call is authorized; accounting stays USD 1.06241155 of 5.
 
 **Historical pre-publication checkpoint (superseded):** obtain publication approval for the completed
 [local PR package](../specs/011-smart-consultant-intake/PR_READINESS.md): commit

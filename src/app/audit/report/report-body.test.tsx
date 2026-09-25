@@ -9,6 +9,15 @@ import { AnswerMarkdown } from "./AnswerMarkdown";
 import { DirectTenReportBody } from "./DirectTenReportBody";
 import ReportView from "../ReportView";
 import { ReportToolbar } from "@/components/product/ReportToolbar";
+import {
+  DIRECT_TEN_CONTEXT_VERSION,
+  type DirectTenAuditContext,
+} from "@/lib/audit/direct-ten-context-v2";
+import {
+  REPORT_DISPLAY_TIMEZONE,
+  formatObservationWindow,
+  observationWindow,
+} from "./report-header";
 
 afterEach(() => {
   cleanup();
@@ -339,5 +348,234 @@ describe("inert Markdown policy", () => {
     expect(container.textContent).toContain("[ ] perlu diperiksa");
     expect(container.textContent).toContain("Batasan catatan kaki.");
     expect(container.textContent).toContain("javascript:alert%281%29");
+  });
+});
+
+describe("Spec 012 B1 final header and contents (AC-13)", () => {
+  const context = (
+    focus: DirectTenAuditContext["focus"]["value"],
+  ): DirectTenAuditContext => ({
+    version: DIRECT_TEN_CONTEXT_VERSION,
+    identity: {
+      name: "Kedai Fiksi",
+      source: "https://kedai-fiksi.example/",
+      sourceOrigin: "owner",
+      aliases: [],
+      origin: "owner",
+    },
+    focus: { value: focus, origin: "owner" },
+    category: { value: "kedai kopi", origin: "website" },
+    offerings: {
+      value: focus.kind === "produk" ? [focus.name] : ["kopi susu"],
+      origin: "website",
+    },
+    serviceChannels: { value: ["on_premise"], origin: "website" },
+    market:
+      focus.kind === "cabang"
+        ? null
+        : { value: { reach: "seluruh", areas: [] }, origin: "owner" },
+    comparators: { value: { mode: "unknown" }, origin: "nuave" },
+  });
+  // Retained order is deliberately nonchronological; creation is later.
+  const times = [
+    "2026-09-22T09:30:00.000Z",
+    "2026-09-21T23:05:00.000Z",
+    "2026-09-22T10:45:00.000Z",
+    "2026-09-22T00:00:00.000Z",
+    "2026-09-22T01:00:00.000Z",
+    "2026-09-22T02:00:00.000Z",
+    "2026-09-22T03:00:00.000Z",
+    "2026-09-22T04:00:00.000Z",
+    "2026-09-22T05:00:00.000Z",
+    "2026-09-22T06:00:00.000Z",
+  ];
+  function directTen(focus: DirectTenAuditContext["focus"]["value"]) {
+    const fixture = presentationFixture();
+    fixture.observations.forEach((o, i) => (o.observed_at = times[i]!));
+    fixture.report.generated_at = "2026-09-24T07:00:00.000Z";
+    return { ...fixture, brief: context(focus) };
+  }
+
+  it("derives the observation window from retained instants without reordering", () => {
+    const retained = [...times];
+    expect(observationWindow(retained)).toEqual({
+      start: "2026-09-21T23:05:00.000Z",
+      end: "2026-09-22T10:45:00.000Z",
+    });
+    expect(retained).toEqual(times);
+    expect(
+      observationWindow(["2026-09-22T09:30:00.000Z", "bukan-tanggal"]),
+    ).toBeNull();
+    expect(observationWindow([])).toBeNull();
+    expect(
+      formatObservationWindow({
+        start: "2026-09-22T04:10:00.000Z",
+        end: "2026-09-22T04:10:00.000Z",
+      }),
+    ).toBe("22 September 2026, 04.10 UTC");
+    expect(
+      formatObservationWindow({
+        start: "2026-09-22T04:10:00.000Z",
+        end: "2026-09-22T04:12:00.000Z",
+      }),
+    ).toBe("22 September 2026, 04.10–04.12 UTC");
+    expect(
+      formatObservationWindow({
+        start: "2026-09-21T23:05:00.000Z",
+        end: "2026-09-22T10:45:00.000Z",
+      }),
+    ).toBe("21 September 2026, 23.05 – 22 September 2026, 10.45 UTC");
+    expect(REPORT_DISPLAY_TIMEZONE).toBe("UTC");
+  });
+
+  it("shows exact identity, whole-brand scope, observation range and separate creation time", () => {
+    const fixture = directTen({ kind: "brand" });
+    const { container } = render(
+      <ReportView {...fixture} onDownloadJson={() => {}} />,
+    );
+    const header = container.querySelector("header")!;
+    expect(within(header).getByText("AI Visibility Report")).toBeVisible();
+    expect(
+      within(header).getByRole("heading", { level: 1, name: "Kedai Fiksi" }),
+    ).toBeVisible();
+    expect(header).toHaveTextContent(
+      "Seluruh brand Kedai Fiksi · seluruh Indonesia",
+    );
+    expect(header).not.toHaveTextContent("Dibuat oleh");
+    expect(header.querySelector("img")).toBeNull();
+    const facts = header.querySelector("[data-report-header-facts]")!;
+    expect(facts).toHaveTextContent(
+      "Tanggal pengamatan21 September 2026, 23.05 – 22 September 2026, 10.45 UTC",
+    );
+    expect(facts.querySelector("time")).toHaveAttribute(
+      "datetime",
+      "2026-09-21T23:05:00.000Z",
+    );
+    // Creation time is not the observation date; it stays in the method section.
+    expect(facts).not.toHaveTextContent("24 September 2026");
+    expect(container.querySelector("#method")).toHaveTextContent(
+      "Laporan dibuat: 24 September 2026",
+    );
+    expect(facts).toHaveTextContent("Sistem yang diujisynthetic-local-fixture");
+    expect(facts).toHaveTextContent(
+      "Model jawabanfictional-answer-0, fictional-answer-1",
+    );
+    expect(facts).not.toHaveTextContent("fictional-answer-requested");
+    // Retained answer order is untouched by the header's earliest/latest.
+    expect(
+      [...container.querySelectorAll("[data-report-answer] time")].map((el) =>
+        el.getAttribute("datetime"),
+      ),
+    ).toEqual(times);
+  });
+
+  it("lists contents in the body's exact order and keeps navigation report-local", async () => {
+    const user = userEvent.setup();
+    const fixture = directTen({ kind: "brand" });
+    const { container } = render(
+      <ReportView {...fixture} onDownloadJson={() => {}} />,
+    );
+    const nav = screen.getByRole("navigation", { name: "Report contents" });
+    const links = within(nav).getAllByRole("link");
+    expect(
+      links.map((link) => [link.getAttribute("href"), link.textContent]),
+    ).toEqual([
+      ["#summary", "Hasil singkat"],
+      ["#detail", "Jawaban model AI"],
+      ["#findings", "Analisis Nuave"],
+      ["#priorities", "Yang dapat dilakukan"],
+      ["#method", "Tentang audit ini"],
+    ]);
+    const bodyOrder = [
+      ...container.querySelectorAll("[data-direct-ten-report] > section[id]"),
+    ].map((section) => section.id);
+    expect(bodyOrder).toEqual(
+      links.map((l) => l.getAttribute("href")!.slice(1)),
+    );
+    for (const id of ["summary", "detail", "findings", "priorities", "method"])
+      expect(container.querySelectorAll(`#${id}`)).toHaveLength(1);
+    const urlBefore = window.location.href;
+    const historyLength = window.history.length;
+    for (const link of links) {
+      const target = container.querySelector<HTMLElement>(
+        link.getAttribute("href")!,
+      )!;
+      target.scrollIntoView = vi.fn();
+      await user.click(link);
+      expect(target).toHaveFocus();
+      link.focus();
+      await user.keyboard("{Enter}");
+      expect(target).toHaveFocus();
+    }
+    expect(window.location.href).toBe(urlBefore);
+    expect(window.history.length).toBe(historyLength);
+    expect(
+      within(container.querySelector("#priorities")!).getAllByText(
+        "Penanggung jawab yang disarankan",
+      ).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("shows product and location scope without invented optional meaning", () => {
+    const product = directTen({ kind: "produk", name: "kopi susu" });
+    const { container, unmount } = render(
+      <ReportView {...product} onDownloadJson={() => {}} />,
+    );
+    const header = () => container.querySelector("header")!;
+    expect(header()).toHaveTextContent(
+      "Produk atau layanan: kopi susu · seluruh Indonesia",
+    );
+    unmount();
+    const location = directTen({
+      kind: "cabang",
+      name: "Kedai Fiksi Dago",
+      address: "Jl. Fiksi 1, Bandung",
+    });
+    const view = render(<ReportView {...location} onDownloadJson={() => {}} />);
+    const locationHeader = view.container.querySelector("header")!;
+    expect(locationHeader.querySelector("p:nth-of-type(2)")?.textContent).toBe(
+      "Lokasi: Kedai Fiksi Dago — Jl. Fiksi 1, Bandung",
+    );
+    for (const invented of ["undefined", "null", "Pelanggan", "Pembanding"])
+      expect(locationHeader).not.toHaveTextContent(invented);
+  });
+
+  it("shows no invented date when the retained binding is invalid", () => {
+    const fixture = directTen({ kind: "brand" });
+    fixture.observations[3]!.observed_at = "bukan-tanggal";
+    const { container } = render(
+      <ReportView {...fixture} onDownloadJson={() => {}} />,
+    );
+    const facts = container.querySelector("[data-report-header-facts]")!;
+    expect(facts).toHaveTextContent("Tanggal pengamatanTidak tersedia");
+    expect(facts).not.toHaveTextContent("Sistem yang diuji");
+    expect(facts).not.toHaveTextContent("September");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Bukti laporan tidak tersedia",
+    );
+  });
+
+  it("keeps the historical header and contents unchanged", () => {
+    const fixture = presentationFixture();
+    Object.assign(fixture.report.provenance, { question_method: "canonical" });
+    const { container } = render(
+      <ReportView {...fixture} onDownloadJson={() => {}} />,
+    );
+    const header = container.querySelector("header")!;
+    expect(header).toHaveTextContent("Laporan visibilitas AI");
+    expect(header).toHaveTextContent("Dibuat oleh");
+    expect(header).toHaveTextContent("Tanggal audit");
+    expect(header.querySelector("[data-report-header-facts]")).toBeNull();
+    expect(
+      within(screen.getByRole("navigation", { name: "Report contents" }))
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual([
+      "Hasil utama",
+      "Temuan utama",
+      "Langkah berikutnya",
+      "Hasil tiap pertanyaan",
+      "Cara kerja audit",
+    ]);
   });
 });

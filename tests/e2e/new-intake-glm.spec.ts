@@ -634,6 +634,28 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
     }
   }
   await checkContentsNavigation(true);
+  // Spec 012 B1: final header and contents match the direct-ten body.
+  await expect(contents.getByRole("link")).toHaveText([
+    "Hasil singkat",
+    "Jawaban model AI",
+    "Analisis Nuave",
+    "Yang dapat dilakukan",
+    "Tentang audit ini",
+  ]);
+  const hero = page.locator("header#stage-5");
+  await expect(hero).toContainText("AI Visibility Report");
+  await expect(hero).not.toContainText("Dibuat oleh");
+  const retainedTimes = (
+    JSON.parse(snapshot!) as { observations: { observed_at: string }[] }
+  ).observations.map((o) => o.observed_at);
+  const earliest = [...retainedTimes].sort()[0];
+  await expect(hero.locator("[data-report-header-facts] time")).toHaveAttribute(
+    "datetime",
+    earliest!,
+  );
+  await expect(hero.locator("[data-report-header-facts]")).toContainText(
+    /Tanggal pengamatan.*UTC/,
+  );
   await page
     .getByRole("button", { name: "Teks asli pertanyaan 1", exact: true })
     .click();

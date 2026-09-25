@@ -116,23 +116,28 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-The approved [privacy-screen follow-up R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
-has an isolated [implementation candidate and worker result](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_RESULT.md)
-from merged main `7f34d69`. Independent implementation review passed; the
-[acceptance closeout](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md)
-records Verified offline status and the proposed publication scope. Founder
-publication approval is next. The
-[retained baseline evidence](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_EVIDENCE.md)
-records the original finding; prior acceptance stays closed. The integration
-sequence below is retained historical context.
+Accepted offline: [Spec 012 B1 — report content and final header](../specs/012-evidence-first-report/B1_ACCEPTANCE.md),
+with its [worker result](../specs/012-evidence-first-report/B1_IMPLEMENTATION_RESULT.md),
+[independent review](../specs/012-evidence-first-report/B1_IMPLEMENTATION_REVIEW.md)
+and [completed handoff](../specs/012-evidence-first-report/B1_WORKER_PROMPT.md).
+Founder-authorized draft-PR publication is next; merge/deployment and live work
+remain separate. B2, combined checks and founder usefulness judgment remain
+pending, so Spec 012 is not Verified. The approved spec is pinned at `9c5d4c0`;
+broader documentation-branch promotion remains separate.
+
+The [privacy-screen follow-up R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
+was released through PR #79 as `8907d96`, after Spec 011 PR #78 as `7f34d69`.
+Both releases passed main CI and deployment. Existing acceptance stays closed.
+The integration sequence below is retained historical context.
 
 The isolated [main integration candidate](../specs/011-smart-consultant-intake/MAIN_INTEGRATION_RESULT.md)
 combines verified Spec 011 with merged Spec 012 PR A and the later intake/navigation
-fixes. Independent integration review is next; this does not mark all of Spec 012
-Verified or authorize publication. PR #77 fixed the old contents-anchor defect;
+fixes. Independent integration review passed before the PR #78 release; it did not
+mark all of Spec 012 Verified. PR #77 fixed the old contents-anchor defect;
 header labels/order and printed URL tails remain separate report work. The
 [PR A record](../specs/012-evidence-first-report/VERIFICATION.md) retains its dated
-scope; B1/B2 and promotion of the report documentation branch remain pending.
+scope; B1 is now accepted offline. B2 and promotion of the report documentation
+branch remain pending.
 
 **Current bounded implementation:** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
 is **Verified** (2026-09-24) on preserved `2a21f85` plus the reviewed 316-file

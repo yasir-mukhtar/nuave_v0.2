@@ -18,6 +18,7 @@ import {
 } from "./contracts";
 import {
   reportAssessmentInstructions,
+  reportContentInstructions,
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
@@ -630,6 +631,7 @@ export async function generateReportContent(
       "You are a senior analyst writing Nuave AI Visibility Reports.",
       ...reportWritingInstructions(),
       ...reportAssessmentInstructions(input.question_method),
+      ...reportContentInstructions(input.question_method),
     ].join("\n");
     const measurementDefinitions =
       input.question_method === "direct-ten"

@@ -12,6 +12,8 @@ import {
   structuredOutputOrThrow,
 } from "./openai";
 import {
+  REPORT_SYNTHESIS_PROMPT_VERSION,
+  REPORT_SYNTHESIS_PROMPT_VERSION_V2,
   DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
   OBSERVATION_INSTRUCTION_VERSION_LEGACY_EN,
   OBSERVATION_INSTRUCTION_VERSION_NEUTRAL_ID,
@@ -26,6 +28,13 @@ import {
   type BusinessBrief,
 } from "./types";
 import { fixtureBudget, fixtureCallTelemetry } from "./fixtures/telemetry";
+import {
+  goldenBrief,
+  goldenObservations,
+  goldenPrompts,
+  goldenReportContent,
+} from "./fixtures/report-golden";
+import { DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS } from "./report-prompt-contract";
 import { extractBusinessDraft as extractGeminiDraft } from "./gemini";
 import {
   initialSmartSelection,
@@ -83,6 +92,97 @@ describe("v2 report model request", () => {
     expect(JSON.stringify(user)).toContain("Toko Fiksi");
     expect(JSON.stringify(user)).toContain("owner");
     expect(JSON.stringify(user)).not.toContain("not specified");
+    vi.unstubAllEnvs();
+  });
+
+  it("sends B1 direct-ten content guidance on initial and language-retry requests (AC-12)", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "dummy-offline-key");
+    mockResponsesParse.mockReset();
+    mockResponsesParse.mockRejectedValue(
+      new Error("offline stop after request capture"),
+    );
+    const context: DirectTenAuditContext = {
+      version: DIRECT_TEN_CONTEXT_VERSION,
+      identity: {
+        name: "Toko Fiksi",
+        source: "https://toko-fiksi.example/",
+        sourceOrigin: "owner",
+        aliases: [],
+        origin: "owner",
+      },
+      focus: { value: { kind: "brand" }, origin: "nuave" },
+      category: { value: "toko", origin: "website" },
+      offerings: { value: ["barang fiksi"], origin: "website" },
+      serviceChannels: { value: ["delivery"], origin: "website" },
+      market: { value: { reach: "seluruh", areas: [] }, origin: "owner" },
+      comparators: { value: { mode: "unknown" }, origin: "nuave" },
+    };
+    const input = {
+      brief: context,
+      prompts: [],
+      observations: [],
+      safety_identifier: "offline-b1-report-test",
+      budget: fixtureBudget,
+      language: "id" as const,
+      question_method: "direct-ten" as const,
+    };
+    const draft = goldenReportContent();
+    await expect(generateReportContent(input)).rejects.toThrow();
+    await expect(
+      generateReportContent(input, { draft, violations: ["kalimat panjang"] }),
+    ).rejects.toThrow();
+    const [initial, retry] = mockResponsesParse.mock.calls.map(
+      (call) => call[0] as { input: { content: string }[] },
+    );
+    for (const request of [initial!, retry!]) {
+      const developer = request.input[0]!.content;
+      for (const line of DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS)
+        expect(developer).toContain(line);
+      expect(developer).toContain(
+        "Return no more than ten key findings and no more than ten priorities. Each priority's evidence_prompt_ids must include at least one observed gap",
+      );
+      expect(developer).not.toContain("no more than five priorities");
+      expect(developer).toContain(
+        `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION_V2}.`,
+      );
+    }
+    expect(REPORT_SYNTHESIS_PROMPT_VERSION_V2).toBe(
+      "report-synthesis-v6-context",
+    );
+    // Language-only retry keeps evidence, order, timing and owner invariants.
+    const retryDeveloper = retry!.input[0]!.content;
+    expect(retryDeveloper).toContain(
+      "Keep accuracy status, assessment order and classifications, prompt IDs, evidence prompt IDs, priority timing, and owner exactly as supplied in the draft.",
+    );
+    const retryUser = JSON.parse(retry!.input[1]!.content) as {
+      report_draft: { priorities: unknown };
+    };
+    expect(retryUser.report_draft.priorities).toEqual(draft.priorities);
+    expect(mockResponsesParse).toHaveBeenCalledTimes(2);
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps historical (non-direct-ten) report instructions unchanged", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "dummy-offline-key");
+    mockResponsesParse.mockReset();
+    mockResponsesParse.mockRejectedValue(new Error("offline stop"));
+    await expect(
+      generateReportContent({
+        brief: goldenBrief,
+        prompts: goldenPrompts,
+        observations: goldenObservations,
+        safety_identifier: "offline-b1-historical",
+        budget: fixtureBudget,
+      }),
+    ).rejects.toThrow();
+    const developer = (
+      mockResponsesParse.mock.calls[0]![0] as { input: { content: string }[] }
+    ).input[0]!.content;
+    expect(developer).toContain("Return no more than five priorities.");
+    expect(developer).not.toContain(DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS[0]);
+    expect(developer).toContain(
+      `Use synthesis contract ${REPORT_SYNTHESIS_PROMPT_VERSION}.`,
+    );
     vi.unstubAllEnvs();
   });
 });
