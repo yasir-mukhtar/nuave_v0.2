@@ -46,11 +46,20 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
-- [Spec 012 PR A verification](./012-evidence-first-report/VERIFICATION.md)
-  — PR A is merged; PR #77 subsequently fixed report contents navigation.
-  Its complete-answer presentation is retained in the Spec 011 integration
-  candidate. B1/B2, header labels/order, printed URL-tail work and the report
-  documentation-branch promotion remain separate. Whole Spec 012 is not Verified.
+- [`012-evidence-first-report/SPEC.md`](./012-evidence-first-report/SPEC.md)
+  — **Verified with founder-approved exception (AC-18)** (2026-09-26,
+  independent closeout PASS accepted by the orchestrator; original approval
+  2026-09-22, restored from pinned `9c5d4c0`). Astra v3.1 report redesign: all ten answers fully visible, bounded
+  Markdown with exact copy, one-to-ten supported findings/actions, exact
+  labels, same-tree screen/PDF, and answers-only recovery. A (PR #74), B1
+  (PR #80) and B2 (PR #81) are merged and deployed. The founder accepted the
+  current report for now on 2026-09-26 and deferred format simplification.
+  AC-18's original same-evidence comparison is unperformed and deferred, and is
+  recorded as a founder-accepted exception. The documentation-only
+  [combined closeout candidate](./012-evidence-first-report/CLOSEOUT_RESULT.md)
+  and [verification matrix](./012-evidence-first-report/VERIFICATION.md) have
+  independent closeout PASS; see [acceptance](./012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md).
+  Publication of the documentation remains separate.
 
 - [`011-smart-consultant-intake/SPEC.md`](./011-smart-consultant-intake/SPEC.md)
   — **Verified** (2026-09-24, preserved `2a21f85` plus reviewed 316-file product
@@ -86,9 +95,8 @@ verification is against its acceptance criteria.
   [acceptance closeout review](./011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW.md)
   passes AC-00 through AC-08, with its stated limits retained. The combined main
   candidate has [independent integration PASS](./011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md).
-  Its [local PR package](./011-smart-consultant-intake/PR_READINESS.md) is complete;
-  publication approval and required CI are next. Do not repeat founder judgment
-  or paid preparation. Merge and production release remain separate.
+  It was released through PR #78 (`7f34d69`), followed by privacy R3 through
+  PR #79 (`8907d96`). Do not repeat founder judgment or paid preparation.
   All live allowances are consumed; accounting is USD 1.06241155 of 5.
   F-03/AC-07 are closed; F-01 remains closed. No further acceptance gate remains
   on this preserved baseline.
@@ -97,8 +105,9 @@ verification is against its acceptance criteria.
   — **Approved** (2026-09-19, r3): the new direct-ten journey becomes the
   public `/audit` entry on v2.nuave.ai (no login — accepted trial risk); local-only guards
   become deployed configuration; disk-based single-send protection becomes
-  Cloudflare rate limits; the old flow is archived. Report usefulness stays
-  deferred until this is verified.
+  Cloudflare rate limits; the old flow is archived. Its 2026-09-22 bounded
+  answers-only recovery amendment was implemented by Spec 012 B2 (PR #81); the
+  later founder report decision superseded the blanket usefulness deferral.
 
 - [`009-recommendation-eligible-audit/SPEC.md`](./009-recommendation-eligible-audit/SPEC.md)
   — **Approved** (2026-09-18), current bounded implementation: ten directly

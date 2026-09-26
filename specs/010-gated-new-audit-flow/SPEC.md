@@ -2,7 +2,7 @@
 
 > Status: **Approved** — founder instruction 2026-09-19: "write the short approved spec"; "report usefulness work waits later after the new end to end workflow are wired up"; revision 3: "Adding Google login is out of scope. Let the audit journey open to public … If there is a low hanging fruit solution, I'd like to do that."; revision 4 folds in the reviewer's final accounting correction
 > Owner: Founder / orchestrator
-> Updated: 2026-09-19 (revision 4 — reviewer-marked ready)
+> Updated: 2026-09-22 (revision 4 retained; founder-settled report-recovery amendment for Spec 012 B2)
 > Implements: `docs/NOW.md` — one working path from intake to downloadable report, now reachable on the deployed site
 > Supersedes for the public entry: the old `/audit` workflow (Spec 003/007 journey). Historical records keep their contracts.
 
@@ -301,8 +301,17 @@ SimilarBusinessesEditor*,SourceHero*}.tsx|css`,
 | Rate-limit binding unavailable (prod)      | session                | stage error "pengendali permintaan tidak tersedia"                              | later                          | provider call                                        |
 | GLM HTTP failure                           | confirmed facts        | existing failure state; attempt recorded with cost or "biaya tidak diketahui"   | "Coba lagi" within R-03 limits | regenerating silently; presenting stub as GLM output |
 | GLM response never received                | confirmed facts        | interrupted state (R-06); "Buat pertanyaan lagi" labelled as a new paid attempt | explicit, within R-03 limits   | claiming the pack exists; automatic retry            |
-| Observation/report failure                 | completed observations | existing interrupted/failed states                                              | existing rules                 | rerunning completed observations for PDF             |
+| Observation/report failure | completed observations and attempt/cost ledger | existing interrupted/failed states; **bounded Spec 012 B2 exception:** if the final useful-report gate fails after repair with ten usable observations (findings empty, actions empty, or both), show only retained questions/answers, sources/provenance, and an unfinished-analysis notice; expose no surviving analysis or rejected classifications | existing rules; explicit report retry within existing attempt/cost limits for the usefulness failure; copy is available | partial/report-ready delivery, print/PDF/JSON save path in answers-only recovery, or rerunning completed observations for report/PDF |
 | Reload / Back after report                 | whole session          | same report                                                                     | n/a                            | another run/report request                           |
+
+**2026-09-22 amendment:** founder decisions D-06/D-08 in
+[Spec 012](../012-evidence-first-report/SPEC.md) authorize the bounded
+answers-only exception above. It does not relax the ten-usable-observation or
+integrity/privacy gates, make other failures retryable, expose a surviving
+analysis section, or add an export. Use existing saved observations and
+accounting; Back/reload remains request-free. Spec 012 B2 implemented this
+exception through PR #81 (merged and deployed 2026-09-26); its verification is
+recorded in the Spec 012 closeout, not in this spec's verification record.
 
 ## Evidence, data, privacy, and cost
 
@@ -404,6 +413,12 @@ archived, not deleted; report work waits.
 
 ## Revision record
 
+- **Report-recovery amendment, 2026-09-22:** latest founder decisions permit
+  the observation-only reader whenever either required analysis section is
+  empty after repair and ten usable answers remain; no surviving analysis,
+  partial report, or print/JSON save path. G4 is founder-confirmed. Spec 012 B2
+  owns the implementation with existing retry/cost limits. Earlier r1–r4
+  decisions and unrelated public-trial behavior remain unchanged.
 - **r1, 2026-09-19:** first approved version with a shared access code.
 - **r2, 2026-09-19:** Google login via the v1 Supabase project; six review
   findings folded in (supported 60 s rate-limit periods; landing hero as an
