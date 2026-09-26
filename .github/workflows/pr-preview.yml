@@ -88,6 +88,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           marker='<!-- nuave-pr-preview -->'
@@ -100,7 +101,7 @@ jobs:
 
           This preview is isolated from production. Live AI-provider credentials are disabled; the audit journey runs its labeled synthetic substitutes.
 
-          Updated from commit \`${GITHUB_SHA}\`."
+          Updated from commit \`${HEAD_SHA}\`."
 
           comment_id="$(
             gh api "/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \

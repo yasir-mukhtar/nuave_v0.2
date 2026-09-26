@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+// verify-nuave CLI entry. Bundles ../src/cli.ts with the repository's own
+// esbuild into node_modules/.cache (so @playwright/test resolves from the
+// checkout's node_modules), then runs it. No new dependency.
+const { execFileSync } = require("node:child_process");
+const { realpathSync } = require("node:fs");
+const { dirname, join } = require("node:path");
+const { pathToFileURL } = require("node:url");
+
+const skillDir = dirname(dirname(realpathSync(__filename)));
+const root = execFileSync("git", ["-C", skillDir, "rev-parse", "--show-toplevel"], {
+  encoding: "utf8",
+}).trim();
+const outfile = join(root, "node_modules", ".cache", "verify-nuave", "cli.mjs");
+
+require(require.resolve("esbuild", { paths: [root] }))
+  .build({
+    entryPoints: [join(skillDir, "src", "cli.ts")],
+    outfile,
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    target: "node22",
+    packages: "external",
+    logLevel: "error",
+  })
+  .then(() => import(pathToFileURL(outfile).href))
+  .then(({ main }) => main(process.argv.slice(2), skillDir))
+  .then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (error) => {
+      console.error(`verify-nuave: ${error instanceof Error ? error.message : error}`);
+      process.exitCode = 1;
+    },
+  );

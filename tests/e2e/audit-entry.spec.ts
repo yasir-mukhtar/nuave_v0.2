@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { assertNoSideEffects, collectRequests } from "./helpers";
+import { entryScreen, expectEmptyEntry, openAuditFromLanding } from "./journey";
 
 /**
  * Spec 010 R-08 / AC-03: `/audit` is the single public audit entry. The
@@ -29,22 +30,8 @@ test("landing CTA reaches the new audit journey on the empty business step", asy
 }) => {
   const requests = collectRequests(page);
   await page.goto("/");
-  const hero = page.getByRole("region", { name: "Mulai audit visibilitas AI" });
-  await expect(
-    hero.getByRole("heading", { name: "Cek bisnis Anda di AI" }),
-  ).toBeVisible();
-  await hero.getByPlaceholder("https://bisnisanda.com").fill("example.com");
-  await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
-
-  await expect(page).toHaveURL(/\/audit$/);
-  const shell = page.locator('[data-intake-screen="entry"]');
-  await expect(shell).toBeVisible();
-  await expect(
-    page.getByRole("textbox", { name: "Nama bisnis", exact: true }),
-  ).toHaveValue("");
-  await expect(
-    page.getByRole("textbox", { name: "URL website publik", exact: true }),
-  ).toHaveValue("");
+  await openAuditFromLanding(page);
+  await expectEmptyEntry(page);
   // No fixture business or fixture-preview wording appears on the entry.
   await expect(
     page.getByText(/Kopi Sudut|Laundry Ceria|contoh fiktif|pratinjau/i),
@@ -57,7 +44,7 @@ test("the former preview path redirects to /audit without seeding old fixture fa
 }) => {
   await page.goto("/audit/new-intake?fixture=GLM&glm=1");
   await expect(page).toHaveURL(/\/audit\?fixture=GLM&glm=1$/);
-  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  await expect(entryScreen(page)).toBeVisible();
   await expect(page.getByText("Laundry Ceria")).toHaveCount(0);
 });
 
@@ -65,8 +52,8 @@ test("an old fixture parameter still opens empty v2 entry", async ({
   page,
 }) => {
   await page.goto("/audit");
-  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  await expect(entryScreen(page)).toBeVisible();
   await page.goto("/audit?fixture=F1");
-  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  await expect(entryScreen(page)).toBeVisible();
   await expect(page.getByText("Kopi Sudut")).toHaveCount(0);
 });
