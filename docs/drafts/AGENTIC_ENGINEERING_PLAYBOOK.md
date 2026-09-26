@@ -129,10 +129,10 @@ spread by copying: every copy makes the next one likelier. [T 20:43–21:31]
 [P shipping; not in the talk] The agent that wrote a change does not certify it. A fresh session runs
 the verify skill against the PR head and posts one verdict comment: `PASS`, `PASS+NOTES`, or `FAIL`,
 with evidence paths. It drives the same feature on the base and on the head; if the base lacks the
-feature, it says so. [P shipping step 1] Missing evidence means `FAIL / blocked`, never an inferred
-pass [G, from R1]. Green CI and bot approval are not verdicts. **Evidence record:** the PR description
-(finish condition, commands run with outputs, verify-skill evidence, corrections) plus that one
-verdict comment. Nothing else. [G]
+feature, it says so. [P shipping 1; autopilot-full 4] Missing evidence means `FAIL / blocked`,
+never an inferred pass [G, from R1]. Green CI and bot approval are not verdicts. **Evidence record:**
+the PR description (finish condition, commands run with outputs, verify-skill evidence, corrections)
+plus that one verdict comment. Nothing else. [G]
 **Freshness** [P]: if the stable `git patch-id` (a fingerprint of the diff that survives a rebase) is
 unchanged, the code verdict stands. Re-run only mergeability and CI. **Doc-only changes** skip
 independent verification when the PR's diff file list shows no executable file. [G] Files that
@@ -217,8 +217,8 @@ Nuave-specific commands appear only here.
    is marked `fault-injected (not user-reachable in synthetic mode)`, never plain `passed`. Gotchas:
    check every PDF page for clipping, and note the known cosmetic 320 px wrap.
 
-**Gotcha for every feature file's `Gotchas` section (a hypothesis, to confirm during the prove-once
-run, not a fact):**
+**Gotcha for `SKILL.md`'s Cleanup section (a hypothesis, to confirm during the prove-once run, not a
+fact):**
 - `cleanup` may leave the port bound if it kills only the recorded `npm` process ID, because
   `next dev` starts child processes of its own. The process-group design above assumes this; the
   prove-once run confirms it by checking that the port is free after cleanup (finish condition (c)).
@@ -228,9 +228,10 @@ run, not a fact):**
 (a) runs launch → doctor → drive all five features (recovery through its labelled fault-injected
 drive) → capture → cleanup; (b) evidence exists after cleanup, is stamped with the drive-time `HEAD`
 and dirty flag, and the network log shows zero unexpected external requests; (c) the port is free
-after cleanup; (d) doctor **fails** against a server launched from another worktree (known-bad case);
-(e) `npm run verify` passes and the e2e suites still list the same tests as before the refactor:
-30 tests from `playwright test --list` (28 `test(` blocks in the five specs matched by
+after cleanup; (d) known-bad case: with a state file whose `root` is this checkout while the process
+on the port was started from another worktree, doctor **fails on the root mismatch** (not on a
+missing state file); (e) `npm run verify` passes and the e2e suites still list the same tests as
+before the refactor: 30 tests from `playwright test --list` (28 `test(` blocks in the five specs matched by
 `playwright.config.ts`, two of them generated in loops) plus 3 in `preview-disabled.spec.ts` under
 `playwright.config.disabled.ts`. Counts checked at `360e84c`; re-count on the slice's base before
 starting.
@@ -242,8 +243,8 @@ I checked each class against the PRs and the current code at `d45a944`. R2.1 re-
 
 | # | Class | Evidence | Control (layer) | Status |
 |---|---|---|---|---|
-| A | Approved provider or system identity hard-coded in several places | PR #69 (live gate pinned to OpenCode Go → 503) and PR #71 (observation integrity pinned to one label → 422), same live run, 2026-09-20. The string literal `"OpenAI Responses API"` still appears 7 times in 6 non-test `src/lib/audit/` files (`types.ts:281`, `questions-id-provider.ts:60`, `production-observation-method.ts:11`, `openai.ts:568,600`, `contracts.ts:1195–1196`), plus once in the fixture `fixtures/report-golden.ts:169`. The same words also appear in comments (`contracts.ts`, `telemetry.ts`, `groq.ts`, `gemini.ts`) | One registry module exports the approved live providers and their system labels, and every gate derives from it (L1). A guard test fails when a label appears as a **string literal** (not in a comment) in non-test `src/` outside the registry (L2). Fixtures count as test code: `report-golden.ts` is imported only by `*.test.*` files and `report-presentation.fixture.ts`, which is itself imported only by tests | **Confirmed, recurring.** Encode |
-| B | Developer `.env.local` leaks into the "offline" e2e server (`next dev` reads it from disk, and only explicitly set keys override it) | `6a27c51` (2026-08-23 "isolate Playwright server environment"; the commit body is empty, so the trigger is inferred) and the 2026-09-19 local fix for `NUAVE_NEW_INTAKE_PREVIEW_ENABLED` (session record; never merged; the flag has since been removed). Today two keys read by `src/` are not set by `offlineE2EServerEnv`: `NUAVE_GLM_EVIDENCE_DIR` (2 code reads, `src/lib/intake/glm-local.ts:115,602`) and `NUAVE_LOCAL_AUDIT_PACK_DIR` (read through the constant `LOCAL_PACK_DIR_ENV`, `src/lib/audit/local-direct-ten-audit.ts:52,138`) | A guard test: every `NUAVE_*` key read in non-test `src/` is a key that `offlineE2EServerEnv()` sets explicitly (L2). It matches both `process.env.NUAVE_*` and `"NUAVE_*"` string literals, so reads through a constant are caught. **Blanking caveat:** setting a key to `""` does block `.env.local` (`@next/env` 16.3.5 `processEnv` applies a file value only when the key is `undefined` in the starting environment), but `""` is not neutral for every reader. `glm-local.ts:115` (`glmEvidenceDir`) uses `??`, so `""` would resolve to the current directory; `glm-local.ts:602` (`?.trim() \|\| undefined`) and `local-direct-ten-audit.ts:138` (`\|\|`) treat `""` as unset. Before blanking a key, make its readers treat `""` as unset, reader by reader | **Confirmed twice.** Encode. The current gap is inferred, so the implementer confirms it with the known-bad case |
+| A | Approved provider or system identity hard-coded in several places | PR #69 (live gate pinned to OpenCode Go → 503) and PR #71 (observation integrity pinned to one label → 422), same live run, 2026-09-20. The string literal `"OpenAI Responses API"` still appears 7 times in 5 non-test `src/lib/audit/` files (`types.ts:281`, `questions-id-provider.ts:60`, `production-observation-method.ts:11`, `openai.ts:568,600`, `contracts.ts:1195–1196`), plus once in the fixture `fixtures/report-golden.ts:169`. The same words also appear in comments (`contracts.ts`, `telemetry.ts`, `groq.ts`, `gemini.ts`) | One registry module exports the approved live providers and their system labels, and every gate derives from it (L1). A guard test fails when a label appears as a **string literal** (not in a comment) in non-test `src/` outside the registry (L2). Fixtures count as test code: `report-golden.ts` is imported only by `*.test.*` files and `report-presentation.fixture.ts`, which is itself imported only by tests | **Confirmed, recurring.** Encode |
+| B | Developer `.env.local` leaks into the "offline" e2e server (`next dev` reads it from disk, and only explicitly set keys override it) | `6a27c51` (2026-08-23 "isolate Playwright server environment"; the commit body is empty, so the trigger is inferred) and the 2026-09-19 local fix for `NUAVE_NEW_INTAKE_PREVIEW_ENABLED` (session record; never merged; the flag has since been removed). Today two keys read by `src/` are not set by `offlineE2EServerEnv`: `NUAVE_GLM_EVIDENCE_DIR` (2 code reads, `src/lib/intake/glm-local.ts:115,602`) and `NUAVE_LOCAL_AUDIT_PACK_DIR` (read through the constant `LOCAL_PACK_DIR_ENV`, `src/lib/audit/local-direct-ten-audit.ts:52,138`) | A guard test: every `NUAVE_*` key read in non-test `src/` is a key that `offlineE2EServerEnv()` sets explicitly (L2). It matches `process.env.NUAVE_*` reads and `"NUAVE_*"` string literals only, not comments, so reads through a constant are caught while comment-only mentions (e.g. the three retired keys in `src/lib/audit/deployment-gate.ts:5–6`) are ignored. **Blanking caveat:** setting a key to `""` does block `.env.local` (`@next/env` 16.3.5 `processEnv` applies a file value only when the key is `undefined` in the starting environment), but `""` is not neutral for every reader. `glm-local.ts:115` (`glmEvidenceDir`) uses `??`, so `""` would resolve to the current directory; `glm-local.ts:602` (`?.trim() \|\| undefined`) and `local-direct-ten-audit.ts:138` (`\|\|`) treat `""` as unset. Before blanking a key, make its readers treat `""` as unset, reader by reader | **Confirmed twice.** Encode. The current gap is inferred, so the implementer confirms it with the known-bad case |
 | C | Worker-runtime-incompatible API that passes under Node (`fetch` `redirect: "error"`) | PR #70, once. It was found only in production because `test:workers` runs synthetic mode (the live transport never executes) and is not part of `verify` or CI | Hold. On a second worker-only failure, promote (P-7) | **Single occurrence.** Not encoded |
 
 Each encoded control ships with its known-bad and known-good cases (§2).
