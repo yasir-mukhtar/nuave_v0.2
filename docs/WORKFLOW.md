@@ -1,7 +1,7 @@
 # Nuave document and specification workflow
 
 > Status: **Canonical working method**
-> Updated: 2026-09-26
+> Updated: 2026-09-27
 
 This workflow keeps product reasoning consistent across fresh AI sessions
 without asking every agent to ingest the entire repository.
@@ -126,6 +126,11 @@ Implementation begins only when:
 - material product decisions are resolved; and
 - the specification is marked **Approved**.
 
+An internal engineering change with no customer-visible behavior change (for
+example tooling, tests, CI, or agent docs) needs no spec. It needs a checkable
+finish condition, stated in its PR description, and the usual evidence per
+change. Anything a customer could see still goes through this gate.
+
 Technical exploration may precede approval when the spec names it as a spike,
 but exploratory code is not silently treated as the final implementation.
 
@@ -164,7 +169,8 @@ After verification:
 - mark the spec **Verified**;
 - update `NOW.md` with the next smallest outcome;
 - update canonical documents only when product truth changed; and
-- do not commit or push unless the founder explicitly requests it.
+- commit and push only to the change's own feature branch; merge and deploy
+  stay with the founder.
 
 ## Evidence per change
 
