@@ -1,7 +1,7 @@
 # Nuave document and specification workflow
 
 > Status: **Canonical working method**
-> Updated: 2026-08-09
+> Updated: 2026-09-26
 
 This workflow keeps product reasoning consistent across fresh AI sessions
 without asking every agent to ingest the entire repository.
@@ -105,8 +105,9 @@ When approved:
 - repair direct contradictions in affected child documents; and
 - update [`NOW.md`](./NOW.md) only when the current facts or next action changed.
 
-Drafts and reviews are working material. Keep only artifacts that retain useful
-decision evidence; Git already preserves ordinary revision history.
+Drafts and reviews are working material. The review goes in the PR as its
+verdict comment (see **Evidence per change**); commit a review file only when
+the founder asks. Git already preserves ordinary revision history.
 
 ## Specification-driven development
 
@@ -158,11 +159,31 @@ returns a bounded fix list to implementation.
 
 After verification:
 
-- record evidence in the spec package;
+- record the result in the spec's `VERIFICATION.md`, linking the PR and its
+  verdict comment for the supporting evidence;
 - mark the spec **Verified**;
 - update `NOW.md` with the next smallest outcome;
 - update canonical documents only when product truth changed; and
 - do not commit or push unless the founder explicitly requests it.
+
+## Evidence per change
+
+Founder decision P-6, 2026-09-26, from the
+[Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md) §B.4 and §6.
+Each change leaves two records, both on its pull request:
+
+1. **The PR description.** It states the finish condition, the commands run
+   with their outputs, the verification evidence (paths or links, for example
+   from `verify-nuave`), and one line in this format:
+   `Corrections: <n> — <what> → <layer/control or "not promoted: why">`.
+2. **One verdict comment** from an agent that did not write the change:
+   `PASS`, `PASS+NOTES`, or `FAIL`, with its evidence. If the code changes
+   after the verdict, a new verdict covers the new head.
+
+Nothing else is committed for the change. A product-behavior spec package holds
+only `SPEC.md` and `VERIFICATION.md`. Worker prompts, worker results, separate
+review reports, and hash manifests stay out of Git unless the founder asks for
+a specific one. Files already in the repository stay as historical records.
 
 ## Worker handoff standard
 
@@ -180,5 +201,6 @@ Every worker prompt must state:
 
 Use [`templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md). The
 orchestrator gives the founder a completed prompt only when a task is ready to
-delegate. The founder should not need to translate or supplement it.
+delegate. The founder should not need to translate or supplement it. The prompt
+is handed over in the session, not committed, unless the founder asks.
 
