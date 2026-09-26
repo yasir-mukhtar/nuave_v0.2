@@ -6,6 +6,23 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-26 — evidence per change: PR description plus one verdict comment
+
+The founder said: **"Accept P-6."** This adopts proposal P-6 of the
+[Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md) (§B.4).
+[`WORKFLOW.md`](./WORKFLOW.md) now has an **Evidence per change** section:
+
+- each change leaves only its PR description and one verdict comment from an
+  agent that did not write it;
+- a product-behavior spec package holds only `SPEC.md` and `VERIFICATION.md`;
+- worker prompts, worker results, separate review reports, and hash manifests
+  stay out of Git unless the founder asks for a specific one.
+
+Files already committed stay as historical records. The first change to use
+this rule was the `verify-nuave` build (PR #84, independent **PASS** at
+`563d10f`). The rule on commits and pushes is unchanged: agents still commit or
+push only when the founder asks (P-1 remains a proposal).
+
 ## 2026-09-26 — adopt the agentic engineering playbook; place the verify skill
 
 After independent review returned **ACCEPT** (R2.1 review with follow-up check

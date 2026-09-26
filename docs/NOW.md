@@ -101,10 +101,11 @@ been committed or published for B2. Merge/deployment and AC-18 remain separate.
 
 **Engineering track (separate from the product next action):** the founder
 adopted the [Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md)
-on 2026-09-26. Next is one PR that builds the `verify-nuave` skill in
-`.agents/skills/verify-nuave/` from the playbook's section B.2, which is its
-approved plan. A different agent then runs the skill once from a fresh session
-before it counts. The build adds no live calls, spending, or deployment.
+on 2026-09-26. The `verify-nuave` skill (`.agents/skills/verify-nuave/`) was
+merged through PR #84 after an independent **PASS** at head `563d10f`. From now
+on, each change's evidence is its PR description plus one verdict comment
+([`WORKFLOW.md`](./WORKFLOW.md), Evidence per change). The next engineering
+slice is the playbook's §B.3: guards for the two recurring correction classes.
 
 **B1 released:** [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80)
 merged approved head `eb5483e` as `d93ec8256200b662796103246e224bd4a3800603`
