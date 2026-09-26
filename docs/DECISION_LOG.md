@@ -1,10 +1,35 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-26
+> Updated: 2026-09-27
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-27 — accept playbook proposals P-1 to P-4 and P-7
+
+The founder said: **"Accept all."** This adopts the remaining proposals of the
+[Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md) (§B.5) as
+written:
+
+- **P-1:** agents may commit and push to their own non-`main` feature branches
+  without asking. Merge, deploy, force-push, and anything on `main` stay
+  founder-only. This supersedes the `AGENTS.md` rule "Do not commit or push
+  unless the founder explicitly requests it" and the same line in the P-6
+  entry below.
+- **P-2:** an internal engineering change with no customer-visible behavior
+  change needs no spec. Its checkable finish condition goes in the PR
+  description. Customer-visible behavior still needs an approved spec.
+- **P-3:** no paid tools now (no bot reviewer, cloud agents, or extra
+  subscriptions). Revisit when the playbook's §7 shows a gap that humans keep
+  catching.
+- **P-4:** merge and deploy stay with the founder. Revisit only after the
+  playbook appendix's trusted-verdict item is built.
+- **P-7:** add `npm run test:workers` to CI or `verify` when a second
+  worker-runtime-only failure (class C) occurs. Nothing changes until then.
+
+`AGENTS.md`, [`WORKFLOW.md`](./WORKFLOW.md), and the worker prompt template
+now state P-1 to P-4.
 
 ## 2026-09-26 — evidence per change: PR description plus one verdict comment
 

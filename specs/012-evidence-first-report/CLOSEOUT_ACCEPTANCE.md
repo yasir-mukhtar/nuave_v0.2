@@ -113,10 +113,10 @@ The follow-up to `84cb4a3` changes only the current-objective wording in
 and [synthetic preview](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36216678311)
 passed. No review verdict is posted on this PR.
 
-Main has advanced to `54a97dd175ec7ce7823d0d384d6bb6aaa43c5212`, including
-PRs #83–#85. The published PR conflicts in `docs/DECISION_LOG.md`. The local
+Main has advanced to `e7f3b37e87d82c1b97a9e11a1a33744588d2b7dc`, including
+PRs #83–#86. The published PR conflicts in `docs/DECISION_LOG.md`. The local
 update retains both the report closeout decisions and main's newer playbook
-and P-6 decisions, and updates the publication pointers. Runtime, tests,
+and all accepted P-1–P-7 decisions, and updates the publication pointers. Runtime, tests,
 dependencies and workflow files match main. The approved specification and
 AC-18 exception are unchanged. This is documentation reconciliation, not a
 new product acceptance or repeat of the live audit.

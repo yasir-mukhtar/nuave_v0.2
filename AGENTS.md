@@ -16,7 +16,10 @@ it over a generalized system that serves a hypothetical one.
 specifications, worker handoffs, and verification. For implementation work,
 read the approved specification named by `NOW.md` and only the additional
 context it requires. Do not implement a draft specification. If no approved
-spec is active, prepare or review the spec before broad implementation.
+spec is active, prepare or review the spec before broad implementation. An
+internal engineering change with no customer-visible behavior change needs no
+spec; its checkable finish condition goes in the PR description (see
+`docs/WORKFLOW.md`, Specification gate).
 
 ## Working rules
 
@@ -66,7 +69,7 @@ For implementation work:
    diagnostic scripts, debug logging, bypasses, and test-only switches that are
    not permanent protections.
 7. Do not merge, deploy, or make live provider calls unless the founder
-   explicitly authorizes that action.
+   explicitly authorizes that action. Merge and deploy stay with the founder.
 8. This repository is public. GitHub branch protection on `main` requires a
    pull request with the `validate` CI check green on an up-to-date branch,
    requires resolved conversations, and blocks force pushes and branch
@@ -109,7 +112,12 @@ delivery promise, accepting a non-standard order, using a client name, logo,
 quote, or finding publicly, or making a legal, privacy, retention, refund, or
 commercial-use commitment.
 
-Do not commit or push unless the founder explicitly requests it.
+Agents may commit and push to their own non-`main` feature branches without
+asking, and may open a pull request from them. Merge, deploy, force-push, and
+anything on `main` stay founder-only.
+
+Do not add paid tools, such as a bot reviewer, cloud agents, or extra
+subscriptions, without a new founder decision.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

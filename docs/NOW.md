@@ -97,7 +97,7 @@ leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 then obtain the separate merge/deployment decision. The founder approved
 commit/push of its current-main update and automatic synthetic preview on
 2026-09-27. This update reconciles the earlier published head `20c0acc` with
-main `54a97dd`, preserves the newer engineering decisions and corrects stale
+main `e7f3b37`, preserves the newer engineering decisions and corrects stale
 publication status. Use the PR's current head and checks for readiness; the
 earlier head's green checks do not certify this update. The documentation-only
 package uses the playbook §6 exception to a new independent product
@@ -126,8 +126,12 @@ adopted the [Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md)
 on 2026-09-26. The `verify-nuave` skill (`.agents/skills/verify-nuave/`) was
 merged through PR #84 after an independent **PASS** at head `563d10f`. From now
 on, each change's evidence is its PR description plus one verdict comment
-([`WORKFLOW.md`](./WORKFLOW.md), Evidence per change). The next engineering
-slice is the playbook's §B.3: guards for the two recurring correction classes.
+([`WORKFLOW.md`](./WORKFLOW.md), Evidence per change). On 2026-09-27 the
+founder accepted the remaining proposals: agents may commit and push to their
+own feature branches, internal changes need no spec, no paid tools, merge and
+deploy stay with the founder, and `test:workers` joins the gate if class C
+recurs. The next engineering slice is the playbook's §B.3: guards for the two
+recurring correction classes.
 
 **B1 released:** [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80)
 merged approved head `eb5483e` as `d93ec8256200b662796103246e224bd4a3800603`

@@ -28,8 +28,9 @@ Out of scope:
   standard, commercial direction, or approved specification.
 - Do not read historical experiments, superseded plans, or unrelated drafts
   unless listed above.
-- Do not modify unrelated files, commit, push, publish, contact anyone, or
-  spend money.
+- Do not modify unrelated files, publish, contact anyone, or spend money.
+- Commit and push only to your own feature branch. Do not merge, deploy,
+  force-push, or touch `main`.
 
 Deliverable:
 
