@@ -398,9 +398,10 @@ Report state (Spec 012): PR A merged on 2026-09-22 (`d08b9e9`), B1 on
 verified merge per R-19. PR #77 (`4470deb`) fixed the old contents-anchor
 navigation defect; B1 delivered the header labels/order. Verbatim `?utm_source=`
 link tails in printed answers remain faithful exact text. They fall under the
-founder's deferred reference-clutter simplification. The combined closeout
-candidate reconciles the approved report documentation onto main; it awaits
-independent review.
+founder's deferred reference-clutter simplification. Independent combined
+closeout passed, and Spec 012 is **Verified with founder-approved exception
+(AC-18)**. The original same-evidence comparison remains unperformed and
+deferred.
 
 ## Presentation layer
 
