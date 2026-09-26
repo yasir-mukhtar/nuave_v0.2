@@ -164,7 +164,8 @@ Greenfield is where strictness is cheapest, so lock it down early. [T ~07:15] In
 ## Part B — Nuave binding
 
 Kept in this file rather than a companion so the founder reviews one artifact. It sits outside the
-core markers, so the core stays portable. After adoption it moves into the skill directory.
+core markers, so the core stays portable. Once `verify-nuave` is built, its `SKILL.md` and feature
+files are the working instructions; this part stays as the plan and record they were built from.
 Nuave-specific commands appear only here.
 
 ### B.1 Controls to keep (from review §4.1)
