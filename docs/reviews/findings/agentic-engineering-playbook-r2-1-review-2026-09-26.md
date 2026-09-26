@@ -126,3 +126,27 @@ weakened:
 
 Correct N-1 in the draft. Apply N-2 and N-3 there too, or carry them into the `verify-nuave` slice's PR.
 The founder can then decide on P-1 to P-7, starting with P-5, whose citations are now verified.
+
+## 8. Follow-up check of `536a6cf` (2026-09-26)
+
+The worker applied N-1 to N-4 and the F-9 placement nit in `536a6cf`. That commit changes only the
+playbook (12 lines added, 11 removed). I checked it against `git diff e0cd4d0 536a6cf`:
+
+- **N-1: fixed.** Row A now reads "7 times in 5 non-test `src/lib/audit/` files", plus once in the
+  fixture. That matches the listed sites.
+- **N-2: fixed.** The class B guard now matches "`process.env.NUAVE_*` reads and `"NUAVE_*"` string
+  literals only, not comments". Its example, `deployment-gate.ts:5–6`, is accurate: that comment names
+  three "former founder-local flags" that the deployment gate replaced.
+- **N-3: fixed.** In (d), the state file's `root` is this checkout while the server was started from
+  another worktree. Doctor must fail "on the root mismatch (not on a missing state file)".
+- **N-4: fixed.** The tag is now `[P shipping 1; autopilot-full 4]`. I had already checked both steps in
+  pstack at `ecc249f` (§1, F-6).
+- **F-9 placement: fixed.** The gotcha now belongs in `SKILL.md`'s Cleanup section and is still marked
+  as a hypothesis.
+
+Nothing else changed. The core is still **146 lines**, and B.1, the class C row, the appendix, and
+P-1 to P-7 are untouched.
+
+**Updated verdict: ACCEPT** at `536a6cf`. The assumptions in §6 still stand. None of them blocks
+adoption, and the prove-once run and P-5's discovery check are how they get confirmed. The founder's
+next decision is P-5.
