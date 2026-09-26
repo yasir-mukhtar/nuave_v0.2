@@ -1,8 +1,8 @@
 # Nuave
 
-**Resuming the September 19 checkpoint on another laptop?** Start with
-[`docs/RESUME_DEVELOPMENT.md`](./docs/RESUME_DEVELOPMENT.md). This branch combines
-the implementation and current handoff; old absolute paths are historical.
+Start with [`docs/NOW.md`](./docs/NOW.md) for current work. The September 19
+[resume notes](./docs/RESUME_DEVELOPMENT.md) describe a preserved earlier
+checkpoint, not the current development baseline.
 
 Nuave is an AI visibility audit for small and medium Indonesian businesses,
 used by the owner or person accountable for marketing. It shows how that
@@ -19,17 +19,19 @@ direct-link-only deployment. The former access-code gate has been removed under
 the founder's recorded interim-exposure acceptance; a minimal server-side
 rate/cost guard is still required before any public link sharing. The current
 objective in [`docs/NOW.md`](./docs/NOW.md) is to complete one continuous local
-audit experience from business input to report download. The founder has judged
-the current report not useful enough and deferred format/usefulness improvements
-so they no longer block this functional work. The accepted direct-ten questions
-have completed a real audit and report on the retained-pack path. The ordinary
-intake is now connected to that engine and has passed the local flow checks
-with labeled test responses, including the founder's PDF review. Spec 011 is
-Verified on its preserved working-tree manifest. The combined main candidate has
-[independent integration PASS](./specs/011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md).
-Its [local PR package](./specs/011-smart-consultant-intake/PR_READINESS.md) is ready
-for publication approval; required GitHub CI and production release remain
-separate. No further live call is authorized by this work. The
+audit experience from business input to report download. The real end-to-end
+path completed on 2026-09-19. The prepared-intake (Spec 011) and report
+redesign (Spec 012) changes then shipped through PRs #78–#81. On 2026-09-26
+the founder accepted the redesigned report for now after the disclosed
+fictional layout sample. The founder found its substance useful and deferred
+formatting and reference-section improvements. The original same-evidence
+real-report comparison is unperformed and deferred. The Spec 012
+[closeout acceptance](./specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
+records **Verified with founder-approved exception (AC-18)** after independent
+review. These records are in [draft PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82);
+its final checks and founder review are next. See the
+[founder decision](./docs/DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements).
+No further live call is authorized by this work. Commercial release is separate. The
 [September 19 handoff](./docs/checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
 retains the earlier milestone; `docs/NOW.md` governs the current next action.
 
@@ -42,7 +44,7 @@ retains the earlier milestone; `docs/NOW.md` governs the current next action.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — Verified; combined main candidate independently reviewed; PR publication approval and CI pending; historical hold retained |
+| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — Verified and released (PR #78); prepared summary and truthful new-session report/export context; approved historical hold. Report: [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) — Verified with founder-approved exception (AC-18); implementation released, closeout documentation in draft PR #82; final review and merge pending |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
@@ -103,10 +105,10 @@ run a few unbranded questions on a prospect before any contact
 
 The current build starts with a fixture-backed version of this whole journey,
 including an unmistakably simulated checkout and report destination. The
-founder-supervised direct-ten live report now exists and falls short of the
-founder's standard. The approved next step is completing the continuous local
-audit flow with that report, with report improvements deferred. Durable private
-delivery and real checkout remain outside this bounded continuation.
+founder-supervised direct-ten live report exists, and the continuous local
+audit flow has completed a real test. The redesigned report is accepted for
+now under the 2026-09-26 decision above; further formatting improvements are
+deferred. Durable private delivery and real checkout remain separate work.
 
 The settled commercial direction does not make the current fixture a real
 checkout: production payment still requires its approved implementation

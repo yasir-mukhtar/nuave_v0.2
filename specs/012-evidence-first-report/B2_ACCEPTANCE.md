@@ -1,14 +1,16 @@
 # Spec 012 B2 — orchestrator acceptance and publication readiness
 
 > Updated: 2026-09-26
-> Status: **Implementation and visual evidence accepted offline; publication package prepared**
-> Remaining: B2 publication authorization, PR/CI review and AC-18; Spec 012 is not Verified
+> Status: **PR #81 approved, merged and deployed on 2026-09-26**
+> Founder: current report accepted for now; formatting improvements deferred
+> Remaining: documentation publication; original AC-18 comparison unperformed/deferred
+> Spec 012: **Verified with founder-approved exception (AC-18)**, 2026-09-26; see [closeout acceptance](./CLOSEOUT_ACCEPTANCE.md). Earlier sections retain their dated scope.
 
 The founder relayed the independent review's PASS. The orchestrator read the
 worker result and complete review and accepts the bounded technical
 implementation. The subsequent visual follow-up is also accepted below.
-No corrective code task follows from these checks. PR/release gates and AC-18
-remain separate.
+No corrective code task follows from these checks. Release completion and the
+later founder acceptance, including its evidence limit, are recorded below.
 
 ## Exact accepted state
 
@@ -146,3 +148,134 @@ the orchestrator at these acceptance checkpoints. The visual worker's focused
 checks are attributed above. Candidate and shared product files remain unchanged. Spec 011
 stays Verified; F-01/F-03/AC-07 stay closed. Accounting stays **USD 1.06241155 of 5**.
 Acceptance-check records: `/private/tmp/nuave-b2-acceptance-a6m7er7k/`.
+
+## Draft PR published — 2026-09-26
+
+The founder answered **Approved** to the explicit request to commit/push the
+32-file B2 package and create a draft PR. That authorization has been completed.
+The preparation/pending-approval wording above is the earlier checkpoint.
+
+[Draft PR #81](https://github.com/yasir-mukhtar/nuave_v0.2/pull/81) is open at
+`25679a528f5a3cba33769b8dba817a8bc4a2ea79`, branch
+`codex/spec012-b2-publication`, based on freshly rechecked main
+`d93ec8256200b662796103246e224bd4a3800603`.
+Published tree: `8337005d84a729292e7138c142ebc55acfb3b393`, exactly the approved
+package. All 32 published file blobs match the package manifest; all 25 worker
+files and 331 product hashes remain identical to the accepted implementation.
+No code was changed during publication and the publication checkout is clean.
+
+[Required CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36204921147)
+passed on the exact PR head: **1,460 unit tests, both builds and 33 browser
+checks (30 enabled + 3 disabled-path checks)**. The
+[synthetic preview workflow](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36204921134)
+also passed. The bot comment names GitHub's temporary merge
+`e7de48bb56f6836c5d231832ad57a23d4bd2c011`; its tree matches the approved tree.
+The preview workflow checks out the actual PR head. The preview audit page
+returned HTTP 200, and its server-rendered props contain `live: false`.
+Only a read-only page GET was made; no preview audit or live provider call ran.
+
+The PR is mergeable with zero unresolved review conversations at this
+checkpoint and remains **draft**, awaiting independent published-PR review.
+Pass the PR #81 reviewer prompt (`PR_81_REVIEWER_PROMPT.md`, a local handoff file that was not published) to a fresh reviewer.
+The review covers PR readiness; merge and production deployment require the
+founder's separate decision. AC-18 and Spec 012 closeout remain separate.
+
+Publication evidence is retained in `/private/tmp/nuave-b2-publication-exs4tvkh/`:
+`authorized-publication-preflight.json`, `commit-result.json`,
+`publication-result.json`, `pr-state-latest.json`, `pr-merge-tree.json`,
+`ci-run.log`, `review-threads.json` and the read-only preview response.
+These local status updates and the reviewer prompt are not additional changes
+to the approved published commit. Original candidate/shared product files
+remain preserved. Accounting stays **USD 1.06241155 of 5**.
+
+## Merge and deployment — 2026-09-26
+
+The founder said **“PR approved”**, then **“Merge”** after being told that
+merging triggers automatic production deployment after main's checks pass.
+This authorizes ready/merge and that automatic deployment. The supplied
+founder approval is recorded directly; this note does not invent a separate
+published-PR review report.
+
+The final preflight confirmed approved head `25679a5`, current main `d93ec82`,
+green required `validate` and synthetic preview, mergeability and zero
+unresolved conversations. The orchestrator marked the PR ready and merged it
+through the protected PR path, matching the approved head explicitly. No admin
+bypass, direct main push, force push or branch deletion was requested.
+
+- Merge: `d45a944674f29828bdd95bc878ce8ca07ff01818`, 08:00:49 WIB.
+- Parents: `d93ec8256200b662796103246e224bd4a3800603` and
+  `25679a528f5a3cba33769b8dba817a8bc4a2ea79`.
+- Tree: `8337005d84a729292e7138c142ebc55acfb3b393`; all 32 published file
+  blobs match the approved package.
+- [Main validation and deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36206938604):
+  passed on `d45a944`: 1,460 unit tests, both validation builds, 33 browser
+  checks (30 enabled + 3 disabled-path checks), merged-PR-origin gate and
+  production deployment.
+- Deployment completed at 08:06:42 WIB; Cloudflare version
+  `d188c76a-d1e6-4d78-b9e4-c771c16722b3`.
+- [Preview cleanup](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36206938567):
+  passed; the temporary PR preview is confirmed absent.
+- Production `https://v2.nuave.ai/audit`: a read-only HEAD request returned
+  HTTP 200 at 08:08:20 WIB. This checks availability; no live audit or
+  provider request was started.
+
+Release evidence: `/private/tmp/nuave-pr81-merge-pt2_ikni/`, including
+`merge-result.json`, `merge-tree-check.json`, `main-run.json`, `main-run.log`,
+`cleanup-run.json`, `cleanup-run.log`, `production-head.txt`, preservation
+checks and `release-result.json`. The publication
+checkout and original worker candidate remain preserved. No production audit
+or live provider call is authorized by this release. AC-18 and combined
+acceptance/document reconciliation remain separate; Spec 012 stays
+Approved/in progress. Existing Spec 011 closures and the USD 1.06241155 ledger
+remain unchanged.
+
+The next action at that release checkpoint was a bounded private AC-18
+before/after usefulness review using approved retained audit evidence,
+followed by combined acceptance and document
+reconciliation. First establish available artifacts and scope; any fresh
+provider call needs separate authorization. This merge does not itself close
+the founder's usefulness judgment or promote the broader report-doc branch.
+
+## Founder acceptance for now — 2026-09-26
+
+The founder judged the new report more useful and substantially complete,
+accepted keeping it as it is, and directed moving forward. Simplifying the
+format and shortening the distracting reference/link section are deferred
+improvements. No report-polish implementation or further review round is the
+immediate next task.
+
+The artifact supplied immediately before this feedback was the disclosed
+fictional B2 layout sample, copied byte-identically to the visible local path
+`review-artifacts/b2-fictional-layout-sample.pdf`. Its SHA-256 is
+`cdc7626ee20809f804fe5ef54f6d88d039abe44f3bf800c90806e62b1a7a5d3c`.
+The earlier real report and JSON were located, but a matching real-evidence
+before/after package was not prepared. The feedback establishes the founder's
+acceptance for progression; it does not establish execution of the original
+AC-18 timed/item-level rubric or real model-output usefulness. That comparison
+is deferred and must not be reported as PASS.
+
+The [founder decision](../../docs/DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements)
+supersedes the immediate next action above. Complete combined acceptance and
+document reconciliation carrying this acceptance and its evidence limit.
+Spec 012 remains Approved until that closeout; no automatic Verified claim is
+made here. The deployed implementation, independent technical/visual results,
+Spec 011 closures and USD 1.06241155 accounting remain unchanged. This update
+changes records only; no tests, live calls, commits, pushes or deployment ran.
+
+## Combined closeout candidate — 2026-09-26
+
+The documentation-only closeout candidate carries the founder acceptance above
+and its evidence limit. It maps AC-01–AC-19 in [VERIFICATION.md](./VERIFICATION.md#combined-closeout-2026-09-26)
+and reconciles the approved 2026-09-22 report amendments onto current main. It
+is recorded in [CLOSEOUT_RESULT.md](./CLOSEOUT_RESULT.md). AC-18 is recorded as a
+founder-accepted exception, not a PASS. The next step is one independent
+closeout review, followed by the orchestrator's status record. No runtime,
+test, provider call or deployment is part of the candidate.
+
+## Orchestrator closeout — 2026-09-26
+
+The founder relayed independent closeout **PASS with founder-approved exception
+(AC-18)**. The orchestrator accepts it and records Spec 012 Verified with that
+exception; see [CLOSEOUT_ACCEPTANCE.md](./CLOSEOUT_ACCEPTANCE.md). This supersedes
+the pending closeout next action above. Publication of the documentation is
+separate. No report code, tests or live calls changed.

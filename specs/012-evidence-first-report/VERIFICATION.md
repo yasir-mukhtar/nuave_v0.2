@@ -1,4 +1,96 @@
-# Verification: Spec 012 — PR A evidence-first report presentation
+# Verification: Spec 012 — Evidence-first AI Visibility Report
+
+> Result: **PASS with founder-approved exception (AC-18). Spec 012 Verified on 2026-09-26.** Independent closeout PASS was relayed by the founder and accepted by the orchestrator; see [CLOSEOUT_ACCEPTANCE.md](./CLOSEOUT_ACCEPTANCE.md).
+> Date: 2026-09-26
+> Prepared by: closeout worker (evidence matrix); final status recorded by orchestrator after founder-relayed independent review. Existing test attribution is unchanged.
+> Approved specification: `9c5d4c0f5e1ec3d59f5fd90c4f5d88ee1e1a7174:specs/012-evidence-first-report/SPEC.md`, SHA-256 `294ac792c347d0ccce12e6d40f6250b72aaaa038d9ea7313c212421a205e4110`
+> Runtime evaluated: `main` at `d45a944674f29828bdd95bc878ce8ca07ff01818` (PR #81 merge), deployed 2026-09-26
+> Closeout record: [CLOSEOUT_RESULT.md](./CLOSEOUT_RESULT.md)
+
+## Combined closeout (2026-09-26)
+
+### Scope and integration order
+
+This section maps AC-01 through AC-19 to the evidence that already exists. No
+product code changed after `d45a944`. This closeout reused the attributed
+checks listed below; it did not rerun tests, regenerate PDFs, or repeat
+founder walkthroughs.
+
+| Step | PR / merge | Base | Main CI on merge (read-only GitHub check, 2026-09-26) |
+|---|---|---|---|
+| A — presentation | #74 / `d08b9e9` | `4e6b2cf` | [35712356136](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/35712356136): attempt 1 failed (flaky `generation-attempts.test.tsx`); attempt 2 passed validate, the merged-PR gate and deployment |
+| Test race fix | #76 / `d679a51` | — | [35715969940](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/35715969940) success |
+| A closeout docs | #75 / `7da8003` | — | [35795099105](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/35795099105) success |
+| Contents-nav fix (PR A Finding 1) | #77 / `4470deb` | — | [35795727194](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/35795727194) success |
+| Spec 011 intake (verified) + A integration | #78 / `7f34d69` | `4470deb` | [36075063156](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36075063156) success |
+| Privacy R3 | #79 / `8907d96` | `7f34d69` | [36099502093](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36099502093) success |
+| B1 — content and header | #80 / `d93ec82` | `8907d96` | [36123028659](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36123028659) success: 1,429 tests, both builds, 32 browser checks |
+| B2 — useful completion and recovery | #81 / `d45a944` | `d93ec82` | [36206938604](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36206938604) success: 1,460 tests, both builds, 33 browser checks (30 + 3), merged-PR gate, deployment |
+
+This follows R-19: A from then-current main, the Spec 011 merge before B1/B2,
+B1 on integrated A plus verified Spec 011, and B2 on B1. The documentation half
+of R-19 (reconciling the approved report amendments onto main after the intake
+merge) is delivered by this closeout candidate.
+
+### Acceptance matrix
+
+"Review" means an independent fresh-context review. "Worker" means the
+implementer's own record. All automated evidence uses fictional, synthetic or
+mocked data.
+
+| AC | Disposition | Implementation / evidence source | Attribution and limits |
+|---|---|---|---|
+| AC-01 | **Pass** | A: `report-presentation.ts`, `DirectTenReportBody.tsx`, `ReportAnswer.tsx`. Body test and saved-session browser test (ten exact questions, whole answers, late caveats, reload). | Worker plus [PR A review](./PR_A_REVIEW.md). Rechecked as inherited regressions in the [B1 review](./B1_IMPLEMENTATION_REVIEW.md), the Spec 011 [integration review](../011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md) and the [B2 visual result](./B2_VISUAL_VERIFICATION_RESULT.md) (ten tail markers). |
+| AC-02 | **Pass** | A: 40 adapter-first tests passed before any UI/CSS edit. B2 added 8 `buildObservationAnswers` cases. | Worker timestamped gate. The PR A review confirmed the 40 adapter tests exist and pass; the adapter-first chronology itself is implementer-reported and not independently provable (the uncommitted tree left no Git evidence of order), though the adapter's lack of any UI dependency is consistent with the claim. B2 cases in the B2 review's canonical run. |
+| AC-03 | **Pass** | A: zero, mention-only, and 1/10 recommendation with nine `not_assessed`; corrupt denominator rejected; detail label `Tidak dinilai dari jawaban yang tersedia`. | Worker plus PR A review. The B2 visual result observed the detail label on a completed report and no `Tidak diuji` on completed observations. |
+| AC-04 | **Pass** | A: `AnswerMarkdown.tsx` bounded AST policy. Hostile-Markdown fixture; the browser recorded zero external requests. | Worker plus PR A review. B2 visual: literal image/script text and `external = []`. |
+| AC-05 | **Pass** | A: exact JS-string comparisons for question/raw/clipboard; truthful clipboard-failure notice. | Worker plus PR A review. B2 visual: raw view and clipboard byte-identical to the stored answer. |
+| AC-06 | **Pass** | A: `ReportReferences.tsx`; every reference kept; keyboard focus lands on one target per question. | Worker plus PR A review. B2 visual: evidence link focuses `#report-question-1`. |
+| AC-07 | **Pass** | A: empty comparator omitted despite raw names; invalid references unavailable. | Worker plus PR A review. |
+| AC-08 | **Pass with accepted qualifications** | A: 1440/390/320px, CSS 200%, keyboard/focus, 44px answer controls; 12-page A4 PDF with every page inspected. B1: 11-page PDF. Spec 011 integration: 11-page PDF. B2: recovery and completed report at all widths; 11-page completed-report PDF with every page inspected. | Worker PDFs; every page inspected independently by the PR A review, B1 review and integration review. B2 pages were inspected by the visual worker, and the orchestrator re-inspected all 11 ([B2 acceptance](./B2_ACCEPTANCE.md)). Qualifications accepted in the cited reviews, not unmet criteria: PDFs come from the headless Chromium print engine. The toolbar's `window.print()` callback was spied, and the native OS Save dialog was not exercised. The PR A review found "toolbar" and "native" PDFs were one capture; toolbar and browser print use the same DOM and print CSS. CSS zoom is not native zoom. Viewport emulation is not a physical phone. The decorative section index wraps at 320px (cosmetic). |
+| AC-09 | **Pass** | A: explicit-method routing; `ReportToolbar` default and `INDONESIAN_REPORT_LABELS.download_pdf` are `Download PDF`; label test and e2e locators. | Worker plus PR A review. |
+| AC-10 | **Pass** (A; rechecked B1 and B2) | A: snapshot and request-counter browser test. B1: inherited regression. B2: request table (one run; one, two or three report calls for success, retry and ceiling). | PR A review; B1 review; B2 review browser regression; B2 visual result. The export baseline for B1/B2 is the post-Spec-011 `nuave-evidence-v5` / `live-audit-report-v2`, with the inner `nuave-report-v3`. R-17's `nuave-evidence-v4` wording predates Spec 011's approved context versioning. Spec 012 changed no export version. |
+| AC-11 | **Pass** | B1: `types.ts` maxima 10; three stay three; ten pass; eleven fail. | Worker plus B1 review (305 focused tests plus probes). |
+| AC-12 | **Pass with pre-existing limitation** | B1: `report-prompt-contract.ts` guidance to all four adapters; versions `report-synthesis-v6`/`-v6-context` (B2 later `v7`); language calibration rechecked (20/25, no floor, no field totals). | B1 review. The Gemini provider-side schema conversion is a pre-existing, testing-only limitation that the review did not certify. Mocked requests do not prove real model compliance. |
+| AC-13 | **Pass** | B1: `ReportView.tsx` header from the Spec 011 `DirectTenAuditContext`; `report-header.ts` UTC observation window; creation time only in `Tentang audit ini`; contents follow body order. | B1 review, including timezone probes. |
+| AC-14 | **Pass** | B2: `directTenReportSynthesisSchema`, `report-noncorrective.ts`, `report-pipeline.ts` insertion after repair/revision; P then V, earliest ordinal; no template in any request. | Worker plus [B2 review](./B2_IMPLEMENTATION_REVIEW.md) (canonical `npm run verify` rerun; 22 reviewer assertions against the pinned R-13 table). |
+| AC-15 | **Pass** | B2: ordinary gap validation for model-authored priorities; exact field-set/equality check for inserted actions; forged copies discarded. | Worker plus B2 review. |
+| AC-16 | **Pass** | B2: all three empty-section cases produce `REPORT_USEFULNESS_FAILURE`/422 before `buildAuditReport`; recovery reader shows no analysis. | Worker plus B2 review. |
+| AC-17 | **Pass** | B2: `AnswersOnlyRecovery.tsx` and `SmartAuditStage.tsx`; copy present; no Nuave print/PDF/JSON control or export; guarded explicit retry; ceiling; Back/reload; other failure codes use ordinary recovery. | B2 review browser regression; B2 visual result (21 focus stops, print media keeps answers, `onbeforeprint` null). The spec names `LocalAuditStage`/`AuditRunStep`; the B2 review accepted the active `SmartAuditStage` as the correct counterpart (a moved-path mapping). |
+| AC-18 | **Founder-accepted exception: original same-evidence comparison unperformed and deferred** | No before/after rubric was run on retained real evidence. On 2026-09-26, after the disclosed fictional B2 layout sample (SHA-256 `cdc7626e…a5d3c`), the founder judged the new report more useful and substantially complete, said to keep it and move forward, and deferred format simplification including the long reference/link section ([decision](../../docs/DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements); [B2 acceptance](./B2_ACCEPTANCE.md#founder-acceptance-for-now--2026-09-26)). | Not a test PASS. No timed rubric results or real-synthesis quality are claimed. The PR A founder check on the real 2026-09-19 record ("good enough for now") is separate, earlier evidence of A's layout only; it is not the integrated B1/B2 comparison. The comparison remains deferred and needs no new founder decision to proceed. |
+| AC-19 | **Pass** (code PRs); documentation part delivered by this candidate | Allowlists, base SHAs and dependency pins: PR A review (exact pins `react-markdown@10.1.0`, `remark-gfm@4.0.1`), B1 review (20-file delta), B2 review (25-file delta). Integration order: table above. `npm run verify`: A worker plus reviewer (1,174 tests); B1 worker (1,429) reused by the reviewer; B2 reviewer's independent rerun (1,460). Combined result: the B2 reviewer's run on product files identical to `d45a944` (331/331 hashes), plus main CI on `d45a944`. A fictional restricted-data marker stays behind an unavailable binding (PR A). No persisted fields, schema migration, transport or protected edits (B1/B2 reviews). | The two live-flow tasks are accounted for in [CLOSEOUT_RESULT.md](./CLOSEOUT_RESULT.md#live-flow-tasks). PR A's main CI initially failed and passed on attempt 2 (see table). Docs reconciliation received independent closeout PASS, relayed by the founder and recorded in CLOSEOUT_ACCEPTANCE.md. |
+
+### Requirements trace and carried items
+
+R-01–R-09 are covered by AC-01–AC-10 (A). R-10–R-12 are covered by AC-11–AC-13
+(B1). R-13–R-15 are covered by AC-14–AC-17 (B2). R-16–R-17 are covered by
+AC-10/AC-17. R-18–R-19 are covered by AC-19. No untested requirement or extra
+behavior was reported by any review. Items PR A carried to B1:
+
+- The contents-nav anchors that left the report were fixed by PR #77.
+- Header labels and order were delivered by B1 (AC-13).
+- Verbatim model link tails such as `?utm_source=openai` still print, as R-04/R-05's
+  exact-answer rule requires. The founder's deferred reference-clutter
+  simplification covers this; it is not a criterion failure.
+
+### Preserved limits
+
+Headless PDF output is not the native Save dialog. CSS zoom is not browser zoom.
+Emulation is not a physical phone. Fictional evidence does not establish real
+usefulness. No evidence covers production provider output quality, real billing
+or production rate-limit bindings. Spec 011 F-01/F-03/AC-07 stay closed.
+Accounting stays USD 1.06241155 of the USD 5 ceiling. No live-call allowance
+exists or is granted here.
+
+---
+
+## PR A verification record (2026-09-22; historical)
+
+> Later status (2026-09-26): the header below is the dated PR A record. GitHub
+> shows run 35712356136 **attempt 2** (started 2026-09-22T10:01:49Z) passed
+> `validate`, the merged-PR gate and deployment on `d08b9e9`; attempt 1 is the
+> failure recorded below. PR #76 (`d679a51`) later fixed the test race. See the
+> combined closeout above for current status.
 
 > Result: **PR A merged; independent review passed; Spec 012 remains in progress (B1/B2 pending)**
 > Implementation: Codex; independent review: Claude ([review record](./PR_A_REVIEW.md)); follow-up self-verification: Codex
@@ -199,6 +291,8 @@ Local evidence (fictional only):
 
 ## B1 offline candidate (2026-09-25)
 
+> Later status: independently reviewed PASS ([review](./B1_IMPLEMENTATION_REVIEW.md)), merged through PR #80 as `d93ec82` and deployed on 2026-09-25 ([acceptance](./B1_ACCEPTANCE.md)).
+
 > Result: **worker PASS, offline; focused independent review pending.** Not merged; Spec 012 stays in progress (B2 and AC-18 pending).
 > Base: `8907d96d10ca101f6fdd68c8c77607cd994d83f3` (contains PR #78, PR #74 and privacy PR #79). Branch: `codex/spec012-b1-report-content` (unstaged).
 > Record: [B1_IMPLEMENTATION_RESULT.md](./B1_IMPLEMENTATION_RESULT.md).
@@ -209,6 +303,8 @@ Local evidence (fictional only):
 - Inherited A regressions and request counters are unchanged. `npm run verify` passes: 1,429 unit tests, both builds, 29 + 3 browser tests. An 11-page fictional A4 PDF was inspected page by page with PDFKit. The native Save dialog and native zoom were not exercised.
 
 ## B2 offline candidate (2026-09-25)
+
+> Later status: independently reviewed PASS ([review](./B2_IMPLEMENTATION_REVIEW.md)), visual follow-up PASS ([result](./B2_VISUAL_VERIFICATION_RESULT.md)), merged through PR #81 as `d45a944` and deployed on 2026-09-26 ([acceptance](./B2_ACCEPTANCE.md)).
 
 > Result: **worker PASS, offline; focused independent review pending.** Not merged; Spec 012 stays in progress (AC-18 founder usefulness judgment pending).
 > Base: `d93ec8256200b662796103246e224bd4a3800603` (PR #80, the accepted B1 merge). Branch: `codex/spec012-b2-useful-recovery` (unstaged), isolated clone `/private/tmp/nuave-spec012-b2/candidate`.

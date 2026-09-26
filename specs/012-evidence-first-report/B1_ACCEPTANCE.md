@@ -1,8 +1,8 @@
 # Spec 012 B1 — orchestrator acceptance
 
 > Date: 2026-09-25
-> Status: **Accepted for the bounded offline B1 implementation**
-> Spec 012 remains **Approved / in progress**, not Verified
+> Status: **Accepted; PR #80 merged and deployed on 2026-09-25**
+> Later status (2026-09-26): Spec 012 **Verified with founder-approved exception (AC-18)**; see [closeout acceptance](./CLOSEOUT_ACCEPTANCE.md). Earlier sections retain their dated scope.
 
 The founder relayed the independent reviewer’s PASS. The orchestrator read
 the complete worker result and review, checked their evidence identity, and
@@ -99,3 +99,88 @@ final usefulness minimum and answers-only recovery. B2, combined verification
 and the founder’s AC-18 before/after usefulness judgment remain outstanding.
 Spec 011 stays Verified; F-01/F-03/AC-07 stay closed. No live/provider call,
 source fetch or spend occurred. Accounting stays **USD 1.06241155 of 5**.
+
+## Draft-PR publication — 2026-09-25
+
+The founder instructed **“Proceed with B1 publication package and draft PR”**,
+then clarified **“You publish B1; worker prompt covers B2.”** This authorized
+commit/push and a draft PR with the existing automatic synthetic preview.
+
+[Draft PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80) is open at
+`eb5483e75ef2a9eb7608e6492d0a28454c4bc672`, branch
+`codex/spec012-b1-publication`. Remote main was freshly checked/fetched and
+still matched `8907d96d10ca101f6fdd68c8c77607cd994d83f3` before publication.
+Published tree: `300f6cd5eb7dca278ae67c04c47d63bdae76cd1a`.
+
+All 25 published file blobs match the exact package: the 20 worker files,
+verbatim independent review, publication copy of acceptance, completed B1
+handoff and narrow NOW/INDEX status edits. All 327 inventoried product files
+match the reviewed candidate. The complete diff, links, whitespace, protected-
+file exclusion and added-secret/test-bypass scan passed. No tests were repeated
+for unchanged code; the matching worker/reviewer evidence remains attributed
+above. The original candidate and shared source code remain unchanged.
+
+[Synthetic preview](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36114202819)
+passed. [Required CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36114202753)
+also passed on exact head `eb5483e`: 1,429 tests, both builds and 32 browser
+checks. The preview comment identifies GitHub's temporary merge commit
+`0cc2f051e17fca51abffd72ed0acb80e82373d97`; its tree matches the published B1
+tree exactly. At this publication checkpoint the PR remained draft pending
+published-PR review and the founder's merge decision. No production release
+or live provider call occurred at that checkpoint; the later release is below.
+
+Publication checkout and exact package/body/hash records:
+`/private/tmp/nuave-b1-publication-72lfuzyn/`; `PR_READINESS.md`,
+`publication-files.json`, `publication-checks.json`, `publication.patch`,
+`PR_BODY.md`, `publication-result.json` and `pr-state.json`.
+The [B2 prompt](./B2_WORKER_PROMPT.md) was prepared locally for founder handoff
+after accepted B1's merge; it is not part of PR #80. It does not close
+AC-18 or authorize B2 publication, live work or deployment.
+
+## Merge and deployment — 2026-09-25
+
+The founder said **“PR 80 approved. Merge deploy.”** This settles PR approval
+and explicitly authorizes merge and production deployment. The original
+independent offline review remains the supplied review artifact; this note
+does not invent another published-PR review report.
+
+Before merge, current main still matched `8907d96`, required `validate` and
+preview checks were green on approved head `eb5483e`, the PR was mergeable,
+and there were no unresolved conversations. All 25 publication file hashes
+matched the accepted package. The orchestrator marked it ready and merged
+through the protected PR path, with no admin bypass, direct main push,
+force push or branch deletion.
+
+- Merge: `d93ec8256200b662796103246e224bd4a3800603` at 17:15:52 WIB.
+- Parents: `8907d96d10ca101f6fdd68c8c77607cd994d83f3` and
+  `eb5483e75ef2a9eb7608e6492d0a28454c4bc672`.
+- Tree: `300f6cd5eb7dca278ae67c04c47d63bdae76cd1a`, exactly the published tree.
+- [Main CI and deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36123028659):
+  PASS on the merge commit; 1,429 tests, both builds, 32 browser checks,
+  merged-PR-origin gate and production deployment.
+- Deployment completed at 17:21:04 WIB; Cloudflare version
+  `7be82d31-20b2-4fad-9f41-90991b0f8631`.
+- [Preview cleanup](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36123029058):
+  PASS; the temporary preview was removed.
+- Production `https://v2.nuave.ai/audit`: read-only HEAD returned HTTP 200,
+  response dated 10:21:45 UTC / 17:21:45 WIB. This checks availability; no
+  live audit or provider request was made.
+
+Release evidence: `/private/tmp/nuave-pr80-merge-raas_v5u/`, including
+`preflight.json`, `merge-result.json`, main/cleanup workflow records,
+`main-run.log`, preservation evidence and `release-result.json`.
+The publication checkout and original worker candidate remain unchanged.
+Local release/handoff records are separate from the exact merged package.
+
+Next is the founder's handoff of the B2 prompt, now pointing to current main
+containing `d93ec82`; no additional B1 approval is needed. B2 has not started.
+Spec 012 remains Approved/in progress. Prior closed findings and accounting
+remain unchanged, with no new live-call allowance.
+
+## Later status — 2026-09-26
+
+B2 merged through PR #81 as `d45a944` and was deployed on 2026-09-26. The founder
+accepted the current report for now, with the original AC-18 comparison
+unperformed and deferred. The combined Spec 012 closeout candidate is recorded in
+[CLOSEOUT_RESULT.md](./CLOSEOUT_RESULT.md) and awaits independent closeout review.
+Spec 012 stays Approved, not Verified, until the orchestrator records that review.
