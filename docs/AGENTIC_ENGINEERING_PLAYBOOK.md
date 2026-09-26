@@ -3,7 +3,8 @@
 > Revision: 0.2.1 / R2.1 (targeted revision of R2 `42e2045`; R1 is preserved in Git at `ac4bd62`)
 > Status: **Adopted 2026-09-26 (founder)** at review `536a6cf` + follow-up `d2d92c1`. Adopted: Part A,
 > Part B, and P-5. Section B.2 is the approved plan for the `verify-nuave` build (no separate spec).
-> P-1 to P-4, P-6, and P-7 remain proposals. See [`DECISION_LOG.md`](./DECISION_LOG.md).
+> P-6 decided 2026-09-26 (now in `WORKFLOW.md`). P-1 to P-4 and P-7 remain proposals. See
+> [`DECISION_LOG.md`](./DECISION_LOG.md).
 > Brief: [`docs/briefs/agentic-engineering-playbook-r2.md`](./briefs/agentic-engineering-playbook-r2.md)
 > Review applied: [`agentic-engineering-playbook-r2-review-2026-09-26.md`](./reviews/findings/agentic-engineering-playbook-r2-review-2026-09-26.md) (`360e84c`), F-1 to F-9
 > Sources: the talk via review §2, pstack at `ecc249f`, and the R1 review (see § Sources)
@@ -258,11 +259,12 @@ Each encoded control ships with its known-bad and known-good cases (§2).
 Specs 011–012 produced 38 and 12 Markdown files, prompt/result pairs, and 316–331-file hash manifests
 per review. Target per change: **the PR description plus one verdict comment** (§6). A product-behavior
 spec package holds only `SPEC.md` and `VERIFICATION.md`. Worker prompts, results, and manifests stay
-out of Git unless the founder asks. This changes `docs/WORKFLOW.md`, so it is proposal P-6.
+out of Git unless the founder asks. Decided as P-6 on 2026-09-26; the rule now lives in
+`docs/WORKFLOW.md` (Evidence per change).
 
-### B.5 Founder proposals (not decisions, except P-5)
+### B.5 Founder proposals (not decisions, except P-5 and P-6)
 
-P-5 was decided on 2026-09-26 as written. The others remain proposals.
+P-5 and P-6 were decided on 2026-09-26 as written. The others remain proposals.
 
 | ID | Proposal | Why |
 |---|---|---|

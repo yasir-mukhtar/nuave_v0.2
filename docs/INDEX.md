@@ -37,7 +37,7 @@ decision log does not become a permanent hidden override.
 | [`DESIGN.md`](./DESIGN.md)             | Current UI stack, visual language, interaction, accessibility, and component boundaries | Canonical current design authority      |
 | [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions                              | Canonical history                       |
 | [`WORKFLOW.md`](./WORKFLOW.md)         | Document creation, specifications, worker handoffs, and verification                    | Canonical working method                |
-| [`AGENTIC_ENGINEERING_PLAYBOOK.md`](./AGENTIC_ENGINEERING_PLAYBOOK.md) | How agents verify, correct, and land engineering work; the `verify-nuave` build plan (B.2) | Adopted 2026-09-26; P-5 decided, other proposals open |
+| [`AGENTIC_ENGINEERING_PLAYBOOK.md`](./AGENTIC_ENGINEERING_PLAYBOOK.md) | How agents verify, correct, and land engineering work; the `verify-nuave` build plan (B.2) | Adopted 2026-09-26; P-5 and P-6 decided, other proposals open |
 
 ## Current development plan
 
