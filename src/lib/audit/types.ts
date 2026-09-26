@@ -443,6 +443,32 @@ export const reportSynthesisSchema = reportContentSchema
       .length(10),
   });
 
+/**
+ * Spec 012 R-13 (B2): the direct-ten intermediate synthesis contract permits
+ * zero priorities — when no observed gap supports an action the model returns
+ * `priorities: []` instead of inventing one. This is a generation-stage
+ * contract only: the persisted `reportContentSchema` minimum of one and the
+ * historical synthesis minimum are unchanged, and no template wording ever
+ * enters a request.
+ */
+export const directTenReportSynthesisSchema = reportSynthesisSchema.extend({
+  priorities: z
+    .array(reportContentSchema.shape.priorities.element)
+    .min(0)
+    .max(REPORT_CONTENT_MAX_ITEMS),
+});
+
+/** The synthesis contract a method uses for structured output and response
+ * parsing. Direct-ten takes the zero-priority intermediate shape; every other
+ * method keeps the shared minimum of one. */
+export function reportSynthesisSchemaForMethod(
+  questionMethod?: AuditQuestionMethod,
+) {
+  return questionMethod === "direct-ten"
+    ? directTenReportSynthesisSchema
+    : reportSynthesisSchema;
+}
+
 export type Source = z.infer<typeof sourceSchema>;
 export type SimilarBusiness = z.infer<typeof similarBusinessSchema>;
 export type BusinessBrief = z.infer<typeof businessBriefSchema>;
@@ -464,6 +490,9 @@ export type ReportDetail = z.infer<typeof reportDetailSchema>;
 export type ObservedCompetitor = z.infer<typeof observedCompetitorSchema>;
 export type ReportContent = z.infer<typeof reportContentSchema>;
 export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
+export type DirectTenReportSynthesis = z.infer<
+  typeof directTenReportSynthesisSchema
+>;
 
 export type AuditReport = ReportContent & {
   report_version: "nuave-report-v3";

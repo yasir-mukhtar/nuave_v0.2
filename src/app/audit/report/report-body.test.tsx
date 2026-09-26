@@ -4,8 +4,10 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { presentationFixture } from "@/lib/audit/report-presentation.fixture";
+import { buildObservationAnswers } from "@/lib/audit/report-presentation";
 import { makeCustomerEvidenceExport } from "@/lib/audit/customer-evidence-export";
 import { AnswerMarkdown } from "./AnswerMarkdown";
+import { AnswersOnlyRecovery } from "./AnswersOnlyRecovery";
 import { DirectTenReportBody } from "./DirectTenReportBody";
 import ReportView from "../ReportView";
 import { ReportToolbar } from "@/components/product/ReportToolbar";
@@ -299,6 +301,155 @@ describe("evidence-first body", () => {
     await user.click(screen.getByRole("button", { name: "Unduh bukti JSON" }));
     expect(pdf).toHaveBeenCalledTimes(1);
     expect(json).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("answers-only recovery (Spec 012 R-15, AC-16/AC-17)", () => {
+  const answers = () => {
+    const { observations } = presentationFixture();
+    const projected = buildObservationAnswers(observations);
+    if (!projected) throw Error("Expected usable observations");
+    return { observations, projected };
+  };
+
+  it("shows the exact unfinished notice, all ten questions and full answers with provenance", () => {
+    const { observations, projected } = answers();
+    const { container } = render(
+      <AnswersOnlyRecovery
+        answers={projected}
+        canRetry={true}
+        limitReached={false}
+        onRetry={() => {}}
+      />,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Analisis Nuave belum selesai",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Sepuluh jawaban model AI sudah tersimpan. Analisis belum memenuhi syarat laporan. Anda dapat membaca dan menyalin jawaban di bawah.",
+    );
+    expect(container.querySelectorAll("[data-report-answer]")).toHaveLength(10);
+    observations.forEach((o, i) => {
+      const card = container.querySelector(
+        `[data-report-answer="${i + 1}"]`,
+      ) as HTMLElement;
+      expect(card.querySelector(`#report-question-${i + 1}`)?.textContent).toBe(
+        o.question,
+      );
+      expect(card.querySelector("[data-answer-body]")).toHaveTextContent(
+        `Namun, keterangan terakhir ${i + 1} perlu dikonfirmasi.`,
+      );
+      expect(card).toHaveTextContent("Sumber yang tersimpan");
+      expect(card).toHaveTextContent("Waktu pengamatan");
+      expect(card).toHaveTextContent(o.system);
+      expect(card).toHaveTextContent(o.returned_model);
+    });
+  });
+
+  it("renders no classification, finding, action, measure or report-ready control", () => {
+    const { projected } = answers();
+    render(
+      <AnswersOnlyRecovery
+        answers={projected}
+        canRetry={true}
+        limitReached={false}
+        onRetry={() => {}}
+      />,
+    );
+    // No bound detail — no rejected/kept classification labels at all.
+    expect(screen.queryByText("Penyebutan")).not.toBeInTheDocument();
+    expect(screen.queryByText("Rekomendasi")).not.toBeInTheDocument();
+    expect(screen.queryByText("Perbandingan")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Tidak dinilai dari jawaban yang tersedia"),
+    ).not.toBeInTheDocument();
+    // No report conclusion, findings, actions, comparators or scores.
+    expect(screen.queryByText("Temuan fiktif")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hasil singkat")).not.toBeInTheDocument();
+    expect(screen.queryByText(/diunggulkan/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/dari 10 pertanyaan/)).not.toBeInTheDocument();
+    // No Nuave report-ready controls: no PDF/print/JSON/export affordance.
+    // (Retained evidence source links are allowed and checked separately.)
+    expect(
+      screen.queryByRole("button", { name: /PDF|JSON|Unduh|Cetak/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "Report contents" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Laporan (siap|selesai|terbukti)/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("copies each exact question/answer and opens the raw text accordion", async () => {
+    const user = userEvent.setup();
+    const writeText = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue();
+    const { observations, projected } = answers();
+    const { container } = render(
+      <AnswersOnlyRecovery
+        answers={projected}
+        canRetry={true}
+        limitReached={false}
+        onRetry={() => {}}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: "Salin pertanyaan dan jawaban 1",
+      }),
+    );
+    const copied = writeText.mock.calls[0][0];
+    expect(copied).toContain(observations[0].question);
+    expect(copied).toContain(observations[0].raw_answer);
+    await user.click(
+      screen.getByRole("button", { name: "Teks asli pertanyaan 2" }),
+    );
+    // Only the opened card mounts its raw pre — exactly one exists.
+    expect(container.querySelectorAll("[data-raw-answer]")).toHaveLength(1);
+    expect(container.querySelector("[data-raw-answer]")?.textContent).toBe(
+      observations[1].raw_answer,
+    );
+  });
+
+  it("fires the explicit retry once per click and disables it at the limit", async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    const { projected } = answers();
+    const { rerender } = render(
+      <AnswersOnlyRecovery
+        answers={projected}
+        canRetry={true}
+        limitReached={false}
+        onRetry={onRetry}
+      />,
+    );
+    const retry = screen.getByRole("button", {
+      name: "Coba buat laporan lagi",
+    });
+    await user.click(retry);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    rerender(
+      <AnswersOnlyRecovery
+        answers={projected}
+        canRetry={false}
+        limitReached={true}
+        onRetry={onRetry}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Coba buat laporan lagi" }),
+    ).toBeDisabled();
+    // The existing disabled/limit explanation is reused verbatim (R-15).
+    expect(screen.getByText("Batas pembuatan laporan tercapai")).toBeVisible();
+    expect(
+      screen.getByText(/batas biaya atau batas tiga panggilan tahap laporan/),
+    ).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: "Coba buat laporan lagi" }),
+    );
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
 

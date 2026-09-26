@@ -74,30 +74,32 @@ export function ReportAnswer({ answer }: { answer: AnswerPresentation }) {
         <h3 id={answer.targetId} tabIndex={-1}>
           {answer.question}
         </h3>
-        <dl className={styles.statuses}>
-          <div>
-            <dt>Penyebutan</dt>
-            <dd>{appearance[answer.detail.appearance]}</dd>
-          </div>
-          <div>
-            <dt>Rekomendasi</dt>
-            <dd>{recommendation[answer.detail.recommendation]}</dd>
-          </div>
-          {!["not_observed", "not_assessed"].includes(
-            answer.detail.comparison,
-          ) && (
+        {answer.detail ? (
+          <dl className={styles.statuses}>
             <div>
-              <dt>Perbandingan</dt>
-              <dd>{comparison[answer.detail.comparison]}</dd>
+              <dt>Penyebutan</dt>
+              <dd>{appearance[answer.detail.appearance]}</dd>
             </div>
-          )}
-          {answer.detail.information !== "not_assessed" && (
             <div>
-              <dt>Informasi publik</dt>
-              <dd>{information[answer.detail.information]}</dd>
+              <dt>Rekomendasi</dt>
+              <dd>{recommendation[answer.detail.recommendation]}</dd>
             </div>
-          )}
-        </dl>
+            {!["not_observed", "not_assessed"].includes(
+              answer.detail.comparison,
+            ) && (
+              <div>
+                <dt>Perbandingan</dt>
+                <dd>{comparison[answer.detail.comparison]}</dd>
+              </div>
+            )}
+            {answer.detail.information !== "not_assessed" && (
+              <div>
+                <dt>Informasi publik</dt>
+                <dd>{information[answer.detail.information]}</dd>
+              </div>
+            )}
+          </dl>
+        ) : null}
       </header>
       <AnswerMarkdown raw={answer.rawAnswer} />
       <div className={styles.provenance}>

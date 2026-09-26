@@ -76,8 +76,12 @@ export const PROMPT_CONTRACT_VERSION = "deterministic-v4-en";
 // Spec 012 B1: both synthesis contracts widen findings/priorities to ten
 // (shared schema) and direct-ten adds evidence-led content guidance. v2 is the
 // contract every new confirmed-context report records in its provenance.
-export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v6";
-export const REPORT_SYNTHESIS_PROMPT_VERSION_V2 = "report-synthesis-v6-context";
+// Spec 012 B2: v7 adds the direct-ten no-gap instruction and the matching
+// zero-priority intermediate contract (R-13). Historical synthesis wording is
+// unchanged, but the shared schema bound it validates against now permits an
+// empty priorities array only for the direct-ten method.
+export const REPORT_SYNTHESIS_PROMPT_VERSION = "report-synthesis-v7";
+export const REPORT_SYNTHESIS_PROMPT_VERSION_V2 = "report-synthesis-v7-context";
 
 /**
  * Versioned neutral observation instructions (Spec 003 R-14).
@@ -867,6 +871,45 @@ export function validatePromptPack(
   return errors;
 }
 
+/**
+ * The single observed-gap predicate shared by ordinary corrective-priority
+ * validation and the Spec 012 B2 non-corrective candidate's no-gap eligibility
+ * rule. A "gap" is a failed run, an absent appearance, incomplete/conflicting
+ * information, a competitor-preferred comparison, or an eligible
+ * recommendation path that ended not_recommended.
+ */
+export function detailShowsObservedGap(input: {
+  promptId: string;
+  details: ReportContent["details"];
+  observations: AuditObservation[];
+  historicalFixtureId?: HistoricalPromptPackId;
+  questionMethod?: AuditQuestionMethod;
+}): boolean {
+  const detail = input.details.find(
+    (item) => item.prompt_id === input.promptId,
+  );
+  const observation = input.observations.find(
+    (item) => item.prompt_id === input.promptId,
+  );
+  if (!detail || !observation) return false;
+  const classes = reportAssessmentClassesFor({
+    promptId: input.promptId,
+    observation,
+    historicalFixtureId: input.historicalFixtureId,
+    questionMethod: input.questionMethod,
+  });
+  return (
+    detail.run === "failed" ||
+    detail.appearance === "absent" ||
+    detail.information === "incomplete" ||
+    detail.information === "conflicting" ||
+    detail.comparison === "competitor_preferred" ||
+    (!observation.branded &&
+      classes.includes("recommendation") &&
+      detail.recommendation === "not_recommended")
+  );
+}
+
 export function validateReportContent(
   content: ReportContent,
   observations: AuditObservation[],
@@ -1053,31 +1096,15 @@ export function validateReportContent(
   });
 
   content.priorities.forEach((priority) => {
-    const hasObservedGap = priority.evidence_prompt_ids.some((promptId) => {
-      const detail = content.details.find(
-        (item) => item.prompt_id === promptId,
-      );
-      const observation = observations.find(
-        (item) => item.prompt_id === promptId,
-      );
-      if (!detail || !observation) return false;
-      const classes = reportAssessmentClassesFor({
+    const hasObservedGap = priority.evidence_prompt_ids.some((promptId) =>
+      detailShowsObservedGap({
         promptId,
-        observation,
+        details: content.details,
+        observations,
         historicalFixtureId,
         questionMethod,
-      });
-      return (
-        detail.run === "failed" ||
-        detail.appearance === "absent" ||
-        detail.information === "incomplete" ||
-        detail.information === "conflicting" ||
-        detail.comparison === "competitor_preferred" ||
-        (!observation.branded &&
-          classes.includes("recommendation") &&
-          detail.recommendation === "not_recommended")
-      );
-    });
+      }),
+    );
     if (!hasObservedGap) {
       errors.push(`Priority ${priority.order} is not tied to an observed gap.`);
     }

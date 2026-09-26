@@ -147,7 +147,7 @@ describe("v2 report model request", () => {
       );
     }
     expect(REPORT_SYNTHESIS_PROMPT_VERSION_V2).toBe(
-      "report-synthesis-v6-context",
+      "report-synthesis-v7-context",
     );
     // Language-only retry keeps evidence, order, timing and owner invariants.
     const retryDeveloper = retry!.input[0]!.content;

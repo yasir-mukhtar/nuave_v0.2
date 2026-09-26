@@ -26,6 +26,8 @@ import {
   isReportFailureCode,
   type ReportFailureCode,
 } from "@/lib/audit/report-recovery";
+import { buildObservationAnswers } from "@/lib/audit/report-presentation";
+import { AnswersOnlyRecovery } from "@/app/audit/report/AnswersOnlyRecovery";
 import { isAbortError } from "@/lib/audit/workflow-operation-generation";
 import { DIRECT_TEN_METHOD_VERSION } from "@/lib/intake/local-questions";
 import {
@@ -535,6 +537,28 @@ export default function SmartAuditStage({
           reportAttemptsUsed(record),
         )
       : null;
+  const retryReport = () => {
+    // Synchronous pre-submit guard: the in-flight flag goes up before the
+    // request leaves, so repeated clicks cannot overlap.
+    if (!(record && reportRecovery?.can_retry && !inFlightRef.current)) return;
+    inFlightRef.current = true;
+    void callReport(record, record.context).finally(() => {
+      inFlightRef.current = false;
+    });
+  };
+
+  // Spec 012 R-15: a saved REPORT_USEFULNESS_FAILURE over ten completed
+  // observations reads as the observation-only answers view — regardless of
+  // whether a retry is still permitted — and never re-exposes analysis.
+  const recoveryAnswers =
+    !busy &&
+    !done &&
+    record?.status === "report-failed" &&
+    reportFailureCode === "REPORT_USEFULNESS_FAILURE" &&
+    completed === 10
+      ? buildObservationAnswers(record.observations)
+      : null;
+
   const interrupted =
     !busy &&
     !reportRecovery &&
@@ -678,6 +702,24 @@ export default function SmartAuditStage({
     );
   }
 
+  if (recoveryAnswers) {
+    return (
+      <div className="grid gap-4" data-local-audit-stage={stage}>
+        <AnswersOnlyRecovery
+          answers={recoveryAnswers}
+          canRetry={Boolean(reportRecovery?.can_retry)}
+          limitReached={reportRecovery?.kind === "terminal_limit"}
+          onRetry={retryReport}
+        />
+        <div>
+          <Button variant="ghost" onClick={onExit}>
+            Kembali ke pertanyaan
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4" data-local-audit-stage={stage}>
       {!record && !busy ? (
@@ -719,20 +761,7 @@ export default function SmartAuditStage({
             interrupted={interrupted && completed > 0}
             runUnfinished={runUnfinished}
             reportRecovery={reportRecovery}
-            onRetryReport={() => {
-              // Synchronous pre-submit guard: the in-flight flag goes up
-              // before the request leaves, so repeated clicks cannot overlap.
-              if (!(
-                record &&
-                reportRecovery?.can_retry &&
-                !inFlightRef.current
-              ))
-                return;
-              inFlightRef.current = true;
-              void callReport(record!, record!.context).finally(() => {
-                inFlightRef.current = false;
-              });
-            }}
+            onRetryReport={retryReport}
           />
           {record?.status === "failed" && !busy && !reportRecovery ? (
             <div className="grid gap-3">

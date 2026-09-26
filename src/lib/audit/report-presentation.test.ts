@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildReportPresentation, answerCopyText } from "./report-presentation";
+import {
+  buildObservationAnswers,
+  buildReportPresentation,
+  answerCopyText,
+} from "./report-presentation";
 import { presentationFixture } from "./report-presentation.fixture";
 import type { AuditReport, AuditObservation } from "./types";
 
@@ -151,7 +155,7 @@ describe("direct-ten presentation binding (before UI)", () => {
       assessed: 10,
     });
     expect(
-      result.answers.filter((a) => a.detail.recommendation === "not_assessed"),
+      result.answers.filter((a) => a.detail?.recommendation === "not_assessed"),
     ).toHaveLength(9);
   });
   it.each([0, 1, 9, 11, -1, 1.5, NaN, Infinity])(
@@ -225,5 +229,49 @@ describe("direct-ten presentation binding (before UI)", () => {
     const result = buildReportPresentation(report, observations);
     expect(result.status).toBe("unavailable");
     expect(JSON.stringify(result)).not.toContain("PERSONAL-DATA MARKER");
+  });
+});
+
+describe("observation-only projection (Spec 012 R-15 answers-only recovery)", () => {
+  it("returns ten exact questions/answers with null detail — no analysis surface", () => {
+    const { observations } = presentationFixture();
+    const answers = buildObservationAnswers(observations);
+    expect(answers).toHaveLength(10);
+    answers?.forEach((answer, index) => {
+      expect(answer.id).toBe(observations[index].prompt_id);
+      expect(answer.ordinal).toBe(index + 1);
+      expect(answer.question).toBe(observations[index].question);
+      expect(answer.rawAnswer).toBe(observations[index].raw_answer);
+      // The recovery view must never surface a classification.
+      expect(answer.detail).toBeNull();
+      expect(answer.sources.map((s) => s.url)).toEqual(
+        observations[index].sources.map((s) => s.url),
+      );
+    });
+    // Copy behavior reuses the ready path's exact-question/full-answer text.
+    expect(answerCopyText(answers![0])).toContain(observations[0].question);
+    expect(answerCopyText(answers![0])).toContain(observations[0].raw_answer);
+  });
+
+  it.each([
+    "missing",
+    "extra",
+    "duplicate",
+    "failed-run",
+    "blank-question",
+    "blank-answer",
+    "bad-time",
+  ] as const)("returns null instead of guessing on %s", (defect) => {
+    const { observations } = presentationFixture();
+    if (defect === "missing") observations.pop();
+    if (defect === "extra")
+      observations.push({ ...observations[0], prompt_id: "extra" });
+    if (defect === "duplicate")
+      observations[1].prompt_id = observations[0].prompt_id;
+    if (defect === "failed-run") observations[0].run_status = "failed";
+    if (defect === "blank-question") observations[0].question = "  ";
+    if (defect === "blank-answer") observations[0].raw_answer = "";
+    if (defect === "bad-time") observations[0].observed_at = "not-a-date";
+    expect(buildObservationAnswers(observations)).toBeNull();
   });
 });

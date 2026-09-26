@@ -207,3 +207,15 @@ Local evidence (fictional only):
 - AC-12: direct-ten content guidance goes to all four adapters on initial and language-only retry requests, and the observed-gap clause is kept. Synthesis versions are `report-synthesis-v6` / `report-synthesis-v6-context`. Language calibration was rechecked (20/25, no floor, no field totals), with no change.
 - AC-13: the direct-ten header shows the `AI Visibility Report` title, exact brand/scope from `DirectTenAuditContext`, a UTC observation range from retained `observed_at`, and system/answer model. Creation time appears only in `Tentang audit ini`. Contents match body order and stay report-local.
 - Inherited A regressions and request counters are unchanged. `npm run verify` passes: 1,429 unit tests, both builds, 29 + 3 browser tests. An 11-page fictional A4 PDF was inspected page by page with PDFKit. The native Save dialog and native zoom were not exercised.
+
+## B2 offline candidate (2026-09-25)
+
+> Result: **worker PASS, offline; focused independent review pending.** Not merged; Spec 012 stays in progress (AC-18 founder usefulness judgment pending).
+> Base: `d93ec8256200b662796103246e224bd4a3800603` (PR #80, the accepted B1 merge). Branch: `codex/spec012-b2-useful-recovery` (unstaged), isolated clone `/private/tmp/nuave-spec012-b2/candidate`.
+> Record: [B2_IMPLEMENTATION_RESULT.md](./B2_IMPLEMENTATION_RESULT.md).
+
+- AC-14: direct-ten initial and language-only retry synthesis accept `priorities: []` via the method-aware schema; the persisted contract and historical methods still require one. With no surviving corrective action, code inserts at most one exact eligible P/V action — verified byte-for-byte against the R-13 table, P before V then earliest ordinal — and no template, candidate or flag enters any model request or retry draft.
+- AC-15: a model-authored copy of the template (including a forged discriminator field) is discarded by the unchanged observed-gap sanitizer; the inserted object additionally passes exact-equality and field-set checks plus a local writing-contract check, with no extra provider call.
+- AC-16: the three failure shapes (findings empty, actions empty with no eligible candidate, both empty) each fail `REPORT_USEFULNESS_FAILURE`/422 before `buildAuditReport`, with retained telemetry and `usefulness_minimum_not_met` diagnostic; no report body is returned.
+- AC-17: the answers-only recovery shows the exact notice, all ten retained questions and full answers, sources and provenance; copy and raw view work; no classification, finding, action, comparator, score, report-ready or print/PDF/JSON/export control renders. Reload restores the state without a request; the explicit guarded retry replays identical observations/context under the existing 3-attempt report ceiling and never reruns completed observations.
+- `npm run verify` passes: 1,460 unit tests across 95 files, both builds, 30 + 3 browser tests including the new recovery e2e.

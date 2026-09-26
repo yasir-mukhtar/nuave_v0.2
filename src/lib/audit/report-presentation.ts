@@ -13,7 +13,9 @@ export type AnswerPresentation = {
   targetId: string;
   question: string;
   rawAnswer: string;
-  detail: ReportDetail;
+  /** The bound analysis detail. Spec 012 R-15's answers-only recovery passes
+   * `null`: it reuses this renderer without supplying any classification. */
+  detail: ReportDetail | null;
   observedAt: string;
   system: string;
   requestedModel: string;
@@ -91,6 +93,18 @@ const evidenceSchema = auditObservationSchema
     telemetry: z.array(z.unknown()).min(1),
     sources: z.array(z.object({ title: z.string(), url: z.string() })),
   });
+
+function answerSources(observation: AuditObservation) {
+  return observation.sources.map((source) => {
+    const href = retainedSourceHref(source.url);
+    return {
+      title: source.title,
+      url: source.url,
+      href,
+      domain: href ? new URL(href).hostname : "",
+    };
+  });
+}
 
 /** Only retained, absolute HTTP(S) source URLs may navigate. Body URLs never do. */
 export function retainedSourceHref(url: string): string | null {
@@ -178,15 +192,7 @@ export function buildReportPresentation(
       system: o.system,
       requestedModel: o.requested_model,
       returnedModel: o.returned_model,
-      sources: o.sources.map((source) => {
-        const href = retainedSourceHref(source.url);
-        return {
-          title: source.title,
-          url: source.url,
-          href,
-          domain: href ? new URL(href).hostname : "",
-        };
-      }),
+      sources: answerSources(o),
     }),
   );
   return {
@@ -196,6 +202,48 @@ export function buildReportPresentation(
     answers,
     references: new Map(answers.map((a) => [a.id, a])),
   };
+}
+
+/**
+ * Spec 012 R-15: the observation-only projection for the answers-only
+ * recovery reader. It applies the same retained-evidence checks as the ready
+ * path — ten unique bound observations, each completed with a non-empty exact
+ * question and raw answer, retained telemetry, and a valid timestamp — then
+ * returns answers with `detail: null`. No fake report, detail, measure, or
+ * rejected synthesis is constructed, and a failed check returns null so the
+ * stage can keep its ordinary failure path instead of guessing.
+ */
+export function buildObservationAnswers(
+  observations: readonly AuditObservation[],
+): AnswerPresentation[] | null {
+  if (!Array.isArray(observations) || observations.length !== 10) return null;
+  const ids = observations.map((o) => o?.prompt_id);
+  if (
+    ids.some((id) => typeof id !== "string" || !id.trim()) ||
+    new Set(ids).size !== 10 ||
+    observations.some(
+      (o) =>
+        !evidenceSchema.safeParse(o).success ||
+        o.run_status !== "completed" ||
+        !o.question.trim() ||
+        !o.raw_answer.trim() ||
+        !Number.isFinite(Date.parse(o.observed_at)),
+    )
+  )
+    return null;
+  return observations.map((o: AuditObservation, index) => ({
+    id: o.prompt_id,
+    ordinal: index + 1,
+    targetId: `report-question-${index + 1}`,
+    question: o.question,
+    rawAnswer: o.raw_answer,
+    detail: null,
+    observedAt: o.observed_at,
+    system: o.system,
+    requestedModel: o.requested_model,
+    returnedModel: o.returned_model,
+    sources: answerSources(o),
+  }));
 }
 
 /** Interpolate stored strings directly: do not normalize CRLF or whitespace. */

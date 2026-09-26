@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   extractionDraftSchema,
-  reportSynthesisSchema,
+  reportSynthesisSchemaForMethod,
   type AuditBudget,
   type AuditCallTelemetry,
   type AuditObservation,
@@ -687,7 +687,9 @@ Return exactly one assessment for each supplied prompt ID. ${reportPriorityCount
     });
 
     const parsed = parseJsonObject(text);
-    const synthesis = reportSynthesisSchema.parse({
+    const synthesis = reportSynthesisSchemaForMethod(
+      input.question_method,
+    ).parse({
       ...parsed,
       prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
     });

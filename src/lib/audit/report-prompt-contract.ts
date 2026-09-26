@@ -122,12 +122,14 @@ export function reportAssessmentInstructions(
 }
 
 /**
- * Spec 012 R-10/R-11 (B1): direct-ten findings and actions. The count is a
- * ceiling, never a quota. This guidance does not describe any exception to
- * the observed-gap rule for actions; that remains a separate decision.
+ * Spec 012 R-10/R-11 (B1) and R-13 (B2): direct-ten findings and actions. The
+ * count is a ceiling, never a quota — and B2 permits an empty priorities list
+ * when the answers support no corrective action. Code owns the later
+ * non-corrective candidate insertion; no template, candidate or flag wording
+ * is ever described to the model here.
  */
 export const DIRECT_TEN_REPORT_CONTENT_INSTRUCTIONS = [
-  "Return between one and ten key findings and between one and ten priorities, only as many as the answers support. Three supported, distinct items stay three; never pad with generic advice, repeated findings, or a restated action.",
+  "Return between one and ten key findings and between zero and ten priorities, only as many as the answers support. Three supported, distinct items stay three; never pad with generic advice, repeated findings, or a restated action. When no observed gap in the answers supports a corrective action, return an empty priorities list — never invent a gap, a defect, or an action to fill it.",
   "Each key finding explains a material observation from the answers and what it may mean for the business, qualified by its limits. Cite every prompt ID that supports it.",
   "Each priority states one concrete action with why, basis (the specific answers it relies on), a suggested owner, done_when (an observable completion check), caveat, and the evidence_prompt_ids it actually uses. Number priorities in order from 1.",
   "Non-appearance alone does not show a missing page, a website defect, or a cause. Do not diagnose one from absence.",

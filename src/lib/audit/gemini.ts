@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   extractionDraftSchema,
-  reportSynthesisSchema,
+  reportSynthesisSchemaForMethod,
   type AuditBudget,
   type AuditCallTelemetry,
   type AuditObservation,
@@ -557,7 +557,9 @@ export async function generateReportContent(
       systemInstruction,
       userContent,
       useSearch: false,
-      jsonSchema: zodSchemaToGemini(reportSynthesisSchema),
+      jsonSchema: zodSchemaToGemini(
+        reportSynthesisSchemaForMethod(input.question_method),
+      ),
       maxOutputTokens: 16384,
     });
     const parsed = safeJson<ReportSynthesis>(text);
@@ -566,7 +568,9 @@ export async function generateReportContent(
         "Report generation did not return usable structured data.",
       );
     }
-    const synthesis = reportSynthesisSchema.parse(parsed);
+    const synthesis = reportSynthesisSchemaForMethod(
+      input.question_method,
+    ).parse(parsed);
     const telemetry = geminiCompletedTelemetry({
       stage: "report",
       started_at_ms: startedAt,
