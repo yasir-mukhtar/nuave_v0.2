@@ -116,14 +116,18 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-Accepted offline: [Spec 012 B1 — report content and final header](../specs/012-evidence-first-report/B1_ACCEPTANCE.md),
-with its [worker result](../specs/012-evidence-first-report/B1_IMPLEMENTATION_RESULT.md),
-[independent review](../specs/012-evidence-first-report/B1_IMPLEMENTATION_REVIEW.md)
-and [completed handoff](../specs/012-evidence-first-report/B1_WORKER_PROMPT.md).
-Founder-authorized draft-PR publication is next; merge/deployment and live work
-remain separate. B2, combined checks and founder usefulness judgment remain
-pending, so Spec 012 is not Verified. The approved spec is pinned at `9c5d4c0`;
-broader documentation-branch promotion remains separate.
+Released: [Spec 012 B1](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)
+through [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80), merge `d93ec82`.
+
+[B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md) records the
+[independent review](../specs/012-evidence-first-report/B2_IMPLEMENTATION_REVIEW.md)
+and completed [visual/PDF follow-up](../specs/012-evidence-first-report/B2_VISUAL_VERIFICATION_RESULT.md).
+The [implementation handoff](../specs/012-evidence-first-report/B2_WORKER_PROMPT.md)
+and [visual handoff](../specs/012-evidence-first-report/B2_VISUAL_VERIFICATION_WORKER_PROMPT.md)
+are complete. Next: founder authorization for the exact B2 publication package,
+then draft PR/CI review. Spec 012 remains Approved/in progress, not Verified;
+AC-18, combined closeout and broader report-document promotion remain separate.
+The approved spec is pinned at `9c5d4c0`.
 
 The [privacy-screen follow-up R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
 was released through PR #79 as `8907d96`, after Spec 011 PR #78 as `7f34d69`.
@@ -136,8 +140,8 @@ fixes. Independent integration review passed before the PR #78 release; it did n
 mark all of Spec 012 Verified. PR #77 fixed the old contents-anchor defect;
 header labels/order and printed URL tails remain separate report work. The
 [PR A record](../specs/012-evidence-first-report/VERIFICATION.md) retains its dated
-scope; B1 is now accepted offline. B2 and promotion of the report documentation
-branch remain pending.
+scope; B1 is released and B2 is accepted offline. B2 publication and promotion
+of the report documentation branch remain pending.
 
 **Current bounded implementation:** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
 is **Verified** (2026-09-24) on preserved `2a21f85` plus the reviewed 316-file

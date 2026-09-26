@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   extractionDraftSchema,
-  reportSynthesisSchema,
+  reportSynthesisSchemaForMethod,
   type AuditBudget,
   type AuditCallTelemetry,
   type AuditObservation,
@@ -675,7 +675,9 @@ Base every claim on the observation sources. Keep the writing plain and decisive
     });
 
     const parsed = parseJsonObject(text);
-    const synthesis = reportSynthesisSchema.parse({
+    const synthesis = reportSynthesisSchemaForMethod(
+      input.question_method,
+    ).parse({
       ...parsed,
       prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION,
     });

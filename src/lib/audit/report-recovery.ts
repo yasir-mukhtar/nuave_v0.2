@@ -2,6 +2,7 @@ export const REPORT_FAILURE_CODES = [
   "REPORT_TRANSIENT_FAILURE",
   "REPORT_INTEGRITY_FAILURE",
   "REPORT_LIMIT_EXHAUSTED",
+  "REPORT_USEFULNESS_FAILURE",
 ] as const;
 
 export type ReportFailureCode = (typeof REPORT_FAILURE_CODES)[number];
@@ -15,6 +16,8 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "language_warning",
   "prohibited_claim_removed",
   "minimum_report_fallback_used",
+  "noncorrective_action_inserted",
+  "usefulness_minimum_not_met",
   "unrecoverable_report_failure",
 ] as const;
 
@@ -35,6 +38,10 @@ export function isReportFailureCode(
  * Pure UI recovery classification. Deterministic evidence failures never
  * invite another paid synthesis call. Provider/transport failures may retry
  * only while the report-stage call ceiling still has headroom.
+ * Spec 012 R-15: REPORT_USEFULNESS_FAILURE keeps the default retryable path —
+ * explicit report retry stays permitted only under the existing report-call
+ * and cost ceilings, and the answers-only recovery remains readable when the
+ * ceiling is exhausted.
  */
 export function classifyReportRecovery(
   code: ReportFailureCode | undefined,

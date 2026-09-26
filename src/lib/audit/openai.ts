@@ -9,7 +9,7 @@ import {
   extractionDraftSchema,
   publicSourceDataSchema,
   type PublicSourceData,
-  reportSynthesisSchema,
+  reportSynthesisSchemaForMethod,
   type AuditObservation,
   type AuditBudget,
   type AuditCallTelemetry,
@@ -643,7 +643,10 @@ export async function generateReportContent(
     max_output_tokens: AUDIT_CALL_LIMITS.report.max_output_tokens,
     safety_identifier: hashSafetyIdentifier(input.safety_identifier),
     text: {
-      format: zodTextFormat(reportSynthesisSchema, "nuave_audit_report"),
+      format: zodTextFormat(
+        reportSynthesisSchemaForMethod(input.question_method),
+        "nuave_audit_report",
+      ),
       verbosity: "low" as const,
     },
     input: [

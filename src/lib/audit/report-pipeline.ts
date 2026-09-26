@@ -24,6 +24,10 @@ import {
   exactReportExcerptErrors,
   repairExactReportExcerpts,
 } from "./report-excerpt";
+import {
+  selectCodeOwnedNonCorrectiveAction,
+  isExactCodeOwnedNonCorrectiveAction,
+} from "./report-noncorrective";
 import { sanitizeUnsupportedReportPriorities } from "./report-priority";
 import type {
   ReportDiagnosticCode,
@@ -421,8 +425,12 @@ export async function createValidatedAuditReport(
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
+    // Spec 012 R-13: direct-ten permits an empty priorities list in the
+    // language-only retry draft; findings still need at least one item.
     const retryShapeIsRepresentable =
-      original.key_findings.length > 0 && original.priorities.length > 0;
+      original.key_findings.length > 0 &&
+      (original.priorities.length > 0 ||
+        lockedInput.question_method === "direct-ten");
     let retrySucceeded = false;
 
     if (!retryShapeIsRepresentable) {
@@ -491,6 +499,67 @@ export async function createValidatedAuditReport(
       const finalLanguageErrors = languageErrorsFor(lockedInput, content);
       if (finalLanguageErrors.length) diagnostics.add("language_warning");
     }
+  }
+
+  // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and
+  // any permitted language-only revision: when no corrective action survives,
+  // code may insert at most one eligible non-corrective P/V action — never as
+  // filler beside a supported action. The inserted text is checked locally
+  // against the unchanged writing contract (no extra model call), and the
+  // finished report still requires one supported finding and one action.
+  if (
+    lockedInput.question_method === "direct-ten" &&
+    content.priorities.length === 0
+  ) {
+    const candidate = selectCodeOwnedNonCorrectiveAction({
+      content,
+      observations: lockedInput.observations,
+      historicalFixtureId: lockedInput.historical_fixture_id,
+      questionMethod: lockedInput.question_method,
+    });
+    if (candidate) {
+      const withCandidate = { ...content, priorities: [candidate] };
+      const baselineErrors = new Set(languageErrorsFor(lockedInput, content));
+      const templateErrors = languageErrorsFor(
+        lockedInput,
+        withCandidate,
+      ).filter((error) => !baselineErrors.has(error));
+      if (
+        templateErrors.length ||
+        !isExactCodeOwnedNonCorrectiveAction(candidate, {
+          content,
+          observations: lockedInput.observations,
+          historicalFixtureId: lockedInput.historical_fixture_id,
+          questionMethod: lockedInput.question_method,
+        })
+      ) {
+        throw new ReportPipelineError(
+          [
+            "The code-owned non-corrective action failed local validation.",
+            ...templateErrors,
+          ].join(" "),
+          422,
+          reportCalls,
+          "REPORT_INTEGRITY_FAILURE",
+          [...diagnostics, "unrecoverable_report_failure"],
+        );
+      }
+      content = withCandidate;
+      diagnostics.add("noncorrective_action_inserted");
+    }
+  }
+
+  if (
+    lockedInput.question_method === "direct-ten" &&
+    (content.key_findings.length === 0 || content.priorities.length === 0)
+  ) {
+    throw new ReportPipelineError(
+      "Report analysis did not produce a supported finding and a supported action, so no finished report is returned.",
+      422,
+      reportCalls,
+      "REPORT_USEFULNESS_FAILURE",
+      [...diagnostics, "usefulness_minimum_not_met"],
+    );
   }
 
   const annotatedReportCalls = annotateReportTelemetry(reportCalls, [

@@ -256,6 +256,91 @@ test("failed report allows a report-only retry with saved observations and ledge
   ).toHaveLength(10);
 });
 
+// Spec 012 R-15/AC-16/AC-17: a retained-usefulness failure reads as the
+// answers-only recovery — ten exact answers with provenance, the unfinished
+// notice, no report controls — and one explicit report-only retry.
+test("usefulness failure shows answers-only recovery; explicit retry finishes the report", async ({
+  page,
+}) => {
+  const calls = track(page);
+  const payloads: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/report")
+      payloads.push(request.postDataJSON() as Record<string, unknown>);
+  });
+  await toQuestions(page);
+  let failed = false;
+  await page.route("**/api/audit/report", (route) => {
+    if (failed) return route.fallback();
+    failed = true;
+    return route.fulfill({
+      status: 422,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Laporan belum memenuhi syarat laporan.",
+        code: "REPORT_USEFULNESS_FAILURE",
+        telemetry: [],
+        diagnostics: ["usefulness_minimum_not_met"],
+      }),
+    });
+  });
+  await page.getByRole("button", { name: "Mulai audit" }).click();
+  await expect(
+    page.locator('[data-local-audit-stage="report-failed"]'),
+  ).toBeVisible({ timeout: 45_000 });
+
+  // Required surface: the exact notice and all ten retained answers.
+  const notice = page.getByRole("alert").filter({
+    hasText: "Analisis Nuave belum selesai",
+  });
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText(
+    "Sepuluh jawaban model AI sudah tersimpan. Analisis belum memenuhi syarat laporan.",
+  );
+  await expect(page.locator("[data-report-answer]")).toHaveCount(10);
+  await expect(
+    page.locator('[data-report-answer="1"] [data-answer-body]'),
+  ).not.toBeEmpty();
+  await expect(
+    page
+      .locator('[data-report-answer="1"]')
+      .getByRole("heading", { name: "Sumber yang tersimpan" }),
+  ).toBeVisible();
+
+  // Forbidden surface: no classification, findings, actions, scores or any
+  // report-ready/export/print/PDF/JSON control.
+  await expect(page.getByText("Penyebutan")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /PDF|JSON|Unduh|Cetak/i }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Laporan siap")).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Report contents" }),
+  ).toHaveCount(0);
+
+  // A reload restores the same state without another request.
+  await page.reload();
+  await expect(
+    page.locator('[data-local-audit-stage="report-failed"]'),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Coba buat laporan lagi" }),
+  ).toBeVisible();
+  expect(calls["POST /api/audit/report"]).toBe(1);
+  expect(calls["POST /api/audit/run"]).toBe(1);
+
+  // The explicit retry replays the retained observations — same payload —
+  // and a supported report then replaces the recovery view.
+  await page.getByRole("button", { name: "Coba buat laporan lagi" }).click();
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout: 45_000,
+  });
+  expect(calls["POST /api/audit/run"]).toBe(1);
+  expect(calls["POST /api/audit/report"]).toBe(2);
+  expect(payloads[1]!.observations).toEqual(payloads[0]!.observations);
+  expect(payloads[1]!.context).toEqual(payloads[0]!.context);
+});
+
 test("Back and audit start obey the three-attempt report ceiling without rerunning observations", async ({
   page,
 }) => {

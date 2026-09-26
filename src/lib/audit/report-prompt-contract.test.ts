@@ -218,9 +218,15 @@ describe("Spec 012 B1 — direct-ten content instructions (AC-12)", () => {
     expect(reportContentInstructions("canonical")).toEqual([]);
   });
 
-  it("does not advertise a B2 non-corrective exception", () => {
+  // Spec 012 R-13 (B2): the model is told to return `priorities: []` when no
+  // observed gap supports a corrective action — but the code-owned candidate,
+  // template or flag wording is never advertised to it.
+  it("permits an empty list without advertising the non-corrective exception", () => {
+    expect(direct).toContain("between zero and ten priorities");
+    expect(direct).toContain("return an empty priorities list");
+    expect(direct).toContain("never invent a gap, a defect, or an action");
     expect(direct).not.toMatch(
-      /template|no observed gap|without a gap|zero priorities/i,
+      /template|candidate|preservation|pemeliharaan|pemeriksaan lanjutan|maintenance flag/i,
     );
   });
 

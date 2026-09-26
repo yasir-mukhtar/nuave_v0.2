@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-25
+> Updated: 2026-09-26
 > Stage: pre-customer, building the pipeline
 
 **Portable pause checkpoint:** code and current instructions are combined on
@@ -92,22 +92,32 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** publish the accepted offline B1 candidate as a draft PR,
-then obtain independent review of the published diff and required CI. The founder
-explicitly authorized publication on 2026-09-25. Merge, production deployment
-and live calls remain separate.
+**Next action:** founder decision on the prepared B2 publication package:
+commit/push and draft PR, followed by published-PR review and required CI.
+The [B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md) records
+independent technical PASS and accepted desktop/mobile/keyboard/zoom/PDF evidence.
+The exact package is prepared on freshly fetched main `d93ec82`; nothing has
+been committed or published for B2. Merge/deployment and AC-18 remain separate.
 
-**Spec 012 B1 accepted:** the [acceptance record](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)
-records the reviewed candidate on `8907d96`: up to ten supported items,
-evidence-led synthesis guidance, and truthful observation dates/header/contents.
-Independent review passed 305 focused tests, four probes and the affected
-browser regression, inspected all 11 PDF pages, and reused the matching worker
-canonical gate: 1,429 tests, both builds and 32 browser checks. The publication
-package preserves reviewed code/tests; only acceptance and routing records are
-added. Required PR CI remains pending on the eventual published head.
-B2, combined verification and the founder's AC-18 usefulness judgment remain
-pending; Spec 012 is Approved/in progress, not Verified. The approved spec is
-pinned at `9c5d4c0`; broader documentation promotion remains separate.
+**B1 released:** [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80)
+merged approved head `eb5483e` as `d93ec8256200b662796103246e224bd4a3800603`
+on 2026-09-25. Main CI, production deployment and preview cleanup passed.
+The earlier [B1 acceptance](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)
+retains its offline implementation evidence. B1 is the base of this B2 package.
+
+**B2 accepted offline:** constrained code-owned actions, the final usefulness
+minimum and answers-only recovery preserve the existing report/session/export
+boundaries. The [independent review](../specs/012-evidence-first-report/B2_IMPLEMENTATION_REVIEW.md)
+passed 1,460 unit tests, both builds, 33 browser tests, 22 extra assertions and
+an accounting/recovery browser regression. The [visual follow-up](../specs/012-evidence-first-report/B2_VISUAL_VERIFICATION_RESULT.md)
+checked desktop/mobile, keyboard, CSS zoom and all 11 completed-report PDF pages.
+The 25 reviewed files and all 331 product hashes match; canonical verification
+is reused for unchanged code. The 320px decorative-index wrap is cosmetic.
+
+Spec 012 remains Approved/in progress, not Verified. Combined closeout,
+AC-18's founder usefulness judgment and broader report-document promotion
+remain separate. The approved spec is pinned at `9c5d4c0`. No new live-call
+allowance is granted. Spec 011 and its finding closures remain unchanged.
 
 **Privacy R3 released:** PR #79 merged as `8907d96`; main CI, production
 deployment and preview cleanup passed on 2026-09-25. P9/P14 remain accepted
