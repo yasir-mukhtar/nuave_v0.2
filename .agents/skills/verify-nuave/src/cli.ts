@@ -298,13 +298,25 @@ async function doctorPreview(pr: number) {
     },
   ];
   if (url) {
-    const response = await fetch(`${url}/audit`).catch(() => null);
-    const html = response ? await response.text() : "";
-    checks.push({
-      name: "preview-audit-synthetic",
-      ok: !!response?.ok && html.includes(SYNTHETIC_LABEL),
-      detail: `${url}/audit → ${response?.status ?? "no answer"}`,
-    });
+    // The journey renders after hydration, so the raw HTML never carries the
+    // label; render /audit in a browser as the local doctor does.
+    const browser = await chromium.launch();
+    try {
+      const page = await browser.newPage();
+      const response = await page.goto(`${url}/audit`).catch(() => null);
+      const label = await page
+        .getByText(SYNTHETIC_LABEL, { exact: true })
+        .waitFor({ state: "visible", timeout: 30_000 })
+        .then(() => true)
+        .catch(() => false);
+      checks.push({
+        name: "preview-audit-synthetic",
+        ok: !!response?.ok() && label,
+        detail: `${url}/audit → ${response?.status() ?? "no answer"}; ${label ? "synthetic label shown" : "synthetic label missing"}`,
+      });
+    } finally {
+      await browser.close();
+    }
   }
   return printChecks(checks);
 }
