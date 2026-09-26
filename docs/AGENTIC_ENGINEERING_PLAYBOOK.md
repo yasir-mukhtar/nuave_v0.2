@@ -3,8 +3,8 @@
 > Revision: 0.2.1 / R2.1 (targeted revision of R2 `42e2045`; R1 is preserved in Git at `ac4bd62`)
 > Status: **Adopted 2026-09-26 (founder)** at review `536a6cf` + follow-up `d2d92c1`. Adopted: Part A,
 > Part B, and P-5. Section B.2 is the approved plan for the `verify-nuave` build (no separate spec).
-> P-6 decided 2026-09-26 (now in `WORKFLOW.md`). P-1 to P-4 and P-7 remain proposals. See
-> [`DECISION_LOG.md`](./DECISION_LOG.md).
+> P-6 decided 2026-09-26 (now in `WORKFLOW.md`). P-1 to P-4 and P-7 decided 2026-09-27; all
+> proposals are now decisions. See [`DECISION_LOG.md`](./DECISION_LOG.md).
 > Brief: [`docs/briefs/agentic-engineering-playbook-r2.md`](./briefs/agentic-engineering-playbook-r2.md)
 > Review applied: [`agentic-engineering-playbook-r2-review-2026-09-26.md`](./reviews/findings/agentic-engineering-playbook-r2-review-2026-09-26.md) (`360e84c`), F-1 to F-9
 > Sources: the talk via review §2, pstack at `ecc249f`, and the R1 review (see § Sources)
@@ -262,9 +262,11 @@ spec package holds only `SPEC.md` and `VERIFICATION.md`. Worker prompts, results
 out of Git unless the founder asks. Decided as P-6 on 2026-09-26; the rule now lives in
 `docs/WORKFLOW.md` (Evidence per change).
 
-### B.5 Founder proposals (not decisions, except P-5 and P-6)
+### B.5 Founder decisions (formerly proposals)
 
-P-5 and P-6 were decided on 2026-09-26 as written. The others remain proposals.
+P-5 and P-6 were decided on 2026-09-26 as written. P-1 to P-4 and P-7 were decided on 2026-09-27 as
+written: P-1 and P-4 now live in `AGENTS.md`, P-2 in `docs/WORKFLOW.md` (Specification gate), P-3 in
+`AGENTS.md`, and P-7 stays a trigger (no change until class C recurs).
 
 | ID | Proposal | Why |
 |---|---|---|
