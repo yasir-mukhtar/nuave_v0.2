@@ -1,9 +1,11 @@
 # Agentic Engineering Playbook
 
 > Revision: 0.2.1 / R2.1 (targeted revision of R2 `42e2045`; R1 is preserved in Git at `ac4bd62`)
-> Status: **In review — not adopted**
-> Brief: [`docs/briefs/agentic-engineering-playbook-r2.md`](../briefs/agentic-engineering-playbook-r2.md)
-> Review applied: [`agentic-engineering-playbook-r2-review-2026-09-26.md`](../reviews/findings/agentic-engineering-playbook-r2-review-2026-09-26.md) (`360e84c`), F-1 to F-9
+> Status: **Adopted 2026-09-26 (founder)** at review `536a6cf` + follow-up `d2d92c1`. Adopted: Part A,
+> Part B, and P-5. Section B.2 is the approved plan for the `verify-nuave` build (no separate spec).
+> P-1 to P-4, P-6, and P-7 remain proposals. See [`DECISION_LOG.md`](./DECISION_LOG.md).
+> Brief: [`docs/briefs/agentic-engineering-playbook-r2.md`](./briefs/agentic-engineering-playbook-r2.md)
+> Review applied: [`agentic-engineering-playbook-r2-review-2026-09-26.md`](./reviews/findings/agentic-engineering-playbook-r2-review-2026-09-26.md) (`360e84c`), F-1 to F-9
 > Sources: the talk via review §2, pstack at `ecc249f`, and the R1 review (see § Sources)
 
 Part A is the portable core. An agent loads Part A in one read (the lines between the `core` markers).
@@ -176,7 +178,8 @@ Nuave-specific commands appear only here.
 
 ### B.2 First slice: `verify-nuave` (one PR)
 
-**Location:** proposal P-5 below. Paths here are relative to that skill directory.
+**Location:** `.agents/skills/verify-nuave/`, with a `.claude/skills/verify-nuave` symlink to it (P-5,
+decided 2026-09-26). Paths here are relative to that skill directory.
 
 **CLI** `bin/verify-nuave` (Node/TypeScript on the Playwright library already in the repo):
 
@@ -256,7 +259,9 @@ per review. Target per change: **the PR description plus one verdict comment** (
 spec package holds only `SPEC.md` and `VERIFICATION.md`. Worker prompts, results, and manifests stay
 out of Git unless the founder asks. This changes `docs/WORKFLOW.md`, so it is proposal P-6.
 
-### B.5 Founder proposals (not decisions)
+### B.5 Founder proposals (not decisions, except P-5)
+
+P-5 was decided on 2026-09-26 as written. The others remain proposals.
 
 | ID | Proposal | Why |
 |---|---|---|
@@ -284,7 +289,7 @@ Condensed from R1 §§6–10. None of this is needed for one founder with one wr
 ## Sources
 
 - **Talk:** Lauren (poteto), 38 min, posted 2026-09-21, via the structured summary in review §2
-  ([`docs/reviews/findings/agentic-engineering-playbook-r1-review-2026-09-26.md`](../reviews/findings/agentic-engineering-playbook-r1-review-2026-09-26.md)).
+  ([`docs/reviews/findings/agentic-engineering-playbook-r1-review-2026-09-26.md`](./reviews/findings/agentic-engineering-playbook-r1-review-2026-09-26.md)).
   Timestamps above are review §2's. The raw transcript is private and was not used.
 - **pstack at `ecc249f`:**
   <https://github.com/cursor/plugins/tree/ecc249f1e306fc64ddf83c7bed16cacf7c2239db/pstack>: README,
