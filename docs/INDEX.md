@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-24
+> Updated: 2026-09-26
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -116,18 +116,26 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-Released: [Spec 012 B1](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)
-through [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80), merge `d93ec82`.
-
-[B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md) records the
+**Current report specification:** [Spec 012 — Evidence-first AI Visibility
+Report](../specs/012-evidence-first-report/SPEC.md) is **Verified with
+founder-approved exception (AC-18)** on 2026-09-26 after independent closeout
+PASS. Original approval followed [review 1](../specs/012-evidence-first-report/SPEC_REVIEW_1.md)
+on 2026-09-22.
+Both files are restored from the pinned approval commit `9c5d4c0`. A, B1 and B2
+are merged and deployed: PR #74 (`d08b9e9`), [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80)
+(`d93ec82`; [B1 acceptance](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)) and
+[PR #81](https://github.com/yasir-mukhtar/nuave_v0.2/pull/81) (`d45a944`;
+[B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md), with its
 [independent review](../specs/012-evidence-first-report/B2_IMPLEMENTATION_REVIEW.md)
-and completed [visual/PDF follow-up](../specs/012-evidence-first-report/B2_VISUAL_VERIFICATION_RESULT.md).
-The [implementation handoff](../specs/012-evidence-first-report/B2_WORKER_PROMPT.md)
-and [visual handoff](../specs/012-evidence-first-report/B2_VISUAL_VERIFICATION_WORKER_PROMPT.md)
-are complete. Next: founder authorization for the exact B2 publication package,
-then draft PR/CI review. Spec 012 remains Approved/in progress, not Verified;
-AC-18, combined closeout and broader report-document promotion remain separate.
-The approved spec is pinned at `9c5d4c0`.
+and [visual/PDF follow-up](../specs/012-evidence-first-report/B2_VISUAL_VERIFICATION_RESULT.md)).
+The founder [accepted the current report for now](./DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements)
+and deferred format and reference-clutter improvements. The original AC-18
+real-evidence comparison is unperformed and deferred. The documentation-only
+[combined closeout candidate](../specs/012-evidence-first-report/CLOSEOUT_RESULT.md)
+maps AC-01–AC-19 in [VERIFICATION.md](../specs/012-evidence-first-report/VERIFICATION.md).
+Independent review passed; the [orchestrator acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
+records Verified with the AC-18 exception. Next is publication of the
+documentation-only package under separate founder authorization.
 
 The [privacy-screen follow-up R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
 was released through PR #79 as `8907d96`, after Spec 011 PR #78 as `7f34d69`.
@@ -140,8 +148,8 @@ fixes. Independent integration review passed before the PR #78 release; it did n
 mark all of Spec 012 Verified. PR #77 fixed the old contents-anchor defect;
 header labels/order and printed URL tails remain separate report work. The
 [PR A record](../specs/012-evidence-first-report/VERIFICATION.md) retains its dated
-scope; B1 is released and B2 is accepted offline. B2 publication and promotion
-of the report documentation branch remain pending.
+scope; B1 and B2 were later released, and the report documentation promotion
+is reconciled in the closeout candidate above.
 
 **Current bounded implementation:** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
 is **Verified** (2026-09-24) on preserved `2a21f85` plus the reviewed 316-file
@@ -177,9 +185,8 @@ populated national reach and enabled confirmation without retry. It stopped
 before confirmation. The founder then accepted the reach and prepared summary.
 The [acceptance closeout review](../specs/011-smart-consultant-intake/ACCEPTANCE_CLOSEOUT_REVIEW.md)
 passes AC-00 through AC-08 with its stated limits retained. The combined main
-candidate has [independent integration PASS](../specs/011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md).
-Its [local PR package](../specs/011-smart-consultant-intake/PR_READINESS.md) is
-complete; publication approval, required CI and release remain separate.
+candidate has [independent integration PASS](../specs/011-smart-consultant-intake/MAIN_INTEGRATION_REVIEW.md)
+and was released through PR #78 (`7f34d69`).
 Do not repeat the founder question or infer another live-test gate.
 Neither meaning nor implementation approval needs repeating.
 Target customer remains optional. Follow `NOW.md`; do not rerun preparation,

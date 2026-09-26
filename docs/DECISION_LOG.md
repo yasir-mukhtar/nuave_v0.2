@@ -1,10 +1,145 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-25
+> Updated: 2026-09-26
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-26 — record Spec 012 Verified with the AC-18 exception
+
+The founder relayed independent closeout **PASS with founder-approved exception
+(AC-18), with no remaining findings**. The orchestrator matched reviewed patch
+`16835384b2daf47866ebc0135fdb241e4b3f36413686d92623eda7395c35a56d`,
+reconstructed all 17 reviewed Markdown files on `d45a944`, and records Spec 012
+**Verified with founder-approved exception (AC-18)**. See the
+[closeout acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md).
+
+The original same-evidence real before/after comparison remains unperformed
+and deferred. The founder's acceptance of the disclosed fictional sample
+supports progression; it is not a rubric PASS or proof of real synthesis
+quality. Print, zoom, emulation and fictional-evidence limits remain recorded.
+Formatting and reference-section simplification remain deferred.
+
+The reviewed candidate stays preserved. Final status changes are a separate
+local documentation package; publication needs explicit founder authorization.
+No code, tests, live calls, commits, pushes or deployment follow from this
+closeout. Spec 011 closures and USD 1.06241155 accounting remain unchanged.
+
+## 2026-09-26 — accept the current report for now and defer formatting improvements
+
+The founder said: “Generally the new report is more useful,” judged its
+substance already present, and directed: “Let's keep it for now and move
+forward.” The reference/link section is too long and distracts from reading;
+the founder explicitly accepts it for now. Simplifying the format and reducing
+reference clutter are deferred improvements, not a new implementation task.
+
+The review followed delivery of the clearly labeled fictional B2 layout PDF,
+now available locally as `review-artifacts/b2-fictional-layout-sample.pdf`.
+Its SHA-256 is
+`cdc7626ee20809f804fe5ef54f6d88d039abe44f3bf800c90806e62b1a7a5d3c`.
+The real retained-evidence before/after comparison had not been prepared.
+Record the founder's acceptance as sufficient to move forward with the current
+report, with that comparison deferred; do not claim the original AC-18
+same-evidence rubric was executed or that real model-output usefulness was
+established by the fictional sample.
+
+This supersedes report polishing and another usefulness-review round as the
+immediate next action. Complete combined acceptance/document reconciliation
+with this acceptance and its evidence limit retained. Spec 012 remains
+Approved pending that closeout, rather than automatically becoming Verified.
+No runtime change, publication, new provider call, or commercial-release
+authorization follows from this decision. See the
+[B2 acceptance record](../specs/012-evidence-first-report/B2_ACCEPTANCE.md#founder-acceptance-for-now--2026-09-26).
+
+## 2026-09-26 — approve and complete PR #81 merge and production deployment
+
+The founder said **“PR approved”**, then **“Merge”** after being told that
+merging triggers automatic production deployment after main's checks pass.
+The orchestrator confirmed approved head `25679a5`, current main `d93ec82`,
+green required `validate` and synthetic preview, mergeability and zero
+unresolved conversations. It merged
+[PR #81](https://github.com/yasir-mukhtar/nuave_v0.2/pull/81) through the
+protected PR path without an admin bypass, force push or branch deletion.
+
+Merge `d45a944674f29828bdd95bc878ce8ca07ff01818` at 08:00:49 WIB has parents
+`d93ec82` and `25679a5`, and approved tree
+`8337005d84a729292e7138c142ebc55acfb3b393`.
+[Main validation and deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36206938604)
+passed: 1,460 unit tests, both builds, 33 browser checks, the merged-PR-origin
+gate and production deployment. Deployment completed at 08:06:42 WIB, version
+`d188c76a-d1e6-4d78-b9e4-c771c16722b3`. Preview cleanup passed. A production
+`/audit` HEAD request returned HTTP 200. No live provider call was made.
+This entry carries the release facts already recorded in the
+[B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md#merge-and-deployment--2026-09-26).
+
+## 2026-09-25 — approve and complete PR #80 merge and production deployment
+
+The founder said **“PR 80 approved. Merge deploy.”** The orchestrator checked
+the approved head `eb5483e`, current main, required `validate` success, resolved
+conversations and the exact publication tree. It marked the draft ready and
+merged [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80) through the
+protected PR path without an admin bypass, force push or branch deletion.
+
+Merge `d93ec8256200b662796103246e224bd4a3800603` at 17:15:52 WIB has parents
+`8907d96` and `eb5483e`, and approved tree
+`300f6cd5eb7dca278ae67c04c47d63bdae76cd1a`.
+[Main CI and deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36123028659)
+passed: 1,429 tests, both builds, 32 browser checks, the merged-PR-origin gate
+and production deployment. Deployment completed at 17:21:04 WIB, version
+`7be82d31-20b2-4fad-9f41-90991b0f8631`.
+[Preview cleanup](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36123029058)
+passed. A production `/audit` HEAD request returned HTTP 200.
+
+This completes the approved B1 release. It supplies no live-audit/provider-call
+allowance and does not complete Spec 012: B2, combined verification and the
+founder's AC-18 usefulness judgment remain open. Spec 011 stays Verified and
+F-01/F-03/AC-07 stay closed; accounting stays USD 1.06241155 of 5. The
+[B2 worker prompt](../specs/012-evidence-first-report/B2_WORKER_PROMPT.md) is
+ready for founder handoff from main containing this merge. No worker was
+dispatched, and shared source/product and reviewed candidates were preserved.
+
+## 2026-09-25 — approve and complete PR #79 merge and production deployment
+
+The founder said **“Draft PR #79 approved. Merge deploy.”** The orchestrator
+verified current main, required `validate` success on reviewed head `dd9e405`,
+no unresolved conversations, the exact approved tree and protected merge rules.
+It marked the draft ready and merged [PR #79](https://github.com/yasir-mukhtar/nuave_v0.2/pull/79)
+through the protected PR path, with no admin bypass, force push or branch deletion.
+
+Merge commit `8907d96d10ca101f6fdd68c8c77607cd994d83f3` at 12:39:52 WIB has
+parents `7f34d69` and `dd9e405` and approved tree
+`c74a801518be9e7f3181360f52ba783dc072ecd1`. The
+[main workflow](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36099502093)
+passed validation (1,407 tests, both builds, 32 browser checks), the merged-PR
+origin gate and production deployment. Deployment finished at 12:45:09 WIB;
+Cloudflare version `f4e24bb4-4da1-48ef-9bfa-102d6d332c9e`.
+[Preview cleanup](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36099502511)
+passed. A read-only HEAD check of production `/audit` returned HTTP 200.
+
+This completes the approved release; it is not a new live audit or provider-call
+allowance. P9/P14 stay accepted cautious stops, Spec 011 stays Verified,
+F-01/F-03/AC-07 stay closed, and accounting stays USD 1.06241155 of 5.
+The local source/candidates remain preserved. Next is the founder's handoff of
+the prepared [Spec 012 B1 prompt](../specs/012-evidence-first-report/B1_WORKER_PROMPT.md),
+now pinned to main containing this release. No B1 agent was dispatched.
+
+## 2026-09-25 — approve and complete privacy-screen R3 commit and push
+
+The founder said **“Approved commit push.”** The orchestrator committed the
+exact 21-file prepared package and pushed `codex/privacy-screen-false-positives`
+to origin without a force push. Commit
+[`dd9e405c704b874483ff0165c8e61c5e2dc2908b`](https://github.com/yasir-mukhtar/nuave_v0.2/commit/dd9e405c704b874483ff0165c8e61c5e2dc2908b)
+has approved tree `c74a801518be9e7f3181360f52ba783dc072ecd1` and parent
+`7f34d69d3be0c451e238f1cddf0da62dda250eb1`. GitHub's ref and tree match;
+the publication checkout is clean and main remains unchanged.
+
+This executes the named commit/push approval. No PR, preview, workflow comment,
+merge, production deployment or live call was initiated. The draft PR and its
+automatic synthetic preview/comment remain the next founder decision. Prior
+offline verification remains valid for the unchanged product; required PR CI
+has not run. The local source handoff records this outcome separately from the
+exact published package. See the [acceptance record](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_ACCEPTANCE.md).
 
 ## 2026-09-25 — accept the privacy-screen R3 offline implementation
 
@@ -51,6 +186,57 @@ Spec 011 remains Verified for its prior scope, F-01/F-03/AC-07 remain closed,
 and the new amendment awaits implementation review. Accounting stays
 USD 1.06241155 of 5. No additional plan approval is needed within this scope.
 
+## 2026-09-25 — approve PR #78 merge and automatic production deployment
+
+The founder replied **“Approved”** to marking PR #78 ready and merging reviewed
+head `29d65f19bb4f681a0854efab2ebe13089337bc61`, explicitly including its
+automatic production deployment. The orchestrator rechecked current main,
+required CI, conversations and product hashes, marked the PR ready and merged
+through GitHub's protected PR path without bypassing checks.
+
+[PR #78](https://github.com/yasir-mukhtar/nuave_v0.2/pull/78) merged as
+`7f34d69d3be0c451e238f1cddf0da62dda250eb1` at 2026-09-24 23:54:51 UTC
+(2026-09-25 06:54:51 WIB). Its tree exactly matches approved publication tree
+`1a9e3431f674e759f061a827993d4e89e124e7c4`, with parents `4470deb` and `29d65f1`.
+Main [CI/deployment run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36075063156)
+**passed**: validation, merged-PR-origin verification and production deployment
+all succeeded. Deployment completed at 2026-09-25 06:59:22 WIB. The temporary
+preview was removed successfully, and a read-only HEAD request to production
+`/audit` returned HTTP 200. Execution details are in `docs/NOW.md` and the
+Spec 011 integration acceptance record.
+
+This approves deploying the reviewed behavior, including the recorded
+nonblocking privacy-screen limitation. It does not approve weakening that
+screen, implementing a narrower rule, a paid audit or another live provider
+call. A bounded privacy-screen proposal remains separate. No production test
+audit is included. Spec 011 stays Verified; F-01/F-03/AC-07 stay closed; Spec 012
+B1/B2 remain separate. Recorded audit accounting stays USD 1.06241155 of 5.
+
+## 2026-09-24 — approve and publish the Spec 011 draft PR package
+
+The founder replied **“Approve”** to the exact 100-file local package on
+`codex/spec011-main-integration`, including commit, branch push, draft PR,
+publication of its acceptance records, and the workflow's automatic isolated
+synthetic preview and preview-link comment. This follows independent integration
+PASS and the completed local publication checks. No further approval for these
+named actions is needed.
+
+Published commit `29d65f19bb4f681a0854efab2ebe13089337bc61` has exactly the
+approved tree `1a9e3431f674e759f061a827993d4e89e124e7c4`, based on current main
+`4470deb2553ae1413b039191a192828c93c7fcca`. Opened
+[draft PR #78](https://github.com/yasir-mukhtar/nuave_v0.2/pull/78).
+The isolated candidate is clean; the original source implementation and prior
+evidence remain preserved. Required `validate` and the authorized preview both
+**passed** on the exact published head. The
+[synthetic audit preview](https://nuave-pr-78.mail-yasirmukhtar.workers.dev/audit)
+is available. Final main remains `4470deb`, with no unresolved conversations or
+merge conflicts. The PR is still draft and unmerged; details are retained in
+`docs/NOW.md` and the integration acceptance record.
+
+The approval excludes merging to main, production deployment, live provider
+calls and unrelated publication. Spec 011 stays Verified; F-01/F-03/AC-07 stay
+closed; Spec 012 B1/B2 remain separate. All live allowances remain consumed;
+accounting stays USD 1.06241155 of 5.
 
 ## 2026-09-24 — record Spec 011 acceptance closure and Verified status
 
@@ -211,6 +397,47 @@ F-03/AC-07 remain open and Spec 011 remains Approved, not Verified.
 
 Execute the [short worker handoff](../specs/011-smart-consultant-intake/F03_PRODUCT_CORRECTION_IMPLEMENTATION_PROMPT.md)
 without seeking repeat approval for this scope.
+
+## 2026-09-22 — promote Astra v3.1 report direction; all eight decisions settled
+
+**SETTLED — founder-approved.** The founder directed promotion of the tech
+lead's published v3.1 at `316ac5b` into the next numbered specification and
+confirmed that all eight decisions, including G4, are settled. The published
+[plan](https://github.com/yasir-mukhtar/nuave_v0.2/blob/9c5d4c0f5e1ec3d59f5fd90c4f5d88ee1e1a7174/docs/drafts/NUAVE_REPORT_REDESIGN_IMPLEMENTATION_PLAN_ASTRA.md),
+[iteration prompt](https://github.com/yasir-mukhtar/nuave_v0.2/blob/9c5d4c0f5e1ec3d59f5fd90c4f5d88ee1e1a7174/docs/drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_ITERATION_PROMPT.md),
+[v2 Founder answers](https://github.com/yasir-mukhtar/nuave_v0.2/blob/9c5d4c0f5e1ec3d59f5fd90c4f5d88ee1e1a7174/docs/drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_V2_REVIEW.md), and
+[v3 review](https://github.com/yasir-mukhtar/nuave_v0.2/blob/9c5d4c0f5e1ec3d59f5fd90c4f5d88ee1e1a7174/docs/drafts/NUAVE_REPORT_REDESIGN_PLAN_ASTRA_V3_REVIEW.md) are the
+decision evidence. [Spec 012](../specs/012-evidence-first-report/SPEC.md) is the
+implementation contract, **Approved** by the founder on 2026-09-22 after
+independent review 1 (S1–S6) was applied; approval is not an implementation pass.
+
+| Decision | Settled direction |
+|---|---|
+| D-01 | All ten exact questions/full answers are visible immediately; no collapse controls (G2). |
+| D-02 | Bounded Markdown, exact raw view and copy; preserve the retained answer. |
+| D-03 | One to ten findings and one to ten actions for completed new direct-ten reports; never pad. |
+| D-04 | Presentation PR A starts from current main without waiting for Spec 011. Shared content/header B1 and template/recovery B2 wait for its verified merge; B2 consumes integrated A/B1. |
+| D-05 | Exact labels: `Bisnis Anda muncul di X dari 10 pertanyaan`, `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, `Download PDF`. G3 fixes the shared toolbar default for every report. |
+| D-06 | Final usefulness failure after repair with ten usable observations permits only retained questions/answers, sources/provenance, and unfinished-analysis recovery; findings empty, actions empty, or both qualify. No surviving analysis or partial report. |
+| D-07 | Screen and PDF have the same order and one DOM tree; no appendix or duplicate print answer tree. |
+| D-08 | G4, confirmed 2026-09-22: recovery has copy and explicit report retry within existing limits, with no print/PDF/JSON save path. |
+
+The reading order is **Hasil singkat → Jawaban model AI → Analisis Nuave →
+Yang dapat dilakukan → Tentang audit ini**. These decisions supersede the
+earlier blanket report-work deferral and conflicting direct-ten content/order
+rules. Historical methods retain their semantics. The accompanying amendments
+reconcile `PRODUCT.md`, `AUDIT.md`, `VOICE.md`, journey 06, and Spec 010's
+**Observation/report failure** row. A/B1 retain current recovery until B2.
+Spec approval must explicitly cover the proposed exact Markdown pins and
+code-owned template contract before their implementation. No runtime,
+dependency, live-provider, merge, or deployment work is authorized by this
+documentation promotion.
+
+*Reconciliation note (2026-09-26):* this entry is carried verbatim from the
+approved documentation branch at `9c5d4c0`. The draft links are pinned
+permalinks because the drafts were never merged. A/B1/B2 were later merged and
+deployed (PRs #74, #80, #81). The founder's 2026-09-26 acceptance above records
+the current report status.
 
 ## 2026-09-22 — authorize the F-03 controlled-input diagnostic
 

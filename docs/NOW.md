@@ -14,8 +14,10 @@ credentials remain outside the public repository.
 **Latest checkpoint:** [NUAVE-LIVE-REPORT-2026-09-19](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
 The founder called the completed real path great progress, noted that reaching
 it took too long, and requested this milestone be preserved. This records
-progress and pace feedback. The subsequent founder verdict is that the report
-is not yet useful enough; completing the audit experience now takes priority.
+progress and pace feedback. The founder initially judged that report not useful
+enough. On 2026-09-26, after the redesigned report sample, the founder accepted
+the current report for now and deferred formatting improvements; see the
+[current decision](./DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements).
 
 **Current bounded implementation:** [Spec 011 — Smart consultant prepared
 intake](../specs/011-smart-consultant-intake/SPEC.md) is **Verified** on 2026-09-24
@@ -92,20 +94,34 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** founder decision on the prepared B2 publication package:
-commit/push and draft PR, followed by published-PR review and required CI.
-The [B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md) records
-independent technical PASS and accepted desktop/mobile/keyboard/zoom/PDF evidence.
-The exact package is prepared on freshly fetched main `d93ec82`; nothing has
-been committed or published for B2. Merge/deployment and AC-18 remain separate.
+**Next action:** publish the documentation-only Spec 012 closeout package
+through a PR after explicit founder commit/push/PR authorization. The
+[independent closeout PASS and orchestrator acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
+record Spec 012 **Verified with founder-approved exception (AC-18)** on
+2026-09-26 against deployed `d45a944`. The original real same-evidence
+before/after comparison is unperformed and deferred; the founder accepted the
+current report for now. Formatting and reference-section simplification remain
+deferred. Existing print, zoom, emulation and fictional-evidence limits stay
+recorded. The current report code is already deployed. Selecting the next
+product capability is separate; no new provider allowance is granted.
+
+**B2 released:** [PR #81](https://github.com/yasir-mukhtar/nuave_v0.2/pull/81)
+was founder-approved and merged as `d45a944` on 2026-09-26 at 08:00:49 WIB. Its
+tree exactly matches the approved 32-file package at `25679a5`.
+[Main CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36206938604)
+passed 1,460 unit tests, both builds, 33 browser checks, the merged-PR-origin
+gate and production deployment (completed 08:06:42 WIB). Preview cleanup passed,
+and production `/audit` returned HTTP 200 on a read-only HEAD check. No live
+provider call was made. The [B2 acceptance](../specs/012-evidence-first-report/B2_ACCEPTANCE.md)
+retains the exact state, verification evidence and founder acceptance.
 
 **B1 released:** [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80)
 merged approved head `eb5483e` as `d93ec8256200b662796103246e224bd4a3800603`
 on 2026-09-25. Main CI, production deployment and preview cleanup passed.
 The earlier [B1 acceptance](../specs/012-evidence-first-report/B1_ACCEPTANCE.md)
-retains its offline implementation evidence. B1 is the base of this B2 package.
+retains its offline implementation evidence. B1 is the base of B2.
 
-**B2 accepted offline:** constrained code-owned actions, the final usefulness
+**B2 acceptance evidence:** constrained code-owned actions, the final usefulness
 minimum and answers-only recovery preserve the existing report/session/export
 boundaries. The [independent review](../specs/012-evidence-first-report/B2_IMPLEMENTATION_REVIEW.md)
 passed 1,460 unit tests, both builds, 33 browser tests, 22 extra assertions and
@@ -114,10 +130,12 @@ checked desktop/mobile, keyboard, CSS zoom and all 11 completed-report PDF pages
 The 25 reviewed files and all 331 product hashes match; canonical verification
 is reused for unchanged code. The 320px decorative-index wrap is cosmetic.
 
-Spec 012 remains Approved/in progress, not Verified. Combined closeout,
-AC-18's founder usefulness judgment and broader report-document promotion
-remain separate. The approved spec is pinned at `9c5d4c0`. No new live-call
-allowance is granted. Spec 011 and its finding closures remain unchanged.
+Spec 012 is Verified with founder-approved exception (AC-18). Independent
+closeout accepted the combined matrix and document reconciliation. The local
+package restores the approved spec and reconciles its report amendments onto
+the main baseline; documentation publication remains pending.
+The approved spec is pinned at `9c5d4c0`. No new live-call allowance is granted.
+Spec 011 and its finding closures remain unchanged.
 
 **Privacy R3 released:** PR #79 merged as `8907d96`; main CI, production
 deployment and preview cleanup passed on 2026-09-25. P9/P14 remain accepted
@@ -356,9 +374,8 @@ tests. These are implementation checks, not a naturalness or release pass.
 ## Current objective
 
 Preserve the verified Spec 011 prepared-understanding intake and truthful
-new-session path through report/download while awaiting publication approval
-for the independently reviewed, locally packaged main-integration candidate.
-AC-00 through AC-08 pass on the preserved `2a21f85` working tree
+new-session path through report/download. Its main integration was released
+through PR #78 and privacy R3 through PR #79. AC-00 through AC-08 pass on the preserved `2a21f85` working tree
 and 316-file product manifest. F-03/AC-07 are closed; F-01 remains closed.
 The independent closeout accepts the existing offline, PDF, live-preparation and
 founder-judgment evidence; no additional acceptance gate remains on this baseline.
@@ -376,13 +393,14 @@ contracts and resulting report interpretation change only to remove fabricated
 input. Preserve old records under the accepted output/retry hold. Do not expand
 this into legacy deletion, historical reactivation, or a report redesign.
 
-Report state (Spec 012): PR A merged on 2026-09-22
-(`d08b9e90e20930377873fe2fd79e2489ab9c39a6`). B1 starts only after
-Spec 011's verified merge per R-19. PR #77 (`4470deb`) fixed the old
-contents-anchor navigation defect; this candidate also exercises report-local
-navigation and browser Back on Smart v2. Header labels/order and verbatim
-`?utm_source=` link tails in printed answers remain separate report work.
-B1/B2 and the report documentation-branch promotion are not implemented here.
+Report state (Spec 012): PR A merged on 2026-09-22 (`d08b9e9`), B1 on
+2026-09-25 (`d93ec82`) and B2 on 2026-09-26 (`d45a944`), after Spec 011's
+verified merge per R-19. PR #77 (`4470deb`) fixed the old contents-anchor
+navigation defect; B1 delivered the header labels/order. Verbatim `?utm_source=`
+link tails in printed answers remain faithful exact text. They fall under the
+founder's deferred reference-clutter simplification. The combined closeout
+candidate reconciles the approved report documentation onto main; it awaits
+independent review.
 
 ## Presentation layer
 
@@ -697,14 +715,17 @@ requires explicit authorization.
   computed in code with direct denominators and failed-test context. Method copy
   is deterministic, and unsupported ranking, equivalence, guarantee, revenue,
   and causal claims are blocked before rendering.
-- Report synthesis allows at most five priorities. A delivered report still
-  requires one to five evidence-backed actions and must not invent a deficiency
-  to meet the minimum. When no corrective gap is supported, an action may
-  preserve a strength, improve its public evidence, or check an explicitly
-  untested aspect. The report retains synthesis/prompt versions and exact
+- Report synthesis allows at most ten findings and ten priorities for direct-ten
+  (Spec 012 B1; historical methods keep their limits). A delivered report still
+  requires at least one evidence-backed action and must not invent a deficiency
+  to meet the minimum. When no corrective gap is supported, only the exact
+  code-owned preservation/verification action from Spec 012 B2 may be used.
+  If findings or actions are still empty, the owner gets answers-only recovery
+  instead of a report. The report retains synthesis/prompt versions and exact
   requested/returned model provenance.
-- A delivered paid report requires 10/10 evaluable observations, one to five
-  material findings, and one to five evidence-backed actions. One or two strong
+- A delivered paid report requires 10/10 evaluable observations, one to ten
+  material findings, and one to ten evidence-backed actions for new direct-ten
+  reports (one to five for historical methods). One or two strong
   findings are sufficient. A substantive refusal is evaluable; a provider or
   policy block with no usable answer is a failed test and receives targeted
   recovery.
@@ -799,23 +820,37 @@ requires explicit authorization.
 3. The location-source instruction change, independent offline review and
    authorized one-Periksa walkthrough and founder acceptance are complete.
    Independent acceptance closeout is also complete: Spec 011 is Verified and
-   F-03/AC-07 are closed. Main integration has independent PASS and its local
-   publication package is complete. Obtain the bounded publication approval
-   described above; preserve the original source baseline and both review records.
+   F-03/AC-07 are closed. Preserve the original source baseline and both
+   review records.
+   The main integration and privacy R3 were released through PRs #78/#79.
    Do not repeat preparation or broad gates without new authority or a relevant
-   change/finding. Integration and PR readiness remain separate.
+   change/finding.
    National presence may use the existing broad-reach representation; count or
    overflow alone cannot establish it. Preserve the stated regional limitation.
    Do not repeat source checks or ask for the same facts to be
    retyped. Target customer stays optional. Preserve historical uncertainty,
    remaining acceptance limits and customer confirmation.
    No final confirmation or other live work is authorized by this closeout.
+4. Spec 012 is Verified with founder-approved exception (AC-18); see the
+   [closeout acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md).
+   Next is a documentation-only PR after explicit publication authorization.
+   Do not repeat the founder acceptance or the deferred same-evidence comparison.
+   Format/reference simplification remains deferred.
+5. The two live-flow tasks restored by Spec 012 review 1 (prepare a real-flow
+   approval scope; run the ordinary intake through real preparation to
+   report/download) were completed on 2026-09-19 by the
+   [complete real end-to-end test](../specs/009-recommendation-eligible-audit/VERIFICATION.md#complete-real-end-to-end-test--execution-2026-09-19).
+   Spec 010 AC-11 repeated the run on the deployed site on 2026-09-20. Their
+   allowances are consumed. A new real end-to-end run through the Spec 011/012
+   path needs new founder authorization; none is granted here.
 
 ## Not now
 
 - legacy-only code deletion and historical v1 delivery/resume reactivation;
-- report usefulness, excerpt/action quality and format redesign — deferred by
-  the founder on 2026-09-19 while the continuous audit flow is completed;
+- report format simplification, including the long reference/link section, and
+  the real same-evidence AC-18 comparison — deferred by the founder on
+  2026-09-26 after accepting the current report for now (the 2026-09-19
+  deferral was superseded by Spec 012);
 - real payment, durable jobs, and durable report persistence — after the
   report-quality gate; an explicitly simulated checkout and destination are in
   scope for the fixture journey;
@@ -850,8 +885,9 @@ handoffs or fabricated context, with exact approved-input continuity, old
 record preservation/hold, and the offline verification gate passing.
 Distinguish offline readiness from any subsequently authorized
 live confirmation. The earlier real report and the founder's insufficient-
-usefulness verdict remain recorded; improving that report is deferred and is
-not a completion gate for this cycle.
+usefulness verdict remain recorded. Spec 012 later redesigned the report, and
+the founder accepted it for now on 2026-09-26. Further format improvement is
+deferred and is not a completion gate for this cycle.
 
 Material changes to customer, offer, promise, or scope belong in
 [`DECISION_LOG.md`](./DECISION_LOG.md). Earlier vertical-specific and
