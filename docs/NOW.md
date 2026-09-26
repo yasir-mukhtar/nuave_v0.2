@@ -99,6 +99,13 @@ independent technical PASS and accepted desktop/mobile/keyboard/zoom/PDF evidenc
 The exact package is prepared on freshly fetched main `d93ec82`; nothing has
 been committed or published for B2. Merge/deployment and AC-18 remain separate.
 
+**Engineering track (separate from the product next action):** the founder
+adopted the [Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md)
+on 2026-09-26. Next is one PR that builds the `verify-nuave` skill in
+`.agents/skills/verify-nuave/` from the playbook's section B.2, which is its
+approved plan. A different agent then runs the skill once from a fresh session
+before it counts. The build adds no live calls, spending, or deployment.
+
 **B1 released:** [PR #80](https://github.com/yasir-mukhtar/nuave_v0.2/pull/80)
 merged approved head `eb5483e` as `d93ec8256200b662796103246e224bd4a3800603`
 on 2026-09-25. Main CI, production deployment and preview cleanup passed.

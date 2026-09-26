@@ -1,10 +1,31 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-25
+> Updated: 2026-09-26
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-26 — adopt the agentic engineering playbook; place the verify skill
+
+After independent review returned **ACCEPT** (R2.1 review with follow-up check
+`d2d92c1`, on draft `536a6cf`), the founder accepted the reviewer's
+recommendation on where the verify skill lives and asked to proceed. This
+adopts the [Agentic Engineering Playbook](./AGENTIC_ENGINEERING_PLAYBOOK.md),
+moved out of `drafts/`.
+
+- **P-5 decided as written.** The canonical skill folder is
+  `.agents/skills/verify-nuave/`, with a `.claude/skills/verify-nuave` symlink
+  pointing to it so Claude Code finds it too. The first run checks that each
+  tool in use lists the skill without being told the path.
+- **Build go-ahead.** Asked whether the build needs its own spec, the founder
+  chose: "B.2 is the go-ahead." The playbook's section B.2, including its
+  finish condition, is the approved plan for the one `verify-nuave` PR. This
+  is a one-off: the general spec rule is unchanged, and P-2 stays a proposal.
+- **Still proposals:** P-1 to P-4, P-6 and P-7. `AGENTS.md` and
+  `docs/WORKFLOW.md` are unchanged.
+
+This record grants no merge, deployment, live-call or spending authority.
 
 ## 2026-09-25 — accept the privacy-screen R3 offline implementation
 
