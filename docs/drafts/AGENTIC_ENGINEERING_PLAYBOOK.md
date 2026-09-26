@@ -1,8 +1,9 @@
 # Agentic Engineering Playbook
 
-> Revision: 0.2 / R2 (fresh rewrite; R1 is preserved in Git at `ac4bd62`)
+> Revision: 0.2.1 / R2.1 (targeted revision of R2 `42e2045`; R1 is preserved in Git at `ac4bd62`)
 > Status: **In review — not adopted**
 > Brief: [`docs/briefs/agentic-engineering-playbook-r2.md`](../briefs/agentic-engineering-playbook-r2.md)
+> Review applied: [`agentic-engineering-playbook-r2-review-2026-09-26.md`](../reviews/findings/agentic-engineering-playbook-r2-review-2026-09-26.md) (`360e84c`), F-1 to F-9
 > Sources: the talk via review §2, pstack at `ecc249f`, and the R1 review (see § Sources)
 
 Part A is the portable core. An agent loads Part A in one read (the lines between the `core` markers).
@@ -23,8 +24,9 @@ Part B binds it to Nuave. The appendix is optional hardening with activation tri
   Put it into the environment: code structure, static checks, and a verification skill any agent can run.
 - **Three levers:** verification, engineering skills, and agent-friendly architecture. [T ~07:15]
 - **Who decides what.** [P never-block-on-the-human] The owner decides product direction and
-  irreversible actions (merge, deploy, spend, contact, delete data). Reversible engineering work
-  (writing code, running tests, committing to a feature branch) goes ahead. The agent presents
+  irreversible actions: force-push, deleting production data, sending external messages [P], plus
+  merge, deploy, and spend [G; pstack's autopilot can let a PR's owner merge]. Reversible engineering
+  work (writing code, running tests, committing to a feature branch) goes ahead. The agent presents
   evidence, and the owner corrects afterwards. Do not ask "should I do X?" about reversible work.
 - **Finish condition first.** [P guide 06/07] Every task states what "done" means as a check that can
   pass or fail. "Work on it for 4 hours" is not a finish condition.
@@ -126,14 +128,16 @@ spread by copying: every copy makes the next one likelier. [T 20:43–21:31]
 
 [P shipping; not in the talk] The agent that wrote a change does not certify it. A fresh session runs
 the verify skill against the PR head and posts one verdict comment: `PASS`, `PASS+NOTES`, or `FAIL`,
-with evidence paths. Missing evidence means `FAIL / blocked`, never an inferred pass [G, from R1].
-Green CI and bot approval are not verdicts. **Evidence record:** the PR description (finish
-condition, commands run with outputs, verify-skill evidence, corrections) plus that one verdict
-comment. Nothing else. [G]
+with evidence paths. It drives the same feature on the base and on the head; if the base lacks the
+feature, it says so. [P shipping step 1] Missing evidence means `FAIL / blocked`, never an inferred
+pass [G, from R1]. Green CI and bot approval are not verdicts. **Evidence record:** the PR description
+(finish condition, commands run with outputs, verify-skill evidence, corrections) plus that one
+verdict comment. Nothing else. [G]
 **Freshness** [P]: if the stable `git patch-id` (a fingerprint of the diff that survives a rebase) is
 unchanged, the code verdict stands. Re-run only mergeability and CI. **Doc-only changes** skip
-independent verification when CI's changed-file list shows no executable file. [G] Stacked PRs: see
-the appendix.
+independent verification when the PR's diff file list shows no executable file. [G] Files that
+steer agents or CI never count as doc-only: `SKILL.md`, `features/*.md`, `AGENTS.md`, `CLAUDE.md`,
+and CI workflow files. Stacked PRs: see the appendix.
 
 ### 7. Measuring progress
 
@@ -168,7 +172,7 @@ Nuave-specific commands appear only here.
 `tests/e2e/network-guard.ts` with `offline-network.spec.ts` (no live egress offline).
 `offlineE2EServerEnv` in `tests/e2e/shared-config.ts` (blanks credentials). `pr-preview.yml`
 (isolated synthetic preview per PR). Founder authority over merge, deploy, live calls, and spend
-(`AGENTS.md`). R2 changes none of these.
+(`AGENTS.md`). R2.1 changes none of these.
 
 ### B.2 First slice: `verify-nuave` (one PR)
 
@@ -178,18 +182,21 @@ Nuave-specific commands appear only here.
 
 | Command | Behavior |
 |---|---|
-| `launch [--port 3100]` | Starts `npm run dev -- --port <p> --hostname 127.0.0.1` with env from `offlineE2EServerEnv({ NUAVE_NEW_AUDIT_ENABLED: "true", NUAVE_AUDIT_MODE: "synthetic" })`. Waits until the URL answers. Writes `{pid, port, sha, dirty, mode}` to the run's state file. |
-| `doctor [--pr <n>]` | Read-only. Local: the pid from the state file is alive, the port answers, `/audit` renders the entry screen asserted in `audit-entry.spec.ts`, mode is `synthetic`, and the state-file SHA equals `git rev-parse HEAD` (dirty tree reported). `--pr`: the preview comment's commit equals `gh pr view <n> --json headRefOid` (depends on the fix below). |
-| `drive <feature>` | Runs one feature-map recipe from its baseline state. Records every request with `collectRequests` and fails on `unexpectedExternalRequests` (`network-guard.ts`). |
+| `launch [--port 3100]` | Starts `npm run dev -- --port <p> --hostname 127.0.0.1` (`dev` is `next dev`) as its own process group, with env from `offlineE2EServerEnv({ NUAVE_NEW_AUDIT_ENABLED: "true", NUAVE_AUDIT_MODE: "synthetic" })`. Waits until the URL answers. Writes `{pgid, port, root, mode}` to the run's state file, where `root` is the checkout's absolute path (`git rev-parse --show-toplevel`). No SHA is recorded here: `next dev` hot-reloads, so it serves whatever is in the working tree, and a launch-time SHA says nothing about the code being served. |
+| `doctor [--pr <n>] [--allow-dirty]` | Read-only. Local: the process group from the state file is alive, the port answers, the process on the port was launched from the state file's `root` (fail if it came from another checkout or worktree), `/audit` renders the entry screen asserted in `audit-entry.spec.ts`, and mode is `synthetic`. Fails on a dirty tree unless `--allow-dirty` is passed. `--pr`: the preview is a fixed build, so here the SHA check stays: the preview comment's commit equals `gh pr view <n> --json headRefOid` (depends on the fix below). |
+| `drive <feature>` | Runs one feature-map recipe from its baseline state. Stamps the evidence with `git rev-parse HEAD` and a dirty flag **at drive time**. Records every request with `collectRequests` (`helpers.ts`) and fails on `unexpectedExternalRequests` (`network-guard.ts`). |
 | `capture` | Screenshot and ARIA snapshot per step, the downloaded JSON, an A4 PDF via `page.pdf()` in print media (labelled "headless, not native print"), and the network log. |
-| `cleanup` | Kills only the state-file pid. Evidence stays. |
+| `cleanup` | Stops the whole process group recorded by this run's `launch` (`npm` plus the `next dev` children it spawns), and nothing else. Evidence stays. |
 
 - **Evidence directory:** `.local-evidence/verify-nuave/<run-id>/`. It is already git-ignored, so no
   new ignore rule is needed.
-- **One paved path:** move the journey steps now inlined in `tests/e2e/smart-intake.spec.ts` into a
-  shared driver module. The specs and the CLI both import it, so selectors live in one place.
-  `tests/e2e/helpers.ts` holds only the access cookie and request checks. It is not a journey driver,
-  so wrapping it alone would not be enough.
+- **One paved path:** the journey steps are spread over three specs today: inline in
+  `tests/e2e/smart-intake.spec.ts`, `enter()` in `new-intake-journey.spec.ts:29`, and `track()` and
+  `toQuestions()` in `new-intake-glm.spec.ts:24,35`. Move all three into one shared driver module. The
+  specs and the CLI both import it, so selectors live in one place. A driver built from only one spec
+  would leave parallel ways to do the same steps (§5). `tests/e2e/helpers.ts` (77 lines:
+  `grantAccess`, `collectRequests`, `sideEffectViolations`, `assertNoSideEffects`) holds only the
+  access cookie and request checks. It is not a journey driver, so wrapping it alone would not be enough.
 - **Preview SHA fix (in scope for this slice):** `pr-preview.yml` publishes `${GITHUB_SHA}`. On
   `pull_request` events that is the merge commit, not the PR head it checked out
   (`github.event.pull_request.head.sha`). Publish the head SHA, or Doctor can never match.
@@ -201,25 +208,42 @@ Nuave-specific commands appear only here.
    `Sudah sesuai — buat pertanyaan audit`.
 3. `question-review`: "Periksa pertanyaan audit", edits, `Mulai audit`.
 4. `audit-run`: ten synthetic observations, the labelled synthetic notice, no duplicate run on reload.
-5. `report-and-recovery`: report, `Download PDF`, JSON download, and answers-only recovery. Gotchas:
-   check every PDF page for clipping, and note the known cosmetic 320 px wrap. *Open:* whether
-   recovery is user-reachable in synthetic mode. If not, record it as `verified-unreachable` with the
-   prerequisite, not as passed.
+5. `report-and-recovery`: report, `Download PDF`, and JSON download on the real user path.
+   Answers-only recovery is **not user-reachable in synthetic mode**: the only existing route to it
+   answers `/api/audit/report` with a fake 422 (`REPORT_USEFULNESS_FAILURE`) through
+   `page.route().fulfill()` (`tests/e2e/new-intake-glm.spec.ts:273`). §3's evidence standard forbids
+   that as proof of a user path, so recovery gets its own named, labelled drive:
+   `drive report-and-recovery --inject usefulness-failure`, reusing that exact route stub. Its evidence
+   is marked `fault-injected (not user-reachable in synthetic mode)`, never plain `passed`. Gotchas:
+   check every PDF page for clipping, and note the known cosmetic 320 px wrap.
+
+**Gotcha for every feature file's `Gotchas` section (a hypothesis, to confirm during the prove-once
+run, not a fact):**
+- `cleanup` may leave the port bound if it kills only the recorded `npm` process ID, because
+  `next dev` starts child processes of its own. The process-group design above assumes this; the
+  prove-once run confirms it by checking that the port is free after cleanup (finish condition (c)).
+  If it is not free, fix the stop logic. Do not widen it to kill processes this run did not start.
 
 **Finish condition:** a fresh session given only the skill, on a clean checkout of the slice's PR head:
-(a) runs launch → doctor → drive all five features → capture → cleanup; (b) evidence exists after
-cleanup and the network log shows zero unexpected external requests; (c) the port is free after
-cleanup; (d) doctor **fails** against a server launched from a different SHA (known-bad case);
-(e) `npm run verify` passes with the same e2e test count as before the refactor.
+(a) runs launch → doctor → drive all five features (recovery through its labelled fault-injected
+drive) → capture → cleanup; (b) evidence exists after cleanup, is stamped with the drive-time `HEAD`
+and dirty flag, and the network log shows zero unexpected external requests; (c) the port is free
+after cleanup; (d) doctor **fails** against a server launched from another worktree (known-bad case);
+(e) `npm run verify` passes and the e2e suites still list the same tests as before the refactor:
+30 tests from `playwright test --list` (28 `test(` blocks in the five specs matched by
+`playwright.config.ts`, two of them generated in loops) plus 3 in `preview-disabled.spec.ts` under
+`playwright.config.disabled.ts`. Counts checked at `360e84c`; re-count on the slice's base before
+starting.
 
 ### B.3 Second slice: controls from real corrections
 
-I checked each class against the PRs and the current code at `d45a944`:
+I checked each class against the PRs and the current code at `d45a944`. R2.1 re-checked the counts at
+`360e84c`, whose runtime, test, script, and workflow files are identical to `d45a944`:
 
 | # | Class | Evidence | Control (layer) | Status |
 |---|---|---|---|---|
-| A | Approved provider or system identity hard-coded in several places | PR #69 (live gate pinned to OpenCode Go → 503) and PR #71 (observation integrity pinned to one label → 422), same live run, 2026-09-20. The literal `"OpenAI Responses API"` still appears in 6 non-test `src/` sites (`contracts.ts`, `openai.ts` ×2, `production-observation-method.ts`, `questions-id-provider.ts`, `types.ts`) | One registry module exports the approved live providers and their system labels, and every gate derives from it (L1). A guard test fails when a label literal appears in non-test `src/` outside the registry (L2) | **Confirmed, recurring.** Encode |
-| B | Developer `.env.local` leaks into the "offline" e2e server (`next dev` reads it from disk, and only explicitly set keys override it) | `6a27c51` (2026-08-23 "isolate Playwright server environment"; the commit body is empty, so the trigger is inferred) and the 2026-09-19 local fix for `NUAVE_NEW_INTAKE_PREVIEW_ENABLED` (session record; never merged; the flag has since been removed). Today `NUAVE_GLM_EVIDENCE_DIR` is read by `src/` (3 sites) but not set by `offlineE2EServerEnv` | A guard test: every `process.env.NUAVE_*` read in `src/` is a key that `offlineE2EServerEnv()` sets explicitly (L2) | **Confirmed twice.** Encode. The current gap is inferred, so the implementer confirms it with the known-bad case |
+| A | Approved provider or system identity hard-coded in several places | PR #69 (live gate pinned to OpenCode Go → 503) and PR #71 (observation integrity pinned to one label → 422), same live run, 2026-09-20. The string literal `"OpenAI Responses API"` still appears 7 times in 6 non-test `src/lib/audit/` files (`types.ts:281`, `questions-id-provider.ts:60`, `production-observation-method.ts:11`, `openai.ts:568,600`, `contracts.ts:1195–1196`), plus once in the fixture `fixtures/report-golden.ts:169`. The same words also appear in comments (`contracts.ts`, `telemetry.ts`, `groq.ts`, `gemini.ts`) | One registry module exports the approved live providers and their system labels, and every gate derives from it (L1). A guard test fails when a label appears as a **string literal** (not in a comment) in non-test `src/` outside the registry (L2). Fixtures count as test code: `report-golden.ts` is imported only by `*.test.*` files and `report-presentation.fixture.ts`, which is itself imported only by tests | **Confirmed, recurring.** Encode |
+| B | Developer `.env.local` leaks into the "offline" e2e server (`next dev` reads it from disk, and only explicitly set keys override it) | `6a27c51` (2026-08-23 "isolate Playwright server environment"; the commit body is empty, so the trigger is inferred) and the 2026-09-19 local fix for `NUAVE_NEW_INTAKE_PREVIEW_ENABLED` (session record; never merged; the flag has since been removed). Today two keys read by `src/` are not set by `offlineE2EServerEnv`: `NUAVE_GLM_EVIDENCE_DIR` (2 code reads, `src/lib/intake/glm-local.ts:115,602`) and `NUAVE_LOCAL_AUDIT_PACK_DIR` (read through the constant `LOCAL_PACK_DIR_ENV`, `src/lib/audit/local-direct-ten-audit.ts:52,138`) | A guard test: every `NUAVE_*` key read in non-test `src/` is a key that `offlineE2EServerEnv()` sets explicitly (L2). It matches both `process.env.NUAVE_*` and `"NUAVE_*"` string literals, so reads through a constant are caught. **Blanking caveat:** setting a key to `""` does block `.env.local` (`@next/env` 16.3.5 `processEnv` applies a file value only when the key is `undefined` in the starting environment), but `""` is not neutral for every reader. `glm-local.ts:115` (`glmEvidenceDir`) uses `??`, so `""` would resolve to the current directory; `glm-local.ts:602` (`?.trim() \|\| undefined`) and `local-direct-ten-audit.ts:138` (`\|\|`) treat `""` as unset. Before blanking a key, make its readers treat `""` as unset, reader by reader | **Confirmed twice.** Encode. The current gap is inferred, so the implementer confirms it with the known-bad case |
 | C | Worker-runtime-incompatible API that passes under Node (`fetch` `redirect: "error"`) | PR #70, once. It was found only in production because `test:workers` runs synthetic mode (the live transport never executes) and is not part of `verify` or CI | Hold. On a second worker-only failure, promote (P-7) | **Single occurrence.** Not encoded |
 
 Each encoded control ships with its known-bad and known-good cases (§2).
@@ -239,7 +263,7 @@ out of Git unless the founder asks. This changes `docs/WORKFLOW.md`, so it is pr
 | P-2 | Relax the spec gate: internal engineering changes with no customer-visible behavior change and a checkable finish condition need no spec. The finish condition goes in the PR description. | [P] "the best spec is code". Keeps specs for product behavior |
 | P-3 | No paid tools now (no bot reviewer, cloud agents, or extra subscriptions). Revisit when §7 shows a layer-3 gap that humans keep catching. | Spending decision |
 | P-4 | Merge and deploy stay with the founder. Revisit only after the appendix's trusted-verdict item is built. | Unchanged authority; stated so it is explicit |
-| P-5 | Canonical skill directory `.agents/skills/` (so `.agents/skills/verify-nuave/`). Add a `.claude/skills/verify-nuave` symlink only if Claude Code is in use. **Check:** a fresh session in each tool in use lists `verify-nuave` without being told the path. | Devin's docs list `.agents/skills/` as loaded. Codex and Claude Code loading are **assumptions** to be proven by the check |
+| P-5 | Canonical skill directory `.agents/skills/` (so `.agents/skills/verify-nuave/`). If Claude Code is in use, add a `.claude/skills/verify-nuave` symlink pointing to it. Cursor needs nothing extra. **Check:** a fresh session in each tool in use lists `verify-nuave` without being told the path. | Documented (checked 2026-09-26): **Codex** scans `.agents/skills` in every directory from the working directory up to the repo root and follows symlinked skill folders ([Codex docs](https://developers.openai.com/codex/skills), now redirecting to learn.chatgpt.com/docs/build-skills). **Claude Code** loads project skills from `.claude/skills/<name>/SKILL.md`, from the start directory up to the repo root (only up to the worktree root in a linked worktree); a `<name>` entry may be a symlink to a directory elsewhere; `.agents/skills` is not among its listed locations ([Claude Code docs](https://code.claude.com/docs/en/skills)). **Cursor** loads `.agents/skills/` and `.cursor/skills/`, plus `.claude/skills/` and `.codex/skills/` for compatibility ([Cursor docs](https://cursor.com/docs/context/skills)); it says nothing about symlinks, which does not matter here since it reads `.agents/skills/` directly. Devin's docs list `.agents/skills/` as loaded (per R2, not re-checked). **Assumptions:** that Claude Code does not also read `.agents/skills` (only its absence from the listed locations was confirmed); that the symlink resolves correctly when committed to Git on every contributor's OS. The check proves both |
 | P-6 | Amend `docs/WORKFLOW.md` to the per-change evidence rule in B.4. | Removes the current bottleneck (review R-1) |
 | P-7 | Add `npm run test:workers` to CI or `verify` when class C recurs. | Changes the canonical gate |
 
@@ -270,7 +294,8 @@ Condensed from R1 §§6–10. None of this is needed for one founder with one wr
   codebase as memory, paved path, lint-first gardening, the workaround-comment mechanism, dependency
   boundaries, outer loop last. *pstack:* Launch/Doctor/Drive/Evidence/Cleanup anatomy, prove-once,
   the maintenance pass and its outcomes, the evidence standard, playbook steps, never-block-on-the-human,
-  finish conditions, per-PR independent verdicts, stack landing, patch-id freshness. *This guide [G]:*
-  the evidence record as PR description + verdict comment, the doc-only skip, the corrections-per-change
+  finish conditions, per-PR independent verdicts with a base-versus-head comparison, stack landing,
+  patch-id freshness. *This guide [G]:* the evidence record as PR description + verdict comment, the
+  doc-only skip and its exclusions, merge/deploy/spend as owner-only actions, the corrections-per-change
   format, the reject-the-class standard with a baseline and missing-evidence-means-blocked (salvaged
   from R1), the Nuave binding, and the appendix triggers.
