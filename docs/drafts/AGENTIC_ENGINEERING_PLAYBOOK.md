@@ -1,441 +1,276 @@
 # Agentic Engineering Playbook
 
-> Revision: **0.1 / R1** · 2026-09-26
+> Revision: 0.2 / R2 (fresh rewrite; R1 is preserved in Git at `ac4bd62`)
 > Status: **In review — not adopted**
-> Purpose: A portable playbook for establishing and improving evidence-driven AI engineering in existing and new projects.
-> Publication of this draft does not change its host repository's workflow, grant execution permissions, or certify an implementation.
+> Brief: [`docs/briefs/agentic-engineering-playbook-r2.md`](../briefs/agentic-engineering-playbook-r2.md)
+> Sources: the talk via review §2, pstack at `ecc249f`, and the R1 review (see § Sources)
 
-## 0. Read first
+Part A is the portable core. An agent loads Part A in one read (the lines between the `core` markers).
+Part B binds it to Nuave. The appendix is optional hardening with activation triggers. Source tags:
+**[T]** = the talk, **[P]** = pstack, **[G]** = this guide's own addition.
 
-**Build an environment in which correct work is the easiest path, known mistakes fail early, and a separate verifier proves the behavior before the change lands.**
+<!-- core:start -->
+## Part A — Portable core
 
-This is a bootstrap and improvement playbook, not a substitute for architecture, tests, tools, or judgment. Its success is measured by the controls it materializes, not by how many agents promise to follow it. A new session should need a short project entry point, the relevant feature map, and the relevant skill—not this entire document and its history.
+### 1. The idea
 
-Use it in one of two modes:
+- **Trust limits scale, not model capability.** [T 00:19–00:47] The *trust graph* plots how many agents
+  you can leave running unsupervised. The hardest stage to leave is 1–5 agents, where you babysit
+  every chat. [T ~05:30, 05:38–06:05]
+- **Build a Michelin kitchen, not a factory.** [T 00:57–01:55] You own the dish. Your work is the
+  stations, the equipment, and the training.
+- **"I am the bottleneck."** [T 04:37–04:59] Move what you know out of your head and out of documents.
+  Put it into the environment: code structure, static checks, and a verification skill any agent can run.
+- **Three levers:** verification, engineering skills, and agent-friendly architecture. [T ~07:15]
+- **Who decides what.** [P never-block-on-the-human] The owner decides product direction and
+  irreversible actions (merge, deploy, spend, contact, delete data). Reversible engineering work
+  (writing code, running tests, committing to a feature branch) goes ahead. The agent presents
+  evidence, and the owner corrects afterwards. Do not ask "should I do X?" about reversible work.
+- **Finish condition first.** [P guide 06/07] Every task states what "done" means as a check that can
+  pass or fail. "Work on it for 4 hours" is not a finish condition.
 
-- **Existing project:** inspect the actual system; preserve effective controls; close the most consequential gaps through small, approved changes.
-- **New project:** establish a minimal safe scaffold; build one runnable slice and its verification together; add stronger controls as real surfaces and risks appear.
+### 2. The correction loop
 
-Neither mode authorizes a rewrite, new infrastructure spending, production access, or automatic merging. The project's existing authority and permission boundaries remain in force until its owner explicitly adopts a bounded change. Resolve conflicts rather than silently replacing local rules.
+Every time a human corrects an agent, put the lesson into the **highest layer that works**. [T ~16:30,
+36:09–37:03]
 
-### Basis and limits
-
-This playbook synthesizes three supplied inputs: the operating thesis pasted in the originating conversation; GPT-5.6 Sol's structured extraction of Lauren's talk; and the subsequent discussion about a portable meta-playbook. The original [video link](https://x.com/poteto/status/2102050467505430555) is a provenance pointer. The author of this draft has **not independently verified the recording or its transcript**. Do not attribute every prescription here to Lauren or treat the earlier extraction as a verbatim primary source.
-
-**Source-inspired core:** trust before throughput; a kitchen/environment designed for capable workers; product knowledge in feature maps; real-system control and empirical verification; engineering playbooks; the five enforcement layers; codebase as memory; gardening; and outer-loop automation after a trustworthy inner loop. Independent per-PR verification and bottom-up landing are also explicit in the supplied operating thesis.
-
-**Design additions in this draft:** adoption stages, project binding, permissions, evidence records, blocked-state handling, secure verdict publication, conservative freshness rules, and acceptance tests for the workflow itself. These are proposals for review, not claims about the speaker's exact implementation. Technical references are collected in section 13.
-
-### Reading routes
-
-| Reader | Start with |
+| Layer | Worked example |
 |---|---|
-| Adopting orchestrator | Sections 1–3, then assess the remaining requirements against the repository |
-| Implementer after adoption | The project's short workflow, assigned scope, surface map, and selected skill |
-| Independent verifier | Sections 5–8 and the project's bound verification procedure |
-| Maintainer/gardener | Sections 2, 9, and 10 |
-| Reviewer of this draft | Appendix B, checking the whole document for contradictions |
+| 1. Codebase | An agent calls the payment API directly. Make the client module the only export, so the wrong call cannot be written. |
+| 2. Static analysis | Agents keep importing server code into the browser bundle. Add an import-boundary lint rule. |
+| 3. Rules / bot review | "Never log a request body" cannot be checked statically yet. Add a rule or bot-review check. |
+| 4. Skills | Agents debug slow pages by guessing. Add "take a trace first" to the perf playbook. |
+| 5. Style guide / human review | A naming taste you cannot automate. Treat it as a *discovery source* for layers 1–4, not a control. |
 
-## 1. Operating model and invariants
+Layers 3–5 are guidance, and agents or operators can skip them. [T 17:08–18:36] Standard for a new
+layer-1/2 control [G, from R1]: **reject the class, not the instance.** Each rule ships with a
+known-bad case that fails and a known-good case that passes. CI must actually run it. Existing
+violations go into an explicit baseline that blocks new ones.
 
-Trust means **bounded confidence supported by observable evidence**, not certainty that all behavior is correct. Automated checks reject specified error classes; they do not prove the absence of every defect. Model agreement is not independent empirical evidence.
+**Encode the rule, delete the instruction.** [P encode-lessons-in-structure] If you write the same
+instruction a second time, turn it into a lint rule, a type, a runtime check, or a script, then delete
+the prose. "The instruction is the symptom."
 
-The working loop is:
+### 3. Verification skill (build this first)
 
-```text
-approved outcome and scope
-  -> small implementation
-  -> writer self-check
-  -> independent verification of the exact candidate
-  -> fresh, authorized landing
-  -> correction promoted into a durable control
-```
+A verification skill is a **CLI plus a feature map**, kept in the repository's skill directory.
+[T 09:16–11:34] It replaces the throwaway probe scripts agents write in each session, and it becomes
+critical infrastructure. [T 11:42–12:20] It proves *correctness* only, not performance or code
+quality. [T 12:39–13:06]
 
-The following invariants use **must** for adoption requirements. **Should** means a default whose deviation needs a concrete reason. Optional mechanisms are identified explicitly.
+**Anatomy** [P create-verification-skill]. `SKILL.md` has these sections:
 
-| ID | Invariant |
+- **Launch:** the exact start command, how to tell the app is ready, and how to shut it down.
+- **Doctor:** one read-only check that the instance is worth driving: right process, right build/SHA,
+  our port, right mode.
+- **Drive:** the CLI, using real, stable handles (ARIA roles and names, routes), never coordinates.
+- **Evidence:** what to capture and where it goes.
+- **Cleanup:** kill only what this run started. Keep the evidence.
+- **Helpers:** executable scripts, each with its invocation shown in the skill body.
+
+**Feature map** (`features/`): a `README.md` index (baseline setup, driving conventions, proof rules)
+plus one file per user-facing feature. Each feature file has exactly four H2 sections: `Sub-features`,
+`How to get to it (user POV)`, `Driving it with <cli>`, `Gotchas`. The map says what exists, how a user
+reaches it, and what end state proves it works. It also lets agents interpret vague bug reports.
+[T 10:13–11:34]
+
+**Evidence standard** [P]: use the real user path, not internal setters or test-only endpoints.
+Capture the action *and* the resulting state. Check side effects (downloads, stored values, network
+requests). Mock only where a production boundary already isolates the external system. Confirm by
+observation what a "dry-run" or synthetic mode actually skips.
+
+**Prove once.** A skill that has never been run is a draft. Before it counts, a fresh session runs
+launch → doctor → drive one feature → capture → cleanup, then confirms the evidence survived cleanup.
+[P]
+
+**Maintenance pass** [P maintain-verification-skill]: one read-only source reader per feature, then
+one live pass that drives every feature. The outcome is exactly one of `clean`, `changed` (one PR,
+edits confined to the skill directory), or `blocked` (with the named blocker). It never edits product
+code. A product regression gets reported, not written out of the docs. The talk runs this as an
+automation. [T 10:13–11:34] Start manually, after any PR that changes a user-facing flow.
+
+### 4. Engineering playbooks
+
+Short task-type recipes that teach agents to engineer your way. [T 13:06–14:50] Install pstack where
+your tool supports it. Otherwise keep a starter set in the skill directory:
+
+- **Bug fix:** reproduce on the real surface with the verify skill → narrow down the cause with
+  runtime evidence → smallest fix the evidence supports → re-run the same repro. Commit the failing
+  test before the fix when a cheap test path exists. [P bug-fix]
+- **Feature:** name the data shape first → build in small verifiable units → verify on the matching
+  surface. "Inconclusive" or wrong surface is not a pass. [P feature]
+- **Investigation:** read-only. Answer with file and line citations and runtime evidence where it
+  matters. Change nothing. [P investigation]
+
+**Growth:** after a long or painful task, reflect and edit the relevant playbook. [P reflect] Don't
+write a policy document. If a lesson can go into layer 1–2, it goes there instead (§2).
+
+### 5. Codebase as memory and gardening
+
+Agents extend the patterns they read, so the codebase is their memory. [T 15:41–16:23] Anti-patterns
+spread by copying: every copy makes the next one likelier. [T 20:43–21:31]
+
+- **One paved path per concern.** Make the shortcut the right path, even if that is "annoying for
+  humans." [T 19:01–20:29]
+- **Lint before cleanup.** When you see a bad pattern, add the rule first to stop it spreading, with a
+  baseline for existing cases. Then delete the tech debt. [T 24:24–26:36]
+- **At least one enforced import/dependency boundary per major runtime split** (server/browser,
+  worker/node, active/archived code). [T 27:45–29:09 main→renderer example]
+- **Workaround comments license more workarounds.** [T 23:00–24:24] Agents read a nearby "hack because
+  X" comment as permission. Treat *workaround + justifying comment* as a lint-worthy smell. Comments
+  that state a real external constraint may stay. You may be proportionate, but name the mechanism
+  when you allow one. [G]
+- **Quality bar:** would you be happy if the next agent copied this? [T 24:24–26:36]
+
+### 6. Writer ≠ verifier, and landing (single PR)
+
+[P shipping; not in the talk] The agent that wrote a change does not certify it. A fresh session runs
+the verify skill against the PR head and posts one verdict comment: `PASS`, `PASS+NOTES`, or `FAIL`,
+with evidence paths. Missing evidence means `FAIL / blocked`, never an inferred pass [G, from R1].
+Green CI and bot approval are not verdicts. **Evidence record:** the PR description (finish
+condition, commands run with outputs, verify-skill evidence, corrections) plus that one verdict
+comment. Nothing else. [G]
+**Freshness** [P]: if the stable `git patch-id` (a fingerprint of the diff that survives a rebase) is
+unchanged, the code verdict stands. Re-run only mergeability and CI. **Doc-only changes** skip
+independent verification when CI's changed-file list shows no executable file. [G] Stacked PRs: see
+the appendix.
+
+### 7. Measuring progress
+
+Primary signal: **human corrections per merged change, and the layer each was promoted to.** Record
+them in the PR description as `Corrections: <n> — <what> → <layer/control or "not promoted: why">`, not
+in a new tracker. [G, following T's axis] The trend you want: fewer corrections, and more of them
+landing in layers 1–2. Secondary signals: escaped defects (found after merge), and time from owner
+approval to merge. **PR count and lines of code are not targets.** [T 04:21; P README]
+
+### 8. New-project bootstrap
+
+Greenfield is where strictness is cheapest, so lock it down early. [T ~07:15] In order:
+
+1. One paved-path module layout with an **enforced import rule** between runtime splits.
+2. Lint, typecheck, and **one** canonical verify command that CI runs and that makes no live calls.
+3. As soon as anything runs: the verification skill + feature map (§3), proved once.
+4. Playbooks (§4): install pstack or copy the starter set.
+5. The outer loop comes last: bots that react to alerts and reports, reusing the same skills. It needs
+   little infrastructure and no "company brain." [T 32:37–35:15, 33:08–33:36]
+<!-- core:end -->
+
+## Part B — Nuave binding
+
+Kept in this file rather than a companion so the founder reviews one artifact. It sits outside the
+core markers, so the core stays portable. After adoption it moves into the skill directory.
+Nuave-specific commands appear only here.
+
+### B.1 Controls to keep (from review §4.1)
+
+`npm run verify` (offline gate) and the required `validate` check. Branch protection plus the
+`verify-main-origin` deploy gate. `tests/archive-isolation.guard.test.ts` (import boundary).
+`tests/e2e/network-guard.ts` with `offline-network.spec.ts` (no live egress offline).
+`offlineE2EServerEnv` in `tests/e2e/shared-config.ts` (blanks credentials). `pr-preview.yml`
+(isolated synthetic preview per PR). Founder authority over merge, deploy, live calls, and spend
+(`AGENTS.md`). R2 changes none of these.
+
+### B.2 First slice: `verify-nuave` (one PR)
+
+**Location:** proposal P-5 below. Paths here are relative to that skill directory.
+
+**CLI** `bin/verify-nuave` (Node/TypeScript on the Playwright library already in the repo):
+
+| Command | Behavior |
 |---|---|
-| I-01 | The writer must not issue the independent certification of its own patch. |
-| I-02 | Every required behavioral claim must have an appropriate observable check; a build or approving bot alone is insufficient. |
-| I-03 | Verification must identify the exact candidate, comparison base, environment, and evidence. Stale or mismatched evidence must not authorize landing. |
-| I-04 | Missing capability or required evidence must remain a visible block, not become an inferred pass. |
-| I-05 | Repeated failure classes must move toward stronger, proportionate enforcement, rather than accumulating warnings in chat. |
-| I-06 | Each concern must have a nominated supported path. Alternate implementations must not silently become competing defaults. |
-| I-07 | Only an authorized actor may merge or release, and only within the approved scope. Passing verification does not grant permission. |
-| I-08 | Work must preserve unrelated changes, user data, evidence integrity, and the ability to recover. |
-| I-09 | Parallelism must not exceed the system's ability to independently verify and safely integrate the resulting work. |
+| `launch [--port 3100]` | Starts `npm run dev -- --port <p> --hostname 127.0.0.1` with env from `offlineE2EServerEnv({ NUAVE_NEW_AUDIT_ENABLED: "true", NUAVE_AUDIT_MODE: "synthetic" })`. Waits until the URL answers. Writes `{pid, port, sha, dirty, mode}` to the run's state file. |
+| `doctor [--pr <n>]` | Read-only. Local: the pid from the state file is alive, the port answers, `/audit` renders the entry screen asserted in `audit-entry.spec.ts`, mode is `synthetic`, and the state-file SHA equals `git rev-parse HEAD` (dirty tree reported). `--pr`: the preview comment's commit equals `gh pr view <n> --json headRefOid` (depends on the fix below). |
+| `drive <feature>` | Runs one feature-map recipe from its baseline state. Records every request with `collectRequests` and fails on `unexpectedExternalRequests` (`network-guard.ts`). |
+| `capture` | Screenshot and ARIA snapshot per step, the downloaded JSON, an A4 PDF via `page.pdf()` in print media (labelled "headless, not native print"), and the network log. |
+| `cleanup` | Kills only the state-file pid. Evidence stays. |
 
-### Responsibilities, not a mandatory organization chart
+- **Evidence directory:** `.local-evidence/verify-nuave/<run-id>/`. It is already git-ignored, so no
+  new ignore rule is needed.
+- **One paved path:** move the journey steps now inlined in `tests/e2e/smart-intake.spec.ts` into a
+  shared driver module. The specs and the CLI both import it, so selectors live in one place.
+  `tests/e2e/helpers.ts` holds only the access cookie and request checks. It is not a journey driver,
+  so wrapping it alone would not be enough.
+- **Preview SHA fix (in scope for this slice):** `pr-preview.yml` publishes `${GITHUB_SHA}`. On
+  `pull_request` events that is the merge commit, not the PR head it checked out
+  (`github.event.pull_request.head.sha`). Publish the head SHA, or Doctor can never match.
 
-The **owner** decides product intent, acceptable risk, spending, and publication authority. The **orchestrator** defines bounded work, selects context and verification, and manages dependencies. The **writer** implements and self-checks. The **verifier** independently tests the candidate and reports findings. The **lander** checks freshness, permissions, and integration before merging. The **gardener** removes misleading patterns and promotes lessons.
+**Feature map** (`features/`, four H2 sections each):
 
-One person or service may coordinate several roles. Writer and verifier must remain separate execution sessions for a given candidate; a different model is optional. The writer must not control the certification/merge credentials in an automatically enforced setup. A reviewer that supplies a corrective production patch becomes a contributor to that patch: another independent verifier must certify the revised candidate. Reviewer-only probes kept outside the product patch do not make the verifier its author.
+1. `audit-entry`: landing call-to-action → `/audit` → brand and URL entry, plus its validation.
+2. `smart-intake-summary`: "Ini yang Nuave pahami." summary, row edits, focus, then
+   `Sudah sesuai — buat pertanyaan audit`.
+3. `question-review`: "Periksa pertanyaan audit", edits, `Mulai audit`.
+4. `audit-run`: ten synthetic observations, the labelled synthetic notice, no duplicate run on reload.
+5. `report-and-recovery`: report, `Download PDF`, JSON download, and answers-only recovery. Gotchas:
+   check every PDF page for clipping, and note the known cosmetic 320 px wrap. *Open:* whether
+   recovery is user-reachable in synthetic mode. If not, record it as `verified-unreachable` with the
+   prerequisite, not as passed.
 
-## 2. Encode knowledge at the strongest appropriate layer
+**Finish condition:** a fresh session given only the skill, on a clean checkout of the slice's PR head:
+(a) runs launch → doctor → drive all five features → capture → cleanup; (b) evidence exists after
+cleanup and the network log shows zero unexpected external requests; (c) the port is free after
+cleanup; (d) doctor **fails** against a server launched from a different SHA (known-bad case);
+(e) `npm run verify` passes with the same e2e test count as before the refactor.
 
-This is an **enforcement priority**, not a demand to finish all architectural work before writing a test.
+### B.3 Second slice: controls from real corrections
 
-| Priority | Layer | What to encode |
+I checked each class against the PRs and the current code at `d45a944`:
+
+| # | Class | Evidence | Control (layer) | Status |
+|---|---|---|---|---|
+| A | Approved provider or system identity hard-coded in several places | PR #69 (live gate pinned to OpenCode Go → 503) and PR #71 (observation integrity pinned to one label → 422), same live run, 2026-09-20. The literal `"OpenAI Responses API"` still appears in 6 non-test `src/` sites (`contracts.ts`, `openai.ts` ×2, `production-observation-method.ts`, `questions-id-provider.ts`, `types.ts`) | One registry module exports the approved live providers and their system labels, and every gate derives from it (L1). A guard test fails when a label literal appears in non-test `src/` outside the registry (L2) | **Confirmed, recurring.** Encode |
+| B | Developer `.env.local` leaks into the "offline" e2e server (`next dev` reads it from disk, and only explicitly set keys override it) | `6a27c51` (2026-08-23 "isolate Playwright server environment"; the commit body is empty, so the trigger is inferred) and the 2026-09-19 local fix for `NUAVE_NEW_INTAKE_PREVIEW_ENABLED` (session record; never merged; the flag has since been removed). Today `NUAVE_GLM_EVIDENCE_DIR` is read by `src/` (3 sites) but not set by `offlineE2EServerEnv` | A guard test: every `process.env.NUAVE_*` read in `src/` is a key that `offlineE2EServerEnv()` sets explicitly (L2) | **Confirmed twice.** Encode. The current gap is inferred, so the implementer confirms it with the known-bad case |
+| C | Worker-runtime-incompatible API that passes under Node (`fetch` `redirect: "error"`) | PR #70, once. It was found only in production because `test:workers` runs synthetic mode (the live transport never executes) and is not part of `verify` or CI | Hold. On a second worker-only failure, promote (P-7) | **Single occurrence.** Not encoded |
+
+Each encoded control ships with its known-bad and known-good cases (§2).
+
+### B.4 Goal: fewer artifacts per change
+
+Specs 011–012 produced 38 and 12 Markdown files, prompt/result pairs, and 316–331-file hash manifests
+per review. Target per change: **the PR description plus one verdict comment** (§6). A product-behavior
+spec package holds only `SPEC.md` and `VERIFICATION.md`. Worker prompts, results, and manifests stay
+out of Git unless the founder asks. This changes `docs/WORKFLOW.md`, so it is proposal P-6.
+
+### B.5 Founder proposals (not decisions)
+
+| ID | Proposal | Why |
 |---|---|---|
-| 1 | Architecture, types, data structures, module boundaries | Ownership, valid states, permitted dependencies, one supported execution path |
-| 2 | Compiler, static analysis, tests, CI | Mechanically detectable violations and reproducible regressions |
-| 3 | Rules and review/bug bots | Useful checks not yet reliable or economical as hard failures |
-| 4 | Versioned skills and playbooks | Investigation, operation, evidence collection, and engineering methods |
-| 5 | Style guidance and human review | Irreducible product judgment and genuinely exceptional decisions |
-
-### Architecture: make the supported path obvious
-
-Keep examples short, current, and safe to copy. Collocate behavior where it clarifies ownership. Expose explicit contracts between features, server/client boundaries, and external services. Prefer shared constructors and validated state transitions over repeated checks and casts at call sites.
-
-Remove unused competing paths after checking callers and compatibility obligations. When a migration must coexist with an older implementation, isolate it behind a named boundary, prevent new callers, and specify an owner and removal condition. Do not delete retained customer records or audit evidence to satisfy a cleanliness goal. Multiple provider adapters behind one supported interface are not automatically multiple architectures.
-
-Treat repeated escape hatches, unchecked casts, and duplicated workarounds as investigation signals—not proof that a rewrite is necessary. Keep the repair proportionate. Do not universally ban comments, `useEffect`, abstractions, or a particular library because one source project did; target demonstrated harmful patterns. Comments that explain a real invariant or external constraint can remain useful.
-
-### Static controls: reject the class, not just the reported instance
-
-When a rule is objective, implement it in the existing check system where practical. Examples include forbidden runtime imports, server-only dependencies in client code, an invalid lockfile shape, or bypasses of a common validation boundary. Types/static rules belong here; runtime and integration regressions are equally legitimate hard controls when behavior cannot be checked statically.
-
-Every new guard needs a known-bad case that fails and a valid case that passes. Confirm CI actually invokes it with failure propagated. Start with the highest-risk boundaries, not a repository-wide tooling migration. Where legacy violations cannot be fixed safely now, use an explicit baseline that prevents new violations and has a removal owner. Blanket ignores, unlimited suppressions, and a warning nobody acts on are not equivalent to enforcement.
-
-## 3. Adoption: materialize, do not merely document
-
-### 3.1 Bind the portable playbook to the project
-
-Use an existing workflow document if possible. Create a new binding only when no suitable canonical location exists. A binding records concrete answers to the following—not a second product specification:
-
-| Binding | Required project decision |
-|---|---|
-| Authority | Canonical product/spec sources; workflow owner; approved playbook revision |
-| Scope | Active surfaces, protected data/contracts, permitted changes, adoption target |
-| Work routing | Task/PR location, branch/worktree practice, context entry point |
-| Commands | Exact setup, fast checks, full gate, surface verification, and cleanup commands |
-| Environment | Toolchain, fixtures, services, isolation, runnable URL/binary, revision identity |
-| Independence | How a separate verifier is started; what it can read, execute, and publish |
-| Evidence | Required artifacts, access, redaction, retention, and a machine-readable record format if automated |
-| Landing | Trunk, gate names, trusted publisher, freshness check, authorized merger, release policy |
-| Limits | Spend/call/iteration/concurrency limits, stop conditions, exception authority |
-| Maintenance | Owners and triggers for refreshing maps, skills, rules, and this binding |
-
-Mark unresolved values **unknown**; never invent a command, integration, permission, or installed capability. Map existing files to these responsibilities before creating new ones. `AGENTS.md` should route to the binding and task-specific skills, not duplicate them. Tool-specific instruction files should point to the same authority where supported.
-
-### 3.2 Existing project: assess before changing
-
-Inspect current code, scripts, workflows, applicable protection settings, representative recent PRs, and accessible evidence—not just plans or historical summaries. Distinguish **declared**, **implemented**, **exercised**, and **enforced**. An inaccessible setting is unverified, not absent. Do not rerun costly or sensitive work merely to complete an inventory.
-
-Produce one compact assessment in the project's normal task location:
-
-```text
-control / current evidence and revision / maturity
-failure or exposure / proposed hardest appropriate layer
-KEEP | IMPROVE | ADD | DEFER | NOT APPLICABLE
-smallest change / acceptance test / dependency / owner
-```
-
-Prioritize by harm, recurrence, exposure, and verification cost. Preserve working conventions. Obtain approval for the bounded adoption plan; then implement its controls through the existing approved workflow until the new one is independently demonstrated and adopted. Do not use a proposed gate to certify its own installation.
-
-Pilot one representative change. Add the smallest missing capability that closes its trust loop. Evaluate broader rollout only after the pilot passes section 10. A weak workflow does not justify pausing all useful product work for an engineering-platform rebuild.
-
-### 3.3 New project: bootstrap progressively
-
-Before substantive product implementation, establish a short authority/scope record, one directory/module convention, repeatable setup, available language/static checks, a canonical verification entry point, safe test credentials/fixtures, and explicit writer/verifier/merge responsibilities.
-
-For an empty repository, the owner may authorize a minimal seed commit that creates these foundations. Record that bootstrap exception; it is not evidence of an already enforced PR process. The first runnable slice must add real surface verification, a small feature map, and an independently exercised handoff before it is treated as verified product work.
-
-Do not fabricate checks for nonexistent surfaces. A placeholder verification command that always succeeds is not a gate. Where no independent runner is available, continue authorized prototyping but keep it explicitly uncertified and unshipped under this workflow. A separate approved prototype policy must not be relabeled as verified delivery.
-
-### 3.4 Assess maturity per dimension
-
-Assess architecture, automated checks, product memory, runnable control, independent proof, and landing separately. Do not average away a missing critical gate or assign an unsupported percentage.
-
-| Level | Evidence required |
-|---|---|
-| L0 — Prompt-driven | Behavior depends on individual sessions and manual reconstruction |
-| L1 — Documented | Current authority and procedures are discoverable |
-| L2 — Guarded | Applicable machine checks run, and known-bad inputs demonstrate rejection |
-| L3 — Empirically verifiable | A fresh agent can operate a real surface and retain evidence |
-| L4 — Independently certified | A separate verifier produces fresh evidence and landing enforces its verdict |
-| L5 — Safely parallelizable | Isolated units integrate with dependency-aware verification and bounded concurrency |
-| L6 — Autonomous intake | Authorized external signals feed a reliable, bounded verify-and-land loop |
-
-Target L2 for the initial scaffold and L3 as a surface becomes runnable. L4 is required before calling the workflow independently certified or allowing unattended landing. L5/L6 are optional investments, not completion requirements for a small project.
-
-## 4. Durable product memory and executable skills
-
-### 4.1 Feature maps: how to reach and test a surface
-
-Maintain one compact map per meaningful surface, with its verification procedure or beside its feature. A map should record:
-
-```text
-Surface and owning code / contract
-Entry route or binary; prerequisites and safe fixture/reset path
-Primary interactions and observable state transitions
-Stable accessible names/selectors, shortcuts, or CLI arguments
-Failure/recovery states and forbidden side effects
-Relevant tests, control commands, and evidence oracle
-Known traps and honest environment limits
-Owner; last verified revision; linked verification skill
-```
-
-Prefer semantic interaction handles where practical. Do not turn incidental DOM nesting into the product contract. A code map alone is insufficient: the next agent must be able to reach, operate, and recognize the behavior. Link to the owning specification rather than copying its requirements. Update affected map entries with the behavior change; remove superseded instructions.
-
-### 4.2 Verification skills: reusable instruments
-
-A skill must name prerequisites, supported environments, exact commands or tool interfaces, fixtures/reset, scenarios, expected observations, required artifacts, cleanup, and failure escalation. It must distinguish passing assertions from human/agent visual inspection. Test it in a fresh session without private chat history.
-
-Use stable, versioned helper commands instead of repeatedly inventing scratch automation. Reuse existing test helpers without requiring the verifier to trust the writer's conclusions. Promote a scratch probe when it covers a durable regression; not every diagnostic script belongs in the product tree.
-
-Verification skills ask **whether the behavior works**. Engineering playbooks teach **how to solve it properly**: reproduce, investigate, consider alternatives, repair the cause, prove the result, and ship within authority. Keep them distinct but connected. One general bug-fix playbook and one relevant surface skill are a sufficient starting point.
-
-### 4.3 Keep context small and authoritative
-
-The daily entry point should identify current intent, active contracts, nominated patterns, exact checks, and permission limits. Do not load every past review by default. Keep the present state separate from historical decisions. Prefer a link to live PR status over duplicating its transient details in several documents.
-
-Garden instructions as well as code. Maintain one canonical procedure, preserve meaningful decision evidence, and remove duplicated warnings after their replacement control is working. Version adopted playbook changes; downstream projects review an upgrade rather than silently inheriting new policy.
-
-## 5. Default execution protocol
-
-### 5.1 Plan a verifiable unit
-
-Define one outcome, scope/non-scope, acceptance criteria, comparison base, change type, risk, and required oracle before implementation. An **oracle** is the observation or criterion used to judge correctness. Record who verifies, which environment is available, and the permitted budget/actions.
-
-If the architecture is unclear, conduct a bounded investigation and compare plausible designs before implementation. Prefer a small interface/type sketch when it resolves the ambiguity. Do not force an architect phase on a trivial correction.
-
-Prefer roughly tens to a few hundred changed lines when that produces a coherent unit, but never optimize for a line quota. Distinguish production, tests, generated files, and documentation. Split independent behavioral claims; keep changes together when separation would create an unsafe intermediate state. Record the reason for an unusually large unit.
-
-### 5.2 Implement and self-check
-
-Use an isolated branch/worktree and preserve unrelated work. Reproduce a bug before changing its cause when feasible; add a lasting regression. Follow the supported path. Do not weaken a test, swallow an error, or add a bypass merely to turn the gate green.
-
-Run applicable fast checks while iterating and the bound full gate before handoff. Collect writer evidence, inspect the entire patch, and remove accidental diagnostics and credentials. Commit a reproducible candidate under project permissions. If committing is not authorized, a complete immutable patch plus file manifest can support review, but must be reconciled to the eventual published commit before landing.
-
-When reproduction is impossible, explain exactly what was attempted and what is unobserved. A plausible cause is not an observed cause. Do not claim the bug is reproduced because a newly written unit test models the writer's hypothesis.
-
-### 5.3 Independently verify
-
-Start a genuinely separate session/process with access to the same approved intent, candidate, relevant maps/skills, and necessary environment. Read the diff and writer report as inputs—not authority. Independently execute the required scenario and relevant regressions. Add reviewer-selected probes for plausible failure paths; a second agent rerunning only the writer's assertions may share the same blind spot.
-
-The verifier must not edit the candidate while certifying it. Return a bounded fix list to the writer. Record candidate identity before and after execution to detect mutation. Missing tooling leads to a blocked verdict or a handoff to a capable verifier, never a simulated second personality in the writer's session.
-
-### 5.4 Resolve and land
-
-The writer addresses findings. Changed candidates return to verification; the verifier may reuse unaffected evidence only through section 7's freshness procedure. Land only after required CI, independent verdict, freshness, dependency readiness, and authorization all hold. Release is separate unless the project explicitly couples merge and deployment; where coupled, merge permission must cover that release.
-
-After a release, perform its authorized smoke check and use the documented rollback/containment path on failure. A successful deployment job alone does not establish healthy production behavior. Never erase failed evidence to make the delivery record look clean.
-
-## 6. Verification contract
-
-### 6.1 Use the oracle appropriate to the claim
-
-| Change | Minimum appropriate evidence, selected by risk and scope |
-|---|---|
-| Bug fix | Same scenario against base and candidate; observed failure then success; durable regression |
-| New behavior | Base behavior/absence characterized; candidate acceptance path and relevant failure/recovery paths |
-| UI / interaction | Actual browser interaction, relevant screenshots, console/network observations, and required keyboard/reflow checks |
-| CLI / API / background work | Actual binary or running service; input/output, exit/status, and relevant state/side-effect assertions |
-| Report / export / visual parity | Rendered output and content checks; inspect affected pages/states; all pages where pagination can change |
-| Performance | Comparable base/candidate workloads, environment and repetition policy; traces/profiles and variability, not one unexplained timing |
-| Refactor / architecture | Behavior parity plus boundary checks, caller/contract coverage, and proof the retired path cannot gain new callers |
-| Prompt / model-dependent behavior | Deterministic contract tests plus explicitly scoped evaluation on retained or authorized live cases; report sample limits |
-| Documentation / workflow | Source/authority consistency, links/examples, scenario walkthroughs; execute commands or control probes when operational behavior changes |
-
-Select only relevant checks, but do not classify a change as documentation-only when it changes executable workflows, prompts used at runtime, permissions, or release behavior. For a feature absent in the base, do not fabricate a failing preexisting test. For protected historical/live inputs, use an authorized safe comparison or record the missing evidence.
-
-A real surface may be a locally running product or an isolated deployment of the candidate. A separate demonstration mockup is not the same surface. Synthetic provider responses can prove application behavior but not live provider quality, billing, production configuration, or business usefulness. Record what is substituted. Public-provider calls require their own authority and budget.
-
-Verify a preview's deployed revision; a mutable URL alone is insufficient. Browser-side request interception alone does not establish absence of server-side egress. Bound credentials and outbound access at the relevant execution layers and record the controls used. Use retained inputs for comparable evaluations where safe; nondeterministic output requires an appropriate sample and qualified conclusions, not exact-output expectations by default.
-
-### 6.2 Claims carry evidence and scope
-
-Use these labels for material technical claims in a handoff:
-
-- **MEASURED:** directly observed by the reporting actor, with artifact/command and environment in the same statement.
-- **INFERRED:** derived from identified evidence; state the reasoning boundary and attribution, including another actor's reported result.
-- **GUESS:** an untested explanation or prediction; it cannot satisfy a required criterion.
-
-Example: `MEASURED — two rapid retry clicks produced one report request in synthetic preview <revision>; trace <artifact>. Live billing was not tested.`
-
-A source file demonstrates what it contains, not that its runtime behavior was exercised. A screenshot demonstrates a state, not necessarily the path or absence of hidden side effects. Do not hand the owner a check the agent can safely run within its actual permissions; do hand over genuine product judgments, unavailable capabilities, and unauthorized actions.
-
-### 6.3 One bounded verdict
-
-Use exactly one technical verdict: **PASS | PASS+NOTES | FAIL**.
-
-- **PASS:** all required checks for the stated scope passed with adequate evidence.
-- **PASS+NOTES:** all required checks passed; only nonblocking limitations or improvements remain.
-- **FAIL:** a required check failed or required evidence is unavailable.
-
-Record execution separately as `complete`, `blocked`, or `not-run`. Thus `FAIL / blocked / browser unavailable` does not falsely claim a product defect. `PASS+NOTES` must not conceal an unmet criterion, stale evidence, missing independence, or an unauthorized test. An owner may explicitly revise scope or accept an exception through the project's policy; preserve the original failure and identify the resulting scope/exception. Never relabel untested behavior as measured.
-
-Use the existing evidence format where possible. For automated gating, bind a strict machine-readable format with equivalent fields:
-
-```yaml
-record_version: 1
-verdict: FAIL
-execution: blocked
-reason: required evidence not collected
-unit: <task or PR>
-scope_and_criteria: <approved reference and revision>
-review_base_sha: <exact comparison base>
-candidate_head_sha: <exact candidate commit>
-candidate_tree_oid: <candidate tree identity>
-integration_target_sha: <trunk revision considered>
-patch_id: <value and mode, or explicit not-applicable reason>
-writer_run_id: <execution identity>
-verifier_run_id: <separate execution identity>
-verification_procedure_ref: <trusted procedure revision>
-environment_and_fixtures: <versions, modes, substitutions, input identity>
-criteria_results: <per-criterion pass/fail/not-run and evidence>
-evidence_manifest: <durable authorized location and integrity digest>
-limitations: <bounded conclusions and unresolved findings>
-recorded_at: <timestamp>
-```
-
-This is a field contract, not a claim that a validator already exists. Bootstrap with no parent uses an explicit empty-tree comparison, not an invented base commit. Retain meaningful command outcomes, traces, screenshots, logs, and input identities as appropriate. Redact before publication; private customer/provider evidence stays in approved restricted storage. Reviewers need access through landing, and release-relevant evidence needs the project's stated retention period. Local temporary paths alone are not durable evidence for another machine.
-
-## 7. Freshness and trusted landing
-
-### 7.1 Evidence belongs to a candidate, not a branch name
-
-Record the comparison base, candidate head/tree, integration target, approved criteria, verification procedure, environment, and fixtures. A stacked PR's comparison base is the exact lower dependency head, not an ambiguous moving branch. For a standalone PR, use the recorded base from which its isolated change is reviewed.
-
-Retain the base-to-head diff and its generation method; include binary changes where applicable. Compute `git patch-id --stable` as a **supplementary similarity signal**. Git documents that this mode ignores whitespace, so equal patch IDs do not prove equivalent behavior. They also do not establish equivalent surrounding code or environment. Never use patch ID alone as a certificate. See reference T1.
-
-**Conservative default:** any new head, changed review base, or changed relevant test environment invalidates the old landing authorization until a verifier reconciles it. A changed integration target requires a fresh integration assessment even if the patch appears identical.
-
-| Event | Required action |
-|---|---|
-| Candidate behavior, tests, dependencies, or relevant controls change | Re-verify affected criteria and regressions; issue a new record |
-| Rebase or trunk/dependency moves | Review changed surroundings; test integration against the new target; record new identities |
-| Claimed documentation/metadata-only change | A separate verifier confirms exact impact, runs applicable checks, and explicitly reissues/reaffirms for the new head |
-| Fixture, model, config, or environment changes | Reassess which evidence remains valid; rerun the dependent checks |
-| Missing or wrong-revision artifacts | Keep blocked until adequate matching evidence is available |
-
-Reuse can avoid expensive repetition, but it must name what was reused, why it still applies, and what was newly checked. “Same commit message,” “only whitespace,” and an old green check are insufficient. Store final verdicts outside the candidate tree, such as an immutable run artifact referenced from a PR comment, to avoid endlessly changing HEAD by committing its own certificate.
-
-### 7.2 Enforce the verdict, not a comment containing PASS
-
-The automated target is: a trusted publisher validates verifier identity, separate execution, exact scope/refs, required results, and accessible evidence; it publishes a required check for that candidate. A lander independently checks current target/freshness and authorization immediately before landing.
-
-A writer-authored JSON file or spoofable comment is not independent proof. The protected procedure and gate evaluator must come from a trusted version, not solely from the patch they judge. Changes to those controls require separate trusted review. Record the actual trust limit: two sessions sharing unrestricted credentials are a useful procedural separation, not strong permission isolation.
-
-For GitHub, validate the repository's actual protection capabilities and bypass policy. Required checks can be restricted to an expected GitHub App, and native review rules can dismiss stale approvals; neither independently establishes empirical verification. GitHub accepts some skipped/neutral check conclusions, so the verdict evaluator must explicitly fail when mandatory evidence is absent rather than skipping its own decision. See reference T2.
-
-Keep execution of candidate code away from certification and merge credentials. Treat source, task text, application content, and uploaded artifacts as untrusted data, not instructions that can override the verifier's authority. Privileged automation must not execute an untrusted PR with repository secrets; GitHub's security guidance describes this risk across multiple workflow triggers. See reference T3.
-
-A publisher alone cannot make a stale result on the same HEAD safe after trunk moves. Bind target identity and reevaluate on target changes; use the platform's supported up-to-date/queue controls where available. Serialize authorized landing and perform a final fresh check. If the platform cannot close the race or protect the trusted gate, state the limitation and retain a controlled human-operated landing path. Do not claim hard enforcement from a convention alone.
-
-### 7.3 Capability and budget fallback
-
-| Available setup | Honest operating mode |
-|---|---|
-| Separate capable verifier plus protected gate/publisher | Independently certified, mechanically gated delivery after the controls are exercised |
-| Separate capable verifier; no protected automatic publisher | Independent evidence with a manual landing gate; no unattended merge claim |
-| Only the writer can run the product | Self-check complete; independent verification blocked |
-| Reviewer can read code but cannot run the required surface | Code review complete; empirical certification blocked |
-
-A manual mode should present a compact evidence-backed decision, not ask the human to repeat runnable tests. Keep genuine product approval and spending decisions with the owner. Use the existing local runner, fixtures, and subscriptions before proposing new services. No paid CI tier, bot, cloud agent, or multi-model subscription is universally required.
-
-## 8. Work units, stacks, and parallelism
-
-Start with single-PR delivery. Use stacks only when dependent work gains a real advantage. Use separate writers on independent slices only after defining ownership, integration seams, and verifier capacity. Do not run concurrent agents in an uncoordinated shared dirty tree.
-
-For a stack, give **each PR its own independent verifier execution and verdict**, against its immediate recorded base. One broad stack review cannot substitute for those verdicts. Then:
-
-1. Walk from the lowest unmerged PR upward. Only a contiguous run of fresh `PASS` or `PASS+NOTES` verdicts is eligible; stop at the first missing/failed verdict.
-2. Prepare **only the bottom PR** against current trunk. Rebase/retarget as appropriate, recompute identities and patch ID, and apply section 7 before landing.
-3. Recheck required CI, the independent verdict, scope, target, and authorization. Squash-merge one PR when that is the project's approved strategy; otherwise use its bound equivalent without changing policy opportunistically.
-4. Confirm the actual merge result. Recompute the new bottom, reconcile its new base, and repeat. Do not mass-retarget the remaining stack or carry an old verdict across conflict resolution.
-
-A verified upper PR is not landable above an unverified dependency. `autoMergeRequest`, an enabled auto-merge toggle, or being in a queue is not evidence of stack readiness. Integration checks complement rather than replace per-PR proof.
-
-## 9. Correction promotion and gardening
-
-After each meaningful human or agent correction, ask **what made this failure possible and what will detect or prevent its recurrence?**
-
-| Failure class | Preferred durable response |
-|---|---|
-| Illegal dependency, competing path, invalid state | Reshape the boundary/state; remove or isolate the alternative |
-| Reproducible behavior defect | Regression at the appropriate unit/integration/surface layer |
-| Repeated mechanically detectable mistake | Compiler/static/CI rule with negative and positive tests |
-| Investigation or execution miss | Improve the shared engineering or verification skill |
-| Missing product knowledge | Update the feature map and relevant oracle |
-| Unsupported success or stale approval | Strengthen evidence validation, freshness, and trusted publication |
-| Misleading inherited pattern | Clean the example; block new occurrences while safe cleanup proceeds |
-
-Use the existing issue/PR to record the class, replacement control, and its check. Do not create a second lessons database by default. A repeated class—especially one corrected several times—must not close with “remember next time” alone. Not every first mistake merits a new lint: document a proportionate prevention decision, including a named follow-up when immediate enforcement is unsafe or uneconomical.
-
-The gardener periodically inspects changed areas and recurring findings, not the entire repository indiscriminately. Prune obsolete examples, conflicting procedures, broad suppressions, and abandoned compatibility paths. Preserve historical evidence and approved data obligations. Test that a new agent can discover and use the supported path without a private explanation. The quality question is: **would we be comfortable with the next agent copying this?**
-
-## 10. Verify the workflow itself
-
-A file inventory is not acceptance. Demonstrate the adopted controls in a disposable branch/environment; never inject a defect into production to prove a gate.
-
-| Probe | Required result |
-|---|---|
-| Fresh-session start | An agent reaches the relevant surface and procedure without hidden history |
-| Known-bad boundary/regression | Relevant check fails; valid counterpart passes |
-| Writer-generated PASS | It cannot satisfy the independent gate |
-| Missing verifier or artifacts | Landing stays blocked; reason distinguishes missing evidence from a defect |
-| Changed head after PASS | Old authorization no longer permits landing |
-| Same patch ID, changed base/meaningful whitespace | Equality alone does not restore authorization |
-| Wrong preview revision | Verification detects mismatch before certifying the surface |
-| Gate/procedure modified by candidate | Candidate cannot approve the changed gate using only its own implementation |
-| Representative base/head scenario | A separate verifier reproduces the result and retains accessible evidence |
-| Secret/egress boundary | Synthetic verification cannot silently use live credentials or exceed its approved access |
-| Stack gap, when stacks are adopted | Upper passing PR cannot bypass an unverified lower dependency |
-| Authorized clean candidate | The intended legitimate path can land; guards do not make all work impossible |
-
-Run only applicable probes, but mark unavailable ones pending and do not claim their target maturity. Confirm rollback/disable behavior for new automation within owner authority. The installer cannot be its own independent acceptance reviewer.
-
-Track a small set of useful signals: escaped/repeated defects, stale-verdict blocks, human interventions caused by missing agent capability, verification cost/time, and approved-outcome lead time. PR count, LOC, raw test count, and model confidence are not success targets. Excessive false positives and ceremonial reruns are also defects in the workflow.
-
-## 11. Outer-loop automation comes last
-
-The inner loop delivers one approved task safely. The optional outer loop converts complaints, failures, telemetry, and ideas into a bounded queue of candidate tasks.
-
-Do not let external messages authorize themselves. Triage, deduplicate, classify risk, and attach approved acceptance criteria and limits before execution. Bound concurrency, retries, spend, and privilege; provide a stop switch. Pause on no-progress loops or repeated verification failures rather than consuming the entire budget.
-
-Cloud execution and model diversity are implementation choices. Add them only when they reduce a measured bottleneck. No `/swarm`, `/loop`, or named skill should be assumed installed because it appeared in the source discussion. The owner still supplies product direction and accepts genuine product tradeoffs; automation does not eliminate responsibility.
-
-## 12. Adoption completion and maintenance
-
-An adoption slice is complete only when its bound controls exist, applicable negative/positive probes have passed independently, the legitimate work path has been demonstrated, and current instructions route fresh agents to it. Record remaining gaps and the actual maturity—not the desired maturity.
-
-Promote the approved local workflow through the repository's normal authority process. Keep this portable document separate from project-specific commands, versions, URLs, and status. Revisit the binding when architecture, surfaces, runtime, permissions, or hosting change, or when a failure exposes a missing control. Do not propagate a playbook revision silently across projects.
-
-The durable outcome is not that every agent remembers this file. It is that the environment teaches the current pattern, rejects known bad paths, and preserves independent evidence with minimal human reconstruction.
-
-## 13. Technical references and provenance
-
-The behavioral prescriptions above are this draft's design. These references support specific platform mechanics, not the claim that a project has implemented them. Consult current official documentation when materializing a platform-specific gate.
-
-- **S1 — Supplied operating thesis:** originating conversation, beginning “Trust is the throughput bottleneck.” Source of the explicit enforcement ordering, per-PR verification and stack protocol.
-- **S2 — Supplied talk extraction:** GPT-5.6 Sol's structured response in that conversation. Secondary inspiration for feature maps, control/verification skills, engineering methods, codebase memory, and gardening; not independently authenticated here.
-- **S3 — User decisions in that conversation:** portable Markdown; adoption for existing and new projects; materialize controls rather than rely on prose; independent review before adoption.
-- **T1 — [Git: git-patch-id](https://git-scm.com/docs/git-patch-id):** stable patch IDs ignore whitespace and are intended to identify likely duplicate patches. Referenced for the limitation in section 7.1.
-- **T2 — [GitHub: protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches):** required checks, expected check publisher, stale reviews, up-to-date requirements, and bypass considerations.
-- **T3 — [GitHub: secure use of Actions](https://docs.github.com/en/actions/reference/security/secure-use):** trust boundaries when privileged workflows interact with untrusted code and artifacts.
-
-T1–T3 were consulted on 2026-09-26. This document does not depend on the earlier conversation's numerical Nuave maturity estimates, model recommendations, or reported talk throughput figures.
-
-## Appendix A. Reusable adoption briefs
-
-### Existing project, including Nuave
-
-> Assess this repository against Agentic Engineering Playbook R1. Do not assume the playbook is adopted or that earlier chat assessments describe the current repository. Read current authority, inspect implemented controls and representative evidence, and distinguish declared, implemented, exercised, enforced, and unknown. Preserve effective conventions. Propose KEEP / IMPROVE / ADD / DEFER decisions, with the smallest verifiable adoption slice, permissions, costs, and acceptance probes. Use existing workflow/spec locations; do not create a parallel authority system. Do not change runtime, protections, permissions, release behavior, or paid integrations without authorization. Once a bounded slice is approved, implement it through the existing workflow and obtain separate verification of the controls themselves.
-
-For Nuave, discover its actual routing from `AGENTS.md` and the canonical index. Existing specification, verification, preview, and review mechanisms are candidates for reuse—not a frozen inventory or permission to alter them. Keep this draft outside active authority until reviewed and explicitly adopted.
-
-### New project
-
-> Use Agentic Engineering Playbook R1 to propose a minimal project binding and safe scaffold for this project's stack and risk. Establish current authority, reproducible setup, applicable checks, candidate isolation, permissions, and a real independent-verifier route. Build the first runnable slice with its feature map and executable verification; do not invent checks for a product that does not exist. Demonstrate the relevant acceptance probes before claiming the workflow enforced. Defer paid orchestration, stacks, and autonomous intake unless a concrete need justifies them. Obtain the required approvals before committing/publishing or changing operational permissions.
-
-## Appendix B. Independent review brief for this draft
-
-You are reviewing the **playbook**, not certifying any host repository. You are not its author, implementer, or defender. Do not treat its length or detail as evidence of correctness. Do not adopt or implement it during this review.
-
-Check source fidelity and clearly identified additions; portability; authority; practicality for a solo founder; clarity of independence; appropriate behavioral oracles; evidence integrity and retention; base/head/patch freshness; secure gate publication; stack safety; bootstrap/degraded modes; and unnecessary process cost.
-
-Attack these cases in particular: all agents share one credential; verifier cannot use a browser; live calls are forbidden; a passing preview serves an older revision; a rebased patch keeps the same patch ID; a candidate changes its own gate; a higher stacked PR passes while the bottom fails; a report passes assertions but has unreadable pages; and a one-line documentation change is burdened with the entire production test suite.
-
-For each material finding provide severity, exact section, failure scenario, consequence, and smallest correction. Separate blocking contradictions from optional improvements. State which conclusions follow from reading, which probes were executed, and which remain untested. Return **APPROVE | REVISE | REJECT** for the document, with rationale; these are editorial verdicts, not the runtime certification vocabulary in section 6. Do not claim a second-pass review by the author is independent review.
+| P-1 | Amend `AGENTS.md` "Do not commit or push unless the founder explicitly requests it" to: *agents may commit and push to their own non-`main` feature branches without asking; merge, deploy, force-push, and anything on `main` stay founder-only.* | Feature-branch commits are reversible. This is what [P] never-block-on-the-human requires |
+| P-2 | Relax the spec gate: internal engineering changes with no customer-visible behavior change and a checkable finish condition need no spec. The finish condition goes in the PR description. | [P] "the best spec is code". Keeps specs for product behavior |
+| P-3 | No paid tools now (no bot reviewer, cloud agents, or extra subscriptions). Revisit when §7 shows a layer-3 gap that humans keep catching. | Spending decision |
+| P-4 | Merge and deploy stay with the founder. Revisit only after the appendix's trusted-verdict item is built. | Unchanged authority; stated so it is explicit |
+| P-5 | Canonical skill directory `.agents/skills/` (so `.agents/skills/verify-nuave/`). Add a `.claude/skills/verify-nuave` symlink only if Claude Code is in use. **Check:** a fresh session in each tool in use lists `verify-nuave` without being told the path. | Devin's docs list `.agents/skills/` as loaded. Codex and Claude Code loading are **assumptions** to be proven by the check |
+| P-6 | Amend `docs/WORKFLOW.md` to the per-change evidence rule in B.4. | Removes the current bottleneck (review R-1) |
+| P-7 | Add `npm run test:workers` to CI or `verify` when class C recurs. | Changes the canonical gate |
+
+## Appendix — Optional hardening (activate only on the trigger)
+
+Condensed from R1 §§6–10. None of this is needed for one founder with one writer at a time.
+
+| Item | What it adds | Activation trigger |
+|---|---|---|
+| Structured evidence record | Machine-readable verdict: base/head SHA, patch-id, writer and verifier run IDs, per-criterion results, evidence digest | A machine (not the founder) consumes verdicts to decide merges |
+| Trusted verdict publisher | A required check published only by a verifier identity the writer cannot use, evaluated from trusted (base) code, failing when evidence is absent | Agents may merge without a founder click (P-4 reversed) |
+| Stricter freshness | Any new head invalidates the verdict (a deliberate deviation from [P]'s patch-id rule) | Several concurrent writers on one base, or a regulated release |
+| Stack landing | [P shipping]: one verdict per PR against its immediate base. Land only the contiguous verified run from the bottom, one PR at a time. Recompute after each merge. `autoMergeRequest` is not readiness | The first stacked PR (a PR built on another unmerged PR) |
+| Workflow probes | For each gate adopted: a disposable known-bad case proves it blocks, and a clean case proves it passes (e.g. writer-authored PASS, changed head, wrong preview SHA) | Whenever a gate from this table is adopted. Probe only that gate |
+| Credential separation | Writer and verifier sessions stop sharing credentials | A second human contributor, or unattended merge |
+
+## Sources
+
+- **Talk:** Lauren (poteto), 38 min, posted 2026-09-21, via the structured summary in review §2
+  ([`docs/reviews/findings/agentic-engineering-playbook-r1-review-2026-09-26.md`](../reviews/findings/agentic-engineering-playbook-r1-review-2026-09-26.md)).
+  Timestamps above are review §2's. The raw transcript is private and was not used.
+- **pstack at `ecc249f`:**
+  <https://github.com/cursor/plugins/tree/ecc249f1e306fc64ddf83c7bed16cacf7c2239db/pstack>: README,
+  guide 06/07/10, `create-verification-skill` (+ feature-map example), `maintain-verification-skill`,
+  `poteto-mode/playbooks/{shipping,bug-fix,feature}.md`, and the principles encode-lessons-in-structure,
+  never-block-on-the-human, prove-it-works, and laziness-protocol.
+- **Attribution.** *Talk:* trust thesis, trust graph, three levers, CLI + feature map, five-layer order,
+  codebase as memory, paved path, lint-first gardening, the workaround-comment mechanism, dependency
+  boundaries, outer loop last. *pstack:* Launch/Doctor/Drive/Evidence/Cleanup anatomy, prove-once,
+  the maintenance pass and its outcomes, the evidence standard, playbook steps, never-block-on-the-human,
+  finish conditions, per-PR independent verdicts, stack landing, patch-id freshness. *This guide [G]:*
+  the evidence record as PR description + verdict comment, the doc-only skip, the corrections-per-change
+  format, the reject-the-class standard with a baseline and missing-evidence-means-blocked (salvaged
+  from R1), the Nuave binding, and the appendix triggers.
