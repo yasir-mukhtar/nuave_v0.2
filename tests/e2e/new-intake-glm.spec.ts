@@ -1,5 +1,19 @@
-import { expect, test, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { expect, test } from "@playwright/test";
+import {
+  auditStage,
+  completeSyntheticSummary,
+  confirmSummary,
+  downloadEvidenceJson,
+  editQuestion,
+  expectAuditDone,
+  expectQuestionReview,
+  injectUsefulnessFailureOnce,
+  reportLocator,
+  startAudit,
+  toQuestions,
+  toSummary,
+  trackApiCalls as track,
+} from "./journey";
 
 const allowed = new Set([
   "/api/audit/identity",
@@ -21,49 +35,6 @@ test.beforeEach(async ({ page, baseURL }) => {
   });
 });
 
-function track(page: Page) {
-  const calls: Record<string, number> = {};
-  page.on("request", (request) => {
-    const path = new URL(request.url()).pathname;
-    if (path.startsWith("/api/"))
-      calls[`${request.method()} ${path}`] =
-        (calls[`${request.method()} ${path}`] ?? 0) + 1;
-  });
-  return calls;
-}
-
-async function toQuestions(page: Page, suffix = "") {
-  await page.goto(`/audit${suffix}`);
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/");
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
-  ).toBeVisible();
-  const category = page.locator(
-    'section[aria-label="Kategori dan penawaran utama"]',
-  );
-  await category.getByRole("button", { name: "Ubah" }).click();
-  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .fill("kopi susu");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .press("Enter");
-  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
-  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
-  ).toBeVisible();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-}
-
 test("edited questions and exact v2 context survive reload through report", async ({
   page,
 }) => {
@@ -80,25 +51,13 @@ test("edited questions and exact v2 context survive reload through report", asyn
   await toQuestions(page);
   const wording =
     "Pilihan kedai kopi apa yang cocok untuk pekerja di Indonesia?";
-  await page
-    .getByRole("button", { name: "Ubah pertanyaan 1", exact: true })
-    .click();
-  await page.getByRole("textbox", { name: "Pertanyaan 1" }).fill(wording);
-  await page.getByRole("button", { name: "Simpan", exact: true }).click();
+  await editQuestion(page, 1, wording);
   await page.reload();
   await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await startAudit(page);
+  await expectAuditDone(page);
   async function exportJson() {
-    const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Unduh bukti JSON" }).click();
-    const saved = await download;
-    return JSON.parse(await readFile((await saved.path())!, "utf8")) as Record<
-      string,
-      unknown
-    >;
+    return (await downloadEvidenceJson(page)).json as Record<string, unknown>;
   }
   const beforeReload = await exportJson();
   expect(beforeReload.prompts).toEqual(
@@ -111,7 +70,7 @@ test("edited questions and exact v2 context survive reload through report", asyn
     ]),
   );
   await page.reload();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible();
+  await expect(auditStage(page, "done")).toBeVisible();
   const afterReload = await exportJson();
   const stable = (value: Record<string, unknown>) => {
     const { exported_at: _exportedAt, ...rest } = value;
@@ -154,20 +113,14 @@ test("reload during an interrupted run requires explicit resume", async ({
   const calls = track(page);
   await toQuestions(page);
   await page.route("**/api/audit/run", () => new Promise(() => {}));
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(
-    page.locator('[data-local-audit-stage="running"]'),
-  ).toBeVisible();
+  await startAudit(page);
+  await expect(auditStage(page, "running")).toBeVisible();
   await page.reload();
-  await expect(
-    page.locator('[data-local-audit-stage="interrupted"]'),
-  ).toBeVisible();
+  await expect(auditStage(page, "interrupted")).toBeVisible();
   expect(calls["POST /api/audit/run"]).toBe(1);
   await page.unroute("**/api/audit/run");
   await page.getByRole("button", { name: "Lanjutkan audit" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await expectAuditDone(page);
   expect(calls["POST /api/audit/run"]).toBe(2);
   expect(calls["POST /api/audit/report"]).toBe(1);
 });
@@ -197,16 +150,14 @@ test("partial run resumes three saved observations with exact context", async ({
       body: `${lines.slice(0, done[2]! + 1).join("\n")}\n`,
     });
   });
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(
-    page.locator('[data-local-audit-stage="interrupted"]'),
-  ).toBeVisible({ timeout: 45_000 });
+  await startAudit(page);
+  await expect(auditStage(page, "interrupted")).toBeVisible({
+    timeout: 45_000,
+  });
   await page.reload();
   await page.unroute("**/api/audit/run");
   await page.getByRole("button", { name: "Lanjutkan audit" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await expectAuditDone(page);
   expect(payloads).toHaveLength(2);
   expect(payloads[1]!.resume_observations).toHaveLength(3);
   expect(payloads[1]!.context).toEqual(payloads[0]!.context);
@@ -236,16 +187,14 @@ test("failed report allows a report-only retry with saved observations and ledge
       }),
     });
   });
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(
-    page.locator('[data-local-audit-stage="report-failed"]'),
-  ).toBeVisible({ timeout: 45_000 });
+  await startAudit(page);
+  await expect(auditStage(page, "report-failed")).toBeVisible({
+    timeout: 45_000,
+  });
   await page.reload();
   expect(calls["POST /api/audit/report"]).toBe(1);
   await page.getByRole("button", { name: "Coba buat laporan lagi" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await expectAuditDone(page);
   expect(calls["POST /api/audit/run"]).toBe(1);
   expect(calls["POST /api/audit/report"]).toBe(2);
   expect(payloads[1]!.context).toEqual(payloads[0]!.context);
@@ -269,25 +218,11 @@ test("usefulness failure shows answers-only recovery; explicit retry finishes th
       payloads.push(request.postDataJSON() as Record<string, unknown>);
   });
   await toQuestions(page);
-  let failed = false;
-  await page.route("**/api/audit/report", (route) => {
-    if (failed) return route.fallback();
-    failed = true;
-    return route.fulfill({
-      status: 422,
-      contentType: "application/json",
-      body: JSON.stringify({
-        error: "Laporan belum memenuhi syarat laporan.",
-        code: "REPORT_USEFULNESS_FAILURE",
-        telemetry: [],
-        diagnostics: ["usefulness_minimum_not_met"],
-      }),
-    });
+  await injectUsefulnessFailureOnce(page);
+  await startAudit(page);
+  await expect(auditStage(page, "report-failed")).toBeVisible({
+    timeout: 45_000,
   });
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(
-    page.locator('[data-local-audit-stage="report-failed"]'),
-  ).toBeVisible({ timeout: 45_000 });
 
   // Required surface: the exact notice and all ten retained answers.
   const notice = page.getByRole("alert").filter({
@@ -320,9 +255,7 @@ test("usefulness failure shows answers-only recovery; explicit retry finishes th
 
   // A reload restores the same state without another request.
   await page.reload();
-  await expect(
-    page.locator('[data-local-audit-stage="report-failed"]'),
-  ).toBeVisible();
+  await expect(auditStage(page, "report-failed")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Coba buat laporan lagi" }),
   ).toBeVisible();
@@ -332,9 +265,7 @@ test("usefulness failure shows answers-only recovery; explicit retry finishes th
   // The explicit retry replays the retained observations — same payload —
   // and a supported report then replaces the recovery view.
   await page.getByRole("button", { name: "Coba buat laporan lagi" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await expectAuditDone(page);
   expect(calls["POST /api/audit/run"]).toBe(1);
   expect(calls["POST /api/audit/report"]).toBe(2);
   expect(payloads[1]!.observations).toEqual(payloads[0]!.observations);
@@ -358,17 +289,15 @@ test("Back and audit start obey the three-attempt report ceiling without rerunni
     }),
   );
   for (let attempt = 1; attempt <= 4; attempt++) {
-    await page.getByRole("button", { name: "Mulai audit" }).click();
-    await expect(
-      page.locator('[data-local-audit-stage="report-failed"]'),
-    ).toBeVisible({ timeout: 45_000 });
+    await startAudit(page);
+    await expect(auditStage(page, "report-failed")).toBeVisible({
+      timeout: 45_000,
+    });
     expect(calls["POST /api/audit/report"]).toBe(Math.min(attempt, 3));
     expect(calls["POST /api/audit/run"]).toBe(1);
     if (attempt < 4) {
       await page.getByRole("button", { name: "Kembali ke pertanyaan" }).click();
-      await expect(
-        page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
-      ).toBeVisible();
+      await expectQuestionReview(page);
     }
   }
 });
@@ -393,11 +322,11 @@ for (const unresolvedAttempt of [1, 3]) {
         }),
       });
     });
-    await page.getByRole("button", { name: "Mulai audit" }).click();
+    await startAudit(page);
     for (let attempt = 1; attempt < unresolvedAttempt; attempt++) {
-      await expect(
-        page.locator('[data-local-audit-stage="report-failed"]'),
-      ).toBeVisible({ timeout: 45_000 });
+      await expect(auditStage(page, "report-failed")).toBeVisible({
+        timeout: 45_000,
+      });
       await page
         .getByRole("button", { name: "Coba buat laporan lagi" })
         .click();
@@ -430,9 +359,7 @@ for (const unresolvedAttempt of [1, 3]) {
       );
     }, saved);
     await page.reload();
-    await expect(
-      page.locator('[data-local-audit-stage="report-failed"]'),
-    ).toBeVisible();
+    await expect(auditStage(page, "report-failed")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Lanjutkan audit" }),
     ).toHaveCount(0);
@@ -452,7 +379,7 @@ for (const unresolvedAttempt of [1, 3]) {
         page.getByRole("button", { name: "Coba buat laporan lagi" }),
       ).toHaveCount(0);
       await page.getByRole("button", { name: "Kembali ke pertanyaan" }).click();
-      await page.getByRole("button", { name: "Mulai audit" }).click();
+      await startAudit(page);
       await expect(
         page.getByText("Batas pembuatan laporan tercapai"),
       ).toBeVisible();
@@ -471,11 +398,7 @@ for (const unresolvedAttempt of [1, 3]) {
         ...saved.runCalls,
         ...saved.reportCalls,
       ]);
-      await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible(
-        {
-          timeout: 45_000,
-        },
-      );
+      await expectAuditDone(page);
       expect(calls["POST /api/audit/report"]).toBe(2);
     }
     expect(calls["POST /api/audit/run"]).toBe(1);
@@ -493,40 +416,16 @@ test("unfinished run does not request a report", async ({ page }) => {
       body: `${JSON.stringify({ type: "run_unfinished", completed: 8, failed_prompt_ids: ["NUAVE-DT-09", "NUAVE-DT-10"], message: "Dua pertanyaan belum selesai." })}\n`,
     }),
   );
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(
-    page.locator('[data-local-audit-stage="unfinished"]'),
-  ).toBeVisible({ timeout: 45_000 });
+  await startAudit(page);
+  await expect(auditStage(page, "unfinished")).toBeVisible({ timeout: 45_000 });
   expect(calls["POST /api/audit/report"]).toBeUndefined();
 });
 
 test("GLM failure is visible and never silently retried", async ({ page }) => {
   const calls = track(page);
-  await page.goto("/audit?glm-stub=timeout");
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/");
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
-  ).toBeVisible();
-  const category = page.locator(
-    'section[aria-label="Kategori dan penawaran utama"]',
-  );
-  await category.getByRole("button", { name: "Ubah" }).click();
-  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .fill("kopi susu");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .press("Enter");
-  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
-  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
+  await toSummary(page, { suffix: "?glm-stub=timeout" });
+  await completeSyntheticSummary(page);
+  await confirmSummary(page);
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page.locator("[data-question-slot]")).toHaveCount(0);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
@@ -547,13 +446,11 @@ test("a failed budget read is fetched again before an explicit audit retry", asy
       body: JSON.stringify({ error: "Pengendali biaya tidak tersedia." }),
     });
   });
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(page.locator('[data-local-audit-stage="failed"]')).toBeVisible();
+  await startAudit(page);
+  await expect(auditStage(page, "failed")).toBeVisible();
   expect(calls["POST /api/audit/run"]).toBeUndefined();
   await page.getByRole("button", { name: "Coba lagi" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await expectAuditDone(page);
   expect(calls["GET /api/audit/extract"]).toBe(2);
   expect(calls["POST /api/audit/run"]).toBe(1);
 });
@@ -585,10 +482,8 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   });
   await toQuestions(page);
   expect(calls["POST /api/audit/run"]).toBeUndefined();
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 30_000,
-  });
+  await startAudit(page);
+  await expectAuditDone(page, 30_000);
   // Replace only fictional retained presentation evidence. No new runtime
   // harness, provider send, schema field or request projection is introduced.
   const raw = await page.evaluate(() => {
@@ -633,7 +528,7 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
     );
   });
   await page.reload();
-  const report = page.locator("[data-direct-ten-report]");
+  const report = reportLocator(page);
   await expect(report).toBeVisible();
   for (const state of [null, {}, { nuaveLocalIntake: true }]) {
     await page.evaluate((state) => {
@@ -692,9 +587,7 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
           await link.focus();
           await page.keyboard.press("Enter");
         }
-        await expect(
-          page.locator('[data-local-audit-stage="done"]'),
-        ).toBeVisible();
+        await expect(auditStage(page, "done")).toBeVisible();
         await expect(report).toHaveCount(directTen ? 1 : 0);
         await expect(target).toBeFocused();
         await expect(
@@ -822,13 +715,7 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
     printBackground: true,
   });
   await page.emulateMedia({ media: "screen" });
-  const download = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Unduh bukti JSON", exact: true })
-    .click();
-  const exported = JSON.parse(
-    await readFile((await (await download).path())!, "utf8"),
-  );
+  const { json: exported } = await downloadEvidenceJson(page);
   expect(
     exported.observations.map((o: { raw_answer: string }) => o.raw_answer),
   ).toEqual(raw.map((o: { answer: string }) => o.answer));
@@ -856,11 +743,9 @@ test("Spec 012: retained Markdown answers, exact copy, references, reflow and on
   // returns to the approved questions and reopening uses the saved report.
   const requestsBeforeBack = Object.entries(calls);
   await page.goBack();
-  await expect(
-    page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
-  ).toBeVisible();
+  await expectQuestionReview(page);
   await expect(report).toHaveCount(0);
-  await page.getByRole("button", { name: "Mulai audit" }).click();
+  await startAudit(page);
   await expect(report.locator("[data-answer-body]")).toHaveCount(10);
   expect(Object.entries(calls)).toEqual(requestsBeforeBack);
 

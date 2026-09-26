@@ -1,5 +1,17 @@
 import { expect, test } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import {
+  completeSyntheticSummary,
+  confirmSummary,
+  downloadEvidenceJson,
+  expectAuditDone,
+  expectQuestionReview,
+  expectTenQuestions,
+  fillEntry,
+  reportLocator,
+  SENSITIVE_INPUT_NOTICE,
+  startAudit,
+  toSummary,
+} from "./journey";
 
 test("sensitive entry text retains the last safe draft without a provider request", async ({
   page,
@@ -9,16 +21,9 @@ test("sensitive entry text retains the last safe draft without a provider reques
     if (new URL(request.url()).pathname.startsWith("/api/audit/"))
       calls.push(request.url());
   });
-  await page.goto("/audit");
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/?token=private");
+  await fillEntry(page, { url: "https://kedai-fiksi.example/?token=private" });
   await expect(
-    page.getByText(
-      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
-      { exact: true },
-    ),
+    page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
   ).toBeVisible();
   const saved = await page.evaluate(() =>
     sessionStorage.getItem("nuave.localIntake.v2"),
@@ -43,45 +48,19 @@ test("v2 synthetic intake reaches ten observations, report, JSON and print", asy
       (window as unknown as { __printCount: number }).__printCount++;
     };
   });
-  await page.goto("/audit");
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/");
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
-  ).toBeVisible();
-  const category = page.locator(
-    'section[aria-label="Kategori dan penawaran utama"]',
-  );
-  await category.getByRole("button", { name: "Ubah" }).click();
-  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .fill("kopi susu");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .press("Enter");
-  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
-  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Periksa pertanyaan audit" }),
-  ).toBeVisible();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await toSummary(page);
+  await completeSyntheticSummary(page);
+  await confirmSummary(page);
+  await expectQuestionReview(page);
+  await expectTenQuestions(page);
   await page.reload();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
-  await page.getByRole("button", { name: "Mulai audit" }).click();
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout: 45_000,
-  });
+  await expectTenQuestions(page);
+  await startAudit(page);
+  await expectAuditDone(page);
   const retained = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("nuave.localIntakeAudit.v2")!),
   );
-  const report = page.locator("[data-direct-ten-report]");
+  const report = reportLocator(page);
   await expect(report.locator("[data-answer-body]")).toHaveCount(10);
   for (let index = 1; index <= 10; index++) {
     const observation = retained.observations[index - 1];
@@ -102,10 +81,7 @@ test("v2 synthetic intake reaches ten observations, report, JSON and print", asy
       () => (window as unknown as { __printCount: number }).__printCount,
     ),
   ).toBe(1);
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: /Unduh.*JSON/i }).click();
-  const saved = await download;
-  const evidence = JSON.parse(await readFile((await saved.path())!, "utf8"));
+  const { json: evidence } = await downloadEvidenceJson(page, /Unduh.*JSON/i);
   expect(evidence.export_version).toBe("nuave-evidence-v5");
   expect(evidence.context).toMatchObject({
     version: "nuave-direct-ten-context-v2",

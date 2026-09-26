@@ -1,4 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
+import {
+  categorySection,
+  confirmSummary,
+  expectSummary,
+  expectTenQuestions,
+  fillEntry,
+  pressPeriksa,
+  SENSITIVE_INPUT_NOTICE,
+  toSummary,
+} from "./journey";
 
 const richDraft = {
   brand_name: "Kedai Fiksi",
@@ -51,15 +61,7 @@ async function enter(page: Page, rich = true) {
       }),
     );
   }
-  await page.goto("/audit");
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/");
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
-  ).toBeVisible();
+  await toSummary(page);
 }
 
 test("failed extraction keeps validated identity and forwards its call ledger on retry", async ({
@@ -133,12 +135,8 @@ test("failed extraction keeps validated identity and forwards its call ledger on
       }),
     });
   });
-  await page.goto("/audit");
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/");
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
+  await fillEntry(page);
+  await pressPeriksa(page);
   await expect(page.getByText("Ekstraksi sementara gagal.")).toBeVisible();
   const saved = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
@@ -146,10 +144,8 @@ test("failed extraction keeps validated identity and forwards its call ledger on
   expect(saved.identity.canonicalUrl).toBe("https://kedai-fiksi.example/");
   expect(saved.preparationCalls).toMatchObject([failedCall]);
   await page.reload();
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
-  ).toBeVisible();
+  await pressPeriksa(page);
+  await expectSummary(page);
   expect(
     calls.filter((call) => call === "GET /api/audit/identity"),
   ).toHaveLength(1);
@@ -172,9 +168,7 @@ test("reload during question generation retains an unknown attempt and never aut
   await enter(page);
   await page.route("**/api/audit/glm-questions", () => new Promise(() => {}));
   const started = page.waitForRequest("**/api/audit/glm-questions");
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
+  await confirmSummary(page);
   await started;
   await page.reload();
   await expect(
@@ -197,10 +191,7 @@ test("a sensitive optional edit retains the last safe summary value", async ({
   await differentiator.fill("Racikan kopi khas");
   await differentiator.fill("nomor rekening 12345");
   await expect(
-    page.getByText(
-      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
-      { exact: true },
-    ),
+    page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
   ).toBeVisible();
   await expect(differentiator).toHaveValue("Racikan kopi khas");
   const saved = await page.evaluate(() =>
@@ -222,10 +213,8 @@ test("every manually selected comparator stays visible, correctable and removabl
   const selected = page.getByRole("textbox", { name: "Pembanding terpilih 1" });
   await expect(selected).toHaveValue("Kedai Baru");
   await selected.fill("Kedai Pilihan");
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   const frozen = await page.evaluate(() =>
     JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
   );
@@ -264,10 +253,8 @@ test("rich reading reaches one summary and question review without more typing",
     page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }),
   ).toBeChecked();
   await expect(page.getByRole("checkbox", { name: "Bandung" })).toBeChecked();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(calls).toEqual([
     "GET /api/audit/identity",
     "POST /api/audit/extract",
@@ -276,10 +263,8 @@ test("rich reading reaches one summary and question review without more typing",
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(
     calls.filter((call) => call === "POST /api/audit/glm-questions"),
   ).toHaveLength(1);
@@ -299,9 +284,7 @@ test("partial extraction opens one clarification while channel and reach stay on
     .getByRole("button", { name: "Lengkapi yang perlu dipastikan" })
     .click();
   await expect(page.locator('[data-smart-summary="clarify"]')).toBeVisible();
-  const category = page.locator(
-    'section[aria-label="Kategori dan penawaran utama"]',
-  );
+  const category = categorySection(page);
   await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
   await category
     .getByRole("textbox", { name: "Penawaran lain" })
@@ -309,10 +292,8 @@ test("partial extraction opens one clarification while channel and reach stay on
   await category
     .getByRole("textbox", { name: "Penawaran lain" })
     .press("Enter");
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
 });
 
 test("product and location choices freeze only their active meaning", async ({
@@ -332,10 +313,8 @@ test("product and location choices freeze only their active meaning", async ({
   await enter(page);
   await page.getByRole("button", { name: "Satu produk atau layanan" }).click();
   await page.getByRole("radio", { name: "roti" }).click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
     focus: { value: { kind: "produk", name: "roti" } },
     offerings: { value: ["roti"] },
@@ -348,10 +327,8 @@ test("product and location choices freeze only their active meaning", async ({
   await page
     .getByRole("textbox", { name: "Alamat lokasi" })
     .fill("Jl. Contoh 12");
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
     focus: {
       value: { kind: "cabang", name: "Cabang Timur", address: "Jl. Contoh 12" },
@@ -370,30 +347,24 @@ test("material correction invalidates the old questions; cancel keeps the commit
       questions.push(request.postDataJSON());
   });
   await enter(page);
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
-  const category = page.locator(
-    'section[aria-label="Kategori dan penawaran utama"]',
-  );
+  const category = categorySection(page);
   await category.getByRole("button", { name: "Ubah" }).click();
   await category.getByRole("textbox", { name: "Kategori" }).fill("warung kopi");
   await page.getByRole("button", { name: "Batalkan perubahan" }).click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await expectTenQuestions(page);
   expect(questions).toHaveLength(1);
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
   await category.getByRole("button", { name: "Ubah" }).click();
   await category.getByRole("textbox", { name: "Kategori" }).fill("warung kopi");
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(questions).toHaveLength(2);
   expect(
     (questions[1] as { intake: { factVersion: number } }).intake.factVersion,
@@ -419,10 +390,8 @@ test("identity correction requires explicit Periksa and a new reading", async ({
   await page
     .getByRole("textbox", { name: "Nama bisnis" })
     .fill("Kedai Fiksi Baru");
-  await page.getByRole("button", { name: "Periksa", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
-  ).toBeVisible();
+  await pressPeriksa(page);
+  await expectSummary(page);
   expect(calls).toHaveLength(4);
 });
 
@@ -447,10 +416,8 @@ test("named comparators require selection; alternatives carry no company names",
     .getByRole("textbox", { name: "Nama pembanding lain" })
     .fill("Warung Fiksi");
   await page.getByRole("button", { name: "Tambah", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
     comparators: {
       value: { mode: "named", names: ["Kedai Tetangga", "Warung Fiksi"] },
@@ -463,10 +430,8 @@ test("named comparators require selection; alternatives carry no company names",
   await page
     .getByRole("radio", { name: /Tidak ada pembanding langsung/ })
     .click();
-  await page
-    .getByRole("button", { name: "Sudah sesuai — buat pertanyaan audit" })
-    .click();
-  await expect(page.locator("[data-question-slot]")).toHaveCount(10);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
     comparators: { value: { mode: "category-alternatives" } },
   });
