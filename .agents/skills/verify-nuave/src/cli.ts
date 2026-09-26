@@ -239,11 +239,12 @@ async function doctorLocal(
       await browser.close();
     }
   } else {
-    checks.push({
-      name: "audit-entry-renders",
-      ok: "skip",
-      detail: "earlier check failed",
-    });
+    for (const name of [
+      "audit-entry-renders",
+      "served-mode-synthetic",
+      "doctor-made-no-api-call",
+    ])
+      checks.push({ name, ok: "skip", detail: "earlier check failed" });
   }
   const now = stamp(root);
   checks.push({
@@ -354,12 +355,25 @@ async function drive(
   const calls = trackApiCalls(page);
   const network: { method: string; url: string; status: number | string }[] =
     [];
-  page.on("requestfinished", async (request) =>
-    network.push({
-      method: request.method(),
-      url: request.url(),
-      status: (await request.response())?.status() ?? "none",
-    }),
+  // Response lookups can outlive the recipe; settle them before closing the
+  // browser, or a lookup rejected by the close would end the process.
+  const pending: Promise<void>[] = [];
+  page.on("requestfinished", (request) =>
+    pending.push(
+      request
+        .response()
+        .then(
+          (response) => response?.status() ?? "none",
+          () => "none",
+        )
+        .then((status) => {
+          network.push({
+            method: request.method(),
+            url: request.url(),
+            status,
+          });
+        }),
+    ),
   );
   page.on("requestfailed", (request) =>
     network.push({
@@ -378,6 +392,7 @@ async function drive(
       .screenshot({ path: join(dir, "failure.png"), fullPage: true })
       .catch(() => {});
   }
+  await Promise.allSettled(pending);
   await browser.close();
   const unexpected = unexpectedExternalRequests(urls);
   if (!error && unexpected.length)
