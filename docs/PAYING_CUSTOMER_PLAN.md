@@ -31,8 +31,8 @@ done.
 | J0 | Reset the working docs | Orchestrator | Done | #93 | On the PR |
 | J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Done | #94 | PASS+NOTES |
 | J1s | Stage 1 spec: [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), founder approval | Orchestrator + founder | Done | #95 | PASS+NOTES |
-| J2 | Screen frame, entry, reading screen, brand confirm | Worker | Next | — | — |
-| J3 | Preparation adds locations and category suggestions | Worker | Not started | — | — |
+| J2 | Screen frame, entry, reading screen, brand confirm | Worker | Done | [#96](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656) (`8161030`) |
+| J3 | Preparation adds locations and category suggestions | Worker | Next | — | — |
 | J4 | Focus, location and product screens | Worker | Not started | — | — |
 | J5 | Category, offerings, service-channel and market screens | Worker | Not started | — | — |
 | J6 | Customer-needs, competitor and public-fact screens | Worker | Not started | — | — |

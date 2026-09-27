@@ -1,9 +1,10 @@
 # Spec 013: Airbnb-style intake journey
 
-> Status: **Approved** by the founder on 2026-09-27
-> ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)). J2 may start.
+> Status: **Implementing**; approved by the founder on 2026-09-27
+> ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
+> J2 merged with [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656); J3 is next.
 > Owner: orchestrator
-> Updated: 2026-09-27
+> Updated: 2026-09-28
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > (milestones J2–J7 and JQ)
 > Decision basis: plan §4.1 ("done" for the journey), the three 2026-09-27
