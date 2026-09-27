@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -17,12 +17,15 @@ export default function SmartQuestionsScreen({
   onChange,
   onApprove,
   onBack,
+  headingRef,
 }: {
   pack: SmartQuestionPack;
   context: DirectTenAuditContext;
   onChange: (pack: SmartQuestionPack) => void;
   onApprove: () => void;
   onBack: () => void;
+  /** The intake frame focuses this heading on screen arrival (R-27). */
+  headingRef?: RefObject<HTMLHeadingElement | null>;
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
@@ -61,7 +64,9 @@ export default function SmartQuestionsScreen({
       className="mx-auto w-full max-w-3xl px-5 pb-24"
       data-intake-screen="s-questions"
     >
-      <h1 className="type-heading-lg">Periksa pertanyaan audit</h1>
+      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+        Periksa pertanyaan audit
+      </h1>
       <p className="type-copy mt-2 text-muted-foreground">
         Sepuluh pertanyaan dari informasi yang Anda konfirmasi. Anda dapat
         mengubah kalimatnya sebelum menjalankan audit.

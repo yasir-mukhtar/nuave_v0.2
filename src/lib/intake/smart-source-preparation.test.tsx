@@ -163,6 +163,7 @@ function sdkResponse() {
 beforeEach(() => {
   window.sessionStorage.clear();
   vi.clearAllMocks();
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
   // Native fetch byte chunks and jsdom typed arrays belong to different realms.
   vi.stubGlobal(
     "Uint8Array",
@@ -300,6 +301,14 @@ async function inspect() {
   );
   fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
 }
+// Spec 013 J2: `Periksa` lands on the brand check; `Lanjut` opens the summary.
+async function throughBrand() {
+  await screen.findByRole("heading", {
+    name: "Ini brand yang ingin Anda audit?",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+}
 
 describe("server excerpt through the active Smart preparation", () => {
   it.each([
@@ -314,7 +323,7 @@ describe("server excerpt through the active Smart preparation", () => {
       parsedDraft = { ...draft(), verified_offerings: [text] };
       render(<SmartIntakeJourney live />);
       await inspect();
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await throughBrand();
       expect(
         JSON.parse(requests[0].input[1].content).public_source_data.text,
       ).toBe(text);
@@ -432,7 +441,7 @@ describe("server excerpt through the active Smart preparation", () => {
       parsedDraft = draft();
       render(<SmartIntakeJourney live />);
       await inspect();
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await throughBrand();
       const before = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY);
       const calls = [...clientRequests];
       const row = within(
@@ -455,7 +464,7 @@ describe("server excerpt through the active Smart preparation", () => {
   it("accepts an owner correction with the same safe-text rule and owner origin", async () => {
     render(<SmartIntakeJourney live />);
     await inspect();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await throughBrand();
     const text = "Keluarga kami membuka kedai di jantung kota.";
     const row = within(
       screen.getByRole("region", { name: "Kategori dan penawaran utama" }),
@@ -552,7 +561,7 @@ describe("server excerpt through the active Smart preparation", () => {
       };
       const mounted = render(<SmartIntakeJourney live />);
       await inspect();
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await throughBrand();
       const saved = parseSmartSession(
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
@@ -643,7 +652,7 @@ describe("server excerpt through the active Smart preparation", () => {
   it("one Periksa preserves identity/icon behavior, adds one document, and prepares exact proposals without storing text", async () => {
     render(<SmartIntakeJourney live />);
     await inspect();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await throughBrand();
     expect(clientRequests).toHaveLength(2);
     expect(pageReads).toBe(2);
     expect(iconReads).toBe(1);
@@ -703,7 +712,7 @@ describe("server excerpt through the active Smart preparation", () => {
     parsedDraft = draft(false);
     render(<SmartIntakeJourney live />);
     await inspect();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await throughBrand();
     const saved = JSON.parse(
       window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
     );
@@ -730,10 +739,12 @@ describe("server excerpt through the active Smart preparation", () => {
       pageHtml = `<head><title>Kedai Pelangi Fiksi</title></head>${body}`;
       const first = render(<SmartIntakeJourney live />);
       await inspect();
+      // J2: the no-usable-text note first lands on the brand check.
       await screen.findByText(SOURCE_EXCERPT_EMPTY_NOTICE);
       expect(JSON.parse(requests[0].input[1].content)).not.toHaveProperty(
         "public_source_data",
       );
+      await throughBrand();
       expect(screen.getByText("Kopi susu, Roti panggang")).toBeTruthy();
       fireEvent.click(
         screen.getByRole("button", { name: "Ubah nama atau website" }),
@@ -772,7 +783,7 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(pageReads).toBe(2);
     failPage = 0;
     fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await throughBrand();
     expect(pageReads).toBe(3);
     expect(iconReads).toBe(1);
     expect(
