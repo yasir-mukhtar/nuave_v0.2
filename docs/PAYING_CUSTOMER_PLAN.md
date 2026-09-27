@@ -29,7 +29,7 @@ done.
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
 | S1 | Security patches | Worker | Not started | — | — |
 | S2 | Spending cap on the server | Worker | Not started | — | — |
-| S3 | Save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
+| S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |
 | S5 | Terms, price and promise wording | Worker | Not started | — | — |
 | S6 | Landing page | Founder | Not started | — | — |
@@ -337,20 +337,36 @@ passes.
 - Record every paid provider call's cost on the server (Cloudflare D1 unless S0
   chooses otherwise).
 - Refuse new paid work when today's total passes a server-set daily limit.
-  Show the existing "not available" message.
+  Show the existing "not available" message. (Once S4 adds payment, the cap
+  is checked before payment and an already-paid order may finish; see S4.)
 - Stop trusting spending history sent by the browser.
 
 *Done when:* a test shows the cap blocks work after the limit and survives a
 restart.
 
 **S3 — Save and deliver reports; audit survives tab close** (worker, Stage 2
-spec, ~5–8 days, the largest build in Stage 2; may split into two PRs)
+spec, ~6–9 days including the order summary, the largest build in Stage 2;
+may split into two PRs)
 
 Shape set at S0. Today the audit is tied to the open browser tab: the run
 route passes the browser connection's stop signal into the audit
 (`src/app/api/audit/run/route.ts:213`), and the provider stops when it fires
 (`src/lib/audit/protected-observation-provider.ts:123`). Moving the run to a
-server-side job is most of this milestone. Whatever is chosen must pass:
+server-side job is most of this milestone.
+
+**S3 also creates the order.** Today `/audit` never asks for an email and has
+no order. Right after the free "is this your business?" step, S3 adds the
+**order summary without a payment button**: business, what's included, and
+the customer's **email** (required). This creates a server-side order. The
+audit run, the report, its link, delivery and recovery all hang off that
+order and its email. S4 later adds payment to this same screen. This matches
+the original plan, where durable orders (Phase 4) came before real payment
+(Phase 5).
+
+Whatever is chosen must pass:
+
+- the order summary collects the email and creates an order before the
+  intake starts;
 
 - close the browser during an audit, and it completes or safely resumes,
   without repeating questions that already succeeded (no double AI cost);
@@ -367,13 +383,12 @@ These come from the original plan's Phase 4 exit gate
 
 **S4 — Real payment + founder test pass** (worker, Stage 2 spec, ~3–4 days)
 
-- Right after the customer enters their website and Nuave shows the free
-  "is this your business?" result, show the order summary: business,
-  Rp99.000 total, what's included, delivery promise, and links to Terms and
-  Privacy. **The order summary asks for the customer's email** (no earlier
-  step does); it is required before payment, because delivery (S3) and
-  support (D3, D5, D7, D8) depend on it. Payment comes **before** the intake asks for or prepares any
-  business details.
+- Add payment to the order summary that S3 built (it already collects the
+  email, which delivery and support D3, D5, D7, D8 depend on). The summary now
+  also shows the Rp99.000 total, the delivery promise, and links to Terms and
+  Privacy. It sits right after the free "is this your business?" result.
+  Payment comes **before** the intake asks for or prepares any business
+  details.
 - The free step before payment only reads the website's public page (no AI);
   today that is `/api/audit/identity` (`src/lib/audit/source-identity.ts`).
   If building the price screen seems to need anything more, such as an AI
@@ -389,11 +404,17 @@ These come from the original plan's Phase 4 exit gate
   shown in the page, marks the run as a test in every record, counts against
   the S2 cap, and never works for anyone else.
 - Pending, expired, and failed payments show an honest message and a retry.
+- **Check the S2 daily cap before taking payment**, so Nuave never sells an
+  audit it can't run today; if the cap is reached, the order summary says to
+  try again later and no payment is taken. An order that is already paid is
+  allowed to finish even if the cap is passed meanwhile; if it still cannot
+  run, it falls under D2 and D3 (retry, then refund by hand).
 
 *Done when:* in Midtrans sandbox, URL → pay → intake → approve questions →
 report works end to end. A duplicated notification does not create a second audit. The test pass
 runs a real audit with no payment. Calling the audit endpoints with neither
-payment nor test pass is refused.
+payment nor test pass is refused. With the daily cap reached, no new payment
+can start, and an already-paid order still completes.
 
 **S5 — Terms, price and promise wording** (worker, ~1 day)
 
@@ -424,7 +445,8 @@ only if asked.
 ### Track V — Owner feedback (optional, founder)
 
 Show an existing report we have permission to share to 3–5 owners and ask
-three questions. **Draft; the founder approves the wording before use:**
+three questions. **Approved by the founder on 2026-09-27** (J0 records this in
+`docs/DECISION_LOG.md` with the plan's approval):
 
 1. Did this report tell you something you didn't know about your business?
 2. Would you do anything differently because of it? What?
