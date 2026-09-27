@@ -30,7 +30,7 @@ done.
 | **Stage 1** | **Finish the intake journey** | | | | |
 | J0 | Reset the working docs | Orchestrator | Done | #93 | On the PR |
 | J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Done | #94 | PASS+NOTES |
-| J1s | Stage 1 spec: [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), founder approval | Orchestrator + founder | In review | — | — |
+| J1s | Stage 1 spec: [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), founder approval | Orchestrator + founder | In review | #95 | — |
 | J2 | Screen frame, entry, reading screen, brand confirm | Worker | Not started | — | — |
 | J3 | Preparation adds locations and category suggestions | Worker | Not started | — | — |
 | J4 | Focus, location and product screens | Worker | Not started | — | — |
