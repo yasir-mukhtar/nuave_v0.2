@@ -17,7 +17,9 @@ The complete journey is reviewable end to end with deterministic fixtures and a
 clearly simulated checkout, and `https://v2.nuave.ai` is live as a noindex,
 direct-link-only deployment. The former access-code gate has been removed under
 the founder's recorded interim-exposure acceptance; a minimal server-side
-rate/cost guard is still required before any public link sharing. The current
+rate/cost guard and the
+[deferred dependency security updates](./docs/NOW.md#deferred-security-work--before-customer-testing-or-public-sharing)
+are still required before any public link sharing. The current
 objective in [`docs/NOW.md`](./docs/NOW.md) is to complete one continuous local
 audit experience from business input to report download. The real end-to-end
 path completed on 2026-09-19. The prepared-intake (Spec 011) and report
