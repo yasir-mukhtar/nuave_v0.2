@@ -191,14 +191,14 @@ The same sitting settles the related answers, with suggested defaults:
 
 | # | Question | Suggested default |
 |---|---|---|
-| D1 | How long do we keep a report? | 12 months, then delete |
+| D1 | How long do we keep a report, and how long does its link work? | Keep 12 months, then delete. The link works until the report is deleted; after that it shows "not available". Support can reissue a link while the report exists (D7, D8) |
 | D2 | Delivery promise | "Usually about 15 minutes; at most 24 hours" |
 | D3 | If the audit can't finish | Automatic retry; if still failing, email the customer and refund in full by hand within 3 business days |
 | D4 | Support reply time | Within 1 business day, at support@nuave.ai |
 | D5 | Wrong email or wrong business | Handled by support email, by hand |
 | D6 | Terms and privacy text | Founder approves plain wording in S5; legal review is parked |
-| D7 | How support confirms it's really the customer before resending access | The request comes from the order's email address, or the customer quotes the Midtrans receipt/order number |
-| D8 | How a replacement link is issued | Support issues a new link to the order's email; the old link stops working |
+| D7 | How support confirms it's really the customer before resending or cutting off access | The order number (or Midtrans receipt) is used **only to find the order**, never as proof. Proof is confirmation **from the order's email**: the request comes from that address, or support emails a confirmation there and acts only after the customer confirms. A signed-in order session also counts, if S3 builds one |
+| D8 | How a replacement link is issued | Only after D7 confirmation: send a new link to the order's email and switch off the old one. Sending access to a **different** email is never done on an order number; it stays under D5, by hand, with a stronger check |
 
 ### 4.3 Accounts
 
@@ -357,9 +357,10 @@ server-side job is most of this milestone. Whatever is chosen must pass:
 - a finished paid report is not lost if the customer closes the tab;
 - the customer can open the report again on another device;
 - nobody can open someone else's report by guessing;
-- a lost link can be recovered through support (D7, D8); and
-- expired or revoked access fails safely, with a neutral "not available"
-  page.
+- a lost link can be recovered through support, and a link is revoked or
+  replaced only after confirmation from the order's email (D7, D8); and
+- expired access (after the report is deleted, D1) and revoked access fail
+  safely, with a neutral "not available" page.
 
 These come from the original plan's Phase 4 exit gate
 (`docs/END_TO_END_PLAN.md` §7, Phase 4).
