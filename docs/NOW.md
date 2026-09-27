@@ -867,6 +867,33 @@ requires explicit authorization.
    allowances are consumed. A new real end-to-end run through the Spec 011/012
    path needs new founder authorization; none is granted here.
 
+## Deferred security work — before customer testing or public sharing
+
+On 2026-09-27 the founder approved deferring this maintenance to the final
+pre-customer checks. Before any customer testing or public link sharing,
+update the root application's affected `fast-uri` and `hono` dependencies,
+review remaining dependency security alerts, and pass `npm run verify`.
+This remains pending; closing the archive PRs does not complete it.
+
+The 2026-09-27 lockfile review found `fast-uri` 3.1.6 and `hono` 4.13.5.
+The relevant fixes are in 3.1.7 and 4.13.7 respectively; use supported patched
+versions and recheck current advisories when doing the work. `fast-uri` can
+misinterpret crafted web addresses ([host confusion](https://github.com/fastify/fast-uri/security/advisories/GHSA-58mr-gqgx-xq4g),
+[destination injection](https://github.com/fastify/fast-uri/security/advisories/GHSA-qw65-cvwx-89v3)).
+Affected Hono page-rendering features can treat untrusted text as executable
+page content ([security notice](https://github.com/honojs/hono/security/advisories/GHSA-hxh3-vqpv-xpqv)).
+`npm explain` traced both dependencies through shadcn tooling; a source search
+found no direct application use of the affected features. This supports the
+bounded deferral, but is not a full deployed-runtime security assessment.
+
+The founder authorized closing [#67](https://github.com/yasir-mukhtar/nuave_v0.2/pull/67),
+[#64](https://github.com/yasir-mukhtar/nuave_v0.2/pull/64),
+[#62](https://github.com/yasir-mukhtar/nuave_v0.2/pull/62), and
+[#53](https://github.com/yasir-mukhtar/nuave_v0.2/pull/53): they change only the
+archived report prototype's lockfile, not the active application's dependencies.
+The root lockfile already has the other two proposed versions (`js-yaml`
+4.3.2 and `qs` 6.16.0). Update the archived prototype before reviving it.
+
 ## Not now
 
 - legacy-only code deletion and historical v1 delivery/resume reactivation;
