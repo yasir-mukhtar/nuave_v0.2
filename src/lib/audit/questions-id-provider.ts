@@ -17,6 +17,7 @@ import {
   assertOpenCodeGoProductionMethodConfigured,
   opencodeGoTransportHeaders,
 } from "./opencodego";
+import { OPENAI_SYSTEM, OPENCODEGO_SYSTEM } from "./approved-live-providers";
 
 // Live provider for the Indonesian question-generation boundary (Spec 003,
 // work package A). `questions-id.ts` owns the boundary contract, deterministic
@@ -54,10 +55,8 @@ export const INDONESIAN_QUESTION_PROVIDER_NAMES = [
 export type IndonesianQuestionProviderName =
   (typeof INDONESIAN_QUESTION_PROVIDER_NAMES)[number];
 
-export const INDONESIAN_QUESTION_OPENCODEGO_SYSTEM =
-  "OpenCode Go Responses API" as const;
-export const INDONESIAN_QUESTION_OPENAI_SYSTEM =
-  "OpenAI Responses API" as const;
+export const INDONESIAN_QUESTION_OPENCODEGO_SYSTEM = OPENCODEGO_SYSTEM;
+export const INDONESIAN_QUESTION_OPENAI_SYSTEM = OPENAI_SYSTEM;
 export const INDONESIAN_QUESTION_GEMINI_SYSTEM = "Google Gemini API" as const;
 
 /**

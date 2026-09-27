@@ -53,6 +53,13 @@ export function offlineE2EServerEnv(
     GEMINI_API_KEY: "",
     GROQ_API_KEY: "",
     OPENROUTER_API_KEY: "",
+    // Every NUAVE_* key src/ reads must be named here: a key absent from this
+    // environment can still be filled from a developer's .env.local when
+    // next dev loads it. Blank counts as unset for these readers, so the
+    // offline server behaves as if the keys were never configured instead of
+    // inheriting a founder-local evidence or pack directory.
+    NUAVE_GLM_EVIDENCE_DIR: "",
+    NUAVE_LOCAL_AUDIT_PACK_DIR: "",
     // Spec 010: the public audit journey stays switched off unless a suite
     // enables it; "synthetic" is the failure-safe default and the only mode
     // e2e may run — "live" requires real credentials, all blanked above.
