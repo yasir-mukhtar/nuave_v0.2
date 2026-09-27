@@ -16,7 +16,7 @@ import {
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
-export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v2" as const;
+export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v3" as const;
 
 type Origin = "website" | "nuave" | "owner";
 export type PreparedMeaning<T> = Readonly<{

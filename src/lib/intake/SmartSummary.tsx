@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +31,8 @@ type Props = {
   error?: string | null;
   clarify?: boolean;
   sourceExcerptStatus?: SourceExcerptStatus;
+  /** The intake frame focuses this heading on screen arrival (R-27). */
+  headingRef?: RefObject<HTMLHeadingElement | null>;
 };
 
 const channels = [
@@ -89,6 +91,7 @@ export default function SmartSummary({
   error,
   clarify = false,
   sourceExcerptStatus,
+  headingRef,
 }: Props) {
   const [editingBusiness, setEditingBusiness] = useState(false);
   const [editingOfferings, setEditingOfferings] = useState(clarify);
@@ -151,10 +154,12 @@ export default function SmartSummary({
 
   return (
     <section
-      className="mx-auto w-full max-w-3xl px-5 pb-24"
+      className="w-full pb-10"
       data-smart-summary={clarify ? "clarify" : "ready"}
     >
-      <h1 className="type-heading-lg">Ini yang Nuave pahami.</h1>
+      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+        Ini yang Nuave pahami.
+      </h1>
       <p className="type-copy mt-2 text-muted-foreground">
         Periksa pilihan yang sudah disiapkan. Ubah hanya yang belum sesuai, lalu
         konfirmasi sekali sebelum pertanyaan audit dibuat.

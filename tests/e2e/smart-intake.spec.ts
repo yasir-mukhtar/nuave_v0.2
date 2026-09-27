@@ -7,6 +7,7 @@ import {
   expectQuestionReview,
   expectTenQuestions,
   fillEntry,
+  INTAKE_SESSION_KEY,
   reportLocator,
   SENSITIVE_INPUT_NOTICE,
   startAudit,
@@ -25,8 +26,9 @@ test("sensitive entry text retains the last safe draft without a provider reques
   await expect(
     page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
   ).toBeVisible();
-  const saved = await page.evaluate(() =>
-    sessionStorage.getItem("nuave.localIntake.v2"),
+  const saved = await page.evaluate(
+    (key) => sessionStorage.getItem(key),
+    INTAKE_SESSION_KEY,
   );
   expect(saved).not.toContain("token=private");
   expect(saved).toContain("Kedai Fiksi");

@@ -13,7 +13,7 @@ the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
 - Mode is synthetic. Every answer, question and report comes from a labelled
   synthetic substitute. Live mode is out of scope for this skill.
 - Every drive starts from an empty browser session (a new context). The
-  journey state lives in `sessionStorage` (`nuave.localIntake.v2`,
+  journey state lives in `sessionStorage` (`nuave.localIntake.v3`,
   `nuave.localIntakeAudit.v2`), so a new context is the baseline.
 - The fictional business is `Kedai Fiksi` at `https://kedai-fiksi.example/`.
 

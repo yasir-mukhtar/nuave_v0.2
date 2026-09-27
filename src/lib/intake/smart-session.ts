@@ -33,8 +33,20 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 2;
-  stage: "entry" | "summary" | "clarify" | "questions" | "audit";
+  version: 3;
+  /**
+   * `reading` is persisted only while a preparation is in flight: a refresh
+   * restores it as `entry` with an interruption note, never a replayed call
+   * (Spec 013 R-04). It is never a navigation target.
+   */
+  stage:
+    | "entry"
+    | "reading"
+    | "brand"
+    | "summary"
+    | "clarify"
+    | "questions"
+    | "audit";
   entry: { name: string; source: string };
   identity: SmartPreparedIdentity | null;
   prepared: PreparedUnderstanding | null;
@@ -50,7 +62,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 2,
+    version: 3,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -75,10 +87,16 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 2 ||
-      !["entry", "summary", "clarify", "questions", "audit"].includes(
-        String(value.stage),
-      ) ||
+      value.version !== 3 ||
+      ![
+        "entry",
+        "reading",
+        "brand",
+        "summary",
+        "clarify",
+        "questions",
+        "audit",
+      ].includes(String(value.stage)) ||
       !isRecord(value.entry) ||
       typeof value.entry.name !== "string" ||
       typeof value.entry.source !== "string" ||
@@ -108,7 +126,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     )
       return null;
     if (
-      stage !== "entry" &&
+      !["entry", "reading"].includes(stage) &&
       (!isRecord(value.prepared) || !isRecord(value.selection))
     )
       return null;

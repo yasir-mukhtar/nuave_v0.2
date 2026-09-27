@@ -3,6 +3,8 @@ import type { IntakeChapterFills } from "./navigation";
 type IntakeChapterProgressProps = {
   /** Fractional fill per chapter, one entry per chapter, each in [0, 1]. */
   fills: IntakeChapterFills;
+  /** Accessible name for the whole progress meter. */
+  label?: string;
 };
 
 /**
@@ -13,11 +15,12 @@ type IntakeChapterProgressProps = {
  */
 export default function IntakeChapterProgress({
   fills,
+  label = "Kemajuan",
 }: IntakeChapterProgressProps) {
   return (
     <div
       role="img"
-      aria-label="Kemajuan"
+      aria-label={label}
       data-new-intake-progress="chapters"
       style={{
         display: "grid",

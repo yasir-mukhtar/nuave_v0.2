@@ -19,6 +19,13 @@ export const FICTIONAL_BUSINESS = {
 } as const;
 
 export const CONFIRM_SUMMARY = "Sudah sesuai — buat pertanyaan audit";
+export const CONFIRM_BRAND = "Lanjut";
+export const BRAND_HEADING = "Ini brand yang ingin Anda audit?";
+export const READING_HEADING = "Sebentar, Nuave sedang membaca";
+export const READING_INTERRUPTED_NOTICE =
+  "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
+/** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v3";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -59,6 +66,14 @@ export function entryScreen(page: Page) {
   return page.locator('[data-intake-screen="entry"]');
 }
 
+export function readingScreen(page: Page) {
+  return page.locator('[data-intake-screen="reading"]');
+}
+
+export function brandScreen(page: Page) {
+  return page.locator('[data-intake-screen="brand"]');
+}
+
 /** The entry step is showing with both fields empty. */
 export async function expectEmptyEntry(page: Page) {
   await expect(entryScreen(page)).toBeVisible();
@@ -94,14 +109,35 @@ export async function expectSummary(page: Page) {
   ).toBeVisible();
 }
 
-/** Entry → `Periksa` → the "Ini yang Nuave pahami." summary. */
+/** The brand-confirm screen is showing with the business name card. */
+export async function expectBrandConfirm(
+  page: Page,
+  name: string = FICTIONAL_BUSINESS.name,
+) {
+  await expect(brandScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: BRAND_HEADING }),
+  ).toBeVisible();
+  await expect(brandScreen(page)).toContainText(name);
+}
+
+/** Brand confirm → `Lanjut` (in the frame footer) → the summary. */
+export async function confirmBrand(page: Page) {
+  await page
+    .getByRole("button", { name: CONFIRM_BRAND, exact: true })
+    .click();
+  await expectSummary(page);
+}
+
+/** Entry → `Periksa` → reading → brand confirm → summary. */
 export async function toSummary(
   page: Page,
   entry: Parameters<typeof fillEntry>[1] = {},
 ) {
   await fillEntry(page, entry);
   await pressPeriksa(page);
-  await expectSummary(page);
+  await expectBrandConfirm(page);
+  await confirmBrand(page);
 }
 
 export function categorySection(page: Page) {

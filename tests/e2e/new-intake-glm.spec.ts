@@ -90,7 +90,7 @@ test("edited questions and exact v2 context survive reload through report", asyn
   expect(payloads[1]).not.toHaveProperty("brief");
   const confirmedContext = await page.evaluate(
     () =>
-      JSON.parse(sessionStorage.getItem("nuave.localIntake.v2")!).frozen
+      JSON.parse(sessionStorage.getItem("nuave.localIntake.v3")!).frozen
         .context,
   );
   expect(payloads[0]!.context).toEqual(confirmedContext);

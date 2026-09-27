@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IconCheck, IconCircle, IconLoader2 } from "@tabler/icons-react";
 import { AuditNotice } from "@/components/product/AuditNotice";
+import IntakeChapterProgress from "./progress";
 import {
   AUDIT_COST_LIMIT_USD,
   auditCallTelemetrySchema,
   sourceExcerptStatusSchema,
+  SOURCE_EXCERPT_EMPTY_NOTICE,
   SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
   SOURCE_EXCERPT_RESTRICTED_MESSAGE,
   INTAKE_TEXT_RESTRICTED_MESSAGE,
@@ -40,6 +43,68 @@ import type { GlmQuestionsOutcome } from "./local-questions";
 import SmartSummary from "./SmartSummary";
 import SmartQuestionsScreen from "./SmartQuestionsScreen";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
+
+const READING_STEPS = [
+  "Membaca sumber Anda",
+  "Menemukan produk dan lokasi",
+  "Memperkirakan pelanggan dan pembanding",
+] as const;
+
+const READING_INTERRUPTED_NOTICE =
+  "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
+
+const SYNTHETIC_LABEL =
+  "Mode uji lokal menggunakan pengganti sintetis berlabel.";
+
+type SmartStage = SmartSession["stage"];
+
+/**
+ * In-flow target of the frame's `Kembali` and of a marked browser Back.
+ * `entry` and `reading` have no back target; `reading` is never a target.
+ */
+const STAGE_BACK: Partial<Record<SmartStage, SmartStage>> = {
+  brand: "entry",
+  summary: "brand",
+  clarify: "summary",
+  questions: "summary",
+  audit: "questions",
+};
+
+/**
+ * Four-segment chapter fill per framed screen. J2 mounts entry (bab 1 awal),
+ * brand-confirm (bab 1 akhir → first segment full), and today's combined
+ * summary in the review position (bab 4). Reading carries no progress.
+ */
+const STAGE_PROGRESS: Partial<
+  Record<
+    SmartStage,
+    { chapter: number; fills: [number, number, number, number] }
+  >
+> = {
+  brand: { chapter: 1, fills: [1, 0, 0, 0] },
+  summary: { chapter: 4, fills: [1, 1, 1, 0.5] },
+  clarify: { chapter: 4, fills: [1, 1, 1, 0.5] },
+};
+
+const ORIGIN_TEXT = {
+  website: "Dari website Anda",
+  nuave: "Saran Nuave",
+  owner: "Dari Anda",
+} as const;
+
+function intakeMark() {
+  return { ...(window.history.state ?? {}), nuaveIntake: true };
+}
+
+function brandInitials(name: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]!.toUpperCase());
+  return letters.join("") || "?";
+}
 
 function attemptForOutcome(
   started_at: string,
@@ -74,9 +139,18 @@ export default function SmartIntakeJourney({
   const [ready, setReady] = useState(false);
   const [historical, setHistorical] = useState(false);
   const [busy, setBusy] = useState<"reading" | "questions" | null>(null);
+  const [readingStep, setReadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [interrupted, setInterrupted] = useState(false);
   const [autoStart, setAutoStart] = useState(false);
+  const [editingBrandName, setEditingBrandName] = useState(false);
   const inFlight = useRef(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const focusedStage = useRef<SmartStage | null>(null);
+  const sessionRef = useRef(session);
+  useEffect(() => {
+    sessionRef.current = session;
+  });
   const sourceFailure = {
     unavailable: SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
     restricted: SOURCE_EXCERPT_RESTRICTED_MESSAGE,
@@ -91,40 +165,74 @@ export default function SmartIntakeJourney({
   useEffect(() => {
     queueMicrotask(() => {
       const saved = readSmartSession();
-      if (saved) setSession(saved);
-      else setHistorical(Boolean(readHistoricalAudit()));
+      if (saved) {
+        if (saved.stage === "reading") {
+          // A stored reading session means the page was reloaded mid-read:
+          // return to entry with the fields kept and never replay the call.
+          const next: SmartSession = { ...saved, stage: "entry" };
+          writeSmartSession(next);
+          setSession(next);
+          setInterrupted(true);
+        } else {
+          setSession(saved);
+        }
+      } else setHistorical(Boolean(readHistoricalAudit()));
       setReady(true);
     });
   }, []);
 
+  // History ownership: every in-flow entry is marked `nuaveIntake` and a
+  // marked duplicate stays on top while the stage has a back target. A real
+  // browser Back lands on the marked entry below and performs one in-flow
+  // step back; the trap is re-armed unless the landing stage is `entry`.
   useEffect(() => {
-    if (!ready || session.stage !== "audit") return;
-    if (window.history.state?.nuaveSmartIntake !== "audit") {
-      window.history.replaceState(
-        { ...window.history.state, nuaveSmartIntake: "questions" },
-        "",
-      );
-      window.history.pushState(
-        { ...window.history.state, nuaveSmartIntake: "audit" },
-        "",
-      );
-    }
+    if (!ready) return;
+    if (window.history.state?.nuaveIntake !== true)
+      window.history.replaceState(intakeMark(), "");
+    if (STAGE_BACK[sessionRef.current.stage])
+      window.history.pushState(intakeMark(), "");
     const onBack = (event: PopStateEvent) => {
-      // Only our question entry represents Back from this saved audit.
-      // Fragment/unmarked history events must not dismiss the report.
-      if (event.state?.nuaveSmartIntake !== "questions") return;
-      const next: SmartSession = { ...session, stage: "questions" };
+      // Fragment or foreign history events must not move the intake flow.
+      if (event.state?.nuaveIntake !== true) return;
+      const current = sessionRef.current;
+      const target = STAGE_BACK[current.stage];
+      if (!target) return;
+      const next: SmartSession = { ...current, stage: target };
+      setError(null);
       setAutoStart(false);
       writeSmartSession(next);
       setSession(next);
+      if (STAGE_BACK[target]) window.history.pushState(intakeMark(), "");
     };
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);
-  }, [ready, session]);
+  }, [ready]);
+
+  // R-27: each screen arrival moves focus to its heading and resets scroll.
+  useEffect(() => {
+    if (!ready || focusedStage.current === session.stage) return;
+    focusedStage.current = session.stage;
+    window.scrollTo(0, 0);
+    headingRef.current?.focus();
+  }, [ready, session.stage]);
 
   const persist = (next: SmartSession) => {
     writeSmartSession(next);
     setSession(next);
+  };
+  // A forward transition keeps one marked entry on top of the stack so the
+  // next browser Back performs exactly one in-flow step back.
+  const goStage = (next: SmartSession) => {
+    persist(next);
+    window.history.pushState(intakeMark(), "");
+  };
+  // The frame's `Kembali` moves in-flow without touching the stack; the trap
+  // stays on top, so a later real Back still steps back from the new stage.
+  const goBack = () => {
+    const target = STAGE_BACK[session.stage];
+    if (!target) return;
+    persist({ ...session, stage: target });
+    setError(null);
   };
   function stopSensitiveInput() {
     setError(INTAKE_TEXT_RESTRICTED_MESSAGE);
@@ -134,12 +242,14 @@ export default function SmartIntakeJourney({
     persist(next);
     setHistorical(false);
     setError(null);
+    setInterrupted(false);
     setAutoStart(false);
   }
   async function inspect() {
     if (inFlight.current) return;
     const parsed = parseSourceInput(session.entry.source);
-    if (!session.entry.name.trim() || !parsed) {
+    const name = session.entry.name.trim();
+    if (!name || !parsed) {
       setError("Isi nama bisnis dan satu URL website publik yang valid.");
       return;
     }
@@ -150,24 +260,49 @@ export default function SmartIntakeJourney({
       stopSensitiveInput();
       return;
     }
+    setInterrupted(false);
+    setError(null);
+    // The source is unchanged: preparation stays reusable and a name-only
+    // correction applies without another call (Spec 013 R-05/R-09).
     if (
       session.prepared &&
-      session.entry.name.trim() === session.prepared.typedName &&
-      parsed.normalizedUrl === session.prepared.canonicalSource
+      session.selection &&
+      session.identity &&
+      parsed.normalizedUrl === session.identity.inputSource
     ) {
-      persist({ ...session, stage: "summary" });
-      setError(null);
+      if (name !== session.prepared.typedName) {
+        goStage({
+          ...session,
+          stage: "brand",
+          entry: { ...session.entry, name },
+          identity: session.identity
+            ? { ...session.identity, inputName: name }
+            : session.identity,
+          prepared: { ...session.prepared, typedName: name },
+          selection: {
+            ...session.selection,
+            name,
+            nameOrigin: "owner",
+          },
+          confirmedSelection: null,
+          frozen: null,
+          pack: null,
+        });
+      } else {
+        goStage({ ...session, stage: "brand" });
+      }
       return;
     }
     inFlight.current = true;
     setBusy("reading");
-    setError(null);
-    let working = session;
+    setReadingStep(0);
+    let working: SmartSession = { ...session, stage: "reading" };
+    persist(working);
     try {
       let identity = working.identity;
       if (
         !identity ||
-        identity.inputName !== session.entry.name.trim() ||
+        identity.inputName !== name ||
         identity.inputSource !== parsed.normalizedUrl
       ) {
         const response = await fetch(
@@ -192,7 +327,7 @@ export default function SmartIntakeJourney({
             "Sumber bisnis berisi informasi yang tidak dapat digunakan.",
           );
         identity = {
-          inputName: session.entry.name.trim(),
+          inputName: name,
           inputSource: parsed.normalizedUrl,
           canonicalUrl: canonical.normalizedUrl,
           displayName:
@@ -205,12 +340,13 @@ export default function SmartIntakeJourney({
         working = { ...working, identity };
         persist(working);
       }
+      setReadingStep(1);
       const extractionResponse = await fetch("/api/audit/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           website_url: identity.canonicalUrl,
-          brand_name: session.entry.name.trim(),
+          brand_name: name,
           market_context: "",
           category: "",
           identity_unverified: true,
@@ -255,6 +391,7 @@ export default function SmartIntakeJourney({
             : "synthetic-local",
       };
       persist(working);
+      setReadingStep(2);
       if (!extractionResponse.ok || !extraction.draft)
         throw new Error(
           extraction.error || "Fakta bisnis belum dapat disiapkan.",
@@ -265,9 +402,9 @@ export default function SmartIntakeJourney({
         canonicalSource: identity.canonicalUrl,
         draft: extraction.draft,
       });
-      persist({
+      goStage({
         ...working,
-        stage: "summary",
+        stage: "brand",
         prepared,
         selection: initialSmartSelection(prepared),
         confirmedSelection: null,
@@ -275,6 +412,7 @@ export default function SmartIntakeJourney({
         pack: null,
       });
     } catch (cause) {
+      persist({ ...working, stage: "entry" });
       setError(
         cause instanceof Error
           ? cause.message
@@ -283,6 +421,7 @@ export default function SmartIntakeJourney({
     } finally {
       inFlight.current = false;
       setBusy(null);
+      setReadingStep(0);
     }
   }
 
@@ -307,7 +446,7 @@ export default function SmartIntakeJourney({
       JSON.stringify(session.frozen.context) ===
         JSON.stringify(candidate.context);
     if (unchanged && session.pack) {
-      persist({
+      goStage({
         ...session,
         stage: "questions",
         selection: session.confirmedSelection,
@@ -338,7 +477,7 @@ export default function SmartIntakeJourney({
         },
       ],
     };
-    persist(committed);
+    goStage(committed);
     try {
       const response = await fetch("/api/audit/glm-questions", {
         method: "POST",
@@ -394,6 +533,15 @@ export default function SmartIntakeJourney({
     }
   }
 
+  function updateSelection(selection: SmartSelection) {
+    if (unsafeSmartSelection(selection)) {
+      stopSensitiveInput();
+      return;
+    }
+    persist({ ...session, selection });
+    setError(null);
+  }
+
   if (!ready)
     return (
       <section className="mx-auto max-w-3xl px-5 py-14" role="status">
@@ -417,158 +565,16 @@ export default function SmartIntakeJourney({
         </Button>
       </section>
     );
-  if (session.stage === "entry")
-    return (
-      <section
-        className="mx-auto grid max-w-3xl gap-5 px-5 py-14"
-        data-intake-screen="entry"
-      >
-        <h1 className="type-heading-lg">Periksa visibilitas bisnis Anda</h1>
-        <p className="type-copy">
-          Masukkan nama bisnis dan website publik. Nuave menyiapkan ringkasan
-          untuk Anda periksa.
-        </p>
-        <label className="grid gap-2 type-label">
-          Nama bisnis
-          <Input
-            value={session.entry.name}
-            maxLength={160}
-            onChange={(event) => {
-              if (unsafeSmartName(event.target.value)) {
-                stopSensitiveInput();
-                return;
-              }
-              persist({
-                ...session,
-                entry: { ...session.entry, name: event.target.value },
-                identity: null,
-                sourceExcerptStatus: undefined,
-                prepared: null,
-                selection: null,
-                confirmedSelection: null,
-                frozen: null,
-                pack: null,
-              });
-              setError(null);
-            }}
-          />
-        </label>
-        <label className="grid gap-2 type-label">
-          URL website publik
-          <Input
-            value={session.entry.source}
-            maxLength={2_000}
-            onChange={(event) => {
-              if (unsafeSmartSource(event.target.value)) {
-                stopSensitiveInput();
-                return;
-              }
-              persist({
-                ...session,
-                entry: { ...session.entry, source: event.target.value },
-                identity: null,
-                sourceExcerptStatus: undefined,
-                prepared: null,
-                selection: null,
-                confirmedSelection: null,
-                frozen: null,
-                pack: null,
-              });
-              setError(null);
-            }}
-          />
-        </label>
-        {error || restoredSourceError ? (
-          <p role="alert" className="type-copy text-destructive">
-            {error || restoredSourceError}
-          </p>
-        ) : null}
-        <Button
-          className="w-fit"
-          disabled={busy !== null}
-          onClick={() => void inspect()}
-        >
-          {busy === "reading" ? "Memeriksa…" : "Periksa"}
-        </Button>
-        {!live ? (
-          <p className="type-copy-sm text-muted-foreground">
-            Mode uji lokal menggunakan pengganti sintetis berlabel.
-          </p>
-        ) : null}
-      </section>
-    );
-  if (
-    (session.stage === "summary" || session.stage === "clarify") &&
-    session.prepared &&
-    session.selection
-  )
-    return (
-      <>
-        <SmartSummary
-          key={session.stage}
-          prepared={session.prepared}
-          selection={session.selection}
-          onChange={(selection: SmartSelection) => {
-            if (unsafeSmartSelection(selection)) {
-              stopSensitiveInput();
-              return;
-            }
-            persist({ ...session, selection });
-            setError(null);
-          }}
-          onClarify={() => {
-            persist({ ...session, stage: "clarify" });
-            setError(null);
-          }}
-          onEditSource={() => {
-            persist({ ...session, stage: "entry" });
-            setError(null);
-          }}
-          onConfirm={() => void confirm()}
-          busy={busy !== null}
-          error={error}
-          sourceExcerptStatus={session.sourceExcerptStatus}
-          clarify={session.stage === "clarify"}
-        />
-        {session.stage === "clarify" ? (
-          <div className="mx-auto max-w-3xl px-5 pb-10">
-            <Button onClick={() => persist({ ...session, stage: "summary" })}>
-              Kembali ke ringkasan
-            </Button>
-          </div>
-        ) : null}
-        {session.confirmedSelection &&
-        JSON.stringify(session.selection) !==
-          JSON.stringify(session.confirmedSelection) ? (
-          <div className="mx-auto max-w-3xl px-5 pb-10">
-            <Button
-              variant="ghost"
-              onClick={() =>
-                persist({
-                  ...session,
-                  stage: "questions",
-                  selection: session.confirmedSelection,
-                })
-              }
-            >
-              Batalkan perubahan
-            </Button>
-          </div>
-        ) : null}
-      </>
-    );
   if (session.stage === "questions" && session.frozen)
     return (
       <>
         {session.pack ? (
           <SmartQuestionsScreen
+            headingRef={headingRef}
             pack={session.pack}
             context={session.frozen.context}
             onChange={(pack) => persist({ ...session, pack })}
-            onBack={() => {
-              setError(null);
-              persist({ ...session, stage: "summary" });
-            }}
+            onBack={goBack}
             onApprove={() => {
               if (inFlight.current) return;
               try {
@@ -584,13 +590,15 @@ export default function SmartIntakeJourney({
                 );
                 return;
               }
-              persist({ ...session, stage: "audit" });
+              goStage({ ...session, stage: "audit" });
               setAutoStart(true);
             }}
           />
         ) : (
           <section className="mx-auto grid max-w-3xl gap-4 px-5 py-14">
-            <h1 className="type-heading-lg">Siapkan pertanyaan audit</h1>
+            <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+              Siapkan pertanyaan audit
+            </h1>
             <p className="type-copy">
               {busy === "questions"
                 ? "Sepuluh pertanyaan sedang disiapkan."
@@ -601,11 +609,7 @@ export default function SmartIntakeJourney({
                 Coba siapkan pertanyaan
               </Button>
             ) : null}
-            <Button
-              variant="ghost"
-              className="w-fit"
-              onClick={() => persist({ ...session, stage: "summary" })}
-            >
+            <Button variant="ghost" className="w-fit" onClick={goBack}>
               Kembali ke ringkasan
             </Button>
           </section>
@@ -635,5 +639,355 @@ export default function SmartIntakeJourney({
         onRestart={newJourney}
       />
     );
-  return null;
+
+  // Framed intake screens (Spec 013 J2): entry → reading → brand → summary.
+  const progress = STAGE_PROGRESS[session.stage];
+  const backTarget = STAGE_BACK[session.stage];
+  return (
+    <div className="mx-auto flex min-h-svh w-full max-w-[560px] flex-col px-6 pb-[calc(148px+env(safe-area-inset-bottom,0px))] pt-8 sm:px-8">
+      <header>
+        <p className="type-heading-md m-0">nuave</p>
+        {progress ? (
+          <div className="mt-6">
+            <IntakeChapterProgress
+              fills={progress.fills}
+              label={`Bab ${progress.chapter} dari 4`}
+            />
+          </div>
+        ) : null}
+      </header>
+      <main className="mt-10 flex-1">
+        {session.stage === "entry" ? (
+          <section className="grid gap-5" data-intake-screen="entry">
+            <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+              Periksa visibilitas bisnis Anda
+            </h1>
+            {interrupted ? (
+              <p role="status" className="type-copy-sm text-muted-foreground">
+                {READING_INTERRUPTED_NOTICE}
+              </p>
+            ) : null}
+            <p className="type-copy">
+              Masukkan nama bisnis dan website publik. Nuave menyiapkan
+              ringkasan untuk Anda periksa.
+            </p>
+            <label className="grid gap-2 type-label">
+              Nama bisnis
+              <Input
+                value={session.entry.name}
+                maxLength={160}
+                onChange={(event) => {
+                  if (unsafeSmartName(event.target.value)) {
+                    stopSensitiveInput();
+                    return;
+                  }
+                  // A name-only edit keeps preparation and every later
+                  // answer; `Periksa` applies it without another read.
+                  persist({
+                    ...session,
+                    entry: { ...session.entry, name: event.target.value },
+                  });
+                  setError(null);
+                }}
+              />
+            </label>
+            <label className="grid gap-2 type-label">
+              URL website publik
+              <Input
+                value={session.entry.source}
+                maxLength={2_000}
+                onChange={(event) => {
+                  if (unsafeSmartSource(event.target.value)) {
+                    stopSensitiveInput();
+                    return;
+                  }
+                  // A website change invalidates preparation: the next
+                  // `Periksa` reads the new source from scratch.
+                  persist({
+                    ...session,
+                    entry: { ...session.entry, source: event.target.value },
+                    identity: null,
+                    sourceExcerptStatus: undefined,
+                    prepared: null,
+                    selection: null,
+                    confirmedSelection: null,
+                    frozen: null,
+                    pack: null,
+                  });
+                  setError(null);
+                }}
+              />
+            </label>
+            {error || restoredSourceError ? (
+              <p role="alert" className="type-copy text-destructive">
+                {error || restoredSourceError}
+              </p>
+            ) : null}
+            <Button
+              className="w-fit"
+              disabled={busy !== null}
+              onClick={() => void inspect()}
+            >
+              {busy === "reading" ? "Memeriksa…" : "Periksa"}
+            </Button>
+            {!live ? (
+              <p className="type-copy-sm text-muted-foreground">
+                {SYNTHETIC_LABEL}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+        {session.stage === "reading" ? (
+          <section
+            className="grid gap-5"
+            data-intake-screen="reading"
+            aria-label="Pembacaan sumber"
+          >
+            <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+              Sebentar, Nuave sedang membaca
+            </h1>
+            <ul
+              role="status"
+              aria-live="polite"
+              className="m-0 grid list-none gap-4 p-0"
+            >
+              {READING_STEPS.map((step, index) => {
+                const state =
+                  index < readingStep
+                    ? "done"
+                    : index === readingStep
+                      ? "active"
+                      : "pending";
+                return (
+                  <li
+                    key={step}
+                    data-reading-step={state}
+                    className="flex items-center gap-3 type-copy"
+                  >
+                    {state === "done" ? (
+                      <IconCheck
+                        className="size-5 shrink-0 text-[var(--action)]"
+                        aria-hidden
+                      />
+                    ) : state === "active" ? (
+                      <IconLoader2
+                        className="size-5 shrink-0 animate-spin text-[var(--action)]"
+                        aria-hidden
+                      />
+                    ) : (
+                      <IconCircle
+                        className="size-5 shrink-0 text-muted-foreground"
+                        aria-hidden
+                      />
+                    )}
+                    <span
+                      className={
+                        state === "pending"
+                          ? "text-muted-foreground"
+                          : undefined
+                      }
+                    >
+                      {step}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="type-copy-sm text-muted-foreground">
+              Semua bisa Anda koreksi. Anda yang paling tahu bisnis Anda.
+            </p>
+            {!live ? (
+              <p className="type-copy-sm text-muted-foreground">
+                {SYNTHETIC_LABEL}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+        {session.stage === "brand" && session.prepared && session.selection ? (
+          <section className="grid gap-5" data-intake-screen="brand">
+            <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+              Ini brand yang ingin Anda audit?
+            </h1>
+            {session.sourceExcerptStatus === "no-usable-text" ? (
+              <p role="status" className="type-copy-sm text-muted-foreground">
+                {SOURCE_EXCERPT_EMPTY_NOTICE}
+              </p>
+            ) : null}
+            <article
+              className="flex items-center gap-4 rounded-xl border border-border p-5"
+              aria-label="Brand yang ditemukan"
+            >
+              <span
+                className="grid size-12 shrink-0 place-items-center rounded-full border border-border type-heading-sm"
+                aria-hidden="true"
+              >
+                {brandInitials(session.selection.name)}
+              </span>
+              <div className="min-w-0">
+                <h2 className="type-heading-sm m-0 break-words">
+                  {session.selection.name}
+                </h2>
+                <p className="type-copy-sm m-0 mt-1 break-all text-muted-foreground">
+                  {session.prepared.canonicalSource} ·{" "}
+                  {ORIGIN_TEXT[session.selection.nameOrigin]}
+                </p>
+              </div>
+            </article>
+            <div
+              role="radiogroup"
+              aria-label="Nama bisnis"
+              className="grid gap-1"
+            >
+              <label className="flex min-h-11 items-center gap-3 type-copy">
+                <input
+                  type="radio"
+                  name="smart-brand-name"
+                  checked={
+                    session.selection.name === session.prepared.typedName &&
+                    session.selection.nameOrigin === "owner"
+                  }
+                  onChange={() =>
+                    updateSelection({
+                      ...session.selection!,
+                      name: session.prepared!.typedName,
+                      nameOrigin: "owner",
+                    })
+                  }
+                />
+                {session.prepared.typedName}{" "}
+                <span className="type-copy-sm text-muted-foreground">
+                  Dari Anda
+                </span>
+              </label>
+              {session.prepared.discoveredName &&
+              session.prepared.discoveredName !== session.prepared.typedName ? (
+                <label className="flex min-h-11 items-center gap-3 type-copy">
+                  <input
+                    type="radio"
+                    name="smart-brand-name"
+                    checked={
+                      session.selection.name ===
+                        session.prepared.discoveredName &&
+                      session.selection.nameOrigin === "website"
+                    }
+                    onChange={() =>
+                      updateSelection({
+                        ...session.selection!,
+                        name: session.prepared!.discoveredName!,
+                        nameOrigin: "website",
+                      })
+                    }
+                  />
+                  {session.prepared.discoveredName}{" "}
+                  <span className="type-copy-sm text-muted-foreground">
+                    Dari website Anda
+                  </span>
+                </label>
+              ) : null}
+            </div>
+            <div>
+              <Button
+                variant="link"
+                className="w-fit"
+                onClick={() => setEditingBrandName((value) => !value)}
+              >
+                Ubah nama
+              </Button>
+              {editingBrandName ? (
+                <label className="mt-2 grid gap-2 type-label">
+                  Nama brand
+                  <Input
+                    value={session.selection.name}
+                    maxLength={160}
+                    onChange={(event) =>
+                      updateSelection({
+                        ...session.selection!,
+                        name: event.target.value,
+                        nameOrigin: "owner",
+                      })
+                    }
+                  />
+                </label>
+              ) : null}
+            </div>
+            {error ? (
+              <p role="alert" className="type-copy text-destructive">
+                {error}
+              </p>
+            ) : null}
+          </section>
+        ) : null}
+        {(session.stage === "summary" || session.stage === "clarify") &&
+        session.prepared &&
+        session.selection ? (
+          <>
+            <SmartSummary
+              key={session.stage}
+              headingRef={headingRef}
+              prepared={session.prepared}
+              selection={session.selection}
+              onChange={updateSelection}
+              onClarify={() => {
+                goStage({ ...session, stage: "clarify" });
+                setError(null);
+              }}
+              onEditSource={() => {
+                persist({ ...session, stage: "entry" });
+                setError(null);
+              }}
+              onConfirm={() => void confirm()}
+              busy={busy !== null}
+              error={error}
+              sourceExcerptStatus={session.sourceExcerptStatus}
+              clarify={session.stage === "clarify"}
+            />
+            {session.confirmedSelection &&
+            JSON.stringify(session.selection) !==
+              JSON.stringify(session.confirmedSelection) ? (
+              <Button
+                variant="ghost"
+                className="mt-4 w-fit"
+                onClick={() =>
+                  goStage({
+                    ...session,
+                    stage: "questions",
+                    selection: session.confirmedSelection,
+                  })
+                }
+              >
+                Batalkan perubahan
+              </Button>
+            ) : null}
+          </>
+        ) : null}
+      </main>
+      {backTarget ? (
+        <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background">
+          <div className="mx-auto flex w-full max-w-[560px] items-center justify-between gap-3 px-6 py-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))] sm:px-8">
+            <Button
+              variant="ghost"
+              className="min-h-11 px-2 underline underline-offset-8"
+              onClick={goBack}
+            >
+              Kembali
+            </Button>
+            {session.stage === "brand" ? (
+              <Button
+                className="min-h-11 rounded-full px-6"
+                disabled={!session.selection?.name.trim()}
+                onClick={() => {
+                  setEditingBrandName(false);
+                  goStage({ ...session, stage: "summary" });
+                }}
+              >
+                Lanjut
+              </Button>
+            ) : (
+              <span />
+            )}
+          </div>
+        </footer>
+      ) : null}
+    </div>
+  );
 }

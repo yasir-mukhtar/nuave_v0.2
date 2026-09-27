@@ -1,10 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  brandScreen,
   categorySection,
+  confirmBrand,
   confirmSummary,
-  expectSummary,
+  entryScreen,
+  expectBrandConfirm,
   expectTenQuestions,
   fillEntry,
+  INTAKE_SESSION_KEY,
   pressPeriksa,
   SENSITIVE_INPUT_NOTICE,
   toSummary,
@@ -138,14 +142,16 @@ test("failed extraction keeps validated identity and forwards its call ledger on
   await fillEntry(page);
   await pressPeriksa(page);
   await expect(page.getByText("Ekstraksi sementara gagal.")).toBeVisible();
-  const saved = await page.evaluate(() =>
-    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  const saved = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
   );
   expect(saved.identity.canonicalUrl).toBe("https://kedai-fiksi.example/");
   expect(saved.preparationCalls).toMatchObject([failedCall]);
   await page.reload();
   await pressPeriksa(page);
-  await expectSummary(page);
+  await expectBrandConfirm(page);
+  await confirmBrand(page);
   expect(
     calls.filter((call) => call === "GET /api/audit/identity"),
   ).toHaveLength(1);
@@ -174,8 +180,9 @@ test("reload during question generation retains an unknown attempt and never aut
   await expect(
     page.getByRole("heading", { name: "Siapkan pertanyaan audit" }),
   ).toBeVisible();
-  const saved = await page.evaluate(() =>
-    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  const saved = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
   );
   expect(saved.generationAttempts).toMatchObject([
     { outcome: "interrupted", execution: "unknown", cost_usd: null },
@@ -194,8 +201,9 @@ test("a sensitive optional edit retains the last safe summary value", async ({
     page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
   ).toBeVisible();
   await expect(differentiator).toHaveValue("Racikan kopi khas");
-  const saved = await page.evaluate(() =>
-    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  const saved = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
   );
   expect(saved.selection.differentiator).toBe("Racikan kopi khas");
   expect(JSON.stringify(saved)).not.toContain("nomor rekening");
@@ -215,8 +223,9 @@ test("every manually selected comparator stays visible, correctable and removabl
   await selected.fill("Kedai Pilihan");
   await confirmSummary(page);
   await expectTenQuestions(page);
-  const frozen = await page.evaluate(() =>
-    JSON.parse(sessionStorage.getItem("nuave.localIntake.v2") ?? "{}"),
+  const frozen = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
   );
   expect(frozen.frozen.context.comparators.value).toEqual({
     mode: "named",
@@ -371,7 +380,7 @@ test("material correction invalidates the old questions; cancel keeps the commit
   ).toBe(2);
 });
 
-test("identity correction requires explicit Periksa and a new reading", async ({
+test("a name-only edit reuses the reading; changing the website reads again", async ({
   page,
 }) => {
   const calls: string[] = [];
@@ -385,14 +394,26 @@ test("identity correction requires explicit Periksa and a new reading", async ({
   });
   await enter(page, false);
   await page.getByRole("button", { name: "Ubah nama atau website" }).click();
-  await expect(page.locator('[data-intake-screen="entry"]')).toBeVisible();
+  await expect(entryScreen(page)).toBeVisible();
   expect(calls).toHaveLength(2);
   await page
     .getByRole("textbox", { name: "Nama bisnis" })
     .fill("Kedai Fiksi Baru");
   await pressPeriksa(page);
-  await expectSummary(page);
+  // Name-only correction returns to the brand check without a new read.
+  await expectBrandConfirm(page, "Kedai Fiksi Baru");
+  expect(calls).toHaveLength(2);
+  // A website change invalidates preparation: `Periksa` reads the source again.
+  await page.getByRole("button", { name: "Kembali", exact: true }).click();
+  await expect(entryScreen(page)).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "URL website publik" })
+    .fill("https://fiksi-lain.example/");
+  await pressPeriksa(page);
+  await expect(brandScreen(page)).toBeVisible();
   expect(calls).toHaveLength(4);
+  await confirmBrand(page);
+  await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
 });
 
 test("named comparators require selection; alternatives carry no company names", async ({

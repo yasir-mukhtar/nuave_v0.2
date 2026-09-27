@@ -3,20 +3,24 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   auditStage,
+  brandScreen,
   completeSyntheticSummary,
+  confirmBrand,
   confirmSummary,
   downloadEvidenceJson,
   editQuestion,
   ENTRY_INVALID_NOTICE,
   expectAuditDone,
+  expectBrandConfirm,
   expectEmptyEntry,
   expectQuestionReview,
-  expectSummary,
   expectTenQuestions,
   fillEntry,
   injectUsefulnessFailureOnce,
+  INTAKE_SESSION_KEY,
   openAuditFromLanding,
   pressPeriksa,
+  readingScreen,
   reportLocator,
   SENSITIVE_INPUT_NOTICE,
   startAudit,
@@ -152,9 +156,7 @@ async function auditEntry(ctx: DriveContext) {
       page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
     ).toBeVisible();
   });
-  const saved = JSON.stringify(
-    await sessionValue(page, "nuave.localIntake.v2"),
-  );
+  const saved = JSON.stringify(await sessionValue(page, INTAKE_SESSION_KEY));
   expect(saved).not.toContain("token=private");
   expect(saved).toContain("Kedai Fiksi");
   ctx.check(
@@ -169,11 +171,37 @@ async function smartIntakeSummary(ctx: DriveContext) {
   await ctx.step("entry-filled", async () => {
     await fillEntry(page);
   });
-  await ctx.step("summary", async () => {
+  await ctx.step("reading", async () => {
+    // A short same-origin delay keeps the reading screen up long enough to
+    // verify it; the response itself stays the real synthetic route answer.
+    await page.route("**/api/audit/extract", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await route.continue();
+    });
     await pressPeriksa(page);
-    await expectSummary(page);
+    await expect(readingScreen(page)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Sebentar, Nuave sedang membaca" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Mode uji lokal menggunakan pengganti sintetis berlabel."),
+    ).toBeVisible();
+    await expectBrandConfirm(page);
+    await expect(brandScreen(page)).toContainText("kedai-fiksi.example");
+    await expect(
+      page.getByRole("button", { name: "Kembali", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Lanjut", exact: true }),
+    ).toBeVisible();
   });
-  ctx.check('`Periksa` reaches "Ini yang Nuave pahami."');
+  ctx.check(
+    '`Periksa` shows the labelled reading screen, then the "Ini brand yang ingin Anda audit?" check with name, source and Kembali/Lanjut',
+  );
+  await ctx.step("brand-confirm-to-summary", async () => {
+    await confirmBrand(page);
+  });
+  ctx.check('`Lanjut` on the brand check reaches "Ini yang Nuave pahami."');
   await ctx.step("summary-rows-edited", async () => {
     await completeSyntheticSummary(page);
   });
@@ -192,7 +220,7 @@ async function smartIntakeSummary(ctx: DriveContext) {
     await expectQuestionReview(page);
     await expectTenQuestions(page);
   });
-  const intake = await sessionValue(page, "nuave.localIntake.v2");
+  const intake = await sessionValue(page, INTAKE_SESSION_KEY);
   expect(intake.frozen.context).toMatchObject({
     category: { value: "kedai kopi", origin: "owner" },
     focus: { value: { kind: "produk", name: "kopi susu" } },
