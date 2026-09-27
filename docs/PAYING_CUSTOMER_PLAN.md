@@ -264,10 +264,34 @@ S0.
 
 **S1 — Security patches** (worker, no spec, ~half day)
 
-Update root `fast-uri` to ≥3.1.7 and `hono` to ≥4.13.7. Check
-`package-lock.json` directly (`npm audit` does not flag these yet; see
-`NOW.md` "Deferred security work"). This is small and independent: it may be
-pulled forward into Stage 1 whenever a worker is idle.
+Update root `fast-uri` to ≥3.1.7 and `hono` to ≥4.13.7, review the remaining
+dependency security alerts, and recheck current advisories when doing the
+work. This is small and independent: it may be pulled forward into Stage 1
+whenever a worker is idle.
+
+Background (copied from the former `NOW.md` "Deferred security work",
+2026-09-27):
+
+- The founder deferred this to the final pre-customer checks. It must be done
+  before any customer testing or public link sharing.
+- The root lockfile had `fast-uri` 3.1.6 and `hono` 4.13.5. `fast-uri` can
+  misinterpret crafted web addresses
+  ([host confusion](https://github.com/fastify/fast-uri/security/advisories/GHSA-58mr-gqgx-xq4g),
+  [destination injection](https://github.com/fastify/fast-uri/security/advisories/GHSA-qw65-cvwx-89v3)).
+  Affected Hono page-rendering features can treat untrusted text as
+  executable page content
+  ([security notice](https://github.com/honojs/hono/security/advisories/GHSA-hxh3-vqpv-xpqv)).
+- `npm explain` traced both through shadcn tooling; a source search found no
+  direct application use of the affected features. That supports the
+  deferral but is not a full runtime security assessment.
+- The alert tools do not catch these yet: `npm audit` reported nothing for the
+  root app, and every open Dependabot alert pointed at an archive folder
+  (`archive/prototypes/report-prototype/` or `Archive Candidates/lp-remote/`).
+  Check the root `package-lock.json` versions directly; a clean alert list
+  does not mean done.
+- The root lockfile already has `js-yaml` 4.3.2 and `qs` 6.16.0. The archived
+  report prototype's own lockfile is out of date; update it before reviving
+  that prototype.
 
 *Done when:* the lockfile shows the patched versions and `npm run verify`
 passes.
@@ -358,8 +382,14 @@ founder moves it into a milestone.
 - Server-side PDF generation (the browser PDF path stays for now).
 
 **Question generation and engine**
-- GLM returned model name `zai/glm-5.3-flash` vs requested; runner reads the
-  wrong billing field (see `NOW.md`).
+- GLM model name and billing field (copied from the former `NOW.md`,
+  2026-09-17 connection check): the provider returned model name
+  `zai/glm-5.3-flash` where `glm-5.3-flash` was requested, so the runner
+  marked a complete HTTP 200 response `UNSUCCESSFUL`. A public catalog lookup
+  names Z.ai as the provider but lists no aliases, so the mapping is
+  unconfirmed. The runner also reads the wrong billing field: the saved
+  response has the cost at `cheaper_inference.billing.billed_cost_usd`. Both
+  can be investigated from the saved response, without a new paid request.
 - Spec 008 G2P and remaining guard findings; run-to-run variation study.
 - Structured-output failures: provider limit or call bug.
 
