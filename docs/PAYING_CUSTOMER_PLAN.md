@@ -29,7 +29,7 @@ done.
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
 | S1 | Security patches | Worker | Not started | — | — |
 | S2 | Spending cap on the server | Worker | Not started | — | — |
-| S3 | Save and deliver reports (shape set by S0) | Worker | Not started | — | — |
+| S3 | Save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |
 | S5 | Terms, price and promise wording | Worker | Not started | — | — |
 | S6 | Landing page | Founder | Not started | — | — |
@@ -37,7 +37,6 @@ done.
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
 | V | Show reports to 3–5 real owners | Founder | Optional | — | — |
-| E | Engineering guards (playbook §B.3), already in flight | Worker | In review | #91 | — |
 
 ## 2. Finish line
 
@@ -179,8 +178,10 @@ never blocks the build. Manual payment is not needed.
 
 ### 4.2 At S0, after Stage 1 (reminder)
 
-How do customers get their report and get back to it? The orchestrator brings
-two or three options with costs, for example:
+How do customers get their report and get back to it, and how does a paid
+audit keep running if they close the tab? The orchestrator brings two or three
+options with costs. Every option must meet S3's list (§5), including audits
+that survive the tab closing, for example:
 
 - report saved on our server + private link by email (the original plan);
 - private link only, no email;
@@ -196,6 +197,8 @@ The same sitting settles the related answers, with suggested defaults:
 | D4 | Support reply time | Within 1 business day, at support@nuave.ai |
 | D5 | Wrong email or wrong business | Handled by support email, by hand |
 | D6 | Terms and privacy text | Founder approves plain wording in S5; legal review is parked |
+| D7 | How support confirms it's really the customer before resending access | The request comes from the order's email address, or the customer quotes the Midtrans receipt/order number |
+| D8 | How a replacement link is issued | Support issues a new link to the order's email; the old link stops working |
 
 ### 4.3 Accounts
 
@@ -248,7 +251,7 @@ or confirm it is already there.
 | 2026-08-20 acceptance of the unlisted, ungated live audit | Already in `DECISION_LOG` (2026-08-20 table row); link it from new `NOW.md` |
 | Historical v1 report hold | Already in `DECISION_LOG` (2026-09-22) |
 | Spec states: 011 Verified; 012 Verified with the AC-18 exception; latest checkpoint 2026-09-19 | One line each in new `NOW.md` |
-| Engineering track: playbook adopted 2026-09-26; its next slice (§B.3 guards) is open as PR #91 | New `NOW.md`, one line; §1 ledger |
+| Engineering track: playbook adopted 2026-09-26; its §B.3 guards merged through PR #91 on 2026-09-27 | New `NOW.md`, one line |
 | Open questions ("What is not known": willingness to pay, price, action on reports, re-check demand, run-to-run variation, and others) | Parking lot (§6), one bullet pointing to the old list in Git |
 | Non-scope ("Not now": white-label, dashboards, subscriptions, credits, multi-vertical, banded/ranked scores, fabricated proof) | New `NOW.md`, pointer to `docs/END_TO_END_PLAN.md` §12 plus any item §12 lacks |
 | Private evidence stays outside Git (`.local-evidence/`, `.secrets/`) | New `NOW.md`, one line |
@@ -340,20 +343,35 @@ passes.
 *Done when:* a test shows the cap blocks work after the limit and survives a
 restart.
 
-**S3 — Save and deliver reports** (worker, Stage 2 spec)
+**S3 — Save and deliver reports; audit survives tab close** (worker, Stage 2
+spec, ~5–8 days, the largest build in Stage 2; may split into two PRs)
 
-Shape set at S0. Whatever is chosen must pass:
+Shape set at S0. Today the audit is tied to the open browser tab: the run
+route passes the browser connection's stop signal into the audit
+(`src/app/api/audit/run/route.ts:213`), and the provider stops when it fires
+(`src/lib/audit/protected-observation-provider.ts:123`). Moving the run to a
+server-side job is most of this milestone. Whatever is chosen must pass:
 
-- a paid report is not lost if the customer closes the tab;
-- the customer can open the report again on another device; and
-- nobody can open someone else's report by guessing.
+- close the browser during an audit, and it completes or safely resumes,
+  without repeating questions that already succeeded (no double AI cost);
+- a finished paid report is not lost if the customer closes the tab;
+- the customer can open the report again on another device;
+- nobody can open someone else's report by guessing;
+- a lost link can be recovered through support (D7, D8); and
+- expired or revoked access fails safely, with a neutral "not available"
+  page.
+
+These come from the original plan's Phase 4 exit gate
+(`docs/END_TO_END_PLAN.md` §7, Phase 4).
 
 **S4 — Real payment + founder test pass** (worker, Stage 2 spec, ~3–4 days)
 
 - Right after the customer enters their website and Nuave shows the free
-  "is this your business?" result, show the order summary: business, email,
+  "is this your business?" result, show the order summary: business,
   Rp99.000 total, what's included, delivery promise, and links to Terms and
-  Privacy. Payment comes **before** the intake asks for or prepares any
+  Privacy. **The order summary asks for the customer's email** (no earlier
+  step does); it is required before payment, because delivery (S3) and
+  support (D3, D5, D7, D8) depend on it. Payment comes **before** the intake asks for or prepares any
   business details.
 - The free step before payment only reads the website's public page (no AI);
   today that is `/api/audit/identity` (`src/lib/audit/source-identity.ts`).
