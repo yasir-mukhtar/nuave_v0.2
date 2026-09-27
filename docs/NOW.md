@@ -15,7 +15,8 @@
   business website, confirm the prepared summary, approve ten questions, run a
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
-- **Specs:** none active; the Stage 1 spec follows J1. Latest verified:
+- **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
+  intake) is approved and in force (2026-09-27). Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
   AC-18 exception). Checkpoint: [2026-09-19 live report](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
@@ -24,11 +25,9 @@
 
 ## Next action
 
-- **Active milestone: J1, the gap list** (plan §5). The orchestrator writes
-  the worker prompt from [`templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md).
-- **"Done" for the journey** (founder, 2026-09-27; plan §4.1): match the
-  prototype without copying it blindly, keep what today's intake asks for,
-  and let the founder decide each nuance J1 finds.
+- **Active milestone: J2** (Spec 013, "Delivery slices"): screen frame,
+  entry, reading screen, brand confirm. The orchestrator writes its worker
+  prompt from [`templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md).
 
 ## Rules still in force
 

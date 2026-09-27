@@ -29,8 +29,14 @@ done.
 |---|---|---|---|---|---|
 | **Stage 1** | **Finish the intake journey** | | | | |
 | J0 | Reset the working docs | Orchestrator | Done | #93 | On the PR |
-| J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Next | — | — |
-| J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
+| J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Done | #94 | PASS+NOTES |
+| J1s | Stage 1 spec: [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), founder approval | Orchestrator + founder | Done | #95 | PASS+NOTES |
+| J2 | Screen frame, entry, reading screen, brand confirm | Worker | Next | — | — |
+| J3 | Preparation adds locations and category suggestions | Worker | Not started | — | — |
+| J4 | Focus, location and product screens | Worker | Not started | — | — |
+| J5 | Category, offerings, service-channel and market screens | Worker | Not started | — | — |
+| J6 | Customer-needs, competitor and public-fact screens | Worker | Not started | — | — |
+| J7 | Review screen becomes the single confirmation | Worker | Not started | — | — |
 | JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
@@ -191,7 +197,7 @@ never blocks the build. Manual payment is not needed.
 - ~~May any of today's questions be dropped?~~ Decided 2026-09-27
   ([decision](./DECISION_LOG.md#2026-09-27--keep-every-intake-question-build-the-airbnb-experience-first)):
   **no.** They are important and required; only the extra public fact stays
-  optional. Build the Airbnb-style experience first (J2…Jn), then add back
+  optional. Build the Airbnb-style experience first (J2…J7), then add back
   the questions it lacks (JQ). **Open until JQ:** competitors, target
   customer, customer needs and what makes you different can be skipped
   today. Must the owner answer them, or only be asked?
@@ -251,9 +257,9 @@ Rules for every milestone:
 ### Stage 1 — Finish the intake journey
 
 > **Important: do not forget the missing questions** (founder, 2026-09-27).
-> Stage 1 builds the Airbnb-style experience first (J2…Jn). Some questions
+> Stage 1 builds the Airbnb-style experience first (J2…J7). Some questions
 > today's intake asks are in neither the prototype nor the workbench. They
-> are not dropped: JQ adds them back after J2…Jn, and JZ cannot pass until
+> are not dropped: JQ adds them back after J2…J7, and JZ cannot pass until
 > JQ is done.
 
 **J0 — Reset the working docs** (orchestrator, ~half day)
@@ -351,15 +357,16 @@ overriding it blindly (§4.1):
     mode stays visibly labeled.
   - **Source links** (`Lihat sumber`).
 
-The orchestrator turns the table and the founder's answers into J2…Jn and a
+The orchestrator turns the table and the founder's answers into J2…J7 and a
 short Stage 1 spec for founder approval.
 
 *Done when:* the founder agrees the table and the information check are
 complete and has decided every nuance.
 
-**J2…Jn — Build the gaps** (worker, one PR each)
+**J2…J7 — Build the journey** (worker, one PR each)
 
-Defined after J1. Each PR takes one slice of the journey to the reference and
+Defined in [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), "Delivery
+slices", from the founder's J1 decisions (PR #94, F1–F18). Each PR takes one slice of the journey to the reference and
 keeps the whole path working in synthetic mode. Rules:
 
 - Reuse the existing engine: preparation, question generation, observations,
@@ -369,7 +376,7 @@ keeps the whole path working in synthetic mode. Rules:
 - Do not delete the answers on the JQ list below, or the engine code that
   uses them, even where no screen asks for them yet.
 
-**JQ — Add back the questions the reference lacks** (worker, after J2…Jn)
+**JQ — Add back the questions the reference lacks** (worker, after J2…J7)
 
 Founder decision 2026-09-27: these questions are important and required.
 Build the Airbnb-style experience first, then recreate them in the same
@@ -378,13 +385,14 @@ workbench on 2026-09-27, and add anything J1's information check finds:
 
 - **Target customer** (who buys). In neither reference.
 - **What makes you different.** In neither reference.
-- **Competitors: "I don't know yet" vs "no direct competitor".** Both
-  references merge these into one button (`Tidak ada pesaing langsung yang
-  saya tahu`); today keeps them separate.
-- **How customers are served: four choices** (at your location, at the
-  customer's location, delivered, used online), as today and the workbench
-  have. The prototype has only two. Skip if J2…Jn already built the
-  workbench's version.
+- **Buyer decision considerations** (`Pertimbangan pembeli`). In neither
+  reference; found by J1.
+- ~~Competitors: "I don't know yet" vs "no direct competitor"~~ Built in
+  J6 (J1 decision F11).
+- ~~How customers are served: four choices~~ Built in J5 (J1 decision F10).
+
+Until JQ, the first three stay editable on the review screen (Spec 013,
+R-20).
 
 The extra public fact stays optional.
 
