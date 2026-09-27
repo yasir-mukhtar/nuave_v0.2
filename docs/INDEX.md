@@ -1,7 +1,7 @@
 # Nuave document index
 
 > Status: **Canonical repository map**
-> Updated: 2026-09-26
+> Updated: 2026-09-27
 
 Use this page to decide what to read. Do not load every document by default.
 The active task or specification should name its required context.
@@ -43,7 +43,8 @@ decision log does not become a permanent hidden override.
 
 | Document                                                         | Governs                                                                                                                            | Status                                                                                    |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md)                     | Thin v2 journey, integration sequence, quality gates, and launch readiness                                                         | Founder-approved direction; each implementation phase still requires an approved spec     |
+| [`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md)           | Order of work, stages, and gates to the first paying customer; its §1 ledger is the progress record                                | Active plan, founder-approved 2026-09-27                                                  |
+| [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md)                     | Detailed requirements the active plan points to (Phase 4 exit gate, technical shape, failure matrix, non-scope)                    | Reference; its order of work was replaced by `PAYING_CUSTOMER_PLAN.md` on 2026-09-27      |
 | [`V1_PRODUCT_CONTRACT.md`](./V1_PRODUCT_CONTRACT.md)             | Locked V1 product hypothesis: intake correction loop, the 6 unbranded + 4 branded question structure, and required report outcomes | Locked product hypothesis (filed 2026-08-29); reconciled with Spec 007                    |
 | [`JOURNEY_CONTRACT.md`](./JOURNEY_CONTRACT.md)                   | Cross-module sequence, state ownership, handoffs, email ownership, and phase boundaries                                            | Current founder-approved product contract; implementation still requires an approved spec |
 | [`PROMPT_GENERATION_CONTEXT.md`](./PROMPT_GENERATION_CONTEXT.md) | Universal brand context for building one ten-question pack                                                                         | Working product context                                                                   |
@@ -236,7 +237,7 @@ context an agent must read. Do not implement a draft specification.
 
 | Task                                    | Read first                                             | Then read                                                                                                           |
 | --------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Orient to current work                  | `AGENTS.md`, `README.md`, `docs/NOW.md`                | The active spec named by `NOW.md`                                                                                   |
+| Orient to current work                  | `AGENTS.md`, `README.md`, `docs/NOW.md`                | `docs/PAYING_CUSTOMER_PLAN.md`, then the active spec named by `NOW.md`, if any                                      |
 | Draft a canonical document              | `AGENTS.md`, its document brief                        | Only the sources listed in the brief                                                                                |
 | Implement a capability                  | `AGENTS.md`, approved `SPEC.md`                        | Only the spec's required context and relevant code                                                                  |
 | Verify implementation                   | `AGENTS.md`, approved `SPEC.md`, verification template | The diff, relevant code, and test output                                                                            |

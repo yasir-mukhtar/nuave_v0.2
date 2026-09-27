@@ -8,9 +8,10 @@
 This contract connects the touchpoint plans without turning them into one large
 implementation specification. Product truth remains governed by
 [`VISION.md`](./VISION.md), [`PRODUCT.md`](./PRODUCT.md), and
-[`AUDIT.md`](./AUDIT.md). Build order remains governed by
-[`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md). Each code change still requires
-one bounded approved specification.
+[`AUDIT.md`](./AUDIT.md). Build order is governed by
+[`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) (2026-09-27), which
+replaced [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) for the order of work.
+Customer-visible changes still require an approved specification.
 
 ## Canonical customer sequence
 

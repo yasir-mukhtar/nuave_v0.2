@@ -1,6 +1,10 @@
 # Nuave v2 end-to-end development plan
 
-> Status: **Current development plan — founder-approved direction**
+> Status: **Reference: order of work replaced by
+> [`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) (2026-09-27)**. Use
+> that plan for the order of work, stages and gates. This plan stays the
+> reference for the detailed requirements it points to; where the two
+> disagree, `PAYING_CUSTOMER_PLAN.md` wins.
 > Updated: 2026-09-19
 > Governs: build sequence, integration boundaries, quality gates, and release
 > readiness for the thin v2 journey

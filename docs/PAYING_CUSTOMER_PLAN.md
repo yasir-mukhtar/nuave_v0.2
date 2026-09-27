@@ -1,23 +1,23 @@
 # Plan: first real paying customer
 
-> Status: **Draft for review**. It becomes the active plan when the founder
-> approves it and the approval is recorded in [`docs/DECISION_LOG.md`](./DECISION_LOG.md).
+> Status: **Active plan.** Approved by the founder on 2026-09-27
+> ([decision](./DECISION_LOG.md#2026-09-27--approve-the-paying-customer-plan)).
 > Author: orchestrator (Claude), 2026-09-27
 > Baseline: `main` at `3c07495`
 > Inputs: [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), [`docs/NOW.md`](./NOW.md), the two
 > 2026-09-27 readiness reviews (Codex and Claude) in `docs/reviews/`, and the
 > founder's sequencing direction of 2026-09-27 (§3.4)
 >
-> **Relationship to [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md).** Once
-> approved, this plan replaces it for the order of work, the stages, and the
+> **Relationship to [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md).** This
+> plan replaces it for the order of work, the stages, and the
 > gates. `END_TO_END_PLAN.md` stays as the reference for the detailed
 > requirements this plan points to (for example, the Phase 4 exit gate, §6
 > technical shape and private report access, §10 failure matrix, §12
-> non-scope). Where the two disagree, this plan wins. J0 relabels it.
+> non-scope). Where the two disagree, this plan wins.
 >
 > **Fresh agents: start here.** The ledger in §1 is the current state. Read
-> §2 for the finish line and §5 for your milestone. Read `NOW.md` only if you
-> need history.
+> §2 for the finish line and §5 for your milestone. [`NOW.md`](./NOW.md) holds
+> the deployment facts and standing rules; older history is in Git.
 
 ## 1. Progress ledger
 
@@ -28,7 +28,7 @@ done.
 | # | Milestone | Owner | State | PR | Verdict |
 |---|---|---|---|---|---|
 | **Stage 1** | **Finish the intake journey** | | | | |
-| J0 | Reset the working docs | Orchestrator | Not started | — | — |
+| J0 | Reset the working docs | Orchestrator | In review | — | — |
 | J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Not started | — | — |
 | J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
@@ -461,7 +461,7 @@ only if asked.
 ### Track V — Owner feedback (optional, founder)
 
 Show an existing report we have permission to share to 3–5 owners and ask
-three questions. **Approved by the founder on 2026-09-27** (J0 records this in
+three questions. **Approved by the founder on 2026-09-27** (recorded in
 `docs/DECISION_LOG.md` with the plan's approval):
 
 1. Did this report tell you something you didn't know about your business?
@@ -495,6 +495,12 @@ founder moves it into a milestone.
   can be investigated from the saved response, without a new paid request.
 - Spec 008 G2P and remaining guard findings; run-to-run variation study.
 - Structured-output failures: provider limit or call bug.
+
+**Open questions**
+- The former `NOW.md` "What is not known" list (willingness to pay, price,
+  whether owners act on reports, re-check demand and interval, run-to-run
+  variation, benchmark size, other verticals, outreach conversion, and more):
+  see `git show 29addbe:docs/NOW.md`. Track V answers the first three.
 
 **Operations and features**
 - Self-service recipient change, wrong-business replacement audit, founder

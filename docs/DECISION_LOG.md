@@ -6,6 +6,48 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — approve the paying-customer plan
+
+The founder said: **"The plan is approved. J0 can record this."** This
+approves [`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) as merged
+through PR #92 (`29addbe`). It is now the active plan.
+
+- **It replaces [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) for the order of
+  work, the stages and the gates.** The old plan stays as the reference for
+  the detailed requirements the new plan points to (for example, the Phase 4
+  exit gate, §6 technical shape, §10 failure matrix and §12 non-scope). Where
+  the two disagree, the new plan wins.
+- **Founder direction (plan §3.4):**
+  - order: first finish the intake journey (URL → Airbnb-style confirm and
+    quiz → review questions → report); then payment and the landing page;
+    then everything else;
+  - real test runs without payment stay possible throughout. Stage 1 has no
+    payment step, and a private founder test pass follows once payment exists;
+  - payment goes right after the URL and before any business details: URL →
+    order summary (email) → pay → intake → approve questions → report;
+  - how reports are saved, emailed and recovered is decided at S0, after
+    Stage 1;
+  - the intake reference is `intake-prototype.html`, with the design
+    workbench second. Today's `/audit` and `/audit/new-intake` are
+    implementations to measure against, not references.
+- **Changes to the original plan (plan §3.5):**
+  - the Airbnb-style intake is Stage 1, ahead of durable delivery and payment;
+  - polish (Phase 6) is no longer a gate before payment or before owners see
+    the product. This supersedes the `NOW.md` "Not now" line that held back
+    showing the product until after polish;
+  - lighter paperwork: one PR per milestone, proven by its PR description and
+    one verdict. Customer-visible work still needs a short approved spec: one
+    for Stage 1 (after J1) and one for Stage 2 (after S0);
+  - at low volume, manual support replaces features for refunds, recipient
+    changes, wrong-business replacements and retries.
+- **Track V:** the founder approved the three owner-feedback questions as
+  written (plan §5, Track V).
+
+Not decided here: the S0 answers (D1–D8) stay suggested defaults until S0.
+`NOW.md` is reset to a short page, `END_TO_END_PLAN.md` is relabelled as a
+reference, and `README.md`, `INDEX.md` and `JOURNEY_CONTRACT.md` now point to
+the new plan.
+
 ## 2026-09-27 — accept playbook proposals P-1 to P-4 and P-7
 
 The founder said: **"Accept all."** This adopts the remaining proposals of the
@@ -1234,3 +1276,5 @@ Spec 007 R-01/R-02 canonical matrix (2026-08-30):
 | Intent-5: five categories, two questions each, with 5 unnamed / 5 named | SUPERSEDED | Spec 007 R-01/R-02 canonical ten-slot matrix: 6 unnamed + 4 named, with fixed slot policies (2026-08-30)                      |
 | Universal `generate-ai-visibility-prompts` skill using Intent-5 and 5/5 | SUPERSEDED | Retained skill rewritten against Spec 007's canonical 6/4 matrix (2026-08-30)                                                 |
 | Five-and-five coverage brief with free-composition editing              | SUPERSEDED | Spec 007 R-10: wording edits stay within fixed slots; composition and slot policies cannot change (2026-08-30)                |
+| `END_TO_END_PLAN.md` as the current order of work                       | SUPERSEDED | `PAYING_CUSTOMER_PLAN.md` (2026-09-27); the old plan stays as the requirements reference                                      |
+| Product-wide polish before owners see the product or before payment     | SUPERSEDED | Polish parked until after the first paying customer (`PAYING_CUSTOMER_PLAN.md` §3.5, 2026-09-27)                              |
