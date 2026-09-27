@@ -6,9 +6,11 @@ Start with [`README.md`](./README.md) and [`docs/NOW.md`](./docs/NOW.md). Load
 only the product, audit, experiment, or GTM document needed for the task. Do not
 load all historical planning by default.
 
-The current deliverable is one working path from intake form to downloadable
-report, as defined in [`docs/NOW.md`](./docs/NOW.md). Optimize for that path
-working end to end. Prefer the smallest thing that removes a manual step from
+The current goal is the first paying customer: one working path from the
+business website to a paid, delivered report, built in the order set by the
+active plan (see [`docs/INDEX.md`](./docs/INDEX.md#current-development-plan)).
+[`docs/NOW.md`](./docs/NOW.md) names the active milestone. Optimize for that
+path working end to end. Prefer the smallest thing that removes a manual step from
 it over a generalized system that serves a hypothetical one.
 
 [`docs/INDEX.md`](./docs/INDEX.md) is the canonical document map, and

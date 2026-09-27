@@ -6,6 +6,96 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — keep every intake question; build the Airbnb experience first
+
+The founder said: **"Those questions are important and mandatory, except the
+extra public fact."** and **"Decision: prioritize implementing the Airbnb
+intake experience into the journey first. After that, we will recreate
+questions for what's missing. But please write an important note into the
+plan so me and the agent won't forget about this."**
+
+- Nothing today's intake asks for is dropped in J1. This settles the "items
+  the founder explicitly drops" exception in the entry below: there are
+  none. The extra public fact stays optional.
+- Order: J2…Jn build the Airbnb-style experience first. A new milestone, JQ,
+  then adds back what the prototype and the workbench lack, before JZ:
+  target customer, what makes you different, "I don't know yet" vs "no
+  direct competitor", and the four ways customers are served
+  ([plan §5, JQ](./PAYING_CUSTOMER_PLAN.md)).
+- Open until JQ: competitors, target customer, customer needs and what makes
+  you different can be skipped today. Must the owner answer them, or only be
+  asked?
+
+## 2026-09-27 — what "done" means for the intake journey
+
+The founder answered plan §4.1: **"Yes matching the prototype, but it doesnt
+mean to implement it brutally. There are probably some nuances in the
+existing intake that needs to be reconsidered instead of blindly overriding
+it (point out to me). Basically the protoype should cover all the
+informations needs and developed from the previous version of the intake
+journey, so it's as complete as the previous version but more intuitive."**
+
+Stage 1 is done (JZ) when the journey:
+
+1. follows the flow and feel of `intake-prototype.html`;
+2. asks for and uses everything today's intake asks for and uses: as complete,
+   but more intuitive. The only exceptions are items the founder explicitly
+   drops in J1; and
+3. has had every nuance of today's intake that the prototype would override
+   shown to the founder, who decided to keep, adapt, or drop it.
+
+J1 now produces an information check and a list of nuances to reconsider,
+each with a plain recommendation, alongside the gap table
+([plan §5, J1](./PAYING_CUSTOMER_PLAN.md)).
+
+## 2026-09-27 — approve the paying-customer plan
+
+The founder said: **"The plan is approved. J0 can record this."** This
+approves [`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) as merged
+through PR #92 (`29addbe`). It is now the active plan.
+
+- **It replaces [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) for the order of
+  work, the stages and the gates.** The old plan stays as the reference for
+  the detailed requirements the new plan points to (for example, the Phase 4
+  exit gate, §6 technical shape, §10 failure matrix and §12 non-scope). Where
+  the two disagree, the new plan wins.
+- **Founder direction (plan §3.4):**
+  - order: first finish the intake journey (URL → Airbnb-style confirm and
+    quiz → review questions → report); then payment and the landing page;
+    then everything else;
+  - real test runs without payment stay possible throughout. Stage 1 has no
+    payment step, and a private founder test pass follows once payment exists;
+  - payment goes right after the URL and before any business details: URL →
+    order summary (email) → pay → intake → approve questions → report;
+  - how reports are saved, emailed and recovered is decided at S0, after
+    Stage 1;
+  - the intake reference is `intake-prototype.html`, with the design
+    workbench second. Today's `/audit`, the only live intake, is the
+    implementation to measure against, not a reference (`/audit/new-intake`
+    now redirects to it).
+- **Changes to the original plan (plan §3.5):**
+  - the Airbnb-style intake is Stage 1, ahead of durable delivery and payment;
+  - polish (Phase 6) is no longer a gate before payment or before owners see
+    the product. This supersedes the `NOW.md` "Not now" line that held back
+    showing the product until after polish;
+  - the known-owner pilot is no longer a gate before selling to strangers
+    (the 2026-08-09 order, steps 5–6, and the 2026-08-12 slice order).
+    Owner feedback is the optional Track V, and G1 opens Nuave to paying
+    customers. The outside-user safeguards in `NOW.md` still apply;
+  - lighter paperwork: one PR per milestone, proven by its PR description and
+    one verdict. Customer-visible work still needs a short approved spec: one
+    for Stage 1 (after J1) and one for Stage 2 (after S0);
+  - at low volume, manual support replaces features for refunds, recipient
+    changes, wrong-business replacements and retries.
+- **Track V:** the founder approved the three owner-feedback questions as
+  written (plan §5, Track V).
+
+Not decided here: the S0 answers (D1–D8) stay suggested defaults until S0.
+`NOW.md` is reset to a short page and `END_TO_END_PLAN.md` is relabelled as a
+reference. [`INDEX.md`](./INDEX.md#current-development-plan) is the one place
+that says which plan governs what; `README.md`, `AGENTS.md`, `PRODUCT.md`,
+`JOURNEY_CONTRACT.md` and `specs/README.md` point there.
+
 ## 2026-09-27 — accept playbook proposals P-1 to P-4 and P-7
 
 The founder said: **"Accept all."** This adopts the remaining proposals of the
@@ -1234,3 +1324,6 @@ Spec 007 R-01/R-02 canonical matrix (2026-08-30):
 | Intent-5: five categories, two questions each, with 5 unnamed / 5 named | SUPERSEDED | Spec 007 R-01/R-02 canonical ten-slot matrix: 6 unnamed + 4 named, with fixed slot policies (2026-08-30)                      |
 | Universal `generate-ai-visibility-prompts` skill using Intent-5 and 5/5 | SUPERSEDED | Retained skill rewritten against Spec 007's canonical 6/4 matrix (2026-08-30)                                                 |
 | Five-and-five coverage brief with free-composition editing              | SUPERSEDED | Spec 007 R-10: wording edits stay within fixed slots; composition and slot policies cannot change (2026-08-30)                |
+| `END_TO_END_PLAN.md` as the current order of work                       | SUPERSEDED | `PAYING_CUSTOMER_PLAN.md` (2026-09-27); the old plan stays as the requirements reference                                      |
+| Product-wide polish before owners see the product or before payment     | SUPERSEDED | Polish parked until after the first paying customer (`PAYING_CUSTOMER_PLAN.md` §3.5, 2026-09-27)                              |
+| Known-owner pilot before selling to strangers                           | SUPERSEDED | Optional Track V owner feedback; G1 opens Nuave to paying customers (`PAYING_CUSTOMER_PLAN.md`, 2026-09-27)                   |

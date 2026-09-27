@@ -109,9 +109,8 @@ one honestly.
 
 ## Customer journey
 
-The journey below is the target. [`NOW.md`](./NOW.md) and the newest
-founder-approved entry in [`DECISION_LOG.md`](./DECISION_LOG.md) own the current
-build order. Step 1 describes how a customer arrives and sits outside the
+The journey below is the target. The active plan named in
+[`INDEX.md`](./INDEX.md#current-development-plan) owns the current build order. Step 1 describes how a customer arrives and sits outside the
 product. Step 2 onward is the product journey.
 
 ### 1. Demonstrate before selling

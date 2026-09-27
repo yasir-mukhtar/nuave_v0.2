@@ -1,23 +1,23 @@
 # Plan: first real paying customer
 
-> Status: **Draft for review**. It becomes the active plan when the founder
-> approves it and the approval is recorded in [`docs/DECISION_LOG.md`](./DECISION_LOG.md).
+> Status: **Active plan.** Approved by the founder on 2026-09-27
+> ([decision](./DECISION_LOG.md#2026-09-27--approve-the-paying-customer-plan)).
 > Author: orchestrator (Claude), 2026-09-27
 > Baseline: `main` at `3c07495`
 > Inputs: [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), [`docs/NOW.md`](./NOW.md), the two
 > 2026-09-27 readiness reviews (Codex and Claude) in `docs/reviews/`, and the
 > founder's sequencing direction of 2026-09-27 (§3.4)
 >
-> **Relationship to [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md).** Once
-> approved, this plan replaces it for the order of work, the stages, and the
+> **Relationship to [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md).** This
+> plan replaces it for the order of work, the stages, and the
 > gates. `END_TO_END_PLAN.md` stays as the reference for the detailed
 > requirements this plan points to (for example, the Phase 4 exit gate, §6
 > technical shape and private report access, §10 failure matrix, §12
-> non-scope). Where the two disagree, this plan wins. J0 relabels it.
+> non-scope). Where the two disagree, this plan wins.
 >
 > **Fresh agents: start here.** The ledger in §1 is the current state. Read
-> §2 for the finish line and §5 for your milestone. Read `NOW.md` only if you
-> need history.
+> §2 for the finish line and §5 for your milestone. [`NOW.md`](./NOW.md) holds
+> the deployment facts and standing rules; older history is in Git.
 
 ## 1. Progress ledger
 
@@ -28,9 +28,10 @@ done.
 | # | Milestone | Owner | State | PR | Verdict |
 |---|---|---|---|---|---|
 | **Stage 1** | **Finish the intake journey** | | | | |
-| J0 | Reset the working docs | Orchestrator | Not started | — | — |
-| J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Not started | — | — |
+| J0 | Reset the working docs | Orchestrator | Done | #93 | On the PR |
+| J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Next | — | — |
 | J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
+| JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
@@ -151,9 +152,9 @@ never blocks the build. Manual payment is not needed.
   2. **Secondary:** [`drafts/nuave-intake-design-workbench.html`](./drafts/nuave-intake-design-workbench.html):
      an attempt to recreate the prototype, less clean, but may hold good
      ideas worth keeping.
-  3. **Not references:** today's `/audit` and the PR #58 `/audit/new-intake`
-     version. They are half-built implementations to measure against, not
-     to copy.
+  3. **Not references:** today's `/audit`, the only live intake, is the
+     implementation to measure against, not to copy. (The PR #58
+     `/audit/new-intake` route now just redirects to `/audit`.)
 
   Where the prototype and the workbench disagree, the prototype wins unless
   the founder picks otherwise.
@@ -178,8 +179,22 @@ never blocks the build. Manual payment is not needed.
 ### 4.1 Now
 
 - ~~Name the Airbnb-style reference~~ Done 2026-09-27 (§3.4).
-- **Say what "done" means for the journey** if it is more than matching the
-  reference, such as a list of screens that must exist.
+- ~~Say what "done" means for the journey~~ Done 2026-09-27. The founder's
+  answer: **match the prototype, but don't copy it blindly.** The journey is
+  done when:
+  1. it follows the prototype's flow and feel;
+  2. it asks for and uses everything today's intake asks for and uses, so
+     it is as complete as today's version but more intuitive. The only
+     exceptions are items the founder explicitly drops in J1; and
+  3. every nuance in today's intake that the prototype would override was
+     shown to the founder, who decided to keep, adapt, or drop it (J1).
+- ~~May any of today's questions be dropped?~~ Decided 2026-09-27
+  ([decision](./DECISION_LOG.md#2026-09-27--keep-every-intake-question-build-the-airbnb-experience-first)):
+  **no.** They are important and required; only the extra public fact stays
+  optional. Build the Airbnb-style experience first (J2…Jn), then add back
+  the questions it lacks (JQ). **Open until JQ:** competitors, target
+  customer, customer needs and what makes you different can be skipped
+  today. Must the owner answer them, or only be asked?
 - Real test runs during Stage 1 are the founder's own (§5, JZ); about
   USD 0.20 of AI cost each.
 
@@ -194,6 +209,7 @@ that survive the tab closing, for example:
 - private link only, no email;
 - a lighter option the founder suggests.
 
+Start the session from [`briefs/REPORT_ACCESS_RECOVERY.md`](./briefs/REPORT_ACCESS_RECOVERY.md).
 The same sitting settles the related answers, with suggested defaults:
 
 | # | Question | Suggested default |
@@ -234,6 +250,12 @@ Rules for every milestone:
 
 ### Stage 1 — Finish the intake journey
 
+> **Important: do not forget the missing questions** (founder, 2026-09-27).
+> Stage 1 builds the Airbnb-style experience first (J2…Jn). Some questions
+> today's intake asks are in neither the prototype nor the workbench. They
+> are not dropped: JQ adds them back after J2…Jn, and JZ cannot pass until
+> JQ is done.
+
 **J0 — Reset the working docs** (orchestrator, ~half day)
 
 - Replace [`docs/NOW.md`](./NOW.md) with a page under 100 lines: current state, pointer to this
@@ -268,7 +290,7 @@ or confirm it is already there.
 | Historical v1 report hold | Already in `DECISION_LOG` (2026-09-22) |
 | Spec states: 011 Verified; 012 Verified with the AC-18 exception; latest checkpoint 2026-09-19 | One line each in new `NOW.md` |
 | Engineering track: playbook adopted 2026-09-26; its §B.3 guards merged through PR #91 on 2026-09-27 | New `NOW.md`, one line |
-| Open questions ("What is not known": willingness to pay, price, action on reports, re-check demand, run-to-run variation, and others) | Parking lot (§6), one bullet pointing to the old list in Git |
+| Open questions ("What is not known": willingness to pay, price, action on reports, re-check demand, run-to-run variation, and others) | Parking lot (§6), listed in full; access and delivery questions go to S0 |
 | Non-scope ("Not now": white-label, dashboards, subscriptions, credits, multi-vertical, banded/ranked scores, fabricated proof) | New `NOW.md`, pointer to `docs/END_TO_END_PLAN.md` §12 plus any item §12 lacks |
 | Private evidence stays outside Git (`.local-evidence/`, `.secrets/`) | New `NOW.md`, one line |
 
@@ -284,12 +306,56 @@ reject. Output one table in the PR description:
 - the gap; and
 - a rough size (S/M/L).
 
-Also list what today's `/audit` does that the reference lacks, and which
-existing engine pieces can be reused (preparation, question generation,
-run, report). The orchestrator turns the table into J2…Jn and a short
-Stage 1 spec for founder approval.
+Also list which existing engine pieces can be reused (preparation, question
+generation, run, report).
 
-*Done when:* the founder agrees the table is complete.
+Two more lists, because "done" means matching the prototype without
+overriding it blindly (§4.1):
+
+- **Information check.** Every piece of information today's intake asks for
+  or prepares and then passes to question generation or the report, and
+  whether the prototype covers it. Anything missing is a gap to build unless
+  the founder explicitly drops that information in J1; the J1 PR records each
+  drop. Nuance decisions below change how something is asked, not whether.
+  (Founder, 2026-09-27: nothing is dropped. Missing questions go to JQ.)
+- **Nuances to reconsider.** Everything today's `/audit` does on purpose that
+  the prototype would override or lacks. For each one: what today does, what
+  the prototype does, and a recommendation (keep, adapt, or drop) in plain
+  language for the founder to decide. Much of today's intake was settled
+  after the prototype (2026-08-30) by Spec 011 and later decisions. Start
+  from these candidates, confirm each against the code, and add any others:
+  - **Screen count.** Today: one prepared summary, at most two decisions,
+    one confirmation (Spec 011, settled decision 8). The prototype asks one
+    question per screen. Find a way to keep the prototype's feel without
+    making an owner with a rich website click through answers Nuave
+    already has.
+  - **Where each answer came from.** Today labels each row `Dari website
+    Anda`, `Saran Nuave`, or `Dari Anda`; the prototype has no labels.
+  - **Optional stays optional.** Competitors, target customer, customer
+    needs, differentiator, and public fact never block the owner today; the
+    prototype asks some of these as full screens.
+  - **Service channels.** Today offers four channel choices; the prototype
+    only has "we also serve online" on the location screen.
+  - **Competitors: "don't know" vs "none".** Today keeps them distinct.
+  - **Default focus.** Today proposes `Brand secara keseluruhan` as a Nuave
+    suggestion that counts only after the final confirmation.
+  - **Market reach meaning.** "Broad business presence" (decision
+    2026-09-24), including its stated regional limit.
+  - **Ask only when something required is missing** (`Perlu dipastikan`).
+  - **One final confirmation.** Nothing counts until the owner confirms, and
+    the confirmed answers are frozen and passed through to the report.
+  - **Privacy check during preparation** (Spec 011 privacy amendment R3):
+    stops on sensitive records or credentials, not on ordinary business
+    wording.
+  - **Unreadable website** is an error, not an empty summary; synthetic
+    mode stays visibly labeled.
+  - **Source links** (`Lihat sumber`).
+
+The orchestrator turns the table and the founder's answers into J2…Jn and a
+short Stage 1 spec for founder approval.
+
+*Done when:* the founder agrees the table and the information check are
+complete and has decided every nuance.
 
 **J2…Jn — Build the gaps** (worker, one PR each)
 
@@ -298,8 +364,37 @@ keeps the whole path working in synthetic mode. Rules:
 
 - Reuse the existing engine: preparation, question generation, observations,
   and report. Change the screens, not the audit method.
-- The live route is `/audit`. Retire `/audit/new-intake` rather than keep two
-  intakes.
+- The live route is `/audit`, the only intake (`/audit/new-intake` already
+  redirects there). Build the journey into it; do not add a second intake.
+- Do not delete the answers on the JQ list below, or the engine code that
+  uses them, even where no screen asks for them yet.
+
+**JQ — Add back the questions the reference lacks** (worker, after J2…Jn)
+
+Founder decision 2026-09-27: these questions are important and required.
+Build the Airbnb-style experience first, then recreate them in the same
+style. Start from this list, checked against `intake-prototype.html` and the
+workbench on 2026-09-27, and add anything J1's information check finds:
+
+- **Target customer** (who buys). In neither reference.
+- **What makes you different.** In neither reference.
+- **Competitors: "I don't know yet" vs "no direct competitor".** Both
+  references merge these into one button (`Tidak ada pesaing langsung yang
+  saya tahu`); today keeps them separate.
+- **How customers are served: four choices** (at your location, at the
+  customer's location, delivered, used online), as today and the workbench
+  have. The prototype has only two. Skip if J2…Jn already built the
+  workbench's version.
+
+The extra public fact stays optional.
+
+At the start of JQ the founder decides: competitors, target customer,
+customer needs and what makes you different can be skipped today. Must the
+owner answer them before continuing, or only be asked?
+
+*Done when:* every question on the list is asked in the Airbnb style, the
+answers reach question generation and the report, and the whole path still
+works in synthetic mode.
 
 **JZ — Journey sign-off** (founder)
 
@@ -309,8 +404,8 @@ J-tasks or parking-lot items. Agents still make live AI calls only with a
 named founder approval. JZ is the moment the founder says the journey is
 done.
 
-*Done when:* the founder says the journey is done. Orchestrator then triggers
-S0.
+*Done when:* JQ is done and the founder says the journey is done, judged by
+the three points in §4.1. Orchestrator then triggers S0.
 
 ### Stage 2 — Get ready to take money
 
@@ -461,7 +556,7 @@ only if asked.
 ### Track V — Owner feedback (optional, founder)
 
 Show an existing report we have permission to share to 3–5 owners and ask
-three questions. **Approved by the founder on 2026-09-27** (J0 records this in
+three questions. **Approved by the founder on 2026-09-27** (recorded in
 `docs/DECISION_LOG.md` with the plan's approval):
 
 1. Did this report tell you something you didn't know about your business?
@@ -495,6 +590,23 @@ founder moves it into a milestone.
   can be investigated from the saved response, without a new paid request.
 - Spec 008 G2P and remaining guard findings; run-to-run variation study.
 - Structured-output failures: provider limit or call bug.
+
+**Open questions** (from the former `NOW.md`; Track V starts on the first
+three)
+- Will Indonesian small-business owners pay for one audit at all, and at
+  Rp99.000?
+- Does an owner act on the report, or read it, agree, and do nothing?
+- Will owners buy a re-check, and at what interval?
+- How much does ordinary run-to-run variation move the count out of ten?
+- Can a category benchmark be stated after about twenty audits, or does it
+  need many more?
+- Which other business types can use the method without new claims and
+  report review?
+- Does demonstrate-before-selling outreach convert, and at what rate?
+- Does an objectively wrong delivered report need a correction request and
+  a corrected-version notice?
+- Report access, delivery delay limits, support times and recipient checks
+  are settled at S0 (§4.2, D1–D8).
 
 **Operations and features**
 - Self-service recipient change, wrong-business replacement audit, founder

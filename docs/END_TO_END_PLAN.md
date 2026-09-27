@@ -1,13 +1,18 @@
 # Nuave v2 end-to-end development plan
 
-> Status: **Current development plan — founder-approved direction**
+> Status: **Reference: order of work replaced by
+> [`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) (2026-09-27)**. Use
+> that plan for the order of work, stages and gates. This plan stays the
+> reference for the detailed requirements it points to; where the two
+> disagree, `PAYING_CUSTOMER_PLAN.md` wins.
 > Updated: 2026-09-19
-> Governs: build sequence, integration boundaries, quality gates, and release
-> readiness for the thin v2 journey
+> Governs (reference only): the detailed requirements for the thin v2 journey
+> that the active plan points to. It no longer sets the build sequence or
+> gates; see [`INDEX.md`](./INDEX.md#current-development-plan).
 >
-> This plan does not approve every implementation detail. Each phase still
-> requires one bounded approved specification under `specs/` before code is
-> changed. Product truth remains governed by `VISION.md`, `PRODUCT.md`,
+> This plan does not approve every implementation detail. When a spec is
+> needed is set by `PAYING_CUSTOMER_PLAN.md` §3.5 (one short spec per stage
+> for customer-visible work), not by this plan's phases. Product truth remains governed by `VISION.md`, `PRODUCT.md`,
 > `AUDIT.md`, and the newest founder-approved decision in `DECISION_LOG.md`.
 
 ## 1. Outcome

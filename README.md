@@ -19,23 +19,14 @@ direct-link-only deployment. The former access-code gate has been removed under
 the founder's recorded interim-exposure acceptance; a minimal server-side
 rate/cost guard and the
 [deferred dependency security updates](./docs/NOW.md#deferred-security-work--before-customer-testing-or-public-sharing)
-are still required before any public link sharing. The current
-objective in [`docs/NOW.md`](./docs/NOW.md) is to complete one continuous local
-audit experience from business input to report download. The real end-to-end
-path completed on 2026-09-19. The prepared-intake (Spec 011) and report
-redesign (Spec 012) changes then shipped through PRs #78–#81. On 2026-09-26
-the founder accepted the redesigned report for now after the disclosed
-fictional layout sample. The founder found its substance useful and deferred
-formatting and reference-section improvements. The original same-evidence
-real-report comparison is unperformed and deferred. The Spec 012
-[closeout acceptance](./specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
-records **Verified with founder-approved exception (AC-18)** after independent
-review. These records merged through [PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82)
-(`784530c`, 2026-09-27). See the
-[founder decision](./docs/DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements).
-No further live call is authorized by this work. Commercial release is separate. The
-[September 19 handoff](./docs/checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
-retains the earlier milestone; `docs/NOW.md` governs the current next action.
+are still required before any public link sharing.
+
+The real end-to-end path has worked since 2026-09-19. The prepared intake
+(Spec 011) and redesigned report (Spec 012) shipped through PRs #78–#81, and
+the founder accepted the report for now on 2026-09-26. Work now follows the
+[paying-customer plan](./docs/PAYING_CUSTOMER_PLAN.md), approved on
+2026-09-27: finish the intake journey, get ready to take money, then go live.
+[`docs/NOW.md`](./docs/NOW.md) names the active milestone.
 
 ## Start here
 
@@ -44,9 +35,10 @@ retains the earlier milestone; `docs/NOW.md` governs the current next action.
 | Which documents govern a task | [`docs/INDEX.md`](./docs/INDEX.md) |
 | Why Nuave exists, who it serves, what it believes | [`docs/VISION.md`](./docs/VISION.md) |
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
-| End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
+| Build sequence and gates to the first paying customer | [`docs/PAYING_CUSTOMER_PLAN.md`](./docs/PAYING_CUSTOMER_PLAN.md) |
+| Detailed requirements the plan points to (reference; which plan governs what is in `docs/INDEX.md`) | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — Verified and released (PR #78); prepared summary and truthful new-session report/export context; approved historical hold. Report: [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) — Verified with founder-approved exception (AC-18); implementation released, closeout documentation merged in PR #82 (`784530c`) |
+| Current bounded implementation | None active; the Stage 1 spec follows milestone J1. Latest verified: [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) (prepared intake) and [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) (report, with the founder-approved AC-18 exception) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
@@ -98,19 +90,16 @@ run a few unbranded questions on a prospect before any contact
   -> pay through Midtrans with QRIS, bank transfer, GoPay, or DANA
   -> prepare and confirm the business facts
   -> prepare and approve the ten-question pack in Indonesian
-  -> run ten independent OpenCode Go Responses API observations with GPT-5.6 Luna and web search
+  -> run ten independent OpenAI Responses API observations with GPT-5.6 Luna and web search
   -> generate the final-format web report and evidence export
   -> named recipient opens the report through private access
   -> provide Download PDF when its derived artifact is ready
   -> recommend a re-check six to eight weeks later
 ```
 
-The current build starts with a fixture-backed version of this whole journey,
-including an unmistakably simulated checkout and report destination. The
-founder-supervised direct-ten live report exists, and the continuous local
-audit flow has completed a real test. The redesigned report is accepted for
-now under the 2026-09-26 decision above; further formatting improvements are
-deferred. Durable private delivery and real checkout remain separate work.
+Today the live path runs from the business link to the report without payment
+or saving on the server. Saved reports and delivery (S3) and real payment (S4)
+are Stage 2 of the [paying-customer plan](./docs/PAYING_CUSTOMER_PLAN.md).
 
 The settled commercial direction does not make the current fixture a real
 checkout: production payment still requires its approved implementation
@@ -118,21 +107,19 @@ specification, Midtrans verification, durable delivery, and remaining remedy
 and access decisions. A validated web report may be delivered while PDF
 generation is retried from the same report version.
 
-The `src/` landing page keeps the previous Nuave website as its visual baseline,
-but its English and Indonesian copy still describes the agency-facing raw-MVP
-offer. That copy contradicts the customer defined in
-[`docs/VISION.md`](./docs/VISION.md) and is rewritten in Indonesian for the
-target customer during the later product-wide polish pass; treat it as a known
-gap, not as aligned. Its report preview is explicitly illustrative and
-contains no client result or performance claim.
+The `src/` landing page is Indonesian and addressed to the business owner. It
+carries the interim copy approved on 2026-08-20 (Spec 006 P1) and is no longer
+agency-facing. The founder reworks it in milestone S6 of the plan. Its report
+preview is explicitly illustrative and contains no client result or
+performance claim.
 
 ## Development
 
-The implemented application includes the existing bilingual Next.js landing
-page and a local `/audit` workflow. The workflow has no database, payments,
-customer accounts, public rate limiting, or hosted report access. The current
-journey shell may simulate checkout and a private destination, but must not
-claim either is real. Durable access and real payment follow the quality gate.
+The implemented application includes the Indonesian Next.js landing page and
+the `/audit` workflow. The workflow has no database, payments, customer
+accounts, or hosted report access. The deployed worker has per-IP rate limits,
+but no server-side spending cap yet (S2 adds one). The journey may simulate
+checkout and a private destination, but must not claim either is real.
 
 Use Node.js 22 and npm. From a clean checkout:
 
@@ -149,7 +136,7 @@ tree valid locally but makes `npm ci` fail the in-sync check on every machine,
 including CI — a failure that has already been fixed and reintroduced twice.
 Confirm with `npm ci --dry-run` before committing a lockfile change.
 
-Copy `.env.example` to `.env.local`, add `OPENCODEGO_API_KEY` and
+Copy `.env.example` to `.env.local`, add `OPENAI_API_KEY` and
 `CHEAPERINFERENCE_API_KEY`, set `NUAVE_NEW_AUDIT_ENABLED=true` and
 `NUAVE_AUDIT_MODE=synthetic` (or `live` for a real paid run), and open
 <http://localhost:3000/audit>. The audit journey is publicly reachable when
@@ -183,7 +170,7 @@ cannot be used to judge real visibility or report quality. See `.env.example`
 for the current provider variables and limits.
 
 Every completed observation records the exact returned model. The protected
-OpenCode Go production path is locked to `low` reasoning and fails closed if
+OpenAI production path is locked to `low` reasoning and fails closed if
 `OPENAI_AUDIT_REASONING_EFFORT` is set to another value. The broader
 `none`/`low`/`medium`/`high`/`xhigh`/`max` setting remains available only for
 explicit local or test-provider work outside that protected production path.
@@ -237,7 +224,7 @@ Code map:
 |---|---|
 | Page assembly and root layout | `src/app/` |
 | Reusable page and interface components | `src/components/` |
-| English and Indonesian messages | `src/messages/` |
+| Indonesian messages | `src/messages/` |
 | Locale selection and routing | `src/i18n/` |
 | Global styles and design tokens | `src/app/globals.css`, `src/styles/` |
 | Static images, icons, and web manifest | `public/` |

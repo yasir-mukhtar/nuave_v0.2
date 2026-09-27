@@ -46,6 +46,10 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
+No specification is active for new work; [`../docs/NOW.md`](../docs/NOW.md)
+names the active milestone. The entries below record each package's latest
+status.
+
 - [`012-evidence-first-report/SPEC.md`](./012-evidence-first-report/SPEC.md)
   — **Verified with founder-approved exception (AC-18)** (2026-09-26,
   independent closeout PASS accepted by the orchestrator; original approval
@@ -111,7 +115,7 @@ verification is against its acceptance criteria.
   later founder report decision superseded the blanket usefulness deferral.
 
 - [`009-recommendation-eligible-audit/SPEC.md`](./009-recommendation-eligible-audit/SPEC.md)
-  — **Approved** (2026-09-18), current bounded implementation: ten directly
+  — **Approved** (2026-09-18), implemented; now the base of Specs 011 and 012: ten directly
   generated unnamed questions, human editing/approval, grounded execution and
   downloadable report. Supersedes conflicting fixed-slot/6–4 and R5 gate
   requirements for this method; legacy records retain their contracts.
