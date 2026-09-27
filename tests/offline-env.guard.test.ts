@@ -35,11 +35,13 @@ import {
  * `process` object itself (`const { env } = process`, `process[k]`,
  * `import { env } from "node:process"`).
  *
- * Not enumerable by design: a file that receives the env object smuggled in
- * from somewhere the guard does not flag (e.g. a `{ process }` shorthand or a
- * module that holds a cached copy) — the named-key rule is what makes
- * coverage checkable, so anything that passes the object around without
- * naming keys is rejected instead of trusted.
+ * Limits — this guard catches ordinary env reads in normal code. It does not
+ * stop someone deliberately working around it, for example through
+ * `global.process`, an alias of `globalThis`, or `window`/`self`. The
+ * explicit `""` values in `offlineE2EServerEnv()` are what actually stop the
+ * leak; the named-key rule is what makes coverage checkable, so anything
+ * that passes the object around without naming keys is rejected instead of
+ * trusted.
  */
 
 // NUAVE_* keys are UPPER_SNAKE and end in a letter or digit, so a bare
@@ -138,6 +140,9 @@ function isProcessObjectConsumed(node: ts.Expression): boolean {
   }
   if (parent.kind === ts.SyntaxKind.TypeQuery) return true;
   if (ts.isVariableDeclaration(parent)) return true; // clause flags the decl
+  // `{ process }` shorthand embeds the real object in a new one — an escape,
+  // not a name slot, so it must fall through to the flag.
+  if (ts.isShorthandPropertyAssignment(parent)) return false;
   return (
     (parent as { name?: ts.Node }).name === node ||
     (parent as { propertyName?: ts.Node }).propertyName === node
@@ -448,8 +453,10 @@ function scanEnvReads(path: string, source: string): EnvScan {
       return;
     }
     // `process["env"]` is handled above; `process[<unresolved>]` might be it.
+    // (`globalThis["process"]` itself is the object — the escape clause below.)
     if (
       ts.isElementAccessExpression(node) &&
+      !isProcessObjectExpression(node) &&
       isProcessObjectExpression(node.expression)
     ) {
       const arg = node.argumentExpression;
@@ -462,9 +469,12 @@ function scanEnvReads(path: string, source: string): EnvScan {
       }
       return;
     }
-    // A bare `process` escape — `f(process)`, `x = process`, iteration.
+    // A bare `process` escape — `f(process)`, `f(globalThis["process"])`,
+    // `x = process`, `{ process }` shorthand, iteration.
     if (
-      (ts.isIdentifier(node) || ts.isPropertyAccessExpression(node)) &&
+      (ts.isIdentifier(node) ||
+        ts.isPropertyAccessExpression(node) ||
+        ts.isElementAccessExpression(node)) &&
       isProcessObjectExpression(node) &&
       !isProcessObjectConsumed(node)
     ) {
@@ -608,6 +618,15 @@ describe("offline e2e env coverage (§B.3 class B)", () => {
     ).toHaveLength(1);
     expect(
       scanEnvReads("src/x.ts", 'require("process");').unverifiable,
+    ).toHaveLength(1);
+    // Known bad: `{ process }` shorthand embeds the real object — it is not
+    // a name slot.
+    expect(
+      scanEnvReads("src/x.ts", "f({ process });").unverifiable,
+    ).toHaveLength(1);
+    // Known bad: `globalThis["process"]` is the same object.
+    expect(
+      scanEnvReads("src/x.ts", 'f(globalThis["process"]);').unverifiable,
     ).toHaveLength(1);
     // Known bad: a presence check on a key the env does not set.
     expect(
