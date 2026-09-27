@@ -426,7 +426,10 @@ test("GLM failure is visible and never silently retried", async ({ page }) => {
   await toSummary(page, { suffix: "?glm-stub=timeout" });
   await completeSyntheticSummary(page);
   await confirmSummary(page);
-  await expect(page.getByRole("alert")).toBeVisible();
+  // Next's empty route announcer also has role="alert"; match the failure notice.
+  await expect(
+    page.getByRole("alert").filter({ hasText: "synthetic timeout" }),
+  ).toBeVisible();
   await expect(page.locator("[data-question-slot]")).toHaveCount(0);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
 });
