@@ -3,7 +3,7 @@
 > Date: 2026-09-26
 > Status: **Verified — with founder-approved exception (AC-18)**
 > Runtime: deployed `d45a944674f29828bdd95bc878ce8ca07ff01818`
-> Publication: draft PR #82; current-main update authorized for commit/push on 2026-09-27. Use the PR for its current head and CI status.
+> Publication: PR #82 is published and ready for founder review and merge. Use the PR for its latest head and required CI status.
 
 ## Decision and evidence identity
 
@@ -107,15 +107,16 @@ deferred.
 
 ## Current publication status — 2026-09-27
 
-Read-only GitHub checks found draft PR #82 at `20c0acc63518acce38c77ba8a965c0866d75923d`.
-The follow-up to `84cb4a3` changes only the current-objective wording in
-`docs/NOW.md`. Its [required validation](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36216678324)
-and [synthetic preview](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36216678311)
-passed. No review verdict is posted on this PR.
+PR #82's current-main update was published at `32e2936aced8c5a003c884a0be743a378ff159aa`.
+Its [required validation](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36277477992)
+and [synthetic preview](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/36277477967)
+passed. The preview comment records that exact head. The founder requested
+ready-for-review status and this wording correction; the PR is ready for
+founder review and merge. Use its latest required checks for the merge.
 
 Main has advanced to `e7f3b37e87d82c1b97a9e11a1a33744588d2b7dc`, including
-PRs #83–#86. The published PR conflicts in `docs/DECISION_LOG.md`. The local
-update retains both the report closeout decisions and main's newer playbook
+PRs #83–#86. The published update resolves the `docs/DECISION_LOG.md` conflict
+and retains both the report closeout decisions and main's newer playbook
 and all accepted P-1–P-7 decisions, and updates the publication pointers. Runtime, tests,
 dependencies and workflow files match main. The approved specification and
 AC-18 exception are unchanged. This is documentation reconciliation, not a
@@ -125,7 +126,7 @@ The founder approved local closeout work, then explicitly approved committing
 and pushing the prepared update to PR #82, including its automatic synthetic
 preview, on 2026-09-27. Merge and production deployment remain separate.
 This documentation-only update uses the playbook §6
-exception to a new independent product verification. After publication,
-document review and green required CI precede the founder's separate
-merge/deployment decision. The dated publication record above remains
-historical evidence.
+exception to a new independent product verification. Publication and checks
+on `32e2936` are complete; the wording-only follow-up receives its own CI run.
+The founder will review and merge the PR. The dated publication record above
+remains historical evidence.

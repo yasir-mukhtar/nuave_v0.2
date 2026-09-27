@@ -182,5 +182,7 @@ remain unchanged, with no new live-call allowance.
 B2 merged through PR #81 as `d45a944` and was deployed on 2026-09-26. The founder
 accepted the current report for now, with the original AC-18 comparison
 unperformed and deferred. The combined Spec 012 closeout candidate is recorded in
-[CLOSEOUT_RESULT.md](./CLOSEOUT_RESULT.md) and awaits independent closeout review.
-Spec 012 stays Approved, not Verified, until the orchestrator records that review.
+[CLOSEOUT_RESULT.md](./CLOSEOUT_RESULT.md). Independent closeout review passed,
+and the [orchestrator acceptance](./CLOSEOUT_ACCEPTANCE.md) records Spec 012
+**Verified with founder-approved exception (AC-18)**. The documentation is
+published in PR #82, ready for founder review and merge.

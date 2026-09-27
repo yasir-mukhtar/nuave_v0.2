@@ -92,16 +92,16 @@ unauthorized-by-scope legacy-flow run (≈ USD 0.21) and its guard fix are
 recorded in the same section. A one-rule CSS fix now lets the finished report
 leave the 600 px intake column. Recorded ledger ≈ USD 0.98 of 5.
 
-**Next action:** complete final checks and founder review of the existing
-[documentation-only draft PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82),
-then obtain the separate merge/deployment decision. The founder approved
-commit/push of its current-main update and automatic synthetic preview on
-2026-09-27. This update reconciles the earlier published head `20c0acc` with
-main `e7f3b37`, preserves the newer engineering decisions and corrects stale
-publication status. Use the PR's current head and checks for readiness; the
-earlier head's green checks do not certify this update. The documentation-only
-package uses the playbook §6 exception to a new independent product
-verification. Do not open a duplicate PR. The
+**Next action:** founder review and merge of [documentation-only PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82).
+The current-main update is published and ready for review. Required validation
+and the synthetic preview passed on `32e2936`; the preview names that exact
+commit. The founder requested ready-for-review status and the status-wording
+correction on 2026-09-27. Use the PR's latest head and required checks when
+merging; a wording-only follow-up receives its own CI run.
+The update reconciles the earlier head `20c0acc` with main `e7f3b37` and
+preserves all accepted engineering decisions. The documentation-only package
+uses the playbook §6 exception to a new independent product verification.
+Merge and production deployment stay with the founder. The
 [independent closeout PASS and orchestrator acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
 record Spec 012 **Verified with founder-approved exception (AC-18)** on
 2026-09-26 against deployed `d45a944`. The original real same-evidence
@@ -151,7 +151,7 @@ is reused for unchanged code. The 320px decorative-index wrap is cosmetic.
 Spec 012 is Verified with founder-approved exception (AC-18). Independent
 closeout accepted the combined matrix and document reconciliation. The local
 package restores the approved spec and reconciles its report amendments onto
-the main baseline; its draft PR #82 awaits the final checks and review above.
+the main baseline; PR #82 is published and ready for founder review and merge.
 The approved spec is pinned at `9c5d4c0`. No new live-call allowance is granted.
 Spec 011 and its finding closures remain unchanged.
 
@@ -852,7 +852,7 @@ requires explicit authorization.
    No final confirmation or other live work is authorized by this closeout.
 4. Spec 012 is Verified with founder-approved exception (AC-18); see the
    [closeout acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md).
-   Finish draft PR #82 using the next action above; no new PR is needed.
+   PR #82 is ready for founder review and merge; no new PR is needed.
    Do not repeat the founder acceptance or the deferred same-evidence comparison.
    Format/reference simplification remains deferred.
 5. The two live-flow tasks restored by Spec 012 review 1 (prepare a real-flow
