@@ -127,12 +127,18 @@ never blocks the build. Manual payment is not needed.
 - **Saving and emailing reports:** the founder is open to solutions other than
   the ones in the original plan. Decide at S0, after Stage 1. *Orchestrator:
   remind the founder when Stage 1 closes.*
-- The current intake is half-built. The founder has a proof of concept for the
-  Airbnb-style experience that is only partly implemented. **Open:** which file
-  or URL is the reference (candidates in the repo: `intake-prototype.html`,
-  `docs/drafts/nuave-intake-design-workbench.html`, the disabled
-  `/audit/new-intake` route from PR #58). J1 cannot start until the founder
-  names it.
+- The current intake is half-built. **The reference is settled:**
+  1. **Primary:** [`intake-prototype.html`](../intake-prototype.html) (repo
+     root, 2026-08-30): the cleanest version and closest to the vision.
+  2. **Secondary:** [`drafts/nuave-intake-design-workbench.html`](./drafts/nuave-intake-design-workbench.html):
+     an attempt to recreate the prototype, less clean, but may hold good
+     ideas worth keeping.
+  3. **Not references:** today's `/audit` and the PR #58 `/audit/new-intake`
+     version. They are half-built implementations to measure against, not
+     to copy.
+
+  Where the prototype and the workbench disagree, the prototype wins unless
+  the founder picks otherwise.
 
 ### 3.5 Changes to the original plan
 
@@ -153,7 +159,7 @@ never blocks the build. Manual payment is not needed.
 
 ### 4.1 Now
 
-- **Name the Airbnb-style reference** (§3.4). J1 cannot start without it.
+- ~~Name the Airbnb-style reference~~ Done 2026-09-27 (§3.4).
 - **Say what "done" means for the journey** if it is more than matching the
   reference, such as a list of screens that must exist.
 - **Approve one real test run** at JZ (about USD 0.20 of AI cost).
@@ -218,8 +224,10 @@ the next task without reading anything else.
 
 **J1 — Gap list** (worker, read-only, ~half day)
 
-Walk the founder's reference and today's `/audit` side by side, screen by
-screen. Output one table in the PR description:
+Walk `intake-prototype.html` and today's `/audit` (synthetic mode) side by
+side, screen by screen. Note anything in the workbench that the prototype lacks
+and that looks worth keeping, as a separate list for the founder to accept or
+reject. Output one table in the PR description:
 
 - each reference screen or interaction;
 - what `/audit` does today, with the file path;
@@ -368,10 +376,11 @@ founder moves it into a milestone.
 
 **Cleanup**
 - Historical v1 report reactivation; legacy code deletion.
-- Root-level leftovers (`irongrid-*.html`, `intake-redesign-spec.md`,
-  `prepay-handoff.md`, `intake-handoff.md`, `acceptance-review-2026-09-22/`,
-  `report-prototype/`, `Archive Candidates/`) once Stage 1 no longer needs any
-  of them as reference, and archived-prototype dependency updates.
+- Root-level leftovers (`irongrid-*.html`, `prepay-handoff.md`,
+  `acceptance-review-2026-09-22/`, `report-prototype/`, `Archive Candidates/`)
+  and archived-prototype dependency updates. Keep `intake-prototype.html`, the
+  workbench, `intake-redesign-spec.md` and `intake-handoff.md` until Stage 1
+  closes: they are the intake reference and its notes.
 - Slimming `docs/` and `specs/` beyond the J0 reset.
 
 ## 7. How agents work on this plan
@@ -386,7 +395,7 @@ founder moves it into a milestone.
 - **Reviewer**: reads the prompt, the stage spec, and the PR. Checks the
   milestone's "Done when" on the real path (`verify-nuave`). Posts one verdict
   comment: PASS, PASS+NOTES, or FAIL.
-- **Founder**: names the intake reference, approves specs and wording, answers
+- **Founder**: approves specs and wording, answers
   S0, merges and deploys, and runs JZ and G1.
 
 Keep what is written down small: this ledger, the two stage specs, PR
