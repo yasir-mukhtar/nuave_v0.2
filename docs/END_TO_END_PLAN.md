@@ -10,9 +10,9 @@
 > that the active plan points to. It no longer sets the build sequence or
 > gates; see [`INDEX.md`](./INDEX.md#current-development-plan).
 >
-> This plan does not approve every implementation detail. Each phase still
-> requires one bounded approved specification under `specs/` before code is
-> changed. Product truth remains governed by `VISION.md`, `PRODUCT.md`,
+> This plan does not approve every implementation detail. When a spec is
+> needed is set by `PAYING_CUSTOMER_PLAN.md` §3.5 (one short spec per stage
+> for customer-visible work), not by this plan's phases. Product truth remains governed by `VISION.md`, `PRODUCT.md`,
 > `AUDIT.md`, and the newest founder-approved decision in `DECISION_LOG.md`.
 
 ## 1. Outcome
