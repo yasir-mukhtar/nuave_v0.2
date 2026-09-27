@@ -178,8 +178,14 @@ never blocks the build. Manual payment is not needed.
 ### 4.1 Now
 
 - ~~Name the Airbnb-style reference~~ Done 2026-09-27 (§3.4).
-- **Say what "done" means for the journey** if it is more than matching the
-  reference, such as a list of screens that must exist.
+- ~~Say what "done" means for the journey~~ Done 2026-09-27. The founder's
+  answer: **match the prototype, but don't copy it blindly.** The journey is
+  done when:
+  1. it follows the prototype's flow and feel;
+  2. it asks for and uses everything today's intake asks for and uses, so
+     it is as complete as today's version but more intuitive; and
+  3. every nuance in today's intake that the prototype would override was
+     shown to the founder, who decided to keep, adapt, or drop it (J1).
 - Real test runs during Stage 1 are the founder's own (§5, JZ); about
   USD 0.20 of AI cost each.
 
@@ -284,12 +290,54 @@ reject. Output one table in the PR description:
 - the gap; and
 - a rough size (S/M/L).
 
-Also list what today's `/audit` does that the reference lacks, and which
-existing engine pieces can be reused (preparation, question generation,
-run, report). The orchestrator turns the table into J2…Jn and a short
-Stage 1 spec for founder approval.
+Also list which existing engine pieces can be reused (preparation, question
+generation, run, report).
 
-*Done when:* the founder agrees the table is complete.
+Two more lists, because "done" means matching the prototype without
+overriding it blindly (§4.1):
+
+- **Information check.** Every piece of information today's intake asks for
+  or prepares and then passes to question generation or the report, and
+  whether the prototype covers it. Anything missing is a gap to build, not a
+  loss to accept.
+- **Nuances to reconsider.** Everything today's `/audit` does on purpose that
+  the prototype would override or lacks. For each one: what today does, what
+  the prototype does, and a recommendation (keep, adapt, or drop) in plain
+  language for the founder to decide. Much of today's intake was settled
+  after the prototype (2026-08-30) by Spec 011 and later decisions. Start
+  from these candidates, confirm each against the code, and add any others:
+  - **Screen count.** Today: one prepared summary, at most two decisions,
+    one confirmation (Spec 011, settled decision 8). The prototype asks one
+    question per screen. Find a way to keep the prototype's feel without
+    making an owner with a rich website click through answers Nuave
+    already has.
+  - **Where each answer came from.** Today labels each row `Dari website
+    Anda`, `Saran Nuave`, or `Dari Anda`; the prototype has no labels.
+  - **Optional stays optional.** Competitors, target customer, customer
+    needs, differentiator, and public fact never block the owner today; the
+    prototype asks some of these as full screens.
+  - **Service channels.** Today offers four channel choices; the prototype
+    only has "we also serve online" on the location screen.
+  - **Competitors: "don't know" vs "none".** Today keeps them distinct.
+  - **Default focus.** Today proposes `Brand secara keseluruhan` as a Nuave
+    suggestion that counts only after the final confirmation.
+  - **Market reach meaning.** "Broad business presence" (decision
+    2026-09-24), including its stated regional limit.
+  - **Ask only when something required is missing** (`Perlu dipastikan`).
+  - **One final confirmation.** Nothing counts until the owner confirms, and
+    the confirmed answers are frozen and passed through to the report.
+  - **Privacy check during preparation** (Spec 011 privacy amendment R3):
+    stops on sensitive records or credentials, not on ordinary business
+    wording.
+  - **Unreadable website** is an error, not an empty summary; synthetic
+    mode stays visibly labeled.
+  - **Source links** (`Lihat sumber`).
+
+The orchestrator turns the table and the founder's answers into J2…Jn and a
+short Stage 1 spec for founder approval.
+
+*Done when:* the founder agrees the table and the information check are
+complete and has decided every nuance.
 
 **J2…Jn — Build the gaps** (worker, one PR each)
 
@@ -309,8 +357,8 @@ J-tasks or parking-lot items. Agents still make live AI calls only with a
 named founder approval. JZ is the moment the founder says the journey is
 done.
 
-*Done when:* the founder says the journey is done. Orchestrator then triggers
-S0.
+*Done when:* the founder says the journey is done, judged by the three
+points in §4.1. Orchestrator then triggers S0.
 
 ### Stage 2 — Get ready to take money
 

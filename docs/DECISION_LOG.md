@@ -6,6 +6,27 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — what "done" means for the intake journey
+
+The founder answered plan §4.1: **"Yes matching the prototype, but it doesnt
+mean to implement it brutally. There are probably some nuances in the
+existing intake that needs to be reconsidered instead of blindly overriding
+it (point out to me). Basically the protoype should cover all the
+informations needs and developed from the previous version of the intake
+journey, so it's as complete as the previous version but more intuitive."**
+
+Stage 1 is done (JZ) when the journey:
+
+1. follows the flow and feel of `intake-prototype.html`;
+2. asks for and uses everything today's intake asks for and uses: as complete,
+   but more intuitive; and
+3. has had every nuance of today's intake that the prototype would override
+   shown to the founder, who decided to keep, adapt, or drop it.
+
+J1 now produces an information check and a list of nuances to reconsider,
+each with a plain recommendation, alongside the gap table
+([plan §5, J1](./PAYING_CUSTOMER_PLAN.md)).
+
 ## 2026-09-27 — approve the paying-customer plan
 
 The founder said: **"The plan is approved. J0 can record this."** This

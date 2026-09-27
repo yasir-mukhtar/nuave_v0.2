@@ -30,8 +30,9 @@
 
 - **Active milestone: J1, the gap list** (plan §5). The orchestrator writes
   the worker prompt from [`templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md).
-- **Founder, when ready:** say what "done" means for the journey if it is
-  more than matching the reference (plan §4.1).
+- **"Done" for the journey** (founder, 2026-09-27; plan §4.1): match the
+  prototype without copying it blindly, lose nothing today's intake asks for,
+  and let the founder decide each nuance J1 finds.
 
 ## Rules still in force
 
