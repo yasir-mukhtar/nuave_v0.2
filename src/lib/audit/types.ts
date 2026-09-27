@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { APPROVED_LIVE_SYSTEMS } from "./approved-live-providers";
 import { parseSourceInput } from "./source-input";
 import type { AuditQuestionMethod } from "./locked-question-pack";
 
@@ -278,8 +279,7 @@ export const auditObservationSchema = z.object({
   // instruction remain parseable.
   instruction_version: z.string().optional(),
   system: z.enum([
-    "OpenAI Responses API",
-    "OpenCode Go Responses API",
+    ...APPROVED_LIVE_SYSTEMS,
     "Google Gemini API",
     "Groq + Tavily",
     "OpenRouter",

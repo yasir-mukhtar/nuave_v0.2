@@ -38,6 +38,7 @@ import {
 import { reportWritingInstructions } from "./report-language";
 import { contextForReportModel } from "./direct-ten-context-v2";
 import { isOpenCodeGoBaseUrl, opencodeGoTransportHeaders } from "./opencodego";
+import { OPENAI_SYSTEM } from "./approved-live-providers";
 import type { HistoricalPromptPackId } from "./measurement-matrix";
 import type { AuditQuestionMethod } from "./locked-question-pack";
 import {
@@ -565,7 +566,7 @@ export async function executeAuditPrompt(input: {
       branded: input.prompt.branded,
       question: input.prompt.question,
       instruction_version: DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
-      system: "OpenAI Responses API",
+      system: OPENAI_SYSTEM,
       requested_model: requestedModel,
       returned_model: response.model,
       response_id: response.id,
@@ -597,7 +598,7 @@ export async function executeAuditPrompt(input: {
       branded: input.prompt.branded,
       question: input.prompt.question,
       instruction_version: DEFAULT_OBSERVATION_INSTRUCTION_VERSION,
-      system: "OpenAI Responses API",
+      system: OPENAI_SYSTEM,
       requested_model: requestedModel,
       returned_model: "",
       response_id: "",
