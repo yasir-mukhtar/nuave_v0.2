@@ -135,9 +135,9 @@ real-evidence comparison is unperformed and deferred. The documentation-only
 [combined closeout candidate](../specs/012-evidence-first-report/CLOSEOUT_RESULT.md)
 maps AC-01–AC-19 in [VERIFICATION.md](../specs/012-evidence-first-report/VERIFICATION.md).
 Independent review passed; the [orchestrator acceptance](../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
-records Verified with the AC-18 exception. The documentation is published in
-[PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82). Its current-main
-update is published and ready for founder review and merge. See [`NOW.md`](./NOW.md).
+records Verified with the AC-18 exception. The documentation merged through
+[PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82) (`784530c`,
+2026-09-27). See [`NOW.md`](./NOW.md).
 
 The [privacy-screen follow-up R3](../specs/011-smart-consultant-intake/PRIVACY_SCREEN_FOLLOWUP_PLAN.md)
 was released through PR #79 as `8907d96`, after Spec 011 PR #78 as `7f34d69`.

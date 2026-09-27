@@ -28,8 +28,8 @@ formatting and reference-section improvements. The original same-evidence
 real-report comparison is unperformed and deferred. The Spec 012
 [closeout acceptance](./specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md)
 records **Verified with founder-approved exception (AC-18)** after independent
-review. These records are published in [PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82),
-ready for founder review and merge. See the
+review. These records merged through [PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82)
+(`784530c`, 2026-09-27). See the
 [founder decision](./docs/DECISION_LOG.md#2026-09-26--accept-the-current-report-for-now-and-defer-formatting-improvements).
 No further live call is authorized by this work. Commercial release is separate. The
 [September 19 handoff](./docs/checkpoints/2026-09-17-winning-prompt-glm/NEXT_STEP.md#current-orchestrator-handoff--2026-09-19)
@@ -44,7 +44,7 @@ retains the earlier milestone; `docs/NOW.md` governs the current next action.
 | Current stage and next action | [`docs/NOW.md`](./docs/NOW.md) |
 | End-to-end v2 build sequence and gates | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — Verified and released (PR #78); prepared summary and truthful new-session report/export context; approved historical hold. Report: [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) — Verified with founder-approved exception (AC-18); implementation released, closeout documentation published in PR #82, ready for founder review and merge |
+| Current bounded implementation | [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) — Verified and released (PR #78); prepared summary and truthful new-session report/export context; approved historical hold. Report: [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) — Verified with founder-approved exception (AC-18); implementation released, closeout documentation merged in PR #82 (`784530c`) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
