@@ -239,7 +239,9 @@ screen (R-20).
 
 - **R-21:** The review screen is the only confirmation. It reads back every
   answer with its source label. Each row has `Ubah`, which opens that screen
-  and returns to review. It includes an editable "Nama lain" (aliases) row
+  and returns to review. The focus row is the exception: a focus change goes
+  focus → location or product screen when needed → category → review
+  (R-05). It includes an editable "Nama lain" (aliases) row
   and the `Lihat sumber` links (F13, F14). The action keeps today's exact
   label, `Sudah sesuai — buat pertanyaan audit`, and calls today's
   confirmation and freeze unchanged. If a required answer is missing, the
@@ -340,22 +342,23 @@ screen (R-20).
   "named" and blocks `Lanjut`; a sixth name is blocked (R-18).
 - **AC-10:** Target customer, buyer considerations and differentiator are
   editable on review and reach the frozen context (R-20).
-- **AC-11:** On review, every `Ubah` returns to review. An edited alias
+- **AC-11:** On review, every `Ubah` returns to review, except focus, which
+  follows the R-05 route before returning. An edited alias
   reaches `identity.aliases`. The confirmation label is exact (R-21, R-22).
 - **AC-12:** The frozen context for the same answers is the same as today's,
   apart from edited aliases (R-22).
 - **AC-13:** Sensitive text in any new input is stopped with today's message
   (R-25).
-- **AC-16:** After a focus change, the owner passes the category screen
-  again: an owner-typed category stays; a suggestion from the old focus is
-  replaced unless the new focus also suggests it (R-05).
-- **AC-17:** A session stored before a slice that bumped the stored version
-  restarts at entry without an error (R-26).
 - **AC-14:** `npm run verify` passes, and `verify-nuave drive all` passes
   with no unexpected external requests (R-28).
 - **AC-15 (judgment, founder, JZ):** on real businesses, the journey feels
   like the prototype, loses nothing today's intake asks, and every nuance
   decision F1–F18 is visible.
+- **AC-16:** After a focus change, the owner passes the category screen
+  again: an owner-typed category stays; a suggestion from the old focus is
+  replaced unless the new focus also suggests it (R-05).
+- **AC-17:** A session stored before a slice that bumped the stored version
+  restarts at entry without an error (R-26).
 
 ## Delivery slices
 
