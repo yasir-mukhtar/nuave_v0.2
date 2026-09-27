@@ -1,10 +1,10 @@
 # Plan: first real paying customer
 
 > Status: **Draft for review**. It becomes the active plan when the founder
-> approves it and the approval is recorded in `DECISION_LOG.md`.
+> approves it and the approval is recorded in [`docs/DECISION_LOG.md`](./DECISION_LOG.md).
 > Author: orchestrator (Claude), 2026-09-27
 > Baseline: `main` at `3c07495`
-> Inputs: [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), `NOW.md`, the two
+> Inputs: [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md), [`docs/NOW.md`](./NOW.md), the two
 > 2026-09-27 readiness reviews (Codex and Claude) in `docs/reviews/`, and the
 > founder's sequencing direction of 2026-09-27 (§3.4)
 >
@@ -24,7 +24,7 @@ done.
 | J0 | Reset the working docs | Orchestrator | Not started | — | — |
 | J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Not started | — | — |
 | J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
-| JZ | One real test run, URL to report | Founder + worker | Not started | — | — |
+| JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
 | S1 | Security patches | Worker | Not started | — | — |
@@ -37,23 +37,31 @@ done.
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
 | V | Show reports to 3–5 real owners | Founder | Optional | — | — |
+| E | Engineering guards (playbook §B.3), already in flight | Worker | In review | #91 | — |
 
 ## 2. Finish line
 
 Nuave is ready for paying customers when a stranger can do all of this without
 the founder stepping in:
 
-1. Open `v2.nuave.ai` and enter their business website.
-2. Go through the Airbnb-style intake: Nuave shows what it understood, and the
+1. Open `v2.nuave.ai` and enter their business website. Nuave reads the
+   site's public name and details to show "is this your business?" This step
+   is free and uses no AI.
+2. See the price (Rp99.000) and what they get, and pay through Midtrans.
+3. Go through the Airbnb-style intake: Nuave shows what it understood, and the
    owner confirms, corrects, or answers a few quiz-like choices.
-3. Review and approve the ten questions.
-4. See the price (Rp99.000) and pay through Midtrans.
+4. Review and approve the ten questions.
 5. The audit runs; the owner reads the report and downloads the PDF.
 6. The owner can get back to their report later (how is decided in S0).
 7. If the audit fails, Nuave tells them and the founder refunds by hand.
 
-The founder can run steps 1–5 for real at any time **without paying**, using a
-private test pass (S4).
+Every step after 1 that costs AI money sits behind payment. This matches the
+original plan's order (Order Preview → Payment → Business Facts → Questions).
+
+**Testing without payment.** In Stage 1 there is no payment step at all: the
+founder tests the whole journey for real, with real AI cost, as often as
+wanted. Once payment exists (S4), the founder keeps doing this with a private
+test pass that skips step 2.
 
 Polish and everything in the parking lot (§6) come **after** this works.
 
@@ -123,7 +131,11 @@ never blocks the build. Manual payment is not needed.
   quiz → review questions → generate report → read report); (2) payment and
   landing; (3) everything else.
 - **Real tests without payment** must stay possible throughout, including after
-  payment exists.
+  payment exists. For now there is no payment step at all.
+- **Where payment goes** (founder, via the plan review): right after the
+  customer enters the website URL and before Nuave prepares or asks for any
+  business details. Order: URL → price + pay → intake → approve questions →
+  report (§2).
 - **Saving and emailing reports:** the founder is open to solutions other than
   the ones in the original plan. Decide at S0, after Stage 1. *Orchestrator:
   remind the founder when Stage 1 closes.*
@@ -148,7 +160,7 @@ never blocks the build. Manual payment is not needed.
    see the product. The `NOW.md` "Not now" line that holds back customer
    exposure until after polish is replaced.
 3. **Lighter paperwork.** Each milestone is one PR, proven by the PR
-   description plus one reviewer verdict, as `WORKFLOW.md` already requires.
+   description plus one reviewer verdict, as [`docs/WORKFLOW.md`](./WORKFLOW.md) already requires.
    Customer-visible work still needs an approved spec, kept short: one for
    Stage 1 (after J1), one for Stage 2 (after S0).
 4. **Manual operations over features** at low volume: refunds, recipient
@@ -162,7 +174,8 @@ never blocks the build. Manual payment is not needed.
 - ~~Name the Airbnb-style reference~~ Done 2026-09-27 (§3.4).
 - **Say what "done" means for the journey** if it is more than matching the
   reference, such as a list of screens that must exist.
-- **Approve one real test run** at JZ (about USD 0.20 of AI cost).
+- Real test runs during Stage 1 are the founder's own (§5, JZ); about
+  USD 0.20 of AI cost each.
 
 ### 4.2 At S0, after Stage 1 (reminder)
 
@@ -207,20 +220,38 @@ Rules for every milestone:
 - Anything found that does not block this milestone goes to the parking lot
   (§6) in the PR description. Do not fix it.
 - The orchestrator writes each worker prompt from
-  `templates/WORKER_PROMPT.md` when the milestone before it passes review.
+  [`docs/templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md) when the milestone before it passes review.
 
 ### Stage 1 — Finish the intake journey
 
 **J0 — Reset the working docs** (orchestrator, ~half day)
 
-- Replace `NOW.md` with a page under 100 lines: current state, pointer to this
+- Replace [`docs/NOW.md`](./NOW.md) with a page under 100 lines: current state, pointer to this
   plan, active milestone. The old text stays in Git history.
-- `DECISION_LOG.md`: record approval of this plan and §3.4–3.5.
-- Fix stale `README.md` lines (landing, "no public rate limiting"); point
-  `INDEX.md` here.
+- [`docs/DECISION_LOG.md`](./DECISION_LOG.md): record approval of this plan and §3.4–3.5.
+- Fix stale [`README.md`](../README.md) lines (landing, "no public rate
+  limiting"); point [`docs/INDEX.md`](./INDEX.md) here.
 
-*Done when:* a fresh agent reading `README.md` → `NOW.md` → this plan knows
+*Done when:* nothing on the carry-over list below is lost, and a fresh agent
+reading `README.md` → `docs/NOW.md` → this plan knows
 the next task without reading anything else.
+
+**Carry-over list.** Scanned from `docs/NOW.md` on 2026-09-27. These are
+still in force, and none is in this plan. J0 must keep each one in its target
+or confirm it is already there.
+
+| Still in force | Where it goes |
+|---|---|
+| Deployment facts: Cloudflare worker `nuave-v2` at `v2.nuave.ai` (fallback `nuave-v2.mail-yasirmukhtar.workers.dev`); CI jobs `validate`, `verify-main-origin`, `deploy`; per-PR preview workers; settings are baked in at build, so a settings change needs a redeploy; names (never values) of the required secrets and settings; the `NUAVE_NEW_AUDIT_ENABLED` / `NUAVE_AUDIT_MODE` switch; founder to-do: delete the unused `NUAVE_ACCESS_CODE` secret | New `docs/NOW.md`, short "Deployment" block |
+| Production AI setup: OpenAI direct, `gpt-5.6-luna`, low reasoning; web-search rules per stage; per-stage call limits; USD 5 per-session ceiling and the carry-over setting | Confirm in `docs/AUDIT.md` or the 2026-09-20 `DECISION_LOG` entry; otherwise new `NOW.md` |
+| Live-spend rule: all earlier live allowances are used up; recorded spend is USD 1.06241155 of 5; agents make live AI calls only with a named founder approval (the founder's own test runs are exempt, §5 JZ) | New `NOW.md` |
+| 2026-08-20 acceptance of the unlisted, ungated live audit | Already in `DECISION_LOG` (2026-08-20 table row); link it from new `NOW.md` |
+| Historical v1 report hold | Already in `DECISION_LOG` (2026-09-22) |
+| Spec states: 011 Verified; 012 Verified with the AC-18 exception; latest checkpoint 2026-09-19 | One line each in new `NOW.md` |
+| Engineering track: playbook adopted 2026-09-26; its next slice (§B.3 guards) is open as PR #91 | New `NOW.md`, one line; §1 ledger |
+| Open questions ("What is not known": willingness to pay, price, action on reports, re-check demand, run-to-run variation, and others) | Parking lot (§6), one bullet pointing to the old list in Git |
+| Non-scope ("Not now": white-label, dashboards, subscriptions, credits, multi-vertical, banded/ranked scores, fabricated proof) | New `NOW.md`, pointer to `docs/END_TO_END_PLAN.md` §12 plus any item §12 lacks |
+| Private evidence stays outside Git (`.local-evidence/`, `.secrets/`) | New `NOW.md`, one line |
 
 **J1 — Gap list** (worker, read-only, ~half day)
 
@@ -251,11 +282,13 @@ keeps the whole path working in synthetic mode. Rules:
 - The live route is `/audit`. Retire `/audit/new-intake` rather than keep two
   intakes.
 
-**JZ — Real test run** (founder + worker, ~1 day)
+**JZ — Journey sign-off** (founder)
 
-With founder approval, run one real business from URL to report on the
-deployed site, read the report, and download the PDF. Fix only what blocks
-the journey.
+Throughout Stage 1 the founder runs real businesses from URL to report on the
+deployed site, as often as wanted, with real AI cost. Problems found become
+J-tasks or parking-lot items. Agents still make live AI calls only with a
+named founder approval. JZ is the moment the founder says the journey is
+done.
 
 *Done when:* the founder says the journey is done. Orchestrator then triggers
 S0.
@@ -317,22 +350,29 @@ Shape set at S0. Whatever is chosen must pass:
 
 **S4 — Real payment + founder test pass** (worker, Stage 2 spec, ~3–4 days)
 
-- After the business is recognized, show the order summary: business, email,
+- Right after the customer enters their website and Nuave shows the free
+  "is this your business?" result, show the order summary: business, email,
   Rp99.000 total, what's included, delivery promise, and links to Terms and
-  Privacy.
+  Privacy. Payment comes **before** the intake asks for or prepares any
+  business details.
+- The free step before payment only reads the website's public page (no AI);
+  today that is `/api/audit/identity` (`src/lib/audit/source-identity.ts`).
+  If building the price screen seems to need anything more, such as an AI
+  call, stop and ask the founder.
 - Pay through Midtrans' hosted checkout (Snap). Nuave never sees card or bank
   details.
 - Check each Midtrans payment notification (signature and a status lookup)
   and apply it once, even if it arrives twice.
-- Preparing, question generation, and running need a paid order **or the
-  founder test pass**. One payment = one audit.
+- Everything that costs AI money needs a paid order **or the founder test
+  pass**: preparing the business details (the intake), question generation,
+  the audit run, and the report. One payment = one audit.
 - **Founder test pass:** a secret code set only on the server. It is never
   shown in the page, marks the run as a test in every record, counts against
   the S2 cap, and never works for anyone else.
 - Pending, expired, and failed payments show an honest message and a retry.
 
-*Done when:* in Midtrans sandbox, pay → intake → approve → report works end to
-end. A duplicated notification does not create a second audit. The test pass
+*Done when:* in Midtrans sandbox, URL → pay → intake → approve questions →
+report works end to end. A duplicated notification does not create a second audit. The test pass
 runs a real audit with no payment. Calling the audit endpoints with neither
 payment nor test pass is refused.
 
@@ -364,9 +404,15 @@ only if asked.
 
 ### Track V — Owner feedback (optional, founder)
 
-Show an existing report we have permission to share to 3–5 owners. Ask the
-three questions in `PRODUCT.md`. Findings go to the parking lot unless they
-show the report is unsellable. In that case, stop and re-plan.
+Show an existing report we have permission to share to 3–5 owners and ask
+three questions. **Draft; the founder approves the wording before use:**
+
+1. Did this report tell you something you didn't know about your business?
+2. Would you do anything differently because of it? What?
+3. Would you pay Rp99.000 for a report like this about your own business?
+
+Record each owner's answers in one short note. Findings go to the parking lot
+unless they show the report is unsellable. In that case, stop and re-plan.
 
 ## 6. Parking lot, after we have paying customers
 
