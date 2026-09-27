@@ -145,8 +145,9 @@ export default function SmartIntakeJourney({
   const [autoStart, setAutoStart] = useState(false);
   const [editingBrandName, setEditingBrandName] = useState(false);
   const inFlight = useRef(false);
+  const mounted = useRef(true);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const focusedStage = useRef<SmartStage | null>(null);
+  const focusedStage = useRef<string | null>(null);
   const sessionRef = useRef(session);
   useEffect(() => {
     sessionRef.current = session;
@@ -207,24 +208,39 @@ export default function SmartIntakeJourney({
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);
   }, [ready]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // R-27: each screen arrival moves focus to its heading and resets scroll.
+  // The questions stage swaps its placeholder heading for the pack's heading
+  // when the pack lands, so the key must include that arrival too.
+  const focusKey =
+    session.stage === "questions"
+      ? `questions:${Boolean(session.pack)}`
+      : session.stage;
   useEffect(() => {
-    if (!ready || focusedStage.current === session.stage) return;
-    focusedStage.current = session.stage;
+    if (!ready || focusedStage.current === focusKey) return;
+    focusedStage.current = focusKey;
     window.scrollTo(0, 0);
     headingRef.current?.focus();
-  }, [ready, session.stage]);
+  }, [ready, focusKey]);
 
   const persist = (next: SmartSession) => {
     writeSmartSession(next);
     setSession(next);
   };
   // A forward transition keeps one marked entry on top of the stack so the
-  // next browser Back performs exactly one in-flow step back.
+  // next browser Back performs exactly one in-flow step back. An async tail
+  // may finish after the owner left /audit: the finished state still saves,
+  // but pushing history on the page they moved to would strand a marked
+  // entry there, so the push is skipped once unmounted.
   const goStage = (next: SmartSession) => {
     persist(next);
-    window.history.pushState(intakeMark(), "");
+    if (mounted.current) window.history.pushState(intakeMark(), "");
   };
   // The frame's `Kembali` moves in-flow without touching the stack; the trap
   // stays on top, so a later real Back still steps back from the new stage.
@@ -271,14 +287,21 @@ export default function SmartIntakeJourney({
       parsed.normalizedUrl === session.identity.inputSource
     ) {
       if (name !== session.prepared.typedName) {
+        // The stored discovered name was deduped against the old typed name;
+        // recompute it so the website's name is offered when it now differs
+        // and hidden when it now matches (R-09).
+        const discovered = session.identity.displayName?.trim();
         goStage({
           ...session,
           stage: "brand",
           entry: { ...session.entry, name },
-          identity: session.identity
-            ? { ...session.identity, inputName: name }
-            : session.identity,
-          prepared: { ...session.prepared, typedName: name },
+          identity: { ...session.identity, inputName: name },
+          prepared: {
+            ...session.prepared,
+            typedName: name,
+            discoveredName:
+              discovered && discovered !== name ? discovered : null,
+          },
           selection: {
             ...session.selection,
             name,

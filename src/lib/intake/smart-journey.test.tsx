@@ -498,4 +498,85 @@ describe("Spec 013 J2 screen frame", () => {
         .value,
     ).toBe("kafe fiksi");
   });
+
+  it("re-offers the website's discovered name when a name-only edit makes it differ", async () => {
+    const { calls } = stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    const group = () => screen.getByRole("radiogroup", { name: "Nama bisnis" });
+    // Typed name equals the discovered name: only the owner option shows.
+    expect(within(group()).getAllByRole("radio")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
+    fireEvent.change(
+      await screen.findByRole("textbox", { name: "Nama bisnis" }),
+      { target: { value: "Kedai Fiksi Baru" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    const options = within(group())
+      .getAllByRole("radio")
+      .map((radio) => radio.closest("label")!.textContent);
+    expect(options).toHaveLength(2);
+    expect(options[0]).toContain("Kedai Fiksi Baru");
+    expect(options[0]).toContain("Dari Anda");
+    expect(options[1]).toContain("Kedai Fiksi");
+    expect(options[1]).toContain("Dari website Anda");
+    // The name-only path still spends no new preparation call.
+    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+  });
+
+  it("merges the website option when a name-only edit lands on the discovered name", async () => {
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
+      target: { value: "Kopi X" },
+    });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "URL website publik" }),
+      { target: { value: "https://kedai-fiksi.example/" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    const group = () => screen.getByRole("radiogroup", { name: "Nama bisnis" });
+    expect(within(group()).getAllByRole("radio")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
+    fireEvent.change(
+      await screen.findByRole("textbox", { name: "Nama bisnis" }),
+      { target: { value: "Kedai Fiksi" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    expect(within(group()).getAllByRole("radio")).toHaveLength(1);
+    // The summary must not show a duplicated name either.
+    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    const business = within(screen.getByRole("region", { name: "Bisnis" }));
+    expect(business.getAllByRole("radio")).toHaveLength(1);
+  });
+
+  it("moves focus to the question-review heading when the pack lands", async () => {
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      }),
+    );
+    const heading = await screen.findByRole("heading", {
+      name: "Periksa pertanyaan audit",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+  });
 });
