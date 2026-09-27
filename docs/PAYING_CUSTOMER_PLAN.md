@@ -8,6 +8,13 @@
 > 2026-09-27 readiness reviews (Codex and Claude) in `docs/reviews/`, and the
 > founder's sequencing direction of 2026-09-27 (§3.4)
 >
+> **Relationship to [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md).** Once
+> approved, this plan replaces it for the order of work, the stages, and the
+> gates. `END_TO_END_PLAN.md` stays as the reference for the detailed
+> requirements this plan points to (for example, the Phase 4 exit gate, §6
+> technical shape and private report access, §10 failure matrix, §12
+> non-scope). Where the two disagree, this plan wins. J0 relabels it.
+>
 > **Fresh agents: start here.** The ledger in §1 is the current state. Read
 > §2 for the finish line and §5 for your milestone. Read `NOW.md` only if you
 > need history.
@@ -231,11 +238,20 @@ Rules for every milestone:
 
 - Replace [`docs/NOW.md`](./NOW.md) with a page under 100 lines: current state, pointer to this
   plan, active milestone. The old text stays in Git history.
-- [`docs/DECISION_LOG.md`](./DECISION_LOG.md): record approval of this plan and §3.4–3.5.
+- [`docs/DECISION_LOG.md`](./DECISION_LOG.md): record approval of this plan and §3.4–3.5,
+  including that this plan replaces `END_TO_END_PLAN.md` for the order of
+  work, stages and gates.
+- Relabel [`docs/END_TO_END_PLAN.md`](./END_TO_END_PLAN.md): change its status
+  line from "Current development plan" to "Reference: order of work replaced
+  by `PAYING_CUSTOMER_PLAN.md` (2026-09-27)", with a pointer here. Leave its
+  body unchanged.
 - Fix stale [`README.md`](../README.md) lines (landing, "no public rate
-  limiting"); point [`docs/INDEX.md`](./INDEX.md) here.
+  limiting"). Point [`docs/INDEX.md`](./INDEX.md) and the `README.md`
+  "build sequence and gates" row here, and describe `END_TO_END_PLAN.md` as
+  the requirements reference.
 
-*Done when:* nothing on the carry-over list below is lost, and a fresh agent
+*Done when:* nothing on the carry-over list below is lost, no document still
+presents `END_TO_END_PLAN.md` as the current build order, and a fresh agent
 reading `README.md` → `docs/NOW.md` → this plan knows
 the next task without reading anything else.
 
