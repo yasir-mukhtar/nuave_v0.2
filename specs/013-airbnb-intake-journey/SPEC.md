@@ -9,7 +9,8 @@
 > entries in [`docs/DECISION_LOG.md`](../../docs/DECISION_LOG.md), and the
 > founder's J1 decisions F1–F18 on
 > [PR #94](https://github.com/yasir-mukhtar/nuave_v0.2/pull/94)
-> (recorded in the decision log, 2026-09-27)
+> (recorded in the decision log, 2026-09-27), and the founder's answers to
+> this draft's open questions (same day)
 
 ## Required context
 
@@ -123,9 +124,11 @@ screen (R-20).
 
 **Navigation and state**
 
-- **R-01:** One question per screen, in the order above. Every screen from 3
-  to 13 shows the chapter progress, `Kembali`, and `Lanjut`. Browser Back
-  behaves like `Kembali`.
+- **R-01:** One question per screen, in the order above. Screens 3–13 show
+  the chapter progress. Buttons: entry (1) has `Periksa`; reading (2) has
+  none; screens 3–12 have `Kembali` and `Lanjut`; review (13) has `Kembali`
+  and `Sudah sesuai — buat pertanyaan audit` (R-21); question review (14) is
+  unchanged. Browser Back behaves like `Kembali`.
 - **R-02:** Every prepared proposal arrives already selected and carries
   exactly one of `Dari website Anda`, `Saran Nuave`, or `Dari Anda`, as
   today. Any owner change makes it `Dari Anda` (F5).
@@ -133,14 +136,25 @@ screen (R-20).
   is missing or invalid, by today's rules: a category; at least one offering
   (except product focus); the product target; location name **and**
   address; at least one service channel; market reach and areas under
-  R-16. Optional screens are labelled `Opsional` and never block. The
+  R-16 (including the eight-area cap); a name when "named competitors" is
+  chosen (R-18). Optional screens are labelled `Opsional` and never block. The
   prototype's `need` map is not the contract (F1, F12).
 - **R-04:** Answers on screens 3–12 are working answers, saved in the
-  session: a refresh returns to the same screen with the same answers.
-  Nothing is confirmed until the review action (R-21).
+  session: a refresh returns to the same screen with the same answers. A
+  refresh on review (13) returns to review with the same answers, as today's
+  summary does. A refresh during reading (2) returns to entry with the name
+  and website still filled and a note that the check was interrupted;
+  nothing runs again until the owner presses `Periksa` (as today, a new
+  check is a new preparation). Nothing is confirmed until the review action
+  (R-21).
 - **R-05:** Changing an earlier answer keeps the later answers it does not
   invalidate. Switching focus keeps today's retention of the whole-brand
-  market (`retainedBrandReach`, `retainedBrandAreas`).
+  market (`retainedBrandReach`, `retainedBrandAreas`). Switching focus also
+  sends the owner through the category screen again before review: a
+  category the owner typed stays selected; a suggested category stays only
+  if it is also a suggestion for the new focus; otherwise the new focus's
+  first suggestion is pre-selected, or the prepared main category when that
+  focus has no suggestions.
 
 **Entry, reading and brand**
 
@@ -154,8 +168,11 @@ screen (R-20).
   note shown on the brand-confirm screen (F15).
 - **R-09:** The brand-confirm screen shows the typed name, the discovered
   name when different, and the website. `Ubah nama` corrects the name and
-  keeps every other answer (today's inline correction). Changing the website
-  returns to the entry screen and resets preparation (F4).
+  keeps every other answer (today's inline correction). `Kembali` goes to
+  entry with both fields filled. There, changing only the name keeps the
+  preparation and every answer, runs no new call, and returns to brand
+  confirm with the name labelled `Dari Anda`. Changing the website resets
+  preparation and prepares again (F4).
 
 **Focus and target**
 
@@ -186,7 +203,10 @@ screen (R-20).
 - **R-16:** The market screen offers the four reach cards and, for
   `sekitar` and `beberapa`, the area choices, under today's rules. It is not
   shown for location focus. `sekitar` needs exactly one area; `beberapa`
-  needs one to eight; `seluruh` and `luar` take no areas. Spec 011's
+  needs one to eight; `seluruh` and `luar` take no areas. Above eight areas,
+  `Lanjut` is blocked with a message to remove some; nothing is dropped
+  silently. (Today's page has no cap and quietly keeps the first eight; this
+  is a tightening.) Spec 011's
   regional limit applies: never pick the first or largest eight areas,
   invent a wider region, or raise the reach to pass the check. An
   unsupported reach stays empty for the owner to choose. There is no skip
@@ -199,11 +219,15 @@ screen (R-20).
   semicolon-separated text field (F12).
 - **R-18:** The competitor screen offers three choices: named competitors
   (suggestions plus "add", up to five), "no direct competitor", and "don't
-  know yet". The default stays today's: "don't know yet" (F11; open
-  question 2). If the owner picks named competitors but adds none, the screen
-  asks for a name or another choice. Today that case is silently saved as
-  "don't know yet"; this is the one tightening. Otherwise `Lanjut` never
-  blocks on this screen until JQ decides otherwise.
+  know yet" (F11). When preparation suggests competitors, "named" arrives
+  selected with those names (up to five), labelled `Saran Nuave` (founder,
+  2026-09-27); with no suggestions, "don't know yet" is selected. Removing
+  the last name keeps "named" selected and blocks `Lanjut` with a message
+  to add a name or pick another choice. Adding a sixth name is blocked with
+  a message, never dropped. (Today both cases change silently: the last
+  removal switches to "don't know yet" and extra names are dropped at
+  confirmation. These are tightenings.) Otherwise `Lanjut` never blocks on
+  this screen until JQ decides otherwise.
 - **R-19:** The public-fact screen stays optional, with today's privacy
   check.
 - **R-20:** Until JQ, target customer, buyer considerations and
@@ -234,12 +258,16 @@ screen (R-20).
   Its output gains: (a) up to eight locations the business publishes, each
   with name and address; (b) up to three category suggestions for the whole
   brand; (c) one short category suggestion per offering, for product focus.
-  Anything not supported by the website stays empty; nothing is inferred.
-  Location focus uses the whole-brand suggestions (open question 1).
+  Locations must be published by the business; none are inferred.
+  Category suggestions are Nuave's own suggestions: they carry `Saran Nuave`,
+  never `Dari website Anda`. The prepared main category keeps today's label.
+  Location focus uses the whole-brand suggestions (founder, 2026-09-27).
 - **R-25:** The privacy check covers every new input and prepared value, as
   today (F14).
-- **R-26:** A stored session from before a slice restarts safely, as today
-  (a version change, never a crash or a mixed state).
+- **R-26:** Any slice that changes what the session stores (for example the
+  preparation shape in J3, or the stages in J2 and J7) bumps the stored
+  version, so a session saved before that slice restarts at entry. It never
+  crashes or loads a mixed state.
 
 **Quality**
 
@@ -248,6 +276,11 @@ screen (R-20).
   Customer copy is Indonesian (`docs/VOICE.md`).
 - **R-28:** Each slice extends `tests/e2e/journey.ts` and the matching
   `verify-nuave` feature, and the whole path passes in synthetic mode.
+- **R-29:** J3 adds a clearly labelled rich test preparation (fictional
+  business, every prepared field filled, including locations and category
+  suggestions) that tests and `verify-nuave` can select, like today's
+  `richDraft` stub in `tests/e2e/new-intake-journey.spec.ts`. The default
+  synthetic preparation ("no facts extracted") stays unchanged.
 
 ## Failure and recovery
 
@@ -257,8 +290,9 @@ screen (R-20).
   with today's message; typed name and website are kept.
 - **Privacy stop:** today's calm message on the screen with the problem
   input; nothing is saved from it.
-- **Refresh or tab restore mid-journey:** same screen, same working answers
-  (R-04). An incompatible stored session restarts at entry (R-26).
+- **Refresh or tab restore mid-journey:** same screen, same working answers;
+  during reading, back to entry with the fields kept (R-04). A session
+  stored before a slice changed the stored shape restarts at entry (R-26).
 - **Question generation fails:** unchanged from today.
 - Never fill a missing required answer from a guess, a larger area, or a
   default the owner did not see.
@@ -276,17 +310,21 @@ screen (R-20).
 ## Acceptance criteria
 
 - **AC-01:** In synthetic mode, an owner goes from entry to question review
-  through screens 1–13 in order, with `Kembali` and `Lanjut` and chapter
-  progress (R-01).
-- **AC-02:** With the rich synthetic preparation, every required screen
+  through screens 1–13 in order, each showing the buttons R-01 lists for it
+  and, on 3–13, the chapter progress (R-01).
+- **AC-02:** With the rich test preparation (R-29), every required screen
   arrives with its answer selected and the owner reaches review by tapping
-  `Lanjut` only (R-02, R-03).
+  `Lanjut` only (R-02, R-03). The default synthetic preparation stays empty,
+  so drives on it fill each required screen.
 - **AC-03:** Each required screen blocks `Lanjut` when its answer is
   removed, and each optional screen never blocks (R-03).
-- **AC-04:** Refreshing on any screen from 3 to 12 returns to it with the
-  same answers (R-04).
-- **AC-05:** `Ubah nama` on brand confirm keeps every later answer; changing
-  the website resets preparation (R-09).
+- **AC-04:** Refreshing on any screen from 3 to 13 returns to it with the
+  same answers. Refreshing during reading returns to entry with both fields
+  filled, the interruption note shown, and no new call until `Periksa`
+  (R-04).
+- **AC-05:** `Ubah nama` on brand confirm keeps every later answer. So does
+  `Kembali` to entry followed by a name-only change, with no new
+  preparation call. Changing the website resets preparation (R-09).
 - **AC-06:** With no found locations, the location card is hidden and the
   manual link still leads to a form that requires name and address. With
   found locations, picking one fills both (R-10, R-11).
@@ -294,9 +332,12 @@ screen (R-20).
   catalogue read-only and the frozen offerings are the chosen product only
   (R-14).
 - **AC-08:** The market screen enforces the `sekitar`, `beberapa`,
-  `seluruh` and `luar` rules and is absent under location focus (R-16).
-- **AC-09:** The competitor screen freezes each of its three choices
-  distinctly, and "named" with no name cannot continue (R-18).
+  `seluruh` and `luar` rules, blocks a ninth area with a message, and is
+  absent under location focus (R-16).
+- **AC-09:** With suggested competitors, "named" arrives selected with
+  them, labelled `Saran Nuave`; without, "don't know yet" is selected. Each
+  of the three choices freezes distinctly. Removing the last name keeps
+  "named" and blocks `Lanjut`; a sixth name is blocked (R-18).
 - **AC-10:** Target customer, buyer considerations and differentiator are
   editable on review and reach the frozen context (R-20).
 - **AC-11:** On review, every `Ubah` returns to review. An edited alias
@@ -305,6 +346,11 @@ screen (R-20).
   apart from edited aliases (R-22).
 - **AC-13:** Sensitive text in any new input is stopped with today's message
   (R-25).
+- **AC-16:** After a focus change, the owner passes the category screen
+  again: an owner-typed category stays; a suggestion from the old focus is
+  replaced unless the new focus also suggests it (R-05).
+- **AC-17:** A session stored before a slice that bumped the stored version
+  restarts at entry without an error (R-26).
 - **AC-14:** `npm run verify` passes, and `verify-nuave drive all` passes
   with no unexpected external requests (R-28).
 - **AC-15 (judgment, founder, JZ):** on real businesses, the journey feels
@@ -315,31 +361,30 @@ screen (R-20).
 
 One PR each, in this order. Each keeps the whole path working: new screens
 come before a shrinking version of today's summary page, which becomes the
-review screen in J7. R-02, R-03, R-25, R-27 and R-28 apply to every screen
-in every slice.
+review screen in J7. R-02, R-03, R-25, R-26, R-27 and R-28 apply to every
+screen in every slice.
 
 | Slice | Contents | Requirements | Size |
 |---|---|---|---|
 | **J2** | Screen frame (per-screen state, `Kembali`/`Lanjut`, chapter progress, refresh restore), entry copy, reading screen, brand confirm. Then continue to today's summary. Also fix the stale `src/lib/intake/README.md`. | R-01, R-04, R-06–R-09, R-26–R-28 | M |
-| **J3** | Preparation additions: locations and category suggestions in the same call; synthetic data and tests. No screens. | R-24, R-25 | M |
-| **J4** | Focus, location and product screens. | R-05, R-10–R-12 | M |
-| **J5** | Category, offerings, service channels and market screens. | R-13–R-16 | M |
+| **J3** | Preparation additions: locations and category suggestions in the same call; the rich test preparation; tests. No screens. | R-24, R-25, R-29 | M |
+| **J4** | Focus, location and product screens. | R-05 (market retention), R-10–R-12 | M |
+| **J5** | Category, offerings, service channels and market screens. | R-05 (category after a focus change), R-13–R-16 | M |
 | **J6** | Customer needs, competitors and public fact screens. | R-17–R-19 | S–M |
 | **J7** | Review replaces the summary and the clarification stage; editable aliases; JQ answers held on review. | R-20–R-23 | M |
 | **JQ** | Screens for target customer, buyer considerations and differentiator, after the founder decides must-answer vs asked. | plan §5, JQ | S–M |
 
 ## Open questions
 
-The founder answers these at approval. Each has a default.
+None. The founder answered the draft's three questions on 2026-09-27
+([decision log](../../docs/DECISION_LOG.md#2026-09-27--spec-013-open-questions-answered)):
 
-1. **Location-focus categories.** Default: a location uses the whole-brand
-   suggestions, since each location is the same kind of business.
-   Alternative: separate location suggestions (more preparation output).
-2. **Competitor default.** Default: "don't know yet" stays selected until the
-   owner chooses (today's behavior; suggestions are only Nuave's guesses).
-   Alternative: pre-select the suggested names.
-3. **Copy.** Default: the prototype's Indonesian headings and helper text
-   for Stage 1; the founder reviews final wording at JZ.
+1. **Location-focus categories:** a location uses the whole-brand
+   suggestions (R-24).
+2. **Competitor default:** Nuave's suggested names arrive selected as
+   `Saran Nuave` (R-18).
+3. **Copy:** the prototype's Indonesian headings and helper text for Stage
+   1; the founder reviews final wording at JZ.
 
 ## Implementation notes
 

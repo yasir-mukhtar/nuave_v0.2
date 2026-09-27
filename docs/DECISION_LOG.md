@@ -6,6 +6,22 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — Spec 013 open questions answered
+
+The founder answered the three open questions in the Spec 013 draft:
+**"1. Default. 2. With Nuave's suggested names already selected. 3.
+Default."**
+
+1. When one location is audited, the category screen uses the whole-brand
+   suggestions.
+2. When preparation suggests competitors, the competitor screen arrives with
+   "named competitors" selected and those names (up to five), labelled
+   `Saran Nuave`. The owner can remove them or pick another choice. With no
+   suggestions, "don't know yet" is selected. This changes today's default,
+   which starts at "don't know yet" even when suggestions exist.
+3. Stage 1 uses the prototype's Indonesian headings and helper text; the
+   founder reviews final wording at JZ.
+
 ## 2026-09-27 — J1 decisions: the Airbnb-style intake keeps today's rules
 
 The founder approved all eighteen recommendations of the J1 gap list
@@ -15,10 +31,10 @@ approved as the J1 decisions."** PR #94 is a read-only record and is closed
 without merging. [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) turns
 the decisions into requirements.
 
-- **Shape (F1):** one question per screen in the prototype's order;
+- **Shape (F1, F12):** one question per screen in the prototype's order;
   prepared answers arrive selected; a screen blocks only when a required
-  answer is missing, by today's rules, not the prototype's looser ones;
-  optional screens say `Opsional` and never block.
+  answer is missing, by today's rules, not the prototype's looser ones.
+  Optional screens are shown, say `Opsional`, and never block (F12).
 - **Kept from today:** name and website at entry (F2); inline name
   correction keeps other answers, while a website change resets preparation
   (F4); the three source labels (F5); whole brand pre-selected as
