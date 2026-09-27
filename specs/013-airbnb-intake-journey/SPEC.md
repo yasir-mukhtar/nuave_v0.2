@@ -1,6 +1,7 @@
 # Spec 013: Airbnb-style intake journey
 
-> Status: **Draft**. The founder approves it before any J2 work starts.
+> Status: **Approved** by the founder on 2026-09-27
+> ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)). J2 may start.
 > Owner: orchestrator
 > Updated: 2026-09-27
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)

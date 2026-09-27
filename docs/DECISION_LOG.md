@@ -6,6 +6,18 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — approve Spec 013
+
+The founder said: **"Approved."** This approves
+[Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), the Stage 1
+Airbnb-style intake, after independent review of
+[PR #95](https://github.com/yasir-mukhtar/nuave_v0.2/pull/95): FAIL in round
+1, then PASS with notes in round 2, with the notes fixed. Building starts
+with slice J2. The spec's tightenings are approved with it: a ninth market
+area, a sixth competitor, and "named" with no name are blocked with a
+message instead of being changed silently, and a focus change re-checks the
+category.
+
 ## 2026-09-27 — Spec 013 open questions answered
 
 The founder answered the three open questions in the Spec 013 draft:

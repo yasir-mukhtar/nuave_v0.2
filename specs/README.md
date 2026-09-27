@@ -51,7 +51,7 @@ any, and the active milestone. The entries below record each package's
 latest status.
 
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
-  — **Draft** (2026-09-27), awaiting founder approval. Stage 1 of the
+  — **Approved** (founder, 2026-09-27); slice J2 next. Stage 1 of the
   paying-customer plan: the Airbnb-style one-question-per-screen intake,
   keeping today's rules and information (J1 decisions F1–F18). Slices J2–J7
   and JQ.
