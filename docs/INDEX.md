@@ -33,13 +33,21 @@ decision log does not become a permanent hidden override.
 | [`PRODUCT.md`](./PRODUCT.md)           | Current customer, offer, promise, journey, scope, and success signals                   | Canonical                               |
 | [`AUDIT.md`](./AUDIT.md)               | Measurement, evidence, report, and data-handling method                                 | Canonical                               |
 | [`VOICE.md`](./VOICE.md)               | Indonesian writing contract for questions, reports, and customer copy                   | Canonical (founder-approved 2026-08-17) |
-| [`NOW.md`](./NOW.md)                   | Current objective, deployment state, facts, blockers, and next action                   | Current operating state                 |
+| [`NOW.md`](./NOW.md)                   | Current state, active milestone, deployment facts, and standing rules                   | Current operating state                 |
 | [`DESIGN.md`](./DESIGN.md)             | Current UI stack, visual language, interaction, accessibility, and component boundaries | Canonical current design authority      |
 | [`DECISION_LOG.md`](./DECISION_LOG.md) | Dated material founder decisions and superseded directions                              | Canonical history                       |
 | [`WORKFLOW.md`](./WORKFLOW.md)         | Document creation, specifications, worker handoffs, and verification                    | Canonical working method                |
 | [`AGENTIC_ENGINEERING_PLAYBOOK.md`](./AGENTIC_ENGINEERING_PLAYBOOK.md) | How agents verify, correct, and land engineering work; the `verify-nuave` build plan (B.2) | Adopted 2026-09-26; P-1 to P-7 all decided (2026-09-26/27) |
 
 ## Current development plan
+
+This is the one place that says which plan governs what; other documents
+point here instead of restating it. Since 2026-09-27
+[`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) sets the order of
+work, stages, and gates. [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) stays
+the reference for the detailed requirements the new plan points to; where
+they disagree, `PAYING_CUSTOMER_PLAN.md` wins. The phase tables in
+`END_TO_END_PLAN.md` and `JOURNEY_CONTRACT.md` no longer set build order.
 
 | Document                                                         | Governs                                                                                                                            | Status                                                                                    |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -118,7 +126,11 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-**Current report specification:** [Spec 012 — Evidence-first AI Visibility
+No specification is active for new work. The Stage 1 spec follows milestone
+J1 of the plan; see [`NOW.md`](./NOW.md). The two closed specifications below
+are the latest verified intake and report.
+
+**Latest report specification (closed):** [Spec 012 — Evidence-first AI Visibility
 Report](../specs/012-evidence-first-report/SPEC.md) is **Verified with
 founder-approved exception (AC-18)** on 2026-09-26 after independent closeout
 PASS. Original approval followed [review 1](../specs/012-evidence-first-report/SPEC_REVIEW_1.md)
@@ -154,7 +166,7 @@ header labels/order and printed URL tails remain separate report work. The
 scope; B1 and B2 were later released, and the report documentation promotion
 is reconciled in the closeout candidate above.
 
-**Current bounded implementation:** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
+**Latest intake specification (closed):** [Spec 011](../specs/011-smart-consultant-intake/SPEC.md)
 is **Verified** (2026-09-24) on preserved `2a21f85` plus the reviewed 316-file
 product manifest for the prepared summary and truthful new-session report/export
 boundary. Its 2026-09-22 amendment accepts the Cross-cutting sizing result and
@@ -217,7 +229,7 @@ context an agent must read. Do not implement a draft specification.
 | [`003-live-report-quality-gate`](../specs/003-live-report-quality-gate/SPEC.md)                                       | Live engine connected, first real Indonesian report, report-quality gate verdict                                                                      | Approved; report quality unmet/deferred while Spec 009 completes the local audit flow                                                                                                                                                                                            |
 | [`004-source-hero-intake`](../specs/004-source-hero-intake/SPEC.md)                                                   | One-field website/Instagram hero intake with scan transition, replacing the audit tool's step-0 form                                                  | Superseded by Spec 007                                                                                                                                                                                                                        |
 | [`006-product-wide-polish`](../specs/006-product-wide-polish/SPEC.md)                                                 | Product-wide design and copy pass (calm instrument): foundation, landing, and the six remaining screens                                               | Historical/partially implemented context; its visual-stack direction is superseded by [`DESIGN.md`](./DESIGN.md)                                                                                                                              |
-| [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md)                                               | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance     | Approved (founder-approved 2026-08-30); lettered packages and R-27 intake recovery merged; intake-experience rebuild unmerged (draft PRs #58, #60)                                                                                            |
+| [`007-intake-airbnb-revamp`](../specs/007-intake-airbnb-revamp/SPEC.md)                                               | Runnable V1 journey: canonical 6/4 measurement matrix, workflow/data authority, safe source handling, payment boundary, and end-to-end acceptance     | Approved (founder-approved 2026-08-30); lettered packages and R-27 intake recovery merged; intake rebuild merged via PR #58 (its route now redirects to `/audit`); PR #60 closed unmerged                                                     |
 | [`008-recommendation-eligible-question-generation`](../specs/008-recommendation-eligible-question-generation/SPEC.md) | Recommendation-eligible semantic target for generated questions: natural Indonesian consumer decisions with genuine entity-recommendation opportunity | Approved (founder-approved 2026-09-11); execution authority is [`NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md`](../specs/008-recommendation-eligible-question-generation/NUAVE_SPEC_008_IMPLEMENTATION_PLAN_R5.md), whose ledger owns gate status |
 
 ## Reference and history

@@ -8,10 +8,9 @@
 This contract connects the touchpoint plans without turning them into one large
 implementation specification. Product truth remains governed by
 [`VISION.md`](./VISION.md), [`PRODUCT.md`](./PRODUCT.md), and
-[`AUDIT.md`](./AUDIT.md). Build order is governed by
-[`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md) (2026-09-27), which
-replaced [`END_TO_END_PLAN.md`](./END_TO_END_PLAN.md) for the order of work.
-Customer-visible changes still require an approved specification.
+[`AUDIT.md`](./AUDIT.md). Build order is governed by the active plan named in
+[`INDEX.md`](./INDEX.md#current-development-plan). Customer-visible changes
+still require an approved specification.
 
 ## Canonical customer sequence
 
@@ -148,6 +147,11 @@ smaller without weakening ownership.
     only the derived artifact status, never the immutable report facts.
 
 ## Target journey versus build phases
+
+> **No longer sets build order (2026-09-27).** The phase table below records
+> the original phase boundaries. The order of work and its gates now come
+> from the active plan named in [`INDEX.md`](./INDEX.md#current-development-plan);
+> where they differ, that plan wins.
 
 Touchpoint number describes where the customer encounters behavior. Phase
 number describes when Nuave is allowed to make that behavior real. They are not

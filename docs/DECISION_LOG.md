@@ -19,7 +19,8 @@ Stage 1 is done (JZ) when the journey:
 
 1. follows the flow and feel of `intake-prototype.html`;
 2. asks for and uses everything today's intake asks for and uses: as complete,
-   but more intuitive; and
+   but more intuitive. The only exceptions are items the founder explicitly
+   drops in J1; and
 3. has had every nuance of today's intake that the prototype would override
    shown to the founder, who decided to keep, adapt, or drop it.
 
@@ -49,13 +50,18 @@ through PR #92 (`29addbe`). It is now the active plan.
   - how reports are saved, emailed and recovered is decided at S0, after
     Stage 1;
   - the intake reference is `intake-prototype.html`, with the design
-    workbench second. Today's `/audit` and `/audit/new-intake` are
-    implementations to measure against, not references.
+    workbench second. Today's `/audit`, the only live intake, is the
+    implementation to measure against, not a reference (`/audit/new-intake`
+    now redirects to it).
 - **Changes to the original plan (plan §3.5):**
   - the Airbnb-style intake is Stage 1, ahead of durable delivery and payment;
   - polish (Phase 6) is no longer a gate before payment or before owners see
     the product. This supersedes the `NOW.md` "Not now" line that held back
     showing the product until after polish;
+  - the known-owner pilot is no longer a gate before selling to strangers
+    (the 2026-08-09 order, steps 5–6, and the 2026-08-12 slice order).
+    Owner feedback is the optional Track V, and G1 opens Nuave to paying
+    customers. The outside-user safeguards in `NOW.md` still apply;
   - lighter paperwork: one PR per milestone, proven by its PR description and
     one verdict. Customer-visible work still needs a short approved spec: one
     for Stage 1 (after J1) and one for Stage 2 (after S0);
@@ -65,9 +71,10 @@ through PR #92 (`29addbe`). It is now the active plan.
   written (plan §5, Track V).
 
 Not decided here: the S0 answers (D1–D8) stay suggested defaults until S0.
-`NOW.md` is reset to a short page, `END_TO_END_PLAN.md` is relabelled as a
-reference, and `README.md`, `INDEX.md` and `JOURNEY_CONTRACT.md` now point to
-the new plan.
+`NOW.md` is reset to a short page and `END_TO_END_PLAN.md` is relabelled as a
+reference. [`INDEX.md`](./INDEX.md#current-development-plan) is the one place
+that says which plan governs what; `README.md`, `AGENTS.md`, `PRODUCT.md`,
+`JOURNEY_CONTRACT.md` and `specs/README.md` point there.
 
 ## 2026-09-27 — accept playbook proposals P-1 to P-4 and P-7
 
@@ -1299,3 +1306,4 @@ Spec 007 R-01/R-02 canonical matrix (2026-08-30):
 | Five-and-five coverage brief with free-composition editing              | SUPERSEDED | Spec 007 R-10: wording edits stay within fixed slots; composition and slot policies cannot change (2026-08-30)                |
 | `END_TO_END_PLAN.md` as the current order of work                       | SUPERSEDED | `PAYING_CUSTOMER_PLAN.md` (2026-09-27); the old plan stays as the requirements reference                                      |
 | Product-wide polish before owners see the product or before payment     | SUPERSEDED | Polish parked until after the first paying customer (`PAYING_CUSTOMER_PLAN.md` §3.5, 2026-09-27)                              |
+| Known-owner pilot before selling to strangers                           | SUPERSEDED | Optional Track V owner feedback; G1 opens Nuave to paying customers (`PAYING_CUSTOMER_PLAN.md`, 2026-09-27)                   |

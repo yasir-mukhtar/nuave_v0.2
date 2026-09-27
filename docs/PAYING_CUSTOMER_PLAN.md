@@ -28,8 +28,8 @@ done.
 | # | Milestone | Owner | State | PR | Verdict |
 |---|---|---|---|---|---|
 | **Stage 1** | **Finish the intake journey** | | | | |
-| J0 | Reset the working docs | Orchestrator | In review | #93 | — |
-| J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Not started | — | — |
+| J0 | Reset the working docs | Orchestrator | Done | #93 | On the PR |
+| J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Next | — | — |
 | J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
@@ -151,9 +151,9 @@ never blocks the build. Manual payment is not needed.
   2. **Secondary:** [`drafts/nuave-intake-design-workbench.html`](./drafts/nuave-intake-design-workbench.html):
      an attempt to recreate the prototype, less clean, but may hold good
      ideas worth keeping.
-  3. **Not references:** today's `/audit` and the PR #58 `/audit/new-intake`
-     version. They are half-built implementations to measure against, not
-     to copy.
+  3. **Not references:** today's `/audit`, the only live intake, is the
+     implementation to measure against, not to copy. (The PR #58
+     `/audit/new-intake` route now just redirects to `/audit`.)
 
   Where the prototype and the workbench disagree, the prototype wins unless
   the founder picks otherwise.
@@ -183,7 +183,8 @@ never blocks the build. Manual payment is not needed.
   done when:
   1. it follows the prototype's flow and feel;
   2. it asks for and uses everything today's intake asks for and uses, so
-     it is as complete as today's version but more intuitive; and
+     it is as complete as today's version but more intuitive. The only
+     exceptions are items the founder explicitly drops in J1; and
   3. every nuance in today's intake that the prototype would override was
      shown to the founder, who decided to keep, adapt, or drop it (J1).
 - Real test runs during Stage 1 are the founder's own (§5, JZ); about
@@ -200,6 +201,7 @@ that survive the tab closing, for example:
 - private link only, no email;
 - a lighter option the founder suggests.
 
+Start the session from [`briefs/REPORT_ACCESS_RECOVERY.md`](./briefs/REPORT_ACCESS_RECOVERY.md).
 The same sitting settles the related answers, with suggested defaults:
 
 | # | Question | Suggested default |
@@ -274,7 +276,7 @@ or confirm it is already there.
 | Historical v1 report hold | Already in `DECISION_LOG` (2026-09-22) |
 | Spec states: 011 Verified; 012 Verified with the AC-18 exception; latest checkpoint 2026-09-19 | One line each in new `NOW.md` |
 | Engineering track: playbook adopted 2026-09-26; its §B.3 guards merged through PR #91 on 2026-09-27 | New `NOW.md`, one line |
-| Open questions ("What is not known": willingness to pay, price, action on reports, re-check demand, run-to-run variation, and others) | Parking lot (§6), one bullet pointing to the old list in Git |
+| Open questions ("What is not known": willingness to pay, price, action on reports, re-check demand, run-to-run variation, and others) | Parking lot (§6), listed in full; access and delivery questions go to S0 |
 | Non-scope ("Not now": white-label, dashboards, subscriptions, credits, multi-vertical, banded/ranked scores, fabricated proof) | New `NOW.md`, pointer to `docs/END_TO_END_PLAN.md` §12 plus any item §12 lacks |
 | Private evidence stays outside Git (`.local-evidence/`, `.secrets/`) | New `NOW.md`, one line |
 
@@ -298,8 +300,9 @@ overriding it blindly (§4.1):
 
 - **Information check.** Every piece of information today's intake asks for
   or prepares and then passes to question generation or the report, and
-  whether the prototype covers it. Anything missing is a gap to build, not a
-  loss to accept.
+  whether the prototype covers it. Anything missing is a gap to build unless
+  the founder explicitly drops that information in J1; the J1 PR records each
+  drop. Nuance decisions below change how something is asked, not whether.
 - **Nuances to reconsider.** Everything today's `/audit` does on purpose that
   the prototype would override or lacks. For each one: what today does, what
   the prototype does, and a recommendation (keep, adapt, or drop) in plain
@@ -346,8 +349,8 @@ keeps the whole path working in synthetic mode. Rules:
 
 - Reuse the existing engine: preparation, question generation, observations,
   and report. Change the screens, not the audit method.
-- The live route is `/audit`. Retire `/audit/new-intake` rather than keep two
-  intakes.
+- The live route is `/audit`, the only intake (`/audit/new-intake` already
+  redirects there). Build the journey into it; do not add a second intake.
 
 **JZ — Journey sign-off** (founder)
 
@@ -544,11 +547,22 @@ founder moves it into a milestone.
 - Spec 008 G2P and remaining guard findings; run-to-run variation study.
 - Structured-output failures: provider limit or call bug.
 
-**Open questions**
-- The former `NOW.md` "What is not known" list (willingness to pay, price,
-  whether owners act on reports, re-check demand and interval, run-to-run
-  variation, benchmark size, other verticals, outreach conversion, and more):
-  see `git show 29addbe:docs/NOW.md`. Track V answers the first three.
+**Open questions** (from the former `NOW.md`; Track V starts on the first
+three)
+- Will Indonesian small-business owners pay for one audit at all, and at
+  Rp99.000?
+- Does an owner act on the report, or read it, agree, and do nothing?
+- Will owners buy a re-check, and at what interval?
+- How much does ordinary run-to-run variation move the count out of ten?
+- Can a category benchmark be stated after about twenty audits, or does it
+  need many more?
+- Which other business types can use the method without new claims and
+  report review?
+- Does demonstrate-before-selling outreach convert, and at what rate?
+- Does an objectively wrong delivered report need a correction request and
+  a corrected-version notice?
+- Report access, delivery delay limits, support times and recipient checks
+  are settled at S0 (§4.2, D1–D8).
 
 **Operations and features**
 - Self-service recipient change, wrong-business replacement audit, founder
