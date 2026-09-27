@@ -1,5 +1,6 @@
 import { DEFAULT_OBSERVATION_INSTRUCTION_VERSION } from "./contracts";
 import { OPENCODEGO_AUDIT_MODEL, OPENCODEGO_SYSTEM } from "./opencodego";
+import { APPROVED_LIVE_SYSTEMS } from "./approved-live-providers";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM, type AuditObservation } from "./types";
 
 export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
@@ -8,7 +9,7 @@ export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
  * with hosted web search; every other label stays a rejection. */
 export const PRODUCTION_OBSERVATION_SYSTEMS: ReadonlySet<
   AuditObservation["system"]
-> = new Set(["OpenAI Responses API", OPENCODEGO_SYSTEM]);
+> = new Set(APPROVED_LIVE_SYSTEMS);
 export const PRODUCTION_OBSERVATION_REQUESTED_MODEL = OPENCODEGO_AUDIT_MODEL;
 export const PRODUCTION_OBSERVATION_INSTRUCTION_VERSION =
   DEFAULT_OBSERVATION_INSTRUCTION_VERSION;

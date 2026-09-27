@@ -16,6 +16,7 @@ import { auditMode, newAuditEnabled } from "../audit/deployment-gate";
 import {
   createSyntheticGlmTransport,
   freezeGlmLiveAttempt,
+  glmEvidenceDir,
   glmLiveAuthorized,
   liveGlmTransport,
   prepareGlmQuestionsForIntake,
@@ -70,6 +71,22 @@ describe("newAuditEnabled / auditMode / glmLiveAuthorized (Spec 010 R-01/R-02)",
     // Live mode works the same in a production build — no NODE_ENV gate.
     vi.stubEnv("NODE_ENV", "production");
     expect(glmLiveAuthorized()).toBe(true);
+  });
+});
+
+describe("glmEvidenceDir", () => {
+  const fallback = () =>
+    join(process.cwd(), ".local-evidence", "glm-direct-ten");
+
+  it("an empty or blank NUAVE_GLM_EVIDENCE_DIR counts as unset", () => {
+    expect(glmEvidenceDir(undefined)).toBe(fallback());
+    vi.stubEnv("NUAVE_GLM_EVIDENCE_DIR", "");
+    expect(glmEvidenceDir(undefined)).toBe(fallback());
+    vi.stubEnv("NUAVE_GLM_EVIDENCE_DIR", "   ");
+    expect(glmEvidenceDir(undefined)).toBe(fallback());
+    vi.stubEnv("NUAVE_GLM_EVIDENCE_DIR", "/tmp/nuave-evidence");
+    expect(glmEvidenceDir(undefined)).toBe("/tmp/nuave-evidence");
+    expect(glmEvidenceDir("/explicit/dir")).toBe("/explicit/dir");
   });
 });
 

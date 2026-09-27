@@ -109,10 +109,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * refresh, retry, or post-timeout calls can never send again. Raw response
  * bytes and the outcome are preserved in the owner-only evidence dir. */
 
-function glmEvidenceDir(explicit: string | undefined): string {
+export function glmEvidenceDir(explicit: string | undefined): string {
   return (
     explicit ??
-    process.env.NUAVE_GLM_EVIDENCE_DIR ??
+    // An empty or whitespace-only value counts as unset, matching the send
+    // path's read below — the offline e2e server environment blanks this key
+    // so a developer .env.local cannot redirect it.
+    (process.env.NUAVE_GLM_EVIDENCE_DIR?.trim() || undefined) ??
     join(process.cwd(), ".local-evidence", "glm-direct-ten")
   );
 }

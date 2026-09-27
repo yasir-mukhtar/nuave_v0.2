@@ -30,6 +30,7 @@ import {
   type ReportAssessmentClass,
 } from "./measurement-matrix";
 import type { AuditQuestionMethod } from "./locked-question-pack";
+import { OPENAI_SYSTEM } from "./approved-live-providers";
 
 /**
  * Every report-assessment path a prompt is eligible for under its method.
@@ -1192,8 +1193,8 @@ export function validateReportContent(
 // Groq + Tavily). The `system` enum in types.ts lists the only valid values.
 function describeAuditSystem(system: string): string {
   switch (system) {
-    case "OpenAI Responses API":
-      return "OpenAI Responses API";
+    case OPENAI_SYSTEM:
+      return OPENAI_SYSTEM;
     case "Google Gemini API":
       return "Google Gemini API";
     case "Groq + Tavily":
