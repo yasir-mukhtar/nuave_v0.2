@@ -6,6 +6,26 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — keep every intake question; build the Airbnb experience first
+
+The founder said: **"Those questions are important and mandatory, except the
+extra public fact."** and **"Decision: prioritize implementing the Airbnb
+intake experience into the journey first. After that, we will recreate
+questions for what's missing. But please write an important note into the
+plan so me and the agent won't forget about this."**
+
+- Nothing today's intake asks for is dropped in J1. This settles the "items
+  the founder explicitly drops" exception in the entry below: there are
+  none. The extra public fact stays optional.
+- Order: J2…Jn build the Airbnb-style experience first. A new milestone, JQ,
+  then adds back what the prototype and the workbench lack, before JZ:
+  target customer, what makes you different, "I don't know yet" vs "no
+  direct competitor", and the four ways customers are served
+  ([plan §5, JQ](./PAYING_CUSTOMER_PLAN.md)).
+- Open until JQ: competitors, target customer, customer needs and what makes
+  you different can be skipped today. Must the owner answer them, or only be
+  asked?
+
 ## 2026-09-27 — what "done" means for the intake journey
 
 The founder answered plan §4.1: **"Yes matching the prototype, but it doesnt

@@ -31,6 +31,7 @@ done.
 | J0 | Reset the working docs | Orchestrator | Done | #93 | On the PR |
 | J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Next | — | — |
 | J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
+| JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
@@ -187,6 +188,13 @@ never blocks the build. Manual payment is not needed.
      exceptions are items the founder explicitly drops in J1; and
   3. every nuance in today's intake that the prototype would override was
      shown to the founder, who decided to keep, adapt, or drop it (J1).
+- ~~May any of today's questions be dropped?~~ Decided 2026-09-27
+  ([decision](./DECISION_LOG.md#2026-09-27--keep-every-intake-question-build-the-airbnb-experience-first)):
+  **no.** They are important and required; only the extra public fact stays
+  optional. Build the Airbnb-style experience first (J2…Jn), then add back
+  the questions it lacks (JQ). **Open until JQ:** competitors, target
+  customer, customer needs and what makes you different can be skipped
+  today. Must the owner answer them, or only be asked?
 - Real test runs during Stage 1 are the founder's own (§5, JZ); about
   USD 0.20 of AI cost each.
 
@@ -241,6 +249,12 @@ Rules for every milestone:
   [`docs/templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md) when the milestone before it passes review.
 
 ### Stage 1 — Finish the intake journey
+
+> **Important: do not forget the missing questions** (founder, 2026-09-27).
+> Stage 1 builds the Airbnb-style experience first (J2…Jn). Some questions
+> today's intake asks are in neither the prototype nor the workbench. They
+> are not dropped: JQ adds them back after J2…Jn, and JZ cannot pass until
+> JQ is done.
 
 **J0 — Reset the working docs** (orchestrator, ~half day)
 
@@ -303,6 +317,7 @@ overriding it blindly (§4.1):
   whether the prototype covers it. Anything missing is a gap to build unless
   the founder explicitly drops that information in J1; the J1 PR records each
   drop. Nuance decisions below change how something is asked, not whether.
+  (Founder, 2026-09-27: nothing is dropped. Missing questions go to JQ.)
 - **Nuances to reconsider.** Everything today's `/audit` does on purpose that
   the prototype would override or lacks. For each one: what today does, what
   the prototype does, and a recommendation (keep, adapt, or drop) in plain
@@ -351,6 +366,35 @@ keeps the whole path working in synthetic mode. Rules:
   and report. Change the screens, not the audit method.
 - The live route is `/audit`, the only intake (`/audit/new-intake` already
   redirects there). Build the journey into it; do not add a second intake.
+- Do not delete the answers on the JQ list below, or the engine code that
+  uses them, even where no screen asks for them yet.
+
+**JQ — Add back the questions the reference lacks** (worker, after J2…Jn)
+
+Founder decision 2026-09-27: these questions are important and required.
+Build the Airbnb-style experience first, then recreate them in the same
+style. Start from this list, checked against `intake-prototype.html` and the
+workbench on 2026-09-27, and add anything J1's information check finds:
+
+- **Target customer** (who buys). In neither reference.
+- **What makes you different.** In neither reference.
+- **Competitors: "I don't know yet" vs "no direct competitor".** Both
+  references merge these into one button (`Tidak ada pesaing langsung yang
+  saya tahu`); today keeps them separate.
+- **How customers are served: four choices** (at your location, at the
+  customer's location, delivered, used online), as today and the workbench
+  have. The prototype has only two. Skip if J2…Jn already built the
+  workbench's version.
+
+The extra public fact stays optional.
+
+At the start of JQ the founder decides: competitors, target customer,
+customer needs and what makes you different can be skipped today. Must the
+owner answer them before continuing, or only be asked?
+
+*Done when:* every question on the list is asked in the Airbnb style, the
+answers reach question generation and the report, and the whole path still
+works in synthetic mode.
 
 **JZ — Journey sign-off** (founder)
 
@@ -360,8 +404,8 @@ J-tasks or parking-lot items. Agents still make live AI calls only with a
 named founder approval. JZ is the moment the founder says the journey is
 done.
 
-*Done when:* the founder says the journey is done, judged by the three
-points in §4.1. Orchestrator then triggers S0.
+*Done when:* JQ is done and the founder says the journey is done, judged by
+the three points in §4.1. Orchestrator then triggers S0.
 
 ### Stage 2 — Get ready to take money
 
