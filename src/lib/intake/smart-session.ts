@@ -127,7 +127,16 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       return null;
     if (
       !["entry", "reading"].includes(stage) &&
-      (!isRecord(value.prepared) || !isRecord(value.selection))
+      (!isRecord(value.prepared) ||
+        !isRecord(value.selection) ||
+        typeof value.prepared.typedName !== "string" ||
+        typeof value.prepared.canonicalSource !== "string" ||
+        (value.prepared.discoveredName !== null &&
+          typeof value.prepared.discoveredName !== "string") ||
+        typeof value.selection.name !== "string" ||
+        !["website", "nuave", "owner"].includes(
+          String(value.selection.nameOrigin),
+        ))
     )
       return null;
     const frozen = value.frozen ? parseFrozenSmartIntake(value.frozen) : null;

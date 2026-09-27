@@ -435,6 +435,34 @@ describe("Spec 013 J2 screen frame", () => {
     ).toBeNull();
   });
 
+  it("a corrupt stored selection at a later stage restarts at entry instead of crashing", async () => {
+    window.sessionStorage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify({
+        version: 3,
+        stage: "brand",
+        entry: { name: "Kedai Lama", source: "https://lama.example/" },
+        identity: null,
+        prepared: {},
+        selection: {},
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        preparationCalls: [],
+        preparationMode: null,
+        generationAttempts: [],
+      }),
+    );
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    expect(
+      parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      ),
+    ).toBeNull();
+  });
+
   it("a name-only edit at entry keeps later answers and spends no call", async () => {
     const { calls } = stubPreparation();
     render(<SmartIntakeJourney live={false} />);
