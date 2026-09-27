@@ -28,7 +28,7 @@ done.
 | # | Milestone | Owner | State | PR | Verdict |
 |---|---|---|---|---|---|
 | **Stage 1** | **Finish the intake journey** | | | | |
-| J0 | Reset the working docs | Orchestrator | In review | — | — |
+| J0 | Reset the working docs | Orchestrator | In review | #93 | — |
 | J1 | Gap list: Airbnb-style reference vs today's `/audit` | Worker (read-only) | Not started | — | — |
 | J2…Jn | Build the gaps, one PR each (filled in from J1) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
