@@ -39,6 +39,34 @@ export function isTestCodePath(absolutePath: string): boolean {
 }
 
 /**
+ * Parses one source file with the real TypeScript parser — comments never
+ * produce nodes, so comment text can never match a literal check. The file
+ * is parsed, not type-checked.
+ */
+export function parseSource(fileName: string, source: string): ts.SourceFile {
+  return ts.createSourceFile(
+    fileName,
+    source,
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+    fileName.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+  );
+}
+
+/** Calls `visit` on `root` and every descendant node. */
+export function forEachNode(
+  root: ts.Node,
+  visit: (node: ts.Node, sourceFile: ts.SourceFile) => void,
+): void {
+  const sourceFile = root.getSourceFile();
+  const walk = (node: ts.Node): void => {
+    visit(node, sourceFile);
+    ts.forEachChild(node, walk);
+  };
+  walk(root);
+}
+
+/**
  * Calls `visit` on every AST node of one source file, parsed with the real
  * TypeScript parser — comments never produce nodes, so comment text can never
  * match a literal check. The file is parsed, not type-checked.
@@ -48,16 +76,5 @@ export function forEachSourceNode(
   source: string,
   visit: (node: ts.Node, sourceFile: ts.SourceFile) => void,
 ): void {
-  const sourceFile = ts.createSourceFile(
-    fileName,
-    source,
-    ts.ScriptTarget.Latest,
-    /* setParentNodes */ true,
-    fileName.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
-  );
-  const walk = (node: ts.Node): void => {
-    visit(node, sourceFile);
-    ts.forEachChild(node, walk);
-  };
-  walk(sourceFile);
+  forEachNode(parseSource(fileName, source), visit);
 }
