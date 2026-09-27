@@ -532,8 +532,11 @@ The intake-experience rebuild itself **merged via PR #58**
 (`codex/complete-local-intake`, the complete local intake implementation) on
 2026-09-13; its `/audit/new-intake` route remains disabled in production
 behind `NUAVE_NEW_INTAKE_PREVIEW_ENABLED`, so production intake behavior is
-unchanged. Draft PR #60 (`codex/spec-007-approved-s2-repair`, the earlier
-five-screen S2 repair slice) remains open as a preserved review candidate.
+unchanged. PR #60 (`codex/spec-007-approved-s2-repair`, the earlier
+five-screen S2 repair slice) was closed without merging on 2026-09-27 as
+superseded by PR #58 and the later released Spec 011 prepared intake. Its
+branch remains preserved for historical reference; optional review of its
+screen-level design details is deferred, not an app-completion requirement.
 
 The current bounded work remains Spec 003: the OpenCode Go migration
 and production-method lock are implemented and automated checks are green; the
@@ -599,9 +602,13 @@ authorized, and all original evidence and runner outcomes remain unchanged.
 Further fallback drafting remains paused. This connection check preserves
 the source experiment's twelve-candidate format and does not activate the
 product's ten-question path or pass G2P. The accepted prompt and preserved
-GLM migration are separate artifacts: draft PR #47 retains the old writer
-instruction, while G2P used Luna. Exact wording feedback and source-recovery
-facts are recorded in the decision log.
+GLM migration are separate artifacts: PR #47 retained the old writer
+instruction, while G2P used Luna. PR #47 was closed without merging on
+2026-09-27 as superseded by the current direct-ten GLM implementation. Its
+`feat/cheaperinference-glm-5-3-flash` branch remains preserved as historical
+evidence; its old comparison and writer-test steps are not pending work for
+the current implementation. Exact wording feedback and source-recovery facts
+are recorded in the decision log.
 
 The distinct-decision allocator remains withdrawn; shared need is not a
 blocker. Existing purpose, facts/context, identity and safety requirements
