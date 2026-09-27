@@ -3,7 +3,7 @@
 > Status: Working product plan and content sample
 > Depends on: [`04-questions.md`](./04-questions.md) and
 > [`05-audit-run.md`](./05-audit-run.md)
-> Updated: 2026-08-17
+> Updated: 2026-09-22 (direct-ten report amendment; historical sample retained)
 
 ## Objective
 
@@ -17,11 +17,55 @@ The intended customer reaction is:
 > what my team should do next. The evidence is here, and Nuave has not made the
 > result sound more certain than it is.”
 
-This plan settles report content and evidence hierarchy only. Visual design,
-component layout, PDF art direction, and the complete Indonesian writing
-contract are separate work.
+This touchpoint records report content and evidence hierarchy. The current
+direct-ten implementation contract is
+[Spec 012](../../specs/012-evidence-first-report/SPEC.md), approved and
+implemented and Verified with the founder-approved AC-18 exception; see
+[closeout acceptance](../../specs/012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md). The older
+English content sample remains fictional and does not define the new layout.
 
-## Settled content decisions
+## Direct-ten report contract
+
+The eight founder decisions promoted from Astra v3.1 supersede conflicting
+older order, excerpt-first presentation, item-count, print, and recovery rules
+below for `direct-ten`. This records settled direction. A/B1/B2 were merged
+and deployed through PRs #74, #80 and #81; whole-spec verification is the
+separate Spec 012 closeout record.
+
+| Sequence | Customer sees |
+|---|---|
+| **Hasil singkat** | `Bisnis Anda muncul di X dari 10 pertanyaan` and `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, quiet completion and snapshot limits. Both denominators are the validated ten; no duplicate unnamed or untested tiles. |
+| **Jawaban model AI** | Ten exact approved questions and full retained answers in approved order, all visible without collapse controls. Bounded Markdown, exact raw view/copy, separate honest result labels, sources, and observation date/model. Every answer-body URL is inert; only the separate retained HTTP(S) source list supplies active links. |
+| **Analisis Nuave** | One to ten material, useful findings, with all question references. No arbitrary first excerpt or repeated action. |
+| **Yang dapat dilakukan** | One to ten evidence-backed actions with why, basis, suggested owner and completion check. Never pad. A reviewed code-owned preservation/verification path can support a non-corrective action without inventing a problem. |
+| **Tentang audit ini** | Recorded method, exact observation scope/surface/model/date range and timezone, distinct synthesis date, and limitations. |
+
+The screen and finished PDF use this same order and one DOM tree. Every answer
+appears once; print CSS handles pagination without an appendix, duplicate
+answer tree, or arbitrary page limit. **Download PDF** is the shared default
+label for all reports; completed-report JSON remains secondary and unchanged.
+No reading, copy, navigation, print, Back or reload action starts provider work.
+
+A new direct-ten report is complete only when both findings and actions retain
+at least one supported item after repair. If either is empty with ten usable
+observations, the owner sees questions/answers, sources/provenance, a clear
+unfinished-analysis notice, copy, and explicit report retry under current
+limits. No surviving analysis or rejected classifications are exposed; this is
+not a partial report or a report-ready event. Founder-confirmed G4 allows no
+print/PDF/JSON save path in recovery. Spec 010's failure-table amendment and
+Spec 012 B2 own the bounded implementation, released through PR #81.
+Incomplete/unsafe evidence retains existing failure/restriction handling.
+
+Direct-ten acceptance is Spec 012's AC-01–AC-19, including exactness, all three
+empty-section cases, safe Markdown, same-tree print, request/cost invariants,
+and the human usefulness rubric. Historical methods retain their own measured
+meaning and are never automatically rewritten to this method.
+
+## Historical report content decisions
+
+The following decisions, denominator table, hierarchy, and fictional sample
+describe earlier mixed-name reports. They remain historical context where
+Spec 009's method or the direct-ten amendment above supersedes them.
 
 1. The report follows the exact ten questions the customer approved, including
    their final order and wording.
@@ -478,6 +522,11 @@ dashboard.
 
 ## Acceptance criteria for the content plan
 
+These are the historical mixed-name content criteria. The direct-ten contract
+above and Spec 012 govern its new order, denominators, one-to-ten limits,
+complete-answer rendering, print, and recovery. Delivery/email ownership below
+is unchanged; this report redesign does not implement email or access services.
+
 1. The overall headline counts visible appearance across all ten retained
    answers and displays the matching score out of ten.
 2. Appearance in **Tanpa menyebut bisnis Anda** and recognition in **Menyebut
@@ -517,6 +566,10 @@ dashboard.
 
 ## Known implementation gaps
 
+This list is the historical 2026-08-17 snapshot, not current implementation
+evidence. Use Spec 012's inspected baseline and acceptance record for the
+direct-ten redesign; do not reimplement a listed gap without checking code.
+
 - The current report schema allows at most three priorities; it must support
   one to five.
 - The current report screen still uses original English intent categories and
@@ -535,10 +588,13 @@ dashboard.
   implemented.
 - Web-report and PDF-artifact readiness are not yet represented separately.
 
-## Next smallest product decision
+## Next smallest report action
 
-Define the complete Indonesian report and report-ready email language in one
-dedicated session. The later private access-and-recovery mechanism starts from
+Spec 012 is approved and implemented. On 2026-09-26 the founder accepted the
+current report for now and deferred format simplification, including the long
+reference/link section; that is not a current implementation task. All eight
+founder report decisions remain settled, including G4. Later report-ready
+email and private access-and-recovery work remains separate and starts from
 [`../briefs/REPORT_ACCESS_RECOVERY.md`](../briefs/REPORT_ACCESS_RECOVERY.md).
 An objectively wrong delivered report may still need a separate authenticated
 correction-and-new-version workflow; a customer wrong-business mistake instead
