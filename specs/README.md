@@ -59,8 +59,8 @@ verification is against its acceptance criteria.
   [combined closeout candidate](./012-evidence-first-report/CLOSEOUT_RESULT.md)
   and [verification matrix](./012-evidence-first-report/VERIFICATION.md) have
   independent closeout PASS; see [acceptance](./012-evidence-first-report/CLOSEOUT_ACCEPTANCE.md).
-  Documentation is published in [PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82),
-  ready for founder review and merge.
+  Documentation merged through [PR #82](https://github.com/yasir-mukhtar/nuave_v0.2/pull/82)
+  (`784530c`, 2026-09-27).
 
 - [`011-smart-consultant-intake/SPEC.md`](./011-smart-consultant-intake/SPEC.md)
   — **Verified** (2026-09-24, preserved `2a21f85` plus reviewed 316-file product
