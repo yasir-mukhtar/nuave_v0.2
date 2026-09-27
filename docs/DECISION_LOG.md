@@ -6,6 +6,40 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-09-27 — J1 decisions: the Airbnb-style intake keeps today's rules
+
+The founder approved all eighteen recommendations of the J1 gap list
+([PR #94](https://github.com/yasir-mukhtar/nuave_v0.2/pull/94), section F and
+the founder's decisions comment): **"All recommendations in section F are
+approved as the J1 decisions."** PR #94 is a read-only record and is closed
+without merging. [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) turns
+the decisions into requirements.
+
+- **Shape (F1):** one question per screen in the prototype's order;
+  prepared answers arrive selected; a screen blocks only when a required
+  answer is missing, by today's rules, not the prototype's looser ones;
+  optional screens say `Opsional` and never block.
+- **Kept from today:** name and website at entry (F2); inline name
+  correction keeps other answers, while a website change resets preparation
+  (F4); the three source labels (F5); whole brand pre-selected as
+  `Saran Nuave` (F6); single-target product focus, with the rest of the
+  catalogue shown read-only (F8); today's market rules, including the
+  regional limit, with no skip rule (F9); privacy checks and source links
+  (F14); unreadable websites are errors (F15); the all-unnamed ten-question
+  method (F17).
+- **Taken from the references:** the one-location option only when
+  locations are found, plus a manual route requiring name and address (F7);
+  the workbench's four service channels (F10); three competitor choices:
+  named, none, don't know yet (F11); one review screen as the single
+  confirmation, with editable aliases (F13); category suggestions that fit
+  the chosen focus (F18).
+- **Deferred:** the no-website path to Stage 2 (F3); Google Maps sources
+  until a Maps extraction exists (F16).
+- **JQ list:** buyer decision considerations is added. Four service channels
+  and the competitor distinction are now built in Stage 1 (F10, F11).
+  Must-answer vs only-asked stays open until JQ.
+- **No implementation before Spec 013 is approved.**
+
 ## 2026-09-27 — keep every intake question; build the Airbnb experience first
 
 The founder said: **"Those questions are important and mandatory, except the

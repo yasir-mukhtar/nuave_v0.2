@@ -126,9 +126,10 @@ Create these only when their decisions are needed:
 
 ## Specifications
 
-No specification is active for new work. The Stage 1 spec follows milestone
-J1 of the plan; see [`NOW.md`](./NOW.md). The two closed specifications below
-are the latest verified intake and report.
+[`NOW.md`](./NOW.md) names the specification in force, if any. The Stage 1
+intake specification is
+[Spec 013](../specs/013-airbnb-intake-journey/SPEC.md). The two closed
+specifications below are the latest verified intake and report.
 
 **Latest report specification (closed):** [Spec 012 — Evidence-first AI Visibility
 Report](../specs/012-evidence-first-report/SPEC.md) is **Verified with

@@ -46,9 +46,15 @@ verification is against its acceptance criteria.
 
 ## Active specifications
 
-No specification is active for new work; [`../docs/NOW.md`](../docs/NOW.md)
-names the active milestone. The entries below record each package's latest
-status.
+[`../docs/NOW.md`](../docs/NOW.md) names the specification in force, if
+any, and the active milestone. The entries below record each package's
+latest status.
+
+- [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
+  — **Draft** (2026-09-27), awaiting founder approval. Stage 1 of the
+  paying-customer plan: the Airbnb-style one-question-per-screen intake,
+  keeping today's rules and information (J1 decisions F1–F18). Slices J2–J7
+  and JQ.
 
 - [`012-evidence-first-report/SPEC.md`](./012-evidence-first-report/SPEC.md)
   — **Verified with founder-approved exception (AC-18)** (2026-09-26,

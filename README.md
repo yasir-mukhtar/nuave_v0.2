@@ -38,7 +38,7 @@ the founder accepted the report for now on 2026-09-26. Work now follows the
 | Build sequence and gates to the first paying customer | [`docs/PAYING_CUSTOMER_PLAN.md`](./docs/PAYING_CUSTOMER_PLAN.md) |
 | Detailed requirements the plan points to (reference; which plan governs what is in `docs/INDEX.md`) | [`docs/END_TO_END_PLAN.md`](./docs/END_TO_END_PLAN.md) |
 | Cross-module sequence, ownership, and handoffs | [`docs/JOURNEY_CONTRACT.md`](./docs/JOURNEY_CONTRACT.md) |
-| Current bounded implementation | None active; the Stage 1 spec follows milestone J1. Latest verified: [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) (prepared intake) and [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) (report, with the founder-approved AC-18 exception) |
+| Current bounded implementation | Named in [`docs/NOW.md`](./docs/NOW.md). Latest verified: [`specs/011-smart-consultant-intake/SPEC.md`](./specs/011-smart-consultant-intake/SPEC.md) (prepared intake) and [`specs/012-evidence-first-report/SPEC.md`](./specs/012-evidence-first-report/SPEC.md) (report, with the founder-approved AC-18 exception) |
 | Customer, offer, touchpoints, and scope | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
 | How to collect evidence and make the report | [`docs/AUDIT.md`](./docs/AUDIT.md) |
 | How documents, specs, workers, and verification operate | [`docs/WORKFLOW.md`](./docs/WORKFLOW.md) |
