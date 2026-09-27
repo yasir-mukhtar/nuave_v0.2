@@ -469,7 +469,8 @@ middleware rule and `/access` page are deleted, `/audit` and `/api/audit/*`
 ship ungated under the founder's recorded interim-exposure acceptance
 (`docs/DECISION_LOG.md`, 2026-08-20), and the currently deployed build serves
 the ungated site. The site remains noindex and direct-link only, and a minimal
-server-side rate/cost guard is a prerequisite before any public link sharing.
+server-side rate/cost guard is a prerequisite before any public link sharing,
+as is the [deferred security work](#deferred-security-work--before-customer-testing-or-public-sharing).
 Deleting the now-unused `NUAVE_ACCESS_CODE` GitHub secret is a founder action.
 The custom domain is attached to worker `nuave-v2` (Cloudflare manages the
 proxied AAAA record). The deployment URL
@@ -885,6 +886,14 @@ page content ([security notice](https://github.com/honojs/hono/security/advisori
 `npm explain` traced both dependencies through shadcn tooling; a source search
 found no direct application use of the affected features. This supports the
 bounded deferral, but is not a full deployed-runtime security assessment.
+
+The automated alert tools do not catch these two yet. On 2026-09-27 `npm audit`
+reported no issues for the root application, and every open Dependabot alert
+pointed at an archive folder (`archive/prototypes/report-prototype/` or
+`Archive Candidates/lp-remote/`), not the root lockfile. The linked notices are
+published by the `fast-uri` and Hono projects but are not yet in the shared
+advisory database those tools read. Check the root `package-lock.json` versions
+directly against the patched versions; do not treat a clean alert list as done.
 
 The founder authorized closing [#67](https://github.com/yasir-mukhtar/nuave_v0.2/pull/67),
 [#64](https://github.com/yasir-mukhtar/nuave_v0.2/pull/64),
