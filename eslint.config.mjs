@@ -13,5 +13,9 @@ export default defineConfig([
     "next-env.d.ts",
     "archive/**",
     "Archive Candidates/**",
+    // Git-ignored local evidence, credentials and review scratch folders.
+    ".local-evidence/**",
+    ".secrets/**",
+    "acceptance-review-*/**",
   ]),
 ]);
