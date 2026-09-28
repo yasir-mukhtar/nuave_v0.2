@@ -15,6 +15,7 @@ import {
   expectEmptyEntry,
   expectQuestionReview,
   expectTenQuestions,
+  expectSummary,
   fillEntry,
   injectUsefulnessFailureOnce,
   INTAKE_SESSION_KEY,
@@ -22,8 +23,10 @@ import {
   pressPeriksa,
   readingScreen,
   reportLocator,
+  RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
   startAudit,
+  stubPreparationDraft,
   toQuestions,
 } from "../../../../tests/e2e/journey";
 
@@ -32,6 +35,7 @@ const expect = baseExpect.configure({ timeout: 10_000 });
 export const FEATURES = [
   "audit-entry",
   "smart-intake-summary",
+  "rich-preparation",
   "question-review",
   "audit-run",
   "report-and-recovery",
@@ -237,6 +241,93 @@ async function smartIntakeSummary(ctx: DriveContext) {
   ctx.check("Exactly one identity, one extract and one question request");
 }
 
+/**
+ * Spec 013 R-29: the labelled rich fictional preparation, served through the
+ * stubbed identity/extract routes. This drive proves UI and session handling
+ * of the J3 prepared values — never live extraction quality. The default
+ * synthetic preparation ("no facts extracted") stays the other feature's
+ * path and is unchanged.
+ */
+async function richPreparation(ctx: DriveContext) {
+  const { page } = ctx;
+  await stubPreparationDraft(page, RICH_PREPARATION_DRAFT);
+  await ctx.step("entry-filled", async () => {
+    await fillEntry(page);
+  });
+  await ctx.step("rich-reading-to-summary", async () => {
+    await pressPeriksa(page);
+    await expectBrandConfirm(page);
+    await confirmBrand(page);
+  });
+  ctx.check(
+    "The stubbed rich preparation reaches the brand check and summary without typing",
+  );
+  const prepared = (
+    (await sessionValue(page, INTAKE_SESSION_KEY)) as {
+      prepared?: {
+        locations?: { proposed: unknown; origin: string };
+        categorySuggestions?: { proposed: unknown; origin: string };
+        offeringCategorySuggestions?: { proposed: unknown; origin: string };
+      };
+    } | null
+  )?.prepared;
+  expect(prepared?.locations).toEqual({
+    proposed: [
+      {
+        name: "Kedai Fiksi Dago",
+        address: "Jl. Fiksi Raya No. 10, Bandung",
+        sourceUrl: "https://kedai-fiksi.example/lokasi",
+      },
+      {
+        name: "Kedai Fiksi Cimahi",
+        address: "Jl. Contoh Fiksi No. 2, Cimahi",
+        sourceUrl: "https://kedai-fiksi.example/lokasi",
+      },
+    ],
+    origin: "website",
+  });
+  ctx.check(
+    "Prepared session carries both published locations with origin `website`",
+  );
+  expect(prepared?.categorySuggestions).toEqual({
+    proposed: ["kedai kopi", "kafe", "warung minuman"],
+    origin: "nuave",
+  });
+  expect(prepared?.offeringCategorySuggestions).toEqual({
+    proposed: [
+      { offering: "kopi susu", category: "minuman kopi siap minum" },
+      { offering: "roti", category: "roti dan camilan" },
+    ],
+    origin: "nuave",
+  });
+  ctx.check(
+    "Whole-brand and per-offering category suggestions carry the `nuave` origin",
+  );
+  await ctx.step("summary-after-reload", async () => {
+    await page.reload();
+    await expectSummary(page);
+  });
+  const restored = (await sessionValue(page, INTAKE_SESSION_KEY)) as {
+    prepared?: unknown;
+  } | null;
+  expect(restored?.prepared).toEqual(prepared);
+  ctx.check("A reload restores the same prepared values — session version 4");
+  await ctx.step("questions-created", async () => {
+    await confirmSummary(page);
+    await expectQuestionReview(page);
+    await expectTenQuestions(page);
+  });
+  ctx.check(
+    "The rich summary confirms with no edits and produces ten questions",
+  );
+  expect(ctx.calls).toEqual({
+    "GET /api/audit/identity": 1,
+    "POST /api/audit/extract": 1,
+    "POST /api/audit/glm-questions": 1,
+  });
+  ctx.check("Exactly one identity, one extract and one question request");
+}
+
 async function questionReview(ctx: DriveContext) {
   const { page } = ctx;
   const wording = "Kedai kopi apa yang cocok untuk pekerja di Indonesia?";
@@ -412,6 +503,8 @@ export function recipe(feature: Feature, inject?: string) {
       return auditEntry;
     case "smart-intake-summary":
       return smartIntakeSummary;
+    case "rich-preparation":
+      return richPreparation;
     case "question-review":
       return questionReview;
     case "audit-run":

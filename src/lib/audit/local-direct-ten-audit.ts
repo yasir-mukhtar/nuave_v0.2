@@ -274,6 +274,11 @@ export function syntheticLocalExtraction(input: {
     service_channels: [],
     market_reach: "",
     market_areas: [],
+    // Spec 013 R-24 fields stay empty in the labeled substitute: the default
+    // synthetic preparation never invents locations or category suggestions.
+    published_locations: [],
+    category_suggestions: [],
+    offering_category_suggestions: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],

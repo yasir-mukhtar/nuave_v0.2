@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractionDraftSchema,
+  INTAKE_TEXT_RESTRICTED_MESSAGE,
   type ExtractionDraft,
   type AuditReport,
 } from "../audit/types";
@@ -27,31 +28,7 @@ function prepared(overrides: Partial<ExtractionDraft> = {}) {
     typedName: "Kedai Contoh",
     discoveredName: null,
     canonicalSource: "https://kedai-contoh.example/",
-    draft: extractionDraftSchema.parse({
-      brand_name: "Kedai Contoh",
-      entity_scope: "",
-      brand_type: "",
-      category: "kedai kopi",
-      market_context: "narasi tidak terstruktur",
-      service_channels: ["on_premise", "delivery"],
-      market_reach: "sekitar",
-      market_areas: ["Bandung"],
-      target_customer: "pekerja sekitar",
-      official_sources: ["https://kedai-contoh.example/"],
-      verified_offerings: ["kopi susu", "roti"],
-      verified_customer_needs: ["minuman dekat kantor"],
-      verified_decision_criteria: ["lokasi"],
-      brand_name_variants: [],
-      priority_offering: "",
-      conversion_action: "",
-      customer_supplied_facts: [],
-      known_accuracy_questions: [],
-      usp: "",
-      regulated_category_notes: "",
-      evidence: [],
-      warnings: [],
-      ...overrides,
-    }),
+    draft: extractionDraftSchema.parse({ ...preparedBase(), ...overrides }),
   });
 }
 
@@ -357,3 +334,262 @@ describe("smart intake exact confirmed meaning", () => {
     ]);
   });
 });
+
+describe("Spec 013 J3 preparation additions", () => {
+  const locations = [
+    {
+      name: "Kedai Contoh Dago",
+      address: "Jl. Contoh No. 10, Bandung",
+      source_url: "https://kedai-contoh.example/lokasi",
+    },
+    {
+      name: "Kedai Contoh Cimahi",
+      address: "Jl. Fiksi No. 2, Cimahi",
+      source_url: "",
+    },
+    {
+      name: "Kedai Contoh Dago",
+      address: "JL. CONTOH NO. 10, BANDUNG",
+      source_url: "https://kedai-contoh.example/lokasi",
+    },
+  ];
+
+  it("carries published locations and Nuave category suggestions as prepared proposals", () => {
+    const proposal = prepared({
+      published_locations: locations,
+      category_suggestions: ["kedai kopi", "Kafe Fiksi", "kedai kopi"],
+      offering_category_suggestions: [
+        { offering: "kopi susu", category: "minuman kopi siap minum" },
+        { offering: "KOPI SUSU", category: "duplikat terlambat" },
+        { offering: "menu tidak tercantum", category: "misteri" },
+        { offering: "roti", category: "roti dan camilan" },
+      ],
+    });
+    // Case-insensitive name+address duplicates are dropped; a missing source
+    // page is honestly null, never re-pointed at the canonical URL.
+    expect(proposal.locations).toEqual({
+      proposed: [
+        {
+          name: "Kedai Contoh Dago",
+          address: "Jl. Contoh No. 10, Bandung",
+          sourceUrl: "https://kedai-contoh.example/lokasi",
+        },
+        {
+          name: "Kedai Contoh Cimahi",
+          address: "Jl. Fiksi No. 2, Cimahi",
+          sourceUrl: null,
+        },
+      ],
+      origin: "website",
+    });
+    expect(proposal.categorySuggestions).toEqual({
+      proposed: ["kedai kopi", "Kafe Fiksi"],
+      origin: "nuave",
+    });
+    // One suggestion per offering, bound to the offering's exact text;
+    // duplicates and unknown offerings cannot drift in.
+    expect(proposal.offeringCategorySuggestions).toEqual({
+      proposed: [
+        { offering: "kopi susu", category: "minuman kopi siap minum" },
+        { offering: "roti", category: "roti dan camilan" },
+      ],
+      origin: "nuave",
+    });
+    // The prepared main category keeps its existing "Dari website Anda" label.
+    expect(proposal.category).toEqual({
+      proposed: "kedai kopi",
+      origin: "website",
+    });
+  });
+
+  it("freezes identical confirmed context with or without the new prepared values", () => {
+    const plain = confirmSmartSelection(
+      prepared(),
+      initialSmartSelection(prepared()),
+      1,
+    );
+    const rich = confirmSmartSelection(
+      prepared({
+        published_locations: locations.slice(0, 2),
+        category_suggestions: ["kedai kopi", "kafe"],
+        offering_category_suggestions: [
+          { offering: "roti", category: "roti dan camilan" },
+        ],
+      }),
+      initialSmartSelection(prepared()),
+      1,
+    );
+    expect(rich).toEqual(plain);
+  });
+
+  it("leaves every new field empty for a draft that does not carry them", () => {
+    const proposal = prepared({
+      published_locations: undefined,
+      category_suggestions: undefined,
+      offering_category_suggestions: undefined,
+    });
+    expect(proposal.locations).toEqual({ proposed: [], origin: "website" });
+    expect(proposal.categorySuggestions).toEqual({
+      proposed: [],
+      origin: "nuave",
+    });
+    expect(proposal.offeringCategorySuggestions).toEqual({
+      proposed: [],
+      origin: "nuave",
+    });
+  });
+
+  it("drops malformed rows that survive outside the schema boundary", () => {
+    const proposal = prepareUnderstanding({
+      typedName: "Kedai Contoh",
+      discoveredName: null,
+      canonicalSource: "https://kedai-contoh.example/",
+      draft: {
+        ...preparedBase(),
+        published_locations: [
+          "bukan objek",
+          { name: "Gerai Fiksi", address: "Jl. Fiksi 1" },
+          { name: "Gerai Fiksi", address: "Jl. Fiksi 1", source_url: 7 },
+        ],
+        offering_category_suggestions: [
+          null,
+          { offering: "roti" },
+          { offering: "roti", category: "roti dan camilan" },
+        ],
+        category_suggestions: ["kafe", 42],
+      } as unknown as ExtractionDraft,
+    });
+    expect(proposal.locations.proposed).toEqual([
+      { name: "Gerai Fiksi", address: "Jl. Fiksi 1", sourceUrl: null },
+    ]);
+    expect(proposal.offeringCategorySuggestions.proposed).toEqual([
+      { offering: "roti", category: "roti dan camilan" },
+    ]);
+    expect(proposal.categorySuggestions.proposed).toEqual(["kafe"]);
+  });
+
+  it.each<[string, { name: string; address: string; source_url: string }]>([
+    [
+      "location name",
+      {
+        name: "Hasil tes darah saya menunjukkan anemia",
+        address: "Jl. Contoh 1",
+        source_url: "",
+      },
+    ],
+    [
+      "location address",
+      {
+        name: "Gerai Fiksi",
+        address: "nomor rekening 1234567890123",
+        source_url: "",
+      },
+    ],
+    [
+      "location source",
+      {
+        name: "Gerai Fiksi",
+        address: "Jl. Contoh 1",
+        source_url: "https://kedai-contoh.example/?token=private",
+      },
+    ],
+  ])(
+    "stops a sensitive or unsafe %s before it is stored",
+    (_label, location) => {
+      expect(() => prepared({ published_locations: [location] })).toThrow(
+        INTAKE_TEXT_RESTRICTED_MESSAGE,
+      );
+    },
+  );
+
+  it.each<[string, Partial<ExtractionDraft>]>([
+    [
+      "brand category suggestion",
+      { category_suggestions: ["nomor rekening 1234567890123"] },
+    ],
+    [
+      "offering suggestion's offering",
+      {
+        offering_category_suggestions: [
+          { offering: "nomor rekening 1234567890123", category: "camilan" },
+        ],
+      },
+    ],
+    [
+      "offering suggestion's category",
+      {
+        offering_category_suggestions: [
+          { offering: "roti", category: "nomor rekening 1234567890123" },
+        ],
+      },
+    ],
+  ])(
+    "stops sensitive text in a %s before it is stored",
+    (_label, overrides) => {
+      expect(() => prepared(overrides)).toThrow(INTAKE_TEXT_RESTRICTED_MESSAGE);
+    },
+  );
+
+  it("schema bounds reject over-limit or malformed new fields", () => {
+    const base = preparedBase();
+    const tooMany = (key: string, count: number, item: unknown) =>
+      extractionDraftSchema.safeParse({
+        ...base,
+        [key]: Array.from({ length: count }, () => item),
+      });
+    expect(
+      tooMany("published_locations", 9, {
+        name: "Gerai",
+        address: "Jl. Contoh",
+        source_url: "",
+      }).success,
+    ).toBe(false);
+    expect(tooMany("category_suggestions", 4, "kafe").success).toBe(false);
+    expect(
+      tooMany("offering_category_suggestions", 13, {
+        offering: "roti",
+        category: "camilan",
+      }).success,
+    ).toBe(false);
+    // A malformed record (missing address) fails the whole draft.
+    expect(
+      extractionDraftSchema.safeParse({
+        ...base,
+        published_locations: [{ name: "Gerai tanpa alamat" }],
+      }).success,
+    ).toBe(false);
+    // Missing keys fill their defaults — an older draft still parses.
+    expect(extractionDraftSchema.parse(base)).toMatchObject({
+      published_locations: [],
+      category_suggestions: [],
+      offering_category_suggestions: [],
+    });
+  });
+});
+
+function preparedBase() {
+  return {
+    brand_name: "Kedai Contoh",
+    entity_scope: "",
+    brand_type: "",
+    category: "kedai kopi",
+    market_context: "narasi tidak terstruktur",
+    service_channels: ["on_premise", "delivery"],
+    market_reach: "sekitar",
+    market_areas: ["Bandung"],
+    target_customer: "pekerja sekitar",
+    official_sources: ["https://kedai-contoh.example/"],
+    verified_offerings: ["kopi susu", "roti"],
+    verified_customer_needs: ["minuman dekat kantor"],
+    verified_decision_criteria: ["lokasi"],
+    brand_name_variants: [],
+    priority_offering: "",
+    conversion_action: "",
+    customer_supplied_facts: [],
+    known_accuracy_questions: [],
+    usp: "",
+    regulated_category_notes: "",
+    evidence: [],
+    warnings: [],
+  };
+}

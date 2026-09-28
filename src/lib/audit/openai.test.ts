@@ -325,6 +325,17 @@ describe("website extraction fallback", () => {
         service_channels: ["delivery"],
         market_reach: "sekitar",
         market_areas: ["Jakarta Selatan"],
+        published_locations: [
+          {
+            name: "Gerai Fiksi",
+            address: "Jl. Fiksi 1, Jakarta Selatan",
+            source_url: "https://klinikgigisehat.example/lokasi",
+          },
+        ],
+        category_suggestions: ["kategori fiksi"],
+        offering_category_suggestions: [
+          { offering: "Extracted offer", category: "kategori penawaran" },
+        ],
         target_customer: "Extracted customer",
         official_sources: [input.website_url],
         verified_offerings: ["Extracted offer"],
@@ -344,6 +355,11 @@ describe("website extraction fallback", () => {
 
     expect(parsed.brand_name).toBe("Extracted brand");
     expect(parsed.verified_offerings).toEqual(["Extracted offer"]);
+    // Spec 013 J3: a parsed draft's new fields pass through untouched.
+    expect(parsed.published_locations).toHaveLength(1);
+    expect(parsed.offering_category_suggestions).toEqual([
+      { offering: "Extracted offer", category: "kategori penawaran" },
+    ]);
     expect(parsed.warnings).toEqual([]);
   });
 });

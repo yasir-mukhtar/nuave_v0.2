@@ -228,6 +228,9 @@ export function extractionDraftOrManualFallback(
     service_channels: [],
     market_reach: "",
     market_areas: [],
+    published_locations: [],
+    category_suggestions: [],
+    offering_category_suggestions: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],
@@ -287,6 +290,7 @@ type ExtractionInput = {
 const EXTRACTION_LENGTH_INSTRUCTIONS = [
   "Return at most eight items in any list.",
   "Return at most three similar_businesses suggestions.",
+  "Return at most three category_suggestions and at most one offering_category_suggestions entry per verified_offerings item.",
   "Return at most twelve evidence records, covering the most material values only.",
   "Keep every evidence note to one short clause.",
 ];
@@ -356,6 +360,9 @@ function extractionRequest(
           "Alamat kontak, aspirasi ekspansi, jumlah gerai tanpa penjelasan geografis, nama yang terdengar asing, dan daftar yang melebihi batas saja tidak membuktikan jangkauan lebih luas. Tidak ada ambang jumlah gerai untuk seluruh atau luar. Lokasi operasional yang dipublikasikan mendukung kehadiran di tempat usaha; lokasi kontak saja bukan cakupan layanan.",
           "Isi market_areas dengan paling banyak delapan nama area geografis yang diterbitkan bisnis, mempertahankan ejaannya. Untuk sekitar, gunakan satu area lokal yang didukung. Untuk beberapa, gunakan deskripsi geografis yang setia pada bukti; banyak gerai dapat berada dalam sedikit area. Gunakan deskripsi wilayah yang lebih luas hanya bila secara eksplisit diterbitkan dan setia pada bukti. Untuk seluruh atau luar, market_areas harus kosong; ukuran atau paginasi direktori saja tidak membuat kehadiran nasional yang didukung menjadi tidak diketahui. Tidak wajib merinci semua gerai atau membuktikan kelengkapan direktori.",
           "Jika kehadiran yang benar-benar regional tidak dapat diwakili secara setia dalam delapan area yang didukung dan tidak ada deskripsi wilayah lebih luas yang diterbitkan, pertahankan jangkauan yang didukung dan kosongkan market_areas agar pelanggan dapat melengkapinya. Jangan memilih delapan kota pertama atau terbesar, mengarang pengelompokan wilayah, menaikkan jangkauan untuk lolos validasi, atau mengubah fokus audit.",
+          "Isi published_locations hanya dengan lokasi yang dipublikasikan bisnis itu sendiri — nama dan alamat persis seperti diterbitkan, plus source_url halaman yang menerbitkannya. Jangan menyimpulkan, menggabungkan, atau mengarang lokasi; kosongkan bila situs tidak menerbitkan lokasi.",
+          "Isi category_suggestions dengan paling banyak tiga usulan kategori singkat untuk seluruh brand. Ini usulan Nuave untuk ditinjau pemilik, bukan kutipan atau fakta dari situs — jangan masukkan ke evidence dan jangan menyatakan ditemukan di situs.",
+          "Isi offering_category_suggestions dengan paling banyak satu usulan kategori singkat per item verified_offerings. Nilai offering harus persis sama dengan teks penawarannya; jangan membuat entri untuk penawaran yang tidak tercantum atau lebih dari satu entri untuk penawaran yang sama.",
           "Leave unsupported scalar fields empty and unsupported arrays empty.",
           ...(input.identity_unverified
             ? [

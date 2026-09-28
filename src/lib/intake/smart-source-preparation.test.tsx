@@ -706,6 +706,94 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(frozen).toContain("website");
     expect(requests).toHaveLength(1);
   });
+  it("carries locations and Nuave category suggestions through the real route into a refresh-safe session", async () => {
+    // Fictional J3 draft values; provider calls and counts are unchanged.
+    parsedDraft = {
+      ...draft(),
+      published_locations: [
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          source_url: `${source}lokasi`,
+        },
+        {
+          name: "Kedai Pelangi Cimahi",
+          address: "Jl. Pelangi Fiksi No. 2, Cimahi",
+          source_url: "",
+        },
+      ],
+      category_suggestions: ["kedai kopi", "kafe"],
+      offering_category_suggestions: [
+        { offering: "Kopi susu", category: "minuman kopi siap minum" },
+        { offering: "tidak tercantum", category: "misteri" },
+      ],
+    };
+    const mounted = render(<SmartIntakeJourney live />);
+    await inspect();
+    await throughBrand();
+    const saved = parseSmartSession(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    );
+    expect(saved?.prepared?.locations).toEqual({
+      proposed: [
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          sourceUrl: "https://kedai-pelangi-fiksi.example/lokasi",
+        },
+        {
+          name: "Kedai Pelangi Cimahi",
+          address: "Jl. Pelangi Fiksi No. 2, Cimahi",
+          sourceUrl: null,
+        },
+      ],
+      origin: "website",
+    });
+    expect(saved?.prepared?.categorySuggestions).toEqual({
+      proposed: ["kedai kopi", "kafe"],
+      origin: "nuave",
+    });
+    expect(saved?.prepared?.offeringCategorySuggestions).toEqual({
+      proposed: [
+        { offering: "Kopi susu", category: "minuman kopi siap minum" },
+      ],
+      origin: "nuave",
+    });
+    // Still exactly one provider request for preparation.
+    expect(requests).toHaveLength(1);
+    mounted.unmount();
+    render(<SmartIntakeJourney live />);
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    expect(
+      parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.prepared,
+    ).toEqual(saved?.prepared);
+    expect(requests).toHaveLength(1);
+    expect(clientRequests).toHaveLength(2);
+  });
+
+  it("a sensitive published location stops preparation without storing it", async () => {
+    const text = "Hasil tes darah saya menunjukkan anemia.";
+    parsedDraft = {
+      ...draft(),
+      published_locations: [
+        { name: text, address: "Jl. Pelangi Fiksi 1", source_url: source },
+      ],
+    };
+    render(<SmartIntakeJourney live />);
+    await inspect();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
+    );
+    const saved = parseSmartSession(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    );
+    expect(saved?.prepared).toBeNull();
+    expect(JSON.stringify(saved)).not.toContain("tes darah");
+    expect(document.body.textContent).not.toContain("tes darah");
+    expect(requests).toHaveLength(1);
+  });
+
   it("sparse readable input leaves unknowns empty and does not retry or invent channels/reach", async () => {
     pageHtml =
       "<head><title>Kedai Pelangi Fiksi</title></head><p>Selamat datang.</p>";

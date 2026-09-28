@@ -179,6 +179,31 @@ export const extractionRequestSchema = z.object({
   safety_identifier: z.string().trim().min(8).max(64),
 });
 
+/**
+ * Spec 013 R-24: a location the business itself publishes — never inferred.
+ * `source_url` is the public page that publishes the address; it may be empty
+ * when the draft cannot name a more specific page than the supplied website.
+ */
+export const publishedLocationSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  address: z.string().trim().min(1).max(300),
+  source_url: z.string().max(2_000).default(""),
+});
+export type PublishedLocation = z.infer<typeof publishedLocationSchema>;
+
+/**
+ * Spec 013 R-24: one Nuave category suggestion attached to exactly one
+ * published offering. `offering` repeats the offering's own text so the
+ * suggestion cannot drift to another offering.
+ */
+export const offeringCategorySuggestionSchema = z.object({
+  offering: z.string().trim().min(1).max(300),
+  category: z.string().trim().min(1).max(200),
+});
+export type OfferingCategorySuggestion = z.infer<
+  typeof offeringCategorySuggestionSchema
+>;
+
 export const extractionDraftSchema = z.object({
   brand_name: z.string(),
   entity_scope: z.string(),
@@ -194,6 +219,15 @@ export const extractionDraftSchema = z.object({
     .enum(["sekitar", "beberapa", "seluruh", "luar", ""])
     .default(""),
   market_areas: z.array(z.string().trim().min(1).max(160)).max(8).default([]),
+  published_locations: z.array(publishedLocationSchema).max(8).default([]),
+  category_suggestions: z
+    .array(z.string().trim().min(1).max(200))
+    .max(3)
+    .default([]),
+  offering_category_suggestions: z
+    .array(offeringCategorySuggestionSchema)
+    .max(12)
+    .default([]),
   target_customer: z.string(),
   official_sources: z.array(z.string()),
   verified_offerings: z.array(z.string()),

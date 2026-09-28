@@ -31,7 +31,7 @@ Each arrival focuses the screen heading.
 
 ## Session
 
-`smart-session.ts` parses `nuave.localIntake.v3` in sessionStorage. Only the
+`smart-session.ts` parses `nuave.localIntake.v4` in sessionStorage. Only the
 journey writes it. Refresh restores the stored stage and answers; a session
 stored mid-`reading` restores `entry` with the fields kept and an interruption
 note — the read is never replayed. Corrupt or pre-bump records restart safely
