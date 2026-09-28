@@ -25,6 +25,9 @@ import {
   confirmSmartSelection,
   initialSmartSelection,
   prepareUnderstanding,
+  selectSmartFocus,
+  smartLocationReady,
+  smartProductReady,
   unsafeSmartName,
   unsafeSmartSelection,
   unsafeSmartSource,
@@ -41,6 +44,11 @@ import {
 import type { GenerationAttempt } from "./local-session";
 import type { GlmQuestionsOutcome } from "./local-questions";
 import SmartSummary from "./SmartSummary";
+import {
+  SmartFocusScreen,
+  SmartLocationScreen,
+  SmartProductScreen,
+} from "./smart-target-screens";
 import SmartQuestionsScreen from "./SmartQuestionsScreen";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
 
@@ -61,30 +69,75 @@ type SmartStage = SmartSession["stage"];
 /**
  * In-flow target of the frame's `Kembali` and of a marked browser Back.
  * `entry` and `reading` have no back target; `reading` is never a target.
+ * The summary steps back into the J4 target screen its focus implies, and a
+ * focus screen opened from the summary's `Ubah` (`focusReturn`) steps back
+ * to that summary instead of to the brand check (R-16/R-18).
  */
-const STAGE_BACK: Partial<Record<SmartStage, SmartStage>> = {
-  brand: "entry",
-  summary: "brand",
-  clarify: "summary",
-  questions: "summary",
-  audit: "questions",
-};
+function backTargetFor(session: SmartSession): SmartStage | null {
+  switch (session.stage) {
+    case "brand":
+      return "entry";
+    case "focus":
+      return session.focusReturn ?? "brand";
+    case "location":
+    case "product":
+      return "focus";
+    case "summary":
+      return session.selection?.focus === "cabang"
+        ? "location"
+        : session.selection?.focus === "produk"
+          ? "product"
+          : "focus";
+    case "clarify":
+      return "summary";
+    case "questions":
+      return "summary";
+    case "audit":
+      return "questions";
+    default:
+      return null;
+  }
+}
 
 /**
- * Four-segment chapter fill per framed screen. J2 mounts entry (bab 1 awal),
- * brand-confirm (bab 1 akhir → first segment full), and today's combined
- * summary in the review position (bab 4). Reading carries no progress.
+ * Four-segment chapter fill per framed screen. The J4 focus and target
+ * screens sit in bab 2; the location/product XOR fills it fractionally by
+ * the screens the current focus makes visible — a whole-brand pick fills the
+ * chapter in one step — never leaving a hole (deck §6.1).
  */
-const STAGE_PROGRESS: Partial<
-  Record<
-    SmartStage,
-    { chapter: number; fills: [number, number, number, number] }
-  >
-> = {
-  brand: { chapter: 1, fills: [1, 0, 0, 0] },
-  summary: { chapter: 4, fills: [1, 1, 1, 0.5] },
-  clarify: { chapter: 4, fills: [1, 1, 1, 0.5] },
-};
+function stageProgress(session: SmartSession) {
+  switch (session.stage) {
+    case "brand":
+      return {
+        chapter: 1,
+        fills: [1, 0, 0, 0] as [number, number, number, number],
+      };
+    case "focus":
+      return {
+        chapter: 2,
+        fills: [1, session.selection?.focus === "brand" ? 1 : 0.5, 0, 0] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+      };
+    case "location":
+    case "product":
+      return {
+        chapter: 2,
+        fills: [1, 1, 0, 0] as [number, number, number, number],
+      };
+    case "summary":
+    case "clarify":
+      return {
+        chapter: 4,
+        fills: [1, 1, 1, 0.5] as [number, number, number, number],
+      };
+    default:
+      return null;
+  }
+}
 
 const ORIGIN_TEXT = {
   website: "Dari website Anda",
@@ -190,20 +243,27 @@ export default function SmartIntakeJourney({
     if (!ready) return;
     if (window.history.state?.nuaveIntake !== true)
       window.history.replaceState(intakeMark(), "");
-    if (STAGE_BACK[sessionRef.current.stage])
+    if (backTargetFor(sessionRef.current))
       window.history.pushState(intakeMark(), "");
     const onBack = (event: PopStateEvent) => {
       // Fragment or foreign history events must not move the intake flow.
       if (event.state?.nuaveIntake !== true) return;
       const current = sessionRef.current;
-      const target = STAGE_BACK[current.stage];
+      const target = backTargetFor(current);
       if (!target) return;
-      const next: SmartSession = { ...current, stage: target };
+      // The summary-return marker rides along on the target screens so a
+      // back step that lands on the focus screen still exits to the summary;
+      // any other hop consumes it.
+      const next: SmartSession = {
+        ...current,
+        stage: target,
+        focusReturn: target === "focus" ? current.focusReturn : undefined,
+      };
       setError(null);
       setAutoStart(false);
       writeSmartSession(next);
       setSession(next);
-      if (STAGE_BACK[target]) window.history.pushState(intakeMark(), "");
+      if (backTargetFor(next)) window.history.pushState(intakeMark(), "");
     };
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);
@@ -245,9 +305,13 @@ export default function SmartIntakeJourney({
   // The frame's `Kembali` moves in-flow without touching the stack; the trap
   // stays on top, so a later real Back still steps back from the new stage.
   const goBack = () => {
-    const target = STAGE_BACK[session.stage];
+    const target = backTargetFor(session);
     if (!target) return;
-    persist({ ...session, stage: target });
+    persist({
+      ...session,
+      stage: target,
+      focusReturn: target === "focus" ? session.focusReturn : undefined,
+    });
     setError(null);
   };
   function stopSensitiveInput() {
@@ -663,9 +727,10 @@ export default function SmartIntakeJourney({
       />
     );
 
-  // Framed intake screens (Spec 013 J2): entry → reading → brand → summary.
-  const progress = STAGE_PROGRESS[session.stage];
-  const backTarget = STAGE_BACK[session.stage];
+  // Framed intake screens (Spec 013 J2+J4): entry → reading → brand → focus
+  // → location/product → summary.
+  const progress = stageProgress(session);
+  const backTarget = backTargetFor(session);
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-[560px] flex-col px-6 pb-[calc(148px+env(safe-area-inset-bottom,0px))] pt-8 sm:px-8">
       <header>
@@ -940,6 +1005,49 @@ export default function SmartIntakeJourney({
             ) : null}
           </section>
         ) : null}
+        {session.stage === "focus" && session.prepared && session.selection ? (
+          <SmartFocusScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+            onEnterLocationManually={() => {
+              const next = selectSmartFocus(session.selection!, "cabang");
+              if (unsafeSmartSelection(next)) {
+                stopSensitiveInput();
+                return;
+              }
+              goStage({
+                ...session,
+                selection: next,
+                stage: "location",
+              });
+            }}
+          />
+        ) : null}
+        {session.stage === "location" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartLocationScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "product" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartProductScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
         {(session.stage === "summary" || session.stage === "clarify") &&
         session.prepared &&
         session.selection ? (
@@ -956,6 +1064,17 @@ export default function SmartIntakeJourney({
               }}
               onEditSource={() => {
                 persist({ ...session, stage: "entry" });
+                setError(null);
+              }}
+              onEditFocus={() => {
+                // The summary row reviews focus; the dedicated screen owns
+                // the change, and this marker sends its Back here (R-16).
+                goStage({
+                  ...session,
+                  stage: "focus",
+                  focusReturn:
+                    session.stage === "clarify" ? "clarify" : "summary",
+                });
                 setError(null);
               }}
               onConfirm={() => void confirm()}
@@ -1000,8 +1119,59 @@ export default function SmartIntakeJourney({
                 disabled={!session.selection?.name.trim()}
                 onClick={() => {
                   setEditingBrandName(false);
-                  goStage({ ...session, stage: "summary" });
+                  goStage({ ...session, stage: "focus" });
                 }}
+              >
+                Lanjut
+              </Button>
+            ) : session.stage === "focus" && session.selection ? (
+              <Button
+                className="min-h-11 rounded-full px-6"
+                onClick={() => {
+                  const target =
+                    session.selection!.focus === "cabang"
+                      ? "location"
+                      : session.selection!.focus === "produk"
+                        ? "product"
+                        : "summary";
+                  goStage({
+                    ...session,
+                    stage: target,
+                    // The marker rides into a target screen so its Back still
+                    // exits through this focus screen to the summary; landing
+                    // on the summary consumes it.
+                    focusReturn:
+                      target === "summary" ? undefined : session.focusReturn,
+                  });
+                }}
+              >
+                Lanjut
+              </Button>
+            ) : session.stage === "location" && session.selection ? (
+              <Button
+                className="min-h-11 rounded-full px-6"
+                disabled={!smartLocationReady(session.selection)}
+                onClick={() =>
+                  goStage({
+                    ...session,
+                    stage: "summary",
+                    focusReturn: undefined,
+                  })
+                }
+              >
+                Lanjut
+              </Button>
+            ) : session.stage === "product" && session.selection ? (
+              <Button
+                className="min-h-11 rounded-full px-6"
+                disabled={!smartProductReady(session.selection)}
+                onClick={() =>
+                  goStage({
+                    ...session,
+                    stage: "summary",
+                    focusReturn: undefined,
+                  })
+                }
               >
                 Lanjut
               </Button>

@@ -68,6 +68,16 @@
   line-height: var(--type-copy-sm-leading);
 }
 
+/* Rendered as <small> so chapter styles that resize `span + span` children
+   leave provenance labels at the muted small-copy size. */
+.cardMeta,
+.rowMeta {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
 .cardIcon {
   flex: none;
   margin-top: 2px;

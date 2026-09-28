@@ -27,6 +27,8 @@ type Props = {
   onConfirm: () => void;
   onClarify: () => void;
   onEditSource?: () => void;
+  /** J4: opens the dedicated focus screen so the row itself stays read-back. */
+  onEditFocus?: () => void;
   busy?: boolean;
   error?: string | null;
   clarify?: boolean;
@@ -87,6 +89,7 @@ export default function SmartSummary({
   onConfirm,
   onClarify,
   onEditSource,
+  onEditFocus,
   busy = false,
   error,
   clarify = false,
@@ -126,31 +129,6 @@ export default function SmartSummary({
     selection.comparatorMode !== "unknown" ||
     (prepared.comparatorSuggestions.proposed?.length ?? 0) > 0,
   );
-
-  function chooseFocus(focus: SmartSelection["focus"]) {
-    if (focus === selection.focus) return;
-    const retainedBrandReach =
-      selection.focus === "cabang"
-        ? selection.retainedBrandReach
-        : selection.marketReach;
-    const retainedBrandAreas =
-      selection.focus === "cabang"
-        ? selection.retainedBrandAreas
-        : selection.marketAreas;
-    update(
-      {
-        focus,
-        productTarget: focus === "produk" ? selection.productTarget : "",
-        locationName: focus === "cabang" ? selection.locationName : "",
-        locationAddress: focus === "cabang" ? selection.locationAddress : "",
-        marketReach: focus === "cabang" ? "" : retainedBrandReach,
-        marketAreas: focus === "cabang" ? [] : retainedBrandAreas,
-        retainedBrandReach,
-        retainedBrandAreas,
-      },
-      "focus",
-    );
-  }
 
   return (
     <section
@@ -237,79 +215,29 @@ export default function SmartSummary({
       </Row>
 
       <Row title="Fokus audit" origin={rowOrigin(selection, "focus")}>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {(
-            [
-              ["brand", "Brand secara keseluruhan"],
-              ["cabang", "Satu lokasi"],
-              ["produk", "Satu produk atau layanan"],
-            ] as const
-          ).map(([kind, label]) => (
-            <Button
-              key={kind}
-              type="button"
-              variant={selection.focus === kind ? "default" : "outline"}
-              className="min-h-11 h-auto whitespace-normal"
-              aria-pressed={selection.focus === kind}
-              onClick={() => chooseFocus(kind)}
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-        {selection.focus === "produk" ? (
-          <div className="grid gap-2">
-            <p className="type-copy-sm">
-              Pilih produk atau layanan yang diuji.
-            </p>
-            {(prepared.offerings.proposed ?? []).map((offering) => (
-              <label
-                key={offering}
-                className="flex min-h-11 items-center gap-3 type-copy"
-              >
-                <input
-                  type="radio"
-                  name="smart-product"
-                  checked={selection.productTarget === offering}
-                  onChange={() => update({ productTarget: offering }, "focus")}
-                />
-                {offering}
-              </label>
-            ))}
-            <label className="grid gap-2 type-label">
-              Nama lain bila tidak ada dalam pilihan
-              <Input
-                value={selection.productTarget}
-                maxLength={300}
-                onChange={(event) =>
-                  update({ productTarget: event.target.value }, "focus")
-                }
-              />
-            </label>
-          </div>
-        ) : selection.focus === "cabang" ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-2 type-label">
-              Nama lokasi
-              <Input
-                value={selection.locationName}
-                maxLength={300}
-                onChange={(event) =>
-                  update({ locationName: event.target.value }, "focus")
-                }
-              />
-            </label>
-            <label className="grid gap-2 type-label">
-              Alamat lokasi
-              <Input
-                value={selection.locationAddress}
-                maxLength={500}
-                onChange={(event) =>
-                  update({ locationAddress: event.target.value }, "focus")
-                }
-              />
-            </label>
-          </div>
+        <p className="type-copy">
+          {selection.focus === "cabang"
+            ? "Satu lokasi"
+            : selection.focus === "produk"
+              ? "Satu produk atau layanan"
+              : "Brand secara keseluruhan"}
+        </p>
+        {selection.focus === "cabang" ? (
+          <p className="type-copy-sm text-muted-foreground">
+            {selection.locationName || "Lokasi belum dipilih"}
+            {selection.locationAddress.trim()
+              ? ` — ${selection.locationAddress}`
+              : ""}
+          </p>
+        ) : selection.focus === "produk" ? (
+          <p className="type-copy-sm text-muted-foreground">
+            {selection.productTarget || "Pilih satu produk atau layanan"}
+          </p>
+        ) : null}
+        {onEditFocus ? (
+          <Button variant="link" className="w-fit" onClick={onEditFocus}>
+            Ubah
+          </Button>
         ) : null}
       </Row>
 

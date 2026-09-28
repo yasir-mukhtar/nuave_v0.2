@@ -75,6 +75,22 @@ function isGoogleBusinessOrMapsUrl(url: URL): boolean {
 }
 
 /**
+ * True when two public HTTP(S) sources share one hostname, allowing one
+ * leading `www.` label on either side. Hosts come from URL parsing — never
+ * substring or suffix matching — so a lookalike or a deeper subdomain cannot
+ * pass merely because it contains the business domain.
+ */
+export function samePublicSourceHost(a: string, b: string): boolean {
+  const hostA = parsePublicHttpUrl(a)?.hostname;
+  const hostB = parsePublicHttpUrl(b)?.hostname;
+  if (!hostA || !hostB) return false;
+  return (
+    hostnameLabelsWithoutOptionalWww(hostA).join(".") ===
+    hostnameLabelsWithoutOptionalWww(hostB).join(".")
+  );
+}
+
+/**
  * Shared public HTTP(S) URL boundary for intake and comparison-source checks.
  * It preserves normal website paths/query strings while rejecting credentials,
  * unsupported schemes, and hostnames that the previous server policy did not

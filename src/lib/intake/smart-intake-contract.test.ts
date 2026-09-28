@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   extractionDraftSchema,
-  INTAKE_TEXT_RESTRICTED_MESSAGE,
   type ExtractionDraft,
   type AuditReport,
 } from "../audit/types";
@@ -17,10 +16,14 @@ import {
   initialSmartSelection,
   prepareUnderstanding,
   parseFrozenSmartIntake,
+  selectSmartFocus,
+  smartLocationReady,
+  smartProductReady,
   unsafeSmartName,
   requiredSmartGaps,
   unsafeSmartSelection,
   unsafeSmartSource,
+  usablePublishedLocations,
 } from "./smart-intake-contract";
 
 function prepared(overrides: Partial<ExtractionDraft> = {}) {
@@ -345,7 +348,9 @@ describe("Spec 013 J3 preparation additions", () => {
     {
       name: "Kedai Contoh Cimahi",
       address: "Jl. Fiksi No. 2, Cimahi",
-      source_url: "",
+      // A www.-equivalent page on the same host is still the business's own
+      // source (PR #98 M2, applied in J4).
+      source_url: "https://www.kedai-contoh.example/lokasi",
     },
     {
       name: "Kedai Contoh Dago",
@@ -365,8 +370,8 @@ describe("Spec 013 J3 preparation additions", () => {
         { offering: "roti", category: "roti dan camilan" },
       ],
     });
-    // Case-insensitive name+address duplicates are dropped; a missing source
-    // page is honestly null, never re-pointed at the canonical URL.
+    // Case-insensitive name+address duplicates are dropped; every kept row
+    // carries the page on the canonical host that publishes the address.
     expect(proposal.locations).toEqual({
       proposed: [
         {
@@ -377,7 +382,7 @@ describe("Spec 013 J3 preparation additions", () => {
         {
           name: "Kedai Contoh Cimahi",
           address: "Jl. Fiksi No. 2, Cimahi",
-          sourceUrl: null,
+          sourceUrl: "https://www.kedai-contoh.example/lokasi",
         },
       ],
       origin: "website",
@@ -450,6 +455,11 @@ describe("Spec 013 J3 preparation additions", () => {
           "bukan objek",
           { name: "Gerai Fiksi", address: "Jl. Fiksi 1" },
           { name: "Gerai Fiksi", address: "Jl. Fiksi 1", source_url: 7 },
+          {
+            name: "Gerai Fiksi",
+            address: "Jl. Fiksi 1",
+            source_url: "https://kedai-contoh.example/gerai",
+          },
         ],
         offering_category_suggestions: [
           null,
@@ -460,7 +470,11 @@ describe("Spec 013 J3 preparation additions", () => {
       } as unknown as ExtractionDraft,
     });
     expect(proposal.locations.proposed).toEqual([
-      { name: "Gerai Fiksi", address: "Jl. Fiksi 1", sourceUrl: null },
+      {
+        name: "Gerai Fiksi",
+        address: "Jl. Fiksi 1",
+        sourceUrl: "https://kedai-contoh.example/gerai",
+      },
     ]);
     expect(proposal.offeringCategorySuggestions.proposed).toEqual([
       { offering: "roti", category: "roti dan camilan" },
@@ -605,6 +619,147 @@ describe("Spec 013 J3 preparation additions", () => {
       category_suggestions: [],
       offering_category_suggestions: [],
     });
+  });
+});
+
+describe("Spec 013 J4 published-location source check and focus targets", () => {
+  it("keeps a location only when its source page sits on the canonical host", () => {
+    const at = (name: string, source_url: string) => ({
+      name,
+      address: "Jl. Fiksi 1",
+      source_url,
+    });
+    const proposal = prepared({
+      published_locations: [
+        at("Gerai Pusat", "https://kedai-contoh.example/lokasi"),
+        at("Gerai Www", "https://www.kedai-contoh.example/gerai"),
+        at("Gerai Asing", "https://aggregator.example/listing/1"),
+        at("Gerai Tiruan", "https://kedai-contoh.example.evil.example/x"),
+        at("Gerai Subdomain", "https://sub.kedai-contoh.example/gerai"),
+        at("Gerai Tanpa Sumber", ""),
+        at("Gerai Aneh", "javascript:alert(1)"),
+      ],
+    });
+    expect(proposal.locations.proposed).toEqual([
+      {
+        name: "Gerai Pusat",
+        address: "Jl. Fiksi 1",
+        sourceUrl: "https://kedai-contoh.example/lokasi",
+      },
+      {
+        name: "Gerai Www",
+        address: "Jl. Fiksi 1",
+        sourceUrl: "https://www.kedai-contoh.example/gerai",
+      },
+    ]);
+  });
+
+  it("an Instagram canonical accepts only the profile page itself", () => {
+    const proposal = prepareUnderstanding({
+      typedName: "Kedai Contoh",
+      discoveredName: null,
+      canonicalSource: "@kedaicontoh",
+      draft: extractionDraftSchema.parse({
+        ...preparedBase(),
+        published_locations: [
+          {
+            name: "Profil",
+            address: "Jl. Fiksi 1",
+            source_url: "https://instagram.com/kedaicontoh",
+          },
+          {
+            name: "Profil Lain",
+            address: "Jl. Fiksi 2",
+            source_url: "https://instagram.com/kedailain",
+          },
+          {
+            name: "Post",
+            address: "Jl. Fiksi 3",
+            source_url: "https://instagram.com/p/abc123",
+          },
+        ],
+      }),
+    });
+    expect(proposal.locations.proposed).toEqual([
+      {
+        name: "Profil",
+        address: "Jl. Fiksi 1",
+        sourceUrl: "https://instagram.com/kedaicontoh",
+      },
+    ]);
+  });
+
+  it("usablePublishedLocations re-screens a restored or hand-edited record", () => {
+    const proposal = prepared({ published_locations: [] });
+    const tampered = {
+      ...proposal,
+      locations: {
+        origin: "website" as const,
+        proposed: [
+          {
+            name: "Aman",
+            address: "Jl. Fiksi 1",
+            sourceUrl: "https://kedai-contoh.example/a",
+          },
+          {
+            name: "Asing",
+            address: "Jl. Fiksi 2",
+            sourceUrl: "https://aggregator.example/x",
+          },
+          { name: "Bukan URL", address: "Jl. Fiksi 3", sourceUrl: 42 },
+          { name: "Tanpa URL", address: "Jl. Fiksi 4" },
+        ],
+      },
+    };
+    expect(usablePublishedLocations(tampered as typeof proposal)).toEqual([
+      {
+        name: "Aman",
+        address: "Jl. Fiksi 1",
+        sourceUrl: "https://kedai-contoh.example/a",
+      },
+    ]);
+    expect(usablePublishedLocations(proposal)).toEqual([]);
+  });
+
+  it("selectSmartFocus clears incompatible targets and restores the brand market after a cabang detour", () => {
+    const proposal = prepared();
+    const selection = initialSmartSelection(proposal);
+    selection.productTarget = "kopi susu";
+    const cabang = selectSmartFocus(selection, "cabang");
+    expect(cabang).toMatchObject({
+      focus: "cabang",
+      productTarget: "",
+      marketReach: "",
+      marketAreas: [],
+      retainedBrandReach: "sekitar",
+      retainedBrandAreas: ["Bandung"],
+    });
+    expect(cabang.origins.focus).toBe("owner");
+    const brand = selectSmartFocus(cabang, "brand");
+    expect(brand).toMatchObject({
+      focus: "brand",
+      locationName: "",
+      locationAddress: "",
+      marketReach: "sekitar",
+      marketAreas: ["Bandung"],
+    });
+  });
+
+  it("selectSmartFocus leaves an unchanged pick untouched", () => {
+    const selection = initialSmartSelection(prepared());
+    expect(selectSmartFocus(selection, "brand")).toBe(selection);
+  });
+
+  it("the target screens' Lanjut gates match the contract's focus requirements", () => {
+    const selection = initialSmartSelection(prepared());
+    expect(smartLocationReady(selection)).toBe(false);
+    expect(smartProductReady(selection)).toBe(false);
+    selection.locationName = "Gerai";
+    expect(smartLocationReady(selection)).toBe(false);
+    selection.locationAddress = "Jl. Fiksi 1";
+    expect(smartLocationReady(selection)).toBe(true);
+    selection.productTarget = "  roti  ";
+    expect(smartProductReady(selection)).toBe(true);
   });
 });
 

@@ -47,6 +47,7 @@ export function SelectionCard({
   value,
   title,
   description,
+  meta,
   icon,
   disabled,
   id,
@@ -54,6 +55,8 @@ export function SelectionCard({
   value: string;
   title: string;
   description?: string;
+  /** Small muted provenance note (e.g. an origin label) under the title. */
+  meta?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
   id?: string;
@@ -75,6 +78,7 @@ export function SelectionCard({
         {description ? (
           <span className={styles.cardDescription}>{description}</span>
         ) : null}
+        {meta ? <small className={styles.cardMeta}>{meta}</small> : null}
       </span>
     </Radio.Root>
   );

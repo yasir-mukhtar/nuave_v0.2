@@ -12,11 +12,14 @@ export function SelectionRow({
   value,
   title,
   description,
+  meta,
   disabled,
 }: {
   value: string;
   title: string;
   description?: string;
+  /** Small muted provenance note (e.g. an origin label) under the title. */
+  meta?: string;
   disabled?: boolean;
 }) {
   return (
@@ -27,6 +30,7 @@ export function SelectionRow({
         {description ? (
           <span className={styles.rowDescription}>{description}</span>
         ) : null}
+        {meta ? <small className={styles.rowMeta}>{meta}</small> : null}
       </span>
     </Radio.Root>
   );

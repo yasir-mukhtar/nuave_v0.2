@@ -12,9 +12,12 @@ extraction quality. The default synthetic preparation
 
 ## Sub-features
 
-- `rich-reading`: the stubbed draft drives `Periksa` → brand check → summary
-  with no typed input beyond the entry fields.
-- `prepared-values`: the v4 session's `prepared` carries both published
+- `rich-reading`: the stubbed draft drives `Periksa` → brand check → focus
+  screen with no typed input beyond the entry fields.
+- `location-target`: the focus screen offers `Satu lokasi` because the
+  fixture publishes two locations on the canonical host; the location screen
+  lists them labelled `Dari website Anda` and a pick lands on the summary.
+- `prepared-values`: the v5 session's `prepared` carries both published
   locations with origin `website`, the whole-brand suggestions and the
   per-offering suggestions with origin `nuave` — `Saran Nuave`, never
   `Dari website Anda`.
@@ -27,7 +30,9 @@ extraction quality. The default synthetic preparation
 - From the audit entry, fill `Nama bisnis` and `URL website publik`, then
   press `Periksa` and `Lanjut` — the same path as
   [smart-intake-summary](./smart-intake-summary.md), with the fixture
-  standing in for the extraction answer.
+  standing in for the extraction answer. On the focus screen pick
+  `Satu lokasi`, press `Lanjut`, pick one published row, and press `Lanjut`
+  again.
 
 ## Driving it with verify-nuave
 
@@ -39,10 +44,12 @@ Run `$V drive rich-preparation` (it is part of `drive all`). Steps, in order:
 
 - **Entry.** Fills `Kedai Fiksi` and `https://kedai-fiksi.example/`.
   Evidence: `01-entry-filled`.
-- **Rich reading.** The stubbed routes serve the fixture; the drive passes
-  the brand check and lands on "Ini yang Nuave pahami.". Evidence:
-  `02-rich-reading-to-summary`.
-- **Prepared proof.** `sessionStorage` `nuave.localIntake.v4` `prepared` is
+- **Rich reading to location.** The stubbed routes serve the fixture; the
+  drive passes the brand check, picks `Satu lokasi` on the focus screen, sees
+  both published rows labelled `Dari website Anda`, picks `Kedai Fiksi Dago`
+  and lands on "Ini yang Nuave pahami.". Evidence:
+  `02-rich-reading-to-location`.
+- **Prepared proof.** `sessionStorage` `nuave.localIntake.v5` `prepared` is
   asserted equal to the expected locations and suggestion lists with their
   origins.
 - **Reload.** Refreshes; the summary shows again and the stored `prepared`
@@ -57,8 +64,12 @@ Run `$V drive rich-preparation` (it is part of `drive all`). Steps, in order:
 - The fixture is the only source of the rich values — both routes are
   stubbed, so this drive proves UI/state handling, not extraction quality.
   Report it as such.
+- The fixture's `published_locations` keep `source_url`s on the canonical
+  `kedai-fiksi.example` host; moving them off it trips the J4 source-host
+  gate and the `Satu lokasi` card disappears (the e2e suite covers that
+  boundary).
 - `RICH_PREPARATION_DRAFT` keeps offering spellings (`kopi susu`, `roti`)
   that other journeys select by name; changing them breaks downstream
   drives.
-- A stale v3 session or a v4 record missing the J3 lists restarts at entry —
-  the parser never mixes old and new shapes.
+- A stale v4 session or a v5 record missing the J3/J4 fields restarts at
+  entry — the parser never mixes old and new shapes.
