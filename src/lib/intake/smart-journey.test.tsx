@@ -158,7 +158,7 @@ describe("smart blank intake", () => {
       JSON.parse(
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
       ),
-    ).toMatchObject({ version: 3, stage: "questions" });
+    ).toMatchObject({ version: 4, stage: "questions" });
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
   });
 
@@ -403,9 +403,9 @@ describe("Spec 013 J2 screen frame", () => {
 
   it("a stored pre-bump session restarts safely at an empty entry", async () => {
     window.sessionStorage.setItem(
-      "nuave.localIntake.v2",
+      "nuave.localIntake.v3",
       JSON.stringify({
-        version: 2,
+        version: 3,
         stage: "summary",
         entry: { name: "Kedai Lama", source: "https://lama.example/" },
         identity: null,
@@ -422,7 +422,7 @@ describe("Spec 013 J2 screen frame", () => {
     // A stale version under the current key is rejected the same way.
     window.sessionStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
-      JSON.stringify({ version: 2, stage: "entry" }),
+      JSON.stringify({ version: 3, stage: "entry" }),
     );
     stubPreparation();
     render(<SmartIntakeJourney live={false} />);
@@ -439,7 +439,7 @@ describe("Spec 013 J2 screen frame", () => {
     window.sessionStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
-        version: 3,
+        version: 4,
         stage: "brand",
         entry: { name: "Kedai Lama", source: "https://lama.example/" },
         identity: null,

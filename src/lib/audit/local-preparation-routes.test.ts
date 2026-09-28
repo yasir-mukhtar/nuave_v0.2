@@ -100,6 +100,17 @@ function liveDraft() {
       verified_offerings: ["Kain batik tulis"],
       verified_customer_needs: [],
       verified_decision_criteria: [],
+      published_locations: [
+        {
+          name: "Galeri Batik Laras",
+          address: "Jl. Fiksi Batik No. 3, Pekalongan",
+          source_url: "https://batiklaras.example/lokasi",
+        },
+      ],
+      category_suggestions: ["batik tulis", "galeri batik"],
+      offering_category_suggestions: [
+        { offering: "Kain batik tulis", category: "kain tradisional" },
+      ],
       similar_businesses: [],
       brand_name_variants: [],
       priority_offering: "",
@@ -243,6 +254,10 @@ describe("POST /api/audit/extract server-selected mode", () => {
     expect(data.preparation_mode).toBe("synthetic-local");
     expect(data.returned_model).toBe(SYNTHETIC_LOCAL_FIXTURE_SYSTEM);
     expect(data.draft.verified_offerings).toHaveLength(0);
+    // Spec 013 J3/R-24: the labeled substitute never invents the new fields.
+    expect(data.draft.published_locations).toEqual([]);
+    expect(data.draft.category_suggestions).toEqual([]);
+    expect(data.draft.offering_category_suggestions).toEqual([]);
     expect(data.warnings?.length ?? data.draft.warnings.length).toBeGreaterThan(
       0,
     );
@@ -273,6 +288,21 @@ describe("POST /api/audit/extract server-selected mode", () => {
     expect(data.preparation_mode).toBe("live");
     expect(data.draft.category).toBe("Batik tulis");
     expect(data.draft.verified_offerings).toContain("Kain batik tulis");
+    // Spec 013 J3/R-24 additions pass through the live boundary unchanged.
+    expect(data.draft.published_locations).toEqual([
+      {
+        name: "Galeri Batik Laras",
+        address: "Jl. Fiksi Batik No. 3, Pekalongan",
+        source_url: "https://batiklaras.example/lokasi",
+      },
+    ]);
+    expect(data.draft.category_suggestions).toEqual([
+      "batik tulis",
+      "galeri batik",
+    ]);
+    expect(data.draft.offering_category_suggestions).toEqual([
+      { offering: "Kain batik tulis", category: "kain tradisional" },
+    ]);
     expect(data.telemetry).toHaveLength(1);
     expect(data.telemetry[0].requested_model).toBe("gpt-5.6-luna");
     expect(providerMocks.liveExtractBusinessDraft).toHaveBeenCalledTimes(1);

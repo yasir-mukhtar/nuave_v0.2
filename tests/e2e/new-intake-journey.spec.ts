@@ -6,65 +6,21 @@ import {
   confirmSummary,
   entryScreen,
   expectBrandConfirm,
+  expectSummary,
   expectTenQuestions,
   fillEntry,
   INTAKE_SESSION_KEY,
   pressPeriksa,
+  RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
+  stubPreparationDraft,
   toSummary,
 } from "./journey";
 
-const richDraft = {
-  brand_name: "Kedai Fiksi",
-  entity_scope: "",
-  brand_type: "",
-  category: "kedai kopi",
-  market_context: "Narasi pasar bukan data terstruktur",
-  service_channels: ["on_premise", "delivery"],
-  market_reach: "sekitar",
-  market_areas: ["Bandung"],
-  target_customer: "pekerja sekitar",
-  official_sources: ["https://kedai-fiksi.example/"],
-  verified_offerings: ["kopi susu", "roti"],
-  verified_customer_needs: ["minuman dekat kantor"],
-  verified_decision_criteria: ["lokasi"],
-  similar_businesses: [{ name: "Kedai Tetangga" }],
-  brand_name_variants: [],
-  priority_offering: "",
-  conversion_action: "",
-  customer_supplied_facts: [],
-  known_accuracy_questions: [],
-  usp: "",
-  regulated_category_notes: "",
-  evidence: [],
-  warnings: [],
-};
+const richDraft = RICH_PREPARATION_DRAFT;
 
 async function enter(page: Page, rich = true) {
-  if (rich) {
-    await page.route("**/api/audit/identity?**", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          canonical_url: "https://kedai-fiksi.example/",
-          display_name: "Kedai Fiksi",
-          preparation_mode: "synthetic-local",
-        }),
-      }),
-    );
-    await page.route("**/api/audit/extract", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          draft: richDraft,
-          telemetry: [],
-          preparation_mode: "synthetic-local",
-        }),
-      }),
-    );
-  }
+  if (rich) await stubPreparationDraft(page, richDraft);
   await toSummary(page);
 }
 
@@ -277,6 +233,139 @@ test("rich reading reaches one summary and question review without more typing",
   expect(
     calls.filter((call) => call === "POST /api/audit/glm-questions"),
   ).toHaveLength(1);
+});
+
+test("the labelled rich preparation carries locations and category suggestions into the session and survives a reload", async ({
+  page,
+}) => {
+  const calls: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/api/audit/"))
+      calls.push(`${request.method()} ${new URL(request.url()).pathname}`);
+  });
+  await enter(page);
+  const prepared = (await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}").prepared,
+    INTAKE_SESSION_KEY,
+  )) as {
+    locations: { proposed: unknown[]; origin: string };
+    categorySuggestions: { proposed: unknown[]; origin: string };
+    offeringCategorySuggestions: { proposed: unknown[]; origin: string };
+  };
+  expect(prepared.locations).toEqual({
+    proposed: [
+      {
+        name: "Kedai Fiksi Dago",
+        address: "Jl. Fiksi Raya No. 10, Bandung",
+        sourceUrl: "https://kedai-fiksi.example/lokasi",
+      },
+      {
+        name: "Kedai Fiksi Cimahi",
+        address: "Jl. Contoh Fiksi No. 2, Cimahi",
+        sourceUrl: "https://kedai-fiksi.example/lokasi",
+      },
+    ],
+    origin: "website",
+  });
+  expect(prepared.categorySuggestions).toEqual({
+    proposed: ["kedai kopi", "kafe", "warung minuman"],
+    origin: "nuave",
+  });
+  expect(prepared.offeringCategorySuggestions).toEqual({
+    proposed: [
+      { offering: "kopi susu", category: "minuman kopi siap minum" },
+      { offering: "roti", category: "roti dan camilan" },
+    ],
+    origin: "nuave",
+  });
+  await page.reload();
+  await expectSummary(page);
+  const restored = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}").prepared,
+    INTAKE_SESSION_KEY,
+  );
+  expect(restored).toEqual(prepared);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
+  // One extraction, one question call: the added prepared fields spend nothing.
+  expect(calls).toEqual([
+    "GET /api/audit/identity",
+    "POST /api/audit/extract",
+    "POST /api/audit/glm-questions",
+  ]);
+});
+
+test("a session stored under the previous intake version restarts at an empty entry", async ({
+  page,
+}) => {
+  await page.addInitScript((v4Key) => {
+    sessionStorage.setItem(
+      "nuave.localIntake.v3",
+      JSON.stringify({
+        version: 3,
+        stage: "summary",
+        entry: { name: "Kedai Lama", source: "https://lama.example/" },
+        identity: null,
+        prepared: { typedName: "Kedai Lama" },
+        selection: { name: "Kedai Lama", nameOrigin: "owner" },
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        preparationCalls: [],
+        preparationMode: null,
+        generationAttempts: [],
+      }),
+    );
+    // A v4 record whose prepared state predates the J3 lists is just as
+    // unreadable — it must restart at entry rather than mix old and new shape.
+    sessionStorage.setItem(
+      v4Key,
+      JSON.stringify({
+        version: 4,
+        stage: "summary",
+        entry: { name: "Kedai Usang", source: "https://usang.example/" },
+        identity: null,
+        prepared: {
+          typedName: "Kedai Usang",
+          discoveredName: null,
+          canonicalSource: "https://usang.example/",
+          aliases: [],
+          focus: { proposed: "brand", origin: "nuave" },
+          category: { proposed: "kedai", origin: "website" },
+          offerings: { proposed: ["kopi"], origin: "website" },
+          serviceChannels: { proposed: ["on_premise"], origin: "website" },
+          marketReach: { proposed: "sekitar", origin: "website" },
+          marketAreas: { proposed: ["Bandung"], origin: "website" },
+          targetCustomer: { proposed: null, origin: "nuave" },
+          customerNeeds: { proposed: [], origin: "nuave" },
+          decisionConsiderations: { proposed: [], origin: "nuave" },
+          comparatorSuggestions: { proposed: [], origin: "nuave" },
+          differentiator: { proposed: null, origin: "nuave" },
+          sourceLinks: [],
+        },
+        selection: { name: "Kedai Usang", nameOrigin: "owner" },
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        preparationCalls: [],
+        preparationMode: null,
+        generationAttempts: [],
+      }),
+    );
+  }, INTAKE_SESSION_KEY);
+  await stubPreparationDraft(page, richDraft);
+  await page.goto("/audit");
+  // The pre-bump session is rejected: the entry restores empty, not the stale
+  // "Kedai Lama" values.
+  await expect(page.getByRole("textbox", { name: "Nama bisnis" })).toHaveValue(
+    "",
+  );
+  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
+  await page
+    .getByRole("textbox", { name: "URL website publik" })
+    .fill("https://kedai-fiksi.example/");
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
 });
 
 test("partial extraction opens one clarification while channel and reach stay on summary", async ({

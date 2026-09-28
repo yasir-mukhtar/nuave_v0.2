@@ -88,6 +88,81 @@ describe("Gemini extraction contract without network", () => {
       vi.unstubAllEnvs();
     }
   });
+
+  it("maps null answers on defaulted fields back to their defaults instead of failing the draft", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "dummy-offline-key");
+    // The declared response schema marks fields nullable; a `null` answer on
+    // a defaulted field must restore the default, not throw the whole call.
+    const draft = {
+      brand_name: "Kedai Fiksi",
+      entity_scope: "",
+      brand_type: "",
+      category: "kedai kopi",
+      market_context: "",
+      service_channels: null,
+      market_reach: null,
+      market_areas: null,
+      published_locations: [
+        {
+          name: "Kedai Fiksi Dago",
+          address: "Jl. Fiksi 1, Bandung",
+          source_url: null,
+        },
+      ],
+      category_suggestions: null,
+      offering_category_suggestions: null,
+      target_customer: "",
+      official_sources: ["https://kedai-fiksi.example/"],
+      verified_offerings: ["kopi susu"],
+      verified_customer_needs: [],
+      verified_decision_criteria: [],
+      brand_name_variants: [],
+      priority_offering: "",
+      conversion_action: "",
+      customer_supplied_facts: [],
+      known_accuracy_questions: [],
+      usp: "",
+      regulated_category_notes: "",
+      evidence: [],
+      warnings: [],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          candidates: [
+            { content: { parts: [{ text: JSON.stringify(draft) }] } },
+          ],
+          modelVersion: "dummy-model",
+          responseId: "offline-response",
+        }),
+      ),
+    );
+    try {
+      const result = await extractBusinessDraft({
+        website_url: "https://kedai-fiksi.example/",
+        brand_name: "Kedai Fiksi",
+        market_context: "",
+        category: "",
+        safety_identifier: "offline-gemini-extract",
+        budget: fixtureBudget,
+      });
+      expect(result.draft.service_channels).toEqual([]);
+      expect(result.draft.market_areas).toEqual([]);
+      expect(result.draft.category_suggestions).toEqual([]);
+      expect(result.draft.offering_category_suggestions).toEqual([]);
+      expect(result.draft.published_locations).toEqual([
+        {
+          name: "Kedai Fiksi Dago",
+          address: "Jl. Fiksi 1, Bandung",
+          source_url: "",
+        },
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  });
 });
 
 describe("gemini source collection", () => {
