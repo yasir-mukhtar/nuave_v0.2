@@ -16,8 +16,8 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing. J2 ([#96](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96)) and J3
-  ([#98](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98)) merged with PASS; the full spec is not yet verified. Latest verified:
+  intake) is implementing; J2 and J3 merged with PASS (plan §1). The full
+  spec is not yet verified. Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
   AC-18 exception). Checkpoint: [2026-09-19 live report](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
@@ -26,9 +26,10 @@
 
 ## Next action
 
-- **Active milestone: J4** (Spec 013, "Delivery slices"): focus, location and
-  product screens. Carry PR #98 M2: drop locations with a source host outside
-  the audited website (allow `www` equivalence) before website attribution. Handoff: [`templates/WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md).
+- **Active milestone: J4** (Spec 013, "Delivery slices"): focus, location
+  and product screens. Carry #98 M2 (enforces R-02): drop locations with
+  a source host outside the audited website (allow `www`) before website
+  attribution. Handoff: [`WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md).
 
 ## Rules still in force
 
