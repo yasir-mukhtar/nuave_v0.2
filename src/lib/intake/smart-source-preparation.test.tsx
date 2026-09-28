@@ -772,25 +772,43 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(clientRequests).toHaveLength(2);
   });
 
-  it("a sensitive published location stops preparation without storing it", async () => {
-    const text = "Hasil tes darah saya menunjukkan anemia.";
+  it("a location whose published address carries private contact text is dropped — the clean one still prepares", async () => {
+    // Review B1: a branch listing printing WA/email on the address line drops
+    // only that location — it never reaches the session and never blocks the
+    // reading.
     parsedDraft = {
       ...draft(),
       published_locations: [
-        { name: text, address: "Jl. Pelangi Fiksi 1", source_url: source },
+        {
+          name: "Kedai Pelangi Cimahi",
+          address: "Jl. Pelangi Fiksi 2, Cimahi (WA 0812-3456-7890)",
+          source_url: source,
+        },
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          source_url: `${source}lokasi`,
+        },
       ],
     };
     render(<SmartIntakeJourney live />);
     await inspect();
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
-    );
+    await throughBrand();
     const saved = parseSmartSession(
       window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
     );
-    expect(saved?.prepared).toBeNull();
-    expect(JSON.stringify(saved)).not.toContain("tes darah");
-    expect(document.body.textContent).not.toContain("tes darah");
+    expect(saved?.prepared?.locations).toEqual({
+      proposed: [
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          sourceUrl: "https://kedai-pelangi-fiksi.example/lokasi",
+        },
+      ],
+      origin: "website",
+    });
+    expect(JSON.stringify(saved)).not.toContain("0812-3456-7890");
+    expect(document.body.textContent).not.toContain("0812-3456-7890");
     expect(requests).toHaveLength(1);
   });
 

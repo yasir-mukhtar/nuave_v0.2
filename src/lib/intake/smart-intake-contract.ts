@@ -208,33 +208,48 @@ export function prepareUnderstanding(input: {
     ...draft.brand_name_variants,
     draft.usp,
     ...draft.market_areas,
-    ...publishedLocations.flatMap((item) => [
-      typeof item?.name === "string" ? item.name : "",
-      typeof item?.address === "string" ? item.address : "",
-    ]),
-    ...categorySuggestions.filter((item) => typeof item === "string"),
-    ...offeringCategorySuggestions.flatMap((item) => [
-      typeof item?.offering === "string" ? item.offering : "",
-      typeof item?.category === "string" ? item.category : "",
-    ]),
   ];
   if (
     preparedText.some((value) => value && isSensitiveIntakeText(value)) ||
     unsafeSmartSource(source.normalizedUrl) ||
-    draft.evidence.some((item) => unsafeSmartSource(item.source_url)) ||
-    publishedLocations.some(
-      (item) =>
-        typeof item?.source_url === "string" &&
-        unsafeSmartSource(item.source_url),
-    )
+    draft.evidence.some((item) => unsafeSmartSource(item.source_url))
   ) {
     throw new Error(INTAKE_TEXT_RESTRICTED_MESSAGE);
   }
+  // Spec 013 J3/R-25: the new extracted lists screen per item — a branch
+  // address that also prints a phone/WhatsApp number, an email or a link
+  // drops only that location, never the whole reading. Nothing from a
+  // dropped item is stored.
+  const safeLocations = publishedLocations.filter(
+    (item) =>
+      !(typeof item?.name === "string" && isSensitiveIntakeText(item.name)) &&
+      !(
+        typeof item?.address === "string" && isSensitiveIntakeText(item.address)
+      ) &&
+      !(
+        typeof item?.source_url === "string" &&
+        unsafeSmartSource(item.source_url)
+      ),
+  );
+  const safeCategorySuggestions = categorySuggestions.filter(
+    (item) => typeof item === "string" && !isSensitiveIntakeText(item),
+  );
+  const safeOfferingSuggestions = offeringCategorySuggestions.filter(
+    (item) =>
+      !(
+        typeof item?.offering === "string" &&
+        isSensitiveIntakeText(item.offering)
+      ) &&
+      !(
+        typeof item?.category === "string" &&
+        isSensitiveIntakeText(item.category)
+      ),
+  );
   const areas = unique(draft.market_areas, 8);
   const reach = draft.market_reach || null;
   const offerings = unique(draft.verified_offerings, 12);
   const seenLocations = new Set<string>();
-  const locations = publishedLocations
+  const locations = safeLocations
     .flatMap((item) => {
       const name = typeof item?.name === "string" ? item.name.trim() : "";
       const address =
@@ -261,7 +276,7 @@ export function prepareUnderstanding(input: {
   const offeringKey = (value: string) =>
     value.trim().toLocaleLowerCase("id-ID");
   const seenOfferings = new Set<string>();
-  const perOffering = offeringCategorySuggestions.flatMap((item) => {
+  const perOffering = safeOfferingSuggestions.flatMap((item) => {
     const category =
       typeof item?.category === "string" ? item.category.trim() : "";
     const match = offerings.find(
@@ -305,10 +320,7 @@ export function prepareUnderstanding(input: {
     // label (Spec 013 R-24). The prepared main category keeps its label.
     locations: { proposed: locations, origin: "website" },
     categorySuggestions: {
-      proposed: unique(
-        categorySuggestions.filter((item) => typeof item === "string"),
-        3,
-      ),
+      proposed: unique(safeCategorySuggestions, 3),
       origin: "nuave",
     },
     offeringCategorySuggestions: {

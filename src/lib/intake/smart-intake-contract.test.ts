@@ -468,6 +468,32 @@ describe("Spec 013 J3 preparation additions", () => {
     expect(proposal.categorySuggestions.proposed).toEqual(["kafe"]);
   });
 
+  it("drops a published location whose address carries a phone, email or link — the clean sibling still prepares", () => {
+    // A real Indonesian branch listing often prints WA/email/site on the
+    // address line. The sensitive item must never reach the session, but it
+    // must also never block the whole preparation (review B1).
+    for (const address of [
+      "Jl. Fiksi No. 3, Bandung (WA 0812-3456-7890)",
+      "Jl. Fiksi No. 3, Bandung · halo@kedai-contoh.example",
+      "Jl. Fiksi No. 3, Bandung — www.kedai-contoh.example",
+    ]) {
+      const proposal = prepared({
+        published_locations: [
+          { name: "Kedai Contoh Kota", address, source_url: "" },
+          locations[0]!,
+        ],
+      });
+      expect(proposal.locations.proposed).toEqual([
+        {
+          name: "Kedai Contoh Dago",
+          address: "Jl. Contoh No. 10, Bandung",
+          sourceUrl: "https://kedai-contoh.example/lokasi",
+        },
+      ]);
+      expect(JSON.stringify(proposal)).not.toContain(address.slice(0, 20));
+    }
+  });
+
   it.each<[string, { name: string; address: string; source_url: string }]>([
     [
       "location name",
@@ -494,11 +520,21 @@ describe("Spec 013 J3 preparation additions", () => {
       },
     ],
   ])(
-    "stops a sensitive or unsafe %s before it is stored",
+    "drops only the %s that fails screening — nothing from it is stored",
     (_label, location) => {
-      expect(() => prepared({ published_locations: [location] })).toThrow(
-        INTAKE_TEXT_RESTRICTED_MESSAGE,
-      );
+      const proposal = prepared({
+        published_locations: [location, locations[0]!],
+      });
+      expect(proposal.locations.proposed).toEqual([
+        {
+          name: "Kedai Contoh Dago",
+          address: "Jl. Contoh No. 10, Bandung",
+          sourceUrl: "https://kedai-contoh.example/lokasi",
+        },
+      ]);
+      expect(JSON.stringify(proposal.locations)).not.toContain("tes darah");
+      expect(JSON.stringify(proposal.locations)).not.toContain("rekening");
+      expect(JSON.stringify(proposal.locations)).not.toContain("token=");
     },
   );
 
@@ -524,9 +560,14 @@ describe("Spec 013 J3 preparation additions", () => {
       },
     ],
   ])(
-    "stops sensitive text in a %s before it is stored",
+    "drops only the %s that fails screening — nothing from it is stored",
     (_label, overrides) => {
-      expect(() => prepared(overrides)).toThrow(INTAKE_TEXT_RESTRICTED_MESSAGE);
+      const proposal = prepared(overrides);
+      expect(proposal.categorySuggestions.proposed).toEqual([]);
+      expect(proposal.offeringCategorySuggestions.proposed).toEqual([]);
+      // The rest of the preparation is untouched.
+      expect(proposal.offerings.proposed).toEqual(["kopi susu", "roti"]);
+      expect(JSON.stringify(proposal)).not.toContain("rekening");
     },
   );
 
