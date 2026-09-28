@@ -2,7 +2,8 @@
 
 > Status: **Implementing**; approved by the founder on 2026-09-27
 > ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
-> J2 merged with [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656); J3 is next.
+> J2 and J3 merged with PASS ([J2](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656),
+> [J3](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98#issuecomment-5862847919)); J4 is next.
 > Owner: orchestrator
 > Updated: 2026-09-28
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
