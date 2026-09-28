@@ -48,7 +48,7 @@ verbatim, even when it does not follow the general prose rules.
 | AI in marketing copy (landing, ads, order preview) | plain **AI** (tanya AI, jawaban AI, disebut AI) | model AI, mesin AI |
 | AI as a category/concept | **AI** (era AI, pencarian AI, jawaban AI) | mesin AI, semua AI, "the AI" |
 | The tested system | the system and model exactly as the report records them; in marketing, **AI buatan OpenAI** | semua AI, mesin AI, **ChatGPT** as the tested system |
-| ChatGPT | the customer's habit (**pelanggan tanya ChatGPT**) | Nuave's own answers called ChatGPT's (**jawaban asli ChatGPT**) |
+| ChatGPT | the customer's habit and what AI does (**pelanggan tanya ChatGPT**, **ChatGPT biasanya cuma menyebut beberapa nama**) | Nuave's own answers called ChatGPT's (**jawaban asli ChatGPT**) |
 | Data consistency | **sinkron** / **samakan** / **konsisten** | seragam |
 | Competitor (when a competitor is verified) | **pesaing** | kompetitor |
 | Other named businesses in the report | **bisnis lain yang disebut** | daftar kompetitor (unless the context verifies competitors) |
@@ -79,8 +79,9 @@ Notes:
   tested, and keep `AI` for the general category. Marketing copy says plain
   `AI` throughout: "Sekarang pelanggan tanya AI dulu", "AI tidak asal sebut
   nama".
-- **`ChatGPT`:** name it for the customer's habit ("pelanggan tanya
-  ChatGPT"). Never present Nuave's own answers as ChatGPT's: Nuave asks
+- **`ChatGPT`:** name it for the customer's habit and for what AI does
+  ("pelanggan tanya ChatGPT", "ChatGPT biasanya cuma menyebut beberapa
+  nama"). Never present Nuave's own answers as ChatGPT's: Nuave asks
   OpenAI's model through the API, not the ChatGPT app. Say `jawaban AI`, and
   name the maker near the claim: "AI buatan OpenAI, pembuat ChatGPT".
 - **English authority terms** stay English because they signal credibility to
@@ -105,10 +106,9 @@ alarmist or all-knowing.** Apply these invariants to every surface:
 - **Short sentences.** One idea per sentence; no multi-clause sentences that
   are one English sentence in disguise.
 - **Think in Indonesian first.** Write the line the way an Indonesian owner
-  would say it, not as a translated English sentence. Say "Cuma 5 menit", not
+  would say it, not as a translated English sentence. Say "Cuma semenit", not
   "Hasil dalam detik". Say "Pelanggan tidak lagi cek website satu per satu.
-  Mereka tanya ke AI.", not "Mereka tidak membuka 10 tab." Translated openers
-  such as "Kabar baiknya" or "Hari ini pun" are a sign to rewrite.
+  Mereka tanya ke AI.", not "Mereka tidak membuka 10 tab."
 - **Light spoken words** are welcome in marketing copy where a person would
   say them: `cuma`, `kok`, `duluan`, `kasih tahu`, `biar`, and `ya` at the
   end of helper text ("Nama usahanya diisi dulu, ya."). Always with `Anda`.
@@ -186,8 +186,8 @@ The voice is constant; the register and vocabulary shift per surface.
 
 - `bisnis Anda`, or the business type when it is known. Hero question, e.g.
   "Klinik Anda yang direkomendasikan, atau klinik sebelah?".
-- Plain `AI`, light spoken words, and `ChatGPT` only for the customer's habit
-  (§2 notes, §3).
+- Plain `AI` and light spoken words (§2 notes, §3). `ChatGPT` can name the
+  customer's habit and what AI does, but never Nuave's own answers.
 - Keep it lean: one idea per line and short headings. Let the chat example
   and the sample report do the explaining.
 - Lead with a real observed problem or a clear customer question; sell clarity
