@@ -33,7 +33,7 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 3;
+  version: 4;
   /**
    * `reading` is persisted only while a preparation is in flight: a refresh
    * restores it as `entry` with an interruption note, never a replayed call
@@ -62,7 +62,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 3,
+    version: 4,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -87,7 +87,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 3 ||
+      value.version !== 4 ||
       ![
         "entry",
         "reading",
@@ -125,18 +125,29 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         ))
     )
       return null;
+    // Spec 013 J3: a v4 prepared record must carry the new R-24 lists;
+    // anything older or corrupt restarts at entry instead of mixing.
+    const validPrepared = (prepared: unknown) =>
+      isRecord(prepared) &&
+      typeof prepared.typedName === "string" &&
+      typeof prepared.canonicalSource === "string" &&
+      (prepared.discoveredName === null ||
+        typeof prepared.discoveredName === "string") &&
+      isRecord(prepared.locations) &&
+      Array.isArray(prepared.locations.proposed) &&
+      isRecord(prepared.categorySuggestions) &&
+      Array.isArray(prepared.categorySuggestions.proposed) &&
+      isRecord(prepared.offeringCategorySuggestions) &&
+      Array.isArray(prepared.offeringCategorySuggestions.proposed);
+    const validSelection = (selection: unknown) =>
+      isRecord(selection) &&
+      typeof selection.name === "string" &&
+      ["website", "nuave", "owner"].includes(String(selection.nameOrigin));
     if (
-      !["entry", "reading"].includes(stage) &&
-      (!isRecord(value.prepared) ||
-        !isRecord(value.selection) ||
-        typeof value.prepared.typedName !== "string" ||
-        typeof value.prepared.canonicalSource !== "string" ||
-        (value.prepared.discoveredName !== null &&
-          typeof value.prepared.discoveredName !== "string") ||
-        typeof value.selection.name !== "string" ||
-        !["website", "nuave", "owner"].includes(
-          String(value.selection.nameOrigin),
-        ))
+      (!["entry", "reading"].includes(stage) &&
+        (!validPrepared(value.prepared) || !validSelection(value.selection))) ||
+      (value.prepared != null && !validPrepared(value.prepared)) ||
+      (value.selection != null && !validSelection(value.selection))
     )
       return null;
     const frozen = value.frozen ? parseFrozenSmartIntake(value.frozen) : null;

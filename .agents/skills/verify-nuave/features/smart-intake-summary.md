@@ -60,7 +60,7 @@ Run `$V drive smart-intake-summary`. Steps, in order:
 - **Confirm.** Presses `Sudah sesuai — buat pertanyaan audit`. The heading
   "Periksa pertanyaan audit" and ten `[data-question-slot]` show. Evidence:
   `06-questions-created`.
-- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v3`
+- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v4`
   has category `kedai kopi` (origin `owner`), focus
   `{kind: "produk", name: "kopi susu"}`, and reach `seluruh`.
   `network.json.apiCalls` is exactly one `GET /api/audit/identity`, one
@@ -77,9 +77,10 @@ Run `$V drive smart-intake-summary`. Steps, in order:
   appear.
 - Until category, offering, channel and reach are filled, the button reads
   `Lengkapi yang perlu dipastikan`, not `Sudah sesuai — buat pertanyaan audit`.
-- The rich-reading variants (prefilled channels, comparators, named
-  competitors) need a stubbed extract response. They are covered by
-  `tests/e2e/new-intake-journey.spec.ts`, not by this drive.
+- The other rich-reading variants (named competitors, corrections) need a
+  stubbed extract response. They are covered by
+  `tests/e2e/new-intake-journey.spec.ts`, not by this drive. The labelled J3
+  rich preparation has its own drive: `rich-preparation`.
 - Returning to the entry and pressing `Periksa` with only the name changed
   skips the read entirely — it reuses the stored preparation and lands on the
   brand check. The e2e suite covers the name-only and website-change paths.

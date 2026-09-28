@@ -1,5 +1,6 @@
 import { expect as baseExpect, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import type { ExtractionDraft } from "../../src/lib/audit/types";
 
 /**
  * The one shared driver for the public audit journey. The e2e specs and the
@@ -25,7 +26,7 @@ export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
-export const INTAKE_SESSION_KEY = "nuave.localIntake.v3";
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v4";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -43,6 +44,105 @@ export function trackApiCalls(page: Page): Record<string, number> {
 
 export const ENTRY_INVALID_NOTICE =
   "Isi nama bisnis dan satu URL website publik yang valid.";
+
+/**
+ * Spec 013 R-29: the labelled rich test preparation. Fictional business only —
+ * every prepared field is filled, including the J3 additions (published
+ * locations, whole-brand category suggestions, one suggestion per offering).
+ * It is synthetic fixture data served through the stubbed extract route; it
+ * proves UI/state handling, never live extraction quality. The default
+ * synthetic preparation ("no facts extracted") is unchanged.
+ */
+export const RICH_PREPARATION_DRAFT = {
+  brand_name: "Kedai Fiksi",
+  entity_scope: "Kedai Fiksi — kedai kopi di Bandung",
+  brand_type: "kedai kopi",
+  category: "kedai kopi",
+  market_context: "Narasi pasar bukan data terstruktur",
+  service_channels: ["on_premise", "delivery"],
+  market_reach: "beberapa",
+  market_areas: ["Bandung", "Cimahi"],
+  published_locations: [
+    {
+      name: "Kedai Fiksi Dago",
+      address: "Jl. Fiksi Raya No. 10, Bandung",
+      source_url: "https://kedai-fiksi.example/lokasi",
+    },
+    {
+      name: "Kedai Fiksi Cimahi",
+      address: "Jl. Contoh Fiksi No. 2, Cimahi",
+      source_url: "https://kedai-fiksi.example/lokasi",
+    },
+  ],
+  category_suggestions: ["kedai kopi", "kafe", "warung minuman"],
+  offering_category_suggestions: [
+    { offering: "kopi susu", category: "minuman kopi siap minum" },
+    { offering: "roti", category: "roti dan camilan" },
+  ],
+  target_customer: "pekerja kantoran sekitar",
+  official_sources: ["https://kedai-fiksi.example/"],
+  verified_offerings: ["kopi susu", "roti"],
+  verified_customer_needs: ["minuman dekat kantor"],
+  verified_decision_criteria: ["lokasi"],
+  similar_businesses: [
+    {
+      name: "Kedai Tetangga",
+      source_url: "https://kedai-tetangga.example/",
+    },
+  ],
+  brand_name_variants: ["Kedai Fiksi Bandung"],
+  priority_offering: "",
+  conversion_action: "",
+  customer_supplied_facts: [],
+  known_accuracy_questions: [],
+  usp: "Racikan kopi rumahan fiktif",
+  regulated_category_notes: "",
+  evidence: [
+    {
+      field: "published_locations",
+      value: "Kedai Fiksi Dago",
+      source_url: "https://kedai-fiksi.example/lokasi",
+      note: "Halaman lokasi fiksi.",
+    },
+    {
+      field: "verified_offerings",
+      value: "kopi susu",
+      source_url: "https://kedai-fiksi.example/menu",
+      note: "Menu fiksi.",
+    },
+  ],
+  warnings: [],
+} satisfies ExtractionDraft;
+
+/**
+ * Serves `draft` through the identity and extract routes for the synthetic
+ * journey. Pass `RICH_PREPARATION_DRAFT` for the labelled rich preparation.
+ * The routes are stubbed, not skipped: request counts still apply.
+ */
+export async function stubPreparationDraft(page: Page, draft: ExtractionDraft) {
+  await page.route("**/api/audit/identity?**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        canonical_url: FICTIONAL_BUSINESS.url,
+        display_name: FICTIONAL_BUSINESS.name,
+        preparation_mode: "synthetic-local",
+      }),
+    }),
+  );
+  await page.route("**/api/audit/extract", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        draft,
+        telemetry: [],
+        preparation_mode: "synthetic-local",
+      }),
+    }),
+  );
+}
 
 export function landingHero(page: Page) {
   return page.getByRole("region", { name: "Mulai audit visibilitas AI" });
@@ -123,9 +223,7 @@ export async function expectBrandConfirm(
 
 /** Brand confirm → `Lanjut` (in the frame footer) → the summary. */
 export async function confirmBrand(page: Page) {
-  await page
-    .getByRole("button", { name: CONFIRM_BRAND, exact: true })
-    .click();
+  await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
   await expectSummary(page);
 }
 

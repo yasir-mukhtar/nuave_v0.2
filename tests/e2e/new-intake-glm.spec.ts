@@ -8,6 +8,7 @@ import {
   expectAuditDone,
   expectQuestionReview,
   injectUsefulnessFailureOnce,
+  INTAKE_SESSION_KEY,
   reportLocator,
   startAudit,
   toQuestions,
@@ -89,9 +90,8 @@ test("edited questions and exact v2 context survive reload through report", asyn
   expect(payloads[0]).not.toHaveProperty("brief");
   expect(payloads[1]).not.toHaveProperty("brief");
   const confirmedContext = await page.evaluate(
-    () =>
-      JSON.parse(sessionStorage.getItem("nuave.localIntake.v3")!).frozen
-        .context,
+    (key) => JSON.parse(sessionStorage.getItem(key)!).frozen.context,
+    INTAKE_SESSION_KEY,
   );
   expect(payloads[0]!.context).toEqual(confirmedContext);
   expect(beforeReload.context).toEqual(confirmedContext);

@@ -16,12 +16,27 @@ import {
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
-export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v3" as const;
+export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v4" as const;
 
 type Origin = "website" | "nuave" | "owner";
 export type PreparedMeaning<T> = Readonly<{
   proposed: T | null;
   origin: "website" | "nuave";
+}>;
+
+/** A location the business itself publishes (Spec 013 R-24). `sourceUrl` is
+ * the public page publishing the address, or null when the draft gave none. */
+export type PreparedLocation = Readonly<{
+  name: string;
+  address: string;
+  sourceUrl: string | null;
+}>;
+
+/** One Nuave category suggestion bound to one published offering. `offering`
+ * repeats the offering's exact text so a suggestion cannot drift. */
+export type PreparedOfferingCategory = Readonly<{
+  offering: string;
+  category: string;
 }>;
 
 export type PreparedUnderstanding = Readonly<{
@@ -37,6 +52,9 @@ export type PreparedUnderstanding = Readonly<{
   >;
   marketReach: PreparedMeaning<"sekitar" | "beberapa" | "seluruh" | "luar">;
   marketAreas: PreparedMeaning<string[]>;
+  locations: PreparedMeaning<PreparedLocation[]>;
+  categorySuggestions: PreparedMeaning<string[]>;
+  offeringCategorySuggestions: PreparedMeaning<PreparedOfferingCategory[]>;
   targetCustomer: PreparedMeaning<string>;
   customerNeeds: PreparedMeaning<string[]>;
   decisionConsiderations: PreparedMeaning<string[]>;
@@ -164,6 +182,20 @@ export function prepareUnderstanding(input: {
   if (!source || !input.typedName.trim())
     throw new Error("Nama dan sumber bisnis belum valid.");
   const draft = input.draft;
+  // The route payload is boundary JSON: defend the J3 lists the same way the
+  // optional similar_businesses list is defended, so a stale or malformed
+  // draft cannot throw inside a `.map`.
+  const publishedLocations = Array.isArray(draft.published_locations)
+    ? draft.published_locations
+    : [];
+  const categorySuggestions = Array.isArray(draft.category_suggestions)
+    ? draft.category_suggestions
+    : [];
+  const offeringCategorySuggestions = Array.isArray(
+    draft.offering_category_suggestions,
+  )
+    ? draft.offering_category_suggestions
+    : [];
   const preparedText = [
     input.typedName,
     input.discoveredName ?? "",
@@ -184,8 +216,78 @@ export function prepareUnderstanding(input: {
   ) {
     throw new Error(INTAKE_TEXT_RESTRICTED_MESSAGE);
   }
+  // Spec 013 J3/R-25: the new extracted lists screen per item — a branch
+  // address that also prints a phone/WhatsApp number, an email or a link
+  // drops only that location, never the whole reading. Nothing from a
+  // dropped item is stored.
+  const safeLocations = publishedLocations.filter(
+    (item) =>
+      !(typeof item?.name === "string" && isSensitiveIntakeText(item.name)) &&
+      !(
+        typeof item?.address === "string" && isSensitiveIntakeText(item.address)
+      ) &&
+      !(
+        typeof item?.source_url === "string" &&
+        unsafeSmartSource(item.source_url)
+      ),
+  );
+  const safeCategorySuggestions = categorySuggestions.filter(
+    (item) => typeof item === "string" && !isSensitiveIntakeText(item),
+  );
+  const safeOfferingSuggestions = offeringCategorySuggestions.filter(
+    (item) =>
+      !(
+        typeof item?.offering === "string" &&
+        isSensitiveIntakeText(item.offering)
+      ) &&
+      !(
+        typeof item?.category === "string" &&
+        isSensitiveIntakeText(item.category)
+      ),
+  );
   const areas = unique(draft.market_areas, 8);
   const reach = draft.market_reach || null;
+  const offerings = unique(draft.verified_offerings, 12);
+  const seenLocations = new Set<string>();
+  const locations = safeLocations
+    .flatMap((item) => {
+      const name = typeof item?.name === "string" ? item.name.trim() : "";
+      const address =
+        typeof item?.address === "string" ? item.address.trim() : "";
+      if (!name || !address) return [];
+      const key = `${name.toLocaleLowerCase("id-ID")}::${address.toLocaleLowerCase("id-ID")}`;
+      if (seenLocations.has(key) || seenLocations.size >= 8) return [];
+      seenLocations.add(key);
+      const itemSource = parseSourceInput(
+        typeof item.source_url === "string" ? item.source_url : "",
+      );
+      return [
+        {
+          name,
+          address,
+          sourceUrl: itemSource ? itemSource.normalizedUrl : null,
+        },
+      ];
+    })
+    .slice(0, 8);
+  // A suggestion binds to its offering by repeating the offering's text; an
+  // entry whose offering is not in the prepared list is dropped, and only the
+  // first suggestion per offering survives (Spec 013 R-24).
+  const offeringKey = (value: string) =>
+    value.trim().toLocaleLowerCase("id-ID");
+  const seenOfferings = new Set<string>();
+  const perOffering = safeOfferingSuggestions.flatMap((item) => {
+    const category =
+      typeof item?.category === "string" ? item.category.trim() : "";
+    const match = offerings.find(
+      (offering) =>
+        offeringKey(offering) ===
+        offeringKey(typeof item?.offering === "string" ? item.offering : ""),
+    );
+    if (!match || !category || seenOfferings.has(offeringKey(match))) return [];
+    seenOfferings.add(offeringKey(match));
+    return [{ offering: match, category }];
+  });
   const sourceLinks = unique(
     draft.evidence
       .map((item) => item.source_url)
@@ -204,7 +306,7 @@ export function prepareUnderstanding(input: {
     focus: { proposed: "brand", origin: "nuave" },
     category: { proposed: draft.category.trim() || null, origin: "website" },
     offerings: {
-      proposed: unique(draft.verified_offerings, 12),
+      proposed: offerings,
       origin: "website",
     },
     serviceChannels: {
@@ -213,6 +315,18 @@ export function prepareUnderstanding(input: {
     },
     marketReach: { proposed: reach, origin: "website" },
     marketAreas: { proposed: areas, origin: "website" },
+    // Published locations are website facts; the category suggestions are
+    // Nuave's own proposals — they may never wear the "Dari website Anda"
+    // label (Spec 013 R-24). The prepared main category keeps its label.
+    locations: { proposed: locations, origin: "website" },
+    categorySuggestions: {
+      proposed: unique(safeCategorySuggestions, 3),
+      origin: "nuave",
+    },
+    offeringCategorySuggestions: {
+      proposed: perOffering,
+      origin: "nuave",
+    },
     targetCustomer: {
       proposed: draft.target_customer.trim() || null,
       origin: "nuave",

@@ -277,6 +277,9 @@ export async function extractBusinessDraft(input: {
     "Alamat kontak, aspirasi ekspansi, jumlah gerai tanpa penjelasan geografis, nama yang terdengar asing, dan daftar yang melebihi batas saja tidak membuktikan jangkauan lebih luas. Tidak ada ambang jumlah gerai untuk seluruh atau luar. Lokasi operasional yang dipublikasikan mendukung kehadiran di tempat usaha; lokasi kontak saja bukan cakupan layanan.",
     "Isi market_areas dengan paling banyak delapan nama area geografis yang diterbitkan bisnis, mempertahankan ejaannya. Untuk sekitar, gunakan satu area lokal yang didukung. Untuk beberapa, gunakan deskripsi geografis yang setia pada bukti; banyak gerai dapat berada dalam sedikit area. Gunakan deskripsi wilayah yang lebih luas hanya bila secara eksplisit diterbitkan dan setia pada bukti. Untuk seluruh atau luar, market_areas harus kosong; ukuran atau paginasi direktori saja tidak membuat kehadiran nasional yang didukung menjadi tidak diketahui. Tidak wajib merinci semua gerai atau membuktikan kelengkapan direktori.",
     "Jika kehadiran yang benar-benar regional tidak dapat diwakili secara setia dalam delapan area yang didukung dan tidak ada deskripsi wilayah lebih luas yang diterbitkan, pertahankan jangkauan yang didukung dan kosongkan market_areas agar pelanggan dapat melengkapinya. Jangan memilih delapan kota pertama atau terbesar, mengarang pengelompokan wilayah, menaikkan jangkauan untuk lolos validasi, atau mengubah fokus audit.",
+    "Isi published_locations hanya dengan lokasi yang dipublikasikan bisnis itu sendiri — nama persis seperti diterbitkan dan alamat saja, tanpa nomor telepon/WhatsApp, email, atau URL, plus source_url halaman yang menerbitkannya. Jangan menyimpulkan, menggabungkan, atau mengarang lokasi; kosongkan bila situs tidak menerbitkan lokasi.",
+    "Isi category_suggestions dengan paling banyak tiga usulan kategori singkat untuk seluruh brand. Ini usulan Nuave untuk ditinjau pemilik, bukan kutipan atau fakta dari situs — jangan masukkan ke evidence dan jangan menyatakan ditemukan di situs.",
+    "Isi offering_category_suggestions dengan paling banyak satu usulan kategori singkat per item verified_offerings. Nilai offering harus persis sama dengan teks penawarannya; jangan membuat entri untuk penawaran yang tidak tercantum atau lebih dari satu entri untuk penawaran yang sama.",
     "Leave unsupported scalar fields empty and unsupported arrays empty.",
     "For each material extracted value add an evidence record with the exact field, value, source URL, and a short note.",
     "The values are suggestions for human confirmation, not verified facts.",
@@ -338,13 +341,49 @@ function normalizeExtraction(
   parsed: ExtractionDraft,
   websiteUrl: string,
 ): ExtractionDraft {
+  const clean = nullsToUndefined(
+    parsed,
+    extractionDraftSchema,
+  ) as ExtractionDraft;
   const draft = extractionDraftSchema.parse({
-    ...parsed,
-    official_sources: parsed.official_sources?.length
-      ? parsed.official_sources
+    ...clean,
+    official_sources: clean.official_sources?.length
+      ? clean.official_sources
       : [websiteUrl],
   });
   return { ...draft, warnings: draft.warnings ?? [] };
+}
+
+/** The declared Gemini schema marks fields nullable; a `null` answer is
+ * just "absent" — restore the field's default before parsing instead of
+ * throwing the whole draft away (`.default()` replaces `undefined`, never
+ * `null`). Required fields still fail loudly. */
+function nullsToUndefined(value: unknown, schema: z.ZodType): unknown {
+  if (value === null) return undefined;
+  const def = schema._def as {
+    innerType?: z.ZodType;
+    element?: z.ZodType;
+    shape?: Record<string, z.ZodType>;
+    type?: string;
+  };
+  const real = def.innerType ?? schema;
+  const realDef = real._def as typeof def;
+  if (
+    realDef.type === "object" &&
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    const out: Record<string, unknown> = {
+      ...(value as Record<string, unknown>),
+    };
+    for (const [key, field] of Object.entries(realDef.shape ?? {}))
+      out[key] = nullsToUndefined(out[key], field);
+    return out;
+  }
+  if (realDef.type === "array" && Array.isArray(value) && realDef.element)
+    return value.map((item) => nullsToUndefined(item, realDef.element!));
+  return value;
 }
 
 function extractionManualFallback(
@@ -365,6 +404,9 @@ function extractionManualFallback(
     service_channels: [],
     market_reach: "",
     market_areas: [],
+    published_locations: [],
+    category_suggestions: [],
+    offering_category_suggestions: [],
     target_customer: "",
     official_sources: [input.website_url],
     verified_offerings: [],
@@ -653,26 +695,38 @@ function geminiProperties(schema: z.ZodType): Record<string, unknown> {
 }
 
 function geminiField(schema: z.ZodType): Record<string, unknown> {
-  const def = schema._def as { typeName?: string };
-  switch (def?.typeName) {
-    case "ZodString":
+  const def = schema._def as {
+    type?: string;
+    innerType?: z.ZodType;
+    element?: z.ZodType;
+  };
+  switch (def?.type) {
+    case "string":
       return { type: "STRING", nullable: true };
-    case "ZodNumber":
+    case "number":
       return { type: "NUMBER", nullable: true };
-    case "ZodBoolean":
+    case "boolean":
       return { type: "BOOLEAN", nullable: true };
-    case "ZodArray":
-      return { type: "ARRAY", items: { type: "STRING" }, nullable: true };
-    case "ZodObject":
+    case "array":
+      return {
+        type: "ARRAY",
+        items: def.element ? geminiField(def.element) : { type: "STRING" },
+        nullable: true,
+      };
+    case "object":
       return {
         type: "OBJECT",
         properties: geminiProperties(schema),
         nullable: true,
       };
-    case "ZodEnum":
-    case "ZodLiteral":
+    case "enum":
+    case "literal":
       return { type: "STRING", nullable: true };
     default:
-      return { type: "STRING", nullable: true };
+      // Wrappers (default, optional, nullable, readonly, prefault) expose the
+      // real shape through `innerType`; anything else stays a coarse string.
+      return def?.innerType
+        ? geminiField(def.innerType)
+        : { type: "STRING", nullable: true };
   }
 }

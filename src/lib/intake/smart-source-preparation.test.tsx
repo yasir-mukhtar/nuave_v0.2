@@ -706,6 +706,112 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(frozen).toContain("website");
     expect(requests).toHaveLength(1);
   });
+  it("carries locations and Nuave category suggestions through the real route into a refresh-safe session", async () => {
+    // Fictional J3 draft values; provider calls and counts are unchanged.
+    parsedDraft = {
+      ...draft(),
+      published_locations: [
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          source_url: `${source}lokasi`,
+        },
+        {
+          name: "Kedai Pelangi Cimahi",
+          address: "Jl. Pelangi Fiksi No. 2, Cimahi",
+          source_url: "",
+        },
+      ],
+      category_suggestions: ["kedai kopi", "kafe"],
+      offering_category_suggestions: [
+        { offering: "Kopi susu", category: "minuman kopi siap minum" },
+        { offering: "tidak tercantum", category: "misteri" },
+      ],
+    };
+    const mounted = render(<SmartIntakeJourney live />);
+    await inspect();
+    await throughBrand();
+    const saved = parseSmartSession(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    );
+    expect(saved?.prepared?.locations).toEqual({
+      proposed: [
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          sourceUrl: "https://kedai-pelangi-fiksi.example/lokasi",
+        },
+        {
+          name: "Kedai Pelangi Cimahi",
+          address: "Jl. Pelangi Fiksi No. 2, Cimahi",
+          sourceUrl: null,
+        },
+      ],
+      origin: "website",
+    });
+    expect(saved?.prepared?.categorySuggestions).toEqual({
+      proposed: ["kedai kopi", "kafe"],
+      origin: "nuave",
+    });
+    expect(saved?.prepared?.offeringCategorySuggestions).toEqual({
+      proposed: [
+        { offering: "Kopi susu", category: "minuman kopi siap minum" },
+      ],
+      origin: "nuave",
+    });
+    // Still exactly one provider request for preparation.
+    expect(requests).toHaveLength(1);
+    mounted.unmount();
+    render(<SmartIntakeJourney live />);
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    expect(
+      parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.prepared,
+    ).toEqual(saved?.prepared);
+    expect(requests).toHaveLength(1);
+    expect(clientRequests).toHaveLength(2);
+  });
+
+  it("a location whose published address carries private contact text is dropped — the clean one still prepares", async () => {
+    // Review B1: a branch listing printing WA/email on the address line drops
+    // only that location — it never reaches the session and never blocks the
+    // reading.
+    parsedDraft = {
+      ...draft(),
+      published_locations: [
+        {
+          name: "Kedai Pelangi Cimahi",
+          address: "Jl. Pelangi Fiksi 2, Cimahi (WA 0812-3456-7890)",
+          source_url: source,
+        },
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          source_url: `${source}lokasi`,
+        },
+      ],
+    };
+    render(<SmartIntakeJourney live />);
+    await inspect();
+    await throughBrand();
+    const saved = parseSmartSession(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    );
+    expect(saved?.prepared?.locations).toEqual({
+      proposed: [
+        {
+          name: "Kedai Pelangi Dago",
+          address: "Jl. Pelangi Fiksi No. 1, Bandung",
+          sourceUrl: "https://kedai-pelangi-fiksi.example/lokasi",
+        },
+      ],
+      origin: "website",
+    });
+    expect(JSON.stringify(saved)).not.toContain("0812-3456-7890");
+    expect(document.body.textContent).not.toContain("0812-3456-7890");
+    expect(requests).toHaveLength(1);
+  });
+
   it("sparse readable input leaves unknowns empty and does not retry or invent channels/reach", async () => {
     pageHtml =
       "<head><title>Kedai Pelangi Fiksi</title></head><p>Selamat datang.</p>";
