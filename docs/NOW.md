@@ -26,10 +26,9 @@
 
 ## Next action
 
-- **Active milestone: J4** (Spec 013, "Delivery slices"): focus, location
-  and product screens. Carry #98 M2 (enforces R-02): drop locations with
-  a source host outside the audited website (allow `www`) before website
-  attribution. Handoff: [`WORKER_PROMPT.md`](./templates/WORKER_PROMPT.md).
+- **Active milestone: J4** (Spec 013 slices): focus, location and product
+  screens. Carry #98 M2 (enforces R-02): drop locations whose source host
+  is not the audited website (`www` ok). Handoff: `templates/WORKER_PROMPT.md`.
 
 ## Rules still in force
 
