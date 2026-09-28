@@ -5,6 +5,7 @@
 > Version: writing-standard-v2 (Indonesian) · Created: 2026-08-17
 > Owner: Orchestrator
 > Report-label amendment: 2026-09-22, founder decisions D-05/D-07 in Spec 012; documentation only
+> Plain-voice amendment: 2026-09-28, founder decision to match landing copy v8 (see `DECISION_LOG.md`); documentation only
 > Supersedes: `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md` (v1 draft)
 >
 > This document is the canonical Indonesian writing contract for
@@ -39,13 +40,15 @@ verbatim, even when it does not follow the general prose rules.
 
 | Meaning | Prefer (customer-facing) | Avoid |
 |---|---|---|
-| Your business (prose) | **brand Anda** | bisnis Anda (outside the settled labels below) |
+| Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**) | brand Anda (except **Seluruh brand**, see the notes) |
 | Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari 10 pertanyaan** · **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan** · **Tidak diuji** · **Download PDF** | any paraphrase or spelling variant of these six |
 | Prospective customer | **calon pelanggan** | calon klien, calon customer, customer potensial, bare "customer" |
 | Existing customer | **pelanggan** | klien, customer |
-| The AI model as the answering/deciding actor | **model AI** | bare "AI" where it means the model ("disebut oleh model AI", "diuji ke model AI") |
+| The AI model as the answering/deciding actor, in the report and intake | **model AI** | bare "AI" where it means the model ("disebut oleh model AI", "diuji ke model AI") |
+| AI in marketing copy (landing, ads, order preview) | plain **AI** (tanya AI, jawaban AI, disebut AI) | model AI, mesin AI |
 | AI as a category/concept | **AI** (era AI, pencarian AI, jawaban AI) | mesin AI, semua AI, "the AI" |
-| The tested product | the exact product name, e.g. **ChatGPT** | semua AI, mesin AI, generic "AI" as the tested system |
+| The tested system | the system and model exactly as the report records them; in marketing, **AI buatan OpenAI** | semua AI, mesin AI, **ChatGPT** as the tested system |
+| ChatGPT | the customer's habit and what AI does (**pelanggan tanya ChatGPT**, **ChatGPT biasanya cuma menyebut beberapa nama**) | Nuave's own answers called ChatGPT's (**jawaban asli ChatGPT**) |
 | Data consistency | **sinkron** / **samakan** / **konsisten** | seragam |
 | Competitor (when a competitor is verified) | **pesaing** | kompetitor |
 | Other named businesses in the report | **bisnis lain yang disebut** | daftar kompetitor (unless the context verifies competitors) |
@@ -64,16 +67,23 @@ verbatim, even when it does not follow the general prose rules.
 
 Notes:
 
-- **`brand Anda` vs `bisnis Anda`:** `brand Anda` is the default for general
-  prose. The settled labels that keep `bisnis Anda` are **Tanpa menyebut
-  bisnis Anda**, **Menyebut bisnis Anda**, **Bisnis Anda muncul di X dari 10
-  pertanyaan**, **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan**,
-  and the **X/10**-style count (e.g. **4/10**). Do NOT "fix"
-  those labels to `brand Anda`, and do NOT use `brand Anda` inside a phrase
-  that is meant to be the settled label.
-- **`model AI` vs `AI`:** use `model AI` only where the AI system is the thing
-  that learns, answers, decides, or is being tested. Keep `AI` for the general
-  category. `ChatGPT` is named explicitly and needs no gloss.
+- **`bisnis Anda`, not `brand Anda`:** since 2026-09-28, `bisnis Anda` is the
+  default in all prose, the same words as the settled labels (**Tanpa
+  menyebut bisnis Anda**, **Menyebut bisnis Anda**, **Bisnis Anda muncul di X
+  dari 10 pertanyaan**, **Bisnis Anda direkomendasikan di Y dari 10
+  pertanyaan**, and the **X/10**-style count). The one exception is
+  **Seluruh brand**, where the report and intake separate a whole
+  multi-location brand from one location.
+- **`model AI` vs `AI`:** in the report and intake, use `model AI` only where
+  the AI system is the thing that learns, answers, decides, or is being
+  tested, and keep `AI` for the general category. Marketing copy says plain
+  `AI` throughout: "Sekarang pelanggan tanya AI dulu", "AI tidak asal sebut
+  nama".
+- **`ChatGPT`:** name it for the customer's habit and for what AI does
+  ("pelanggan tanya ChatGPT", "ChatGPT biasanya cuma menyebut beberapa
+  nama"). Never present Nuave's own answers as ChatGPT's: Nuave asks
+  OpenAI's model through the API, not the ChatGPT app. Say `jawaban AI`, and
+  name the maker near the claim: "AI buatan OpenAI, pembuat ChatGPT".
 - **English authority terms** stay English because they signal credibility to
   the Indonesian SMB audience; never transliterate them in customer copy.
 
@@ -95,6 +105,14 @@ alarmist or all-knowing.** Apply these invariants to every surface:
   written as `08.00–21.00`.
 - **Short sentences.** One idea per sentence; no multi-clause sentences that
   are one English sentence in disguise.
+- **Think in Indonesian first.** Write the line the way an Indonesian owner
+  would say it, not as a translated English sentence. Say "Cuma semenit", not
+  "Hasil dalam detik". Say "Pelanggan tidak lagi cek website satu per satu.
+  Mereka tanya ke AI.", not "Mereka tidak membuka 10 tab."
+- **Light spoken words** are welcome in marketing copy where a person would
+  say them: `cuma`, `kok`, `duluan`, `kasih tahu`, `biar`, and `ya` at the
+  end of helper text ("Nama usahanya diisi dulu, ya."). Always with `Anda`.
+  Business facts, the report, and email keep their own registers (§7).
 - No false urgency, fear, or hype (`mendominasi AI`, `jangan sampai
   tertinggal`, `tak terlihat di dunia AI`, countdowns, scarcity).
 - No ranking, guarantee, or forecast (`Pertama Ditemukan`, `dijamin`,
@@ -166,8 +184,12 @@ The voice is constant; the register and vocabulary shift per surface.
 
 #### 7.1 Landing and order preview (marketing register)
 
-- `brand Anda` throughout. Hero question, e.g. "Apakah brand Anda muncul di
-  ChatGPT?".
+- `bisnis Anda`, or the business type when it is known. Hero question, e.g.
+  "Klinik Anda yang direkomendasikan, atau klinik sebelah?".
+- Plain `AI` and light spoken words (§2 notes, §3). `ChatGPT` can name the
+  customer's habit and what AI does, but never Nuave's own answers.
+- Keep it lean: one idea per line and short headings. Let the chat example
+  and the sample report do the explaining.
 - Lead with a real observed problem or a clear customer question; sell clarity
   and evidence, not fear of being left behind.
 - No conversion/ROI statistics, no `Pertama`, no guarantee, no `5x`/`67%`/`73%`
