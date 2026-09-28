@@ -23,9 +23,8 @@ export const CONFIRM_SUMMARY = "Sudah sesuai — buat pertanyaan audit";
 export const CONFIRM_BRAND = "Lanjut";
 export const BRAND_HEADING = "Ini brand yang ingin Anda audit?";
 export const FOCUS_HEADING = "Apa yang ingin Anda audit?";
-export const LOCATION_HEADING = "Lokasi mana yang ingin Anda audit?";
-export const PRODUCT_HEADING =
-  "Produk atau layanan mana yang ingin Anda audit?";
+export const LOCATION_HEADING = "Cabang mana yang ingin diaudit?";
+export const PRODUCT_HEADING = "Produk atau layanan mana?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";

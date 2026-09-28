@@ -71,14 +71,29 @@ type SmartStage = SmartSession["stage"];
  * `entry` and `reading` have no back target; `reading` is never a target.
  * The summary steps back into the J4 target screen its focus implies, and a
  * focus screen opened from the summary's `Ubah` (`focusReturn`) steps back
- * to that summary instead of to the brand check (R-16/R-18).
+ * to that summary — but only while the picked focus is complete; a new
+ * location or product pick whose target is still missing detours through
+ * that target screen so the summary never shows a focus without its target
+ * (R-21).
  */
 function backTargetFor(session: SmartSession): SmartStage | null {
   switch (session.stage) {
     case "brand":
       return "entry";
-    case "focus":
-      return session.focusReturn ?? "brand";
+    case "focus": {
+      if (!session.focusReturn || !session.selection) return "brand";
+      if (
+        session.selection.focus === "cabang" &&
+        !smartLocationReady(session.selection)
+      )
+        return "location";
+      if (
+        session.selection.focus === "produk" &&
+        !smartProductReady(session.selection)
+      )
+        return "product";
+      return session.focusReturn;
+    }
     case "location":
     case "product":
       return "focus";
@@ -1068,7 +1083,7 @@ export default function SmartIntakeJourney({
               }}
               onEditFocus={() => {
                 // The summary row reviews focus; the dedicated screen owns
-                // the change, and this marker sends its Back here (R-16).
+                // the change, and this marker sends its Back here (R-21).
                 goStage({
                   ...session,
                   stage: "focus",

@@ -23,11 +23,11 @@ decides whether real provider boundaries or their labeled substitutes answer.
   brand-wide (marked `Saran Nuave`), one location, or one product/service.
   Choosing one location without a usable published list asks to type it
   manually; `Lanjut` then opens the location target screen.
-- `location` — "Lokasi mana yang ingin Anda audit?" lists published locations
+- `location` — "Cabang mana yang ingin diaudit?" lists published locations
   that preparation attributed to the canonical source host (`Dari website
-  Anda`), plus `Tambah lokasi lain` for a manual name + address
+Anda`), plus `Tambah lokasi lain` for a manual name + address
   (`Dari Anda`). `Lanjut` stays blocked until a complete target exists.
-- `product` — "Produk atau layanan mana yang ingin Anda audit?" lists the
+- `product` — "Produk atau layanan mana?" lists the
   prepared offerings and accepts a typed name with the same completeness
   gate.
 - `summary`/`clarify` — `SmartSummary.tsx`, the row-level corrected

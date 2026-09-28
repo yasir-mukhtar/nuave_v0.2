@@ -413,7 +413,7 @@ export function usablePublishedLocations(
 }
 
 /**
- * Focus selection (R-05/R-09): switching focus clears the target fields that
+ * Focus selection (R-05/R-10): switching focus clears the target fields that
  * no longer apply, while the whole-brand market answers are retained across
  * a cabang detour so returning to brand restores them unchanged.
  */

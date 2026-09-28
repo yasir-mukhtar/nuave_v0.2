@@ -6,7 +6,7 @@ screen, in synthetic mode through a labelled substitute. It then asks
 when different, and the website; `Lanjut` confirms the brand and opens the
 focus screen "Apa yang ingin Anda audit?" — whole brand (marked
 `Saran Nuave`), one location, or one product/service. A product pick opens
-"Produk atau layanan mana yang ingin Anda audit?" and `Lanjut` there lands on
+"Produk atau layanan mana?" and `Lanjut` there lands on
 "Ini yang Nuave pahami.", a summary the owner corrects row by row: category
 and offerings, service channel, and market reach. The focus row is read-back;
 its `Ubah` re-opens the focus screen. One confirmation,

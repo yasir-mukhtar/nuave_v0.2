@@ -67,9 +67,11 @@ const focusChoices = [
  * R-10: the audit's point of view. `Brand secara keseluruhan` carries the
  * `Saran Nuave` label because whole-brand is Nuave's prepared proposal; the
  * combined focus row on the summary switches to `Dari Anda` once the owner
- * changes it. `Satu lokasi` is offered as a card only while the business's
- * own source publishes at least one location — otherwise a secondary link
- * opens the manual location screen instead.
+ * changes it. `Satu lokasi` is offered as a card while the business's own
+ * source publishes at least one location — otherwise a secondary link opens
+ * the manual location screen. The card also stays while `cabang` is the
+ * stored answer, so the radio group never shows nothing selected for a
+ * saved pick (R-02).
  */
 export function SmartFocusScreen({
   prepared,
@@ -99,7 +101,12 @@ export function SmartFocusScreen({
           }
         >
           {focusChoices
-            .filter((choice) => choice.value !== "cabang" || locations.length)
+            .filter(
+              (choice) =>
+                choice.value !== "cabang" ||
+                locations.length > 0 ||
+                selection.focus === "cabang",
+            )
             .map(({ value, title, description, icon: Icon }) => (
               <SelectionCard
                 key={value}
@@ -161,28 +168,35 @@ export function SmartLocationScreen({
       ...patch,
       origins: { ...selection.origins, focus: "owner" },
     });
+  // The manual fields stay blank while a published row is the answer —
+  // typing over a picked row clears the other field, so the owner never
+  // silently edits a website-published row into a `Dari Anda` one.
+  const typeManual = (patch: Partial<SmartSelection>) => {
+    const next: Partial<SmartSelection> = manualActive
+      ? patch
+      : { locationName: "", locationAddress: "", ...patch };
+    updateTarget(next);
+  };
   const manualForm = (
     <div className={`${controls.manual} grid gap-3`}>
       <label className="grid gap-2 type-label">
         Nama lokasi
         <Input
-          value={selection.locationName}
+          value={manualActive ? selection.locationName : ""}
           maxLength={300}
           autoComplete="off"
-          onChange={(event) =>
-            updateTarget({ locationName: event.target.value })
-          }
+          onChange={(event) => typeManual({ locationName: event.target.value })}
         />
       </label>
       <label className="grid gap-2 type-label">
         Alamat atau area
         <Input
-          value={selection.locationAddress}
+          value={manualActive ? selection.locationAddress : ""}
           maxLength={500}
           autoComplete="off"
           placeholder="Jalan, nomor, dan kota atau area"
           onChange={(event) =>
-            updateTarget({ locationAddress: event.target.value })
+            typeManual({ locationAddress: event.target.value })
           }
         />
       </label>
@@ -194,7 +208,7 @@ export function SmartLocationScreen({
   return (
     <section className="grid gap-5" data-intake-screen="location">
       <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Lokasi mana yang ingin Anda audit?
+        Cabang mana yang ingin diaudit?
       </h1>
       {locations.length ? (
         <div className={`${controls.choices} ${controls.dynamicChoices}`}>
@@ -282,7 +296,7 @@ export function SmartProductScreen({
       <label className="grid gap-2 type-label">
         Nama produk atau layanan
         <Input
-          value={selection.productTarget}
+          value={manualActive ? selection.productTarget : ""}
           maxLength={300}
           autoComplete="off"
           onChange={(event) =>
@@ -298,7 +312,7 @@ export function SmartProductScreen({
   return (
     <section className="grid gap-5" data-intake-screen="product">
       <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Produk atau layanan mana yang ingin Anda audit?
+        Produk atau layanan mana?
       </h1>
       {offerings.length ? (
         <div className={`${controls.choices} ${controls.dynamicChoices}`}>
