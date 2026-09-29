@@ -435,6 +435,10 @@ print for a type without stored answers, and the rate-limit wait line.
 
 ## Implementation notes
 
+- **Spike, allowed while this spec is in review:** trying the risky parts
+  locally (fonts with no network at build time, the KV read inside the
+  OpenNext worker, the matching rules on the fixture). Nothing from the spike
+  lands as implementation before approval.
 - Stored-answers data: one KV key per type and city, for example
   `klinik-kecantikan:bekasi`, holding the whole set as JSON with a version.
   The worker reads it through the OpenNext Cloudflare context.
