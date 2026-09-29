@@ -33,7 +33,7 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 4;
+  version: 5;
   /**
    * `reading` is persisted only while a preparation is in flight: a refresh
    * restores it as `entry` with an interruption note, never a replayed call
@@ -43,11 +43,20 @@ export type SmartSession = {
     | "entry"
     | "reading"
     | "brand"
+    | "focus"
+    | "location"
+    | "product"
     | "summary"
     | "clarify"
     | "questions"
     | "audit";
   entry: { name: string; source: string };
+  /**
+   * Set while the focus screen was opened from the summary's `Ubah`: in-flow
+   * Back returns to that summary stage instead of the brand check. Cleared
+   * on every transition out of `focus` (Spec 013 J4).
+   */
+  focusReturn?: "summary" | "clarify";
   identity: SmartPreparedIdentity | null;
   prepared: PreparedUnderstanding | null;
   selection: SmartSelection | null;
@@ -62,7 +71,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 4,
+    version: 5,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -87,11 +96,14 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 4 ||
+      value.version !== 5 ||
       ![
         "entry",
         "reading",
         "brand",
+        "focus",
+        "location",
+        "product",
         "summary",
         "clarify",
         "questions",
@@ -103,7 +115,9 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       value.entry.name.length > 160 ||
       value.entry.source.length > 2_000 ||
       !Array.isArray(value.preparationCalls) ||
-      !Array.isArray(value.generationAttempts)
+      !Array.isArray(value.generationAttempts) ||
+      (value.focusReturn !== undefined &&
+        !["summary", "clarify"].includes(String(value.focusReturn)))
     )
       return null;
     const stage = value.stage as SmartSession["stage"];
@@ -125,8 +139,8 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         ))
     )
       return null;
-    // Spec 013 J3: a v4 prepared record must carry the new R-24 lists;
-    // anything older or corrupt restarts at entry instead of mixing.
+    // Spec 013 J3: a prepared record must carry the R-24 lists; anything
+    // older or corrupt restarts at entry instead of mixing.
     const validPrepared = (prepared: unknown) =>
       isRecord(prepared) &&
       typeof prepared.typedName === "string" &&

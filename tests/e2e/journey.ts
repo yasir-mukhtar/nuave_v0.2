@@ -22,11 +22,14 @@ export const FICTIONAL_BUSINESS = {
 export const CONFIRM_SUMMARY = "Sudah sesuai — buat pertanyaan audit";
 export const CONFIRM_BRAND = "Lanjut";
 export const BRAND_HEADING = "Ini brand yang ingin Anda audit?";
+export const FOCUS_HEADING = "Apa yang ingin Anda audit?";
+export const LOCATION_HEADING = "Cabang mana yang ingin diaudit?";
+export const PRODUCT_HEADING = "Produk atau layanan mana?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
-export const INTAKE_SESSION_KEY = "nuave.localIntake.v4";
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v5";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -174,6 +177,57 @@ export function brandScreen(page: Page) {
   return page.locator('[data-intake-screen="brand"]');
 }
 
+export function focusScreen(page: Page) {
+  return page.locator('[data-intake-screen="focus"]');
+}
+
+export function locationScreen(page: Page) {
+  return page.locator('[data-intake-screen="location"]');
+}
+
+export function productScreen(page: Page) {
+  return page.locator('[data-intake-screen="product"]');
+}
+
+export async function expectFocusScreen(page: Page) {
+  await expect(focusScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: FOCUS_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectLocationScreen(page: Page) {
+  await expect(locationScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: LOCATION_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectProductScreen(page: Page) {
+  await expect(productScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: PRODUCT_HEADING }),
+  ).toBeVisible();
+}
+
+/** The frame footer's `Lanjut` (brand, focus, location, product stages). */
+export async function pressLanjut(page: Page) {
+  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
+}
+
+/** The frame footer's `Kembali`. */
+export async function pressKembali(page: Page) {
+  await page.getByRole("button", { name: "Kembali", exact: true }).click();
+}
+
+/** Focus screen: pick one of the three focus cards. */
+export async function chooseFocus(
+  page: Page,
+  name: "Brand secara keseluruhan" | "Satu lokasi" | "Satu produk atau layanan",
+) {
+  await focusScreen(page).getByRole("radio", { name }).click();
+}
+
 /** The entry step is showing with both fields empty. */
 export async function expectEmptyEntry(page: Page) {
   await expect(entryScreen(page)).toBeVisible();
@@ -221,13 +275,19 @@ export async function expectBrandConfirm(
   await expect(brandScreen(page)).toContainText(name);
 }
 
-/** Brand confirm → `Lanjut` (in the frame footer) → the summary. */
+/** Brand confirm → `Lanjut` (in the frame footer) → the focus screen. */
 export async function confirmBrand(page: Page) {
   await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
+  await expectFocusScreen(page);
+}
+
+/** Focus screen → `Lanjut` on the whole-brand default → the summary. */
+export async function confirmFocus(page: Page) {
+  await pressLanjut(page);
   await expectSummary(page);
 }
 
-/** Entry → `Periksa` → reading → brand confirm → summary. */
+/** Entry → `Periksa` → reading → brand confirm → focus → summary. */
 export async function toSummary(
   page: Page,
   entry: Parameters<typeof fillEntry>[1] = {},
@@ -236,6 +296,7 @@ export async function toSummary(
   await pressPeriksa(page);
   await expectBrandConfirm(page);
   await confirmBrand(page);
+  await confirmFocus(page);
 }
 
 export function categorySection(page: Page) {

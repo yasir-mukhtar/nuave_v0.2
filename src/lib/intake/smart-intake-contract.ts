@@ -8,7 +8,11 @@ import {
   isSensitiveIntakeText,
   unsafePublicSource,
 } from "../audit/sensitive-intake";
-import { parseSourceInput } from "../audit/source-input";
+import {
+  parseSourceInput,
+  samePublicSourceHost,
+  type ParsedSourceInput,
+} from "../audit/source-input";
 import {
   INTAKE_TEXT_RESTRICTED_MESSAGE,
   type ExtractionDraft,
@@ -16,7 +20,7 @@ import {
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
-export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v4" as const;
+export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v5" as const;
 
 type Origin = "website" | "nuave" | "owner";
 export type PreparedMeaning<T> = Readonly<{
@@ -25,11 +29,13 @@ export type PreparedMeaning<T> = Readonly<{
 }>;
 
 /** A location the business itself publishes (Spec 013 R-24). `sourceUrl` is
- * the public page publishing the address, or null when the draft gave none. */
+ * the public page on the business's own canonical source that publishes the
+ * address — a location whose source cannot be attributed to that host is
+ * dropped at preparation, never merely unlabeled (PR #98 M2, applied in J4). */
 export type PreparedLocation = Readonly<{
   name: string;
   address: string;
-  sourceUrl: string | null;
+  sourceUrl: string;
 }>;
 
 /** One Nuave category suggestion bound to one published offering. `offering`
@@ -255,19 +261,20 @@ export function prepareUnderstanding(input: {
       const address =
         typeof item?.address === "string" ? item.address.trim() : "";
       if (!name || !address) return [];
-      const key = `${name.toLocaleLowerCase("id-ID")}::${address.toLocaleLowerCase("id-ID")}`;
-      if (seenLocations.has(key) || seenLocations.size >= 8) return [];
-      seenLocations.add(key);
       const itemSource = parseSourceInput(
         typeof item.source_url === "string" ? item.source_url : "",
       );
-      return [
-        {
-          name,
-          address,
-          sourceUrl: itemSource ? itemSource.normalizedUrl : null,
-        },
-      ];
+      // PR #98 M2, applied in J4: a location counts as published by the
+      // business only when the page that carries its address sits on the
+      // canonical source host. A foreign host, an unparsable URL, or no URL
+      // drops the location entirely — the check runs before dedupe so a
+      // discarded row cannot consume another row's slot.
+      if (!itemSource || !locationPublishedOnCanonical(source, itemSource))
+        return [];
+      const key = `${name.toLocaleLowerCase("id-ID")}::${address.toLocaleLowerCase("id-ID")}`;
+      if (seenLocations.has(key) || seenLocations.size >= 8) return [];
+      seenLocations.add(key);
+      return [{ name, address, sourceUrl: itemSource.normalizedUrl }];
     })
     .slice(0, 8);
   // A suggestion binds to its offering by repeating the offering's text; an
@@ -349,6 +356,104 @@ export function prepareUnderstanding(input: {
     differentiator: { proposed: draft.usp.trim() || null, origin: "nuave" },
     sourceLinks,
   });
+}
+
+/**
+ * Spec 013 J4 (PR #98 M2): a published location may wear `Dari website Anda`
+ * only when the page publishing its address lives on the business's own
+ * canonical source host — `www.` equivalence allowed, subdomains and
+ * lookalikes rejected. When the canonical source is an Instagram profile the
+ * check is stricter: every post shares the instagram.com host, so only the
+ * profile URL itself qualifies.
+ */
+function locationPublishedOnCanonical(
+  canonical: ParsedSourceInput,
+  itemSource: ParsedSourceInput,
+): boolean {
+  if (
+    canonical.sourceType === "instagram" ||
+    itemSource.sourceType === "instagram"
+  ) {
+    return (
+      canonical.sourceType === "instagram" &&
+      itemSource.sourceType === "instagram" &&
+      canonical.normalizedUrl.toLocaleLowerCase("id-ID") ===
+        itemSource.normalizedUrl.toLocaleLowerCase("id-ID")
+    );
+  }
+  return samePublicSourceHost(
+    canonical.normalizedUrl,
+    itemSource.normalizedUrl,
+  );
+}
+
+/**
+ * The prepared locations the J4 screens may list as `Dari website Anda`. The
+ * preparation boundary already host-screens them; this re-check keeps a
+ * restored or hand-edited session record from displaying a foreign page
+ * under the website label, and drops malformed rows outright.
+ */
+export function usablePublishedLocations(
+  prepared: PreparedUnderstanding,
+): PreparedLocation[] {
+  const canonical = parseSourceInput(prepared.canonicalSource);
+  if (!canonical) return [];
+  return (prepared.locations.proposed ?? []).filter((item) => {
+    if (
+      typeof item?.name !== "string" ||
+      typeof item?.address !== "string" ||
+      typeof item?.sourceUrl !== "string"
+    )
+      return false;
+    const itemSource = parseSourceInput(item.sourceUrl);
+    return Boolean(
+      itemSource && locationPublishedOnCanonical(canonical, itemSource),
+    );
+  });
+}
+
+/**
+ * Focus selection (R-05/R-10): switching focus clears the target fields that
+ * no longer apply, while the whole-brand market answers are retained across
+ * a cabang detour so returning to brand restores them unchanged.
+ */
+export function selectSmartFocus(
+  selection: SmartSelection,
+  focus: SmartSelection["focus"],
+): SmartSelection {
+  if (focus === selection.focus) return selection;
+  const retainedBrandReach =
+    selection.focus === "cabang"
+      ? selection.retainedBrandReach
+      : selection.marketReach;
+  const retainedBrandAreas =
+    selection.focus === "cabang"
+      ? selection.retainedBrandAreas
+      : selection.marketAreas;
+  return {
+    ...selection,
+    focus,
+    productTarget: focus === "produk" ? selection.productTarget : "",
+    locationName: focus === "cabang" ? selection.locationName : "",
+    locationAddress: focus === "cabang" ? selection.locationAddress : "",
+    marketReach: focus === "cabang" ? "" : retainedBrandReach,
+    marketAreas: focus === "cabang" ? [] : retainedBrandAreas,
+    retainedBrandReach,
+    retainedBrandAreas,
+    origins: { ...selection.origins, focus: "owner" },
+  };
+}
+
+/** R-03/R-11: the location screen's Lanjut requires both name and address. */
+export function smartLocationReady(selection: SmartSelection): boolean {
+  return Boolean(
+    selection.locationName.trim() && selection.locationAddress.trim(),
+  );
+}
+
+/** R-03/R-12: the product screen's Lanjut requires the typed/picked target. */
+export function smartProductReady(selection: SmartSelection): boolean {
+  return Boolean(selection.productTarget.trim());
 }
 
 export function initialSmartSelection(

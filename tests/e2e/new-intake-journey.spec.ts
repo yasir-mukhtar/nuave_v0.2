@@ -2,15 +2,25 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   brandScreen,
   categorySection,
+  chooseFocus,
   confirmBrand,
+  confirmFocus,
   confirmSummary,
   entryScreen,
   expectBrandConfirm,
+  expectFocusScreen,
+  expectLocationScreen,
+  expectProductScreen,
   expectSummary,
   expectTenQuestions,
   fillEntry,
+  focusScreen,
   INTAKE_SESSION_KEY,
+  locationScreen,
+  pressKembali,
+  pressLanjut,
   pressPeriksa,
+  productScreen,
   RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
   stubPreparationDraft,
@@ -211,9 +221,9 @@ test("rich reading reaches one summary and question review without more typing",
   });
   await enter(page);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Brand secara keseluruhan" }),
-  ).toHaveAttribute("aria-pressed", "true");
+  const focusRow = page.locator('section[aria-label="Fokus audit"]');
+  await expect(focusRow).toContainText("Brand secara keseluruhan");
+  await expect(focusRow).toContainText("Saran Nuave");
   await expect(
     page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }),
   ).toBeChecked();
@@ -295,10 +305,10 @@ test("the labelled rich preparation carries locations and category suggestions i
   ]);
 });
 
-test("a session stored under the previous intake version restarts at an empty entry", async ({
+test("a session stored under a previous intake version restarts at an empty entry", async ({
   page,
 }) => {
-  await page.addInitScript((v4Key) => {
+  await page.addInitScript((v5Key) => {
     sessionStorage.setItem(
       "nuave.localIntake.v3",
       JSON.stringify({
@@ -316,10 +326,10 @@ test("a session stored under the previous intake version restarts at an empty en
         generationAttempts: [],
       }),
     );
-    // A v4 record whose prepared state predates the J3 lists is just as
-    // unreadable — it must restart at entry rather than mix old and new shape.
+    // A well-formed v4 record under its own key is never read: the current
+    // key is v5, and older keys are simply not looked at.
     sessionStorage.setItem(
-      v4Key,
+      "nuave.localIntake.v4",
       JSON.stringify({
         version: 4,
         stage: "summary",
@@ -336,6 +346,9 @@ test("a session stored under the previous intake version restarts at an empty en
           serviceChannels: { proposed: ["on_premise"], origin: "website" },
           marketReach: { proposed: "sekitar", origin: "website" },
           marketAreas: { proposed: ["Bandung"], origin: "website" },
+          locations: { proposed: [], origin: "website" },
+          categorySuggestions: { proposed: [], origin: "nuave" },
+          offeringCategorySuggestions: { proposed: [], origin: "nuave" },
           targetCustomer: { proposed: null, origin: "nuave" },
           customerNeeds: { proposed: [], origin: "nuave" },
           decisionConsiderations: { proposed: [], origin: "nuave" },
@@ -343,6 +356,25 @@ test("a session stored under the previous intake version restarts at an empty en
           differentiator: { proposed: null, origin: "nuave" },
           sourceLinks: [],
         },
+        selection: { name: "Kedai Usang", nameOrigin: "owner" },
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        preparationCalls: [],
+        preparationMode: null,
+        generationAttempts: [],
+      }),
+    );
+    // A stale-version record under the current v5 key is just as unreadable —
+    // it must restart at entry rather than mix old and new shape.
+    sessionStorage.setItem(
+      v5Key,
+      JSON.stringify({
+        version: 4,
+        stage: "summary",
+        entry: { name: "Kedai Usang", source: "https://usang.example/" },
+        identity: null,
+        prepared: { typedName: "Kedai Usang" },
         selection: { name: "Kedai Usang", nameOrigin: "owner" },
         confirmedSelection: null,
         frozen: null,
@@ -408,23 +440,46 @@ test("product and location choices freeze only their active meaning", async ({
         ).intake.context,
       );
   });
-  await enter(page);
-  await page.getByRole("button", { name: "Satu produk atau layanan" }).click();
-  await page.getByRole("radio", { name: "roti" }).click();
+  // First pass: pick the product focus on its dedicated screens.
+  await stubPreparationDraft(page, richDraft);
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await confirmBrand(page);
+  await chooseFocus(page, "Satu produk atau layanan");
+  await pressLanjut(page);
+  await expectProductScreen(page);
+  await productScreen(page).getByRole("radio", { name: "roti" }).click();
+  await pressLanjut(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
     focus: { value: { kind: "produk", name: "roti" } },
     offerings: { value: ["roti"] },
   });
+  // Editing the summary's focus row re-opens the focus screen; switching to a
+  // location clears the product target and freezes only the cabang meaning.
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
-  await page.getByRole("button", { name: "Satu lokasi" }).click();
-  await page.getByRole("textbox", { name: "Nama lokasi" }).fill("Cabang Timur");
-  await page
-    .getByRole("textbox", { name: "Alamat lokasi" })
+  const focusRow = page.locator('section[aria-label="Fokus audit"]');
+  await focusRow.getByRole("button", { name: "Ubah" }).click();
+  await expectFocusScreen(page);
+  await chooseFocus(page, "Satu lokasi");
+  await pressLanjut(page);
+  await expectLocationScreen(page);
+  await locationScreen(page)
+    .getByRole("button", { name: "Tambah lokasi lain" })
+    .click();
+  await locationScreen(page)
+    .getByRole("textbox", { name: "Nama lokasi" })
+    .fill("Cabang Timur");
+  await locationScreen(page)
+    .getByRole("textbox", { name: "Alamat atau area" })
     .fill("Jl. Contoh 12");
+  await pressLanjut(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
@@ -502,6 +557,7 @@ test("a name-only edit reuses the reading; changing the website reads again", as
   await expect(brandScreen(page)).toBeVisible();
   expect(calls).toHaveLength(4);
   await confirmBrand(page);
+  await confirmFocus(page);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
 });
 
@@ -548,4 +604,292 @@ test("named comparators require selection; alternatives carry no company names",
   expect(
     (contexts[1]!.comparators as { value: Record<string, unknown> }).value,
   ).not.toHaveProperty("names");
+});
+
+test.describe("J4 focus and target screens", () => {
+  test("the focus screen offers the three scopes with honest labels and a keyboard-driven pick", async ({
+    page,
+  }) => {
+    const calls: string[] = [];
+    page.on("request", (request) => {
+      const path = new URL(request.url()).pathname;
+      if (path.startsWith("/api/")) calls.push(`${request.method()} ${path}`);
+    });
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await expectBrandConfirm(page);
+    await confirmBrand(page);
+    const wholeBrand = focusScreen(page).getByRole("radio", {
+      name: "Brand secara keseluruhan",
+    });
+    await expect(wholeBrand).toBeChecked();
+    await expect(
+      focusScreen(page).getByRole("radio", { name: "Satu lokasi" }),
+    ).toBeVisible();
+    await expect(
+      focusScreen(page).getByRole("radio", {
+        name: "Satu produk atau layanan",
+      }),
+    ).toBeVisible();
+    await expect(
+      focusScreen(page).getByText("Saran Nuave", { exact: true }),
+    ).toBeVisible();
+    // Radio-group keyboard support: ArrowDown moves the checked choice.
+    await wholeBrand.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(
+      focusScreen(page).getByRole("radio", { name: "Satu lokasi" }),
+    ).toBeChecked();
+    // Kembali returns to the brand check with its answer intact.
+    await pressKembali(page);
+    await expectBrandConfirm(page);
+    await confirmBrand(page);
+    // Screen navigation spends no extra preparation calls.
+    expect(calls).toEqual([
+      "GET /api/audit/identity",
+      "POST /api/audit/extract",
+    ]);
+    // Whole-brand continues straight to the summary.
+    await chooseFocus(page, "Brand secara keseluruhan");
+    await pressLanjut(page);
+    await expectSummary(page);
+  });
+
+  test("one location picks a published row carrying Dari website Anda", async ({
+    page,
+  }) => {
+    const contexts: Record<string, unknown>[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+        contexts.push(
+          (
+            request.postDataJSON() as {
+              intake: { context: Record<string, unknown> };
+            }
+          ).intake.context,
+        );
+    });
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await chooseFocus(page, "Satu lokasi");
+    await pressLanjut(page);
+    await expectLocationScreen(page);
+    const published = locationScreen(page).getByRole("radio", {
+      name: /Kedai Fiksi Cimahi/,
+    });
+    await expect(published).toContainText("Dari website Anda");
+    await published.click();
+    await pressLanjut(page);
+    await expectSummary(page);
+    const focusRow = page.locator('section[aria-label="Fokus audit"]');
+    await expect(focusRow).toContainText("Satu lokasi");
+    await expect(focusRow).toContainText("Kedai Fiksi Cimahi");
+    await confirmSummary(page);
+    await expectTenQuestions(page);
+    expect(contexts[0]).toMatchObject({
+      focus: {
+        value: {
+          kind: "cabang",
+          name: "Kedai Fiksi Cimahi",
+          address: "Jl. Contoh Fiksi No. 2, Cimahi",
+        },
+      },
+      market: null,
+    });
+  });
+
+  test("the location screen blocks Lanjut until name and address are filled, and a reload restores both", async ({
+    page,
+  }) => {
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await chooseFocus(page, "Satu lokasi");
+    await pressLanjut(page);
+    await expectLocationScreen(page);
+    await locationScreen(page)
+      .getByRole("button", { name: "Tambah lokasi lain" })
+      .click();
+    const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
+    const name = locationScreen(page).getByRole("textbox", {
+      name: "Nama lokasi",
+    });
+    const address = locationScreen(page).getByRole("textbox", {
+      name: "Alamat atau area",
+    });
+    await name.fill("Cabang Baru");
+    await expect(lanjut).toBeDisabled();
+    await address.fill("Jl. Fiksi 40");
+    await expect(lanjut).toBeEnabled();
+    await page.reload();
+    await expectLocationScreen(page);
+    await expect(
+      locationScreen(page).getByRole("textbox", { name: "Nama lokasi" }),
+    ).toHaveValue("Cabang Baru");
+    await expect(
+      locationScreen(page).getByRole("textbox", { name: "Alamat atau area" }),
+    ).toHaveValue("Jl. Fiksi 40");
+    await pressLanjut(page);
+    await expectSummary(page);
+  });
+
+  test("a product target typed by hand carries Dari Anda and survives a reload", async ({
+    page,
+  }) => {
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await chooseFocus(page, "Satu produk atau layanan");
+    await pressLanjut(page);
+    await expectProductScreen(page);
+    await expect(
+      productScreen(page).getByRole("radio", { name: "kopi susu" }),
+    ).toContainText("Dari website Anda");
+    await productScreen(page)
+      .getByRole("button", { name: "Tambah produk atau layanan lain" })
+      .click();
+    await productScreen(page)
+      .getByRole("textbox", { name: "Nama produk atau layanan" })
+      .fill("paket rapat");
+    await expect(
+      productScreen(page).getByRole("radio", { name: /paket rapat/ }),
+    ).toContainText("Dari Anda");
+    await page.reload();
+    await expectProductScreen(page);
+    await pressLanjut(page);
+    await expectSummary(page);
+    const focusRow = page.locator('section[aria-label="Fokus audit"]');
+    await expect(focusRow).toContainText("Satu produk atau layanan");
+    await expect(focusRow).toContainText("paket rapat");
+  });
+
+  test("manual typing survives a transient match with a published row", async ({
+    page,
+  }) => {
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await chooseFocus(page, "Satu lokasi");
+    await pressLanjut(page);
+    await expectLocationScreen(page);
+    await locationScreen(page)
+      .getByRole("button", { name: "Tambah lokasi lain" })
+      .click();
+    const name = locationScreen(page).getByRole("textbox", {
+      name: "Nama lokasi",
+    });
+    const address = locationScreen(page).getByRole("textbox", {
+      name: "Alamat atau area",
+    });
+    await name.pressSequentially("Kedai Fiksi Dago");
+    // Mid-typing the pair equals the published row at
+    // "Jl. Fiksi Raya No. 10, Bandung" — the name must survive the match.
+    await address.pressSequentially("Jl. Fiksi Raya No. 10, Bandung Wetan");
+    await expect(name).toHaveValue("Kedai Fiksi Dago");
+    await expect(address).toHaveValue("Jl. Fiksi Raya No. 10, Bandung Wetan");
+
+    await pressKembali(page);
+    await expectFocusScreen(page);
+    await chooseFocus(page, "Satu produk atau layanan");
+    await pressLanjut(page);
+    await expectProductScreen(page);
+    await productScreen(page)
+      .getByRole("button", { name: "Tambah produk atau layanan lain" })
+      .click();
+    const product = productScreen(page).getByRole("textbox", {
+      name: "Nama produk atau layanan",
+    });
+    // "kopi susu" is a published offering — typing through it must keep
+    // the draft instead of collapsing to the suffix after the match.
+    await product.pressSequentially("kopi susu premium");
+    await expect(product).toHaveValue("kopi susu premium");
+    await expect(
+      productScreen(page).getByRole("radio", { name: /kopi susu premium/ }),
+    ).toContainText("Dari Anda");
+  });
+
+  test("locations whose source page lives off the business host are never offered", async ({
+    page,
+  }) => {
+    // Every published location points at a foreign host (M2): the cabang card
+    // disappears and only the manual link leads to the location screen.
+    await stubPreparationDraft(page, {
+      ...richDraft,
+      published_locations: [
+        {
+          name: "Kedai Fiksi Dago",
+          address: "Jl. Fiksi Raya No. 10, Bandung",
+          source_url: "https://aggregator.example/listing/kedai-fiksi",
+        },
+        {
+          name: "Kedai Fiksi Cimahi",
+          address: "Jl. Contoh Fiksi No. 2, Cimahi",
+          source_url: "https://kedai-fiksi.example.evil.example/lokasi",
+        },
+      ],
+    });
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await expect(
+      focusScreen(page).getByRole("radio", { name: "Satu lokasi" }),
+    ).toHaveCount(0);
+    await focusScreen(page)
+      .getByRole("button", { name: "Isi lokasi secara manual" })
+      .click();
+    await expectLocationScreen(page);
+    await locationScreen(page)
+      .getByRole("textbox", { name: "Nama lokasi" })
+      .fill("Satu-satunya gerai");
+    await locationScreen(page)
+      .getByRole("textbox", { name: "Alamat atau area" })
+      .fill("Jl. Fiksi 1, Bandung");
+    await pressLanjut(page);
+    await expectSummary(page);
+  });
+
+  test("Ubah on the summary focus row re-opens the focus screen and Kembali returns to the summary", async ({
+    page,
+  }) => {
+    await enter(page);
+    const focusRow = page.locator('section[aria-label="Fokus audit"]');
+    await focusRow.getByRole("button", { name: "Ubah" }).click();
+    await expectFocusScreen(page);
+    await pressKembali(page);
+    await expectSummary(page);
+    // The read-back row still reports the unchanged whole-brand focus.
+    await expect(focusRow).toContainText("Brand secara keseluruhan");
+  });
+
+  test("the focus and location screens hold within a 320px viewport", async ({
+    page,
+  }) => {
+    const noOverflow = async () =>
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    await stubPreparationDraft(page, richDraft);
+    await page.setViewportSize({ width: 320, height: 720 });
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await expectFocusScreen(page);
+    await noOverflow();
+    await chooseFocus(page, "Satu lokasi");
+    await pressLanjut(page);
+    await expectLocationScreen(page);
+    await noOverflow();
+    await locationScreen(page)
+      .getByRole("button", { name: "Tambah lokasi lain" })
+      .click();
+    await noOverflow();
+  });
 });

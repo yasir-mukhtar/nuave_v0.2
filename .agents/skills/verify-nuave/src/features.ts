@@ -4,8 +4,10 @@ import { join } from "node:path";
 import {
   auditStage,
   brandScreen,
+  chooseFocus,
   completeSyntheticSummary,
   confirmBrand,
+  confirmFocus,
   confirmSummary,
   downloadEvidenceJson,
   editQuestion,
@@ -13,13 +15,18 @@ import {
   expectAuditDone,
   expectBrandConfirm,
   expectEmptyEntry,
+  expectFocusScreen,
+  expectLocationScreen,
+  expectProductScreen,
   expectQuestionReview,
   expectTenQuestions,
   expectSummary,
   fillEntry,
   injectUsefulnessFailureOnce,
   INTAKE_SESSION_KEY,
+  locationScreen,
   openAuditFromLanding,
+  pressLanjut,
   pressPeriksa,
   readingScreen,
   reportLocator,
@@ -202,23 +209,56 @@ async function smartIntakeSummary(ctx: DriveContext) {
   ctx.check(
     '`Periksa` shows the labelled reading screen, then the "Ini brand yang ingin Anda audit?" check with name, source and Kembali/Lanjut',
   );
-  await ctx.step("brand-confirm-to-summary", async () => {
+  await ctx.step("brand-confirm-to-focus", async () => {
     await confirmBrand(page);
+    // The synthetic reading publishes no locations, so the location scope is
+    // a manual-entry link, not a card.
+    await expect(page.getByRole("radio", { name: "Satu lokasi" })).toHaveCount(
+      0,
+    );
+    await expect(
+      page.getByRole("button", { name: "Isi lokasi secara manual" }),
+    ).toBeVisible();
+    await expect(page.getByText("Saran Nuave", { exact: true })).toBeVisible();
   });
-  ctx.check('`Lanjut` on the brand check reaches "Ini yang Nuave pahami."');
+  ctx.check(
+    '`Lanjut` on the brand check reaches "Apa yang ingin Anda audit?" with the labelled whole-brand suggestion',
+  );
   await ctx.step("summary-rows-edited", async () => {
+    // Whole-brand `Lanjut` lands on the summary; its row edits happen under
+    // the default brand focus because a product focus hides the offerings
+    // editor.
+    await confirmFocus(page);
     await completeSyntheticSummary(page);
   });
   await ctx.step("focus-one-offering", async () => {
+    // The focus row is read-back; `Ubah` re-opens the dedicated screens.
+    // The offerings editor is hidden once focus is a product, so this step
+    // runs after the row edits.
     await page
-      .getByRole("button", { name: "Satu produk atau layanan" })
+      .locator('section[aria-label="Fokus audit"]')
+      .getByRole("button", { name: "Ubah" })
       .click();
+    await expectFocusScreen(page);
+    await chooseFocus(page, "Satu produk atau layanan");
+    await pressLanjut(page);
+    await expectProductScreen(page);
     // Synthetic reading proposes no offerings, so there is no radio to pick;
-    // the user types the name instead.
+    // the owner types the product target instead.
     await page
-      .getByRole("textbox", { name: "Nama lain bila tidak ada dalam pilihan" })
+      .getByRole("textbox", { name: "Nama produk atau layanan" })
       .fill("kopi susu");
+    await pressLanjut(page);
+    await expectSummary(page);
+    await expect(
+      page
+        .locator('section[aria-label="Fokus audit"]')
+        .getByText("Satu produk atau layanan"),
+    ).toBeVisible();
   });
+  ctx.check(
+    "`Ubah` on the read-back focus row re-opens the focus screen; the product target accepts the typed offering and returns to the summary",
+  );
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
     await expectQuestionReview(page);
@@ -254,13 +294,28 @@ async function richPreparation(ctx: DriveContext) {
   await ctx.step("entry-filled", async () => {
     await fillEntry(page);
   });
-  await ctx.step("rich-reading-to-summary", async () => {
+  await ctx.step("rich-reading-to-location", async () => {
     await pressPeriksa(page);
     await expectBrandConfirm(page);
     await confirmBrand(page);
+    // The fixture publishes two locations on the canonical host, so the
+    // `Satu lokasi` card is offered.
+    await chooseFocus(page, "Satu lokasi");
+    await pressLanjut(page);
+    await expectLocationScreen(page);
+    for (const name of ["Kedai Fiksi Dago", "Kedai Fiksi Cimahi"]) {
+      const row = locationScreen(page).getByRole("radio", { name });
+      await expect(row).toBeVisible();
+      await expect(row).toContainText("Dari website Anda");
+    }
+    await locationScreen(page)
+      .getByRole("radio", { name: "Kedai Fiksi Dago" })
+      .click();
+    await pressLanjut(page);
+    await expectSummary(page);
   });
   ctx.check(
-    "The stubbed rich preparation reaches the brand check and summary without typing",
+    "The stubbed rich preparation reaches the brand check, offers the published locations labelled `Dari website Anda`, and lands on the summary without typing",
   );
   const prepared = (
     (await sessionValue(page, INTAKE_SESSION_KEY)) as {
@@ -311,7 +366,7 @@ async function richPreparation(ctx: DriveContext) {
     prepared?: unknown;
   } | null;
   expect(restored?.prepared).toEqual(prepared);
-  ctx.check("A reload restores the same prepared values — session version 4");
+  ctx.check("A reload restores the same prepared values — session version 5");
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
     await expectQuestionReview(page);

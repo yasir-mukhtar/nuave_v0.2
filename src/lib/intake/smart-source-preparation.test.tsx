@@ -301,11 +301,14 @@ async function inspect() {
   );
   fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
 }
-// Spec 013 J2: `Periksa` lands on the brand check; `Lanjut` opens the summary.
+// Spec 013 J2+J4: `Periksa` lands on the brand check; `Lanjut` opens the
+// focus screen; `Lanjut` on the whole-brand default opens the summary.
 async function throughBrand() {
   await screen.findByRole("heading", {
     name: "Ini brand yang ingin Anda audit?",
   });
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
   fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
   await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
 }
@@ -719,7 +722,15 @@ describe("server excerpt through the active Smart preparation", () => {
         {
           name: "Kedai Pelangi Cimahi",
           address: "Jl. Pelangi Fiksi No. 2, Cimahi",
-          source_url: "",
+          // www-equivalent page on the same host still counts as published
+          // by the business (PR #98 M2, applied in J4).
+          source_url: `${source.replace("https://", "https://www.")}lokasi`,
+        },
+        {
+          name: "Kedai Pelangi Terluar",
+          address: "Jl. Pelangi Fiksi No. 3",
+          // A listing on another host is never shown as website-published.
+          source_url: "https://agregator.example/listing/pelangi",
         },
       ],
       category_suggestions: ["kedai kopi", "kafe"],
@@ -744,7 +755,7 @@ describe("server excerpt through the active Smart preparation", () => {
         {
           name: "Kedai Pelangi Cimahi",
           address: "Jl. Pelangi Fiksi No. 2, Cimahi",
-          sourceUrl: null,
+          sourceUrl: "https://www.kedai-pelangi-fiksi.example/lokasi",
         },
       ],
       origin: "website",
