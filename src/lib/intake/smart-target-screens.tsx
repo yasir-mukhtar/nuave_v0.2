@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
 import {
   IconBuildingStore,
   IconMapPin,
@@ -168,36 +168,44 @@ export function SmartLocationScreen({
       ...patch,
       origins: { ...selection.origins, focus: "owner" },
     });
-  // The manual fields stay blank while a published row is the answer —
-  // typing over a picked row clears the other field, so the owner never
-  // silently edits a website-published row into a `Dari Anda` one.
-  const typeManual = (patch: Partial<SmartSelection>) => {
-    const next: Partial<SmartSelection> = manualActive
-      ? patch
-      : { locationName: "", locationAddress: "", ...patch };
-    updateTarget(next);
+  // Manual typing lives in a local draft so a value that only transiently
+  // equals a published row mid-keystroke cannot blank the fields or drop the
+  // sibling input; the draft survives the match and typing continues on it.
+  const [manualDraft, setManualDraft] = useState<{
+    name: string;
+    address: string;
+  } | null>(null);
+  const shownManual = manualDraft ?? {
+    name: manualActive ? selection.locationName : "",
+    address: manualActive ? selection.locationAddress : "",
+  };
+  // The manual fields stay blank while a published row is the answer, and a
+  // published pick abandons the draft — a `Dari website Anda` row is never
+  // silently edited into a `Dari Anda` one.
+  const typeManual = (patch: { name?: string; address?: string }) => {
+    const next = { ...shownManual, ...patch };
+    setManualDraft(next);
+    updateTarget({ locationName: next.name, locationAddress: next.address });
   };
   const manualForm = (
     <div className={`${controls.manual} grid gap-3`}>
       <label className="grid gap-2 type-label">
         Nama lokasi
         <Input
-          value={manualActive ? selection.locationName : ""}
+          value={shownManual.name}
           maxLength={300}
           autoComplete="off"
-          onChange={(event) => typeManual({ locationName: event.target.value })}
+          onChange={(event) => typeManual({ name: event.target.value })}
         />
       </label>
       <label className="grid gap-2 type-label">
         Alamat atau area
         <Input
-          value={manualActive ? selection.locationAddress : ""}
+          value={shownManual.address}
           maxLength={500}
           autoComplete="off"
           placeholder="Jalan, nomor, dan kota atau area"
-          onChange={(event) =>
-            typeManual({ locationAddress: event.target.value })
-          }
+          onChange={(event) => typeManual({ address: event.target.value })}
         />
       </label>
       <p className={`${controls.hint} type-copy-sm m-0`}>
@@ -224,11 +232,13 @@ export function SmartLocationScreen({
             onValueChange={(next) => {
               if (!next.startsWith("loc-")) return;
               const picked = locations[Number(next.slice(4))];
-              if (picked)
+              if (picked) {
+                setManualDraft(null);
                 updateTarget({
                   locationName: picked.name,
                   locationAddress: picked.address,
                 });
+              }
             }}
           >
             {locations.map((item, index) => (
@@ -291,17 +301,24 @@ export function SmartProductScreen({
       ...patch,
       origins: { ...selection.origins, focus: "owner" },
     });
+  // Same local-draft rule as the location screen: a typed value that
+  // transiently equals an offering mid-keystroke must not blank the input.
+  const [manualDraft, setManualDraft] = useState<string | null>(null);
+  const shownManual =
+    manualDraft ?? (manualActive ? selection.productTarget : "");
   const manualForm = (
     <div className={`${controls.manual} grid gap-3`}>
       <label className="grid gap-2 type-label">
         Nama produk atau layanan
         <Input
-          value={manualActive ? selection.productTarget : ""}
+          value={shownManual}
           maxLength={300}
           autoComplete="off"
-          onChange={(event) =>
-            updateTarget({ productTarget: event.target.value })
-          }
+          onChange={(event) => {
+            const value = event.target.value;
+            setManualDraft(value);
+            updateTarget({ productTarget: value });
+          }}
         />
       </label>
       <p className={`${controls.hint} type-copy-sm m-0`}>
@@ -328,7 +345,10 @@ export function SmartProductScreen({
             onValueChange={(next) => {
               if (!next.startsWith("off-")) return;
               const picked = offerings[Number(next.slice(4))];
-              if (picked) updateTarget({ productTarget: picked });
+              if (picked) {
+                setManualDraft(null);
+                updateTarget({ productTarget: picked });
+              }
             }}
           >
             {offerings.map((offering, index) => (

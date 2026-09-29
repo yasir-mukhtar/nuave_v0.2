@@ -768,6 +768,52 @@ test.describe("J4 focus and target screens", () => {
     await expect(focusRow).toContainText("paket rapat");
   });
 
+  test("manual typing survives a transient match with a published row", async ({
+    page,
+  }) => {
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await chooseFocus(page, "Satu lokasi");
+    await pressLanjut(page);
+    await expectLocationScreen(page);
+    await locationScreen(page)
+      .getByRole("button", { name: "Tambah lokasi lain" })
+      .click();
+    const name = locationScreen(page).getByRole("textbox", {
+      name: "Nama lokasi",
+    });
+    const address = locationScreen(page).getByRole("textbox", {
+      name: "Alamat atau area",
+    });
+    await name.pressSequentially("Kedai Fiksi Dago");
+    // Mid-typing the pair equals the published row at
+    // "Jl. Fiksi Raya No. 10, Bandung" — the name must survive the match.
+    await address.pressSequentially("Jl. Fiksi Raya No. 10, Bandung Wetan");
+    await expect(name).toHaveValue("Kedai Fiksi Dago");
+    await expect(address).toHaveValue("Jl. Fiksi Raya No. 10, Bandung Wetan");
+
+    await pressKembali(page);
+    await expectFocusScreen(page);
+    await chooseFocus(page, "Satu produk atau layanan");
+    await pressLanjut(page);
+    await expectProductScreen(page);
+    await productScreen(page)
+      .getByRole("button", { name: "Tambah produk atau layanan lain" })
+      .click();
+    const product = productScreen(page).getByRole("textbox", {
+      name: "Nama produk atau layanan",
+    });
+    // "kopi susu" is a published offering — typing through it must keep
+    // the draft instead of collapsing to the suffix after the match.
+    await product.pressSequentially("kopi susu premium");
+    await expect(product).toHaveValue("kopi susu premium");
+    await expect(
+      productScreen(page).getByRole("radio", { name: /kopi susu premium/ }),
+    ).toContainText("Dari Anda");
+  });
+
   test("locations whose source page lives off the business host are never offered", async ({
     page,
   }) => {

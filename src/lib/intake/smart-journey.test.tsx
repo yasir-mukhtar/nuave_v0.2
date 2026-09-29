@@ -1025,4 +1025,67 @@ describe("Spec 013 J4 focus and target screens", () => {
     expect(saved.selection.locationName).toBe("Gerai Baru");
     expect(saved.selection.locationAddress).toBe("");
   });
+
+  // Types one character at a time — bulk fireEvent.change skips the
+  // intermediate values a real keystroke sequence passes through.
+  const typeChars = (input: HTMLInputElement, text: string) => {
+    for (const ch of text) {
+      fireEvent.change(input, { target: { value: input.value + ch } });
+    }
+  };
+
+  it("keeps typed text whole across a transient match with a published offering (P2)", async () => {
+    stubPreparation({ draft: j4Draft });
+    render(<SmartIntakeJourney live={false} />);
+    await toFocusScreen();
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+    await screen.findByRole("heading", { name: "Produk atau layanan mana?" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tambah produk atau layanan lain" }),
+    );
+    const input = screen.getByRole("textbox", {
+      name: "Nama produk atau layanan",
+    }) as HTMLInputElement;
+    // "kopi susu" is a published offering — the draft must not blank when
+    // the owner types through it on the way to a longer name.
+    typeChars(input, "kopi susu premium");
+    expect(input.value).toBe("kopi susu premium");
+    const manual = screen.getByRole("radio", { name: /kopi susu premium/ });
+    expect(manual.getAttribute("aria-checked")).toBe("true");
+    expect(manual.textContent).toContain("Dari Anda");
+  });
+
+  it("keeps the location name across a transient match with a published row (P2)", async () => {
+    stubPreparation({ draft: j4Draft });
+    render(<SmartIntakeJourney live={false} />);
+    await toFocusScreen();
+    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+    await screen.findByRole("heading", {
+      name: "Cabang mana yang ingin diaudit?",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Tambah lokasi lain" }));
+    const name = screen.getByRole("textbox", {
+      name: "Nama lokasi",
+    }) as HTMLInputElement;
+    const address = screen.getByRole("textbox", {
+      name: "Alamat atau area",
+    }) as HTMLInputElement;
+    typeChars(name, "Kedai Fiksi Dago");
+    // Mid-typing the pair equals the published row at
+    // "Jl. Fiksi Raya No. 10, Bandung" — the name must survive the match.
+    typeChars(address, "Jl. Fiksi Raya No. 10, Bandung Wetan");
+    expect(name.value).toBe("Kedai Fiksi Dago");
+    expect(address.value).toBe("Jl. Fiksi Raya No. 10, Bandung Wetan");
+    const saved = JSON.parse(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+    );
+    expect(saved.selection.locationName).toBe("Kedai Fiksi Dago");
+    expect(saved.selection.locationAddress).toBe(
+      "Jl. Fiksi Raya No. 10, Bandung Wetan",
+    );
+  });
 });
