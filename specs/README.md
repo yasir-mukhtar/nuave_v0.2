@@ -51,10 +51,9 @@ any, and the active milestone. The entries below record each package's
 latest status.
 
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
-  — **Implementing** (approved 2026-09-27); J2
-  ([#96](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96)) and J3
-  ([#98](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98)) merged with
-  PASS; J4 next. Stage 1 of the paying-customer plan: the Airbnb-style
+  — **Implementing** (approved 2026-09-27); J2–J4 merged; J5 next.
+  Review evidence: [plan §1](../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
+  Stage 1 of the paying-customer plan: the Airbnb-style
   one-question-per-screen intake, keeping today's rules and information
   (J1 decisions F1–F18). Slices J2–J7 and JQ.
 
