@@ -13,13 +13,14 @@ The audited business is the customer's own business, not a client's. Nuave is
 one automated path from intake form to downloadable report, not a monitoring
 dashboard or subscription platform.
 
-The complete journey is reviewable end to end with deterministic fixtures and a
-clearly simulated checkout, and `https://v2.nuave.ai` is live as a noindex,
-direct-link-only deployment. The former access-code gate has been removed under
-the founder's recorded interim-exposure acceptance; a minimal server-side
-rate/cost guard and the
-[deferred dependency security updates](./docs/NOW.md#deferred-security-work--before-customer-testing-or-public-sharing)
-are still required before any public link sharing.
+The live `https://v2.nuave.ai` deployment is public with no login and marked
+noindex. Its audit path runs without payment; the separate fixture journey
+includes a clearly simulated checkout. The founder's recorded interim-exposure
+acceptance remains in force. Before outside users or public link sharing, the
+safeguards listed in [`docs/NOW.md`](./docs/NOW.md#rules-still-in-force), including
+the server-side spending cap and
+[deferred dependency security updates](./docs/NOW.md#deferred-security-work--before-customer-testing-or-public-sharing),
+are still required.
 
 The real end-to-end path has worked since 2026-09-19. The prepared intake
 (Spec 011) and redesigned report (Spec 012) shipped through PRs #78–#81, and
