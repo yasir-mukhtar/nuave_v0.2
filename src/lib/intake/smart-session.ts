@@ -33,7 +33,7 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 5;
+  version: 6;
   /**
    * `reading` is persisted only while a preparation is in flight: a refresh
    * restores it as `entry` with an interruption note, never a replayed call
@@ -46,17 +46,31 @@ export type SmartSession = {
     | "focus"
     | "location"
     | "product"
+    | "category"
+    | "offerings"
+    | "service"
+    | "market"
     | "summary"
-    | "clarify"
     | "questions"
     | "audit";
   entry: { name: string; source: string };
   /**
-   * Set while the focus screen was opened from the summary's `Ubah`: in-flow
-   * Back returns to that summary stage instead of the brand check. Cleared
-   * on every transition out of `focus` (Spec 013 J4).
+   * Spec 013 J5: set while a detail screen (or the focus screen) was opened
+   * from the summary's `Ubah` — the review stage the edit detour returns to.
+   * Lanjut hops walk the remaining chain and consume the marker on arrival;
+   * Back exits to it from the first detail screen of the detour.
    */
-  focusReturn?: "summary" | "clarify";
+  editReturn?: "summary";
+  /**
+   * The focus + category the owner confirmed on the summary before a focus
+   * edit began. While both stay untouched the detour may exit straight back
+   * to the review; once either changes the chain continues through category
+   * so the re-resolved suggestion is shown (R-05).
+   */
+  editBaseline?: {
+    focus: "brand" | "produk" | "cabang";
+    category: string;
+  };
   identity: SmartPreparedIdentity | null;
   prepared: PreparedUnderstanding | null;
   selection: SmartSelection | null;
@@ -71,7 +85,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 5,
+    version: 6,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -96,7 +110,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 5 ||
+      value.version !== 6 ||
       ![
         "entry",
         "reading",
@@ -104,8 +118,11 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         "focus",
         "location",
         "product",
+        "category",
+        "offerings",
+        "service",
+        "market",
         "summary",
-        "clarify",
         "questions",
         "audit",
       ].includes(String(value.stage)) ||
@@ -116,8 +133,14 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       value.entry.source.length > 2_000 ||
       !Array.isArray(value.preparationCalls) ||
       !Array.isArray(value.generationAttempts) ||
-      (value.focusReturn !== undefined &&
-        !["summary", "clarify"].includes(String(value.focusReturn)))
+      (value.editReturn !== undefined && value.editReturn !== "summary") ||
+      (value.editBaseline !== undefined &&
+        (!isRecord(value.editBaseline) ||
+          !["brand", "produk", "cabang"].includes(
+            String(value.editBaseline.focus),
+          ) ||
+          typeof value.editBaseline.category !== "string" ||
+          value.editBaseline.category.length > 300))
     )
       return null;
     const stage = value.stage as SmartSession["stage"];
@@ -156,7 +179,8 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const validSelection = (selection: unknown) =>
       isRecord(selection) &&
       typeof selection.name === "string" &&
-      ["website", "nuave", "owner"].includes(String(selection.nameOrigin));
+      ["website", "nuave", "owner"].includes(String(selection.nameOrigin)) &&
+      ["main", "suggestion", "manual"].includes(String(selection.categoryKind));
     if (
       (!["entry", "reading"].includes(stage) &&
         (!validPrepared(value.prepared) || !validSelection(value.selection))) ||

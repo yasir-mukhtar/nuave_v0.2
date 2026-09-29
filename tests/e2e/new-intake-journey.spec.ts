@@ -1,29 +1,37 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
   brandScreen,
-  categorySection,
+  categoryScreen,
   chooseFocus,
   confirmBrand,
   confirmFocus,
+  CONFIRM_SUMMARY,
   confirmSummary,
   entryScreen,
   expectBrandConfirm,
+  expectCategoryScreen,
   expectFocusScreen,
   expectLocationScreen,
+  expectMarketScreen,
+  expectOfferingsScreen,
   expectProductScreen,
+  expectServiceScreen,
   expectSummary,
   expectTenQuestions,
   fillEntry,
   focusScreen,
   INTAKE_SESSION_KEY,
   locationScreen,
+  marketScreen,
   pressKembali,
   pressLanjut,
   pressPeriksa,
   productScreen,
   RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
+  serviceScreen,
   stubPreparationDraft,
+  throughDetailScreens,
   toSummary,
 } from "./journey";
 
@@ -225,9 +233,11 @@ test("rich reading reaches one summary and question review without more typing",
   await expect(focusRow).toContainText("Brand secara keseluruhan");
   await expect(focusRow).toContainText("Saran Nuave");
   await expect(
-    page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }),
-  ).toBeChecked();
-  await expect(page.getByRole("checkbox", { name: "Bandung" })).toBeChecked();
+    page.locator('section[aria-label="Cara layanan"]'),
+  ).toContainText("Di lokasi bisnis Anda");
+  const marketRow = page.locator('section[aria-label="Jangkauan pasar"]');
+  await expect(marketRow).toContainText("Beberapa area");
+  await expect(marketRow).toContainText("Bandung");
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(calls).toEqual([
@@ -308,7 +318,7 @@ test("the labelled rich preparation carries locations and category suggestions i
 test("a session stored under a previous intake version restarts at an empty entry", async ({
   page,
 }) => {
-  await page.addInitScript((v5Key) => {
+  await page.addInitScript((currentKey) => {
     sessionStorage.setItem(
       "nuave.localIntake.v3",
       JSON.stringify({
@@ -327,7 +337,7 @@ test("a session stored under a previous intake version restarts at an empty entr
       }),
     );
     // A well-formed v4 record under its own key is never read: the current
-    // key is v5, and older keys are simply not looked at.
+    // key is v6, and older keys are simply not looked at.
     sessionStorage.setItem(
       "nuave.localIntake.v4",
       JSON.stringify({
@@ -365,10 +375,10 @@ test("a session stored under a previous intake version restarts at an empty entr
         generationAttempts: [],
       }),
     );
-    // A stale-version record under the current v5 key is just as unreadable —
+    // A stale-version record under the current v6 key is just as unreadable —
     // it must restart at entry rather than mix old and new shape.
     sessionStorage.setItem(
-      v5Key,
+      currentKey,
       JSON.stringify({
         version: 4,
         stage: "summary",
@@ -400,28 +410,41 @@ test("a session stored under a previous intake version restarts at an empty entr
   await expectBrandConfirm(page);
 });
 
-test("partial extraction opens one clarification while channel and reach stay on summary", async ({
+test("a cleared detail row routes the summary CTA to its owning screen", async ({
   page,
 }) => {
   await enter(page, false);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Lengkapi yang perlu dipastikan" }),
-  ).toBeVisible();
-  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
-  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
+  // Clearing a required answer through its own screen leaves a gap; the
+  // summary then offers the single completion CTA instead of confirming.
+  await page
+    .locator('section[aria-label="Kategori"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectCategoryScreen(page);
+  await page.getByRole("textbox", { name: "Kategori" }).fill("");
+  await pressKembali(page);
+  await expectSummary(page);
+  await expect(page.getByText(/Perlu dipastikan: Kategori/)).toBeVisible();
+  await expect(page.getByRole("button", { name: CONFIRM_SUMMARY })).toHaveCount(
+    0,
+  );
+  // The CTA opens the owning detail screen without an edit marker, so
+  // Lanjut walks the ordinary chain — already-answered screens need only
+  // the footer press — until it lands back on the review.
   await page
     .getByRole("button", { name: "Lengkapi yang perlu dipastikan" })
     .click();
-  await expect(page.locator('[data-smart-summary="clarify"]')).toBeVisible();
-  const category = categorySection(page);
-  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .fill("kopi susu");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .press("Enter");
+  await expectCategoryScreen(page);
+  await page.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
+  await pressLanjut(page);
+  await expectOfferingsScreen(page);
+  await pressLanjut(page);
+  await expectServiceScreen(page);
+  await pressLanjut(page);
+  await expectMarketScreen(page);
+  await pressLanjut(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
 });
@@ -451,7 +474,9 @@ test("product and location choices freeze only their active meaning", async ({
   await expectProductScreen(page);
   await productScreen(page).getByRole("radio", { name: "roti" }).click();
   await pressLanjut(page);
-  await expectSummary(page);
+  // Product focus chains through the detail screens; its offering list is
+  // read-only catalogue context and the market screen still applies.
+  await throughDetailScreens(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
@@ -479,6 +504,10 @@ test("product and location choices freeze only their active meaning", async ({
     .getByRole("textbox", { name: "Alamat atau area" })
     .fill("Jl. Contoh 12");
   await pressLanjut(page);
+  // The focus change makes the detour pass the category checkpoint, whose
+  // Lanjut then exits straight back to the review.
+  await expectCategoryScreen(page);
+  await pressLanjut(page);
   await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
@@ -505,17 +534,29 @@ test("material correction invalidates the old questions; cancel keeps the commit
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
-  const category = categorySection(page);
-  await category.getByRole("button", { name: "Ubah" }).click();
-  await category.getByRole("textbox", { name: "Kategori" }).fill("warung kopi");
+  const categoryRow = page.locator('section[aria-label="Kategori"]');
+  const editCategory = async () => {
+    await categoryRow.getByRole("button", { name: "Ubah" }).click();
+    await expectCategoryScreen(page);
+    const input = categoryScreen(page).getByRole("textbox", {
+      name: "Kategori",
+    });
+    if (!(await input.isVisible()))
+      await categoryScreen(page)
+        .getByRole("button", { name: "Tulis kategori sendiri" })
+        .click();
+    await input.fill("warung kopi");
+    await pressKembali(page);
+    await expectSummary(page);
+  };
+  await editCategory();
   await page.getByRole("button", { name: "Batalkan perubahan" }).click();
   await expectTenQuestions(page);
   expect(questions).toHaveLength(1);
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
-  await category.getByRole("button", { name: "Ubah" }).click();
-  await category.getByRole("textbox", { name: "Kategori" }).fill("warung kopi");
+  await editCategory();
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(questions).toHaveLength(2);
@@ -558,6 +599,7 @@ test("a name-only edit reuses the reading; changing the website reads again", as
   expect(calls).toHaveLength(4);
   await confirmBrand(page);
   await confirmFocus(page);
+  await throughDetailScreens(page);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
 });
 
@@ -650,10 +692,10 @@ test.describe("J4 focus and target screens", () => {
       "GET /api/audit/identity",
       "POST /api/audit/extract",
     ]);
-    // Whole-brand continues straight to the summary.
+    // Whole-brand continues through the detail screens to the summary.
     await chooseFocus(page, "Brand secara keseluruhan");
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughDetailScreens(page);
   });
 
   test("one location picks a published row carrying Dari website Anda", async ({
@@ -683,7 +725,7 @@ test.describe("J4 focus and target screens", () => {
     await expect(published).toContainText("Dari website Anda");
     await published.click();
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughDetailScreens(page);
     const focusRow = page.locator('section[aria-label="Fokus audit"]');
     await expect(focusRow).toContainText("Satu lokasi");
     await expect(focusRow).toContainText("Kedai Fiksi Cimahi");
@@ -734,7 +776,7 @@ test.describe("J4 focus and target screens", () => {
       locationScreen(page).getByRole("textbox", { name: "Alamat atau area" }),
     ).toHaveValue("Jl. Fiksi 40");
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughDetailScreens(page);
   });
 
   test("a product target typed by hand carries Dari Anda and survives a reload", async ({
@@ -762,7 +804,7 @@ test.describe("J4 focus and target screens", () => {
     await page.reload();
     await expectProductScreen(page);
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughDetailScreens(page);
     const focusRow = page.locator('section[aria-label="Fokus audit"]');
     await expect(focusRow).toContainText("Satu produk atau layanan");
     await expect(focusRow).toContainText("paket rapat");
@@ -851,7 +893,7 @@ test.describe("J4 focus and target screens", () => {
       .getByRole("textbox", { name: "Alamat atau area" })
       .fill("Jl. Fiksi 1, Bandung");
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughDetailScreens(page);
   });
 
   test("Ubah on the summary focus row re-opens the focus screen and Kembali returns to the summary", async ({
@@ -891,5 +933,122 @@ test.describe("J4 focus and target screens", () => {
       .getByRole("button", { name: "Tambah lokasi lain" })
       .click();
     await noOverflow();
+  });
+});
+
+test.describe("J5 business-detail screens", () => {
+  test("the category screen labels Nuave suggestions and keeps a typed pick", async ({
+    page,
+  }) => {
+    await stubPreparationDraft(page, richDraft);
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await pressLanjut(page);
+    await expectCategoryScreen(page);
+    const group = categoryScreen(page).getByRole("radiogroup", {
+      name: "Pilihan kategori",
+    });
+    // The website's main category doubles as the first Nuave suggestion; the
+    // other two suggestions follow.
+    const kedaiKopi = group.getByRole("radio", { name: /kedai kopi/ });
+    await expect(kedaiKopi).toContainText("Saran Nuave");
+    await expect(kedaiKopi).toBeChecked();
+    await expect(group.getByRole("radio", { name: /^kafe/ })).toBeVisible();
+    // Typing over the prepared pick replaces it with a `Dari Anda` card.
+    await categoryScreen(page)
+      .getByRole("button", { name: "Tulis kategori sendiri" })
+      .click();
+    await categoryScreen(page)
+      .getByRole("textbox", { name: "Kategori" })
+      .fill("rumah makan keluarga");
+    const own = group.getByRole("radio", { name: /rumah makan keluarga/ });
+    await expect(own).toBeChecked();
+    await expect(own).toContainText("Dari Anda");
+    await pressLanjut(page);
+    await expectOfferingsScreen(page);
+  });
+
+  test("the market screen refuses a ninth area instead of truncating", async ({
+    page,
+  }) => {
+    await stubPreparationDraft(page, {
+      ...richDraft,
+      market_reach: "beberapa",
+      market_areas: [
+        "Bandung",
+        "Cimahi",
+        "Bekasi",
+        "Depok",
+        "Bogor",
+        "Solo",
+        "Medan",
+        "Makassar",
+      ],
+    });
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await pressLanjut(page);
+    // Prepared values keep every detail screen's Lanjut enabled.
+    await pressLanjut(page);
+    await expectOfferingsScreen(page);
+    await pressLanjut(page);
+    await expectServiceScreen(page);
+    await pressLanjut(page);
+    await expectMarketScreen(page);
+    // All eight prepared areas sit selected; typing a ninth is refused with a
+    // visible block while Lanjut stays enabled for the valid set.
+    await marketScreen(page)
+      .getByRole("textbox", { name: "Tambah area lain" })
+      .fill("Denpasar");
+    await marketScreen(page).getByRole("button", { name: "Tambahkan" }).click();
+    await expect(marketScreen(page).getByRole("alert")).toContainText(
+      "dibatasi paling banyak 8",
+    );
+    await pressLanjut(page);
+    await expectSummary(page);
+    await expect(
+      page.locator('section[aria-label="Jangkauan pasar"]'),
+    ).toContainText("Makassar");
+  });
+
+  test("the service screen keeps multiple channels and the detail screens hold at 320px", async ({
+    page,
+  }) => {
+    const noOverflow = async () =>
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    await stubPreparationDraft(page, richDraft);
+    await page.setViewportSize({ width: 320, height: 720 });
+    await fillEntry(page);
+    await pressPeriksa(page);
+    await confirmBrand(page);
+    await pressLanjut(page);
+    await expectCategoryScreen(page);
+    await noOverflow();
+    await pressLanjut(page);
+    await expectOfferingsScreen(page);
+    await noOverflow();
+    await pressLanjut(page);
+    await expectServiceScreen(page);
+    await noOverflow();
+    // A second channel stacks on the prepared pick.
+    await serviceScreen(page)
+      .getByRole("checkbox", { name: "Digunakan secara online" })
+      .click();
+    await pressLanjut(page);
+    await expectMarketScreen(page);
+    await noOverflow();
+    await pressLanjut(page);
+    await expectSummary(page);
+    const serviceRow = page.locator('section[aria-label="Cara layanan"]');
+    await expect(serviceRow).toContainText("Di lokasi bisnis Anda");
+    await expect(serviceRow).toContainText("Dikirim ke pelanggan");
+    await expect(serviceRow).toContainText("Digunakan secara online");
+    await expect(serviceRow).toContainText("Dari Anda");
   });
 });

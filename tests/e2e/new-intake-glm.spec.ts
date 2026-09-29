@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
   auditStage,
-  completeSyntheticSummary,
   confirmSummary,
   downloadEvidenceJson,
   editQuestion,
@@ -424,7 +423,6 @@ test("unfinished run does not request a report", async ({ page }) => {
 test("GLM failure is visible and never silently retried", async ({ page }) => {
   const calls = track(page);
   await toSummary(page, { suffix: "?glm-stub=timeout" });
-  await completeSyntheticSummary(page);
   await confirmSummary(page);
   // Next's empty route announcer also has role="alert"; match the failure notice.
   await expect(

@@ -25,11 +25,17 @@ export const BRAND_HEADING = "Ini brand yang ingin Anda audit?";
 export const FOCUS_HEADING = "Apa yang ingin Anda audit?";
 export const LOCATION_HEADING = "Cabang mana yang ingin diaudit?";
 export const PRODUCT_HEADING = "Produk atau layanan mana?";
+export const CATEGORY_HEADING =
+  /^(Bisnis Anda|Lokasi ini|Produk atau layanan ini) biasanya disebut apa\?$/;
+export const OFFERINGS_HEADING = /^(Apakah ini|Apa saja) yang Anda tawarkan\?$/;
+export const SERVICE_HEADING =
+  "Bagaimana pelanggan mendapatkan yang Anda tawarkan?";
+export const MARKET_HEADING = "Di mana pelanggan Anda berada?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
-export const INTAKE_SESSION_KEY = "nuave.localIntake.v5";
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v6";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -189,6 +195,22 @@ export function productScreen(page: Page) {
   return page.locator('[data-intake-screen="product"]');
 }
 
+export function categoryScreen(page: Page) {
+  return page.locator('[data-intake-screen="category"]');
+}
+
+export function offeringsScreen(page: Page) {
+  return page.locator('[data-intake-screen="offerings"]');
+}
+
+export function serviceScreen(page: Page) {
+  return page.locator('[data-intake-screen="service"]');
+}
+
+export function marketScreen(page: Page) {
+  return page.locator('[data-intake-screen="market"]');
+}
+
 export async function expectFocusScreen(page: Page) {
   await expect(focusScreen(page)).toBeVisible();
   await expect(
@@ -207,6 +229,34 @@ export async function expectProductScreen(page: Page) {
   await expect(productScreen(page)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: PRODUCT_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectCategoryScreen(page: Page) {
+  await expect(categoryScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: CATEGORY_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectOfferingsScreen(page: Page) {
+  await expect(offeringsScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: OFFERINGS_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectServiceScreen(page: Page) {
+  await expect(serviceScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: SERVICE_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectMarketScreen(page: Page) {
+  await expect(marketScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: MARKET_HEADING }),
   ).toBeVisible();
 }
 
@@ -281,13 +331,64 @@ export async function confirmBrand(page: Page) {
   await expectFocusScreen(page);
 }
 
-/** Focus screen → `Lanjut` on the whole-brand default → the summary. */
+/** Focus screen → `Lanjut` → the category screen (first J5 detail screen). */
 export async function confirmFocus(page: Page) {
   await pressLanjut(page);
+  await expectCategoryScreen(page);
+}
+
+/**
+ * Walks the four business-detail screens to the summary. Prepared values are
+ * already selected, so `Lanjut` is enough; when the synthetic reading found
+ * nothing, each gated screen gets the smallest owner answer instead: a typed
+ * category, one added offering, the on-premise channel, nationwide reach.
+ * A location focus skips the market screen entirely.
+ */
+export async function throughDetailScreens(page: Page) {
+  const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
+  await expectCategoryScreen(page);
+  if (await lanjut.isDisabled()) {
+    const input = categoryScreen(page).getByRole("textbox", {
+      name: "Kategori",
+    });
+    if (!(await input.isVisible()))
+      await categoryScreen(page)
+        .getByRole("button", { name: "Tulis kategori sendiri" })
+        .click();
+    await input.fill("kedai kopi");
+  }
+  await pressLanjut(page);
+  await expectOfferingsScreen(page);
+  if (await lanjut.isDisabled()) {
+    const input = offeringsScreen(page).getByRole("textbox", {
+      name: "Penawaran lain",
+    });
+    await input.fill("kopi susu");
+    await input.press("Enter");
+  }
+  await pressLanjut(page);
+  await expectServiceScreen(page);
+  if (await lanjut.isDisabled())
+    await serviceScreen(page)
+      .getByRole("checkbox", { name: "Di lokasi bisnis Anda" })
+      .click();
+  await pressLanjut(page);
+  // A location focus audits no market: service hops straight to the summary.
+  await page
+    .locator('[data-intake-screen="market"], [data-smart-summary]')
+    .first()
+    .waitFor();
+  if (await marketScreen(page).isVisible()) {
+    if (await lanjut.isDisabled())
+      await marketScreen(page)
+        .getByRole("radio", { name: "Seluruh Indonesia" })
+        .click();
+    await pressLanjut(page);
+  }
   await expectSummary(page);
 }
 
-/** Entry → `Periksa` → reading → brand confirm → focus → summary. */
+/** Entry → `Periksa` → reading → brand confirm → focus → details → summary. */
 export async function toSummary(
   page: Page,
   entry: Parameters<typeof fillEntry>[1] = {},
@@ -297,28 +398,7 @@ export async function toSummary(
   await expectBrandConfirm(page);
   await confirmBrand(page);
   await confirmFocus(page);
-}
-
-export function categorySection(page: Page) {
-  return page.locator('section[aria-label="Kategori dan penawaran utama"]');
-}
-
-/**
- * The smallest summary edit that lets the synthetic reading continue: a
- * category, one offering, the on-premise channel, and nationwide reach.
- */
-export async function completeSyntheticSummary(page: Page) {
-  const category = categorySection(page);
-  await category.getByRole("button", { name: "Ubah" }).click();
-  await category.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .fill("kopi susu");
-  await category
-    .getByRole("textbox", { name: "Penawaran lain" })
-    .press("Enter");
-  await page.getByRole("checkbox", { name: "Di lokasi bisnis Anda" }).click();
-  await page.getByRole("button", { name: "Seluruh Indonesia" }).click();
+  await throughDetailScreens(page);
 }
 
 export async function confirmSummary(page: Page) {
@@ -335,10 +415,9 @@ export async function expectTenQuestions(page: Page) {
   await expect(page.locator("[data-question-slot]")).toHaveCount(10);
 }
 
-/** Entry → summary → completed summary → ten reviewable questions. */
+/** Entry → detail screens → summary → ten reviewable questions. */
 export async function toQuestions(page: Page, suffix = "") {
   await toSummary(page, { suffix });
-  await completeSyntheticSummary(page);
   await confirmSummary(page);
   await expectQuestionReview(page);
   await expectTenQuestions(page);

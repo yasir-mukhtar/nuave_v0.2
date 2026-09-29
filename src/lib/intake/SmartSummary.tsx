@@ -25,13 +25,18 @@ type Props = {
   selection: SmartSelection;
   onChange: (next: SmartSelection) => void;
   onConfirm: () => void;
-  onClarify: () => void;
+  /** Opens the dedicated screen that owns the first still-missing meaning. */
+  onFillGaps: () => void;
   onEditSource?: () => void;
   /** J4: opens the dedicated focus screen so the row itself stays read-back. */
   onEditFocus?: () => void;
+  /** J5: each business-detail row opens its own screen instead of editing inline. */
+  onEditCategory?: () => void;
+  onEditOfferings?: () => void;
+  onEditService?: () => void;
+  onEditMarket?: () => void;
   busy?: boolean;
   error?: string | null;
-  clarify?: boolean;
   sourceExcerptStatus?: SourceExcerptStatus;
   /** The intake frame focuses this heading on screen arrival (R-27). */
   headingRef?: RefObject<HTMLHeadingElement | null>;
@@ -87,18 +92,19 @@ export default function SmartSummary({
   selection,
   onChange,
   onConfirm,
-  onClarify,
+  onFillGaps,
   onEditSource,
   onEditFocus,
+  onEditCategory,
+  onEditOfferings,
+  onEditService,
+  onEditMarket,
   busy = false,
   error,
-  clarify = false,
   sourceExcerptStatus,
   headingRef,
 }: Props) {
   const [editingBusiness, setEditingBusiness] = useState(false);
-  const [editingOfferings, setEditingOfferings] = useState(clarify);
-  const [manualArea, setManualArea] = useState("");
   const [manualComparator, setManualComparator] = useState("");
   const update = (patch: Partial<SmartSelection>, originKey?: string) =>
     onChange({
@@ -109,17 +115,6 @@ export default function SmartSummary({
         : selection.origins,
     });
   const gaps = requiredSmartGaps(selection);
-  const marketReady =
-    selection.focus === "cabang" ||
-    Boolean(
-      selection.marketReach &&
-      (selection.marketReach === "sekitar"
-        ? selection.marketAreas.length === 1
-        : selection.marketReach === "beberapa"
-          ? selection.marketAreas.length > 0
-          : true),
-    );
-  const inlineReady = selection.serviceChannels.length > 0 && marketReady;
   const optionalPresent = Boolean(
     selection.targetCustomer ||
     selection.customerNeeds.length ||
@@ -129,12 +124,13 @@ export default function SmartSummary({
     selection.comparatorMode !== "unknown" ||
     (prepared.comparatorSuggestions.proposed?.length ?? 0) > 0,
   );
+  const reachLabel =
+    reaches.find(([value]) => value === selection.marketReach)?.[1] ?? "";
+  const areaBased =
+    selection.marketReach === "sekitar" || selection.marketReach === "beberapa";
 
   return (
-    <section
-      className="w-full pb-10"
-      data-smart-summary={clarify ? "clarify" : "ready"}
-    >
+    <section className="w-full pb-10" data-smart-summary="ready">
       <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
         Ini yang Nuave pahami.
       </h1>
@@ -241,84 +237,35 @@ export default function SmartSummary({
         ) : null}
       </Row>
 
-      <Row
-        title="Kategori dan penawaran utama"
-        origin={rowOrigin(selection, "category")}
-      >
+      <Row title="Kategori" origin={rowOrigin(selection, "category")}>
         <p className="type-copy">
           {selection.category || "Kategori belum tersedia"}
         </p>
-        <p className="type-copy-sm text-muted-foreground">
+        {onEditCategory ? (
+          <Button variant="link" className="w-fit" onClick={onEditCategory}>
+            Ubah
+          </Button>
+        ) : null}
+      </Row>
+
+      <Row
+        title="Produk dan layanan"
+        origin={
+          selection.focus === "produk"
+            ? rowOrigin(selection, "focus")
+            : rowOrigin(selection, "offerings")
+        }
+      >
+        <p className="type-copy">
           {selection.focus === "produk"
             ? selection.productTarget || "Pilih satu produk atau layanan"
             : selection.offerings.join(", ") ||
               "Penawaran utama belum tersedia"}
         </p>
-        <Button
-          variant="link"
-          className="w-fit"
-          onClick={() => setEditingOfferings(!editingOfferings)}
-        >
-          Ubah
-        </Button>
-        {editingOfferings ? (
-          <div className="grid gap-3">
-            <label className="grid gap-2 type-label">
-              Kategori
-              <Input
-                value={selection.category}
-                maxLength={200}
-                onChange={(event) =>
-                  update({ category: event.target.value }, "category")
-                }
-              />
-            </label>
-            {selection.focus !== "produk" ? (
-              <>
-                {(prepared.offerings.proposed ?? []).map((offering) => (
-                  <label
-                    key={offering}
-                    className="flex min-h-11 items-center gap-3 type-copy"
-                  >
-                    <Checkbox
-                      checked={selection.offerings.includes(offering)}
-                      onCheckedChange={(checked) => {
-                        update(
-                          {
-                            offerings: checked
-                              ? [...selection.offerings, offering]
-                              : selection.offerings.filter(
-                                  (item) => item !== offering,
-                                ),
-                          },
-                          "offerings",
-                        );
-                      }}
-                    />
-                    {offering}
-                  </label>
-                ))}
-                <label className="grid gap-2 type-label">
-                  Penawaran lain
-                  <Input
-                    maxLength={300}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter") return;
-                      event.preventDefault();
-                      const value = event.currentTarget.value.trim();
-                      if (value && !selection.offerings.includes(value))
-                        update(
-                          { offerings: [...selection.offerings, value] },
-                          "offerings",
-                        );
-                      event.currentTarget.value = "";
-                    }}
-                    placeholder="Ketik lalu tekan Enter"
-                  />
-                </label>
-              </>
-            ) : null}
-          </div>
+        {onEditOfferings ? (
+          <Button variant="link" className="w-fit" onClick={onEditOfferings}>
+            Ubah
+          </Button>
         ) : null}
       </Row>
 
@@ -326,152 +273,35 @@ export default function SmartSummary({
         title="Cara layanan"
         origin={rowOrigin(selection, "serviceChannels")}
       >
-        <div className="grid gap-1 sm:grid-cols-2">
-          {channels.map(([channel, label]) => (
-            <label
-              key={channel}
-              className="flex min-h-11 items-center gap-3 type-copy"
-            >
-              <Checkbox
-                checked={selection.serviceChannels.includes(channel)}
-                onCheckedChange={(checked) => {
-                  update(
-                    {
-                      serviceChannels: checked
-                        ? [...selection.serviceChannels, channel]
-                        : selection.serviceChannels.filter(
-                            (item) => item !== channel,
-                          ),
-                    },
-                    "serviceChannels",
-                  );
-                }}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-        {!selection.serviceChannels.length ? (
-          <p className="type-copy-sm text-muted-foreground">
-            Pilih setidaknya satu cara layanan.
-          </p>
+        <p className="type-copy">
+          {selection.serviceChannels
+            .map(
+              (channel) =>
+                channels.find(([value]) => value === channel)?.[1] ?? channel,
+            )
+            .join(", ") || "Belum dipilih"}
+        </p>
+        {onEditService ? (
+          <Button variant="link" className="w-fit" onClick={onEditService}>
+            Ubah
+          </Button>
         ) : null}
       </Row>
 
       {selection.focus !== "cabang" ? (
-        <>
-          <Row title="Jangkauan pasar" origin={rowOrigin(selection, "market")}>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {reaches.map(([reach, label]) => (
-                <Button
-                  key={reach}
-                  type="button"
-                  variant={
-                    selection.marketReach === reach ? "default" : "outline"
-                  }
-                  className="min-h-11 h-auto whitespace-normal"
-                  aria-pressed={selection.marketReach === reach}
-                  onClick={() =>
-                    update(
-                      {
-                        marketReach: reach,
-                        marketAreas: [],
-                        retainedBrandReach: reach,
-                        retainedBrandAreas: [],
-                      },
-                      "market",
-                    )
-                  }
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </Row>
-          {selection.marketReach === "sekitar" ||
-          selection.marketReach === "beberapa" ? (
-            <Row title="Area layanan" origin={rowOrigin(selection, "market")}>
-              {(prepared.marketAreas.proposed ?? []).map((area) => (
-                <label
-                  key={area}
-                  className="flex min-h-11 items-center gap-3 type-copy"
-                >
-                  <Checkbox
-                    checked={selection.marketAreas.includes(area)}
-                    onCheckedChange={(checked) => {
-                      const areas =
-                        selection.marketReach === "sekitar"
-                          ? checked
-                            ? [area]
-                            : []
-                          : checked
-                            ? [...selection.marketAreas, area]
-                            : selection.marketAreas.filter(
-                                (item) => item !== area,
-                              );
-                      update(
-                        { marketAreas: areas, retainedBrandAreas: areas },
-                        "market",
-                      );
-                    }}
-                  />
-                  {area}
-                </label>
-              ))}
-              <div className="flex gap-2">
-                <Input
-                  aria-label="Area layanan lain"
-                  value={manualArea}
-                  maxLength={160}
-                  onChange={(event) => setManualArea(event.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const area = manualArea.trim();
-                    if (!area) return;
-                    const areas =
-                      selection.marketReach === "sekitar"
-                        ? [area]
-                        : [...selection.marketAreas, area];
-                    update(
-                      { marketAreas: areas, retainedBrandAreas: areas },
-                      "market",
-                    );
-                    setManualArea("");
-                  }}
-                >
-                  Tambah area
-                </Button>
-              </div>
-              {selection.marketAreas
-                .filter(
-                  (area) =>
-                    !(prepared.marketAreas.proposed ?? []).includes(area),
-                )
-                .map((area) => (
-                  <p key={area} className="type-copy-sm">
-                    {area}{" "}
-                    <Button
-                      variant="link"
-                      onClick={() => {
-                        const areas = selection.marketAreas.filter(
-                          (item) => item !== area,
-                        );
-                        update(
-                          { marketAreas: areas, retainedBrandAreas: areas },
-                          "market",
-                        );
-                      }}
-                    >
-                      Hapus
-                    </Button>
-                  </p>
-                ))}
-            </Row>
+        <Row title="Jangkauan pasar" origin={rowOrigin(selection, "market")}>
+          <p className="type-copy">
+            {reachLabel || "Belum dipilih"}
+            {areaBased && selection.marketAreas.length
+              ? ` — ${selection.marketAreas.join(", ")}`
+              : ""}
+          </p>
+          {onEditMarket ? (
+            <Button variant="link" className="w-fit" onClick={onEditMarket}>
+              Ubah
+            </Button>
           ) : null}
-        </>
+        </Row>
       ) : null}
 
       <Row title="Detail tambahan" origin={originText.nuave}>
@@ -752,22 +582,14 @@ export default function SmartSummary({
           {error}
         </p>
       ) : null}
-      {!inlineReady ? (
-        <p role="status" className="type-copy-sm text-muted-foreground">
-          Lengkapi cara layanan, jangkauan, dan area yang berlaku di pilihan di
-          atas.
+      {gaps.length ? (
+        <p role="status" className="type-copy-sm mt-4 text-muted-foreground">
+          Perlu dipastikan: {gaps.join(", ")}.
         </p>
       ) : null}
       <div className="mt-6 flex flex-wrap gap-3">
         {gaps.length ? (
-          <Button
-            type="button"
-            className="min-h-11"
-            onClick={() => {
-              setEditingOfferings(true);
-              onClarify();
-            }}
-          >
+          <Button type="button" className="min-h-11" onClick={onFillGaps}>
             Lengkapi yang perlu dipastikan
           </Button>
         ) : (
@@ -775,7 +597,7 @@ export default function SmartSummary({
             type="button"
             className="min-h-11"
             onClick={onConfirm}
-            disabled={!inlineReady || busy}
+            disabled={busy}
           >
             Sudah sesuai — buat pertanyaan audit
           </Button>

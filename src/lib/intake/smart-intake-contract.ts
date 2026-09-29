@@ -20,7 +20,7 @@ import {
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
-export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v5" as const;
+export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v6" as const;
 
 type Origin = "website" | "nuave" | "owner";
 export type PreparedMeaning<T> = Readonly<{
@@ -77,6 +77,9 @@ export type SmartSelection = {
   locationName: string;
   locationAddress: string;
   category: string;
+  /** How the current category was picked: the prepared main category, one of
+   * the active focus's suggestions, or typed by the owner (R-05). */
+  categoryKind: "main" | "suggestion" | "manual";
   offerings: string[];
   serviceChannels: DirectTenAuditContext["serviceChannels"]["value"];
   marketReach: "sekitar" | "beberapa" | "seluruh" | "luar" | "";
@@ -412,12 +415,75 @@ export function usablePublishedLocations(
   });
 }
 
+/** Case-insensitive text match for deduping category options (R-13). */
+function sameCategoryText(a: string, b: string): boolean {
+  return (
+    a.trim().toLocaleLowerCase("id-ID") === b.trim().toLocaleLowerCase("id-ID")
+  );
+}
+
+/**
+ * The category suggestions that fit the active focus (R-13/R-24): a product
+ * focus uses the suggestion bound to the selected offering, while brand and
+ * location focuses share the whole-brand suggestions (location focus uses
+ * the whole-brand list — founder, 2026-09-27).
+ */
+export function categorySuggestionsFor(
+  prepared: PreparedUnderstanding,
+  selection: Pick<SmartSelection, "focus" | "productTarget">,
+): string[] {
+  if (selection.focus === "produk") {
+    const key = selection.productTarget.trim().toLocaleLowerCase("id-ID");
+    const entry = (prepared.offeringCategorySuggestions.proposed ?? []).find(
+      (item) => item.offering.trim().toLocaleLowerCase("id-ID") === key,
+    );
+    return key && entry ? [entry.category] : [];
+  }
+  return prepared.categorySuggestions.proposed ?? [];
+}
+
+/**
+ * R-05: after the focus — or the product target — changes, the category is
+ * re-resolved. A category the owner typed (`manual`) stays selected; a
+ * suggestion stays only while the new focus also suggests it; otherwise the
+ * new focus's first suggestion is pre-selected (`Saran Nuave`), or the
+ * prepared main category when that focus has none.
+ */
+export function syncSmartCategory(
+  prepared: PreparedUnderstanding,
+  selection: SmartSelection,
+): SmartSelection {
+  const suggestions = categorySuggestionsFor(prepared, selection);
+  const current = selection.category.trim();
+  if (selection.categoryKind === "manual" && current) return selection;
+  if (current && suggestions.some((item) => sameCategoryText(item, current)))
+    return selection;
+  if (suggestions.length)
+    return {
+      ...selection,
+      category: suggestions[0]!,
+      categoryKind: "suggestion",
+      origins: { ...selection.origins, category: "nuave" },
+    };
+  const main = prepared.category.proposed?.trim() ?? "";
+  if (main)
+    return {
+      ...selection,
+      category: prepared.category.proposed!,
+      categoryKind: "main",
+      origins: { ...selection.origins, category: "website" },
+    };
+  return { ...selection, category: "", categoryKind: "manual" };
+}
+
 /**
  * Focus selection (R-05/R-10): switching focus clears the target fields that
  * no longer apply, while the whole-brand market answers are retained across
- * a cabang detour so returning to brand restores them unchanged.
+ * a cabang detour so returning to brand restores them unchanged. The category
+ * is re-resolved for the new focus (AC-16).
  */
 export function selectSmartFocus(
+  prepared: PreparedUnderstanding,
   selection: SmartSelection,
   focus: SmartSelection["focus"],
 ): SmartSelection {
@@ -430,7 +496,7 @@ export function selectSmartFocus(
     selection.focus === "cabang"
       ? selection.retainedBrandAreas
       : selection.marketAreas;
-  return {
+  return syncSmartCategory(prepared, {
     ...selection,
     focus,
     productTarget: focus === "produk" ? selection.productTarget : "",
@@ -441,7 +507,7 @@ export function selectSmartFocus(
     retainedBrandReach,
     retainedBrandAreas,
     origins: { ...selection.origins, focus: "owner" },
-  };
+  });
 }
 
 /** R-03/R-11: the location screen's Lanjut requires both name and address. */
@@ -454,6 +520,60 @@ export function smartLocationReady(selection: SmartSelection): boolean {
 /** R-03/R-12: the product screen's Lanjut requires the typed/picked target. */
 export function smartProductReady(selection: SmartSelection): boolean {
   return Boolean(selection.productTarget.trim());
+}
+
+/** R-03/R-13: the category screen's Lanjut requires a non-empty category. */
+export function smartCategoryReady(selection: SmartSelection): boolean {
+  return Boolean(selection.category.trim());
+}
+
+/** R-03/R-15: the service screen's Lanjut requires at least one channel. */
+export function smartServiceReady(selection: SmartSelection): boolean {
+  return selection.serviceChannels.length > 0;
+}
+
+/**
+ * R-03/R-16: the market screen's Lanjut requires a reach; `sekitar` needs
+ * exactly one area, `beberapa` needs one to eight, and a list past the cap
+ * blocks instead of silently shrinking.
+ */
+export function smartMarketReady(selection: SmartSelection): boolean {
+  if (selection.focus === "cabang") return true;
+  if (selection.marketReach === "sekitar")
+    return selection.marketAreas.length === 1;
+  if (selection.marketReach === "beberapa")
+    return (
+      selection.marketAreas.length >= 1 && selection.marketAreas.length <= 8
+    );
+  return Boolean(selection.marketReach);
+}
+
+/**
+ * The detail screen that owns the first still-missing meaning, in journey
+ * order — the summary's gap CTA opens it and the normal chain walks forward
+ * from there.
+ */
+export function firstSmartGapStage(
+  selection: SmartSelection,
+):
+  | "location"
+  | "product"
+  | "category"
+  | "offerings"
+  | "service"
+  | "market"
+  | null {
+  if (selection.focus === "cabang" && !smartLocationReady(selection))
+    return "location";
+  if (selection.focus === "produk" && !smartProductReady(selection))
+    return "product";
+  if (!smartCategoryReady(selection)) return "category";
+  if (selection.focus !== "produk" && !selection.offerings.length)
+    return "offerings";
+  if (!smartServiceReady(selection)) return "service";
+  if (selection.focus !== "cabang" && !smartMarketReady(selection))
+    return "market";
+  return null;
 }
 
 export function initialSmartSelection(
@@ -477,6 +597,7 @@ export function initialSmartSelection(
     locationName: "",
     locationAddress: "",
     category: prepared.category.proposed ?? "",
+    categoryKind: prepared.category.proposed?.trim() ? "main" : "manual",
     offerings: prepared.offerings.proposed ?? [],
     serviceChannels: prepared.serviceChannels.proposed ?? [],
     marketReach: reach,
@@ -506,8 +627,8 @@ export function initialSmartSelection(
   };
 }
 
-/** The one clarification stage is reserved for missing category, offering,
- * or active focus target. Inline channel/reach/area choices stay on summary. */
+/** The one clarification CTA is reserved for still-missing required meaning:
+ * category, offering, the active focus target, service channels, or market. */
 export function requiredSmartGaps(selection: SmartSelection): string[] {
   const gaps: string[] = [];
   if (!selection.category.trim()) gaps.push("Kategori");
@@ -520,6 +641,9 @@ export function requiredSmartGaps(selection: SmartSelection): string[] {
     (!selection.locationName.trim() || !selection.locationAddress.trim())
   )
     gaps.push("Nama dan alamat lokasi");
+  if (!selection.serviceChannels.length) gaps.push("Cara layanan");
+  if (selection.focus !== "cabang" && !smartMarketReady(selection))
+    gaps.push(selection.marketReach ? "Area layanan" : "Jangkauan pasar");
   return gaps;
 }
 
@@ -545,6 +669,14 @@ export function confirmSmartSelection(
     !selection.marketAreas.length
   )
     throw new Error("Pilih area layanan.");
+  // R-16: past the eight-area cap the market screen keeps the whole list and
+  // blocks Lanjut — confirmation refuses rather than silently keeping eight.
+  if (
+    selection.focus !== "cabang" &&
+    ["sekitar", "beberapa"].includes(selection.marketReach) &&
+    selection.marketAreas.length > 8
+  )
+    throw new Error("Pilih paling banyak 8 area layanan.");
   const origin = (key: string): Origin => selection.origins[key] ?? "owner";
   const optionalText = (value: string, key: string) =>
     value.trim() ? { value: value.trim(), origin: origin(key) } : undefined;

@@ -5,7 +5,6 @@ import {
   auditStage,
   brandScreen,
   chooseFocus,
-  completeSyntheticSummary,
   confirmBrand,
   confirmFocus,
   confirmSummary,
@@ -14,17 +13,21 @@ import {
   ENTRY_INVALID_NOTICE,
   expectAuditDone,
   expectBrandConfirm,
+  expectCategoryScreen,
   expectEmptyEntry,
   expectFocusScreen,
   expectLocationScreen,
+  expectOfferingsScreen,
   expectProductScreen,
   expectQuestionReview,
+  expectServiceScreen,
   expectTenQuestions,
   expectSummary,
   fillEntry,
   injectUsefulnessFailureOnce,
   INTAKE_SESSION_KEY,
   locationScreen,
+  marketScreen,
   openAuditFromLanding,
   pressLanjut,
   pressPeriksa,
@@ -34,6 +37,7 @@ import {
   SENSITIVE_INPUT_NOTICE,
   startAudit,
   stubPreparationDraft,
+  throughDetailScreens,
   toQuestions,
 } from "../../../../tests/e2e/journey";
 
@@ -224,17 +228,20 @@ async function smartIntakeSummary(ctx: DriveContext) {
   ctx.check(
     '`Lanjut` on the brand check reaches "Apa yang ingin Anda audit?" with the labelled whole-brand suggestion',
   );
-  await ctx.step("summary-rows-edited", async () => {
-    // Whole-brand `Lanjut` lands on the summary; its row edits happen under
-    // the default brand focus because a product focus hides the offerings
-    // editor.
+  await ctx.step("detail-screens", async () => {
+    // Whole-brand `Lanjut` lands on the category screen; the synthetic
+    // reading found nothing, so each gated screen takes the smallest owner
+    // answer before the chain reaches the summary.
     await confirmFocus(page);
-    await completeSyntheticSummary(page);
+    await throughDetailScreens(page);
   });
+  ctx.check(
+    "Category, offerings, service-channel and market screens each gate Lanjut until the missing meaning is supplied",
+  );
   await ctx.step("focus-one-offering", async () => {
     // The focus row is read-back; `Ubah` re-opens the dedicated screens.
-    // The offerings editor is hidden once focus is a product, so this step
-    // runs after the row edits.
+    // A product focus turns the offerings screen into read-only catalogue
+    // context, so this step runs after the owner-filled first pass.
     await page
       .locator('section[aria-label="Fokus audit"]')
       .getByRole("button", { name: "Ubah" })
@@ -249,7 +256,10 @@ async function smartIntakeSummary(ctx: DriveContext) {
       .getByRole("textbox", { name: "Nama produk atau layanan" })
       .fill("kopi susu");
     await pressLanjut(page);
-    await expectSummary(page);
+    // The changed focus must pass the category checkpoint; its Lanjut then
+    // exits the detour straight back to the review.
+    await expectCategoryScreen(page);
+    await pressLanjut(page);
     await expect(
       page
         .locator('section[aria-label="Fokus audit"]')
@@ -257,7 +267,7 @@ async function smartIntakeSummary(ctx: DriveContext) {
     ).toBeVisible();
   });
   ctx.check(
-    "`Ubah` on the read-back focus row re-opens the focus screen; the product target accepts the typed offering and returns to the summary",
+    "`Ubah` on the read-back focus row re-opens the focus screen; the product target accepts the typed offering and the detour returns to the summary",
   );
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
@@ -312,10 +322,19 @@ async function richPreparation(ctx: DriveContext) {
       .getByRole("radio", { name: "Kedai Fiksi Dago" })
       .click();
     await pressLanjut(page);
+    // Category and offerings still appear (with prepared picks) while a
+    // location focus skips the market screen before the summary.
+    await expectCategoryScreen(page);
+    await pressLanjut(page);
+    await expectOfferingsScreen(page);
+    await pressLanjut(page);
+    await expectServiceScreen(page);
+    await pressLanjut(page);
+    await expect(marketScreen(page)).toHaveCount(0);
     await expectSummary(page);
   });
   ctx.check(
-    "The stubbed rich preparation reaches the brand check, offers the published locations labelled `Dari website Anda`, and lands on the summary without typing",
+    "The stubbed rich preparation reaches the brand check, offers the published locations labelled `Dari website Anda`, walks the detail screens without typing, and skips the market screen under a location focus",
   );
   const prepared = (
     (await sessionValue(page, INTAKE_SESSION_KEY)) as {
@@ -366,7 +385,7 @@ async function richPreparation(ctx: DriveContext) {
     prepared?: unknown;
   } | null;
   expect(restored?.prepared).toEqual(prepared);
-  ctx.check("A reload restores the same prepared values — session version 5");
+  ctx.check("A reload restores the same prepared values — session version 6");
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
     await expectQuestionReview(page);

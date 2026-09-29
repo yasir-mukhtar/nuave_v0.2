@@ -178,9 +178,9 @@ describe("smart intake exact confirmed meaning", () => {
     const selection = initialSmartSelection(proposal);
     expect(selection.focus).toBe("brand");
     expect(selection.marketReach).toBe("beberapa");
-    expect(requiredSmartGaps(selection)).toEqual([]);
+    expect(requiredSmartGaps(selection)).toEqual(["Area layanan"]);
     expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
-      "Pilih area layanan.",
+      "Lengkapi: Area layanan.",
     );
     selection.marketAreas = ["Wilayah pilihan pemilik"];
     selection.origins.market = "owner";
@@ -334,6 +334,8 @@ describe("smart intake exact confirmed meaning", () => {
     expect(requiredSmartGaps(selection)).toEqual([
       "Kategori",
       "Produk atau layanan utama",
+      "Cara layanan",
+      "Jangkauan pasar",
     ]);
   });
 });
@@ -725,7 +727,7 @@ describe("Spec 013 J4 published-location source check and focus targets", () => 
     const proposal = prepared();
     const selection = initialSmartSelection(proposal);
     selection.productTarget = "kopi susu";
-    const cabang = selectSmartFocus(selection, "cabang");
+    const cabang = selectSmartFocus(proposal, selection, "cabang");
     expect(cabang).toMatchObject({
       focus: "cabang",
       productTarget: "",
@@ -735,7 +737,7 @@ describe("Spec 013 J4 published-location source check and focus targets", () => 
       retainedBrandAreas: ["Bandung"],
     });
     expect(cabang.origins.focus).toBe("owner");
-    const brand = selectSmartFocus(cabang, "brand");
+    const brand = selectSmartFocus(proposal, cabang, "brand");
     expect(brand).toMatchObject({
       focus: "brand",
       locationName: "",
@@ -746,8 +748,9 @@ describe("Spec 013 J4 published-location source check and focus targets", () => 
   });
 
   it("selectSmartFocus leaves an unchanged pick untouched", () => {
-    const selection = initialSmartSelection(prepared());
-    expect(selectSmartFocus(selection, "brand")).toBe(selection);
+    const proposal = prepared();
+    const selection = initialSmartSelection(proposal);
+    expect(selectSmartFocus(proposal, selection, "brand")).toBe(selection);
   });
 
   it("the target screens' Lanjut gates match the contract's focus requirements", () => {
