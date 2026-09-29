@@ -1,10 +1,32 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-27
+> Updated: 2026-09-28
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-28 — plain landing voice in VOICE.md
+
+The founder approved updating [`VOICE.md`](VOICE.md) to match landing copy v8,
+first as item 12 of the website team's round 1 decisions and then with a
+direct **"yes"** to "Should I update VOICE.md to match?".
+
+- `bisnis Anda` replaces `brand Anda` as the default in prose.
+  `Seluruh brand` stays where the report and intake separate a whole
+  multi-location brand from one location.
+- Marketing copy says plain `AI`. The report and intake keep `model AI` where
+  the model is the tested actor.
+- Light spoken words (`cuma`, `kok`, `duluan`) are welcome in marketing copy,
+  and copy is written in Indonesian first, not translated from English.
+
+Item 9 of the same decisions is recorded with it: `ChatGPT` names the
+customer's habit, never Nuave's own answers, because Nuave asks OpenAI's model
+through the API. Nuave's data is `jawaban AI`, and the method note names
+OpenAI.
+
+The price in `VOICE.md` (`Rp99.000`) and the settled landing CTA are not
+changed here; they change with the product.
 
 ## 2026-09-27 — approve Spec 013
 
