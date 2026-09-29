@@ -87,7 +87,8 @@ that its prepared experiment passed.
 run a few unbranded questions on a prospect before any contact
   -> lead with the observed finding
   -> collect one public business link
-  -> show a free identity and Rp99.000 order preview valid for 30 days
+  -> show a free identity and order preview (Rp299.000, or Rp790.000 with a
+     day-30 re-check) valid for 30 days
   -> pay through Midtrans with QRIS, bank transfer, GoPay, or DANA
   -> prepare and confirm the business facts
   -> prepare and approve the ten-question pack in Indonesian

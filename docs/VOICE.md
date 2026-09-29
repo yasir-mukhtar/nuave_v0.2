@@ -125,9 +125,10 @@ alarmist or all-knowing.** Apply these invariants to every surface:
 
 ### 4. Numerals, dates, and currency
 
-- **Money:** `Rp99.000` — no space after `Rp`; thousands separated by a full
-  stop. One audit is **Rp99.000**, with no tax or fee added at checkout.
-- **Quote validity:** the unpaid Order Preview keeps the `Rp99.000` total for
+- **Money:** `Rp299.000` — no space after `Rp`; thousands separated by a full
+  stop. One audit is **Rp299.000**, or **Rp790.000** with the day-30
+  re-check, with no tax or fee added at checkout.
+- **Quote validity:** the unpaid Order Preview keeps its total for
   **30 days**; after expiry the customer must refresh the preview before paying.
 - **Dates:** `17 Agustus 2026` — day, spelled month, year; no leading zero, no
   slash form (`17/08/26`).
@@ -194,9 +195,10 @@ The voice is constant; the register and vocabulary shift per surface.
   and evidence, not fear of being left behind.
 - No conversion/ROI statistics, no `Pertama`, no guarantee, no `5x`/`67%`/`73%`
   figures, and no unsourced market percentages.
-- The settled primary CTA is **Cek bisnis saya di AI**; the priced action is
-  **Bayar Rp99.000**; an upper non-charging action is **Lanjut ke pembayaran**.
-- State the one-audit nature, the `Rp99.000` total, no extra tax/fee, and the
+- The free check's button is **Cek sekarang**; the non-charging package
+  action is **Pesan audit**, which opens the pay page; the priced action is
+  **Bayar Rp299.000** or **Bayar Rp790.000** (Spec 014, home copy v9).
+- State the one-audit nature, the package total, no extra tax/fee, and the
   30-day quote validity.
 - Distinguish the free identity preview from the paid audit; never imply the
   business has appeared in AI before observations run.

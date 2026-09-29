@@ -60,7 +60,8 @@ the founder stepping in:
 1. Open `v2.nuave.ai` and enter their business website. Nuave reads the
    site's public name and details to show "is this your business?" This step
    is free and uses no AI.
-2. See the price (Rp99.000) and what they get, and pay through Midtrans.
+2. See the price (Rp299.000, or Rp790.000 with a day-30 re-check; decided
+   2026-09-27) and what they get, and pay through Midtrans.
 3. Go through the Airbnb-style intake: Nuave shows what it understood, and the
    owner confirms, corrects, or answers a few quiz-like choices.
 4. Review and approve the ten questions.
@@ -504,7 +505,7 @@ These come from the original plan's Phase 4 exit gate
 
 - Add payment to the order summary that S3 built (it already collects the
   email, which delivery and support D3, D5, D7, D8 depend on). The summary now
-  also shows the Rp99.000 total, the delivery promise, and links to Terms and
+  also shows the package total, the delivery promise, and links to Terms and
   Privacy. It sits right after the free "is this your business?" result.
   Payment comes **before** the intake asks for or prepares any business
   details.
@@ -557,7 +558,7 @@ only if asked.
    evidence in the PR.
 2. Founder switches Midtrans to production keys.
 3. Founder buys one real audit for a business they own or have permission for
-   (Rp99.000), reaches the report on a phone, and refunds it from the Midtrans
+   (Rp299.000), reaches the report on a phone, and refunds it from the Midtrans
    dashboard.
 4. Founder records "open for paying customers" in `DECISION_LOG.md`.
 

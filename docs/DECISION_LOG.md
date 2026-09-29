@@ -1,10 +1,98 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-28
+> Updated: 2026-09-29
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-09-29 — website package: eight decisions
+
+The founder replied **"AGREE"** in the site orchestrator's thread of the
+project chat (05:29Z) to all eight recommendations of the website package.
+The facts they set:
+
+1. **Delivery promise:** "Biasanya sekitar 15 menit, paling lama 24 jam"
+   (plan D2's default). The Rp790.000 re-check runs on day 30, at the latest
+   3 working days later.
+2. **Stored answers for the free check:** one run by an agent, up to USD 2
+   of live AI calls. Klinik kecantikan in Jakarta, Bogor, Depok, Tangerang
+   and Bekasi, with the 10 approved questions each, asked once with web
+   search by the audit's observation method: 50 answers. This is the named
+   approval `NOW.md` requires for agent-run AI calls. Other business types
+   and refreshes need a new approval. Real business names from the answers
+   stay out of Git and out of the page before payment.
+3. **Meta measurement:** besides purchases, a second server-side event when
+   the free check runs. It carries the event name, click ID, user agent and
+   page address with any business name removed: no result, no health words,
+   no IP address, no cookies. This widens round 1's "purchases only".
+4. **Sample report page** `/contoh-laporan` at launch: an invented clinic,
+   labelled as an example.
+5. **Launch address:** `nuave.ai`, once payment works. `v2.nuave.ai` stays
+   the noindex test copy.
+6. **First ads:** A (owners) and C (marketing leads), in Bekasi and Jakarta.
+   Nothing runs before payment works and the PT exists.
+7. **Build now:** one build thread and a draft pull request with its own
+   preview, for the home with the free check, the FAQ and the legal pages.
+   No intake changes; live only when payment is. This is
+   [Spec 014](../specs/014-website-free-check/SPEC.md).
+8. **Legal wording approved** for the terms, privacy and contact pages (plan
+   D6). A lawyer checks the 12 marked points when the PT is registered,
+   before the first paid ad if possible.
+
+## 2026-09-28 — website decisions, round 1
+
+The founder agreed (11:49Z, site orchestrator's thread) with the website
+team's round 1 recommendations, with one change: no personal name on the
+site. The ones that set product facts:
+
+- **Seller:** Nuave has no legal entity yet. The founder will register a PT
+  Perorangan before the first paid ad (12:17Z). Pages show "[Nama PT
+  Perorangan]" placeholders until its name, registered address and NIB
+  arrive.
+- **Contact:** `support@nuave.ai` only, first reply within 1 working day,
+  plus Instagram @nuave.ai and X @nuaveAI. No personal name.
+- **Meta measurement:** the server-side Conversions API only, no browser
+  pixel, so no cookie bar. Widened on 2026-09-29 (decision 3).
+- **Refunds:** claims within 14 days, paid within 3 working days of approval,
+  or a free re-run instead. A wrong fact the buyer confirmed at intake gets a
+  free re-run, not a refund. If the Rp790.000 re-check cannot run,
+  Rp491.000 is refunded. Legal added a fourth case the same day: money taken
+  but the audit never ran.
+- **Retention:** reports and orders 12 months (plan D1), technical logs 30
+  days, names typed in the free check 30 days.
+- **No marketing email.**
+- **Cheaper Inference** keeps writing questions only if its operator,
+  country and no-training can be named; otherwise question writing moves to
+  OpenAI.
+- **Prices are final**, with a company invoice on request by email.
+- **One audit, one focus:** the whole brand, one branch, or one product or
+  service, as the intake offers (Spec 013 R-10).
+- **Agencies:** no agency product; one line, "Pegang banyak klien? Hubungi
+  kami".
+- **Look:** the night-street scene is the home's second screen; the fonts
+  are Gabarito, Hanken Grotesk and Gochi Hand. `DESIGN.md` records them with
+  Spec 014.
+- **Later:** public pages that name real clinics per city wait until after
+  the first sales and a lawyer check.
+
+Items 9 and 12 of the same list (the word ChatGPT, VOICE.md) are in the
+entry below.
+
+## 2026-09-27 — price Rp299.000, a re-check package, first target
+
+In the project's discovery research thread, the founder set:
+
+- **Price:** Rp299.000 for one audit, replacing Rp99.000.
+- **A second package,** "Audit + cek ulang", Rp790.000: the audit plus a
+  second report on day 30 with the same 10 questions.
+- **The refund promise stays:** money back if the report gets the business's
+  name, location or type wrong.
+- **First target:** aesthetic clinics in Jabodetabek.
+
+This replaces `PRODUCT.md`'s "no public tiers" rule for this one package,
+and its six-to-eight-week re-check for it. `PRODUCT.md` and `VOICE.md`
+change with Spec 014.
 
 ## 2026-09-28 — plain landing voice in VOICE.md
 

@@ -65,16 +65,19 @@ outcomes, and does not forecast improvement.
 One audit for one verified business, delivered as a report its marketing
 decision-maker can read in ten minutes, in Indonesian.
 
-A re-check of the same business after six to eight weeks, showing what changed,
-is the recurring offer. The interval is a recommended cadence, not a
-scientifically derived one.
+A re-check of the same business, showing what changed, is the recurring
+offer. The Rp790.000 package includes one, on day 30 with the same ten
+questions ([2026-09-27](./DECISION_LOG.md#2026-09-27--price-rp299000-a-re-check-package-first-target));
+otherwise six to eight weeks is the recommended cadence. Neither interval is
+scientifically derived.
 
-The current price is **Rp99.000 total for one audit**, with no additional tax or
-fee charged to the customer at checkout. An unpaid Order Preview keeps that
-quoted total for 30 days; after expiry the customer refreshes the preview before
-paying. There are no public tiers, subscriptions, bundles, credits, or volume
-plans before real purchasing behaviour supports them. The price remains
-provisional until strangers respond to it.
+The current price is **Rp299.000 total for one audit**, or **Rp790.000 for
+the audit plus the day-30 re-check**, with no additional tax or fee charged
+to the customer at checkout. An unpaid Order Preview keeps that quoted total
+for 30 days; after expiry the customer refreshes the preview before paying.
+Apart from these two packages there are no public tiers, subscriptions,
+bundles, credits, or volume plans before real purchasing behaviour supports
+them. The price remains provisional until strangers respond to it.
 
 ## How results are reported
 
@@ -126,6 +129,12 @@ pitch.
 
 Never contact a business using a finding that was not actually observed.
 
+The website does the same self-serve
+([Spec 014](../specs/014-website-free-check/SPEC.md)): a visitor checks
+their business name for free against answers to the same ten unbranded
+questions, asked once for their business type and city and stored with
+their date.
+
 ### 2. Free identity and order preview
 
 Collect one official website or public Instagram business profile plus a
@@ -146,7 +155,8 @@ is enough; no account is required to buy. Verified payment unlocks personalized
 business-fact and question preparation, but does not start or consume the
 audit.
 
-The order total is Rp99.000 with no additional checkout tax or fee. Use
+The order total is Rp299.000, or Rp790.000 with the day-30 re-check, with
+no additional checkout tax or fee. Use
 Midtrans hosted checkout with QRIS, bank transfer, GoPay, and DANA. The
 implementation specification still has to verify the merchant configuration,
 webhooks, reconciliation, and remedies before accepting a real payment.
@@ -240,7 +250,7 @@ approves or carries out the work.
 ### 8. Re-check
 
 After six to eight weeks, offer to re-run the same questions and show what
-changed. This requires the approved question pack to be persisted and replayed
+changed; the Rp790.000 package runs it on day 30. This requires the approved question pack to be persisted and replayed
 verbatim, and the count to be compared only under a compatible method version.
 
 ### 9. Feedback
@@ -308,7 +318,7 @@ These are questions to test, not claims that Nuave has proven them.
 
 ## Open terms before a paid offer
 
-Before accepting a paid audit, state the Rp99.000 total and 30-day quote
+Before accepting a paid audit, state the package total and 30-day quote
 validity, a realistic delivery promise, the exact report scope, privacy and
 retention treatment, and the approved correction and remedy path. Legal or
 regulatory requirements remain subject to qualified review; do not present an

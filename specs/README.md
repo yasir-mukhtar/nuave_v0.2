@@ -50,6 +50,12 @@ verification is against its acceptance criteria.
 any, and the active milestone. The entries below record each package's
 latest status.
 
+- [`014-website-free-check/SPEC.md`](./014-website-free-check/SPEC.md)
+  — **In review** (2026-09-29), for the founder's approval. The website:
+  the home with the free name check against stored AI answers, the FAQ and
+  the legal pages, behind a launch switch until payment works. Slices
+  W0–W3.
+
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
   — **Implementing** (approved 2026-09-27); J2
   ([#96](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96)) and J3
