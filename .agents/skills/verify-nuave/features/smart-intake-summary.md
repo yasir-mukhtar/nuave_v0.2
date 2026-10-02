@@ -11,8 +11,10 @@ focus screen "Apa yang ingin Anda audit?" — whole brand (marked
 tawarkan?"), customer needs, service channels ("Bagaimana pelanggan
 mendapatkan yang Anda tawarkan?"), market ("Di mana pelanggan Anda berada?",
 skipped for a location focus), competitors, and public fact before landing on
-"Ini yang Nuave pahami.", a summary whose business-detail rows are
-read-back: each `Ubah` re-opens the owning screen. One confirmation,
+"Ini yang akan Nuave audit", the final review whose business-detail rows are
+read-back: each `Ubah` re-opens the owning screen, `Ubah` on the `Bisnis`
+row re-opens the brand check and `Ubah website` re-opens the entry source
+fields, and `Nama lain` holds an inline alias editor. One confirmation,
 `Sudah sesuai — buat pertanyaan audit`, freezes the context and creates the
 audit questions.
 
@@ -48,9 +50,20 @@ sendiri` accepts a manual pick labelled `Dari Anda`; `Lanjut` stays
 - `public-fact`: optional public context accepts owner text through the
   existing sensitive-text rejection path.
 - `summary-row-edit`: `Ubah` on a read-back row opens the owning detail
-  screen; `Kembali`, `Lanjut`, or marked browser Back returns to the summary.
+  screen; `Kembali`, `Lanjut`, or marked browser Back returns to the review.
+  On the `Bisnis` row, `Ubah` opens the brand check (`Lanjut`, footer
+  `Kembali`, or marked browser Back return to the review) and `Ubah website`
+  opens the entry source fields — a same-URL name correction keeps every
+  answer and makes no new read, while a changed URL resets preparation,
+  aliases, frozen context and the question pack.
+- `alias-edit`: `Ubah` on `Nama lain` opens an inline chip editor for
+  prepared or owner aliases — add or remove one at a time, at most twelve
+  names of 160 characters each, duplicates refused; an empty list is valid
+  and hides the provenance badge. Sensitive names are rejected through the
+  same stop path as other owner text.
 - `summary-confirm`: `Sudah sesuai — buat pertanyaan audit` freezes the
-  context and makes exactly one question request; while a required meaning
+  context, edited `Nama lain` aliases included, and makes exactly one
+  question request; while a required meaning
   is missing the button reads `Lengkapi yang perlu dipastikan` and opens the
   first owning screen instead.
 
@@ -91,7 +104,8 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
   `Di lokasi bisnis Anda` checkbox, and the `Seluruh Indonesia` reach card.
   The three optional J6 screens follow: customer needs remain empty,
   competitor mode remains `Belum tahu`, and public fact remains blank. The
-  chain then lands on the summary. Evidence: `04-detail-screens`.
+  chain then lands on the review "Ini yang akan Nuave audit". Evidence:
+  `04-detail-screens`.
 - **Product target.** Presses `Ubah` on the read-back focus row, picks
   `Satu produk atau layanan` on the re-opened focus screen, presses
   `Lanjut`, types `kopi susu` into `Nama produk atau layanan` on the
@@ -101,10 +115,11 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
 - **Confirm.** Presses `Sudah sesuai — buat pertanyaan audit`. The heading
   "Periksa pertanyaan audit" and ten `[data-question-slot]` show. Evidence:
   `06-questions-created`.
-- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v7`
+- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v8`
   has category `kedai kopi` (origin `owner`), focus
   `{kind: "produk", name: "kopi susu"}`, reach `seluruh`, empty optional
-  customer needs, unknown competitor mode and a blank public fact.
+  customer needs, empty aliases, unknown competitor mode and a blank public
+  fact.
   `network.json.apiCalls` is exactly one `GET /api/audit/identity`, one
   `POST /api/audit/extract` and one `POST /api/audit/glm-questions`.
 
@@ -121,16 +136,16 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
   runs before the focus switch in this drive.
 - A location focus never shows the market screen — customer needs precede
   service, whose `Lanjut` lands on competitors and then public fact before the
-  summary.
+  review.
 - Until category, offering, channel and reach are filled, the button reads
   `Lengkapi yang perlu dipastikan`, not `Sudah sesuai — buat pertanyaan
-audit`. The forward chain's gates mean the summary only shows it after an
+audit`. The forward chain's gates mean the review only shows it after an
   edit that clears a required answer.
 - The other rich-reading variants (named competitors, corrections) need a
   stubbed extract response. They are covered by
   `tests/e2e/new-intake-journey.spec.ts`, not by this drive. The labelled J3
   rich preparation has its own drive: `rich-preparation`.
-- Returning to the entry and pressing `Periksa` with only the name changed
-  skips the read entirely — it reuses the stored preparation and lands on
-  the brand check. The e2e suite covers the name-only and website-change
-  paths.
+- `Ubah website` on the review returns to the entry, and pressing `Periksa`
+  with only the name changed skips the read entirely — it reuses the stored
+  preparation and lands on the brand check. The e2e suite covers the
+  name-only and website-change paths.

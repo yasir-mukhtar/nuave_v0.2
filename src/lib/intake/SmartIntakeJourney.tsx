@@ -48,7 +48,7 @@ import {
 } from "./smart-session";
 import type { GenerationAttempt } from "./local-session";
 import type { GlmQuestionsOutcome } from "./local-questions";
-import SmartSummary from "./SmartSummary";
+import SmartReview from "./SmartReview";
 import {
   SmartFocusScreen,
   SmartLocationScreen,
@@ -154,7 +154,9 @@ function backTargetFor(session: SmartSession): SmartStage | null {
   const selection = session.selection;
   switch (session.stage) {
     case "brand":
-      return "entry";
+      // A review-opened name edit backs out to the review (J7); the normal
+      // brand check still steps back to the entry screen.
+      return marker ?? "entry";
     case "focus": {
       if (!marker || !selection) return "brand";
       if (selection.focus === "cabang" && !smartLocationReady(selection))
@@ -934,6 +936,8 @@ export default function SmartIntakeJourney({
                     confirmedSelection: null,
                     frozen: null,
                     pack: null,
+                    editReturn: undefined,
+                    editBaseline: undefined,
                   });
                   setError(null);
                 }}
@@ -1264,21 +1268,46 @@ export default function SmartIntakeJourney({
         session.prepared &&
         session.selection ? (
           <>
-            <SmartSummary
+            <SmartReview
               headingRef={headingRef}
               prepared={session.prepared}
               selection={session.selection}
               onChange={updateSelection}
               onFillGaps={() => {
                 // The CTA opens the screen that owns the first still-missing
-                // meaning; the normal chain walks forward from there.
+                // meaning; the return marker sends it back to the review
+                // once corrected instead of replaying unrelated screens.
                 const target = firstSmartGapStage(session.selection!);
                 if (!target) return;
-                goStage({ ...session, stage: target });
+                goStage({
+                  ...session,
+                  stage: target,
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditBrand={() => {
+                // The business row's Ubah opens the existing brand screen;
+                // its Lanjut and Back then return to the review (J7).
+                goStage({
+                  ...session,
+                  stage: "brand",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
                 setError(null);
               }}
               onEditSource={() => {
-                persist({ ...session, stage: "entry" });
+                // The marker lets a same-source/name-only correction come
+                // back through the brand check; a changed URL clears it and
+                // resets preparation/frozen state on input change.
+                persist({
+                  ...session,
+                  stage: "entry",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
                 setError(null);
               }}
               onEditFocus={() => {
@@ -1404,7 +1433,14 @@ export default function SmartIntakeJourney({
                 disabled={!session.selection?.name.trim()}
                 onClick={() => {
                   setEditingBrandName(false);
-                  goStage({ ...session, stage: "focus" });
+                  // A review-opened name edit continues straight back to
+                  // the review; the normal brand check still opens focus.
+                  const target = session.editReturn ?? "focus";
+                  goStage({
+                    ...session,
+                    stage: target,
+                    ...markerFields(session, target),
+                  });
                 }}
               >
                 Lanjut

@@ -1,7 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  addAlias,
   addCompetitor,
   addCustomerNeed,
+  aliasInput,
   brandScreen,
   categoryScreen,
   chooseCompetitorMode,
@@ -10,6 +12,8 @@ import {
   confirmFocus,
   CONFIRM_SUMMARY,
   confirmSummary,
+  editBusinessFromReview,
+  editWebsiteFromReview,
   entryScreen,
   expectBrandConfirm,
   expectCategoryScreen,
@@ -27,9 +31,11 @@ import {
   fillEntry,
   fillPublicFact,
   focusScreen,
+  intakeSession,
   INTAKE_SESSION_KEY,
   locationScreen,
   marketScreen,
+  openAliasEditor,
   pressKembali,
   pressLanjut,
   pressPeriksa,
@@ -37,6 +43,10 @@ import {
   competitorsScreen,
   customerNeedsScreen,
   publicFactScreen,
+  removeAlias,
+  reviewRow,
+  reviewScreen,
+  REVIEW_HEADING,
   RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
   serviceScreen,
@@ -261,7 +271,7 @@ test("every manually selected comparator stays visible, correctable and removabl
   await expect(remaining).toHaveCount(0);
 });
 
-test("rich reading reaches one summary and question review without more typing", async ({
+test("rich reading reaches one review and question review without more typing", async ({
   page,
 }) => {
   const calls: string[] = [];
@@ -270,7 +280,20 @@ test("rich reading reaches one summary and question review without more typing",
       calls.push(`${request.method()} ${new URL(request.url()).pathname}`);
   });
   await enter(page);
-  await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
+  await expect(reviewScreen(page)).toBeVisible();
+  await expect(reviewScreen(page)).toHaveAttribute(
+    "data-smart-summary",
+    "ready",
+  );
+  await expect(
+    page.getByRole("heading", { name: REVIEW_HEADING }),
+  ).toBeVisible();
+  // The business name reads back with no inline name controls; the prepared
+  // alias keeps its website provenance.
+  await expect(reviewRow(page, "Bisnis")).toContainText("Kedai Fiksi");
+  const aliasRow = reviewRow(page, "Nama lain");
+  await expect(aliasRow).toContainText("Kedai Fiksi Bandung");
+  await expect(aliasRow).toContainText("Dari website Anda");
   const focusRow = page.locator('section[aria-label="Fokus audit"]');
   await expect(focusRow).toContainText("Brand secara keseluruhan");
   await expect(focusRow).toContainText("Saran Nuave");
@@ -378,8 +401,27 @@ test("a session stored under a previous intake version restarts at an empty entr
         generationAttempts: [],
       }),
     );
+    // A v7 record under its own key is never read either — the previous
+    // intake version is not opened at all.
+    sessionStorage.setItem(
+      "nuave.localIntake.v7",
+      JSON.stringify({
+        version: 7,
+        stage: "summary",
+        entry: { name: "Kedai Ketujuh", source: "https://tujuh.example/" },
+        identity: null,
+        prepared: { typedName: "Kedai Ketujuh" },
+        selection: { name: "Kedai Ketujuh", nameOrigin: "owner" },
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        preparationCalls: [],
+        preparationMode: null,
+        generationAttempts: [],
+      }),
+    );
     // A well-formed v4 record under its own key is never read: the current
-    // key is v6, and older keys are simply not looked at.
+    // key is v8, and older keys are simply not looked at.
     sessionStorage.setItem(
       "nuave.localIntake.v4",
       JSON.stringify({
@@ -417,7 +459,7 @@ test("a session stored under a previous intake version restarts at an empty entr
         generationAttempts: [],
       }),
     );
-    // A stale-version record under the current v6 key is just as unreadable —
+    // A stale-version record under the current v8 key is just as unreadable —
     // it must restart at entry rather than mix old and new shape.
     sessionStorage.setItem(
       currentKey,
@@ -471,24 +513,15 @@ test("a cleared detail row routes the summary CTA to its owning screen", async (
   await expect(page.getByRole("button", { name: CONFIRM_SUMMARY })).toHaveCount(
     0,
   );
-  // The CTA opens the owning detail screen without an edit marker, so
-  // Lanjut walks the ordinary chain — already-answered screens need only
-  // the footer press — until it lands back on the review.
+  // The CTA opens the owning detail screen marked to return: filling the
+  // gap and pressing Lanjut lands straight back on the review.
   await page
     .getByRole("button", { name: "Lengkapi yang perlu dipastikan" })
     .click();
   await expectCategoryScreen(page);
   await page.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
   await pressLanjut(page);
-  await expectOfferingsScreen(page);
-  await pressLanjut(page);
-  await expectCustomerNeedsScreen(page);
-  await pressLanjut(page);
-  await expectServiceScreen(page);
-  await pressLanjut(page);
-  await expectMarketScreen(page);
-  await pressLanjut(page);
-  await throughCompetitorContext(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
 });
@@ -622,7 +655,8 @@ test("a name-only edit reuses the reading; changing the website reads again", as
       calls.push(new URL(request.url()).pathname);
   });
   await enter(page, false);
-  await page.getByRole("button", { name: "Ubah nama atau website" }).click();
+  // `Ubah website` on the Bisnis row opens the entry source fields.
+  await editWebsiteFromReview(page);
   await expect(entryScreen(page)).toBeVisible();
   expect(calls).toHaveLength(2);
   await page
@@ -632,8 +666,11 @@ test("a name-only edit reuses the reading; changing the website reads again", as
   // Name-only correction returns to the brand check without a new read.
   await expectBrandConfirm(page, "Kedai Fiksi Baru");
   expect(calls).toHaveLength(2);
+  // The brand screen's Lanjut returns to the review through the marker.
+  await pressLanjut(page);
+  await expectSummary(page);
   // A website change invalidates preparation: `Periksa` reads the source again.
-  await page.getByRole("button", { name: "Kembali", exact: true }).click();
+  await editWebsiteFromReview(page);
   await expect(entryScreen(page)).toBeVisible();
   await page
     .getByRole("textbox", { name: "URL website publik" })
@@ -1395,5 +1432,203 @@ test.describe("J5 business-detail screens", () => {
     await expect(serviceRow).toContainText("Dikirim ke pelanggan");
     await expect(serviceRow).toContainText("Digunakan secara online");
     await expect(serviceRow).toContainText("Dari Anda");
+  });
+});
+
+test.describe("J7 review and Nama lain aliases", () => {
+  test("the Bisnis row returns brand edits by Lanjut, Kembali, and browser Back", async ({
+    page,
+  }) => {
+    await enter(page);
+    for (const back of ["lanjut", "footer", "browser"] as const) {
+      await editBusinessFromReview(page);
+      await expectBrandConfirm(page);
+      if (back === "lanjut") await pressLanjut(page);
+      else if (back === "footer") await pressKembali(page);
+      else await page.goBack();
+      await expectSummary(page);
+    }
+    // `Ubah website` opens the entry fields with the current answers kept.
+    await editWebsiteFromReview(page);
+    await expect(entryScreen(page)).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "URL website publik" }),
+    ).toHaveValue("https://kedai-fiksi.example/");
+    await expect(
+      page.getByRole("textbox", { name: "Nama bisnis" }),
+    ).toHaveValue("Kedai Fiksi");
+  });
+
+  test("aliases add and remove individually and persist over a reload", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await enter(page);
+    const row = reviewRow(page, "Nama lain");
+    await expect(row).toContainText("Kedai Fiksi Bandung");
+    await expect(row).toContainText("Dari website Anda");
+    await openAliasEditor(page, true);
+    await expect(aliasInput(page)).toBeFocused();
+    // Enter commits an addition through the same AddLine acceptance seam.
+    await aliasInput(page).fill("Kedai Fiksi Pusat");
+    await aliasInput(page).press("Enter");
+    await expect(row).toContainText("Kedai Fiksi Pusat");
+    await expect(aliasInput(page)).toHaveValue("");
+    await addAlias(page, "KopiFiksi");
+    await expect(row).toContainText("KopiFiksi");
+    await expect(row).toContainText("Dari Anda");
+    let saved = await intakeSession(page);
+    expect(saved.selection.aliases).toEqual([
+      "Kedai Fiksi Bandung",
+      "Kedai Fiksi Pusat",
+      "KopiFiksi",
+    ]);
+    expect(saved.selection.origins.aliases).toBe("owner");
+    const boundaryAlias = "A".repeat(160);
+    await addAlias(page, boundaryAlias);
+    expect((await intakeSession(page)).selection.aliases).toContain(
+      boundaryAlias,
+    );
+    // The 320px review and open editor stay inside the viewport, 160-char
+    // chip included.
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await removeAlias(page, boundaryAlias);
+    await page.reload();
+    await expectSummary(page);
+    saved = await intakeSession(page);
+    expect(saved.selection.aliases).toEqual([
+      "Kedai Fiksi Bandung",
+      "Kedai Fiksi Pusat",
+      "KopiFiksi",
+    ]);
+    await openAliasEditor(page);
+    await removeAlias(page, /KopiFiksi/, true);
+    saved = await intakeSession(page);
+    expect(saved.selection.aliases).toEqual([
+      "Kedai Fiksi Bandung",
+      "Kedai Fiksi Pusat",
+    ]);
+    // Removing every alias is valid; the provenance badge hides.
+    await removeAlias(page, /Kedai Fiksi Bandung/);
+    await removeAlias(page, /Kedai Fiksi Pusat/);
+    await expect(row).toContainText("Belum diisi");
+    await expect(row).not.toContainText("Dari Anda");
+    saved = await intakeSession(page);
+    expect(saved.selection.aliases).toEqual([]);
+  });
+
+  test("invalid aliases are refused with the draft kept for a retry", async ({
+    page,
+  }) => {
+    await enter(page);
+    await openAliasEditor(page);
+    // Trimmed case-insensitive duplicates are refused with the draft kept.
+    await addAlias(page, "  kedai fiksi bandung ");
+    await expect(reviewScreen(page).getByRole("alert")).toContainText(
+      "sudah ada",
+    );
+    await expect(aliasInput(page)).toHaveValue("  kedai fiksi bandung ");
+    // Overlong names are refused the same way.
+    const longName = `Nama lain ${"sangat ".repeat(30)}`;
+    await addAlias(page, longName);
+    await expect(reviewScreen(page).getByRole("alert")).toContainText(
+      "160 karakter",
+    );
+    await expect(aliasInput(page)).toHaveValue(longName);
+    // The rejected draft corrects in place and commits.
+    await addAlias(page, "Kedai Fiksi Pusat");
+    await expect(aliasInput(page)).toHaveValue("");
+    expect((await intakeSession(page)).selection.aliases).toEqual([
+      "Kedai Fiksi Bandung",
+      "Kedai Fiksi Pusat",
+    ]);
+  });
+
+  test("a thirteenth alias is refused at the cap", async ({ page }) => {
+    await stubPreparationDraft(page, {
+      ...richDraft,
+      brand_name_variants: Array.from(
+        { length: 12 },
+        (_, index) => `Varian ${index + 1}`,
+      ),
+    });
+    await toSummary(page);
+    await openAliasEditor(page);
+    await addAlias(page, "Ketiga belas");
+    await expect(reviewScreen(page).getByRole("alert")).toContainText(
+      "paling banyak 12",
+    );
+    await expect(aliasInput(page)).toHaveValue("Ketiga belas");
+    expect((await intakeSession(page)).selection.aliases).toHaveLength(12);
+  });
+
+  test("a sensitive alias is refused through the privacy stop", async ({
+    page,
+  }) => {
+    const questions: string[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+        questions.push("questions");
+    });
+    await enter(page);
+    await openAliasEditor(page);
+    await addAlias(page, "nomor rekening 12345");
+    await expect(
+      page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
+    ).toBeVisible();
+    // The refused draft stays; the committed list and session stay safe.
+    await expect(aliasInput(page)).toHaveValue("nomor rekening 12345");
+    const saved = await intakeSession(page);
+    expect(saved.selection.aliases).toEqual(["Kedai Fiksi Bandung"]);
+    expect(JSON.stringify(saved)).not.toContain("nomor rekening");
+    // An edit alone never fires the question request.
+    expect(questions).toHaveLength(0);
+  });
+
+  test("edited aliases freeze into the single question request with source links", async ({
+    page,
+  }) => {
+    const contexts: { identity?: { aliases?: string[] } }[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+        contexts.push(
+          (
+            request.postDataJSON() as {
+              intake: { context: { identity: { aliases: string[] } } };
+            }
+          ).intake.context,
+        );
+    });
+    await enter(page);
+    // The Bisnis row carries the source, and `Lihat sumber` lists the links.
+    await expect(reviewRow(page, "Bisnis")).toContainText(
+      "kedai-fiksi.example",
+    );
+    await reviewScreen(page)
+      .getByRole("button", { name: "Lihat sumber" })
+      .click();
+    await expect(
+      reviewScreen(page)
+        .getByRole("link", { name: /kedai-fiksi\.example/ })
+        .first(),
+    ).toBeVisible();
+    await openAliasEditor(page);
+    await addAlias(page, "Kedai Fiksi Pusat");
+    await confirmSummary(page);
+    await expectTenQuestions(page);
+    expect(contexts).toHaveLength(1);
+    expect(contexts[0]?.identity?.aliases).toEqual([
+      "Kedai Fiksi Bandung",
+      "Kedai Fiksi Pusat",
+    ]);
+    const saved = await intakeSession(page);
+    expect(saved.frozen.context.identity.aliases).toEqual([
+      "Kedai Fiksi Bandung",
+      "Kedai Fiksi Pusat",
+    ]);
   });
 });

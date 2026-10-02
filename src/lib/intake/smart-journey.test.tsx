@@ -59,7 +59,7 @@ async function fromOfferings(focus: "brand" | "cabang" | "produk" = "brand") {
     name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
   });
   lanjut();
-  await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+  await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
 }
 
 async function afterMarket() {
@@ -71,7 +71,7 @@ async function afterMarket() {
     name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
   });
   lanjut();
-  await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+  await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
 }
 
 async function throughDetails(focus: "brand" | "cabang" | "produk" = "brand") {
@@ -216,7 +216,7 @@ describe("smart blank intake", () => {
       JSON.parse(
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
       ),
-    ).toMatchObject({ version: 7, stage: "questions" });
+    ).toMatchObject({ version: 8, stage: "questions" });
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
   });
 
@@ -281,7 +281,7 @@ function stubPreparation(
   } = {},
 ) {
   const calls: string[] = [];
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+  const fetchMock = vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
     const url = String(input);
     calls.push(url.startsWith("/api/audit/identity") ? "identity" : url);
     if (url.startsWith("/api/audit/identity"))
@@ -518,6 +518,11 @@ describe("Spec 013 J2 screen frame", () => {
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({ version: 5, stage: "entry" }),
     );
+    // A v7 record under its own key is simply never read (J7).
+    window.sessionStorage.setItem(
+      "nuave.localIntake.v7",
+      JSON.stringify({ version: 7, stage: "summary" }),
+    );
     stubPreparation();
     render(<SmartIntakeJourney live={false} />);
     const name = await screen.findByRole("textbox", { name: "Nama bisnis" });
@@ -533,7 +538,7 @@ describe("Spec 013 J2 screen frame", () => {
     window.sessionStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
-        version: 7,
+        version: 8,
         stage: "brand",
         entry: { name: "Kedai Lama", source: "https://lama.example/" },
         identity: null,
@@ -555,6 +560,132 @@ describe("Spec 013 J2 screen frame", () => {
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       ),
     ).toBeNull();
+  });
+
+  // J7/R-26: a v8 record carries a valid "Nama lain" list on the working
+  // selection and the last confirmed selection; anything else restarts.
+  const storedPrepared = {
+    typedName: "Kedai Lama",
+    discoveredName: null,
+    canonicalSource: "https://lama.example/",
+    aliases: ["Kedai Lama Pusat"],
+    locations: { proposed: [], origin: "website" },
+    categorySuggestions: { proposed: [], origin: "nuave" },
+    offeringCategorySuggestions: { proposed: [], origin: "nuave" },
+    sourceLinks: [],
+  };
+  const storedSelection = {
+    name: "Kedai Lama",
+    nameOrigin: "owner",
+    aliases: ["Kedai Lama Pusat"],
+    focus: "brand",
+    productTarget: "",
+    locationName: "",
+    locationAddress: "",
+    category: "kedai kopi",
+    categoryKind: "main",
+    offerings: ["kopi"],
+    serviceChannels: ["on_premise"],
+    marketReach: "sekitar",
+    marketAreas: ["Bandung"],
+    retainedBrandReach: "sekitar",
+    retainedBrandAreas: ["Bandung"],
+    targetCustomer: "",
+    customerNeeds: [],
+    decisionConsiderations: [],
+    comparatorMode: "unknown",
+    comparatorNames: [],
+    differentiator: "",
+    publicFact: "",
+    origins: { aliases: "website" },
+  };
+  const storedSession = (overrides: Record<string, unknown> = {}) => ({
+    version: 8,
+    stage: "summary",
+    entry: { name: "Kedai Lama", source: "https://lama.example/" },
+    identity: null,
+    prepared: storedPrepared,
+    selection: storedSelection,
+    confirmedSelection: null,
+    frozen: null,
+    pack: null,
+    preparationCalls: [],
+    preparationMode: "synthetic-local",
+    generationAttempts: [],
+    ...overrides,
+  });
+
+  it.each<[string, unknown]>([
+    ["a missing list", { aliases: undefined }],
+    ["a non-array", { aliases: "Kedai Lama" }],
+    ["a blank entry", { aliases: ["  "] }],
+    ["a non-string entry", { aliases: [42] }],
+    ["an overlong entry", { aliases: ["x".repeat(161)] }],
+    ["a trimmed duplicate", { aliases: ["Sama", " sama "] }],
+    [
+      "a thirteenth entry",
+      { aliases: Array.from({ length: 13 }, (_, i) => `Alias ${i + 1}`) },
+    ],
+  ])(
+    "a stored session with %s in selection.aliases restarts at entry",
+    async (_label, patch) => {
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify(
+          storedSession({
+            selection: {
+              ...storedSelection,
+              ...(patch as Record<string, unknown>),
+            },
+          }),
+        ),
+      );
+      render(<SmartIntakeJourney live={false} />);
+      await screen.findByRole("textbox", { name: "Nama bisnis" });
+      expect(
+        parseSmartSession(
+          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        ),
+      ).toBeNull();
+    },
+  );
+
+  it("rejects a malformed confirmedSelection alias list the same way", () => {
+    window.sessionStorage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify(
+        storedSession({
+          confirmedSelection: { ...storedSelection, aliases: "bukan array" },
+        }),
+      ),
+    );
+    expect(
+      parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      ),
+    ).toBeNull();
+  });
+
+  it("restores a valid v8 review and its stored aliases without a call", async () => {
+    const { fetchMock } = stubPreparation();
+    window.sessionStorage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify(storedSession()),
+    );
+    render(<SmartIntakeJourney live={false} />);
+    const heading = await screen.findByRole("heading", {
+      name: "Ini yang akan Nuave audit",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect(
+      document
+        .querySelector('[data-intake-screen="review"]')
+        ?.getAttribute("data-smart-summary"),
+    ).toBe("ready");
+    const row = within(screen.getByRole("region", { name: "Nama lain" }));
+    expect(row.getByText("Kedai Lama Pusat")).toBeTruthy();
+    expect(row.getByText("Dari website Anda")).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("a name-only edit at entry keeps later answers and spends no call", async () => {
@@ -580,9 +711,14 @@ describe("Spec 013 J2 screen frame", () => {
       target: { value: "kafe fiksi" },
     });
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    // J7: the review keeps a separate website action; a same-source
+    // name-only edit reuses preparation and returns through the brand check.
     fireEvent.click(
-      screen.getByRole("button", { name: "Ubah nama atau website" }),
+      within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
+        "button",
+        { name: "Ubah website" },
+      ),
     );
     await screen.findByRole("textbox", { name: "Nama bisnis" });
     fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
@@ -594,12 +730,13 @@ describe("Spec 013 J2 screen frame", () => {
     });
     expect(calls).toEqual(["identity", "/api/audit/extract"]);
     lanjut();
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-    lanjut();
-    await throughDetails();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
       screen.getByRole("region", { name: "Kategori" }).textContent,
     ).toContain("kafe fiksi");
+    expect(
+      screen.getByRole("region", { name: "Bisnis" }).textContent,
+    ).toContain("Kedai Fiksi Baru");
   });
 
   it("re-offers the website's discovered name when a name-only edit makes it differ", async () => {
@@ -660,13 +797,15 @@ describe("Spec 013 J2 screen frame", () => {
       name: "Ini brand yang ingin Anda audit?",
     });
     expect(within(group()).getAllByRole("radio")).toHaveLength(1);
-    // The summary must not show a duplicated name either.
+    // The review must not show a duplicated name either — the row is
+    // read-back only now (J7), so the merged name appears once as text.
     lanjut();
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     lanjut();
     await throughDetails();
     const business = within(screen.getByRole("region", { name: "Bisnis" }));
-    expect(business.getAllByRole("radio")).toHaveLength(1);
+    expect(business.queryByRole("radio")).toBeNull();
+    expect(business.getByText("Kedai Fiksi")).toBeTruthy();
   });
 
   it("moves focus to the question-review heading when the pack lands", async () => {
@@ -881,7 +1020,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     // In-flow Kembali returns to the summary this edit came from.
     kembali();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
   });
 
   it("walks back through the target screens one stage at a time", async () => {
@@ -1269,7 +1408,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       lanjut();
       await screen.findByRole("heading", { name: /biasanya disebut apa\?/ });
       lanjut();
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
       expect(focusRow().getByText(replacement)).toBeTruthy();
     },
   );
@@ -1352,7 +1491,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       "paling banyak 8",
     );
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
   });
 
   it("the category screen labels Nuave suggestions and keeps the website category as its own card", async () => {
@@ -1491,7 +1630,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     expect(productSuggestion.getAttribute("aria-checked")).toBe("true");
     expect(productSuggestion.textContent).toContain("Saran Nuave");
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
       screen.getByRole("region", { name: "Kategori" }).textContent,
     ).toContain("minuman kopi siap tutup");
@@ -1508,7 +1647,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     // Nothing changed: Lanjut returns to the review without re-walking the
     // detail screens.
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
   });
 
   it("the offerings screen keeps prepared chips labelled, adds manual items, and updates the row", async () => {
@@ -1839,7 +1978,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     // Kembali exits the detour to the summary without touching the answer.
     kembali();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     fireEvent.click(
       within(
         screen.getByRole("region", { name: "Produk dan layanan" }),
@@ -1850,7 +1989,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /roti/ }));
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
       screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
     ).toContain("kopi susu");
@@ -1906,7 +2045,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       name: "Produk atau layanan ini biasanya disebut apa?",
     });
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
       screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
     ).toContain("roti");
@@ -1970,7 +2109,7 @@ describe("Spec 013 J5 business-detail screens", () => {
         fireEvent.popState(window, { state: { nuaveIntake: true } });
       }
 
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
       expect(
         screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
       ).toContain("kopi susu");
@@ -2049,5 +2188,408 @@ describe("Spec 013 J5 business-detail screens", () => {
       window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.offerings).not.toContain("nomor rekening 12345");
+  });
+});
+
+describe("Spec 013 J7 final review", () => {
+  const aliasDraft = {
+    ...draft,
+    brand_name_variants: ["Kedai Fiksi Pusat", "KopiFiksi"],
+  };
+  const namaLain = () =>
+    within(screen.getByRole("region", { name: "Nama lain" }));
+  const aliasInput = () =>
+    screen.getByRole("textbox", { name: "Nama lain baru" }) as HTMLInputElement;
+  const addAlias = (value: string) => {
+    fireEvent.change(aliasInput(), { target: { value } });
+    fireEvent.click(screen.getByRole("button", { name: "Tambah" }));
+  };
+  const confirm = () =>
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      }),
+    );
+  const savedSession = () =>
+    parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY));
+
+  it("reads the business name back without inline name controls", async () => {
+    stubPreparation({ draft: aliasDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    const heading = await screen.findByRole("heading", {
+      name: "Ini yang akan Nuave audit",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect(
+      document
+        .querySelector('[data-intake-screen="review"]')
+        ?.getAttribute("data-smart-summary"),
+    ).toBe("ready");
+    const business = within(screen.getByRole("region", { name: "Bisnis" }));
+    // The review is read-back only — name corrections route to the brand
+    // check, website changes to the entry (J7/R-21).
+    expect(business.queryByRole("radio")).toBeNull();
+    expect(business.getByText("Kedai Fiksi")).toBeTruthy();
+    expect(business.getByText(/kedai-fiksi\.example/)).toBeTruthy();
+    expect(business.getByRole("button", { name: "Ubah" })).toBeTruthy();
+    expect(business.getByRole("button", { name: "Ubah website" })).toBeTruthy();
+    // Prepared aliases arrive with their website provenance.
+    expect(namaLain().getByText("Kedai Fiksi Pusat, KopiFiksi")).toBeTruthy();
+    expect(namaLain().getByText("Dari website Anda")).toBeTruthy();
+  });
+
+  it.each(["Lanjut", "footer Kembali", "marked browser popstate"])(
+    "a review brand edit returns through %s with the marker consumed",
+    async (wayBack) => {
+      const { calls } = stubPreparation();
+      render(<SmartIntakeJourney live={false} />);
+      await fillAndPeriksa();
+      await throughBrand();
+      fireEvent.click(
+        within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
+          "button",
+          { name: "Ubah" },
+        ),
+      );
+      await screen.findByRole("heading", {
+        name: "Ini brand yang ingin Anda audit?",
+      });
+      expect(savedSession()).toMatchObject({ editReturn: "summary" });
+      // Correcting the name on the existing brand check spends no calls.
+      fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
+      fireEvent.change(screen.getByRole("textbox", { name: "Nama brand" }), {
+        target: { value: "Kedai Fiksi Baru" },
+      });
+      if (wayBack === "Lanjut") lanjut();
+      else if (wayBack === "footer Kembali") kembali();
+      else fireEvent.popState(window, { state: { nuaveIntake: true } });
+      await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+      const stored = savedSession();
+      expect(stored?.stage).toBe("summary");
+      // Consumed markers are dropped from the stored session entirely.
+      expect(stored?.editReturn).toBeUndefined();
+      expect(stored?.editBaseline).toBeUndefined();
+      expect(
+        screen.getByRole("region", { name: "Bisnis" }).textContent,
+      ).toContain("Kedai Fiksi Baru");
+      expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    },
+  );
+
+  it("edits Nama lain inline, marks the owner change and persists it over a reload", async () => {
+    stubPreparation({ draft: aliasDraft });
+    const mounted = render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("Kedai Fiksi Baru");
+    expect(aliasInput().value).toBe("");
+    expect(savedSession()?.selection?.aliases).toEqual([
+      "Kedai Fiksi Pusat",
+      "KopiFiksi",
+      "Kedai Fiksi Baru",
+    ]);
+    expect(savedSession()?.selection?.origins.aliases).toBe("owner");
+    // A reload restores the review with the committed list.
+    mounted.unmount();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    const group = () => namaLain().getByRole("group", { name: "Nama lain" });
+    // Removing a chip drops exactly that alias.
+    fireEvent.click(within(group()).getByRole("button", { name: /KopiFiksi/ }));
+    expect(savedSession()?.selection?.aliases).toEqual([
+      "Kedai Fiksi Pusat",
+      "Kedai Fiksi Baru",
+    ]);
+    // An emptied list is valid and shows no provenance badge (J6 rule).
+    fireEvent.click(
+      within(group()).getByRole("button", { name: /Kedai Fiksi Pusat/ }),
+    );
+    fireEvent.click(
+      within(group()).getByRole("button", { name: /Kedai Fiksi Baru/ }),
+    );
+    expect(namaLain().getByText("Belum diisi")).toBeTruthy();
+    expect(namaLain().queryByText(/Dari |Saran Nuave/)).toBeNull();
+    expect(savedSession()?.selection?.aliases).toEqual([]);
+  });
+
+  it.each<[string, string, string]>([
+    ["a duplicate", " kedai fiksi pusat ", "Nama lain ini sudah ada."],
+    [
+      "an overlong",
+      "x".repeat(161),
+      "Setiap nama lain paling panjang 160 karakter.",
+    ],
+  ])(
+    "rejects %s alias, keeps the draft, and accepts the correction",
+    async (_label, value, message) => {
+      stubPreparation({ draft: aliasDraft });
+      render(<SmartIntakeJourney live={false} />);
+      await fillAndPeriksa();
+      await throughBrand();
+      fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+      addAlias(value);
+      expect((await screen.findByRole("alert")).textContent).toContain(message);
+      // The refused draft stays in the AddLine for a one-stroke fix.
+      expect(aliasInput().value).toBe(value);
+      expect(savedSession()?.selection?.aliases).toEqual([
+        "Kedai Fiksi Pusat",
+        "KopiFiksi",
+      ]);
+      fireEvent.change(aliasInput(), { target: { value: "Nama Ketiga" } });
+      fireEvent.click(screen.getByRole("button", { name: "Tambah" }));
+      expect(aliasInput().value).toBe("");
+      expect(savedSession()?.selection?.aliases).toEqual([
+        "Kedai Fiksi Pusat",
+        "KopiFiksi",
+        "Nama Ketiga",
+      ]);
+    },
+  );
+
+  it("refuses a thirteenth alias while keeping the committed twelve", async () => {
+    const twelve = Array.from({ length: 12 }, (_, i) => `Varian ${i + 1}`);
+    stubPreparation({ draft: { ...draft, brand_name_variants: twelve } });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("Varian Ke-13");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Pilih paling banyak 12 nama lain.",
+    );
+    expect(aliasInput().value).toBe("Varian Ke-13");
+    expect(savedSession()?.selection?.aliases).toEqual(twelve);
+  });
+
+  it("keeps a sensitive alias out of selection, storage and any request", async () => {
+    const { calls, fetchMock } = stubPreparation({ draft: aliasDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("nomor rekening 12345");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
+    // The rejected draft stays; nothing unsafe is committed or stored.
+    expect(aliasInput().value).toBe("nomor rekening 12345");
+    expect(savedSession()?.selection?.aliases).toEqual([
+      "Kedai Fiksi Pusat",
+      "KopiFiksi",
+    ]);
+    expect(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    ).not.toContain("nomor rekening");
+    // Editing alone never asks for questions; a later explicit confirm sends
+    // only the last safe list.
+    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    confirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    const questionRequest = fetchMock.mock.calls.find(
+      (call) => call[0] === "/api/audit/glm-questions",
+    );
+    expect(
+      JSON.parse(String(questionRequest?.[1]?.body)).intake.context.identity
+        .aliases,
+    ).toEqual(["Kedai Fiksi Pusat", "KopiFiksi"]);
+  });
+
+  it("keeps aliases and later answers on a same-source name edit", async () => {
+    const { calls } = stubPreparation({ draft: aliasDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("Alias Pemilik");
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
+        "button",
+        { name: "Ubah website" },
+      ),
+    );
+    const name = await screen.findByRole("textbox", { name: "Nama bisnis" });
+    fireEvent.change(name, { target: { value: "Kedai Fiksi Baru" } });
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    // No preparation call, and every answer — aliases included — is retained.
+    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(savedSession()?.selection).toMatchObject({
+      name: "Kedai Fiksi Baru",
+      aliases: ["Kedai Fiksi Pusat", "KopiFiksi", "Alias Pemilik"],
+    });
+  });
+
+  it("a changed website clears markers and resets preparation state", async () => {
+    const { calls } = stubPreparation({ draft: aliasDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    // An owner alias on the review proves the reset drops edited state.
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("Kedai Fiksi Baru");
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
+        "button",
+        { name: "Ubah website" },
+      ),
+    );
+    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    expect(savedSession()).toMatchObject({
+      stage: "entry",
+      editReturn: "summary",
+    });
+    // Typing a different URL resets on input change, not on submit.
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "URL website publik" }),
+      { target: { value: "https://kedai-baru.example/" } },
+    );
+    const stored = savedSession();
+    expect(stored).toMatchObject({
+      prepared: null,
+      selection: null,
+      confirmedSelection: null,
+      frozen: null,
+      pack: null,
+    });
+    expect(stored?.editReturn).toBeUndefined();
+    expect(stored?.editBaseline).toBeUndefined();
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    lanjut();
+    // The marker is gone: the flow walks the normal chain, not the review.
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    expect(calls).toEqual([
+      "identity",
+      "/api/audit/extract",
+      "identity",
+      "/api/audit/extract",
+    ]);
+    // The owner alias is gone: the fresh selection re-seeds from preparation.
+    const afterReset = savedSession();
+    expect(afterReset?.selection?.aliases).toEqual([
+      "Kedai Fiksi Pusat",
+      "KopiFiksi",
+    ]);
+    expect(afterReset?.selection?.origins?.aliases).toBe("website");
+  });
+
+  it("routes a missing required answer to its owning screen and back", async () => {
+    stubPreparation();
+    const mounted = render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    // Reach the gap state through a restored session: the service screen
+    // gates Lanjut, so a normal walk cannot leave serviceChannels empty.
+    const stored = savedSession()!;
+    mounted.unmount();
+    window.sessionStorage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify({
+        ...stored,
+        selection: { ...stored.selection, serviceChannels: [] },
+      }),
+    );
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    expect(screen.getByText(/Perlu dipastikan: Cara layanan/)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      }),
+    ).toBeNull();
+    // The CTA opens the owning screen directly, marked to return here.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Lengkapi yang perlu dipastikan" }),
+    );
+    await screen.findByRole("heading", {
+      name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+    });
+    expect(savedSession()?.editReturn).toBe("summary");
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Di lokasi bisnis Anda/ }),
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    expect(
+      screen.getByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("confirms once, reuses the pack unchanged, regenerates on an alias edit and restores on cancel", async () => {
+    const { fetchMock } = stubPreparation({ draft: aliasDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("Kedai Fiksi Baru");
+    const glmCalls = () =>
+      fetchMock.mock.calls.filter(
+        (call) => call[0] === "/api/audit/glm-questions",
+      );
+    // A rapid double press: the first click moves the journey off the review,
+    // so the second dispatch lands on the detached button and no-ops.
+    const confirmButton = screen.getByRole("button", {
+      name: "Sudah sesuai — buat pertanyaan audit",
+    });
+    fireEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(1);
+    expect(
+      JSON.parse(String(glmCalls()[0]?.[1]?.body)).intake.context.identity
+        .aliases,
+    ).toEqual(["Kedai Fiksi Pusat", "KopiFiksi", "Kedai Fiksi Baru"]);
+    // An unchanged return reuses the pack — no new request.
+    const backToReview = () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Kembali ke informasi bisnis" }),
+      );
+    backToReview();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    confirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(1);
+    // An alias change freezes a different context and generates a new pack.
+    backToReview();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    fireEvent.click(
+      within(namaLain().getByRole("group", { name: "Nama lain" })).getByRole(
+        "button",
+        { name: /KopiFiksi/ },
+      ),
+    );
+    confirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(2);
+    expect(
+      JSON.parse(String(glmCalls()[1]?.[1]?.body)).intake.context.identity
+        .aliases,
+    ).toEqual(["Kedai Fiksi Pusat", "Kedai Fiksi Baru"]);
+    // A further edit cancelled from the review restores the confirmed list.
+    backToReview();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    fireEvent.click(namaLain().getByRole("button", { name: "Ubah" }));
+    addAlias("Draft Tidak Jadi");
+    fireEvent.click(screen.getByRole("button", { name: "Batalkan perubahan" }));
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(2);
+    expect(savedSession()?.selection?.aliases).toEqual([
+      "Kedai Fiksi Pusat",
+      "Kedai Fiksi Baru",
+    ]);
   });
 });

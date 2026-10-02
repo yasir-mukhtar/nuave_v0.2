@@ -1,13 +1,14 @@
 # Verification: Spec 013 — intake journey
 
 > Full-spec result: **Pending — Implementing**
+> Latest completed slice: **J6 PASS**, merged 2026-10-02; [frozen closeout](#j6-frozen-closeout).
 > J5 slice result: **PASS**, 2026-10-02
 > Independent reviewer: [review session](https://app.devin.ai/sessions/cfbe766968b1491da877e5e40b62f031)
 > Implementation: `358c521b3e3e5fca9046714f0559c50ac07b5e03`
 > Evidence: [PR #104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104),
 > [independent PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114)
 
-## Scope reviewed
+## J5 scope reviewed
 
 J5 of the approved [Spec 013](./SPEC.md): category, offerings, service-channel
 and market screens; category reconsideration after focus changes; their
@@ -23,7 +24,7 @@ J2–J4 are merged; their verdicts remain linked in the
 reviewed and founder-approved, but its PR was still open at this closeout.
 This record does not claim a production deployment or full-spec verification.
 
-## Acceptance results and requirements trace
+## J5 acceptance results and requirements trace
 
 | Criteria | J5 result | Evidence and remaining scope |
 |---|---|---|
@@ -35,7 +36,7 @@ This record does not claim a production deployment or full-spec verification.
 | R-15 | Pass | At least one service channel is required. |
 | Remaining full-spec criteria | Pending | J6, J7, JQ and founder journey signoff are not closed by this slice. |
 
-## Checks run
+## J5 checks run
 
 The following evidence is for the implementation above, before this docs-only
 closeout. Logs and browser artifacts are ignored local evidence, not GitHub
@@ -57,7 +58,7 @@ attachments; the PR and verdict are the durable evidence summaries.
 - Required GitHub `validate`, preview and Devin Review checks passed on the
   implementation head. Any later documentation head needs its own CI/verdict.
 
-## Findings and judgment review
+## J5 findings and judgment review
 
 The four original findings (target reachability, duplicate areas, category
 provenance and blank-category initialization), plus product-row editing and
@@ -71,9 +72,60 @@ presentation. PDF evidence uses headless output. No live provider calls were
 made. Nonblocking ESLint/Vite warnings and dependency audit findings are
 recorded on the PR; they were not bypassed or repaired as part of J5.
 
-## Verdict and next action
+## J5 verdict at its closeout
 
 **J5 PASS; Spec 013 remains Implementing.** After the founder merges J5,
 start J6 from updated `origin/main`: customer-needs, competitor and public-fact
 screens (R-17–R-19). Preserve R-20's optional review fields until JQ. J7,
 JQ and founder signoff still precede Stage 2 payment and report delivery.
+
+## J6 frozen closeout
+
+J6 of the approved spec (R-17–R-19, shared navigation/privacy/session rules,
+and R-20 retention) passed independent review and merged in
+[PR #109](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109).
+Reviewed head: `9fa130846cd0c52a979a1599b46cd436968eeb93`.
+Merge: `072868865e5fbb0707db3c8d2f624afc84a668f7`, 2026-10-02.
+Independent reviewer: Mia, a fresh local reviewer separate from the worker;
+[PASS verdict](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109#issuecomment-5956009449).
+
+| Criteria | J6 result | Evidence and remaining scope |
+|---|---|---|
+| R-17 / R-19, AC-01–AC-04 | Pass for J6 screens | Optional needs/public fact, prepared suggestions, owner edits, order, chapter progress and per-screen restoration pass. |
+| R-18 / AC-09 | Pass | Three comparator meanings freeze distinctly; prepared names default to named with Nuave provenance; last removal, sixth addition and duplicate edits are guarded without silently dropping selections. |
+| R-20 / AC-10 | Retained | Owner-edited target customer, buyer considerations and differentiator freeze with owner provenance and reach question generation. Their dedicated screens remain JQ. |
+| R-21 / AC-11 | J6 edit routes pass | Nine Continue/footer Back/marked browser Back return combinations pass; full final-review/alias work remains J7. |
+| R-25–R-28 / AC-13–AC-14, AC-17 | Pass for this slice | Privacy retains the last safe input; v7 restart/restore, keyboard/focus, 320px layout, offline gate and synthetic capture pass. |
+| Full spec / AC-15 | Pending | J7, JQ and real-business founder signoff are not closed by J6. |
+
+The two blocking implementation findings were corrected before review:
+trimmed/case-insensitive duplicate competitor edits now show an actionable
+error and block confirmation; rejected additions retain the draft until an
+accepted retry. AddLine's boolean acceptance contract and all existing callers
+were checked. Nonblocking duplicate-add feedback and a stale gap comment are
+parked; empty public-fact provenance presentation is carried into J7.
+
+Independent evidence is frozen at the reviewed head:
+
+- Focused Vitest: four files / 97 tests pass; skill-source typecheck passes.
+- `npm run verify`: exit 0, 98 unit files / 1,547 tests, Next/OpenNext builds,
+  48 enabled and three disabled browser tests.
+- Own clean-head `verify-nuave` run `20261002T154130Z-mbv8`: six normal
+  features pass, injected recovery is labelled separately, zero unexpected
+  external requests, complete capture and successful owned-process cleanup.
+- Supplemental probes cover owner-edited R-20 values reaching the question
+  request, keyboard comparator modes, last removal and the invalid-summary
+  gap route. Evidence is ignored local storage under
+  `/Users/hy4-mac-006/nuave-worktrees/j6-reviewer/.local-evidence/`; the verdict
+  links the durable acceptance summary.
+- Exact-head validate and preview passed; merged-main CI run `37029610663`
+  passed validate, `verify-main-origin` and Cloudflare deployment.
+
+No live provider calls were made. Synthetic results do not establish live
+extraction quality, native print-dialog behavior, real-device layout or JZ
+founder judgment. The PDF artifact is headless output.
+
+J5 and J6 are now merged. **Spec 013 remains Implementing.** J7 is active,
+then JQ and founder signoff. S1 security patches were independently reviewed
+and merged in [PR #110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110);
+they do not close any remaining intake or customer-exposure gate.

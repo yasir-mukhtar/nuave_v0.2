@@ -340,7 +340,7 @@ async function throughBrand() {
     name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
   });
   fireEvent.click(lanjut());
-  await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+  await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
 }
 
 describe("server excerpt through the active Smart preparation", () => {
@@ -524,7 +524,7 @@ describe("server excerpt through the active Smart preparation", () => {
     });
     expect(screen.getByText("Dari Anda")).toBeTruthy();
     fireEvent.click(lanjut());
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
       within(screen.getByRole("region", { name: "Kategori" })).getByText(
         "Dari Anda",
@@ -671,7 +671,7 @@ describe("server excerpt through the active Smart preparation", () => {
         });
         fireEvent.click(lanjut());
         await screen.findByRole("heading", {
-          name: "Ini yang Nuave pahami.",
+          name: "Ini yang akan Nuave audit",
         });
         expect(
           within(
@@ -762,7 +762,7 @@ describe("server excerpt through the active Smart preparation", () => {
     });
     expect(screen.getByText("Dari Anda")).toBeTruthy();
     fireEvent.click(lanjut());
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     fireEvent.click(
       screen.getByRole("button", {
         name: "Sudah sesuai — buat pertanyaan audit",
@@ -841,7 +841,7 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(requests).toHaveLength(1);
     mounted.unmount();
     render(<SmartIntakeJourney live />);
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
       parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
         ?.prepared,
@@ -944,7 +944,10 @@ describe("server excerpt through the active Smart preparation", () => {
       await throughBrand();
       expect(screen.getByText("Kopi susu, Roti panggang")).toBeTruthy();
       fireEvent.click(
-        screen.getByRole("button", { name: "Ubah nama atau website" }),
+        within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
+          "button",
+          { name: "Ubah website" },
+        ),
       );
       fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
       await screen.findByText(SOURCE_EXCERPT_EMPTY_NOTICE);

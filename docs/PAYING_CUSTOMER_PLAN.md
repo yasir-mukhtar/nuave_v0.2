@@ -34,14 +34,14 @@ done.
 | J2 | Screen frame, entry, reading screen, brand confirm | Worker | Done | [#96](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656) (`8161030`) |
 | J3 | Preparation adds locations and category suggestions | Worker | Done | [#98](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98#issuecomment-5862847919) (`5dd097c`) |
 | J4 | Focus, location and product screens; #98 M2 location-source host check (enforces R-02) | Worker | Done | [#99](https://github.com/yasir-mukhtar/nuave_v0.2/pull/99) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/99#issuecomment-5889417883) (`283eea0`; merged head `a1dc860` adds main docs only) |
-| J5 | Category, offerings, service-channel and market screens | Worker | PASS; awaiting founder merge | [#104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114) (`358c521`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md)) |
-| J6 | Customer-needs, competitor and public-fact screens | Worker | Next, after J5 merge | — | — |
-| J7 | Review screen becomes the single confirmation | Worker | Not started | — | — |
+| J5 | Category, offerings, service-channel and market screens | Worker | Done; merged | [#104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114) (`358c521`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md)) |
+| J6 | Customer-needs, competitor and public-fact screens | Worker | Done; merged | [#109](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109#issuecomment-5956009449) (`9fa1308`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md#j6-frozen-closeout)) |
+| J7 | Review screen becomes the single confirmation | Worker | In progress | — | — |
 | JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
-| S1 | Security patches | Worker | Not started | — | — |
+| S1 | Security patches | Worker | Done; pulled forward, merged | [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110#issuecomment-5956716058) (`9cca862`; production audit clean, dev-only findings disclosed) |
 | S2 | Spending cap on the server | Worker | Not started | — | — |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |

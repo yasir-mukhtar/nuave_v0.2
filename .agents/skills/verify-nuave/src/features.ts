@@ -2,6 +2,7 @@ import { expect as baseExpect, type Page } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
+  addAlias,
   addCompetitor,
   addCustomerNeed,
   auditStage,
@@ -37,11 +38,13 @@ import {
   customerNeedsScreen,
   locationScreen,
   marketScreen,
+  openAliasEditor,
   openAuditFromLanding,
   pressLanjut,
   pressPeriksa,
   readingScreen,
   reportLocator,
+  reviewRow,
   RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
   startAudit,
@@ -250,13 +253,14 @@ async function smartIntakeSummary(ctx: DriveContext) {
   );
   const optionalSelection = await sessionValue(page, INTAKE_SESSION_KEY);
   expect(optionalSelection.selection).toMatchObject({
+    aliases: [],
     customerNeeds: [],
     comparatorMode: "unknown",
     comparatorNames: [],
     publicFact: "",
   });
   ctx.check(
-    "Empty optional J6 answers and the unknown comparator default persist",
+    "Empty optional J6 answers, empty aliases and the unknown comparator default persist",
   );
   await ctx.step("focus-one-offering", async () => {
     // The focus row is read-back; `Ubah` re-opens the dedicated screens.
@@ -432,7 +436,20 @@ async function richPreparation(ctx: DriveContext) {
     prepared?: unknown;
   } | null;
   expect(restored?.prepared).toEqual(prepared);
-  ctx.check("A reload restores the same prepared values — session version 7");
+  ctx.check("A reload restores the same prepared values — session version 8");
+  await ctx.step("alias-edit", async () => {
+    const row = reviewRow(page, "Nama lain");
+    // The fixture publishes one brand variant; the owner adds a second.
+    await expect(row).toContainText("Kedai Fiksi Bandung");
+    await expect(row).toContainText("Dari website Anda");
+    await openAliasEditor(page);
+    await addAlias(page, "Kedai Fiksi Pusat");
+    await expect(row).toContainText("Kedai Fiksi Pusat");
+    await expect(row).toContainText("Dari Anda");
+  });
+  ctx.check(
+    "`Nama lain` keeps the prepared website alias and accepts one owner alias",
+  );
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
     await expectQuestionReview(page);
@@ -442,6 +459,9 @@ async function richPreparation(ctx: DriveContext) {
     frozen?: { context?: Record<string, unknown> };
   } | null;
   expect(confirmed?.frozen?.context).toMatchObject({
+    identity: {
+      aliases: ["Kedai Fiksi Bandung", "Kedai Fiksi Pusat"],
+    },
     focus: { value: { kind: "cabang", name: "Kedai Fiksi Dago" } },
     market: null,
     targetCustomer: {
@@ -463,7 +483,7 @@ async function richPreparation(ctx: DriveContext) {
     },
   });
   ctx.check(
-    "J6 owner answers freeze alongside prepared R20 values, and confirmation produces ten questions",
+    "J6 owner answers and the edited aliases freeze alongside prepared R20 values, and confirmation produces ten questions",
   );
   expect(ctx.calls).toEqual({
     "GET /api/audit/identity": 1,

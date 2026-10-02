@@ -54,14 +54,18 @@ Anda`), plus `Tambah lokasi lain` for a manual name + address
   one to five names, and a sixth is refused rather than truncated.
 - `public-fact` — optional owner-supplied public context follows the existing
   sensitive-text rejection path.
-- `summary` — `SmartSummary.tsx`, the read-back understanding. Each
-  business-detail row is read-back; its `Ubah` opens the owning screen and
-  `Lanjut`, footer `Kembali`, or marked browser Back returns to the summary
-  (an `editReturn`/`editBaseline` marker pair survives refresh, so a changed
-  focus or category re-passes the category checkpoint before exiting — R-05).
-  While a required meaning is missing, `Lengkapi yang perlu dipastikan` opens
-  the first owning detail screen. `Sudah sesuai — buat pertanyaan audit`
-  freezes the context.
+- `summary` — `SmartReview.tsx`, the final review screen "Ini yang akan
+  Nuave audit" (R-21). Each business-detail row is read-back; its `Ubah`
+  opens the owning screen and `Lanjut`, footer `Kembali`, or marked browser
+  Back returns to the review (an `editReturn`/`editBaseline` marker pair
+  survives refresh, so a changed focus or category re-passes the category
+  checkpoint before exiting — R-05). The `Bisnis` row's `Ubah` opens the
+  brand check for a name correction, with a separate `Ubah website` action
+  to the entry. The `Nama lain` row edits aliases inline (up to 12, 160
+  characters each); confirmed edits freeze as `identity.aliases` (R-22).
+  While a required meaning is missing, `Lengkapi yang perlu dipastikan`
+  opens the first owning detail screen. `Sudah sesuai — buat pertanyaan
+audit` freezes the context.
 - `questions` — `SmartQuestionsScreen.tsx` edits the approved ten.
 - `audit` — `SmartAuditStage` runs the ten and shows the report.
 
@@ -76,7 +80,7 @@ Each arrival focuses the screen heading.
 
 ## Session
 
-`smart-session.ts` parses `nuave.localIntake.v7` (schema version 7) in
+`smart-session.ts` parses `nuave.localIntake.v8` (schema version 8) in
 sessionStorage. Only the journey writes it. Refresh restores the stored stage
 and answers; a session stored mid-`reading` restores `entry` with the fields
 kept and an interruption note — the read is never replayed. Corrupt or

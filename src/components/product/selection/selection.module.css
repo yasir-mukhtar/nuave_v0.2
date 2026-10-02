@@ -175,6 +175,8 @@
   display: inline-flex;
   gap: var(--space-sm);
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--target-min-size);
   padding: var(--space-sm) var(--space-md);
   color: var(--text-body);
@@ -214,12 +216,15 @@
 }
 
 .chipLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: var(--type-copy-size);
   line-height: var(--type-copy-leading);
 }
 
 .chipRemove {
   display: inline-flex;
+  flex: none;
   opacity: 0.6;
 }
 

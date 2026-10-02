@@ -33,7 +33,7 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 7;
+  version: 8;
   /**
    * `reading` is persisted only while a preparation is in flight: a refresh
    * restores it as `entry` with an interruption note, never a replayed call
@@ -88,7 +88,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 7,
+    version: 8,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -113,7 +113,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 7 ||
+      value.version !== 8 ||
       ![
         "entry",
         "reading",
@@ -196,12 +196,28 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       ) &&
       Array.isArray(selection.comparatorNames) &&
       selection.comparatorNames.every((item) => typeof item === "string") &&
-      typeof selection.publicFact === "string";
+      typeof selection.publicFact === "string" &&
+      // J7/R-22: aliases must already be a valid "Nama lain" list.
+      Array.isArray(selection.aliases) &&
+      selection.aliases.length <= 12 &&
+      selection.aliases.every(
+        (item) =>
+          typeof item === "string" &&
+          item.trim().length > 0 &&
+          item.trim().length <= 160,
+      ) &&
+      new Set(
+        selection.aliases.map((item) =>
+          String(item).trim().toLocaleLowerCase("id-ID"),
+        ),
+      ).size === selection.aliases.length;
     if (
       (!["entry", "reading"].includes(stage) &&
         (!validPrepared(value.prepared) || !validSelection(value.selection))) ||
       (value.prepared != null && !validPrepared(value.prepared)) ||
-      (value.selection != null && !validSelection(value.selection))
+      (value.selection != null && !validSelection(value.selection)) ||
+      (value.confirmedSelection != null &&
+        !validSelection(value.confirmedSelection))
     )
       return null;
     const frozen = value.frozen ? parseFrozenSmartIntake(value.frozen) : null;
