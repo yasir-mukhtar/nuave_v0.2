@@ -31,11 +31,16 @@ export const OFFERINGS_HEADING = /^(Apakah ini|Apa saja) yang Anda tawarkan\?$/;
 export const SERVICE_HEADING =
   "Bagaimana pelanggan mendapatkan yang Anda tawarkan?";
 export const MARKET_HEADING = "Di mana pelanggan Anda berada?";
+export const CUSTOMER_NEEDS_HEADING =
+  "Kenapa pelanggan biasanya mencari yang seperti ini?";
+export const COMPETITORS_HEADING = "Ini yang mungkin dibandingkan dengan Anda";
+export const PUBLIC_FACT_HEADING =
+  "Apa yang tidak boleh salah dipahami tentang brand Anda?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
-export const INTAKE_SESSION_KEY = "nuave.localIntake.v6";
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v7";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -57,7 +62,8 @@ export const ENTRY_INVALID_NOTICE =
 /**
  * Spec 013 R-29: the labelled rich test preparation. Fictional business only —
  * every prepared field is filled, including the J3 additions (published
- * locations, whole-brand category suggestions, one suggestion per offering).
+ * locations, whole-brand category suggestions, one suggestion per offering)
+ * and the J6 customer-needs and competitor suggestions.
  * It is synthetic fixture data served through the stubbed extract route; it
  * proves UI/state handling, never live extraction quality. The default
  * synthetic preparation ("no facts extracted") is unchanged.
@@ -211,6 +217,18 @@ export function marketScreen(page: Page) {
   return page.locator('[data-intake-screen="market"]');
 }
 
+export function customerNeedsScreen(page: Page) {
+  return page.locator('[data-intake-screen="customer-needs"]');
+}
+
+export function competitorsScreen(page: Page) {
+  return page.locator('[data-intake-screen="competitors"]');
+}
+
+export function publicFactScreen(page: Page) {
+  return page.locator('[data-intake-screen="public-fact"]');
+}
+
 export async function expectFocusScreen(page: Page) {
   await expect(focusScreen(page)).toBeVisible();
   await expect(
@@ -258,6 +276,61 @@ export async function expectMarketScreen(page: Page) {
   await expect(
     page.getByRole("heading", { name: MARKET_HEADING }),
   ).toBeVisible();
+}
+
+export async function expectCustomerNeedsScreen(page: Page) {
+  await expect(customerNeedsScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: CUSTOMER_NEEDS_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectCompetitorsScreen(page: Page) {
+  await expect(competitorsScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: COMPETITORS_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectPublicFactScreen(page: Page) {
+  await expect(publicFactScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: PUBLIC_FACT_HEADING }),
+  ).toBeVisible();
+}
+
+export async function toggleCustomerNeed(page: Page, name: string) {
+  await customerNeedsScreen(page).getByRole("button", { name }).click();
+}
+
+export async function addCustomerNeed(page: Page, name: string) {
+  await customerNeedsScreen(page)
+    .getByRole("textbox", { name: "Kebutuhan pelanggan lain" })
+    .fill(name);
+  await customerNeedsScreen(page)
+    .getByRole("button", { name: "Tambah", exact: true })
+    .click();
+}
+
+export async function chooseCompetitorMode(
+  page: Page,
+  mode:
+    "Bisnis yang saya pilih" | "Tidak ada pembanding langsung" | "Belum tahu",
+) {
+  await competitorsScreen(page).getByRole("radio", { name: mode }).click();
+}
+
+export async function addCompetitor(page: Page, name: string) {
+  await competitorsScreen(page)
+    .getByRole("textbox", { name: "Nama pembanding lain" })
+    .fill(name);
+  await competitorsScreen(page)
+    .getByRole("button", { name: "Tambah", exact: true })
+    .click();
+}
+
+export async function fillPublicFact(page: Page, value: string) {
+  await publicFactScreen(page).getByRole("textbox").fill(value);
 }
 
 /** The frame footer's `Lanjut` (brand, focus, location, product stages). */
@@ -331,14 +404,14 @@ export async function confirmBrand(page: Page) {
   await expectFocusScreen(page);
 }
 
-/** Focus screen → `Lanjut` → the category screen (first J5 detail screen). */
+/** Focus screen → `Lanjut` → the category screen. */
 export async function confirmFocus(page: Page) {
   await pressLanjut(page);
   await expectCategoryScreen(page);
 }
 
 /**
- * Walks the four business-detail screens to the summary. Prepared values are
+ * Walks the detail screens to the summary. Prepared values are
  * already selected, so `Lanjut` is enough; when the synthetic reading found
  * nothing, each gated screen gets the smallest owner answer instead: a typed
  * category, one added offering, the on-premise channel, nationwide reach.
@@ -367,15 +440,19 @@ export async function throughDetailScreens(page: Page) {
     await input.press("Enter");
   }
   await pressLanjut(page);
+  await expectCustomerNeedsScreen(page);
+  await pressLanjut(page);
   await expectServiceScreen(page);
   if (await lanjut.isDisabled())
     await serviceScreen(page)
       .getByRole("checkbox", { name: "Di lokasi bisnis Anda" })
       .click();
   await pressLanjut(page);
-  // A location focus audits no market: service hops straight to the summary.
+  // A location focus audits no market: service hops to competitors.
   await page
-    .locator('[data-intake-screen="market"], [data-smart-summary]')
+    .locator(
+      '[data-intake-screen="market"], [data-intake-screen="competitors"]',
+    )
     .first()
     .waitFor();
   if (await marketScreen(page).isVisible()) {
@@ -385,6 +462,15 @@ export async function throughDetailScreens(page: Page) {
         .click();
     await pressLanjut(page);
   }
+  await throughCompetitorContext(page);
+}
+
+/** Walks the optional J6 screens after market or a location-focus service. */
+export async function throughCompetitorContext(page: Page) {
+  await expectCompetitorsScreen(page);
+  await pressLanjut(page);
+  await expectPublicFactScreen(page);
+  await pressLanjut(page);
   await expectSummary(page);
 }
 

@@ -33,7 +33,7 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 6;
+  version: 7;
   /**
    * `reading` is persisted only while a preparation is in flight: a refresh
    * restores it as `entry` with an interruption note, never a replayed call
@@ -48,6 +48,9 @@ export type SmartSession = {
     | "product"
     | "category"
     | "offerings"
+    | "customer-needs"
+    | "competitors"
+    | "public-fact"
     | "service"
     | "market"
     | "summary"
@@ -85,7 +88,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 6,
+    version: 7,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -110,7 +113,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 6 ||
+      value.version !== 7 ||
       ![
         "entry",
         "reading",
@@ -120,6 +123,9 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         "product",
         "category",
         "offerings",
+        "customer-needs",
+        "competitors",
+        "public-fact",
         "service",
         "market",
         "summary",
@@ -180,7 +186,17 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       isRecord(selection) &&
       typeof selection.name === "string" &&
       ["website", "nuave", "owner"].includes(String(selection.nameOrigin)) &&
-      ["main", "suggestion", "manual"].includes(String(selection.categoryKind));
+      ["main", "suggestion", "manual"].includes(
+        String(selection.categoryKind),
+      ) &&
+      Array.isArray(selection.customerNeeds) &&
+      selection.customerNeeds.every((item) => typeof item === "string") &&
+      ["named", "unknown", "category-alternatives"].includes(
+        String(selection.comparatorMode),
+      ) &&
+      Array.isArray(selection.comparatorNames) &&
+      selection.comparatorNames.every((item) => typeof item === "string") &&
+      typeof selection.publicFact === "string";
     if (
       (!["entry", "reading"].includes(stage) &&
         (!validPrepared(value.prepared) || !validSelection(value.selection))) ||

@@ -5,7 +5,7 @@ blank start opens on the empty business name + source step; `/audit/new-intake`
 redirects here. The server gate (`NUAVE_NEW_AUDIT_ENABLED` + `NUAVE_AUDIT_MODE`)
 decides whether real provider boundaries or their labeled substitutes answer.
 
-## Journey shape (Spec 013 J2–J5)
+## Journey shape (Spec 013 J2–J6)
 
 `SmartIntakeJourney.tsx` owns the screen frame and the session state machine:
 
@@ -47,18 +47,28 @@ Anda`), plus `Tambah lokasi lain` for a manual name + address
   one to eight (a ninth is refused with a visible block, never silently
   dropped), `seluruh`/`luar` none. A location focus never shows this
   screen (R-16).
+- `customer-needs` — optional prepared customer needs are labelled by source;
+  the owner may select, clear, or add needs.
+- `competitors` — named businesses, no direct competitor, and unknown remain
+  distinct meanings. Prepared names default to named mode; a named list needs
+  one to five names, and a sixth is refused rather than truncated.
+- `public-fact` — optional owner-supplied public context follows the existing
+  sensitive-text rejection path.
 - `summary` — `SmartSummary.tsx`, the read-back understanding. Each
   business-detail row is read-back; its `Ubah` opens the owning screen and
-  `Lanjut`/`Kembali` returns to the summary (an `editReturn`/`editBaseline`
-  marker pair survives refresh, so a changed focus or category re-passes the
-  category checkpoint before exiting — R-05). While a required meaning is
-  missing, `Lengkapi yang perlu dipastikan` opens the first owning detail
-  screen. `Sudah sesuai — buat pertanyaan audit` freezes the context.
+  `Lanjut`, footer `Kembali`, or marked browser Back returns to the summary
+  (an `editReturn`/`editBaseline` marker pair survives refresh, so a changed
+  focus or category re-passes the category checkpoint before exiting — R-05).
+  While a required meaning is missing, `Lengkapi yang perlu dipastikan` opens
+  the first owning detail screen. `Sudah sesuai — buat pertanyaan audit`
+  freezes the context.
 - `questions` — `SmartQuestionsScreen.tsx` edits the approved ten.
 - `audit` — `SmartAuditStage` runs the ten and shows the report.
 
 Back from `summary` re-enters the last detail screen the current focus
-implies — `market` for brand/product, `service` for a location focus.
+implies — `public-fact` for brand/product and location; continuing backward
+walks through competitors and customer needs before the J5 screens. A location
+focus skips `market`.
 
 Screens 3 onward carry the four-segment chapter progress and a fixed
 `Kembali`/`Lanjut` footer; browser Back performs the same one in-flow step.
@@ -66,7 +76,7 @@ Each arrival focuses the screen heading.
 
 ## Session
 
-`smart-session.ts` parses `nuave.localIntake.v6` (schema version 6) in
+`smart-session.ts` parses `nuave.localIntake.v7` (schema version 7) in
 sessionStorage. Only the journey writes it. Refresh restores the stored stage
 and answers; a session stored mid-`reading` restores `entry` with the fields
 kept and an interruption note — the read is never replayed. Corrupt or
