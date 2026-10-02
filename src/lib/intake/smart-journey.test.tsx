@@ -1792,6 +1792,58 @@ describe("Spec 013 J5 business-detail screens", () => {
     ).not.toContain("roti");
   });
 
+  it("the product summary edit reopens the product target and updates it", async () => {
+    stubPreparation({ draft: j5Draft });
+    render(<SmartIntakeJourney live={false} />);
+    await toFocusScreen();
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
+    );
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Produk atau layanan mana?",
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /kopi susu/ }));
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Produk atau layanan ini biasanya disebut apa?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa saja yang Anda tawarkan?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Di mana pelanggan Anda berada?",
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+
+    const row = screen.getByRole("region", { name: "Produk dan layanan" });
+    expect(row.textContent).toContain("kopi susu");
+    fireEvent.click(within(row).getByRole("button", { name: "Ubah" }));
+    await screen.findByRole("heading", {
+      name: "Produk atau layanan mana?",
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /roti/ }));
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Produk atau layanan ini biasanya disebut apa?",
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    expect(
+      screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
+    ).toContain("roti");
+    expect(
+      screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
+    ).not.toContain("kopi susu");
+  });
+
   it("restores a mid-detail screen and its answers after a reload", async () => {
     stubPreparation({ draft: j5Draft });
     const first = render(<SmartIntakeJourney live={false} />);

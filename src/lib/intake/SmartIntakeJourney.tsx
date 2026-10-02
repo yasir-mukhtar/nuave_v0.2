@@ -1250,7 +1250,10 @@ export default function SmartIntakeJourney({
               onEditOfferings={() => {
                 goStage({
                   ...session,
-                  stage: "offerings",
+                  stage:
+                    session.selection?.focus === "produk"
+                      ? "product"
+                      : "offerings",
                   editReturn: "summary",
                   editBaseline: undefined,
                 });
