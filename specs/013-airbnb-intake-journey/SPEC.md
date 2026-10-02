@@ -2,10 +2,10 @@
 
 > Status: **Implementing**; approved by the founder on 2026-09-27
 > ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
-> J2 and J3 merged with PASS ([J2](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656),
-> [J3](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98#issuecomment-5862847919)); J4 is next.
+> J2–J4 merged; J5 passed review, awaiting founder merge; J6 is next.
+> Review evidence: [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
 > Owner: orchestrator
-> Updated: 2026-09-28
+> Updated: 2026-10-02
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > (milestones J2–J7 and JQ)
 > Decision basis: plan §4.1 ("done" for the journey), the three 2026-09-27
@@ -406,9 +406,9 @@ None. The founder answered the draft's three questions on 2026-09-27
 
 ## Verification record
 
-Complete after implementation:
+Partial implementation; full-spec verification remains pending:
 
 - Verification artifact: `specs/013-airbnb-intake-journey/VERIFICATION.md`
-- Result: Pending
-- Date: Pending
-- Verified commit or working-tree state: Pending
+- Result: J5 PASS; J6, J7 and JQ remain outstanding
+- Date: 2026-10-02 (J5)
+- Verified implementation commit: `358c521b3e3e5fca9046714f0559c50ac07b5e03` (J5 only)

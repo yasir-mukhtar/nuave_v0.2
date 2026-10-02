@@ -33,9 +33,9 @@ done.
 | J1s | Stage 1 spec: [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md), founder approval | Orchestrator + founder | Done | #95 | PASS+NOTES |
 | J2 | Screen frame, entry, reading screen, brand confirm | Worker | Done | [#96](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/96#issuecomment-5860555656) (`8161030`) |
 | J3 | Preparation adds locations and category suggestions | Worker | Done | [#98](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/98#issuecomment-5862847919) (`5dd097c`) |
-| J4 | Focus, location and product screens; #98 M2 location-source host check (enforces R-02) | Worker | Next | — | — |
-| J5 | Category, offerings, service-channel and market screens | Worker | Not started | — | — |
-| J6 | Customer-needs, competitor and public-fact screens | Worker | Not started | — | — |
+| J4 | Focus, location and product screens; #98 M2 location-source host check (enforces R-02) | Worker | Done | [#99](https://github.com/yasir-mukhtar/nuave_v0.2/pull/99) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/99#issuecomment-5889417883) (`283eea0`; merged head `a1dc860` adds main docs only) |
+| J5 | Category, offerings, service-channel and market screens | Worker | PASS; awaiting founder merge | [#104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114) (`358c521`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md)) |
+| J6 | Customer-needs, competitor and public-fact screens | Worker | Next, after J5 merge | — | — |
 | J7 | Review screen becomes the single confirmation | Worker | Not started | — | — |
 | JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Not started | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |

@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-09-28
+> Updated: 2026-10-02
 > Stage: Stage 1 of the [paying-customer plan](./PAYING_CUSTOMER_PLAN.md):
 > finish the intake journey
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -16,8 +16,8 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing; J2 and J3 merged with PASS (plan §1). The full
-  spec is not yet verified. Latest verified:
+  intake) is implementing; J2–J4 merged; J5 passed review, awaiting merge
+  (plan §1 has evidence). The full spec is not yet verified. Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
   AC-18 exception). Checkpoint: [2026-09-19 live report](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
@@ -26,9 +26,9 @@
 
 ## Next action
 
-- **Active milestone: J4** (Spec 013 slices): focus, location and product
-  screens. Carry #98 M2 (enforces R-02): drop locations whose source host
-  is not the audited website (`www` ok). Handoff: `templates/WORKER_PROMPT.md`.
+- **Next milestone: J6** (Spec 013): customer-needs, competitor and public-fact
+  screens. First merge [J5 #104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104)
+  as founder, then start from updated `origin/main`. Handoff: `templates/WORKER_PROMPT.md`.
 
 ## Rules still in force
 
