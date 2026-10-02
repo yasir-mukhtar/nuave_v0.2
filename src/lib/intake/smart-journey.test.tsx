@@ -30,11 +30,15 @@ const lanjut = () =>
 const kembali = () =>
   fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
 
-// J5: the detail chain between the target screens and the summary. A cabang
+// J5 and J6 detail chain between the target screens and the summary. A cabang
 // focus skips the market screen.
 async function fromOfferings(focus: "brand" | "cabang" | "produk" = "brand") {
   await screen.findByRole("heading", {
     name: /^(Apakah ini|Apa saja) yang Anda tawarkan\?$/,
+  });
+  lanjut();
+  await screen.findByRole("heading", {
+    name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
   });
   lanjut();
   await screen.findByRole("heading", {
@@ -47,6 +51,26 @@ async function fromOfferings(focus: "brand" | "cabang" | "produk" = "brand") {
     });
     lanjut();
   }
+  await screen.findByRole("heading", {
+    name: "Ini yang mungkin dibandingkan dengan Anda",
+  });
+  lanjut();
+  await screen.findByRole("heading", {
+    name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+  });
+  lanjut();
+  await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+}
+
+async function afterMarket() {
+  await screen.findByRole("heading", {
+    name: "Ini yang mungkin dibandingkan dengan Anda",
+  });
+  lanjut();
+  await screen.findByRole("heading", {
+    name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+  });
+  lanjut();
   await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
 }
 
@@ -192,7 +216,7 @@ describe("smart blank intake", () => {
       JSON.parse(
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
       ),
-    ).toMatchObject({ version: 6, stage: "questions" });
+    ).toMatchObject({ version: 7, stage: "questions" });
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
   });
 
@@ -394,8 +418,16 @@ describe("Spec 013 J2 screen frame", () => {
     render(<SmartIntakeJourney live={false} />);
     await fillAndPeriksa();
     await throughBrand();
-    // summary → market → service → offerings → category → focus → brand →
-    // entry via marked pops; foreign states do nothing.
+    // summary → public fact → competitors → market → service → customer
+    // needs → offerings → category → focus → brand → entry via marked pops.
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
+    await screen.findByRole("heading", {
+      name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+    });
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
+    await screen.findByRole("heading", {
+      name: "Ini yang mungkin dibandingkan dengan Anda",
+    });
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
       name: "Di mana pelanggan Anda berada?",
@@ -403,6 +435,10 @@ describe("Spec 013 J2 screen frame", () => {
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
       name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+    });
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
+    await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
     });
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
@@ -497,7 +533,7 @@ describe("Spec 013 J2 screen frame", () => {
     window.sessionStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
-        version: 6,
+        version: 7,
         stage: "brand",
         entry: { name: "Kedai Lama", source: "https://lama.example/" },
         identity: null,
@@ -869,8 +905,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     await screen.findByRole("heading", {
       name: "Ini brand yang ingin Anda audit?",
     });
-    // And the summary steps back to the last screen its focus shows — the
-    // service screen for a location focus, which skips the market.
+    // A location focus steps back through J6 but skips market.
     lanjut();
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     lanjut();
@@ -882,7 +917,19 @@ describe("Spec 013 J4 focus and target screens", () => {
     await throughDetails("cabang");
     kembali();
     await screen.findByRole("heading", {
+      name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+    });
+    kembali();
+    await screen.findByRole("heading", {
+      name: "Ini yang mungkin dibandingkan dengan Anda",
+    });
+    kembali();
+    await screen.findByRole("heading", {
       name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+    });
+    kembali();
+    await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
     });
   });
 
@@ -1507,6 +1554,10 @@ describe("Spec 013 J5 business-detail screens", () => {
     ).toHaveLength(1);
     lanjut();
     await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
     });
     lanjut();
@@ -1514,7 +1565,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       name: "Di mana pelanggan Anda berada?",
     });
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await afterMarket();
     expect(
       screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
     ).toContain("kopi susu, es teh");
@@ -1551,6 +1602,10 @@ describe("Spec 013 J5 business-detail screens", () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
     lanjut();
     await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
     });
   });
@@ -1566,6 +1621,10 @@ describe("Spec 013 J5 business-detail screens", () => {
     lanjut();
     await screen.findByRole("heading", {
       name: "Apakah ini yang Anda tawarkan?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -1586,7 +1645,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       name: "Di mana pelanggan Anda berada?",
     });
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await afterMarket();
     expect(
       screen.getByRole("region", { name: "Cara layanan" }).textContent,
     ).toContain("Digunakan secara online");
@@ -1618,6 +1677,10 @@ describe("Spec 013 J5 business-detail screens", () => {
     lanjut();
     await screen.findByRole("heading", {
       name: "Apakah ini yang Anda tawarkan?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -1670,7 +1733,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     );
     expect(savedAfterSwitch.selection.marketAreas).toEqual(["Area 2"]);
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await afterMarket();
     expect(
       screen.getByRole("region", { name: "Jangkauan pasar" }).textContent,
     ).toContain("Sekitar bisnis");
@@ -1727,11 +1790,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
     });
     lanjut();
-    // Cabang focus: service → summary directly, never the market screen.
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    // Cabang focus skips market but still walks the J6 optional screens.
+    await afterMarket();
     expect(
       screen.queryByRole("heading", {
         name: "Di mana pelanggan Anda berada?",
@@ -1814,6 +1881,10 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
     });
     lanjut();
@@ -1821,7 +1892,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       name: "Di mana pelanggan Anda berada?",
     });
     lanjut();
-    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    await afterMarket();
 
     const row = screen.getByRole("region", { name: "Produk dan layanan" });
     expect(row.textContent).toContain("kopi susu");
@@ -1868,6 +1939,10 @@ describe("Spec 013 J5 business-detail screens", () => {
       });
       lanjut();
       await screen.findByRole("heading", {
+        name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+      });
+      lanjut();
+      await screen.findByRole("heading", {
         name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
       });
       lanjut();
@@ -1875,7 +1950,7 @@ describe("Spec 013 J5 business-detail screens", () => {
         name: "Di mana pelanggan Anda berada?",
       });
       lanjut();
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await afterMarket();
 
       const row = screen.getByRole("region", { name: "Produk dan layanan" });
       fireEvent.click(within(row).getByRole("button", { name: "Ubah" }));

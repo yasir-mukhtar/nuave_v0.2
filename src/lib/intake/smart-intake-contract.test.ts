@@ -19,6 +19,8 @@ import {
   selectSmartFocus,
   smartLocationReady,
   smartProductReady,
+  smartComparatorsReady,
+  firstSmartGapStage,
   unsafeSmartName,
   requiredSmartGaps,
   unsafeSmartSelection,
@@ -36,6 +38,63 @@ function prepared(overrides: Partial<ExtractionDraft> = {}) {
 }
 
 describe("smart intake exact confirmed meaning", () => {
+  it("selects prepared comparators with Nuave provenance and keeps all three frozen meanings distinct", () => {
+    const proposal = prepared();
+    const suggestions = {
+      ...proposal,
+      comparatorSuggestions: {
+        proposed: ["Kedai Tetangga"],
+        origin: "nuave" as const,
+      },
+    };
+    const selection = initialSmartSelection(suggestions);
+    expect(selection.comparatorMode).toBe("named");
+    expect(selection.comparatorNames).toEqual(["Kedai Tetangga"]);
+    expect(
+      confirmSmartSelection(suggestions, selection, 1).context.comparators,
+    ).toEqual({
+      value: { mode: "named", names: ["Kedai Tetangga"] },
+      origin: "nuave",
+    });
+    for (const mode of ["unknown", "category-alternatives"] as const) {
+      selection.comparatorMode = mode;
+      selection.comparatorNames = [];
+      expect(smartComparatorsReady(selection)).toBe(true);
+      expect(
+        confirmSmartSelection(suggestions, selection, 2).context.comparators
+          .value,
+      ).toEqual({ mode });
+    }
+    expect(
+      initialSmartSelection({
+        ...proposal,
+        comparatorSuggestions: { proposed: [], origin: "nuave" },
+      }).comparatorMode,
+    ).toBe("unknown");
+  });
+
+  it.each([
+    { names: [] },
+    { names: [" "] },
+    { names: ["Kedai A", " kedai a "] },
+    { names: ["Satu", "Dua", "Tiga", "Empat", "Lima", "Enam"] },
+  ])(
+    "refuses an invalid named comparator list instead of switching modes or truncating: $names",
+    ({ names }) => {
+      const proposal = prepared();
+      const selection = initialSmartSelection(proposal);
+      selection.comparatorMode = "named";
+      selection.comparatorNames = names;
+      expect(smartComparatorsReady(selection)).toBe(false);
+      expect(firstSmartGapStage(selection)).toBe("competitors");
+      expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
+        "Bisnis pembanding",
+      );
+      expect(selection.comparatorNames).toEqual(names);
+      expect(selection.comparatorMode).toBe("named");
+    },
+  );
+
   it.each([
     "Hasil panen petani lokal untuk keluarga Indonesia.",
     "Menu sehat keluarga, baik untuk jantung.",

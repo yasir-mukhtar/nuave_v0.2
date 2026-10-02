@@ -246,7 +246,7 @@ export function SmartOfferingsScreen({
         ? { ...selection.origins, [originKey]: "owner" }
         : selection.origins,
     });
-  const toggle = (item: string, on: boolean) =>
+  const toggle = (item: string, on: boolean): boolean => {
     update(
       {
         offerings: on
@@ -255,15 +255,18 @@ export function SmartOfferingsScreen({
       },
       "offerings",
     );
-  const add = (value: string) => {
+    return true;
+  };
+  const add = (value: string): boolean => {
     const match = [...proposed, ...ownerAdded].find((item) =>
       sameText(item, value),
     );
     if (match) {
       if (!selection.offerings.includes(match)) toggle(match, true);
-      return;
+      return true;
     }
     update({ offerings: [...selection.offerings, value] }, "offerings");
+    return true;
   };
   if (selection.focus === "produk") {
     const catalogue = proposed.includes(selection.productTarget)
@@ -532,41 +535,39 @@ export function SmartMarketScreen({
     setAreaBlock(
       "Area layanan dibatasi paling banyak 8. Hapus satu untuk menambah yang lain.",
     );
-  const toggleArea = (area: string, on: boolean) => {
+  const toggleArea = (area: string, on: boolean): boolean => {
     if (on && selection.marketAreas.some((item) => sameText(item, area))) {
       setAreaBlock(null);
-      return;
+      return true;
     }
     if (selection.marketReach === "sekitar") {
       setAreas(on ? [area] : []);
       setAreaBlock(null);
-      return;
+      return true;
     }
     if (on) {
       if (selection.marketAreas.length >= AREA_CAP) {
         blocked();
-        return;
+        return false;
       }
       setAreas([...selection.marketAreas, area]);
     } else {
       setAreas(selection.marketAreas.filter((item) => item !== area));
     }
     setAreaBlock(null);
+    return true;
   };
-  const addArea = (value: string) => {
+  const addArea = (value: string): boolean => {
     const match = [...proposed, ...ownerAdded].find((item) =>
       sameText(item, value),
     );
-    if (match) {
-      toggleArea(match, true);
-      return;
-    }
+    if (match) return toggleArea(match, true);
     if (
       selection.marketReach === "beberapa" &&
       selection.marketAreas.length >= AREA_CAP
     ) {
       blocked();
-      return;
+      return false;
     }
     setAreas(
       selection.marketReach === "sekitar"
@@ -574,6 +575,7 @@ export function SmartMarketScreen({
         : [...selection.marketAreas, value],
     );
     setAreaBlock(null);
+    return true;
   };
   return (
     <section className="grid gap-5" data-intake-screen="market">

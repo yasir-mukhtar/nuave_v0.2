@@ -6,14 +6,15 @@ screen, in synthetic mode through a labelled substitute. It then asks
 when different, and the website; `Lanjut` confirms the brand and opens the
 focus screen "Apa yang ingin Anda audit?" — whole brand (marked
 `Saran Nuave`), one location, or one product/service. A product pick opens
-"Produk atau layanan mana?" first. The chain then walks the business-detail
-screens — category ("Bisnis Anda biasanya disebut apa?"), offerings
-("Apakah ini yang Anda tawarkan?"), service channels ("Bagaimana pelanggan
-mendapatkan yang Anda tawarkan?") and market ("Di mana pelanggan Anda
-berada?") — before landing on "Ini yang Nuave pahami.", a summary whose
-business-detail rows are read-back: each `Ubah` re-opens the owning screen.
-One confirmation, `Sudah sesuai — buat pertanyaan audit`, freezes the
-context and creates the audit questions.
+"Produk atau layanan mana?" first. The chain then walks category
+("Bisnis Anda biasanya disebut apa?"), offerings ("Apakah ini yang Anda
+tawarkan?"), customer needs, service channels ("Bagaimana pelanggan
+mendapatkan yang Anda tawarkan?"), market ("Di mana pelanggan Anda berada?",
+skipped for a location focus), competitors, and public fact before landing on
+"Ini yang Nuave pahami.", a summary whose business-detail rows are
+read-back: each `Ubah` re-opens the owning screen. One confirmation,
+`Sudah sesuai — buat pertanyaan audit`, freezes the context and creates the
+audit questions.
 
 ## Sub-features
 
@@ -39,8 +40,15 @@ sendiri` accepts a manual pick labelled `Dari Anda`; `Lanjut` stays
 - `market-screen`: four reach cards; `sekitar` needs exactly one area and
   `beberapa` needs one to eight — a ninth area is refused with a visible
   block. A location focus never shows this screen.
+- `customer-needs`: optional prepared needs keep their source label; the owner
+  can deselect a suggestion or add a need.
+- `competitors`: named businesses, no direct competitor, and unknown are
+  distinct modes. Prepared names default to named mode; named mode requires
+  one to five names and refuses a sixth instead of truncating.
+- `public-fact`: optional public context accepts owner text through the
+  existing sensitive-text rejection path.
 - `summary-row-edit`: `Ubah` on a read-back row opens the owning detail
-  screen; `Kembali` or `Lanjut` returns to the summary.
+  screen; `Kembali`, `Lanjut`, or marked browser Back returns to the summary.
 - `summary-confirm`: `Sudah sesuai — buat pertanyaan audit` freezes the
   context and makes exactly one question request; while a required meaning
   is missing the button reads `Lengkapi yang perlu dipastikan` and opens the
@@ -80,8 +88,10 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
   category screen. The synthetic reading found nothing, so each gated
   screen takes the smallest owner answer: `kedai kopi` typed into
   `Kategori`, `kopi susu` added through `Penawaran lain` + Enter, the
-  `Di lokasi bisnis Anda` checkbox, and the `Seluruh Indonesia` reach card —
-  then the chain lands on the summary. Evidence: `04-detail-screens`.
+  `Di lokasi bisnis Anda` checkbox, and the `Seluruh Indonesia` reach card.
+  The three optional J6 screens follow: customer needs remain empty,
+  competitor mode remains `Belum tahu`, and public fact remains blank. The
+  chain then lands on the summary. Evidence: `04-detail-screens`.
 - **Product target.** Presses `Ubah` on the read-back focus row, picks
   `Satu produk atau layanan` on the re-opened focus screen, presses
   `Lanjut`, types `kopi susu` into `Nama produk atau layanan` on the
@@ -91,9 +101,10 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
 - **Confirm.** Presses `Sudah sesuai — buat pertanyaan audit`. The heading
   "Periksa pertanyaan audit" and ten `[data-question-slot]` show. Evidence:
   `06-questions-created`.
-- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v6`
+- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v7`
   has category `kedai kopi` (origin `owner`), focus
-  `{kind: "produk", name: "kopi susu"}`, and reach `seluruh`.
+  `{kind: "produk", name: "kopi susu"}`, reach `seluruh`, empty optional
+  customer needs, unknown competitor mode and a blank public fact.
   `network.json.apiCalls` is exactly one `GET /api/audit/identity`, one
   `POST /api/audit/extract` and one `POST /api/audit/glm-questions`.
 
@@ -108,8 +119,9 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
 - Under a product focus the offerings screen is read-only catalogue context
   (the product target is the offering), so the owner-filled offerings pass
   runs before the focus switch in this drive.
-- A location focus never shows the market screen — its service screen's
-  `Lanjut` lands on the summary directly.
+- A location focus never shows the market screen — customer needs precede
+  service, whose `Lanjut` lands on competitors and then public fact before the
+  summary.
 - Until category, offering, channel and reach are filled, the button reads
   `Lengkapi yang perlu dipastikan`, not `Sudah sesuai — buat pertanyaan
 audit`. The forward chain's gates mean the summary only shows it after an

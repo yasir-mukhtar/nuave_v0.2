@@ -1,7 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  addCompetitor,
+  addCustomerNeed,
   brandScreen,
   categoryScreen,
+  chooseCompetitorMode,
   chooseFocus,
   confirmBrand,
   confirmFocus,
@@ -10,15 +13,19 @@ import {
   entryScreen,
   expectBrandConfirm,
   expectCategoryScreen,
+  expectCompetitorsScreen,
+  expectCustomerNeedsScreen,
   expectFocusScreen,
   expectLocationScreen,
   expectMarketScreen,
   expectOfferingsScreen,
   expectProductScreen,
+  expectPublicFactScreen,
   expectServiceScreen,
   expectSummary,
   expectTenQuestions,
   fillEntry,
+  fillPublicFact,
   focusScreen,
   INTAKE_SESSION_KEY,
   locationScreen,
@@ -27,11 +34,16 @@ import {
   pressLanjut,
   pressPeriksa,
   productScreen,
+  competitorsScreen,
+  customerNeedsScreen,
+  publicFactScreen,
   RICH_PREPARATION_DRAFT,
   SENSITIVE_INPUT_NOTICE,
   serviceScreen,
   stubPreparationDraft,
   throughDetailScreens,
+  throughCompetitorContext,
+  toggleCustomerNeed,
   toSummary,
 } from "./journey";
 
@@ -186,15 +198,34 @@ test("a sensitive optional edit retains the last safe summary value", async ({
 test("every manually selected comparator stays visible, correctable and removable", async ({
   page,
 }) => {
-  await enter(page);
-  await page.getByRole("radio", { name: "Bisnis yang saya pilih" }).check();
+  await enter(page, false);
   await page
-    .getByRole("textbox", { name: "Nama pembanding lain" })
-    .fill("Kedai Baru");
-  await page.getByRole("button", { name: "Tambah", exact: true }).click();
+    .locator('section[aria-label="Bisnis pembanding"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectCompetitorsScreen(page);
+  await chooseCompetitorMode(page, "Bisnis yang saya pilih");
+  await addCompetitor(page, "Kedai Baru");
+  await addCompetitor(page, "Kedai Samping");
   const selected = page.getByRole("textbox", { name: "Pembanding terpilih 1" });
+  const otherSelected = page.getByRole("textbox", {
+    name: "Pembanding terpilih 2",
+  });
   await expect(selected).toHaveValue("Kedai Baru");
+  await expect(otherSelected).toHaveValue("Kedai Samping");
+  await selected.fill(" kedai SAMPing ");
+  await expect(selected).toHaveAttribute("aria-invalid", "true");
+  const duplicateErrorId = await selected.getAttribute("aria-describedby");
+  expect(duplicateErrorId).toBeTruthy();
+  await expect(page.locator(`#${duplicateErrorId}`)).toContainText(
+    "Nama pembanding sudah dipakai",
+  );
+  await expect(page.getByRole("button", { name: "Lanjut" })).toBeDisabled();
   await selected.fill("Kedai Pilihan");
+  await expect(selected).not.toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByRole("button", { name: "Lanjut" })).toBeEnabled();
+  await pressLanjut(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   const frozen = await page.evaluate(
@@ -203,20 +234,31 @@ test("every manually selected comparator stays visible, correctable and removabl
   );
   expect(frozen.frozen.context.comparators.value).toEqual({
     mode: "named",
-    names: ["Kedai Pilihan"],
+    names: ["Kedai Pilihan", "Kedai Samping"],
   });
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
+  await expectSummary(page);
+  await page
+    .locator('section[aria-label="Bisnis pembanding"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectCompetitorsScreen(page);
   await expect(
     page.getByRole("textbox", { name: "Pembanding terpilih 1" }),
   ).toHaveValue("Kedai Pilihan");
   await page
     .getByRole("button", { name: "Hapus pembanding Kedai Pilihan" })
     .click();
-  await expect(
-    page.getByRole("textbox", { name: "Pembanding terpilih 1" }),
-  ).toHaveCount(0);
+  const remaining = page.getByRole("textbox", {
+    name: "Pembanding terpilih 1",
+  });
+  await expect(remaining).toHaveValue("Kedai Samping");
+  await page
+    .getByRole("button", { name: "Hapus pembanding Kedai Samping" })
+    .click();
+  await expect(remaining).toHaveCount(0);
 });
 
 test("rich reading reaches one summary and question review without more typing", async ({
@@ -440,11 +482,13 @@ test("a cleared detail row routes the summary CTA to its owning screen", async (
   await pressLanjut(page);
   await expectOfferingsScreen(page);
   await pressLanjut(page);
+  await expectCustomerNeedsScreen(page);
+  await pressLanjut(page);
   await expectServiceScreen(page);
   await pressLanjut(page);
   await expectMarketScreen(page);
   await pressLanjut(page);
-  await expectSummary(page);
+  await throughCompetitorContext(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
 });
@@ -603,7 +647,7 @@ test("a name-only edit reuses the reading; changing the website reads again", as
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
 });
 
-test("named comparators require selection; alternatives carry no company names", async ({
+test("prepared competitor names are editable; alternatives carry no company names", async ({
   page,
 }) => {
   const contexts: Record<string, unknown>[] = [];
@@ -618,12 +662,24 @@ test("named comparators require selection; alternatives carry no company names",
       );
   });
   await enter(page);
-  await page.getByRole("radio", { name: "Bisnis yang saya pilih" }).click();
-  await page.getByRole("checkbox", { name: "Kedai Tetangga" }).click();
-  await page
-    .getByRole("textbox", { name: "Nama pembanding lain" })
-    .fill("Warung Fiksi");
-  await page.getByRole("button", { name: "Tambah", exact: true }).click();
+  const competitorRow = page.locator('section[aria-label="Bisnis pembanding"]');
+  await expect(competitorRow).toContainText("Kedai Tetangga");
+  const beforeEdit = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
+  expect(beforeEdit.selection.comparatorMode).toBe("named");
+  expect(beforeEdit.selection.comparatorNames).toEqual(["Kedai Tetangga"]);
+  await competitorRow.getByRole("button", { name: "Ubah" }).click();
+  await expectCompetitorsScreen(page);
+  await expect(
+    competitorsScreen(page).getByRole("textbox", {
+      name: "Pembanding terpilih 1",
+    }),
+  ).toHaveValue("Kedai Tetangga");
+  await addCompetitor(page, "Warung Fiksi");
+  await pressLanjut(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
@@ -636,8 +692,13 @@ test("named comparators require selection; alternatives carry no company names",
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
     .click();
   await page
-    .getByRole("radio", { name: /Tidak ada pembanding langsung/ })
+    .locator('section[aria-label="Bisnis pembanding"]')
+    .getByRole("button", { name: "Ubah" })
     .click();
+  await expectCompetitorsScreen(page);
+  await chooseCompetitorMode(page, "Tidak ada pembanding langsung");
+  await pressLanjut(page);
+  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
@@ -646,6 +707,284 @@ test("named comparators require selection; alternatives carry no company names",
   expect(
     (contexts[1]!.comparators as { value: Record<string, unknown> }).value,
   ).not.toHaveProperty("names");
+});
+
+test("empty optional screens keep no needs or facts and unknown competitors", async ({
+  page,
+}) => {
+  await enter(page, false);
+  await expect(
+    page.locator('section[aria-label="Kebutuhan pelanggan"]'),
+  ).toContainText("Belum diisi");
+  await expect(
+    page.locator('section[aria-label="Bisnis pembanding"]'),
+  ).toContainText("Belum tahu");
+  await expect(
+    page.locator('section[aria-label="Fakta publik tambahan"]'),
+  ).toContainText("Belum diisi");
+  const saved = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
+  expect(saved.selection).toMatchObject({
+    customerNeeds: [],
+    comparatorMode: "unknown",
+    comparatorNames: [],
+    publicFact: "",
+  });
+});
+
+test("J6 screens keep prepared provenance, optional edits, and competitor limits", async ({
+  page,
+}) => {
+  await enter(page);
+  await page
+    .locator('section[aria-label="Kebutuhan pelanggan"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectCustomerNeedsScreen(page);
+  await expect(customerNeedsScreen(page)).toContainText("Saran Nuave");
+  const preparedNeed = customerNeedsScreen(page).getByRole("button", {
+    name: "minuman dekat kantor",
+  });
+  await expect(preparedNeed).toHaveAttribute("aria-pressed", "true");
+  await toggleCustomerNeed(page, "minuman dekat kantor");
+  await addCustomerNeed(page, "pesanan untuk rapat pagi");
+  await expect(
+    customerNeedsScreen(page).getByRole("button", {
+      name: "pesanan untuk rapat pagi",
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await pressLanjut(page);
+  await expectSummary(page);
+
+  await page
+    .locator('section[aria-label="Bisnis pembanding"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectCompetitorsScreen(page);
+  await expect(competitorsScreen(page)).toContainText("Saran Nuave");
+  await competitorsScreen(page)
+    .getByRole("button", { name: "Kedai Tetangga", exact: true })
+    .click();
+  await expect(
+    competitorsScreen(page).getByText(/Tambahkan nama pembanding/),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lanjut" })).toBeDisabled();
+  for (const name of [
+    "Pembanding satu",
+    "Pembanding dua",
+    "Pembanding tiga",
+    "Pembanding empat",
+    "Pembanding lima",
+  ]) {
+    await addCompetitor(page, name);
+  }
+  await addCompetitor(page, "Pembanding enam");
+  await expect(competitorsScreen(page).getByRole("alert")).toContainText(
+    "paling banyak 5",
+  );
+  const addition = competitorsScreen(page).getByRole("textbox", {
+    name: "Nama pembanding lain",
+  });
+  await expect(addition).toHaveValue("Pembanding enam");
+  const saved = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
+  expect(saved.selection.comparatorNames).toEqual([
+    "Pembanding satu",
+    "Pembanding dua",
+    "Pembanding tiga",
+    "Pembanding empat",
+    "Pembanding lima",
+  ]);
+  await competitorsScreen(page)
+    .getByRole("button", { name: "Hapus pembanding Pembanding lima" })
+    .click();
+  await expect(addition).toHaveValue("Pembanding enam");
+  await competitorsScreen(page)
+    .getByRole("button", { name: "Tambah", exact: true })
+    .click();
+  await expect(addition).toHaveValue("");
+  const retried = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
+  expect(retried.selection.comparatorNames).toEqual([
+    "Pembanding satu",
+    "Pembanding dua",
+    "Pembanding tiga",
+    "Pembanding empat",
+    "Pembanding enam",
+  ]);
+  await expect(page.getByRole("button", { name: "Lanjut" })).toBeEnabled();
+  await chooseCompetitorMode(page, "Belum tahu");
+  await pressLanjut(page);
+  await expectSummary(page);
+  await page
+    .locator('section[aria-label="Fakta publik tambahan"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectPublicFactScreen(page);
+  await fillPublicFact(page, "Buka setiap hari sampai pukul 21.00.");
+  await pressLanjut(page);
+  await expectSummary(page);
+});
+
+test("J6 edits return to the summary by Continue, footer Back, and browser Back", async ({
+  page,
+}) => {
+  await enter(page);
+  await page.setViewportSize({ width: 320, height: 720 });
+  const stages = [
+    {
+      row: "Kebutuhan pelanggan",
+      expectScreen: expectCustomerNeedsScreen,
+      heading: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    },
+    {
+      row: "Bisnis pembanding",
+      expectScreen: expectCompetitorsScreen,
+      heading: "Ini yang mungkin dibandingkan dengan Anda",
+    },
+    {
+      row: "Fakta publik tambahan",
+      expectScreen: expectPublicFactScreen,
+      heading: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+    },
+  ] as const;
+  for (const stage of stages) {
+    for (const back of ["continue", "footer", "browser"] as const) {
+      await page
+        .locator(`section[aria-label="${stage.row}"]`)
+        .getByRole("button", { name: "Ubah" })
+        .click();
+      await stage.expectScreen(page);
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => document.activeElement?.textContent?.trim() ?? "",
+          ),
+        )
+        .toContain(stage.heading);
+      await page.keyboard.press("Tab");
+      await expect
+        .poll(() => page.evaluate(() => document.activeElement?.tagName ?? ""))
+        .not.toBe("H1");
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+      if (back === "continue") await pressLanjut(page);
+      else if (back === "footer") await pressKembali(page);
+      else await page.goBack();
+      await expectSummary(page);
+    }
+  }
+});
+
+test("each J6 screen restores its value after a reload", async ({ page }) => {
+  await enter(page);
+  await page
+    .locator('section[aria-label="Kebutuhan pelanggan"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await addCustomerNeed(page, "pilihan sarapan ringan");
+  await page.reload();
+  await expectCustomerNeedsScreen(page);
+  await expect(
+    customerNeedsScreen(page).getByRole("button", {
+      name: "pilihan sarapan ringan",
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await pressKembali(page);
+  await expectSummary(page);
+
+  await page
+    .locator('section[aria-label="Bisnis pembanding"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await addCompetitor(page, "Kedai Samping");
+  await page.reload();
+  await expectCompetitorsScreen(page);
+  await expect(
+    competitorsScreen(page).getByRole("textbox", {
+      name: "Pembanding terpilih 2",
+    }),
+  ).toHaveValue("Kedai Samping");
+  await pressKembali(page);
+  await expectSummary(page);
+
+  await page
+    .locator('section[aria-label="Fakta publik tambahan"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await fillPublicFact(page, "Menyediakan area duduk di lantai dua.");
+  await page.reload();
+  await expectPublicFactScreen(page);
+  await expect(publicFactScreen(page).getByRole("textbox")).toHaveValue(
+    "Menyediakan area duduk di lantai dua.",
+  );
+  await pressKembali(page);
+  await expectSummary(page);
+});
+
+test("unsafe public facts retain the safe value and frozen R20 context", async ({
+  page,
+}) => {
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  await enter(page);
+  await page
+    .locator('section[aria-label="Fakta publik tambahan"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await fillPublicFact(page, "Buka setiap hari sampai pukul 21.00.");
+  await fillPublicFact(page, "nomor rekening 12345");
+  await expect(
+    page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
+  ).toBeVisible();
+  await expect(publicFactScreen(page).getByRole("textbox")).toHaveValue(
+    "Buka setiap hari sampai pukul 21.00.",
+  );
+  const saved = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
+  expect(saved.selection.publicFact).toBe(
+    "Buka setiap hari sampai pukul 21.00.",
+  );
+  expect(JSON.stringify(saved)).not.toContain("nomor rekening");
+  await pressLanjut(page);
+  await expectSummary(page);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
+  expect(contexts[0]).toMatchObject({
+    targetCustomer: { value: "pekerja kantoran sekitar", origin: "nuave" },
+    customerNeeds: {
+      value: ["minuman dekat kantor"],
+      origin: "nuave",
+    },
+    decisionConsiderations: { value: ["lokasi"], origin: "nuave" },
+    comparators: {
+      value: { mode: "named", names: ["Kedai Tetangga"] },
+    },
+    publicFact: {
+      value: "Buka setiap hari sampai pukul 21.00.",
+      origin: "owner",
+    },
+  });
 });
 
 test.describe("J4 focus and target screens", () => {
@@ -993,20 +1332,24 @@ test.describe("J5 business-detail screens", () => {
     await pressLanjut(page);
     await expectOfferingsScreen(page);
     await pressLanjut(page);
+    await expectCustomerNeedsScreen(page);
+    await pressLanjut(page);
     await expectServiceScreen(page);
     await pressLanjut(page);
     await expectMarketScreen(page);
     // All eight prepared areas sit selected; typing a ninth is refused with a
     // visible block while Lanjut stays enabled for the valid set.
-    await marketScreen(page)
-      .getByRole("textbox", { name: "Tambah area lain" })
-      .fill("Denpasar");
+    const areaInput = marketScreen(page).getByRole("textbox", {
+      name: "Tambah area lain",
+    });
+    await areaInput.fill("Denpasar");
     await marketScreen(page).getByRole("button", { name: "Tambahkan" }).click();
+    await expect(areaInput).toHaveValue("Denpasar");
     await expect(marketScreen(page).getByRole("alert")).toContainText(
       "dibatasi paling banyak 8",
     );
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughCompetitorContext(page);
     await expect(
       page.locator('section[aria-label="Jangkauan pasar"]'),
     ).toContainText("Makassar");
@@ -1033,6 +1376,9 @@ test.describe("J5 business-detail screens", () => {
     await expectOfferingsScreen(page);
     await noOverflow();
     await pressLanjut(page);
+    await expectCustomerNeedsScreen(page);
+    await noOverflow();
+    await pressLanjut(page);
     await expectServiceScreen(page);
     await noOverflow();
     // A second channel stacks on the prepared pick.
@@ -1043,7 +1389,7 @@ test.describe("J5 business-detail screens", () => {
     await expectMarketScreen(page);
     await noOverflow();
     await pressLanjut(page);
-    await expectSummary(page);
+    await throughCompetitorContext(page);
     const serviceRow = page.locator('section[aria-label="Cara layanan"]');
     await expect(serviceRow).toContainText("Di lokasi bisnis Anda");
     await expect(serviceRow).toContainText("Dikirim ke pelanggan");

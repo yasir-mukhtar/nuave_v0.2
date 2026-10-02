@@ -28,6 +28,7 @@ import {
   prepareUnderstanding,
   selectSmartFocus,
   smartCategoryReady,
+  smartComparatorsReady,
   smartLocationReady,
   smartMarketReady,
   smartProductReady,
@@ -59,6 +60,11 @@ import {
   SmartOfferingsScreen,
   SmartServiceScreen,
 } from "./smart-detail-screens";
+import {
+  SmartCustomerNeedsScreen,
+  SmartCompetitorsScreen,
+  SmartPublicFactScreen,
+} from "./smart-customer-screens";
 import SmartQuestionsScreen from "./SmartQuestionsScreen";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
 
@@ -92,10 +98,11 @@ function detourUnchanged(session: SmartSession): boolean {
 
 /**
  * Forward hop after each framed screen. Outside a summary-edit detour the
- * chain is focus → location/product → category → offerings → service →
- * market → summary. Inside a detour (`editReturn`) a screen's Lanjut walks
- * the remaining chain until it lands on the review. Product and location
- * edits pass through their target and category screens (R-05/R-21).
+ * chain is focus → location/product → category → offerings → customer needs →
+ * service → market → competitors → public fact → summary. Inside a detour
+ * (`editReturn`) a screen's Lanjut walks the remaining chain until it lands on
+ * the review. Product and location edits pass through their target and
+ * category screens (R-05/R-21).
  */
 function forwardStageFor(session: SmartSession): SmartStage | null {
   const marker = session.editReturn;
@@ -114,10 +121,18 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
     case "category":
       return marker ?? "offerings";
     case "offerings":
+      return marker ?? "customer-needs";
+    case "customer-needs":
       return marker ?? "service";
     case "service":
-      return marker ?? (selection?.focus === "cabang" ? "summary" : "market");
+      return (
+        marker ?? (selection?.focus === "cabang" ? "competitors" : "market")
+      );
     case "market":
+      return marker ?? "competitors";
+    case "competitors":
+      return marker ?? "public-fact";
+    case "public-fact":
       return marker ?? "summary";
     default:
       return null;
@@ -127,8 +142,7 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
 /**
  * In-flow target of the frame's `Kembali` and of a marked browser Back.
  * `entry` and `reading` have no back target; `reading` is never a target.
- * The summary steps back to the last detail screen its focus shows (the
- * market screen for brand/product, the service screen for a location).
+ * The summary steps back to the optional public-fact screen.
  * Inside a summary-edit detour every detail screen's Back exits straight to
  * the review, while the focus screen keeps its J4 guards: a picked location
  * or product whose target is still missing detours through that target
@@ -164,12 +178,18 @@ function backTargetFor(session: SmartSession): SmartStage | null {
       );
     case "offerings":
       return marker ?? "category";
-    case "service":
+    case "customer-needs":
       return marker ?? "offerings";
+    case "service":
+      return marker ?? "customer-needs";
     case "market":
       return marker ?? "service";
+    case "competitors":
+      return marker ?? (selection?.focus === "cabang" ? "service" : "market");
+    case "public-fact":
+      return marker ?? "competitors";
     case "summary":
-      return selection?.focus === "cabang" ? "service" : "market";
+      return "public-fact";
     case "questions":
       return "summary";
     case "audit":
@@ -237,8 +257,13 @@ function stageProgress(session: SmartSession) {
     "category",
     "offerings",
   ];
-  const bab3: SmartStage[] =
-    session.selection?.focus === "cabang" ? ["service"] : ["service", "market"];
+  const bab3: SmartStage[] = [
+    "customer-needs",
+    "service",
+    ...(session.selection?.focus === "cabang" ? [] : ["market" as const]),
+    "competitors",
+    "public-fact",
+  ];
   if (session.stage === "brand") return fills(1, 1);
   const index2 = bab2.indexOf(session.stage);
   if (index2 >= 0) return fills(2, (index2 + 1) / bab2.length);
@@ -1202,6 +1227,39 @@ export default function SmartIntakeJourney({
             error={error}
           />
         ) : null}
+        {session.stage === "customer-needs" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartCustomerNeedsScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "competitors" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartCompetitorsScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "public-fact" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartPublicFactScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
         {session.stage === "summary" &&
         session.prepared &&
         session.selection ? (
@@ -1278,6 +1336,33 @@ export default function SmartIntakeJourney({
                 });
                 setError(null);
               }}
+              onEditCustomerNeeds={() => {
+                goStage({
+                  ...session,
+                  stage: "customer-needs",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditCompetitors={() => {
+                goStage({
+                  ...session,
+                  stage: "competitors",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditPublicFact={() => {
+                goStage({
+                  ...session,
+                  stage: "public-fact",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
               onConfirm={() => void confirm()}
               busy={busy !== null}
               error={error}
@@ -1332,6 +1417,9 @@ export default function SmartIntakeJourney({
                 "offerings",
                 "service",
                 "market",
+                "customer-needs",
+                "competitors",
+                "public-fact",
               ].includes(session.stage) && session.selection ? (
               <Button
                 className="min-h-11 rounded-full px-6"
@@ -1348,7 +1436,9 @@ export default function SmartIntakeJourney({
                   (session.stage === "service" &&
                     !smartServiceReady(session.selection)) ||
                   (session.stage === "market" &&
-                    !smartMarketReady(session.selection))
+                    !smartMarketReady(session.selection)) ||
+                  (session.stage === "competitors" &&
+                    !smartComparatorsReady(session.selection))
                 }
                 onClick={() => {
                   const target = forwardStageFor(session);

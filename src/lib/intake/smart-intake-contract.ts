@@ -20,7 +20,7 @@ import {
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
-export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v6" as const;
+export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v7" as const;
 
 type Origin = "website" | "nuave" | "owner";
 export type PreparedMeaning<T> = Readonly<{
@@ -532,6 +532,19 @@ export function smartServiceReady(selection: SmartSelection): boolean {
   return selection.serviceChannels.length > 0;
 }
 
+export function smartComparatorsReady(selection: SmartSelection): boolean {
+  if (selection.comparatorMode !== "named") return true;
+  const names = selection.comparatorNames.map((name) =>
+    name.trim().toLocaleLowerCase("id-ID"),
+  );
+  return (
+    names.length > 0 &&
+    names.length <= 5 &&
+    names.every(Boolean) &&
+    new Set(names).size === names.length
+  );
+}
+
 /**
  * R-03/R-16: the market screen's Lanjut requires a reach; `sekitar` needs
  * exactly one area, `beberapa` needs one to eight, and a list past the cap
@@ -562,6 +575,7 @@ export function firstSmartGapStage(
   | "offerings"
   | "service"
   | "market"
+  | "competitors"
   | null {
   if (selection.focus === "cabang" && !smartLocationReady(selection))
     return "location";
@@ -573,6 +587,7 @@ export function firstSmartGapStage(
   if (!smartServiceReady(selection)) return "service";
   if (selection.focus !== "cabang" && !smartMarketReady(selection))
     return "market";
+  if (!smartComparatorsReady(selection)) return "competitors";
   return null;
 }
 
@@ -607,8 +622,10 @@ export function initialSmartSelection(
     targetCustomer: prepared.targetCustomer.proposed ?? "",
     customerNeeds: prepared.customerNeeds.proposed ?? [],
     decisionConsiderations: prepared.decisionConsiderations.proposed ?? [],
-    comparatorMode: "unknown",
-    comparatorNames: [],
+    comparatorMode: prepared.comparatorSuggestions.proposed?.length
+      ? "named"
+      : "unknown",
+    comparatorNames: prepared.comparatorSuggestions.proposed ?? [],
     differentiator: prepared.differentiator.proposed ?? "",
     publicFact: "",
     origins: {
@@ -647,6 +664,7 @@ export function requiredSmartGaps(selection: SmartSelection): string[] {
   if (!selection.serviceChannels.length) gaps.push("Cara layanan");
   if (selection.focus !== "cabang" && !smartMarketReady(selection))
     gaps.push(selection.marketReach ? "Area layanan" : "Jangkauan pasar");
+  if (!smartComparatorsReady(selection)) gaps.push("Bisnis pembanding");
   return gaps;
 }
 
@@ -701,7 +719,7 @@ export function confirmSmartSelection(
     selection.focus === "produk"
       ? [selection.productTarget.trim()]
       : unique(selection.offerings, 12);
-  const namedComparators = unique(selection.comparatorNames, 5);
+  const namedComparators = selection.comparatorNames.map((name) => name.trim());
   const context: DirectTenAuditContext = {
     version: DIRECT_TEN_CONTEXT_VERSION,
     identity: {

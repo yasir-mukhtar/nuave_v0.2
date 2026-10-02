@@ -7,7 +7,6 @@ import {
   SOURCE_EXCERPT_EMPTY_NOTICE,
   type SourceExcerptStatus,
 } from "../audit/types";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Accordion,
   AccordionContent,
@@ -35,6 +34,9 @@ type Props = {
   onEditOfferings?: () => void;
   onEditService?: () => void;
   onEditMarket?: () => void;
+  onEditCustomerNeeds?: () => void;
+  onEditCompetitors?: () => void;
+  onEditPublicFact?: () => void;
   busy?: boolean;
   error?: string | null;
   sourceExcerptStatus?: SourceExcerptStatus;
@@ -99,13 +101,15 @@ export default function SmartSummary({
   onEditOfferings,
   onEditService,
   onEditMarket,
+  onEditCustomerNeeds,
+  onEditCompetitors,
+  onEditPublicFact,
   busy = false,
   error,
   sourceExcerptStatus,
   headingRef,
 }: Props) {
   const [editingBusiness, setEditingBusiness] = useState(false);
-  const [manualComparator, setManualComparator] = useState("");
   const update = (patch: Partial<SmartSelection>, originKey?: string) =>
     onChange({
       ...selection,
@@ -117,12 +121,8 @@ export default function SmartSummary({
   const gaps = requiredSmartGaps(selection);
   const optionalPresent = Boolean(
     selection.targetCustomer ||
-    selection.customerNeeds.length ||
     selection.decisionConsiderations.length ||
-    selection.differentiator ||
-    selection.comparatorNames.length ||
-    selection.comparatorMode !== "unknown" ||
-    (prepared.comparatorSuggestions.proposed?.length ?? 0) > 0,
+    selection.differentiator,
   );
   const reachLabel =
     reaches.find(([value]) => value === selection.marketReach)?.[1] ?? "";
@@ -304,6 +304,54 @@ export default function SmartSummary({
         </Row>
       ) : null}
 
+      <Row
+        title="Kebutuhan pelanggan"
+        origin={rowOrigin(selection, "customerNeeds")}
+      >
+        <p className="type-copy break-words">
+          {selection.customerNeeds.join(", ") || "Belum diisi"}
+        </p>
+        {onEditCustomerNeeds ? (
+          <Button
+            variant="link"
+            className="w-fit"
+            onClick={onEditCustomerNeeds}
+          >
+            Ubah
+          </Button>
+        ) : null}
+      </Row>
+      <Row
+        title="Bisnis pembanding"
+        origin={rowOrigin(selection, "comparators")}
+      >
+        <p className="type-copy break-words">
+          {selection.comparatorMode === "named"
+            ? selection.comparatorNames.join(", ") ||
+              "Tambahkan nama pembanding atau pilih pilihan lain"
+            : selection.comparatorMode === "category-alternatives"
+              ? "Tidak ada pembanding langsung; bandingkan kategori alternatif"
+              : "Belum tahu"}
+        </p>
+        {onEditCompetitors ? (
+          <Button variant="link" className="w-fit" onClick={onEditCompetitors}>
+            Ubah
+          </Button>
+        ) : null}
+      </Row>
+      <Row
+        title="Fakta publik tambahan"
+        origin={rowOrigin(selection, "publicFact")}
+      >
+        <p className="type-copy break-words">
+          {selection.publicFact || "Belum diisi"}
+        </p>
+        {onEditPublicFact ? (
+          <Button variant="link" className="w-fit" onClick={onEditPublicFact}>
+            Ubah
+          </Button>
+        ) : null}
+      </Row>
       <Row title="Detail tambahan" origin={originText.nuave}>
         <Accordion defaultValue={optionalPresent ? ["optional"] : []}>
           <AccordionItem value="optional">
@@ -311,6 +359,7 @@ export default function SmartSummary({
               {optionalPresent ? "Periksa detail tambahan" : "Tambah detail"}
             </AccordionTrigger>
             <AccordionContent>
+              <p className="type-copy-sm text-muted-foreground">Opsional</p>
               <div className="grid gap-4 pt-3">
                 <label className="grid gap-2 type-label">
                   Pelanggan sasaran{" "}
@@ -324,27 +373,6 @@ export default function SmartSummary({
                       update(
                         { targetCustomer: event.target.value },
                         "targetCustomer",
-                      )
-                    }
-                  />
-                </label>
-                <label className="grid gap-2 type-label">
-                  Kebutuhan pelanggan{" "}
-                  <span className="type-copy-sm text-muted-foreground">
-                    {rowOrigin(selection, "customerNeeds")}
-                  </span>
-                  <Input
-                    value={selection.customerNeeds.join("; ")}
-                    maxLength={1200}
-                    onChange={(event) =>
-                      update(
-                        {
-                          customerNeeds: event.target.value
-                            .split(";")
-                            .map((item) => item.trim())
-                            .filter(Boolean),
-                        },
-                        "customerNeeds",
                       )
                     }
                   />
@@ -370,154 +398,6 @@ export default function SmartSummary({
                     }
                   />
                 </label>
-                <fieldset className="grid gap-2">
-                  <legend className="type-label">
-                    Bisnis pembanding{" "}
-                    <span className="type-copy-sm text-muted-foreground">
-                      {rowOrigin(selection, "comparators")}
-                    </span>
-                  </legend>
-                  {(
-                    [
-                      ["unknown", "Belum tahu"],
-                      ["named", "Bisnis yang saya pilih"],
-                      [
-                        "category-alternatives",
-                        "Tidak ada pembanding langsung; bandingkan kategori alternatif",
-                      ],
-                    ] as const
-                  ).map(([mode, label]) => (
-                    <label
-                      key={mode}
-                      className="flex min-h-11 items-center gap-3 type-copy"
-                    >
-                      <input
-                        type="radio"
-                        name="smart-comparators"
-                        checked={selection.comparatorMode === mode}
-                        onChange={() =>
-                          update(
-                            {
-                              comparatorMode: mode,
-                              comparatorNames:
-                                mode === "named"
-                                  ? selection.comparatorNames
-                                  : [],
-                            },
-                            "comparators",
-                          )
-                        }
-                      />
-                      {label}
-                    </label>
-                  ))}
-                  {selection.comparatorMode === "named" ? (
-                    <>
-                      {(prepared.comparatorSuggestions.proposed ?? []).map(
-                        (name) => (
-                          <label
-                            key={name}
-                            className="flex min-h-11 items-center gap-3 type-copy"
-                          >
-                            <Checkbox
-                              checked={selection.comparatorNames.includes(name)}
-                              onCheckedChange={(checked) =>
-                                update(
-                                  {
-                                    comparatorNames: checked
-                                      ? [...selection.comparatorNames, name]
-                                      : selection.comparatorNames.filter(
-                                          (item) => item !== name,
-                                        ),
-                                  },
-                                  "comparators",
-                                )
-                              }
-                            />
-                            {name}
-                          </label>
-                        ),
-                      )}
-                      {selection.comparatorNames.map((name, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
-                            aria-label={`Pembanding terpilih ${index + 1}`}
-                            value={name}
-                            maxLength={160}
-                            onChange={(event) =>
-                              update(
-                                {
-                                  comparatorNames:
-                                    selection.comparatorNames.map(
-                                      (item, itemIndex) =>
-                                        itemIndex === index
-                                          ? event.target.value
-                                          : item,
-                                    ),
-                                },
-                                "comparators",
-                              )
-                            }
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            aria-label={`Hapus pembanding ${name}`}
-                            onClick={() =>
-                              update(
-                                {
-                                  comparatorNames:
-                                    selection.comparatorNames.filter(
-                                      (_, itemIndex) => itemIndex !== index,
-                                    ),
-                                  ...(selection.comparatorNames.length === 1
-                                    ? { comparatorMode: "unknown" as const }
-                                    : {}),
-                                },
-                                "comparators",
-                              )
-                            }
-                          >
-                            Hapus
-                          </Button>
-                        </div>
-                      ))}
-                      <div className="flex gap-2">
-                        <Input
-                          aria-label="Nama pembanding lain"
-                          value={manualComparator}
-                          maxLength={160}
-                          onChange={(event) =>
-                            setManualComparator(event.target.value)
-                          }
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            const name = manualComparator.trim();
-                            if (
-                              name &&
-                              !selection.comparatorNames.includes(name)
-                            )
-                              update(
-                                {
-                                  comparatorNames: [
-                                    ...selection.comparatorNames,
-                                    name,
-                                  ],
-                                },
-                                "comparators",
-                              );
-                            setManualComparator("");
-                          }}
-                        >
-                          Tambah
-                        </Button>
-                      </div>
-                    </>
-                  ) : null}
-                </fieldset>
                 <label className="grid gap-2 type-label">
                   Pembeda bisnis{" "}
                   <span className="type-copy-sm text-muted-foreground">
@@ -531,19 +411,6 @@ export default function SmartSummary({
                         { differentiator: event.target.value },
                         "differentiator",
                       )
-                    }
-                  />
-                </label>
-                <label className="grid gap-2 type-label">
-                  Fakta publik tambahan{" "}
-                  <span className="type-copy-sm text-muted-foreground">
-                    Dari Anda
-                  </span>
-                  <Input
-                    value={selection.publicFact}
-                    maxLength={500}
-                    onChange={(event) =>
-                      update({ publicFact: event.target.value }, "publicFact")
                     }
                   />
                 </label>

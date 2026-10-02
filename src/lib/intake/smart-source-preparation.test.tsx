@@ -301,11 +301,10 @@ async function inspect() {
   );
   fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
 }
-// Spec 013 J2–J5: `Periksa` lands on the brand check; `Lanjut` opens the
-// focus screen; `Lanjut` on the whole-brand default chains through the
-// business-detail screens — category → offerings → service → market —
-// before the summary. These fixtures always carry prepared values, so each
-// screen's `Lanjut` is already enabled.
+// `Periksa` lands on the brand check; `Lanjut` opens focus; whole-brand
+// continues through category → offerings → customer needs → service → market
+// → competitors → public fact → summary. These fixtures carry prepared
+// values, so each screen's `Lanjut` is already enabled.
 const lanjut = () => screen.getByRole("button", { name: "Lanjut" });
 async function throughBrandToMarket() {
   await screen.findByRole("heading", {
@@ -319,6 +318,10 @@ async function throughBrandToMarket() {
   await screen.findByRole("heading", { name: /yang Anda tawarkan\?$/ });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
+    name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+  });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
     name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
   });
   fireEvent.click(lanjut());
@@ -328,6 +331,14 @@ async function throughBrandToMarket() {
 }
 async function throughBrand() {
   await throughBrandToMarket();
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
+    name: "Ini yang mungkin dibandingkan dengan Anda",
+  });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
+    name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+  });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
 }
@@ -606,7 +617,7 @@ describe("server excerpt through the active Smart preparation", () => {
       };
       const mounted = render(<SmartIntakeJourney live />);
       await inspect();
-      // J5: the prepared market proposal lands on the market screen; an
+      // The prepared market proposal lands on the market screen; an
       // unrepresentable one keeps its `Lanjut` blocked instead of reaching
       // the summary with a gap.
       await throughBrandToMarket();
@@ -650,6 +661,14 @@ describe("server excerpt through the active Smart preparation", () => {
       expect(pageReads).toBe(2); // Existing identity read plus one excerpt read.
       expect(clientRequests).toHaveLength(2);
       if (ready) {
+        fireEvent.click(lanjut());
+        await screen.findByRole("heading", {
+          name: "Ini yang mungkin dibandingkan dengan Anda",
+        });
+        fireEvent.click(lanjut());
+        await screen.findByRole("heading", {
+          name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+        });
         fireEvent.click(lanjut());
         await screen.findByRole("heading", {
           name: "Ini yang Nuave pahami.",
