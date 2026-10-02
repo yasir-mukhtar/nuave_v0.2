@@ -949,10 +949,9 @@ test.describe("J5 business-detail screens", () => {
     const group = categoryScreen(page).getByRole("radiogroup", {
       name: "Pilihan kategori",
     });
-    // The website's main category doubles as the first Nuave suggestion; the
-    // other two suggestions follow.
+    // An overlapping suggestion keeps the selected website value's origin.
     const kedaiKopi = group.getByRole("radio", { name: /kedai kopi/ });
-    await expect(kedaiKopi).toContainText("Saran Nuave");
+    await expect(kedaiKopi).toContainText("Dari website Anda");
     await expect(kedaiKopi).toBeChecked();
     await expect(group.getByRole("radio", { name: /^kafe/ })).toBeVisible();
     // Typing over the prepared pick replaces it with a `Dari Anda` card.

@@ -169,14 +169,26 @@ export function SmartCategoryScreen({
                 key={`sug-${index}`}
                 value={`sug-${index}`}
                 title={item}
-                meta={ORIGIN_TEXT.nuave}
+                meta={
+                  ORIGIN_TEXT[
+                    sameText(item, current)
+                      ? (selection.origins.category ?? "owner")
+                      : "nuave"
+                  ]
+                }
               />
             ))}
             {mainDistinct ? (
               <SelectionCard
                 value="main"
                 title={mainDistinct}
-                meta={ORIGIN_TEXT.website}
+                meta={
+                  ORIGIN_TEXT[
+                    sameText(mainDistinct, current)
+                      ? (selection.origins.category ?? "owner")
+                      : prepared.category.origin
+                  ]
+                }
               />
             ) : null}
             {currentUnmatched ? (
@@ -521,6 +533,10 @@ export function SmartMarketScreen({
       "Area layanan dibatasi paling banyak 8. Hapus satu untuk menambah yang lain.",
     );
   const toggleArea = (area: string, on: boolean) => {
+    if (on && selection.marketAreas.some((item) => sameText(item, area))) {
+      setAreaBlock(null);
+      return;
+    }
     if (selection.marketReach === "sekitar") {
       setAreas(on ? [area] : []);
       setAreaBlock(null);

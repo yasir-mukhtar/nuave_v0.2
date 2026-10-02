@@ -94,9 +94,8 @@ function detourUnchanged(session: SmartSession): boolean {
  * Forward hop after each framed screen. Outside a summary-edit detour the
  * chain is focus → location/product → category → offerings → service →
  * market → summary. Inside a detour (`editReturn`) a screen's Lanjut walks
- * the remaining chain until it lands on the review; a focus or target hop
- * exits early only while the confirmed focus and category are untouched —
- * once either changes, the category checkpoint is required again (R-05).
+ * the remaining chain until it lands on the review. Product and location
+ * edits pass through their target and category screens (R-05/R-21).
  */
 function forwardStageFor(session: SmartSession): SmartStage | null {
   const marker = session.editReturn;
@@ -105,17 +104,13 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
   switch (session.stage) {
     case "focus": {
       if (!selection) return "category";
-      if (selection.focus === "cabang")
-        return unchanged && smartLocationReady(selection)
-          ? marker!
-          : "location";
-      if (selection.focus === "produk")
-        return unchanged && smartProductReady(selection) ? marker! : "product";
+      if (selection.focus === "cabang") return "location";
+      if (selection.focus === "produk") return "product";
       return unchanged ? marker! : "category";
     }
     case "location":
     case "product":
-      return unchanged ? marker! : "category";
+      return "category";
     case "category":
       return marker ?? "offerings";
     case "offerings":
