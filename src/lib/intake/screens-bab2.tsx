@@ -537,9 +537,10 @@ function MarketScreen({
               inputLabel="Tambah area lain"
               placeholder="Tambah area lain"
               buttonLabel="Tambahkan"
-              onCommit={(area) =>
-                updateAnswer((prev) => addMarketArea(prev, area))
-              }
+              onCommit={(area) => {
+                updateAnswer((prev) => addMarketArea(prev, area));
+                return true;
+              }}
             />
           </div>
         </div>
@@ -637,6 +638,7 @@ function CompetitorsScreen({
                       )
                   : addCompetitor(prev, name),
               );
+              return true;
             }}
           />
         </div>

@@ -9,7 +9,7 @@ afterEach(cleanup);
 
 describe("AddLine", () => {
   it("commits the draft on Enter and clears the input", async () => {
-    const onCommit = vi.fn();
+    const onCommit = vi.fn().mockReturnValue(true);
     const user = userEvent.setup();
     render(
       <AddLine inputLabel="Tambah produk atau layanan" onCommit={onCommit} />,
@@ -23,18 +23,20 @@ describe("AddLine", () => {
   });
 
   it("commits through the button and trims the value", async () => {
-    const onCommit = vi.fn();
+    const onCommit = vi.fn().mockReturnValue(true);
     const user = userEvent.setup();
     render(<AddLine inputLabel="Tambah cabang" onCommit={onCommit} />);
 
-    await user.type(screen.getByLabelText("Tambah cabang"), "  Senopati  ");
+    const input = screen.getByLabelText("Tambah cabang");
+    await user.type(input, "  Senopati  ");
     await user.click(screen.getByRole("button", { name: "Tambah" }));
 
     expect(onCommit).toHaveBeenCalledWith("Senopati");
+    expect(input).toHaveValue("");
   });
 
   it("keeps the commit button disabled without a draft", async () => {
-    const onCommit = vi.fn();
+    const onCommit = vi.fn().mockReturnValue(true);
     const user = userEvent.setup();
     render(<AddLine inputLabel="Tambah cabang" onCommit={onCommit} />);
 
@@ -52,4 +54,36 @@ describe("AddLine", () => {
     expect(onCommit).toHaveBeenCalledWith("Cabang");
     expect(onCommit).toHaveBeenCalledTimes(1);
   });
+
+  it.each(["Enter", "button"] as const)(
+    "preserves a rejected draft on %s and clears it after a later acceptance",
+    async (firstAttempt) => {
+      const onCommit = vi
+        .fn()
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true);
+      const user = userEvent.setup();
+      render(<AddLine inputLabel="Tambah cabang" onCommit={onCommit} />);
+
+      const input = screen.getByLabelText("Tambah cabang");
+      await user.type(input, "  Senopati  ");
+      if (firstAttempt === "Enter") {
+        await user.keyboard("{Enter}");
+      } else {
+        await user.click(screen.getByRole("button", { name: "Tambah" }));
+      }
+
+      expect(onCommit).toHaveBeenLastCalledWith("Senopati");
+      expect(input).toHaveValue("  Senopati  ");
+
+      if (firstAttempt === "Enter") {
+        await user.click(screen.getByRole("button", { name: "Tambah" }));
+      } else {
+        await user.keyboard("{Enter}");
+      }
+
+      expect(onCommit).toHaveBeenCalledTimes(2);
+      expect(input).toHaveValue("");
+    },
+  );
 });

@@ -7,7 +7,7 @@ import styles from "./selection.module.css";
 
 /**
  * The typed escape hatch under cards, rows, and chips (R-27). Committing
- * clears the draft; the button stays disabled until there is a value.
+ * clears the draft only when the consumer accepts it.
  */
 export function AddLine({
   inputLabel,
@@ -20,7 +20,7 @@ export function AddLine({
   inputLabel: string;
   placeholder?: string;
   buttonLabel?: string;
-  onCommit: (value: string) => void;
+  onCommit: (value: string) => boolean;
   disabled?: boolean;
   id?: string;
 }) {
@@ -29,8 +29,7 @@ export function AddLine({
   function commit() {
     const value = draft.trim();
     if (!value) return;
-    onCommit(value);
-    setDraft("");
+    if (onCommit(value)) setDraft("");
   }
 
   return (

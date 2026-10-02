@@ -507,9 +507,10 @@ function CategoryScreen({
             inputLabel="Tulis kategori sendiri"
             placeholder="Tulis kategori sendiri"
             buttonLabel="Pakai"
-            onCommit={(label) =>
-              updateAnswer((prev) => setCategoryCustom(prev, label))
-            }
+            onCommit={(label) => {
+              updateAnswer((prev) => setCategoryCustom(prev, label));
+              return true;
+            }}
           />
         </div>
       </Reveal>
@@ -544,7 +545,7 @@ function ChipsScreen({
       : "Pilih dari saran di bawah atau tambah sendiri.";
   const valid = optional || isScreenAnswerValid(screenId, answers);
   useValidity(valid, nav);
-  const add = (label: string) => {
+  const add = (label: string): boolean => {
     const existing = rows.find(
       (row) => row.label.toLocaleLowerCase() === label.toLocaleLowerCase(),
     );
@@ -559,6 +560,7 @@ function ChipsScreen({
             on: true,
           }),
     );
+    return true;
   };
   return (
     <Screen heading={heading}>

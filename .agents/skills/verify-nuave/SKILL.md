@@ -83,11 +83,12 @@ fail this check by design.
 ## Drive
 
 `$V drive <feature> [--run <id>]`, `$V drive report-and-recovery --inject usefulness-failure`,
-or `$V drive all` (five features, then the injected recovery).
+or `$V drive all` (five base features plus rich preparation, then the injected
+recovery).
 
-- Features: `audit-entry`, `smart-intake-summary`, `question-review`,
-  `audit-run`, `report-and-recovery`. The recipes live in the feature files and
-  in `src/features.ts`.
+- Features: `audit-entry`, `smart-intake-summary`, `rich-preparation`,
+  `question-review`, `audit-run`, `report-and-recovery`. The recipes live in
+  the feature files and in `src/features.ts`.
 - Refuses to drive unless the process checks from doctor pass (right group,
   right folder, owns the port).
 - Each drive opens a fresh headless Chromium context (1280×900) at the
