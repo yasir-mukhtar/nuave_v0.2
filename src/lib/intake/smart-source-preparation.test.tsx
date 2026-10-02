@@ -301,15 +301,34 @@ async function inspect() {
   );
   fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
 }
-// Spec 013 J2+J4: `Periksa` lands on the brand check; `Lanjut` opens the
-// focus screen; `Lanjut` on the whole-brand default opens the summary.
-async function throughBrand() {
+// Spec 013 J2–J5: `Periksa` lands on the brand check; `Lanjut` opens the
+// focus screen; `Lanjut` on the whole-brand default chains through the
+// business-detail screens — category → offerings → service → market —
+// before the summary. These fixtures always carry prepared values, so each
+// screen's `Lanjut` is already enabled.
+const lanjut = () => screen.getByRole("button", { name: "Lanjut" });
+async function throughBrandToMarket() {
   await screen.findByRole("heading", {
     name: "Ini brand yang ingin Anda audit?",
   });
-  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  fireEvent.click(lanjut());
   await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", { name: /biasanya disebut apa\?$/ });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", { name: /yang Anda tawarkan\?$/ });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
+    name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+  });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
+    name: "Di mana pelanggan Anda berada?",
+  });
+}
+async function throughBrand() {
+  await throughBrandToMarket();
+  fireEvent.click(lanjut());
   await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
 }
 
@@ -445,13 +464,21 @@ describe("server excerpt through the active Smart preparation", () => {
       render(<SmartIntakeJourney live />);
       await inspect();
       await throughBrand();
-      const before = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY);
       const calls = [...clientRequests];
-      const row = within(
-        screen.getByRole("region", { name: "Kategori dan penawaran utama" }),
+      fireEvent.click(
+        within(screen.getByRole("region", { name: "Kategori" })).getByRole(
+          "button",
+          { name: "Ubah" },
+        ),
       );
-      fireEvent.click(row.getByRole("button", { name: "Ubah" }));
-      fireEvent.change(row.getByRole("textbox", { name: "Kategori" }), {
+      await screen.findByRole("heading", {
+        name: "Bisnis Anda biasanya disebut apa?",
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Tulis kategori sendiri" }),
+      );
+      const before = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY);
+      fireEvent.change(screen.getByRole("textbox", { name: "Kategori" }), {
         target: { value: text },
       });
       expect((await screen.findByRole("alert")).textContent).toBe(expected);
@@ -469,14 +496,29 @@ describe("server excerpt through the active Smart preparation", () => {
     await inspect();
     await throughBrand();
     const text = "Keluarga kami membuka kedai di jantung kota.";
-    const row = within(
-      screen.getByRole("region", { name: "Kategori dan penawaran utama" }),
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Kategori" })).getByRole(
+        "button",
+        { name: "Ubah" },
+      ),
     );
-    fireEvent.click(row.getByRole("button", { name: "Ubah" }));
-    fireEvent.change(row.getByRole("textbox", { name: "Kategori" }), {
+    await screen.findByRole("heading", {
+      name: "Bisnis Anda biasanya disebut apa?",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tulis kategori sendiri" }),
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Kategori" }), {
       target: { value: text },
     });
-    expect(row.getByText("Dari Anda")).toBeTruthy();
+    expect(screen.getByText("Dari Anda")).toBeTruthy();
+    fireEvent.click(lanjut());
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+    expect(
+      within(screen.getByRole("region", { name: "Kategori" })).getByText(
+        "Dari Anda",
+      ),
+    ).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", {
         name: "Sudah sesuai — buat pertanyaan audit",
@@ -564,7 +606,10 @@ describe("server excerpt through the active Smart preparation", () => {
       };
       const mounted = render(<SmartIntakeJourney live />);
       await inspect();
-      await throughBrand();
+      // J5: the prepared market proposal lands on the market screen; an
+      // unrepresentable one keeps its `Lanjut` blocked instead of reaching
+      // the summary with a gap.
+      await throughBrandToMarket();
       const saved = parseSmartSession(
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
@@ -581,38 +626,45 @@ describe("server excerpt through the active Smart preparation", () => {
           serviceChannels: "website",
         },
       });
-      expect(
-        within(
-          screen.getByRole("region", { name: "Jangkauan pasar" }),
-        ).getByText("Dari website Anda"),
-      ).toBeTruthy();
-      const confirm = screen.getByRole("button", {
-        name: "Sudah sesuai — buat pertanyaan audit",
-      });
-      expect((confirm as HTMLButtonElement).disabled).toBe(!ready);
+      if (reach)
+        expect(
+          screen.getByText("Pilihan awal disiapkan dari website Anda."),
+        ).toBeTruthy();
       if (reach === "seluruh" || reach === "luar")
         expect(
-          screen.queryByRole("region", { name: "Area layanan" }),
+          screen.queryByRole("textbox", { name: "Tambah area lain" }),
         ).toBeNull();
       for (const area of areas)
         expect(
           screen
-            .getByRole("checkbox", { name: area })
-            .getAttribute("aria-checked"),
+            .getByRole("button", { name: area })
+            .getAttribute("aria-pressed"),
         ).toBe("true");
-      fireEvent.click(screen.getByRole("button", { name: "Lihat sumber" }));
-      expect(
-        (
-          await screen.findByRole("link", { name: source + "lokasi-resmi" })
-        ).getAttribute("href"),
-      ).toBe(source + "lokasi-resmi");
+      expect((lanjut() as HTMLButtonElement).disabled).toBe(!ready);
       mounted.unmount();
       render(<SmartIntakeJourney live />);
-      await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
+      await screen.findByRole("heading", {
+        name: "Di mana pelanggan Anda berada?",
+      });
       expect(requests).toHaveLength(1);
       expect(pageReads).toBe(2); // Existing identity read plus one excerpt read.
       expect(clientRequests).toHaveLength(2);
       if (ready) {
+        fireEvent.click(lanjut());
+        await screen.findByRole("heading", {
+          name: "Ini yang Nuave pahami.",
+        });
+        expect(
+          within(
+            screen.getByRole("region", { name: "Jangkauan pasar" }),
+          ).getByText("Dari website Anda"),
+        ).toBeTruthy();
+        fireEvent.click(screen.getByRole("button", { name: "Lihat sumber" }));
+        expect(
+          (
+            await screen.findByRole("link", { name: source + "lokasi-resmi" })
+          ).getAttribute("href"),
+        ).toBe(source + "lokasi-resmi");
         fireEvent.click(
           screen.getByRole("button", {
             name: "Sudah sesuai — buat pertanyaan audit",
@@ -638,14 +690,6 @@ describe("server excerpt through the active Smart preparation", () => {
         });
         expect(intake.context).not.toHaveProperty("targetCustomer");
         expect(clientRequests).toHaveLength(3);
-      } else {
-        expect(
-          (
-            screen.getByRole("button", {
-              name: "Sudah sesuai — buat pertanyaan audit",
-            }) as HTMLButtonElement
-          ).disabled,
-        ).toBe(true);
       }
       expect(requests).toHaveLength(1);
       expect(pageReads).toBe(2);
@@ -663,15 +707,11 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(screen.getByText("kedai kopi")).toBeTruthy();
     expect(screen.getByText("Kopi susu, Roti panggang")).toBeTruthy();
     expect(
-      screen
-        .getByRole("checkbox", { name: "Di lokasi bisnis Anda" })
-        .getAttribute("aria-checked"),
-    ).toBe("true");
+      screen.getByRole("region", { name: "Cara layanan" }).textContent,
+    ).toContain("Di lokasi bisnis Anda");
     expect(
-      screen
-        .getByRole("checkbox", { name: "Dago, Bandung" })
-        .getAttribute("aria-checked"),
-    ).toBe("true");
+      screen.getByRole("region", { name: "Jangkauan pasar" }).textContent,
+    ).toContain("Dago, Bandung");
     const user = JSON.parse(requests[0].input[1].content);
     expect(user.public_source_data).toEqual({
       text: excerpt,
@@ -684,7 +724,7 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(stored).not.toContain("<html>");
     expect(JSON.parse(stored).sourceExcerptStatus).toBe("included");
     const categoryRow = within(
-      screen.getByRole("region", { name: "Kategori dan penawaran utama" }),
+      screen.getByRole("region", { name: "Kategori" }),
     );
     expect(categoryRow.getByText("Dari website Anda")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Lihat sumber" }));
@@ -692,10 +732,18 @@ describe("server excerpt through the active Smart preparation", () => {
       (await screen.findByRole("link", { name: source })).getAttribute("href"),
     ).toBe(source);
     fireEvent.click(categoryRow.getByRole("button", { name: "Ubah" }));
-    fireEvent.change(categoryRow.getByRole("textbox", { name: "Kategori" }), {
+    await screen.findByRole("heading", {
+      name: "Bisnis Anda biasanya disebut apa?",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tulis kategori sendiri" }),
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Kategori" }), {
       target: { value: "kafe" },
     });
-    expect(categoryRow.getByText("Dari Anda")).toBeTruthy();
+    expect(screen.getByText("Dari Anda")).toBeTruthy();
+    fireEvent.click(lanjut());
+    await screen.findByRole("heading", { name: "Ini yang Nuave pahami." });
     fireEvent.click(
       screen.getByRole("button", {
         name: "Sudah sesuai — buat pertanyaan audit",
@@ -829,7 +877,20 @@ describe("server excerpt through the active Smart preparation", () => {
     parsedDraft = draft(false);
     render(<SmartIntakeJourney live />);
     await inspect();
-    await throughBrand();
+    // Nothing was prepared: the first detail screen asks instead of
+    // inventing values, and its `Lanjut` stays blocked.
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    fireEvent.click(lanjut());
+    await screen.findByRole("heading", {
+      name: "Apa yang ingin Anda audit?",
+    });
+    fireEvent.click(lanjut());
+    await screen.findByRole("heading", {
+      name: "Bisnis Anda biasanya disebut apa?",
+    });
+    expect((lanjut() as HTMLButtonElement).disabled).toBe(true);
     const saved = JSON.parse(
       window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
     );

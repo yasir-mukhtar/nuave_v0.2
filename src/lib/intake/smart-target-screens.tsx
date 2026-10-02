@@ -17,6 +17,7 @@ import {
   selectSmartFocus,
   smartLocationReady,
   smartProductReady,
+  syncSmartCategory,
   usablePublishedLocations,
   type PreparedUnderstanding,
   type SmartSelection,
@@ -96,7 +97,11 @@ export function SmartFocusScreen({
           value={selection.focus}
           onValueChange={(next) =>
             onChange(
-              selectSmartFocus(selection, next as SmartSelection["focus"]),
+              selectSmartFocus(
+                prepared,
+                selection,
+                next as SmartSelection["focus"],
+              ),
             )
           }
         >
@@ -295,12 +300,16 @@ export function SmartProductScreen({
   );
   const manualActive =
     Boolean(selection.productTarget.trim()) && selectedIndex < 0;
+  // A target change re-resolves the category: the new product's suggestion
+  // pre-selects unless the owner typed one (R-05).
   const updateTarget = (patch: Partial<SmartSelection>) =>
-    onChange({
-      ...selection,
-      ...patch,
-      origins: { ...selection.origins, focus: "owner" },
-    });
+    onChange(
+      syncSmartCategory(prepared, {
+        ...selection,
+        ...patch,
+        origins: { ...selection.origins, focus: "owner" },
+      }),
+    );
   // Same local-draft rule as the location screen: a typed value that
   // transiently equals an offering mid-keystroke must not blank the input.
   const [manualDraft, setManualDraft] = useState<string | null>(null);

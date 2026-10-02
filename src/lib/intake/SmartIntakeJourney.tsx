@@ -23,11 +23,15 @@ import { dedupeCalls } from "./local-audit-session";
 import { readHistoricalAudit } from "./historical-audit";
 import {
   confirmSmartSelection,
+  firstSmartGapStage,
   initialSmartSelection,
   prepareUnderstanding,
   selectSmartFocus,
+  smartCategoryReady,
   smartLocationReady,
+  smartMarketReady,
   smartProductReady,
+  smartServiceReady,
   unsafeSmartName,
   unsafeSmartSelection,
   unsafeSmartSource,
@@ -49,6 +53,12 @@ import {
   SmartLocationScreen,
   SmartProductScreen,
 } from "./smart-target-screens";
+import {
+  SmartCategoryScreen,
+  SmartMarketScreen,
+  SmartOfferingsScreen,
+  SmartServiceScreen,
+} from "./smart-detail-screens";
 import SmartQuestionsScreen from "./SmartQuestionsScreen";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
 
@@ -67,44 +77,99 @@ const SYNTHETIC_LABEL =
 type SmartStage = SmartSession["stage"];
 
 /**
+ * True while the focus and category the owner confirmed on the review are
+ * still untouched inside the current edit detour (R-05).
+ */
+function detourUnchanged(session: SmartSession): boolean {
+  const baseline = session.editBaseline;
+  return Boolean(
+    baseline &&
+    session.selection &&
+    session.selection.focus === baseline.focus &&
+    session.selection.category === baseline.category,
+  );
+}
+
+/**
+ * Forward hop after each framed screen. Outside a summary-edit detour the
+ * chain is focus → location/product → category → offerings → service →
+ * market → summary. Inside a detour (`editReturn`) a screen's Lanjut walks
+ * the remaining chain until it lands on the review. Product and location
+ * edits pass through their target and category screens (R-05/R-21).
+ */
+function forwardStageFor(session: SmartSession): SmartStage | null {
+  const marker = session.editReturn;
+  const selection = session.selection;
+  const unchanged = marker ? detourUnchanged(session) : false;
+  switch (session.stage) {
+    case "focus": {
+      if (!selection) return "category";
+      if (selection.focus === "cabang") return "location";
+      if (selection.focus === "produk") return "product";
+      return unchanged ? marker! : "category";
+    }
+    case "location":
+    case "product":
+      return "category";
+    case "category":
+      return marker ?? "offerings";
+    case "offerings":
+      return marker ?? "service";
+    case "service":
+      return marker ?? (selection?.focus === "cabang" ? "summary" : "market");
+    case "market":
+      return marker ?? "summary";
+    default:
+      return null;
+  }
+}
+
+/**
  * In-flow target of the frame's `Kembali` and of a marked browser Back.
  * `entry` and `reading` have no back target; `reading` is never a target.
- * The summary steps back into the J4 target screen its focus implies, and a
- * focus screen opened from the summary's `Ubah` (`focusReturn`) steps back
- * to that summary — but only while the picked focus is complete; a new
- * location or product pick whose target is still missing detours through
- * that target screen so the summary never shows a focus without its target
- * (R-21).
+ * The summary steps back to the last detail screen its focus shows (the
+ * market screen for brand/product, the service screen for a location).
+ * Inside a summary-edit detour every detail screen's Back exits straight to
+ * the review, while the focus screen keeps its J4 guards: a picked location
+ * or product whose target is still missing detours through that target
+ * screen, and a changed focus or category passes the category checkpoint
+ * before returning (R-05/R-21).
  */
 function backTargetFor(session: SmartSession): SmartStage | null {
+  const marker = session.editReturn;
+  const selection = session.selection;
   switch (session.stage) {
     case "brand":
       return "entry";
     case "focus": {
-      if (!session.focusReturn || !session.selection) return "brand";
-      if (
-        session.selection.focus === "cabang" &&
-        !smartLocationReady(session.selection)
-      )
+      if (!marker || !selection) return "brand";
+      if (selection.focus === "cabang" && !smartLocationReady(selection))
         return "location";
-      if (
-        session.selection.focus === "produk" &&
-        !smartProductReady(session.selection)
-      )
+      if (selection.focus === "produk" && !smartProductReady(selection))
         return "product";
-      return session.focusReturn;
+      return detourUnchanged(session) ? marker : "category";
     }
     case "location":
-    case "product":
       return "focus";
+    case "product":
+      return marker && session.editBaseline === undefined ? marker : "focus";
+    case "category":
+      return (
+        marker ??
+        (selection?.focus === "cabang"
+          ? "location"
+          : selection?.focus === "produk"
+            ? "product"
+            : "focus")
+      );
+    case "offerings":
+      return marker ?? "category";
+    case "service":
+      return marker ?? "offerings";
+    case "market":
+      return marker ?? "service";
     case "summary":
-      return session.selection?.focus === "cabang"
-        ? "location"
-        : session.selection?.focus === "produk"
-          ? "product"
-          : "focus";
-    case "clarify":
-      return "summary";
+      return selection?.focus === "cabang" ? "service" : "market";
     case "questions":
       return "summary";
     case "audit":
@@ -115,43 +180,72 @@ function backTargetFor(session: SmartSession): SmartStage | null {
 }
 
 /**
- * Four-segment chapter fill per framed screen. The J4 focus and target
- * screens sit in bab 2; the location/product XOR fills it fractionally by
- * the screens the current focus makes visible — a whole-brand pick fills the
- * chapter in one step — never leaving a hole (deck §6.1).
+ * Marker fields for a forward hop that lands on `target`: arriving on the
+ * review consumes the marker and its baseline; every other stage keeps them.
+ */
+function markerFields(
+  session: SmartSession,
+  target: SmartStage,
+): Pick<SmartSession, "editReturn" | "editBaseline"> {
+  return target === session.editReturn
+    ? { editReturn: undefined, editBaseline: undefined }
+    : { editReturn: session.editReturn, editBaseline: session.editBaseline };
+}
+
+/**
+ * Marker fields for a back hop: landing on the focus or category screen
+ * keeps the detour alive (the target guard and the category checkpoint still
+ * apply), while landing anywhere else — a target screen, the review, or the
+ * brand check — consumes it so backing out always resumes the ordinary
+ * chain (J4 B1).
+ */
+function backMarkerFields(
+  session: SmartSession,
+  target: SmartStage,
+): Pick<SmartSession, "editReturn" | "editBaseline"> {
+  return target === "focus" || target === "category"
+    ? {
+        editReturn: session.editReturn,
+        editBaseline: session.editBaseline,
+      }
+    : { editReturn: undefined, editBaseline: undefined };
+}
+
+/**
+ * Four-segment chapter fill per framed screen. Bab 2 is focus → target →
+ * category → offerings (the target screen only exists under a location or
+ * product focus); bab 3 is service → market (location focus audits no
+ * market, so service completes the chapter). Fractional fills never leave a
+ * hole (deck §6.1).
  */
 function stageProgress(session: SmartSession) {
-  switch (session.stage) {
-    case "brand":
-      return {
-        chapter: 1,
-        fills: [1, 0, 0, 0] as [number, number, number, number],
-      };
-    case "focus":
-      return {
-        chapter: 2,
-        fills: [1, session.selection?.focus === "brand" ? 1 : 0.5, 0, 0] as [
-          number,
-          number,
-          number,
-          number,
-        ],
-      };
-    case "location":
-    case "product":
-      return {
-        chapter: 2,
-        fills: [1, 1, 0, 0] as [number, number, number, number],
-      };
-    case "summary":
-    case "clarify":
-      return {
-        chapter: 4,
-        fills: [1, 1, 1, 0.5] as [number, number, number, number],
-      };
-    default:
-      return null;
-  }
+  const fills = (chapter: number, fill: number) => {
+    const value = [1, 0, 0, 0] as [number, number, number, number];
+    for (let index = 0; index < chapter - 1; index += 1) value[index] = 1;
+    value[chapter - 1] = fill;
+    return { chapter, fills: value };
+  };
+  const targetStages: SmartStage[] =
+    session.selection?.focus === "cabang"
+      ? ["location"]
+      : session.selection?.focus === "produk"
+        ? ["product"]
+        : [];
+  const bab2: SmartStage[] = [
+    "focus",
+    ...targetStages,
+    "category",
+    "offerings",
+  ];
+  const bab3: SmartStage[] =
+    session.selection?.focus === "cabang" ? ["service"] : ["service", "market"];
+  if (session.stage === "brand") return fills(1, 1);
+  const index2 = bab2.indexOf(session.stage);
+  if (index2 >= 0) return fills(2, (index2 + 1) / bab2.length);
+  const index3 = bab3.indexOf(session.stage);
+  if (index3 >= 0) return fills(3, (index3 + 1) / bab3.length);
+  if (session.stage === "summary") return fills(4, 0.5);
+  return null;
 }
 
 const ORIGIN_TEXT = {
@@ -266,13 +360,12 @@ export default function SmartIntakeJourney({
       const current = sessionRef.current;
       const target = backTargetFor(current);
       if (!target) return;
-      // The summary-return marker rides along on the target screens so a
-      // back step that lands on the focus screen still exits to the summary;
-      // any other hop consumes it.
+      // The review-return marker survives a back hop onto the focus or
+      // category checkpoint; landing anywhere else consumes it.
       const next: SmartSession = {
         ...current,
         stage: target,
-        focusReturn: target === "focus" ? current.focusReturn : undefined,
+        ...backMarkerFields(current, target),
       };
       setError(null);
       setAutoStart(false);
@@ -325,7 +418,7 @@ export default function SmartIntakeJourney({
     persist({
       ...session,
       stage: target,
-      focusReturn: target === "focus" ? session.focusReturn : undefined,
+      ...backMarkerFields(session, target),
     });
     setError(null);
   };
@@ -1028,7 +1121,11 @@ export default function SmartIntakeJourney({
             onChange={updateSelection}
             error={error}
             onEnterLocationManually={() => {
-              const next = selectSmartFocus(session.selection!, "cabang");
+              const next = selectSmartFocus(
+                session.prepared!,
+                session.selection!,
+                "cabang",
+              );
               if (unsafeSmartSelection(next)) {
                 stopSensitiveInput();
                 return;
@@ -1063,18 +1160,63 @@ export default function SmartIntakeJourney({
             error={error}
           />
         ) : null}
-        {(session.stage === "summary" || session.stage === "clarify") &&
+        {session.stage === "category" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartCategoryScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "offerings" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartOfferingsScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "service" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartServiceScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "market" && session.prepared && session.selection ? (
+          <SmartMarketScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "summary" &&
         session.prepared &&
         session.selection ? (
           <>
             <SmartSummary
-              key={session.stage}
               headingRef={headingRef}
               prepared={session.prepared}
               selection={session.selection}
               onChange={updateSelection}
-              onClarify={() => {
-                goStage({ ...session, stage: "clarify" });
+              onFillGaps={() => {
+                // The CTA opens the screen that owns the first still-missing
+                // meaning; the normal chain walks forward from there.
+                const target = firstSmartGapStage(session.selection!);
+                if (!target) return;
+                goStage({ ...session, stage: target });
                 setError(null);
               }}
               onEditSource={() => {
@@ -1083,12 +1225,56 @@ export default function SmartIntakeJourney({
               }}
               onEditFocus={() => {
                 // The summary row reviews focus; the dedicated screen owns
-                // the change, and this marker sends its Back here (R-21).
+                // the change, and this marker sends the detour back here
+                // once the chain completes — recording the confirmed focus
+                // and category so an untouched pick exits early (R-05/R-21).
                 goStage({
                   ...session,
                   stage: "focus",
-                  focusReturn:
-                    session.stage === "clarify" ? "clarify" : "summary",
+                  editReturn: "summary",
+                  editBaseline: {
+                    focus: session.selection!.focus,
+                    category: session.selection!.category,
+                  },
+                });
+                setError(null);
+              }}
+              onEditCategory={() => {
+                goStage({
+                  ...session,
+                  stage: "category",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditOfferings={() => {
+                goStage({
+                  ...session,
+                  stage:
+                    session.selection?.focus === "produk"
+                      ? "product"
+                      : "offerings",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditService={() => {
+                goStage({
+                  ...session,
+                  stage: "service",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditMarket={() => {
+                goStage({
+                  ...session,
+                  stage: "market",
+                  editReturn: "summary",
+                  editBaseline: undefined,
                 });
                 setError(null);
               }}
@@ -1096,7 +1282,6 @@ export default function SmartIntakeJourney({
               busy={busy !== null}
               error={error}
               sourceExcerptStatus={session.sourceExcerptStatus}
-              clarify={session.stage === "clarify"}
             />
             {session.confirmedSelection &&
             JSON.stringify(session.selection) !==
@@ -1139,54 +1324,41 @@ export default function SmartIntakeJourney({
               >
                 Lanjut
               </Button>
-            ) : session.stage === "focus" && session.selection ? (
+            ) : [
+                "focus",
+                "location",
+                "product",
+                "category",
+                "offerings",
+                "service",
+                "market",
+              ].includes(session.stage) && session.selection ? (
               <Button
                 className="min-h-11 rounded-full px-6"
+                disabled={
+                  (session.stage === "location" &&
+                    !smartLocationReady(session.selection)) ||
+                  (session.stage === "product" &&
+                    !smartProductReady(session.selection)) ||
+                  (session.stage === "category" &&
+                    !smartCategoryReady(session.selection)) ||
+                  (session.stage === "offerings" &&
+                    session.selection.focus !== "produk" &&
+                    !session.selection.offerings.length) ||
+                  (session.stage === "service" &&
+                    !smartServiceReady(session.selection)) ||
+                  (session.stage === "market" &&
+                    !smartMarketReady(session.selection))
+                }
                 onClick={() => {
-                  const target =
-                    session.selection!.focus === "cabang"
-                      ? "location"
-                      : session.selection!.focus === "produk"
-                        ? "product"
-                        : "summary";
+                  const target = forwardStageFor(session);
+                  if (!target) return;
                   goStage({
                     ...session,
                     stage: target,
-                    // The marker rides into a target screen so its Back still
-                    // exits through this focus screen to the summary; landing
-                    // on the summary consumes it.
-                    focusReturn:
-                      target === "summary" ? undefined : session.focusReturn,
+                    ...markerFields(session, target),
                   });
                 }}
-              >
-                Lanjut
-              </Button>
-            ) : session.stage === "location" && session.selection ? (
-              <Button
-                className="min-h-11 rounded-full px-6"
-                disabled={!smartLocationReady(session.selection)}
-                onClick={() =>
-                  goStage({
-                    ...session,
-                    stage: "summary",
-                    focusReturn: undefined,
-                  })
-                }
-              >
-                Lanjut
-              </Button>
-            ) : session.stage === "product" && session.selection ? (
-              <Button
-                className="min-h-11 rounded-full px-6"
-                disabled={!smartProductReady(session.selection)}
-                onClick={() =>
-                  goStage({
-                    ...session,
-                    stage: "summary",
-                    focusReturn: undefined,
-                  })
-                }
               >
                 Lanjut
               </Button>

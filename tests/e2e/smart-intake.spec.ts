@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import {
-  completeSyntheticSummary,
   confirmSummary,
   downloadEvidenceJson,
   expectAuditDone,
@@ -51,7 +50,6 @@ test("v2 synthetic intake reaches ten observations, report, JSON and print", asy
     };
   });
   await toSummary(page);
-  await completeSyntheticSummary(page);
   await confirmSummary(page);
   await expectQuestionReview(page);
   await expectTenQuestions(page);
