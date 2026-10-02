@@ -1156,6 +1156,35 @@ const j5Draft = {
 };
 
 describe("Spec 013 J5 business-detail screens", () => {
+  it.each(["", "   "])(
+    "preselects a Nuave suggestion when the main category is %j",
+    async (category) => {
+      stubPreparation({ draft: { ...j5Draft, category } });
+      render(<SmartIntakeJourney live={false} />);
+      await toFocusScreen();
+      lanjut();
+      await screen.findByRole("heading", {
+        name: "Bisnis Anda biasanya disebut apa?",
+      });
+      const suggestion = screen.getByRole("radio", { name: /kedai kopi/ });
+      expect(suggestion.getAttribute("aria-checked")).toBe("true");
+      expect(suggestion.textContent).toContain("Saran Nuave");
+      const session = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      );
+      expect(session?.selection).toMatchObject({
+        category: "kedai kopi",
+        categoryKind: "suggestion",
+        origins: { category: "nuave" },
+      });
+      lanjut();
+      await fromOfferings();
+      expect(
+        screen.getByRole("region", { name: "Kategori" }).textContent,
+      ).toContain("Saran Nuave");
+    },
+  );
+
   it.each([
     [
       "produk",

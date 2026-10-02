@@ -589,7 +589,7 @@ export function initialSmartSelection(
       : reach === "beberapa"
         ? areas
         : [];
-  return {
+  const selection: SmartSelection = {
     name: prepared.typedName,
     nameOrigin: "owner",
     focus: "brand",
@@ -625,6 +625,9 @@ export function initialSmartSelection(
       publicFact: "owner",
     },
   };
+  return selection.category.trim()
+    ? selection
+    : syncSmartCategory(prepared, selection);
 }
 
 /** The one clarification CTA is reserved for still-missing required meaning:

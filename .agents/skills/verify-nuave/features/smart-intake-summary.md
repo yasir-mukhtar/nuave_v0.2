@@ -29,7 +29,7 @@ context and creates the audit questions.
   labelled `Dari Anda`; `Lanjut` stays blocked until one exists.
 - `category-screen`: prepared suggestions are `Saran Nuave` cards, the
   website's main category is `Dari website Anda`, and `Tulis kategori
-  sendiri` accepts a manual pick labelled `Dari Anda`; `Lanjut` stays
+sendiri` accepts a manual pick labelled `Dari Anda`; `Lanjut` stays
   blocked until one exists.
 - `offerings-screen`: prepared offerings sit in a `Dari website Anda` chip
   group, owner additions form `Dari Anda`, and `Penawaran lain` adds one;
@@ -75,7 +75,7 @@ Run `$V drive smart-intake-summary`. Steps, in order:
 - **Focus.** Presses `Lanjut`. The focus screen shows the three scopes'
   honest labels: `Saran Nuave` on whole brand, no `Satu lokasi` card (the
   synthetic reading publishes no locations) and the `Isi lokasi secara
-  manual` link. Evidence: `03-brand-confirm-to-focus`.
+manual` link. Evidence: `03-brand-confirm-to-focus`.
 - **Detail screens.** `Lanjut` on the whole-brand default opens the
   category screen. The synthetic reading found nothing, so each gated
   screen takes the smallest owner answer: `kedai kopi` typed into
@@ -86,8 +86,7 @@ Run `$V drive smart-intake-summary`. Steps, in order:
   `Satu produk atau layanan` on the re-opened focus screen, presses
   `Lanjut`, types `kopi susu` into `Nama produk atau layanan` on the
   product screen, presses `Lanjut` again, and walks the changed-focus
-  detour — category checkpoint, read-only offerings catalogue, service and
-  market — back to the summary with the focus row showing
+  detour — category checkpoint, then directly back to the summary with the focus row showing
   `Satu produk atau layanan`. Evidence: `05-focus-one-offering`.
 - **Confirm.** Presses `Sudah sesuai — buat pertanyaan audit`. The heading
   "Periksa pertanyaan audit" and ten `[data-question-slot]` show. Evidence:
@@ -113,7 +112,7 @@ Run `$V drive smart-intake-summary`. Steps, in order:
   `Lanjut` lands on the summary directly.
 - Until category, offering, channel and reach are filled, the button reads
   `Lengkapi yang perlu dipastikan`, not `Sudah sesuai — buat pertanyaan
-  audit`. The forward chain's gates mean the summary only shows it after an
+audit`. The forward chain's gates mean the summary only shows it after an
   edit that clears a required answer.
 - The other rich-reading variants (named competitors, corrections) need a
   stubbed extract response. They are covered by
