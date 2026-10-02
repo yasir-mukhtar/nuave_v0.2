@@ -150,8 +150,9 @@ function backTargetFor(session: SmartSession): SmartStage | null {
       return detourUnchanged(session) ? marker : "category";
     }
     case "location":
-    case "product":
       return "focus";
+    case "product":
+      return marker && session.editBaseline === undefined ? marker : "focus";
     case "category":
       return (
         marker ??
