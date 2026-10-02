@@ -205,13 +205,25 @@ test("every manually selected comparator stays visible, correctable and removabl
     .click();
   await expectCompetitorsScreen(page);
   await chooseCompetitorMode(page, "Bisnis yang saya pilih");
-  await page
-    .getByRole("textbox", { name: "Nama pembanding lain" })
-    .fill("Kedai Baru");
-  await page.getByRole("button", { name: "Tambah", exact: true }).click();
+  await addCompetitor(page, "Kedai Baru");
+  await addCompetitor(page, "Kedai Samping");
   const selected = page.getByRole("textbox", { name: "Pembanding terpilih 1" });
+  const otherSelected = page.getByRole("textbox", {
+    name: "Pembanding terpilih 2",
+  });
   await expect(selected).toHaveValue("Kedai Baru");
+  await expect(otherSelected).toHaveValue("Kedai Samping");
+  await selected.fill(" kedai SAMPing ");
+  await expect(selected).toHaveAttribute("aria-invalid", "true");
+  const duplicateErrorId = await selected.getAttribute("aria-describedby");
+  expect(duplicateErrorId).toBeTruthy();
+  await expect(page.locator(`#${duplicateErrorId}`)).toContainText(
+    "Nama pembanding sudah dipakai",
+  );
+  await expect(page.getByRole("button", { name: "Lanjut" })).toBeDisabled();
   await selected.fill("Kedai Pilihan");
+  await expect(selected).not.toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByRole("button", { name: "Lanjut" })).toBeEnabled();
   await pressLanjut(page);
   await expectSummary(page);
   await confirmSummary(page);
@@ -222,7 +234,7 @@ test("every manually selected comparator stays visible, correctable and removabl
   );
   expect(frozen.frozen.context.comparators.value).toEqual({
     mode: "named",
-    names: ["Kedai Pilihan"],
+    names: ["Kedai Pilihan", "Kedai Samping"],
   });
   await page
     .getByRole("button", { name: "Kembali ke informasi bisnis" })
@@ -239,9 +251,14 @@ test("every manually selected comparator stays visible, correctable and removabl
   await page
     .getByRole("button", { name: "Hapus pembanding Kedai Pilihan" })
     .click();
-  await expect(
-    page.getByRole("textbox", { name: "Pembanding terpilih 1" }),
-  ).toHaveCount(0);
+  const remaining = page.getByRole("textbox", {
+    name: "Pembanding terpilih 1",
+  });
+  await expect(remaining).toHaveValue("Kedai Samping");
+  await page
+    .getByRole("button", { name: "Hapus pembanding Kedai Samping" })
+    .click();
+  await expect(remaining).toHaveCount(0);
 });
 
 test("rich reading reaches one summary and question review without more typing", async ({
@@ -767,6 +784,10 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   await expect(competitorsScreen(page).getByRole("alert")).toContainText(
     "paling banyak 5",
   );
+  const addition = competitorsScreen(page).getByRole("textbox", {
+    name: "Nama pembanding lain",
+  });
+  await expect(addition).toHaveValue("Pembanding enam");
   const saved = await page.evaluate(
     (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
@@ -781,6 +802,22 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   await competitorsScreen(page)
     .getByRole("button", { name: "Hapus pembanding Pembanding lima" })
     .click();
+  await expect(addition).toHaveValue("Pembanding enam");
+  await competitorsScreen(page)
+    .getByRole("button", { name: "Tambah", exact: true })
+    .click();
+  await expect(addition).toHaveValue("");
+  const retried = await page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
+  expect(retried.selection.comparatorNames).toEqual([
+    "Pembanding satu",
+    "Pembanding dua",
+    "Pembanding tiga",
+    "Pembanding empat",
+    "Pembanding enam",
+  ]);
   await expect(page.getByRole("button", { name: "Lanjut" })).toBeEnabled();
   await chooseCompetitorMode(page, "Belum tahu");
   await pressLanjut(page);
@@ -1302,10 +1339,12 @@ test.describe("J5 business-detail screens", () => {
     await expectMarketScreen(page);
     // All eight prepared areas sit selected; typing a ninth is refused with a
     // visible block while Lanjut stays enabled for the valid set.
-    await marketScreen(page)
-      .getByRole("textbox", { name: "Tambah area lain" })
-      .fill("Denpasar");
+    const areaInput = marketScreen(page).getByRole("textbox", {
+      name: "Tambah area lain",
+    });
+    await areaInput.fill("Denpasar");
     await marketScreen(page).getByRole("button", { name: "Tambahkan" }).click();
+    await expect(areaInput).toHaveValue("Denpasar");
     await expect(marketScreen(page).getByRole("alert")).toContainText(
       "dibatasi paling banyak 8",
     );

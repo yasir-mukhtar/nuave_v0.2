@@ -52,14 +52,14 @@ export function SmartCustomerNeedsScreen({
     (need) => !proposed.some((item) => sameText(item, need)),
   );
   const [limitError, setLimitError] = useState<string | null>(null);
-  const toggle = (need: string, on: boolean) => {
+  const toggle = (need: string, on: boolean): boolean => {
     if (on && selection.customerNeeds.some((item) => sameText(item, need)))
-      return;
+      return true;
     if (on && (selection.customerNeeds.length >= 12 || need.length > 300)) {
       setLimitError(
         "Pilih paling banyak 12 kebutuhan, masing-masing paling panjang 300 karakter.",
       );
-      return;
+      return false;
     }
     setLimitError(null);
     onChange({
@@ -69,6 +69,7 @@ export function SmartCustomerNeedsScreen({
         : selection.customerNeeds.filter((item) => item !== need),
       origins: { ...selection.origins, customerNeeds: "owner" },
     });
+    return true;
   };
   return (
     <section className="grid gap-5" data-intake-screen="customer-needs">
@@ -132,6 +133,19 @@ export function SmartCompetitorsScreen({
   error,
 }: ScreenProps) {
   const proposed = prepared.comparatorSuggestions.proposed ?? [];
+  const duplicateIndexes = new Set<number>();
+  const comparatorIndexes = new Map<string, number>();
+  selection.comparatorNames.forEach((name, index) => {
+    const key = name.trim().toLocaleLowerCase("id-ID");
+    if (!key) return;
+    const firstIndex = comparatorIndexes.get(key);
+    if (firstIndex !== undefined) {
+      duplicateIndexes.add(firstIndex);
+      duplicateIndexes.add(index);
+    } else {
+      comparatorIndexes.set(key, index);
+    }
+  });
   const [limitError, setLimitError] = useState<string | null>(null);
   const update = (patch: Partial<SmartSelection>) => {
     setLimitError(null);
@@ -141,19 +155,21 @@ export function SmartCompetitorsScreen({
       origins: { ...selection.origins, comparators: "owner" },
     });
   };
-  const add = (name: string) => {
-    if (selection.comparatorNames.some((item) => sameText(item, name))) return;
+  const add = (name: string): boolean => {
+    if (selection.comparatorNames.some((item) => sameText(item, name)))
+      return true;
     if (selection.comparatorNames.length >= 5) {
       setLimitError(
         "Pilih paling banyak 5 bisnis pembanding. Hapus satu untuk menambah yang lain.",
       );
-      return;
+      return false;
     }
     if (name.length > 160) {
       setLimitError("Nama pembanding paling panjang 160 karakter.");
-      return;
+      return false;
     }
     update({ comparatorNames: [...selection.comparatorNames, name] });
+    return true;
   };
   return (
     <section className="grid gap-5" data-intake-screen="competitors">
@@ -228,6 +244,12 @@ export function SmartCompetitorsScreen({
                   aria-label={`Pembanding terpilih ${index + 1}`}
                   value={name}
                   maxLength={160}
+                  aria-invalid={duplicateIndexes.has(index) ? true : undefined}
+                  aria-describedby={
+                    duplicateIndexes.has(index)
+                      ? `comparator-duplicate-error-${index}`
+                      : undefined
+                  }
                   onChange={(event) =>
                     update({
                       comparatorNames: selection.comparatorNames.map(
@@ -250,6 +272,15 @@ export function SmartCompetitorsScreen({
                   Hapus
                 </Button>
               </div>
+              {duplicateIndexes.has(index) ? (
+                <p
+                  id={`comparator-duplicate-error-${index}`}
+                  role="alert"
+                  className="type-copy-sm text-destructive"
+                >
+                  Nama pembanding sudah dipakai. Ubah atau hapus nama yang sama.
+                </p>
+              ) : null}
             </div>
           ))}
           <AddLine
@@ -257,7 +288,7 @@ export function SmartCompetitorsScreen({
             placeholder="Tambah bisnis pembanding"
             onCommit={add}
           />
-          {!smartComparatorsReady(selection) ? (
+          {!smartComparatorsReady(selection) && !duplicateIndexes.size ? (
             <p role="status" className="type-copy-sm text-muted-foreground">
               Tambahkan nama pembanding atau pilih “Tidak ada pembanding
               langsung” atau “Belum tahu”. Pilih paling banyak 5 nama.

@@ -533,11 +533,15 @@ export function smartServiceReady(selection: SmartSelection): boolean {
 }
 
 export function smartComparatorsReady(selection: SmartSelection): boolean {
+  if (selection.comparatorMode !== "named") return true;
+  const names = selection.comparatorNames.map((name) =>
+    name.trim().toLocaleLowerCase("id-ID"),
+  );
   return (
-    selection.comparatorMode !== "named" ||
-    (selection.comparatorNames.length > 0 &&
-      selection.comparatorNames.length <= 5 &&
-      selection.comparatorNames.every((name) => Boolean(name.trim())))
+    names.length > 0 &&
+    names.length <= 5 &&
+    names.every(Boolean) &&
+    new Set(names).size === names.length
   );
 }
 
@@ -715,10 +719,7 @@ export function confirmSmartSelection(
     selection.focus === "produk"
       ? [selection.productTarget.trim()]
       : unique(selection.offerings, 12);
-  const namedComparators = unique(
-    selection.comparatorNames,
-    selection.comparatorNames.length,
-  );
+  const namedComparators = selection.comparatorNames.map((name) => name.trim());
   const context: DirectTenAuditContext = {
     version: DIRECT_TEN_CONTEXT_VERSION,
     identity: {

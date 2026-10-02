@@ -76,6 +76,7 @@ describe("smart intake exact confirmed meaning", () => {
   it.each([
     { names: [] },
     { names: [" "] },
+    { names: ["Kedai A", " kedai a "] },
     { names: ["Satu", "Dua", "Tiga", "Empat", "Lima", "Enam"] },
   ])(
     "refuses an invalid named comparator list instead of switching modes or truncating: $names",
