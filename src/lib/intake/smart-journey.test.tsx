@@ -2592,4 +2592,91 @@ describe("Spec 013 J7 final review", () => {
       "Kedai Fiksi Baru",
     ]);
   });
+
+  it("restores review when extraction includes an overlong alias", async () => {
+    const { calls } = stubPreparation({
+      draft: {
+        ...aliasDraft,
+        brand_name_variants: ["x".repeat(161), "KopiFiksi"],
+      },
+    });
+    const mounted = render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    expect(savedSession()?.selection?.aliases).toEqual(["KopiFiksi"]);
+
+    mounted.unmount();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    expect(namaLain().getByText("KopiFiksi")).toBeTruthy();
+    expect(savedSession()?.stage).toBe("summary");
+    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+
+    confirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(calls).toEqual([
+      "identity",
+      "/api/audit/extract",
+      "/api/audit/glm-questions",
+    ]);
+  });
+
+  it.each(["footer Kembali", "marked browser popstate"])(
+    "corrects an empty business name after %s returns to review",
+    async (wayBack) => {
+      const { calls } = stubPreparation({ draft: aliasDraft });
+      render(<SmartIntakeJourney live={false} />);
+      await fillAndPeriksa();
+      await throughBrand();
+      const originalSelection = savedSession()?.selection;
+      expect(originalSelection).toBeTruthy();
+
+      fireEvent.click(
+        within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
+          "button",
+          { name: "Ubah" },
+        ),
+      );
+      await screen.findByRole("heading", {
+        name: "Ini brand yang ingin Anda audit?",
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
+      fireEvent.change(screen.getByRole("textbox", { name: "Nama brand" }), {
+        target: { value: "   " },
+      });
+      if (wayBack === "footer Kembali") kembali();
+      else fireEvent.popState(window, { state: { nuaveIntake: true } });
+      await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+      expect(screen.getByText(/Perlu dipastikan: Nama bisnis/)).toBeTruthy();
+      expect(
+        screen.queryByRole("button", {
+          name: "Sudah sesuai — buat pertanyaan audit",
+        }),
+      ).toBeNull();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Lengkapi yang perlu dipastikan" }),
+      );
+      await screen.findByRole("heading", {
+        name: "Ini brand yang ingin Anda audit?",
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: "Nama brand" }), {
+        target: { value: "Kedai Fiksi Benar" },
+      });
+      lanjut();
+      await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+      expect(savedSession()?.selection).toEqual({
+        ...originalSelection,
+        name: "Kedai Fiksi Benar",
+        nameOrigin: "owner",
+      });
+      expect(savedSession()?.editReturn).toBeUndefined();
+      expect(
+        screen.getByRole("button", {
+          name: "Sudah sesuai — buat pertanyaan audit",
+        }),
+      ).toBeTruthy();
+      expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    },
+  );
 });

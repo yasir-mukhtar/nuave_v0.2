@@ -317,7 +317,10 @@ export function prepareUnderstanding(input: {
         ? input.discoveredName.trim()
         : null,
     canonicalSource: source.normalizedUrl,
-    aliases: unique(draft.brand_name_variants, 12),
+    aliases: unique(
+      draft.brand_name_variants.filter((alias) => alias.trim().length <= 160),
+      12,
+    ),
     focus: { proposed: "brand", origin: "nuave" },
     category: { proposed: draft.category.trim() || null, origin: "website" },
     offerings: {
@@ -574,6 +577,7 @@ export function smartMarketReady(selection: SmartSelection): boolean {
 export function firstSmartGapStage(
   selection: SmartSelection,
 ):
+  | "brand"
   | "location"
   | "product"
   | "category"
@@ -582,6 +586,7 @@ export function firstSmartGapStage(
   | "market"
   | "competitors"
   | null {
+  if (!selection.name.trim()) return "brand";
   if (selection.focus === "cabang" && !smartLocationReady(selection))
     return "location";
   if (selection.focus === "produk" && !smartProductReady(selection))
@@ -669,10 +674,10 @@ export function initialSmartSelection(
     : syncSmartCategory(prepared, selection);
 }
 
-/** The one clarification CTA is reserved for still-missing required meaning:
- * category, offering, the active focus target, service channels, or market. */
+/** Required meanings the review must route back to their owning screen. */
 export function requiredSmartGaps(selection: SmartSelection): string[] {
   const gaps: string[] = [];
+  if (!selection.name.trim()) gaps.push("Nama bisnis");
   if (!selection.category.trim()) gaps.push("Kategori");
   if (selection.focus !== "produk" && !selection.offerings.length)
     gaps.push("Produk atau layanan utama");

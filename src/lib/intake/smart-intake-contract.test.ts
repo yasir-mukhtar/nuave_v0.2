@@ -358,6 +358,30 @@ describe("smart intake exact confirmed meaning", () => {
       expect(proposal.aliases).toEqual(["Kedai Contoh Pusat", "KopiContoh"]);
     });
 
+    it("keeps valid prepared aliases after overlong variants", () => {
+      const boundaryAlias = "A".repeat(160);
+      const overlongAliases = Array.from(
+        { length: 12 },
+        (_, index) => `Variant ${index} ${"x".repeat(160)}`,
+      );
+      const proposal = prepared({
+        brand_name_variants: [
+          ...overlongAliases,
+          ` ${boundaryAlias} `,
+          "KopiContoh",
+          " kopicontoh ",
+          " ",
+        ],
+      });
+      expect(proposal.aliases).toEqual([boundaryAlias, "KopiContoh"]);
+      const selection = initialSmartSelection(proposal);
+      expect(selection.aliases).toEqual([boundaryAlias, "KopiContoh"]);
+      expect(smartAliasesReady(selection)).toBe(true);
+      expect(
+        confirmSmartSelection(proposal, selection, 1).context.identity.aliases,
+      ).toEqual([boundaryAlias, "KopiContoh"]);
+    });
+
     it.each([
       { aliases: [] as string[] },
       { aliases: ["Alias Satu", " Alias Dua "] },
@@ -530,6 +554,17 @@ describe("smart intake exact confirmed meaning", () => {
       "Cara layanan",
       "Jangkauan pasar",
     ]);
+  });
+
+  it.each(["", "   "])("routes an empty business name %j to brand", (name) => {
+    const proposal = prepared();
+    const selection = initialSmartSelection(proposal);
+    selection.name = name;
+    expect(requiredSmartGaps(selection)).toEqual(["Nama bisnis"]);
+    expect(firstSmartGapStage(selection)).toBe("brand");
+    expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
+      "Lengkapi: Nama bisnis",
+    );
   });
 });
 
