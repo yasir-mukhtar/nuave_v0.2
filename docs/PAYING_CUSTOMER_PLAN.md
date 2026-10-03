@@ -36,8 +36,8 @@ done.
 | J4 | Focus, location and product screens; #98 M2 location-source host check (enforces R-02) | Worker | Done | [#99](https://github.com/yasir-mukhtar/nuave_v0.2/pull/99) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/99#issuecomment-5889417883) (`283eea0`; merged head `a1dc860` adds main docs only) |
 | J5 | Category, offerings, service-channel and market screens | Worker | Done; merged | [#104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114) (`358c521`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md)) |
 | J6 | Customer-needs, competitor and public-fact screens | Worker | Done; merged | [#109](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109#issuecomment-5956009449) (`9fa1308`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md#j6-frozen-closeout)) |
-| J7 | Review screen becomes the single confirmation | Worker | In progress | — | — |
-| JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Not started | — | — |
+| J7 | Review screen becomes the single confirmation | Worker | Done; merged | [#114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5964756164) (`681df10`; [release](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5966316930); merged `753452e`) |
+| JQ | Add back the questions the reference lacks (§5, JQ) | Worker | In progress | — | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
@@ -198,9 +198,13 @@ never blocks the build. Manual payment is not needed.
   ([decision](./DECISION_LOG.md#2026-09-27--keep-every-intake-question-build-the-airbnb-experience-first)):
   **no.** They are important and required; only the extra public fact stays
   optional. Build the Airbnb-style experience first (J2…J7), then add back
-  the questions it lacks (JQ). **Open until JQ:** competitors, target
+  the questions it lacks (JQ). ~~**Open until JQ:** competitors, target
   customer, customer needs and what makes you different can be skipped
-  today. Must the owner answer them, or only be asked?
+  today. Must the owner answer them, or only be asked?~~ Decided
+  2026-10-02
+  ([decision](./DECISION_LOG.md#2026-10-02--jq-decisions-the-three-retained-customer-questions-return-as-dedicated-optional-screens)):
+  **only be asked** — every question is shown on its own screen; the three
+  JQ screens and the existing optional answers allow an empty `Lanjut`.
 - Real test runs during Stage 1 are the founder's own (§5, JZ); about
   USD 0.20 of AI cost each.
 
@@ -391,14 +395,16 @@ workbench on 2026-09-27, and add anything J1's information check finds:
   J6 (J1 decision F11).
 - ~~How customers are served: four choices~~ Built in J5 (J1 decision F10).
 
-Until JQ, the first three stay editable on the review screen (Spec 013,
-R-20).
+Until JQ, the first three stayed editable on the review screen (Spec 013,
+R-20). JQ moves them to dedicated chapter-3 screens in the order target
+customer → customer needs → buyer considerations → service → market →
+competitors → differentiator → public fact → review.
 
 The extra public fact stays optional.
 
-At the start of JQ the founder decides: competitors, target customer,
-customer needs and what makes you different can be skipped today. Must the
-owner answer them before continuing, or only be asked?
+Decided at the start of JQ (2026-10-02, delegated): the owner is only asked,
+never required — the three JQ screens allow an empty `Lanjut`, and the
+existing optional answers stay optional.
 
 *Done when:* every question on the list is asked in the Airbnb style, the
 answers reach question generation and the report, and the whole path still

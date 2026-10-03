@@ -1,10 +1,35 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-09-28
+> Updated: 2026-10-02
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-02 — JQ decisions: the three retained customer questions return as dedicated optional screens
+
+For [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) milestone JQ,
+decided by Alfred (delegated), 2026-10-02:
+
+- **Every question is shown.** Target customer, buyer considerations and
+  differentiator each get a dedicated chapter-3 screen instead of staying
+  review-only. Nothing on the JQ list is dropped.
+- **Optional stays optional.** No new required fields: `Lanjut` is never
+  blocked on the three new screens, and an empty Continue is allowed on
+  each. No `Belum tahu` chip is added to them.
+- **Chapter 3 order:** target customer → customer needs → buyer
+  considerations → service → market (skipped for a location focus) →
+  competitors → differentiator → public fact → review.
+- **Provenance and edits:** prepared values arrive selected with their
+  source label; any owner change becomes `Dari Anda`. Each review row's
+  `Ubah` opens its dedicated screen, and `Lanjut`, footer `Kembali`, or
+  marked browser Back returns to the review.
+- **Comparators unchanged:** the three modes stay as built in J6; named
+  mode still requires one to five names.
+- **Contracts unchanged:** no new AI call, provider, payment step, report
+  shape change, or required-field gate. The privacy rejection path, session
+  versioning, frozen context and question-generation contracts apply to the
+  new screens as to the existing ones.
 
 ## 2026-09-28 — plain landing voice in VOICE.md
 

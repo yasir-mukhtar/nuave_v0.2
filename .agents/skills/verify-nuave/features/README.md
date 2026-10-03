@@ -13,7 +13,7 @@ the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
 - Mode is synthetic. Every answer, question and report comes from a labelled
   synthetic substitute. Live mode is out of scope for this skill.
 - Every drive starts from an empty browser session (a new context). The
-  journey state lives in `sessionStorage` (`nuave.localIntake.v8`,
+  journey state lives in `sessionStorage` (`nuave.localIntake.v9`,
   `nuave.localIntakeAudit.v2`), so a new context is the baseline.
 - The fictional business is `Kedai Fiksi` at `https://kedai-fiksi.example/`.
 
@@ -60,13 +60,15 @@ user-visible behavior. It then uses exactly four H2 sections in this order:
 
 - [Audit entry](./audit-entry.md) covers the landing call-to-action, the
   `/audit` entry step, and its validation.
-- [Smart intake summary](./smart-intake-summary.md) covers the J5 and J6
-  detail screens (category, offerings, service channels, market, customer
-  needs, competitors, public fact), the
+- [Smart intake summary](./smart-intake-summary.md) covers the J5, J6 and JQ
+  detail screens (category, offerings, target customer, customer needs,
+  buyer considerations, service channels, market, competitors,
+  differentiator, public fact), the
   "Ini yang akan Nuave audit" final review, its read-back rows, editable
   `Nama lain` aliases and focus, through question creation.
 - [Rich preparation](./rich-preparation.md) covers the labelled fictional
-  preparation — locations, category suggestions, customer needs, and named
+  preparation — locations, category suggestions, customer needs, the JQ
+  customer meanings, and named
   competitor suggestions in the session, reload persistence, and downstream
   question creation.
 - [Question review](./question-review.md) covers "Periksa pertanyaan audit",

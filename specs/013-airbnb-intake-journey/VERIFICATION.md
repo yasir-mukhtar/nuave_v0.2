@@ -129,3 +129,39 @@ J5 and J6 are now merged. **Spec 013 remains Implementing.** J7 is active,
 then JQ and founder signoff. S1 security patches were independently reviewed
 and merged in [PR #110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110);
 they do not close any remaining intake or customer-exposure gate.
+
+## J7 frozen closeout
+
+J7 of the approved spec (R-20–R-23, shared navigation/privacy/session rules)
+passed independent review and merged in
+[PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114).
+Reviewed head: `681df10bfe9bf5540ed2686319c97307a92a43b3`; base
+`4e6d9e4a622de6e8003ed9c214abd8fe022c1cb2`.
+Merge: `753452e18e2ceb2b9ca3e343f6cee274eee397e8`, 2026-10-03T06:21:16Z.
+Independent reviewer:
+[PASS verdict](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5964756164);
+[release record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5966316930).
+Merged-main CI run `37102775587` completed SUCCESS including deploy
+(observed 2026-10-03T06:31:10Z).
+
+Supplied historical evidence at the reviewed head — frozen, not rerun at
+this closeout: 1,585 unit tests, 54 enabled and 3 disabled browser tests,
+and both builds.
+
+| Criteria | J7 result | Evidence and remaining scope |
+|---|---|---|
+| R-21 / AC-11 | Pass | The review is the single confirmation; every `Ubah` returns to review; the confirmation label is exact. |
+| R-22 / R-23 | Pass | Edited aliases freeze as `identity.aliases`; a same-source name edit reuses preparation while a website change resets it. |
+| R-20 / AC-10 | Retained | Target customer, buyer considerations and differentiator kept prepared values and stayed editable; their dedicated screens are JQ. |
+| Full spec / AC-15 | Pending | JQ and real-business founder signoff are not closed by J7. |
+
+## JQ status (in progress)
+
+JQ implements the R-20 screens as dedicated optional chapter-3 steps, per
+the delegated 2026-10-02 decision recorded in `docs/DECISION_LOG.md` and
+plan §5: target customer → customer needs → buyer considerations → service
+→ market → competitors → differentiator → public fact → review, with empty
+`Lanjut` allowed on the three new screens. This section is filled with its
+acceptance results after independent review; no JQ verdict exists yet.
+
+**Spec 013 remains Implementing.** JQ is active, then founder signoff.

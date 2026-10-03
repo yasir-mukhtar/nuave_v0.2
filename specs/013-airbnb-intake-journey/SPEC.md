@@ -2,7 +2,7 @@
 
 > Status: **Implementing**; approved by the founder on 2026-09-27
 > ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
-> J2–J6 merged with PASS; J7 is active. JQ and founder signoff remain.
+> J2–J7 merged with PASS; JQ is active. Founder signoff remains.
 > Review evidence: [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
 > Owner: orchestrator
 > Updated: 2026-10-03
@@ -87,9 +87,12 @@ businesses (plan §5, JZ).
 - Keeping answers when the owner changes the website (F4: the website change
   resets preparation, as today).
 - Any rule that skips the market screen (F9: none).
-- Whether the owner must answer target customer, customer needs, buyer
-  considerations, competitors and differentiator, or only be asked. That is
-  decided at the start of JQ.
+- ~~Whether the owner must answer target customer, customer needs, buyer
+  considerations, competitors and differentiator, or only be asked.~~
+  Decided 2026-10-02 (delegated,
+  [decision log](../../docs/DECISION_LOG.md#2026-10-02--jq-decisions-the-three-retained-customer-questions-return-as-dedicated-optional-screens)):
+  only asked — every question is shown; the JQ screens and the existing
+  optional answers allow an empty `Lanjut`.
 - A new AI call, a new retrieval step, or a new data store.
 
 ## Experience
@@ -110,18 +113,21 @@ otherwise. The founder reviews final wording at JZ.
 | 6 | Category | "Bisnis Anda paling tepat disebut apa?" | Yes | F18 |
 | 7 | Offerings | "Ini produk Anda. Sudah benar?" | Yes, except product focus | F8 |
 | **Chapter 3** | **Pelanggan Anda** | | | |
+| 7a | Target customer (JQ) | "Siapa pelanggan utama Anda?" | Opsional | JQ |
 | 8 | Customer needs | "Kenapa pelanggan biasanya mencari yang seperti ini?" | Opsional | F12 |
+| 8a | Buyer considerations (JQ) | "Apa yang dipertimbangkan pelanggan saat memilih?" | Opsional | JQ |
 | 9 | Service channels (workbench `service` screen) | (workbench copy) | Yes | F10 |
 | 10 | Market (not for location focus) | "Di mana pelanggan Anda berada?" | Yes | F9 |
 | 11 | Competitors | "Ini yang mungkin dibandingkan dengan Anda" | See R-18 | F11 |
+| 11a | Differentiator (JQ) | "Apa yang membedakan bisnis Anda?" | Opsional | JQ |
 | 12 | Public fact | "Apa yang tidak boleh salah dipahami tentang brand Anda?" | Opsional | F12 |
 | **Chapter 4** | **Periksa** | | | |
 | 13 | Review: the single confirmation | "Ini yang akan Nuave audit" | — | F5, F13, F14 |
 | 14 | Question review (unchanged) | (today's screen) | — | F17 |
 
-After JQ, screens for target customer, buyer considerations and
-differentiator join chapter 3; until then those answers live on the review
-screen (R-20).
+JQ adds the target customer, buyer considerations and differentiator
+screens to chapter 3 in the order above (decided 2026-10-02, delegated);
+until JQ those answers lived on the review screen (R-20).
 
 ## Requirements
 
@@ -233,10 +239,12 @@ screen (R-20).
   this screen until JQ decides otherwise.
 - **R-19:** The public-fact screen stays optional, with today's privacy
   check.
-- **R-20:** Until JQ, target customer, buyer considerations and
-  differentiator keep their prepared values and stay editable in an
-  `Opsional` section on the review screen. No slice may remove them, or the
-  code that passes them on (plan §5, JQ).
+- **R-20:** Target customer, buyer considerations and differentiator are
+  retained meanings with dedicated optional chapter-3 screens (JQ): prepared
+  values arrive selected with their source label, `Lanjut` never blocks on
+  them, owner edits become `Dari Anda`, each review row's `Ubah` opens its
+  screen and returns to review, and the answers reach the frozen context.
+  No slice may remove them, or the code that passes them on (plan §5, JQ).
 
 **Review and questions**
 
@@ -343,8 +351,10 @@ screen (R-20).
   them, labelled `Saran Nuave`; without, "don't know yet" is selected. Each
   of the three choices freezes distinctly. Removing the last name keeps
   "named" and blocks `Lanjut`; a sixth name is blocked (R-18).
-- **AC-10:** Target customer, buyer considerations and differentiator are
-  editable on review and reach the frozen context (R-20).
+- **AC-10:** Target customer, buyer considerations and differentiator each
+  have a dedicated optional screen: prepared values arrive selected with
+  provenance, empty `Lanjut` is allowed, owner edits freeze with `owner`
+  origin, and review `Ubah` opens the screen and returns to review (R-20).
 - **AC-11:** On review, every `Ubah` returns to review, except focus, which
   follows the R-05 route before returning. An edited alias
   reaches `identity.aliases`. The confirmation label is exact (R-21, R-22).
@@ -378,7 +388,7 @@ screen in every slice.
 | **J5** | Category, offerings, service channels and market screens. | R-05 (category after a focus change), R-13–R-16 | M |
 | **J6** | Customer needs, competitors and public fact screens. | R-17–R-19 | S–M |
 | **J7** | Review replaces the summary and the clarification stage; editable aliases; JQ answers held on review. | R-20–R-23 | M |
-| **JQ** | Screens for target customer, buyer considerations and differentiator, after the founder decides must-answer vs asked. | plan §5, JQ | S–M |
+| **JQ** | Screens for target customer, buyer considerations and differentiator — optional, as decided 2026-10-02. | plan §5, JQ | S–M |
 
 ## Open questions
 
@@ -409,6 +419,8 @@ None. The founder answered the draft's three questions on 2026-09-27
 Partial implementation; full-spec verification remains pending:
 
 - Verification artifact: `specs/013-airbnb-intake-journey/VERIFICATION.md`
-- Result: J5 PASS; J6, J7 and JQ remain outstanding
-- Date: 2026-10-02 (J5)
-- Verified implementation commit: `358c521b3e3e5fca9046714f0559c50ac07b5e03` (J5 only)
+- Result: J2–J7 each passed independent review and merged (latest: J7,
+  [PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114), merged
+  `753452e`); JQ and full-spec verification remain outstanding
+- Date: 2026-10-03 (J7)
+- Verified implementation commit: `681df10bfe9bf5540ed2686319c97307a92a43b3` (J7 only)

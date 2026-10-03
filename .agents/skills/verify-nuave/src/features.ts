@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   addAlias,
   addCompetitor,
+  addConsideration,
   addCustomerNeed,
   auditStage,
   brandScreen,
@@ -20,6 +21,8 @@ import {
   expectCategoryScreen,
   expectCompetitorsScreen,
   expectCustomerNeedsScreen,
+  expectDecisionConsiderationsScreen,
+  expectDifferentiatorScreen,
   expectEmptyEntry,
   expectFocusScreen,
   expectLocationScreen,
@@ -28,14 +31,19 @@ import {
   expectProductScreen,
   expectQuestionReview,
   expectServiceScreen,
+  expectTargetCustomerScreen,
   expectTenQuestions,
   expectSummary,
+  fillDifferentiator,
   fillEntry,
   fillPublicFact,
+  fillTargetCustomer,
   injectUsefulnessFailureOnce,
   INTAKE_SESSION_KEY,
   competitorsScreen,
   customerNeedsScreen,
+  decisionConsiderationsScreen,
+  differentiatorScreen,
   locationScreen,
   marketScreen,
   openAliasEditor,
@@ -49,6 +57,8 @@ import {
   SENSITIVE_INPUT_NOTICE,
   startAudit,
   stubPreparationDraft,
+  targetCustomerScreen,
+  toggleConsideration,
   toggleCustomerNeed,
   throughDetailScreens,
   toQuestions,
@@ -249,18 +259,21 @@ async function smartIntakeSummary(ctx: DriveContext) {
     await throughDetailScreens(page);
   });
   ctx.check(
-    "Category, offerings, service-channel and market screens each gate Lanjut; J6 customer needs and public fact stay optional and competitors default to unknown",
+    "Category, offerings, service-channel and market screens each gate Lanjut; the JQ customer screens and J6 optional answers stay optional and competitors default to unknown",
   );
   const optionalSelection = await sessionValue(page, INTAKE_SESSION_KEY);
   expect(optionalSelection.selection).toMatchObject({
     aliases: [],
+    targetCustomer: "",
     customerNeeds: [],
+    decisionConsiderations: [],
     comparatorMode: "unknown",
     comparatorNames: [],
+    differentiator: "",
     publicFact: "",
   });
   ctx.check(
-    "Empty optional J6 answers, empty aliases and the unknown comparator default persist",
+    "Empty optional JQ and J6 answers, empty aliases and the unknown comparator default persist",
   );
   await ctx.step("focus-one-offering", async () => {
     // The focus row is read-back; `Ubah` re-opens the dedicated screens.
@@ -305,10 +318,13 @@ async function smartIntakeSummary(ctx: DriveContext) {
     market: { value: { reach: "seluruh" } },
     comparators: { value: { mode: "unknown" }, origin: "nuave" },
   });
+  expect(intake.frozen.context).not.toHaveProperty("targetCustomer");
   expect(intake.frozen.context).not.toHaveProperty("customerNeeds");
+  expect(intake.frozen.context).not.toHaveProperty("decisionConsiderations");
+  expect(intake.frozen.context).not.toHaveProperty("differentiator");
   expect(intake.frozen.context).not.toHaveProperty("publicFact");
   ctx.check(
-    "Frozen context keeps unknown competitors and omits empty optional J6 values alongside the edited category, product focus and nationwide reach",
+    "Frozen context keeps unknown competitors and omits empty optional JQ/J6 values alongside the edited category, product focus and nationwide reach",
   );
   expect(ctx.calls).toEqual({
     "GET /api/audit/identity": 1,
@@ -321,8 +337,8 @@ async function smartIntakeSummary(ctx: DriveContext) {
 /**
  * Spec 013 R-29: the labelled rich fictional preparation, served through the
  * stubbed identity/extract routes. This drive proves UI and session handling
- * of the J3 prepared values and J6 customer context — never live extraction
- * quality. The default
+ * of the J3 prepared values, the J6 customer context and the JQ retained
+ * customer-meaning screens — never live extraction quality. The default
  * synthetic preparation ("no facts extracted") stays the other feature's
  * path and is unchanged.
  */
@@ -351,10 +367,20 @@ async function richPreparation(ctx: DriveContext) {
       .click();
     await pressLanjut(page);
     // Category and offerings still appear with prepared picks; a location
-    // focus skips market before the optional J6 screens.
+    // focus skips market. The JQ customer screens show prepared values with
+    // their Nuave label, then take the specified owner edits.
     await expectCategoryScreen(page);
     await pressLanjut(page);
     await expectOfferingsScreen(page);
+    await pressLanjut(page);
+    await expectTargetCustomerScreen(page);
+    await expect(targetCustomerScreen(page)).toContainText("Saran Nuave");
+    await expect(
+      targetCustomerScreen(page).getByRole("textbox", {
+        name: /Pelanggan sasaran/,
+      }),
+    ).toHaveValue("pekerja kantoran sekitar");
+    await fillTargetCustomer(page, "keluarga sekitar");
     await pressLanjut(page);
     await expectCustomerNeedsScreen(page);
     await expect(
@@ -365,6 +391,18 @@ async function richPreparation(ctx: DriveContext) {
     await toggleCustomerNeed(page, "minuman dekat kantor");
     await toggleCustomerNeed(page, "minuman dekat kantor");
     await addCustomerNeed(page, "sarapan sebelum kerja");
+    await pressLanjut(page);
+    await expectDecisionConsiderationsScreen(page);
+    await expect(decisionConsiderationsScreen(page)).toContainText(
+      "Saran Nuave",
+    );
+    await expect(
+      decisionConsiderationsScreen(page).getByRole("button", {
+        name: "lokasi",
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await toggleConsideration(page, "lokasi");
+    await addConsideration(page, "jam buka");
     await pressLanjut(page);
     await expectServiceScreen(page);
     await pressLanjut(page);
@@ -378,6 +416,15 @@ async function richPreparation(ctx: DriveContext) {
     await chooseCompetitorMode(page, "Bisnis yang saya pilih");
     await addCompetitor(page, "Warung Fiksi");
     await pressLanjut(page);
+    await expectDifferentiatorScreen(page);
+    await expect(differentiatorScreen(page)).toContainText("Saran Nuave");
+    await expect(
+      differentiatorScreen(page).getByRole("textbox", {
+        name: /Pembeda bisnis/,
+      }),
+    ).toHaveValue("Racikan kopi rumahan fiktif");
+    await fillDifferentiator(page, "Pilihan roti rumahan fiktif");
+    await pressLanjut(page);
     await expectPublicFactScreen(page);
     await fillPublicFact(page, "Buka setiap hari sampai pukul 21.00.");
     await pressLanjut(page);
@@ -385,7 +432,7 @@ async function richPreparation(ctx: DriveContext) {
     await expectSummary(page);
   });
   ctx.check(
-    "The rich fixture offers published locations labelled `Dari website Anda`, keeps prepared provenance, accepts optional J6 edits and skips market for a location focus",
+    "The rich fixture offers published locations labelled `Dari website Anda`, shows the prepared JQ meanings with their Nuave label, accepts the owner JQ and J6 edits and skips market for a location focus",
   );
   const prepared = (
     (await sessionValue(page, INTAKE_SESSION_KEY)) as {
@@ -393,6 +440,9 @@ async function richPreparation(ctx: DriveContext) {
         locations?: { proposed: unknown; origin: string };
         categorySuggestions?: { proposed: unknown; origin: string };
         offeringCategorySuggestions?: { proposed: unknown; origin: string };
+        targetCustomer?: { proposed: unknown; origin: string };
+        decisionConsiderations?: { proposed: unknown; origin: string };
+        differentiator?: { proposed: unknown; origin: string };
       };
     } | null
   )?.prepared;
@@ -428,6 +478,21 @@ async function richPreparation(ctx: DriveContext) {
   ctx.check(
     "Whole-brand and per-offering category suggestions carry the `nuave` origin",
   );
+  expect(prepared?.targetCustomer).toEqual({
+    proposed: "pekerja kantoran sekitar",
+    origin: "nuave",
+  });
+  expect(prepared?.decisionConsiderations).toEqual({
+    proposed: ["lokasi"],
+    origin: "nuave",
+  });
+  expect(prepared?.differentiator).toEqual({
+    proposed: "Racikan kopi rumahan fiktif",
+    origin: "nuave",
+  });
+  ctx.check(
+    "Prepared JQ meanings carry their `nuave` origin in the stored session",
+  );
   await ctx.step("summary-after-reload", async () => {
     await page.reload();
     await expectSummary(page);
@@ -436,7 +501,7 @@ async function richPreparation(ctx: DriveContext) {
     prepared?: unknown;
   } | null;
   expect(restored?.prepared).toEqual(prepared);
-  ctx.check("A reload restores the same prepared values — session version 8");
+  ctx.check("A reload restores the same prepared values — session version 9");
   await ctx.step("alias-edit", async () => {
     const row = reviewRow(page, "Nama lain");
     // The fixture publishes one brand variant; the owner adds a second.
@@ -464,15 +529,16 @@ async function richPreparation(ctx: DriveContext) {
     },
     focus: { value: { kind: "cabang", name: "Kedai Fiksi Dago" } },
     market: null,
-    targetCustomer: {
-      value: "pekerja kantoran sekitar",
-      origin: "nuave",
-    },
+    targetCustomer: { value: "keluarga sekitar", origin: "owner" },
     customerNeeds: {
       value: ["minuman dekat kantor", "sarapan sebelum kerja"],
       origin: "owner",
     },
-    decisionConsiderations: { value: ["lokasi"], origin: "nuave" },
+    decisionConsiderations: { value: ["jam buka"], origin: "owner" },
+    differentiator: {
+      value: "Pilihan roti rumahan fiktif",
+      origin: "owner",
+    },
     comparators: {
       value: { mode: "named", names: ["Kedai Tetangga", "Warung Fiksi"] },
       origin: "owner",
@@ -483,7 +549,7 @@ async function richPreparation(ctx: DriveContext) {
     },
   });
   ctx.check(
-    "J6 owner answers and the edited aliases freeze alongside prepared R20 values, and confirmation produces ten questions",
+    "JQ and J6 owner answers and the edited aliases freeze with exact values and origins, and confirmation produces ten questions",
   );
   expect(ctx.calls).toEqual({
     "GET /api/audit/identity": 1,
