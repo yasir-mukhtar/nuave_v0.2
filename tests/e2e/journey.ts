@@ -388,6 +388,57 @@ export async function draftConsideration(page: Page, name: string) {
   await considerationInput(page).fill(name);
 }
 
+/**
+ * Asserts every glyph rectangle of a selected consideration chip sits inside
+ * the chip's painted shape (its box minus the uniform corner radius), not
+ * merely inside the document width.
+ */
+export async function expectConsiderationTextOnBackground(
+  page: Page,
+  value: string,
+) {
+  const chip = decisionConsiderationsScreen(page).getByRole("button", {
+    name: value,
+    exact: true,
+  });
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+  expect(
+    await chip.evaluate((element) => {
+      const text = element.querySelector("span")?.firstChild;
+      if (!(text instanceof Text) || !text.length) return false;
+      const box = element.getBoundingClientRect();
+      const radius = Math.min(
+        parseFloat(getComputedStyle(element).borderTopLeftRadius),
+        box.width / 2,
+        box.height / 2,
+      );
+      if (!Number.isFinite(radius)) return false;
+      const inside = (x: number, y: number) => {
+        if (x < box.left || x > box.right || y < box.top || y > box.bottom)
+          return false;
+        const cx = Math.max(box.left + radius, Math.min(x, box.right - radius));
+        const cy = Math.max(box.top + radius, Math.min(y, box.bottom - radius));
+        return (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2;
+      };
+      const range = document.createRange();
+      for (let index = 0; index < text.length; index += 1) {
+        range.setStart(text, index);
+        range.setEnd(text, index + 1);
+        for (const rect of Array.from(range.getClientRects())) {
+          if (
+            !inside(rect.left + 1, rect.top + 1) ||
+            !inside(rect.right - 1, rect.top + 1) ||
+            !inside(rect.left + 1, rect.bottom - 1) ||
+            !inside(rect.right - 1, rect.bottom - 1)
+          )
+            return false;
+        }
+      }
+      return true;
+    }),
+  ).toBe(true);
+}
+
 /** The `Pembeda bisnis` textarea on the differentiator screen. */
 export function differentiatorInput(page: Page) {
   return differentiatorScreen(page).getByRole("textbox", {

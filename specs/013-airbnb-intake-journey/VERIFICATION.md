@@ -161,7 +161,7 @@ JQ implements the R-20 screens as dedicated optional chapter-3 steps, per
 the delegated 2026-10-02 decision recorded in `docs/DECISION_LOG.md` and
 plan §5: target customer → customer needs → buyer considerations → service
 → market → competitors → differentiator → public fact → review, with empty
-`Lanjut` allowed on the three new screens. This section is filled with its
-acceptance results after independent review; no JQ verdict exists yet.
+`Lanjut` allowed on the three new screens.
+The first independent review of [PR #117](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117) at `cb5c46e` found long-chip readability and error-message precedence issues. The PR's [verdict record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117#issuecomment-5966961064) holds the current reviewed commit and acceptance evidence; implementation checks alone do not accept JQ.
 
 **Spec 013 remains Implementing.** JQ is active, then founder signoff.

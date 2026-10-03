@@ -56,6 +56,7 @@ import {
   fillTargetCustomer,
   targetCustomerInput,
   toggleConsideration,
+  expectConsiderationTextOnBackground,
   removeAlias,
   reviewRow,
   reviewScreen,
@@ -903,7 +904,8 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
 
 test("JQ customer screens keep prepared provenance, take owner edits, and hold at 320px", async ({
   page,
-}) => {
+}, testInfo) => {
+  const shots = testInfo.outputPath("jq-320px");
   const contexts: Record<string, unknown>[] = [];
   page.on("request", (request) => {
     if (new URL(request.url()).pathname === "/api/audit/glm-questions")
@@ -950,13 +952,24 @@ test("JQ customer screens keep prepared provenance, take owner edits, and hold a
   ).toHaveAttribute("aria-pressed", "true");
   await toggleConsideration(page, "lokasi");
   await addConsideration(page, "jam buka");
-  // An unbroken 300-character consideration fits the 320px layout.
+  // An unbroken 300-character consideration fits the 320px layout and its
+  // glyphs stay on the chip's painted background.
   await addConsideration(page, "x".repeat(300));
+  await decisionConsiderationsScreen(page).screenshot({
+    path: `${shots}/decision-considerations-320px.png`,
+  });
+  await decisionConsiderationsScreen(page)
+    .getByRole("button", { name: "jam buka", exact: true })
+    .screenshot({ path: `${shots}/chip-singleline.png` });
+  await decisionConsiderationsScreen(page)
+    .getByRole("button", { name: "x".repeat(300), exact: true })
+    .screenshot({ path: `${shots}/chip-tall-300.png` });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+  await expectConsiderationTextOnBackground(page, "x".repeat(300));
   await pressLanjut(page);
   await expectSummary(page);
   // Differentiator: prepared value selected, owner edit returns to review.

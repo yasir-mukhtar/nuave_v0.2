@@ -191,7 +191,9 @@ export function SmartDecisionConsiderationsScreen({
     }
     if (unsafeSmartName(value)) {
       // The journey's privacy path refuses the update and shows the shared
-      // notice; the unsafe draft never enters the selection or storage.
+      // notice; the unsafe draft never enters the selection or storage. The
+      // privacy refusal supersedes any earlier local limit message.
+      setLimitError(null);
       update([...selected, value]);
       return false;
     }
@@ -268,7 +270,9 @@ export function SmartDecisionConsiderationsScreen({
         placeholder="Tambah pertimbangan"
         onCommit={add}
       />
-      <Notice error={error ?? limitError} />
+      {/* A current local error wins over a stale journey error; a fresh
+          journey privacy error still shows when none is pending. */}
+      <Notice error={limitError ?? error} />
     </section>
   );
 }

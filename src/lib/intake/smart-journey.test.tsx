@@ -3125,6 +3125,75 @@ describe("Spec 013 JQ customer screens", () => {
     ]);
   });
 
+  it("shows the current consideration error after privacy and duplicate refusals", async () => {
+    const { fetchMock } = stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    const input = screen.getByRole("textbox", {
+      name: "Pertimbangan pembeli lain",
+    }) as HTMLInputElement;
+    const enter = (value: string) => {
+      fireEvent.change(input, { target: { value } });
+      fireEvent.keyDown(input, { key: "Enter" });
+    };
+    enter("jam buka");
+    expect(input.value).toBe("");
+    // A sensitive draft is refused: privacy notice, draft kept, nothing stored.
+    enter("nomor rekening 12345");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
+    expect(input.value).toBe("nomor rekening 12345");
+    expect(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+    ).not.toContain("nomor rekening");
+    // A current safe duplicate shows its own message, not the stale privacy one.
+    enter("  JAM BUKA ");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Pertimbangan ini sudah dipilih.",
+    );
+    expect(input.value).toBe("  JAM BUKA ");
+    expect(jqSession()?.selection?.decisionConsiderations).toEqual([
+      "lokasi",
+      "jam buka",
+    ]);
+    // Sensitive again: the privacy notice supersedes the duplicate message.
+    enter("nomor rekening 12345");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
+    // A 301-character safe draft shows the length correction instead.
+    enter("y".repeat(301));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "300 karakter",
+    );
+    expect(input.value).toBe("y".repeat(301));
+    // An accepted value clears the alert and the draft.
+    enter("jam tutup");
+    expect(input.value).toBe("");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(jqSession()?.selection?.decisionConsiderations).toEqual([
+      "lokasi",
+      "jam buka",
+      "jam tutup",
+    ]);
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    const [context] = jqQuestionBodies(fetchMock);
+    expect(context.decisionConsiderations).toEqual({
+      value: ["lokasi", "jam buka", "jam tutup"],
+      origin: "owner",
+    });
+    expect(JSON.stringify(context)).not.toContain("nomor rekening");
+  });
+
   it("accepts a twelfth consideration and refuses a thirteenth", async () => {
     stubPreparation({
       draft: {

@@ -37,7 +37,7 @@ done.
 | J5 | Category, offerings, service-channel and market screens | Worker | Done; merged | [#104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114) (`358c521`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md)) |
 | J6 | Customer-needs, competitor and public-fact screens | Worker | Done; merged | [#109](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109#issuecomment-5956009449) (`9fa1308`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md#j6-frozen-closeout)) |
 | J7 | Review screen becomes the single confirmation | Worker | Done; merged | [#114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5964756164) (`681df10`; [release](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5966316930); merged `753452e`) |
-| JQ | Add back the questions the reference lacks (§5, JQ) | Worker | In progress | — | — |
+| JQ | Add back the questions the reference lacks (§5, JQ) | Worker | In progress | [#117](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117) | — |
 | JZ | Founder signs off the journey after real test runs | Founder | Not started | — | — |
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Waiting for Stage 1 | — | — |
