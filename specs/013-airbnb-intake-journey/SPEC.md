@@ -2,10 +2,10 @@
 
 > Status: **Implementing**; approved by the founder on 2026-09-27
 > ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
-> J2–J4 merged; J5 passed review, awaiting founder merge; J6 is next.
+> J2–J6 merged with PASS; J7 is active. JQ and founder signoff remain.
 > Review evidence: [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
 > Owner: orchestrator
-> Updated: 2026-10-02
+> Updated: 2026-10-03
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > (milestones J2–J7 and JQ)
 > Decision basis: plan §4.1 ("done" for the journey), the three 2026-09-27
@@ -32,7 +32,7 @@ Read in order:
    `docs/drafts/nuave-intake-design-workbench.html` (secondary, only where
    this spec names it)
 7. Code for your slice: `src/lib/intake/SmartIntakeJourney.tsx`,
-   `SmartSummary.tsx`, `smart-intake-contract.ts`, `smart-session.ts`,
+   `SmartReview.tsx`, `smart-intake-contract.ts`, `smart-session.ts`,
    `src/lib/audit/direct-ten-context-v2.ts`; parts donors
    `src/lib/intake/IntakeJourney.tsx`, `screens-bab1.tsx`, `screens-bab2.tsx`
 8. `.agents/skills/verify-nuave/` and `tests/e2e/journey.ts`

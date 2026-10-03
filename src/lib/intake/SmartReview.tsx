@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Chip, ChipGroup } from "@/components/product/selection/Chip";
+import { AddLine } from "@/components/product/selection/AddLine";
 import {
   SOURCE_EXCERPT_EMPTY_NOTICE,
   type SourceExcerptStatus,
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import {
   requiredSmartGaps,
+  unsafeSmartName,
   type PreparedUnderstanding,
   type SmartSelection,
 } from "./smart-intake-contract";
@@ -26,6 +29,8 @@ type Props = {
   onConfirm: () => void;
   /** Opens the dedicated screen that owns the first still-missing meaning. */
   onFillGaps: () => void;
+  /** J7: opens the brand check so a name correction keeps its own screen. */
+  onEditBrand?: () => void;
   onEditSource?: () => void;
   /** J4: opens the dedicated focus screen so the row itself stays read-back. */
   onEditFocus?: () => void;
@@ -72,29 +77,33 @@ function Row({
   children,
 }: {
   title: string;
-  origin: string;
+  /** The row's provenance label; an empty optional answer shows none (J6). */
+  origin?: string;
   children: React.ReactNode;
 }) {
   return (
     <section
-      className="grid gap-3 border-t border-border py-5"
+      className="grid min-w-0 grid-cols-1 gap-3 border-t border-border py-5"
       aria-label={title}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="type-heading-sm">{title}</h2>
-        <span className="type-copy-sm text-muted-foreground">{origin}</span>
+        {origin ? (
+          <span className="type-copy-sm text-muted-foreground">{origin}</span>
+        ) : null}
       </div>
       {children}
     </section>
   );
 }
 
-export default function SmartSummary({
+export default function SmartReview({
   prepared,
   selection,
   onChange,
   onConfirm,
   onFillGaps,
+  onEditBrand,
   onEditSource,
   onEditFocus,
   onEditCategory,
@@ -109,7 +118,12 @@ export default function SmartSummary({
   sourceExcerptStatus,
   headingRef,
 }: Props) {
-  const [editingBusiness, setEditingBusiness] = useState(false);
+  const [editingAliases, setEditingAliases] = useState(false);
+  const [aliasError, setAliasError] = useState<string | null>(null);
+  const aliasEditorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (editingAliases) aliasEditorRef.current?.querySelector("input")?.focus();
+  }, [editingAliases]);
   const update = (patch: Partial<SmartSelection>, originKey?: string) =>
     onChange({
       ...selection,
@@ -118,6 +132,41 @@ export default function SmartSummary({
         ? { ...selection.origins, [originKey]: "owner" }
         : selection.origins,
     });
+  const sameAlias = (a: string, b: string) =>
+    a.trim().toLocaleLowerCase("id-ID") === b.trim().toLocaleLowerCase("id-ID");
+  // A refused add returns false so the AddLine draft stays for correction.
+  const addAlias = (value: string): boolean => {
+    const alias = value.trim();
+    if (!alias) return false;
+    if (unsafeSmartName(alias)) {
+      // The journey's privacy path refuses the update and shows the shared
+      // notice; nothing unsafe is committed or stored.
+      update({ aliases: [...selection.aliases, alias] }, "aliases");
+      return false;
+    }
+    if (selection.aliases.some((item) => sameAlias(item, alias))) {
+      setAliasError("Nama lain ini sudah ada.");
+      return false;
+    }
+    if (alias.length > 160) {
+      setAliasError("Setiap nama lain paling panjang 160 karakter.");
+      return false;
+    }
+    if (selection.aliases.length >= 12) {
+      setAliasError("Pilih paling banyak 12 nama lain.");
+      return false;
+    }
+    setAliasError(null);
+    update({ aliases: [...selection.aliases, alias] }, "aliases");
+    return true;
+  };
+  const removeAlias = (index: number) => {
+    setAliasError(null);
+    update(
+      { aliases: selection.aliases.filter((_, item) => item !== index) },
+      "aliases",
+    );
+  };
   const gaps = requiredSmartGaps(selection);
   const optionalPresent = Boolean(
     selection.targetCustomer ||
@@ -130,9 +179,13 @@ export default function SmartSummary({
     selection.marketReach === "sekitar" || selection.marketReach === "beberapa";
 
   return (
-    <section className="w-full pb-10" data-smart-summary="ready">
+    <section
+      className="w-full min-w-0 pb-10"
+      data-smart-summary="ready"
+      data-intake-screen="review"
+    >
       <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Ini yang Nuave pahami.
+        Ini yang akan Nuave audit
       </h1>
       <p className="type-copy mt-2 text-muted-foreground">
         Periksa pilihan yang sudah disiapkan. Ubah hanya yang belum sesuai, lalu
@@ -145,69 +198,22 @@ export default function SmartSummary({
       ) : null}
 
       <Row title="Bisnis" origin={originText[selection.nameOrigin]}>
+        <p className="type-copy break-words">{selection.name}</p>
         <p className="type-copy-sm text-muted-foreground break-all">
           {prepared.canonicalSource} · Dari Anda
         </p>
-        {onEditSource ? (
-          <Button variant="link" className="w-fit" onClick={onEditSource}>
-            Ubah nama atau website
-          </Button>
-        ) : null}
-        <label className="flex min-h-11 items-center gap-3 type-copy">
-          <input
-            type="radio"
-            name="smart-business"
-            checked={
-              selection.name === prepared.typedName &&
-              selection.nameOrigin === "owner"
-            }
-            onChange={() =>
-              update({ name: prepared.typedName, nameOrigin: "owner" })
-            }
-          />
-          {prepared.typedName}
-        </label>
-        {prepared.discoveredName ? (
-          <label className="flex min-h-11 items-center gap-3 type-copy">
-            <input
-              type="radio"
-              name="smart-business"
-              checked={
-                selection.name === prepared.discoveredName &&
-                selection.nameOrigin === "website"
-              }
-              onChange={() =>
-                update({
-                  name: prepared.discoveredName!,
-                  nameOrigin: "website",
-                })
-              }
-            />
-            {prepared.discoveredName}{" "}
-            <span className="type-copy-sm text-muted-foreground">
-              Dari website Anda
-            </span>
-          </label>
-        ) : null}
-        <Button
-          variant="link"
-          className="w-fit"
-          onClick={() => setEditingBusiness(!editingBusiness)}
-        >
-          Ubah nama
-        </Button>
-        {editingBusiness ? (
-          <label className="grid gap-2 type-label">
-            Nama brand
-            <Input
-              value={selection.name}
-              maxLength={160}
-              onChange={(event) =>
-                update({ name: event.target.value, nameOrigin: "owner" })
-              }
-            />
-          </label>
-        ) : null}
+        <div className="flex flex-wrap gap-3">
+          {onEditBrand ? (
+            <Button variant="link" className="w-fit" onClick={onEditBrand}>
+              Ubah
+            </Button>
+          ) : null}
+          {onEditSource ? (
+            <Button variant="link" className="w-fit" onClick={onEditSource}>
+              Ubah website
+            </Button>
+          ) : null}
+        </div>
       </Row>
 
       <Row title="Fokus audit" origin={rowOrigin(selection, "focus")}>
@@ -341,7 +347,11 @@ export default function SmartSummary({
       </Row>
       <Row
         title="Fakta publik tambahan"
-        origin={rowOrigin(selection, "publicFact")}
+        origin={
+          selection.publicFact.trim()
+            ? rowOrigin(selection, "publicFact")
+            : undefined
+        }
       >
         <p className="type-copy break-words">
           {selection.publicFact || "Belum diisi"}
@@ -350,6 +360,56 @@ export default function SmartSummary({
           <Button variant="link" className="w-fit" onClick={onEditPublicFact}>
             Ubah
           </Button>
+        ) : null}
+      </Row>
+      <Row
+        title="Nama lain"
+        origin={
+          selection.aliases.length ? rowOrigin(selection, "aliases") : undefined
+        }
+      >
+        <p className="type-copy break-words">
+          {selection.aliases.join(", ") || "Belum diisi"}
+        </p>
+        <p className="type-copy-sm text-muted-foreground">
+          Nama lain membantu Nuave memeriksa agar pertanyaan audit tidak
+          menyebut bisnis Anda.
+        </p>
+        <Button
+          variant="link"
+          className="w-fit"
+          aria-expanded={editingAliases}
+          onClick={() => setEditingAliases((value) => !value)}
+        >
+          Ubah
+        </Button>
+        {editingAliases ? (
+          <div ref={aliasEditorRef} className="grid min-w-0 grid-cols-1 gap-3">
+            {selection.aliases.length ? (
+              <ChipGroup label="Nama lain">
+                {selection.aliases.map((alias, index) => (
+                  <Chip
+                    key={alias}
+                    label={alias}
+                    selected
+                    onToggle={(on) => {
+                      if (!on) removeAlias(index);
+                    }}
+                  />
+                ))}
+              </ChipGroup>
+            ) : null}
+            <AddLine
+              inputLabel="Nama lain baru"
+              placeholder="Tambah nama lain"
+              onCommit={addAlias}
+            />
+            {aliasError ? (
+              <p role="alert" className="type-copy-sm text-destructive">
+                {aliasError}
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </Row>
       <Row title="Detail tambahan" origin={originText.nuave}>

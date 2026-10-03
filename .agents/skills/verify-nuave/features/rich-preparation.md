@@ -19,7 +19,7 @@ about live extraction quality. The default synthetic preparation
   fixture publishes two locations on the canonical host; the location
   screen lists them labelled `Dari website Anda` and a pick continues to
   the detail screens.
-- `prepared-values`: the v7 session's `prepared` carries both published
+- `prepared-values`: the v8 session's `prepared` carries both published
   locations with origin `website`, the whole-brand suggestions and the
   per-offering suggestions with origin `nuave` — `Saran Nuave`, never
   `Dari website Anda`.
@@ -29,9 +29,10 @@ about live extraction quality. The default synthetic preparation
   defaults to named mode; the public fact stays optional; a location focus
   skips the market screen.
 - `reload-persistence`: a reload restores the identical prepared state.
-- `downstream-unchanged`: optional J6 answers are frozen alongside the R20
-  prepared context; confirming produces ten questions with exactly one
-  identity, one extract and one question request.
+- `downstream-unchanged`: optional J6 answers and edited `Nama lain`
+  aliases are frozen alongside the R20 prepared context; confirming
+  produces ten questions with exactly one identity, one extract and one
+  question request.
 
 ## How to get to it (user POV)
 
@@ -61,19 +62,25 @@ order:
   (prepared picks), toggles the prepared customer need off and back on, adds
   one owner need, continues through service (prepared picks), keeps the
   prepared named competitor and adds a second, then adds an optional public
-  fact before landing on "Ini yang Nuave pahami." — a location focus audits
+  fact before landing on "Ini yang akan Nuave audit" — a location focus audits
   no market, so the market screen never appears. Evidence:
   `02-rich-reading-to-location`.
-- **Prepared proof.** `sessionStorage` `nuave.localIntake.v7` `prepared` is
+- **Prepared proof.** `sessionStorage` `nuave.localIntake.v8` `prepared` is
   asserted equal to the expected locations and suggestion lists with their
   origins.
-- **Reload.** Refreshes; the summary shows again and the stored `prepared`
+- **Reload.** Refreshes; the review shows again and the stored `prepared`
   is identical. Evidence: `03-summary-after-reload`.
+- **Alias edit.** The `Nama lain` row shows the prepared
+  `Kedai Fiksi Bandung` alias labelled `Dari website Anda`; the editor adds
+  `Kedai Fiksi Pusat`, flipping the row to `Dari Anda`. Evidence:
+  `04-alias-edit`.
 - **Questions.** `Sudah sesuai — buat pertanyaan audit` works with no
-  further summary edits; ten `[data-question-slot]` show.
+  further review edits; ten `[data-question-slot]` show, and the frozen
+  context's `identity.aliases` equals the edited
+  `["Kedai Fiksi Bandung", "Kedai Fiksi Pusat"]`.
   `network.json.apiCalls` is
   exactly one `GET /api/audit/identity`, one `POST /api/audit/extract` and
-  one `POST /api/audit/glm-questions`. Evidence: `04-questions-created`.
+  one `POST /api/audit/glm-questions`. Evidence: `05-questions-created`.
 
 ## Gotchas
 
@@ -87,5 +94,5 @@ order:
 - `RICH_PREPARATION_DRAFT` keeps offering spellings (`kopi susu`, `roti`)
   that other journeys select by name; changing them breaks downstream
   drives.
-- A stale pre-v7 session restarts at entry — the parser never mixes old and
+- A stale pre-v8 session restarts at entry — the parser never mixes old and
   new shapes.

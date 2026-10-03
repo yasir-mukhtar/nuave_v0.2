@@ -20,7 +20,7 @@ import {
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
-export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v7" as const;
+export const SMART_INTAKE_STORAGE_KEY = "nuave.localIntake.v8" as const;
 
 type Origin = "website" | "nuave" | "owner";
 export type PreparedMeaning<T> = Readonly<{
@@ -72,6 +72,10 @@ export type PreparedUnderstanding = Readonly<{
 export type SmartSelection = {
   name: string;
   nameOrigin: Origin;
+  /** Other names the business goes by (R-21/R-22): seeded from the
+   * prepared `brand_name_variants`, owner-editable on the review, frozen as
+   * `identity.aliases`. */
+  aliases: string[];
   focus: "brand" | "produk" | "cabang";
   productTarget: string;
   locationName: string;
@@ -166,6 +170,7 @@ export function unsafeSmartSelection(selection: SmartSelection): boolean {
     ...selection.customerNeeds,
     ...selection.decisionConsiderations,
     ...selection.comparatorNames,
+    ...selection.aliases,
     selection.differentiator,
     selection.publicFact,
   ].some((value) => value && isSensitiveIntakeText(value));
@@ -312,7 +317,10 @@ export function prepareUnderstanding(input: {
         ? input.discoveredName.trim()
         : null,
     canonicalSource: source.normalizedUrl,
-    aliases: unique(draft.brand_name_variants, 12),
+    aliases: unique(
+      draft.brand_name_variants.filter((alias) => alias.trim().length <= 160),
+      12,
+    ),
     focus: { proposed: "brand", origin: "nuave" },
     category: { proposed: draft.category.trim() || null, origin: "website" },
     offerings: {
@@ -569,6 +577,7 @@ export function smartMarketReady(selection: SmartSelection): boolean {
 export function firstSmartGapStage(
   selection: SmartSelection,
 ):
+  | "brand"
   | "location"
   | "product"
   | "category"
@@ -577,6 +586,7 @@ export function firstSmartGapStage(
   | "market"
   | "competitors"
   | null {
+  if (!selection.name.trim()) return "brand";
   if (selection.focus === "cabang" && !smartLocationReady(selection))
     return "location";
   if (selection.focus === "produk" && !smartProductReady(selection))
@@ -589,6 +599,21 @@ export function firstSmartGapStage(
     return "market";
   if (!smartComparatorsReady(selection)) return "competitors";
   return null;
+}
+
+/** R-22: a valid "Nama lain" list is empty or holds up to twelve distinct
+ * non-blank names of at most 160 characters (trimmed, case-insensitive). */
+export function smartAliasesReady(selection: SmartSelection): boolean {
+  if (selection.aliases.length > 12) return false;
+  const seen = new Set<string>();
+  for (const alias of selection.aliases) {
+    const trimmed = alias.trim();
+    if (!trimmed || trimmed.length > 160) return false;
+    const key = trimmed.toLocaleLowerCase("id-ID");
+    if (seen.has(key)) return false;
+    seen.add(key);
+  }
+  return true;
 }
 
 export function initialSmartSelection(
@@ -607,6 +632,7 @@ export function initialSmartSelection(
   const selection: SmartSelection = {
     name: prepared.typedName,
     nameOrigin: "owner",
+    aliases: [...prepared.aliases],
     focus: "brand",
     productTarget: "",
     locationName: "",
@@ -640,6 +666,7 @@ export function initialSmartSelection(
       comparators: "nuave",
       differentiator: "nuave",
       publicFact: "owner",
+      aliases: "website",
     },
   };
   return selection.category.trim()
@@ -647,10 +674,10 @@ export function initialSmartSelection(
     : syncSmartCategory(prepared, selection);
 }
 
-/** The one clarification CTA is reserved for still-missing required meaning:
- * category, offering, the active focus target, service channels, or market. */
+/** Required meanings the review must route back to their owning screen. */
 export function requiredSmartGaps(selection: SmartSelection): string[] {
   const gaps: string[] = [];
+  if (!selection.name.trim()) gaps.push("Nama bisnis");
   if (!selection.category.trim()) gaps.push("Kategori");
   if (selection.focus !== "produk" && !selection.offerings.length)
     gaps.push("Produk atau layanan utama");
@@ -698,6 +725,13 @@ export function confirmSmartSelection(
     selection.marketAreas.length > 8
   )
     throw new Error("Pilih paling banyak 8 area layanan.");
+  // R-22: the confirmed "Nama lain" list freezes as-is — an invalid entry
+  // (blank, overlong, duplicate, or a thirteenth) is rejected here instead
+  // of silently dropped.
+  if (!smartAliasesReady(selection))
+    throw new Error(
+      "Periksa nama lain: tanpa nama kosong atau duplikat, paling banyak 12 nama, masing-masing paling panjang 160 karakter.",
+    );
   const origin = (key: string): Origin => selection.origins[key] ?? "owner";
   const optionalText = (value: string, key: string) =>
     value.trim() ? { value: value.trim(), origin: origin(key) } : undefined;
@@ -726,7 +760,7 @@ export function confirmSmartSelection(
       name: selection.name.trim(),
       source: prepared.canonicalSource,
       sourceOrigin: "owner",
-      aliases: prepared.aliases,
+      aliases: selection.aliases.map((alias) => alias.trim()),
       origin: selection.nameOrigin,
     },
     focus: { value: focusValue, origin: origin("focus") },
@@ -806,6 +840,7 @@ export function confirmSmartSelection(
     ...offerings,
     ...selection.marketAreas,
     ...selection.comparatorNames,
+    ...selection.aliases,
     selection.targetCustomer,
     ...selection.customerNeeds,
     ...selection.decisionConsiderations,

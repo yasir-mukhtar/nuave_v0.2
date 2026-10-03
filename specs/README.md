@@ -51,8 +51,8 @@ any, and the active milestone. The entries below record each package's
 latest status.
 
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
-  — **Implementing** (approved 2026-09-27); J2–J4 merged; J5 passed review,
-  awaiting founder merge; J6 next. Review evidence:
+  — **Implementing** (approved 2026-09-27); J2–J6 merged with PASS;
+  J7 active, with JQ and founder signoff remaining. Review evidence:
   [plan §1](../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger) and
   [slice verification](./013-airbnb-intake-journey/VERIFICATION.md).
   Stage 1 of the paying-customer plan: the Airbnb-style

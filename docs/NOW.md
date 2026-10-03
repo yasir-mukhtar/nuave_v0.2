@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-02
+> Updated: 2026-10-03
 > Stage: Stage 1 of the [paying-customer plan](./PAYING_CUSTOMER_PLAN.md):
 > finish the intake journey
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -16,7 +16,7 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing; J2–J4 merged; J5 passed review, awaiting merge
+  intake) is implementing; J2–J6 merged with PASS; J7 is active
   (plan §1 has evidence). The full spec is not yet verified. Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
@@ -26,9 +26,8 @@
 
 ## Next action
 
-- **Next milestone: J6** (Spec 013): customer-needs, competitor and public-fact
-  screens. First merge [J5 #104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104)
-  as founder, then start from updated `origin/main`. Handoff: `templates/WORKER_PROMPT.md`.
+- **Active milestone: J7** (Spec 013): final review, one confirmation and editable aliases,
+  from merged J6/S1; JQ and founder signoff follow. Handoff: `templates/WORKER_PROMPT.md`.
 
 ## Rules still in force
 
@@ -85,8 +84,9 @@
 
 ## Deferred security work — before customer testing or public sharing
 
-Update root `fast-uri` and `hono` first: plan §5, **S1**. A clean
-`npm audit` or Dependabot list does not mean this is done.
+**S1 merged in [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110):** root patches
+and the production dependency audit pass; dev-only brace findings remain disclosed.
+This is not full security or customer-exposure readiness; S2 and safeguards still apply.
 
 ## Not now
 

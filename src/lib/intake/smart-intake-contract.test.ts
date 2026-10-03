@@ -17,6 +17,7 @@ import {
   prepareUnderstanding,
   parseFrozenSmartIntake,
   selectSmartFocus,
+  smartAliasesReady,
   smartLocationReady,
   smartProductReady,
   smartComparatorsReady,
@@ -27,6 +28,7 @@ import {
   unsafeSmartSource,
   usablePublishedLocations,
 } from "./smart-intake-contract";
+import { validateDirectTenQuestionPack } from "../audit/questions-id-direct-ten";
 
 function prepared(overrides: Partial<ExtractionDraft> = {}) {
   return prepareUnderstanding({
@@ -336,6 +338,162 @@ describe("smart intake exact confirmed meaning", () => {
     expect(writer).toContain("confirmation does not independently verify it");
   });
 
+  describe("Spec 013 J7 alias selection", () => {
+    it("seeds aliases as an independent copy with website provenance", () => {
+      const proposal = prepared({
+        brand_name_variants: [
+          "Kedai Contoh Pusat",
+          "  kedai contoh pusat  ",
+          "KopiContoh",
+        ],
+      });
+      // Preparation trims and dedupes case-insensitively before capping at 12.
+      expect(proposal.aliases).toEqual(["Kedai Contoh Pusat", "KopiContoh"]);
+      const selection = initialSmartSelection(proposal);
+      expect(selection.aliases).toEqual(["Kedai Contoh Pusat", "KopiContoh"]);
+      expect(selection.origins.aliases).toBe("website");
+      selection.aliases.push("Nama Dari Pemilik");
+      selection.origins.aliases = "owner";
+      // The selection copy is independent: the prepared proposal never moves.
+      expect(proposal.aliases).toEqual(["Kedai Contoh Pusat", "KopiContoh"]);
+    });
+
+    it("keeps valid prepared aliases after overlong variants", () => {
+      const boundaryAlias = "A".repeat(160);
+      const overlongAliases = Array.from(
+        { length: 12 },
+        (_, index) => `Variant ${index} ${"x".repeat(160)}`,
+      );
+      const proposal = prepared({
+        brand_name_variants: [
+          ...overlongAliases,
+          ` ${boundaryAlias} `,
+          "KopiContoh",
+          " kopicontoh ",
+          " ",
+        ],
+      });
+      expect(proposal.aliases).toEqual([boundaryAlias, "KopiContoh"]);
+      const selection = initialSmartSelection(proposal);
+      expect(selection.aliases).toEqual([boundaryAlias, "KopiContoh"]);
+      expect(smartAliasesReady(selection)).toBe(true);
+      expect(
+        confirmSmartSelection(proposal, selection, 1).context.identity.aliases,
+      ).toEqual([boundaryAlias, "KopiContoh"]);
+    });
+
+    it.each([
+      { aliases: [] as string[] },
+      { aliases: ["Alias Satu", " Alias Dua "] },
+    ])(
+      "freezes the exact selected alias list (trimmed): $aliases",
+      ({ aliases }) => {
+        const proposal = prepared({
+          brand_name_variants: ["Kedai Contoh Pusat"],
+        });
+        const selection = initialSmartSelection(proposal);
+        selection.aliases = [...aliases];
+        selection.origins.aliases = "owner";
+        const frozen = confirmSmartSelection(proposal, selection, 1);
+        expect(frozen.context.identity.aliases).toEqual(
+          aliases.map((alias) => alias.trim()),
+        );
+        // Removing them again freezes the empty list exactly.
+        selection.aliases = [];
+        expect(
+          confirmSmartSelection(proposal, selection, 1).context.identity
+            .aliases,
+        ).toEqual([]);
+      },
+    );
+
+    it.each<[string, string[]]>([
+      ["a blank entry", [" "]],
+      ["a trimmed duplicate", ["Alias", " alias "]],
+      [
+        "a thirteenth alias",
+        Array.from({ length: 13 }, (_, index) => `Alias ${index + 1}`),
+      ],
+      ["an overlong alias", ["x".repeat(161)]],
+    ])("rejects %s instead of silently dropping it", (_label, aliases) => {
+      const proposal = prepared();
+      const selection = initialSmartSelection(proposal);
+      selection.aliases = aliases;
+      expect(smartAliasesReady(selection)).toBe(false);
+      expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
+        "Periksa nama lain",
+      );
+      expect(selection.aliases).toEqual(aliases);
+    });
+
+    it("screens a sensitive alias through the shared selection guard and confirmation", () => {
+      const proposal = prepared();
+      const selection = initialSmartSelection(proposal);
+      selection.aliases = ["nomor rekening 12345"];
+      expect(unsafeSmartSelection(selection)).toBe(true);
+      // Programmatic confirmation rejects the unsafe list.
+      expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow();
+    });
+
+    it("moves the fingerprint with an alias edit and keeps every other frozen field identical", () => {
+      const proposal = prepared();
+      const base = confirmSmartSelection(
+        proposal,
+        initialSmartSelection(proposal),
+        1,
+      );
+      const edited = initialSmartSelection(proposal);
+      edited.aliases = ["Kopi Pojok Fiksi"];
+      edited.origins.aliases = "owner";
+      const changed = confirmSmartSelection(proposal, edited, 1);
+      // Every other frozen field is identical — only identity.aliases moved.
+      expect(changed.context).toEqual({
+        ...base.context,
+        identity: {
+          ...base.context.identity,
+          aliases: ["Kopi Pojok Fiksi"],
+        },
+      });
+      expect(changed.fingerprint).not.toBe(base.fingerprint);
+      // Reconfirming the same selection reproduces the identical pack key.
+      expect(confirmSmartSelection(proposal, edited, 1).fingerprint).toBe(
+        changed.fingerprint,
+      );
+    });
+
+    it("passes edited aliases to the existing unnamed-question screening", () => {
+      const proposal = prepared();
+      const selection = initialSmartSelection(proposal);
+      selection.aliases = ["Kopi Pojok Fiksi"];
+      selection.origins.aliases = "owner";
+      const frozen = confirmSmartSelection(proposal, selection, 1);
+      const projected = projectQuestionFactsV2({
+        context: frozen.context,
+        factVersion: 1,
+      });
+      expect(projected.status).toBe("projected");
+      if (projected.status !== "projected") return;
+      expect(projected.facts.identity.aliases).toContain("Kopi Pojok Fiksi");
+      expect(buildDirectTenWriterBrief(projected.facts)).toContain(
+        "Kopi Pojok Fiksi",
+      );
+      const questions = Array.from(
+        { length: 10 },
+        (_, index) =>
+          `Pertanyaan fiksi nomor ${index + 1} untuk pelanggan sekitar?`,
+      );
+      expect(
+        validateDirectTenQuestionPack(questions, projected.facts),
+      ).toHaveLength(0);
+      questions[3] = "Apa yang pelanggan katakan tentang Kopi Pojok Fiksi?";
+      expect(
+        validateDirectTenQuestionPack(questions, projected.facts).map(
+          (issue) => issue.rule,
+        ),
+      ).toContain("identity_leakage");
+    });
+  });
+
   it("omits empty optional meaning, freezes product as the only offering, and clears market for a location", () => {
     const proposal = prepared();
     const selection = initialSmartSelection(proposal);
@@ -396,6 +554,17 @@ describe("smart intake exact confirmed meaning", () => {
       "Cara layanan",
       "Jangkauan pasar",
     ]);
+  });
+
+  it.each(["", "   "])("routes an empty business name %j to brand", (name) => {
+    const proposal = prepared();
+    const selection = initialSmartSelection(proposal);
+    selection.name = name;
+    expect(requiredSmartGaps(selection)).toEqual(["Nama bisnis"]);
+    expect(firstSmartGapStage(selection)).toBe("brand");
+    expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
+      "Lengkapi: Nama bisnis",
+    );
   });
 });
 

@@ -20,6 +20,7 @@ export const FICTIONAL_BUSINESS = {
 } as const;
 
 export const CONFIRM_SUMMARY = "Sudah sesuai — buat pertanyaan audit";
+export const REVIEW_HEADING = "Ini yang akan Nuave audit";
 export const CONFIRM_BRAND = "Lanjut";
 export const BRAND_HEADING = "Ini brand yang ingin Anda audit?";
 export const FOCUS_HEADING = "Apa yang ingin Anda audit?";
@@ -40,7 +41,7 @@ export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
-export const INTAKE_SESSION_KEY = "nuave.localIntake.v7";
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v8";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -380,10 +381,86 @@ export async function pressPeriksa(page: Page) {
   await page.getByRole("button", { name: "Periksa", exact: true }).click();
 }
 
+/** The J7 final review (internal stage stays `summary`). */
+export function reviewScreen(page: Page) {
+  return page.locator('[data-intake-screen="review"]');
+}
+
+/** One labelled read-back row on the review (Bisnis, Nama lain, …). */
+export function reviewRow(page: Page, name: string) {
+  return reviewScreen(page).getByRole("region", { name, exact: true });
+}
+
 export async function expectSummary(page: Page) {
+  await expect(reviewScreen(page)).toBeVisible();
+  await expect(reviewScreen(page)).toHaveAttribute(
+    "data-smart-summary",
+    "ready",
+  );
   await expect(
-    page.getByRole("heading", { name: "Ini yang Nuave pahami." }),
+    page.getByRole("heading", { name: REVIEW_HEADING }),
   ).toBeVisible();
+}
+
+/** Review Bisnis row: `Ubah` opens the brand check for a name correction. */
+export async function editBusinessFromReview(page: Page) {
+  await reviewRow(page, "Bisnis")
+    .getByRole("button", { name: "Ubah", exact: true })
+    .click();
+}
+
+/** Review Bisnis row: `Ubah website` opens the entry source fields. */
+export async function editWebsiteFromReview(page: Page) {
+  await reviewRow(page, "Bisnis")
+    .getByRole("button", { name: "Ubah website", exact: true })
+    .click();
+}
+
+/** The `Nama lain` row's `Ubah` opens the inline alias editor. */
+export async function openAliasEditor(page: Page, keyboard = false) {
+  const button = reviewRow(page, "Nama lain").getByRole("button", {
+    name: "Ubah",
+    exact: true,
+  });
+  if (keyboard) {
+    await button.focus();
+    await button.press("Enter");
+  } else await button.click();
+}
+
+export function aliasInput(page: Page) {
+  return reviewRow(page, "Nama lain").getByRole("textbox", {
+    name: "Nama lain baru",
+  });
+}
+
+/** Types an alias into the editor and commits it with the Tambah button. */
+export async function addAlias(page: Page, value: string) {
+  await aliasInput(page).fill(value);
+  await reviewRow(page, "Nama lain")
+    .getByRole("button", { name: "Tambah", exact: true })
+    .click();
+}
+
+/** Removes a committed alias by pressing its selected chip. */
+export async function removeAlias(
+  page: Page,
+  name: string | RegExp,
+  keyboard = false,
+) {
+  const chip = reviewRow(page, "Nama lain").getByRole("button", { name });
+  if (keyboard) {
+    await chip.focus();
+    await chip.press("Enter");
+  } else await chip.click();
+}
+
+/** Reads the stored v8 intake session from sessionStorage. */
+export async function intakeSession(page: Page) {
+  return page.evaluate(
+    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    INTAKE_SESSION_KEY,
+  );
 }
 
 /** The brand-confirm screen is showing with the business name card. */
