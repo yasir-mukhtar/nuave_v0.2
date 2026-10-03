@@ -23,6 +23,32 @@ internal engineering change with no customer-visible behavior change needs no
 spec; its checkable finish condition goes in the PR description (see
 `docs/WORKFLOW.md`, Specification gate).
 
+## Parked work
+
+Founder decision, 2026-10-03: these PRs are outside the active product work:
+
+- #115: autonomous workflow documentation.
+- #116: CI browser-artifact pilot.
+- #102: Spec 014 website/free-check experiment.
+
+Unless Yasir explicitly names the relevant PR or topic and asks to inspect
+or resume it, do not inspect its branch-only material, monitor its progress,
+resume or repair it, run its tests, dispatch agents for it, update/reopen/merge
+it, recommend it as next work, or mention it in routine status, backlog,
+blocker or notification reports. Broad autonomy/backlog requests are not
+reactivation. Minimal metadata may be read solely to filter these items out.
+Do not proactively ask to restart them.
+
+Preserve their branches, evidence, owner records and recorded budgets.
+Permission to inspect does not authorize implementation; permission to resume
+does not reset budgets or waive release gates. Parking #102 does not cancel
+the main plan's landing-page milestone. Parking #115/#116 does not weaken
+existing engineering or independent-review requirements. Their unmerged
+branch material is not active context for the main product work.
+
+This decision supersedes older handoffs that queued or requested updates to
+these PRs; see [docs/DECISION_LOG.md](./docs/DECISION_LOG.md).
+
 ## Working rules
 
 1. Use plain language and explain unavoidable technical terms.

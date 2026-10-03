@@ -16,7 +16,7 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing; J2–J7 merged with PASS; JQ is active
+  intake) is implementing; J2–JQ merged with PASS; founder JZ is pending
   (plan §1 has evidence). The full spec is not yet verified. Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
@@ -26,10 +26,7 @@
 
 ## Next action
 
-- **Active milestone: JQ** (Spec 013): dedicated screens for target customer,
-  buyer considerations and differentiator, from merged J7
-  ([PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114)); JZ
-  founder signoff follows. Handoff: `templates/WORKER_PROMPT.md`.
+- **Active milestone: JZ** (Spec 013): founder real-business journey sign-off after [JQ #117](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117) was released.
 
 ## Rules still in force
 
@@ -92,6 +89,7 @@ This is not full security or customer-exposure readiness; S2 and safeguards stil
 
 ## Not now
 
+- PRs **#115, #116 and #102 are parked**: [do not revisit or notify unless Yasir explicitly asks](../AGENTS.md#parked-work).
 - The plan's [parking lot](./PAYING_CUSTOMER_PLAN.md#6-parking-lot-after-we-have-paying-customers),
   including the open questions, waits until after the first paying customer.
 - Non-scope: [`END_TO_END_PLAN.md` §12](./END_TO_END_PLAN.md#12-explicit-non-scope-through-initial-launch),

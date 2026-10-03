@@ -1,10 +1,33 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-02
+> Updated: 2026-10-03
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-03 — Park optional PRs until an explicit founder request
+
+Decided directly by Yasir: [PR #115](https://github.com/yasir-mukhtar/nuave_v0.2/pull/115)
+(autonomous workflow documentation), [PR #116](https://github.com/yasir-mukhtar/nuave_v0.2/pull/116)
+(CI browser-artifact pilot), and [PR #102](https://github.com/yasir-mukhtar/nuave_v0.2/pull/102)
+(Spec 014 website/free-check experiment) are parked outside the main work.
+
+Close them without merging or deleting their branches. Preserve their work,
+evidence, owner records and existing budgets. They must not appear in routine
+backlog, status, blocker or notification reports, and agents must not inspect,
+resume, repair, test, update or reopen them unless Yasir explicitly names the
+relevant PR or topic and asks to inspect or continue it. Do not proactively
+ask to restart them. A broad instruction to work autonomously or tackle the
+backlog is not permission to reactivate them.
+
+Minimal metadata may be read to exclude these items from active work.
+Inspection permission is not implementation approval; a request to resume
+does not reset a budget or waive specification, review or release gates.
+Their unmerged branch material is not active product context. The main
+plan's landing-page milestone and existing engineering/review requirements
+remain in force. This supersedes older instructions to queue or update these
+three PRs. The standing rule is in [AGENTS.md](../AGENTS.md#parked-work).
 
 ## 2026-10-02 — JQ decisions: the three retained customer questions return as dedicated optional screens
 
