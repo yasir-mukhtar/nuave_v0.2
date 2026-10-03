@@ -142,6 +142,12 @@ and technical review replies. Record the finish condition, actual checks,
 evidence, limitations, and the `Corrections: <n> — <what> → <control or reason>`
 line required by `docs/WORKFLOW.md`. Publish the independent verdict with
 attribution and the exact reviewed SHA; do not fabricate a reviewer identity.
+Use the repository's public verdict format: PASS stays PASS; an explicit
+PASS+NOTES stays PASS+NOTES with its nonblocking notes; CHANGES_REQUIRED or
+FAIL publishes as FAIL with findings; BLOCKED publishes as FAIL with a clear
+blocked/missing-evidence explanation. Preserve the internal status in the
+comment. PASS+NOTES satisfies the review gate only if all criteria pass and
+its notes are nonblocking. Never turn missing evidence into acceptance.
 
 Check required CI on the current PR head and resolve actionable review
 findings through the same bounded loop. Devin Review is an additional check,
