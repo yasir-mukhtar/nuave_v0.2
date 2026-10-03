@@ -180,11 +180,13 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     // website or Nuave origin, or null.
     const validPreparedText = (value: unknown) =>
       isRecord(value) &&
-      ["website", "nuave"].includes(String(value.origin)) &&
+      typeof value.origin === "string" &&
+      ["website", "nuave"].includes(value.origin) &&
       (value.proposed === null || typeof value.proposed === "string");
     const validPreparedList = (value: unknown) =>
       isRecord(value) &&
-      ["website", "nuave"].includes(String(value.origin)) &&
+      typeof value.origin === "string" &&
+      ["website", "nuave"].includes(value.origin) &&
       (value.proposed === null ||
         (Array.isArray(value.proposed) &&
           value.proposed.every((item) => typeof item === "string")));
@@ -207,7 +209,8 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     // origin rule — absent falls back to "owner" at confirm time.
     const validMeaningOrigin = (value: unknown) =>
       value === undefined ||
-      ["website", "nuave", "owner"].includes(String(value));
+      (typeof value === "string" &&
+        ["website", "nuave", "owner"].includes(value));
     const validSelection = (selection: unknown) =>
       isRecord(selection) &&
       typeof selection.name === "string" &&

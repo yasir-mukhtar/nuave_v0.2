@@ -422,7 +422,9 @@ export default function SmartReview({
         }
       >
         <p className="type-copy break-words">
-          {selection.targetCustomer.trim() || "Belum diisi"}
+          {selection.targetCustomer.trim()
+            ? selection.targetCustomer
+            : "Belum diisi."}
         </p>
         {onEditTargetCustomer ? (
           <Button
@@ -444,7 +446,7 @@ export default function SmartReview({
         }
       >
         <p className="type-copy break-words">
-          {selection.decisionConsiderations.join("; ") || "Belum diisi"}
+          {selection.decisionConsiderations.join("; ") || "Belum diisi."}
         </p>
         {onEditDecisionConsiderations ? (
           <Button
@@ -466,7 +468,9 @@ export default function SmartReview({
         }
       >
         <p className="type-copy break-words">
-          {selection.differentiator.trim() || "Belum diisi"}
+          {selection.differentiator.trim()
+            ? selection.differentiator
+            : "Belum diisi."}
         </p>
         {onEditDifferentiator ? (
           <Button

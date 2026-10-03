@@ -368,11 +368,16 @@ export async function toggleConsideration(page: Page, name: string) {
     .click();
 }
 
+/** The `Pertimbangan pembeli lain` draft input on the considerations screen. */
+export function considerationInput(page: Page) {
+  return decisionConsiderationsScreen(page).getByRole("textbox", {
+    name: "Pertimbangan pembeli lain",
+  });
+}
+
 /** Commits an owner consideration through the screen's `Tambah` button. */
 export async function addConsideration(page: Page, name: string) {
-  await decisionConsiderationsScreen(page)
-    .getByRole("textbox", { name: "Pertimbangan pembeli lain" })
-    .fill(name);
+  await considerationInput(page).fill(name);
   await decisionConsiderationsScreen(page)
     .getByRole("button", { name: "Tambah", exact: true })
     .click();
@@ -380,9 +385,7 @@ export async function addConsideration(page: Page, name: string) {
 
 /** Fills the consideration draft without committing — used for refused adds. */
 export async function draftConsideration(page: Page, name: string) {
-  await decisionConsiderationsScreen(page)
-    .getByRole("textbox", { name: "Pertimbangan pembeli lain" })
-    .fill(name);
+  await considerationInput(page).fill(name);
 }
 
 /** The `Pembeda bisnis` textarea on the differentiator screen. */

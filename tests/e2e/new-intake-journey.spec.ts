@@ -50,8 +50,11 @@ import {
   publicFactScreen,
   targetCustomerScreen,
   addConsideration,
+  considerationInput,
+  differentiatorInput,
   fillDifferentiator,
   fillTargetCustomer,
+  targetCustomerInput,
   toggleConsideration,
   removeAlias,
   reviewRow,
@@ -981,6 +984,164 @@ test("JQ customer screens keep prepared provenance, take owner edits, and hold a
     customerNeeds: {
       value: ["minuman dekat kantor"],
       origin: "nuave",
+    },
+  });
+});
+
+test("JQ customer screens take keyboard-only edits that survive reload and freeze exactly", async ({
+  page,
+}, testInfo) => {
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  await enter(page);
+  await page.setViewportSize({ width: 320, height: 720 });
+  const shots = testInfo.outputPath("jq-keyboard");
+  const kembali = page.getByRole("button", { name: "Kembali", exact: true });
+  const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
+  // Test entry may focus the row's Ubah programmatically; every changed-screen
+  // action after that is keyboard only.
+  const openRowByKeyboard = async (row: string, heading: string) => {
+    await page
+      .locator(`section[aria-label="${row}"]`)
+      .getByRole("button", { name: "Ubah" })
+      .focus();
+    await page.keyboard.press("Enter");
+    const head = page.getByRole("heading", { name: heading });
+    await expect(head).toBeVisible();
+    await expect(head).toBeFocused();
+  };
+
+  // Target customer: keyboard edit, reload, keyboard return to the review.
+  await openRowByKeyboard("Pelanggan sasaran", "Siapa pelanggan utama Anda?");
+  await page.keyboard.press("Tab");
+  await expect(targetCustomerInput(page)).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("keluarga sekitar");
+  await page.reload();
+  await expectTargetCustomerScreen(page);
+  await expect(targetCustomerInput(page)).toHaveValue("keluarga sekitar");
+  await expect(targetCustomerScreen(page)).toContainText("Dari Anda");
+  await expect(
+    page.getByRole("heading", { name: "Siapa pelanggan utama Anda?" }),
+  ).toBeFocused();
+  await page.screenshot({
+    path: `${shots}/target-customer.png`,
+    fullPage: true,
+  });
+  await page.keyboard.press("Tab");
+  await expect(targetCustomerInput(page)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(kembali).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(lanjut).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expectSummary(page);
+
+  // Buyer considerations: prepared chip toggled off, owner value committed and
+  // removed by Space, then re-committed from a focused input — all keyboard.
+  await openRowByKeyboard(
+    "Pertimbangan pembeli",
+    "Apa yang dipertimbangkan pelanggan saat memilih?",
+  );
+  const lokasiChip = decisionConsiderationsScreen(page).getByRole("button", {
+    name: "lokasi",
+  });
+  const ownerChip = decisionConsiderationsScreen(page).getByRole("button", {
+    name: "jam buka",
+  });
+  await page.keyboard.press("Tab");
+  await expect(lokasiChip).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(lokasiChip).toHaveAttribute("aria-pressed", "false");
+  await page.keyboard.press("Tab");
+  await expect(considerationInput(page)).toBeFocused();
+  await page.keyboard.type("jam buka");
+  await page.keyboard.press("Enter");
+  await expect(considerationInput(page)).toHaveValue("");
+  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("Shift+Tab");
+  await expect(ownerChip).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(ownerChip).toHaveCount(0);
+  await considerationInput(page).focus();
+  await page.keyboard.type("jam buka");
+  await page.keyboard.press("Enter");
+  await expect(considerationInput(page)).toHaveValue("");
+  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expectDecisionConsiderationsScreen(page);
+  await expect(
+    page.getByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    }),
+  ).toBeFocused();
+  await expect(lokasiChip).toHaveAttribute("aria-pressed", "false");
+  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await expect(decisionConsiderationsScreen(page)).toContainText("Dari Anda");
+  await page.screenshot({
+    path: `${shots}/decision-considerations.png`,
+    fullPage: true,
+  });
+  await page.keyboard.press("Tab");
+  await expect(lokasiChip).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(ownerChip).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(considerationInput(page)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(kembali).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(lanjut).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expectSummary(page);
+
+  // Differentiator: keyboard edit, reload, keyboard return to the review.
+  await openRowByKeyboard("Pembeda bisnis", "Apa yang membedakan bisnis Anda?");
+  await page.keyboard.press("Tab");
+  await expect(differentiatorInput(page)).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("Pilihan roti rumahan fiktif");
+  await page.reload();
+  await expectDifferentiatorScreen(page);
+  await expect(differentiatorInput(page)).toHaveValue(
+    "Pilihan roti rumahan fiktif",
+  );
+  await expect(differentiatorScreen(page)).toContainText("Dari Anda");
+  await expect(
+    page.getByRole("heading", { name: "Apa yang membedakan bisnis Anda?" }),
+  ).toBeFocused();
+  await page.screenshot({
+    path: `${shots}/differentiator.png`,
+    fullPage: true,
+  });
+  await page.keyboard.press("Tab");
+  await expect(differentiatorInput(page)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(kembali).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(lanjut).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expectSummary(page);
+
+  // One confirmation, one question request, exact frozen meanings.
+  await confirmSummary(page);
+  await expectTenQuestions(page);
+  expect(contexts).toHaveLength(1);
+  expect(contexts[0]).toMatchObject({
+    targetCustomer: { value: "keluarga sekitar", origin: "owner" },
+    decisionConsiderations: { value: ["jam buka"], origin: "owner" },
+    differentiator: {
+      value: "Pilihan roti rumahan fiktif",
+      origin: "owner",
     },
   });
 });

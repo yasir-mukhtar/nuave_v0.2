@@ -2896,7 +2896,7 @@ describe("Spec 013 JQ customer screens", () => {
       "Pertimbangan pembeli",
       "Pembeda bisnis",
     ]) {
-      expect(jqRow(row).getByText("Belum diisi")).toBeTruthy();
+      expect(jqRow(row).getByText("Belum diisi.")).toBeTruthy();
       expect(jqRow(row).queryByText("Saran Nuave")).toBeNull();
       expect(jqRow(row).queryByText("Dari Anda")).toBeNull();
       expect(jqRow(row).queryByText("Dari website Anda")).toBeNull();
@@ -3287,7 +3287,12 @@ describe("Spec 013 JQ customer screens", () => {
 
   it.each([
     ["a v8 record under the v9 key", { version: 8 }],
-    ["a selection missing targetCustomer", { selection: undefined }],
+    [
+      "a selection missing targetCustomer",
+      {
+        selection: { ...jqStored().selection, targetCustomer: undefined },
+      },
+    ],
     [
       "non-string considerations",
       {
@@ -3338,6 +3343,97 @@ describe("Spec 013 JQ customer screens", () => {
     },
   );
 
+  // JQ parser coverage: every malformed meaning type must fail closed on both
+  // the working and the confirmed selection, and on the prepared record —
+  // including coercible non-strings like `origin: ["owner"]`.
+  const jqMalformedRows: [string, Record<string, unknown>][] = (
+    ["selection", "confirmedSelection"] as const
+  ).flatMap((slot) => {
+    const base = jqStored().selection;
+    return [
+      [
+        `a ${slot} with a non-string targetCustomer`,
+        { [slot]: { ...base, targetCustomer: 4 } },
+      ],
+      [
+        `a ${slot} with non-string considerations`,
+        { [slot]: { ...base, decisionConsiderations: [3] } },
+      ],
+      [
+        `a ${slot} with a non-string differentiator`,
+        { [slot]: { ...base, differentiator: {} } },
+      ],
+      [
+        `a ${slot} with an array targetCustomer origin`,
+        { [slot]: { ...base, origins: { targetCustomer: ["owner"] } } },
+      ],
+      [
+        `a ${slot} with an array considerations origin`,
+        { [slot]: { ...base, origins: { decisionConsiderations: ["owner"] } } },
+      ],
+      [
+        `a ${slot} with an array differentiator origin`,
+        { [slot]: { ...base, origins: { differentiator: ["owner"] } } },
+      ],
+    ];
+  });
+  for (const field of [
+    "targetCustomer",
+    "decisionConsiderations",
+    "differentiator",
+  ] as const) {
+    const badProposed =
+      field === "decisionConsiderations"
+        ? { proposed: [3], origin: "nuave" }
+        : { proposed: 5, origin: "nuave" };
+    jqMalformedRows.push(
+      [
+        `a prepared record missing ${field}`,
+        { prepared: { ...jqStored().prepared, [field]: undefined } },
+      ],
+      [
+        `a prepared ${field} with a bad proposed type`,
+        { prepared: { ...jqStored().prepared, [field]: badProposed } },
+      ],
+      [
+        `a prepared ${field} with an array origin`,
+        {
+          prepared: {
+            ...jqStored().prepared,
+            [field]: { proposed: null, origin: ["nuave"] },
+          },
+        },
+      ],
+    );
+  }
+  it.each(jqMalformedRows)("the parser rejects %s", (_label, patch) => {
+    expect(
+      parseSmartSession(JSON.stringify({ ...jqStored(), ...patch })),
+    ).toBeNull();
+  });
+
+  it("parses long prepared meanings unchanged", () => {
+    const parsed = parseSmartSession(
+      JSON.stringify({
+        ...jqStored(),
+        prepared: {
+          ...jqStored().prepared,
+          targetCustomer: { proposed: "x".repeat(501), origin: "website" },
+          decisionConsiderations: {
+            proposed: ["x".repeat(301)],
+            origin: "nuave",
+          },
+          differentiator: { proposed: "x".repeat(1001), origin: "website" },
+        },
+      }),
+    );
+    expect(parsed?.prepared?.targetCustomer.proposed).toBe("x".repeat(501));
+    expect(parsed?.prepared?.decisionConsiderations.proposed).toEqual([
+      "x".repeat(301),
+    ]);
+    expect(parsed?.prepared?.differentiator.proposed).toBe("x".repeat(1001));
+  });
+
   it("keeps the JQ answers on a same-source name edit and reseeds them on a website change", async () => {
     const { calls } = stubPreparation({ draft: jqDraft });
     render(<SmartIntakeJourney live={false} />);
@@ -3348,6 +3444,21 @@ describe("Spec 013 JQ customer screens", () => {
     fireEvent.change(
       screen.getByRole("textbox", { name: /Pelanggan sasaran/ }),
       { target: { value: "keluarga sekitar" } },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "lokasi" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { target: { value: "jam buka" } },
+    );
+    fireEvent.keyDown(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { key: "Enter" },
     );
     lanjut();
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
@@ -3377,7 +3488,13 @@ describe("Spec 013 JQ customer screens", () => {
     expect(calls).toEqual(["identity", "/api/audit/extract"]);
     expect(jqSession()?.selection).toMatchObject({
       targetCustomer: "keluarga sekitar",
+      decisionConsiderations: ["jam buka"],
       differentiator: "Pilihan roti rumahan fiktif",
+      origins: {
+        targetCustomer: "owner",
+        decisionConsiderations: "owner",
+        differentiator: "owner",
+      },
     });
     // A changed website prepares fresh meanings with their own provenance.
     fireEvent.click(
@@ -3461,14 +3578,55 @@ describe("Spec 013 JQ customer screens", () => {
     );
     lanjut();
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
-    expect(jqSession()?.selection?.targetCustomer).toBe("wisatawan");
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "lokasi" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { target: { value: "jam buka" } },
+    );
+    fireEvent.keyDown(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { key: "Enter" },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pembeda bisnis");
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /Pembeda bisnis/ }), {
+      target: { value: "Pembeda sementara fiktif" },
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    expect(jqSession()?.selection).toMatchObject({
+      targetCustomer: "wisatawan",
+      decisionConsiderations: ["jam buka"],
+      differentiator: "Pembeda sementara fiktif",
+    });
     fireEvent.click(screen.getByRole("button", { name: "Batalkan perubahan" }));
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     expect(glmCalls()).toHaveLength(2);
-    expect(jqSession()?.selection?.targetCustomer).toBe("pekerja sekitar");
-    expect(jqSession()?.frozen?.context.targetCustomer).toEqual({
-      value: "pekerja sekitar",
-      origin: "nuave",
+    expect(jqSession()?.selection).toMatchObject({
+      targetCustomer: "pekerja sekitar",
+      decisionConsiderations: ["lokasi"],
+      differentiator: "Pilihan roti rumahan fiktif",
+      origins: {
+        targetCustomer: "nuave",
+        decisionConsiderations: "nuave",
+        differentiator: "owner",
+      },
+    });
+    expect(jqSession()?.frozen?.context).toMatchObject({
+      targetCustomer: { value: "pekerja sekitar", origin: "nuave" },
+      decisionConsiderations: { value: ["lokasi"], origin: "nuave" },
+      differentiator: {
+        value: "Pilihan roti rumahan fiktif",
+        origin: "owner",
+      },
     });
   });
 });

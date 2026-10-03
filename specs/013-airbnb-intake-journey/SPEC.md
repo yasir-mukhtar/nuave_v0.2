@@ -89,8 +89,8 @@ businesses (plan §5, JZ).
 - Any rule that skips the market screen (F9: none).
 - ~~Whether the owner must answer target customer, customer needs, buyer
   considerations, competitors and differentiator, or only be asked.~~
-  Decided 2026-10-02 (delegated,
-  [decision log](../../docs/DECISION_LOG.md#2026-10-02--jq-decisions-the-three-retained-customer-questions-return-as-dedicated-optional-screens)):
+  Decided by Alfred (delegated), 2026-10-02
+  ([decision log](../../docs/DECISION_LOG.md#2026-10-02--jq-decisions-the-three-retained-customer-questions-return-as-dedicated-optional-screens)):
   only asked — every question is shown; the JQ screens and the existing
   optional answers allow an empty `Lanjut`.
 - A new AI call, a new retrieval step, or a new data store.
@@ -126,7 +126,8 @@ otherwise. The founder reviews final wording at JZ.
 | 14 | Question review (unchanged) | (today's screen) | — | F17 |
 
 JQ adds the target customer, buyer considerations and differentiator
-screens to chapter 3 in the order above (decided 2026-10-02, delegated);
+screens to chapter 3 in the order above (decided by Alfred (delegated),
+2026-10-02);
 until JQ those answers lived on the review screen (R-20).
 
 ## Requirements
