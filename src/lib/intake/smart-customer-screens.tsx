@@ -12,6 +12,7 @@ import {
 } from "@/components/product/selection/SelectionCard";
 import {
   smartComparatorsReady,
+  unsafeSmartName,
   type PreparedUnderstanding,
   type SmartSelection,
 } from "./smart-intake-contract";
@@ -121,6 +122,196 @@ export function SmartCustomerNeedsScreen({
         }
       />
       <Notice error={error ?? limitError} />
+    </section>
+  );
+}
+
+export function SmartTargetCustomerScreen({
+  selection,
+  onChange,
+  headingRef,
+  error,
+}: ScreenProps) {
+  return (
+    <section className="grid gap-5" data-intake-screen="target-customer">
+      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+        Siapa pelanggan utama Anda?
+      </h1>
+      <p className="type-copy-sm text-muted-foreground">
+        Opsional · Sebutkan pelanggan yang biasanya membeli dari bisnis Anda.
+      </p>
+      <label className="grid gap-2 type-label">
+        Pelanggan sasaran{" "}
+        {selection.targetCustomer.trim() ? (
+          <span className="type-copy-sm text-muted-foreground">
+            {originText[selection.origins.targetCustomer ?? "owner"]}
+          </span>
+        ) : null}
+        <Input
+          value={selection.targetCustomer}
+          maxLength={500}
+          onChange={(event) =>
+            onChange({
+              ...selection,
+              targetCustomer: event.target.value,
+              origins: { ...selection.origins, targetCustomer: "owner" },
+            })
+          }
+        />
+      </label>
+      <Notice error={error} />
+    </section>
+  );
+}
+
+export function SmartDecisionConsiderationsScreen({
+  prepared,
+  selection,
+  onChange,
+  headingRef,
+  error,
+}: ScreenProps) {
+  const proposed = prepared.decisionConsiderations.proposed ?? [];
+  const selected = selection.decisionConsiderations;
+  const ownerAdded = selected.filter(
+    (value) => !proposed.some((item) => sameText(item, value)),
+  );
+  const [limitError, setLimitError] = useState<string | null>(null);
+  const update = (values: string[]) =>
+    onChange({
+      ...selection,
+      decisionConsiderations: values,
+      origins: { ...selection.origins, decisionConsiderations: "owner" },
+    });
+  const add = (raw: string): boolean => {
+    const value = raw.trim();
+    if (!value) {
+      setLimitError("Isi pertimbangan sebelum menambahkannya.");
+      return false;
+    }
+    if (unsafeSmartName(value)) {
+      // The journey's privacy path refuses the update and shows the shared
+      // notice; the unsafe draft never enters the selection or storage. The
+      // privacy refusal supersedes any earlier local limit message.
+      setLimitError(null);
+      update([...selected, value]);
+      return false;
+    }
+    if (selected.some((item) => sameText(item, value))) {
+      setLimitError("Pertimbangan ini sudah dipilih.");
+      return false;
+    }
+    if (value.length > 300) {
+      setLimitError("Setiap pertimbangan paling panjang 300 karakter.");
+      return false;
+    }
+    if (selected.length >= 12) {
+      setLimitError("Pilih paling banyak 12 pertimbangan.");
+      return false;
+    }
+    setLimitError(null);
+    update([...selected, value]);
+    return true;
+  };
+  const toggle = (value: string, on: boolean) => {
+    if (on) {
+      add(value);
+      return;
+    }
+    setLimitError(null);
+    update(selected.filter((item) => !sameText(item, value)));
+  };
+  return (
+    <section
+      className="grid gap-5"
+      data-intake-screen="decision-considerations"
+    >
+      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+        Apa yang dipertimbangkan pelanggan saat memilih?
+      </h1>
+      <p className="type-copy-sm text-muted-foreground">
+        Opsional · Pilih yang sesuai atau tambahkan pertimbangan pelanggan Anda.
+      </p>
+      {proposed.length ? (
+        <div className="grid gap-2">
+          <h2 className="type-label m-0">
+            {originText[prepared.decisionConsiderations.origin]}
+          </h2>
+          <ChipGroup label={originText[prepared.decisionConsiderations.origin]}>
+            {proposed.map((value) => (
+              <Chip
+                key={value}
+                label={value}
+                selected={selected.some((item) => sameText(item, value))}
+                selectedIndicator="check"
+                onToggle={(on) => toggle(value, on)}
+              />
+            ))}
+          </ChipGroup>
+        </div>
+      ) : null}
+      {ownerAdded.length ? (
+        <div className="grid gap-2">
+          <h2 className="type-label m-0">Dari Anda</h2>
+          <ChipGroup label="Dari Anda">
+            {ownerAdded.map((value) => (
+              <Chip
+                key={value}
+                label={value}
+                selected
+                onToggle={(on) => toggle(value, on)}
+              />
+            ))}
+          </ChipGroup>
+        </div>
+      ) : null}
+      <AddLine
+        inputLabel="Pertimbangan pembeli lain"
+        placeholder="Tambah pertimbangan"
+        onCommit={add}
+      />
+      {/* A current local error wins over a stale journey error; a fresh
+          journey privacy error still shows when none is pending. */}
+      <Notice error={limitError ?? error} />
+    </section>
+  );
+}
+
+export function SmartDifferentiatorScreen({
+  selection,
+  onChange,
+  headingRef,
+  error,
+}: ScreenProps) {
+  return (
+    <section className="grid gap-5" data-intake-screen="differentiator">
+      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
+        Apa yang membedakan bisnis Anda?
+      </h1>
+      <p className="type-copy-sm text-muted-foreground">
+        Opsional · Ceritakan hal yang membedakan bisnis Anda. Gunakan hanya
+        informasi publik.
+      </p>
+      <label className="grid gap-2 type-label">
+        Pembeda bisnis{" "}
+        {selection.differentiator.trim() ? (
+          <span className="type-copy-sm text-muted-foreground">
+            {originText[selection.origins.differentiator ?? "owner"]}
+          </span>
+        ) : null}
+        <Textarea
+          value={selection.differentiator}
+          maxLength={1000}
+          onChange={(event) =>
+            onChange({
+              ...selection,
+              differentiator: event.target.value,
+              origins: { ...selection.origins, differentiator: "owner" },
+            })
+          }
+        />
+      </label>
+      <Notice error={error} />
     </section>
   );
 }

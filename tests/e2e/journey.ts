@@ -34,14 +34,18 @@ export const SERVICE_HEADING =
 export const MARKET_HEADING = "Di mana pelanggan Anda berada?";
 export const CUSTOMER_NEEDS_HEADING =
   "Kenapa pelanggan biasanya mencari yang seperti ini?";
+export const TARGET_CUSTOMER_HEADING = "Siapa pelanggan utama Anda?";
+export const DECISION_CONSIDERATIONS_HEADING =
+  "Apa yang dipertimbangkan pelanggan saat memilih?";
 export const COMPETITORS_HEADING = "Ini yang mungkin dibandingkan dengan Anda";
+export const DIFFERENTIATOR_HEADING = "Apa yang membedakan bisnis Anda?";
 export const PUBLIC_FACT_HEADING =
   "Apa yang tidak boleh salah dipahami tentang brand Anda?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
-export const INTAKE_SESSION_KEY = "nuave.localIntake.v8";
+export const INTAKE_SESSION_KEY = "nuave.localIntake.v9";
 export const SENSITIVE_INPUT_NOTICE =
   "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
 
@@ -218,12 +222,24 @@ export function marketScreen(page: Page) {
   return page.locator('[data-intake-screen="market"]');
 }
 
+export function targetCustomerScreen(page: Page) {
+  return page.locator('[data-intake-screen="target-customer"]');
+}
+
 export function customerNeedsScreen(page: Page) {
   return page.locator('[data-intake-screen="customer-needs"]');
 }
 
+export function decisionConsiderationsScreen(page: Page) {
+  return page.locator('[data-intake-screen="decision-considerations"]');
+}
+
 export function competitorsScreen(page: Page) {
   return page.locator('[data-intake-screen="competitors"]');
+}
+
+export function differentiatorScreen(page: Page) {
+  return page.locator('[data-intake-screen="differentiator"]');
 }
 
 export function publicFactScreen(page: Page) {
@@ -279,6 +295,13 @@ export async function expectMarketScreen(page: Page) {
   ).toBeVisible();
 }
 
+export async function expectTargetCustomerScreen(page: Page) {
+  await expect(targetCustomerScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: TARGET_CUSTOMER_HEADING }),
+  ).toBeVisible();
+}
+
 export async function expectCustomerNeedsScreen(page: Page) {
   await expect(customerNeedsScreen(page)).toBeVisible();
   await expect(
@@ -286,10 +309,24 @@ export async function expectCustomerNeedsScreen(page: Page) {
   ).toBeVisible();
 }
 
+export async function expectDecisionConsiderationsScreen(page: Page) {
+  await expect(decisionConsiderationsScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: DECISION_CONSIDERATIONS_HEADING }),
+  ).toBeVisible();
+}
+
 export async function expectCompetitorsScreen(page: Page) {
   await expect(competitorsScreen(page)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: COMPETITORS_HEADING }),
+  ).toBeVisible();
+}
+
+export async function expectDifferentiatorScreen(page: Page) {
+  await expect(differentiatorScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: DIFFERENTIATOR_HEADING }),
   ).toBeVisible();
 }
 
@@ -311,6 +348,106 @@ export async function addCustomerNeed(page: Page, name: string) {
   await customerNeedsScreen(page)
     .getByRole("button", { name: "Tambah", exact: true })
     .click();
+}
+
+/** The `Pelanggan sasaran` textbox on the target-customer screen. */
+export function targetCustomerInput(page: Page) {
+  return targetCustomerScreen(page).getByRole("textbox", {
+    name: /Pelanggan sasaran/,
+  });
+}
+
+export async function fillTargetCustomer(page: Page, value: string) {
+  await targetCustomerInput(page).fill(value);
+}
+
+/** Toggles one chip on the decision-considerations screen (prepared or owner). */
+export async function toggleConsideration(page: Page, name: string) {
+  await decisionConsiderationsScreen(page)
+    .getByRole("button", { name })
+    .click();
+}
+
+/** The `Pertimbangan pembeli lain` draft input on the considerations screen. */
+export function considerationInput(page: Page) {
+  return decisionConsiderationsScreen(page).getByRole("textbox", {
+    name: "Pertimbangan pembeli lain",
+  });
+}
+
+/** Commits an owner consideration through the screen's `Tambah` button. */
+export async function addConsideration(page: Page, name: string) {
+  await considerationInput(page).fill(name);
+  await decisionConsiderationsScreen(page)
+    .getByRole("button", { name: "Tambah", exact: true })
+    .click();
+}
+
+/** Fills the consideration draft without committing — used for refused adds. */
+export async function draftConsideration(page: Page, name: string) {
+  await considerationInput(page).fill(name);
+}
+
+/**
+ * Asserts every glyph rectangle of a selected consideration chip sits inside
+ * the chip's painted shape (its box minus the uniform corner radius), not
+ * merely inside the document width.
+ */
+export async function expectConsiderationTextOnBackground(
+  page: Page,
+  value: string,
+) {
+  const chip = decisionConsiderationsScreen(page).getByRole("button", {
+    name: value,
+    exact: true,
+  });
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+  expect(
+    await chip.evaluate((element) => {
+      const text = element.querySelector("span")?.firstChild;
+      if (!(text instanceof Text) || !text.length) return false;
+      const box = element.getBoundingClientRect();
+      const radius = Math.min(
+        parseFloat(getComputedStyle(element).borderTopLeftRadius),
+        box.width / 2,
+        box.height / 2,
+      );
+      if (!Number.isFinite(radius)) return false;
+      const inside = (x: number, y: number) => {
+        if (x < box.left || x > box.right || y < box.top || y > box.bottom)
+          return false;
+        const cx = Math.max(box.left + radius, Math.min(x, box.right - radius));
+        const cy = Math.max(box.top + radius, Math.min(y, box.bottom - radius));
+        return (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2;
+      };
+      const range = document.createRange();
+      for (let index = 0; index < text.length; index += 1) {
+        range.setStart(text, index);
+        range.setEnd(text, index + 1);
+        for (const rect of Array.from(range.getClientRects())) {
+          if (
+            !inside(rect.left + 1, rect.top + 1) ||
+            !inside(rect.right - 1, rect.top + 1) ||
+            !inside(rect.left + 1, rect.bottom - 1) ||
+            !inside(rect.right - 1, rect.bottom - 1)
+          )
+            return false;
+        }
+      }
+      return true;
+    }),
+  ).toBe(true);
+}
+
+/** The `Pembeda bisnis` textarea on the differentiator screen. */
+export function differentiatorInput(page: Page) {
+  return differentiatorScreen(page).getByRole("textbox", {
+    name: /Pembeda bisnis/,
+  });
+}
+
+export async function fillDifferentiator(page: Page, value: string) {
+  await differentiatorInput(page).fill(value);
 }
 
 export async function chooseCompetitorMode(
@@ -455,7 +592,7 @@ export async function removeAlias(
   } else await chip.click();
 }
 
-/** Reads the stored v8 intake session from sessionStorage. */
+/** Reads the stored v9 intake session from sessionStorage. */
 export async function intakeSession(page: Page) {
   return page.evaluate(
     (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
@@ -517,7 +654,11 @@ export async function throughDetailScreens(page: Page) {
     await input.press("Enter");
   }
   await pressLanjut(page);
+  await expectTargetCustomerScreen(page);
+  await pressLanjut(page);
   await expectCustomerNeedsScreen(page);
+  await pressLanjut(page);
+  await expectDecisionConsiderationsScreen(page);
   await pressLanjut(page);
   await expectServiceScreen(page);
   if (await lanjut.isDisabled())
@@ -542,9 +683,11 @@ export async function throughDetailScreens(page: Page) {
   await throughCompetitorContext(page);
 }
 
-/** Walks the optional J6 screens after market or a location-focus service. */
+/** Walks the optional customer screens after market or a location-focus service. */
 export async function throughCompetitorContext(page: Page) {
   await expectCompetitorsScreen(page);
+  await pressLanjut(page);
+  await expectDifferentiatorScreen(page);
   await pressLanjut(page);
   await expectPublicFactScreen(page);
   await pressLanjut(page);

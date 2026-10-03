@@ -33,7 +33,7 @@ export type SmartPreparedIdentity = {
 };
 
 export type SmartSession = {
-  version: 8;
+  version: 9;
   /**
    * `reading` is persisted only while a preparation is in flight: a refresh
    * restores it as `entry` with an interruption note, never a replayed call
@@ -48,8 +48,11 @@ export type SmartSession = {
     | "product"
     | "category"
     | "offerings"
+    | "target-customer"
     | "customer-needs"
+    | "decision-considerations"
     | "competitors"
+    | "differentiator"
     | "public-fact"
     | "service"
     | "market"
@@ -88,7 +91,7 @@ export type SmartSession = {
 
 export function freshSmartSession(): SmartSession {
   return {
-    version: 8,
+    version: 9,
     stage: "entry",
     entry: { name: "", source: "" },
     identity: null,
@@ -113,7 +116,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
-      value.version !== 8 ||
+      value.version !== 9 ||
       ![
         "entry",
         "reading",
@@ -123,8 +126,11 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         "product",
         "category",
         "offerings",
+        "target-customer",
         "customer-needs",
+        "decision-considerations",
         "competitors",
+        "differentiator",
         "public-fact",
         "service",
         "market",
@@ -169,7 +175,21 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     )
       return null;
     // Spec 013 J3: a prepared record must carry the R-24 lists; anything
-    // older or corrupt restarts at entry instead of mixing.
+    // older or corrupt restarts at entry instead of mixing. JQ adds the
+    // retained R-20 prepared meanings: a proposed string/string-list with a
+    // website or Nuave origin, or null.
+    const validPreparedText = (value: unknown) =>
+      isRecord(value) &&
+      typeof value.origin === "string" &&
+      ["website", "nuave"].includes(value.origin) &&
+      (value.proposed === null || typeof value.proposed === "string");
+    const validPreparedList = (value: unknown) =>
+      isRecord(value) &&
+      typeof value.origin === "string" &&
+      ["website", "nuave"].includes(value.origin) &&
+      (value.proposed === null ||
+        (Array.isArray(value.proposed) &&
+          value.proposed.every((item) => typeof item === "string")));
     const validPrepared = (prepared: unknown) =>
       isRecord(prepared) &&
       typeof prepared.typedName === "string" &&
@@ -181,7 +201,16 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       isRecord(prepared.categorySuggestions) &&
       Array.isArray(prepared.categorySuggestions.proposed) &&
       isRecord(prepared.offeringCategorySuggestions) &&
-      Array.isArray(prepared.offeringCategorySuggestions.proposed);
+      Array.isArray(prepared.offeringCategorySuggestions.proposed) &&
+      validPreparedText(prepared.targetCustomer) &&
+      validPreparedList(prepared.decisionConsiderations) &&
+      validPreparedText(prepared.differentiator);
+    // JQ: the three retained meanings keep the same optional owner/prepared
+    // origin rule — absent falls back to "owner" at confirm time.
+    const validMeaningOrigin = (value: unknown) =>
+      value === undefined ||
+      (typeof value === "string" &&
+        ["website", "nuave", "owner"].includes(value));
     const validSelection = (selection: unknown) =>
       isRecord(selection) &&
       typeof selection.name === "string" &&
@@ -191,6 +220,16 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       ) &&
       Array.isArray(selection.customerNeeds) &&
       selection.customerNeeds.every((item) => typeof item === "string") &&
+      typeof selection.targetCustomer === "string" &&
+      Array.isArray(selection.decisionConsiderations) &&
+      selection.decisionConsiderations.every(
+        (item) => typeof item === "string",
+      ) &&
+      typeof selection.differentiator === "string" &&
+      isRecord(selection.origins) &&
+      validMeaningOrigin(selection.origins.targetCustomer) &&
+      validMeaningOrigin(selection.origins.decisionConsiderations) &&
+      validMeaningOrigin(selection.origins.differentiator) &&
       ["named", "unknown", "category-alternatives"].includes(
         String(selection.comparatorMode),
       ) &&

@@ -338,6 +338,34 @@ describe("smart intake exact confirmed meaning", () => {
     expect(writer).toContain("confirmation does not independently verify it");
   });
 
+  it("freezes owner-edited retained meanings with owner provenance", () => {
+    const proposal = prepared();
+    const selection = initialSmartSelection(proposal);
+    selection.targetCustomer = "keluarga sekitar";
+    selection.origins.targetCustomer = "owner";
+    selection.decisionConsiderations = ["jam buka"];
+    selection.origins.decisionConsiderations = "owner";
+    selection.differentiator = "Pilihan roti rumahan fiktif";
+    selection.origins.differentiator = "owner";
+    const { context } = confirmSmartSelection(proposal, selection, 1);
+    expect(context.targetCustomer).toEqual({
+      value: "keluarga sekitar",
+      origin: "owner",
+    });
+    expect(context.decisionConsiderations).toEqual({
+      value: ["jam buka"],
+      origin: "owner",
+    });
+    expect(context.differentiator).toEqual({
+      value: "Pilihan roti rumahan fiktif",
+      origin: "owner",
+    });
+    expect(context.customerNeeds).toEqual({
+      value: ["minuman dekat kantor"],
+      origin: "nuave",
+    });
+  });
+
   describe("Spec 013 J7 alias selection", () => {
     it("seeds aliases as an independent copy with website provenance", () => {
       const proposal = prepared({

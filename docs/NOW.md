@@ -16,7 +16,7 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing; J2–J6 merged with PASS; J7 is active
+  intake) is implementing; J2–J7 merged with PASS; JQ is active
   (plan §1 has evidence). The full spec is not yet verified. Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
@@ -26,8 +26,10 @@
 
 ## Next action
 
-- **Active milestone: J7** (Spec 013): final review, one confirmation and editable aliases,
-  from merged J6/S1; JQ and founder signoff follow. Handoff: `templates/WORKER_PROMPT.md`.
+- **Active milestone: JQ** (Spec 013): dedicated screens for target customer,
+  buyer considerations and differentiator, from merged J7
+  ([PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114)); JZ
+  founder signoff follows. Handoff: `templates/WORKER_PROMPT.md`.
 
 ## Rules still in force
 

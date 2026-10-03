@@ -30,15 +30,21 @@ const lanjut = () =>
 const kembali = () =>
   fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
 
-// J5 and J6 detail chain between the target screens and the summary. A cabang
+// J5–JQ detail chain between the target screens and the summary. A cabang
 // focus skips the market screen.
 async function fromOfferings(focus: "brand" | "cabang" | "produk" = "brand") {
   await screen.findByRole("heading", {
     name: /^(Apakah ini|Apa saja) yang Anda tawarkan\?$/,
   });
   lanjut();
+  await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
+  lanjut();
   await screen.findByRole("heading", {
     name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+  });
+  lanjut();
+  await screen.findByRole("heading", {
+    name: "Apa yang dipertimbangkan pelanggan saat memilih?",
   });
   lanjut();
   await screen.findByRole("heading", {
@@ -56,6 +62,10 @@ async function fromOfferings(focus: "brand" | "cabang" | "produk" = "brand") {
   });
   lanjut();
   await screen.findByRole("heading", {
+    name: "Apa yang membedakan bisnis Anda?",
+  });
+  lanjut();
+  await screen.findByRole("heading", {
     name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
   });
   lanjut();
@@ -65,6 +75,10 @@ async function fromOfferings(focus: "brand" | "cabang" | "produk" = "brand") {
 async function afterMarket() {
   await screen.findByRole("heading", {
     name: "Ini yang mungkin dibandingkan dengan Anda",
+  });
+  lanjut();
+  await screen.findByRole("heading", {
+    name: "Apa yang membedakan bisnis Anda?",
   });
   lanjut();
   await screen.findByRole("heading", {
@@ -216,7 +230,7 @@ describe("smart blank intake", () => {
       JSON.parse(
         window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
       ),
-    ).toMatchObject({ version: 8, stage: "questions" });
+    ).toMatchObject({ version: 9, stage: "questions" });
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
   });
 
@@ -418,11 +432,16 @@ describe("Spec 013 J2 screen frame", () => {
     render(<SmartIntakeJourney live={false} />);
     await fillAndPeriksa();
     await throughBrand();
-    // summary → public fact → competitors → market → service → customer
-    // needs → offerings → category → focus → brand → entry via marked pops.
+    // summary → public fact → differentiator → competitors → market →
+    // service → considerations → customer needs → target customer →
+    // offerings → category → focus → brand → entry via marked pops.
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
       name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+    });
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
     });
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
@@ -438,7 +457,15 @@ describe("Spec 013 J2 screen frame", () => {
     });
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
+    await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
     });
     fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
@@ -518,10 +545,10 @@ describe("Spec 013 J2 screen frame", () => {
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({ version: 5, stage: "entry" }),
     );
-    // A v7 record under its own key is simply never read (J7).
+    // A v8 record under its own key is simply never read (JQ bumped to v9).
     window.sessionStorage.setItem(
-      "nuave.localIntake.v7",
-      JSON.stringify({ version: 7, stage: "summary" }),
+      "nuave.localIntake.v8",
+      JSON.stringify({ version: 8, stage: "summary" }),
     );
     stubPreparation();
     render(<SmartIntakeJourney live={false} />);
@@ -538,7 +565,7 @@ describe("Spec 013 J2 screen frame", () => {
     window.sessionStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
-        version: 8,
+        version: 9,
         stage: "brand",
         entry: { name: "Kedai Lama", source: "https://lama.example/" },
         identity: null,
@@ -562,8 +589,9 @@ describe("Spec 013 J2 screen frame", () => {
     ).toBeNull();
   });
 
-  // J7/R-26: a v8 record carries a valid "Nama lain" list on the working
-  // selection and the last confirmed selection; anything else restarts.
+  // J7/R-26: a v9 record carries a valid "Nama lain" list and the retained
+  // JQ prepared meanings on the working selection and the last confirmed
+  // selection; anything else restarts.
   const storedPrepared = {
     typedName: "Kedai Lama",
     discoveredName: null,
@@ -572,6 +600,9 @@ describe("Spec 013 J2 screen frame", () => {
     locations: { proposed: [], origin: "website" },
     categorySuggestions: { proposed: [], origin: "nuave" },
     offeringCategorySuggestions: { proposed: [], origin: "nuave" },
+    targetCustomer: { proposed: null, origin: "nuave" },
+    decisionConsiderations: { proposed: [], origin: "nuave" },
+    differentiator: { proposed: null, origin: "nuave" },
     sourceLinks: [],
   };
   const storedSelection = {
@@ -600,7 +631,7 @@ describe("Spec 013 J2 screen frame", () => {
     origins: { aliases: "website" },
   };
   const storedSession = (overrides: Record<string, unknown> = {}) => ({
-    version: 8,
+    version: 9,
     stage: "summary",
     entry: { name: "Kedai Lama", source: "https://lama.example/" },
     identity: null,
@@ -666,7 +697,7 @@ describe("Spec 013 J2 screen frame", () => {
     ).toBeNull();
   });
 
-  it("restores a valid v8 review and its stored aliases without a call", async () => {
+  it("restores a valid v9 review and its stored aliases without a call", async () => {
     const { fetchMock } = stubPreparation();
     window.sessionStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
@@ -1044,7 +1075,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     await screen.findByRole("heading", {
       name: "Ini brand yang ingin Anda audit?",
     });
-    // A location focus steps back through J6 but skips market.
+    // A location focus steps back through J6/JQ but skips market.
     lanjut();
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     lanjut();
@@ -1060,6 +1091,10 @@ describe("Spec 013 J4 focus and target screens", () => {
     });
     kembali();
     await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    kembali();
+    await screen.findByRole("heading", {
       name: "Ini yang mungkin dibandingkan dengan Anda",
     });
     kembali();
@@ -1068,8 +1103,14 @@ describe("Spec 013 J4 focus and target screens", () => {
     });
     kembali();
     await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    kembali();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
     });
+    kembali();
+    await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
   });
 
   it("restores the location stage and its answers after a reload", async () => {
@@ -1693,7 +1734,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     ).toHaveLength(1);
     lanjut();
     await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -1741,7 +1790,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
     lanjut();
     await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -1763,7 +1820,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -1819,7 +1884,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -1929,7 +2002,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -2020,7 +2101,15 @@ describe("Spec 013 J5 business-detail screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
       name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
     });
     lanjut();
     await screen.findByRole("heading", {
@@ -2078,7 +2167,15 @@ describe("Spec 013 J5 business-detail screens", () => {
       });
       lanjut();
       await screen.findByRole("heading", {
+        name: "Siapa pelanggan utama Anda?",
+      });
+      lanjut();
+      await screen.findByRole("heading", {
         name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+      });
+      lanjut();
+      await screen.findByRole("heading", {
+        name: "Apa yang dipertimbangkan pelanggan saat memilih?",
       });
       lanjut();
       await screen.findByRole("heading", {
@@ -2679,4 +2776,926 @@ describe("Spec 013 J7 final review", () => {
       expect(calls).toEqual(["identity", "/api/audit/extract"]);
     },
   );
+});
+
+const jqDraft = {
+  ...j5Draft,
+  target_customer: "pekerja sekitar",
+  verified_decision_criteria: ["lokasi"],
+  usp: "Racikan kopi rumahan fiktif",
+};
+
+const jqRows = [
+  ["Pelanggan sasaran", "Siapa pelanggan utama Anda?"],
+  ["Pertimbangan pembeli", "Apa yang dipertimbangkan pelanggan saat memilih?"],
+  ["Pembeda bisnis", "Apa yang membedakan bisnis Anda?"],
+] as const;
+
+const jqRow = (name: string) => within(screen.getByRole("region", { name }));
+
+const jqEdit = (name: string) =>
+  fireEvent.click(jqRow(name).getByRole("button", { name: "Ubah" }));
+
+const jqSession = () =>
+  parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY));
+
+const jqConfirm = () =>
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Sudah sesuai — buat pertanyaan audit",
+    }),
+  );
+
+const jqQuestionBodies = (
+  fetchMock: ReturnType<typeof stubPreparation>["fetchMock"],
+) =>
+  fetchMock.mock.calls
+    .filter((call) => call[0] === "/api/audit/glm-questions")
+    .map(
+      (call) =>
+        (
+          JSON.parse(String(call[1]?.body)) as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+    );
+
+describe("Spec 013 JQ customer screens", () => {
+  it("walks the three screens in order, keeps empty Continue free, and omits empty meanings", async () => {
+    const { fetchMock } = stubPreparation({
+      draft: {
+        ...j5Draft,
+        target_customer: "",
+        verified_decision_criteria: [],
+        usp: "",
+      },
+    });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    lanjut();
+    await screen.findByRole("heading", { name: /biasanya disebut apa\?$/ });
+    lanjut();
+    await screen.findByRole("heading", { name: /yang Anda tawarkan\?$/ });
+    lanjut();
+    const target = await screen.findByRole("heading", {
+      name: "Siapa pelanggan utama Anda?",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(target));
+    expect(
+      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+    });
+    lanjut();
+    const considerations = await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(considerations));
+    expect(screen.queryByRole("group", { name: "Saran Nuave" })).toBeNull();
+    expect(
+      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Di mana pelanggan Anda berada?",
+    });
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Ini yang mungkin dibandingkan dengan Anda",
+    });
+    lanjut();
+    const differentiator = await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(differentiator));
+    expect(
+      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    for (const row of [
+      "Pelanggan sasaran",
+      "Pertimbangan pembeli",
+      "Pembeda bisnis",
+    ]) {
+      expect(jqRow(row).getByText("Belum diisi.")).toBeTruthy();
+      expect(jqRow(row).queryByText("Saran Nuave")).toBeNull();
+      expect(jqRow(row).queryByText("Dari Anda")).toBeNull();
+      expect(jqRow(row).queryByText("Dari website Anda")).toBeNull();
+    }
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    const [context] = jqQuestionBodies(fetchMock);
+    expect(context).not.toHaveProperty("targetCustomer");
+    expect(context).not.toHaveProperty("decisionConsiderations");
+    expect(context).not.toHaveProperty("differentiator");
+    expect(context).toHaveProperty("customerNeeds");
+  });
+
+  it("shows prepared meanings selected with their Nuave label and freezes them unchanged", async () => {
+    const { calls, fetchMock } = stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    expect(
+      jqRow("Pelanggan sasaran").getByText("pekerja sekitar"),
+    ).toBeTruthy();
+    expect(jqRow("Pelanggan sasaran").getByText("Saran Nuave")).toBeTruthy();
+    expect(jqRow("Pertimbangan pembeli").getByText("lokasi")).toBeTruthy();
+    expect(jqRow("Pertimbangan pembeli").getByText("Saran Nuave")).toBeTruthy();
+    expect(
+      jqRow("Pembeda bisnis").getByText("Racikan kopi rumahan fiktif"),
+    ).toBeTruthy();
+    expect(jqRow("Pembeda bisnis").getByText("Saran Nuave")).toBeTruthy();
+    jqEdit("Pelanggan sasaran");
+    await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
+    expect(
+      (
+        screen.getByRole("textbox", {
+          name: /Pelanggan sasaran/,
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("pekerja sekitar");
+    expect(screen.getByText("Saran Nuave")).toBeTruthy();
+    kembali();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    expect(
+      within(screen.getByRole("group", { name: "Saran Nuave" }))
+        .getByRole("button", { name: "lokasi" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    kembali();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pembeda bisnis");
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    expect(
+      (
+        screen.getByRole("textbox", {
+          name: /Pembeda bisnis/,
+        }) as HTMLTextAreaElement
+      ).value,
+    ).toBe("Racikan kopi rumahan fiktif");
+    expect(screen.getByText("Saran Nuave")).toBeTruthy();
+    kembali();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(calls).toEqual([
+      "identity",
+      "/api/audit/extract",
+      "/api/audit/glm-questions",
+    ]);
+    const [context] = jqQuestionBodies(fetchMock);
+    expect(context.targetCustomer).toEqual({
+      value: "pekerja sekitar",
+      origin: "nuave",
+    });
+    expect(context.decisionConsiderations).toEqual({
+      value: ["lokasi"],
+      origin: "nuave",
+    });
+    expect(context.differentiator).toEqual({
+      value: "Racikan kopi rumahan fiktif",
+      origin: "nuave",
+    });
+  });
+
+  it("freezes exact owner edits with owner origin while keeping the rest of the context", async () => {
+    const { fetchMock } = stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqEdit("Pelanggan sasaran");
+    await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /Pelanggan sasaran/ }),
+      { target: { value: "keluarga sekitar" } },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "lokasi" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { target: { value: "jam buka" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Tambah" }));
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pembeda bisnis");
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /Pembeda bisnis/ }), {
+      target: { value: "Pilihan roti rumahan fiktif" },
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    const [context] = jqQuestionBodies(fetchMock);
+    expect(context.targetCustomer).toEqual({
+      value: "keluarga sekitar",
+      origin: "owner",
+    });
+    expect(context.decisionConsiderations).toEqual({
+      value: ["jam buka"],
+      origin: "owner",
+    });
+    expect(context.differentiator).toEqual({
+      value: "Pilihan roti rumahan fiktif",
+      origin: "owner",
+    });
+    expect(context.customerNeeds).toEqual({
+      value: ["minuman dekat kantor"],
+      origin: "nuave",
+    });
+    expect(context.category).toEqual({
+      value: "kedai kopi",
+      origin: "website",
+    });
+    expect(context.comparators).toEqual({
+      value: { mode: "unknown" },
+      origin: "nuave",
+    });
+  });
+
+  it("enforces chips, Enter, duplicates, length and the privacy stop on considerations", async () => {
+    stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    const input = screen.getByRole("textbox", {
+      name: "Pertimbangan pembeli lain",
+    }) as HTMLInputElement;
+    const tambah = () => screen.getByRole("button", { name: "Tambah" });
+    const lokasi = screen.getByRole("button", { name: "lokasi" });
+    fireEvent.click(lokasi);
+    expect(lokasi.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(lokasi);
+    expect(lokasi.getAttribute("aria-pressed")).toBe("true");
+    // Enter commits an owner consideration.
+    fireEvent.change(input, { target: { value: "jam buka" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input.value).toBe("");
+    const ownerChip = within(
+      screen.getByRole("group", { name: "Dari Anda" }),
+    ).getByRole("button", { name: "jam buka" });
+    expect(ownerChip.getAttribute("aria-pressed")).toBe("true");
+    // A trimmed case-insensitive duplicate is refused; the draft stays.
+    fireEvent.change(input, { target: { value: "  JAM BUKA " } });
+    fireEvent.click(tambah());
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "sudah dipilih",
+    );
+    expect(input.value).toBe("  JAM BUKA ");
+    expect(jqSession()?.selection?.decisionConsiderations).toEqual([
+      "lokasi",
+      "jam buka",
+    ]);
+    // 300 characters accepted; 301 refused with the draft kept.
+    fireEvent.change(input, { target: { value: "x".repeat(300) } });
+    fireEvent.click(tambah());
+    expect(input.value).toBe("");
+    expect(jqSession()?.selection?.decisionConsiderations).toHaveLength(3);
+    fireEvent.change(input, { target: { value: "y".repeat(301) } });
+    fireEvent.click(tambah());
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "300 karakter",
+    );
+    expect(input.value).toBe("y".repeat(301));
+    expect(jqSession()?.selection?.decisionConsiderations).toHaveLength(3);
+    // A sensitive draft stays in the input but never reaches the session.
+    fireEvent.change(input, { target: { value: "nomor rekening 12345" } });
+    fireEvent.click(tambah());
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
+    expect(input.value).toBe("nomor rekening 12345");
+    expect(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+    ).not.toContain("nomor rekening");
+    // Removing an owner chip is one click.
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Dari Anda" })).getByRole(
+        "button",
+        { name: "jam buka" },
+      ),
+    );
+    expect(
+      within(screen.getByRole("group", { name: "Dari Anda" })).queryByRole(
+        "button",
+        { name: "jam buka" },
+      ),
+    ).toBeNull();
+    expect(jqSession()?.selection?.decisionConsiderations).toEqual([
+      "lokasi",
+      "x".repeat(300),
+    ]);
+  });
+
+  it("shows the current consideration error after privacy and duplicate refusals", async () => {
+    const { fetchMock } = stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    const input = screen.getByRole("textbox", {
+      name: "Pertimbangan pembeli lain",
+    }) as HTMLInputElement;
+    const enter = (value: string) => {
+      fireEvent.change(input, { target: { value } });
+      fireEvent.keyDown(input, { key: "Enter" });
+    };
+    enter("jam buka");
+    expect(input.value).toBe("");
+    // A sensitive draft is refused: privacy notice, draft kept, nothing stored.
+    enter("nomor rekening 12345");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
+    expect(input.value).toBe("nomor rekening 12345");
+    expect(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+    ).not.toContain("nomor rekening");
+    // A current safe duplicate shows its own message, not the stale privacy one.
+    enter("  JAM BUKA ");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Pertimbangan ini sudah dipilih.",
+    );
+    expect(input.value).toBe("  JAM BUKA ");
+    expect(jqSession()?.selection?.decisionConsiderations).toEqual([
+      "lokasi",
+      "jam buka",
+    ]);
+    // Sensitive again: the privacy notice supersedes the duplicate message.
+    enter("nomor rekening 12345");
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
+    // A 301-character safe draft shows the length correction instead.
+    enter("y".repeat(301));
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "300 karakter",
+    );
+    expect(input.value).toBe("y".repeat(301));
+    // An accepted value clears the alert and the draft.
+    enter("jam tutup");
+    expect(input.value).toBe("");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(jqSession()?.selection?.decisionConsiderations).toEqual([
+      "lokasi",
+      "jam buka",
+      "jam tutup",
+    ]);
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    const [context] = jqQuestionBodies(fetchMock);
+    expect(context.decisionConsiderations).toEqual({
+      value: ["lokasi", "jam buka", "jam tutup"],
+      origin: "owner",
+    });
+    expect(JSON.stringify(context)).not.toContain("nomor rekening");
+  });
+
+  it("accepts a twelfth consideration and refuses a thirteenth", async () => {
+    stubPreparation({
+      draft: {
+        ...jqDraft,
+        verified_decision_criteria: Array.from(
+          { length: 12 },
+          (_, index) => `Pertimbangan ${index + 1}`,
+        ),
+      },
+    });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    const input = screen.getByRole("textbox", {
+      name: "Pertimbangan pembeli lain",
+    }) as HTMLInputElement;
+    const tambah = () => screen.getByRole("button", { name: "Tambah" });
+    fireEvent.change(input, { target: { value: "Ke-13" } });
+    fireEvent.click(tambah());
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "paling banyak 12",
+    );
+    expect(input.value).toBe("Ke-13");
+    expect(jqSession()?.selection?.decisionConsiderations).toHaveLength(12);
+    // Freeing a slot lets the owner value in.
+    fireEvent.click(screen.getByRole("button", { name: "Pertimbangan 1" }));
+    fireEvent.click(tambah());
+    expect(input.value).toBe("");
+    expect(jqSession()?.selection?.decisionConsiderations).toContain("Ke-13");
+    expect(jqSession()?.selection?.decisionConsiderations).toHaveLength(12);
+  });
+
+  for (const [row, heading] of jqRows)
+    it.each(["Lanjut", "footer Kembali", "marked browser popstate"])(
+      `the ${row} edit returns to the review through %s`,
+      async (wayBack) => {
+        const { calls } = stubPreparation({ draft: jqDraft });
+        render(<SmartIntakeJourney live={false} />);
+        await fillAndPeriksa();
+        await throughBrand();
+        jqEdit(row);
+        await screen.findByRole("heading", { name: heading });
+        const editing = jqSession();
+        expect(editing?.editReturn).toBe("summary");
+        expect(editing?.editBaseline).toBeUndefined();
+        if (wayBack === "Lanjut") lanjut();
+        else if (wayBack === "footer Kembali") kembali();
+        else fireEvent.popState(window, { state: { nuaveIntake: true } });
+        await screen.findByRole("heading", {
+          name: "Ini yang akan Nuave audit",
+        });
+        const returned = jqSession();
+        expect(returned?.editReturn).toBeUndefined();
+        expect(returned?.editBaseline).toBeUndefined();
+        // Prepared answers survive the detour; no preparation repeated.
+        expect(returned?.selection).toMatchObject({
+          targetCustomer: "pekerja sekitar",
+          decisionConsiderations: ["lokasi"],
+          differentiator: "Racikan kopi rumahan fiktif",
+          origins: {
+            targetCustomer: "nuave",
+            decisionConsiderations: "nuave",
+            differentiator: "nuave",
+          },
+        });
+        expect(calls).toEqual(["identity", "/api/audit/extract"]);
+      },
+    );
+
+  for (const [row, heading] of jqRows)
+    it(`a reload restores the ${row} screen with its answers and heading focus`, async () => {
+      stubPreparation({ draft: jqDraft });
+      const first = render(<SmartIntakeJourney live={false} />);
+      await fillAndPeriksa();
+      await throughBrand();
+      jqEdit(row);
+      await screen.findByRole("heading", { name: heading });
+      first.unmount();
+      render(<SmartIntakeJourney live={false} />);
+      const restored = await screen.findByRole("heading", { name: heading });
+      await waitFor(() => expect(document.activeElement).toBe(restored));
+      if (row === "Pelanggan sasaran")
+        expect(
+          (
+            screen.getByRole("textbox", {
+              name: /Pelanggan sasaran/,
+            }) as HTMLInputElement
+          ).value,
+        ).toBe("pekerja sekitar");
+      else if (row === "Pertimbangan pembeli")
+        expect(
+          within(screen.getByRole("group", { name: "Saran Nuave" }))
+            .getByRole("button", { name: "lokasi" })
+            .getAttribute("aria-pressed"),
+        ).toBe("true");
+      else
+        expect(
+          (
+            screen.getByRole("textbox", {
+              name: /Pembeda bisnis/,
+            }) as HTMLTextAreaElement
+          ).value,
+        ).toBe("Racikan kopi rumahan fiktif");
+    });
+
+  const jqStored = () => ({
+    version: 9,
+    stage: "summary",
+    entry: { name: "Kedai Lama", source: "https://lama.example/" },
+    identity: null,
+    prepared: {
+      typedName: "Kedai Lama",
+      discoveredName: null,
+      canonicalSource: "https://lama.example/",
+      aliases: [],
+      locations: { proposed: [], origin: "website" },
+      categorySuggestions: { proposed: [], origin: "nuave" },
+      offeringCategorySuggestions: { proposed: [], origin: "nuave" },
+      targetCustomer: { proposed: null, origin: "nuave" },
+      decisionConsiderations: { proposed: [], origin: "nuave" },
+      differentiator: { proposed: null, origin: "nuave" },
+      sourceLinks: [],
+    },
+    selection: {
+      name: "Kedai Lama",
+      nameOrigin: "owner",
+      aliases: [],
+      focus: "brand",
+      productTarget: "",
+      locationName: "",
+      locationAddress: "",
+      category: "kedai kopi",
+      categoryKind: "main",
+      offerings: ["kopi"],
+      serviceChannels: ["on_premise"],
+      marketReach: "sekitar",
+      marketAreas: ["Bandung"],
+      retainedBrandReach: "sekitar",
+      retainedBrandAreas: ["Bandung"],
+      targetCustomer: "",
+      customerNeeds: [],
+      decisionConsiderations: [],
+      comparatorMode: "unknown",
+      comparatorNames: [],
+      differentiator: "",
+      publicFact: "",
+      origins: {},
+    },
+    confirmedSelection: null,
+    frozen: null,
+    pack: null,
+    preparationCalls: [],
+    preparationMode: "synthetic-local",
+    generationAttempts: [],
+  });
+
+  it.each([
+    ["a v8 record under the v9 key", { version: 8 }],
+    [
+      "a selection missing targetCustomer",
+      {
+        selection: { ...jqStored().selection, targetCustomer: undefined },
+      },
+    ],
+    [
+      "non-string considerations",
+      {
+        selection: {
+          ...jqStored().selection,
+          decisionConsiderations: [3],
+        },
+      },
+    ],
+    [
+      "an invalid targetCustomer origin",
+      {
+        selection: {
+          ...jqStored().selection,
+          origins: { targetCustomer: "robot" },
+        },
+      },
+    ],
+    [
+      "a malformed prepared targetCustomer",
+      {
+        prepared: { ...jqStored().prepared, targetCustomer: 5 },
+      },
+    ],
+    [
+      "a malformed prepared decisionConsiderations",
+      {
+        prepared: {
+          ...jqStored().prepared,
+          decisionConsiderations: { proposed: [3], origin: "nuave" },
+        },
+      },
+    ],
+  ])(
+    "rejects %s and restarts safely at the empty entry",
+    async (_label, patch) => {
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify({ ...jqStored(), ...patch }),
+      );
+      stubPreparation();
+      render(<SmartIntakeJourney live={false} />);
+      const name = (await screen.findByRole("textbox", {
+        name: "Nama bisnis",
+      })) as HTMLInputElement;
+      expect(name.value).toBe("");
+      expect(jqSession()).toBeNull();
+    },
+  );
+
+  // JQ parser coverage: every malformed meaning type must fail closed on both
+  // the working and the confirmed selection, and on the prepared record —
+  // including coercible non-strings like `origin: ["owner"]`.
+  const jqMalformedRows: [string, Record<string, unknown>][] = (
+    ["selection", "confirmedSelection"] as const
+  ).flatMap((slot) => {
+    const base = jqStored().selection;
+    return [
+      [
+        `a ${slot} with a non-string targetCustomer`,
+        { [slot]: { ...base, targetCustomer: 4 } },
+      ],
+      [
+        `a ${slot} with non-string considerations`,
+        { [slot]: { ...base, decisionConsiderations: [3] } },
+      ],
+      [
+        `a ${slot} with a non-string differentiator`,
+        { [slot]: { ...base, differentiator: {} } },
+      ],
+      [
+        `a ${slot} with an array targetCustomer origin`,
+        { [slot]: { ...base, origins: { targetCustomer: ["owner"] } } },
+      ],
+      [
+        `a ${slot} with an array considerations origin`,
+        { [slot]: { ...base, origins: { decisionConsiderations: ["owner"] } } },
+      ],
+      [
+        `a ${slot} with an array differentiator origin`,
+        { [slot]: { ...base, origins: { differentiator: ["owner"] } } },
+      ],
+    ];
+  });
+  for (const field of [
+    "targetCustomer",
+    "decisionConsiderations",
+    "differentiator",
+  ] as const) {
+    const badProposed =
+      field === "decisionConsiderations"
+        ? { proposed: [3], origin: "nuave" }
+        : { proposed: 5, origin: "nuave" };
+    jqMalformedRows.push(
+      [
+        `a prepared record missing ${field}`,
+        { prepared: { ...jqStored().prepared, [field]: undefined } },
+      ],
+      [
+        `a prepared ${field} with a bad proposed type`,
+        { prepared: { ...jqStored().prepared, [field]: badProposed } },
+      ],
+      [
+        `a prepared ${field} with an array origin`,
+        {
+          prepared: {
+            ...jqStored().prepared,
+            [field]: { proposed: null, origin: ["nuave"] },
+          },
+        },
+      ],
+    );
+  }
+  it.each(jqMalformedRows)("the parser rejects %s", (_label, patch) => {
+    expect(
+      parseSmartSession(JSON.stringify({ ...jqStored(), ...patch })),
+    ).toBeNull();
+  });
+
+  it("parses long prepared meanings unchanged", () => {
+    const parsed = parseSmartSession(
+      JSON.stringify({
+        ...jqStored(),
+        prepared: {
+          ...jqStored().prepared,
+          targetCustomer: { proposed: "x".repeat(501), origin: "website" },
+          decisionConsiderations: {
+            proposed: ["x".repeat(301)],
+            origin: "nuave",
+          },
+          differentiator: { proposed: "x".repeat(1001), origin: "website" },
+        },
+      }),
+    );
+    expect(parsed?.prepared?.targetCustomer.proposed).toBe("x".repeat(501));
+    expect(parsed?.prepared?.decisionConsiderations.proposed).toEqual([
+      "x".repeat(301),
+    ]);
+    expect(parsed?.prepared?.differentiator.proposed).toBe("x".repeat(1001));
+  });
+
+  it("keeps the JQ answers on a same-source name edit and reseeds them on a website change", async () => {
+    const { calls } = stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqEdit("Pelanggan sasaran");
+    await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /Pelanggan sasaran/ }),
+      { target: { value: "keluarga sekitar" } },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "lokasi" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { target: { value: "jam buka" } },
+    );
+    fireEvent.keyDown(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { key: "Enter" },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pembeda bisnis");
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /Pembeda bisnis/ }), {
+      target: { value: "Pilihan roti rumahan fiktif" },
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    // A name-only edit on the same source preserves the JQ answers.
+    fireEvent.click(
+      jqRow("Bisnis").getByRole("button", { name: "Ubah website" }),
+    );
+    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
+      target: { value: "Kedai Fiksi Cabang" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(jqSession()?.selection).toMatchObject({
+      targetCustomer: "keluarga sekitar",
+      decisionConsiderations: ["jam buka"],
+      differentiator: "Pilihan roti rumahan fiktif",
+      origins: {
+        targetCustomer: "owner",
+        decisionConsiderations: "owner",
+        differentiator: "owner",
+      },
+    });
+    // A changed website prepares fresh meanings with their own provenance.
+    fireEvent.click(
+      jqRow("Bisnis").getByRole("button", { name: "Ubah website" }),
+    );
+    await screen.findByRole("textbox", { name: "URL website publik" });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "URL website publik" }),
+      { target: { value: "https://kedai-baru.example/" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    expect(calls).toEqual([
+      "identity",
+      "/api/audit/extract",
+      "identity",
+      "/api/audit/extract",
+    ]);
+    expect(jqSession()?.selection).toMatchObject({
+      targetCustomer: "pekerja sekitar",
+      decisionConsiderations: ["lokasi"],
+      differentiator: "Racikan kopi rumahan fiktif",
+      origins: {
+        targetCustomer: "nuave",
+        decisionConsiderations: "nuave",
+        differentiator: "nuave",
+      },
+    });
+  });
+
+  it("reuses the pack on an unchanged return, regenerates on a JQ edit, and restores on cancel", async () => {
+    const { fetchMock } = stubPreparation({ draft: jqDraft });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    const glmCalls = () =>
+      fetchMock.mock.calls.filter(
+        (call) => call[0] === "/api/audit/glm-questions",
+      );
+    expect(glmCalls()).toHaveLength(1);
+    const backToReview = () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Kembali ke informasi bisnis" }),
+      );
+    backToReview();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(1);
+    // A changed JQ meaning invalidates pack reuse.
+    backToReview();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pembeda bisnis");
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /Pembeda bisnis/ }), {
+      target: { value: "Pilihan roti rumahan fiktif" },
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqConfirm();
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(2);
+    expect(
+      JSON.parse(String(glmCalls()[1]?.[1]?.body)).intake.context
+        .differentiator,
+    ).toEqual({ value: "Pilihan roti rumahan fiktif", origin: "owner" });
+    // Cancelling a further edit restores the confirmed answers and the pack.
+    backToReview();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pelanggan sasaran");
+    await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /Pelanggan sasaran/ }),
+      { target: { value: "wisatawan" } },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pertimbangan pembeli");
+    await screen.findByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "lokasi" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { target: { value: "jam buka" } },
+    );
+    fireEvent.keyDown(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { key: "Enter" },
+    );
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    jqEdit("Pembeda bisnis");
+    await screen.findByRole("heading", {
+      name: "Apa yang membedakan bisnis Anda?",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /Pembeda bisnis/ }), {
+      target: { value: "Pembeda sementara fiktif" },
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    expect(jqSession()?.selection).toMatchObject({
+      targetCustomer: "wisatawan",
+      decisionConsiderations: ["jam buka"],
+      differentiator: "Pembeda sementara fiktif",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Batalkan perubahan" }));
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(glmCalls()).toHaveLength(2);
+    expect(jqSession()?.selection).toMatchObject({
+      targetCustomer: "pekerja sekitar",
+      decisionConsiderations: ["lokasi"],
+      differentiator: "Pilihan roti rumahan fiktif",
+      origins: {
+        targetCustomer: "nuave",
+        decisionConsiderations: "nuave",
+        differentiator: "owner",
+      },
+    });
+    expect(jqSession()?.frozen?.context).toMatchObject({
+      targetCustomer: { value: "pekerja sekitar", origin: "nuave" },
+      decisionConsiderations: { value: ["lokasi"], origin: "nuave" },
+      differentiator: {
+        value: "Pilihan roti rumahan fiktif",
+        origin: "owner",
+      },
+    });
+  });
 });

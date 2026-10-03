@@ -302,8 +302,9 @@ async function inspect() {
   fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
 }
 // `Periksa` lands on the brand check; `Lanjut` opens focus; whole-brand
-// continues through category → offerings → customer needs → service → market
-// → competitors → public fact → summary. These fixtures carry prepared
+// continues through category → offerings → target customer → customer needs
+// → decision considerations → service → market → competitors →
+// differentiator → public fact → summary. These fixtures carry prepared
 // values, so each screen's `Lanjut` is already enabled.
 const lanjut = () => screen.getByRole("button", { name: "Lanjut" });
 async function throughBrandToMarket() {
@@ -318,7 +319,15 @@ async function throughBrandToMarket() {
   await screen.findByRole("heading", { name: /yang Anda tawarkan\?$/ });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
+    name: "Siapa pelanggan utama Anda?",
+  });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
     name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
+  });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
+    name: "Apa yang dipertimbangkan pelanggan saat memilih?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
@@ -334,6 +343,10 @@ async function throughBrand() {
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
     name: "Ini yang mungkin dibandingkan dengan Anda",
+  });
+  fireEvent.click(lanjut());
+  await screen.findByRole("heading", {
+    name: "Apa yang membedakan bisnis Anda?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
@@ -664,6 +677,10 @@ describe("server excerpt through the active Smart preparation", () => {
         fireEvent.click(lanjut());
         await screen.findByRole("heading", {
           name: "Ini yang mungkin dibandingkan dengan Anda",
+        });
+        fireEvent.click(lanjut());
+        await screen.findByRole("heading", {
+          name: "Apa yang membedakan bisnis Anda?",
         });
         fireEvent.click(lanjut());
         await screen.findByRole("heading", {

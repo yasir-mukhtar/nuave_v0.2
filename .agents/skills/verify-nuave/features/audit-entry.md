@@ -44,7 +44,7 @@ Run `$V drive audit-entry`. Steps, in order:
   `Periksa`. The same alert shows. Evidence: `04-invalid-url-rejected`.
 - **Sensitive URL.** Fills `https://kedai-fiksi.example/?token=private`. The
   notice "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi
-  informasi sensitif. …" shows. `sessionStorage` `nuave.localIntake.v8` keeps
+  informasi sensitif. …" shows. `sessionStorage` `nuave.localIntake.v9` keeps
   `Kedai Fiksi` and does not contain `token=private`. Evidence:
   `05-sensitive-url-blocked`.
 - **Proof.** `result.json` status is `passed`, and
