@@ -27,6 +27,9 @@ import {
   expectPublicFactScreen,
   expectServiceScreen,
   expectSummary,
+  expectTargetCustomerScreen,
+  expectDecisionConsiderationsScreen,
+  expectDifferentiatorScreen,
   expectTenQuestions,
   fillEntry,
   fillPublicFact,
@@ -42,7 +45,18 @@ import {
   productScreen,
   competitorsScreen,
   customerNeedsScreen,
+  decisionConsiderationsScreen,
+  differentiatorScreen,
   publicFactScreen,
+  targetCustomerScreen,
+  addConsideration,
+  considerationInput,
+  differentiatorInput,
+  fillDifferentiator,
+  fillTargetCustomer,
+  targetCustomerInput,
+  toggleConsideration,
+  expectConsiderationTextOnBackground,
   removeAlias,
   reviewRow,
   reviewScreen,
@@ -190,7 +204,14 @@ test("a sensitive optional edit retains the last safe summary value", async ({
   page,
 }) => {
   await enter(page);
-  const differentiator = page.getByRole("textbox", { name: /Pembeda bisnis/ });
+  await page
+    .locator('section[aria-label="Pembeda bisnis"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectDifferentiatorScreen(page);
+  const differentiator = differentiatorScreen(page).getByRole("textbox", {
+    name: /Pembeda bisnis/,
+  });
   await differentiator.fill("Racikan kopi khas");
   await differentiator.fill("nomor rekening 12345");
   await expect(
@@ -421,7 +442,7 @@ test("a session stored under a previous intake version restarts at an empty entr
       }),
     );
     // A well-formed v4 record under its own key is never read: the current
-    // key is v8, and older keys are simply not looked at.
+    // key is v9, and older keys are simply not looked at.
     sessionStorage.setItem(
       "nuave.localIntake.v4",
       JSON.stringify({
@@ -459,7 +480,7 @@ test("a session stored under a previous intake version restarts at an empty entr
         generationAttempts: [],
       }),
     );
-    // A stale-version record under the current v8 key is just as unreadable —
+    // A stale-version record under the current v9 key is just as unreadable —
     // it must restart at entry rather than mix old and new shape.
     sessionStorage.setItem(
       currentKey,
@@ -751,11 +772,20 @@ test("empty optional screens keep no needs or facts and unknown competitors", as
 }) => {
   await enter(page, false);
   await expect(
+    page.locator('section[aria-label="Pelanggan sasaran"]'),
+  ).toContainText("Belum diisi");
+  await expect(
     page.locator('section[aria-label="Kebutuhan pelanggan"]'),
+  ).toContainText("Belum diisi");
+  await expect(
+    page.locator('section[aria-label="Pertimbangan pembeli"]'),
   ).toContainText("Belum diisi");
   await expect(
     page.locator('section[aria-label="Bisnis pembanding"]'),
   ).toContainText("Belum tahu");
+  await expect(
+    page.locator('section[aria-label="Pembeda bisnis"]'),
+  ).toContainText("Belum diisi");
   await expect(
     page.locator('section[aria-label="Fakta publik tambahan"]'),
   ).toContainText("Belum diisi");
@@ -764,9 +794,12 @@ test("empty optional screens keep no needs or facts and unknown competitors", as
     INTAKE_SESSION_KEY,
   );
   expect(saved.selection).toMatchObject({
+    targetCustomer: "",
     customerNeeds: [],
+    decisionConsiderations: [],
     comparatorMode: "unknown",
     comparatorNames: [],
+    differentiator: "",
     publicFact: "",
   });
 });
@@ -869,21 +902,293 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   await expectSummary(page);
 });
 
-test("J6 edits return to the summary by Continue, footer Back, and browser Back", async ({
+test("JQ customer screens keep prepared provenance, take owner edits, and hold at 320px", async ({
+  page,
+}, testInfo) => {
+  const shots = testInfo.outputPath("jq-320px");
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  await enter(page);
+  await page.setViewportSize({ width: 320, height: 720 });
+  // The read-back rows show the prepared meanings with their Nuave label.
+  for (const [row, value] of [
+    ["Pelanggan sasaran", "pekerja kantoran sekitar"],
+    ["Pertimbangan pembeli", "lokasi"],
+    ["Pembeda bisnis", "Racikan kopi rumahan fiktif"],
+  ] as const) {
+    const section = page.locator(`section[aria-label="${row}"]`);
+    await expect(section).toContainText(value);
+    await expect(section).toContainText("Saran Nuave");
+    await expect(section.getByRole("button", { name: "Ubah" })).toBeEnabled();
+  }
+  // Target customer: prepared value selected, owner edit returns to review.
+  await page
+    .locator('section[aria-label="Pelanggan sasaran"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectTargetCustomerScreen(page);
+  await expect(targetCustomerScreen(page)).toContainText("Saran Nuave");
+  await fillTargetCustomer(page, "keluarga sekitar");
+  await pressLanjut(page);
+  await expectSummary(page);
+  // Buyer considerations: prepared chip selected, owner edit wins.
+  await page
+    .locator('section[aria-label="Pertimbangan pembeli"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectDecisionConsiderationsScreen(page);
+  await expect(decisionConsiderationsScreen(page)).toContainText("Saran Nuave");
+  await expect(
+    decisionConsiderationsScreen(page).getByRole("button", { name: "lokasi" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await toggleConsideration(page, "lokasi");
+  await addConsideration(page, "jam buka");
+  // An unbroken 300-character consideration fits the 320px layout and its
+  // glyphs stay on the chip's painted background.
+  await addConsideration(page, "x".repeat(300));
+  await decisionConsiderationsScreen(page).screenshot({
+    path: `${shots}/decision-considerations-320px.png`,
+  });
+  await decisionConsiderationsScreen(page)
+    .getByRole("button", { name: "jam buka", exact: true })
+    .screenshot({ path: `${shots}/chip-singleline.png` });
+  await decisionConsiderationsScreen(page)
+    .getByRole("button", { name: "x".repeat(300), exact: true })
+    .screenshot({ path: `${shots}/chip-tall-300.png` });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await expectConsiderationTextOnBackground(page, "x".repeat(300));
+  await pressLanjut(page);
+  await expectSummary(page);
+  // Differentiator: prepared value selected, owner edit returns to review.
+  await page
+    .locator('section[aria-label="Pembeda bisnis"]')
+    .getByRole("button", { name: "Ubah" })
+    .click();
+  await expectDifferentiatorScreen(page);
+  await expect(differentiatorScreen(page)).toContainText("Saran Nuave");
+  await fillDifferentiator(page, "Pilihan roti rumahan fiktif");
+  await pressLanjut(page);
+  await expectSummary(page);
+  await confirmSummary(page);
+  await expectTenQuestions(page);
+  expect(contexts[0]).toMatchObject({
+    targetCustomer: { value: "keluarga sekitar", origin: "owner" },
+    decisionConsiderations: {
+      value: ["jam buka", "x".repeat(300)],
+      origin: "owner",
+    },
+    differentiator: {
+      value: "Pilihan roti rumahan fiktif",
+      origin: "owner",
+    },
+    customerNeeds: {
+      value: ["minuman dekat kantor"],
+      origin: "nuave",
+    },
+  });
+});
+
+test("JQ customer screens take keyboard-only edits that survive reload and freeze exactly", async ({
+  page,
+}, testInfo) => {
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  await enter(page);
+  await page.setViewportSize({ width: 320, height: 720 });
+  const shots = testInfo.outputPath("jq-keyboard");
+  const kembali = page.getByRole("button", { name: "Kembali", exact: true });
+  const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
+  // Test entry may focus the row's Ubah programmatically; every changed-screen
+  // action after that is keyboard only.
+  const openRowByKeyboard = async (row: string, heading: string) => {
+    await page
+      .locator(`section[aria-label="${row}"]`)
+      .getByRole("button", { name: "Ubah" })
+      .focus();
+    await page.keyboard.press("Enter");
+    const head = page.getByRole("heading", { name: heading });
+    await expect(head).toBeVisible();
+    await expect(head).toBeFocused();
+  };
+
+  // Target customer: keyboard edit, reload, keyboard return to the review.
+  await openRowByKeyboard("Pelanggan sasaran", "Siapa pelanggan utama Anda?");
+  await page.keyboard.press("Tab");
+  await expect(targetCustomerInput(page)).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("keluarga sekitar");
+  await page.reload();
+  await expectTargetCustomerScreen(page);
+  await expect(targetCustomerInput(page)).toHaveValue("keluarga sekitar");
+  await expect(targetCustomerScreen(page)).toContainText("Dari Anda");
+  await expect(
+    page.getByRole("heading", { name: "Siapa pelanggan utama Anda?" }),
+  ).toBeFocused();
+  await page.screenshot({
+    path: `${shots}/target-customer.png`,
+    fullPage: true,
+  });
+  await page.keyboard.press("Tab");
+  await expect(targetCustomerInput(page)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(kembali).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(lanjut).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expectSummary(page);
+
+  // Buyer considerations: prepared chip toggled off, owner value committed and
+  // removed by Space, then re-committed from a focused input — all keyboard.
+  await openRowByKeyboard(
+    "Pertimbangan pembeli",
+    "Apa yang dipertimbangkan pelanggan saat memilih?",
+  );
+  const lokasiChip = decisionConsiderationsScreen(page).getByRole("button", {
+    name: "lokasi",
+  });
+  const ownerChip = decisionConsiderationsScreen(page).getByRole("button", {
+    name: "jam buka",
+  });
+  await page.keyboard.press("Tab");
+  await expect(lokasiChip).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(lokasiChip).toHaveAttribute("aria-pressed", "false");
+  await page.keyboard.press("Tab");
+  await expect(considerationInput(page)).toBeFocused();
+  await page.keyboard.type("jam buka");
+  await page.keyboard.press("Enter");
+  await expect(considerationInput(page)).toHaveValue("");
+  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("Shift+Tab");
+  await expect(ownerChip).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(ownerChip).toHaveCount(0);
+  await considerationInput(page).focus();
+  await page.keyboard.type("jam buka");
+  await page.keyboard.press("Enter");
+  await expect(considerationInput(page)).toHaveValue("");
+  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expectDecisionConsiderationsScreen(page);
+  await expect(
+    page.getByRole("heading", {
+      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    }),
+  ).toBeFocused();
+  await expect(lokasiChip).toHaveAttribute("aria-pressed", "false");
+  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await expect(decisionConsiderationsScreen(page)).toContainText("Dari Anda");
+  await page.screenshot({
+    path: `${shots}/decision-considerations.png`,
+    fullPage: true,
+  });
+  await page.keyboard.press("Tab");
+  await expect(lokasiChip).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(ownerChip).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(considerationInput(page)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(kembali).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(lanjut).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expectSummary(page);
+
+  // Differentiator: keyboard edit, reload, keyboard return to the review.
+  await openRowByKeyboard("Pembeda bisnis", "Apa yang membedakan bisnis Anda?");
+  await page.keyboard.press("Tab");
+  await expect(differentiatorInput(page)).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("Pilihan roti rumahan fiktif");
+  await page.reload();
+  await expectDifferentiatorScreen(page);
+  await expect(differentiatorInput(page)).toHaveValue(
+    "Pilihan roti rumahan fiktif",
+  );
+  await expect(differentiatorScreen(page)).toContainText("Dari Anda");
+  await expect(
+    page.getByRole("heading", { name: "Apa yang membedakan bisnis Anda?" }),
+  ).toBeFocused();
+  await page.screenshot({
+    path: `${shots}/differentiator.png`,
+    fullPage: true,
+  });
+  await page.keyboard.press("Tab");
+  await expect(differentiatorInput(page)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(kembali).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(lanjut).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expectSummary(page);
+
+  // One confirmation, one question request, exact frozen meanings.
+  await confirmSummary(page);
+  await expectTenQuestions(page);
+  expect(contexts).toHaveLength(1);
+  expect(contexts[0]).toMatchObject({
+    targetCustomer: { value: "keluarga sekitar", origin: "owner" },
+    decisionConsiderations: { value: ["jam buka"], origin: "owner" },
+    differentiator: {
+      value: "Pilihan roti rumahan fiktif",
+      origin: "owner",
+    },
+  });
+});
+
+test("J6 and JQ edits return to the summary by Continue, footer Back, and browser Back", async ({
   page,
 }) => {
   await enter(page);
   await page.setViewportSize({ width: 320, height: 720 });
   const stages = [
     {
+      row: "Pelanggan sasaran",
+      expectScreen: expectTargetCustomerScreen,
+      heading: "Siapa pelanggan utama Anda?",
+    },
+    {
       row: "Kebutuhan pelanggan",
       expectScreen: expectCustomerNeedsScreen,
       heading: "Kenapa pelanggan biasanya mencari yang seperti ini?",
     },
     {
+      row: "Pertimbangan pembeli",
+      expectScreen: expectDecisionConsiderationsScreen,
+      heading: "Apa yang dipertimbangkan pelanggan saat memilih?",
+    },
+    {
       row: "Bisnis pembanding",
       expectScreen: expectCompetitorsScreen,
       heading: "Ini yang mungkin dibandingkan dengan Anda",
+    },
+    {
+      row: "Pembeda bisnis",
+      expectScreen: expectDifferentiatorScreen,
+      heading: "Apa yang membedakan bisnis Anda?",
     },
     {
       row: "Fakta publik tambahan",
@@ -1014,6 +1319,10 @@ test("unsafe public facts retain the safe value and frozen R20 context", async (
       origin: "nuave",
     },
     decisionConsiderations: { value: ["lokasi"], origin: "nuave" },
+    differentiator: {
+      value: "Racikan kopi rumahan fiktif",
+      origin: "nuave",
+    },
     comparators: {
       value: { mode: "named", names: ["Kedai Tetangga"] },
     },
@@ -1369,7 +1678,11 @@ test.describe("J5 business-detail screens", () => {
     await pressLanjut(page);
     await expectOfferingsScreen(page);
     await pressLanjut(page);
+    await expectTargetCustomerScreen(page);
+    await pressLanjut(page);
     await expectCustomerNeedsScreen(page);
+    await pressLanjut(page);
+    await expectDecisionConsiderationsScreen(page);
     await pressLanjut(page);
     await expectServiceScreen(page);
     await pressLanjut(page);
@@ -1413,7 +1726,13 @@ test.describe("J5 business-detail screens", () => {
     await expectOfferingsScreen(page);
     await noOverflow();
     await pressLanjut(page);
+    await expectTargetCustomerScreen(page);
+    await noOverflow();
+    await pressLanjut(page);
     await expectCustomerNeedsScreen(page);
+    await noOverflow();
+    await pressLanjut(page);
+    await expectDecisionConsiderationsScreen(page);
     await noOverflow();
     await pressLanjut(page);
     await expectServiceScreen(page);

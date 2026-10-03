@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/product/selection/Chip";
 import { AddLine } from "@/components/product/selection/AddLine";
 import {
@@ -42,6 +41,10 @@ type Props = {
   onEditCustomerNeeds?: () => void;
   onEditCompetitors?: () => void;
   onEditPublicFact?: () => void;
+  /** JQ: each retained R-20 meaning opens its own dedicated screen. */
+  onEditTargetCustomer?: () => void;
+  onEditDecisionConsiderations?: () => void;
+  onEditDifferentiator?: () => void;
   busy?: boolean;
   error?: string | null;
   sourceExcerptStatus?: SourceExcerptStatus;
@@ -113,6 +116,9 @@ export default function SmartReview({
   onEditCustomerNeeds,
   onEditCompetitors,
   onEditPublicFact,
+  onEditTargetCustomer,
+  onEditDecisionConsiderations,
+  onEditDifferentiator,
   busy = false,
   error,
   sourceExcerptStatus,
@@ -168,11 +174,6 @@ export default function SmartReview({
     );
   };
   const gaps = requiredSmartGaps(selection);
-  const optionalPresent = Boolean(
-    selection.targetCustomer ||
-    selection.decisionConsiderations.length ||
-    selection.differentiator,
-  );
   const reachLabel =
     reaches.find(([value]) => value === selection.marketReach)?.[1] ?? "";
   const areaBased =
@@ -412,72 +413,75 @@ export default function SmartReview({
           </div>
         ) : null}
       </Row>
-      <Row title="Detail tambahan" origin={originText.nuave}>
-        <Accordion defaultValue={optionalPresent ? ["optional"] : []}>
-          <AccordionItem value="optional">
-            <AccordionTrigger>
-              {optionalPresent ? "Periksa detail tambahan" : "Tambah detail"}
-            </AccordionTrigger>
-            <AccordionContent>
-              <p className="type-copy-sm text-muted-foreground">Opsional</p>
-              <div className="grid gap-4 pt-3">
-                <label className="grid gap-2 type-label">
-                  Pelanggan sasaran{" "}
-                  <span className="type-copy-sm text-muted-foreground">
-                    {rowOrigin(selection, "targetCustomer")}
-                  </span>
-                  <Input
-                    value={selection.targetCustomer}
-                    maxLength={500}
-                    onChange={(event) =>
-                      update(
-                        { targetCustomer: event.target.value },
-                        "targetCustomer",
-                      )
-                    }
-                  />
-                </label>
-                <label className="grid gap-2 type-label">
-                  Pertimbangan pembeli{" "}
-                  <span className="type-copy-sm text-muted-foreground">
-                    {rowOrigin(selection, "decisionConsiderations")}
-                  </span>
-                  <Input
-                    value={selection.decisionConsiderations.join("; ")}
-                    maxLength={1200}
-                    onChange={(event) =>
-                      update(
-                        {
-                          decisionConsiderations: event.target.value
-                            .split(";")
-                            .map((item) => item.trim())
-                            .filter(Boolean),
-                        },
-                        "decisionConsiderations",
-                      )
-                    }
-                  />
-                </label>
-                <label className="grid gap-2 type-label">
-                  Pembeda bisnis{" "}
-                  <span className="type-copy-sm text-muted-foreground">
-                    {rowOrigin(selection, "differentiator")}
-                  </span>
-                  <Input
-                    value={selection.differentiator}
-                    maxLength={1000}
-                    onChange={(event) =>
-                      update(
-                        { differentiator: event.target.value },
-                        "differentiator",
-                      )
-                    }
-                  />
-                </label>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+      <Row
+        title="Pelanggan sasaran"
+        origin={
+          selection.targetCustomer.trim()
+            ? rowOrigin(selection, "targetCustomer")
+            : undefined
+        }
+      >
+        <p className="type-copy break-words">
+          {selection.targetCustomer.trim()
+            ? selection.targetCustomer
+            : "Belum diisi."}
+        </p>
+        {onEditTargetCustomer ? (
+          <Button
+            variant="link"
+            className="w-fit"
+            onClick={onEditTargetCustomer}
+            disabled={busy}
+          >
+            Ubah
+          </Button>
+        ) : null}
+      </Row>
+      <Row
+        title="Pertimbangan pembeli"
+        origin={
+          selection.decisionConsiderations.length
+            ? rowOrigin(selection, "decisionConsiderations")
+            : undefined
+        }
+      >
+        <p className="type-copy break-words">
+          {selection.decisionConsiderations.join("; ") || "Belum diisi."}
+        </p>
+        {onEditDecisionConsiderations ? (
+          <Button
+            variant="link"
+            className="w-fit"
+            onClick={onEditDecisionConsiderations}
+            disabled={busy}
+          >
+            Ubah
+          </Button>
+        ) : null}
+      </Row>
+      <Row
+        title="Pembeda bisnis"
+        origin={
+          selection.differentiator.trim()
+            ? rowOrigin(selection, "differentiator")
+            : undefined
+        }
+      >
+        <p className="type-copy break-words">
+          {selection.differentiator.trim()
+            ? selection.differentiator
+            : "Belum diisi."}
+        </p>
+        {onEditDifferentiator ? (
+          <Button
+            variant="link"
+            className="w-fit"
+            onClick={onEditDifferentiator}
+            disabled={busy}
+          >
+            Ubah
+          </Button>
+        ) : null}
       </Row>
 
       {prepared.sourceLinks.length ? (

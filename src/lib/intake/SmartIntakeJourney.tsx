@@ -62,8 +62,11 @@ import {
 } from "./smart-detail-screens";
 import {
   SmartCustomerNeedsScreen,
+  SmartDecisionConsiderationsScreen,
+  SmartDifferentiatorScreen,
   SmartCompetitorsScreen,
   SmartPublicFactScreen,
+  SmartTargetCustomerScreen,
 } from "./smart-customer-screens";
 import SmartQuestionsScreen from "./SmartQuestionsScreen";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
@@ -98,8 +101,9 @@ function detourUnchanged(session: SmartSession): boolean {
 
 /**
  * Forward hop after each framed screen. Outside a summary-edit detour the
- * chain is focus → location/product → category → offerings → customer needs →
- * service → market → competitors → public fact → summary. Inside a detour
+ * chain is focus → location/product → category → offerings → target
+ * customer → customer needs → decision considerations → service → market →
+ * competitors → differentiator → public fact → summary. Inside a detour
  * (`editReturn`) a screen's Lanjut walks the remaining chain until it lands on
  * the review. Product and location edits pass through their target and
  * category screens (R-05/R-21).
@@ -121,8 +125,12 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
     case "category":
       return marker ?? "offerings";
     case "offerings":
+      return marker ?? "target-customer";
+    case "target-customer":
       return marker ?? "customer-needs";
     case "customer-needs":
+      return marker ?? "decision-considerations";
+    case "decision-considerations":
       return marker ?? "service";
     case "service":
       return (
@@ -131,6 +139,8 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
     case "market":
       return marker ?? "competitors";
     case "competitors":
+      return marker ?? "differentiator";
+    case "differentiator":
       return marker ?? "public-fact";
     case "public-fact":
       return marker ?? "summary";
@@ -180,16 +190,22 @@ function backTargetFor(session: SmartSession): SmartStage | null {
       );
     case "offerings":
       return marker ?? "category";
-    case "customer-needs":
+    case "target-customer":
       return marker ?? "offerings";
-    case "service":
+    case "customer-needs":
+      return marker ?? "target-customer";
+    case "decision-considerations":
       return marker ?? "customer-needs";
+    case "service":
+      return marker ?? "decision-considerations";
     case "market":
       return marker ?? "service";
     case "competitors":
       return marker ?? (selection?.focus === "cabang" ? "service" : "market");
-    case "public-fact":
+    case "differentiator":
       return marker ?? "competitors";
+    case "public-fact":
+      return marker ?? "differentiator";
     case "summary":
       return "public-fact";
     case "questions":
@@ -260,10 +276,13 @@ function stageProgress(session: SmartSession) {
     "offerings",
   ];
   const bab3: SmartStage[] = [
+    "target-customer",
     "customer-needs",
+    "decision-considerations",
     "service",
     ...(session.selection?.focus === "cabang" ? [] : ["market" as const]),
     "competitors",
+    "differentiator",
     "public-fact",
   ];
   if (session.stage === "brand") return fills(1, 1);
@@ -1211,6 +1230,39 @@ export default function SmartIntakeJourney({
             error={error}
           />
         ) : null}
+        {session.stage === "target-customer" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartTargetCustomerScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "decision-considerations" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartDecisionConsiderationsScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "differentiator" &&
+        session.prepared &&
+        session.selection ? (
+          <SmartDifferentiatorScreen
+            headingRef={headingRef}
+            prepared={session.prepared}
+            selection={session.selection}
+            onChange={updateSelection}
+            error={error}
+          />
+        ) : null}
         {session.stage === "service" &&
         session.prepared &&
         session.selection ? (
@@ -1374,6 +1426,33 @@ export default function SmartIntakeJourney({
                 });
                 setError(null);
               }}
+              onEditTargetCustomer={() => {
+                goStage({
+                  ...session,
+                  stage: "target-customer",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditDecisionConsiderations={() => {
+                goStage({
+                  ...session,
+                  stage: "decision-considerations",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
+              onEditDifferentiator={() => {
+                goStage({
+                  ...session,
+                  stage: "differentiator",
+                  editReturn: "summary",
+                  editBaseline: undefined,
+                });
+                setError(null);
+              }}
               onEditCompetitors={() => {
                 goStage({
                   ...session,
@@ -1451,10 +1530,13 @@ export default function SmartIntakeJourney({
                 "product",
                 "category",
                 "offerings",
+                "target-customer",
+                "customer-needs",
+                "decision-considerations",
                 "service",
                 "market",
-                "customer-needs",
                 "competitors",
+                "differentiator",
                 "public-fact",
               ].includes(session.stage) && session.selection ? (
               <Button

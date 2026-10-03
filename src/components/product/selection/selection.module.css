@@ -182,7 +182,9 @@
   color: var(--text-body);
   background: var(--bg-page);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-token-full);
+  /* Keep wrapped labels inside the selected background; a full pill radius
+     grows with multiline chip height and can hide the corner text. */
+  border-radius: var(--radius-token-3xl);
   cursor: pointer;
   transition:
     border-color var(--motion-duration-fast) var(--motion-ease-out),

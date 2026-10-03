@@ -5,7 +5,7 @@ blank start opens on the empty business name + source step; `/audit/new-intake`
 redirects here. The server gate (`NUAVE_NEW_AUDIT_ENABLED` + `NUAVE_AUDIT_MODE`)
 decides whether real provider boundaries or their labeled substitutes answer.
 
-## Journey shape (Spec 013 J2–J6)
+## Journey shape (Spec 013 J2–JQ)
 
 `SmartIntakeJourney.tsx` owns the screen frame and the session state machine:
 
@@ -41,17 +41,27 @@ Anda`), plus `Tambah lokasi lain` for a manual name + address
   and `Penawaran lain` adds owner items (`Dari Anda`); at least one is
   required outside a product focus, where the audited product is the
   offering and the catalogue is read-only context (R-14).
+- `target-customer` — "Siapa pelanggan utama Anda?" is an optional
+  free-text screen (`smart-customer-screens.tsx`); a prepared value keeps
+  its source label and `Lanjut` is never blocked (R-20).
+- `customer-needs` — optional prepared customer needs are labelled by source;
+  the owner may select, clear, or add needs.
+- `decision-considerations` — "Apa yang dipertimbangkan pelanggan saat
+  memilih?" offers prepared considerations as labelled chips plus an owner
+  add-line: at most twelve of 300 characters each, trimmed
+  case-insensitive duplicates refused, empty `Lanjut` allowed (R-20).
 - `service` — the four fixed channel choices as multi-select cards; at
   least one is required (R-15).
 - `market` — four reach cards; `sekitar` needs exactly one area, `beberapa`
   one to eight (a ninth is refused with a visible block, never silently
   dropped), `seluruh`/`luar` none. A location focus never shows this
   screen (R-16).
-- `customer-needs` — optional prepared customer needs are labelled by source;
-  the owner may select, clear, or add needs.
 - `competitors` — named businesses, no direct competitor, and unknown remain
   distinct meanings. Prepared names default to named mode; a named list needs
   one to five names, and a sixth is refused rather than truncated.
+- `differentiator` — "Apa yang membedakan bisnis Anda?" is an optional
+  free-text screen; a prepared value keeps its source label and `Lanjut`
+  is never blocked (R-20).
 - `public-fact` — optional owner-supplied public context follows the existing
   sensitive-text rejection path.
 - `summary` — `SmartReview.tsx`, the final review screen "Ini yang akan
@@ -71,7 +81,8 @@ audit` freezes the context.
 
 Back from `summary` re-enters the last detail screen the current focus
 implies — `public-fact` for brand/product and location; continuing backward
-walks through competitors and customer needs before the J5 screens. A location
+walks through differentiator, competitors, service, buyer considerations,
+customer needs and target customer before the J5 screens. A location
 focus skips `market`.
 
 Screens 3 onward carry the four-segment chapter progress and a fixed
@@ -80,7 +91,7 @@ Each arrival focuses the screen heading.
 
 ## Session
 
-`smart-session.ts` parses `nuave.localIntake.v8` (schema version 8) in
+`smart-session.ts` parses `nuave.localIntake.v9` (schema version 9) in
 sessionStorage. Only the journey writes it. Refresh restores the stored stage
 and answers; a session stored mid-`reading` restores `entry` with the fields
 kept and an interruption note — the read is never replayed. Corrupt or
