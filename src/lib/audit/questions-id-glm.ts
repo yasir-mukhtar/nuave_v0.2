@@ -168,6 +168,48 @@ export type CheaperInferenceUsage = {
   total_tokens: number | null;
 };
 
+/** R-30: bounded metadata only; never provider prose or inferred accounting. */
+export type CheaperInferenceDiagnostics = {
+  usage: CheaperInferenceUsage | null;
+  finishReason:
+    | "stop"
+    | "length"
+    | "content_filter"
+    | "tool_calls"
+    | "function_call"
+    | "other"
+    | "missing";
+  httpStatus: number | null;
+};
+
+function normalizedUsage(value: unknown): CheaperInferenceUsage | null {
+  if (!isRecord(value) || Array.isArray(value)) return null;
+  const tokens = (value: unknown): number | null =>
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+      ? value
+      : null;
+  return {
+    prompt_tokens: tokens(value.prompt_tokens),
+    completion_tokens: tokens(value.completion_tokens),
+    total_tokens: tokens(value.total_tokens),
+  };
+}
+
+function normalizedFinishReason(
+  value: unknown,
+): CheaperInferenceDiagnostics["finishReason"] {
+  switch (value) {
+    case "stop":
+    case "length":
+    case "content_filter":
+    case "tool_calls":
+    case "function_call":
+      return value;
+    default:
+      return typeof value === "string" ? "other" : "missing";
+  }
+}
+
 export type CheaperInferenceAssessment =
   | {
       ok: true;
@@ -178,6 +220,7 @@ export type CheaperInferenceAssessment =
       responseId: string;
       usage: CheaperInferenceUsage | null;
       billedCostUsd: number | null;
+      diagnostics: CheaperInferenceDiagnostics;
     }
   | {
       ok: false;
@@ -186,6 +229,7 @@ export type CheaperInferenceAssessment =
       requestedModel: string;
       returnedModel: string | null;
       responseId: string | null;
+      diagnostics: CheaperInferenceDiagnostics;
     };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -237,6 +281,17 @@ export function assessCheaperInferenceIndonesianResponse(input: {
   const returnedModel =
     body && typeof body.model === "string" ? body.model : null;
   const responseId = body && typeof body.id === "string" ? body.id : null;
+  const firstChoice = Array.isArray(body?.choices) ? body.choices[0] : null;
+  const diagnostics: CheaperInferenceDiagnostics = {
+    usage: normalizedUsage(body?.usage),
+    finishReason: normalizedFinishReason(
+      isRecord(firstChoice) ? firstChoice.finish_reason : undefined,
+    ),
+    httpStatus:
+      Number.isSafeInteger(input.httpStatus) && input.httpStatus >= 0
+        ? input.httpStatus
+        : null,
+  };
   const fail = (
     reason: CheaperInferenceFailureReason,
     detail: string,
@@ -247,6 +302,7 @@ export function assessCheaperInferenceIndonesianResponse(input: {
     requestedModel,
     returnedModel,
     responseId,
+    diagnostics,
   });
 
   if (input.httpStatus < 200 || input.httpStatus >= 300) {
@@ -294,22 +350,7 @@ export function assessCheaperInferenceIndonesianResponse(input: {
     return fail("provenance", "response id missing or blank");
   }
 
-  const usage = isRecord(body.usage)
-    ? {
-        prompt_tokens:
-          typeof body.usage.prompt_tokens === "number"
-            ? body.usage.prompt_tokens
-            : null,
-        completion_tokens:
-          typeof body.usage.completion_tokens === "number"
-            ? body.usage.completion_tokens
-            : null,
-        total_tokens:
-          typeof body.usage.total_tokens === "number"
-            ? body.usage.total_tokens
-            : null,
-      }
-    : null;
+  const usage = diagnostics.usage;
   const billedCostUsd = cheaperInferenceBilledCostUsd(body);
 
   return {
@@ -320,6 +361,7 @@ export function assessCheaperInferenceIndonesianResponse(input: {
     responseId,
     usage,
     billedCostUsd,
+    diagnostics,
   };
 }
 

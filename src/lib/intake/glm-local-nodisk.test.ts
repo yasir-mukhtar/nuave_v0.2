@@ -48,6 +48,43 @@ function frozenLaundry() {
 }
 
 describe("R-05 — live GLM send with NUAVE_GLM_EVIDENCE_DIR unset", () => {
+  it("returns bounded incomplete diagnostics without any filesystem work (R-30)", async () => {
+    const fetchSpy = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "mock-no-disk",
+            model: "glm-5.3-flash",
+            choices: [
+              { finish_reason: "length", message: { content: "partial mock" } },
+            ],
+            usage: { prompt_tokens: 0, completion_tokens: 5 },
+          }),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchSpy);
+    const result = await prepareGlmQuestionsForIntake({
+      intake: frozenLaundry(),
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({
+      status: "failed",
+      reason: "incomplete",
+      providerContact: "responded",
+      diagnostics: {
+        finishReason: "length",
+        httpStatus: 200,
+        usage: { prompt_tokens: 0, completion_tokens: 5, total_tokens: null },
+        instructionVersion: "glm-direct-ten-2026-09-18-concise-v1",
+      },
+      cost: { billedUsd: null, available: false },
+    });
+    expect(result).not.toHaveProperty("questions");
+    const fs = await import("node:fs/promises");
+    for (const fn of [fs.mkdir, fs.open, fs.readFile, fs.writeFile])
+      expect(fn).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     delete process.env.NUAVE_GLM_EVIDENCE_DIR;
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");

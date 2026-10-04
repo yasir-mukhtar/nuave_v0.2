@@ -9,11 +9,16 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import historicalPair from "../../../tests/spec011-v1-records.json";
+import { extractionDraftSchema } from "../audit/types";
 import { LOCAL_INTAKE_STORAGE_KEY } from "./local-session";
 import { LOCAL_AUDIT_STORAGE_KEY } from "./local-audit-session";
-import { SMART_INTAKE_STORAGE_KEY } from "./smart-intake-contract";
+import {
+  prepareUnderstanding,
+  initialSmartSelection,
+  SMART_INTAKE_STORAGE_KEY,
+} from "./smart-intake-contract";
 import SmartIntakeJourney from "./SmartIntakeJourney";
-import { parseSmartSession } from "./smart-session";
+import { freshSmartSession, parseSmartSession } from "./smart-session";
 
 beforeEach(() => {
   window.sessionStorage.clear();
@@ -131,6 +136,295 @@ const draft = {
 };
 
 describe("smart blank intake", () => {
+  it("maps incomplete by structured reason and preserves frozen JQ context on explicit retry (R-30)", async () => {
+    const prepared = prepareUnderstanding({
+      draft: extractionDraftSchema.parse(draft),
+      typedName: "Kedai Fiksi",
+      discoveredName: null,
+      canonicalSource: "https://kedai-fiksi.example/",
+    });
+    const base = initialSmartSelection(prepared);
+    const selection = {
+      ...base,
+      targetCustomer: "pekerja sekitar",
+      decisionConsiderations: ["lokasi", "harga"],
+      differentiator: "kopi segar",
+      origins: {
+        ...base.origins,
+        targetCustomer: "owner" as const,
+        decisionConsiderations: "owner" as const,
+        differentiator: "owner" as const,
+      },
+    };
+    window.sessionStorage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify({
+        ...freshSmartSession(),
+        stage: "summary",
+        prepared,
+        selection,
+      }),
+    );
+    const requests: unknown[] = [];
+    const fetchMock = vi.fn(
+      async (url: RequestInfo | URL, init?: RequestInit) => {
+        expect(String(url)).toBe("/api/audit/glm-questions");
+        requests.push(JSON.parse(String(init?.body)));
+        const provenance = {
+          requestId: "mock",
+          method: "direct-ten",
+          requestedModel: "glm-5.3-flash",
+          returnedModel: "glm-5.3-flash",
+          responseId: "mock",
+          modelMismatch: false,
+          transport: "synthetic-stub",
+        };
+        return Response.json(
+          requests.length === 1
+            ? {
+                status: "failed",
+                reason: "incomplete",
+                detail: "arbitrary provider prose; not a length substring",
+                providerContact: "responded",
+                provenance,
+                diagnostics: {
+                  httpStatus: 200,
+                  finishReason: "length",
+                  usage: {
+                    prompt_tokens: 0,
+                    completion_tokens: 20,
+                    total_tokens: null,
+                  },
+                  instructionVersion: "glm-direct-ten-2026-09-18-concise-v1",
+                },
+                cost: { billedUsd: null, available: false },
+              }
+            : {
+                status: "ok",
+                questions: Array.from(
+                  { length: 10 },
+                  (_, i) =>
+                    `Pilihan kedai kopi apa di Bandung untuk kebutuhan ${i + 1}?`,
+                ),
+                provenance,
+                cost: { billedUsd: null, available: false },
+              },
+        );
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<SmartIntakeJourney live={true} />);
+    const confirm = await screen.findByRole("button", {
+      name: "Sudah sesuai — buat pertanyaan audit",
+    });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
+    expect(
+      screen.queryByRole("button", { name: "Coba siapkan pertanyaan" }),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        "Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.",
+      ),
+    ).toBeNull();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(
+      "Penyusunan 10 pertanyaan belum selesai. Jawaban Anda tetap tersedia dalam sesi ini. Coba siapkan pertanyaan lagi.",
+    );
+    expect(alert.textContent).not.toMatch(/finish_reason|provider prose/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const failed = parseSmartSession(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    )!;
+    expect(failed.pack).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mulai audit" })).toBeNull();
+    expect(failed.generationAttempts).toHaveLength(1);
+    expect(
+      screen.getByText(
+        "Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.",
+      ),
+    ).toBeDefined();
+    expect(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)).not.toMatch(
+      /diagnostics|instructionVersion|finishReason|prompt_tokens/,
+    );
+    cleanup();
+    render(<SmartIntakeJourney live={true} />);
+    const retry = await screen.findByRole("button", {
+      name: "Coba siapkan pertanyaan",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByText(
+        "Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.",
+      ),
+    ).not.toBeNull();
+    fireEvent.click(retry);
+    fireEvent.click(retry);
+    await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(requests[1]).toEqual(requests[0]);
+    const recovered = parseSmartSession(
+      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    )!;
+    expect(recovered.frozen).toEqual(failed.frozen);
+    expect(recovered.selection).toEqual(selection);
+    expect(recovered.generationAttempts).toHaveLength(2);
+    expect(recovered.pack!.approved).toHaveLength(10);
+    expect(recovered.stage).toBe("questions");
+    expect(screen.getByRole("button", { name: "Mulai audit" })).toBeDefined();
+    expect(
+      screen.queryByRole("button", { name: "Coba siapkan pertanyaan" }),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        "Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.",
+      ),
+    ).toBeNull();
+  });
+
+  it.each([
+    [true, true, null, "responded"],
+    [false, false, 0, "responded"],
+    [false, true, null, "responded"],
+    [true, false, 0, "responded"],
+    [true, true, null, "interrupted"],
+    [false, false, null, "interrupted"],
+  ] as const)(
+    "prospective retry notice uses current mode %s → %s with cost %s and %s (R-30)",
+    async (initialLive, currentLive, cost, contact) => {
+      const prepared = prepareUnderstanding({
+        draft: extractionDraftSchema.parse(draft),
+        typedName: "Kedai Fiksi",
+        discoveredName: null,
+        canonicalSource: "https://kedai-fiksi.example/",
+      });
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify({
+          ...freshSmartSession(),
+          stage: "summary",
+          prepared,
+          selection: initialSmartSelection(prepared),
+        }),
+      );
+      const fetchMock = vi.fn(async (url: RequestInfo | URL) => {
+        expect(String(url)).toBe("/api/audit/glm-questions");
+        if (contact === "interrupted") throw new Error("mock dropped response");
+        return Response.json({
+          status: "failed",
+          reason: "incomplete",
+          detail: "mock",
+          providerContact: "responded",
+          cost: { billedUsd: cost, available: cost !== null },
+          provenance: {
+            requestId: "mock",
+            method: "direct-ten",
+            requestedModel: "glm-5.3-flash",
+            returnedModel: "glm-5.3-flash",
+            responseId: "mock",
+            modelMismatch: false,
+            // Deliberately unlike the current presentation: never classify history from props.
+            transport: initialLive ? "synthetic-stub" : "cheaper-inference",
+          },
+        });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const notice =
+        "Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.";
+      render(<SmartIntakeJourney live={initialLive} />);
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "Sudah sesuai — buat pertanyaan audit",
+        }),
+      );
+      await screen.findByRole("alert");
+      expect(
+        screen.getByRole("button", { name: "Coba siapkan pertanyaan" }),
+      ).toBeDefined();
+      expect(screen.queryByText(notice) !== null).toBe(initialLive);
+      const saved = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
+      const session = parseSmartSession(saved)!;
+      expect(session.generationAttempts).toHaveLength(1);
+      expect(session.generationAttempts[0]).toMatchObject({
+        outcome: contact === "interrupted" ? "interrupted" : "failed",
+        execution: contact === "interrupted" ? "unknown" : "confirmed",
+        cost_usd: cost,
+      });
+      if (contact === "interrupted")
+        expect(screen.getByRole("alert").textContent).toBe(
+          "mock dropped response",
+        );
+      cleanup();
+      render(<SmartIntakeJourney live={currentLive} />);
+      await screen.findByRole("button", { name: "Coba siapkan pertanyaan" });
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(screen.queryByText(notice) !== null).toBe(currentLive);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(
+        saved,
+      );
+      expect(saved).not.toMatch(
+        /diagnostics|instructionVersion|finishReason|prompt_tokens/,
+      );
+    },
+  );
+
+  it("demonstrates the existing live/synthetic failed-attempt persistence collision (R-30 fence dependency)", async () => {
+    vi.spyOn(Date.prototype, "toISOString").mockReturnValue(
+      "2026-10-04T00:00:00.000Z",
+    );
+    const prepared = prepareUnderstanding({
+      draft: extractionDraftSchema.parse(draft),
+      typedName: "Kedai Fiksi",
+      discoveredName: null,
+      canonicalSource: "https://kedai-fiksi.example/",
+    });
+    const seed = {
+      ...freshSmartSession(),
+      stage: "summary",
+      prepared,
+      selection: initialSmartSelection(prepared),
+    };
+    const snapshots: unknown[] = [];
+    for (const transport of ["synthetic-stub", "cheaper-inference"]) {
+      cleanup();
+      window.sessionStorage.clear();
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify(seed),
+      );
+      vi.stubGlobal("fetch", async (url: RequestInfo | URL) => {
+        expect(String(url)).toBe("/api/audit/glm-questions");
+        return Response.json({
+          status: "failed",
+          reason: "incomplete",
+          detail: "mock",
+          providerContact: "responded",
+          cost: { billedUsd: null, available: false },
+          provenance: {
+            requestId: "mock",
+            method: "direct-ten",
+            requestedModel: "glm-5.3-flash",
+            returnedModel: "glm-5.3-flash",
+            responseId: "mock",
+            modelMismatch: false,
+            transport,
+          },
+        });
+      });
+      render(<SmartIntakeJourney live={true} />);
+      fireEvent.click(
+        await screen.findByRole("button", {
+          name: "Sudah sesuai — buat pertanyaan audit",
+        }),
+      );
+      await screen.findByRole("alert");
+      snapshots.push(
+        JSON.parse(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!),
+      );
+    }
+    expect(snapshots[0]).toEqual(snapshots[1]);
+  });
   it("uses one explicit inspection and one confirmation to reach ten questions with exact v2 context", async () => {
     const requests: { url: string; body: Record<string, unknown> | null }[] =
       [];

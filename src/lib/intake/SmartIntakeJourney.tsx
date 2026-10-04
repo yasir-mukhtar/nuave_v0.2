@@ -745,7 +745,9 @@ export default function SmartIntakeJourney({
       if (!response.ok || outcome.status !== "ok") {
         throw new Error(
           outcome.status === "failed" || outcome.status === "invalid_request"
-            ? outcome.detail
+            ? outcome.status === "failed" && outcome.reason === "incomplete"
+              ? "Penyusunan 10 pertanyaan belum selesai. Jawaban Anda tetap tersedia dalam sesi ini. Coba siapkan pertanyaan lagi."
+              : outcome.detail
             : outcome.status === "validation_failed"
               ? outcome.issues.join(" ")
               : "Pertanyaan perlu ditinjau ulang.",
@@ -846,9 +848,17 @@ export default function SmartIntakeJourney({
                 : "Pertanyaan belum diterima. Coba lagi hanya jika Anda ingin membuat permintaan baru."}
             </p>
             {busy !== "questions" ? (
-              <Button className="w-fit" onClick={() => void confirm()}>
-                Coba siapkan pertanyaan
-              </Button>
+              <>
+                <Button className="w-fit" onClick={() => void confirm()}>
+                  Coba siapkan pertanyaan
+                </Button>
+                {live ? (
+                  <p className="type-copy">
+                    Mencoba lagi mengirim permintaan baru dan dapat menambah
+                    biaya penggunaan AI.
+                  </p>
+                ) : null}
+              </>
             ) : null}
             <Button variant="ghost" className="w-fit" onClick={goBack}>
               Kembali ke ringkasan

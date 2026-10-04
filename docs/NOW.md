@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-03
+> Updated: 2026-10-04
 > Stage: Stage 1 of the [paying-customer plan](./PAYING_CUSTOMER_PLAN.md):
 > finish the intake journey
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -16,7 +16,8 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing; J2–J7 merged with PASS; JQ is active
+  intake) is implementing; J2–J7 and JQ merged. Founder successful
+  prompts/report are accepted; narrow JZ R-30 correction is pending
   (plan §1 has evidence). The full spec is not yet verified. Latest verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
@@ -26,10 +27,14 @@
 
 ## Next action
 
-- **Active milestone: JQ** (Spec 013): dedicated screens for target customer,
-  buyer considerations and differentiator, from merged J7
-  ([PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114)); JZ
-  founder signoff follows. Handoff: `templates/WORKER_PROMPT.md`.
+- **Active milestone: JZ** (Spec 013 R-30): independent review of the completed
+  narrow question-generation reliability correction.
+  Alfred resolved retry disclosure as prospective current-mode information
+  from the server-provided `live` prop, not past-attempt classification.
+  No new persistence or accounting workaround was added. Final `npm run verify`
+  passes on the uncommitted diff; independent exact-head review precedes
+  closeout. Founder successful prompts/report approval stands. Parent owns
+  closeout; Stage 2 and outside users remain out of scope.
 
 ## Rules still in force
 
