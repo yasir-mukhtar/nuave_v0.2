@@ -1,10 +1,10 @@
 # Spec 013: Airbnb-style intake journey
 
-> Status: **Implementing**; approved by the founder on 2026-09-27
-> ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
-> J2–J7 and JQ merged. Founder successful prompts/report accepted;
-> the approved narrow JZ reliability correction (R-30) is implementing.
-> Review evidence: [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
+> Status: **Verified — JZ accepted by Alfred under delegated founder authority on 2026-10-04, with documented evidence exceptions in [VERIFICATION.md](./VERIFICATION.md#final-jz-closeout).**
+> Original spec approval: [2026-09-27](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013).
+> J2–J7/JQ and the bounded R-30 correction merged; [PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) is deployed.
+> Canonical docs PR/review/merge remain pending parent action; Stage 2 is not authorized.
+> Review evidence: [verification record](./VERIFICATION.md#final-jz-closeout) and [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
 > Owner: orchestrator
 > Updated: 2026-10-04
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
@@ -360,7 +360,9 @@ until JQ those answers lived on the review screen (R-20).
     No token increase, model/provider change, continuation or new call.
     This reduces avoidable ancillary output pressure, not a guarantee against
     truncation or proof of its live cause. Founder successful-result approval
-    stands; independent correction review and parent closeout remain pending.
+    stands; independent correction review, merge and deployment are complete.
+    Qualified JZ acceptance is recorded in [VERIFICATION.md](./VERIFICATION.md#final-jz-closeout);
+    canonical documentation review/merge remains parent-owned.
 
 ## Failure and recovery
 
@@ -503,11 +505,15 @@ None. The founder answered the draft's three questions on 2026-09-27
 
 ## Verification record
 
-Partial implementation; full-spec verification remains pending:
+**Verified with documented evidence exceptions**, accepted by Alfred under
+delegated founder authority on 2026-10-04. This supersedes the partial/JQ-
+outstanding footer as current status, not the frozen slice results.
 
-- Verification artifact: `specs/013-airbnb-intake-journey/VERIFICATION.md`
-- Result: J2–J7 each passed independent review and merged (latest: J7,
-  [PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114), merged
-  `753452e`); JQ and full-spec verification remain outstanding
-- Date: 2026-10-03 (J7)
-- Verified implementation commit: `681df10bfe9bf5540ed2686319c97307a92a43b3` (J7 only)
+- Canonical evidence: [final JZ closeout](./VERIFICATION.md#final-jz-closeout),
+  including composite AC dispositions and explicit exceptions.
+- J2–J7/JQ and bounded R-30 correction independently reviewed and merged;
+  [PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) deployed.
+- Reviewed implementation: `7aa6fc9a08d141ecab03ff98e05a06408ade405d`.
+- Merged deployment: `d7a2f50fddafae222eb62dbabaec5497010743b8`.
+- Documentation PR, fresh independent docs verdict and merge remain pending
+  parent action. No new live run, S0/Stage 2 or outside-user access is authorized.
