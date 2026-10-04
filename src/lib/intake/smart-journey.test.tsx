@@ -19,6 +19,7 @@ import {
 } from "./smart-intake-contract";
 import SmartIntakeJourney from "./SmartIntakeJourney";
 import { freshSmartSession, parseSmartSession } from "./smart-session";
+import { projectQuestionOutcome } from "./question-public-errors";
 
 beforeEach(() => {
   window.sessionStorage.clear();
@@ -136,6 +137,473 @@ const draft = {
 };
 
 describe("smart blank intake", () => {
+  it.each([
+    "rate429",
+    "rate503",
+    "unknown500",
+    "unknown503",
+    "validation_positive",
+    "validation_zero",
+    "validation_unavailable",
+    "malformed_ok_missing_questions",
+    "malformed_ok_invalid_provenance",
+    "malformed_ok_canonical",
+    "valid_ok",
+  ])(
+    "PR121 accounting correction %s preserves truthful history",
+    async (kind) => {
+      const prepared = prepareUnderstanding({
+        draft: extractionDraftSchema.parse(draft),
+        typedName: "Kedai Fiksi",
+        discoveredName: null,
+        canonicalSource: "https://kedai-fiksi.example/",
+      });
+      const base = initialSmartSelection(prepared);
+      const selection = {
+        ...base,
+        targetCustomer: "pekerja sekitar",
+        decisionConsiderations: ["lokasi", "harga"],
+        differentiator: "kopi segar",
+        origins: {
+          ...base.origins,
+          targetCustomer: "owner" as const,
+          decisionConsiderations: "owner" as const,
+          differentiator: "owner" as const,
+        },
+      };
+      const history = [
+        {
+          started_at: "2026-10-01T00:00:00.000Z",
+          outcome: "failed",
+          execution: "confirmed",
+          cost_usd: 0.001,
+        },
+        {
+          started_at: "2026-10-02T00:00:00.000Z",
+          outcome: "interrupted",
+          execution: "unknown",
+          cost_usd: null,
+        },
+      ];
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify({
+          ...freshSmartSession(),
+          stage: "summary",
+          prepared,
+          selection,
+          generationAttempts: history,
+        }),
+      );
+      const provenance = {
+        requestId: "accepted-server-id",
+        method: "direct-ten" as const,
+        requestedModel: "glm-5.3-flash",
+        returnedModel: "zai/glm-5.3-flash",
+        responseId: "accepted-response-id",
+        modelMismatch: true,
+        transport: "cheaper-inference" as const,
+      };
+      const questions = Array.from(
+        { length: 10 },
+        (_, i) => `Pilihan kedai kopi apa di Bandung untuk kebutuhan ${i + 1}?`,
+      );
+      const validation = kind.startsWith("validation_");
+      const rate = kind.startsWith("rate");
+      const valid = kind === "valid_ok";
+      const cost =
+        kind === "validation_positive"
+          ? 0.004
+          : kind === "validation_zero"
+            ? 0
+            : null;
+      const payload = validation
+        ? projectQuestionOutcome({
+            status: "validation_failed",
+            questions: ["MOCK_ONLY_REJECTED"],
+            issues: ["MOCK_ONLY_ISSUE"],
+            examination: {
+              marketInterpretation: "MOCK_ONLY_EXAM",
+              selfCritique: "MOCK_ONLY_CRITIQUE",
+              intentLabels: ["MOCK_ONLY_LABEL"],
+            },
+            provenance: {
+              ...provenance,
+              requestId: "MOCK_ONLY_INVALID_REQUEST_ID",
+              returnedModel: "MOCK_ONLY_MODEL_ID",
+              responseId: "MOCK_ONLY_RESPONSE_ID",
+            },
+            cost: { billedUsd: cost, available: cost !== null },
+          })
+        : rate
+          ? {
+              error:
+                kind === "rate429"
+                  ? "Terlalu banyak permintaan, coba lagi dalam beberapa menit."
+                  : "Perlindungan akses sedang tidak tersedia. Coba lagi nanti.",
+              code:
+                kind === "rate429" ? "RATE_LIMITED" : "RATE_LIMIT_UNAVAILABLE",
+            }
+          : kind.startsWith("unknown")
+            ? { error: "MOCK_ONLY_EXCEPTION", code: "MOCK_ONLY_UNKNOWN" }
+            : {
+                status: "ok",
+                provenance:
+                  kind === "malformed_ok_missing_questions" ||
+                  kind === "malformed_ok_invalid_provenance"
+                    ? {}
+                    : provenance,
+                cost: { billedUsd: 0, available: true },
+                ...(kind === "malformed_ok_missing_questions"
+                  ? {}
+                  : {
+                      questions:
+                        kind === "malformed_ok_canonical"
+                          ? ["", ...questions.slice(1)]
+                          : questions,
+                    }),
+              };
+      if (validation) {
+        const serialized = JSON.stringify(payload);
+        expect(serialized).not.toContain("MOCK_ONLY");
+        expect(JSON.parse(serialized)).not.toHaveProperty("provenance");
+        expect(JSON.parse(serialized)).toMatchObject({
+          status: "validation_failed",
+          questions: [],
+          identitiesWithheld: true,
+          cost: { billedUsd: cost, available: cost !== null },
+        });
+      }
+      const requests: unknown[] = [];
+      const fetchMock = vi.fn(
+        async (url: RequestInfo | URL, init?: RequestInit) => {
+          expect(String(url)).toBe("/api/audit/glm-questions");
+          requests.push(JSON.parse(String(init?.body)));
+          return Response.json(payload, {
+            status:
+              kind === "rate429"
+                ? 429
+                : kind === "rate503" || kind === "unknown503"
+                  ? 503
+                  : kind === "unknown500"
+                    ? 500
+                    : 200,
+          });
+        },
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      render(<SmartIntakeJourney live={true} />);
+      const confirm = await screen.findByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      });
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
+      if (valid)
+        await screen.findByRole("heading", {
+          name: "Periksa pertanyaan audit",
+        });
+      else {
+        const alert = await screen.findByRole("alert");
+        expect(alert.textContent).toBe(
+          rate
+            ? (payload as { error: string }).error
+            : validation
+              ? "Pertanyaan belum memenuhi persyaratan audit. Periksa kembali informasi bisnis Anda."
+              : "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+        );
+        expect(
+          screen.queryByRole("button", { name: "Mulai audit" }),
+        ).toBeNull();
+      }
+      const saved = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      )!;
+      expect(saved.generationAttempts.slice(0, history.length)).toEqual(
+        history,
+      );
+      expect(saved.generationAttempts).toHaveLength(
+        rate ? history.length : history.length + 1,
+      );
+      if (!rate)
+        expect(saved.generationAttempts.at(-1)).toMatchObject({
+          outcome: validation ? "failed" : valid ? "succeeded" : "interrupted",
+          execution: validation || valid ? "confirmed" : "unknown",
+          cost_usd: validation ? cost : valid ? 0 : null,
+        });
+      expect(saved.selection).toEqual(selection);
+      if (valid) {
+        expect(saved.pack!.provenance).toEqual(provenance);
+        expect(saved.pack!.approved).toEqual(questions);
+      } else {
+        expect(saved.pack).toBeNull();
+        expect(
+          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        ).not.toMatch(/MOCK_ONLY|identitiesWithheld/);
+      }
+      cleanup();
+      render(<SmartIntakeJourney live={true} />);
+      if (valid)
+        await screen.findByRole("heading", {
+          name: "Periksa pertanyaan audit",
+        });
+      else
+        await screen.findByRole("button", { name: "Coba siapkan pertanyaan" });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(
+        parseSmartSession(
+          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        )!.generationAttempts,
+      ).toEqual(saved.generationAttempts);
+      if (!valid) {
+        const retry = screen.getByRole("button", {
+          name: "Coba siapkan pertanyaan",
+        });
+        fireEvent.click(retry);
+        fireEvent.click(retry);
+        await screen.findByRole("alert");
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(requests[1]).toEqual(requests[0]);
+        expect(
+          parseSmartSession(
+            window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+          )!.frozen,
+        ).toEqual(saved.frozen);
+      }
+    },
+  );
+
+  it.each([
+    [
+      "provider_error",
+      "Layanan pembuatan pertanyaan sedang mengalami kendala. Coba lagi nanti.",
+      0.004,
+    ],
+    [
+      "http_error",
+      "Layanan pembuatan pertanyaan sedang mengalami kendala. Coba lagi nanti.",
+      0,
+    ],
+    [
+      "refusal",
+      "Pertanyaan tidak dapat dibuat dari informasi ini. Periksa kembali informasi bisnis Anda.",
+      null,
+    ],
+    [
+      "extraction_unexpected_line",
+      "Respons pembuatan pertanyaan tidak dapat digunakan. Coba siapkan pertanyaan lagi.",
+      null,
+    ],
+    [
+      "provenance",
+      "Asal respons pembuatan pertanyaan tidak dapat diverifikasi. Pertanyaan belum dapat digunakan.",
+      null,
+    ],
+    [
+      "validation_failed",
+      "Pertanyaan belum memenuhi persyaratan audit. Periksa kembali informasi bisnis Anda.",
+      0,
+    ],
+    [
+      "correction_required",
+      "Konfirmasi bisnis belum dapat digunakan. Kembali ke ringkasan dan periksa pilihan Anda.",
+      null,
+    ],
+    [
+      "preflight",
+      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+      null,
+    ],
+    [
+      "unknown",
+      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+      null,
+    ],
+    [
+      "missing_status",
+      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+      null,
+    ],
+    [
+      "missing_provenance",
+      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+      null,
+    ],
+    [
+      "connection_live",
+      "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima.",
+      null,
+    ],
+    [
+      "connection_synthetic",
+      "Permintaan pembuatan pertanyaan terputus. Pertanyaan belum diterima.",
+      null,
+    ],
+    [
+      "no_json",
+      "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima.",
+      null,
+    ],
+    [
+      "internal_error",
+      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+      null,
+    ],
+  ] as const)(
+    "PR121 defensive alert/accounting %s ignores MOCK_ONLY text",
+    async (kind, message, cost) => {
+      const prepared = prepareUnderstanding({
+        draft: extractionDraftSchema.parse(draft),
+        typedName: "Kedai Fiksi",
+        discoveredName: null,
+        canonicalSource: "https://kedai-fiksi.example/",
+      });
+      const base = initialSmartSelection(prepared);
+      const selection = {
+        ...base,
+        targetCustomer: "pekerja sekitar",
+        decisionConsiderations: ["lokasi", "harga"],
+        differentiator: "kopi segar",
+        origins: {
+          ...base.origins,
+          targetCustomer: "owner" as const,
+          decisionConsiderations: "owner" as const,
+          differentiator: "owner" as const,
+        },
+      };
+      window.sessionStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify({
+          ...freshSmartSession(),
+          stage: "summary",
+          prepared,
+          selection,
+        }),
+      );
+      const requests: unknown[] = [];
+      const fetchMock = vi.fn(
+        async (url: RequestInfo | URL, init?: RequestInit) => {
+          expect(String(url)).toBe("/api/audit/glm-questions");
+          requests.push(JSON.parse(String(init?.body)));
+          if (kind.startsWith("connection"))
+            throw new Error("MOCK_ONLY_CLIENT_EXCEPTION");
+          if (kind === "no_json")
+            return new Response("MOCK_ONLY_INVALID_JSON", { status: 502 });
+          const status =
+            kind === "validation_failed" || kind === "correction_required"
+              ? kind
+              : kind === "missing_status"
+                ? undefined
+                : kind === "unknown"
+                  ? "MOCK_ONLY_STATUS"
+                  : kind === "missing_provenance"
+                    ? "ok"
+                    : "failed";
+          return Response.json(
+            {
+              status,
+              reason: kind,
+              code:
+                kind === "preflight" ? "LIVE_CREDENTIALS_MISSING" : undefined,
+              detail: "MOCK_ONLY_DETAIL",
+              error: "MOCK_ONLY_ERROR",
+              issues: ["MOCK_ONLY_ISSUES"],
+              questions: ["MOCK_ONLY_REJECTED"],
+              ...(kind === "internal_error" || kind === "missing_provenance"
+                ? {}
+                : {
+                    provenance: {
+                      requestId: "mock",
+                      method: "direct-ten",
+                      requestedModel: "glm-5.3-flash",
+                      returnedModel: "MOCK_ONLY_MODEL",
+                      responseId: "MOCK_ONLY_RESPONSE",
+                      modelMismatch: true,
+                      transport: "cheaper-inference",
+                    },
+                  }),
+              providerContact:
+                kind === "preflight"
+                  ? "none"
+                  : kind === "internal_error" ||
+                      kind.startsWith("missing") ||
+                      kind === "unknown"
+                    ? undefined
+                    : "responded",
+              cost: { billedUsd: cost, available: cost !== null },
+              identitiesWithheld: true,
+            },
+            {
+              status:
+                kind === "internal_error"
+                  ? 500
+                  : kind === "preflight"
+                    ? 503
+                    : 200,
+            },
+          );
+        },
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      const live = kind !== "connection_synthetic";
+      render(<SmartIntakeJourney live={live} />);
+      const confirm = await screen.findByRole("button", {
+        name: "Sudah sesuai — buat pertanyaan audit",
+      });
+      fireEvent.click(confirm);
+      fireEvent.click(confirm);
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe(message);
+      expect(document.body.textContent).not.toContain("MOCK_ONLY");
+      const saved = parseSmartSession(
+        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      )!;
+      expect(saved.pack).toBeNull();
+      expect(saved.selection).toEqual(selection);
+      expect(saved.frozen!.context.targetCustomer!.value).toBe(
+        selection.targetCustomer,
+      );
+      expect(saved.frozen!.context.decisionConsiderations!.value).toEqual(
+        selection.decisionConsiderations,
+      );
+      expect(saved.frozen!.context.differentiator!.value).toBe(
+        selection.differentiator,
+      );
+      expect(screen.queryByRole("button", { name: "Mulai audit" })).toBeNull();
+      const noWork = kind === "preflight" || kind === "correction_required";
+      const uncertain =
+        kind === "unknown" ||
+        kind.startsWith("missing") ||
+        kind.startsWith("connection") ||
+        kind === "no_json" ||
+        kind === "internal_error";
+      expect(saved.generationAttempts).toHaveLength(noWork ? 0 : 1);
+      if (!noWork)
+        expect(saved.generationAttempts[0]).toMatchObject({
+          outcome: uncertain ? "interrupted" : "failed",
+          execution: uncertain ? "unknown" : "confirmed",
+          cost_usd: uncertain ? null : cost,
+        });
+      const raw = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
+      expect(raw).not.toMatch(/MOCK_ONLY|identitiesWithheld/);
+      cleanup();
+      render(<SmartIntakeJourney live={live} />);
+      const retry = await screen.findByRole("button", {
+        name: "Coba siapkan pertanyaan",
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(
+        parseSmartSession(
+          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        )!.generationAttempts,
+      ).toEqual(saved.generationAttempts);
+      fireEvent.click(retry);
+      fireEvent.click(retry);
+      await screen.findByRole("alert");
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(requests[1]).toEqual(requests[0]);
+    },
+  );
+
   it("maps incomplete by structured reason and preserves frozen JQ context on explicit retry (R-30)", async () => {
     const prepared = prepareUnderstanding({
       draft: extractionDraftSchema.parse(draft),
@@ -352,7 +820,9 @@ describe("smart blank intake", () => {
       });
       if (contact === "interrupted")
         expect(screen.getByRole("alert").textContent).toBe(
-          "mock dropped response",
+          initialLive
+            ? "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima."
+            : "Permintaan pembuatan pertanyaan terputus. Pertanyaan belum diterima.",
         );
       cleanup();
       render(<SmartIntakeJourney live={currentLive} />);

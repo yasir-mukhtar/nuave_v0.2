@@ -6,6 +6,20 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-04 — approve PR121 public question-error correction
+
+Alfred, under delegated founder authority, approves the bounded public API/UI
+projection recorded in Spec 013 R-30/AC-18. The unresolved PR121 thread
+`discussion_r4176528975` is a release blocker; the parent owns its disposition.
+Failure text, rejected content, diagnostics and provider-controlled failure IDs
+are withheld explicitly. Internal identities/evidence and validated billing,
+known preflight refusal versus uncertain execution, accepted success and retry
+gates remain unchanged. Scope is only the question endpoint and its UI, one
+pure helper and nearby regressions. No new persistence, live spend, dependency,
+shared gate, instruction or other-stage change is approved. Founder successful
+prompts/report approval stands. Earlier review/gate covers the old head only;
+fresh review/CI are required. No merge, deploy or JZ closeout approval.
+
 ## 2026-10-04 — approve bounded JZ question-generation reliability correction
 
 Alfred (delegated founder authority) approved A+B; Mia's independent technical

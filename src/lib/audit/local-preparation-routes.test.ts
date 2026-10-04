@@ -35,6 +35,10 @@ const sourceMocks = vi.hoisted(() => ({
 vi.mock("@/lib/audit/source-identity", () => sourceMocks);
 
 import { GET as identityGET } from "../../app/api/audit/identity/route";
+import { POST as questionsPOST } from "../../app/api/audit/glm-questions/route";
+import * as gates from "./deployment-gate";
+import * as limiter from "./rate-limit";
+import * as questions from "../intake/glm-local";
 import { fetchWebsiteExcerpt } from "./source-excerpt";
 import {
   GET as extractGET,
@@ -42,6 +46,147 @@ import {
 } from "../../app/api/audit/extract/route";
 
 const SOURCE = "https://batiklaras.example";
+
+describe("PR121 question-only fixed preflights and ordering", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    providerMocks.assertLiveProviderCredentialsConfigured.mockReset();
+    vi.unstubAllGlobals();
+  });
+  it.each([
+    ["switch", 404, "AUDIT_DISABLED", "Audit tidak tersedia saat ini."],
+    [
+      "method",
+      400,
+      "INVALID_METHOD",
+      "Permintaan pembuatan pertanyaan tidak valid.",
+    ],
+    [
+      "limited",
+      429,
+      "RATE_LIMITED",
+      "Terlalu banyak permintaan, coba lagi dalam beberapa menit.",
+    ],
+    [
+      "limit_unavailable",
+      503,
+      "RATE_LIMIT_UNAVAILABLE",
+      "Perlindungan akses sedang tidak tersedia. Coba lagi nanti.",
+    ],
+    [
+      "credentials",
+      503,
+      "LIVE_CREDENTIALS_MISSING",
+      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+    ],
+    [
+      "stale",
+      409,
+      "STALE_INTAKE",
+      "Versi konfirmasi bisnis ini sudah lama. Mulai audit baru.",
+    ],
+    [
+      "missing",
+      400,
+      "INVALID_INTAKE",
+      "Konfirmasi bisnis belum dapat digunakan. Kembali ke ringkasan dan periksa pilihan Anda.",
+    ],
+  ] as const)(
+    "reconstructs %s without forwarding helper prose",
+    async (kind, status, code, message) => {
+      const hostile = () =>
+        Response.json(
+          {
+            error: "MOCK_ONLY_GATE_PROSE",
+            detail: "MOCK_ONLY_DETAIL",
+            arbitrary: "MOCK_ONLY_EXTRA",
+            code: "MOCK_ONLY_UNKNOWN",
+          },
+          { status },
+        );
+      const switched = vi
+        .spyOn(gates, "auditSwitchResponse")
+        .mockReturnValue(
+          kind === "switch"
+            ? (hostile() as ReturnType<typeof gates.auditSwitchResponse>)
+            : null,
+        );
+      const rate = vi
+        .spyOn(limiter, "enforceAuditCallerRateLimit")
+        .mockResolvedValue(
+          kind === "limited" || kind === "limit_unavailable"
+            ? (hostile() as Awaited<
+                ReturnType<typeof limiter.enforceAuditCallerRateLimit>
+              >)
+            : null,
+        );
+      const credentials = vi
+        .spyOn(gates, "auditLiveCredentialsResponse")
+        .mockReturnValue(
+          kind === "credentials"
+            ? (hostile() as ReturnType<
+                typeof gates.auditLiveCredentialsResponse
+              >)
+            : null,
+        );
+      const adapter = vi.spyOn(questions, "prepareGlmQuestionsForIntake");
+      const fetchSpy = vi.fn(() => {
+        throw new Error("MOCK_ONLY_NETWORK_FORBIDDEN");
+      });
+      vi.stubGlobal("fetch", fetchSpy);
+      const request = new Request(
+        "https://nuave.test/api/audit/glm-questions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: kind === "method" ? "MOCK_ONLY_METHOD" : "direct-ten",
+            ...(kind === "stale"
+              ? { intake: { version: "MOCK_ONLY_STALE" } }
+              : {}),
+          }),
+        },
+      );
+      const json = vi.spyOn(request, "json");
+      const response = await questionsPOST(request);
+      expect(response.status).toBe(status);
+      const text = await response.text();
+      expect(text).not.toContain("MOCK_ONLY");
+      expect(JSON.parse(text)).toEqual(
+        kind === "limited" || kind === "limit_unavailable"
+          ? { error: message, code }
+          : {
+              status:
+                kind === "method" || kind === "stale" || kind === "missing"
+                  ? "invalid_request"
+                  : "failed",
+              code,
+              error: message,
+              providerContact: "none",
+            },
+      );
+      expect(switched).toHaveBeenCalledTimes(1);
+      expect(json).toHaveBeenCalledTimes(kind === "switch" ? 0 : 1);
+      expect(rate).toHaveBeenCalledTimes(
+        kind === "switch" || kind === "method" ? 0 : 1,
+      );
+      expect(credentials).toHaveBeenCalledTimes(
+        kind === "switch" ||
+          kind === "method" ||
+          kind === "limited" ||
+          kind === "limit_unavailable"
+          ? 0
+          : 1,
+      );
+      if (credentials.mock.calls.length)
+        expect(rate.mock.invocationCallOrder[0]).toBeLessThan(
+          credentials.mock.invocationCallOrder[0]!,
+        );
+      expect(adapter).not.toHaveBeenCalled();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    },
+  );
+});
 
 function liveIdentity() {
   return {

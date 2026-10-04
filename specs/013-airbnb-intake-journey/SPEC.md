@@ -306,6 +306,7 @@ until JQ those answers lived on the review screen (R-20).
   generation boundary; historical Specs 009/010 are not rewritten.
   Spec 009's verbatim source, research method, three sections and ten-question
   acceptance remain authoritative. R-24 extraction is unchanged.
+  - Question-generation errors exposed by the public API and UI use fixed Indonesian messages selected from allowlisted status/reason/code, never provider/transport/exception prose or extractor excerpts. Non-success public responses redact provider-controlled failure text, rejected content and restricted diagnostics/identities, while preserving structured classification, validated accounting and explicit identity-redaction semantics. Exact internal provenance and restricted evidence policy stay unchanged. Preflight refusal and uncertain execution remain distinct. The incomplete alert and remount-safe prospective retry notice remain unchanged.
   - Reject every non-`stop` completion, even complete-looking ten-question
     text marked `length`. No repair, fallback, partial pack or automatic retry.
   - For structured failed reason `incomplete`, show exactly, with `role=alert`:
@@ -451,6 +452,13 @@ until JQ those answers lived on the review screen (R-20).
   before separate merge approval. No new full journey drive or live efficacy
   measurement is required by this bounded correction. Full-spec Verified and
   JZ closeout remain parent-owned, not implied by this acceptance criterion.
+  The approved PR121 security extension also requires full serialized-error
+  sentinel regressions, fixed copy for every defined failure/preflight category,
+  hostile bypassed-serializer UI tests, explicit failed-identity redaction,
+  internal fidelity and unchanged success, accounting uncertainty without
+  partial packs/extra sends, and the canonical offline gate. Fresh independent
+  exact-head review, required CI and parent-verified thread disposition are
+  required before a separate merge decision; earlier PASS is not transferable.
 
 ## Delivery slices
 
