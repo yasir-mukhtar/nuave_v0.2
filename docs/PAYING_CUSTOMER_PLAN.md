@@ -42,7 +42,7 @@ done.
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder | Paused; awaiting separate Stage 2 instruction | — | — |
 | S1 | Security patches | Worker | Done; pulled forward, merged | [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110#issuecomment-5956716058) (`9cca862`; production audit clean, dev-only findings disclosed) |
-| S2 | Spending cap on the server | Worker | Not started | — | — |
+| S2 | Spending cap on the server | Worker | Foundation prepared; integration/live verification pending | — | — |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |
 | S5 | Terms, price and promise wording | Worker | Not started | — | — |
@@ -468,6 +468,18 @@ passes.
 
 *Done when:* a test shows the cap blocks work after the limit and survives a
 restart.
+
+*Foundation status (2026-10-04):* an unused server-owned ledger module
+(`src/lib/spending/`) carrying the authored conditional-insert admission SQL
+and integer-unit semantics is prepared on `feat/s2-ledger-foundation-20261004`,
+proven against real local SQLite. That is offline evidence only — not
+Cloudflare D1 compatibility, binding or provisioning proof. `reserved_day_utc`
+is the UTC reservation/admission bucket, not evidence of an actual dispatch;
+integration must define and store actual dispatch consistently before the
+ledger can back billing claims. Provider price bounds and SDK retry accounting
+are not solved. Nothing in production calls this code, so no synthetic success
+or live-cap guarantee is claimed; the milestone is not done until the cap is
+integrated, verified live and shown to survive restart.
 
 **S3 — Save and deliver reports; audit survives tab close** (worker, Stage 2
 spec, ~6–9 days including the order summary, the largest build in Stage 2;

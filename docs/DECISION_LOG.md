@@ -6,6 +6,33 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-04 — overnight delegation and S2 spend-ledger foundation
+
+With Yasir asleep, he authorized continuing the backlog with Fox as his
+representative, including explicit merge and deployment delegation, plus a
+separate up-to-USD-5 total paid agent API allowance. USD 0 of it was used
+in the S2 foundation task and no paid calls were made. The September
+agent-allowance record, earlier dated budgets and the production
+USD 1 daily cap are unchanged; this entry resets none of them.
+
+Fox scope decision `7daed2e8` approved only this foundation slice: an
+unused provider-spend ledger module (`src/lib/spending/`) holding the
+Pac-authored conditional-insert SQL and integer-unit semantics, proven on
+real local SQLite, with narrow truthful documentation updates. It changes
+no live, provider or application behavior: nothing imports it outside its
+test, no schema runs automatically, and no production binding exists.
+Release — PR, exact-head review, merge and deploy — is delegated for the
+session's approved work but was pending at record time.
+
+The running audit still trusts browser-sent cost history, so this slice
+does not claim S2 complete, enforced or a live-cap guarantee. Real local
+SQLite is offline evidence, not Cloudflare D1 compatibility or provisioning
+proof; `reserved_day_utc` is the UTC reservation/admission bucket, not
+evidence of an actual dispatch, and price bounds plus SDK retry accounting
+are unsolved. The held Spec 015 draft at `582f426` stays unapproved and is
+not implementation context. Deferred polish and the disclosed
+enforcement-gap and preview-cleanup findings are unchanged.
+
 ## 2026-10-04 PR120 JQ status finding assessed
 
 Yasir asked Pac to coordinate resolution of PR #120 and supplied the withheld

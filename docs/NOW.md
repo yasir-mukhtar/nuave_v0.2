@@ -1,8 +1,8 @@
 # Nuave now
 
 > Updated: 2026-10-04
-> Stage: Stage 1 accepted; repository-baseline preparation in progress
-> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); Stage 2 remains paused
+> Stage: Stage 1 accepted; S2 spend-ledger foundation in progress
+> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); Stage 2 resumes only this foundation slice
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
 ## Current state
@@ -29,22 +29,30 @@
 
 ## Next action
 
-- **Active action: finish the documentation baseline in [PR #120](https://github.com/yasir-mukhtar/nuave_v0.2/pull/120).**
-  The supplied JQ milestone finding has been assessed: the current ledger,
-  spec and verification record close JQ. Retain frozen slice results as history,
-  not active handoff instructions. Complete fresh independent review and
-  exact-head CI before separate merge authorization. This is documentation
-  reconciliation, not new JQ implementation or Stage 2 approval.
+- **Active action: the S2 spend-ledger foundation** on
+  `feat/s2-ledger-foundation-20261004` — an unused server-owned ledger
+  module (`src/lib/spending/`) with authored conditional-insert admission
+  semantics, proven on real local SQLite. Status: **S2 ledger foundation
+  only; provider integration, Cloudflare binding and live enforcement
+  pending.** The proof is offline evidence, not D1 compatibility or
+  provisioning proof, and `reserved_day_utc` is the UTC reservation-time
+  bucket, not evidence of an actual dispatch. The running audit still
+  trusts browser-sent cost history; this unused code protects nothing yet.
+- **Named engineering follow-up:** verify the D1 binding and billable
+  provider price bounds, integrate the ledger into every paid dispatch
+  including SDK retries, then the approved S3 spec.
 - **JZ is complete.** The [existing closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
   records its merge, checks and evidence exceptions; do not repeat acceptance.
-- **Stage 2 remains paused.** Spec 015 exists only as an unmerged local draft
-  on `docs/stage2-paid-report-spec` at `582f426`; it is held, not approved and
-  not present on main. S0/Stage 2 implementation and outside users require a
+- **Stage 2 resumes only this foundation.** Spec 015 exists only as an
+  unmerged local draft on `docs/stage2-paid-report-spec` at `582f426`; it is
+  held, not approved, not present on main and not implementation context.
+  S0/Stage 2 implementation beyond this slice and outside users require a
   separate next-stage instruction. No spending allowance is reset.
 - **Polish waits until all intended screens exist**, for one later pass.
-  [Current delegation and limits](./DECISION_LOG.md#2026-10-04-trustworthy-baseline-and-deferred-polish):
-  Fox handles scoped baseline decisions; Pac coordinates delivery. Merge,
-  closure, deletion, privacy/spending changes and live actions remain separate.
+  [Current delegation and limits](./DECISION_LOG.md#2026-10-04--overnight-delegation-and-s2-spend-ledger-foundation):
+  with Yasir asleep he authorized the backlog with Fox as representative,
+  including explicit merge/deployment delegation; Pac coordinates delivery.
+  PR120 is merged and deployed (below). Release of this branch is pending.
 
 ## Rules still in force
 
@@ -58,25 +66,30 @@
   reduce bursts but are not a hard cap. The 2026-08-20 "interim exposure" row
   in [`DECISION_LOG.md`](./DECISION_LOG.md) requires a server-side guard
   before sharing the link beyond direct outreach.
-- **Live AI calls by agents** need a named founder approval; earlier
-  allowances are used up. Agent-run spend was USD 1.06241155 of a USD 5
-  allowance on 2026-09-27; update this line after each approved agent run.
-  The founder's own test runs (plan §5, JZ) are not counted here; the
-  provider dashboards show total spend.
+- **Live AI calls by agents** need a named founder approval. Agent-run
+  spend was USD 1.06241155 of the September USD 5 allowance on 2026-09-27.
+  The 2026-10-04 overnight delegation adds a separate up-to-USD-5 total
+  paid agent API allowance; USD 0 used in the S2 foundation task — no calls
+  were made. Earlier dated budgets are not reset and the production USD 1
+  daily cap is unchanged. The founder's own test runs (plan §5, JZ) are not
+  counted here; the provider dashboards show total spend.
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
   engagement only. This does not reset the separately dated September allowance
-  usage above. Founder-run charges remain unknown; no new spending is authorized.
+  usage above. Founder-run charges remain unknown; the later 2026-10-04
+  delegation allowance is recorded in the Live-AI-calls line.
 - **Private evidence stays out of Git:** `.local-evidence/` and `.secrets/`
   (both ignored). The old `devin/sol-smart-consultant-intake-plan` branch's
   uncommitted files are in `.local-evidence/branch-closeout-20260927/`.
 
 ## Deployment
 
-- **Current main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37198166636)
-  validated `613f1b3` and passed the merged-PR-origin gate and deployment.
-  [Closeout record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
-  reports worker version `00a8c286-d344-4a80-8954-2a0d2f2c9b4c`. This is recorded
-  release evidence, not a fresh browser drive, provider call or live report.
+- **Current main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37208096086)
+  on merged PR #120 (`62b5b51`) completed with conclusion success; validate,
+  `verify-main-origin` and deploy passed and worker `nuave-v2` shipped version
+  `f29ae355-b1d2-4ad8-8f97-e2a0a8d45945`. Prior release: PR #122 closeout
+  `613f1b3`, worker `00a8c286-d344-4a80-8954-2a0d2f2c9b4c` ([record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)).
+  This is recorded release evidence, not a fresh browser drive, provider call
+  or live report.
 - **Repository enforcement:** GitHub reports PRIVATE/unprotected main; protection
   APIs return HTTP 403. Mandatory review/release rules remain, but enforcement
   readiness is unresolved; no visibility, billing or settings change is approved.
