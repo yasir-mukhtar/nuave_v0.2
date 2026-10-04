@@ -6,6 +6,59 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-04 PR120 JQ status finding assessed
+
+Yasir asked Pac to coordinate resolution of PR #120 and supplied the withheld
+Devin Review finding, "Milestone records disagree on JQ closeout." At the
+original PR head `869c9f1`, NOW routed to JZ while the ledger still marked JQ
+in progress and Spec 013 retained active/pending JQ status. The finding was
+valid for that revision; it was not an application failure.
+
+Current main `613f1b3` already records JQ as merged with independent PASS in
+[the ledger](./PAYING_CUSTOMER_PLAN.md#1-progress-ledger), and qualified JZ
+acceptance in [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md#verification-record)
+and [final verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout).
+This follow-up incorporates those closeouts, reconciles shared routing and
+updates current pre-merge documentation references to the completed
+[PR #122 closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013).
+Frozen slice outcomes and evidence exceptions remain history, not active
+handoff instructions; no completed implementation or live test is repeated.
+
+The supplied finding is assessed and addressed by this reconciliation. That
+does not claim its Devin Review UI item was marked resolved or that a later
+automated review has no findings. The earlier access-blocker record remains
+historical. Fresh exact-head independent review and GitHub checks are required.
+This bounded documentation follow-up grants no merge, deployment, PR closure,
+deletion, settings/spending change, Stage 2 implementation or customer exposure.
+
+## 2026-10-04 trustworthy baseline and deferred polish
+
+Yasir accepted the repository-baseline recommendation and asked Pac to
+coordinate one current, verified main with accurate status. Clean means a
+trustworthy starting point, not deleting retained drafts, branches or evidence.
+Yasir deferred experience and design polish until all intended screens exist,
+so it can be done in one pass.
+
+Yasir then said, "Fox, take over from me." Within this baseline task, Fox
+approved safe local-only fast-forward synchronization and preparation of the
+existing PR #120 documentation correction. Pac retains technical coordination;
+Imu implements a bounded brief and Rev independently reviews the exact result.
+This is scoped delegation, not a standing replacement for founder approval.
+
+Merge, deployment, PR closure, deletion, visibility or billing changes, live
+cleanup, new spending and customer exposure remain separately permissioned.
+Stage 2 implementation is not authorized. The local Spec 015 draft stays held;
+older draft decisions and allowances do not override the current main pause.
+
+JZ's canonical closeout is complete in [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013),
+merged as `613f1b3`; the existing evidence exceptions remain. Current routing
+updates do not reopen JZ acceptance or require another recursive closeout.
+
+Observed repository enforcement is private/unprotected; the protection and
+ruleset APIs return HTTP 403. This entry records the discrepancy, not permission
+to weaken rules, change visibility or buy a subscription. The withheld PR #120
+review finding and PR #121/#122 preview-cleanup failures remain unresolved.
+
 ## 2026-10-04 — accept JZ with documented evidence exceptions; Stage 2 not authorized
 
 Alfred **accepts JZ** under Yasir's delegated completion authority on 2026-10-04.
@@ -94,6 +147,29 @@ with cross-references, not changes to historical Specs 009/010.
 - Spec 013 remains Implementing; JZ is founder-result-accepted with this narrow
   correction pending independent exact-head review after its offline gate.
   Parent owns later closeout; no Stage 2, outside users, merge or deploy approval.
+
+## 2026-10-03 — Park optional PRs until an explicit founder request
+
+Decided directly by Yasir: [PR #115](https://github.com/yasir-mukhtar/nuave_v0.2/pull/115)
+(autonomous workflow documentation), [PR #116](https://github.com/yasir-mukhtar/nuave_v0.2/pull/116)
+(CI browser-artifact pilot), and [PR #102](https://github.com/yasir-mukhtar/nuave_v0.2/pull/102)
+(Spec 014 website/free-check experiment) are parked outside the main work.
+
+Close them without merging or deleting their branches. Preserve their work,
+evidence, owner records and existing budgets. They must not appear in routine
+backlog, status, blocker or notification reports, and agents must not inspect,
+resume, repair, test, update or reopen them unless Yasir explicitly names the
+relevant PR or topic and asks to inspect or continue it. Do not proactively
+ask to restart them. A broad instruction to work autonomously or tackle the
+backlog is not permission to reactivate them.
+
+Minimal metadata may be read to exclude these items from active work.
+Inspection permission is not implementation approval; a request to resume
+does not reset a budget or waive specification, review or release gates.
+Their unmerged branch material is not active product context. The main
+plan's landing-page milestone and existing engineering/review requirements
+remain in force. This supersedes older instructions to queue or update these
+three PRs. The standing rule is in [AGENTS.md](../AGENTS.md#parked-work).
 
 ## 2026-10-02 — JQ decisions: the three retained customer questions return as dedicated optional screens
 

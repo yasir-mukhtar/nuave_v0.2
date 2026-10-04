@@ -23,6 +23,32 @@ internal engineering change with no customer-visible behavior change needs no
 spec; its checkable finish condition goes in the PR description (see
 `docs/WORKFLOW.md`, Specification gate).
 
+## Parked work
+
+Founder decision, 2026-10-03: these PRs are outside the active product work:
+
+- #115: autonomous workflow documentation.
+- #116: CI browser-artifact pilot.
+- #102: Spec 014 website/free-check experiment.
+
+Unless Yasir explicitly names the relevant PR or topic and asks to inspect
+or resume it, do not inspect its branch-only material, monitor its progress,
+resume or repair it, run its tests, dispatch agents for it, update/reopen/merge
+it, recommend it as next work, or mention it in routine status, backlog,
+blocker or notification reports. Broad autonomy/backlog requests are not
+reactivation. Minimal metadata may be read solely to filter these items out.
+Do not proactively ask to restart them.
+
+Preserve their branches, evidence, owner records and recorded budgets.
+Permission to inspect does not authorize implementation; permission to resume
+does not reset budgets or waive release gates. Parking #102 does not cancel
+the main plan's landing-page milestone. Parking #115/#116 does not weaken
+existing engineering or independent-review requirements. Their unmerged
+branch material is not active context for the main product work.
+
+This decision supersedes older handoffs that queued or requested updates to
+these PRs; see [docs/DECISION_LOG.md](./docs/DECISION_LOG.md).
+
 ## Working rules
 
 1. Use plain language and explain unavoidable technical terms.
@@ -72,13 +98,19 @@ For implementation work:
    not permanent protections.
 7. Do not merge, deploy, or make live provider calls unless the founder
    explicitly authorizes that action. Merge and deploy stay with the founder.
-8. This repository is public. GitHub branch protection on `main` requires a
-   pull request with the `validate` CI check green on an up-to-date branch,
-   requires resolved conversations, and blocks force pushes and branch
-   deletion. Direct pushes to `main` remain prohibited.
+8. Repository policy requires a pull request with `validate` green on an
+   up-to-date branch, resolved conversations and independent exact-head review.
+   Direct pushes to `main` remain prohibited. Force pushes, branch deletion and
+   bypassing release gates are not authorized by a routine repository task.
+   GitHub currently reports this repository as private and `main` as unprotected
+   (observed 2026-10-04); protection and ruleset APIs require GitHub Pro or public
+   visibility. Do not claim these rules are enforced by GitHub or change
+   visibility, billing or settings without the founder's explicit approval.
+   Manual checks are not equivalent to enforced branch protection; report the
+   unresolved enforcement gap rather than inferring a waiver.
    CI must keep the `verify-main-origin` deployment gate: a `main` commit without
    an associated merged pull request must fail that gate and must not deploy.
-   The gate remains a second layer under the branch-protection rule.
+   This gate does not substitute for branch protection or release authorization.
 
 ## UI stack and presentation rules
 

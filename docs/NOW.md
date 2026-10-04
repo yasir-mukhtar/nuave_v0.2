@@ -1,8 +1,8 @@
 # Nuave now
 
 > Updated: 2026-10-04
-> Stage: Stage 1 of the [paying-customer plan](./PAYING_CUSTOMER_PLAN.md):
-> intake journey accepted; canonical docs closeout pending
+> Stage: Stage 1 accepted; repository-baseline preparation in progress
+> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); Stage 2 remains paused
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
 ## Current state
@@ -20,7 +20,7 @@
   PR121 merged, the latter deployed. Alfred accepted JZ under delegated founder
   authority, with Yasir's successful-result approval and the composite
   [verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout).
-  Canonical docs review/merge remains pending. Also verified:
+  Canonical docs merged in [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013). Also verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
   AC-18 exception). Checkpoint: [2026-09-19 live report](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
@@ -29,14 +29,22 @@
 
 ## Next action
 
-- **Active action: reviewed docs-only JZ closeout.** JZ is accepted, not awaiting
-  another code review or founder live test. Parent inspects and publishes the
-  five-file reconciliation, obtains a fresh independent docs verdict and
-  exact-head checks, and records the actual merge. No future PR URL is asserted.
-- **After this closeout, await a separate next-stage instruction.
-  S0/Stage 2 and outside users are not authorized.** The
-  [latest decision](./DECISION_LOG.md#2026-10-04--accept-jz-with-documented-evidence-exceptions-stage-2-not-authorized)
-  controls dispatch despite the plan's eventual Stage 2 sequence.
+- **Active action: finish the documentation baseline in [PR #120](https://github.com/yasir-mukhtar/nuave_v0.2/pull/120).**
+  The supplied JQ milestone finding has been assessed: the current ledger,
+  spec and verification record close JQ. Retain frozen slice results as history,
+  not active handoff instructions. Complete fresh independent review and
+  exact-head CI before separate merge authorization. This is documentation
+  reconciliation, not new JQ implementation or Stage 2 approval.
+- **JZ is complete.** The [existing closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
+  records its merge, checks and evidence exceptions; do not repeat acceptance.
+- **Stage 2 remains paused.** Spec 015 exists only as an unmerged local draft
+  on `docs/stage2-paid-report-spec` at `582f426`; it is held, not approved and
+  not present on main. S0/Stage 2 implementation and outside users require a
+  separate next-stage instruction. No spending allowance is reset.
+- **Polish waits until all intended screens exist**, for one later pass.
+  [Current delegation and limits](./DECISION_LOG.md#2026-10-04-trustworthy-baseline-and-deferred-polish):
+  Fox handles scoped baseline decisions; Pac coordinates delivery. Merge,
+  closure, deletion, privacy/spending changes and live actions remain separate.
 
 ## Rules still in force
 
@@ -64,7 +72,17 @@
 
 ## Deployment
 
-- **PR121 release:** [main CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
+- **Current main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37198166636)
+  validated `613f1b3` and passed the merged-PR-origin gate and deployment.
+  [Closeout record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
+  reports worker version `00a8c286-d344-4a80-8954-2a0d2f2c9b4c`. This is recorded
+  release evidence, not a fresh browser drive, provider call or live report.
+- **Repository enforcement:** GitHub reports PRIVATE/unprotected main; protection
+  APIs return HTTP 403. Mandatory review/release rules remain, but enforcement
+  readiness is unresolved; no visibility, billing or settings change is approved.
+- **Additional operational finding:** [PR #122 closed-preview removal failed](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979315878).
+  Existence, cause and exposure are not established; no remediation is authorized.
+- **PR121 earlier release:** [main CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
   validated/deployed `d7a2f50fddafae222eb62dbabaec5497010743b8`, the same tree as
   reviewed `7aa6fc9a08d141ecab03ff98e05a06408ade405d`.
   [Deployment job](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597/job/111407548044)
@@ -115,6 +133,7 @@ Dependency alerts remain unassessed by the JZ acceptance, not waived or resolved
 
 ## Not now
 
+- Standing task exclusions remain in [AGENTS.md](../AGENTS.md#parked-work); broad cleanup does not reactivate them.
 - The plan's [parking lot](./PAYING_CUSTOMER_PLAN.md#6-parking-lot-after-we-have-paying-customers),
   including the open questions, waits until after the first paying customer.
 - Non-scope: [`END_TO_END_PLAN.md` §12](./END_TO_END_PLAN.md#12-explicit-non-scope-through-initial-launch),

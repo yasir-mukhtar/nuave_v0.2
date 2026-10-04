@@ -51,13 +51,17 @@ any, and the active milestone. The entries below record each package's
 latest status.
 
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
-  — **Implementing** (approved 2026-09-27); J2–J7 merged with PASS;
-  JQ active, with founder signoff remaining. Review evidence:
-  [plan §1](../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger) and
-  [slice verification](./013-airbnb-intake-journey/VERIFICATION.md).
-  Stage 1 of the paying-customer plan: the Airbnb-style
-  one-question-per-screen intake, keeping today's rules and information
-  (J1 decisions F1–F18). Slices J2–J7 and JQ.
+  — **Verified with documented evidence exceptions** (2026-10-04).
+  J2–J7/JQ are merged; delegated JZ acceptance and canonical closeout are
+  recorded in [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013).
+  [Final verification](./013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout)
+  retains the qualifications and historical results; this is not an unqualified
+  fresh independent exercise of every criterion. Stage 2 is not authorized.
+
+- Spec 015, paid report delivery, is an **unmerged local Draft, held** on
+  `docs/stage2-paid-report-spec` at `582f426`. It is not present on main,
+  approved or implementation-authorizing. Follow
+  [current routing](../docs/NOW.md#next-action), not older draft authority.
 
 - [`012-evidence-first-report/SPEC.md`](./012-evidence-first-report/SPEC.md)
   — **Verified with founder-approved exception (AC-18)** (2026-09-26,
