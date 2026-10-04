@@ -6,6 +6,11 @@ import {
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import { prepareGlmQuestionsForIntake } from "@/lib/intake/glm-local";
 import { SMART_INTAKE_INPUT_VERSION } from "@/lib/intake/smart-intake-contract";
+import {
+  projectQuestionOutcome,
+  questionPreflightError,
+  questionUnexpectedError,
+} from "@/lib/intake/question-public-errors";
 
 export const runtime = "nodejs";
 
@@ -20,63 +25,73 @@ export const runtime = "nodejs";
  * stays server-side.
  */
 export async function POST(request: Request) {
-  const switchedOff = auditSwitchResponse();
-  if (switchedOff) return switchedOff;
+  try {
+    const switchedOff = auditSwitchResponse();
+    if (switchedOff)
+      return NextResponse.json(questionPreflightError("AUDIT_DISABLED"), {
+        status: switchedOff.status,
+      });
 
-  const body = await request.json().catch(() => null);
-  const record =
-    body && typeof body === "object" && !Array.isArray(body)
-      ? (body as Record<string, unknown>)
-      : null;
-  // Method acceptance runs before any further body validation or provider
-  // work. The approved Spec 009 method is the only one the public route
-  // serves; "glm-slots" and unknown values are rejected outright.
-  if (record?.method !== "direct-ten") {
-    return NextResponse.json(
-      {
-        status: "invalid_request",
-        detail: 'unknown question-generation method — expected "direct-ten"',
-      },
-      { status: 400 },
+    const body = await request.json().catch(() => null);
+    const record =
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : null;
+    // Method acceptance runs before any further body validation or provider
+    // work. The approved Spec 009 method is the only one the public route
+    // serves; "glm-slots" and unknown values are rejected outright.
+    if (record?.method !== "direct-ten") {
+      return NextResponse.json(questionPreflightError("INVALID_METHOD"), {
+        status: 400,
+      });
+    }
+    const rateLimited = await enforceAuditCallerRateLimit(
+      request,
+      (bindings) => bindings.glmCaller,
     );
-  }
-  const rateLimited = await enforceAuditCallerRateLimit(
-    request,
-    (bindings) => bindings.glmCaller,
-  );
-  if (rateLimited) return rateLimited;
+    if (rateLimited) {
+      const projected = questionPreflightError(
+        rateLimited.status === 429 ? "RATE_LIMITED" : "RATE_LIMIT_UNAVAILABLE",
+      );
+      return NextResponse.json(
+        { error: projected.error, code: projected.code },
+        { status: rateLimited.status },
+      );
+    }
 
-  const credentialsError = auditLiveCredentialsResponse("question generation");
-  if (credentialsError) return credentialsError;
-
-  if (
-    record?.intake &&
-    typeof record.intake === "object" &&
-    (record.intake as { version?: unknown }).version !==
-      SMART_INTAKE_INPUT_VERSION
-  ) {
-    return NextResponse.json(
-      {
-        status: "invalid_request",
-        detail: "Versi konfirmasi bisnis ini sudah lama. Mulai audit baru.",
-      },
-      { status: 409 },
+    const credentialsError = auditLiveCredentialsResponse(
+      "question generation",
     );
-  }
+    if (credentialsError)
+      return NextResponse.json(
+        questionPreflightError("LIVE_CREDENTIALS_MISSING"),
+        { status: credentialsError.status },
+      );
 
-  if (!record || !("intake" in record)) {
-    return NextResponse.json(
-      {
-        status: "invalid_request",
-        detail: "body must carry the confirmed frozen intake record",
-      },
-      { status: 400 },
-    );
-  }
+    if (
+      record?.intake &&
+      typeof record.intake === "object" &&
+      (record.intake as { version?: unknown }).version !==
+        SMART_INTAKE_INPUT_VERSION
+    ) {
+      return NextResponse.json(questionPreflightError("STALE_INTAKE"), {
+        status: 409,
+      });
+    }
 
-  const outcome = await prepareGlmQuestionsForIntake({
-    intake: record.intake,
-    stubBehavior: record.stubBehavior,
-  });
-  return NextResponse.json(outcome);
+    if (!record || !("intake" in record)) {
+      return NextResponse.json(questionPreflightError("INVALID_INTAKE"), {
+        status: 400,
+      });
+    }
+
+    const outcome = await prepareGlmQuestionsForIntake({
+      intake: record.intake,
+      stubBehavior: record.stubBehavior,
+    });
+    return NextResponse.json(projectQuestionOutcome(outcome));
+  } catch {
+    // Execution may already have started: never fabricate no work or zero cost.
+    return NextResponse.json(questionUnexpectedError(), { status: 500 });
+  }
 }

@@ -98,13 +98,19 @@ For implementation work:
    not permanent protections.
 7. Do not merge, deploy, or make live provider calls unless the founder
    explicitly authorizes that action. Merge and deploy stay with the founder.
-8. This repository is public. GitHub branch protection on `main` requires a
-   pull request with the `validate` CI check green on an up-to-date branch,
-   requires resolved conversations, and blocks force pushes and branch
-   deletion. Direct pushes to `main` remain prohibited.
+8. Repository policy requires a pull request with `validate` green on an
+   up-to-date branch, resolved conversations and independent exact-head review.
+   Direct pushes to `main` remain prohibited. Force pushes, branch deletion and
+   bypassing release gates are not authorized by a routine repository task.
+   GitHub currently reports this repository as private and `main` as unprotected
+   (observed 2026-10-04); protection and ruleset APIs require GitHub Pro or public
+   visibility. Do not claim these rules are enforced by GitHub or change
+   visibility, billing or settings without the founder's explicit approval.
+   Manual checks are not equivalent to enforced branch protection; report the
+   unresolved enforcement gap rather than inferring a waiver.
    CI must keep the `verify-main-origin` deployment gate: a `main` commit without
    an associated merged pull request must fail that gate and must not deploy.
-   The gate remains a second layer under the branch-protection rule.
+   This gate does not substitute for branch protection or release authorization.
 
 ## UI stack and presentation rules
 

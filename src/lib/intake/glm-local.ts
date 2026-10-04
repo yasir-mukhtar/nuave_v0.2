@@ -45,6 +45,7 @@ import {
   buildDirectTenQuestionRequest,
   buildDirectTenWriterBrief,
   extractDirectTenQuestions,
+  INDONESIAN_QUESTION_DIRECT_TEN_INSTRUCTION_VERSION,
   validateDirectTenQuestionPack,
 } from "../audit/questions-id-direct-ten";
 import {
@@ -191,6 +192,13 @@ async function recordLiveEvidence(
   dir: string,
   requestHash: string,
   envelope: GlmTransportEnvelope,
+  metadata: {
+    diagnostics: NonNullable<
+      Extract<GlmQuestionsOutcome, { status: "failed" }>["diagnostics"]
+    >;
+    provenance: GlmPackProvenance;
+    cost: ReturnType<typeof failedCost>;
+  },
 ): Promise<void> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const base = join(dir, `response-${stamp}-${requestHash.slice(0, 12)}`);
@@ -207,6 +215,7 @@ async function recordLiveEvidence(
         bodyPreserved: typeof envelope.rawBody === "string",
         bodyBytes:
           typeof envelope.rawBody === "string" ? envelope.rawBody.length : 0,
+        ...metadata,
       },
       null,
       2,
@@ -632,28 +641,43 @@ export async function prepareGlmQuestionsForIntake(input: {
       };
   }
   const envelope = await transport.call(requestBody);
-  if (liveAttempt && evidenceDir !== undefined) {
-    try {
-      await recordLiveEvidence(evidenceDir, requestHash, envelope);
-    } catch {
-      return {
-        status: "failed",
-        reason: "evidence",
-        detail:
-          "the response arrived but could not be preserved to restricted local evidence",
-        provenance: provenanceFor(transport.kind),
-        // The provider response did arrive — a confirmed call whose settled
-        // cost stays on the record when the body carried billing data.
-        providerContact: "responded",
-        cost: failedCost(envelope.body),
-      };
-    }
-  }
+  // Normalize once, before optional evidence writes and all early returns.
+  // Diagnostics are outcome/owner-only sidecar metadata, never pack contents.
   const assessment = assessCheaperInferenceIndonesianResponse({
     httpStatus: envelope.httpStatus,
     body: envelope.body,
   });
   const provenance = provenanceFor(transport.kind, assessment);
+  const diagnostics = {
+    ...assessment.diagnostics,
+    instructionVersion: INDONESIAN_QUESTION_DIRECT_TEN_INSTRUCTION_VERSION,
+  };
+  if (liveAttempt && evidenceDir !== undefined) {
+    try {
+      await recordLiveEvidence(evidenceDir, requestHash, envelope, {
+        diagnostics,
+        provenance,
+        cost: failedCost(envelope.body),
+      });
+    } catch {
+      const noResponse = !!envelope.transportError || envelope.httpStatus === 0;
+      return {
+        status: "failed",
+        reason: "evidence",
+        detail: noResponse
+          ? "the request was sent without a provider response and its transport outcome could not be preserved to restricted local evidence"
+          : "the response arrived but could not be preserved to restricted local evidence",
+        provenance,
+        diagnostics,
+        // Evidence failure must not turn unknown execution into confirmation.
+        // Only an actual received response can supply settled billing here.
+        providerContact: noResponse ? "sent" : "responded",
+        cost: noResponse
+          ? { billedUsd: null, available: false }
+          : failedCost(envelope.body),
+      };
+    }
+  }
   if (envelope.transportError || envelope.httpStatus === 0) {
     return {
       status: "failed",
@@ -662,6 +686,7 @@ export async function prepareGlmQuestionsForIntake(input: {
         envelope.transportError ??
         `transport returned HTTP ${envelope.httpStatus}`,
       provenance,
+      diagnostics,
       // The request was sent but no provider response came back — execution
       // unknown, exactly like a dropped client response (R-06).
       providerContact: "sent",
@@ -684,6 +709,7 @@ export async function prepareGlmQuestionsForIntake(input: {
       reason: assessment.reason,
       detail: assessment.detail,
       provenance,
+      diagnostics,
       providerContact: "responded",
       cost: failedCost(envelope.body),
     };
@@ -705,6 +731,7 @@ export async function prepareGlmQuestionsForIntake(input: {
       reason: `extraction_${extraction.reason}`,
       detail: extraction.detail,
       provenance,
+      diagnostics,
       providerContact: "responded",
       cost: failedCost(envelope.body),
     };

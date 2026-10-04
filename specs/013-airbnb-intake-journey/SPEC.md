@@ -1,11 +1,12 @@
 # Spec 013: Airbnb-style intake journey
 
-> Status: **Implementing**; approved by the founder on 2026-09-27
-> ([decision](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013)).
-> J2–J7 merged with PASS; JQ is active. Founder signoff remains.
-> Review evidence: [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
+> Status: **Verified — JZ accepted by Alfred under delegated founder authority on 2026-10-04, with documented evidence exceptions in [VERIFICATION.md](./VERIFICATION.md#final-jz-closeout).**
+> Original spec approval: [2026-09-27](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013).
+> J2–J7/JQ and the bounded R-30 correction merged; [PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) is deployed.
+> Canonical docs PR/review/merge remain pending parent action; Stage 2 is not authorized.
+> Review evidence: [verification record](./VERIFICATION.md#final-jz-closeout) and [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
 > Owner: orchestrator
-> Updated: 2026-10-03
+> Updated: 2026-10-04
 > Implements: Stage 1 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > (milestones J2–J7 and JQ)
 > Decision basis: plan §4.1 ("done" for the journey), the three 2026-09-27
@@ -83,7 +84,7 @@ businesses (plan §5, JZ).
 - The no-website path, `p-manual` (F3: Stage 2).
 - Google Maps as a source (F16).
 - The audit method: question generation, the locked all-unnamed ten-question
-  pack, observations, and the report (F17).
+  pack, observations, and the report (F17), except the bounded R-30 refinement.
 - Keeping answers when the owner changes the website (F4: the website change
   resets preparation, as today).
 - Any rule that skips the market screen (F9: none).
@@ -263,7 +264,8 @@ until JQ those answers lived on the review screen (R-20).
   pass today's privacy check, and are used by the existing question
   screening. No other frozen-context field changes meaning.
 - **R-23:** Question review, audit start, the run and the report are
-  unchanged (F17). The old summary page is removed once the review screen
+  unchanged (F17), except R-30's question-failure recovery and runtime format
+  refinement. The old summary page is removed once the review screen
   exists; `/audit` stays the only intake.
 
 **Preparation**
@@ -296,6 +298,72 @@ until JQ those answers lived on the review screen (R-20).
   `richDraft` stub in `tests/e2e/new-intake-journey.spec.ts`. The default
   synthetic preparation ("no facts extracted") stays unchanged.
 
+**JZ question-generation reliability refinement (approved 2026-10-04)**
+
+- **R-30:** Alfred, acting under delegated founder authority, approves only
+  the following A+B correction. It is the explicit bounded exception to
+  Spec 010's unchanged-instruction exclusion and this spec's unchanged-
+  generation boundary; historical Specs 009/010 are not rewritten.
+  Spec 009's verbatim source, research method, three sections and ten-question
+  acceptance remain authoritative. R-24 extraction is unchanged.
+  - Question-generation errors exposed by the public API and UI use fixed Indonesian messages selected from allowlisted status/reason/code, never provider/transport/exception prose or extractor excerpts. Non-success public responses redact provider-controlled failure text, rejected content and restricted diagnostics/identities, while preserving structured classification, validated accounting and explicit identity-redaction semantics. Exact internal provenance and restricted evidence policy stay unchanged. Preflight refusal and uncertain execution remain distinct. The incomplete alert and remount-safe prospective retry notice remain unchanged.
+  - Reject every non-`stop` completion, even complete-looking ten-question
+    text marked `length`. No repair, fallback, partial pack or automatic retry.
+  - For structured failed reason `incomplete`, show exactly, with `role=alert`:
+    “Penyusunan 10 pertanyaan belum selesai. Jawaban Anda tetap tersedia dalam
+    sesi ini. Coba siapkan pertanyaan lagi.” Never select this copy by parsing
+    provider prose or expose raw finish codes/diagnostics in this alert.
+  - Keep `Coba siapkan pertanyaan`. Whenever the retry action is offered in
+    the current server-selected live mode, show beside it:
+    “Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.”
+    This is a notice about the next explicit request, not a claim about a
+    previous attempt. Derive it from the existing server-provided `live` prop,
+    including after reload/remount, independently of transient errors and
+    historical transport/cost. Omit this live-cost notice in synthetic mode.
+    Preserve interruption handling and all attempt history. No new persisted
+    discriminator or diagnostics are required.
+  - Preserve selections, frozen JQ values/origins, attempt history and the
+    in-flight guard. Back/reload/remount/double clicks never send again.
+    One explicit retry sends questions only; audit start remains explicit.
+  - Normalize usage before early rejection, consistently on success/failure:
+    each supplied token field is a nonnegative finite safe integer or null;
+    absent/malformed usage is null. Preserve zero, infer no totals, coerce no
+    values and derive no billing. Keep exact identities, model mismatch,
+    provider contact and separately validated settled billing; unknown cost
+    stays unknown. Optional failed-outcome diagnostics allow only usage,
+    known finish code or `other`/`missing`, HTTP status and instruction version.
+  - Only the already-configured owner-only `response-*.outcome.json` sidecar
+    may receive these diagnostics under its existing gate/permissions. No
+    evidence directory means no filesystem attempt. Do not enable capture,
+    broaden raw-body handling or add session/export/database/log/analytics
+    persistence, diagnostic schemas/versions or retention promises.
+  - Keep `DIRECT_TEN_SOURCE_BODY` and its recovered reference byte-for-byte
+    unchanged, plus all current count/no-quota/all-unnamed amendments. Append
+    exactly this runtime-only addendum through `glmDirectTenWriterInstruction()`:
+
+    ```text
+    Runtime output-format refinement — concise-v1:
+    Keep the three section headings exactly as specified, in the same order. Do not add a preamble, closing paragraph, extra section, table or code fence.
+    In ## 1. Market interpretation, use exactly the four existing labelled bullets: Category; Likely customer decision situations; Common decision dimensions; Target-brand facts that should not be copied too literally. Limit each bullet's content to 20 words, excluding its label. Use concise phrases. State unknowns honestly; do not invent facts or repeat the whole brief.
+    In ## 2. Candidate questions, write exactly ten complete Indonesian questions or direct requests on numbered lines 1–10. After each question, provide one Intent pattern: label of 1–4 words. Do not add rationales, scores or explanations. Keep questions natural and concise without changing their meaning or omitting relevant context. Do not force a template, intent mix or distinct-needs quota.
+    In ## 3. Self-critique, use exactly three bullets: Strongest; Borderline; Assumptions. Limit each bullet's content to 30 words, excluding its label. Strongest must identify the three strongest question numbers and give a short reason. Borderline must identify any borderline question numbers and a short reason, or explicitly say none. Assumptions must state assumptions caused by missing information, or explicitly say none. Refer to question numbers; do not repeat the question texts. Remain critical rather than defending the output.
+    These limits constrain presentation, not the underlying consumer-choice reasoning. Preserve the research principles, source examples, openness, no-quota amendment and all-unnamed rule.
+    ```
+
+  - Version only the runtime instruction as
+    `glm-direct-ten-2026-09-18-concise-v1`; method/pack/session versions stay
+    unchanged. These are generation guidance, not parser caps or output
+    trimming. Optional intent-label parsing remains valid. Frozen request
+    hashes bind the new bytes; old authorizations must fail `request_changed`.
+  - Keep glm-5.3-flash, endpoint, `low`, `max_tokens=4096`, non-streaming,
+    180000 ms wait, one call per explicit attempt, rate limits and accounting.
+    No token increase, model/provider change, continuation or new call.
+    This reduces avoidable ancillary output pressure, not a guarantee against
+    truncation or proof of its live cause. Founder successful-result approval
+    stands; independent correction review, merge and deployment are complete.
+    Qualified JZ acceptance is recorded in [VERIFICATION.md](./VERIFICATION.md#final-jz-closeout);
+    canonical documentation review/merge remains parent-owned.
+
 ## Failure and recovery
 
 - **Website unreadable, unsafe or blocked:** error on entry; nothing
@@ -307,7 +375,7 @@ until JQ those answers lived on the review screen (R-20).
 - **Refresh or tab restore mid-journey:** same screen, same working answers;
   during reading, back to entry with the fields kept (R-04). A session
   stored before a slice changed the stored shape restarts at entry (R-26).
-- **Question generation fails:** unchanged from today.
+- **Question generation fails:** unchanged except the approved R-30 handling.
 - Never fill a missing required answer from a guess, a larger area, or a
   default the owner did not see.
 
@@ -373,6 +441,26 @@ until JQ those answers lived on the review screen (R-20).
   replaced unless the new focus also suggests it (R-05).
 - **AC-17:** A session stored before a slice that bumped the stored version
   restarts at entry without an error (R-26).
+- **AC-18:** R-30's focused offline regressions prove rejection of complete,
+  empty and partial `length` responses; normalized valid/absent/malformed/zero
+  usage and honest separate billing/contact/identity; exact recovery copy,
+  prospective current live/synthetic notice before and after remount, without
+  classifying historical billing/transport, and interruption distinction; frozen JQ preservation
+  through duplicate clicks/remount/explicit retry without preparation/audit
+  sends; exact addendum/version with unchanged core hash/request settings,
+  sparse/rich labelled fixtures and frozen-hash rejection; no disk when unset
+  and restricted allowlisted sidecars only when configured. Run focused tests
+  and `npm run verify`; require independent exact-head review and green CI
+  before separate merge approval. No new full journey drive or live efficacy
+  measurement is required by this bounded correction. Full-spec Verified and
+  JZ closeout remain parent-owned, not implied by this acceptance criterion.
+  The approved PR121 security extension also requires full serialized-error
+  sentinel regressions, fixed copy for every defined failure/preflight category,
+  hostile bypassed-serializer UI tests, explicit failed-identity redaction,
+  internal fidelity and unchanged success, accounting uncertainty without
+  partial packs/extra sends, and the canonical offline gate. Fresh independent
+  exact-head review, required CI and parent-verified thread disposition are
+  required before a separate merge decision; earlier PASS is not transferable.
 
 ## Delivery slices
 
@@ -417,11 +505,15 @@ None. The founder answered the draft's three questions on 2026-09-27
 
 ## Verification record
 
-Partial implementation; full-spec verification remains pending:
+**Verified with documented evidence exceptions**, accepted by Alfred under
+delegated founder authority on 2026-10-04. This supersedes the partial/JQ-
+outstanding footer as current status, not the frozen slice results.
 
-- Verification artifact: `specs/013-airbnb-intake-journey/VERIFICATION.md`
-- Result: J2–J7 each passed independent review and merged (latest: J7,
-  [PR #114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114), merged
-  `753452e`); JQ and full-spec verification remain outstanding
-- Date: 2026-10-03 (J7)
-- Verified implementation commit: `681df10bfe9bf5540ed2686319c97307a92a43b3` (J7 only)
+- Canonical evidence: [final JZ closeout](./VERIFICATION.md#final-jz-closeout),
+  including composite AC dispositions and explicit exceptions.
+- J2–J7/JQ and bounded R-30 correction independently reviewed and merged;
+  [PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) deployed.
+- Reviewed implementation: `7aa6fc9a08d141ecab03ff98e05a06408ade405d`.
+- Merged deployment: `d7a2f50fddafae222eb62dbabaec5497010743b8`.
+- Documentation PR, fresh independent docs verdict and merge remain pending
+  parent action. No new live run, S0/Stage 2 or outside-user access is authorized.

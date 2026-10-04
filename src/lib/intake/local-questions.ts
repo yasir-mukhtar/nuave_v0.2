@@ -19,7 +19,10 @@ import {
   type MinimizedIndonesianBrief,
 } from "../audit/questions-id";
 import type { QuestionFactsV3 } from "../audit/question-facts-v3";
-import { validateIndonesianQuestionPackV3 } from "../audit/questions-id-glm";
+import {
+  validateIndonesianQuestionPackV3,
+  type CheaperInferenceDiagnostics,
+} from "../audit/questions-id-glm";
 import { validateDirectTenQuestionPack } from "../audit/questions-id-direct-ten";
 import { parseSourceInput } from "../audit/source-input";
 import {
@@ -113,6 +116,10 @@ export type GlmQuestionsOutcome =
        * client response); "none": rejected before any provider work. Absent
        * on legacy-shaped records. */
       providerContact?: "responded" | "sent" | "none";
+      /** R-30: bounded outcome metadata only, never copied into a pack/session. */
+      diagnostics?: CheaperInferenceDiagnostics & {
+        instructionVersion: string;
+      };
       /** Provider-reported billed cost when the failed response carried
        * billing data — the attempt keeps it for accounting; otherwise null. */
       cost?: { billedUsd: number | null; available: boolean };

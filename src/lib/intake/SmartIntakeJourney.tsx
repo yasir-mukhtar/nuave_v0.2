@@ -47,7 +47,12 @@ import {
   type SmartSession,
 } from "./smart-session";
 import type { GenerationAttempt } from "./local-session";
-import type { GlmQuestionsOutcome } from "./local-questions";
+import {
+  questionPublicCost,
+  questionPublicMessage,
+  questionRateLimitRefusal,
+  type QuestionPublicOutcome,
+} from "./question-public-errors";
 import SmartReview from "./SmartReview";
 import {
   SmartFocusScreen,
@@ -316,23 +321,40 @@ function brandInitials(name: string): string {
 
 function attemptForOutcome(
   started_at: string,
-  outcome: GlmQuestionsOutcome,
+  outcome: QuestionPublicOutcome,
 ): GenerationAttempt | null {
-  if (outcome.status === "ok" || outcome.status === "validation_failed") {
+  const cost = questionPublicCost(outcome)?.billedUsd ?? null;
+  if (outcome.status === "validation_failed") {
     return {
       started_at,
-      outcome: outcome.status === "ok" ? "succeeded" : "failed",
+      outcome: "failed",
       execution: "confirmed",
-      cost_usd: outcome.cost.billedUsd,
+      cost_usd: cost,
     };
   }
-  if (outcome.status !== "failed" || outcome.providerContact === "none")
+  if (
+    questionRateLimitRefusal(outcome) ||
+    outcome.status === "invalid_request" ||
+    outcome.status === "correction_required" ||
+    (outcome.status === "failed" && outcome.providerContact === "none")
+  )
     return null;
+  if (
+    outcome.status !== "failed" ||
+    (outcome.providerContact !== "sent" &&
+      outcome.providerContact !== "responded")
+  )
+    return {
+      started_at,
+      outcome: "interrupted",
+      execution: "unknown",
+      cost_usd: null,
+    };
   return {
     started_at,
     outcome: "failed",
     execution: outcome.providerContact === "sent" ? "unknown" : "confirmed",
-    cost_usd: outcome.cost?.billedUsd ?? null,
+    cost_usd: cost,
   };
 }
 
@@ -675,10 +697,8 @@ export default function SmartIntakeJourney({
         session.selection,
         session.frozen ? session.frozen.factVersion + 1 : 1,
       );
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Periksa pilihan Anda.",
-      );
+    } catch {
+      setError(questionPublicMessage({ status: "invalid_request" }));
       return;
     }
     // Returning to the unchanged committed summary does not spend another call.
@@ -719,6 +739,11 @@ export default function SmartIntakeJourney({
       ],
     };
     goStage(committed);
+    // Until a classified response arrives, execution remains uncertain.
+    let failureMessage = questionPublicMessage(
+      { status: "failed", reason: "transport" },
+      live,
+    );
     try {
       const response = await fetch("/api/audit/glm-questions", {
         method: "POST",
@@ -731,43 +756,71 @@ export default function SmartIntakeJourney({
       });
       const outcome = (await response
         .json()
-        .catch(() => null)) as GlmQuestionsOutcome | null;
-      if (!outcome)
-        throw new Error(
-          "Respons pertanyaan tidak diterima. Percobaan mungkin sudah dikenai biaya.",
-        );
+        .catch(() => null)) as QuestionPublicOutcome | null;
+      if (!outcome) throw new Error("Question response unavailable");
+      failureMessage = questionPublicMessage(outcome, live);
+      if (outcome.status === "ok") {
+        const provenance = outcome.provenance;
+        const cost = questionPublicCost(outcome);
+        if (
+          !response.ok ||
+          !Array.isArray(outcome.questions) ||
+          outcome.questions.some((question) => typeof question !== "string") ||
+          !cost ||
+          !provenance ||
+          typeof provenance.requestId !== "string" ||
+          !provenance.requestId.trim() ||
+          provenance.method !== "direct-ten" ||
+          typeof provenance.requestedModel !== "string" ||
+          !provenance.requestedModel.trim() ||
+          !(
+            typeof provenance.returnedModel === "string" ||
+            provenance.returnedModel === null
+          ) ||
+          !(
+            typeof provenance.responseId === "string" ||
+            provenance.responseId === null
+          ) ||
+          typeof provenance.modelMismatch !== "boolean" ||
+          (provenance.transport !== "cheaper-inference" &&
+            provenance.transport !== "synthetic-stub")
+        )
+          throw new Error("Question success envelope invalid");
+        const pack: SmartQuestionPack = {
+          version: "nuave-local-questions-v2",
+          inputFingerprint: frozen.fingerprint,
+          originals: [...outcome.questions],
+          approved: [...outcome.questions],
+          revision: 0,
+          provenance,
+          billedCostUsd: cost.billedUsd,
+        };
+        // Do not replace the started unknown attempt until the pack is valid.
+        canonicalLockedDirectTenPack(smartPackPrompts(pack), frozen.context);
+        persist({
+          ...committed,
+          pack,
+          generationAttempts: [
+            ...session.generationAttempts,
+            {
+              started_at,
+              outcome: "succeeded",
+              execution: "confirmed",
+              cost_usd: cost.billedUsd,
+            },
+          ],
+        });
+        return;
+      }
       const attempt = attemptForOutcome(started_at, outcome);
       const attempts = attempt
         ? [...session.generationAttempts, attempt]
         : session.generationAttempts;
       const settled = { ...committed, generationAttempts: attempts };
       persist(settled);
-      if (!response.ok || outcome.status !== "ok") {
-        throw new Error(
-          outcome.status === "failed" || outcome.status === "invalid_request"
-            ? outcome.detail
-            : outcome.status === "validation_failed"
-              ? outcome.issues.join(" ")
-              : "Pertanyaan perlu ditinjau ulang.",
-        );
-      }
-      const pack: SmartQuestionPack = {
-        version: "nuave-local-questions-v2",
-        inputFingerprint: frozen.fingerprint,
-        originals: [...outcome.questions],
-        approved: [...outcome.questions],
-        revision: 0,
-        provenance: outcome.provenance,
-        billedCostUsd: outcome.cost.billedUsd,
-      };
-      canonicalLockedDirectTenPack(smartPackPrompts(pack), frozen.context);
-      persist({ ...settled, pack });
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Pembuatan pertanyaan terhenti.",
-      );
+      setError(failureMessage);
+    } catch {
+      setError(failureMessage);
     } finally {
       inFlight.current = false;
       setBusy(null);
@@ -846,9 +899,17 @@ export default function SmartIntakeJourney({
                 : "Pertanyaan belum diterima. Coba lagi hanya jika Anda ingin membuat permintaan baru."}
             </p>
             {busy !== "questions" ? (
-              <Button className="w-fit" onClick={() => void confirm()}>
-                Coba siapkan pertanyaan
-              </Button>
+              <>
+                <Button className="w-fit" onClick={() => void confirm()}>
+                  Coba siapkan pertanyaan
+                </Button>
+                {live ? (
+                  <p className="type-copy">
+                    Mencoba lagi mengirim permintaan baru dan dapat menambah
+                    biaya penggunaan AI.
+                  </p>
+                ) : null}
+              </>
             ) : null}
             <Button variant="ghost" className="w-fit" onClick={goBack}>
               Kembali ke ringkasan

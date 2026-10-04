@@ -1,10 +1,127 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-03
+> Updated: 2026-10-04
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-04 trustworthy baseline and deferred polish
+
+Yasir accepted the repository-baseline recommendation and asked Pac to
+coordinate one current, verified main with accurate status. Clean means a
+trustworthy starting point, not deleting retained drafts, branches or evidence.
+Yasir deferred experience and design polish until all intended screens exist,
+so it can be done in one pass.
+
+Yasir then said, "Fox, take over from me." Within this baseline task, Fox
+approved safe local-only fast-forward synchronization and preparation of the
+existing PR #120 documentation correction. Pac retains technical coordination;
+Imu implements a bounded brief and Rev independently reviews the exact result.
+This is scoped delegation, not a standing replacement for founder approval.
+
+Merge, deployment, PR closure, deletion, visibility or billing changes, live
+cleanup, new spending and customer exposure remain separately permissioned.
+Stage 2 implementation is not authorized. The local Spec 015 draft stays held;
+older draft decisions and allowances do not override the current main pause.
+
+JZ's canonical closeout is complete in [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013),
+merged as `613f1b3`; the existing evidence exceptions remain. Current routing
+updates do not reopen JZ acceptance or require another recursive closeout.
+
+Observed repository enforcement is private/unprotected; the protection and
+ruleset APIs return HTTP 403. This entry records the discrepancy, not permission
+to weaken rules, change visibility or buy a subscription. The withheld PR #120
+review finding and PR #121/#122 preview-cleanup failures remain unresolved.
+
+## 2026-10-04 — accept JZ with documented evidence exceptions; Stage 2 not authorized
+
+Alfred **accepts JZ** under Yasir's delegated completion authority on 2026-10-04.
+Yasir's exact successful-result approval was: “The prompts generated, the report
+is successfully created. I approve this result.” Alfred accepts the three plan
+judgments — flow and feel, information completeness/use, and settled nuances —
+from the composite live-reported, visual, slice and contract evidence, not a
+claim that Yasir personally tested every acceptance criterion or F1–F18 rule.
+
+[Spec 013's final verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout)
+records **Verified with documented evidence exceptions** under
+[WORKFLOW](./WORKFLOW.md#independent-verification): historical-drive freshness;
+the record-specific blocked-framework/JavaScript-guard and fictional/stubbed
+synthetic limits (original FAIL/HOLD and stop-at-entry remain failures); the
+missing reading-animation/continuous synthetic-label observation for R-07;
+and unknown live business/revision/run/usage/charges/attempt count, without a
+reconstructed per-field R-24 or all-F1–F18 live walkthrough. “2nd retry” remains
+the founder's wording, not an inferred attempt count. No requirement is waived
+or reusable exception created. Exact observer/executor attribution is retained
+in the verification record; no live efficacy or prevention guarantee is made.
+
+The requested bounded reliability/security correction is complete:
+[PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121), reviewed
+`7aa6fc9a08d141ecab03ff98e05a06408ade405d`, merged
+`d7a2f50fddafae222eb62dbabaec5497010743b8`; the
+[resolved final-head response](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121#discussion_r4176920304)
+records independent review and the parent's canonical gate.
+[Main CI/deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
+shipped worker version `09c25e17-02e8-498b-bfe7-20e43f7ea0cd`.
+Parent's HTTP smoke is availability only, not rendered QA or a new live audit.
+The separate [closed-preview cleanup failure](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060)
+remains disclosed; no cause, ongoing exposure or remediation is established here.
+
+This decision supersedes earlier current JZ HOLD/correction-pending routing,
+not historical failures, counts or warnings. **JZ accepted; canonical docs
+PR, independent review and merge pending.** Parent records that transition.
+After closeout, await a separate next-stage instruction: **S0 is not initiated;
+Stage 2, outside users, new spending and commercial commitments are not authorized**,
+despite the plan's eventual sequencing. Earlier entries below remain dated history.
+
+## 2026-10-04 — approve PR121 public question-error correction
+
+Alfred, under delegated founder authority, approves the bounded public API/UI
+projection recorded in Spec 013 R-30/AC-18. The unresolved PR121 thread
+`discussion_r4176528975` is a release blocker; the parent owns its disposition.
+Failure text, rejected content, diagnostics and provider-controlled failure IDs
+are withheld explicitly. Internal identities/evidence and validated billing,
+known preflight refusal versus uncertain execution, accepted success and retry
+gates remain unchanged. Scope is only the question endpoint and its UI, one
+pure helper and nearby regressions. No new persistence, live spend, dependency,
+shared gate, instruction or other-stage change is approved. Founder successful
+prompts/report approval stands. Earlier review/gate covers the old head only;
+fresh review/CI are required. No merge, deploy or JZ closeout approval.
+
+## 2026-10-04 — approve bounded JZ question-generation reliability correction
+
+Alfred (delegated founder authority) approved A+B; Mia's independent technical
+review supports the bounded correction. The parent reconciled spec routing:
+one active [Spec 013 R-30](../specs/013-airbnb-intake-journey/SPEC.md) and AC-18,
+with cross-references, not changes to historical Specs 009/010.
+
+- Yasir's successful prompts/report result is accepted. His observed
+  `Error: finish_reason: length` followed by “its succeed on the 2nd retry”
+  remains reliability evidence, not a known attempt count, cost or root cause.
+- R-30 is an explicit narrow exception to the unchanged-instruction/generation
+  boundaries: safe incomplete recovery copy and live retry-cost disclosure,
+  optional allowlisted normalized diagnostics within existing outcome/owner-only
+  configured sidecars, and the exact concise-v1 runtime addendum.
+- Alfred's remount refinement supersedes the retrospective notice condition:
+  display the exact R-30 notice beside an available retry in the current
+  server-selected live mode, from the existing `live` prop, including remount.
+  It describes the next request, not past transport/billing. Synthetic current
+  mode omits it; historical attempts, interruption and unknown/zero billing
+  stay unchanged. No discriminator, persistence, schema or version is added.
+  A received-response evidence-write failure retains responded/settled billing;
+  no-response transport plus evidence failure retains sent/unknown, not a
+  fabricated response or settled zero. Parent approved the adjacent JQ-row
+  reconciliation from PR #117's merged/PASS evidence.
+- Preserve the verbatim core, research method, three sections, all ten unnamed
+  questions, frozen context/hash protections, explicit confirmation and all
+  request settings. No partial repair, automatic paid retry, token/model change,
+  new persistence, evidence enablement or agent live call is approved.
+- Runtime instruction version becomes `glm-direct-ten-2026-09-18-concise-v1`;
+  method/pack/session versions do not change. Presentation guidance is not a
+  new rejection cap. No measured live efficacy or guaranteed prevention claim.
+- Spec 013 remains Implementing; JZ is founder-result-accepted with this narrow
+  correction pending independent exact-head review after its offline gate.
+  Parent owns later closeout; no Stage 2, outside users, merge or deploy approval.
 
 ## 2026-10-03 — Park optional PRs until an explicit founder request
 

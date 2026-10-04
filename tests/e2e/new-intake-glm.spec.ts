@@ -425,11 +425,18 @@ test("GLM failure is visible and never silently retried", async ({ page }) => {
   await toSummary(page, { suffix: "?glm-stub=timeout" });
   await confirmSummary(page);
   // Next's empty route announcer also has role="alert"; match the failure notice.
+  const safeFailure =
+    "Permintaan pembuatan pertanyaan terputus. Pertanyaan belum diterima.";
+  const failureAlert = page.getByRole("alert").filter({ hasText: safeFailure });
+  await expect(failureAlert).toBeVisible();
+  await expect(failureAlert).toHaveText(safeFailure);
   await expect(
     page.getByRole("alert").filter({ hasText: "synthetic timeout" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(page.locator("[data-question-slot]")).toHaveCount(0);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
+  expect(calls["POST /api/audit/run"]).toBeUndefined();
+  expect(calls["POST /api/audit/report"]).toBeUndefined();
 });
 
 test("a failed budget read is fetched again before an explicit audit retry", async ({

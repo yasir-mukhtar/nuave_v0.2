@@ -2,6 +2,7 @@
  * assembly, the adapted request, strict three-section extraction and the
  * flat unnamed-text rules. No provider, no fetch, no credentials. */
 import { createHash } from "node:crypto";
+import { assessCheaperInferenceIndonesianResponse } from "./questions-id-glm";
 import { describe, expect, it } from "vitest";
 import {
   parseQuestionFactsV3,
@@ -11,6 +12,7 @@ import {
   buildDirectTenQuestionRequest,
   buildDirectTenWriterBrief,
   extractDirectTenQuestions,
+  INDONESIAN_QUESTION_DIRECT_TEN_INSTRUCTION_VERSION,
   validateDirectTenQuestionPack,
 } from "./questions-id-direct-ten";
 import {
@@ -84,6 +86,41 @@ function sectioned(questions: string[], labels = false) {
 }
 
 describe("source body and adaptation diff", () => {
+  it("appends only the exact approved concise-v1 refinement (R-30)", () => {
+    const addendum = `Runtime output-format refinement — concise-v1:
+Keep the three section headings exactly as specified, in the same order. Do not add a preamble, closing paragraph, extra section, table or code fence.
+In ## 1. Market interpretation, use exactly the four existing labelled bullets: Category; Likely customer decision situations; Common decision dimensions; Target-brand facts that should not be copied too literally. Limit each bullet's content to 20 words, excluding its label. Use concise phrases. State unknowns honestly; do not invent facts or repeat the whole brief.
+In ## 2. Candidate questions, write exactly ten complete Indonesian questions or direct requests on numbered lines 1–10. After each question, provide one Intent pattern: label of 1–4 words. Do not add rationales, scores or explanations. Keep questions natural and concise without changing their meaning or omitting relevant context. Do not force a template, intent mix or distinct-needs quota.
+In ## 3. Self-critique, use exactly three bullets: Strongest; Borderline; Assumptions. Limit each bullet's content to 30 words, excluding its label. Strongest must identify the three strongest question numbers and give a short reason. Borderline must identify any borderline question numbers and a short reason, or explicitly say none. Assumptions must state assumptions caused by missing information, or explicitly say none. Refer to question numbers; do not repeat the question texts. Remain critical rather than defending the output.
+These limits constrain presentation, not the underlying consumer-choice reasoning. Preserve the research principles, source examples, openness, no-quota amendment and all-unnamed rule.`;
+    const sectionSource =
+      "## 2. Candidate questions\n\nFor each question, provide:\n\n**1. [question]**  \nIntent pattern: [short label]\n\nDo this for all 12.";
+    const sectionAdapted = `## 2. Candidate questions
+
+Write exactly ten questions, each on its own numbered line:
+
+1. [question]
+Intent pattern: [short label]
+2. [question]
+Intent pattern: [short label]
+
+…through:
+
+10. [question]
+Intent pattern: [short label]
+
+Each numbered line is one Indonesian consumer question or direct request. An "Intent pattern:" label may appear on the line after its question. No other text may appear in this section. Only the ten numbered lines in this section become the product's questions.`;
+    const legacy =
+      DIRECT_TEN_SOURCE_BODY.replace(
+        "Then generate **12 candidate consumer questions**.",
+        "Then generate **10 consumer questions**.",
+      ).replace(sectionSource, sectionAdapted) +
+      `\n\n---\n\n${DIRECT_TEN_AMENDMENTS}`;
+    expect(glmDirectTenWriterInstruction()).toBe(`${legacy}\n\n${addendum}`);
+    expect(INDONESIAN_QUESTION_DIRECT_TEN_INSTRUCTION_VERSION).toBe(
+      "glm-direct-ten-2026-09-18-concise-v1",
+    );
+  });
   it("keeps the recovered source body byte-identical (confirmed SHA-256)", () => {
     expect(
       createHash("sha256").update(DIRECT_TEN_SOURCE_BODY, "utf8").digest("hex"),
@@ -141,6 +178,115 @@ describe("buildDirectTenQuestionRequest", () => {
 });
 
 describe("extractDirectTenQuestions", () => {
+  it("accepts identical complete content only on stop and rejects partial/empty length (R-30)", () => {
+    const complete = sectioned(CLEAN_TEN, true);
+    const body = (finish_reason: string, content: string) => ({
+      id: "mock-complete",
+      model: "glm-5.3-flash",
+      choices: [{ finish_reason, message: { content } }],
+    });
+    expect(
+      assessCheaperInferenceIndonesianResponse({
+        httpStatus: 200,
+        body: body("stop", complete),
+      }),
+    ).toMatchObject({ ok: true, assistantText: complete });
+    expect(extractDirectTenQuestions(complete)).toMatchObject({
+      ok: true,
+      questions: CLEAN_TEN,
+    });
+    for (const text of [complete, "partial", ""]) {
+      const result = assessCheaperInferenceIndonesianResponse({
+        httpStatus: 200,
+        body: body("length", text),
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        reason: "incomplete",
+        diagnostics: { finishReason: "length" },
+      });
+      expect(result).not.toHaveProperty("assistantText");
+    }
+  });
+  it.each(["sparse", "rich"])(
+    "preserves authored concise %s fixtures without adding rejection caps (R-30)",
+    (kind) => {
+      const rich = kind === "rich";
+      const sparse = parseQuestionFactsV3({
+        requestId: "concise-fixture",
+        intake: {
+          version: "nuave-local-intake-input-v1",
+          factVersion: 1,
+          confirmed: {
+            brand: {
+              name: "Laundry Ceria",
+              primarySource: "https://laundryceria.example",
+            },
+            scope: "brand",
+            target: null,
+            category: "laundry kiloan",
+            offerings: ["cuci kiloan"],
+            customerReasons: [],
+            serviceChannels: [{ channel: "delivery" }],
+            market: { reach: "seluruh", areas: [] },
+            comparators: { mode: "category-alternatives", names: [] },
+            publicFact: "",
+          },
+        },
+      });
+      expect(sparse.status).toBe("projected");
+      if (sparse.status !== "projected")
+        throw new Error("fixture did not project");
+      const facts = rich ? laundryFacts() : sparse.facts;
+      const brief = buildDirectTenWriterBrief(facts);
+      expect(
+        buildDirectTenQuestionRequest(brief).messages[0].content,
+      ).toContain(brief);
+      const questions = rich
+        ? CLEAN_TEN
+        : CLEAN_TEN.map((q) =>
+            q
+              .replaceAll(" di Jakarta Selatan", "")
+              .replaceAll("di Jakarta Selatan ", ""),
+          );
+      const interpretation = [
+        "- Category: Laundry kiloan.",
+        `- Likely customer decision situations: ${rich ? "Cucian rutin dan mendadak." : "Situasi khusus belum diketahui."}`,
+        "- Common decision dimensions: Kesesuaian kebutuhan dan kemudahan layanan.",
+        "- Target-brand facts that should not be copied too literally: Nama bisnis dan pembanding tidak dipakai.",
+      ].join("\n");
+      const critique = [
+        "- Strongest: 1, 2, 4 membuka pilihan sesuai kebutuhan.",
+        "- Borderline: None.",
+        `- Assumptions: ${rich ? "Preferensi tambahan belum diketahui." : "Kebutuhan khusus belum diketahui."}`,
+      ].join("\n");
+      // Authored offline fixtures, not measured provider adherence or efficacy.
+      const text = sectioned(questions, true)
+        .replace("Interpretasi pasar.", interpretation)
+        .replace("Kritik diri.", critique);
+      const result = extractDirectTenQuestions(text);
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error(result.detail);
+      expect(result.questions).toEqual(questions);
+      expect(result.intentLabels).toEqual(
+        questions.map((_, i) => `pola-${i + 1}`),
+      );
+      expect(result.marketInterpretation).toBe(interpretation);
+      expect(result.selfCritique).toBe(critique);
+      expect(validateDirectTenQuestionPack(result.questions, facts)).toEqual(
+        [],
+      );
+      // Ancillary envelope limits are guidance, not new parser rejection caps.
+      expect(
+        extractDirectTenQuestions(
+          text.replace(
+            interpretation,
+            interpretation + "\n" + "kata ".repeat(100),
+          ),
+        ).ok,
+      ).toBe(true);
+    },
+  );
   it("extracts exactly ten texts and preserves the inspection sections", () => {
     const result = extractDirectTenQuestions(sectioned(CLEAN_TEN, true));
     expect(result.ok).toBe(true);
