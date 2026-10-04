@@ -2,7 +2,7 @@
 
 > Full-spec result: **Verified — delegated JZ acceptance with documented evidence exceptions, 2026-10-04.**
 > Accepted by Alfred under Yasir's delegated authority; canonical closeout is recorded through the reviewed documentation PR.
-> Documentation PR, fresh independent docs verdict and merge: **pending parent action**; no future PR URL or completed docs review is asserted here.
+> Canonical documentation closeout: [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013), reviewed `0338f72`, merged `613f1b3`. Original pre-merge checkpoints and frozen slice results below remain historical, not active handoff instructions.
 
 ## Final JZ closeout
 
@@ -12,7 +12,8 @@ using the composite evidence and explicit exceptions below. This meets
 not an unqualified independently exercised PASS for every criterion. The
 [decision](../../docs/DECISION_LOG.md#2026-10-04--accept-jz-with-documented-evidence-exceptions-stage-2-not-authorized)
 supersedes earlier HOLD/correction-pending routing, not the original results.
-Canonical documentation closeout still needs the parent's reviewed PR and merge.
+Canonical documentation closeout is complete in [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013);
+this routing update does not reopen JZ acceptance or relabel historical results.
 
 ### Three delegated journey judgments
 

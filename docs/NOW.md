@@ -29,11 +29,12 @@
 
 ## Next action
 
-- **Active action: trustworthy repository baseline.** Synchronize local main
-  safely and prepare [PR #120](https://github.com/yasir-mukhtar/nuave_v0.2/pull/120)
-  against current main with accurate routing, fresh independent review and
-  exact-head checks. Its withheld automated finding remains an access blocker;
-  neither preparation nor green checks clears that finding.
+- **Active action: finish the documentation baseline in [PR #120](https://github.com/yasir-mukhtar/nuave_v0.2/pull/120).**
+  The supplied JQ milestone finding has been assessed: the current ledger,
+  spec and verification record close JQ. Retain frozen slice results as history,
+  not active handoff instructions. Complete fresh independent review and
+  exact-head CI before separate merge authorization. This is documentation
+  reconciliation, not new JQ implementation or Stage 2 approval.
 - **JZ is complete.** The [existing closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
   records its merge, checks and evidence exceptions; do not repeat acceptance.
 - **Stage 2 remains paused.** Spec 015 exists only as an unmerged local draft

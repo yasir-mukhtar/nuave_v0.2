@@ -3,7 +3,7 @@
 > Status: **Verified — JZ accepted by Alfred under delegated founder authority on 2026-10-04, with documented evidence exceptions in [VERIFICATION.md](./VERIFICATION.md#final-jz-closeout).**
 > Original spec approval: [2026-09-27](../../docs/DECISION_LOG.md#2026-09-27--approve-spec-013).
 > J2–J7/JQ and the bounded R-30 correction merged; [PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) is deployed.
-> Canonical docs PR/review/merge remain pending parent action; Stage 2 is not authorized.
+> Canonical docs closeout merged in [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013), as `613f1b3`; Stage 2 is not authorized.
 > Review evidence: [verification record](./VERIFICATION.md#final-jz-closeout) and [plan §1](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger).
 > Owner: orchestrator
 > Updated: 2026-10-04
@@ -515,5 +515,6 @@ outstanding footer as current status, not the frozen slice results.
   [PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) deployed.
 - Reviewed implementation: `7aa6fc9a08d141ecab03ff98e05a06408ade405d`.
 - Merged deployment: `d7a2f50fddafae222eb62dbabaec5497010743b8`.
-- Documentation PR, fresh independent docs verdict and merge remain pending
-  parent action. No new live run, S0/Stage 2 or outside-user access is authorized.
+- Canonical documentation closeout: [PR #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013),
+  independently reviewed `0338f72`, merged `613f1b3`. No new live run,
+  S0/Stage 2 or outside-user access is authorized.

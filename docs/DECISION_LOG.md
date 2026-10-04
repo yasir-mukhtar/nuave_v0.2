@@ -6,6 +6,31 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-04 PR120 JQ status finding assessed
+
+Yasir asked Pac to coordinate resolution of PR #120 and supplied the withheld
+Devin Review finding, "Milestone records disagree on JQ closeout." At the
+original PR head `869c9f1`, NOW routed to JZ while the ledger still marked JQ
+in progress and Spec 013 retained active/pending JQ status. The finding was
+valid for that revision; it was not an application failure.
+
+Current main `613f1b3` already records JQ as merged with independent PASS in
+[the ledger](./PAYING_CUSTOMER_PLAN.md#1-progress-ledger), and qualified JZ
+acceptance in [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md#verification-record)
+and [final verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout).
+This follow-up incorporates those closeouts, reconciles shared routing and
+updates current pre-merge documentation references to the completed
+[PR #122 closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013).
+Frozen slice outcomes and evidence exceptions remain history, not active
+handoff instructions; no completed implementation or live test is repeated.
+
+The supplied finding is assessed and addressed by this reconciliation. That
+does not claim its Devin Review UI item was marked resolved or that a later
+automated review has no findings. The earlier access-blocker record remains
+historical. Fresh exact-head independent review and GitHub checks are required.
+This bounded documentation follow-up grants no merge, deployment, PR closure,
+deletion, settings/spending change, Stage 2 implementation or customer exposure.
+
 ## 2026-10-04 trustworthy baseline and deferred polish
 
 Yasir accepted the repository-baseline recommendation and asked Pac to
