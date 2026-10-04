@@ -1,7 +1,7 @@
 # Nuave now
 
 > Updated: 2026-10-04
-> Stage: Stage 1 accepted; S2 spend-ledger foundation in progress
+> Stage: Stage 1 accepted; S2 ledger foundation only
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); Stage 2 resumes only this foundation slice
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -29,18 +29,20 @@
 
 ## Next action
 
-- **Active action: the S2 spend-ledger foundation** on
-  `feat/s2-ledger-foundation-20261004` — an unused server-owned ledger
-  module (`src/lib/spending/`) with authored conditional-insert admission
-  semantics, proven on real local SQLite. Status: **S2 ledger foundation
-  only; provider integration, Cloudflare binding and live enforcement
-  pending.** The proof is offline evidence, not D1 compatibility or
-  provisioning proof, and `reserved_day_utc` is the UTC reservation-time
-  bucket, not evidence of an actual dispatch. The running audit still
-  trusts browser-sent cost history; this unused code protects nothing yet.
-- **Named engineering follow-up:** verify the D1 binding and billable
-  provider price bounds, integrate the ledger into every paid dispatch
-  including SDK retries, then the approved S3 spec.
+- **S2 ledger foundation exists** (`src/lib/spending/`, unused): authored
+  conditional-insert admission semantics proven on real local SQLite —
+  offline evidence only, not D1 compatibility or provisioning proof, and
+  `reserved_day_utc` is the UTC reservation-time bucket, not evidence of an
+  actual dispatch. The running audit still trusts browser-sent cost
+  history; this unused code protects nothing yet. Implementation, review
+  and release evidence lives on [PR #123](https://github.com/yasir-mukhtar/nuave_v0.2/pull/123);
+  release status is a dated decision-record fact, not claimed here.
+- **Named engineering follow-up:** a separately approved integration pass —
+  verify D1 compatibility and bindings plus credible billable provider
+  price bounds (see the `web_search` warning below), then integrate the
+  ledger into every paid dispatch including SDK retries — then obtain
+  actual independent spec review and Fox approval for S3. Draft 015 is
+  not approved; no Stage 2 scope expansion is implied.
 - **JZ is complete.** The [existing closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
   records its merge, checks and evidence exceptions; do not repeat acceptance.
 - **Stage 2 resumes only this foundation.** Spec 015 exists only as an
@@ -52,7 +54,8 @@
   [Current delegation and limits](./DECISION_LOG.md#2026-10-04--overnight-delegation-and-s2-spend-ledger-foundation):
   with Yasir asleep he authorized the backlog with Fox as representative,
   including explicit merge/deployment delegation; Pac coordinates delivery.
-  PR120 is merged and deployed (below). Release of this branch is pending.
+  PR120 is merged and deployed (below); release status lives in the dated
+  decision record.
 
 ## Rules still in force
 
@@ -66,8 +69,9 @@
   reduce bursts but are not a hard cap. The 2026-08-20 "interim exposure" row
   in [`DECISION_LOG.md`](./DECISION_LOG.md) requires a server-side guard
   before sharing the link beyond direct outreach.
-- **Live AI calls by agents** need a named founder approval. Agent-run
-  spend was USD 1.06241155 of the September USD 5 allowance on 2026-09-27.
+- **Live AI calls by agents** need a named founder approval; earlier
+  allowances are used up. Agent-run spend was USD 1.06241155 of the
+  September USD 5 allowance on 2026-09-27.
   The 2026-10-04 overnight delegation adds a separate up-to-USD-5 total
   paid agent API allowance; USD 0 used in the S2 foundation task — no calls
   were made. Earlier dated budgets are not reset and the production USD 1
@@ -83,13 +87,15 @@
 
 ## Deployment
 
-- **Current main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37208096086)
+- **Last recorded production release at this slice's preparation:**
+  [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37208096086)
   on merged PR #120 (`62b5b51`) completed with conclusion success; validate,
   `verify-main-origin` and deploy passed and worker `nuave-v2` shipped version
   `f29ae355-b1d2-4ad8-8f97-e2a0a8d45945`. Prior release: PR #122 closeout
   `613f1b3`, worker `00a8c286-d344-4a80-8954-2a0d2f2c9b4c` ([record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)).
-  This is recorded release evidence, not a fresh browser drive, provider call
-  or live report.
+  The latest S2 release evidence is on [PR #123](https://github.com/yasir-mukhtar/nuave_v0.2/pull/123),
+  distinct from the production release above; this is recorded release
+  evidence, not a fresh browser drive, provider call or live report.
 - **Repository enforcement:** GitHub reports PRIVATE/unprotected main; protection
   APIs return HTTP 403. Mandatory review/release rules remain, but enforcement
   readiness is unresolved; no visibility, billing or settings change is approved.
@@ -107,6 +113,11 @@
 - **Separate operational finding:** [closed-preview cleanup failed](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060).
   Preview removal, cause and continuing exposure are not established. This does
   not negate the successful main deployment; no cleanup/remediation is authorized.
+- **Additional operational finding (parent-recorded):** the
+  [PR #120](https://github.com/yasir-mukhtar/nuave_v0.2/pull/120) closed-preview
+  cleanup failed at the Wrangler install/override step; preview removal is
+  unconfirmed and no manual repair or deletion was performed. This is
+  separate from the successful main validation and deployment above.
 - Cloudflare **Workers** (not Pages; Pages could not serve the static assets)
   worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
@@ -136,6 +147,9 @@
   The USD 5 per-session ceiling uses spending history sent by the browser
   (S2 replaces this). `OPENAI_AUDIT_CARRYOVER_COST_USD` adds a minimum
   already-spent amount; the deploy job does not set it.
+- Warning: `web_search` max_tool_calls is advisory (known overrun), not a
+  guaranteed billable ceiling; provider price bounds and SDK retries remain
+  unverified.
 
 ## Deferred security work — before customer testing or public sharing
 

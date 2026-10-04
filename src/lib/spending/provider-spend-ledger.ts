@@ -344,6 +344,23 @@ function toSpendReservation(value: unknown): SpendReservation {
   };
 }
 
+/**
+ * Structurally validates a returned row, then requires it to prove the
+ * request it claims to answer. An inconsistent store returning a valid row
+ * for another operation, lifecycle status or metadata fails closed as
+ * unavailable — never as reserved, duplicate, denied or settled evidence.
+ */
+function expectMatchingRow(
+  value: unknown,
+  matches: (row: SpendReservation) => boolean,
+): SpendReservation {
+  const row = toSpendReservation(value);
+  if (!matches(row)) {
+    throw new SpendLedgerUnavailableError();
+  }
+  return row;
+}
+
 export class ProviderSpendLedger {
   private readonly database: SpendLedgerDatabase;
   private readonly clock: () => Date;
@@ -426,7 +443,10 @@ export class ProviderSpendLedger {
     if (rows.length === 0) {
       return null;
     }
-    return toSpendReservation(rows[0]);
+    return expectMatchingRow(
+      rows[0],
+      (row) => row.operation_id === operationId,
+    );
   }
 
   /**
@@ -472,7 +492,21 @@ export class ProviderSpendLedger {
       throw new SpendLedgerUnavailableError();
     }
     if (rows.length === 1) {
-      return { status: "reserved", reservation: toSpendReservation(rows[0]) };
+      return {
+        status: "reserved",
+        reservation: expectMatchingRow(
+          rows[0],
+          (row) =>
+            row.operation_id === operationId &&
+            row.provider === provider &&
+            row.stage === stage &&
+            row.pricing_version === pricingVersion &&
+            row.reservation_units === reservationUnits &&
+            row.status === "reserved" &&
+            row.reserved_day_utc === dayUtc &&
+            row.created_at === iso,
+        ),
+      };
     }
 
     const existing = await this.readByOperationId(operationId);
@@ -530,7 +564,15 @@ export class ProviderSpendLedger {
       throw new SpendLedgerUnavailableError();
     }
     if (rows.length === 1) {
-      return toSpendReservation(rows[0]);
+      return expectMatchingRow(
+        rows[0],
+        (row) =>
+          row.operation_id === operationId &&
+          row.status === "settled" &&
+          row.actual_units === actualUnits &&
+          row.provider_response_id === providerResponseId &&
+          row.settled_at === iso,
+      );
     }
 
     const existing = await this.readByOperationId(operationId);
@@ -571,7 +613,10 @@ export class ProviderSpendLedger {
       throw new SpendLedgerUnavailableError();
     }
     if (rows.length === 1) {
-      return toSpendReservation(rows[0]);
+      return expectMatchingRow(
+        rows[0],
+        (row) => row.operation_id === id && row.status === "uncertain",
+      );
     }
 
     const existing = await this.readByOperationId(id);

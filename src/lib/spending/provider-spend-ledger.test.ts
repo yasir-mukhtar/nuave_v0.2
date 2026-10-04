@@ -14,7 +14,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  MARK_UNCERTAIN_SPEND_SQL,
   READ_SPEND_SQL,
+  RESERVE_SPEND_SQL,
   SETTLE_SPEND_SQL,
   SPEND_LEDGER_SCHEMA,
 } from "./ledger-sql";
@@ -28,6 +30,7 @@ import {
   type SpendLedgerBindValue,
   type SpendLedgerDatabase,
   type SpendLedgerStatement,
+  type SpendReservation,
 } from "./provider-spend-ledger";
 
 // node:sqlite ships no @types/node 20 declarations, so it is loaded through
@@ -733,5 +736,218 @@ describe("ProviderSpendLedger on real SQLite", () => {
     const ledger = new ProviderSpendLedger(counting, at(DAY1_ISO));
     expect(ledger).toBeInstanceOf(ProviderSpendLedger);
     expect(prepareCalls).toBe(0);
+  });
+});
+
+/** A statement whose all() resolves a fixed D1-shaped result every time. */
+function fixedRowsStatement(rows: unknown[]): SpendLedgerStatement {
+  const statement: SpendLedgerStatement = {
+    bind: () => statement,
+    all: <T>() => Promise.resolve({ success: true, results: rows as T[] }),
+  };
+  return statement;
+}
+
+/**
+ * Wraps the real database so specific authored statements return chosen
+ * (valid-looking but untrusted) rows while everything else stays real. This
+ * simulates an inconsistent store without faking the persistence proofs.
+ */
+function withCanned(
+  real: SpendLedgerDatabase,
+  canned: Partial<Record<string, unknown[]>>,
+): SpendLedgerDatabase {
+  return {
+    prepare: (sql) =>
+      sql in canned ? fixedRowsStatement(canned[sql] ?? []) : real.prepare(sql),
+  };
+}
+
+interface SpendFixtureRows {
+  real: SpendLedgerDatabase;
+  raw: SqliteDatabaseSync;
+  reserved: SpendReservation;
+  uncertain: SpendReservation;
+  settled: SpendReservation;
+}
+
+/** Real SQLite writes produce the valid rows the stubs then misattribute. */
+async function seededRows(path: string): Promise<SpendFixtureRows> {
+  const raw = openRawDatabase(path);
+  const real = toLedgerDatabase(raw);
+  const ledger = new ProviderSpendLedger(real, at(DAY1_ISO));
+  await ledger.reserve(reserveInput("op-res", 1000000));
+  await ledger.reserve(reserveInput("op-unc", 1000000));
+  await ledger.markUncertain("op-unc");
+  await ledger.reserve(reserveInput("op-set", 1000000));
+  await ledger.settle({
+    operationId: "op-set",
+    actualUnits: 500000,
+    providerResponseId: "resp-set",
+  });
+  return {
+    real,
+    raw,
+    reserved: rawRows(raw, "op-res")[0] as SpendReservation,
+    uncertain: rawRows(raw, "op-unc")[0] as SpendReservation,
+    settled: rawRows(raw, "op-set")[0] as SpendReservation,
+  };
+}
+
+describe("request binding on returned rows", () => {
+  it("get() and the duplicate fallback refuse a valid row of another operation", async () => {
+    const path = newDbPath();
+    const { real, reserved } = await seededRows(path);
+
+    const foreignRead = withCanned(real, {
+      [READ_SPEND_SQL]: [reserved],
+    });
+    await expectUnavailable(
+      new ProviderSpendLedger(foreignRead, at(DAY1_ISO)).get("op-other"),
+    );
+
+    // An unadmitted insert followed by a read of someone else's valid row
+    // must never be reported as this operation's duplicate.
+    const foreignFallback = withCanned(real, {
+      [RESERVE_SPEND_SQL]: [],
+      [READ_SPEND_SQL]: [reserved],
+    });
+    await expectUnavailable(
+      new ProviderSpendLedger(foreignFallback, at(DAY1_ISO)).reserve(
+        reserveInput("op-other", 1000000),
+      ),
+    );
+  });
+
+  it("reserve() refuses a valid-looking RETURNING row that does not match the request", async () => {
+    const path = newDbPath();
+    const { real, reserved, settled } = await seededRows(path);
+    const request = reserveInput("op-res", 1000000);
+
+    const wrongRows: Record<string, SpendReservation> = {
+      "wrong operation id": { ...reserved, operation_id: "op-other" },
+      "wrong provider": { ...reserved, provider: "cheaper-inference" },
+      "wrong stage": { ...reserved, stage: "report" },
+      "wrong pricing version": {
+        ...reserved,
+        pricing_version: "pricing-v9",
+      },
+      "wrong reservation units": { ...reserved, reservation_units: 2 },
+      "wrong reservation day": { ...reserved, reserved_day_utc: DAY2 },
+      "wrong created_at": { ...reserved, created_at: DAY1_LATER_ISO },
+      "settled not reserved": settled,
+    };
+    for (const [label, row] of Object.entries(wrongRows)) {
+      const db = withCanned(real, { [RESERVE_SPEND_SQL]: [row] });
+      const ledger = new ProviderSpendLedger(db, at(DAY1_ISO));
+      const result = await ledger.reserve(request).then(
+        () => `resolved:${label}`,
+        (error: unknown) => error,
+      );
+      expect(result, label).toBeInstanceOf(SpendLedgerUnavailableError);
+    }
+  });
+
+  it("settle() refuses a valid-looking RETURNING row that does not match the request", async () => {
+    const path = newDbPath();
+    const { real, reserved, uncertain, settled } = await seededRows(path);
+    const request = {
+      operationId: "op-set",
+      actualUnits: 500000,
+      providerResponseId: "resp-set",
+    };
+
+    const wrongRows: Record<string, SpendReservation> = {
+      "wrong operation id": { ...settled, operation_id: "op-other" },
+      "still reserved": reserved,
+      "still uncertain": uncertain,
+      "wrong actual units": { ...settled, actual_units: 600000 },
+      "wrong response id": {
+        ...settled,
+        provider_response_id: "resp-other",
+      },
+      "wrong settled_at": { ...settled, settled_at: DAY1_LATER_ISO },
+    };
+    for (const [label, row] of Object.entries(wrongRows)) {
+      const db = withCanned(real, { [SETTLE_SPEND_SQL]: [row] });
+      const ledger = new ProviderSpendLedger(db, at(DAY1_ISO));
+      const result = await ledger.settle(request).then(
+        () => `resolved:${label}`,
+        (error: unknown) => error,
+      );
+      expect(result, label).toBeInstanceOf(SpendLedgerUnavailableError);
+    }
+  });
+
+  it("markUncertain() refuses a valid-looking RETURNING row that does not match the request", async () => {
+    const path = newDbPath();
+    const { real, reserved, settled } = await seededRows(path);
+
+    for (const [label, row] of Object.entries({
+      "wrong operation id": { ...reserved, operation_id: "op-other" },
+      "still reserved": reserved,
+      "settled for this op": { ...settled, operation_id: "op-res" },
+    })) {
+      const db = withCanned(real, { [MARK_UNCERTAIN_SPEND_SQL]: [row] });
+      const ledger = new ProviderSpendLedger(db, at(DAY1_ISO));
+      const result = await ledger.markUncertain("op-res").then(
+        () => `resolved:${label}`,
+        (error: unknown) => error,
+      );
+      expect(result, label).toBeInstanceOf(SpendLedgerUnavailableError);
+    }
+  });
+
+  it("an idempotent settle retry returns the original settled_at across clocks and reopen", async () => {
+    const path = newDbPath();
+    const raw = openRawDatabase(path);
+    const ledger1 = new ProviderSpendLedger(
+      toLedgerDatabase(raw),
+      at(DAY1_ISO),
+    );
+    await ledger1.reserve(reserveInput("op-t", 1000000));
+    const first = await ledger1.settle({
+      operationId: "op-t",
+      actualUnits: 400000,
+      providerResponseId: "resp-t",
+    });
+    expect(first.settled_at).toBe(DAY1_ISO);
+
+    // Identical retry under a later same-day clock: no rewrite of the row.
+    const later = new ProviderSpendLedger(
+      toLedgerDatabase(raw),
+      at(DAY1_LATER_ISO),
+    );
+    const retry = await later.settle({
+      operationId: "op-t",
+      actualUnits: 400000,
+      providerResponseId: "resp-t",
+    });
+    expect(retry).toEqual(first);
+    expect(retry.settled_at).toBe(DAY1_ISO);
+    raw.close();
+
+    // After reopen on a new UTC day the stored row is still the original.
+    const raw2 = openRawDatabase(path);
+    const day2 = new ProviderSpendLedger(toLedgerDatabase(raw2), at(DAY2_ISO));
+    const retryDay2 = await day2.settle({
+      operationId: "op-t",
+      actualUnits: 400000,
+      providerResponseId: "resp-t",
+    });
+    expect(retryDay2).toEqual(first);
+    expect(retryDay2.settled_at).toBe(DAY1_ISO);
+
+    // A conflicting retry neither overwrites nor alters the stored row.
+    await expect(
+      day2.settle({
+        operationId: "op-t",
+        actualUnits: 410000,
+        providerResponseId: "resp-t",
+      }),
+    ).rejects.toBeInstanceOf(SpendLedgerConflictError);
+    const stored = await day2.get("op-t");
+    expect(stored).toEqual(first);
+    expect(stored?.settled_at).toBe(DAY1_ISO);
   });
 });

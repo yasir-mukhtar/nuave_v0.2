@@ -6,6 +6,21 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-04 — S2 ledger foundation request-binding correction
+
+Independent exact-head review of the foundation slice found returned rows
+were not bound to the requesting operation: a structurally valid row for
+another operation could be accepted as a reservation, duplicate,
+settlement or readback result. The rework keeps the authored SQL
+byte-identical and adds request binding: every trusted row must prove the
+requested operation id, expected lifecycle status and request metadata
+(day, timestamps, units, provider, stage, pricing version, response id)
+before it is treated as evidence; inconsistent storage fails closed as
+unavailable. Timestamp idempotence is now proven with distinct clocks and
+a reopened database. The initial review verdict on [PR #123](https://github.com/yasir-mukhtar/nuave_v0.2/pull/123)
+was FAIL; a fresh exact-head review is required on the corrected head.
+Release remains delegated and pending — this entry grants nothing further.
+
 ## 2026-10-04 — overnight delegation and S2 spend-ledger foundation
 
 With Yasir asleep, he authorized continuing the backlog with Fox as his
