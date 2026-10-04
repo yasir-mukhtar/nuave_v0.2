@@ -201,6 +201,123 @@ const okBody = (overrides: Record<string, unknown> = {}) =>
   };
 
 describe("assessCheaperInferenceIndonesianResponse", () => {
+  it("normalizes allowlisted diagnostics before incomplete rejection (R-30)", () => {
+    const body = okBody();
+    body.choices[0].finish_reason = "length";
+    expect(
+      assessCheaperInferenceIndonesianResponse({ httpStatus: 200, body }),
+    ).toMatchObject({
+      ok: false,
+      reason: "incomplete",
+      diagnostics: {
+        httpStatus: 200,
+        finishReason: "length",
+        usage: body.usage,
+      },
+    });
+  });
+
+  it("uses the same strict usage normalization on stop and length (R-30)", () => {
+    for (const finish of ["stop", "length"]) {
+      for (const invalid of [
+        undefined,
+        null,
+        "3",
+        true,
+        -1,
+        0.5,
+        NaN,
+        Infinity,
+        Number.MAX_SAFE_INTEGER + 1,
+      ]) {
+        const body = okBody({
+          usage: {
+            prompt_tokens: invalid,
+            completion_tokens: 0,
+            total_tokens: 99,
+          },
+        });
+        body.choices[0].finish_reason = finish;
+        const result = assessCheaperInferenceIndonesianResponse({
+          httpStatus: 200,
+          body,
+        });
+        expect(result).toMatchObject({
+          diagnostics: {
+            usage: {
+              prompt_tokens: null,
+              completion_tokens: 0,
+              total_tokens: 99,
+            },
+          },
+        });
+        if (result.ok)
+          expect(result.usage).toEqual({
+            prompt_tokens: null,
+            completion_tokens: 0,
+            total_tokens: 99,
+          });
+      }
+      for (const usage of [undefined, null, [], "usage", false]) {
+        const body = okBody({ usage });
+        body.choices[0].finish_reason = finish;
+        expect(
+          assessCheaperInferenceIndonesianResponse({ httpStatus: 200, body }),
+        ).toMatchObject({ diagnostics: { usage: null } });
+      }
+      const body = okBody({ usage: { prompt_tokens: 3 } });
+      body.choices[0].finish_reason = finish;
+      expect(
+        assessCheaperInferenceIndonesianResponse({ httpStatus: 200, body }),
+      ).toMatchObject({
+        diagnostics: {
+          usage: {
+            prompt_tokens: 3,
+            completion_tokens: null,
+            total_tokens: null,
+          },
+        },
+      });
+    }
+  });
+
+  it("bounds finish and HTTP diagnostics without changing failure order (R-30)", () => {
+    for (const [finish, code] of [
+      ["stop", "stop"],
+      ["length", "length"],
+      ["content_filter", "content_filter"],
+      ["tool_calls", "tool_calls"],
+      ["function_call", "function_call"],
+      ["untrusted secret prose", "other"],
+      [undefined, "missing"],
+      [12, "missing"],
+    ]) {
+      const body = okBody({
+        choices: [
+          {
+            message: { content: "", refusal: "refused" },
+            finish_reason: finish,
+          },
+        ],
+      });
+      expect(
+        assessCheaperInferenceIndonesianResponse({ httpStatus: 503, body }),
+      ).toMatchObject({
+        ok: false,
+        reason: "http_error",
+        diagnostics: { finishReason: code, httpStatus: 503 },
+      });
+    }
+    for (const httpStatus of [NaN, Infinity, -1, 200.5]) {
+      expect(
+        assessCheaperInferenceIndonesianResponse({
+          httpStatus,
+          body: okBody(),
+        }),
+      ).toMatchObject({ diagnostics: { httpStatus: null } });
+    }
+  });
+
   it("returns the assistant text plus verbatim provenance on a healthy envelope", () => {
     const result = assessCheaperInferenceIndonesianResponse({
       httpStatus: 200,

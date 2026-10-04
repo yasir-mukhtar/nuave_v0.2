@@ -8,6 +8,56 @@
 > Evidence: [PR #104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104),
 > [independent PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114)
 
+## JZ R-30 reliability checkpoint — 2026-10-04 (not closeout)
+
+Founder successful prompts/report are accepted. The bounded correction is
+implemented and passes its offline gate; independent exact-head review and
+parent closeout remain pending. The full spec stays Implementing. The delegated approval was recorded in
+the active spec and decision log before code changes; Specs 009/010 are unchanged.
+
+On the uncommitted `fix/jz-question-generation-reliability` diff based on
+`407b23259edc4974aabfff9e30a722a26086076a`, private Node v22.23.3:
+
+- Earlier parser/adapter/copy/addendum RED records remain preserved separately.
+  The completion ran Node 22 RED before notice and no-response contact fixes:
+  five expected notice failures; one no-response evidence failure incorrectly
+  returned responded while the received-response case passed. GREEN gives
+  eight notice cases and both evidence-write-failure cases passing.
+- Final focused offline suite: seven files / 245 tests pass. Authored sparse/rich
+  fixtures are not provider output or live efficacy measurements.
+- Canonical `npm run verify`: PASS; typecheck, lint (24 existing warnings),
+  formatting, typography, 98 unit-test files / 1,656 tests, Next/OpenNext
+  builds, 56 enabled-mode and three disabled-mode E2E tests.
+- Same strict usage normalizer runs before rejection and on success. Separate
+  settled billing/identity/contact and frozen-request authorization are retained.
+  No filesystem work without evidence configuration; configured sidecar remains
+  owner-only. Diagnostics are not added to session/pack/export storage.
+- Exact addendum and source-hash invariant pass. Request/model/pack settings,
+  acceptance order and explicit confirmation/retry/audit gates are unchanged.
+
+Alfred's approved prospective condition resolves the earlier contradiction:
+the available no-pack/not-busy retry shows the exact cost notice from the
+current server-provided live prop, including remount without transient error.
+Synthetic mode hides it. Both mode transitions preserve all history and known
+zero/unknown costs; remount sends nothing. Busy and accepted-pack branches hide
+the notice. Frozen JQ equality, duplicate-click and explicit-send gates pass.
+The historical persistence-collision characterization remains, not as a blocker
+or a claim that current props classify past transport/billing. No persistence,
+schema, discriminator, route or mode-selection change was made.
+
+The evidence-write catch now derives contact from the actual envelope: a received
+HTTP response retains responded/billing/diagnostics; HTTP 0/transport error with
+no response retains sent/unknown and null/unavailable cost. The evidence failure
+reason remains; authorization is consumed before sending, not skipped.
+
+These are source and mocked/offline observations. An already-open page is not
+an atomic guarantee across a later deployment/configuration change. No measured
+live truncation prevention or broad provider-error sanitization is claimed.
+
+This is an offline working-diff checkpoint, not a committed-head gate, CI verdict,
+independent acceptance, JZ closeout or deployment. No live call/efficacy measurement
+was made. Restricted worker logs/report stay outside Git. Parent owns closeout.
+
 ## J5 scope reviewed
 
 J5 of the approved [Spec 013](./SPEC.md): category, offerings, service-channel

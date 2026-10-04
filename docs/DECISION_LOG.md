@@ -1,10 +1,59 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-02
+> Updated: 2026-10-04
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-04 — approve PR121 public question-error correction
+
+Alfred, under delegated founder authority, approves the bounded public API/UI
+projection recorded in Spec 013 R-30/AC-18. The unresolved PR121 thread
+`discussion_r4176528975` is a release blocker; the parent owns its disposition.
+Failure text, rejected content, diagnostics and provider-controlled failure IDs
+are withheld explicitly. Internal identities/evidence and validated billing,
+known preflight refusal versus uncertain execution, accepted success and retry
+gates remain unchanged. Scope is only the question endpoint and its UI, one
+pure helper and nearby regressions. No new persistence, live spend, dependency,
+shared gate, instruction or other-stage change is approved. Founder successful
+prompts/report approval stands. Earlier review/gate covers the old head only;
+fresh review/CI are required. No merge, deploy or JZ closeout approval.
+
+## 2026-10-04 — approve bounded JZ question-generation reliability correction
+
+Alfred (delegated founder authority) approved A+B; Mia's independent technical
+review supports the bounded correction. The parent reconciled spec routing:
+one active [Spec 013 R-30](../specs/013-airbnb-intake-journey/SPEC.md) and AC-18,
+with cross-references, not changes to historical Specs 009/010.
+
+- Yasir's successful prompts/report result is accepted. His observed
+  `Error: finish_reason: length` followed by “its succeed on the 2nd retry”
+  remains reliability evidence, not a known attempt count, cost or root cause.
+- R-30 is an explicit narrow exception to the unchanged-instruction/generation
+  boundaries: safe incomplete recovery copy and live retry-cost disclosure,
+  optional allowlisted normalized diagnostics within existing outcome/owner-only
+  configured sidecars, and the exact concise-v1 runtime addendum.
+- Alfred's remount refinement supersedes the retrospective notice condition:
+  display the exact R-30 notice beside an available retry in the current
+  server-selected live mode, from the existing `live` prop, including remount.
+  It describes the next request, not past transport/billing. Synthetic current
+  mode omits it; historical attempts, interruption and unknown/zero billing
+  stay unchanged. No discriminator, persistence, schema or version is added.
+  A received-response evidence-write failure retains responded/settled billing;
+  no-response transport plus evidence failure retains sent/unknown, not a
+  fabricated response or settled zero. Parent approved the adjacent JQ-row
+  reconciliation from PR #117's merged/PASS evidence.
+- Preserve the verbatim core, research method, three sections, all ten unnamed
+  questions, frozen context/hash protections, explicit confirmation and all
+  request settings. No partial repair, automatic paid retry, token/model change,
+  new persistence, evidence enablement or agent live call is approved.
+- Runtime instruction version becomes `glm-direct-ten-2026-09-18-concise-v1`;
+  method/pack/session versions do not change. Presentation guidance is not a
+  new rejection cap. No measured live efficacy or guaranteed prevention claim.
+- Spec 013 remains Implementing; JZ is founder-result-accepted with this narrow
+  correction pending independent exact-head review after its offline gate.
+  Parent owns later closeout; no Stage 2, outside users, merge or deploy approval.
 
 ## 2026-10-02 — JQ decisions: the three retained customer questions return as dedicated optional screens
 

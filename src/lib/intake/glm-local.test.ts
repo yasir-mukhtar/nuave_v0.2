@@ -4,7 +4,15 @@
  * credentials, no provider call. The live transport is exercised only through
  * a throwing fetch stub to prove its failure is reported, never retried.
  */
-import { mkdtempSync, readFileSync, readdirSync, statSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -91,6 +99,128 @@ describe("glmEvidenceDir", () => {
 });
 
 describe("prepareGlmQuestionsForIntake", () => {
+  it("preserves incomplete diagnostics, identities and separate billing without a pack (R-30)", async () => {
+    for (const billing of [0, "0.000496", undefined, "bad", -1]) {
+      const call = vi.fn(async () => ({
+        httpStatus: 200,
+        body: {
+          id: " response-fixture ",
+          model: "zai/glm-5.3-flash",
+          choices: [
+            { finish_reason: "length", message: { content: "partial" } },
+          ],
+          usage: {
+            prompt_tokens: 0,
+            completion_tokens: 20,
+            total_tokens: "20",
+          },
+          cheaper_inference: { billing: { billed_cost_usd: billing } },
+        },
+      }));
+      const result = await prepareGlmQuestionsForIntake({
+        intake: frozenLaundry(),
+        transport: { kind: "cheaper-inference", call },
+      });
+      expect(call).toHaveBeenCalledTimes(1);
+      expect(result).toMatchObject({
+        status: "failed",
+        reason: "incomplete",
+        providerContact: "responded",
+        provenance: {
+          requestedModel: "glm-5.3-flash",
+          returnedModel: "zai/glm-5.3-flash",
+          responseId: " response-fixture ",
+          modelMismatch: true,
+        },
+        diagnostics: {
+          usage: {
+            prompt_tokens: 0,
+            completion_tokens: 20,
+            total_tokens: null,
+          },
+          httpStatus: 200,
+          finishReason: "length",
+          instructionVersion: "glm-direct-ten-2026-09-18-concise-v1",
+        },
+      });
+      expect(result).not.toHaveProperty("questions");
+      const cost = billing === 0 ? 0 : billing === "0.000496" ? 0.000496 : null;
+      expect(result).toMatchObject({
+        cost: { billedUsd: cost, available: cost !== null },
+      });
+    }
+  });
+
+  it("keeps response diagnostics and provenance when configured evidence writing fails (R-30)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
+    const intake = frozenLaundry();
+    await freezeGlmLiveAttempt({ intake, evidenceDir: dir });
+    const body = {
+      id: "fixture-response",
+      model: "glm-5.3-flash",
+      choices: [{ finish_reason: "length", message: { content: "partial" } }],
+      usage: { prompt_tokens: 0 },
+      cheaper_inference: { billing: { billed_cost_usd: "0.000496" } },
+    };
+    const outcome = await prepareGlmQuestionsForIntake({
+      intake,
+      evidenceDir: dir,
+      transport: {
+        kind: "cheaper-inference",
+        call: async () => {
+          rmSync(dir, { recursive: true, force: true });
+          return { httpStatus: 200, body, rawBody: JSON.stringify(body) };
+        },
+      },
+    });
+    expect(outcome).toMatchObject({
+      status: "failed",
+      reason: "evidence",
+      providerContact: "responded",
+      provenance: { responseId: "fixture-response" },
+      cost: { billedUsd: 0.000496, available: true },
+      diagnostics: {
+        finishReason: "length",
+        instructionVersion: "glm-direct-ten-2026-09-18-concise-v1",
+      },
+    });
+    expect(outcome).not.toHaveProperty("questions");
+  });
+  it("keeps sent/unknown on no-response transport plus configured evidence-write failure (R-30)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
+    const intake = frozenLaundry();
+    await freezeGlmLiveAttempt({ intake, evidenceDir: dir });
+    const call = vi.fn(async () => {
+      expect(readdirSync(dir)).toContain("attempt.consumed");
+      // Remove only this owned test directory after authorization was consumed.
+      rmSync(dir, { recursive: true, force: true });
+      return { httpStatus: 0, body: null, transportError: "mock no response" };
+    });
+    const outcome = await prepareGlmQuestionsForIntake({
+      intake,
+      evidenceDir: dir,
+      transport: { kind: "cheaper-inference", call },
+    });
+    expect(call).toHaveBeenCalledTimes(1);
+    expect(outcome).toMatchObject({
+      status: "failed",
+      reason: "evidence",
+      providerContact: "sent",
+      provenance: { returnedModel: null, responseId: null },
+      diagnostics: {
+        httpStatus: 0,
+        finishReason: "missing",
+        usage: null,
+        instructionVersion: "glm-direct-ten-2026-09-18-concise-v1",
+      },
+      cost: { billedUsd: null, available: false },
+    });
+    if (outcome.status !== "failed")
+      throw new Error("expected evidence failure");
+    expect(outcome.detail).toContain("without a provider response");
+    expect(outcome.detail).not.toContain("response arrived");
+    expect(outcome).not.toHaveProperty("questions");
+  });
   it("keeps the mismatch verdict while leaving the text inspectable", async () => {
     const outcome = await prepareGlmQuestionsForIntake({
       intake: frozenLaundry(),
@@ -600,6 +730,104 @@ describe("B1 — single authorized live attempt", () => {
     expect(outcome.bodyPreserved).toBe(true);
     expect(statSync(join(dir, bodyFile)).mode & 0o777).toBe(0o600);
     expect(statSync(join(dir, outcomeFile)).mode & 0o777).toBe(0o600);
+  });
+
+  it.each(["stop", "length"])(
+    "adds only bounded metadata to configured %s outcome evidence (R-30)",
+    async (finish_reason) => {
+      const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
+      const intake = frozenLaundry();
+      await freezeGlmLiveAttempt({ intake, evidenceDir: dir });
+      const body = {
+        ...okBody,
+        choices: [{ ...okBody.choices[0], finish_reason }],
+        usage: { prompt_tokens: 0, completion_tokens: 5 },
+        cheaper_inference: { billing: { billed_cost_usd: "0.000496" } },
+      };
+      const seen: unknown[] = [];
+      await prepareGlmQuestionsForIntake({
+        intake,
+        transport: spyTransport(seen, body),
+        evidenceDir: dir,
+      });
+      expect(seen).toHaveLength(1);
+      const files = readdirSync(dir);
+      const recordPath = join(
+        dir,
+        files.find((f) => f.endsWith(".outcome.json"))!,
+      );
+      const record = JSON.parse(readFileSync(recordPath, "utf8"));
+      expect(record.diagnostics).toEqual({
+        httpStatus: 200,
+        finishReason: finish_reason,
+        usage: { prompt_tokens: 0, completion_tokens: 5, total_tokens: null },
+        instructionVersion: "glm-direct-ten-2026-09-18-concise-v1",
+      });
+      expect(record.provenance).toMatchObject({
+        responseId: "chatcmpl-live",
+        requestedModel: "glm-5.3-flash",
+        returnedModel: "glm-5.3-flash",
+        method: "direct-ten",
+      });
+      expect(record.cost).toEqual({ billedUsd: 0.000496, available: true });
+      expect(Object.keys(record).sort()).toEqual(
+        [
+          "recordedAt",
+          "requestSha256",
+          "httpStatus",
+          "transportError",
+          "bodyPreserved",
+          "bodyBytes",
+          "diagnostics",
+          "provenance",
+          "cost",
+        ].sort(),
+      );
+      expect(JSON.stringify(record.diagnostics)).not.toMatch(
+        /partial|content|prompt[^_]|reasoning|secret/,
+      );
+      expect(statSync(recordPath).mode & 0o777).toBe(0o600);
+      expect(
+        readFileSync(
+          join(
+            dir,
+            files.find((f) => f.endsWith(".body.txt"))!,
+          ),
+          "utf8",
+        ),
+      ).toBe(JSON.stringify(body));
+    },
+  );
+
+  it("refuses an old runtime authorization rather than rebinding its request hash (R-30)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "glm-evidence-"));
+    const intake = frozenLaundry();
+    await freezeGlmLiveAttempt({ intake, evidenceDir: dir });
+    const request = JSON.parse(
+      readFileSync(join(dir, "frozen-request.json"), "utf8"),
+    );
+    request.messages[0].content = request.messages[0].content.split(
+      "\n\nRuntime output-format refinement — concise-v1:",
+    )[0];
+    const old = JSON.stringify(request);
+    writeFileSync(join(dir, "frozen-request.json"), old);
+    writeFileSync(
+      join(dir, "frozen-request.sha256"),
+      createHash("sha256").update(old).digest("hex"),
+    );
+    const seen: unknown[] = [];
+    const result = await prepareGlmQuestionsForIntake({
+      intake,
+      transport: spyTransport(seen, okBody),
+      evidenceDir: dir,
+    });
+    expect(result).toMatchObject({
+      status: "failed",
+      reason: "request_changed",
+      providerContact: "none",
+    });
+    expect(seen).toHaveLength(0);
+    expect(readFileSync(join(dir, "frozen-request.json"), "utf8")).toBe(old);
   });
 });
 

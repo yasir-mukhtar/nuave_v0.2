@@ -495,6 +495,9 @@ Be critical of your own output rather than defending it.
  * 4. Founder amendments appended at the end (DIRECT_TEN_AMENDMENTS): the
  *    2026-09-16 no-quota amendment and the 2026-09-18 all-unnamed direct-ten
  *    delivery terms. Both are addenda; no source sentence is edited for them.
+ * 5. Spec 013 R-30, Alfred's delegated approval (2026-10-04): append the exact
+ *    concise-v1 runtime-only presentation addendum after existing amendments.
+ *    It is generation guidance, not new extraction caps or response trimming.
  *
  * No matrix roles, per-slot permissions, named exceptions, forced intent
  * mixes, or evaluator prompt are appended. */
@@ -543,6 +546,13 @@ export const DIRECT_TEN_AMENDMENTS = `Founder amendments (take precedence over c
  * present before substitution — if the recovered body ever drifts, this
  * throws rather than silently producing a different instruction.
  */
+const CONCISE_OUTPUT_ADDENDUM = `Runtime output-format refinement — concise-v1:
+Keep the three section headings exactly as specified, in the same order. Do not add a preamble, closing paragraph, extra section, table or code fence.
+In ## 1. Market interpretation, use exactly the four existing labelled bullets: Category; Likely customer decision situations; Common decision dimensions; Target-brand facts that should not be copied too literally. Limit each bullet's content to 20 words, excluding its label. Use concise phrases. State unknowns honestly; do not invent facts or repeat the whole brief.
+In ## 2. Candidate questions, write exactly ten complete Indonesian questions or direct requests on numbered lines 1–10. After each question, provide one Intent pattern: label of 1–4 words. Do not add rationales, scores or explanations. Keep questions natural and concise without changing their meaning or omitting relevant context. Do not force a template, intent mix or distinct-needs quota.
+In ## 3. Self-critique, use exactly three bullets: Strongest; Borderline; Assumptions. Limit each bullet's content to 30 words, excluding its label. Strongest must identify the three strongest question numbers and give a short reason. Borderline must identify any borderline question numbers and a short reason, or explicitly say none. Assumptions must state assumptions caused by missing information, or explicitly say none. Refer to question numbers; do not repeat the question texts. Remain critical rather than defending the output.
+These limits constrain presentation, not the underlying consumer-choice reasoning. Preserve the research principles, source examples, openness, no-quota amendment and all-unnamed rule.`;
+
 export function glmDirectTenWriterInstruction(): string {
   for (const source of [COUNT_ADAPTATION[0], SECTION_FORMAT_SOURCE]) {
     if (!DIRECT_TEN_SOURCE_BODY.includes(source)) {
@@ -555,5 +565,5 @@ export function glmDirectTenWriterInstruction(): string {
     COUNT_ADAPTATION[0],
     COUNT_ADAPTATION[1],
   ).replace(SECTION_FORMAT_SOURCE, SECTION_FORMAT_ADAPTED);
-  return `${adapted}\n\n---\n\n${DIRECT_TEN_AMENDMENTS}`;
+  return `${adapted}\n\n---\n\n${DIRECT_TEN_AMENDMENTS}\n\n${CONCISE_OUTPUT_ADDENDUM}`;
 }

@@ -37,7 +37,7 @@ import {
 } from "./questions-id-direct-ten-instruction";
 
 export const INDONESIAN_QUESTION_DIRECT_TEN_INSTRUCTION_VERSION =
-  "glm-direct-ten-2026-09-18" as const;
+  "glm-direct-ten-2026-09-18-concise-v1" as const;
 // Shared transport/provenance mechanics stay imported from the dormant slot
 // module rather than duplicated; its own contract is untouched.
 
