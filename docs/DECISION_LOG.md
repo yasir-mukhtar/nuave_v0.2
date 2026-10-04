@@ -6,6 +6,46 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-04 — accept JZ with documented evidence exceptions; Stage 2 not authorized
+
+Alfred **accepts JZ** under Yasir's delegated completion authority on 2026-10-04.
+Yasir's exact successful-result approval was: “The prompts generated, the report
+is successfully created. I approve this result.” Alfred accepts the three plan
+judgments — flow and feel, information completeness/use, and settled nuances —
+from the composite live-reported, visual, slice and contract evidence, not a
+claim that Yasir personally tested every acceptance criterion or F1–F18 rule.
+
+[Spec 013's final verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout)
+records **Verified with documented evidence exceptions** under
+[WORKFLOW](./WORKFLOW.md#independent-verification): historical-drive freshness;
+the record-specific blocked-framework/JavaScript-guard and fictional/stubbed
+synthetic limits (original FAIL/HOLD and stop-at-entry remain failures); the
+missing reading-animation/continuous synthetic-label observation for R-07;
+and unknown live business/revision/run/usage/charges/attempt count, without a
+reconstructed per-field R-24 or all-F1–F18 live walkthrough. “2nd retry” remains
+the founder's wording, not an inferred attempt count. No requirement is waived
+or reusable exception created. Exact observer/executor attribution is retained
+in the verification record; no live efficacy or prevention guarantee is made.
+
+The requested bounded reliability/security correction is complete:
+[PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121), reviewed
+`7aa6fc9a08d141ecab03ff98e05a06408ade405d`, merged
+`d7a2f50fddafae222eb62dbabaec5497010743b8`; the
+[resolved final-head response](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121#discussion_r4176920304)
+records independent review and the parent's canonical gate.
+[Main CI/deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
+shipped worker version `09c25e17-02e8-498b-bfe7-20e43f7ea0cd`.
+Parent's HTTP smoke is availability only, not rendered QA or a new live audit.
+The separate [closed-preview cleanup failure](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060)
+remains disclosed; no cause, ongoing exposure or remediation is established here.
+
+This decision supersedes earlier current JZ HOLD/correction-pending routing,
+not historical failures, counts or warnings. **JZ accepted; canonical docs
+PR, independent review and merge pending.** Parent records that transition.
+After closeout, await a separate next-stage instruction: **S0 is not initiated;
+Stage 2, outside users, new spending and commercial commitments are not authorized**,
+despite the plan's eventual sequencing. Earlier entries below remain dated history.
+
 ## 2026-10-04 — approve PR121 public question-error correction
 
 Alfred, under delegated founder authority, approves the bounded public API/UI

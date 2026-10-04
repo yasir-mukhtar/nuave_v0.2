@@ -2,7 +2,7 @@
 
 > Updated: 2026-10-04
 > Stage: Stage 1 of the [paying-customer plan](./PAYING_CUSTOMER_PLAN.md):
-> finish the intake journey
+> intake journey accepted; canonical docs closeout pending
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
 ## Current state
@@ -16,9 +16,11 @@
   live audit, and download the report (PDF and JSON). Nothing is saved on the
   server, and there is no payment or email.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
-  intake) is implementing; J2–J7 and JQ merged. Founder successful
-  prompts/report are accepted; narrow JZ R-30 correction is pending
-  (plan §1 has evidence). The full spec is not yet verified. Latest verified:
+  intake) is **Verified with documented evidence exceptions**; J2–J7/JQ and
+  PR121 merged, the latter deployed. Alfred accepted JZ under delegated founder
+  authority, with Yasir's successful-result approval and the composite
+  [verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout).
+  Canonical docs review/merge remains pending. Also verified:
   [Spec 011](../specs/011-smart-consultant-intake/SPEC.md) (intake) and
   [Spec 012](../specs/012-evidence-first-report/SPEC.md) (report, with the
   AC-18 exception). Checkpoint: [2026-09-19 live report](./checkpoints/2026-09-19-live-direct-ten-report/CHECKPOINT.md).
@@ -27,14 +29,14 @@
 
 ## Next action
 
-- **Active milestone: JZ** (Spec 013 R-30): independent review of the completed
-  narrow question-generation reliability correction.
-  Alfred resolved retry disclosure as prospective current-mode information
-  from the server-provided `live` prop, not past-attempt classification.
-  No new persistence or accounting workaround was added. Final `npm run verify`
-  passes on the uncommitted diff; independent exact-head review precedes
-  closeout. Founder successful prompts/report approval stands. Parent owns
-  closeout; Stage 2 and outside users remain out of scope.
+- **Active action: reviewed docs-only JZ closeout.** JZ is accepted, not awaiting
+  another code review or founder live test. Parent inspects and publishes the
+  five-file reconciliation, obtains a fresh independent docs verdict and
+  exact-head checks, and records the actual merge. No future PR URL is asserted.
+- **After this closeout, await a separate next-stage instruction.
+  S0/Stage 2 and outside users are not authorized.** The
+  [latest decision](./DECISION_LOG.md#2026-10-04--accept-jz-with-documented-evidence-exceptions-stage-2-not-authorized)
+  controls dispatch despite the plan's eventual Stage 2 sequence.
 
 ## Rules still in force
 
@@ -53,12 +55,27 @@
   allowance on 2026-09-27; update this line after each approved agent run.
   The founder's own test runs (plan §5, JZ) are not counted here; the
   provider dashboards show total spend.
+- **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
+  engagement only. This does not reset the separately dated September allowance
+  usage above. Founder-run charges remain unknown; no new spending is authorized.
 - **Private evidence stays out of Git:** `.local-evidence/` and `.secrets/`
   (both ignored). The old `devin/sol-smart-consultant-intake-plan` branch's
   uncommitted files are in `.local-evidence/branch-closeout-20260927/`.
 
 ## Deployment
 
+- **PR121 release:** [main CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
+  validated/deployed `d7a2f50fddafae222eb62dbabaec5497010743b8`, the same tree as
+  reviewed `7aa6fc9a08d141ecab03ff98e05a06408ade405d`.
+  [Deployment job](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597/job/111407548044)
+  reported worker `nuave-v2` version `09c25e17-02e8-498b-bfe7-20e43f7ea0cd`.
+  GitHub's deployments API was empty; the association comes from that job log.
+  Parent's `https://v2.nuave.ai` HTTP smoke: Python home GET 403, then curl home and
+  `/audit` HTTP 200. No browser JavaScript, business submission, provider call,
+  rendered QA or fresh production report was exercised.
+- **Separate operational finding:** [closed-preview cleanup failed](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060).
+  Preview removal, cause and continuing exposure are not established. This does
+  not negate the successful main deployment; no cleanup/remediation is authorized.
 - Cloudflare **Workers** (not Pages; Pages could not serve the static assets)
   worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
@@ -94,6 +111,7 @@
 **S1 merged in [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110):** root patches
 and the production dependency audit pass; dev-only brace findings remain disclosed.
 This is not full security or customer-exposure readiness; S2 and safeguards still apply.
+Dependency alerts remain unassessed by the JZ acceptance, not waived or resolved.
 
 ## Not now
 

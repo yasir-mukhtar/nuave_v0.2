@@ -1,14 +1,136 @@
 # Verification: Spec 013 — intake journey
 
-> Full-spec result: **Pending — Implementing**
-> Latest completed slice: **J6 PASS**, merged 2026-10-02; [frozen closeout](#j6-frozen-closeout).
-> J5 slice result: **PASS**, 2026-10-02
-> Independent reviewer: [review session](https://app.devin.ai/sessions/cfbe766968b1491da877e5e40b62f031)
-> Implementation: `358c521b3e3e5fca9046714f0559c50ac07b5e03`
-> Evidence: [PR #104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104),
-> [independent PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114)
+> Full-spec result: **Verified — delegated JZ acceptance with documented evidence exceptions, 2026-10-04.**
+> Accepted by Alfred under Yasir's delegated authority; canonical closeout is recorded through the reviewed documentation PR.
+> Documentation PR, fresh independent docs verdict and merge: **pending parent action**; no future PR URL or completed docs review is asserted here.
+
+## Final JZ closeout
+
+Alfred accepted JZ on 2026-10-04 under Yasir's delegated completion authority,
+using the composite evidence and explicit exceptions below. This meets
+[WORKFLOW's qualified verification rule](../../docs/WORKFLOW.md#independent-verification),
+not an unqualified independently exercised PASS for every criterion. The
+[decision](../../docs/DECISION_LOG.md#2026-10-04--accept-jz-with-documented-evidence-exceptions-stage-2-not-authorized)
+supersedes earlier HOLD/correction-pending routing, not the original results.
+Canonical documentation closeout still needs the parent's reviewed PR and merge.
+
+### Three delegated journey judgments
+
+- **Flow and feel — accepted.** The delegated visual review inspected all
+  26 indexed captures and report crops: short-screen whole-brand flow,
+  chapter progress, prepared selections, Back/Continue, review/edit and visible
+  Indonesian wording, with the approved prototype exceptions. Combined with
+  Yasir's reported live success, this supports the judgment; neither proves
+  every conditional live branch or every device/focus.
+- **Information completeness and use — accepted.** JQ retains target customer,
+  buyer considerations and differentiator as optional screens. Existing
+  context-equality/provenance evidence and the saved same-session synthetic edit
+  trace show those owner-origin values reaching question creation, audit and
+  report requests and actual downloaded JSON. This proves downstream inputs,
+  not that generated prose must repeat each answer verbatim. PR121 regressions
+  preserve frozen JQ values, selections, history and explicit-send protection.
+- **Settled nuances — accepted.** The J1 inventory/F1–F18 decisions, JQ optional
+  decision, independent slice reviews and observed whole-brand path support
+  Alfred's judgment that the prototype did not silently replace retained rules.
+  This covers stronger required-field gates, source labels, manual name/address,
+  single-product scope, geography, channels, three comparator meanings, optional
+  screens, aliases/sources/privacy, thin-source handling, the excluded Maps
+  promise, ten unnamed questions and focus-specific categories. Yasir did not
+  individually restate or retest every F1–F18 decision in the live run.
+
+### Composite acceptance dispositions
+
+| Criteria | Accepted basis and qualification |
+|---|---|
+| AC-01, AC-03–AC-11, AC-13, AC-16–AC-17 | Accumulated J2–JQ independent slice evidence and retained regressions, supplemented by bounded JZ observations. Durable PR/verdict links are in the [plan ledger](../../docs/PAYING_CUSTOMER_PLAN.md#1-progress-ledger) and frozen records below. No fresh manual exercise of every screen, focus or device is claimed. |
+| AC-02 and JQ downstream finish condition | Saved rich Continue-only observation and same-session edited-context trace, subject to the record-specific synthetic exception below. These are not a full drive or live extraction. JQ prerequisite is satisfied by [its merged closeout](#jq-frozen-closeout). |
+| AC-12 | Existing independent contract/equality/provenance evidence remains accepted; no exhaustive old/new golden matrix is implied or newly required. |
+| AC-14 | Explicit historical-drive freshness exception: the separate JQ drive belongs to `54c7340`, not `407b232` or `7aa6fc9`. The final offline gate and targeted correction supplement it. `npm run verify` does not replace that historical drive; R-30/AC-18 require no new full drive. |
+| AC-15 and R-24 live evidence | Yasir's reported successful outcome and direct result approval, combined with the delegated judgments and preparation-contract/slice evidence. Alfred expressly accepts the missing live metadata and per-field observation limits below; no further live run is required to fill them. |
+| AC-18 | Baseline and final independent correction reviews, exact-head parent gate, resolved security thread and successful release chain below. Offline/mock regression and deployment evidence, not a paid efficacy experiment. |
+
+### Evidence exceptions
+
+- **Record-specific synthetic evidence:** only the identified Next telemetry/
+  version operations blocked before egress were accepted as rejected framework
+  operations for retaining the saved A/B observations. The original strict
+  overall FAIL/HOLD and later stop-at-entry result remain failures. No external
+  operation was permitted. There is no packet-level or OS-wide isolation proof;
+  the immutable harness snapshot is missing, the guard was JavaScript-scoped,
+  extraction was fictional, budgets were stubbed, and synthetic cost fields
+  remain unknown. Parent and Mia independently corroborated the saved context/
+  hash artifacts. This is not a reusable testing or isolation exception.
+- **R-07 observation limit:** the saved set does not show the reading animation
+  or continuous synthetic labelling on intermediate screens. The earlier visual
+  decision did not fully verify that wording. Alfred explicitly accepts this
+  residual limit alongside existing J2 reading-screen evidence, only for these
+  identified private synthetic records. It does not assert continuous labelling,
+  permit concealed synthetic mode, change R-07 or mark a demonstrated defect fixed.
+- **Live evidence limit:** Yasir reported `Error: finish_reason: length`, then
+  “When Nuave trying to create 10 prompts. But its succeed on the 2nd retry. But dont want this to happen ever again for users.”
+  His exact result approval was: “The prompts generated, the report is successfully created. I approve this result.”
+  This was his live result, not an agent execution or synthetic success. The
+  entered business was not confirmed; a suggestion is not entered data. Served
+  revision, run ID, timestamps, token usage, charges and billable attempt count
+  are unknown. “2nd retry” is not converted to a count. Alfred accepts this
+  documentation/evidence limit: no reconstructed per-field live extraction,
+  live location/category correctness certificate or all-F1–F18 live walkthrough.
+  Truthful preparation, source labels and public-location rules remain required.
+
+### Correction, review and release evidence
+
+[PR121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121) merged on
+2026-10-04T09:27:38Z. Reviewed application:
+`7aa6fc9a08d141ecab03ff98e05a06408ade405d`; merged main:
+`d7a2f50fddafae222eb62dbabaec5497010743b8`. Both have tree
+`35799cc52760fea89f511dabd820ac7a51696ad8`.
+
+The bounded R-30 correction is complete: concise runtime guidance, honest
+incomplete/retry handling, safe public failures and truthful accounting. It
+reduces avoidable output pressure; the provider may still truncate. Live cause
+and measured prevention rate remain unproved. No actual exploitation/leak or
+efficacy guarantee is claimed. Internal evidence policy and accepted success
+remain unchanged.
+
+The [final-head thread response](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121#discussion_r4176920304)
+records Mia's exact-head PASS and 391 independently executed focused tests,
+including all three accounting corrections and public-boundary/internal-fidelity
+regressions. Parent separately ran exact-committed-head `npm run verify`: exit 0,
+99 unit files / 1,745 tests, both builds, 56 enabled and three disabled browser
+tests; 24 lint warnings remain disclosed. Alfred inspected that parent log;
+Mia's browser-log inspection was not independent browser execution. The earlier
+[PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121#issuecomment-5977584788)
+covers `0faac21`, not the final head. The original security concern remains
+legitimate historical evidence; the single thread is now resolved.
+
+Exact-head validate, PR preview and Devin Review succeeded before merge.
+[Main CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
+succeeded at the exact merge, including validate, merged-PR-origin verification
+and [production deployment](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597/job/111407548044).
+The deployment job associates worker `nuave-v2`, version
+`09c25e17-02e8-498b-bfe7-20e43f7ea0cd`, with that commit. The GitHub deployments
+API was empty; no deployment-record ID is inferred. Parent's narrow HTTP smoke
+on `https://v2.nuave.ai` recorded Python home GET 403,
+then curl home and `/audit` HTTP 200. This proves HTTP availability only: no
+browser JavaScript, business submission, provider call, rendered QA or fresh
+live report was exercised.
+
+Separately, [closed-preview cleanup failed](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060).
+Do not infer that all PR checks were green or the preview was removed. Cause
+and continuing exposure were not established; this does not negate the
+successful production deployment. No remediation is authorized here.
+
+JZ is accepted; canonical documentation review/merge remains pending. A fresh
+independent docs verdict and exact-head PR checks must cover this closeout when
+the parent publishes it; neither a future PR URL nor its verdict is invented.
+After this closeout, await a separate next-stage instruction. **S0/Stage 2,
+outside users, new spending and commercial commitments are not authorized.**
 
 ## JZ R-30 reliability checkpoint — 2026-10-04 (not closeout)
+
+**Historical working-diff checkpoint — superseded for current status by the
+[final JZ closeout](#final-jz-closeout).** Its counts, pending-status wording and
+execution limits below remain evidence of that checkpoint, not a final-head gate.
 
 Founder successful prompts/report are accepted. The bounded correction is
 implemented and passes its offline gate; independent exact-head review and
@@ -59,6 +181,14 @@ independent acceptance, JZ closeout or deployment. No live call/efficacy measure
 was made. Restricted worker logs/report stay outside Git. Parent owns closeout.
 
 ## J5 scope reviewed
+
+The J5–J7 records below are frozen slice history. Their Implementing/pending
+and next-dispatch statements are superseded only for current routing by final JZ.
+Historical J5 result: PASS, 2026-10-02; implementation
+`358c521b3e3e5fca9046714f0559c50ac07b5e03`;
+[review session](https://app.devin.ai/sessions/cfbe766968b1491da877e5e40b62f031),
+[PR #104](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104),
+[independent PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/104#issuecomment-5953173114).
 
 J5 of the approved [Spec 013](./SPEC.md): category, offerings, service-channel
 and market screens; category reconsideration after focus changes; their
@@ -205,13 +335,26 @@ and both builds.
 | R-20 / AC-10 | Retained | Target customer, buyer considerations and differentiator kept prepared values and stayed editable; their dedicated screens are JQ. |
 | Full spec / AC-15 | Pending | JQ and real-business founder signoff are not closed by J7. |
 
-## JQ status (in progress)
+## JQ frozen closeout
 
 JQ implements the R-20 screens as dedicated optional chapter-3 steps, per
 the delegated 2026-10-02 decision recorded in `docs/DECISION_LOG.md` and
 plan §5: target customer → customer needs → buyer considerations → service
 → market → competitors → differentiator → public fact → review, with empty
 `Lanjut` allowed on the three new screens.
-The first independent review of [PR #117](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117) at `cb5c46e` found long-chip readability and error-message precedence issues. The PR's [verdict record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117#issuecomment-5966961064) holds the current reviewed commit and acceptance evidence; implementation checks alone do not accept JQ.
+The first independent review of [PR #117](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117)
+at `cb5c46e` failed on long-chip readability and error-message precedence. That
+failed review remains history, not the final verdict. Charlie's independent
+[PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117#issuecomment-5966961064)
+resolved both findings at `54c7340054995c332eaa88d36fab58c32a16ddb0`.
+Merge: `1074dadf89dade6c254451cb00ff2b303cdef171`, 2026-10-03;
+[release record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117#issuecomment-5968651503).
 
-**Spec 013 remains Implementing.** JQ is active, then founder signoff.
+Frozen independent evidence at `54c7340`: 225 focused tests, canonical gate with
+1,634 unit tests, both builds, 56 enabled and three disabled browser tests;
+own clean-head synthetic drive with six normal features and separately labelled
+injected recovery. These are not new JZ-head executions. The supplementary
+browser probe stopped after chip checks; unit regression covered error
+precedence. Only the headless PDF cover was visually inspected; no native-print
+acceptance is implied. JQ is closed; the accepted JZ composite and exceptions
+above govern full-spec status, with no automatic Stage 2 dispatch.
