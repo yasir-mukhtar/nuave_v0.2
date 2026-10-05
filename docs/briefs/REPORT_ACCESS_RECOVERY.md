@@ -1,10 +1,14 @@
 # Session prompt: 07 — Report Access and Recovery
 
-> Status: **Ready for a future decision session**
+> Status: **S0 decided 2026-10-05** — [decision](../DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
 > Owner: Founder through the orchestrator
-> Output: recommendation first; no implementation until the founder approves
+> Output: the decision session ran and its recommendation was approved;
+> no implementation until an S3 specification is approved
 
-Copy the prompt below into a fresh AI session.
+The prompt below is the record of the completed decision session. Its
+option comparison and scenarios state the requirements the choice was weighed
+against; keep them as S3 verification context, not as an open decision. Do not
+start a new session to re-choose the mechanism.
 
 ---
 
@@ -38,8 +42,10 @@ names a specific file.
 - Email sender: `Tim Nuave <support@nuave.ai>`.
 - `07` owns opening private access, returning on another device, expired or
   revoked access, and access recovery.
-- The founder has deliberately not chosen between a private link, narrow report
-  history, bounded account, or another mechanism.
+- S0 chose (2026-10-05): one immutable private report per order, stored on the
+  server, with a revocable private link sent to the order email — no account,
+  password, dashboard, or report-history product at launch
+  ([decision](../DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)).
 - A general monitoring, analytics, team, agency, or subscription dashboard is
   out of scope. Minimum account-like behavior is allowed only if it is necessary
   for private report access and recovery.
@@ -89,9 +95,9 @@ Evaluate each option against:
 For recipient changes, do not accept possession of an order number alone.
 Evaluate this minimum candidate: confirmation from the original email when
 available, or an authenticated current order session plus verification of the
-new email, with a manual founder exception when the original email is
-inaccessible. A recipient change creates a new recipient version; it does not
-mutate the order, evidence, or report.
+new email, with any exceptional manual proof method deferred until separately
+approved when the original email is inaccessible. A recipient change creates a
+new recipient version; it does not mutate the order, evidence, or report.
 
 ## Output
 

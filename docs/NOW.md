@@ -1,8 +1,8 @@
 # Nuave now
 
-> Updated: 2026-10-04
-> Stage: Stage 1 accepted; repository-baseline preparation in progress
-> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); Stage 2 remains paused
+> Updated: 2026-10-05
+> Stage: Stage 1 accepted; S0 private report delivery decided; full S2 integration is next
+> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 exists only on a feature branch, nothing enforced on main
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
 ## Current state
@@ -29,22 +29,38 @@
 
 ## Next action
 
-- **Active action: finish the documentation baseline in [PR #120](https://github.com/yasir-mukhtar/nuave_v0.2/pull/120).**
-  The supplied JQ milestone finding has been assessed: the current ledger,
-  spec and verification record close JQ. Retain frozen slice results as history,
-  not active handoff instructions. Complete fresh independent review and
-  exact-head CI before separate merge authorization. This is documentation
-  reconciliation, not new JQ implementation or Stage 2 approval.
-- **JZ is complete.** The [existing closeout](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
-  records its merge, checks and evidence exceptions; do not repeat acceptance.
-- **Stage 2 remains paused.** Spec 015 exists only as an unmerged local draft
-  on `docs/stage2-paid-report-spec` at `582f426`; it is held, not approved and
-  not present on main. S0/Stage 2 implementation and outside users require a
-  separate next-stage instruction. No spending allowance is reset.
+- **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
+  one immutable private report per order, stored on the server, reached through
+  a revocable private link emailed to the order email; no account, password,
+  dashboard or report-history product at launch. Reviewed `a0738376`
+  (PASS+NOTES), approved by Fox `d68c7478`. It is internal policy, not a
+  published promise; main code and the live product are unchanged.
+- **Next: full S2 integration** — the server-side spending cap on the real
+  audit path. Its prerequisites are unverified:
+  - the foundation exists only on feature branch
+    `feat/s2-ledger-foundation-20261004` (committed `fad8cfe`, plus a preserved
+    uncommitted canonical timestamp correction): 21 focused tests passed, but
+    the revision-3 `npm run verify` FAILED on four browser checks (52 passed);
+  - there is no final independent acceptance of that correction, no release,
+    and no enforcement on main; the worker's consumed 7/9 budget is not reset;
+  - the S3 save-and-deliver build still needs its own approved bounded spec.
+  Integration covers provider-call inventory, storage
+  compatibility/bindings, credible versioned pricing bounds, retry accounting
+  and fail-closed provider integration. No new S2 worker dispatch is part of
+  this docs task.
+- **S2 diagnostic (brief):** the last native child handoffs were complete; the
+  old session identifiers are not recognized now, with no cancellation or
+  billing proof. No unidentified process was killed and no Desktop state was
+  edited.
+- **The S0/Stage 2 pause is superseded only for this approved sequence.**
+  Spec 015 stays an unapproved held draft on `docs/stage2-paid-report-spec`
+  at `582f426`, not present on main. Outside users, payment, publication and
+  polish remain gated as below. No spending allowance is reset.
 - **Polish waits until all intended screens exist**, for one later pass.
-  [Current delegation and limits](./DECISION_LOG.md#2026-10-04-trustworthy-baseline-and-deferred-polish):
-  Fox handles scoped baseline decisions; Pac coordinates delivery. Merge,
-  closure, deletion, privacy/spending changes and live actions remain separate.
+  [Current delegation and limits](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved):
+  Fox is the scoped decision/merge-deploy delegate; Pac coordinates delivery.
+  Merge, closure, deletion, privacy/spending changes and live actions remain
+  separate.
 
 ## Rules still in force
 
@@ -66,6 +82,9 @@
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
   engagement only. This does not reset the separately dated September allowance
   usage above. Founder-run charges remain unknown; no new spending is authorized.
+- **S0/S2 sequence allowance:** USD 5 total provider-call allowance, USD 0 used
+  as of 2026-10-05. It does not authorize infrastructure charges or new tool
+  subscriptions, and does not replace the named-approval rule above.
 - **Private evidence stays out of Git:** `.local-evidence/` and `.secrets/`
   (both ignored). The old `devin/sol-smart-consultant-intake-plan` branch's
   uncommitted files are in `.local-evidence/branch-closeout-20260927/`.
