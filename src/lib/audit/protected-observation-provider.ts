@@ -36,6 +36,8 @@ function client() {
   const baseURL = process.env.OPENAI_BASE_URL?.trim() || undefined;
   return new OpenAI({
     apiKey,
+    // Keep retries at the budgeted application layer.
+    maxRetries: 0,
     ...(baseURL ? { baseURL } : {}),
     // OpenCode Go rejects requests without its routing session header; the
     // protected path sets OPENAI_BASE_URL to the OpenCode Go endpoint.
