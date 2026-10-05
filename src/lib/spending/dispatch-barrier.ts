@@ -58,35 +58,60 @@ function assertValidOperationId(
   }
 }
 
-// A barrier row must be a plain object with singleton strictly equal to the
-// number 1 and an own `operation_id` that is either null or a valid id.
-// No coercion: wrong types, missing fields or throwing getters are
-// unavailable storage, never an idle barrier.
-const parseBarrierRow = (
-  row: unknown,
-): { singleton: 1; operation_id: string | null } => {
+// Anything crossing the storage boundary must be a plain JSON-shaped record:
+// a non-null, non-array object whose prototype is Object.prototype or null.
+// Required fields must exist as OWN DATA properties — they are captured once
+// through property descriptors, so accessor fields are rejected without
+// invoking their getters and no live field can change under validation
+// (class instances, inherited fields and accessor rows are all refused).
+// Proxy traps that throw surface as sanitized unavailability.
+const captureOwnDataFields = (
+  record: unknown,
+  fields: ReadonlyArray<string>,
+): Record<string, unknown> => {
   try {
-    if (typeof row !== "object" || row === null || Array.isArray(row)) {
+    if (
+      typeof record !== "object" ||
+      record === null ||
+      Array.isArray(record)
+    ) {
       throw new ProviderDispatchBarrierUnavailableError();
     }
-    if ((row as { singleton?: unknown }).singleton !== 1) {
+    const prototype = Object.getPrototypeOf(record);
+    if (prototype !== Object.prototype && prototype !== null) {
       throw new ProviderDispatchBarrierUnavailableError();
     }
-    if (!Object.hasOwn(row, "operation_id")) {
-      throw new ProviderDispatchBarrierUnavailableError();
+    const captured: Record<string, unknown> = {};
+    for (const field of fields) {
+      const descriptor = Object.getOwnPropertyDescriptor(record, field);
+      if (descriptor === undefined || !Object.hasOwn(descriptor, "value")) {
+        throw new ProviderDispatchBarrierUnavailableError();
+      }
+      captured[field] = descriptor.value;
     }
-    const owner = (row as { operation_id?: unknown }).operation_id;
-    if (owner !== null && !isValidOperationId(owner)) {
-      throw new ProviderDispatchBarrierUnavailableError();
-    }
-    return { singleton: 1, operation_id: owner };
+    return captured;
   } catch (error) {
     if (error instanceof ProviderDispatchBarrierUnavailableError) {
       throw error;
     }
-    // Getter/proxy failures and any other malformed access sanitize the same.
     throw new ProviderDispatchBarrierUnavailableError();
   }
+};
+
+// A barrier row must carry own data singleton strictly equal to the number 1
+// and own data `operation_id` that is either null or a valid id. No coercion.
+const parseBarrierRow = (
+  row: unknown,
+): { singleton: 1; operation_id: string | null } => {
+  const captured = captureOwnDataFields(row, ["singleton", "operation_id"]);
+  if (captured.singleton !== 1) {
+    throw new ProviderDispatchBarrierUnavailableError();
+  }
+  const owner = captured.operation_id;
+  if (owner !== null && !isValidOperationId(owner)) {
+    throw new ProviderDispatchBarrierUnavailableError();
+  }
+  return { singleton: 1, operation_id: owner };
 };
 
 export class ProviderDispatchBarrier {
@@ -99,10 +124,17 @@ export class ProviderDispatchBarrier {
 
   async read(): Promise<{ singleton: 1; operation_id: string | null }> {
     const results = await this.execute(READ_DISPATCH_BARRIER_SQL, []);
-    if (results.length !== 1) {
+    try {
+      if (results.length !== 1) {
+        throw new ProviderDispatchBarrierUnavailableError();
+      }
+      return parseBarrierRow(results[0]);
+    } catch (error) {
+      if (error instanceof ProviderDispatchBarrierUnavailableError) {
+        throw error;
+      }
       throw new ProviderDispatchBarrierUnavailableError();
     }
-    return parseBarrierRow(results[0]);
   }
 
   async acquire(operationId: string): Promise<boolean> {
@@ -110,7 +142,7 @@ export class ProviderDispatchBarrier {
     const results = await this.execute(ACQUIRE_DISPATCH_BARRIER_SQL, [
       operationId,
     ]);
-    return this.finishMutation(results, (row) => row === operationId);
+    return this.finishMutation(results, (owner) => owner === operationId);
   }
 
   async releaseAccounted(operationId: string): Promise<boolean> {
@@ -118,7 +150,7 @@ export class ProviderDispatchBarrier {
     const results = await this.execute(RELEASE_ACCOUNTED_DISPATCH_SQL, [
       operationId,
     ]);
-    return this.finishMutation(results, (row) => row === null);
+    return this.finishMutation(results, (owner) => owner === null);
   }
 
   async releaseUnstarted(operationId: string): Promise<boolean> {
@@ -126,34 +158,34 @@ export class ProviderDispatchBarrier {
     const results = await this.execute(RELEASE_UNSTARTED_DISPATCH_SQL, [
       operationId,
     ]);
-    return this.finishMutation(results, (row) => row === null);
+    return this.finishMutation(results, (owner) => owner === null);
   }
 
   private async execute(
     sql: string,
     values: ReadonlyArray<string | number | null>,
   ): Promise<unknown[]> {
+    let copied: unknown[];
     try {
       const response: unknown = await this.database
         .prepare(sql)
         .bind(...values)
         .all();
-      if (typeof response !== "object" || response === null) {
+      const captured = captureOwnDataFields(response, ["success", "results"]);
+      if (captured.success !== true || !Array.isArray(captured.results)) {
         throw new ProviderDispatchBarrierUnavailableError();
       }
-      if (
-        (response as { success?: unknown }).success !== true ||
-        !Array.isArray((response as { results?: unknown }).results)
-      ) {
-        throw new ProviderDispatchBarrierUnavailableError();
-      }
-      return (response as { results: unknown[] }).results;
+      // One copy through the array itself consumes any proxy length/index
+      // traps here, inside the sanitized boundary, and yields a stable
+      // ordinary array. Sparse holes survive and fail row parsing later.
+      copied = Array.prototype.slice.call(captured.results);
     } catch (error) {
       if (error instanceof ProviderDispatchBarrierUnavailableError) {
         throw error;
       }
       throw new ProviderDispatchBarrierUnavailableError();
     }
+    return copied;
   }
 
   // A mutation conveys ownership only through a NEW matching RETURNING row.
@@ -164,17 +196,24 @@ export class ProviderDispatchBarrier {
     results: unknown[],
     ownerMatches: (owner: string | null) => boolean,
   ): Promise<boolean> {
-    if (results.length === 0) {
-      await this.read();
-      return false;
-    }
-    if (results.length !== 1) {
+    try {
+      if (results.length === 0) {
+        await this.read();
+        return false;
+      }
+      if (results.length !== 1) {
+        throw new ProviderDispatchBarrierUnavailableError();
+      }
+      const row = parseBarrierRow(results[0]);
+      if (!ownerMatches(row.operation_id)) {
+        throw new ProviderDispatchBarrierUnavailableError();
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof ProviderDispatchBarrierUnavailableError) {
+        throw error;
+      }
       throw new ProviderDispatchBarrierUnavailableError();
     }
-    const row = parseBarrierRow(results[0]);
-    if (!ownerMatches(row.operation_id)) {
-      throw new ProviderDispatchBarrierUnavailableError();
-    }
-    return true;
   }
 }

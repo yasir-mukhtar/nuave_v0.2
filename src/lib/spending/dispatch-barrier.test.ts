@@ -999,3 +999,297 @@ describe("storage boundary validation", () => {
     );
   });
 });
+
+// Revision-2 regression coverage: the storage contract is a plain JSON record
+// with own data fields. Class instances, inherited properties, accessor
+// fields, changing getters and hostile array proxies are all unavailable
+// storage, never grants — and every failure reports the generic message.
+describe("hostile storage shapes (plain-record contract)", () => {
+  const hostileMethods: Array<{
+    name: "read" | "acquire" | "releaseAccounted" | "releaseUnstarted";
+    call: (barrier: ProviderDispatchBarrier) => Promise<unknown>;
+  }> = [
+    { name: "read", call: (b) => b.read() },
+    { name: "acquire", call: (b) => b.acquire("operation-a") },
+    {
+      name: "releaseAccounted",
+      call: (b) => b.releaseAccounted("operation-a"),
+    },
+    {
+      name: "releaseUnstarted",
+      call: (b) => b.releaseUnstarted("operation-a"),
+    },
+  ];
+
+  const mutatingMethods = hostileMethods.filter((m) => m.name !== "read");
+
+  // A valid-looking returned owner for each method: acquire carries the
+  // requested id; read and both release rows carry a null owner.
+  const expectedOwner = (name: string): string | null =>
+    name === "acquire" ? "operation-a" : null;
+
+  const expectUnavailable = async (
+    call: Promise<unknown>,
+  ): Promise<unknown> => {
+    const caught = await call.catch((e: unknown) => e);
+    expect(caught).toBeInstanceOf(ProviderDispatchBarrierUnavailableError);
+    expect((caught as Error).message).toBe(UNAVAILABLE_MESSAGE);
+    return caught;
+  };
+
+  class HostileRow {
+    singleton = 1;
+    operation_id: string | null;
+    constructor(owner: string | null) {
+      this.operation_id = owner;
+    }
+  }
+
+  for (const m of hostileMethods) {
+    it(`${m.name} rejects a class-instance barrier row`, async () => {
+      const stub = new RecordingDatabase([
+        {
+          response: {
+            success: true,
+            results: [new HostileRow(expectedOwner(m.name))],
+          },
+        },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      await expectUnavailable(m.call(barrier));
+    });
+  }
+
+  const inheritedSingletonRow = (owner: string | null): object =>
+    Object.assign(Object.create({ singleton: 1 }), { operation_id: owner });
+  const inheritedOwnerRow = (owner: string | null): object =>
+    Object.assign(Object.create({ operation_id: owner }), { singleton: 1 });
+
+  for (const m of hostileMethods) {
+    it(`${m.name} rejects inherited singleton or owner fields`, async () => {
+      for (const makeRow of [inheritedSingletonRow, inheritedOwnerRow]) {
+        const stub = new RecordingDatabase([
+          {
+            response: {
+              success: true,
+              results: [makeRow(expectedOwner(m.name))],
+            },
+          },
+        ]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectUnavailable(m.call(barrier));
+      }
+    });
+  }
+
+  for (const m of hostileMethods) {
+    it(`${m.name} rejects accessor-backed row fields without invoking them`, async () => {
+      let singletonGets = 0;
+      let ownerGets = 0;
+      const row = {
+        get singleton(): number {
+          singletonGets += 1;
+          return 1;
+        },
+        get operation_id(): string | null {
+          ownerGets += 1;
+          return expectedOwner(m.name);
+        },
+      };
+      const stub = new RecordingDatabase([
+        { response: { success: true, results: [row] } },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      await expectUnavailable(m.call(barrier));
+      expect(singletonGets).toBe(0);
+      expect(ownerGets).toBe(0);
+    });
+
+    it(`${m.name} rejects a mixed data/accessor row`, async () => {
+      let ownerGets = 0;
+      const row = {
+        singleton: 1,
+        get operation_id(): string | null {
+          ownerGets += 1;
+          return expectedOwner(m.name);
+        },
+      };
+      const stub = new RecordingDatabase([
+        { response: { success: true, results: [row] } },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      await expectUnavailable(m.call(barrier));
+      expect(ownerGets).toBe(0);
+    });
+  }
+
+  const plainRow = (owner: string | null): object => ({
+    singleton: 1,
+    operation_id: owner,
+  });
+
+  for (const m of hostileMethods) {
+    it(`${m.name} rejects accessor-backed response fields without invoking them`, async () => {
+      let successGets = 0;
+      let resultsGets = 0;
+      const successAccessor = {
+        get success(): boolean {
+          successGets += 1;
+          return true;
+        },
+        results: [plainRow(expectedOwner(m.name))],
+      };
+      const resultsAccessor = {
+        success: true,
+        get results(): object[] {
+          resultsGets += 1;
+          return [plainRow(expectedOwner(m.name))];
+        },
+      };
+      for (const response of [successAccessor, resultsAccessor]) {
+        const stub = new RecordingDatabase([{ response }]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectUnavailable(m.call(barrier));
+      }
+      expect(successGets).toBe(0);
+      expect(resultsGets).toBe(0);
+    });
+  }
+
+  for (const m of hostileMethods) {
+    it(`${m.name} rejects a changing results accessor without invoking it`, async () => {
+      let calls = 0;
+      const response = {
+        success: true,
+        get results(): unknown {
+          calls += 1;
+          return calls === 1
+            ? [plainRow(expectedOwner(m.name))]
+            : { length: 1, 0: plainRow(expectedOwner(m.name)) };
+        },
+      };
+      const stub = new RecordingDatabase([{ response }]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      await expectUnavailable(m.call(barrier));
+      expect(calls).toBe(0);
+    });
+  }
+
+  const lengthBombArray = (): unknown[] =>
+    new Proxy([] as unknown[], {
+      get(target, prop, receiver) {
+        if (prop === "length") {
+          throw new Error("private-array-length");
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+  const indexBombArray = (row: object): unknown[] =>
+    new Proxy([row] as unknown[], {
+      get(target, prop, receiver) {
+        if (prop === "0") {
+          throw new Error("private-array-0");
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+  it("sanity: proxy arrays still report as arrays", () => {
+    expect(Array.isArray(lengthBombArray())).toBe(true);
+    expect(Array.isArray(indexBombArray(plainRow(null)))).toBe(true);
+  });
+
+  for (const m of hostileMethods) {
+    it(`${m.name} sanitizes a length-throwing results proxy`, async () => {
+      const stub = new RecordingDatabase([
+        { response: { success: true, results: lengthBombArray() } },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      const caught = await expectUnavailable(m.call(barrier));
+      expect((caught as Error).message).not.toContain("private-array-length");
+    });
+
+    it(`${m.name} sanitizes an index-throwing results proxy`, async () => {
+      const stub = new RecordingDatabase([
+        {
+          response: {
+            success: true,
+            results: indexBombArray(plainRow(expectedOwner(m.name))),
+          },
+        },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      const caught = await expectUnavailable(m.call(barrier));
+      expect((caught as Error).message).not.toContain("private-array-0");
+    });
+  }
+
+  for (const m of mutatingMethods) {
+    it(`${m.name} sanitizes a proxy failure during the zero-row fallback read`, async () => {
+      const stub = new RecordingDatabase([
+        { response: { success: true, results: [] } },
+        { response: { success: true, results: lengthBombArray() } },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      const caught = await expectUnavailable(m.call(barrier));
+      expect((caught as Error).message).not.toContain("private-array-length");
+    });
+  }
+
+  for (const m of hostileMethods) {
+    it(`${m.name} rejects a sparse or undefined returned row`, async () => {
+      for (const results of [new Array(1), [undefined]]) {
+        const stub = new RecordingDatabase([
+          { response: { success: true, results } },
+        ]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectUnavailable(m.call(barrier));
+      }
+    });
+  }
+
+  const nullProtoRecord = <T extends Record<string, unknown>>(fields: T): T =>
+    Object.assign(Object.create(null), fields);
+
+  it("read accepts ordinary and null-prototype records", async () => {
+    for (const response of [
+      { success: true, results: [{ singleton: 1, operation_id: null }] },
+      nullProtoRecord({
+        success: true,
+        results: [nullProtoRecord({ singleton: 1, operation_id: null })],
+      }),
+    ]) {
+      const stub = new RecordingDatabase([{ response }]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      await expect(barrier.read()).resolves.toEqual({
+        singleton: 1,
+        operation_id: null,
+      });
+    }
+  });
+
+  it("mutations accept ordinary and null-prototype returned rows", async () => {
+    for (const m of mutatingMethods) {
+      for (const response of [
+        {
+          success: true,
+          results: [{ singleton: 1, operation_id: expectedOwner(m.name) }],
+        },
+        nullProtoRecord({
+          success: true,
+          results: [
+            nullProtoRecord({
+              singleton: 1,
+              operation_id: expectedOwner(m.name),
+            }),
+          ],
+        }),
+      ]) {
+        const stub = new RecordingDatabase([{ response }]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expect(m.call(barrier)).resolves.toBe(true);
+      }
+    }
+  });
+});
