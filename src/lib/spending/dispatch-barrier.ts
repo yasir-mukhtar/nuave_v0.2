@@ -90,10 +90,7 @@ const captureOwnDataFields = (
       captured[field] = descriptor.value;
     }
     return captured;
-  } catch (error) {
-    if (error instanceof ProviderDispatchBarrierUnavailableError) {
-      throw error;
-    }
+  } catch {
     throw new ProviderDispatchBarrierUnavailableError();
   }
 };
@@ -129,10 +126,7 @@ export class ProviderDispatchBarrier {
         throw new ProviderDispatchBarrierUnavailableError();
       }
       return parseBarrierRow(results[0]);
-    } catch (error) {
-      if (error instanceof ProviderDispatchBarrierUnavailableError) {
-        throw error;
-      }
+    } catch {
       throw new ProviderDispatchBarrierUnavailableError();
     }
   }
@@ -175,14 +169,18 @@ export class ProviderDispatchBarrier {
       if (captured.success !== true || !Array.isArray(captured.results)) {
         throw new ProviderDispatchBarrierUnavailableError();
       }
-      // One copy through the array itself consumes any proxy length/index
-      // traps here, inside the sanitized boundary, and yields a stable
-      // ordinary array. Sparse holes survive and fail row parsing later.
-      copied = Array.prototype.slice.call(captured.results);
-    } catch (error) {
-      if (error instanceof ProviderDispatchBarrierUnavailableError) {
-        throw error;
+      // The returned cardinality is captured exactly once and must be a
+      // safe integer of zero or one — the only counts the statements can
+      // yield. The copy is an ordinary array literal over a single index
+      // read; the input constructor, species, iterator and species-aware
+      // array methods are never consulted, so hostile storage cannot
+      // fabricate a row. Length and index reads stay inside this boundary.
+      const length: unknown = captured.results.length;
+      if (!Number.isSafeInteger(length) || !(length === 0 || length === 1)) {
+        throw new ProviderDispatchBarrierUnavailableError();
       }
+      copied = length === 0 ? [] : [captured.results[0]];
+    } catch {
       throw new ProviderDispatchBarrierUnavailableError();
     }
     return copied;
@@ -209,10 +207,7 @@ export class ProviderDispatchBarrier {
         throw new ProviderDispatchBarrierUnavailableError();
       }
       return true;
-    } catch (error) {
-      if (error instanceof ProviderDispatchBarrierUnavailableError) {
-        throw error;
-      }
+    } catch {
       throw new ProviderDispatchBarrierUnavailableError();
     }
   }

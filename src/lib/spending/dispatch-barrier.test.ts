@@ -1293,3 +1293,502 @@ describe("hostile storage shapes (plain-record contract)", () => {
     }
   });
 });
+
+// Revision-3 regression coverage: hostile storage must never fabricate a
+// matching row out of zero returned rows, and must never smuggle a private
+// detail out through the error channel. The copy uses ordinary array
+// literals over a once-captured safe cardinality; every boundary catch
+// reports one fresh fixed unavailable error without inspecting what it
+// caught. These fixtures are hostile-storage JS shapes only — no financial
+// calculation, query or pricing behavior is added.
+describe("species fabrication and hostile thrown proxies (revision 3)", () => {
+  const methods: Array<{
+    name: "read" | "acquire" | "releaseAccounted" | "releaseUnstarted";
+    sql: string;
+    call: (barrier: ProviderDispatchBarrier) => Promise<unknown>;
+  }> = [
+    { name: "read", sql: READ_DISPATCH_BARRIER_SQL, call: (b) => b.read() },
+    {
+      name: "acquire",
+      sql: ACQUIRE_DISPATCH_BARRIER_SQL,
+      call: (b) => b.acquire("operation-a"),
+    },
+    {
+      name: "releaseAccounted",
+      sql: RELEASE_ACCOUNTED_DISPATCH_SQL,
+      call: (b) => b.releaseAccounted("operation-a"),
+    },
+    {
+      name: "releaseUnstarted",
+      sql: RELEASE_UNSTARTED_DISPATCH_SQL,
+      call: (b) => b.releaseUnstarted("operation-a"),
+    },
+  ];
+  const mutating = methods.filter((m) => m.name !== "read");
+
+  // Matching returned owner: only acquire grants operation-a; an idle
+  // readback or a completed release row carries null.
+  const expectedOwner = (name: string): string | null =>
+    name === "acquire" ? "operation-a" : null;
+
+  const plainRow = (owner: string | null): object => ({
+    singleton: 1,
+    operation_id: owner,
+  });
+
+  const expectFixedUnavailable = async (
+    call: Promise<unknown>,
+  ): Promise<unknown> => {
+    const caught = await call.catch((e: unknown) => e);
+    expect(caught).toBeInstanceOf(ProviderDispatchBarrierUnavailableError);
+    expect((caught as Error).name).toBe(
+      "ProviderDispatchBarrierUnavailableError",
+    );
+    expect((caught as Error).message).toBe(UNAVAILABLE_MESSAGE);
+    return caught;
+  };
+
+  interface HookCounters {
+    constructorReads: number;
+    speciesReads: number;
+    factoryCalls: number;
+    iteratorCalls: number;
+  }
+
+  const zeroCounters = (): HookCounters => ({
+    constructorReads: 0,
+    speciesReads: 0,
+    factoryCalls: 0,
+    iteratorCalls: 0,
+  });
+
+  // A genuine empty Array subclass instance whose species factory
+  // fabricates `fabricated` no matter which length it is asked for. Any
+  // species-aware copy (slice, Array.from, spread, ...) would silently turn
+  // zero returned rows into one matching row.
+  const fabricatingEmptyResults = (
+    fabricated: object,
+    counters: HookCounters,
+  ): unknown[] => {
+    class FabricatingArray extends Array<unknown> {}
+    Object.defineProperty(FabricatingArray, Symbol.species, {
+      get: () => {
+        counters.speciesReads += 1;
+        return () => {
+          counters.factoryCalls += 1;
+          return [fabricated];
+        };
+      },
+    });
+    return new FabricatingArray();
+  };
+
+  it("sanity: an empty Array subclass is still a real array", () => {
+    const results = fabricatingEmptyResults(plainRow(null), zeroCounters());
+    expect(Array.isArray(results)).toBe(true);
+    expect(results).toHaveLength(0);
+  });
+
+  for (const m of methods) {
+    it(`${m.name} never lets an empty species-fabricating results array forge a matching row`, async () => {
+      const counters = zeroCounters();
+      const stub = new RecordingDatabase([
+        {
+          response: {
+            success: true,
+            results: fabricatingEmptyResults(
+              plainRow(expectedOwner(m.name)),
+              counters,
+            ),
+          },
+        },
+        // Matching readback for the zero-row mutation fallback path.
+        {
+          response: {
+            success: true,
+            results: [plainRow(expectedOwner(m.name))],
+          },
+        },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      if (m.name === "read") {
+        await expectFixedUnavailable(m.call(barrier));
+        expect(stub.queries).toEqual([READ_DISPATCH_BARRIER_SQL]);
+      } else {
+        await expect(m.call(barrier)).resolves.toBe(false);
+        expect(stub.queries).toEqual([m.sql, READ_DISPATCH_BARRIER_SQL]);
+      }
+      expect(counters.factoryCalls).toBe(0);
+      expect(counters.speciesReads).toBe(0);
+    });
+  }
+
+  for (const m of mutating) {
+    it(`${m.name} rejects unavailable when the zero-row fallback read is species-empty too`, async () => {
+      const counters = zeroCounters();
+      const stub = new RecordingDatabase([
+        {
+          response: {
+            success: true,
+            results: fabricatingEmptyResults(
+              plainRow(expectedOwner(m.name)),
+              counters,
+            ),
+          },
+        },
+        {
+          response: {
+            success: true,
+            results: fabricatingEmptyResults(
+              plainRow(expectedOwner(m.name)),
+              counters,
+            ),
+          },
+        },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      await expectFixedUnavailable(m.call(barrier));
+      expect(stub.queries).toEqual([m.sql, READ_DISPATCH_BARRIER_SQL]);
+      expect(counters.factoryCalls).toBe(0);
+      expect(counters.speciesReads).toBe(0);
+    });
+  }
+
+  // A valid one-row results array whose constructor lookup, species lookup,
+  // species factory and iterator all count and then throw if consulted. A
+  // genuine row must be accepted without invoking any of them.
+  const hookedValidResults = (
+    row: object,
+    counters: HookCounters,
+  ): unknown[] => {
+    class HookedArray extends Array<unknown> {}
+    Object.defineProperty(HookedArray, Symbol.species, {
+      get: () => {
+        counters.speciesReads += 1;
+        return () => {
+          counters.factoryCalls += 1;
+          throw new Error("species factory must not run");
+        };
+      },
+    });
+    const results = new HookedArray();
+    results[0] = row;
+    Object.defineProperty(results, "constructor", {
+      get: () => {
+        counters.constructorReads += 1;
+        return HookedArray;
+      },
+    });
+    Object.defineProperty(results, Symbol.iterator, {
+      value: () => {
+        counters.iteratorCalls += 1;
+        throw new Error("iterator hook must not run");
+      },
+    });
+    return results;
+  };
+
+  for (const m of methods) {
+    it(`${m.name} accepts a genuine row without invoking constructor, species or iterator hooks`, async () => {
+      const counters = zeroCounters();
+      const stub = new RecordingDatabase([
+        {
+          response: {
+            success: true,
+            results: hookedValidResults(
+              plainRow(expectedOwner(m.name)),
+              counters,
+            ),
+          },
+        },
+      ]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      if (m.name === "read") {
+        await expect(m.call(barrier)).resolves.toEqual({
+          singleton: 1,
+          operation_id: null,
+        });
+      } else {
+        await expect(m.call(barrier)).resolves.toBe(true);
+      }
+      expect(counters).toEqual(zeroCounters());
+    });
+  }
+
+  interface ArrayProbes {
+    lengthReads: number;
+    indexReads: number;
+  }
+
+  // A results proxy whose `length` reports `reported` while recording every
+  // length and index-0 read. The backing row stays reachable so a code path
+  // that wrongly trusts the reported length observably fabricates a row.
+  const meteredResults = (
+    backing: unknown[],
+    reported: unknown,
+    probes: ArrayProbes,
+  ): unknown[] =>
+    new Proxy(backing, {
+      get(target, prop, receiver) {
+        if (prop === "length") {
+          probes.lengthReads += 1;
+          return reported;
+        }
+        if (prop === "0") {
+          probes.indexReads += 1;
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+  for (const m of methods) {
+    it(`${m.name} reads results length exactly once on a valid zero or one row`, async () => {
+      for (const rowCount of [0, 1]) {
+        const probes: ArrayProbes = { lengthReads: 0, indexReads: 0 };
+        const stub = new RecordingDatabase([
+          {
+            response: {
+              success: true,
+              results: meteredResults(
+                rowCount === 0 ? [] : [plainRow(expectedOwner(m.name))],
+                rowCount,
+                probes,
+              ),
+            },
+          },
+          // Matching readback for the zero-row mutation fallback path.
+          {
+            response: {
+              success: true,
+              results: [plainRow(expectedOwner(m.name))],
+            },
+          },
+        ]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        if (m.name === "read") {
+          if (rowCount === 0) {
+            await expectFixedUnavailable(m.call(barrier));
+          } else {
+            await expect(m.call(barrier)).resolves.toEqual({
+              singleton: 1,
+              operation_id: null,
+            });
+          }
+        } else if (rowCount === 0) {
+          await expect(m.call(barrier)).resolves.toBe(false);
+          expect(stub.queries).toEqual([m.sql, READ_DISPATCH_BARRIER_SQL]);
+        } else {
+          await expect(m.call(barrier)).resolves.toBe(true);
+        }
+        expect(probes.lengthReads).toBe(1);
+        expect(probes.indexReads).toBe(rowCount);
+      }
+    });
+  }
+
+  // Reported lengths that must be rejected before any index is touched:
+  // non-number, fractional, negative, above one and non-safe-integer.
+  const hostileLengths: unknown[] = [
+    "1",
+    1.5,
+    -1,
+    2,
+    Number.MAX_SAFE_INTEGER + 1,
+    Number.NaN,
+  ];
+
+  for (const m of methods) {
+    it(`${m.name} rejects a hostile results length before reading any index`, async () => {
+      for (const reported of hostileLengths) {
+        const probes: ArrayProbes = { lengthReads: 0, indexReads: 0 };
+        const stub = new RecordingDatabase([
+          {
+            response: {
+              success: true,
+              results: meteredResults(
+                [plainRow(expectedOwner(m.name))],
+                reported,
+                probes,
+              ),
+            },
+          },
+          // Standing by if a zero-cardinality path falls back to read().
+          {
+            response: {
+              success: true,
+              results: [plainRow(expectedOwner(m.name))],
+            },
+          },
+        ]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectFixedUnavailable(m.call(barrier));
+        expect(probes.lengthReads).toBe(1);
+        expect(probes.indexReads).toBe(0);
+        expect(stub.queries).toEqual([m.sql]);
+      }
+    });
+  }
+
+  // The hostile thrown value is itself a proxy whose getPrototypeOf trap
+  // throws a private detail: any `instanceof` classification of it would
+  // leak that raw error past the boundary.
+  const hostileThrownProxy = (): object =>
+    new Proxy(
+      {},
+      {
+        getPrototypeOf() {
+          throw new Error("private backend detail");
+        },
+      },
+    );
+
+  const expectSanitizedHostile = async (
+    call: Promise<unknown>,
+  ): Promise<void> => {
+    const caught = await expectFixedUnavailable(call);
+    expect((caught as Error).message).not.toContain("private backend detail");
+  };
+
+  const prepareThrows = (error: unknown): DispatchBarrierDatabase => ({
+    prepare(): DispatchBarrierStatement {
+      throw error;
+    },
+  });
+
+  const bindThrows = (error: unknown): DispatchBarrierDatabase => ({
+    prepare(): DispatchBarrierStatement {
+      const statement: DispatchBarrierStatement = {
+        bind(): DispatchBarrierStatement {
+          throw error;
+        },
+        all: () => Promise.resolve({ success: true, results: [] }),
+      };
+      return statement;
+    },
+  });
+
+  for (const m of methods) {
+    it(`${m.name} sanitizes a hostile thrown proxy from prepare, bind and all`, async () => {
+      const storages: DispatchBarrierDatabase[] = [
+        prepareThrows(hostileThrownProxy()),
+        bindThrows(hostileThrownProxy()),
+        new RecordingDatabase([{ error: hostileThrownProxy() }]),
+      ];
+      for (const database of storages) {
+        const barrier = new ProviderDispatchBarrier(database);
+        await expectSanitizedHostile(m.call(barrier));
+      }
+    });
+  }
+
+  // Response and row objects whose prototype or own-descriptor trap throws
+  // the same hostile proxy when captureOwnDataFields inspects them.
+  const protoTrapThrows = <T extends object>(target: T): T =>
+    new Proxy(target, {
+      getPrototypeOf() {
+        throw hostileThrownProxy();
+      },
+    });
+
+  const descriptorTrapThrows = <T extends object>(target: T): T =>
+    new Proxy(target, {
+      getOwnPropertyDescriptor() {
+        throw hostileThrownProxy();
+      },
+    });
+
+  for (const m of methods) {
+    it(`${m.name} sanitizes response and row traps that throw a hostile proxy`, async () => {
+      const row = plainRow(expectedOwner(m.name));
+      const responses: unknown[] = [
+        protoTrapThrows({ success: true, results: [row] }),
+        descriptorTrapThrows({ success: true, results: [row] }),
+        { success: true, results: [protoTrapThrows(row)] },
+        { success: true, results: [descriptorTrapThrows(row)] },
+      ];
+      for (const response of responses) {
+        const stub = new RecordingDatabase([{ response }]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectSanitizedHostile(m.call(barrier));
+      }
+    });
+  }
+
+  // Results arrays whose length or index-0 trap throws the hostile proxy
+  // when execute reads them.
+  const resultsLengthThrows = (row: object): unknown[] =>
+    new Proxy([row], {
+      get(target, prop, receiver) {
+        if (prop === "length") {
+          throw hostileThrownProxy();
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+  const resultsIndexThrows = (row: object): unknown[] =>
+    new Proxy([row], {
+      get(target, prop, receiver) {
+        if (prop === "0") {
+          throw hostileThrownProxy();
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+  for (const m of methods) {
+    it(`${m.name} sanitizes results length and index traps that throw a hostile proxy`, async () => {
+      for (const results of [
+        resultsLengthThrows(plainRow(expectedOwner(m.name))),
+        resultsIndexThrows(plainRow(expectedOwner(m.name))),
+      ]) {
+        const stub = new RecordingDatabase([
+          { response: { success: true, results } },
+        ]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectSanitizedHostile(m.call(barrier));
+      }
+    });
+  }
+
+  for (const m of mutating) {
+    it(`${m.name} sanitizes a hostile proxy rejected during the zero-row fallback`, async () => {
+      const fallbacks: StubResult[] = [
+        { error: hostileThrownProxy() },
+        { response: protoTrapThrows({ success: true, results: [] }) },
+        {
+          response: {
+            success: true,
+            results: [protoTrapThrows(plainRow(null))],
+          },
+        },
+      ];
+      for (const fallback of fallbacks) {
+        const stub = new RecordingDatabase([
+          { response: { success: true, results: [] } },
+          fallback,
+        ]);
+        const barrier = new ProviderDispatchBarrier(stub);
+        await expectSanitizedHostile(m.call(barrier));
+        expect(stub.queries).toEqual([m.sql, READ_DISPATCH_BARRIER_SQL]);
+      }
+    });
+  }
+
+  it("returns a fresh fixed error when storage throws a tampered local unavailable instance", async () => {
+    for (const m of methods) {
+      const tampered = new ProviderDispatchBarrierUnavailableError();
+      tampered.message = "private backend detail";
+      (tampered as unknown as Record<string, unknown>)["extra"] =
+        "private backend detail";
+      const stub = new RecordingDatabase([{ error: tampered }]);
+      const barrier = new ProviderDispatchBarrier(stub);
+      const caught = await expectFixedUnavailable(m.call(barrier));
+      expect(caught).not.toBe(tampered);
+      expect((caught as Error).message).not.toContain("private backend detail");
+      expect(
+        (caught as unknown as Record<string, unknown>)["extra"],
+      ).toBeUndefined();
+    }
+  });
+});
