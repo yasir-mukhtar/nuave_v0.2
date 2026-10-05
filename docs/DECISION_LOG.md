@@ -1,10 +1,189 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-04
+> Updated: 2026-10-05
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-05 — S0 private report delivery and recovery approved
+
+Yasir directed: preserve and resolve identifiable S2 activity where
+possible, settle S0 with Fox, then proceed with full S2 integration. Fox
+is the delegated founder-side decision representative and merge/deploy
+decision delegate; Pac coordinates and records. Publication, provisioning,
+payments, refund execution, deletion, and launch are not approved by this
+decision.
+
+Fox approved the S0 decision packet V2 exactly as reviewed (163 lines, Git
+blob `7c15793a54cc5723caf69664c03e2cc7304caec0`, written on base `62b5b51`).
+Independent review `a0738376` returned **PASS+NOTES** over the entire
+source packet and its named canonicals, with all V1 gaps fixed; Fox
+approval `d68c7478` covers the exact packet plus this bounded
+four-document recording on a non-main feature branch, its push/PR work,
+and read-only network checks.
+
+**Selected mechanism.** One immutable private report per order, stored on
+the server, with a revocable private link sent to the order email. No
+account, password, dashboard, or report-history product at launch.
+
+This is an approved private operating policy, not a public performance
+promise. The live product, `/terms`, `/privacy` and `/support` are
+unchanged by this entry. Customer-facing wording still needs separate S5
+approval, the build needs an approved bounded S3 specification, and
+deletion, provisioning, sending-domain/support verification and actual
+delivery performance remain separate implementation/launch gates.
+
+### Options compared
+
+| Option | Customer/access implications | Operating and engineering cost drivers | Recommendation |
+| --- | --- | --- | --- |
+| Stored report + revocable emailed link | Simple initial access and cross-device return; link possession grants access, including to someone receiving a forwarded link; support handles recovery | Durable storage/jobs, initial email and retries/resends, grant revocation; least new authentication machinery | Choose |
+| Stored report + private link only, no email | Customer must retain the link; weaker cross-device return/recovery; contradicts current Module 06 email ownership unless separately changed | Same storage/jobs; removes initial email, increases manual recovery burden | Reject |
+| Stored report + emailed one-time code/magic-link recovery | Verifies mailbox possession for self-service recovery; needs enumeration/rate-limit/expiry controls | Same storage/jobs plus challenge state and additional email attempts | Defer |
+| Narrow report history for one verified email | Easier repeated access to several reports; unnecessary for the first one-report purchase | Same storage/jobs plus verified-email sessions, history listing and its access controls | Defer |
+| Bounded customer account | Credentials/login and account recovery before reading; largest support/authentication burden of these launch choices | Same storage/jobs plus credential/session/account lifecycle | Defer |
+
+These are qualitative comparisons, not measured effort or current dollar
+quotes. Existing Cloudflare/Resend account terms, quotas, credentials and
+pricing are unverified. No zero-cost/free-tier claim or new fixed subscription
+is approved. Verify costs and permissions before provisioning; the USD 5
+provider-call allowance does not authorize infrastructure charges.
+
+### D1–D8 approved decisions
+
+- D1: retain the completed report and its immutable customer-visible evidence
+  for 12 months after completion. Private access ends at that expiry or earlier
+  revocation. Support may reissue only while the report exists and D7 succeeds.
+  Nonexistent, expired and revoked access show a neutral unavailable response.
+  This selects a finite future policy, not permission to delete anything now.
+  Before S3 approval, separately bound every other record class; do not silently
+  apply report deletion to financial records or unresolved spending liability.
+- D2: target usually 15 minutes and at most 24 hours from the first
+  server-accepted audit start for the customer's approved question pack, not
+  payment, opening the page, or a client-supplied timestamp. The start time is
+  immutable across retry. Fulfillment requires a validated private web report,
+  an active access grant, and Resend acceptance of a report-ready email attempt
+  without a known unresolved terminal delivery failure. This is not proof of
+  inbox arrival or customer opening. PDF-only delay does not block fulfillment.
+  This is a proposed future launch policy, not observed performance.
+- D3: retry only technically failed work within S2's safe commitment; do not
+  repeat valid observations or regenerate a valid report to fix email/PDF.
+  Unknown post-dispatch cost remains a liability. At the 24-hour deadline,
+  missing web report/access or unsuccessful email handoff/unresolved terminal
+  email failure triggers full refund by hand. An earlier irrecoverable failure
+  or a later confirmed unrecoverable delivery failure also triggers that remedy.
+  Record terminal failure once; complete refund within three business days
+  from that record. Email-only failure means retry the email/support recovery,
+  not rerun the audit; PDF-only failure means repair the derived artifact, not
+  refund an otherwise fulfilled web report automatically. Business days mean
+  Monday-Friday in Asia/Jakarta; precise customer wording is reviewed in S5.
+  No money movement or automatic refund is authorized now.
+- D4: support@nuave.ai, response within one business day under the same
+  business-day convention. Mailbox operational readiness is unverified;
+  no email is sent by this decision and no current service claim is made.
+- D5: wrong email or business is handled manually through support, not by
+  creating another paid entitlement or repeating a valid audit. Recipient
+  changes require ownership authorization AND verification of the destination
+  mailbox. If the original mailbox is available, confirm from it and verify
+  the new one before a new recipient version/access grant. If unavailable,
+  an authenticated current order session may authorize the change only if S3
+  implements and verifies it, plus verification of the new mailbox. Without
+  either approved proof path, refuse redirection; an exceptional manual
+  proof method is deferred until separately approved. "Manual" and an order
+  number alone are never sufficient proof.
+- D6: plain Indonesian terms/privacy wording receives separate approval in
+  S5. No legal-compliance claim, customer publication or launch now.
+- D7: an order number or Midtrans receipt locates the order, never proves
+  ownership. Require confirmation from the recorded order mailbox or an
+  authenticated current order session if implemented and verified in S3.
+  No approved proof means no reissue, recipient change or disclosure.
+- D8: after D7, issue a fresh grant to the SAME mailbox and invalidate the old
+  grant atomically, including sessions derived from it. Do not mutate the
+  report, evidence, order or entitlement. A different mailbox follows D5,
+  verifies the destination, and creates a new recipient version.
+
+### Ten required customer flows
+
+1. Original-device email open: 06 sends the ready notice using 07's active
+   destination; 07 validates the grant/expiry/report and opens the immutable web
+   report with honest PDF status.
+2. Same-device return: reopen the email link or a still-valid exchanged session;
+   recheck revocation and expiry. No provider work starts.
+3. Other-device return: open the same email link and validate the same grant;
+   no account or new audit is created.
+4. Forwarded/leaked secret: disclose that bearer-link sharing transfers access.
+   After D7 confirmation, replace/revoke under D8; old links and derived
+   sessions stop working. Do not claim access is inherently identity-bound.
+5. Expired/revoked access: neutral unavailable result, no private metadata,
+   cached protected content or AI calls. Support reissue only if the report
+   still exists and D7 succeeds.
+6. Lost email/unusable action: support confirms the recorded mailbox, then 07
+   replaces the grant and 06 resends. An unavailable original mailbox follows
+   the conditional D5 proof path; otherwise fail closed.
+7. Arbitrary-email enumeration: recovery responses do not reveal order/report
+   existence; rate-limit and deduplicate requests. No access is issued without
+   proof.
+8. Recipient change: authorize ownership, verify the new mailbox, create a new
+   recipient version, and invalidate former access before 06 sends to the new
+   recipient. Do not edit report/evidence/order.
+9. Web ready/PDF pending or failed: deliver the validated web report/email;
+   preserve truthful PDF state and repair only that artifact.
+10. Ready-email resend: 07 supplies a currently valid authorized destination;
+    06 records a new delivery attempt for the same immutable report and
+    recipient version. No report regeneration, observation or entitlement.
+
+### Minimum conceptual state and boundaries
+
+This is an inventory, not a database schema: order and recipient version;
+server-owned accepted-start/deadline; immutable report/evidence version and
+retention expiry; grant validity/expiry/revocation and any exchanged session;
+separate web/PDF artifact states; idempotent delivery identity and attempts;
+terminal remedy/support status. Email/credentials/private contents stay out of
+model prompts, analytics, logs and Git.
+
+Module 06 owns report validation, artifact state, Resend delivery, delivery
+failure and resend. Module 07 owns access opening, return, expiry/revocation,
+replacement and recovery. Require no indexing, no referrer-secret leakage,
+safe secret storage, protected downloads, and server-side authorization on
+every private artifact. Private storage has no public-bucket shortcut.
+
+Prefer the existing Cloudflare stack, with D1 as the S2 server-ledger/order
+metadata baseline. Select and prove exact private artifact storage and durable
+runner in S3's specification, not through an unverified SDK choice here.
+Closing the tab must not stop paid work or repeat successful observations.
+The current browser PDF path is not replaced by this decision.
+
+### Sequence, held state and remaining gates
+
+- S1 is already complete through PR #110.
+- The S2 spending-cap foundation remains held on feature branch
+  `feat/s2-ledger-foundation-20261004` (committed `fad8cfe`, not on main),
+  plus a preserved uncommitted canonical timestamp correction. Its 21
+  focused tests pass, but the revision-3 full `npm run verify` FAILED on
+  four browser checks (52 passed). There is no final independent acceptance
+  of the correction, no release, and no enforcement on main. The failed
+  gate is carried forward, and the foundation worker's consumed budget
+  (7 of 9) is not reset.
+- Next: full S2 integration — inventory, storage compatibility/bindings,
+  credible versioned pricing bounds, retry accounting and fail-closed
+  provider integration — routed by [`NOW.md`](./NOW.md). S3 still needs an
+  approved bounded specification and the non-report retention decisions.
+  Held Spec 015 is not adopted.
+- Payment, final S5 wording, outside users and broad design polish remain
+  gated.
+
+**Carried-forward clarification for S3/S5 acceptance context (Fox note, not
+a policy change):** revoking an access grant stops future access and
+sessions derived from it; it cannot take back report copies or screenshots
+already downloaded.
+
+Acceptance for this record (from the packet): explicit delegated policy
+choice; complete comparison and ten flows; honest costs/readiness; correct
+module ownership; finite report access without deletion authority; no
+current customer behavior or public promise changed. Provisioning,
+sending-domain and support-mailbox verification, current prices and actual
+delivery performance remain separate implementation/launch evidence.
 
 ## 2026-10-04 PR120 JQ status finding assessed
 

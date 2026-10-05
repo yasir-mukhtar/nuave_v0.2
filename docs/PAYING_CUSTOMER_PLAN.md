@@ -38,11 +38,11 @@ done.
 | J6 | Customer-needs, competitor and public-fact screens | Worker | Done; merged | [#109](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/109#issuecomment-5956009449) (`9fa1308`; [slice record](../specs/013-airbnb-intake-journey/VERIFICATION.md#j6-frozen-closeout)) |
 | J7 | Review screen becomes the single confirmation | Worker | Done; merged | [#114](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5964756164) (`681df10`; [release](https://github.com/yasir-mukhtar/nuave_v0.2/pull/114#issuecomment-5966316930); merged `753452e`) |
 | JQ | Add back the questions the reference lacks (§5, JQ) | Worker | Done; merged | [#117](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117#issuecomment-5966961064) (`54c7340`; merged `1074dad`; [release](https://github.com/yasir-mukhtar/nuave_v0.2/pull/117#issuecomment-5968651503)) |
-| JZ | Founder signs off the journey after real test runs | Founder authority represented by Alfred; parent records transition | Done — delegated JZ acceptance with documented evidence exceptions | [#121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121); [docs closeout #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013), merged `613f1b3` | Accepted: founder-reported live success + qualified offline/slice evidence; R-30 correction independently reviewed, merged and deployed. Stage 2 not authorized. [Final canonical verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout); [dispatch pause](./NOW.md#next-action) |
+| JZ | Founder signs off the journey after real test runs | Founder authority represented by Alfred; parent records transition | Done — delegated JZ acceptance with documented evidence exceptions | [#121](https://github.com/yasir-mukhtar/nuave_v0.2/pull/121); [docs closeout #122](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013), merged `613f1b3` | Accepted: founder-reported live success + qualified offline/slice evidence; R-30 correction independently reviewed, merged and deployed. Stage 2 was not authorized by JZ acceptance. [Final canonical verification](../specs/013-airbnb-intake-journey/VERIFICATION.md#final-jz-closeout); [dispatch pause](./NOW.md#next-action) |
 | **Stage 2** | **Get ready to take money** | | | | |
-| S0 | Decision: how to save and email reports (§4.2) | Founder | Paused; awaiting separate Stage 2 instruction | — | — |
+| S0 | Decision: how to save and email reports (§4.2) | Founder represented by Fox; Pac records | Done — scoped private policy approved | — | [Fox APPROVE; packet PASS+NOTES](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved) |
 | S1 | Security patches | Worker | Done; pulled forward, merged | [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110#issuecomment-5956716058) (`9cca862`; production audit clean, dev-only findings disclosed) |
-| S2 | Spending cap on the server | Worker | Not started | — | — |
+| S2 | Spending cap on the server | Worker | Foundation held; full integration next, not enforced | [#123](https://github.com/yasir-mukhtar/nuave_v0.2/pull/123) | Revision-3 offline gate failed; correction unaccepted; integration prerequisites pending |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |
 | S5 | Terms, price and promise wording | Worker | Not started | — | — |
@@ -209,6 +209,17 @@ never blocks the build. Manual payment is not needed.
   USD 0.20 of AI cost each.
 
 ### 4.2 At S0, after Stage 1 (reminder)
+
+> **Decided 2026-10-05** — [canonical decision](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved):
+> one immutable private report per order, stored on the server, with a
+> revocable private link emailed to the order email; no account, password,
+> dashboard or report-history product at launch. The option list and the
+> D1–D8 "Suggested default" column below remain as the record of what was
+> compared; they are now approved private policies whose exact clocks,
+> failure split (email-only retry vs PDF-only repair) and destination-mailbox
+> proof definitions live in the decision-log entry, which governs wherever
+> wording differs. These are internal policies, not a published customer
+> promise — S5 approves the final wording.
 
 How do customers get their report and get back to it, and how does a paid
 audit keep running if they close the tab? The orchestrator brings two or three
