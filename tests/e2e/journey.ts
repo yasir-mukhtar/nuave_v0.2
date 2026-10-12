@@ -182,7 +182,9 @@ export async function openAuditFromLanding(
   ).toBeVisible();
   await hero.getByPlaceholder("https://bisnisanda.com").fill(website);
   await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
-  await expect(page).toHaveURL(/\/audit$/);
+  // The dev server compiles /audit on its first visit; on a cold CI runner
+  // that can take longer than the default 10 s expect timeout.
+  await expect(page).toHaveURL(/\/audit$/, { timeout: 30_000 });
 }
 
 export function entryScreen(page: Page) {
