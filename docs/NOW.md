@@ -1,8 +1,8 @@
 # Nuave now
 
 > Updated: 2026-10-12
-> Stage: Stage 1 accepted; S0 private report delivery decided; S2 built on PR #127, awaiting merge
-> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 is on PR #127; nothing enforced on main until it merges
+> Stage: Stage 1 accepted; S0 private report delivery decided; S2 spending cap merged (#127); S3 spec is next
+> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
 ## Current state
@@ -35,7 +35,7 @@
   dashboard or report-history product at launch. Reviewed `a0738376`
   (PASS+NOTES), approved by Fox `d68c7478`. It is internal policy, not a
   published promise; main code and the live product are unchanged.
-- **S2 is built and reviewed on [PR #127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127)**
+- **S2 is merged: [PR #127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127)**
   (2026-10-12; review PASS+NOTES, notes fixed in `8c9d6a6`). Every paid
   provider call reserves its maximum cost in D1 database `nuave-v2-spend`
   (binding `SPEND_DB`) before dispatch and settles to the actual cost. New
@@ -43,8 +43,9 @@
   `NUAVE_DAILY_SPEND_LIMIT_USD` (default USD 5, founder decision 2026-10-12).
   Live mode without the binding fails closed. Browser-sent spend history is
   ignored. It replaces the unmerged `feat/s2-ledger-foundation-20261004` and
-  `feat/s2-spend-guard-integration-20261005` branches. Nothing is enforced
-  until the founder merges and deploys it.
+  `feat/s2-spend-guard-integration-20261005` branches (PRs #123 and #125
+  closed). S4 adds a per-order cost limit and founder alerts at 80%, 90% and
+  100% of the cap.
 - **Then: S3** (order with email, saved and delivered reports, audit
   survives tab close) needs its own short Stage 2 spec, approved by the
   founder, before any build.
