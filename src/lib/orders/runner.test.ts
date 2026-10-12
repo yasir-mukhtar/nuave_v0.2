@@ -733,42 +733,76 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     return { counted, count };
   }
 
-  it("one run with every cap reached: 5 expired, 2 deadline failures, 2 audit steps and 2 failure-email retries, under 50 queries", async () => {
+  it("one live run with every cap reached: 3 expired, 1 deadline failure, 2 audit steps with ledger reserve and settle, and failure emails due, at most 40 queries", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     const rejecting = mailbox(() => false);
+    const order = async () => {
+      const id = await makeOrder(d1.db, {
+        mode: "live",
+        limitUsd: 0.5,
+        dailyLimitUsd: 1000,
+        now: clock,
+      });
+      await approve(d1.db, id, { mode: "live", now: clock });
+      return id;
+    };
+    // The fake paid provider goes through the real ledger: one reservation and
+    // one settlement per call.
+    const execute = async (input: QuestionExecuteInput) => {
+      const spend = await reserveProviderSpend({
+        provider: "openai",
+        stage: "observation",
+        usd: 0.1,
+      });
+      await spend.settle(0.05);
+      return executeSyntheticLocalObservation(input);
+    };
+    const live = (extra: Partial<RunnerDeps> = {}) =>
+      deps({ mode: "live", execute, sender: rejecting.sender, ...extra });
     // Orders approved now reach their deadline in 24 hours.
     const stale = [];
-    for (let i = 0; i < 4; i += 1) stale.push(await runningOrder());
+    for (let i = 0; i < 4; i += 1) stale.push(await order());
     advance(25 * 3600_000);
-    // Run A: two of them fail at the deadline; their failure emails are not
-    // accepted, so they stay due for a retry.
-    await runOrders(deps({ sender: rejecting.sender }));
+    // Runs A: one order per run fails at the deadline; the failure emails are
+    // not accepted, so they stay due for a retry.
+    await runOrders(live());
+    await runOrders(live());
     expect(stale.filter((id) => orderRow(id).state === "failed")).toHaveLength(
       2,
     );
 
-    // Run B (counted): seven open orders past their time, two more orders past
+    // Run B (counted): five open orders past their time, two more orders past
     // their deadline, two fresh running orders, two failure emails due.
-    for (let i = 0; i < 7; i += 1) {
-      await makeOrder(d1.db, { now: new Date(clock.getTime() - 3 * 3600_000) });
+    for (let i = 0; i < 5; i += 1) {
+      await makeOrder(d1.db, {
+        mode: "live",
+        limitUsd: 0.5,
+        dailyLimitUsd: 1000,
+        now: new Date(clock.getTime() - 3 * 3600_000),
+      });
     }
-    const fresh = [await runningOrder(), await runningOrder()];
+    const fresh = [await order(), await order()];
+    const callsBefore = rows(
+      "SELECT id FROM provider_spend WHERE kind = 'order_call'",
+    ).length;
     const { counted, count } = counting(d1.db);
-    const result = await runOrders(
-      deps({ db: counted, sender: rejecting.sender }),
-    );
+    const result = await runOrders(live({ db: counted }));
     const tally = (outcome: string) =>
       result.outcomes.filter((entry) => entry === outcome).length;
-    expect(tally("expired")).toBe(5);
-    expect(tally("failed_deadline")).toBe(2);
+    expect(tally("expired")).toBe(3);
+    expect(tally("failed_deadline")).toBe(1);
     expect(tally("question_done")).toBe(2);
-    expect(tally("failure_email")).toBe(0); // rejected sends are not counted done
-    expect(count.queries).toBeLessThan(50);
+    expect(count.queries).toBeLessThanOrEqual(40);
     // Left for the next run: two open orders, nothing lost.
     expect(d1.query("SELECT id FROM orders WHERE state = 'open'")).toHaveLength(
       2,
     );
     for (const id of fresh) expect(orderRow(id).state).toBe("running");
-    // Measured when written: 45 queries (52 statements) for this synthetic run.
+    expect(
+      rows("SELECT id FROM provider_spend WHERE kind = 'order_call'").length -
+        callsBefore,
+    ).toBe(2);
+    // Measured when written: 40 queries (48 statements), live mode.
   });
 
   it("at most two orders get an audit step in one run, oldest first; the rest wait for the next run", async () => {

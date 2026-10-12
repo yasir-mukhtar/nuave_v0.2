@@ -150,7 +150,9 @@ export { orderSafetyIdentifier, sha256Hex };
 /** Per run, so one cron run stays under the Free plan's 50 D1 queries
  * (measured in runner.test.ts "one run with every cap reached"). */
 export const MAX_ORDERS_PER_RUN = 2;
-export const MAX_EXPIRED_PER_RUN = 5;
+export const MAX_EXPIRED_PER_RUN = 3;
+export const MAX_FAILURE_EMAILS_PER_RUN = 1;
+export const MAX_DEADLINE_FAILURES_PER_RUN = 1;
 
 export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   const outcomes: StepOutcome[] = [];
@@ -173,7 +175,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   for (const id of await ordersPastDeadline(deps.db, {
     ...scope,
     now: deps.now(),
-    limit: MAX_ORDERS_PER_RUN,
+    limit: MAX_DEADLINE_FAILURES_PER_RUN,
   })) {
     if (await failOrder(deps, id, "deadline")) {
       failedNow.add(id);
@@ -244,7 +246,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   for (const id of await failedOrdersNeedingEmail(deps.db, {
     ...scope,
     now: deps.now(),
-    limit: MAX_ORDERS_PER_RUN,
+    limit: MAX_FAILURE_EMAILS_PER_RUN,
   })) {
     if (failedNow.has(id)) continue;
     if (await sendFailureEmail(deps, id)) outcomes.push("failure_email");
