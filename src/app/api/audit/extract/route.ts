@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   extractionRequestSchema,
-  auditBudgetSchema,
   SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
   type SourceExcerptStatus,
   type PublicSourceData,
@@ -24,13 +23,15 @@ import {
 import {
   AuditBudgetError,
   AuditCallExecutionError,
-  configuredAuditCarryoverCostUsd,
   serverOwnedAuditBudget,
 } from "@/lib/audit/telemetry";
 import {
   INVALID_SOURCE_INPUT_MESSAGE,
   parseSourceInput,
 } from "@/lib/audit/source-input";
+import { orderRuntime } from "@/lib/orders/http";
+import { orderInState } from "@/lib/orders/store";
+import { withOrderSpend } from "@/lib/spending/provider-spend";
 import {
   callerIpFromRequest,
   consumeRateLimit,
@@ -82,33 +83,6 @@ async function enforceExtractionRateLimit(
     : extractionRateLimitResponse(429);
 }
 
-export async function GET(request: Request) {
-  // Spec 010 R-01/R-02b: the switch answers 404 before anything else.
-  const switchedOff = auditSwitchResponse();
-  if (switchedOff) return switchedOff;
-
-  const rateLimitError = await enforceExtractionRateLimit(request);
-  if (rateLimitError) return rateLimitError;
-
-  try {
-    return NextResponse.json({
-      limit_usd: 5,
-      carryover_cost_usd: configuredAuditCarryoverCostUsd(),
-      calls: [],
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Pengendali biaya privat tidak tersedia.",
-      },
-      { status: 500 },
-    );
-  }
-}
-
 export async function POST(request: Request) {
   // Spec 010 R-01/R-02b: switch → rate limit → mode/credentials → body
   // validation → provider work.
@@ -138,10 +112,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const record = body as Record<string, unknown>;
-    const normalizedSource = parseSourceInput(
-      typeof record.website_url === "string" ? record.website_url : "",
-    );
+    // Spec 016 R-03/R-04: the paid reading needs an `open` order of this
+    // environment and mode, and reads the website SAVED ON THE ORDER. The
+    // browser sends only the order id: any website, brand, budget or spend
+    // history it adds is ignored. With no usable order nothing is sent.
+    const server = orderRuntime();
+    const order = server
+      ? await orderInState(server.db, {
+          orderId: (body as Record<string, unknown>).order_id,
+          environment: server.environment,
+          mode: server.mode,
+          states: ["open"],
+          now: new Date(),
+        })
+      : null;
+    if (!server || !order) {
+      return NextResponse.json(
+        {
+          error: "Pesanan belum dibuat atau sudah berakhir.",
+          code: "ORDER_REQUIRED",
+          telemetry: [],
+        },
+        { status: 409 },
+      );
+    }
+    const normalizedSource = parseSourceInput(order.website);
     if (!normalizedSource) {
       return NextResponse.json(
         {
@@ -153,12 +148,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // The browser's budget/spend history is validated for shape only and then
-    // discarded: the daily spend ledger, not the client, decides admission.
-    const parsed = extractionRequestSchema
-      .extend({ budget: auditBudgetSchema })
-      .parse({ ...record, website_url: normalizedSource.normalizedUrl });
-    const input = { ...parsed, budget: serverOwnedAuditBudget() };
+    const input = {
+      ...extractionRequestSchema.parse({
+        website_url: normalizedSource.normalizedUrl,
+        brand_name: order.business_name,
+        market_context: "",
+        category: "",
+        identity_unverified: true,
+        // R-04: from the order id, never the email.
+        safety_identifier: `nuave-order-${order.id}`,
+      }),
+      budget: serverOwnedAuditBudget(),
+    };
 
     // Spec 010 R-02: synthetic mode serves the labeled substitute at this
     // same boundary; live mode runs the real extraction. `preparation_mode`
@@ -193,11 +194,16 @@ export async function POST(request: Request) {
       });
       sourceStatus = sourceData ? "included" : "no-usable-text";
     }
+    const draft = await withOrderSpend(
+      { db: server.db, orderId: order.id },
+      () =>
+        liveExtractBusinessDraft({
+          ...input,
+          ...(sourceData ? { public_source_data: sourceData } : {}),
+        }),
+    );
     return NextResponse.json({
-      ...(await liveExtractBusinessDraft({
-        ...input,
-        ...(sourceData ? { public_source_data: sourceData } : {}),
-      })),
+      ...draft,
       preparation_mode: "live",
       source_excerpt_status: sourceStatus,
     });

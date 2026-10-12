@@ -107,8 +107,10 @@ describe("abortable protected observation provider", () => {
     });
 
     expect(createResponse).toHaveBeenCalledTimes(1);
+    // The request signal and an explicit timeout (spec 016 R-18).
     expect(createResponse.mock.calls[0][1]).toEqual({
       signal: controller.signal,
+      timeout: 90_000,
     });
   });
 

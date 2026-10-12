@@ -55,6 +55,11 @@ import {
   releaseIfRejectedUnrun,
   reserveProviderSpend,
 } from "../spending/provider-spend";
+import {
+  EXTRACT_CALL_TIMEOUT_MS,
+  OBSERVATION_CALL_TIMEOUT_MS,
+  REPORT_CALL_TIMEOUT_MS,
+} from "./call-timeouts";
 
 const DEFAULT_MODEL = AUDIT_MODEL;
 const REASONING_EFFORTS = [
@@ -424,7 +429,9 @@ export async function extractBusinessDraft(input: ExtractionInput): Promise<{
     });
     const startedAt = Date.now();
     try {
-      const response = await client().responses.parse(request);
+      const response = await client().responses.parse(request, {
+        timeout: EXTRACT_CALL_TIMEOUT_MS,
+      });
       const completed = completedCallTelemetry({
         stage: "extract",
         attempt: attemptNumber,
@@ -527,6 +534,7 @@ export async function executeAuditPrompt(input: {
     BusinessBrief | import("./direct-ten-context-v2").DirectTenAuditContext;
   safety_identifier: string;
   budget: AuditBudget;
+  signal?: AbortSignal;
 }): Promise<AuditObservation> {
   const requestedModel = auditModel();
   const request = {
@@ -565,7 +573,10 @@ export async function executeAuditPrompt(input: {
   });
   const startedAt = Date.now();
   try {
-    const response = await client().responses.create(request);
+    const response = await client().responses.create(request, {
+      timeout: OBSERVATION_CALL_TIMEOUT_MS,
+      ...(input.signal ? { signal: input.signal } : {}),
+    });
     const completed = completedCallTelemetry({
       stage: "observation",
       started_at_ms: startedAt,
@@ -774,7 +785,9 @@ export async function generateReportContent(
   const startedAt = Date.now();
   let telemetry: AuditCallTelemetry | undefined;
   try {
-    const response = await client().responses.parse(request);
+    const response = await client().responses.parse(request, {
+      timeout: REPORT_CALL_TIMEOUT_MS,
+    });
     telemetry = completedCallTelemetry({
       stage: "report",
       started_at_ms: startedAt,

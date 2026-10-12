@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  AUDIT_COST_LIMIT_USD,
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
   type AuditCallTelemetry,
 } from "./types";
@@ -23,6 +22,24 @@ const providerMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/audit/provider", () => providerMocks);
+// Spec 016: the paid reading needs an open order and reads the website saved on
+// it. The order and ledger mechanics are tested in orders/*.test.ts; here the
+// order is a stub that carries the website under test.
+vi.mock("@/lib/orders/http", () => ({
+  orderRuntime: () => ({
+    db: {},
+    environment: "production",
+    mode: process.env.NUAVE_AUDIT_MODE === "live" ? "live" : "synthetic",
+  }),
+}));
+vi.mock("@/lib/orders/store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/orders/store")>()),
+  orderInState: async () => ({
+    id: "a".repeat(32),
+    website: "https://batiklaras.example",
+    business_name: "Batik Laras",
+  }),
+}));
 vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./source-excerpt")>()),
   fetchWebsiteExcerpt: vi.fn(async () => null),
@@ -40,10 +57,7 @@ import * as gates from "./deployment-gate";
 import * as limiter from "./rate-limit";
 import * as questions from "../intake/glm-local";
 import { fetchWebsiteExcerpt } from "./source-excerpt";
-import {
-  GET as extractGET,
-  POST as extractPOST,
-} from "../../app/api/audit/extract/route";
+import { POST as extractPOST } from "../../app/api/audit/extract/route";
 
 const SOURCE = "https://batiklaras.example";
 
@@ -275,17 +289,7 @@ function liveDraft() {
 
 function extractBody(localMode?: string) {
   return {
-    website_url: SOURCE,
-    brand_name: "Batik Laras",
-    market_context: "",
-    category: "",
-    identity_unverified: true,
-    safety_identifier: "local-test-preparation",
-    budget: {
-      limit_usd: AUDIT_COST_LIMIT_USD,
-      carryover_cost_usd: 0,
-      calls: [],
-    },
+    order_id: "a".repeat(32),
     ...(localMode !== undefined ? { local_mode: localMode } : {}),
   };
 }
@@ -382,14 +386,6 @@ describe("POST /api/audit/extract server-selected mode", () => {
     expect(
       providerMocks.assertLiveProviderCredentialsConfigured,
     ).not.toHaveBeenCalled();
-  });
-
-  it("switch off answers 404 on the budget read as well", async () => {
-    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "");
-    const response = await extractGET(
-      new Request("https://nuave.test/api/audit/extract"),
-    );
-    expect(response.status).toBe(404);
   });
 
   it("synthetic mode returns the labeled substitute draft", async () => {

@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { assembleReportContent } from "./contracts";
 import {
   DIRECT_TEN_CONTEXT_VERSION,
-  DIRECT_TEN_REPORT_CONTRACT_VERSION,
   type DirectTenAuditContext,
 } from "./direct-ten-context-v2";
 import {
@@ -49,7 +48,6 @@ vi.mock("@/lib/audit/local-direct-ten-audit", async (importOriginal) => {
   };
 });
 
-import { POST as reportPOST } from "../../app/api/audit/report/route";
 import { generateSyntheticLocalReport } from "./local-direct-ten-audit";
 
 /** Fictional direct-ten context — the same shape the route tests use. */
@@ -484,13 +482,6 @@ describe("report route usefulness failure (Spec 012 R-14/R-15, AC-16/AC-17)", ()
     vi.unstubAllGlobals();
   });
 
-  const post = (body: unknown) =>
-    new Request("https://nuave.test/api/audit/report", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
   const syntheticCall = (id: string): AuditCallTelemetry =>
     fixtureCallTelemetry({ response_id: `synthetic-report-${id}` });
 
@@ -517,18 +508,22 @@ describe("report route usefulness failure (Spec 012 R-14/R-15, AC-16/AC-17)", ()
     };
   }
 
-  const reportBody = () => ({
-    question_method: "direct-ten",
-    prompts: wirePrompts,
-    safety_identifier: "local-direct-ten-fixture",
+  // Spec 016: the server-side runner calls the report pipeline directly (the
+  // browser-driven report route is retired), so the pipeline input is what the
+  // runner builds from an order.
+  const reportInput = (): ReportPipelineInput => ({
+    brief: context(),
+    prompts: canonicalLockedDirectTenPack(wirePrompts, context()).prompts,
+    observations: wirePrompts.map(syntheticObservation),
+    safety_identifier: "nuave-order-fixture",
     budget: {
       limit_usd: AUDIT_COST_LIMIT_USD,
       carryover_cost_usd: 0,
       calls: [],
     },
-    client_contract_version: DIRECT_TEN_REPORT_CONTRACT_VERSION,
-    context: context(),
-    observations: wirePrompts.map(syntheticObservation),
+    language: "id",
+    question_method: "direct-ten",
+    allow_synthetic_evidence: true,
   });
 
   /** Synthetic report that retains ten answers but offers no action at all —
@@ -563,26 +558,28 @@ describe("report route usefulness failure (Spec 012 R-14/R-15, AC-16/AC-17)", ()
     };
   };
 
-  it("returns 422 REPORT_USEFULNESS_FAILURE with retained telemetry, then succeeds on retry", async () => {
-    const generate = vi.mocked(generateSyntheticLocalReport);
-    generate.mockImplementationOnce(uselessReport);
-
-    const failed = await reportPOST(post(reportBody()));
-    expect(failed.status).toBe(422);
-    const failure = await failed.json();
+  it("fails with REPORT_USEFULNESS_FAILURE and retained telemetry, then succeeds on retry", async () => {
+    const failed = await createValidatedAuditReport(
+      reportInput(),
+      uselessReport,
+    ).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(failed).toBeInstanceOf(ReportPipelineError);
+    const failure = failed as ReportPipelineError;
     expect(failure.code).toBe("REPORT_USEFULNESS_FAILURE");
-    expect(failure.report).toBeUndefined();
     expect(failure.telemetry).toHaveLength(1);
     expect(failure.telemetry[0].response_id).toBe("synthetic-report-useless");
     expect(failure.diagnostics).toContain("usefulness_minimum_not_met");
 
-    // The recovery retry replays the retained observations — same body.
-    const retried = await reportPOST(post(reportBody()));
-    expect(retried.status).toBe(200);
-    const success = await retried.json();
-    expect(success.report).toBeDefined();
-    expect(success.report.details).toHaveLength(10);
-    expect(success.report.priorities.length).toBeGreaterThanOrEqual(1);
+    // The recovery retry replays the retained observations — same input.
+    const report = await createValidatedAuditReport(
+      reportInput(),
+      generateSyntheticLocalReport,
+    );
+    expect(report.details).toHaveLength(10);
+    expect(report.priorities.length).toBeGreaterThanOrEqual(1);
     expect(providerMocks.liveGenerateReportContent).not.toHaveBeenCalled();
   });
 });

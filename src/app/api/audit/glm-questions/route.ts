@@ -4,6 +4,9 @@ import {
   auditSwitchResponse,
 } from "@/lib/audit/deployment-gate";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
+import { orderRuntime } from "@/lib/orders/http";
+import { orderInState } from "@/lib/orders/store";
+import { withOrderSpend } from "@/lib/spending/provider-spend";
 import { prepareGlmQuestionsForIntake } from "@/lib/intake/glm-local";
 import { SMART_INTAKE_INPUT_VERSION } from "@/lib/intake/smart-intake-contract";
 import {
@@ -21,8 +24,10 @@ export const runtime = "nodejs";
  * and anything else are 400); the GLM caller-IP rate limiter runs next; then
  * live-mode credentials. In synthetic mode the labeled stub transport runs;
  * in live mode a missing credential stops the stage without falling back.
- * Nothing about the request or response is logged here; the raw envelope
- * stays server-side.
+ * Spec 016 R-03: question writing is a paid call, so it needs an `open` order
+ * of this environment and mode (`order_id` in the body); without one nothing is
+ * sent. The call runs inside the order's own spend limit. Nothing about the
+ * request or response is logged here; the raw envelope stays server-side.
  */
 export async function POST(request: Request) {
   try {
@@ -85,10 +90,31 @@ export async function POST(request: Request) {
       });
     }
 
-    const outcome = await prepareGlmQuestionsForIntake({
-      intake: record.intake,
-      stubBehavior: record.stubBehavior,
-    });
+    const server = orderRuntime();
+    const now = new Date();
+    const order = server
+      ? await orderInState(server.db, {
+          orderId: record.order_id,
+          environment: server.environment,
+          mode: server.mode,
+          states: ["open"],
+          now,
+        })
+      : null;
+    if (!server || !order) {
+      return NextResponse.json(questionPreflightError("ORDER_REQUIRED"), {
+        status: 409,
+      });
+    }
+
+    const outcome = await withOrderSpend(
+      { db: server.db, orderId: order.id },
+      () =>
+        prepareGlmQuestionsForIntake({
+          intake: record.intake,
+          stubBehavior: record.stubBehavior,
+        }),
+    );
     return NextResponse.json(projectQuestionOutcome(outcome));
   } catch {
     // Execution may already have started: never fabricate no work or zero cost.
