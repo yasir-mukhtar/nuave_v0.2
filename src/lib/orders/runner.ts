@@ -202,10 +202,22 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
       continue;
     }
     try {
+      // Read the order again now that the lease is ours: another runner may have
+      // moved it on between the first read and the claim.
+      const current = await getOrder(deps.db, id);
+      if (
+        !current ||
+        current.mode !== deps.mode ||
+        current.environment !== deps.environment ||
+        (current.state !== "running" && current.state !== "reporting")
+      ) {
+        outcomes.push("skipped");
+        continue;
+      }
       const outcome =
-        order.state === "running"
-          ? await questionStep(deps, order, owner, stepMs)
-          : await reportStep(deps, order, owner, stepMs);
+        current.state === "running"
+          ? await questionStep(deps, current, owner, stepMs)
+          : await reportStep(deps, current, owner, stepMs);
       if (
         outcome === "failed" ||
         outcome === "question_failed" ||
@@ -495,7 +507,13 @@ async function reportStep(
     owner,
   });
   if (attempt === null) {
-    // R-19: report attempts are checked from D1; none left means final.
+    // No attempt could be claimed: either none is left (R-19, checked from D1:
+    // final) or the report was saved or the order moved on since it was read.
+    const latest = await getOrder(deps.db, order.id);
+    if (latest?.state === "reporting" && latest.report_json) {
+      return readyEmailStep(deps, latest);
+    }
+    if (latest?.state !== "reporting") return "skipped";
     await failOrder(deps, order.id, "report_limit");
     return "report_failed";
   }

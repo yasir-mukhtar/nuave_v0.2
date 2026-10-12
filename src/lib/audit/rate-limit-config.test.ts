@@ -1,32 +1,8 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-
-type Limiter = {
-  name: string;
-  namespace_id: string;
-  simple: { limit: number; period: number };
-};
-type Environment = {
-  triggers?: { crons?: string[] };
-  vars?: Record<string, string>;
-  ratelimits?: Limiter[];
-  d1_databases?: Array<{
-    binding: string;
-    database_name: string;
-    database_id: string;
-  }>;
-};
-type Config = Environment & { env?: Record<string, Environment> };
-
-/** wrangler.jsonc: whole-line comments and trailing commas are allowed. */
-export function readWranglerConfig(): Config {
-  return JSON.parse(
-    readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8")
-      .replace(/^\s*\/\/.*$/gm, "")
-      .replace(/,\s*([}\]])/g, "$1"),
-  ) as Config;
-}
+import {
+  readWranglerConfig,
+  type WranglerEnvironment as Environment,
+} from "../orders/wrangler-config.test-helper";
 
 const config = readWranglerConfig();
 

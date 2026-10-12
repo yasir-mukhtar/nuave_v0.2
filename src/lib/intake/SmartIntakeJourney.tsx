@@ -440,7 +440,13 @@ export default function SmartIntakeJourney({
           setSession(saved);
         }
         if (saved.order && restoredStage !== "order") void checkOrder(saved);
-      } else setHistorical(Boolean(readHistoricalAudit()));
+      } else {
+        try {
+          setHistorical(Boolean(readHistoricalAudit()));
+        } catch {
+          // Browser storage is blocked: there is no old audit to hold.
+        }
+      }
       setReady(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

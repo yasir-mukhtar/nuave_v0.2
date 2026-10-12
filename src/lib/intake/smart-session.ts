@@ -108,6 +108,28 @@ export type SmartSession = {
   generationAttempts: GenerationAttempt[];
 };
 
+const SMART_STAGES: readonly SmartSession["stage"][] = [
+  "entry",
+  "reading",
+  "brand",
+  "order",
+  "focus",
+  "location",
+  "product",
+  "category",
+  "offerings",
+  "target-customer",
+  "customer-needs",
+  "decision-considerations",
+  "competitors",
+  "differentiator",
+  "public-fact",
+  "service",
+  "market",
+  "summary",
+  "questions",
+];
+
 export function freshSmartSession(): SmartSession {
   return {
     version: 9,
@@ -136,27 +158,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     if (
       !isRecord(value) ||
       value.version !== 9 ||
-      ![
-        "entry",
-        "reading",
-        "brand",
-        "order",
-        "focus",
-        "location",
-        "product",
-        "category",
-        "offerings",
-        "target-customer",
-        "customer-needs",
-        "decision-considerations",
-        "competitors",
-        "differentiator",
-        "public-fact",
-        "service",
-        "market",
-        "summary",
-        "questions",
-      ].includes(String(value.stage)) ||
+      !SMART_STAGES.includes(value.stage as SmartSession["stage"]) ||
       !isRecord(value.entry) ||
       typeof value.entry.name !== "string" ||
       typeof value.entry.source !== "string" ||
@@ -307,9 +309,13 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       return null;
     if (
       value.afterOrder != null &&
-      (typeof value.afterOrder !== "string" || value.afterOrder === "order")
+      (typeof value.afterOrder !== "string" ||
+        value.afterOrder === "order" ||
+        !SMART_STAGES.includes(value.afterOrder as SmartSession["stage"]))
     )
       return null;
+    // The order screen runs on the identity (and the brand chosen on it).
+    if (stage === "order" && value.identity == null) return null;
     if (value.savedAt !== undefined && typeof value.savedAt !== "string")
       return null;
     const pack = value.pack;
