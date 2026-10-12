@@ -198,7 +198,8 @@ export async function reserveOrderCall(
          SELECT ?1, ?2, 'reserved', ?3, ?4, ?5, ?5, ?6, 'order_call', ?7
          WHERE EXISTS (
                  SELECT 1 FROM orders
-                 WHERE id = ?7 AND mode = 'live' AND state IN (${inList(states)}))
+                 WHERE id = ?7 AND mode = 'live' AND state IN (${inList(states)})
+                   AND (deadline_at IS NULL OR deadline_at > ?6))
            AND EXISTS (
                  SELECT 1 FROM provider_spend
                  WHERE kind = 'order_hold' AND order_id = ?7 AND status = 'reserved')
@@ -220,7 +221,7 @@ export async function reserveOrderCall(
   }
   if (changes === 0) {
     throw new SpendLedgerError(
-      await classifyOrderRefusal(db, input.orderId, states),
+      await classifyOrderRefusal(db, input.orderId, states, at),
       "order call refused",
     );
   }
@@ -265,22 +266,31 @@ async function classifyOrderRefusal(
   db: SpendDb,
   orderId: string,
   allowed: readonly OrderState[],
+  at: Date,
 ): Promise<SpendLedgerErrorCode> {
   try {
     const row = await db
       .prepare(
-        `SELECT o.state AS state, o.mode AS mode, h.status AS hold_status
+        `SELECT o.state AS state, o.mode AS mode, o.deadline_at AS deadline_at,
+                h.status AS hold_status
          FROM orders o
          LEFT JOIN provider_spend h ON h.kind = 'order_hold' AND h.order_id = o.id
          WHERE o.id = ?1`,
       )
       .bind(orderId)
-      .first<{ state: string; mode: string; hold_status: string | null }>();
+      .first<{
+        state: string;
+        mode: string;
+        deadline_at: string | null;
+        hold_status: string | null;
+      }>();
     if (
       !row ||
       row.mode !== "live" ||
       !allowed.includes(row.state as OrderState) ||
-      row.hold_status !== "reserved"
+      row.hold_status !== "reserved" ||
+      // Past its deadline no more paid calls are allowed.
+      (row.deadline_at !== null && row.deadline_at <= at.toISOString())
     ) {
       return "order_refused";
     }

@@ -415,12 +415,14 @@ export async function renewOrderLease(
   const result = await db
     .prepare(
       `UPDATE orders SET lease_until = ?3
-       WHERE id = ?1 AND lease_owner = ?2 AND state IN (${ACTIVE_STATES})`,
+       WHERE id = ?1 AND lease_owner = ?2 AND state IN (${ACTIVE_STATES})
+         AND (deadline_at IS NULL OR deadline_at > ?4)`,
     )
     .bind(
       input.orderId,
       input.owner,
       iso(new Date(input.now.getTime() + input.leaseMs)),
+      iso(input.now),
     )
     .run();
   return result.meta?.changes === 1;

@@ -185,6 +185,55 @@ describe("order hold (R-08, AC-05)", () => {
   });
 });
 
+describe("order calls past the deadline (R-23)", () => {
+  const DEADLINE = new Date("2026-10-13T10:00:00.000Z");
+  const setState = (id: string, state: string) =>
+    d1.query(
+      `UPDATE orders SET state = '${state}', deadline_at = '${DEADLINE.toISOString()}' WHERE id = '${id}' RETURNING 1`,
+    );
+
+  it("a report call is allowed one second before the deadline and refused from the deadline on", async () => {
+    const { order } = await liveOrder();
+    setState(order.id, "reporting");
+    const report = { ...call, stage: "report", orderId: order.id, usd: 0.04 };
+    await reserveOrderCall(d1.db, {
+      ...report,
+      now: () => new Date(DEADLINE.getTime() - 1000),
+    });
+    // The language-fix call, after the deadline passed during the first call.
+    expect(
+      (
+        await refusal(
+          reserveOrderCall(d1.db, { ...report, now: () => DEADLINE }),
+        )
+      )?.code,
+    ).toBe("order_refused");
+    expect(
+      d1.query("SELECT id FROM provider_spend WHERE kind = 'order_call'"),
+    ).toHaveLength(1);
+  });
+
+  it("a question call reserved after the deadline is refused", async () => {
+    const { order } = await liveOrder();
+    setState(order.id, "running");
+    const question = { ...call, orderId: order.id, usd: 0.1 };
+    await reserveOrderCall(d1.db, {
+      ...question,
+      now: () => new Date(DEADLINE.getTime() - 1000),
+    });
+    expect(
+      (
+        await refusal(
+          reserveOrderCall(d1.db, {
+            ...question,
+            now: () => new Date(DEADLINE.getTime() + 1000),
+          }),
+        )
+      )?.code,
+    ).toBe("order_refused");
+  });
+});
+
 describe("order calls (R-09, AC-06, AC-07)", () => {
   it("is refused with no order, an unknown order, or a state that does not allow it", async () => {
     const { order } = await liveOrder();

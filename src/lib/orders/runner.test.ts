@@ -21,6 +21,7 @@ import { usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import {
   claimOrderLease,
+  renewOrderLease,
   ORDER_DEADLINE_MS,
   ORDER_OPEN_MS,
   orderStatus,
@@ -1043,5 +1044,50 @@ describe("overdue orders and fair rotation (R-15, R-23)", () => {
     }
     const after = counts();
     for (const id of ids) expect(after[id]).toBe(before[id] + 1);
+  });
+
+  it("the lease cannot be renewed at or after the deadline", async () => {
+    const id = await runningOrder();
+    expect(
+      await claimOrderLease(d1.db, {
+        orderId: id,
+        owner: "x",
+        now: clock,
+        leaseMs: 1000,
+      }),
+    ).toBe(true);
+    const deadline = Date.parse(String(orderRow(id).deadline_at));
+    const renew = (at: number) =>
+      renewOrderLease(d1.db, {
+        orderId: id,
+        owner: "x",
+        now: new Date(at),
+        leaseMs: 1000,
+      });
+    expect(await renew(deadline - 1000)).toBe(true);
+    expect(await renew(deadline)).toBe(false);
+  });
+
+  it("a report claimed one second before the deadline makes its first call but not the language-fix call", async () => {
+    const LONG = Array.from({ length: 26 }, () => "kopi").join(" ") + ".";
+    const calls = { n: 0 };
+    const id = await runningOrder();
+    const d = deps({
+      generateReport: async (...args) => {
+        calls.n += 1;
+        const first = await generateSyntheticLocalReport(args[0]);
+        if (args[1] !== undefined) return first;
+        advance(2000); // the deadline passes during the first call
+        return { ...first, content: { ...first.content, conclusion: LONG } };
+      },
+    });
+    for (let i = 0; i < 10; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("reporting");
+    clock = new Date(Date.parse(String(orderRow(id).deadline_at)) - 1000);
+    await runOrders(d);
+    expect(calls.n).toBe(1);
   });
 });
