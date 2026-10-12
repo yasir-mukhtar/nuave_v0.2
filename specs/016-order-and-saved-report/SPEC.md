@@ -1,6 +1,6 @@
 # Spec 016: Order, saved report and private link (S3)
 
-> Status: **In review — revision 6; plan review PASS+NOTES with notes applied; waiting for the founder's explicit approval. Do not implement.**
+> Status: **Approved** by the founder on 2026-10-12 (revision 6, `a006048`; [decision](../../docs/DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). Implementation may begin with S3a.
 > Owner: orchestrator
 > Updated: 2026-10-12 (revision 6: plan re-review notes 1–10 applied)
 > Implements: S3 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md),

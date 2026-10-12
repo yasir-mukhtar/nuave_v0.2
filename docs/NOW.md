@@ -1,7 +1,7 @@
 # Nuave now
 
 > Updated: 2026-10-12
-> Stage: Stage 1 accepted; S0 private report delivery decided; S2 spending cap merged (#127); S3 spec is next
+> Stage: Stage 1 accepted; S0 private report delivery decided; S2 spending cap merged (#127); Spec 016 (S3) approved; S3a building
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -46,9 +46,13 @@
   `feat/s2-spend-guard-integration-20261005` branches (PRs #123 and #125
   closed). S4 adds a per-order cost limit and founder alerts at 80%, 90% and
   100% of the cap.
-- **Then: S3** (order with email, saved and delivered reports, audit
-  survives tab close) needs its own short Stage 2 spec, approved by the
-  founder, before any build.
+- **S3: [Spec 016](../specs/016-order-and-saved-report/SPEC.md) approved**
+  ([2026-10-12](./DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). S3a
+  (order, per-order limit, server-side audit) is being built on
+  `claude/nuave-stage-3-spec-je7pqf` ([PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129)).
+  S3a and S3b go live together in one merge. Founder actions before review:
+  Resend key and domain, Resend tracking off, free D1 `nuave-v2-preview`, CI
+  token D1 and secret permissions, private email list.
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or
   billing proof. No unidentified process was killed and no Desktop state was

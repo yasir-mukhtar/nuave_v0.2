@@ -1,10 +1,31 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-05
+> Updated: 2026-10-12
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-12 — Approve Spec 016 (S3)
+
+Yasir approved [Spec 016](../specs/016-order-and-saved-report/SPEC.md)
+revision 6 (`a006048`) on [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129).
+Independent plan review: FAIL on revision 4, PASS+NOTES on revision 5, notes
+applied in revision 6. Founder answers recorded in the spec:
+
+- Order limit USD 2.00 per live order, held from the daily cap until the
+  order ends (Q1/D2); unstarted orders expire after 2 hours (Q2).
+- Record lifetimes as listed in the spec (Q3); no deletion is authorized.
+- Intake progress is kept in the customer's browser only (Q4, option A).
+- Live orders only for emails on the founder's private list until S4 (Q6).
+  This stops live audits for strangers once S3 is deployed.
+- New screen order: free brand confirm, then the order, then the paid
+  website reading (D1). The account stays on Workers Free (D3). Every resend
+  makes a new link and the old one stops (D4).
+
+This approves the build of S3a and S3b. It does not approve merge, deploy,
+live AI calls, provisioning, or spending; AC-21 needs a separate named
+approval. Founder actions are listed in the spec (Q5).
 
 ## 2026-10-05 — S0 private report delivery and recovery approved
 

@@ -50,6 +50,11 @@ verification is against its acceptance criteria.
 any, and the active milestone. The entries below record each package's
 latest status.
 
+- [`016-order-and-saved-report/SPEC.md`](./016-order-and-saved-report/SPEC.md)
+  — **Approved** (2026-10-12, revision 6). S3: order with email, per-order
+  cost limit, server-side audit that survives tab close, saved report with a
+  private emailed link. Built as S3a and S3b, released in one merge.
+
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
   — **Verified with documented evidence exceptions** (2026-10-04).
   J2–J7/JQ are merged; delegated JZ acceptance and canonical closeout are
