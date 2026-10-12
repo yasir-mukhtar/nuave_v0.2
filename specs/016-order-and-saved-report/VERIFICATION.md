@@ -4,7 +4,7 @@
 > Reviewer: independent Opus reviewer (did not write the code)
 > Date: 2026-10-12
 > Spec version: revision 6, `a006048` (approved 2026-10-12)
-> Implementation: [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129), branch `claude/nuave-stage-3-spec-je7pqf`; final exact-head review pending on the head that carries this file
+> Implementation: [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129), branch `claude/nuave-stage-3-spec-je7pqf`; last reviewed head `da04910` (PASS+NOTES); notes closed in `beb86ab` and this record
 
 ## Scope reviewed
 
@@ -27,6 +27,7 @@
 | `52e9e98` | S3a | FAIL | Deadline cap allowed a paid step on an overdue order; fixed in `a7edecc` |
 | `a7edecc` | S3a | PASS+NOTES | Ledger now refuses calls past the deadline (`3afbf02`) |
 | `0adebd2` | S3a+S3b | PASS+NOTES | 7 notes fixed in `9caa6f5` |
+| `da04910` | S3a+S3b, final | PASS+NOTES | New run-mix test added in `beb86ab`; this record corrected (AC-20 evidence, figures) |
 
 ## Acceptance results
 
@@ -51,7 +52,7 @@
 | AC-17 | Pass | `support.test.ts` (`resend`, `off`, `show`, bad ID, sender made before the link changes) |
 | AC-18 | Pass | `report-link.test.ts` (provider inputs and console lines); `mail.test.ts` (key never logged) |
 | AC-19 | Pass | `order-journey.test.tsx`; e2e reload, ended order, 7-day removal; synthetic order writes no ledger rows |
-| AC-20 | Pass | `npm run verify` passes; the verify-nuave drive (6 features, 0 external requests) ran locally, with evidence in the git-ignored `.local-evidence/verify-nuave/` |
+| AC-20 | Pass, with evidence exception | `npm run verify` passes on `da04910` (reviewer). The verify-nuave drives (6 features, 0 external requests) passed in the worker's sandbox on a pre-fix S3b head (run `20261012T193415Z-6z5v`), with screenshots kept only in the git-ignored `.local-evidence/`. They are **not attached to the PR** and were **not re-run on the final head**: the reviewer's sandbox blocks the skill's port check (`lsof`). The same journey is covered by the browser tests in `npm run verify`. |
 | AC-21 | Pending | Live run on production after the combined deploy, with a listed email; needs named founder approval and budget |
 
 ## Requirements trace
@@ -76,10 +77,12 @@ deviations, all accepted by the reviewer:
 
 ## Measurements
 
-- One cron run, worst live mix: 33 D1 queries and 9 outbound requests with a
-  report step. The two-question mix stays at or below 40 queries. The Free
-  plan allows 50 of each.
-- Worker size: 2924 KiB gzipped against the Free limit of 3072 KiB (95%).
+- One cron run, worst live mixes (tests in `runner-worst-case.test.ts` and
+  `runner.test.ts`, measured on `beb86ab`): an email-only delivery plus a
+  report step uses 40 D1 queries and 10 outbound requests; a report step alone
+  uses 33 and 9; two question steps use at most 40. The tests fail above 40
+  queries or 10 outbound requests. The Free plan allows 50 of each.
+- Worker size: 2924 KiB gzipped on `da04910` against the Free limit of 3072 KiB (95%).
 - Largest single reservation: USD 0.41. A normal order holds at most about
   USD 0.61 at one time; at USD 2.00 an order survives 4 unknown-cost calls.
 - Not measured offline: CPU time per cron run against Free's 10 ms. This is
@@ -87,16 +90,14 @@ deviations, all accepted by the reviewer:
 
 ## Checks run
 
-- `npm run verify` (reviewer, at `0adebd2`): 114 files / 1985 unit tests;
+- `npm run verify` (reviewer, at `da04910`): 114 files / 1993 unit tests;
   Playwright 51 + 3. The sandbox's stock browser is missing, so the browser
   run used the installed Chromium.
-- `node scripts/test-workers.mjs`: 30/30.
-- The worker re-ran both on `9caa6f5`: both pass.
-- CI `validate` and `Deploy PR preview`: green on `0adebd2`.
+- `node scripts/test-workers.mjs` (reviewer, at `da04910`): 30/30.
+- CI `validate` and `Deploy PR preview`: green on `da04910`.
 
 ## Open before merge
 
-- Final exact-head review of the head that carries this file.
 - Founder: GitHub secrets `RESEND_API_KEY` and `NUAVE_MAIL_FROM`; Resend
   domain confirmed with tracking off and the shortest retention; the local
   `.secrets/resend-api-key` and `.secrets/resend-from` files for
@@ -105,5 +106,6 @@ deviations, all accepted by the reviewer:
 
 ## Verdict
 
-**Pass with one pending criterion** for the offline acceptance criteria.
-AC-21 stays pending until the founder-approved live run.
+**Pass with one pending criterion and one evidence exception.** All offline
+criteria pass. AC-20's browser-drive evidence is local only (see above). AC-21
+stays pending until the founder-approved live run.
