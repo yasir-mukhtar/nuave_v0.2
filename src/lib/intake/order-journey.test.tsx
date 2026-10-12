@@ -576,7 +576,11 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
         "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda.",
       ),
     ).toBeTruthy();
-    expect(document.querySelector('[data-order-progress="3"]')).not.toBeNull();
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-order-progress="3"]'),
+      ).not.toBeNull(),
+    );
     expect(server.bodies["/api/orders/status"]).toEqual([
       { order_id: ORDER_ID },
     ]);

@@ -406,8 +406,11 @@ describe("paid routes need an order (R-03, R-04, AC-02)", () => {
       url: String(url),
       body: String((init as RequestInit | undefined)?.body ?? ""),
     }));
-    const provider = requests.filter((r) => r.url.includes("openai"));
-    expect(provider.length).toBeGreaterThanOrEqual(1);
+    const provider = requests.filter((r) => r.url.includes("/responses"));
+    expect(
+      provider.length,
+      `status ${response.status}, urls ${requests.map((r) => r.url).join(" ")}`,
+    ).toBeGreaterThanOrEqual(1);
     for (const { body } of provider) {
       expect(body).not.toContain("attacker.example");
       expect(body).not.toContain("Someone Else");
