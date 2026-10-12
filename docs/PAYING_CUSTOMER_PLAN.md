@@ -42,7 +42,7 @@ done.
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder represented by Fox; Pac records | Done — scoped private policy approved | — | [Fox APPROVE; packet PASS+NOTES](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved) |
 | S1 | Security patches | Worker | Done; pulled forward, merged | [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110#issuecomment-5956716058) (`9cca862`; production audit clean, dev-only findings disclosed) |
-| S2 | Spending cap on the server | Worker | Built on draft PR; awaiting founder merge and deploy | [#127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127) (supersedes #123) | [PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127#issuecomment-6118211608) (`8c9d6a6`; notes fixed) |
+| S2 | Spending cap on the server | Worker | Done; merged `2d2c4ec` | [#127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127) (supersedes #123) | [PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127#issuecomment-6118211608) (`8c9d6a6`; notes fixed) |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |
 | S5 | Terms, price and promise wording | Worker | Not started | — | — |
@@ -545,12 +545,25 @@ These come from the original plan's Phase 4 exit gate
   try again later and no payment is taken. An order that is already paid is
   allowed to finish even if the cap is passed meanwhile; if it still cannot
   run, it falls under D2 and D3 (retry, then refund by hand).
+- **Per-order cost limit.** Each paid order (or test pass) gets its own
+  maximum AI cost, set from the measured cost of real audits. It is recorded
+  against the order in the S2 ledger. Before payment, the remaining daily cap
+  must cover one full order at that maximum. So the daily cap sets the
+  maximum number of sales per day. A paid order's calls are allowed past the
+  daily cap (the S2 code refuses them today; S4 must change that), but never
+  past its own order limit.
+- **Cap alerts to the founder** (founder decision, 2026-10-12): an email
+  when today's total first reaches 80%, 90% and 100% of the daily cap. That
+  is one email per level per day, so the founder can raise
+  `NUAVE_DAILY_SPEND_LIMIT_USD` in time.
 
 *Done when:* in Midtrans sandbox, URL → pay → intake → approve questions →
 report works end to end. A duplicated notification does not create a second audit. The test pass
 runs a real audit with no payment. Calling the audit endpoints with neither
 payment nor test pass is refused. With the daily cap reached, no new payment
-can start, and an already-paid order still completes.
+can start, and an already-paid order still completes. An order cannot pass its own cost
+limit. Crossing 80%, 90% and 100% of the daily cap each sends one founder
+email.
 
 **S5 — Terms, price and promise wording** (worker, ~1 day)
 
