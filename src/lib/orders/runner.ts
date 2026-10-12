@@ -154,6 +154,10 @@ export const MAX_ORDERS_PER_RUN = 2;
 export const MAX_EXPIRED_PER_RUN = 3;
 export const MAX_FAILURE_EMAILS_PER_RUN = 1;
 export const MAX_DEADLINE_FAILURES_PER_RUN = 1;
+/** A report step is the heaviest (up to two paid calls, then the ready email),
+ * so it runs alone in its run: no other audit step before or after it. That
+ * keeps the worst live run at 40 D1 queries or fewer. A report that has to wait
+ * is first in line on the next run (rotation by last step). */
 
 export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   const outcomes: StepOutcome[] = [];
@@ -162,6 +166,8 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   const owner = crypto.randomUUID();
   const scope = { environment: deps.environment, mode: deps.mode };
   const failedNow = new Set<string>();
+  let auditSteps = 0;
+  let reportRan = false;
 
   // R-22: an `open` order past its time becomes `expired`, which settles it.
   const expired = await expireOpenOrders(deps.db, {
@@ -197,6 +203,10 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
     ) {
       continue;
     }
+    if (reportRan || (order.state === "reporting" && auditSteps > 0)) {
+      outcomes.push("waiting"); // its turn comes on a later run
+      continue;
+    }
     const stepMs =
       order.state === "reporting" ? REPORT_STEP_MS : OBSERVATION_STEP_MS;
     if (deps.now().getTime() - startedAt + stepMs > budgetMs) {
@@ -227,6 +237,8 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
         outcomes.push("skipped");
         continue;
       }
+      auditSteps += 1;
+      if (current.state === "reporting") reportRan = true;
       const outcome =
         current.state === "running"
           ? await questionStep(deps, current, owner, stepMs)

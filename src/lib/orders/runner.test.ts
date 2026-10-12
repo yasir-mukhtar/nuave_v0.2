@@ -825,7 +825,7 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     // Measured when written: 40 queries (48 statements), live mode.
   });
 
-  it("one run with emails in it: 3 expired, 1 deadline failure with its email, 2 reports each saved and emailed and delivered, and a failure email retry, at most 40 queries", async () => {
+  it("one run with emails in it: 3 expired, 1 deadline failure with its email, 1 report saved, emailed and delivered (one report step per run), and a failure email retry, at most 40 queries", async () => {
     // Synthetic mode (a live report needs real evidence): no ledger rows, so
     // the paid-call ledger statements are measured separately, below.
     const accepting = mailbox();
@@ -874,16 +874,18 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
       result.outcomes.filter((entry) => entry === outcome).length;
     expect(tally("expired")).toBe(3);
     expect(tally("failed_deadline")).toBe(1);
-    expect(tally("report_saved")).toBe(2);
+    expect(tally("report_saved")).toBe(1);
+    expect(tally("waiting")).toBe(1);
     expect(tally("failure_email")).toBe(1);
-    for (const id of reporting) expect(orderRow(id).state).toBe("delivered");
+    expect(
+      reporting.filter((id) => orderRow(id).state === "delivered"),
+    ).toHaveLength(1);
     expect(
       accepting.sent.filter((m) => m.subject.includes("siap")),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(count.queries).toBeLessThanOrEqual(40);
-    // Measured when written: 40 queries (46 statements). A live report adds 2
-    // queries per paid call (reserve and settle), so two live report steps
-    // add 4 to 8: about 44 to 48, still under the Free plan's 50.
+    // The worst live mix (a report step with both paid calls) is measured in
+    // runner-worst-case.test.ts.
   });
 
   it("at most two orders get an audit step in one run, oldest first; the rest wait for the next run", async () => {
