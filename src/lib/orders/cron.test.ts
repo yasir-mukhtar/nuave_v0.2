@@ -162,39 +162,59 @@ describe("runScheduledOrders (R-15)", () => {
     expect(mocks.liveReport).not.toHaveBeenCalled();
   });
 
-  it("never runs an order whose stored mode differs from its own", async () => {
-    await dueOrder(); // a synthetic order
+  function liveSettings(resend = true) {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     vi.stubEnv("NUAVE_PROVIDER", "openai");
     vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
-    // TEMPORARY (S3a): no real sender yet, so live mode does nothing at all.
-    // S3b: this becomes `{ ran: true, outcomes: [] }`.
-    expect(await runScheduledOrders()).toEqual({
-      ran: false,
-      reason: "sender_missing",
-    });
+    vi.stubEnv("RESEND_API_KEY", resend ? "offline-test-resend-key" : "");
+    vi.stubEnv("NUAVE_MAIL_FROM", resend ? "Nuave <laporan@nuave.test>" : "");
+  }
+
+  it("never runs an order whose stored mode differs from its own", async () => {
+    await dueOrder(); // a synthetic order
+    liveSettings();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    expect(await runScheduledOrders()).toEqual({ ran: true, outcomes: [] });
     expect(done()).toBe(0);
     expect(mocks.liveExecute).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled(); // no Resend call either
+    vi.unstubAllGlobals();
   });
 
-  it("live mode with every credential set returns sender_missing before the runner, and touches nothing (S3a, removed by S3b)", async () => {
+  it("live mode without the Resend key or the from address does nothing, and touches no order", async () => {
     const live = await makeOrder(d1.db, { mode: "live", now: new Date() });
     await approve(d1.db, live, { mode: "live", now: new Date() });
     const before = JSON.stringify(d1.query("SELECT * FROM orders ORDER BY id"));
-    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
-    vi.stubEnv("NUAVE_PROVIDER", "openai");
-    vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
-    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+    liveSettings(false);
     expect(await runScheduledOrders()).toEqual({
       ran: false,
       reason: "sender_missing",
     });
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key"); // from address still missing
+    expect((await runScheduledOrders()).ran).toBe(false);
     expect(JSON.stringify(d1.query("SELECT * FROM orders ORDER BY id"))).toBe(
       before,
     );
     expect(mocks.liveExecute).not.toHaveBeenCalled();
     expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
+  it("live mode with every credential and the Resend settings runs the live order (the real sender is wired in)", async () => {
+    const live = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    await approve(d1.db, live, { mode: "live", now: new Date() });
+    liveSettings();
+    // The fake paid provider fails: the point here
+    // is that the cron reaches it, with a Resend key present and no email sent.
+    mocks.liveExecute.mockRejectedValue(new Error("offline provider failure"));
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const result = await runScheduledOrders();
+    expect(result.ran).toBe(true);
+    expect(mocks.liveExecute).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it("delivers a synthetic order through the fake sender with no network", async () => {

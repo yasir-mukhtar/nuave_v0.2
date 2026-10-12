@@ -5,21 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
-  senderAvailable: true,
 }));
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
 }));
-
-// Most tests here make live orders, which S3a refuses until a real sender
-// exists (S3b). They run as if one existed; the refusal has its own tests.
-vi.mock("@/lib/orders/mail", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/lib/orders/mail")>();
-  return Object.defineProperty({ ...original }, "REAL_SENDER_AVAILABLE", {
-    get: () => mocks.senderAvailable,
-    enumerable: true,
-  });
-});
 
 vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/audit/source-excerpt")>()),
@@ -68,7 +57,6 @@ function bind(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  mocks.senderAvailable = true;
   dir = mkdtempSync(join(tmpdir(), "nuave-orders-"));
   d1 = openFileD1(join(dir, "orders.sqlite"));
   limiters = {
@@ -93,6 +81,8 @@ beforeEach(() => {
     "NUAVE_ORDER_EMAIL_ALLOWLIST",
     "Owner@Example.com, other@example.com",
   );
+  vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+  vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
   vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "");
   vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "");
 });
@@ -199,8 +189,18 @@ describe("making an order (R-01, R-02, R-06, AC-01)", () => {
     expect(orders()).toEqual([]);
   });
 
-  it("while no real sender exists (S3a), a live order is refused with the usual answer, even for a listed email", async () => {
-    mocks.senderAvailable = false;
+  it("without a Resend key or from address, a live order is refused with the usual answer, even for a listed email", async () => {
+    for (const name of ["RESEND_API_KEY", "NUAVE_MAIL_FROM"]) {
+      vi.stubEnv(name, "");
+      const response = await create();
+      expect(response.status, name).toBe(503);
+      expect(JSON.stringify(await response.json())).toContain(UNAVAILABLE);
+      expect(orders()).toEqual([]);
+      expect(ledger()).toEqual([]);
+      vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+      vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    }
+    vi.stubEnv("RESEND_API_KEY", "");
     const response = await create();
     expect(response.status).toBe(503);
     expect(JSON.stringify(await response.json())).toContain(UNAVAILABLE);

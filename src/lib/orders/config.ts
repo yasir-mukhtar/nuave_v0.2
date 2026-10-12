@@ -81,6 +81,15 @@ export function siteOrigin(): string | null {
   }
 }
 
+/** The real mail sender's settings: Worker secrets set by the deploy job
+ * (R-25). Null when either is missing, so live mode cannot take or deliver an
+ * order. */
+export function resendSettings(): { apiKey: string; from: string } | null {
+  const apiKey = setting("RESEND_API_KEY", process.env.RESEND_API_KEY)?.trim();
+  const from = setting("NUAVE_MAIL_FROM", process.env.NUAVE_MAIL_FROM)?.trim();
+  return apiKey && from ? { apiKey, from } : null;
+}
+
 const EMAIL_PATTERN =
   /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;
 
@@ -122,4 +131,13 @@ export async function sha256Hex(value: string): Promise<string> {
  * id. */
 export async function orderSafetyIdentifier(orderId: string): Promise<string> {
   return `nuave-order-${(await sha256Hex(orderId)).slice(0, 32)}`;
+}
+
+/** At least 128 random bits (R-24): 24 bytes, URL-safe base64, 32 characters. */
+export function newLinkSecret(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return btoa(String.fromCharCode(...bytes))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
 }

@@ -1,6 +1,6 @@
 /**
- * Order emails (spec 016 R-25, R-28). S3a has the sender interface, the draft
- * wording and the FAKE sender; the real Resend sender is S3b.
+ * Order emails (spec 016 R-25, R-28). The sender interface, the draft wording,
+ * the real Resend sender (live mode) and the fake sender (synthetic mode).
  *
  * Synthetic mode never calls Resend: it uses the fake sender, which accepts
  * every message without a network call. In local development only
@@ -21,14 +21,6 @@ export type MailMessage = {
 export type MailResult = { accepted: boolean; messageId?: string };
 
 export type MailSender = (message: MailMessage) => Promise<MailResult>;
-
-/**
- * TEMPORARY (S3a): there is no real sender until S3b, so no live order could
- * ever be delivered. While this is false, POST /api/orders refuses live orders
- * and the cron returns `sender_missing`. S3b: set this to true (or delete it
- * and both checks) when the Resend sender lands.
- */
-export const REAL_SENDER_AVAILABLE: boolean = false;
 
 const SUPPORT_EMAIL = "support@nuave.ai";
 
@@ -52,6 +44,50 @@ export function failureEmail(input: { businessName: string }) {
   const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.`;
   const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Audit Nuave Anda belum bisa diselesaikan", text, html };
+}
+
+export const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const RESEND_TIMEOUT_MS = 10_000;
+
+/**
+ * The real sender (live mode): Resend's HTTP API through `fetch`, no new
+ * dependency. The idempotency key goes in the `Idempotency-Key` header, so a
+ * retry of ONE attempt with the same body never sends twice (R-25). Resend sets
+ * open and click tracking per domain, not per email, so the domain setting
+ * (founder action Q5) is what turns it off. The key never appears in a thrown
+ * message or a log line.
+ */
+export function resendMailSender(config: {
+  apiKey: string;
+  from: string;
+  fetchImpl?: typeof fetch;
+}): MailSender {
+  return async (message) => {
+    const send = config.fetchImpl ?? fetch;
+    const response = await send(RESEND_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": message.idempotencyKey,
+      },
+      body: JSON.stringify({
+        from: config.from,
+        to: [message.to],
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+      }),
+      signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
+    });
+    if (!response.ok) return { accepted: false };
+    const body = (await response.json().catch(() => null)) as {
+      id?: unknown;
+    } | null;
+    return typeof body?.id === "string" && body.id
+      ? { accepted: true, messageId: body.id }
+      : { accepted: false };
+  };
 }
 
 /** The synthetic-mode sender. Accepts every message; never touches the network. */

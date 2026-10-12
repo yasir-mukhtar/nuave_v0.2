@@ -13,13 +13,13 @@ import {
   emailOnAllowlist,
   orderSpendLimitUsd,
   parseOrderEmail,
+  resendSettings,
 } from "@/lib/orders/config";
 import {
   orderModeIsExplicit,
   orderRuntime,
   orderUnavailableResponse,
 } from "@/lib/orders/http";
-import { REAL_SENDER_AVAILABLE } from "@/lib/orders/mail";
 import { createOrder } from "@/lib/orders/store";
 import { dailySpendLimitUsd } from "@/lib/spending/provider-spend";
 
@@ -84,9 +84,9 @@ export async function POST(request: Request) {
 
   const server = orderRuntime();
   if (!server) return orderUnavailableResponse();
-  // TEMPORARY (S3a, removed by S3b): no real sender yet, so a live order could
-  // never be delivered. Same "not available" answer as a full cap.
-  if (server.mode === "live" && !REAL_SENDER_AVAILABLE) {
+  // A live order that could never be emailed must not be taken (and must not
+  // hold part of the daily cap): same "not available" answer as a full cap.
+  if (server.mode === "live" && !resendSettings()) {
     return orderUnavailableResponse();
   }
   // R-06: live orders only for the founder's list until S4.
