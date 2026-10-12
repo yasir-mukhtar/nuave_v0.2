@@ -139,11 +139,13 @@ Confirm with `npm ci --dry-run` before committing a lockfile change.
 
 Copy `.env.example` to `.env.local`, add `OPENAI_API_KEY` and
 `CHEAPERINFERENCE_API_KEY`, set `NUAVE_NEW_AUDIT_ENABLED=true` and
-`NUAVE_AUDIT_MODE=synthetic` (or `live` for a real paid run), and open
+`NUAVE_AUDIT_MODE=synthetic`, and open
 <http://localhost:3000/audit>. The audit journey is publicly reachable when
 the switch is on — there is no login; during the trial the founder monitors
 provider billing and can set the switch off to stop every audit endpoint
-before provider work. The deployed worker also uses per-IP Cloudflare rate
+before provider work. `NUAVE_AUDIT_MODE=live` needs the `SPEND_DB` D1 binding (daily
+spend cap), which plain `next dev` does not provide, so local live mode refuses
+paid work by design (it fails closed). The deployed worker also uses per-IP Cloudflare rate
 limits (`wrangler.jsonc`) as a burst brake. The protected production
 configuration is
 `NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,

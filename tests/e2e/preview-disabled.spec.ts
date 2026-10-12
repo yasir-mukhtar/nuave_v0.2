@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { assertNoSideEffects, collectRequests, grantAccess } from "./helpers";
+import {
+  assertNoSideEffects,
+  collectRequests,
+  grantAccess,
+} from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await grantAccess(page);

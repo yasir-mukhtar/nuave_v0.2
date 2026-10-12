@@ -1,3 +1,4 @@
+import { APIError } from "openai";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { AuditBudgetError } from "../audit/telemetry";
 import { auditMode } from "../audit/deployment-gate";
@@ -82,5 +83,25 @@ export async function reserveProviderSpend(input: {
     throw new SpendCapError(
       error instanceof SpendLedgerError ? error.code : "unavailable",
     );
+  }
+}
+
+/**
+ * An OpenAI SDK 4xx (400/401/403/404/429...) means the request was rejected
+ * before any model ran, so it cost nothing: release the reservation. 5xx,
+ * timeouts, network errors and aborts have unknown cost and stay held.
+ */
+export async function releaseIfRejectedUnrun(
+  spend: SpendReservation,
+  error: unknown,
+) {
+  if (
+    error instanceof APIError &&
+    typeof error.status === "number" &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    error.status !== 408
+  ) {
+    await spend.settle(0);
   }
 }

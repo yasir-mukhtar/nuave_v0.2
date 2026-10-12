@@ -51,7 +51,10 @@ import {
   reserveAuditCall,
   structuredOutputFailureDetail,
 } from "./telemetry";
-import { reserveProviderSpend } from "../spending/provider-spend";
+import {
+  releaseIfRejectedUnrun,
+  reserveProviderSpend,
+} from "../spending/provider-spend";
 
 const DEFAULT_MODEL = AUDIT_MODEL;
 const REASONING_EFFORTS = [
@@ -433,6 +436,7 @@ export async function extractBusinessDraft(input: ExtractionInput): Promise<{
       await spend.settle(completed.accounted_cost_usd);
       return response;
     } catch (error) {
+      await releaseIfRejectedUnrun(spend, error);
       calls.push(
         failedCallTelemetry({
           stage: "extract",
@@ -605,6 +609,7 @@ export async function executeAuditPrompt(input: {
       telemetry: [completed],
     };
   } catch (error) {
+    await releaseIfRejectedUnrun(spend, error);
     const telemetry = failedCallTelemetry({
       stage: "observation",
       started_at_ms: startedAt,
@@ -796,6 +801,7 @@ export async function generateReportContent(
       telemetry: [telemetry],
     };
   } catch (error) {
+    await releaseIfRejectedUnrun(spend, error);
     const retained =
       telemetry ??
       failedCallTelemetry({

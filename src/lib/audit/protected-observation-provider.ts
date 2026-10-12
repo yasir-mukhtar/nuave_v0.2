@@ -21,7 +21,10 @@ import {
   failedCallTelemetry,
   reserveAuditCall,
 } from "./telemetry";
-import { reserveProviderSpend } from "../spending/provider-spend";
+import {
+  releaseIfRejectedUnrun,
+  reserveProviderSpend,
+} from "../spending/provider-spend";
 import { throwIfAuditAborted, type QuestionExecuteInput } from "./retry";
 import type { AuditObservation, Source } from "./types";
 
@@ -184,6 +187,7 @@ export async function executeAbortableProtectedObservation(
       telemetry: [completed],
     };
   } catch (error) {
+    await releaseIfRejectedUnrun(spend, error);
     throwIfAuditAborted(input.signal);
     const call = failedCallTelemetry({
       stage: "observation",

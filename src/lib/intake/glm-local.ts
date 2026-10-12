@@ -613,43 +613,9 @@ export async function prepareGlmQuestionsForIntake(input: {
             : "ok",
         }));
   const liveAttempt = liveRequested || transport.kind === "cheaper-inference";
-  // Spec 010 R-05: the frozen-attempt/consume/evidence disk gate exists only
-  // for local evidence runs — an explicit evidenceDir or
-  // NUAVE_GLM_EVIDENCE_DIR. With neither set no filesystem call is attempted:
-  // no default .local-evidence directory is even resolved on this path.
-  const evidenceDir =
-    input.evidenceDir ??
-    (process.env.NUAVE_GLM_EVIDENCE_DIR?.trim() || undefined);
-  let requestHash = "";
-  if (liveAttempt && evidenceDir !== undefined) {
-    const gate = await verifyFrozenAttempt(
-      evidenceDir,
-      input.intake,
-      requestBody,
-    );
-    requestHash = gate.requestHash;
-    if (!gate.ok)
-      return {
-        status: "failed",
-        reason: gate.reason,
-        detail: gate.detail,
-        provenance: provenanceFor(transport.kind),
-        providerContact: "none",
-      };
-    // Atomically consumed before the send — a duplicate, concurrent call,
-    // refresh, retry or post-timeout reuse can never send again.
-    if (!(await consumeGlmAttempt(evidenceDir, gate.requestHash)))
-      return {
-        status: "failed",
-        reason: "attempt_consumed",
-        detail:
-          "the authorized live attempt was already consumed — a second send is never made",
-        provenance: provenanceFor(transport.kind),
-        providerContact: "none",
-      };
-  }
   // Daily spend cap (plan S2): a real GLM call reserves a fixed upper-bound
-  // first and is refused, unsent, when the server's daily limit is reached or
+  // first (before the local evidence attempt is consumed, so a refusal never
+  // burns it) and is refused, unsent, when the server's daily limit is reached or
   // the ledger is unavailable. The settled `billed_cost_usd` replaces it.
   let spend: Awaited<ReturnType<typeof reserveProviderSpend>> | null = null;
   if (liveAttempt) {
@@ -670,9 +636,52 @@ export async function prepareGlmQuestionsForIntake(input: {
       };
     }
   }
+  // Spec 010 R-05: the frozen-attempt/consume/evidence disk gate exists only
+  // for local evidence runs — an explicit evidenceDir or
+  // NUAVE_GLM_EVIDENCE_DIR. With neither set no filesystem call is attempted:
+  // no default .local-evidence directory is even resolved on this path.
+  const evidenceDir =
+    input.evidenceDir ??
+    (process.env.NUAVE_GLM_EVIDENCE_DIR?.trim() || undefined);
+  let requestHash = "";
+  if (liveAttempt && evidenceDir !== undefined) {
+    const gate = await verifyFrozenAttempt(
+      evidenceDir,
+      input.intake,
+      requestBody,
+    );
+    requestHash = gate.requestHash;
+    if (!gate.ok) {
+      await spend?.settle(0); // nothing was sent
+      return {
+        status: "failed",
+        reason: gate.reason,
+        detail: gate.detail,
+        provenance: provenanceFor(transport.kind),
+        providerContact: "none",
+      };
+    }
+    // Atomically consumed before the send — a duplicate, concurrent call,
+    // refresh, retry or post-timeout reuse can never send again.
+    if (!(await consumeGlmAttempt(evidenceDir, gate.requestHash))) {
+      await spend?.settle(0); // nothing was sent
+      return {
+        status: "failed",
+        reason: "attempt_consumed",
+        detail:
+          "the authorized live attempt was already consumed — a second send is never made",
+        provenance: provenanceFor(transport.kind),
+        providerContact: "none",
+      };
+    }
+  }
   const envelope = await transport.call(requestBody);
   const settledUsd = cheaperInferenceBilledCostUsd(envelope.body);
+  // A clear HTTP 4xx was rejected before the model ran, so it cost nothing;
+  // anything else without a billed cost (5xx, timeout, no response) stays held.
+  const rejectedUnrun = envelope.httpStatus >= 400 && envelope.httpStatus < 500;
   if (spend && settledUsd !== null) await spend.settle(settledUsd);
+  else if (spend && rejectedUnrun) await spend.settle(0);
   // Normalize once, before optional evidence writes and all early returns.
   // Diagnostics are outcome/owner-only sidecar metadata, never pack contents.
   const assessment = assessCheaperInferenceIndonesianResponse({
