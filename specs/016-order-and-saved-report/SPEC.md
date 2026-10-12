@@ -1,12 +1,13 @@
 # Spec 016: Order, saved report and private link (S3)
 
-> Status: **In review — founder answered Q1–Q6 on 2026-10-12; waiting for the founder's explicit approval. Do not implement.**
+> Status: **In review — revision 5; waiting for re-review and the founder's explicit approval. Do not implement.**
 > Owner: orchestrator
-> Updated: 2026-10-12 (revision 4: founder answers to Q1–Q6)
+> Updated: 2026-10-12 (revision 5: plan review FAIL fixed; founder answers D1–D4)
 > Implements: S3 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md),
 > plus the per-order cost limit that the plan lists under S4
 > Decision basis: [S0 decision, 2026-10-05](../../docs/DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
-> (D1–D8 and the ten flows); S2 spending cap (PR #127)
+> (D1–D8 and the ten flows); S2 spending cap (PR #127); founder answers in
+> "Founder decisions" below
 > Number: 015 is taken by the held, unadopted paid-report draft on
 > `docs/stage2-paid-report-spec`. This spec does not use or adopt it.
 
@@ -18,62 +19,84 @@ Read in order:
 2. `docs/PAYING_CUSTOMER_PLAN.md`: §2, §4.2, §5 S3 and S4
 3. `docs/DECISION_LOG.md`: the 2026-10-05 S0 entry
 4. This spec
-5. Code: `src/app/api/audit/run/route.ts`, `src/app/api/audit/report/route.ts`,
-   `src/lib/spending/` (including `sqlite-d1.test-helper.ts`),
-   `src/lib/audit/protected-observation-provider.ts`, `src/app/audit/`
-   (journey and `ReportView.tsx`), `wrangler.jsonc`
-6. `.agents/skills/verify-nuave/` and `tests/e2e/journey.ts`
+5. Code: `src/lib/spending/` (ledger, provider spend, sqlite test helper),
+   `src/app/api/audit/*/route.ts`, `src/lib/audit/openai.ts`,
+   `src/lib/audit/protected-observation-provider.ts`,
+   `src/lib/audit/telemetry.ts`, `src/lib/audit/retry.ts`,
+   `src/lib/audit/report-recovery.ts`, `src/lib/audit/deployment-gate.ts`,
+   `src/lib/intake/SmartIntakeJourney.tsx`, `src/lib/intake/smart-session.ts`,
+   `src/lib/intake/glm-local.ts`, `src/app/audit/`, `wrangler.jsonc`,
+   `open-next.config.ts`, `next.config.ts`, `.github/workflows/`
+6. `.agents/skills/verify-nuave/`, `tests/e2e/journey.ts`,
+   `scripts/verify-offline.mjs`
 
 Do not load: `archive/`, Spec 015, old checkpoints.
 
 ## Problem
 
-**Evidence.** Today `/audit` has no order and asks for no email. The audit
-runs inside the open browser tab: the run route passes the tab's stop signal
-into the audit (`src/app/api/audit/run/route.ts`), so closing the tab stops
-the audit. The browser holds the answers and sends them back to the server
-to write the report. Nothing is saved on the server. S2 limits total AI cost
-per UTC day, but one audit has no cost limit of its own.
+**Evidence.** Today `/audit` has no order and asks for no email. The free
+identity lookup runs first; then a paid AI reading of the website
+(`/api/audit/extract`, up to about USD 0.41 reserved per attempt) runs before
+the "is this your business?" screen (`SmartIntakeJourney.tsx`). The audit runs
+inside the open tab: the run route passes the tab's stop signal into the
+audit, so closing the tab stops it. The browser holds the answers and sends
+them back to write the report. Nothing is saved on the server. S2 limits total
+AI cost per UTC day, but one audit has no cost limit of its own.
 
 **Interpretation.** A customer who pays (S4) must not lose the audit or the
-report when they close the tab, and must be able to open the report later on
-any device. Nuave must also know the most one order may reserve, so the
-daily cap says how many orders fit in one day.
+report when they close the tab, must be able to open the report later on any
+device, and must not cause AI cost before they give an email (and, in S4,
+pay). Nuave must also know the most one order can hold, so the daily cap says
+how many orders fit in one day.
 
 ## Desired outcome
 
-The customer gives an email before the intake. Nuave saves an order. After
-the customer approves the ten questions, the audit runs on the server. The
-customer can close the tab. When the report is ready, Nuave saves it and
-emails a private link. The link opens the same report on any device until it
-expires or is switched off. An order never reserves more than its own limit.
+The customer enters a website and confirms the business from a free lookup.
+They give an email; Nuave saves an order. Only then does Nuave read the website
+with AI. After the customer approves the ten questions, the audit runs on the
+server. The customer can close the tab. When the report is ready, Nuave saves
+it and emails a private link. The link opens the same report on any device
+until it expires or is switched off. An order never holds more than its own
+limit.
+
+## User and situation
+
+The owner or marketing lead of a small Indonesian business, on a phone or a
+laptop. Before S4, only the founder (and emails on the founder's list, Q6)
+can run a live order. They may close the tab during the audit and expect the
+report by email.
 
 ## Scope
 
-- The order screen (no payment button) after "is this your business?".
+- New screen order: free brand confirm, then the order screen, then the paid
+  website reading (D1).
 - The saved order, with its email, in D1.
-- The audit and report run on the server and continue after the tab closes.
-- Each finished question is saved, so no question is paid for twice.
+- The audit and report run on the server (cron runner) and continue after the
+  tab closes.
+- Each finished step is saved, so no finished step is paid for twice.
 - The saved report page, opened by a private link, with today's PDF (browser
   print) and JSON downloads.
-- The report-ready email and the failure email, through Resend.
+- The report-ready and failure emails, through Resend.
 - The neutral "not available" page.
-- Founder support script: resend the link, replace it, switch it off.
+- Founder support script: resend, replace, switch off, show.
 - The per-order cost limit.
-- A founder-only gate on live orders until S4/S5 (Q6).
-- Intake progress kept in the customer's browser, so closing the tab does
-  not lose it on the same browser (Q4).
+- The founder-only email list for live orders until S4 (Q6).
+- Intake progress kept in the customer's browser (Q4).
+- A separate preview database, and database change files (migrations).
 
 ## Non-scope
 
 - Payment, price, Midtrans, the founder test pass (S4).
-- Cap alert emails to the founder at 80/90/100% (S4).
+- Cap alert emails to the founder (S4).
 - Final customer wording, terms and privacy (S5). S3 uses the draft wording
-  below; the founder checks it at review.
-- Intake progress on another device, or a "continue" link by email (Q4).
+  below.
+- Intake progress on another device, or a "continue" email link (Q4).
 - Accounts, passwords, a dashboard, report history, self-service link
   recovery, a stored PDF file.
 - Changing the recipient email (D5): by hand, outside S3.
+- Handling email bounces: the founder checks the Resend dashboard.
+- Answers-only recovery for order-bound audits: a failed order is handled by
+  the founder by hand (D3); the support script can show the saved answers.
 - Deleting any record. S3 stores expiry dates and blocks access after them.
 - Any change to the audit method, the questions or the report content.
 
@@ -81,18 +104,21 @@ expires or is switched off. An order never reserves more than its own limit.
 
 | # | Screen | What the customer sees |
 |---|---|---|
-| 1–3 | Entry, reading, brand confirm | Unchanged |
+| 1 | Entry | Unchanged |
+| 2 | Reading (free) | Short wait while the free lookup runs. No AI. |
+| 3 | Brand confirm | "Ini brand yang ingin Anda audit?" with the business name and website from the free lookup only. |
 | 3a | **Order summary (new)** | Business name and website, what the report includes, an email field (required), `Lanjut`. No price, no payment. |
+| 3b | **Preparing (new place)** | Today's step-by-step "Nuave sedang membaca" while the paid reading runs under the order. |
 | 4–14 | Intake and question review | Unchanged |
-| 15 | Audit running | Progress by question, as today. New line: "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda." |
-| 15a | Audit done (open tab) | "Laporan Anda sudah siap dan kami kirim ke email Anda." The tab does not show the report itself (R-16). |
+| 15 | Audit running | Progress by question. New line: "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda." |
+| 15a | Audit done (open tab) | "Laporan Anda sudah siap dan kami kirim ke email Anda." The tab does not show the report itself. |
 | 16 | Report | Opens from the email link. Same report, PDF and JSON buttons as today. |
 | — | Not available | "Laporan ini tidak tersedia." No business name, no reason. |
 | — | Audit failed | "Audit belum bisa diselesaikan. Kami sudah mencatatnya dan akan menghubungi Anda lewat email." |
 
-If the daily cap cannot cover one more order, or the email is not allowed
-by the gate (Q6), screen 3a shows today's "Audit tidak tersedia saat ini."
-and no order is created.
+If the daily cap cannot hold one more order, or the email is not on the list
+(Q6), screen 3a shows today's "Audit tidak tersedia saat ini." and no order
+is made.
 
 **Draft email wording (S5 finalizes):**
 
@@ -104,265 +130,350 @@ and no order is created.
 
 ## Requirements
 
-**Order**
+### Order
 
-- **R-01:** Screen 3a follows the brand confirm. It requires one valid email.
-  `Lanjut` creates one order on the server. The intake starts only after
-  that succeeds.
-- **R-02:** An order has a random server-made ID. The server records the
-  email, business name, website, created time, status and the times below.
-  The browser never sets the status, a cost, or a time.
+- **R-01:** Screen 3 uses only the free identity lookup. Screen 3a requires one
+  valid email. `Lanjut` makes one order. The paid reading (screen 3b) starts
+  only after that succeeds.
+- **R-02:** The order ID has at least 128 random bits, is made by the server,
+  and never appears in a URL. The server records the email, business name,
+  website, mode (`live` or `synthetic`), environment (`production` or
+  `preview`), state and times. The browser never sets the state, a cost, a
+  mode or a time.
 - **R-03:** Order states and the paid calls allowed in each:
-  `open` (preparation, question writing) → `running` (questions) →
-  `reporting` (report) → `delivered` | `failed` | `expired`. The server
-  refuses a paid call with no order, an unknown order, or the wrong state.
-- **R-04:** For order-bound runs the server ignores any observations,
-  resume data, costs or `safety_identifier` sent by the browser. It uses only
-  saved results. The `safety_identifier` comes from the order ID, never the
-  email.
-- **R-05:** Order creation has a per-IP rate limit and at most 2 `open`
-  orders per IP at a time.
-- **R-06 (gate, Q6):** In live mode, an order is created only if the email is
-  on a server-side allowlist (`NUAVE_ORDER_EMAIL_ALLOWLIST`, a Cloudflare
-  secret, never in `wrangler.jsonc` or Git; matched without case after
-  trimming spaces). An empty or missing list allows no live order. Synthetic mode has no gate.
 
-**Per-order cost limit (S2 ledger, same D1 database)**
+  | State | Allowed paid calls | Next state |
+  |---|---|---|
+  | `open` | website reading, question writing | `running` (questions approved), `expired` |
+  | `running` | questions (cron only) | `reporting`, `failed` |
+  | `reporting` | report (cron only) | `delivered`, `failed` |
+  | `delivered`, `failed`, `expired` | none | — |
+
+  The server refuses a paid call with no order, an unknown order, or the
+  wrong state.
+- **R-04:** For order-bound work the server ignores any observations, resume
+  data, costs or `safety_identifier` from the browser. The `safety_identifier`
+  comes from the order ID, never the email. The old browser-driven
+  `/api/audit/run` and `/api/audit/report` refuse every request; question
+  approval plus the cron replace them.
+- **R-05:** Order creation has a per-IP rate limit (Cloudflare rate limiter,
+  like the other routes). No IP address is stored.
+- **R-06 (Q6):** In live mode, an order is made only if the email is on
+  `NUAVE_ORDER_EMAIL_ALLOWLIST`: a Cloudflare secret, never in
+  `wrangler.jsonc` or Git, matched without case after trimming spaces. An
+  empty or missing list allows no live order. Synthetic mode has no list but
+  never sends a real email (R-28).
+
+### Per-order cost limit (S2 ledger)
 
 - **R-07:** The order limit is set on the server only
-  (`NUAVE_ORDER_SPEND_LIMIT_USD`, default USD 1.00, Q1). A value that is not
+  (`NUAVE_ORDER_SPEND_LIMIT_USD`, default **USD 2.00**, D2). A value that is not
   a number, is negative, or is above the daily cap fails closed.
-- **R-08:** Creating an order inserts one order row in the ledger, dated the
-  UTC creation day, holding the full order limit. It is one conditional insert
-  that checks today's total, like S2. If the daily cap cannot cover it, no
-  order is created and the ledger is unchanged.
-- **R-09:** Each paid call for an order inserts a call row that carries the
-  order ID. It is one conditional insert that checks the order's total
-  (settled plus held call rows) against the order limit. Call rows with an
-  order ID are left out of the daily sum, so nothing counts twice, and the
-  calls are not refused by a later day's cap. A call that would pass the order
-  limit is not sent. Settling and unknown costs follow S2.
-- **R-10:** When the order ends (`delivered`, `failed` or `expired`), its
-  order row is settled to the sum of its call rows (settled plus still-held
-  unknown costs). The rest returns to the daily cap of the creation day.
-- **R-11:** A call may cost more than its reserved maximum (S2 settles the
-  actual cost). Any order whose total passes its limit is recorded and shown
-  in the founder's support script output.
-- **R-12:** The worker computes the largest possible reservation of one full
-  order from the S2 per-call maximums, with all retries, and puts the number
-  in the PR. If the default limit does not cover it, the worker stops and asks.
+- **R-08 (hold):** Making an order writes the order record and one ledger row
+  of kind `order_hold`, which carries the order ID, is dated the UTC creation
+  day, and holds the limit. Both writes are one D1 batch. The hold insert is
+  one conditional statement that checks the day's total, like S2. If the cap
+  cannot hold it, nothing is written.
+- **R-09 (calls):** Each paid call for an order writes a ledger row of kind
+  `order_call` with the order ID. It is one conditional insert that succeeds
+  only if: the order's hold is not settled; the order is in a state that
+  allows the call; and the order's call total (settled plus held) plus this
+  reservation is not more than the amount in the order's own hold row (not the
+  current setting). The daily sum counts `order_hold` and other rows, and
+  leaves out `order_call` rows, so nothing counts twice and no later day's cap
+  stops the order. A call that would pass the hold is not sent.
+- **R-10 (settle):** When the order becomes `delivered`, `failed` or
+  `expired`, one D1 batch changes the state and settles the hold row to the
+  sum of its call rows (settled plus held unknown costs). The rest returns to
+  the creation day's cap.
+- **R-11:** A call may cost more than its reservation (S2 settles the actual
+  cost). An order whose total passes its hold is flagged and shown by the
+  support script.
+- **R-12:** The worker reports in the PR the peak hold of one order: the actual
+  cost of a normal order (about USD 0.20) plus the largest single reservation
+  (about USD 0.41). At USD 2.00 an order survives about three calls with
+  unknown cost; the next is refused and the order fails (founder accepted, D2).
+- **R-13 (database changes):** Table changes are SQL files in `migrations/`
+  (`wrangler d1 migrations`). They add to the existing `provider_spend` table
+  and never drop data. The deploy job applies them before it deploys; the
+  preview job applies them to the preview database. `SpendDb` and the sqlite
+  test helper gain `batch` and `first`.
 
-**Server-side audit**
+### Environments
 
-- **R-13 (runner):** A Cloudflare cron trigger on the `nuave-v2` worker runs
-  every minute. Each run takes the orders that have work to do, one at a time,
-  and does the next steps. No other runner is used. The first S3a commit
-  proves on the PR preview that the OpenNext worker can export the cron
-  handler and that the run fits the current plan's limits. The PR records how
-  many questions one cron run completes and how long it takes. If it cannot, or
-  needs a paid plan, the worker stops and asks the founder.
-- **R-14:** Approving the questions moves the order to `running` and records
-  the start time once (the D2 clock) and the deadline (start + 24 hours).
-  Neither changes later.
-- **R-15 (one runner at a time):** A runner first claims the order with a
-  lease that expires (one conditional update). It claims each question the
-  same way before it calls the provider. A question claim lasts longer than
-  the longest possible provider call. A second runner cannot work on a
-  leased order. Each finished question is saved before the next starts. A
-  resumed run does only questions with no saved result. A question whose call
-  was cut off mid-flight has an unknown result: it counts as one attempt under
-  today's retry rule, and its cost stays held (S2).
-- **R-16:** The tab shows progress by asking for the order status. The status
-  answer has the state and question progress only. It never has the report,
-  the email, or the link secret.
-- **R-17:** Technical failures use today's retry rule per question. After
-  ten saved results, the server writes and saves the report. The saved report
-  never changes. A failed report step retries the report only.
-- **R-18:** An order that expires unstarted: an `open` order 2 hours after
-  creation (Q2) becomes `expired` on the next cron run, which settles its
-  order row (R-10).
-- **R-19:** At the deadline, an order not yet `delivered` with no saved report, no active link,
-  or no accepted ready email is marked `failed` once, and the failure email
-  is sent (D3). An order that cannot finish earlier (all retries used, order
-  limit reached) is marked `failed` at that time. Retries stop at the
-  deadline or the order limit.
+- **R-14:** PR previews use their own D1 database (`nuave-v2-preview`, founder
+  creates it, Q5) through a `preview` environment in `wrangler.jsonc`.
+  Previews have no cron. Production is the only worker with a cron. Every
+  runner and route touches only orders whose environment matches its own.
 
-**Private link and email**
+### Server-side audit (cron runner)
 
-- **R-20:** When the report is saved, the server makes a link secret with at
-  least 128 random bits. Only its hash is stored. The link is
-  `https://v2.nuave.ai/r#<secret>`: the secret is after `#`, so it is not in
-  server or Cloudflare request logs. The page sends it to the server in a
-  POST body to get the report. The secret works until 12 months after
-  completion (D1) or until it is switched off.
-- **R-21:** The server sends the two emails through Resend, with click and
-  open tracking off. Each send is recorded with its result. A failed send is
-  retried until the deadline; it never reruns the audit or rewrites the
-  report (D3).
-- **R-22:** A valid secret opens the saved report on any device with no
-  login and no provider call. The page and its data are `noindex`,
-  `no-store`, and send no referrer.
-- **R-23:** A wrong, expired or switched-off secret gets the same response
-  (same status code, headers and page) and starts no provider call. The
-  report-data route has a per-IP rate limit.
+- **R-15 (runner):** A Cloudflare cron trigger on the production worker runs
+  every minute. The handler reads its settings and bindings from the cron's own
+  environment, not from a request. If the mode, the database, a key, or the
+  emergency switch (`NUAVE_NEW_AUDIT_ENABLED`) is missing, off or unclear, it
+  does nothing. It never runs an order whose stored mode differs from its own.
+- **R-16 (Free plan, D3):** The account is on Workers Free. Each cron run does
+  at most one paid call per order and stops starting new work after a time
+  budget, with a margin, set from measured live call times. The worker checks
+  the current Free limits (CPU, outbound requests, D1 queries, cron triggers)
+  in Cloudflare's docs and writes them in the PR. If one audit step cannot fit,
+  the worker stops and asks the founder (a paid plan needs founder approval).
+- **R-17:** Approving the questions moves the order to `running` in one batch
+  that saves, unchanged from then on: the confirmed business details, the ten
+  approved questions and their original wording, the mode, the start time
+  (the D2 clock) and the deadline (start + 24 hours).
+- **R-18 (one runner at a time):** A runner claims the order with an owner
+  token and a lease that expires (one conditional update). It renews the lease
+  before each question claim and each paid call, and stops if renewal fails.
+  It claims each question the same way. Every provider call has an explicit
+  timeout; the claim lasts longer than that timeout. Each finished question is
+  saved before the next starts. A resumed run does only questions with no
+  saved result.
+- **R-19 (retry counts):** Attempts per question and report calls per order are
+  stored in D1 and checked from there, not from a per-request budget. Today's
+  limits apply: 3 attempts per question; the report follows
+  `classifyReportRecovery` (`src/lib/audit/report-recovery.ts`). A call cut off
+  mid-flight counts as one attempt, and its cost stays held (S2).
+- **R-20:** After ten saved results, the order moves to `reporting`; the
+  runner writes and saves the report. The saved report never changes.
+- **R-21:** The tab shows progress by asking for the order status. The answer
+  has the state and question progress only: never the report, the email or the
+  link secret.
+- **R-22 (expiry):** An `open` order 2 hours after creation becomes `expired`
+  on the next cron run, which settles it (R-10).
+- **R-23 (end states):** `reporting` → `delivered` when the report is saved,
+  the link is active, and Resend has accepted the ready email (S0 D2). An order
+  that cannot finish (attempts used, report recovery says final, hold reached)
+  becomes `failed` then. At the deadline, an order not yet `delivered` becomes
+  `failed`. Becoming `failed` happens once and sends the failure email.
+  "Completion" (the start of the 12-month clock) is the moment the report is
+  saved.
 
-**Intake progress (Q4: option A)**
+### Private link and email
 
-- **R-25:** The intake progress (answers, prepared summary, questions) and the
-  order ID are kept in the browser's local storage, not only in the tab. If
-  the customer closes the tab and opens `/audit` again in the same browser,
-  the journey continues at the same screen. No paid call is repeated.
-- **R-26:** If the saved order has expired (R-18), the customer sees screen 3a
-  again with the email filled in. `Lanjut` makes a new order (same gate and
-  cap check) and the saved progress continues on it, with no new paid call.
-- **R-27:** The saved progress is removed from the browser when the audit
-  starts, and after 7 days. The email is not kept in local storage after the
-  order is made; only the order ID is.
+- **R-24:** Each send of the ready email makes a new link secret with at least
+  128 random bits and replaces the stored hash in the same write, so only the
+  newest link works (D4). Only the hash is stored. The link is
+  `https://v2.nuave.ai/r#<secret>`, built from a fixed site address, never the
+  request's host. The secret is after `#`, so it is not in request logs. The
+  page sends it in a POST body to get the report. It works until 12 months
+  after completion or until switched off.
+- **R-25:** Emails go through Resend with an idempotency key per send, so a
+  retry never sends twice. The business name is escaped in the email. Each send
+  is recorded with its result. The ready email is retried until the deadline;
+  the failure email is retried for 24 hours after the failure. Retrying an
+  email never reruns the audit or rewrites the report (D3).
+- **R-26:** A valid secret opens the saved report on any device with no login
+  and no provider call. The page and its data are `noindex`, `no-store`, and
+  send no referrer.
+- **R-27:** A wrong, expired or switched-off secret gets the same response
+  (status code, headers and page) and starts no provider call. The report-data
+  route has a per-IP rate limit.
+- **R-28:** Synthetic mode never calls Resend. It uses a fake sender. In local
+  development only, the fake sender writes the email to an ignored folder
+  (`.local-evidence/test-mail/`), so tests can read the link. It never serves
+  it over HTTP.
 
-**Support (founder only)**
+### Intake progress (Q4: option A)
 
-- **R-24:** A founder-run script (`npm run support -- <command> <order>`)
-  uses `wrangler` against the D1 database and the founder's local Resend key.
-  No public admin endpoint. Commands: `resend` (same report and secret, new
-  send record), `replace` (new secret to the same email; the old secret stops
-  in the same database write, D8), `off` (switch the secret off), `show`
-  (state, times, costs, overruns; never the email unless asked). The founder
-  first confirms through the order email (D7); the script does not do that
-  check. It never sends to any other email. `off` never changes the order
-  state.
+- **R-29:** The intake progress (answers, prepared summary, questions) and the
+  order ID are kept in the browser's local storage. If the customer closes the
+  tab and opens `/audit` again in the same browser, the journey continues at
+  the same screen. No completed paid step is repeated.
+- **R-30:** If the saved order has expired, the customer sees screen 3a again
+  and types the email again. `Lanjut` makes a new order (same list and cap
+  check), and the saved progress continues on it with no new paid call.
+- **R-31:** The saved progress is removed from the browser when the audit
+  starts, and after 7 days. The email is never kept in local storage.
+
+### Support (founder only)
+
+- **R-32:** A founder-run script (`npm run support -- <command> <order-id>`)
+  uses `wrangler` against D1 and the founder's Resend key from a git-ignored
+  file. No public admin endpoint. It checks the order ID format strictly
+  before use, keeps the email out of SQL text, and never prints a secret.
+  Commands:
+  - `resend`: new secret, old one stops, email to the same address (D4, D8);
+  - `off`: switch the link off (the order state does not change);
+  - `show`: state, times, costs, overruns, saved answers; the email only with a
+    flag.
+
+  The founder first confirms through the order email (D7). The script never
+  sends to another email. Its database and sender can be replaced in tests.
+
+### Tests and local development
+
+- **R-33:** Local development and the offline tests use a local D1 database
+  (`initOpenNextCloudflareForDev()` with the migrations applied). The runner is
+  started in tests by a trigger that exists only when `NODE_ENV` is
+  `development` and the mode is synthetic; production builds do not contain
+  it. The R-15 cron proof uses `wrangler dev --test-scheduled` on the built
+  worker and shows the cron sees the same settings and database as a request.
 
 ## Failure and recovery
 
 | Failure | Saved | Customer sees | Retried |
 |---|---|---|---|
-| Daily cap full, or email not allowed | Nothing | "Audit tidak tersedia saat ini." | Customer tries later |
-| Tab closed or worker restart during the audit | Finished questions | Email when ready | Remaining questions only |
-| One question fails all retries | Finished questions | Failure screen and email | No; founder handles by hand (D3) |
-| Order limit reached | Finished questions | Failure screen and email | No |
-| Report step fails | All ten results | Waiting, then email | Report step only, until the deadline |
-| Email fails | Report and link | Nothing new | Email only, until the deadline |
+| Daily cap full, or email not on the list | Nothing | "Audit tidak tersedia saat ini." | Customer tries later |
+| Tab closed or worker restart | Finished steps | Email when ready | Unfinished steps only, within R-19 |
+| A question uses all attempts | Finished questions | Failure screen and email | No; founder by hand (D3) |
+| Order hold reached | Finished steps | Failure screen and email | No |
+| Report step fails | All ten results | Waiting, then email or failure | Per `classifyReportRecovery` |
+| Email fails | Report | Nothing new | Email only, until the deadline |
 | Bad, expired or switched-off link | — | "Laporan ini tidak tersedia." | — |
+| Emergency switch off | Everything | Waiting | Nothing runs until it is on again |
 
-Never invent a result, a report or a delivery. A failed question is never
-shown as an answer.
+Never invent a result, a report or a delivery. A failed question is never shown
+as an answer.
 
 ## Evidence, data, privacy, and cost
 
 - **Storage:** orders, saved results, reports and send records go in the
-  existing D1 database (`nuave-v2-spend`, binding `SPEND_DB`). They must sit
-  in the same database as the ledger, so one statement can check an order's
-  limit (R-09). The database name stays.
+  existing D1 database (`nuave-v2-spend`), in the same database as the ledger,
+  so one statement can check an order's hold (R-09). Previews use
+  `nuave-v2-preview`.
 - The email goes only to D1 and Resend. Never to an AI prompt, analytics, logs
   or Git. The link secret never goes to logs, analytics or Git.
-- Keys: a new Resend key in Cloudflare/GitHub secrets, and a copy the founder
-  holds locally for the support script (founder action, Q5).
-- **Record lifetimes:** see Q3. S3 stores each expiry date and blocks access
-  after it. No deletion is built or authorized.
-- **Infrastructure cost:** the cron trigger and D1 must work on the current
-  Cloudflare plan (R-13).
-- **No live AI calls** during the build or review. One live run for AC-15
-  needs a separate named founder approval, with its budget.
+- Record lifetimes: see Q3. No deletion is built or authorized.
+- **Infrastructure:** Workers Free, D1 and one cron trigger (R-16). No paid plan
+  without founder approval.
+- **No live AI calls** during the build or review. AC-21 needs a separate named
+  founder approval, with its budget.
 
 ## Acceptance criteria
 
-The cost criteria (AC-03 to AC-07) run against the real ledger code on the
-sqlite D1 test helper, with a fake paid provider. The rest run in synthetic
-mode.
+The cost criteria (AC-04 to AC-09) run against the real ledger code on the
+sqlite D1 test helper with a fake paid provider. The others run in synthetic
+mode on local D1 unless named.
 
-- **AC-01:** Given the brand confirm, when the customer enters an allowed
-  email and taps `Lanjut`, then one `open` order exists and the intake starts.
-  A missing, bad or not-allowed email creates no order.
-- **AC-02:** Given a paid route called with no order, an unknown order, or an
-  order in a state that does not allow it (R-03), then it is refused and no
-  provider call starts. Browser-sent observations or costs are ignored.
-- **AC-03:** Given a daily cap with less room than one order limit, when an
-  order is created, then it is refused and the ledger is unchanged.
-- **AC-04:** Given an order near its limit, when the next call would pass it,
-  then the call is not sent and the order ends `failed`.
-- **AC-05:** Given a running order, when other spend fills the daily cap, or
-  the UTC day changes mid-run, then this order still finishes within its own
-  limit and the new day's total is unchanged by it.
-- **AC-06:** Given a `delivered`, `failed` or `expired` order, then its order
-  row equals the sum of its call rows and the rest is back in the daily cap.
-- **AC-07:** Given an `open` order and a test clock 2 hours later, when the
-  cron run happens, then it is `expired` and its reservation is returned.
-- **AC-08:** Given an audit with some finished questions, when the tab closes,
-  or the run stops and restarts, or two runners start on the same order, then
-  the audit completes, no saved question is called again, and two runners
-  never call the same question at once (counted on the fake provider). A
-  question cut off mid-call is retried only within today's retry rule.
-- **AC-09:** Given a completed audit, then one ready email (fake sender) holds
-  a link that opens the same report in a fresh browser with no cookies, makes
-  no provider call, and the PDF and JSON buttons work. The status answer never
-  has the report, email or secret.
-- **AC-10:** Given a random, expired or switched-off secret, then the
-  response is identical (status, headers, body), with no business data and no
-  provider call.
-- **AC-11:** Support script: `replace` makes the old secret fail and the new
-  one work, with the email to the same address; `resend` adds a send record
-  for the same report; `off` gives the neutral page; a command for an unknown
-  order sends nothing.
-- **AC-12:** Given a failed send, then the email is retried and the audit and
-  report are not run again. At the deadline with no accepted ready email, the
-  order is `failed` once and the failure email is sent.
-- **AC-13:** The email and the link secret do not appear in any provider
-  request, log line, or analytics event (tests check request bodies and
-  logs).
-- **AC-17:** Given an intake at screen 8, when the tab closes and `/audit`
-  opens again in the same browser, then the journey is at screen 8 with the
-  same answers, and no paid call was repeated. With an expired order, a new
-  order is made and the answers stay.
-- **AC-14:** `verify-nuave` drives URL → order → intake → questions → close
-  tab → report by link, in synthetic mode, with evidence in the PR.
-- **AC-15 (live, needs named approval):** one founder-approved live run on the
-  PR preview reaches the report by email link; its recorded total is shown and
-  is within the order limit.
-- **AC-16:** `npm run verify` passes. R-12's number and R-13's proof are in
-  the PR.
+**Order and screens**
+
+- **AC-01:** Given a website, the screens before 3a make no paid call (the fake
+  provider counts zero). With an email on the list, `Lanjut` makes one `open`
+  order, then the paid reading runs. A missing, bad or not-listed email makes
+  no order; an empty or missing list makes no live order.
+- **AC-02:** A paid route called with no order, an unknown order, or a state
+  that does not allow it (R-03) is refused with no provider call. Browser-sent
+  observations or costs are ignored. `/api/audit/run` and `/api/audit/report`
+  refuse every request.
+- **AC-03:** Order creation past the per-IP rate limit is refused. No IP is
+  stored in D1.
+
+**Money**
+
+- **AC-04:** An invalid, negative, or above-cap order limit makes order
+  creation fail closed.
+- **AC-05:** With less room in the daily cap than one order limit, order
+  creation is refused and the database is unchanged.
+- **AC-06:** When the next call would pass the order's hold, it is not sent
+  and the order ends `failed`. A higher limit set after the order was made does
+  not change that order's hold.
+- **AC-07:** A running order still finishes within its hold when other spend
+  fills the daily cap, and when the UTC day changes mid-run; the new day's
+  total is unchanged by it.
+- **AC-08:** After `delivered`, `failed` or `expired`, the hold equals the sum
+  of its call rows, and the rest is back in the cap. A call insert after the
+  hold is settled is refused. A crash between the two writes of R-08 or R-10
+  leaves neither.
+- **AC-09:** An order whose actual cost passes its hold is flagged and shown by
+  `show`.
+
+**Runner**
+
+- **AC-10:** With some finished questions, when the tab closes, or the run
+  stops and restarts, or two runners start on one order: the audit completes,
+  no saved question is called again, two runners never call the same question
+  at once, and a question cut off mid-call uses at most its 3 attempts.
+- **AC-11:** With the mode, database or key missing, or the emergency switch
+  off, the cron does nothing. A runner never runs an order whose mode or
+  environment differs from its own.
+- **AC-12:** With a test clock, an `open` order is `expired` 2 hours after
+  creation, and a `running` order with no accepted ready email is `failed` at
+  its deadline, with one failure email. The start time and deadline never
+  change after approval.
+- **AC-13:** A report that `classifyReportRecovery` marks final makes the order
+  `failed` with no more report calls.
+
+**Link and email**
+
+- **AC-14:** A completed audit gives one ready email (fake sender). Its link
+  opens the same report in a fresh browser with no cookies and no provider
+  call; PDF and JSON work; the response has `noindex`, `no-store` and
+  no-referrer headers. The status answer never has the report, email or
+  secret. The order becomes `delivered` only after the send is accepted.
+- **AC-15:** A random, expired or switched-off secret gets an identical
+  response (status, headers, body), with no business data and no provider
+  call. The report-data route has a rate limit.
+- **AC-16:** A failed send is retried with the same idempotency key, adds a
+  send record, and does not rerun the audit or report. Synthetic mode never
+  calls Resend.
+- **AC-17:** Support script: `resend` makes the old link fail and the new one
+  work, to the same address; `off` gives the neutral page and keeps the state;
+  `show` hides the email unless asked; an unknown or badly formed order ID
+  sends nothing.
+- **AC-18:** The email and the link secret do not appear in any provider
+  request, log line or analytics event (tests check request bodies and logs).
+
+**Browser progress and the whole path**
+
+- **AC-19:** At intake screen 8, when the tab closes and `/audit` opens again in
+  the same browser, the journey is at screen 8 with the same answers and no
+  completed paid step repeated. With an expired order, the customer types the
+  email again, a new order is made, and the answers stay. Progress is gone
+  after the audit starts or after 7 days; the email is never in local storage.
+- **AC-20:** `verify-nuave` drives URL → brand confirm → order → preparing →
+  intake → questions → close tab → report by link, in synthetic mode, with
+  evidence in the PR. The cron proof (R-33) and the Free-plan limits (R-16) are
+  in the PR. `npm run verify` passes.
+- **AC-21 (live, needs named approval):** after the combined deploy, one live
+  run on production with a listed email reaches the report by email link. Its
+  recorded total and the time of each cron run are shown, and the total is
+  within the hold.
 
 ## Delivery plan
 
-Two PRs. A Sonnet worker builds each. An Opus reviewer gives the verdict on
-each before merge.
+A Sonnet worker builds each part. An Opus reviewer gives a verdict on each.
+Both go live in **one** merge to `main`, because every merge deploys.
 
-- **S3a:** cron runner proof (R-13) first, then order screen, order record,
-  gate, per-order limit, intake progress in the browser (R-25 to R-27),
-  server-side audit and report, status progress.
-- **S3b:** private link, report page, emails, not-available page, support
-  script.
-
-S3a is not deployed to production until S3b is merged, because S3a alone
-saves reports that nobody can open.
+- **S3a** (PR against `main`, reviewed, not merged): migrations, preview
+  database, order and screen order, list, per-order limit, browser progress,
+  cron runner and report, status progress. Must pass AC-01 to AC-13 and AC-19.
+- **S3b** (PR against the S3a branch): link, report page, emails, not-available
+  page, support script. Must pass AC-14 to AC-18 and AC-20.
+- After S3b passes, it merges into the S3a branch. The combined S3a PR gets a
+  final review on its exact head, then the founder merges once. AC-21 follows,
+  with named approval.
 
 ## Founder decisions (2026-10-12)
 
-- **Q1 — Order limit: USD 1.00** (accepted). The spec holds the limit for each
-  order until it ends, so a running order is never stopped by the cap and the
-  cap is never passed. With the USD 5 cap, at most 5 orders can be open at the
-  same time in one UTC day (the day starts at 07:00 Jakarta time). In S4 the
-  hold moves to the moment of payment, so unpaid visitors hold nothing. R-12
-  may show the worst case needs more; then the worker stops and asks.
-- **Q2 — Unstarted order expiry: 2 hours** (accepted).
-- **Q3 — Record lifetimes** (accepted; expiry dates only, no deletion now):
-  - Order with email, saved results, report, send records: 12 months after
-    completion (D1).
+- **Q1 / D2 — Order limit: USD 2.00.** Each order holds USD 2.00 of the daily
+  cap until it ends; unused money returns. With the USD 5 cap, at most 2 orders
+  run at the same time in one UTC day (the day starts at 07:00 Jakarta time).
+  An order survives about three AI calls with unknown cost. In S4 the hold moves
+  to the moment of payment.
+- **Q2 — Unstarted order expiry: 2 hours.**
+- **Q3 — Record lifetimes** (expiry dates only; no deletion now):
+  - Order with email, saved business details and questions, saved results,
+    report, send records: 12 months after completion (D1).
   - Order that failed or expired: 30 days, unless a support case is open.
-  - Link secret hash: ends with the report or when switched off.
+  - Link secret hash: ends with the report, when replaced, or when switched off.
   - Ledger rows (order ID and costs, no email): 24 months, as cost records.
+  - Browser progress: on the customer's device, 7 days at most (R-31).
   - Resend's copy of each email (has the link): Resend's own retention, set to
-    the shortest available; the founder checks it in the Resend account.
-  - Cloudflare logs: never hold the email or secret (R-20, AC-13); kept for
-    Cloudflare's own period.
-- **Q4 — Intake progress: option A** (decided). Progress is kept in the
-  customer's browser (R-25 to R-27). Another device or a "continue" email link
-  is not built; add it later only if real customers need it.
-- **Q5 — Accounts** (accepted). The founder creates the Resend key for
-  `nuave.ai` and confirms the domain before S3b review.
-- **Q6 — Live orders only for the founder's email list until S4/S5**
-  (agreed). The founder writes the list in a Cloudflare secret (R-06). Other
-  visitors see "Audit tidak tersedia saat ini." The public site stops running
-  live audits for strangers once S3 is deployed. Payment replaces the list in
-  S4.
+    the shortest available.
+  - Cloudflare logs: never hold the email or secret; kept for Cloudflare's own
+    period. No IP address is stored by Nuave.
+- **Q4 — Intake progress: option A** (browser only).
+- **Q5 — Founder actions before review:** create the Resend key for
+  `nuave.ai` and confirm the domain; check that Resend open and click tracking
+  is off for the domain (this may also affect v0.1 mail on `nuave.ai`); create
+  the free D1 database `nuave-v2-preview`; put only unpublished addresses on
+  the email list.
+- **Q6 — Live orders only for the founder's email list until S4.**
+- **D1 — Screen order:** free brand confirm → order → paid reading → intake.
+- **D3 — Plan:** Workers Free (R-16).
+- **D4 — A resend makes a new link; the old one stops.**
 
 ## Verification record
 
