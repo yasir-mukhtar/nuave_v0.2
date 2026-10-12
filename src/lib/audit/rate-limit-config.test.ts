@@ -2,21 +2,45 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const config = JSON.parse(
-  readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8").replace(
-    /,\s*([}\]])/g,
-    "$1",
-  ),
-) as {
-  ratelimits?: Array<{
-    name: string;
-    namespace_id: string;
-    simple: { limit: number; period: number };
+type Limiter = {
+  name: string;
+  namespace_id: string;
+  simple: { limit: number; period: number };
+};
+type Environment = {
+  triggers?: { crons?: string[] };
+  vars?: Record<string, string>;
+  ratelimits?: Limiter[];
+  d1_databases?: Array<{
+    binding: string;
+    database_name: string;
+    database_id: string;
   }>;
 };
+type Config = Environment & { env?: Record<string, Environment> };
+
+/** wrangler.jsonc: whole-line comments and trailing commas are allowed. */
+export function readWranglerConfig(): Config {
+  return JSON.parse(
+    readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8")
+      .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/,\s*([}\]])/g, "$1"),
+  ) as Config;
+}
+
+const config = readWranglerConfig();
+
+const NAMES = [
+  "IDENTITY_CALLER_RATE_LIMITER",
+  "IDENTITY_DESTINATION_RATE_LIMITER",
+  "EXTRACT_CALLER_RATE_LIMITER",
+  "GLM_CALLER_RATE_LIMITER",
+  "ORDER_CREATE_CALLER_RATE_LIMITER",
+  "ORDER_STATUS_CALLER_RATE_LIMITER",
+];
 
 describe("Worker rate-limit configuration", () => {
-  it("declares exactly the six approved independent 60-second limiters", () => {
+  it("declares exactly the six approved independent 60-second limiters in production", () => {
     expect(config.ratelimits).toEqual([
       {
         name: "IDENTITY_CALLER_RATE_LIMITER",
@@ -39,22 +63,43 @@ describe("Worker rate-limit configuration", () => {
         namespace_id: "301",
         simple: { limit: 2, period: 60 },
       },
+      // Spec 016 R-05: order creation and order status, per caller IP.
       {
-        name: "AUDIT_RUN_CALLER_RATE_LIMITER",
-        namespace_id: "302",
-        simple: { limit: 2, period: 60 },
+        name: "ORDER_CREATE_CALLER_RATE_LIMITER",
+        namespace_id: "304",
+        simple: { limit: 5, period: 60 },
       },
       {
-        name: "AUDIT_REPORT_CALLER_RATE_LIMITER",
-        namespace_id: "303",
-        simple: { limit: 3, period: 60 },
+        name: "ORDER_STATUS_CALLER_RATE_LIMITER",
+        namespace_id: "305",
+        simple: { limit: 30, period: 60 },
       },
     ]);
-    expect(
-      new Set(config.ratelimits?.map((binding) => binding.name)).size,
-    ).toBe(6);
-    expect(
-      new Set(config.ratelimits?.map((binding) => binding.namespace_id)).size,
-    ).toBe(6);
+  });
+
+  it("every environment declares the same limiters, with counters of its own", () => {
+    const seen = new Set<string>();
+    for (const [label, environment] of Object.entries({
+      production: config as Environment,
+      ...config.env,
+    })) {
+      expect(
+        environment.ratelimits?.map((binding) => binding.name),
+        label,
+      ).toEqual(NAMES);
+      for (const binding of environment.ratelimits ?? []) {
+        // A shared namespace id would share counters between environments.
+        expect(seen.has(binding.namespace_id), `${label} ${binding.name}`).toBe(
+          false,
+        );
+        seen.add(binding.namespace_id);
+      }
+    }
+  });
+
+  it("local limits are test-only and far above the production ones", () => {
+    for (const binding of config.env?.dev?.ratelimits ?? []) {
+      expect(binding.simple.limit).toBeGreaterThanOrEqual(10_000);
+    }
   });
 });

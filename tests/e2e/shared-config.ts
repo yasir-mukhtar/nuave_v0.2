@@ -61,6 +61,13 @@ export function offlineE2EServerEnv(
     NUAVE_GLM_EVIDENCE_DIR: "",
     NUAVE_LOCAL_AUDIT_PACK_DIR: "",
     NUAVE_DAILY_SPEND_LIMIT_USD: "",
+    // Spec 016: order settings. Blank counts as unset, so the offline server
+    // takes its environment label and site address from wrangler.jsonc's
+    // `dev` environment, and never inherits a developer's own limit or list.
+    NUAVE_ENVIRONMENT: "",
+    NUAVE_SITE_URL: "",
+    NUAVE_ORDER_SPEND_LIMIT_USD: "",
+    NUAVE_ORDER_EMAIL_ALLOWLIST: "",
     // Spec 010: the public audit journey stays switched off unless a suite
     // enables it; "synthetic" is the failure-safe default and the only mode
     // e2e may run — "live" requires real credentials, all blanked above.
@@ -76,8 +83,9 @@ export function journeyWebServer(
   return {
     // Interface-level founder-local confinement: the preview listens on the
     // IPv4 loopback only, never on a LAN-reachable interface (next dev's
-    // default hostname is 0.0.0.0).
-    command: `npm run dev -- --port ${port} --hostname 127.0.0.1`,
+    // default hostname is 0.0.0.0). The local D1 database (orders and the
+    // spend ledger, spec 016 R-33) gets its migrations first.
+    command: `npm run db:migrate:local && npm run dev -- --port ${port} --hostname 127.0.0.1`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: false,
     timeout: 120_000,
