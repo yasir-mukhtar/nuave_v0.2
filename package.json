@@ -17,6 +17,7 @@
     "test:e2e:enabled": "playwright test",
     "test:e2e:disabled": "playwright test -c playwright.config.disabled.ts",
     "db:migrate:local": "wrangler d1 migrations apply SPEND_DB --local --env dev",
+    "support": "node scripts/support.mjs",
     "test:workers": "node scripts/test-workers.mjs",
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"*.{json,mjs}\" \".github/**/*.yml\"",
