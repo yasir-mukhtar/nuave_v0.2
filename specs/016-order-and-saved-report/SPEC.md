@@ -121,8 +121,9 @@ and no order is created.
 - **R-05:** Order creation has a per-IP rate limit and at most 2 `open`
   orders per IP at a time.
 - **R-06 (gate, Q6):** In live mode, an order is created only if the email is
-  on a server-side allowlist (`NUAVE_ORDER_EMAIL_ALLOWLIST`). An empty or
-  missing list allows no live order. Synthetic mode has no gate.
+  on a server-side allowlist (`NUAVE_ORDER_EMAIL_ALLOWLIST`, a Cloudflare
+  secret, never in `wrangler.jsonc` or Git; matched without case after
+  trimming spaces). An empty or missing list allows no live order. Synthetic mode has no gate.
 
 **Per-order cost limit (S2 ledger, same D1 database)**
 
@@ -155,16 +156,20 @@ and no order is created.
   every minute. Each run takes the orders that have work to do, one at a time,
   and does the next steps. No other runner is used. The first S3a commit
   proves on the PR preview that the OpenNext worker can export the cron
-  handler and that the run fits the current plan's limits. If it cannot, or
+  handler and that the run fits the current plan's limits. The PR records how
+  many questions one cron run completes and how long it takes. If it cannot, or
   needs a paid plan, the worker stops and asks the founder.
 - **R-14:** Approving the questions moves the order to `running` and records
   the start time once (the D2 clock) and the deadline (start + 24 hours).
   Neither changes later.
 - **R-15 (one runner at a time):** A runner first claims the order with a
   lease that expires (one conditional update). It claims each question the
-  same way before it calls the provider. A second runner cannot work on a
+  same way before it calls the provider. A question claim lasts longer than
+  the longest possible provider call. A second runner cannot work on a
   leased order. Each finished question is saved before the next starts. A
-  resumed run does only questions with no saved result.
+  resumed run does only questions with no saved result. A question whose call
+  was cut off mid-flight has an unknown result: it counts as one attempt under
+  today's retry rule, and its cost stays held (S2).
 - **R-16:** The tab shows progress by asking for the order status. The status
   answer has the state and question progress only. It never has the report,
   the email, or the link secret.
@@ -174,7 +179,7 @@ and no order is created.
 - **R-18:** An order that expires unstarted: an `open` order 2 hours after
   creation (Q2) becomes `expired` on the next cron run, which settles its
   order row (R-10).
-- **R-19:** At the deadline, an order with no saved report, no active link,
+- **R-19:** At the deadline, an order not yet `delivered` with no saved report, no active link,
   or no accepted ready email is marked `failed` once, and the failure email
   is sent (D3). An order that cannot finish earlier (all retries used, order
   limit reached) is marked `failed` at that time. Retries stop at the
@@ -208,7 +213,8 @@ and no order is created.
   in the same database write, D8), `off` (switch the secret off), `show`
   (state, times, costs, overruns; never the email unless asked). The founder
   first confirms through the order email (D7); the script does not do that
-  check. It never sends to any other email.
+  check. It never sends to any other email. `off` never changes the order
+  state.
 
 ## Failure and recovery
 
@@ -267,8 +273,9 @@ mode.
   cron run happens, then it is `expired` and its reservation is returned.
 - **AC-08:** Given an audit with some finished questions, when the tab closes,
   or the run stops and restarts, or two runners start on the same order, then
-  the audit completes and each question has exactly one paid call (counted on
-  the fake provider).
+  the audit completes, no saved question is called again, and two runners
+  never call the same question at once (counted on the fake provider). A
+  question cut off mid-call is retried only within today's retry rule.
 - **AC-09:** Given a completed audit, then one ready email (fake sender) holds
   a link that opens the same report in a fresh browser with no cookies, makes
   no provider call, and the PDF and JSON buttons work. The status answer never
@@ -303,6 +310,9 @@ each before merge.
   gate, per-order limit, server-side audit and report, status progress.
 - **S3b:** private link, report page, emails, not-available page, support
   script.
+
+S3a is not deployed to production until S3b is merged, because S3a alone
+saves reports that nobody can open.
 
 ## Open questions (founder)
 
