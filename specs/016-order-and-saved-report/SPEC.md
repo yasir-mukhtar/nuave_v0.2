@@ -1,6 +1,6 @@
 # Spec 016: Order, saved report and private link (S3)
 
-> Status: **Approved** by the founder on 2026-10-12 (revision 6, `a006048`; [decision](../../docs/DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). Implementation may begin with S3a.
+> Status: **Implementing** — approved by the founder on 2026-10-12 (revision 6, `a006048`; [decision](../../docs/DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). S3a and S3b are built on [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129); see [VERIFICATION.md](./VERIFICATION.md).
 > Owner: orchestrator
 > Updated: 2026-10-12 (revision 6: plan re-review notes 1–10 applied)
 > Implements: S3 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md),
@@ -510,5 +510,5 @@ Both go live in **one** merge to `main`, because every merge deploys.
 
 ## Verification record
 
-- Verification artifact: `VERIFICATION.md` (added when implementation starts)
-- Result: Pending
+- Verification artifact: [`VERIFICATION.md`](./VERIFICATION.md)
+- Result: offline criteria reviewed PASS+NOTES; AC-21 (live run) pending
