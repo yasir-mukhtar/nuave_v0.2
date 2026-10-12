@@ -1,5 +1,6 @@
 import { expect as baseExpect, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
+import { join } from "node:path";
 import type { ExtractionDraft } from "../../src/lib/audit/types";
 
 /**
@@ -824,38 +825,69 @@ export async function downloadEvidenceJson(
   return { download: saved, text, json: JSON.parse(text) };
 }
 
-/**
- * Retained for the `verify-nuave` skill CLI until S3b rewrites its audit
- * features for the saved-report flow (spec 016 AC-20). The browser no longer
- * runs the audit or shows the report, so these two helpers describe behavior
- * that no longer exists in the app; no spec in tests/e2e/ uses them.
- */
-export async function expectAuditDone(page: Page, timeout = 45_000) {
-  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
-    timeout,
-  });
+/** The ready email the fake sender wrote (spec 016 R-28). */
+export type TestMail = { to: string; subject: string; text: string };
+
+/** The fake sender's local files, written only in local development to the
+ * ignored folder `.local-evidence/test-mail/`, newest last. */
+export async function readTestMail(since: number): Promise<TestMail[]> {
+  const folder = join(process.cwd(), ".local-evidence", "test-mail");
+  let names: string[] = [];
+  try {
+    names = await readdir(folder);
+  } catch {
+    return [];
+  }
+  const found: Array<{ at: number; mail: TestMail }> = [];
+  for (const name of names) {
+    const path = join(folder, name);
+    const info = await stat(path);
+    if (info.mtimeMs < since) continue;
+    found.push({
+      at: info.mtimeMs,
+      mail: JSON.parse(await readFile(path, "utf8")) as TestMail,
+    });
+  }
+  return found.sort((a, b) => a.at - b.at).map((item) => item.mail);
 }
 
-/**
- * Fault injection, not a user path: answers the first `/api/audit/report`
- * with the 422 `REPORT_USEFULNESS_FAILURE` that opens answers-only recovery,
- * then lets later report requests through. Synthetic mode never produces
- * this failure on its own.
- */
-export async function injectUsefulnessFailureOnce(page: Page) {
-  let failed = false;
-  await page.route("**/api/audit/report", (route) => {
-    if (failed) return route.fallback();
-    failed = true;
-    return route.fulfill({
-      status: 422,
-      contentType: "application/json",
-      body: JSON.stringify({
-        error: "Laporan belum memenuhi syarat laporan.",
-        code: "REPORT_USEFULNESS_FAILURE",
-        telemetry: [],
-        diagnostics: ["usefulness_minimum_not_met"],
-      }),
-    });
-  });
+/** The private link inside the newest ready email to `to`, as a path with its
+ * fragment (`/r#secret`) so it opens on whatever address the test server has. */
+export async function readyLinkFromMail(
+  since: number,
+  to: string = ORDER_EMAIL,
+): Promise<{ path: string; secret: string; mail: TestMail }> {
+  const ready = (await readTestMail(since)).filter(
+    (mail) => mail.to === to && /siap/.test(mail.subject),
+  );
+  const mail = ready.at(-1);
+  const secret = mail ? /\/r#([A-Za-z0-9_-]+)/.exec(mail.text)?.[1] : undefined;
+  if (!mail || !secret) throw new Error("no ready email with a link was found");
+  return { path: `/r#${secret}`, secret, mail };
+}
+
+/** Local tests only: runs the cron through the development trigger until the
+ * ready email has gone out (ten questions, then the report). */
+export async function runServerAuditToDelivery(
+  page: Page,
+  maxRuns = 16,
+): Promise<string[]> {
+  const outcomes: string[] = [];
+  for (let run = 0; run < maxRuns; run += 1) {
+    const result = await runRunnerOnce(page);
+    expect(result.ran).toBe(true);
+    outcomes.push(...(result.outcomes ?? []));
+    if (outcomes.includes("report_saved")) return outcomes;
+  }
+  throw new Error(`the audit did not reach a saved report in ${maxRuns} runs`);
+}
+
+/** The saved report page (spec 016 R-26) once it has opened a valid link. */
+export function savedReport(page: Page) {
+  return page.locator('[data-saved-report="ready"]');
+}
+
+/** The "not available" page for a link that does not work (R-27). */
+export function unavailableReport(page: Page) {
+  return page.locator('[data-saved-report="unavailable"]');
 }

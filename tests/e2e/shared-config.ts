@@ -68,6 +68,9 @@ export function offlineE2EServerEnv(
     NUAVE_SITE_URL: "",
     NUAVE_ORDER_SPEND_LIMIT_USD: "",
     NUAVE_ORDER_EMAIL_ALLOWLIST: "",
+    // Spec 016 R-25: the real mail sender is never configured offline.
+    RESEND_API_KEY: "",
+    NUAVE_MAIL_FROM: "",
     // Spec 010: the public audit journey stays switched off unless a suite
     // enables it; "synthetic" is the failure-safe default and the only mode
     // e2e may run — "live" requires real credentials, all blanked above.

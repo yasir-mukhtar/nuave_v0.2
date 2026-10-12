@@ -17,6 +17,20 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
+  // Spec 016 R-26: the private report page is never cached, never indexed and
+  // sends no Referer. (The report data route sets the same headers itself.)
+  async headers() {
+    return [
+      {
+        source: "/r",
+        headers: [
+          { key: "Cache-Control", value: "no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
