@@ -168,9 +168,33 @@ describe("runScheduledOrders (R-15)", () => {
     vi.stubEnv("NUAVE_PROVIDER", "openai");
     vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
-    expect(await runScheduledOrders()).toEqual({ ran: true, outcomes: [] });
+    // TEMPORARY (S3a): no real sender yet, so live mode does nothing at all.
+    // S3b: this becomes `{ ran: true, outcomes: [] }`.
+    expect(await runScheduledOrders()).toEqual({
+      ran: false,
+      reason: "sender_missing",
+    });
     expect(done()).toBe(0);
     expect(mocks.liveExecute).not.toHaveBeenCalled();
+  });
+
+  it("live mode with every credential set returns sender_missing before the runner, and touches nothing (S3a, removed by S3b)", async () => {
+    const live = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    await approve(d1.db, live, { mode: "live", now: new Date() });
+    const before = JSON.stringify(d1.query("SELECT * FROM orders ORDER BY id"));
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+    expect(await runScheduledOrders()).toEqual({
+      ran: false,
+      reason: "sender_missing",
+    });
+    expect(JSON.stringify(d1.query("SELECT * FROM orders ORDER BY id"))).toBe(
+      before,
+    );
+    expect(mocks.liveExecute).not.toHaveBeenCalled();
+    expect(mocks.liveReport).not.toHaveBeenCalled();
   });
 
   it("delivers a synthetic order through the fake sender with no network", async () => {

@@ -14,7 +14,12 @@ import {
   orderSpendLimitUsd,
   parseOrderEmail,
 } from "@/lib/orders/config";
-import { orderRuntime, orderUnavailableResponse } from "@/lib/orders/http";
+import {
+  orderModeIsExplicit,
+  orderRuntime,
+  orderUnavailableResponse,
+} from "@/lib/orders/http";
+import { REAL_SENDER_AVAILABLE } from "@/lib/orders/mail";
 import { createOrder } from "@/lib/orders/store";
 import { dailySpendLimitUsd } from "@/lib/spending/provider-spend";
 
@@ -35,6 +40,10 @@ export async function POST(request: Request) {
     (bindings) => bindings.orderCreateCaller,
   );
   if (rateLimited) return rateLimited;
+
+  // In production the mode must be set on purpose: a missing or mistyped
+  // NUAVE_AUDIT_MODE makes no order (it would otherwise fall back to synthetic).
+  if (!orderModeIsExplicit()) return orderUnavailableResponse();
 
   const credentialsError = auditLiveCredentialsResponse("order");
   if (credentialsError) return credentialsError;
@@ -75,6 +84,11 @@ export async function POST(request: Request) {
 
   const server = orderRuntime();
   if (!server) return orderUnavailableResponse();
+  // TEMPORARY (S3a, removed by S3b): no real sender yet, so a live order could
+  // never be delivered. Same "not available" answer as a full cap.
+  if (server.mode === "live" && !REAL_SENDER_AVAILABLE) {
+    return orderUnavailableResponse();
+  }
   // R-06: live orders only for the founder's list until S4.
   if (server.mode === "live" && !emailOnAllowlist(email)) {
     return orderUnavailableResponse();

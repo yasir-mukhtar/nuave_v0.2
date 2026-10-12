@@ -12,6 +12,7 @@ import {
   contextNamedComparators,
   directTenContextSchema,
 } from "@/lib/audit/direct-ten-context-v2";
+import { parseSourceInput } from "@/lib/audit/source-input";
 import { lockedQuestionPackForMethod } from "@/lib/audit/locked-question-pack";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import { validateDirectTenQuestions } from "@/lib/audit/questions-id-direct-ten";
@@ -128,6 +129,17 @@ export async function POST(request: Request) {
       order.mode !== server.mode
     ) {
       return orderNotFoundResponse();
+    }
+    // The reading and the questions must be for the website this order was
+    // made for (the free lookup's address), never another one.
+    if (
+      parseSourceInput(input.context.identity.source)?.normalizedUrl !==
+      order.website
+    ) {
+      return NextResponse.json(
+        { error: "Pesanan ini tidak dapat dilanjutkan.", code: "ORDER_STATE" },
+        { status: 409 },
+      );
     }
     // Approving twice is harmless: the saved questions never change.
     if (order.state !== "open") {

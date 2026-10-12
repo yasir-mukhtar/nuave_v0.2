@@ -41,6 +41,7 @@ import {
   sendWithinAttempt,
   type MailSender,
 } from "./mail";
+import { orderSafetyIdentifier, sha256Hex } from "./config";
 import {
   activeOrders,
   claimOrderLease,
@@ -144,9 +145,12 @@ function parseIntake(order: OrderRow): Intake | null {
 
 const iso = (at: Date) => at.toISOString();
 
-/** R-04: from the order id, never the email. */
-export const orderSafetyIdentifier = (orderId: string) =>
-  `nuave-order-${orderId}`;
+export { orderSafetyIdentifier, sha256Hex };
+
+/** Per run, so one cron run stays under the Free plan's 50 D1 queries
+ * (measured in runner.test.ts "one run with every cap reached"). */
+export const MAX_ORDERS_PER_RUN = 2;
+export const MAX_EXPIRED_PER_RUN = 5;
 
 export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   const outcomes: StepOutcome[] = [];
@@ -160,6 +164,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   const expired = await expireOpenOrders(deps.db, {
     ...scope,
     now: deps.now(),
+    limit: MAX_EXPIRED_PER_RUN,
   });
   outcomes.push(...expired.map((): StepOutcome => "expired"));
 
@@ -168,6 +173,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   for (const id of await ordersPastDeadline(deps.db, {
     ...scope,
     now: deps.now(),
+    limit: MAX_ORDERS_PER_RUN,
   })) {
     if (await failOrder(deps, id, "deadline")) {
       failedNow.add(id);
@@ -175,7 +181,10 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
     }
   }
 
-  for (const id of await activeOrders(deps.db, scope)) {
+  for (const id of await activeOrders(deps.db, {
+    ...scope,
+    limit: MAX_ORDERS_PER_RUN,
+  })) {
     const order = await getOrder(deps.db, id);
     if (
       !order ||
@@ -235,6 +244,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
   for (const id of await failedOrdersNeedingEmail(deps.db, {
     ...scope,
     now: deps.now(),
+    limit: MAX_ORDERS_PER_RUN,
   })) {
     if (failedNow.has(id)) continue;
     if (await sendFailureEmail(deps, id)) outcomes.push("failure_email");
@@ -359,6 +369,7 @@ async function questionStep(
     return "skipped";
   }
 
+  const safetyIdentifier = await orderSafetyIdentifier(order.id);
   let observation: AuditObservation;
   try {
     observation = await withOrderSpend(
@@ -367,7 +378,7 @@ async function questionStep(
         deps.execute({
           prompt,
           brief: intake.context,
-          safety_identifier: orderSafetyIdentifier(order.id),
+          safety_identifier: safetyIdentifier,
           // The browser's budget is never used; the order's hold decides (R-09).
           budget: serverOwnedAuditBudget(),
           signal: AbortSignal.timeout(OBSERVATION_CALL_TIMEOUT_MS),
@@ -538,7 +549,7 @@ async function reportStep(
     brief: intake.context,
     prompts: intake.prompts,
     observations,
-    safety_identifier: orderSafetyIdentifier(order.id),
+    safety_identifier: await orderSafetyIdentifier(order.id),
     budget: serverOwnedAuditBudget(),
     language: "id" as const,
     question_method: "direct-ten" as const,
@@ -552,7 +563,21 @@ async function reportStep(
     assertReportGenerationGate(input);
     const report = await withOrderSpend(
       { db: deps.db, orderId: order.id, now: deps.now },
-      () => createValidatedAuditReport(input, deps.generateReport),
+      () =>
+        createValidatedAuditReport(input, async (...args) => {
+          // R-18: the language-fix call is a second provider call; renew the
+          // lease first so it cannot run on a lease that has lapsed.
+          if (args[1] !== undefined) {
+            const renewed = await renewOrderLease(deps.db, {
+              orderId: order.id,
+              owner,
+              now: deps.now(),
+              leaseMs,
+            });
+            if (!renewed) throw new SpendCapError("order_refused");
+          }
+          return deps.generateReport(...args);
+        }),
     );
     const saved = await saveReport(deps.db, {
       orderId: order.id,
@@ -648,14 +673,4 @@ function linkSecret(): string {
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
-}
-
-export async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  );
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
 }

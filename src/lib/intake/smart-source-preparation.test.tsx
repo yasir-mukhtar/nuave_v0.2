@@ -489,6 +489,7 @@ describe("server excerpt through the active Smart preparation", () => {
       expect(SOURCE_EXCERPT_RESTRICTED_MESSAGE).toBe(expected);
       const initial = freshSmartSession();
       initial.preparationCalls = input().budget.calls;
+      initial.savedAt = new Date().toISOString();
       window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify(initial),

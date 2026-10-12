@@ -29,6 +29,7 @@ import {
   INVALID_SOURCE_INPUT_MESSAGE,
   parseSourceInput,
 } from "@/lib/audit/source-input";
+import { orderSafetyIdentifier } from "@/lib/orders/config";
 import { orderRuntime } from "@/lib/orders/http";
 import { orderInState } from "@/lib/orders/store";
 import { withOrderSpend } from "@/lib/spending/provider-spend";
@@ -156,7 +157,7 @@ export async function POST(request: Request) {
         category: "",
         identity_unverified: true,
         // R-04: from the order id, never the email.
-        safety_identifier: `nuave-order-${order.id}`,
+        safety_identifier: await orderSafetyIdentifier(order.id),
       }),
       budget: serverOwnedAuditBudget(),
     };

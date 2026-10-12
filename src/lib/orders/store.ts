@@ -269,13 +269,18 @@ export async function orderStatus(
 
 export async function expireOpenOrders(
   db: SpendDb,
-  input: { environment: OrderEnvironment; mode: OrderMode; now: Date },
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
 ): Promise<string[]> {
   const ids = await orderIds(
     db,
     `SELECT id FROM orders WHERE state = 'open' AND expires_at <= ?1
-       AND environment = ?2 AND mode = ?3`,
-    [iso(input.now), input.environment, input.mode],
+       AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
+    [iso(input.now), input.environment, input.mode, input.limit],
   );
   const expired: string[] = [];
   for (const id of ids) {
@@ -295,25 +300,30 @@ export async function expireOpenOrders(
 
 export async function ordersPastDeadline(
   db: SpendDb,
-  input: { environment: OrderEnvironment; mode: OrderMode; now: Date },
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
 ): Promise<string[]> {
   return orderIds(
     db,
     `SELECT id FROM orders WHERE state IN (${ACTIVE_STATES}) AND deadline_at <= ?1
-       AND environment = ?2 AND mode = ?3 ORDER BY created_at`,
-    [iso(input.now), input.environment, input.mode],
+       AND environment = ?2 AND mode = ?3 ORDER BY created_at LIMIT ?4`,
+    [iso(input.now), input.environment, input.mode, input.limit],
   );
 }
 
 export async function activeOrders(
   db: SpendDb,
-  input: { environment: OrderEnvironment; mode: OrderMode },
+  input: { environment: OrderEnvironment; mode: OrderMode; limit: number },
 ): Promise<string[]> {
   return orderIds(
     db,
     `SELECT id FROM orders WHERE state IN (${ACTIVE_STATES})
-       AND environment = ?1 AND mode = ?2 ORDER BY created_at`,
-    [input.environment, input.mode],
+       AND environment = ?1 AND mode = ?2 ORDER BY created_at LIMIT ?3`,
+    [input.environment, input.mode, input.limit],
   );
 }
 
@@ -321,7 +331,12 @@ export async function activeOrders(
  * the failure (R-25). */
 export async function failedOrdersNeedingEmail(
   db: SpendDb,
-  input: { environment: OrderEnvironment; mode: OrderMode; now: Date },
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
 ): Promise<string[]> {
   return orderIds(
     db,
@@ -330,11 +345,12 @@ export async function failedOrdersNeedingEmail(
        AND NOT EXISTS (SELECT 1 FROM order_emails e
                        WHERE e.order_id = orders.id AND e.kind = 'failure'
                          AND e.result = 'accepted')
-     ORDER BY ended_at`,
+     ORDER BY ended_at LIMIT ?4`,
     [
       input.environment,
       input.mode,
       iso(new Date(input.now.getTime() - FAILURE_EMAIL_WINDOW_MS)),
+      input.limit,
     ],
   );
 }

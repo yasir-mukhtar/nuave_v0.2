@@ -106,3 +106,20 @@ export function emailOnAllowlist(email: string): boolean {
     .filter(Boolean);
   return list.includes(email.trim().toLowerCase());
 }
+
+export async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+/** R-04: sent to the provider instead of the order id: a fixed prefix and the
+ * first 32 hex characters of the id's SHA-256. Never the email, never the raw
+ * id. */
+export async function orderSafetyIdentifier(orderId: string): Promise<string> {
+  return `nuave-order-${(await sha256Hex(orderId)).slice(0, 32)}`;
+}

@@ -3,10 +3,23 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ getCloudflareContext: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  getCloudflareContext: vi.fn(),
+  senderAvailable: true,
+}));
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
 }));
+
+// Most tests here make live orders, which S3a refuses until a real sender
+// exists (S3b). They run as if one existed; the refusal has its own tests.
+vi.mock("@/lib/orders/mail", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/orders/mail")>();
+  return Object.defineProperty({ ...original }, "REAL_SENDER_AVAILABLE", {
+    get: () => mocks.senderAvailable,
+    enumerable: true,
+  });
+});
 
 vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/audit/source-excerpt")>()),
@@ -14,6 +27,7 @@ vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
 }));
 
 import { hashSafetyIdentifier } from "../audit/openai";
+import { orderSafetyIdentifier } from "./config";
 import { POST as createPOST } from "../../app/api/orders/route";
 import { POST as statusPOST } from "../../app/api/orders/status/route";
 import { POST as approvePOST } from "../../app/api/orders/approve/route";
@@ -54,6 +68,7 @@ function bind(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  mocks.senderAvailable = true;
   dir = mkdtempSync(join(tmpdir(), "nuave-orders-"));
   d1 = openFileD1(join(dir, "orders.sqlite"));
   limiters = {
@@ -182,6 +197,32 @@ describe("making an order (R-01, R-02, R-06, AC-01)", () => {
     expect(missing.status).toBe(503);
     expect(await missing.json()).toEqual(await empty.json());
     expect(orders()).toEqual([]);
+  });
+
+  it("while no real sender exists (S3a), a live order is refused with the usual answer, even for a listed email", async () => {
+    mocks.senderAvailable = false;
+    const response = await create();
+    expect(response.status).toBe(503);
+    expect(JSON.stringify(await response.json())).toContain(UNAVAILABLE);
+    expect(orders()).toEqual([]);
+    expect(ledger()).toEqual([]);
+    // Synthetic orders are not affected.
+    vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+    expect((await create()).status).toBe(200);
+  });
+
+  it("on production, a missing or mistyped mode makes no order; only live or synthetic does", async () => {
+    for (const value of ["", "Live", "synthetik", "true", " "]) {
+      vi.stubEnv("NUAVE_AUDIT_MODE", value);
+      const response = await create();
+      expect(response.status, `mode "${value}"`).toBe(503);
+      expect(JSON.stringify(await response.json())).toContain(UNAVAILABLE);
+    }
+    expect(orders()).toEqual([]);
+    vi.stubEnv("NUAVE_AUDIT_MODE", " synthetic ");
+    expect((await create()).status).toBe(200);
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    expect((await create({ email: "other@example.com" })).status).toBe(200);
   });
 
   it("synthetic mode has no list, writes no ledger row and never needs credentials", async () => {
@@ -417,9 +458,10 @@ describe("paid routes need an order (R-03, R-04, AC-02)", () => {
       expect(body).not.toContain("owner@example.com");
       expect(body).toContain("kopinuave.example"); // the order's own website
       // R-04: the safety identifier comes from the order id, never the email.
-      expect(JSON.parse(body).safety_identifier).toBe(
-        hashSafetyIdentifier(`nuave-order-${id}`),
-      );
+      const sent = JSON.parse(body).safety_identifier as string;
+      expect(sent).toBe(hashSafetyIdentifier(await orderSafetyIdentifier(id)));
+      expect(sent).not.toBe(hashSafetyIdentifier(`nuave-order-${id}`));
+      expect(body).not.toContain(id);
     }
     const calls = d1.query(
       "SELECT order_id, stage FROM provider_spend WHERE kind = 'order_call'",
@@ -493,6 +535,25 @@ describe("approving the ten questions (R-17)", () => {
     ).toBe(200);
     expect(JSON.stringify(orders())).toBe(before);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses to approve questions made for another website, and changes nothing", async () => {
+    const id = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    const other = {
+      ...CONTEXT,
+      identity: { ...CONTEXT.identity, source: "https://attacker.example/" },
+    };
+    const response = await approve(body(id, { context: other }));
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe("ORDER_STATE");
+    expect(orders()[0].state).toBe("open");
+    expect(d1.query("SELECT * FROM order_questions")).toEqual([]);
+    // The same website written differently still matches the order.
+    const same = {
+      ...CONTEXT,
+      identity: { ...CONTEXT.identity, source: "https://KopiNuave.example" },
+    };
+    expect((await approve(body(id, { context: same }))).status).toBe(200);
   });
 
   it("runs today's checks first and changes nothing when one fails", async () => {

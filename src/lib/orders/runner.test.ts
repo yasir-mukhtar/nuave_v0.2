@@ -25,7 +25,13 @@ import {
   orderStatus,
   getOrder,
 } from "./store";
-import { runOrders, OBSERVATION_STEP_MS, type RunnerDeps } from "./runner";
+import {
+  runOrders,
+  OBSERVATION_STEP_MS,
+  REPORT_STEP_MS,
+  sha256Hex,
+  type RunnerDeps,
+} from "./runner";
 import {
   approve,
   makeOrder,
@@ -682,5 +688,201 @@ describe("live order and its own limit (R-09..R-11, AC-06, AC-07)", () => {
 describe("getOrder helper", () => {
   it("rejects anything that is not a server-made id", async () => {
     expect(await getOrder(d1.db, "x' OR '1'='1")).toBeNull();
+  });
+});
+
+describe("limits per run (Free plan: 50 D1 queries)", () => {
+  /** A D1 handle that counts every query the runner sends: each statement
+   * run on its own is one query, and a batch is one query for all of its
+   * statements (a batch is one round trip). */
+  function counting(db: RunnerDeps["db"]) {
+    const count = { queries: 0, statements: 0 };
+    type Stmt = ReturnType<ReturnType<RunnerDeps["db"]["prepare"]>["bind"]>;
+    const raw = new WeakMap<object, Stmt>();
+    const wrap = (statement: Stmt): Stmt => {
+      const wrapped: Stmt = {
+        run: () => {
+          count.queries += 1;
+          count.statements += 1;
+          return statement.run();
+        },
+        first: <T>() => {
+          count.queries += 1;
+          count.statements += 1;
+          return statement.first<T>();
+        },
+        all: <T>() => {
+          count.queries += 1;
+          count.statements += 1;
+          return statement.all<T>();
+        },
+      };
+      raw.set(wrapped, statement);
+      return wrapped;
+    };
+    const counted: RunnerDeps["db"] = {
+      prepare: (sql) => ({
+        bind: (...values) => wrap(db.prepare(sql).bind(...values)),
+      }),
+      batch: (statements) => {
+        count.queries += 1;
+        count.statements += statements.length;
+        return db.batch(statements.map((statement) => raw.get(statement)!));
+      },
+    };
+    return { counted, count };
+  }
+
+  it("one run with every cap reached: 5 expired, 2 deadline failures, 2 audit steps and 2 failure-email retries, under 50 queries", async () => {
+    const rejecting = mailbox(() => false);
+    // Orders approved now reach their deadline in 24 hours.
+    const stale = [];
+    for (let i = 0; i < 4; i += 1) stale.push(await runningOrder());
+    advance(25 * 3600_000);
+    // Run A: two of them fail at the deadline; their failure emails are not
+    // accepted, so they stay due for a retry.
+    await runOrders(deps({ sender: rejecting.sender }));
+    expect(stale.filter((id) => orderRow(id).state === "failed")).toHaveLength(
+      2,
+    );
+
+    // Run B (counted): seven open orders past their time, two more orders past
+    // their deadline, two fresh running orders, two failure emails due.
+    for (let i = 0; i < 7; i += 1) {
+      await makeOrder(d1.db, { now: new Date(clock.getTime() - 3 * 3600_000) });
+    }
+    const fresh = [await runningOrder(), await runningOrder()];
+    const { counted, count } = counting(d1.db);
+    const result = await runOrders(
+      deps({ db: counted, sender: rejecting.sender }),
+    );
+    const tally = (outcome: string) =>
+      result.outcomes.filter((entry) => entry === outcome).length;
+    expect(tally("expired")).toBe(5);
+    expect(tally("failed_deadline")).toBe(2);
+    expect(tally("question_done")).toBe(2);
+    expect(tally("failure_email")).toBe(0); // rejected sends are not counted done
+    expect(count.queries).toBeLessThan(50);
+    // Left for the next run: two open orders, nothing lost.
+    expect(d1.query("SELECT id FROM orders WHERE state = 'open'")).toHaveLength(
+      2,
+    );
+    for (const id of fresh) expect(orderRow(id).state).toBe("running");
+    // Measured when written: 45 queries (52 statements) for this synthetic run.
+  });
+
+  it("at most two orders get an audit step in one run, oldest first; the rest wait for the next run", async () => {
+    const ids = [];
+    for (let i = 0; i < 4; i += 1) {
+      ids.push(await runningOrder());
+      advance(1000);
+    }
+    const d = deps();
+    const result = await runOrders(d);
+    expect(result.outcomes).toEqual(["question_done", "question_done"]);
+    expect(d.calls).toHaveLength(2);
+    expect(
+      d1.query(
+        "SELECT DISTINCT order_id FROM order_questions WHERE status = 'done'",
+      ),
+    ).toHaveLength(2);
+  });
+});
+
+describe("the report's second call (R-18)", () => {
+  const LONG = Array.from({ length: 26 }, () => "kopi").join(" ") + ".";
+
+  async function reportingNow(generate: RunnerDeps["generateReport"]) {
+    const id = await runningOrder();
+    const d = deps({ generateReport: generate });
+    for (let i = 0; i < 10; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("reporting");
+    return { id, d };
+  }
+
+  /** A first draft with a language problem, then a language-only revision. */
+  function twoCalls(onSecond: () => void) {
+    const seen = { calls: 0 };
+    const generate: RunnerDeps["generateReport"] = async (...args) => {
+      seen.calls += 1;
+      const first = await generateSyntheticLocalReport(args[0]);
+      if (args[1] === undefined) {
+        return { ...first, content: { ...first.content, conclusion: LONG } };
+      }
+      onSecond();
+      return first;
+    };
+    return { seen, generate };
+  }
+
+  it("renews the order's lease before the language-fix call, so the call is not made on a lapsed lease", async () => {
+    let leaseAtSecond = "";
+    let clockAtSecond = 0;
+    let id = "";
+    const { seen, generate } = twoCalls(() => {
+      leaseAtSecond = String(orderRow(id).lease_until);
+      clockAtSecond = clock.getTime();
+    });
+    const wrapped: RunnerDeps["generateReport"] = async (...args) => {
+      // The first call takes longer than the original lease.
+      const result = await generate(...args);
+      if (args[1] === undefined) advance(REPORT_STEP_MS + 60_000);
+      return result;
+    };
+    const reporting = await reportingNow(wrapped);
+    id = reporting.id;
+    await runOrders(reporting.d);
+    expect(seen.calls).toBe(2);
+    expect(Date.parse(leaseAtSecond)).toBeGreaterThan(clockAtSecond);
+  });
+
+  it("does not make the language-fix call when the lease is no longer this runner's, and saves nothing", async () => {
+    let id = "";
+    const { seen, generate } = twoCalls(() => {});
+    const wrapped: RunnerDeps["generateReport"] = async (...args) => {
+      const result = await generate(...args);
+      if (args[1] === undefined) {
+        d1.query(
+          `UPDATE orders SET lease_owner = 'someone-else' WHERE id = '${id}' RETURNING 1`,
+        );
+      }
+      return result;
+    };
+    const reporting = await reportingNow(wrapped);
+    id = reporting.id;
+    await runOrders(reporting.d);
+    expect(seen.calls).toBe(1);
+    expect(orderRow(id).report_json).toBeNull();
+  });
+});
+
+describe("safety identifier (R-04)", () => {
+  it("every provider call carries nuave-order- and 32 hex characters of the id's SHA-256, never the order id", async () => {
+    const id = await runningOrder();
+    const seen: string[] = [];
+    const d = deps({
+      execute: async (input) => {
+        seen.push(String(input.safety_identifier));
+        return executeSyntheticLocalObservation(input);
+      },
+      generateReport: async (...args) => {
+        seen.push(String(args[0].safety_identifier));
+        return generateSyntheticLocalReport(...args);
+      },
+    });
+    for (let i = 0; i < 12; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(seen).toHaveLength(11);
+    const digest = await sha256Hex(id);
+    for (const value of seen) {
+      expect(value).toBe(`nuave-order-${digest.slice(0, 32)}`);
+      expect(value).not.toContain(id);
+      expect(value).toMatch(/^nuave-order-[0-9a-f]{32}$/);
+    }
   });
 });

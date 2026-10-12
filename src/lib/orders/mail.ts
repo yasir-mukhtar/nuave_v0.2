@@ -22,6 +22,14 @@ export type MailResult = { accepted: boolean; messageId?: string };
 
 export type MailSender = (message: MailMessage) => Promise<MailResult>;
 
+/**
+ * TEMPORARY (S3a): there is no real sender until S3b, so no live order could
+ * ever be delivered. While this is false, POST /api/orders refuses live orders
+ * and the cron returns `sender_missing`. S3b: set this to true (or delete it
+ * and both checks) when the Resend sender lands.
+ */
+export const REAL_SENDER_AVAILABLE: boolean = false;
+
 const SUPPORT_EMAIL = "support@nuave.ai";
 
 export function escapeHtml(value: string): string {

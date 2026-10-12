@@ -201,6 +201,7 @@ describe("smart blank intake", () => {
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({
           ...freshSmartSession(),
+          savedAt: new Date().toISOString(),
           stage: "summary",
           prepared,
           selection,
@@ -486,6 +487,7 @@ describe("smart blank intake", () => {
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({
           ...freshSmartSession(),
+          savedAt: new Date().toISOString(),
           stage: "summary",
           prepared,
           selection,
@@ -640,6 +642,7 @@ describe("smart blank intake", () => {
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
         ...freshSmartSession(),
+        savedAt: new Date().toISOString(),
         stage: "summary",
         prepared,
         selection,
@@ -782,6 +785,7 @@ describe("smart blank intake", () => {
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({
           ...freshSmartSession(),
+          savedAt: new Date().toISOString(),
           stage: "summary",
           prepared,
           selection: initialSmartSelection(prepared),
@@ -850,6 +854,7 @@ describe("smart blank intake", () => {
   );
 
   it("demonstrates the existing live/synthetic failed-attempt persistence collision (R-30 fence dependency)", async () => {
+    const seededAt = new Date().toISOString(); // before the date is mocked
     vi.spyOn(Date.prototype, "toISOString").mockReturnValue(
       "2026-10-04T00:00:00.000Z",
     );
@@ -861,6 +866,7 @@ describe("smart blank intake", () => {
     });
     const seed = {
       ...freshSmartSession(),
+      savedAt: seededAt,
       stage: "summary",
       prepared,
       selection: initialSmartSelection(prepared),
@@ -1496,6 +1502,7 @@ describe("Spec 013 J2 screen frame", () => {
   };
   const storedSession = (overrides: Record<string, unknown> = {}) => ({
     version: 9,
+    savedAt: new Date().toISOString(),
     stage: "summary",
     entry: { name: "Kedai Lama", source: "https://lama.example/" },
     identity: null,

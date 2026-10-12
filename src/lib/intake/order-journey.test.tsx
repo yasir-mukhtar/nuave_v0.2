@@ -406,6 +406,23 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     expect(readSmartSession()?.entry.name).toBe("Kedai Baru");
   });
 
+  it("progress with no save date, or an unreadable one, is treated as expired and removed", () => {
+    for (const savedAt of [undefined, "not a date", ""]) {
+      const session: Record<string, unknown> = {
+        ...freshSmartSession(),
+        entry: { name: "Kedai Tanpa Tanggal", source: "https://x.example/" },
+      };
+      if (savedAt === undefined) delete session.savedAt;
+      else session.savedAt = savedAt;
+      window.localStorage.setItem(
+        SMART_INTAKE_STORAGE_KEY,
+        JSON.stringify(session),
+      );
+      expect(readSmartSession()).toBeNull();
+      expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
+    }
+  });
+
   it("works without browser storage (blocked or full)", async () => {
     stubServer();
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {

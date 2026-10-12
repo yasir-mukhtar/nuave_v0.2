@@ -370,9 +370,10 @@ export function readSmartSession(now = Date.now()): SmartSession | null {
     const raw = storage.getItem(SMART_INTAKE_STORAGE_KEY);
     const session = parseSmartSession(raw);
     if (!session) return null;
-    // Every save stamps `savedAt`; a record without one has no age to expire.
+    // Every save stamps `savedAt`; a record without one (or with one that is
+    // not a date) has no known age and is treated as expired.
     if (
-      session.savedAt !== undefined &&
+      session.savedAt === undefined ||
       !(now - Date.parse(session.savedAt) <= SMART_SESSION_MAX_AGE_MS)
     ) {
       storage.removeItem(SMART_INTAKE_STORAGE_KEY);

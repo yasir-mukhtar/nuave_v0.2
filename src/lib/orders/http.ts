@@ -23,6 +23,14 @@ export function orderRuntime(): OrderRuntime | null {
   return { db, environment, mode: auditMode() };
 }
 
+/** On the production environment the audit mode must be exactly `live` or
+ * `synthetic`; anywhere else the usual synthetic fallback stays. */
+export function orderModeIsExplicit(): boolean {
+  if (orderEnvironment() !== "production") return true;
+  const raw = process.env.NUAVE_AUDIT_MODE?.trim();
+  return raw === "live" || raw === "synthetic";
+}
+
 /** Today's "not available" copy. The same body whether the cap is full, the
  * email is not on the list or the server is not set up, so the list cannot be
  * probed. */

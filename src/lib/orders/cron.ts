@@ -12,7 +12,7 @@ import {
 } from "../audit/provider";
 import { dailySpendLimitUsd, spendDatabase } from "../spending/provider-spend";
 import { orderEnvironment, siteOrigin } from "./config";
-import { fakeMailSender, type MailSender } from "./mail";
+import { fakeMailSender, REAL_SENDER_AVAILABLE, type MailSender } from "./mail";
 import { runOrders, type RunSummary } from "./runner";
 import type { OrderMode } from "./store";
 
@@ -61,8 +61,10 @@ export async function runScheduledOrders(
     } catch {
       return { ran: false, reason: "credentials_missing" };
     }
-    // The real Resend sender arrives with S3b; until then no email can be
-    // accepted in live mode, so no live order can be delivered.
+    // TEMPORARY (S3a, removed by S3b): the real Resend sender arrives with
+    // S3b. Until then no email can be accepted in live mode, so the cron does
+    // not touch live orders at all.
+    if (!REAL_SENDER_AVAILABLE) return { ran: false, reason: "sender_missing" };
     sender = null;
   } else {
     sender = fakeMailSender({ writeLocalFile: options.devTrigger === true });
