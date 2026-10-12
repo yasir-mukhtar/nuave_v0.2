@@ -1,8 +1,8 @@
 # Spec 016: Order, saved report and private link (S3)
 
-> Status: **Draft — waiting for founder approval. Do not implement.**
+> Status: **In review — founder answered Q1–Q6 on 2026-10-12; waiting for the founder's explicit approval. Do not implement.**
 > Owner: orchestrator
-> Updated: 2026-10-12 (revision 2, after independent review)
+> Updated: 2026-10-12 (revision 4: founder answers to Q1–Q6)
 > Implements: S3 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md),
 > plus the per-order cost limit that the plan lists under S4
 > Decision basis: [S0 decision, 2026-10-05](../../docs/DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
@@ -61,6 +61,8 @@ expires or is switched off. An order never reserves more than its own limit.
 - Founder support script: resend the link, replace it, switch it off.
 - The per-order cost limit.
 - A founder-only gate on live orders until S4/S5 (Q6).
+- Intake progress kept in the customer's browser, so closing the tab does
+  not lose it on the same browser (Q4).
 
 ## Non-scope
 
@@ -68,7 +70,7 @@ expires or is switched off. An order never reserves more than its own limit.
 - Cap alert emails to the founder at 80/90/100% (S4).
 - Final customer wording, terms and privacy (S5). S3 uses the draft wording
   below; the founder checks it at review.
-- Saving intake progress (Q4).
+- Intake progress on another device, or a "continue" link by email (Q4).
 - Accounts, passwords, a dashboard, report history, self-service link
   recovery, a stored PDF file.
 - Changing the recipient email (D5): by hand, outside S3.
@@ -204,6 +206,19 @@ and no order is created.
   (same status code, headers and page) and starts no provider call. The
   report-data route has a per-IP rate limit.
 
+**Intake progress (Q4: option A)**
+
+- **R-25:** The intake progress (answers, prepared summary, questions) and the
+  order ID are kept in the browser's local storage, not only in the tab. If
+  the customer closes the tab and opens `/audit` again in the same browser,
+  the journey continues at the same screen. No paid call is repeated.
+- **R-26:** If the saved order has expired (R-18), the customer sees screen 3a
+  again with the email filled in. `Lanjut` makes a new order (same gate and
+  cap check) and the saved progress continues on it, with no new paid call.
+- **R-27:** The saved progress is removed from the browser when the audit
+  starts, and after 7 days. The email is not kept in local storage after the
+  order is made; only the order ID is.
+
 **Support (founder only)**
 
 - **R-24:** A founder-run script (`npm run support -- <command> <order>`)
@@ -293,6 +308,10 @@ mode.
 - **AC-13:** The email and the link secret do not appear in any provider
   request, log line, or analytics event (tests check request bodies and
   logs).
+- **AC-17:** Given an intake at screen 8, when the tab closes and `/audit`
+  opens again in the same browser, then the journey is at screen 8 with the
+  same answers, and no paid call was repeated. With an expired order, a new
+  order is made and the answers stay.
 - **AC-14:** `verify-nuave` drives URL → order → intake → questions → close
   tab → report by link, in synthetic mode, with evidence in the PR.
 - **AC-15 (live, needs named approval):** one founder-approved live run on the
@@ -307,26 +326,24 @@ Two PRs. A Sonnet worker builds each. An Opus reviewer gives the verdict on
 each before merge.
 
 - **S3a:** cron runner proof (R-13) first, then order screen, order record,
-  gate, per-order limit, server-side audit and report, status progress.
+  gate, per-order limit, intake progress in the browser (R-25 to R-27),
+  server-side audit and report, status progress.
 - **S3b:** private link, report page, emails, not-available page, support
   script.
 
 S3a is not deployed to production until S3b is merged, because S3a alone
 saves reports that nobody can open.
 
-## Open questions (founder)
+## Founder decisions (2026-10-12)
 
-- **Q1 — Order limit.** Proposal: **USD 1.00** (about 5 × the observed USD
-  0.20 per run). Note: the plan says the daily cap must *cover* one order. This
-  spec goes one step further and *holds* the limit for each order until it
-  ends, so a running order can never be stopped by the cap and the cap is never
-  passed. With the USD 5 cap, at most 5 orders can be open at the same time in
-  one UTC day (the day starts at 07:00 Jakarta time). Finished orders give back
-  what they did not use. Held unknown costs lower that number. R-12 may show the
-  worst case needs more.
-- **Q2 — Unstarted order expiry.** Proposal: **2 hours**, so abandoned orders
-  do not hold the daily cap.
-- **Q3 — Record lifetimes.** Proposal (expiry dates only; no deletion now):
+- **Q1 — Order limit: USD 1.00** (accepted). The spec holds the limit for each
+  order until it ends, so a running order is never stopped by the cap and the
+  cap is never passed. With the USD 5 cap, at most 5 orders can be open at the
+  same time in one UTC day (the day starts at 07:00 Jakarta time). In S4 the
+  hold moves to the moment of payment, so unpaid visitors hold nothing. R-12
+  may show the worst case needs more; then the worker stops and asks.
+- **Q2 — Unstarted order expiry: 2 hours** (accepted).
+- **Q3 — Record lifetimes** (accepted; expiry dates only, no deletion now):
   - Order with email, saved results, report, send records: 12 months after
     completion (D1).
   - Order that failed or expired: 30 days, unless a support case is open.
@@ -336,18 +353,16 @@ saves reports that nobody can open.
     the shortest available; the founder checks it in the Resend account.
   - Cloudflare logs: never hold the email or secret (R-20, AC-13); kept for
     Cloudflare's own period.
-- **Q4 — Intake progress.** Not saved in S3. After S4 a paid customer who
-  closes the tab during the intake must restart it. Proposal: accept for S3;
-  decide in the S4 spec.
-- **Q5 — Accounts.** The founder creates the Resend key for `nuave.ai` and
-  confirms the domain before S3b review.
-- **Q6 — Who can make a live order before S4/S5.** S3 has no payment and no
-  privacy wording. If any visitor could make orders, anyone could send reports
-  to any inbox, and 5 free orders could hold the whole daily cap. Proposal:
-  **live orders only for emails on the founder's allowlist** until S4/S5.
-  Other visitors see "Audit tidak tersedia saat ini." Effect: after S3 is
-  deployed, the public site stops running live audits for strangers. This
-  matches the rule "no outside users yet".
+- **Q4 — Intake progress: option A** (decided). Progress is kept in the
+  customer's browser (R-25 to R-27). Another device or a "continue" email link
+  is not built; add it later only if real customers need it.
+- **Q5 — Accounts** (accepted). The founder creates the Resend key for
+  `nuave.ai` and confirms the domain before S3b review.
+- **Q6 — Live orders only for the founder's email list until S4/S5**
+  (agreed). The founder writes the list in a Cloudflare secret (R-06). Other
+  visitors see "Audit tidak tersedia saat ini." The public site stops running
+  live audits for strangers once S3 is deployed. Payment replaces the list in
+  S4.
 
 ## Verification record
 
