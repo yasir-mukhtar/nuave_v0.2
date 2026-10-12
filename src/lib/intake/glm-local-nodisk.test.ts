@@ -7,6 +7,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/spending/provider-spend", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/spending/provider-spend")>()),
+  // These tests are not about the spend cap (see spending/*.test.ts).
+  reserveProviderSpend: async () => ({ settle: async () => {} }),
+}));
 vi.mock("node:fs/promises", () => ({
   mkdir: vi.fn(async () => {
     throw new Error("filesystem access is forbidden on this path");

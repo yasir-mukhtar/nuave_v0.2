@@ -25,7 +25,9 @@ import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
+  serverOwnedAuditBudget,
 } from "@/lib/audit/telemetry";
+import { SpendCapError } from "@/lib/spending/provider-spend";
 import { parseAuditQuestionMethod } from "@/lib/audit/locked-question-pack";
 import { generateSyntheticLocalReport } from "@/lib/audit/local-direct-ten-audit";
 
@@ -115,6 +117,8 @@ export async function POST(request: Request) {
     // direct-ten wire prompts are deliberately thin (id/question/review_status).
     const lockedInput = {
       ...input,
+      // Client-sent spend history is ignored; the daily ledger decides.
+      budget: serverOwnedAuditBudget(),
       brief: input.context,
       prompts: input.prompts as AuditPrompt[],
       language: "id" as const,
@@ -166,6 +170,19 @@ export async function POST(request: Request) {
           diagnostics: [],
         },
         { status: error.status },
+      );
+    }
+    // The daily spend cap or ledger being unavailable is temporary: the
+    // customer can retry later, so it must not read as a terminal limit.
+    if (error instanceof SpendCapError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: "REPORT_TRANSIENT_FAILURE",
+          telemetry: [],
+          diagnostics: [],
+        },
+        { status: 503 },
       );
     }
     if (error instanceof AuditBudgetError) {

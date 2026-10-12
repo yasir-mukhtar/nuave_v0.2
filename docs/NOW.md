@@ -1,8 +1,8 @@
 # Nuave now
 
-> Updated: 2026-10-05
-> Stage: Stage 1 accepted; S0 private report delivery decided; full S2 integration is next
-> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 exists only on a feature branch, nothing enforced on main
+> Updated: 2026-10-12
+> Stage: Stage 1 accepted; S0 private report delivery decided; S2 built on PR #127, awaiting merge
+> Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 is on PR #127; nothing enforced on main until it merges
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
 ## Current state
@@ -35,19 +35,19 @@
   dashboard or report-history product at launch. Reviewed `a0738376`
   (PASS+NOTES), approved by Fox `d68c7478`. It is internal policy, not a
   published promise; main code and the live product are unchanged.
-- **Next: full S2 integration** — the server-side spending cap on the real
-  audit path. Its prerequisites are unverified:
-  - the foundation exists only on feature branch
-    `feat/s2-ledger-foundation-20261004` (committed `fad8cfe`, plus a preserved
-    uncommitted canonical timestamp correction): 21 focused tests passed, but
-    the revision-3 `npm run verify` FAILED on four browser checks (52 passed);
-  - there is no final independent acceptance of that correction, no release,
-    and no enforcement on main; the worker's consumed 7/9 budget is not reset;
-  - the S3 save-and-deliver build still needs its own approved bounded spec.
-  Integration covers provider-call inventory, storage
-  compatibility/bindings, credible versioned pricing bounds, retry accounting
-  and fail-closed provider integration. No new S2 worker dispatch is part of
-  this docs task.
+- **S2 is built and reviewed on [PR #127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127)**
+  (2026-10-12; review PASS+NOTES, notes fixed in `8c9d6a6`). Every paid
+  provider call reserves its maximum cost in D1 database `nuave-v2-spend`
+  (binding `SPEND_DB`) before dispatch and settles to the actual cost. New
+  paid work is refused once today's UTC total reaches
+  `NUAVE_DAILY_SPEND_LIMIT_USD` (default USD 5, founder decision 2026-10-12).
+  Live mode without the binding fails closed. Browser-sent spend history is
+  ignored. It replaces the unmerged `feat/s2-ledger-foundation-20261004` and
+  `feat/s2-spend-guard-integration-20261005` branches. Nothing is enforced
+  until the founder merges and deploys it.
+- **Then: S3** (order with email, saved and delivered reports, audit
+  survives tab close) needs its own short Stage 2 spec, approved by the
+  founder, before any build.
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or
   billing proof. No unidentified process was killed and no Desktop state was

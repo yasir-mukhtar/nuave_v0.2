@@ -30,6 +30,10 @@ import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { auditMode, glmKeyPresent } from "../audit/deployment-gate";
 import {
+  reserveProviderSpend,
+  SpendCapError,
+} from "../spending/provider-spend";
+import {
   parseQuestionFactsV3,
   projectQuestionFactsV2,
   type QuestionFactsV3,
@@ -546,6 +550,10 @@ function failedCost(body: unknown): {
   return { billedUsd, available: billedUsd !== null };
 }
 
+/** Fixed per-call reservation for the GLM question call. The observed settled
+ * cost is about USD 0.0005; this leaves wide headroom without a price table. */
+const GLM_CALL_RESERVE_USD = 0.05;
+
 /** Run one preparation attempt over the confirmed intake. `transport`
  * injects the envelope for tests; when omitted the adapter picks the live
  * transport only in the server-selected live mode, else the labeled stub.
@@ -605,6 +613,29 @@ export async function prepareGlmQuestionsForIntake(input: {
             : "ok",
         }));
   const liveAttempt = liveRequested || transport.kind === "cheaper-inference";
+  // Daily spend cap (plan S2): a real GLM call reserves a fixed upper-bound
+  // first (before the local evidence attempt is consumed, so a refusal never
+  // burns it) and is refused, unsent, when the server's daily limit is reached or
+  // the ledger is unavailable. The settled `billed_cost_usd` replaces it.
+  let spend: Awaited<ReturnType<typeof reserveProviderSpend>> | null = null;
+  if (liveAttempt) {
+    try {
+      spend = await reserveProviderSpend({
+        provider: "cheaper-inference",
+        stage: "questions",
+        usd: GLM_CALL_RESERVE_USD,
+      });
+    } catch (error) {
+      if (!(error instanceof SpendCapError)) throw error;
+      return {
+        status: "failed",
+        reason: "spend_cap",
+        detail: "daily spend cap reached or unavailable; nothing was sent",
+        provenance: provenanceFor(transport.kind),
+        providerContact: "none",
+      };
+    }
+  }
   // Spec 010 R-05: the frozen-attempt/consume/evidence disk gate exists only
   // for local evidence runs — an explicit evidenceDir or
   // NUAVE_GLM_EVIDENCE_DIR. With neither set no filesystem call is attempted:
@@ -620,7 +651,8 @@ export async function prepareGlmQuestionsForIntake(input: {
       requestBody,
     );
     requestHash = gate.requestHash;
-    if (!gate.ok)
+    if (!gate.ok) {
+      await spend?.settle(0); // nothing was sent
       return {
         status: "failed",
         reason: gate.reason,
@@ -628,9 +660,11 @@ export async function prepareGlmQuestionsForIntake(input: {
         provenance: provenanceFor(transport.kind),
         providerContact: "none",
       };
+    }
     // Atomically consumed before the send — a duplicate, concurrent call,
     // refresh, retry or post-timeout reuse can never send again.
-    if (!(await consumeGlmAttempt(evidenceDir, gate.requestHash)))
+    if (!(await consumeGlmAttempt(evidenceDir, gate.requestHash))) {
+      await spend?.settle(0); // nothing was sent
       return {
         status: "failed",
         reason: "attempt_consumed",
@@ -639,8 +673,18 @@ export async function prepareGlmQuestionsForIntake(input: {
         provenance: provenanceFor(transport.kind),
         providerContact: "none",
       };
+    }
   }
   const envelope = await transport.call(requestBody);
+  const settledUsd = cheaperInferenceBilledCostUsd(envelope.body);
+  // A clear HTTP 4xx was rejected before the model ran, so it cost nothing;
+  // anything else without a billed cost (408, 5xx, timeout, no response) stays held.
+  const rejectedUnrun =
+    envelope.httpStatus >= 400 &&
+    envelope.httpStatus < 500 &&
+    envelope.httpStatus !== 408;
+  if (spend && settledUsd !== null) await spend.settle(settledUsd);
+  else if (spend && rejectedUnrun) await spend.settle(0);
   // Normalize once, before optional evidence writes and all early returns.
   // Diagnostics are outcome/owner-only sidecar metadata, never pack contents.
   const assessment = assessCheaperInferenceIndonesianResponse({

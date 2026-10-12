@@ -21,6 +21,10 @@ import {
   failedCallTelemetry,
   reserveAuditCall,
 } from "./telemetry";
+import {
+  releaseIfRejectedUnrun,
+  reserveProviderSpend,
+} from "../spending/provider-spend";
 import { throwIfAuditAborted, type QuestionExecuteInput } from "./retry";
 import type { AuditObservation, Source } from "./types";
 
@@ -36,6 +40,8 @@ function client() {
   const baseURL = process.env.OPENAI_BASE_URL?.trim() || undefined;
   return new OpenAI({
     apiKey,
+    // Keep retries at the budgeted application layer.
+    maxRetries: 0,
     ...(baseURL ? { baseURL } : {}),
     // OpenCode Go rejects requests without its routing session header; the
     // protected path sets OPENAI_BASE_URL to the OpenCode Go endpoint.
@@ -134,6 +140,11 @@ export async function executeAbortableProtectedObservation(
     requested_model: requestedModel,
     has_web_search: true,
   });
+  const spend = await reserveProviderSpend({
+    provider: "openai",
+    stage: "observation",
+    usd: reservedCost,
+  });
   const startedAt = Date.now();
 
   try {
@@ -141,6 +152,13 @@ export async function executeAbortableProtectedObservation(
       request,
       input.signal ? { signal: input.signal } : undefined,
     );
+    const completed = completedCallTelemetry({
+      stage: "observation",
+      started_at_ms: startedAt,
+      requested_model: requestedModel,
+      response,
+    });
+    await spend.settle(completed.accounted_cost_usd);
     throwIfAuditAborted(input.signal);
     const searchExecuted = response.output.some(
       (item) =>
@@ -166,16 +184,10 @@ export async function executeAbortableProtectedObservation(
       sources: collectSources(response),
       run_status: "completed",
       failure_reason: "",
-      telemetry: [
-        completedCallTelemetry({
-          stage: "observation",
-          started_at_ms: startedAt,
-          requested_model: requestedModel,
-          response,
-        }),
-      ],
+      telemetry: [completed],
     };
   } catch (error) {
+    await releaseIfRejectedUnrun(spend, error);
     throwIfAuditAborted(input.signal);
     const call = failedCallTelemetry({
       stage: "observation",

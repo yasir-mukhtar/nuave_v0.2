@@ -42,7 +42,7 @@ done.
 | **Stage 2** | **Get ready to take money** | | | | |
 | S0 | Decision: how to save and email reports (§4.2) | Founder represented by Fox; Pac records | Done — scoped private policy approved | — | [Fox APPROVE; packet PASS+NOTES](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved) |
 | S1 | Security patches | Worker | Done; pulled forward, merged | [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110#issuecomment-5956716058) (`9cca862`; production audit clean, dev-only findings disclosed) |
-| S2 | Spending cap on the server | Worker | Foundation held; full integration next, not enforced | [#123](https://github.com/yasir-mukhtar/nuave_v0.2/pull/123) | Revision-3 offline gate failed; correction unaccepted; integration prerequisites pending |
+| S2 | Spending cap on the server | Worker | Built on draft PR; awaiting founder merge and deploy | [#127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127) (supersedes #123) | [PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127#issuecomment-6118211608) (`8c9d6a6`; notes fixed) |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Not started | — | — |
 | S4 | Real payment + founder test pass | Worker | Not started | — | — |
 | S5 | Terms, price and promise wording | Worker | Not started | — | — |

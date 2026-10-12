@@ -25,6 +25,7 @@ import {
   AuditBudgetError,
   AuditCallExecutionError,
   configuredAuditCarryoverCostUsd,
+  serverOwnedAuditBudget,
 } from "@/lib/audit/telemetry";
 import {
   INVALID_SOURCE_INPUT_MESSAGE,
@@ -152,9 +153,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const input = extractionRequestSchema
+    // The browser's budget/spend history is validated for shape only and then
+    // discarded: the daily spend ledger, not the client, decides admission.
+    const parsed = extractionRequestSchema
       .extend({ budget: auditBudgetSchema })
       .parse({ ...record, website_url: normalizedSource.normalizedUrl });
+    const input = { ...parsed, budget: serverOwnedAuditBudget() };
 
     // Spec 010 R-02: synthetic mode serves the labeled substitute at this
     // same boundary; live mode runs the real extraction. `preparation_mode`

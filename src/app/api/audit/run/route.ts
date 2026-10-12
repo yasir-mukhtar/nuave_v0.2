@@ -29,6 +29,7 @@ import {
   productionObservationMethodErrors,
   syntheticLocalObservationMethodErrors,
 } from "@/lib/audit/production-observation-method";
+import { serverOwnedAuditBudget } from "@/lib/audit/telemetry";
 import { runAuditObservations } from "@/lib/audit/run-orchestrator";
 import { encodeAuditRunEvent, type AuditRunEvent } from "@/lib/audit/stream";
 import { executeSyntheticLocalObservation } from "@/lib/audit/local-direct-ten-audit";
@@ -176,18 +177,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const seenCalls = new Set<string>();
-    const foldedCalls = [
-      ...input.budget.calls,
-      ...resume.flatMap((observation) => observation.telemetry),
-    ].filter((call) => {
-      const key =
-        call.response_id || `${call.stage}:${call.attempt}:${call.started_at}`;
-      if (seenCalls.has(key)) return false;
-      seenCalls.add(key);
-      return true;
-    });
-    const budget = { ...input.budget, calls: foldedCalls };
+    // Client-sent `budget.calls`/carryover and resumed telemetry are not
+    // trusted for spend; the daily spend ledger decides every paid call.
+    const budget = serverOwnedAuditBudget();
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({

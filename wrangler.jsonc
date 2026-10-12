@@ -58,6 +58,13 @@
       },
     },
   ],
+  "d1_databases": [
+    {
+      "binding": "SPEND_DB",
+      "database_name": "nuave-v2-spend",
+      "database_id": "e2bd6ac9-7fd9-4d3a-890c-66fcfecd23ea",
+    },
+  ],
   "observability": {
     "enabled": true,
   },
