@@ -16,6 +16,11 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+vi.mock("@/lib/spending/provider-spend", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/spending/provider-spend")>()),
+  // These tests are not about the spend cap (see spending/*.test.ts).
+  reserveProviderSpend: async () => ({ settle: async () => {} }),
+}));
 import { INTAKE_FIXTURES } from "./fixtures";
 import { resolveJourneyPath } from "./navigation";
 import { freezeLocalIntake } from "./local-questions";

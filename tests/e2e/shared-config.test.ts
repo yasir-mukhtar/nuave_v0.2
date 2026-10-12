@@ -45,9 +45,9 @@ describe("offlineE2EServerEnv", () => {
     expect(
       offlineE2EServerEnv({ NUAVE_AUDIT_MODE: "synthetic" }).NUAVE_AUDIT_MODE,
     ).toBe("synthetic");
-    expect(() =>
-      offlineE2EServerEnv({ NUAVE_PROVIDER: "gemini" }),
-    ).toThrow("Unsupported Playwright server env override");
+    expect(() => offlineE2EServerEnv({ NUAVE_PROVIDER: "gemini" })).toThrow(
+      "Unsupported Playwright server env override",
+    );
     expect(() =>
       offlineE2EServerEnv({ NUAVE_GLM_LOCAL_EXPERIMENT: "true" }),
     ).toThrow("Unsupported Playwright server env override");

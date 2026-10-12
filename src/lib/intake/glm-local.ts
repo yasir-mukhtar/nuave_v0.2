@@ -30,6 +30,10 @@ import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { auditMode, glmKeyPresent } from "../audit/deployment-gate";
 import {
+  reserveProviderSpend,
+  SpendCapError,
+} from "../spending/provider-spend";
+import {
   parseQuestionFactsV3,
   projectQuestionFactsV2,
   type QuestionFactsV3,
@@ -546,6 +550,10 @@ function failedCost(body: unknown): {
   return { billedUsd, available: billedUsd !== null };
 }
 
+/** Fixed per-call reservation for the GLM question call. The observed settled
+ * cost is about USD 0.0005; this leaves wide headroom without a price table. */
+const GLM_CALL_RESERVE_USD = 0.05;
+
 /** Run one preparation attempt over the confirmed intake. `transport`
  * injects the envelope for tests; when omitted the adapter picks the live
  * transport only in the server-selected live mode, else the labeled stub.
@@ -640,7 +648,31 @@ export async function prepareGlmQuestionsForIntake(input: {
         providerContact: "none",
       };
   }
+  // Daily spend cap (plan S2): a real GLM call reserves a fixed upper-bound
+  // first and is refused, unsent, when the server's daily limit is reached or
+  // the ledger is unavailable. The settled `billed_cost_usd` replaces it.
+  let spend: Awaited<ReturnType<typeof reserveProviderSpend>> | null = null;
+  if (liveAttempt) {
+    try {
+      spend = await reserveProviderSpend({
+        provider: "cheaper-inference",
+        stage: "questions",
+        usd: GLM_CALL_RESERVE_USD,
+      });
+    } catch (error) {
+      if (!(error instanceof SpendCapError)) throw error;
+      return {
+        status: "failed",
+        reason: "spend_cap",
+        detail: "daily spend cap reached or unavailable; nothing was sent",
+        provenance: provenanceFor(transport.kind),
+        providerContact: "none",
+      };
+    }
+  }
   const envelope = await transport.call(requestBody);
+  const settledUsd = cheaperInferenceBilledCostUsd(envelope.body);
+  if (spend && settledUsd !== null) await spend.settle(settledUsd);
   // Normalize once, before optional evidence writes and all early returns.
   // Diagnostics are outcome/owner-only sidecar metadata, never pack contents.
   const assessment = assessCheaperInferenceIndonesianResponse({

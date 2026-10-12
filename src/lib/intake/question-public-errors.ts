@@ -70,6 +70,7 @@ const reasons = {
   evidence: "unavailable",
   transport: "interrupted",
   internal_error: "unavailable",
+  spend_cap: "unavailable",
 } as const;
 /** Locally defined preflight codes plus the existing shared-gate codes. */
 const codes = {

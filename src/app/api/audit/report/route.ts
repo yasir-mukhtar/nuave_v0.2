@@ -25,6 +25,7 @@ import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import {
   AuditBudgetError,
   AuditCallExecutionError,
+  serverOwnedAuditBudget,
 } from "@/lib/audit/telemetry";
 import { parseAuditQuestionMethod } from "@/lib/audit/locked-question-pack";
 import { generateSyntheticLocalReport } from "@/lib/audit/local-direct-ten-audit";
@@ -115,6 +116,8 @@ export async function POST(request: Request) {
     // direct-ten wire prompts are deliberately thin (id/question/review_status).
     const lockedInput = {
       ...input,
+      // Client-sent spend history is ignored; the daily ledger decides.
+      budget: serverOwnedAuditBudget(),
       brief: input.context,
       prompts: input.prompts as AuditPrompt[],
       language: "id" as const,

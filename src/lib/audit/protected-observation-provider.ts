@@ -21,6 +21,7 @@ import {
   failedCallTelemetry,
   reserveAuditCall,
 } from "./telemetry";
+import { reserveProviderSpend } from "../spending/provider-spend";
 import { throwIfAuditAborted, type QuestionExecuteInput } from "./retry";
 import type { AuditObservation, Source } from "./types";
 
@@ -136,6 +137,11 @@ export async function executeAbortableProtectedObservation(
     requested_model: requestedModel,
     has_web_search: true,
   });
+  const spend = await reserveProviderSpend({
+    provider: "openai",
+    stage: "observation",
+    usd: reservedCost,
+  });
   const startedAt = Date.now();
 
   try {
@@ -143,6 +149,13 @@ export async function executeAbortableProtectedObservation(
       request,
       input.signal ? { signal: input.signal } : undefined,
     );
+    const completed = completedCallTelemetry({
+      stage: "observation",
+      started_at_ms: startedAt,
+      requested_model: requestedModel,
+      response,
+    });
+    await spend.settle(completed.accounted_cost_usd);
     throwIfAuditAborted(input.signal);
     const searchExecuted = response.output.some(
       (item) =>
@@ -168,14 +181,7 @@ export async function executeAbortableProtectedObservation(
       sources: collectSources(response),
       run_status: "completed",
       failure_reason: "",
-      telemetry: [
-        completedCallTelemetry({
-          stage: "observation",
-          started_at_ms: startedAt,
-          requested_model: requestedModel,
-          response,
-        }),
-      ],
+      telemetry: [completed],
     };
   } catch (error) {
     throwIfAuditAborted(input.signal);

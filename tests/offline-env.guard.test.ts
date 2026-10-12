@@ -56,10 +56,7 @@ function isProcessObjectExpression(node: ts.Expression): boolean {
   if (ts.isIdentifier(node)) return node.text === "process";
   const isGlobalThis = (e: ts.Expression) =>
     ts.isIdentifier(e) && e.text === "globalThis";
-  if (
-    ts.isPropertyAccessExpression(node) &&
-    node.name.text === "process"
-  ) {
+  if (ts.isPropertyAccessExpression(node) && node.name.text === "process") {
     return isGlobalThis(node.expression);
   }
   if (ts.isElementAccessExpression(node)) {
@@ -505,9 +502,9 @@ describe("offline e2e env coverage (§B.3 class B)", () => {
         'const KEY = "NUAVE_B3_PROBE";\nconst v = process.env[KEY];',
       ).keys,
     ).toEqual(["NUAVE_B3_PROBE"]);
-    expect(scanEnvReads("src/x.ts", "const k = `NUAVE_B3_PROBE`;").keys).toEqual(
-      ["NUAVE_B3_PROBE"],
-    );
+    expect(
+      scanEnvReads("src/x.ts", "const k = `NUAVE_B3_PROBE`;").keys,
+    ).toEqual(["NUAVE_B3_PROBE"]);
     // Known good: comments never produce nodes.
     expect(
       scanEnvReads(
@@ -529,10 +526,8 @@ describe("offline e2e env coverage (§B.3 class B)", () => {
     ).toEqual(["NUAVE_B3_PROBE"]);
     // Known bad: destructuring under an alias still names the env key.
     expect(
-      scanEnvReads(
-        "src/x.ts",
-        "const { NUAVE_B3_PROBE: probe } = process.env;",
-      ).keys,
+      scanEnvReads("src/x.ts", "const { NUAVE_B3_PROBE: probe } = process.env;")
+        .keys,
     ).toEqual(["NUAVE_B3_PROBE"]);
     // Known bad: a computed access whose key is not a fixed literal fails
     // closed — `process.env[`NUAVE_${x}`]` and an unresolved identifier.
@@ -610,11 +605,11 @@ describe("offline e2e env coverage (§B.3 class B)", () => {
     expect(
       scanEnvReads("src/x.ts", "const p = process;").unverifiable,
     ).toHaveLength(1);
+    expect(scanEnvReads("src/x.ts", "f(process);").unverifiable).toHaveLength(
+      1,
+    );
     expect(
-      scanEnvReads("src/x.ts", "f(process);").unverifiable,
-    ).toHaveLength(1);
-    expect(
-      scanEnvReads("src/x.ts", 'const v = process[key];').unverifiable,
+      scanEnvReads("src/x.ts", "const v = process[key];").unverifiable,
     ).toHaveLength(1);
     expect(
       scanEnvReads("src/x.ts", 'require("process");').unverifiable,
@@ -636,15 +631,13 @@ describe("offline e2e env coverage (§B.3 class B)", () => {
       scanEnvReads("src/x.ts", "if (key in process.env) {}").unverifiable,
     ).toHaveLength(1);
     // Known good: `process.cwd()` and other members are not env reads.
-    expect(
-      scanEnvReads("src/x.ts", "const d = process.cwd();"),
-    ).toEqual({ keys: [], unverifiable: [] });
+    expect(scanEnvReads("src/x.ts", "const d = process.cwd();")).toEqual({
+      keys: [],
+      unverifiable: [],
+    });
     // Known good: a literal `in` check on an allowed key is not a violation.
     expect(
-      scanEnvReads(
-        "src/x.ts",
-        'if ("NUAVE_AUDIT_MODE" in process.env) {}',
-      ),
+      scanEnvReads("src/x.ts", 'if ("NUAVE_AUDIT_MODE" in process.env) {}'),
     ).toEqual({ keys: ["NUAVE_AUDIT_MODE"], unverifiable: [] });
   });
 

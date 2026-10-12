@@ -51,6 +51,7 @@ import {
   reserveAuditCall,
   structuredOutputFailureDetail,
 } from "./telemetry";
+import { reserveProviderSpend } from "../spending/provider-spend";
 
 const DEFAULT_MODEL = AUDIT_MODEL;
 const REASONING_EFFORTS = [
@@ -413,18 +414,23 @@ export async function extractBusinessDraft(input: ExtractionInput): Promise<{
       requested_model: requestedModel,
       has_web_search: true,
     });
+    const spend = await reserveProviderSpend({
+      provider: "openai",
+      stage: "extract",
+      usd: reservedCost,
+    });
     const startedAt = Date.now();
     try {
       const response = await client().responses.parse(request);
-      calls.push(
-        completedCallTelemetry({
-          stage: "extract",
-          attempt: attemptNumber,
-          started_at_ms: startedAt,
-          requested_model: requestedModel,
-          response,
-        }),
-      );
+      const completed = completedCallTelemetry({
+        stage: "extract",
+        attempt: attemptNumber,
+        started_at_ms: startedAt,
+        requested_model: requestedModel,
+        response,
+      });
+      calls.push(completed);
+      await spend.settle(completed.accounted_cost_usd);
       return response;
     } catch (error) {
       calls.push(
@@ -548,9 +554,21 @@ export async function executeAuditPrompt(input: {
     requested_model: requestedModel,
     has_web_search: true,
   });
+  const spend = await reserveProviderSpend({
+    provider: "openai",
+    stage: "observation",
+    usd: reservedCost,
+  });
   const startedAt = Date.now();
   try {
     const response = await client().responses.create(request);
+    const completed = completedCallTelemetry({
+      stage: "observation",
+      started_at_ms: startedAt,
+      requested_model: requestedModel,
+      response,
+    });
+    await spend.settle(completed.accounted_cost_usd);
     // Spec 003 R-16/R-18: web search is REQUIRED for every observation. If
     // the tool did not actually execute (no web_search_call item and no
     // grounded sources), the response is not a grounded observation — treat
@@ -584,14 +602,7 @@ export async function executeAuditPrompt(input: {
       sources: collectSources(response),
       run_status: "completed",
       failure_reason: "",
-      telemetry: [
-        completedCallTelemetry({
-          stage: "observation",
-          started_at_ms: startedAt,
-          requested_model: requestedModel,
-          response,
-        }),
-      ],
+      telemetry: [completed],
     };
   } catch (error) {
     const telemetry = failedCallTelemetry({
@@ -750,6 +761,11 @@ export async function generateReportContent(
     requested_model: requestedModel,
     has_web_search: false,
   });
+  const spend = await reserveProviderSpend({
+    provider: "openai",
+    stage: "report",
+    usd: reservedCost,
+  });
   const startedAt = Date.now();
   let telemetry: AuditCallTelemetry | undefined;
   try {
@@ -760,6 +776,7 @@ export async function generateReportContent(
       requested_model: requestedModel,
       response,
     });
+    await spend.settle(telemetry.accounted_cost_usd);
     return {
       content: assembleReportContent(
         structuredOutputOrThrow<ReportSynthesis>(

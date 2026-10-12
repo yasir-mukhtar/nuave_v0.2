@@ -24,6 +24,11 @@ const providerMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/audit/provider", () => providerMocks);
+vi.mock("@/lib/spending/provider-spend", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/spending/provider-spend")>()),
+  // These tests are not about the spend cap (see spending/*.test.ts).
+  reserveProviderSpend: async () => ({ settle: async () => {} }),
+}));
 
 import { POST as runPOST } from "../../app/api/audit/run/route";
 import { POST as reportPOST } from "../../app/api/audit/report/route";

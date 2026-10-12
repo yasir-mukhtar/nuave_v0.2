@@ -118,18 +118,21 @@ export function configuredAuditCarryoverCostUsd() {
 }
 
 /**
- * This is a floor on the carryover only. `budget.calls` — the running ledger
- * of this session's own calls, which `reserveAuditCall` sums to compute
- * `accounted` — is entirely client-supplied with no server-side session
- * store: a client that posts `calls: []` restores full session headroom, so
- * the USD 5 ceiling is enforced per-request, not truly per-session, unless
- * the caller (e.g. `run/route.ts`) independently reconstructs `calls` from a
- * trusted source. A real server-owned session ledger is out of this phase's
- * scope (`specs/003-live-report-quality-gate/SPEC.md` Non-scope: "server-owned
- * order/run state ... Phase 4") and is an accepted gap while the live path is
- * founder-operated only (R-05). Do not treat this function as closing that
- * gap — it only stops the carryover from being reported below a configured
- * minimum (O-7, Phase 3 fix-round-2 adversarial review, 2026-08-18).
+ * The budget every paid route must use. The browser's `budget.calls` and
+ * `carryover_cost_usd` are NOT trusted: a client that posts `calls: []` would
+ * restore full headroom, so routes ignore them and start from this empty
+ * budget. What it bounds is only the calls made inside one request. The real
+ * spend cap is the server-side daily ledger (`src/lib/spending`), which
+ * `reserveProviderSpend` checks before every paid provider call.
+ */
+export function serverOwnedAuditBudget(): AuditBudget {
+  return { limit_usd: AUDIT_COST_LIMIT_USD, carryover_cost_usd: 0, calls: [] };
+}
+
+/**
+ * Floor on the carryover from server configuration only
+ * (`OPENAI_AUDIT_CARRYOVER_COST_USD`); the carryover a client reports does not
+ * lower or raise what the server decides from.
  */
 export function effectiveAuditCarryoverCostUsd(budget: AuditBudget) {
   return Math.max(budget.carryover_cost_usd, configuredAuditCarryoverCostUsd());

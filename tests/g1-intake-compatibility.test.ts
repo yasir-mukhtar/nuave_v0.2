@@ -18,11 +18,14 @@ const fixture = INTAKE_FIXTURES.F1;
 const scopes = ["brand", "cabang", "produk"] as const;
 
 function answered(scope: IntakeState["scope"] = "brand"): IntakeState {
-  const seeded = setScopeAnswer(createIntakeState(fixture), {
-    brand: "scope-whole-brand",
-    cabang: "scope-branch",
-    produk: "scope-product",
-  }[scope]);
+  const seeded = setScopeAnswer(
+    createIntakeState(fixture),
+    {
+      brand: "scope-whole-brand",
+      cabang: "scope-branch",
+      produk: "scope-product",
+    }[scope],
+  );
   return {
     ...setCategoryCustom(
       seeded,
@@ -51,7 +54,8 @@ function answered(scope: IntakeState["scope"] = "brand"): IntakeState {
             ],
           }
         : { selectedId: null, custom: [] },
-    offerings: scope === "produk" ? { onIds: [], custom: [] } : seeded.offerings,
+    offerings:
+      scope === "produk" ? { onIds: [], custom: [] } : seeded.offerings,
     competitors: {
       keptIds: [],
       custom: ["Kedai Pagi", "Kedai Sore"],

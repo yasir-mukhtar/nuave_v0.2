@@ -31,6 +31,11 @@ vi.mock("../audit/telemetry", async (importOriginal) => {
   const original = await importOriginal<typeof import("../audit/telemetry")>();
   return { ...original, reserveAuditCall: vi.fn(original.reserveAuditCall) };
 });
+vi.mock("@/lib/spending/provider-spend", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/spending/provider-spend")>()),
+  // These tests are not about the spend cap (see spending/*.test.ts).
+  reserveProviderSpend: async () => ({ settle: async () => {} }),
+}));
 vi.mock("openai", async (importOriginal) => {
   const actual = await importOriginal<typeof import("openai")>();
   // These Node route handlers run inside the UI's jsdom test process only.
@@ -50,7 +55,7 @@ import {
   extractBusinessDraft,
   extractionDraftOrManualFallback,
 } from "../audit/openai";
-import { reserveAuditCall } from "../audit/telemetry";
+import { reserveAuditCall, serverOwnedAuditBudget } from "../audit/telemetry";
 import { fixtureCallTelemetry } from "../audit/fixtures/telemetry";
 import {
   SOURCE_EXCERPT_EMPTY_NOTICE,
@@ -1116,7 +1121,8 @@ describe("real extraction route and SDK controls", () => {
       expect(result.status).toBe(200);
       expect((await result.json()).source_excerpt_status).toBe("included");
       const reservation = vi.mocked(reserveAuditCall).mock.calls[0][0];
-      expect(reservation.budget).toEqual(input().budget);
+      // The browser's budget is not trusted: the server starts from its own.
+      expect(reservation.budget).toEqual(serverOwnedAuditBudget());
       const data = JSON.parse(requests[0].input[1].content).public_source_data;
       expect(data.text).toBe(excerpt);
       expect(data.source_url).toBe(source);
@@ -1152,39 +1158,42 @@ describe("real extraction route and SDK controls", () => {
     ).toHaveLength(1);
     expect((await result.json()).telemetry).toHaveLength(2);
   });
-  it("prior extraction blocks a subsequent technical retry and preserves its paid ledger", async () => {
+  it("client-reported prior extraction is ignored; only this request's own calls count", async () => {
     incomplete = true;
     const result = await post();
     const body = await result.json();
     expect(pageReads).toBe(1);
-    expect(requests).toHaveLength(1);
-    expect(body.telemetry).toHaveLength(1);
+    expect(requests).toHaveLength(2);
+    expect(body.telemetry).toHaveLength(2);
     expect(
       vi.mocked(reserveAuditCall).mock.calls[1][0].budget.calls,
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
-  it.each(["stage", "budget", "floor"])(
-    "an exhausted %s retains complete reservation input and prevents provider dispatch",
+  it.each(["stage", "budget"])(
+    "client-reported exhausted %s spend is ignored and does not block dispatch",
     async (kind) => {
       const value = input();
       if (kind === "stage")
         value.budget.calls.push(fixtureCallTelemetry({ stage: "extract" }));
-      else if (kind === "budget") value.budget.carryover_cost_usd = 4.9;
-      else vi.stubEnv("OPENAI_AUDIT_CARRYOVER_COST_USD", "4.9");
-      const original = structuredClone(value);
+      else value.budget.carryover_cost_usd = 4.9;
       const result = await post(value);
-      expect(result.ok).toBe(false);
-      expect(requests).toHaveLength(0);
-      expect(pageReads).toBe(1);
-      expect(value).toEqual(original);
-      expect(
-        JSON.parse(
-          (vi.mocked(reserveAuditCall).mock.calls[0][0].request as SDKRequest)
-            .input[1].content,
-        ).public_source_data.text,
-      ).toBe(excerpt);
+      expect(result.ok).toBe(true);
+      expect(requests).toHaveLength(1);
     },
   );
+  it("a server-configured carryover floor still prevents provider dispatch", async () => {
+    vi.stubEnv("OPENAI_AUDIT_CARRYOVER_COST_USD", "4.9");
+    const result = await post(input());
+    expect(result.ok).toBe(false);
+    expect(requests).toHaveLength(0);
+    expect(pageReads).toBe(1);
+    expect(
+      JSON.parse(
+        (vi.mocked(reserveAuditCall).mock.calls[0][0].request as SDKRequest)
+          .input[1].content,
+      ).public_source_data.text,
+    ).toBe(excerpt);
+  });
   it("provider failure retains included-source outcome and failed-call telemetry, not a source error", async () => {
     providerError = true;
     const result = await post();

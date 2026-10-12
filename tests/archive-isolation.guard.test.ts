@@ -11,8 +11,7 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = process.cwd();
 const SCANNED_DIRS = ["src", "tests"];
-const IMPORT_SPECIFIER_PATTERN =
-  /(?:from|import)\s*\(?\s*["']([^"']+)["']/g;
+const IMPORT_SPECIFIER_PATTERN = /(?:from|import)\s*\(?\s*["']([^"']+)["']/g;
 
 function* sourceFiles(dir: string): Generator<string> {
   for (const entry of readdirSync(dir)) {

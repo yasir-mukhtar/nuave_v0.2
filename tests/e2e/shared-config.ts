@@ -60,6 +60,7 @@ export function offlineE2EServerEnv(
     // inheriting a founder-local evidence or pack directory.
     NUAVE_GLM_EVIDENCE_DIR: "",
     NUAVE_LOCAL_AUDIT_PACK_DIR: "",
+    NUAVE_DAILY_SPEND_LIMIT_USD: "",
     // Spec 010: the public audit journey stays switched off unless a suite
     // enables it; "synthetic" is the failure-safe default and the only mode
     // e2e may run — "live" requires real credentials, all blanked above.
