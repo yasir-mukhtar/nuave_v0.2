@@ -1,8 +1,8 @@
 # Spec 016: Order, saved report and private link (S3)
 
-> Status: **In review — revision 5; waiting for re-review and the founder's explicit approval. Do not implement.**
+> Status: **In review — revision 6; plan review PASS+NOTES with notes applied; waiting for the founder's explicit approval. Do not implement.**
 > Owner: orchestrator
-> Updated: 2026-10-12 (revision 5: plan review FAIL fixed; founder answers D1–D4)
+> Updated: 2026-10-12 (revision 6: plan re-review notes 1–10 applied)
 > Implements: S3 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md),
 > plus the per-order cost limit that the plan lists under S4
 > Decision basis: [S0 decision, 2026-10-05](../../docs/DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
@@ -134,7 +134,8 @@ is made.
 
 - **R-01:** Screen 3 uses only the free identity lookup. Screen 3a requires one
   valid email. `Lanjut` makes one order. The paid reading (screen 3b) starts
-  only after that succeeds.
+  only after that succeeds, and uses the website saved on the order. Going
+  back past screen 3a to change the website or brand starts a new order.
 - **R-02:** The order ID has at least 128 random bits, is made by the server,
   and never appears in a URL. The server records the email, business name,
   website, mode (`live` or `synthetic`), environment (`production` or
@@ -169,7 +170,8 @@ is made.
 - **R-07:** The order limit is set on the server only
   (`NUAVE_ORDER_SPEND_LIMIT_USD`, default **USD 2.00**, D2). A value that is not
   a number, is negative, or is above the daily cap fails closed.
-- **R-08 (hold):** Making an order writes the order record and one ledger row
+- **R-08 (hold):** Synthetic orders write no ledger rows and hold nothing;
+  the cap applies only to live orders, as in S2. Making a live order writes the order record and one ledger row
   of kind `order_hold`, which carries the order ID, is dated the UTC creation
   day, and holds the limit. Both writes are one D1 batch. The hold insert is
   one conditional statement that checks the day's total, like S2. If the cap
@@ -194,8 +196,11 @@ is made.
   (about USD 0.41). At USD 2.00 an order survives about three calls with
   unknown cost; the next is refused and the order fails (founder accepted, D2).
 - **R-13 (database changes):** Table changes are SQL files in `migrations/`
-  (`wrangler d1 migrations`). They add to the existing `provider_spend` table
-  and never drop data. The deploy job applies them before it deploys; the
+  (`wrangler d1 migrations`). Migration 1 is `CREATE TABLE IF NOT EXISTS
+  provider_spend` with today's columns, so new databases match; later
+  migrations add columns that are nullable or have defaults (the old worker
+  runs between migration and deploy) and never drop data. The
+  create-on-first-use code in `spend-ledger.ts` is removed. The deploy job applies them before it deploys; the
   preview job applies them to the preview database. `SpendDb` and the sqlite
   test helper gain `batch` and `first`.
 
@@ -203,23 +208,34 @@ is made.
 
 - **R-14:** PR previews use their own D1 database (`nuave-v2-preview`, founder
   creates it, Q5) through a `preview` environment in `wrangler.jsonc`.
-  Previews have no cron. Production is the only worker with a cron. Every
-  runner and route touches only orders whose environment matches its own.
+  Previews have no cron and no runner: a preview journey stops at screen 15,
+  and the full path is checked locally (AC-20). `env.preview` sets
+  `crons: []` explicitly and declares its own D1 and rate-limiter bindings.
+  A test reads `wrangler.jsonc` and fails if a preview cron exists.
+  Production is the only worker with a cron. Every runner and route touches
+  only orders whose environment matches its own.
 
 ### Server-side audit (cron runner)
 
 - **R-15 (runner):** A Cloudflare cron trigger on the production worker runs
-  every minute. The handler reads its settings and bindings from the cron's own
-  environment, not from a request. If the mode, the database, a key, or the
-  emergency switch (`NUAVE_NEW_AUDIT_ENABLED`) is missing, off or unclear, it
-  does nothing. It never runs an order whose stored mode differs from its own.
+  every minute. Today's mode and keys are build-time values that OpenNext
+  loads only for web requests, so the cron cannot see them. The deploy job
+  therefore also sets the values the cron needs as Worker vars and secrets:
+  mode, emergency switch (`NUAVE_NEW_AUDIT_ENABLED`), daily cap, order limit,
+  site address, the email list, and the keys the mode needs (synthetic needs
+  none). The handler reads only these, from the cron's own environment. If a
+  needed value or the database is missing, off or unclear, it does nothing. It never runs an order whose stored mode differs from its own.
 - **R-16 (Free plan, D3):** The account is on Workers Free. Each cron run does
-  at most one paid call per order and stops starting new work after a time
-  budget, with a margin, set from measured live call times. The worker checks
+  at most one audit step per order (one question attempt, or one report run
+  including its language fix) and stops starting new work after a time
+  budget, with a margin, based on R-18's explicit call timeout. AC-21 records
+  the real times. The worker checks
   the current Free limits (CPU, outbound requests, D1 queries, cron triggers)
   in Cloudflare's docs and writes them in the PR. If one audit step cannot fit,
   the worker stops and asks the founder (a paid plan needs founder approval).
-- **R-17:** Approving the questions moves the order to `running` in one batch
+- **R-17:** Approval first runs today's checks from the run route: the
+  question pack lock, the identity guard and `validateDirectTenQuestions`.
+  Then it moves the order to `running` in one batch
   that saves, unchanged from then on: the confirmed business details, the ten
   approved questions and their original wording, the mode, the start time
   (the D2 clock) and the deadline (start + 24 hours).
@@ -255,12 +271,16 @@ is made.
 - **R-24:** Each send of the ready email makes a new link secret with at least
   128 random bits and replaces the stored hash in the same write, so only the
   newest link works (D4). Only the hash is stored. The link is
-  `https://v2.nuave.ai/r#<secret>`, built from a fixed site address, never the
+  `<site>/r#<secret>`, where `<site>` is a fixed setting per environment
+  (`https://v2.nuave.ai` in production, localhost in local tests), never the
   request's host. The secret is after `#`, so it is not in request logs. The
   page sends it in a POST body to get the report. It works until 12 months
   after completion or until switched off.
-- **R-25:** Emails go through Resend with an idempotency key per send, so a
-  retry never sends twice. The business name is escaped in the email. Each send
+- **R-25:** Emails go through Resend. An idempotency key covers only retries
+  of one attempt, with the same body, so one attempt never sends twice. A
+  later attempt (a later cron run, or `resend`) is a new send with a new key
+  and a new secret; the customer may get a second email, and only the newest
+  link works (D4). The business name is escaped in the email. Each send
   is recorded with its result. The ready email is retried until the deadline;
   the failure email is retried for 24 hours after the failure. Retrying an
   email never reruns the audit or rewrites the report (D3).
@@ -284,8 +304,10 @@ is made.
 - **R-30:** If the saved order has expired, the customer sees screen 3a again
   and types the email again. `Lanjut` makes a new order (same list and cap
   check), and the saved progress continues on it with no new paid call.
-- **R-31:** The saved progress is removed from the browser when the audit
-  starts, and after 7 days. The email is never kept in local storage.
+- **R-31:** The intake progress is removed from the browser when the audit
+  starts, and after 7 days. Only the order ID stays until the order ends, so a
+  reload shows screen 15 or 15a; then it is removed too. The email is never
+  kept in local storage.
 
 ### Support (founder only)
 
@@ -308,8 +330,12 @@ is made.
   (`initOpenNextCloudflareForDev()` with the migrations applied). The runner is
   started in tests by a trigger that exists only when `NODE_ENV` is
   `development` and the mode is synthetic; production builds do not contain
-  it. The R-15 cron proof uses `wrangler dev --test-scheduled` on the built
-  worker and shows the cron sees the same settings and database as a request.
+  it; the built worker answers 404 to it. Local rate limiters are given
+  test-only limits high enough for the suite (every local request is the same
+  caller), and a missing binding in dev is not a 503. The R-15 cron proof
+  fires the cron first, in a fresh `wrangler dev --test-scheduled` on the
+  built worker, with values set the same way as the deploy job (no `--var`),
+  and shows the cron sees the same settings and database as a request.
 
 ## Failure and recovery
 
@@ -385,8 +411,9 @@ mode on local D1 unless named.
   stops and restarts, or two runners start on one order: the audit completes,
   no saved question is called again, two runners never call the same question
   at once, and a question cut off mid-call uses at most its 3 attempts.
-- **AC-11:** With the mode, database or key missing, or the emergency switch
-  off, the cron does nothing. A runner never runs an order whose mode or
+- **AC-11:** With the mode, database or a needed key missing, or the emergency
+  switch off, the cron does nothing. The built worker answers 404 to the
+  dev-only trigger. No preview cron exists in `wrangler.jsonc`. A runner never runs an order whose mode or
   environment differs from its own.
 - **AC-12:** With a test clock, an `open` order is `expired` 2 hours after
   creation, and a `running` order with no accepted ready email is `failed` at
@@ -405,8 +432,9 @@ mode on local D1 unless named.
 - **AC-15:** A random, expired or switched-off secret gets an identical
   response (status, headers, body), with no business data and no provider
   call. The report-data route has a rate limit.
-- **AC-16:** A failed send is retried with the same idempotency key, adds a
-  send record, and does not rerun the audit or report. Synthetic mode never
+- **AC-16:** A failed send inside one attempt is retried with the same
+  idempotency key; a later attempt uses a new key and a new secret, and only
+  the newest link works. Each adds a send record, and does not rerun the audit or report. Synthetic mode never
   calls Resend.
 - **AC-17:** Support script: `resend` makes the old link fail and the new one
   work, to the same address; `off` gives the neutral page and keeps the state;
@@ -421,7 +449,9 @@ mode on local D1 unless named.
   the same browser, the journey is at screen 8 with the same answers and no
   completed paid step repeated. With an expired order, the customer types the
   email again, a new order is made, and the answers stay. Progress is gone
-  after the audit starts or after 7 days; the email is never in local storage.
+  after the audit starts or after 7 days; a reload during the audit shows
+  screen 15 or 15a; the email is never in local storage. A synthetic order
+  writes no ledger rows.
 - **AC-20:** `verify-nuave` drives URL → brand confirm → order → preparing →
   intake → questions → close tab → report by link, in synthetic mode, with
   evidence in the PR. The cron proof (R-33) and the Free-plan limits (R-16) are
@@ -438,7 +468,9 @@ Both go live in **one** merge to `main`, because every merge deploys.
 
 - **S3a** (PR against `main`, reviewed, not merged): migrations, preview
   database, order and screen order, list, per-order limit, browser progress,
-  cron runner and report, status progress. Must pass AC-01 to AC-13 and AC-19.
+  cron runner and report, status progress, and the fake sender (so the
+  failure email and `delivered` can be tested). Must pass AC-01 to AC-13 and
+  AC-19.
 - **S3b** (PR against the S3a branch): link, report page, emails, not-available
   page, support script. Must pass AC-14 to AC-18 and AC-20.
 - After S3b passes, it merges into the S3a branch. The combined S3a PR gets a
@@ -468,8 +500,9 @@ Both go live in **one** merge to `main`, because every merge deploys.
 - **Q5 — Founder actions before review:** create the Resend key for
   `nuave.ai` and confirm the domain; check that Resend open and click tracking
   is off for the domain (this may also affect v0.1 mail on `nuave.ai`); create
-  the free D1 database `nuave-v2-preview`; put only unpublished addresses on
-  the email list.
+  the free D1 database `nuave-v2-preview`; give the CI Cloudflare token D1
+  edit permission (for migrations) and Worker secret permission (R-15); put
+  only unpublished addresses on the email list.
 - **Q6 — Live orders only for the founder's email list until S4.**
 - **D1 — Screen order:** free brand confirm → order → paid reading → intake.
 - **D3 — Plan:** Workers Free (R-16).
