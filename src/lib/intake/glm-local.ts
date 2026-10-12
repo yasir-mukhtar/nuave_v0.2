@@ -678,8 +678,11 @@ export async function prepareGlmQuestionsForIntake(input: {
   const envelope = await transport.call(requestBody);
   const settledUsd = cheaperInferenceBilledCostUsd(envelope.body);
   // A clear HTTP 4xx was rejected before the model ran, so it cost nothing;
-  // anything else without a billed cost (5xx, timeout, no response) stays held.
-  const rejectedUnrun = envelope.httpStatus >= 400 && envelope.httpStatus < 500;
+  // anything else without a billed cost (408, 5xx, timeout, no response) stays held.
+  const rejectedUnrun =
+    envelope.httpStatus >= 400 &&
+    envelope.httpStatus < 500 &&
+    envelope.httpStatus !== 408;
   if (spend && settledUsd !== null) await spend.settle(settledUsd);
   else if (spend && rejectedUnrun) await spend.settle(0);
   // Normalize once, before optional evidence writes and all early returns.
