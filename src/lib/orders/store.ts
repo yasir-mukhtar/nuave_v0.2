@@ -16,6 +16,17 @@ import {
 export const ORDER_OPEN_MS = 2 * 60 * 60 * 1000; // Q2: 2 hours
 export const ORDER_DEADLINE_MS = 24 * 60 * 60 * 1000; // D2: start + 24 hours
 export const FAILURE_EMAIL_WINDOW_MS = 24 * 60 * 60 * 1000; // R-25
+/** Email retries back off: after the first failed attempt wait 2 minutes, then
+ * 4, 8, 16 and 32, and at most 60 minutes between attempts from then on. */
+export const EMAIL_RETRY_BASE_MS = 2 * 60 * 1000;
+export const EMAIL_RETRY_MAX_MS = 60 * 60 * 1000;
+export function emailRetryDelayMs(failedAttempts: number): number {
+  if (failedAttempts <= 0) return 0;
+  return Math.min(
+    EMAIL_RETRY_BASE_MS * 2 ** (failedAttempts - 1),
+    EMAIL_RETRY_MAX_MS,
+  );
+}
 export const MAX_ATTEMPTS_PER_QUESTION = 3; // R-19, as retry.ts
 export const MAX_REPORT_ATTEMPTS = 3; // R-19, as classifyReportRecovery
 
@@ -340,7 +351,9 @@ export async function activeOrders(
 }
 
 /** Failed orders whose failure email is not yet accepted, within 24 hours of
- * the failure (R-25). */
+ * the failure (R-25), and whose last attempt is old enough: attempts back off
+ * (2, 4, 8, 16, 32, then 60 minutes). The order that waited longest since its
+ * last attempt goes first, so one failing email cannot block the others. */
 export async function failedOrdersNeedingEmail(
   db: SpendDb,
   input: {
@@ -350,27 +363,39 @@ export async function failedOrdersNeedingEmail(
     limit: number;
   },
 ): Promise<string[]> {
-  return orderIds(
-    db,
-    `SELECT id FROM orders
-     WHERE state = 'failed' AND environment = ?1 AND mode = ?2 AND ended_at > ?3
-       AND NOT EXISTS (SELECT 1 FROM order_emails e
-                       WHERE e.order_id = orders.id AND e.kind = 'failure'
-                         AND e.result = 'accepted')
-     ORDER BY
-       (SELECT MAX(e.created_at) FROM order_emails e
-         WHERE e.order_id = orders.id AND e.kind = 'failure') IS NOT NULL,
-       (SELECT MAX(e.created_at) FROM order_emails e
-         WHERE e.order_id = orders.id AND e.kind = 'failure'),
-       ended_at
-     LIMIT ?4`,
-    [
+  // Orders still backing off are filtered below, so read a few more rows than
+  // the limit. One query either way.
+  const { results } = await db
+    .prepare(
+      `SELECT id,
+         (SELECT COUNT(*) FROM order_emails e
+           WHERE e.order_id = orders.id AND e.kind = 'failure') AS tries,
+         (SELECT MAX(e.created_at) FROM order_emails e
+           WHERE e.order_id = orders.id AND e.kind = 'failure') AS last_at
+       FROM orders
+       WHERE state = 'failed' AND environment = ?1 AND mode = ?2 AND ended_at > ?3
+         AND NOT EXISTS (SELECT 1 FROM order_emails e
+                         WHERE e.order_id = orders.id AND e.kind = 'failure'
+                           AND e.result = 'accepted')
+       ORDER BY last_at IS NOT NULL, last_at, ended_at
+       LIMIT ?4`,
+    )
+    .bind(
       input.environment,
       input.mode,
       iso(new Date(input.now.getTime() - FAILURE_EMAIL_WINDOW_MS)),
-      input.limit,
-    ],
-  );
+      input.limit * 5,
+    )
+    .all<{ id: string; tries: number; last_at: string | null }>();
+  return results
+    .filter(
+      (row) =>
+        !row.last_at ||
+        new Date(row.last_at).getTime() + emailRetryDelayMs(row.tries) <=
+          input.now.getTime(),
+    )
+    .slice(0, input.limit)
+    .map((row) => row.id);
 }
 
 async function orderIds(
@@ -677,16 +702,114 @@ export async function recordEmail(
     .run();
 }
 
-export async function nextEmailAttempt(
+/** The sends so far for one kind of email: the next attempt number, and when
+ * the last attempt was made and how many failed, so a retry can back off. */
+export async function emailHistory(
   db: SpendDb,
   input: { orderId: string; kind: "ready" | "failure" },
-): Promise<number> {
+): Promise<{
+  next: number;
+  failed: number;
+  accepted: number;
+  lastAt: Date | null;
+}> {
   const row = await db
     .prepare(
-      `SELECT COALESCE(MAX(attempt), 0) + 1 AS next FROM order_emails
-       WHERE order_id = ?1 AND kind = ?2`,
+      `SELECT COALESCE(MAX(attempt), 0) + 1 AS next,
+              COALESCE(SUM(result = 'failed'), 0) AS failed,
+              COALESCE(SUM(result = 'accepted'), 0) AS accepted,
+              MAX(created_at) AS last_at
+       FROM order_emails WHERE order_id = ?1 AND kind = ?2`,
     )
     .bind(input.orderId, input.kind)
-    .first<{ next: number }>();
-  return row?.next ?? 1;
+    .first<{
+      next: number;
+      failed: number;
+      accepted: number;
+      last_at: string | null;
+    }>();
+  return {
+    next: row?.next ?? 1,
+    failed: row?.failed ?? 0,
+    accepted: row?.accepted ?? 0,
+    lastAt: row?.last_at ? new Date(row.last_at) : null,
+  };
+}
+
+/** True when the last failed attempt is too recent for another one (backoff). */
+export function emailBackingOff(
+  history: { failed: number; lastAt: Date | null },
+  now: Date,
+): boolean {
+  return (
+    history.lastAt !== null &&
+    history.lastAt.getTime() + emailRetryDelayMs(history.failed) > now.getTime()
+  );
+}
+
+/** R-24/R-26: the saved report behind a link secret. Only the secret's hash is
+ * compared. A wrong, expired or switched-off secret all give null, so the
+ * caller cannot tell them apart. No provider is involved. */
+export async function reportForLink(
+  db: SpendDb,
+  input: { linkHash: string; environment: OrderEnvironment; now: Date },
+): Promise<{
+  report_json: string;
+  intake_json: string;
+  observations: string[];
+  mode: OrderMode;
+} | null> {
+  const order = await db
+    .prepare(
+      `SELECT id, report_json, intake_json, mode FROM orders
+       WHERE link_hash = ?1 AND link_off = 0 AND report_json IS NOT NULL
+         AND link_expires_at > ?2 AND environment = ?3`,
+    )
+    .bind(input.linkHash, iso(input.now), input.environment)
+    .first<{
+      id: string;
+      report_json: string;
+      intake_json: string;
+      mode: OrderMode;
+    }>();
+  if (!order) return null;
+  const questions = await listQuestions(db, order.id);
+  return {
+    report_json: order.report_json,
+    intake_json: order.intake_json,
+    observations: questions.flatMap((question) =>
+      question.observation_json ? [question.observation_json] : [],
+    ),
+    mode: order.mode,
+  };
+}
+
+/** R-32 `off`: the link stops working; the order state does not change. */
+export async function switchLinkOff(
+  db: SpendDb,
+  orderId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare("UPDATE orders SET link_off = 1 WHERE id = ?1")
+    .bind(orderId)
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** R-32 `resend`: a new secret replaces the stored hash, in the same write, for
+ * any order with a saved report (also one already delivered or failed). A link
+ * the founder switched off is switched on again by an explicit resend: the old
+ * secret stays dead either way. */
+export async function replaceLinkHashForSupport(
+  db: SpendDb,
+  input: { orderId: string; linkHash: string; now: Date },
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE orders SET link_hash = ?2, link_off = 0
+       WHERE id = ?1 AND report_json IS NOT NULL AND link_expires_at > ?3`,
+    )
+    .bind(input.orderId, input.linkHash, iso(input.now))
+    .run();
+  return result.meta?.changes === 1;
 }

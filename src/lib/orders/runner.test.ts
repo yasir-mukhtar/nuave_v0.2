@@ -22,6 +22,9 @@ import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import {
   claimOrderLease,
   renewOrderLease,
+  EMAIL_RETRY_BASE_MS,
+  EMAIL_RETRY_MAX_MS,
+  emailRetryDelayMs,
   ORDER_DEADLINE_MS,
   ORDER_OPEN_MS,
   orderStatus,
@@ -66,6 +69,8 @@ const advance = (ms: number) => {
   clock = new Date(clock.getTime() + ms);
 };
 const minute = () => advance(60_000);
+/** Longer than the longest email retry delay, so a retry is due. */
+const pastBackoff = () => advance(EMAIL_RETRY_MAX_MS + 1000);
 
 function deps(overrides: Partial<RunnerDeps> = {}): RunnerDeps & {
   calls: string[];
@@ -414,6 +419,10 @@ describe("expiry and deadline (R-22, R-23, AC-12)", () => {
     }
     expect(orderRow(id).state).toBe("reporting");
     expect(orderRow(id).report_json).toBeTruthy();
+    for (let i = 0; i < 3; i += 1) {
+      pastBackoff(); // email retries back off, so a retry is due only later
+      await runOrders(d);
+    }
     // Each later run is a new send with a new secret; only the newest hash stays.
     const ready = mail.sent.filter((m) => m.subject.includes("siap"));
     const attempts = new Set(ready.map((m) => m.idempotencyKey));
@@ -459,12 +468,12 @@ describe("expiry and deadline (R-22, R-23, AC-12)", () => {
     advance(ORDER_DEADLINE_MS);
     await runOrders(d); // fails the order; failure email attempt 1 not accepted
     expect(failureKeys.size).toBe(1);
-    minute();
+    pastBackoff();
     await runOrders(d); // attempt 2
-    minute();
+    pastBackoff();
     await runOrders(d); // attempt 3 accepted
     expect(failureKeys.size).toBe(3);
-    minute();
+    pastBackoff();
     await runOrders(d);
     expect(failureKeys.size).toBe(3); // accepted: no more sends
     expect(orderRow(id).state).toBe("failed");
@@ -491,6 +500,7 @@ describe("expiry and deadline (R-22, R-23, AC-12)", () => {
     }
     expect(orderRow(id).state).toBe("reporting");
     accept = true;
+    pastBackoff();
     await runOrders(d);
     expect(orderRow(id).state).toBe("delivered");
   });
@@ -776,7 +786,9 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     );
 
     // Run B (counted): five open orders past their time, two more orders past
-    // their deadline, two fresh running orders, two failure emails due.
+    // their deadline, two fresh running orders, two failure emails due. The
+    // failure emails back off, so the clock moves past the first delay.
+    advance(EMAIL_RETRY_BASE_MS + 1000);
     for (let i = 0; i < 5; i += 1) {
       await makeOrder(d1.db, {
         mode: "live",
@@ -789,6 +801,7 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     const callsBefore = rows(
       "SELECT id FROM provider_spend WHERE kind = 'order_call'",
     ).length;
+    const emailsBefore = rejecting.sent.length;
     const { counted, count } = counting(d1.db);
     const result = await runOrders(live({ db: counted }));
     const tally = (outcome: string) =>
@@ -796,6 +809,9 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     expect(tally("expired")).toBe(3);
     expect(tally("failed_deadline")).toBe(1);
     expect(tally("question_done")).toBe(2);
+    // Two failure emails were tried (the new failure's, and one retry that
+    // was due), each as one attempt of three tries.
+    expect(rejecting.sent.length - emailsBefore).toBe(6);
     expect(count.queries).toBeLessThanOrEqual(40);
     // Left for the next run: two open orders, nothing lost.
     expect(d1.query("SELECT id FROM orders WHERE state = 'open'")).toHaveLength(
@@ -807,6 +823,67 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
         callsBefore,
     ).toBe(2);
     // Measured when written: 40 queries (48 statements), live mode.
+  });
+
+  it("one run with emails in it: 3 expired, 1 deadline failure with its email, 2 reports each saved and emailed and delivered, and a failure email retry, at most 40 queries", async () => {
+    // Synthetic mode (a live report needs real evidence): no ledger rows, so
+    // the paid-call ledger statements are measured separately, below.
+    const accepting = mailbox();
+    const rejecting = mailbox(() => false);
+    const make = async () => {
+      const id = await makeOrder(d1.db, { now: clock });
+      await approve(d1.db, id, { now: clock });
+      return id;
+    };
+    const stale = [await make(), await make(), await make()];
+    // Held by another runner (so they take no audit step) until they fail.
+    for (const id of stale) {
+      await d1.db
+        .prepare(
+          `UPDATE orders SET lease_owner = 'other', lease_until = '2099-01-01T00:00:00.000Z' WHERE id = '${id}'`,
+        )
+        .bind()
+        .run();
+    }
+    advance(13 * 3600_000);
+    const reporting = [await make(), await make()];
+    for (let i = 0; i < 12; i += 1) {
+      await runOrders(deps({ sender: rejecting.sender }));
+      if (reporting.every((id) => orderRow(id).state !== "running")) break;
+      minute();
+    }
+    advance(12 * 3600_000);
+    // Two runs that fit no audit step: only the deadline failures run, and
+    // their emails are rejected and stay due.
+    await runOrders(deps({ sender: rejecting.sender, runBudgetMs: 0 }));
+    await runOrders(deps({ sender: rejecting.sender, runBudgetMs: 0 }));
+    expect(stale.filter((id) => orderRow(id).state === "failed")).toHaveLength(
+      2,
+    );
+    for (let i = 0; i < 5; i += 1) {
+      await makeOrder(d1.db, {
+        now: new Date(clock.getTime() - 3 * 3600_000),
+      });
+    }
+    advance(EMAIL_RETRY_BASE_MS + 1000);
+    const { counted, count } = counting(d1.db);
+    const result = await runOrders(
+      deps({ db: counted, sender: accepting.sender }),
+    );
+    const tally = (outcome: string) =>
+      result.outcomes.filter((entry) => entry === outcome).length;
+    expect(tally("expired")).toBe(3);
+    expect(tally("failed_deadline")).toBe(1);
+    expect(tally("report_saved")).toBe(2);
+    expect(tally("failure_email")).toBe(1);
+    for (const id of reporting) expect(orderRow(id).state).toBe("delivered");
+    expect(
+      accepting.sent.filter((m) => m.subject.includes("siap")),
+    ).toHaveLength(2);
+    expect(count.queries).toBeLessThanOrEqual(40);
+    // Measured when written: 40 queries (46 statements). A live report adds 2
+    // queries per paid call (reserve and settle), so two live report steps
+    // add 4 to 8: about 44 to 48, still under the Free plan's 50.
   });
 
   it("at most two orders get an audit step in one run, oldest first; the rest wait for the next run", async () => {
@@ -1039,8 +1116,8 @@ describe("overdue orders and fair rotation (R-15, R-23)", () => {
     const before = counts();
     expect(Object.keys(before)).toHaveLength(3);
     for (let i = 0; i < 3; i += 1) {
+      pastBackoff(); // every retry is due; the oldest last attempt goes first
       await runOrders(deps({ sender: rejecting.sender }));
-      minute();
     }
     const after = counts();
     for (const id of ids) expect(after[id]).toBe(before[id] + 1);
@@ -1089,5 +1166,105 @@ describe("overdue orders and fair rotation (R-15, R-23)", () => {
     clock = new Date(Date.parse(String(orderRow(id).deadline_at)) - 1000);
     await runOrders(d);
     expect(calls.n).toBe(1);
+  });
+});
+
+describe("email retries back off (R-25)", () => {
+  it("the delay grows 2, 4, 8, 16, 32 and then stays at 60 minutes", () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 20].map(emailRetryDelayMs)).toEqual(
+      [2, 4, 8, 16, 32, 60, 60, 60].map((minutes) => minutes * 60_000),
+    );
+    expect(emailRetryDelayMs(0)).toBe(0);
+    expect(EMAIL_RETRY_BASE_MS).toBe(120_000);
+  });
+
+  /** After each failed attempt, a run one second early sends nothing and a run
+   * on time sends exactly one new attempt. */
+  async function expectGrowingDelays(
+    id: string,
+    d: ReturnType<typeof deps>,
+    mail: ReturnType<typeof mailbox>,
+    subject: string,
+    firstAttempts: number,
+  ) {
+    const attempts = () =>
+      new Set(
+        mail.sent
+          .filter((m) => m.subject.includes(subject))
+          .map((m) => m.idempotencyKey),
+      ).size;
+    expect(attempts()).toBe(firstAttempts);
+    for (let failed = firstAttempts; failed <= 7; failed += 1) {
+      const before = attempts();
+      advance(emailRetryDelayMs(failed) - 1000);
+      await runOrders(d);
+      expect(attempts(), `early after ${failed} failed`).toBe(before);
+      advance(1000);
+      await runOrders(d);
+      expect(attempts(), `on time after ${failed} failed`).toBe(before + 1);
+    }
+    return id;
+  }
+
+  it("a ready email that keeps failing is retried at growing delays, one attempt at a time, and never reruns the audit", async () => {
+    const id = await runningOrder();
+    const mail = mailbox(() => false);
+    const d = deps({ sender: mail.sender });
+    for (let i = 0; i < 11; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("reporting");
+    const reports = d.reports.n;
+    // Run 11 saved the report and made attempt 1; the clock moved 1 minute since.
+    advance(-60_000);
+    await expectGrowingDelays(id, d, mail, "siap", 1);
+    expect(d.reports.n).toBe(reports);
+    expect(orderRow(id).state).toBe("reporting");
+  });
+
+  it("a waiting retry makes no new secret: the stored link stays as it is", async () => {
+    const id = await runningOrder();
+    const mail = mailbox(() => false);
+    const d = deps({ sender: mail.sender });
+    for (let i = 0; i < 11; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    const hash = orderRow(id).link_hash;
+    expect(hash).toBeTruthy();
+    await runOrders(d); // 1 minute after attempt 1: still waiting
+    expect(orderRow(id).link_hash).toBe(hash);
+  });
+
+  it("a failure email that keeps failing is retried at growing delays", async () => {
+    const id = await runningOrder();
+    const mail = mailbox(() => false);
+    const d = deps({ sender: mail.sender });
+    advance(ORDER_DEADLINE_MS);
+    await runOrders(d); // fails the order; attempt 1
+    expect(orderRow(id).state).toBe("failed");
+    await expectGrowingDelays(id, d, mail, "belum bisa", 1);
+  });
+
+  it("an accepted ready email already on record (a founder resend) finishes delivery with no second email", async () => {
+    const id = await runningOrder();
+    const mail = mailbox(() => false);
+    const d = deps({ sender: mail.sender });
+    for (let i = 0; i < 11; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("reporting");
+    d1.query(
+      `INSERT INTO order_emails (id, order_id, kind, attempt, idempotency_key, result, created_at)
+       VALUES ('manual-1', '${id}', 'ready', 9, 'nuave-order-${id}-ready-9', 'accepted', '${clock.toISOString()}') RETURNING id`,
+    );
+    const sent = mail.sent.length;
+    const hash = orderRow(id).link_hash;
+    await runOrders(d);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(mail.sent).toHaveLength(sent);
+    expect(orderRow(id).link_hash).toBe(hash);
   });
 });

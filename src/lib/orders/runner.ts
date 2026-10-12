@@ -41,19 +41,20 @@ import {
   sendWithinAttempt,
   type MailSender,
 } from "./mail";
-import { orderSafetyIdentifier, sha256Hex } from "./config";
+import { newLinkSecret, orderSafetyIdentifier, sha256Hex } from "./config";
 import {
   activeOrders,
   claimOrderLease,
   claimQuestion,
   claimReportAttempt,
+  emailBackingOff,
+  emailHistory,
   exhaustSpentQuestions,
   expireOpenOrders,
   failedOrdersNeedingEmail,
   getOrder,
   listQuestions,
   moveToReporting,
-  nextEmailAttempt,
   ordersPastDeadline,
   recordEmail,
   refundReportAttempt,
@@ -278,7 +279,11 @@ async function sendFailureEmail(
 ): Promise<boolean> {
   const order = await getOrder(deps.db, orderId);
   if (!order || !deps.sender) return false;
-  const attempt = await nextEmailAttempt(deps.db, { orderId, kind: "failure" });
+  const history = await emailHistory(deps.db, { orderId, kind: "failure" });
+  // Retries back off; the cron's retry list already leaves out orders that
+  // are still waiting, so this only guards a direct call.
+  if (emailBackingOff(history, deps.now())) return false;
+  const attempt = history.next;
   const idempotencyKey = `nuave-order-${orderId}-failure-${attempt}`;
   const mail = failureEmail({ businessName: order.business_name });
   const result = await sendWithinAttempt(deps.sender, {
@@ -630,16 +635,31 @@ async function readyEmailStep(
   order: OrderRow,
 ): Promise<StepOutcome> {
   if (!deps.sender) return "email_pending";
-  const secret = linkSecret();
+  // Retries back off, and a waiting retry makes no new secret: the stored
+  // link stays as it is until a real send happens.
+  const history = await emailHistory(deps.db, {
+    orderId: order.id,
+    kind: "ready",
+  });
+  // An accepted ready email already exists (for example the founder resent it
+  // by hand): the link is out, so only `delivered` is left. No second email.
+  if (history.accepted > 0) {
+    const finished = await endOrder(deps.db, {
+      orderId: order.id,
+      from: ["reporting"],
+      to: "delivered",
+      now: deps.now,
+    });
+    return finished ? "delivered" : "skipped";
+  }
+  if (emailBackingOff(history, deps.now())) return "email_pending";
+  const secret = newLinkSecret();
   const replaced = await replaceLinkHash(deps.db, {
     orderId: order.id,
     linkHash: await sha256Hex(secret),
   });
   if (!replaced) return "email_pending"; // link switched off, or order moved on
-  const attempt = await nextEmailAttempt(deps.db, {
-    orderId: order.id,
-    kind: "ready",
-  });
+  const attempt = history.next;
   const idempotencyKey = `nuave-order-${order.id}-ready-${attempt}`;
   const mail = readyEmail({
     businessName: order.business_name,
@@ -667,13 +687,4 @@ async function readyEmailStep(
     now: deps.now,
   });
   return delivered ? "delivered" : "skipped";
-}
-
-/** At least 128 random bits (R-24): 24 bytes, URL-safe. */
-function linkSecret(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return btoa(String.fromCharCode(...bytes))
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
 }
