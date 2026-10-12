@@ -42,6 +42,9 @@ export const DIFFERENTIATOR_HEADING = "Apa yang membedakan bisnis Anda?";
 export const PUBLIC_FACT_HEADING =
   "Apa yang tidak boleh salah dipahami tentang brand Anda?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
+export const ORDER_HEADING = "Ringkasan pesanan";
+/** The email the synthetic journeys order with (never stored in the browser). */
+export const ORDER_EMAIL = "pemilik@example.com";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
@@ -192,6 +195,10 @@ export function readingScreen(page: Page) {
 
 export function brandScreen(page: Page) {
   return page.locator('[data-intake-screen="brand"]');
+}
+
+export function orderScreen(page: Page) {
+  return page.locator('[data-intake-screen="order"]');
 }
 
 export function focusScreen(page: Page) {
@@ -592,10 +599,11 @@ export async function removeAlias(
   } else await chip.click();
 }
 
-/** Reads the stored v9 intake session from sessionStorage. */
+/** Reads the stored v9 intake session. Spec 016 R-29: the intake progress is
+ * kept in the browser's local storage, so it survives a closed tab. */
 export async function intakeSession(page: Page) {
   return page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
 }
@@ -612,9 +620,26 @@ export async function expectBrandConfirm(
   await expect(brandScreen(page)).toContainText(name);
 }
 
-/** Brand confirm → `Lanjut` (in the frame footer) → the focus screen. */
-export async function confirmBrand(page: Page) {
+/** Screen 3a: type the email and press `Lanjut`. The order is made and the
+ * paid reading (screen 3b) runs. */
+export async function submitOrder(page: Page, email: string = ORDER_EMAIL) {
+  await expect(orderScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: ORDER_HEADING }),
+  ).toBeVisible();
+  await page.getByRole("textbox", { name: /Email/ }).fill(email);
+  await pressLanjut(page);
+}
+
+/** Brand confirm → `Lanjut` → order screen → email → `Lanjut` → the focus
+ * screen. (A saved, still-open order skips the order screen's email field.) */
+export async function confirmBrand(page: Page, email: string = ORDER_EMAIL) {
   await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
+  await page
+    .locator('[data-intake-screen="order"], [data-intake-screen="focus"]')
+    .first()
+    .waitFor();
+  if (await orderScreen(page).isVisible()) await submitOrder(page, email);
   await expectFocusScreen(page);
 }
 
@@ -737,16 +762,46 @@ export async function editQuestion(page: Page, slot: number, wording: string) {
   await page.getByRole("button", { name: "Simpan", exact: true }).click();
 }
 
+/** Approving the ten questions saves them on the server (spec 016 R-17). */
 export async function startAudit(page: Page) {
   await page.getByRole("button", { name: "Mulai audit" }).click();
 }
 
+/** Screens 15 and 15a: the server-side audit's progress and result. */
 export function auditStage(page: Page, stage: string) {
-  return page.locator(`[data-local-audit-stage="${stage}"]`);
+  return page.locator(`[data-order-stage="${stage}"]`);
 }
 
-export async function expectAuditDone(page: Page, timeout = 45_000) {
-  await expect(auditStage(page, "done")).toBeVisible({ timeout });
+export const CLOSE_OK_NOTE =
+  "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda.";
+
+/** The audit is running on the server and the tab says it may be closed. */
+export async function expectAuditRunning(page: Page, timeout = 15_000) {
+  await expect(
+    page.locator(
+      '[data-order-stage="running"], [data-order-stage="reporting"]',
+    ),
+  ).toBeVisible({ timeout });
+  await expect(page.getByText(CLOSE_OK_NOTE)).toBeVisible();
+}
+
+/** Screen 15a: the report is ready and was emailed. The tab never shows the
+ * report itself. */
+export async function expectAuditDelivered(page: Page, timeout = 45_000) {
+  await expect(auditStage(page, "delivered")).toBeVisible({ timeout });
+  await expect(
+    page.getByText("Laporan Anda sudah siap dan kami kirim ke email Anda."),
+  ).toBeVisible();
+}
+
+/**
+ * Local tests only: runs one cron pass through the development trigger
+ * (spec 016 R-33). The trigger exists only under `next dev` in synthetic mode.
+ */
+export async function runRunnerOnce(page: Page) {
+  const response = await page.request.post("/api/dev/run-cron");
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { ran: boolean; outcomes?: string[] };
 }
 
 export function reportLocator(page: Page) {
@@ -765,6 +820,18 @@ export async function downloadEvidenceJson(
   const saved = await download;
   const text = await readFile((await saved.path())!, "utf8");
   return { download: saved, text, json: JSON.parse(text) };
+}
+
+/**
+ * Retained for the `verify-nuave` skill CLI until S3b rewrites its audit
+ * features for the saved-report flow (spec 016 AC-20). The browser no longer
+ * runs the audit or shows the report, so these two helpers describe behavior
+ * that no longer exists in the app; no spec in tests/e2e/ uses them.
+ */
+export async function expectAuditDone(page: Page, timeout = 45_000) {
+  await expect(page.locator('[data-local-audit-stage="done"]')).toBeVisible({
+    timeout,
+  });
 }
 
 /**
