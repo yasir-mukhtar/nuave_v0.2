@@ -51,6 +51,10 @@ afterEach(() => {
 const advance = (ms: number) => {
   clock = new Date(clock.getTime() + ms);
 };
+const orderRow = (id: string) =>
+  d1.query<{ report_json: string | null }>(
+    `SELECT report_json FROM orders WHERE id = '${id}'`,
+  )[0]!;
 const state = (id: string) =>
   d1.query<{ state: string }>(`SELECT state FROM orders WHERE id = '${id}'`)[0]!
     .state;
@@ -81,124 +85,158 @@ function counting(db: RunnerDeps["db"]) {
 }
 
 describe("the worst live run", () => {
-  it("3 expiries, a deadline failure and a failure-email retry (both emails rejected), one report step with both paid calls and an accepted ready email (it runs alone, so the waiting question step is left for the next run): at most 40 queries and well under 50 outbound requests", async () => {
-    const providerCalls = { n: 0 };
-    const resendCalls = { n: 0 };
-    // Resend through the real sender with a counting fetch: failure emails are
-    // rejected (three tries each), the ready email is accepted.
-    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
-      resendCalls.n += 1;
-      const subject = String(JSON.parse(String(init?.body)).subject);
-      return subject.includes("siap")
-        ? Response.json({ id: "re-1" })
-        : new Response("{}", { status: 500 });
-    }) as typeof fetch;
-    const sender = resendMailSender({
-      apiKey: "k",
-      from: "n@x.test",
-      fetchImpl,
-    });
-    const paid = async (stage: string) => {
-      const spend = await reserveProviderSpend({
-        provider: "openai",
-        stage,
-        usd: 0.1,
+  it.each([
+    ["report alone", false],
+    ["email-only delivery plus report", true],
+  ])(
+    "%s: 3 expiries, a deadline failure and a failure-email retry (both emails rejected), a report step with both paid calls and an accepted ready email, at most 40 queries and 10 outbound requests",
+    async (_label, emailOnly) => {
+      const providerCalls = { n: 0 };
+      const resendCalls = { n: 0 };
+      // Resend through the real sender with a counting fetch: failure emails are
+      // rejected (three tries each), the ready email is accepted.
+      const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+        resendCalls.n += 1;
+        const subject = String(JSON.parse(String(init?.body)).subject);
+        return subject.includes("siap")
+          ? Response.json({ id: "re-1" })
+          : new Response("{}", { status: 500 });
+      }) as typeof fetch;
+      const sender = resendMailSender({
+        apiKey: "k",
+        from: "n@x.test",
+        fetchImpl,
       });
-      providerCalls.n += 1;
-      await spend.settle(0.05);
-    };
-    const deps = (extra: Partial<RunnerDeps> = {}): RunnerDeps => ({
-      db: d1.db,
-      environment: "production",
-      mode: "live",
-      siteOrigin: "https://v2.nuave.test",
-      now: () => clock,
-      execute: async (input) => {
-        await paid("observation");
-        return executeSyntheticLocalObservation(input);
-      },
-      generateReport: (async () => {
-        await paid("report");
-        return {};
-      }) as unknown as RunnerDeps["generateReport"],
-      sender,
-      sleep: async () => {},
-      ...extra,
-    });
-    const live = async () => {
-      const id = await makeOrder(d1.db, {
+      const paid = async (stage: string) => {
+        const spend = await reserveProviderSpend({
+          provider: "openai",
+          stage,
+          usd: 0.1,
+        });
+        providerCalls.n += 1;
+        await spend.settle(0.05);
+      };
+      const deps = (extra: Partial<RunnerDeps> = {}): RunnerDeps => ({
+        db: d1.db,
+        environment: "production",
         mode: "live",
-        limitUsd: 2,
-        dailyLimitUsd: 1000,
-        now: clock,
+        siteOrigin: "https://v2.nuave.test",
+        now: () => clock,
+        execute: async (input) => {
+          await paid("observation");
+          return executeSyntheticLocalObservation(input);
+        },
+        generateReport: (async () => {
+          await paid("report");
+          return {};
+        }) as unknown as RunnerDeps["generateReport"],
+        sender,
+        sleep: async () => {},
+        ...extra,
       });
-      await approve(d1.db, id, { mode: "live", now: clock });
-      return id;
-    };
+      const live = async () => {
+        const id = await makeOrder(d1.db, {
+          mode: "live",
+          limitUsd: 2,
+          dailyLimitUsd: 1000,
+          now: clock,
+        });
+        await approve(d1.db, id, { mode: "live", now: clock });
+        return id;
+      };
 
-    const stale = [await live(), await live(), await live()];
-    for (const id of stale) {
+      const stale = [await live(), await live(), await live()];
+      for (const id of stale) {
+        await d1.db
+          .prepare(
+            `UPDATE orders SET lease_owner = 'other', lease_until = '2099-01-01T00:00:00.000Z' WHERE id = '${id}'`,
+          )
+          .bind()
+          .run();
+      }
+      advance(13 * 3600_000);
+      // With an email-only order: it first gets its report saved with no sender,
+      // so its ready email is still to send in the counted run.
+      const emailer = emailOnly ? await live() : null;
+      if (emailer) {
+        for (let i = 0; i < 14 && !orderRow(emailer).report_json; i += 1) {
+          await runOrders(deps({ sender: null }));
+          advance(60_000);
+        }
+        expect(orderRow(emailer).report_json).toBeTruthy();
+        expect(state(emailer)).toBe("reporting");
+      }
+      // One order gets all ten answers saved (it is the only one stepping).
+      const reporting = await live();
+      for (let i = 0; i < 12 && state(reporting) === "running"; i += 1) {
+        // Question steps only: no report step until the order is `reporting`.
+        await runOrders(deps({ sender: null }));
+        advance(60_000);
+      }
+      expect(state(reporting)).toBe("reporting");
+      // The report step is left for the counted run: its report attempt is untouched.
+      const questioning = await live();
+      advance(12 * 3600_000);
+      // Runs that fit no audit step: only the deadline failures run.
+      await runOrders(deps({ runBudgetMs: 0 }));
+      await runOrders(deps({ runBudgetMs: 0 }));
+      expect(stale.filter((id) => state(id) === "failed")).toHaveLength(2);
+      for (let i = 0; i < 5; i += 1) {
+        await makeOrder(d1.db, {
+          mode: "live",
+          limitUsd: 0.5,
+          dailyLimitUsd: 1000,
+          now: new Date(clock.getTime() - 3 * 3600_000),
+        });
+      }
+      advance(EMAIL_RETRY_BASE_MS + 1000);
+
+      // The report order has waited longest, so it goes first and runs alone.
       await d1.db
         .prepare(
-          `UPDATE orders SET lease_owner = 'other', lease_until = '2099-01-01T00:00:00.000Z' WHERE id = '${id}'`,
+          `UPDATE orders SET last_step_at = '${clock.toISOString()}' WHERE id = '${questioning}'`,
         )
         .bind()
         .run();
-    }
-    advance(13 * 3600_000);
-    // One order gets all ten answers saved (it is the only one stepping).
-    const reporting = await live();
-    for (let i = 0; i < 12 && state(reporting) === "running"; i += 1) {
-      // Question steps only: no report step until the order is `reporting`.
-      await runOrders(deps({ sender: null }));
-      advance(60_000);
-    }
-    expect(state(reporting)).toBe("reporting");
-    // The report step is left for the counted run: its report attempt is untouched.
-    const questioning = await live();
-    advance(12 * 3600_000);
-    // Runs that fit no audit step: only the deadline failures run.
-    await runOrders(deps({ runBudgetMs: 0 }));
-    await runOrders(deps({ runBudgetMs: 0 }));
-    expect(stale.filter((id) => state(id) === "failed")).toHaveLength(2);
-    for (let i = 0; i < 5; i += 1) {
-      await makeOrder(d1.db, {
-        mode: "live",
-        limitUsd: 0.5,
-        dailyLimitUsd: 1000,
-        now: new Date(clock.getTime() - 3 * 3600_000),
-      });
-    }
-    advance(EMAIL_RETRY_BASE_MS + 1000);
-
-    // The report order has waited longest, so it goes first and runs alone.
-    await d1.db
-      .prepare(
-        `UPDATE orders SET last_step_at = '${clock.toISOString()}' WHERE id = '${questioning}'`,
-      )
-      .bind()
-      .run();
-    providerCalls.n = 0;
-    resendCalls.n = 0;
-    const { counted, count } = counting(d1.db);
-    const result = await runOrders(deps({ db: counted }));
-    const tally = (outcome: string) =>
-      result.outcomes.filter((entry) => entry === outcome).length;
-    expect(tally("expired")).toBe(MAX_EXPIRED_PER_RUN);
-    expect(tally("failed_deadline")).toBe(1);
-    expect(tally("report_saved")).toBe(1);
-    expect(tally("question_done")).toBe(0); // the report step runs alone
-    expect(tally("waiting")).toBe(1);
-    expect(state(reporting)).toBe("delivered");
-    expect(state(questioning)).toBe("running");
-    // 2 report calls; Resend: 3 + 3 rejected failure emails
-    // and 1 accepted ready email.
-    expect(providerCalls.n).toBe(2);
-    expect(resendCalls.n).toBe(7);
-    expect(providerCalls.n + resendCalls.n).toBeLessThanOrEqual(9);
-    expect(count.queries).toBeLessThanOrEqual(40);
-    // Measured when written: 33 queries, 9 outbound requests (2 provider calls
-    // and 7 Resend tries). The other heavy mix, two question steps with two
-    // failure emails, is 40 queries (runner.test.ts).
-  });
+      if (emailer) {
+        // The email-only order has waited longest, so it goes first.
+        await d1.db
+          .prepare(
+            `UPDATE orders SET last_step_at = '2000-01-01T00:00:00.000Z' WHERE id = '${emailer}'`,
+          )
+          .bind()
+          .run();
+      }
+      providerCalls.n = 0;
+      resendCalls.n = 0;
+      const { counted, count } = counting(d1.db);
+      const result = await runOrders(deps({ db: counted }));
+      const tally = (outcome: string) =>
+        result.outcomes.filter((entry) => entry === outcome).length;
+      expect(tally("expired")).toBe(MAX_EXPIRED_PER_RUN);
+      expect(tally("failed_deadline")).toBe(1);
+      expect(tally("report_saved")).toBe(1);
+      expect(tally("question_done")).toBe(0); // the report step runs alone
+      expect(state(reporting)).toBe("delivered");
+      expect(state(questioning)).toBe("running");
+      if (emailer) {
+        // The email-only order is delivered in the same run; the waiting
+        // question order is not given a slot.
+        expect(tally("delivered")).toBe(1);
+        expect(state(emailer)).toBe("delivered");
+      } else {
+        expect(tally("waiting")).toBe(1);
+      }
+      // 2 report calls. Resend: 3 + 3 rejected failure emails, 1 accepted ready
+      // email for the report step, and 1 more for the email-only order.
+      expect(providerCalls.n).toBe(2);
+      expect(resendCalls.n).toBe(emailer ? 8 : 7);
+      expect(providerCalls.n + resendCalls.n).toBeLessThanOrEqual(10);
+      expect(count.queries).toBeLessThanOrEqual(40);
+      // Measured when written: report alone 33 queries and 9 outbound requests;
+      // email-only delivery plus report 40 queries and 10 outbound requests (2
+      // provider calls and 8 Resend tries). Two question steps with two failure
+      // emails: 40 queries (runner.test.ts).
+    },
+  );
 });
