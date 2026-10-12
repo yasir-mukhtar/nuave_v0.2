@@ -18,6 +18,9 @@
 //      settings and the same local D1 database as a web request;
 //   5. the dev-only trigger and the internal cron route answer 404 on the
 //      built worker; the retired run/report routes refuse;
+//   5b. (spec 016 S3b, in the same worker) the private report page and its data
+//      route: private headers, one identical answer for any wrong or switched-off
+//      secret, and the saved report for a secret whose hash is stored;
 //   6. restarts: an approved order is left unfinished, then a worker with the
 //      switch off, and one with an unclear mode, run the cron and change
 //      nothing; a worker with the right settings then finishes it;
@@ -234,7 +237,7 @@ function request(path, { method = "GET", body, headers = {} } = {}) {
           } catch {
             /* HTML and empty bodies are not JSON */
           }
-          resolveRequest({ status: response.statusCode ?? 0, text, json });
+          resolveRequest({ status: response.statusCode ?? 0, text, json, headers: response.headers });
         });
       },
     );
@@ -440,6 +443,64 @@ try {
     /^[0-9a-f]{64}$/.test(hashRow.link_hash ?? "") && Boolean(hashRow.report_json),
   );
 
+  // ── Private report page and data route (spec 016 R-24..R-27, AC-14, AC-15) ──
+  const privateHeaders = (res) =>
+    // Next adds more directives to a dynamic answer; `no-store` stays in it.
+    /\bno-store\b/.test(res.headers["cache-control"] ?? "") &&
+    /noindex/.test(res.headers["x-robots-tag"] ?? "") &&
+    res.headers["referrer-policy"] === "no-referrer";
+  const reportPage = await request("/r");
+  record(
+    "built worker: /r answers with no-store, noindex and no-referrer, and carries no business data",
+    reportPage.status === 200 &&
+      privateHeaders(reportPage) &&
+      !reportPage.text.includes("Kopi Nuave"),
+    `status ${reportPage.status}, cache-control ${reportPage.headers["cache-control"]}`,
+  );
+  const wrongA = await request("/api/report", { method: "POST", body: { secret: "A".repeat(32) } });
+  const wrongB = await request("/api/report", { method: "POST", body: { secret: "b-_9".repeat(8) } });
+  const wrongC = await request("/api/report", { method: "POST", body: { secret: "short" } });
+  const sameAnswer = (a, b) =>
+    a.status === b.status &&
+    a.text === b.text &&
+    JSON.stringify(a.headers["cache-control"]) === JSON.stringify(b.headers["cache-control"]) &&
+    a.headers["x-robots-tag"] === b.headers["x-robots-tag"] &&
+    a.headers["referrer-policy"] === b.headers["referrer-policy"] &&
+    a.headers["content-type"] === b.headers["content-type"];
+  record(
+    "built worker: any wrong secret gets one identical private 404 with no business data",
+    wrongA.status === 404 &&
+      sameAnswer(wrongA, wrongB) &&
+      sameAnswer(wrongA, wrongC) &&
+      privateHeaders(wrongA) &&
+      !wrongA.text.includes("Kopi Nuave"),
+    `statuses ${wrongA.status}/${wrongB.status}/${wrongC.status}; cache-control ${wrongA.headers["cache-control"]}; x-robots-tag ${wrongA.headers["x-robots-tag"]}; referrer-policy ${wrongA.headers["referrer-policy"]}`,
+  );
+  // The link secret itself is only in the email (the fake sender writes no file
+  // in a built worker), so store the hash of a known secret and open it.
+  const knownSecret = "Zk3-_Qw9".repeat(4);
+  const { createHash } = await import("node:crypto");
+  const knownHash = createHash("sha256").update(knownSecret).digest("hex");
+  d1(`UPDATE orders SET link_hash = '${knownHash}' WHERE id = '${first.orderId}'`);
+  const opened = await request("/api/report", { method: "POST", body: { secret: knownSecret } });
+  record(
+    "built worker: a secret whose hash is stored opens the saved report (ten answers, private headers, no email, no secret)",
+    opened.status === 200 &&
+      privateHeaders(opened) &&
+      opened.json?.observations?.length === 10 &&
+      opened.json?.synthetic === true &&
+      !opened.text.includes("pemilik@example.com") &&
+      !opened.text.includes(knownSecret),
+    `status ${opened.status}`,
+  );
+  d1(`UPDATE orders SET link_off = 1 WHERE id = '${first.orderId}'`);
+  const switchedOff = await request("/api/report", { method: "POST", body: { secret: knownSecret } });
+  record(
+    "built worker: a switched-off link gives the same neutral answer as a wrong one",
+    sameAnswer(switchedOff, wrongA),
+    `status ${switchedOff.status}`,
+  );
+
   // A second order is approved and left unfinished for the restart checks.
   const second = await makeApprovedOrder("kedua@example.com");
   record("a second order is approved", second.approved.status === 200);
@@ -492,7 +553,7 @@ try {
   );
   resumed.stop();
 
-  // ── 5. Bundles and size ──────────────────────────────────────────────────
+  // ── 6. Bundles and size ──────────────────────────────────────────────────
   for (const [label, extra] of [
     ["production", []],
     ["preview", ["--env", "preview"]],

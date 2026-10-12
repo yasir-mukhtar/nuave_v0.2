@@ -1,5 +1,5 @@
 import type { SpendDb } from "../spending/spend-ledger";
-import { newLinkSecret, sha256Hex } from "./config";
+import { newLinkSecret, sha256Hex } from "./link-secret";
 import { readyEmail, sendWithinAttempt, type MailSender } from "./mail";
 import {
   emailHistory,

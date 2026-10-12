@@ -1,5 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { dailySpendLimitUsd } from "../spending/provider-spend";
+import { sha256Hex } from "./link-secret";
+
+export { newLinkSecret, sha256Hex } from "./link-secret";
 
 /**
  * Server-only order settings (spec 016). Never read from a request. Values
@@ -116,28 +119,9 @@ export function emailOnAllowlist(email: string): boolean {
   return list.includes(email.trim().toLowerCase());
 }
 
-export async function sha256Hex(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  );
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
-}
-
 /** R-04: sent to the provider instead of the order id: a fixed prefix and the
  * first 32 hex characters of the id's SHA-256. Never the email, never the raw
  * id. */
 export async function orderSafetyIdentifier(orderId: string): Promise<string> {
   return `nuave-order-${(await sha256Hex(orderId)).slice(0, 32)}`;
-}
-
-/** At least 128 random bits (R-24): 24 bytes, URL-safe base64, 32 characters. */
-export function newLinkSecret(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return btoa(String.fromCharCode(...bytes))
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
 }
