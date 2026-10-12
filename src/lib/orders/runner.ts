@@ -98,6 +98,8 @@ export type RunnerDeps = {
   /** One observation call. Throws or returns a failed observation on failure. */
   execute: (input: QuestionExecuteInput) => Promise<AuditObservation>;
   generateReport: ReportGenerator;
+  /** Pause between email tries (tests pass a no-op). */
+  sleep?: (ms: number) => Promise<void>;
   /** Null when no sender is configured: no email can be accepted. */
   sender: MailSender | null;
   runBudgetMs?: number;
@@ -203,7 +205,10 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
     ) {
       continue;
     }
-    if (reportRan || (order.state === "reporting" && auditSteps > 0)) {
+    // A report step with a real report call is the heavy one; an order that
+    // only waits for its email retry is light and does not take that slot.
+    const heavy = order.state === "reporting" && !order.report_json;
+    if (reportRan || (heavy && auditSteps > 0)) {
       outcomes.push("waiting"); // its turn comes on a later run
       continue;
     }
@@ -237,8 +242,9 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
         outcomes.push("skipped");
         continue;
       }
-      auditSteps += 1;
-      if (current.state === "reporting") reportRan = true;
+      const heavyNow = current.state === "reporting" && !current.report_json;
+      if (current.state === "running" || heavyNow) auditSteps += 1;
+      if (heavyNow) reportRan = true;
       const outcome =
         current.state === "running"
           ? await questionStep(deps, current, owner, stepMs)
@@ -279,6 +285,8 @@ async function failOrder(
     from: ["running", "reporting"],
     to: "failed",
     failureCode: code,
+    // No accepted ready email: a link that may have got through stops working.
+    clearUndeliveredLink: true,
     now: deps.now,
   });
   if (ended) await sendFailureEmail(deps, orderId);
@@ -298,11 +306,11 @@ async function sendFailureEmail(
   const attempt = history.next;
   const idempotencyKey = `nuave-order-${orderId}-failure-${attempt}`;
   const mail = failureEmail({ businessName: order.business_name });
-  const result = await sendWithinAttempt(deps.sender, {
-    to: order.email,
-    ...mail,
-    idempotencyKey,
-  });
+  const result = await sendWithinAttempt(
+    deps.sender,
+    { to: order.email, ...mail, idempotencyKey },
+    { sleep: deps.sleep },
+  );
   await recordEmail(deps.db, {
     orderId,
     kind: "failure",
@@ -606,9 +614,15 @@ async function reportStep(
       now: deps.now(),
     });
     if (!saved) return "skipped";
-    // Send the ready email now; `delivered` needs Resend to accept it.
-    const fresh = await getOrder(deps.db, order.id);
-    if (fresh) await readyEmailStep(deps, fresh);
+    // Send the ready email now; `delivered` needs Resend to accept it. A
+    // failure here (for example a database error) never touches the saved
+    // report: the next run retries through the report_json path.
+    try {
+      const fresh = await getOrder(deps.db, order.id);
+      if (fresh) await readyEmailStep(deps, fresh);
+    } catch {
+      // retried on the next run
+    }
     return "report_saved";
   } catch (error) {
     if (error instanceof SpendCapError) {
@@ -666,22 +680,26 @@ async function readyEmailStep(
   }
   if (emailBackingOff(history, deps.now())) return "email_pending";
   const secret = newLinkSecret();
+  const linkHash = await sha256Hex(secret);
   const replaced = await replaceLinkHash(deps.db, {
     orderId: order.id,
-    linkHash: await sha256Hex(secret),
+    linkHash,
   });
   if (!replaced) return "email_pending"; // link switched off, or order moved on
   const attempt = history.next;
-  const idempotencyKey = `nuave-order-${order.id}-ready-${attempt}`;
+  // The key names this secret: if a crash lost the record of an accepted send,
+  // the next try has another secret and so another key, and is never refused
+  // by Resend as the same key with a different body.
+  const idempotencyKey = `nuave-order-${order.id}-ready-${attempt}-${linkHash.slice(0, 12)}`;
   const mail = readyEmail({
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
   });
-  const result = await sendWithinAttempt(deps.sender, {
-    to: order.email,
-    ...mail,
-    idempotencyKey,
-  });
+  const result = await sendWithinAttempt(
+    deps.sender,
+    { to: order.email, ...mail, idempotencyKey },
+    { sleep: deps.sleep },
+  );
   await recordEmail(deps.db, {
     orderId: order.id,
     kind: "ready",

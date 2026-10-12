@@ -4,6 +4,8 @@ import {
   readyEmail,
   RESEND_ENDPOINT,
   resendMailSender,
+  retryWaitMs,
+  RETRY_MAX_WAIT_MS,
   sendWithinAttempt,
   type MailMessage,
 } from "./mail";
@@ -134,5 +136,59 @@ describe("email wording", () => {
     expect(ready.text).toContain("https://v2.nuave.test/r#abc");
     expect(ready.text).toContain("Link berlaku 12 bulan");
     expect(ready.text).toContain("support@nuave.ai");
+  });
+});
+
+describe("the wait between tries inside one attempt", () => {
+  it("grows 0.5 s then 1 s, obeys Retry-After, and never passes the cap", () => {
+    expect(retryWaitMs(1)).toBe(500);
+    expect(retryWaitMs(2)).toBe(1000);
+    expect(retryWaitMs(1, 2000)).toBe(2000);
+    expect(retryWaitMs(1, 60_000)).toBe(RETRY_MAX_WAIT_MS);
+    expect(retryWaitMs(5)).toBe(RETRY_MAX_WAIT_MS);
+  });
+
+  it("a 429 with Retry-After is reported, and the next try waits for it (capped)", async () => {
+    const s = sender((call) =>
+      call === 1
+        ? new Response("{}", { status: 429, headers: { "retry-after": "2" } })
+        : call === 2
+          ? new Response("{}", {
+              status: 429,
+              headers: { "retry-after": "90" },
+            })
+          : Response.json({ id: "ok" }),
+    );
+    expect(
+      await resendMailSender({
+        apiKey: KEY,
+        from: "n@x.test",
+        fetchImpl: (async () =>
+          new Response("{}", {
+            status: 429,
+            headers: { "retry-after": "2" },
+          })) as typeof fetch,
+      })(message),
+    ).toEqual({ accepted: false, retryAfterMs: 2000 });
+    const waits: number[] = [];
+    const result = await sendWithinAttempt(s.send, message, {
+      sleep: async (ms) => {
+        waits.push(ms);
+      },
+    });
+    expect(result.accepted).toBe(true);
+    expect(waits).toEqual([2000, RETRY_MAX_WAIT_MS]);
+  });
+
+  it("waits between tries of a plain failure, and not before the first", async () => {
+    const waits: number[] = [];
+    const s = sender(() => new Response("{}", { status: 500 }));
+    await sendWithinAttempt(s.send, message, {
+      sleep: async (ms) => {
+        waits.push(ms);
+      },
+    });
+    expect(s.calls).toHaveLength(3);
+    expect(waits).toEqual([500, 1000]);
   });
 });

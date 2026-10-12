@@ -105,6 +105,7 @@ function deps(overrides: Partial<RunnerDeps> = {}) {
       return generateSyntheticLocalReport(...args);
     },
     sender: mail.sender,
+    sleep: async () => {},
     ...overrides,
   };
   return { ...value, mail, reports };

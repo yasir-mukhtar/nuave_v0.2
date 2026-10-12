@@ -32,6 +32,8 @@ export type SupportDeps = {
   /** The fixed site address the private link is built on. */
   siteOrigin: string;
   now: () => Date;
+  /** Pause between email tries (tests pass a no-op). */
+  sleep?: (ms: number) => Promise<void>;
   out: (line: string) => void;
 };
 
@@ -92,12 +94,16 @@ async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
     deps.out("This order has no saved report, so there is no link to send.");
     return 1;
   }
+  // The sender comes first: a missing key file must not cost the customer the
+  // working link.
+  const sender = await deps.makeSender();
   const secret = newLinkSecret();
+  const linkHash = await sha256Hex(secret);
   // A new secret replaces the stored hash in one write: the old link stops
   // first (D4). It never changes the saved report.
   const replaced = await replaceLinkHashForSupport(deps.db, {
     orderId: order.id,
-    linkHash: await sha256Hex(secret),
+    linkHash,
     now: deps.now(),
   });
   if (!replaced) {
@@ -108,17 +114,17 @@ async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
     orderId: order.id,
     kind: "ready",
   });
-  const idempotencyKey = `nuave-order-${order.id}-ready-${history.next}`;
+  const idempotencyKey = `nuave-order-${order.id}-ready-${history.next}-${linkHash.slice(0, 12)}`;
   const mail = readyEmail({
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
   });
   // Always to the address saved on the order; there is no way to name another.
-  const result = await sendWithinAttempt(await deps.makeSender(), {
-    to: order.email,
-    ...mail,
-    idempotencyKey,
-  });
+  const result = await sendWithinAttempt(
+    sender,
+    { to: order.email, ...mail, idempotencyKey },
+    { sleep: deps.sleep },
+  );
   await recordEmail(deps.db, {
     orderId: order.id,
     kind: "ready",

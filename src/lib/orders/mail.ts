@@ -18,7 +18,12 @@ export type MailMessage = {
   idempotencyKey: string;
 };
 
-export type MailResult = { accepted: boolean; messageId?: string };
+export type MailResult = {
+  accepted: boolean;
+  messageId?: string;
+  /** Resend asked us to wait (429 with Retry-After), in milliseconds. */
+  retryAfterMs?: number;
+};
 
 export type MailSender = (message: MailMessage) => Promise<MailResult>;
 
@@ -80,7 +85,12 @@ export function resendMailSender(config: {
       }),
       signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
     });
-    if (!response.ok) return { accepted: false };
+    if (!response.ok) {
+      const seconds = Number(response.headers.get("retry-after"));
+      return response.status === 429 && Number.isFinite(seconds) && seconds > 0
+        ? { accepted: false, retryAfterMs: seconds * 1000 }
+        : { accepted: false };
+    }
     const body = (await response.json().catch(() => null)) as {
       id?: unknown;
     } | null;
@@ -110,17 +120,39 @@ export function fakeMailSender(
   };
 }
 
+/** The wait between two tries inside one attempt grows (0.5 s, 1 s) and obeys
+ * Resend's Retry-After, but never passes this cap, so a cron run stays inside
+ * its time budget. */
+export const RETRY_BASE_WAIT_MS = 500;
+export const RETRY_MAX_WAIT_MS = 3_000;
+
+export function retryWaitMs(afterTry: number, retryAfterMs?: number): number {
+  return Math.min(
+    Math.max(RETRY_BASE_WAIT_MS * 2 ** (afterTry - 1), retryAfterMs ?? 0),
+    RETRY_MAX_WAIT_MS,
+  );
+}
+
+const realSleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /** R-25: a failed send inside ONE attempt is retried with the same key and the
  * same body, so one attempt never sends twice. A later attempt is a new call. */
 export async function sendWithinAttempt(
   sender: MailSender,
   message: MailMessage,
-  tries = 3,
+  options: { tries?: number; sleep?: (ms: number) => Promise<void> } = {},
 ): Promise<MailResult> {
+  const tries = options.tries ?? 3;
+  const sleep = options.sleep ?? realSleep;
+  let retryAfterMs: number | undefined;
   for (let attempt = 1; attempt <= tries; attempt += 1) {
+    if (attempt > 1) await sleep(retryWaitMs(attempt - 1, retryAfterMs));
+    retryAfterMs = undefined;
     try {
       const result = await sender(message);
       if (result.accepted) return result;
+      retryAfterMs = result.retryAfterMs;
     } catch {
       // try again with the same key
     }

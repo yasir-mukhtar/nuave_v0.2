@@ -352,8 +352,10 @@ export async function activeOrders(
 
 /** Failed orders whose failure email is not yet accepted, within 24 hours of
  * the failure (R-25), and whose last attempt is old enough: attempts back off
- * (2, 4, 8, 16, 32, then 60 minutes). The order that waited longest since its
- * last attempt goes first, so one failing email cannot block the others. */
+ * (2, 4, 8, 16, 32, then 60 minutes). The due test is in SQL (one cutoff time
+ * per number of tries), so waiting orders never fill the limit. The order that
+ * waited longest since its last attempt goes first, so one failing email cannot
+ * block the others. */
 export async function failedOrdersNeedingEmail(
   db: SpendDb,
   input: {
@@ -363,11 +365,12 @@ export async function failedOrdersNeedingEmail(
     limit: number;
   },
 ): Promise<string[]> {
-  // Orders still backing off are filtered below, so read a few more rows than
-  // the limit. One query either way.
-  const { results } = await db
-    .prepare(
-      `SELECT id,
+  const cutoff = (tries: number) =>
+    iso(new Date(input.now.getTime() - emailRetryDelayMs(tries)));
+  return orderIds(
+    db,
+    `SELECT id FROM (
+       SELECT id, ended_at,
          (SELECT COUNT(*) FROM order_emails e
            WHERE e.order_id = orders.id AND e.kind = 'failure') AS tries,
          (SELECT MAX(e.created_at) FROM order_emails e
@@ -376,26 +379,25 @@ export async function failedOrdersNeedingEmail(
        WHERE state = 'failed' AND environment = ?1 AND mode = ?2 AND ended_at > ?3
          AND NOT EXISTS (SELECT 1 FROM order_emails e
                          WHERE e.order_id = orders.id AND e.kind = 'failure'
-                           AND e.result = 'accepted')
-       ORDER BY last_at IS NOT NULL, last_at, ended_at
-       LIMIT ?4`,
-    )
-    .bind(
+                           AND e.result = 'accepted'))
+     WHERE last_at IS NULL OR last_at <= CASE MIN(tries, 6)
+       WHEN 1 THEN ?5 WHEN 2 THEN ?6 WHEN 3 THEN ?7
+       WHEN 4 THEN ?8 WHEN 5 THEN ?9 ELSE ?10 END
+     ORDER BY last_at IS NOT NULL, last_at, ended_at
+     LIMIT ?4`,
+    [
       input.environment,
       input.mode,
       iso(new Date(input.now.getTime() - FAILURE_EMAIL_WINDOW_MS)),
-      input.limit * 5,
-    )
-    .all<{ id: string; tries: number; last_at: string | null }>();
-  return results
-    .filter(
-      (row) =>
-        !row.last_at ||
-        new Date(row.last_at).getTime() + emailRetryDelayMs(row.tries) <=
-          input.now.getTime(),
-    )
-    .slice(0, input.limit)
-    .map((row) => row.id);
+      input.limit,
+      cutoff(1),
+      cutoff(2),
+      cutoff(3),
+      cutoff(4),
+      cutoff(5),
+      cutoff(6),
+    ],
+  );
 }
 
 async function orderIds(

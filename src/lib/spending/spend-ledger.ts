@@ -312,6 +312,9 @@ export async function endOrder(
     from: readonly OrderState[];
     to: (typeof TERMINAL_ORDER_STATES)[number];
     failureCode?: string;
+    /** For `failed`: in the same batch, clear a link hash whose ready email
+     * was never accepted (spec 016 R-24). */
+    clearUndeliveredLink?: boolean;
     now?: () => Date;
   },
 ): Promise<boolean> {
@@ -337,6 +340,19 @@ export async function endOrder(
                        WHERE id = ?1 AND state IN (${inList(TERMINAL_ORDER_STATES)}))`,
       )
       .bind(input.orderId, at),
+    ...(input.clearUndeliveredLink
+      ? [
+          db
+            .prepare(
+              `UPDATE orders SET link_hash = NULL
+               WHERE id = ?1 AND state = 'failed' AND link_hash IS NOT NULL
+                 AND NOT EXISTS (SELECT 1 FROM order_emails e
+                                 WHERE e.order_id = ?1 AND e.kind = 'ready'
+                                   AND e.result = 'accepted')`,
+            )
+            .bind(input.orderId),
+        ]
+      : []),
   ]);
   return results[0]?.meta?.changes === 1;
 }

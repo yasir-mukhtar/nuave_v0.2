@@ -115,6 +115,7 @@ function support(
     makeSender,
     siteOrigin: SITE,
     now: () => clock,
+    sleep: async () => {},
     out: (line) => output.push(line),
     ...overrides,
   };
@@ -155,7 +156,9 @@ describe("resend (AC-17)", () => {
     expect(order(id).report_json).toBe(reportBefore);
     expect(order(id).state).toBe("delivered");
     // A new idempotency key per send, and a send record.
-    expect(mail.idempotencyKey).toBe(`nuave-order-${id}-ready-2`);
+    expect(mail.idempotencyKey).toMatch(
+      new RegExp(`^nuave-order-${id}-ready-2-[0-9a-f]{12}$`),
+    );
     expect(
       d1.query("SELECT attempt, result FROM order_emails ORDER BY attempt"),
     ).toEqual([
@@ -167,6 +170,26 @@ describe("resend (AC-17)", () => {
     expect(printed).not.toContain(newSecret);
     expect(printed).not.toContain(EMAIL);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("a sender that cannot be made (no key file) fails before anything changes: the old link still works and no send is recorded", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    const hash = order(id).link_hash;
+    await expect(
+      runSupport(["resend", id], {
+        db: d1.db,
+        makeSender: async () => {
+          throw new Error("no key file");
+        },
+        siteOrigin: SITE,
+        now: () => clock,
+        sleep: async () => {},
+        out: (line) => output.push(line),
+      }),
+    ).rejects.toThrow("no key file");
+    expect(order(id).link_hash).toBe(hash);
+    expect((await openLink(firstSecret)).status).toBe(200);
+    expect(d1.query("SELECT id FROM order_emails")).toHaveLength(1); // only the first send
   });
 
   it("a send Resend does not accept still stops the old link, says so, and leaves a failed record", async () => {

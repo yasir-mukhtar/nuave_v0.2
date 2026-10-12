@@ -122,6 +122,7 @@ describe("the worst live run", () => {
         return {};
       }) as unknown as RunnerDeps["generateReport"],
       sender,
+      sleep: async () => {},
       ...extra,
     });
     const live = async () => {

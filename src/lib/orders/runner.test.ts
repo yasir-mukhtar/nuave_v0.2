@@ -95,6 +95,7 @@ function deps(overrides: Partial<RunnerDeps> = {}): RunnerDeps & {
       return generateSyntheticLocalReport(...args);
     },
     sender: mail.sender,
+    sleep: async () => {},
     calls,
     mail,
     reports,
@@ -1268,5 +1269,148 @@ describe("email retries back off (R-25)", () => {
     expect(orderRow(id).state).toBe("delivered");
     expect(mail.sent).toHaveLength(sent);
     expect(orderRow(id).link_hash).toBe(hash);
+  });
+});
+
+describe("the ready email never harms a saved report", () => {
+  /** A D1 handle whose first insert into order_emails throws (the record of a
+   * send is lost), as a database error right after Resend accepted would. */
+  function lossyRecord() {
+    let thrown = false;
+    const wrapped: RunnerDeps["db"] = {
+      prepare: (sql) => ({
+        bind: (...values) => {
+          if (!thrown && /INSERT INTO order_emails/.test(sql)) {
+            thrown = true;
+            throw new Error("D1 unavailable");
+          }
+          return d1.db.prepare(sql).bind(...values);
+        },
+      }),
+      batch: (statements) => d1.db.batch(statements),
+    };
+    return wrapped;
+  }
+
+  async function reportingOrder(d: ReturnType<typeof deps>) {
+    const id = await runningOrder();
+    for (let i = 0; i < 10; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("reporting");
+    return id;
+  }
+
+  it("a database error while recording the ready email keeps the order reporting with its report; the next run finishes it, with no failure email", async () => {
+    const mail = mailbox();
+    const d = deps({ sender: mail.sender });
+    const id = await reportingOrder(d);
+    const lossy = deps({ sender: mail.sender, db: lossyRecord() });
+    const outcome = await runOrders(lossy);
+    expect(outcome.outcomes).toEqual(["report_saved"]);
+    expect(orderRow(id).state).toBe("reporting");
+    expect(orderRow(id).report_json).toBeTruthy();
+    expect(orderRow(id).failure_code).toBeNull();
+    const reports = d.reports.n;
+    minute();
+    await runOrders(deps({ sender: mail.sender }));
+    expect(orderRow(id).state).toBe("delivered");
+    expect(mail.sent.filter((m) => m.subject.includes("belum bisa"))).toEqual(
+      [],
+    );
+    // The lost record means a second send, with its own secret and its own key
+    // (Resend would refuse the same key with another body). Only it works.
+    const ready = mail.sent.filter((m) => m.subject.includes("siap"));
+    expect(ready).toHaveLength(2);
+    expect(ready[0]!.idempotencyKey).not.toBe(ready[1]!.idempotencyKey);
+    expect(secretIn(ready[0]!)).not.toBe(secretIn(ready[1]!));
+    expect(d.reports.n).toBe(reports); // the report was not made again
+  });
+
+  it("an order that only waits for its email retry does not take the report slot", async () => {
+    let accept = false;
+    const mail = mailbox(() => accept);
+    const d = deps({ sender: mail.sender });
+    const waiting = await reportingOrder(d);
+    await runOrders(d); // report saved, ready email rejected
+    expect(orderRow(waiting).report_json).toBeTruthy();
+    const needs = await runningOrder();
+    for (let i = 0; i < 12 && orderRow(needs).state === "running"; i += 1) {
+      await runOrders(d);
+      minute();
+    }
+    expect(orderRow(needs).state).toBe("reporting");
+    expect(orderRow(needs).report_json).toBeNull();
+    accept = true;
+    pastBackoff();
+    // The email-only order has waited longest, so it goes first.
+    await d1.db
+      .prepare(
+        `UPDATE orders SET last_step_at = '2000-01-01T00:00:00.000Z' WHERE id = '${waiting}'`,
+      )
+      .bind()
+      .run();
+    const result = await runOrders(d);
+    expect(result.outcomes).toEqual(["delivered", "report_saved"]);
+    expect(orderRow(waiting).state).toBe("delivered");
+    expect(orderRow(needs).report_json).toBeTruthy();
+  });
+
+  it("a deadline failure with no accepted ready email clears the link, so it opens nothing", async () => {
+    const mail = mailbox((message) => !message.subject.includes("siap"));
+    const d = deps({ sender: mail.sender });
+    const id = await reportingOrder(d);
+    await runOrders(d); // report saved, ready email rejected, link stored
+    expect(orderRow(id).link_hash).toBeTruthy();
+    const hash = String(orderRow(id).link_hash);
+    advance(ORDER_DEADLINE_MS);
+    expect((await runOrders(d)).outcomes).toContain("failed_deadline");
+    expect(orderRow(id).state).toBe("failed");
+    expect(orderRow(id).link_hash).toBeNull();
+    expect(orderRow(id).report_json).toBeTruthy(); // kept for the founder
+    const { reportForLink } = await import("./store");
+    expect(
+      await reportForLink(d1.db, {
+        linkHash: hash,
+        environment: "production",
+        now: clock,
+      }),
+    ).toBeNull();
+  });
+
+  it("failure emails due are chosen in SQL: six waiting orders do not hide a due one", async () => {
+    const { failedOrdersNeedingEmail } = await import("./store");
+    const failed = async (tries: number, lastMinutesAgo: number) => {
+      const id = await runningOrder();
+      await d1.db
+        .prepare(
+          `UPDATE orders SET state = 'failed', ended_at = '${new Date(clock.getTime() - 3600_000).toISOString()}' WHERE id = '${id}'`,
+        )
+        .bind()
+        .run();
+      for (let n = 1; n <= tries; n += 1) {
+        const at = new Date(clock.getTime() - lastMinutesAgo * 60_000);
+        await d1.db
+          .prepare(
+            `INSERT INTO order_emails (id, order_id, kind, attempt, idempotency_key, result, created_at)
+             VALUES ('${id}-${n}', '${id}', 'failure', ${n}, 'k-${id}-${n}', 'failed', '${at.toISOString()}')`,
+          )
+          .bind()
+          .run();
+      }
+      return id;
+    };
+    // Six orders on their sixth try, 30 minutes ago: not due for 60 minutes,
+    // and older than the due order, so they sort first.
+    for (let i = 0; i < 6; i += 1) await failed(6, 30);
+    const due = await failed(1, 5); // first try 5 minutes ago: due after 2
+    const ids = await failedOrdersNeedingEmail(d1.db, {
+      environment: "production",
+      mode: "synthetic",
+      now: clock,
+      limit: 1,
+    });
+    expect(ids).toEqual([due]);
   });
 });
