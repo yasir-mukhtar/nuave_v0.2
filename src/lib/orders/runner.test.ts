@@ -20,6 +20,7 @@ import { reserveProviderSpend } from "../spending/provider-spend";
 import { usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import {
+  claimOrderLease,
   ORDER_DEADLINE_MS,
   ORDER_OPEN_MS,
   orderStatus,
@@ -277,7 +278,9 @@ describe("one runner at a time, restarts (R-18, AC-10)", () => {
         throw new Error("provider timed out");
       },
     });
-    expect((await runOrders(failing)).outcomes).toEqual(["skipped"]);
+    // (An order another runner holds is not even picked for a step.)
+    expect((await runOrders(failing)).outcomes).toEqual([]);
+    expect(failing.calls).toEqual([]);
     // Its claim and lease have expired: attempts 2 and 3 are the runner's.
     advance(10 * 60_000);
     expect((await runOrders(failing)).outcomes).toEqual(["question_retry"]);
@@ -918,5 +921,127 @@ describe("safety identifier (R-04)", () => {
       expect(value).not.toContain(id);
       expect(value).toMatch(/^nuave-order-[0-9a-f]{32}$/);
     }
+  });
+});
+
+describe("overdue orders and fair rotation (R-15, R-23)", () => {
+  it("two orders past their deadline in the same run: no provider call for either, the second fails on the next run", async () => {
+    const first = await runningOrder();
+    const second = await runningOrder();
+    advance(ORDER_DEADLINE_MS + 1000);
+    const d = deps();
+    expect((await runOrders(d)).outcomes).toEqual(["failed_deadline"]);
+    expect(d.calls).toEqual([]);
+    expect(d.reports.n).toBe(0);
+    const states = [first, second].map((id) => orderRow(id).state).sort();
+    expect(states).toEqual(["failed", "running"]);
+    minute();
+    expect((await runOrders(d)).outcomes).toEqual(["failed_deadline"]);
+    expect(d.calls).toEqual([]);
+    expect([first, second].map((id) => orderRow(id).state)).toEqual([
+      "failed",
+      "failed",
+    ]);
+  });
+
+  it("a lease cannot be claimed on an order past its deadline", async () => {
+    const id = await runningOrder();
+    advance(ORDER_DEADLINE_MS);
+    expect(
+      await claimOrderLease(d1.db, {
+        orderId: id,
+        owner: "x",
+        now: clock,
+        leaseMs: 1000,
+      }),
+    ).toBe(false);
+  });
+
+  it("two older orders held by other runners do not stop a newer order from getting its step", async () => {
+    const held = [await runningOrder(), await runningOrder()];
+    advance(1000);
+    const newer = await runningOrder();
+    for (const id of held) {
+      d1.query(
+        `UPDATE orders SET lease_owner = 'other', lease_until = '2026-10-12T11:00:00.000Z' WHERE id = '${id}' RETURNING 1`,
+      );
+    }
+    const d = deps();
+    expect((await runOrders(d)).outcomes).toEqual(["question_done"]);
+    expect(
+      rows(
+        `SELECT DISTINCT order_id FROM order_questions WHERE status = 'done'`,
+      ),
+    ).toEqual([{ order_id: newer }]);
+  });
+
+  it("two older orders waiting on a retry delay rotate behind a newer order; nothing starves", async () => {
+    const waiting = [await runningOrder(), await runningOrder()];
+    const failing = deps({
+      execute: async () => {
+        throw new Error("provider timed out");
+      },
+    });
+    // Both older orders take a step and fail (retry delay), so both go to the back.
+    expect((await runOrders(failing)).outcomes).toEqual([
+      "question_retry",
+      "question_retry",
+    ]);
+    advance(1000);
+    const newer = await runningOrder();
+    const d = deps();
+    const outcomes = (await runOrders(d)).outcomes;
+    expect(outcomes).toContain("question_done");
+    expect(
+      rows(
+        `SELECT DISTINCT order_id FROM order_questions WHERE status = 'done'`,
+      ).map((row) => row.order_id),
+    ).toContain(newer);
+    // Over a few runs every order gets steps.
+    for (let i = 0; i < 4; i += 1) {
+      advance(10 * 60_000);
+      await runOrders(d);
+    }
+    const stepped = new Set(
+      rows(`SELECT order_id FROM order_questions WHERE attempts > 0`).map(
+        (row) => row.order_id,
+      ),
+    );
+    for (const id of [...waiting, newer]) expect(stepped.has(id)).toBe(true);
+  });
+
+  it("failure emails rotate by last attempt, so one failing email cannot block the others", async () => {
+    const ids = [];
+    for (let i = 0; i < 3; i += 1) {
+      ids.push(await runningOrder());
+      advance(1000);
+    }
+    const rejecting = mailbox(() => false);
+    advance(ORDER_DEADLINE_MS);
+    // Three orders fail at their deadline over three runs; every email is rejected.
+    for (let i = 0; i < 3; i += 1) {
+      await runOrders(deps({ sender: rejecting.sender }));
+      minute();
+    }
+    expect(ids.map((id) => orderRow(id).state)).toEqual([
+      "failed",
+      "failed",
+      "failed",
+    ]);
+    // Now one email retry per run: three more runs reach every order.
+    const counts = () =>
+      Object.fromEntries(
+        rows(
+          "SELECT order_id, COUNT(*) AS n FROM order_emails WHERE kind = 'failure' GROUP BY order_id",
+        ).map((row) => [row.order_id, Number(row.n)]),
+      );
+    const before = counts();
+    expect(Object.keys(before)).toHaveLength(3);
+    for (let i = 0; i < 3; i += 1) {
+      await runOrders(deps({ sender: rejecting.sender }));
+      minute();
+    }
+    const after = counts();
+    for (const id of ids) expect(after[id]).toBe(before[id] + 1);
   });
 });

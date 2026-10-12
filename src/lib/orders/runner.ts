@@ -185,6 +185,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
 
   for (const id of await activeOrders(deps.db, {
     ...scope,
+    now: deps.now(),
     limit: MAX_ORDERS_PER_RUN,
   })) {
     const order = await getOrder(deps.db, id);

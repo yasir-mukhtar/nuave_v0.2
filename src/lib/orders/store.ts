@@ -317,13 +317,25 @@ export async function ordersPastDeadline(
 
 export async function activeOrders(
   db: SpendDb,
-  input: { environment: OrderEnvironment; mode: OrderMode; limit: number },
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
 ): Promise<string[]> {
+  // Orders past their deadline never get another paid step (they are failed
+  // by `ordersPastDeadline`), and an order another runner holds is skipped so
+  // it cannot take a slot. The longest-waiting order goes first (never-stepped
+  // first), so a few slow orders cannot hold the slots for ever.
   return orderIds(
     db,
     `SELECT id FROM orders WHERE state IN (${ACTIVE_STATES})
-       AND environment = ?1 AND mode = ?2 ORDER BY created_at LIMIT ?3`,
-    [input.environment, input.mode, input.limit],
+       AND environment = ?1 AND mode = ?2
+       AND deadline_at > ?3
+       AND (lease_owner IS NULL OR lease_until <= ?3)
+     ORDER BY last_step_at IS NOT NULL, last_step_at, created_at LIMIT ?4`,
+    [input.environment, input.mode, iso(input.now), input.limit],
   );
 }
 
@@ -345,7 +357,13 @@ export async function failedOrdersNeedingEmail(
        AND NOT EXISTS (SELECT 1 FROM order_emails e
                        WHERE e.order_id = orders.id AND e.kind = 'failure'
                          AND e.result = 'accepted')
-     ORDER BY ended_at LIMIT ?4`,
+     ORDER BY
+       (SELECT MAX(e.created_at) FROM order_emails e
+         WHERE e.order_id = orders.id AND e.kind = 'failure') IS NOT NULL,
+       (SELECT MAX(e.created_at) FROM order_emails e
+         WHERE e.order_id = orders.id AND e.kind = 'failure'),
+       ended_at
+     LIMIT ?4`,
     [
       input.environment,
       input.mode,
@@ -374,8 +392,9 @@ export async function claimOrderLease(
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      `UPDATE orders SET lease_owner = ?2, lease_until = ?3
+      `UPDATE orders SET lease_owner = ?2, lease_until = ?3, last_step_at = ?4
        WHERE id = ?1 AND state IN (${ACTIVE_STATES})
+         AND deadline_at > ?4
          AND (lease_owner IS NULL OR lease_until <= ?4)`,
     )
     .bind(
