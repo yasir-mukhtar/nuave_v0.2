@@ -178,10 +178,10 @@ jobs:
 
       # Spec 016 R-15: the cron cannot see build-time values, so the deploy also
       # sets everything the cron needs as Worker secrets (the same ones a web
-      # request sees): mode, emergency switch, caps, the founder's email list and
-      # the keys the live mode needs. The API token needs Worker secret
-      # permission (founder action Q5). A value that is empty here fails the
-      # deploy rather than leaving the Worker without it.
+      # request sees): mode, emergency switch, caps, the founder's email list, the
+      # Resend key and from address, and the keys the live mode needs. The API
+      # token needs Worker secret permission (founder action Q5). A value that is
+      # empty here fails the deploy rather than leaving the Worker without it.
       - name: Deploy validated commit to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         env:
@@ -190,6 +190,10 @@ jobs:
           NUAVE_DAILY_SPEND_LIMIT_USD: "5"
           NUAVE_ORDER_SPEND_LIMIT_USD: "2"
           NUAVE_ORDER_EMAIL_ALLOWLIST: ${{ secrets.NUAVE_ORDER_EMAIL_ALLOWLIST }}
+          # Spec 016 R-25: the real mail sender (Resend). The cron and the order
+          # route both refuse live work when either is missing.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NUAVE_MAIL_FROM: ${{ secrets.NUAVE_MAIL_FROM }}
           NUAVE_PROVIDER: openai
           NUAVE_QUESTION_PROVIDER: openai
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -208,6 +212,8 @@ jobs:
             NUAVE_DAILY_SPEND_LIMIT_USD
             NUAVE_ORDER_SPEND_LIMIT_USD
             NUAVE_ORDER_EMAIL_ALLOWLIST
+            RESEND_API_KEY
+            NUAVE_MAIL_FROM
             NUAVE_PROVIDER
             NUAVE_QUESTION_PROVIDER
             OPENAI_API_KEY

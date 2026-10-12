@@ -47,6 +47,8 @@ describe("wrangler.jsonc environments", () => {
     const text = JSON.stringify(config);
     for (const name of [
       "NUAVE_ORDER_EMAIL_ALLOWLIST",
+      "RESEND_API_KEY",
+      "NUAVE_MAIL_FROM",
       "OPENAI_API_KEY",
       "CHEAPERINFERENCE_API_KEY",
       "NUAVE_AUDIT_MODE",
