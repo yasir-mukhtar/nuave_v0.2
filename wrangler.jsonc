@@ -131,8 +131,7 @@
         {
           "binding": "SPEND_DB",
           "database_name": "nuave-v2-preview",
-          // The founder creates this database (Q5) and replaces this id.
-          "database_id": "REPLACE_WITH_NUAVE_V2_PREVIEW_ID",
+          "database_id": "5613a4a7-7a86-432a-810c-7ccef7e80a25",
           "migrations_dir": "migrations",
         },
       ],

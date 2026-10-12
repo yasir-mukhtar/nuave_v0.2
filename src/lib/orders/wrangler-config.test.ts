@@ -33,8 +33,8 @@ describe("wrangler.jsonc environments", () => {
     expect(previewDb.binding).toBe("SPEND_DB");
     expect(previewDb.database_name).toBe("nuave-v2-preview");
     expect(previewDb.database_id).not.toBe(production?.database_id);
-    // Placeholder until the founder creates nuave-v2-preview (Q5).
-    expect(previewDb.database_id).toBe("REPLACE_WITH_NUAVE_V2_PREVIEW_ID");
+    // The founder created nuave-v2-preview on 2026-10-12 (Q5).
+    expect(previewDb.database_id).toBe("5613a4a7-7a86-432a-810c-7ccef7e80a25");
   });
 
   it("every environment applies the same migration folder", () => {
