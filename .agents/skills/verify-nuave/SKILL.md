@@ -1,6 +1,6 @@
 ---
 name: verify-nuave
-description: Drive the Nuave web app's public audit journey (landing → /audit entry → summary → ten questions → synthetic audit → report, PDF and JSON downloads, answers-only recovery) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
+description: Drive the Nuave web app's public audit journey (landing → /audit entry → brand confirm → order → paid reading → intake → ten questions → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
 ---
 
 # verify-nuave
@@ -25,7 +25,10 @@ Always run `cleanup`, even after a failure.
 - Starts `npm run dev -- --port <p> --hostname 127.0.0.1` from the checkout
   root as its own process group, with the environment from
   `offlineE2EServerEnv({ NUAVE_NEW_AUDIT_ENABLED: "true", NUAVE_AUDIT_MODE: "synthetic" })`
-  (`tests/e2e/shared-config.ts`): provider keys blanked, audit on, synthetic.
+  (`tests/e2e/shared-config.ts`): provider keys and the Resend settings
+  blanked, audit on, synthetic. Before it starts the server it applies the
+  local D1 migrations (`npm run db:migrate:local`), because orders and saved
+  reports live in that local database (spec 016 R-33).
 - Refuses a port that is already in use. Never drive a server this run did not
   start.
 - Ready when `http://127.0.0.1:<p>/` answers (about 8 s on a warm machine).
@@ -82,17 +85,17 @@ fail this check by design.
 
 ## Drive
 
-`$V drive <feature> [--run <id>]`, `$V drive report-and-recovery --inject usefulness-failure`,
-or `$V drive all` (five base features plus rich preparation, then the injected
-recovery).
+`$V drive <feature> [--run <id>]` or `$V drive all` (the six features).
 
 - Features: `audit-entry`, `smart-intake-summary`, `rich-preparation`,
-  `question-review`, `audit-run`, `report-and-recovery`. The recipes live in
-  the feature files and in `src/features.ts`.
+  `question-review`, `audit-run`, `report-link`. The recipes live in the
+  feature files and in `src/features.ts`.
 - Refuses to drive unless the process checks from doctor pass (right group,
   right folder, owns the port).
 - Each drive opens a fresh headless Chromium context (1280×900) at the
-  feature's baseline: an empty session on `/` or `/audit`.
+  feature's baseline: an empty session on `/` or `/audit`. The audit features
+  also open a second, never-used browser context for the emailed link, and a
+  new tab in the first context after the first tab is closed.
 - Every journey step comes from the shared driver `tests/e2e/journey.ts`, the
   same module the e2e specs use. Add or fix a selector there, never inline.
 - Stamps the evidence with `git rev-parse HEAD`, a dirty flag and the dirty
@@ -100,11 +103,14 @@ recovery).
 - Records every request with `collectRequests` (`tests/e2e/helpers.ts`). The
   drive fails if `unexpectedExternalRequests` (`tests/e2e/network-guard.ts`)
   is not empty.
-- Status is `passed`, `failed`, or, for `--inject usefulness-failure`,
-  `fault-injected (not user-reachable in synthetic mode)`. That drive answers
-  the first `/api/audit/report` with a fake 422 through
-  `injectUsefulnessFailureOnce` (the same stub the e2e spec uses). It is never
-  reported as plain `passed`.
+- Status is `passed` or `failed`.
+- The server audit needs the cron. In synthetic mode on `next dev` the recipes
+  start it through the development trigger `POST /api/dev/run-cron` (spec 016
+  R-33); it stands in for the one-minute cron and exists only under `next dev`
+  in synthetic mode. It shows in `network.json` as a test helper, not a user
+  request. The ready email is read from the fake mailbox
+  `.local-evidence/test-mail/`. A fragment (the link secret) is never written
+  to evidence: URLs are recorded without it.
 
 ## Evidence
 
@@ -114,13 +120,13 @@ git-ignored. Never commit it.
 ```text
 <run-id>/
   state.json  server.log  capture.json  cleanup.json
-  <feature>[--inject-<name>]/
+  <feature>/
     NN-<step>.png        full-page screenshot after each user action
     NN-<step>.aria.yml   ARIA snapshot of <body> after each user action
     network.json         collectRequests URLs, method/status detail, /api call counts, unexpected external requests
     result.json          status, error, HEAD/dirty stamp, steps, observed checks, artifacts
     failure.png          only when the drive failed
-  report-and-recovery/
+  report-link/
     report-a4.headless.pdf   page.pdf() A4 in print media, labelled "headless, not native print"
     download-evidence.json   the JSON the user downloads with "Unduh bukti JSON"
 ```
@@ -136,7 +142,6 @@ git-ignored. Never commit it.
 Proof rules:
 
 - Use the real user path.
-- Report a fault-injected drive as fault-injected.
 - `Download PDF` is proved by the `window.print()` call it makes. Headless
   Chromium cannot show the print dialog, so the drive counts the call. The PDF
   is `page.pdf()`, not the browser's own print output.
@@ -174,7 +179,7 @@ leader and stopped it.
 - `bin/verify-nuave`: the CLI. It is a Node script that bundles `src/cli.ts`
   with the repo's own esbuild into `node_modules/.cache/verify-nuave/cli.mjs`
   on each call, then runs it. `$V --help` prints the usage.
-- `src/cli.ts`: the commands. `src/features.ts`: the five recipes.
+- `src/cli.ts`: the commands. `src/features.ts`: the six recipes.
   `src/run-state.ts`: state file, git stamp, process and port lookups.
 - `tests/e2e/journey.ts`: the shared journey driver (outside the skill,
   because the specs import it too).

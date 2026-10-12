@@ -1,4 +1,4 @@
-import { chromium } from "@playwright/test";
+import { chromium, type Page } from "@playwright/test";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -13,17 +13,11 @@ import {
 } from "node:fs";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
-import { collectRequests } from "../../../../tests/e2e/helpers";
+
 import { trackApiCalls } from "../../../../tests/e2e/journey";
 import { unexpectedExternalRequests } from "../../../../tests/e2e/network-guard";
 import { offlineE2EServerEnv } from "../../../../tests/e2e/shared-config";
-import {
-  createContext,
-  FEATURES,
-  INJECTIONS,
-  recipe,
-  type Feature,
-} from "./features";
+import { createContext, FEATURES, recipe, type Feature } from "./features";
 import {
   checkoutRoot,
   cwdOf,
@@ -39,7 +33,6 @@ import {
   type RunState,
 } from "./run-state";
 
-const FAULT_INJECTED = "fault-injected (not user-reachable in synthetic mode)";
 const SYNTHETIC_LABEL =
   "Mode uji lokal menggunakan pengganti sintetis berlabel.";
 
@@ -48,7 +41,7 @@ const USAGE = `verify-nuave — drive the Nuave audit journey in synthetic mode
   launch  [--port 3100]                 start next dev (synthetic) as its own process group
   doctor  [--allow-dirty] [--run <id>]  read-only: is this instance worth driving?
   doctor  --pr <n>                      preview: comment commit == PR head SHA
-  drive   <feature|all> [--inject usefulness-failure] [--run <id>]
+  drive   <feature|all> [--run <id>]
   capture [--run <id>]                  check and index the run's evidence
   cleanup [--run <id>]                  stop this run's process group only
 
@@ -87,6 +80,17 @@ async function launch(root: string, port: number) {
   mkdirSync(dir, { recursive: true });
   const logFile = join(dir, "server.log");
   const log = openSync(logFile, "a");
+  const serverEnv = offlineE2EServerEnv({
+    NUAVE_NEW_AUDIT_ENABLED: "true",
+    NUAVE_AUDIT_MODE: "synthetic",
+  });
+  // Spec 016 R-33: orders and the report live in the local D1 database, so its
+  // migrations go first (the same step the e2e web server runs).
+  execFileSync(
+    process.platform === "win32" ? "npm.cmd" : "npm",
+    ["run", "db:migrate:local"],
+    { cwd: root, env: serverEnv, stdio: ["ignore", log, log] },
+  );
   const child = spawn(
     process.platform === "win32" ? "npm.cmd" : "npm",
     ["run", "dev", "--", "--port", String(port), "--hostname", "127.0.0.1"],
@@ -96,10 +100,7 @@ async function launch(root: string, port: number) {
       // next dev child it spawns — and nothing else.
       detached: true,
       stdio: ["ignore", log, log],
-      env: offlineE2EServerEnv({
-        NUAVE_NEW_AUDIT_ENABLED: "true",
-        NUAVE_AUDIT_MODE: "synthetic",
-      }),
+      env: serverEnv,
     },
   );
   child.unref();
@@ -325,7 +326,6 @@ async function doctorPreview(pr: number) {
 async function drive(
   root: string,
   feature: Feature,
-  inject: string | undefined,
   runId: string | undefined,
 ) {
   const state = readState(root, runId);
@@ -336,7 +336,7 @@ async function drive(
       "Refusing to drive: this is not the server this run started. Run doctor.",
     );
   }
-  const label = inject ? `${feature}--inject-${inject}` : feature;
+  const label = feature;
   const dir = join(runDir(root, state.runId), label);
   // A re-drive replaces that feature's evidence; stale files never mix in.
   rmSync(dir, { recursive: true, force: true });
@@ -348,47 +348,79 @@ async function drive(
     acceptDownloads: true,
     viewport: { width: 1280, height: 900 },
   });
-  const page = await context.newPage();
-  page.setDefaultTimeout(30_000);
-  page.setDefaultNavigationTimeout(90_000);
-  const urls = collectRequests(page);
-  const calls = trackApiCalls(page);
+  const urls: string[] = [];
+  const calls: Record<string, number> = {};
   const network: { method: string; url: string; status: number | string }[] =
     [];
   // Response lookups can outlive the recipe; settle them before closing the
   // browser, or a lookup rejected by the close would end the process.
   const pending: Promise<void>[] = [];
-  page.on("requestfinished", (request) =>
-    pending.push(
-      request
-        .response()
-        .then(
-          (response) => response?.status() ?? "none",
-          () => "none",
-        )
-        .then((status) => {
-          network.push({
-            method: request.method(),
-            url: request.url(),
-            status,
-          });
-        }),
-    ),
-  );
-  page.on("requestfailed", (request) =>
-    network.push({
-      method: request.method(),
-      url: request.url(),
-      status: `failed: ${request.failure()?.errorText}`,
-    }),
-  );
-  const ctx = createContext(page, dir, calls);
+  /** A URL as evidence: the private link's secret is in the fragment, so a
+   * fragment is never recorded. */
+  const recorded = (url: string) => url.replace(/#.*$/, "");
+  /** Records every request of a page, like `collectRequests` and
+   * `trackApiCalls`, into this drive's evidence. */
+  const watch = (watched: Page) => {
+    watched.setDefaultTimeout(30_000);
+    watched.setDefaultNavigationTimeout(90_000);
+    watched.on("request", (request) => {
+      urls.push(recorded(request.url()));
+      const path = new URL(request.url()).pathname;
+      if (path.startsWith("/api/")) {
+        const key = `${request.method()} ${path}`;
+        calls[key] = (calls[key] ?? 0) + 1;
+      }
+    });
+    watched.on("requestfinished", (request) =>
+      pending.push(
+        request
+          .response()
+          .then(
+            (response) => response?.status() ?? "none",
+            () => "none",
+          )
+          .then((status) => {
+            network.push({
+              method: request.method(),
+              url: recorded(request.url()),
+              status,
+            });
+          }),
+      ),
+    );
+    watched.on("requestfailed", (request) =>
+      network.push({
+        method: request.method(),
+        url: recorded(request.url()),
+        status: `failed: ${request.failure()?.errorText}`,
+      }),
+    );
+  };
+  const page = await context.newPage();
+  watch(page);
+  const ctx = createContext(page, dir, calls, {
+    async newTab() {
+      const tab = await context.newPage();
+      watch(tab);
+      return tab;
+    },
+    async freshBrowserPage() {
+      const fresh = await browser.newContext({
+        baseURL: `http://127.0.0.1:${state.port}`,
+        acceptDownloads: true,
+        viewport: { width: 1280, height: 900 },
+      });
+      const tab = await fresh.newPage();
+      watch(tab);
+      return tab;
+    },
+  });
   let error: string | null = null;
   try {
-    await recipe(feature, inject)(ctx);
+    await recipe(feature)(ctx);
   } catch (caught) {
     error = caught instanceof Error ? caught.message : String(caught);
-    await page
+    await ctx.page
       .screenshot({ path: join(dir, "failure.png"), fullPage: true })
       .catch(() => {});
   }
@@ -401,10 +433,9 @@ async function drive(
     join(dir, "network.json"),
     `${JSON.stringify({ collectRequests: urls, detail: network, apiCalls: calls, unexpectedExternalRequests: unexpected }, null, 2)}\n`,
   );
-  const status = error ? "failed" : inject ? FAULT_INJECTED : "passed";
+  const status = error ? "failed" : "passed";
   const result = {
     feature,
-    inject: inject ?? null,
     status,
     error,
     runId: state.runId,
@@ -457,10 +488,7 @@ function capture(root: string, runId: string | undefined) {
       problems.push(`${name}: unexpected external requests`);
   }
   const driven = new Set(drives.map((d) => d.name));
-  const missing = [
-    ...FEATURES,
-    "report-and-recovery--inject-usefulness-failure",
-  ].filter((name) => !driven.has(name));
+  const missing = FEATURES.filter((name) => !driven.has(name));
   const files = readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => {
@@ -568,7 +596,6 @@ export async function main(argv: string[], from: string) {
       port: { type: "string", default: "3100" },
       run: { type: "string" },
       pr: { type: "string" },
-      inject: { type: "string" },
       "allow-dirty": { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
@@ -579,6 +606,9 @@ export async function main(argv: string[], from: string) {
     return 0;
   }
   const root = checkoutRoot(from);
+  // The fake mailbox (.local-evidence/test-mail) is written relative to the
+  // server's folder, the checkout root, so read it from there too.
+  process.chdir(root);
   switch (command) {
     case "launch":
       await launch(root, Number(values.port));
@@ -595,18 +625,12 @@ export async function main(argv: string[], from: string) {
       if (target === "all") {
         let ok = true;
         for (const feature of FEATURES)
-          ok = (await drive(root, feature, undefined, values.run)) && ok;
-        for (const [feature, injections] of Object.entries(INJECTIONS))
-          for (const inject of injections)
-            ok =
-              (await drive(root, feature as Feature, inject, values.run)) && ok;
+          ok = (await drive(root, feature, values.run)) && ok;
         return ok ? 0 : 1;
       }
       if (!FEATURES.includes(target as Feature))
         throw new Error(`Unknown feature "${target}". ${USAGE}`);
-      return (await drive(root, target as Feature, values.inject, values.run))
-        ? 0
-        : 1;
+      return (await drive(root, target as Feature, values.run)) ? 0 : 1;
     }
     case "capture":
       return capture(root, values.run) ? 0 : 1;
