@@ -71,6 +71,14 @@
         "period": 60,
       },
     },
+    {
+      "name": "REPORT_DATA_CALLER_RATE_LIMITER",
+      "namespace_id": "306",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
   ],
   "d1_databases": [
     {
@@ -126,6 +134,11 @@
           "namespace_id": "416",
           "simple": { "limit": 30, "period": 60 },
         },
+        {
+          "name": "REPORT_DATA_CALLER_RATE_LIMITER",
+          "namespace_id": "417",
+          "simple": { "limit": 20, "period": 60 },
+        },
       ],
       "d1_databases": [
         {
@@ -177,6 +190,11 @@
         {
           "name": "ORDER_STATUS_CALLER_RATE_LIMITER",
           "namespace_id": "516",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "REPORT_DATA_CALLER_RATE_LIMITER",
+          "namespace_id": "517",
           "simple": { "limit": 100000, "period": 60 },
         },
       ],

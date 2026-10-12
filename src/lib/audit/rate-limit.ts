@@ -13,6 +13,10 @@ export const ORDER_CREATE_CALLER_RATE_LIMITER =
 export const ORDER_STATUS_CALLER_RATE_LIMITER =
   "ORDER_STATUS_CALLER_RATE_LIMITER";
 
+/** Spec 016 R-27: the saved-report data route, per caller IP. */
+export const REPORT_DATA_CALLER_RATE_LIMITER =
+  "REPORT_DATA_CALLER_RATE_LIMITER";
+
 export const RATE_LIMITED_MESSAGE =
   "Permintaan terlalu banyak. Coba lagi dalam beberapa saat.";
 /** Spec 010 R-03: the caller-facing message for the new paid-stage limiters
@@ -34,6 +38,7 @@ export interface AuditRateLimitBindings {
   glmCaller?: AuditRateLimitBinding;
   orderCreateCaller?: AuditRateLimitBinding;
   orderStatusCaller?: AuditRateLimitBinding;
+  reportDataCaller?: AuditRateLimitBinding;
 }
 
 export type AuditRateLimitDecision = "allowed" | "limited" | "unavailable";
@@ -74,6 +79,9 @@ export function getAuditRateLimitBindings(): AuditRateLimitBindings {
       ),
       orderStatusCaller: asRateLimitBinding(
         env[ORDER_STATUS_CALLER_RATE_LIMITER],
+      ),
+      reportDataCaller: asRateLimitBinding(
+        env[REPORT_DATA_CALLER_RATE_LIMITER],
       ),
     };
   } catch {

@@ -13,10 +13,11 @@ const NAMES = [
   "GLM_CALLER_RATE_LIMITER",
   "ORDER_CREATE_CALLER_RATE_LIMITER",
   "ORDER_STATUS_CALLER_RATE_LIMITER",
+  "REPORT_DATA_CALLER_RATE_LIMITER",
 ];
 
 describe("Worker rate-limit configuration", () => {
-  it("declares exactly the six approved independent 60-second limiters in production", () => {
+  it("declares exactly the seven approved independent 60-second limiters in production", () => {
     expect(config.ratelimits).toEqual([
       {
         name: "IDENTITY_CALLER_RATE_LIMITER",
@@ -49,6 +50,12 @@ describe("Worker rate-limit configuration", () => {
         name: "ORDER_STATUS_CALLER_RATE_LIMITER",
         namespace_id: "305",
         simple: { limit: 30, period: 60 },
+      },
+      // Spec 016 R-27: the saved-report data route, per caller IP.
+      {
+        name: "REPORT_DATA_CALLER_RATE_LIMITER",
+        namespace_id: "306",
+        simple: { limit: 20, period: 60 },
       },
     ]);
   });
