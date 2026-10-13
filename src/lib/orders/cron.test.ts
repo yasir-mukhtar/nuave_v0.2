@@ -21,7 +21,7 @@ import { POST as internalCronPOST } from "../../app/api/internal/cron/route";
 import { POST as devTriggerPOST } from "../../app/api/dev/run-cron/route";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { runScheduledOrders } from "./cron";
-import { approve, makeOrder, T0 } from "./orders.test-helper";
+import { approve, makeOrder } from "./orders.test-helper";
 
 // Spec 016 R-15, R-33, AC-11: what one cron run does, and when it does nothing.
 // The real cron entry, the real runner, the real ledger and migrations on the
@@ -292,8 +292,12 @@ describe("the entries to the cron", () => {
     await dueOrder();
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("NUAVE_ENVIRONMENT", "preview");
-    const order = await makeOrder(d1.db, { environment: "preview", now: T0 });
-    await approve(d1.db, order, { environment: "preview", now: T0 });
+    // Due now, like `dueOrder`: a fixed date passes the 24-hour deadline.
+    const order = await makeOrder(d1.db, {
+      environment: "preview",
+      now: new Date(),
+    });
+    await approve(d1.db, order, { environment: "preview", now: new Date() });
     const response = await devTriggerPOST();
     expect((await response.json()).ran).toBe(true);
     // Only the preview order was touched.
