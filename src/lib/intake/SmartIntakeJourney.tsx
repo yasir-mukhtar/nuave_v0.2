@@ -17,6 +17,7 @@ import {
   type ExtractionDraft,
 } from "../audit/types";
 import { parseSourceInput } from "../audit/source-input";
+import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "../audit/source-handoff";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "../audit/client-contract";
 import { canonicalLockedDirectTenPack } from "../audit/locked-question-pack";
 import { dedupeCalls } from "./local-audit-session";
@@ -317,18 +318,17 @@ const ORIGIN_TEXT = {
   owner: "Dari Anda",
 } as const;
 
-/** The website the landing hero sent as `?source=`, taken once: the parameter
- * leaves the address bar so a reload or Back never repeats the lookup. */
+/** The website the landing hero handed over, taken once so a reload or Back
+ * never repeats the lookup. */
 function takeSourceHandoff(): string | null {
-  const url = new URL(window.location.href);
-  const raw = url.searchParams.get("source");
-  if (raw === null) return null;
-  url.searchParams.delete("source");
-  window.history.replaceState(
-    window.history.state,
-    "",
-    `${url.pathname}${url.search}${url.hash}`,
-  );
+  let raw: string | null = null;
+  try {
+    raw = window.sessionStorage.getItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+    window.sessionStorage.removeItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY);
+  } catch {
+    // Browser storage is blocked: the owner types the website on the entry.
+  }
+  if (!raw) return null;
   const parsed = parseSourceInput(raw);
   return parsed && !unsafeSmartSource(parsed.normalizedUrl)
     ? parsed.normalizedUrl
@@ -431,31 +431,43 @@ export default function SmartIntakeJourney({
       : null;
   useEffect(() => {
     queueMicrotask(() => {
+      // Strict Mode mounts twice in development: the lookup the first run
+      // started owns the screen, and its saved "reading" stage is no reload.
+      if (inFlight.current) return;
       const handoff = takeSourceHandoff();
-      if (handoff) {
-        // The landing hero already took the website: look it up at once so
-        // the owner lands on the brand check without typing it again. A saved
-        // journey for the same website resumes instead of starting over.
+      if (handoff && !(!readSmartSession() && readActiveOrder())) {
+        // The landing hero already took the website. A running audit keeps
+        // its progress screen (R-31); otherwise look the website up at once
+        // so the owner lands on the brand check without typing it again.
         const saved = readSmartSession();
-        const sameSource =
-          saved &&
-          saved.stage !== "reading" &&
-          saved.identity &&
-          parseSourceInput(saved.entry.source)?.normalizedUrl === handoff;
-        setReady(true);
-        if (sameSource) {
-          setSession(saved);
-          if (saved.order) void checkOrder(saved);
+        const savedSource = saved
+          ? (saved.identity?.inputSource ??
+            parseSourceInput(saved.entry.source)?.normalizedUrl)
+          : null;
+        if (!saved || savedSource !== handoff) {
+          // A new website, as if changed on the entry: the old order is
+          // handed over so the server releases its hold (R-08).
+          clearSmartSession();
+          const fresh: SmartSession = {
+            ...freshSmartSession(),
+            entry: { name: "", source: handoff },
+            supersededOrder: saved?.order?.id ?? saved?.supersededOrder ?? null,
+          };
+          setReady(true);
+          persist(fresh);
+          void inspect(fresh);
           return;
         }
-        clearSmartSession();
-        const fresh: SmartSession = {
-          ...freshSmartSession(),
-          entry: { name: "", source: handoff },
-        };
-        persist(fresh);
-        void inspect(fresh);
-        return;
+        if (saved.stage === "entry") {
+          // Same website, still on the entry: continue to the brand check,
+          // reusing a finished lookup.
+          setSession(saved);
+          setReady(true);
+          void inspect(saved);
+          return;
+        }
+        // Same website further along: resume exactly like a plain reload,
+        // keeping its order and any saved reading (R-29).
       }
       const saved = readSmartSession();
       const runningOrder = readActiveOrder();
@@ -739,8 +751,13 @@ export default function SmartIntakeJourney({
         inputName: name,
         inputSource: parsed.normalizedUrl,
         canonicalUrl: canonical.normalizedUrl,
+        // A website title longer than a business name can be is not offered
+        // as one (the order and saved progress cap names at 160).
         displayName:
-          typeof result.display_name === "string" ? result.display_name : null,
+          typeof result.display_name === "string" &&
+          result.display_name.trim().length <= 160
+            ? result.display_name
+            : null,
         preparationMode:
           result.preparation_mode === "live"
             ? ("live" as const)
@@ -1249,6 +1266,11 @@ export default function SmartIntakeJourney({
   // → location/product → summary.
   const progress = stageProgress(session);
   const backTarget = backTargetFor(session);
+  // Started from the landing hero with no typed name, the prepared name is
+  // the one confirmed on the brand check, keeping where it came from (R-02).
+  const preparedNameOrigin: "owner" | "website" = session.entry.name.trim()
+    ? "owner"
+    : (session.brand?.origin ?? "owner");
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-[560px] flex-col px-6 pb-[calc(148px+env(safe-area-inset-bottom,0px))] pt-8 sm:px-8">
       <header>
@@ -1274,7 +1296,8 @@ export default function SmartIntakeJourney({
               </p>
             ) : null}
             <p className="type-copy">
-              Masukkan nama bisnis dan website publik. Nuave menyiapkan
+              Masukkan website publik bisnis Anda. Nama bisnis boleh
+              dikosongkan; Nuave mengambilnya dari website. Nuave menyiapkan
               ringkasan untuk Anda periksa.
             </p>
             <label className="grid gap-2 type-label">
@@ -1506,19 +1529,21 @@ export default function SmartIntakeJourney({
                   name="smart-brand-name"
                   checked={
                     session.selection.name === session.prepared.typedName &&
-                    session.selection.nameOrigin === "owner"
+                    session.selection.nameOrigin === preparedNameOrigin
                   }
                   onChange={() =>
                     updateSelection({
                       ...session.selection!,
                       name: session.prepared!.typedName,
-                      nameOrigin: "owner",
+                      nameOrigin: preparedNameOrigin,
                     })
                   }
                 />
                 {session.prepared.typedName}{" "}
                 <span className="type-copy-sm text-muted-foreground">
-                  Dari Anda
+                  {preparedNameOrigin === "website"
+                    ? "Dari website Anda"
+                    : "Dari Anda"}
                 </span>
               </label>
               {session.prepared.discoveredName &&

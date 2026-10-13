@@ -115,7 +115,8 @@ export function FreeBrandScreen({
         <Button variant="link" className="w-fit" onClick={onToggleEditing}>
           Ubah nama
         </Button>
-        {editing ? (
+        {/* With no name to offer (after a reload too), the field stays open. */}
+        {editing || !(typedName || discoveredName) ? (
           <label className="mt-2 grid gap-2 type-label">
             Nama brand
             <Input

@@ -18,7 +18,14 @@ import {
   SMART_INTAKE_STORAGE_KEY,
 } from "./smart-intake-contract";
 import SmartIntakeJourney from "./SmartIntakeJourney";
-import { freshSmartSession, parseSmartSession } from "./smart-session";
+import {
+  freshSmartSession,
+  parseSmartSession,
+  readSmartSession,
+  writeActiveOrder,
+  writeSmartSession,
+} from "./smart-session";
+import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "../audit/source-handoff";
 import { projectQuestionOutcome } from "./question-public-errors";
 
 beforeEach(() => {
@@ -1139,15 +1146,16 @@ async function fillAndPeriksa() {
 }
 
 describe("landing hero handoff", () => {
-  afterEach(() => window.history.replaceState(null, "", "/"));
+  const SITE = "https://kedai-fiksi.example/";
+  const handOver = (source = SITE) =>
+    window.sessionStorage.setItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY, source);
+  const lanjutDisabled = () =>
+    (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
+      .disabled;
 
-  it("looks up the hero's website at once and opens on the brand check", async () => {
-    const { calls } = stubPreparation();
-    window.history.replaceState(
-      null,
-      "",
-      `/audit?source=${encodeURIComponent("https://kedai-fiksi.example/")}`,
-    );
+  it("looks up the hero's website at once and orders under the website's name", async () => {
+    const { calls, fetchMock } = stubPreparation();
+    handOver();
     render(<SmartIntakeJourney live={false} />);
     await screen.findByRole("heading", {
       name: "Ini brand yang ingin Anda audit?",
@@ -1164,38 +1172,131 @@ describe("landing hero handoff", () => {
         .checked,
     ).toBe(true);
     expect(screen.getAllByRole("radio")).toHaveLength(1);
-    // The parameter is taken once, so a reload never repeats the lookup.
-    expect(window.location.search).toBe("");
+    // Taken once, so a reload never repeats the lookup.
+    expect(
+      window.sessionStorage.getItem(AUDIT_SOURCE_HANDOFF_STORAGE_KEY),
+    ).toBeNull();
     lanjut();
-    await screen.findByRole("textbox", { name: /email/i });
+    fireEvent.change(await screen.findByRole("textbox", { name: /email/i }), {
+      target: { value: "pemilik@example.com" },
+    });
+    lanjut();
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    const orderCall = fetchMock.mock.calls.find(
+      ([url]) => String(url) === "/api/orders",
+    );
+    expect(JSON.parse(String(orderCall![1]!.body))).toMatchObject({
+      business_name: "Kedai Fiksi",
+      website: SITE,
+    });
+    // Back on the brand check, the name still reads as the website's (R-02).
+    kembali();
+    expect(
+      (
+        screen.getByRole("radio", {
+          name: /Kedai Fiksi Dari website Anda/,
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
   });
 
-  it("asks for the name when the website does not give one", async () => {
+  it("asks for the name when the website does not give one, also after a reload", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async () =>
         Response.json({
-          canonical_url: "https://kedai-fiksi.example/",
+          canonical_url: SITE,
           preparation_mode: "synthetic-local",
         }),
       ),
     );
-    window.history.replaceState(
-      null,
-      "",
-      `/audit?source=${encodeURIComponent("https://kedai-fiksi.example/")}`,
-    );
+    handOver();
+    const first = render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("textbox", { name: "Nama brand" });
+    expect(lanjutDisabled()).toBe(true);
+    first.unmount();
     render(<SmartIntakeJourney live={false} />);
     const field = await screen.findByRole("textbox", { name: "Nama brand" });
-    expect(
-      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
     fireEvent.change(field, { target: { value: "Kedai Fiksi" } });
-    expect(
-      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(false);
+    expect(lanjutDisabled()).toBe(false);
+  });
+
+  it("does not offer a website title longer than a business name", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({
+          canonical_url: SITE,
+          display_name: "Kedai ".repeat(40),
+          preparation_mode: "synthetic-local",
+        }),
+      ),
+    );
+    handOver();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("textbox", { name: "Nama brand" });
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(lanjutDisabled()).toBe(true);
+  });
+
+  it("keeps a running audit's progress screen", async () => {
+    const { calls } = stubPreparation();
+    writeActiveOrder(ORDER_ID);
+    handOver();
+    render(<SmartIntakeJourney live={false} />);
+    await waitFor(() => expect(calls).toContain("/api/orders/status"));
+    expect(calls).not.toContain("identity");
+  });
+
+  it("hands a saved order over when the hero brings a different website", async () => {
+    const { calls } = stubPreparation();
+    writeSmartSession({
+      ...freshSmartSession(),
+      stage: "order",
+      entry: { name: "Toko Lama", source: "https://toko-lama.example/" },
+      identity: {
+        inputName: "Toko Lama",
+        inputSource: "https://toko-lama.example/",
+        canonicalUrl: "https://toko-lama.example/",
+        displayName: null,
+        preparationMode: "synthetic-local",
+      },
+      brand: { name: "Toko Lama", origin: "owner" },
+      order: {
+        id: ORDER_ID,
+        website: "https://toko-lama.example/",
+        name: "Toko Lama",
+      },
+    });
+    handOver();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    expect(calls).toEqual(["identity"]);
+    expect(readSmartSession()?.supersededOrder).toBe(ORDER_ID);
+  });
+
+  it("resumes a saved journey for the same website without a new lookup", async () => {
+    const { calls } = stubPreparation();
+    writeSmartSession({
+      ...freshSmartSession(),
+      stage: "order",
+      entry: { name: "", source: SITE },
+      identity: {
+        inputName: "",
+        inputSource: SITE,
+        canonicalUrl: SITE,
+        displayName: "Kedai Fiksi",
+        preparationMode: "synthetic-local",
+      },
+      brand: { name: "Kedai Fiksi", origin: "website" },
+      order: { id: ORDER_ID, website: SITE, name: "Kedai Fiksi" },
+    });
+    handOver();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Ringkasan pesanan" });
+    expect(calls).not.toContain("identity");
   });
 });
 

@@ -190,13 +190,25 @@ async function auditEntry(ctx: DriveContext) {
   await ctx.step("landing", async () => {
     await page.goto("/");
   });
-  await ctx.step("landing-cta-to-audit", async () => {
+  await ctx.step("landing-cta-to-brand", async () => {
     await openAuditFromLanding(page);
+    await expect(brandScreen(page)).toBeVisible({ timeout: 30_000 });
+    await expect(brandScreen(page)).toContainText("example.com");
+  });
+  expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
+  ctx.check(
+    "Landing CTA `Cek bisnis saya di AI` looks the website up once and opens /audit on the brand check",
+  );
+  await ctx.step("direct-audit-empty-entry", async () => {
+    // A fresh visitor: no journey saved from the hero step.
+    await page.evaluate(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+    await page.goto("/audit");
     await expectEmptyEntry(page);
   });
-  ctx.check(
-    "Landing CTA `Cek bisnis saya di AI` opens /audit on an empty entry step",
-  );
+  ctx.check("/audit opened directly shows an empty entry step");
   await ctx.step("empty-submit-rejected", async () => {
     await pressPeriksa(page);
     await expect(
@@ -226,8 +238,10 @@ async function auditEntry(ctx: DriveContext) {
   ctx.check(
     "A token-like URL shows the sensitive-input notice and is not saved",
   );
-  expect(ctx.calls).toEqual({});
-  ctx.check("No /api request was made during entry and validation");
+  expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
+  ctx.check(
+    "No /api request beyond the hero's one lookup was made during entry and validation",
+  );
 }
 
 async function smartIntakeSummary(ctx: DriveContext) {

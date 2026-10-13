@@ -172,8 +172,9 @@ export function landingHero(page: Page) {
   return page.getByRole("region", { name: "Mulai audit visibilitas AI" });
 }
 
-/** Landing hero call-to-action → `/audit`, carrying the website so the
- * journey looks it up at once. Expects to start on `/`. */
+/** Landing hero call-to-action → `/audit`, handing the website over in
+ * session storage so the journey looks it up at once. Expects to start on
+ * `/`. */
 export async function openAuditFromLanding(
   page: Page,
   website = "example.com",
@@ -186,7 +187,7 @@ export async function openAuditFromLanding(
   await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
   // The dev server compiles /audit on its first visit; on a cold CI runner
   // that can take longer than the default 10 s expect timeout.
-  // The `?source=` handoff is consumed on arrival and leaves the address bar.
+  // The website never travels in the address.
   await expect(page).toHaveURL(/\/audit$/, { timeout: 30_000 });
 }
 
