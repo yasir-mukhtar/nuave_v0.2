@@ -1,7 +1,7 @@
 # Nuave now
 
 > Updated: 2026-10-13
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) merged and deployed (#129, `d641701`); AC-21 live run pending
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); next: S4 spec draft
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -12,9 +12,15 @@
   Its §1 ledger is the progress record. Which plan governs what:
   [`INDEX.md`](./INDEX.md#current-development-plan).
 - **What works today:** on `v2.nuave.ai`, anyone with the link can enter a
-  business website, confirm the prepared summary, approve ten questions, run a
-  live audit, and download the report (PDF and JSON). Nothing is saved on the
-  server, and there is no payment or email.
+  business website and confirm the business (free). To go further they place
+  an order with an email; in live mode only addresses on the founder's private
+  list (`NUAVE_ORDER_EMAIL_ALLOWLIST`) are accepted until S4. The order holds
+  USD 2.00 of the USD 5 daily cap. The paid website reading, intake and ten
+  questions follow; after approval the audit runs on the server, one step per
+  minute, so the customer can close the tab. The saved report is reached
+  through a private link emailed by Resend (PDF and JSON downloads on the
+  report page). There is no payment yet. First live order (AC-21,
+  2026-10-13): delivered about 10.5 minutes after approval, USD 0.1372.
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
   intake) is **Verified with documented evidence exceptions**; J2–J7/JQ and
   PR121 merged, the latter deployed. Alfred accepted JZ under delegated founder
@@ -52,8 +58,12 @@
   passed; 14 Worker secrets written; the every-minute cron is registered;
   worker version `e7e4ee58-4e4a-49f3-a6c1-005a94806aea`. Offline criteria
   AC-01..AC-20 pass (AC-20 with a founder-accepted evidence exception).
-  **Next:** AC-21, one live run on production with a listed email, after
-  Yasir's named approval and budget. Then S3 closeout, then the S4 spec draft.
+  **AC-21 passed** (2026-10-13, founder-run, USD 2.00 approved): the live
+  order was delivered by email link for USD 0.1372, within its hold
+  ([record](../specs/016-order-and-saved-report/VERIFICATION.md#ac-21-live-run-2026-10-13)).
+  Cron CPU time against Free's 10 ms is still to be read from the Cloudflare
+  dashboard. Spec 016 is **Verified**. **Next:** draft the short S4 spec for
+  founder approval; build nothing before approval.
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or
@@ -98,7 +108,10 @@
 
 ## Deployment
 
-- **Current main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37198166636)
+- **Current main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/38365476032)
+  validated `d641701` (PR #129) and passed the merged-PR-origin gate, D1
+  migrations and deployment; worker version `e7e4ee58-4e4a-49f3-a6c1-005a94806aea`.
+- **Previous main release:** [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37198166636)
   validated `613f1b3` and passed the merged-PR-origin gate and deployment.
   [Closeout record](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979454013)
   reports worker version `00a8c286-d344-4a80-8954-2a0d2f2c9b4c`. This is recorded
@@ -126,22 +139,20 @@
 - CI (`.github/workflows/ci.yml`): `validate` on every PR; on `main`,
   `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
   Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.
-- **After Spec 016 (PR #129) is deployed:** the deploy job also writes the
+- **Since Spec 016 (PR #129, deployed 2026-10-13):** the deploy job also writes the
   runtime settings as **Worker secrets** (mode, emergency switch, daily cap,
   order limit, email list, Resend key and sender, provider keys). At run time a
   Worker secret wins over the build-time value, and the every-minute cron reads
   only Worker secrets. The deploy job applies D1 migrations first.
-- **Emergency stop (after PR #129):** in the Cloudflare dashboard, worker
+- **Emergency stop:** in the Cloudflare dashboard, worker
   `nuave-v2` → Settings → Variables and Secrets, set `NUAVE_NEW_AUDIT_ENABLED`
   to `false` (change it; do not delete it, or the build value `true` applies). This stops new orders, paid steps and the cron within a minute; an
   open audit tab shows "waiting". The next deploy from `main` sets it back to
   `true` unless `ci.yml` is changed too. Changing only the build value in
   `ci.yml` stops nothing.
-- Before PR #129, settings are baked in at build time; a settings change needs
-  a redeploy.
 - Secrets (names only): `OPENAI_API_KEY`, `CHEAPERINFERENCE_API_KEY`,
-  `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; with PR #129 also
-  `NUAVE_ORDER_EMAIL_ALLOWLIST`, `RESEND_API_KEY`, `NUAVE_MAIL_FROM`. D1:
+  `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ORDER_EMAIL_ALLOWLIST`,
+  `RESEND_API_KEY`, `NUAVE_MAIL_FROM`. D1:
   `nuave-v2-spend` (production), `nuave-v2-preview` (PR previews).
 - Deploy settings: `NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,
   `OPENAI_BASE_URL=https://api.openai.com/v1`,

@@ -1,6 +1,6 @@
 # Verification: Spec 016 — Order, saved report and private link (S3)
 
-> Result: **Offline criteria PASS+NOTES (AC-01 to AC-20); AC-21 pending (live run, needs named founder approval)**
+> Result: **Verified.** Offline criteria PASS+NOTES (AC-01 to AC-20; AC-20 with a founder-accepted evidence exception); AC-21 live run PASS (2026-10-13)
 > Reviewer: independent Opus reviewer (did not write the code)
 > Date: 2026-10-12
 > Spec version: revision 6, `a006048` (approved 2026-10-12)
@@ -56,7 +56,7 @@
 | AC-18 | Pass | `report-link.test.ts` (provider inputs and console lines); `mail.test.ts` (key never logged) |
 | AC-19 | Pass | `order-journey.test.tsx`; e2e reload, ended order, 7-day removal; synthetic order writes no ledger rows |
 | AC-20 | Pass, with founder-accepted evidence exception (2026-10-13) | `npm run verify` passes on `da04910` (reviewer). The verify-nuave drives (6 features, 0 external requests) passed in the worker's sandbox on a pre-fix S3b head (run `20261012T193415Z-6z5v`), with screenshots kept only in the git-ignored `.local-evidence/`. They are **not attached to the PR** and were **not re-run on the final head**: the reviewer's sandbox blocks the skill's port check (`lsof`). The same journey is covered by the browser tests in `npm run verify`. |
-| AC-21 | Pending | Live run on production after the combined deploy, with a listed email; needs named founder approval and budget |
+| AC-21 | Pass (2026-10-13) | Founder-run live order on production with a listed email, budget USD 2.00 approved by Yasir. Report reached by the emailed link. Total USD 0.1372 of the USD 2.00 hold. See [AC-21 live run](#ac-21-live-run-2026-10-13) |
 
 ## Requirements trace
 
@@ -119,11 +119,56 @@ deviations, all accepted by the reviewer:
   `npm run support`.
 - After merge and deploy: AC-21 with named approval.
 
+## AC-21 live run (2026-10-13)
+
+Yasir approved USD 2.00 for the run and ran it on `v2.nuave.ai` (worker
+version `e7e4ee58-4e4a-49f3-a6c1-005a94806aea`, main `d641701`). Yasir
+received the ready email and opened the report from its link. The figures
+below were read from production D1 `nuave-v2-spend` with read-only queries
+(no email address read).
+
+- Order `a2f2f640…`: mode `live`, environment `production`, state
+  `delivered`, overrun 0, report attempts 1, one ready email `accepted`
+  (attempt 1), private link on.
+- Timeline (UTC): order 08:47:14 → questions written 08:49:13 → approved
+  08:50:59 → ten question steps, one per cron run, 08:51:10 to 09:00:18 →
+  report step 09:01:10 to 09:01:20 → saved 09:01:21 → email accepted
+  09:01:22. About 10.5 minutes from approval to email.
+- Every question finished on its first attempt; no retries, no failures.
+
+| Step | Provider | Cron run start | Call wall time | Reserved (USD) | Actual (USD) |
+|---|---|---|---|---|---|
+| Website reading | OpenAI | — (web request) | 10.8 s | 0.4076 | 0.0130 |
+| Question writing | Cheaper Inference | — (web request) | 20.7 s | 0.0500 | 0.0005 |
+| Question 1 | OpenAI | 08:51:10 | 16.7 s | 0.3842 | 0.0123 |
+| Question 2 | OpenAI | 08:52:10 | 8.7 s | 0.3842 | 0.0113 |
+| Question 3 | OpenAI | 08:53:10 | 6.7 s | 0.3842 | 0.0114 |
+| Question 4 | OpenAI | 08:54:10 | 7.2 s | 0.3842 | 0.0115 |
+| Question 5 | OpenAI | 08:55:10 | 10.6 s | 0.3842 | 0.0118 |
+| Question 6 | OpenAI | 08:56:10 | 7.7 s | 0.3842 | 0.0115 |
+| Question 7 | OpenAI | 08:57:10 | 13.1 s | 0.3842 | 0.0121 |
+| Question 8 | OpenAI | 08:58:10 | 8.7 s | 0.3842 | 0.0116 |
+| Question 9 | OpenAI | 08:59:10 | 8.2 s | 0.3842 | 0.0117 |
+| Question 10 | OpenAI | 09:00:10 | 7.5 s | 0.3842 | 0.0115 |
+| Report | OpenAI | 09:01:10 | 10.2 s | 0.0356 | 0.0071 |
+| **Total** | | | | | **0.1372** |
+
+- The order hold of USD 2.00 settled at USD 0.13724201, equal to the sum of
+  its 13 call rows. That is about 7% of the hold.
+- Wall time is mostly waiting for the AI provider. Waiting does not count
+  toward Cloudflare's CPU limit.
+- **CPU time per cron run (Free limit 10 ms): not yet recorded.** It is not
+  in D1; it must be read from the Cloudflare dashboard (worker `nuave-v2` →
+  Observability / Logs, the 11 scheduled events from 08:51 to 09:01 UTC). No
+  step failed, which suggests that no run hit the limit, but this is not a
+  measurement.
+
 ## Verdict
 
-**Pass with one pending criterion and one founder-accepted evidence exception.** All offline
-criteria pass. AC-20's browser-drive evidence is local only (see above). AC-21
-stays pending until the founder-approved live run.
+**Verified, with one founder-accepted evidence exception.** All offline
+criteria pass. AC-20's browser-drive evidence is local only (see above).
+AC-21 passed on 2026-10-13: a live production order reached the report by
+its emailed link for USD 0.1372, within the USD 2.00 hold.
 
 **Founder decision, 2026-10-13:** a report step claimed before the 24-hour
 deadline that finishes just after it is still delivered (no code change).
