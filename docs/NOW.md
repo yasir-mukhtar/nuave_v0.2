@@ -124,9 +124,23 @@
 - CI (`.github/workflows/ci.yml`): `validate` on every PR; on `main`,
   `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
   Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.
-- Settings are baked in at build time; a settings change needs a redeploy.
+- **After Spec 016 (PR #129) is deployed:** the deploy job also writes the
+  runtime settings as **Worker secrets** (mode, emergency switch, daily cap,
+  order limit, email list, Resend key and sender, provider keys). At run time a
+  Worker secret wins over the build-time value, and the every-minute cron reads
+  only Worker secrets. The deploy job applies D1 migrations first.
+- **Emergency stop (after PR #129):** in the Cloudflare dashboard, worker
+  `nuave-v2` → Settings → Variables and Secrets, set `NUAVE_NEW_AUDIT_ENABLED`
+  to `false`. This stops new orders, paid steps and the cron within a minute; an
+  open audit tab shows "waiting". The next deploy from `main` sets it back to
+  `true` unless `ci.yml` is changed too. Changing only the build value in
+  `ci.yml` stops nothing.
+- Before PR #129, settings are baked in at build time; a settings change needs
+  a redeploy.
 - Secrets (names only): `OPENAI_API_KEY`, `CHEAPERINFERENCE_API_KEY`,
-  `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
+  `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; with PR #129 also
+  `NUAVE_ORDER_EMAIL_ALLOWLIST`, `RESEND_API_KEY`, `NUAVE_MAIL_FROM`. D1:
+  `nuave-v2-spend` (production), `nuave-v2-preview` (PR previews).
 - Deploy settings: `NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,
   `OPENAI_BASE_URL=https://api.openai.com/v1`,
   `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, `OPENAI_AUDIT_REASONING_EFFORT=low`,
