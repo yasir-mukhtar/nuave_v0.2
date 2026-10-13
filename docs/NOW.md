@@ -1,7 +1,7 @@
 # Nuave now
 
 > Updated: 2026-10-12
-> Stage: Stage 1 accepted; S0 private report delivery decided; S2 spending cap merged (#127); S3 spec is next
+> Stage: Stage 1 accepted; S0 private report delivery decided; S2 spending cap merged (#127); Spec 016 (S3) approved; S3a building
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -46,9 +46,13 @@
   `feat/s2-spend-guard-integration-20261005` branches (PRs #123 and #125
   closed). S4 adds a per-order cost limit and founder alerts at 80%, 90% and
   100% of the cap.
-- **Then: S3** (order with email, saved and delivered reports, audit
-  survives tab close) needs its own short Stage 2 spec, approved by the
-  founder, before any build.
+- **S3: [Spec 016](../specs/016-order-and-saved-report/SPEC.md) approved**
+  ([2026-10-12](./DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). S3a
+  (order, per-order limit, server-side audit) is being built on
+  `claude/nuave-stage-3-spec-je7pqf` ([PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129)).
+  S3a and S3b go live together in one merge. Founder actions before review:
+  Resend key and domain, Resend tracking off, free D1 `nuave-v2-preview`, CI
+  token D1 and secret permissions, private email list.
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or
   billing proof. No unidentified process was killed and no Desktop state was
@@ -120,9 +124,23 @@
 - CI (`.github/workflows/ci.yml`): `validate` on every PR; on `main`,
   `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
   Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.
-- Settings are baked in at build time; a settings change needs a redeploy.
+- **After Spec 016 (PR #129) is deployed:** the deploy job also writes the
+  runtime settings as **Worker secrets** (mode, emergency switch, daily cap,
+  order limit, email list, Resend key and sender, provider keys). At run time a
+  Worker secret wins over the build-time value, and the every-minute cron reads
+  only Worker secrets. The deploy job applies D1 migrations first.
+- **Emergency stop (after PR #129):** in the Cloudflare dashboard, worker
+  `nuave-v2` → Settings → Variables and Secrets, set `NUAVE_NEW_AUDIT_ENABLED`
+  to `false` (change it; do not delete it, or the build value `true` applies). This stops new orders, paid steps and the cron within a minute; an
+  open audit tab shows "waiting". The next deploy from `main` sets it back to
+  `true` unless `ci.yml` is changed too. Changing only the build value in
+  `ci.yml` stops nothing.
+- Before PR #129, settings are baked in at build time; a settings change needs
+  a redeploy.
 - Secrets (names only): `OPENAI_API_KEY`, `CHEAPERINFERENCE_API_KEY`,
-  `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
+  `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; with PR #129 also
+  `NUAVE_ORDER_EMAIL_ALLOWLIST`, `RESEND_API_KEY`, `NUAVE_MAIL_FROM`. D1:
+  `nuave-v2-spend` (production), `nuave-v2-preview` (PR previews).
 - Deploy settings: `NUAVE_PROVIDER=openai`, `NUAVE_QUESTION_PROVIDER=openai`,
   `OPENAI_BASE_URL=https://api.openai.com/v1`,
   `OPENAI_AUDIT_MODEL=gpt-5.6-luna`, `OPENAI_AUDIT_REASONING_EFFORT=low`,

@@ -6,7 +6,6 @@ import {
   addCompetitor,
   addConsideration,
   addCustomerNeed,
-  auditStage,
   brandScreen,
   chooseCompetitorMode,
   chooseFocus,
@@ -16,7 +15,8 @@ import {
   downloadEvidenceJson,
   editQuestion,
   ENTRY_INVALID_NOTICE,
-  expectAuditDone,
+  expectAuditDelivered,
+  expectAuditRunning,
   expectBrandConfirm,
   expectCategoryScreen,
   expectCompetitorsScreen,
@@ -38,7 +38,6 @@ import {
   fillEntry,
   fillPublicFact,
   fillTargetCustomer,
-  injectUsefulnessFailureOnce,
   INTAKE_SESSION_KEY,
   competitorsScreen,
   customerNeedsScreen,
@@ -48,20 +47,28 @@ import {
   marketScreen,
   openAliasEditor,
   openAuditFromLanding,
+  ORDER_EMAIL,
+  ORDER_HEADING,
+  orderScreen,
   pressLanjut,
   pressPeriksa,
   readingScreen,
+  readyLinkFromMail,
   reportLocator,
   reviewRow,
   RICH_PREPARATION_DRAFT,
+  runServerAuditToDelivery,
+  savedReport,
   SENSITIVE_INPUT_NOTICE,
   startAudit,
   stubPreparationDraft,
+  submitOrder,
   targetCustomerScreen,
   toggleConsideration,
   toggleCustomerNeed,
   throughDetailScreens,
   toQuestions,
+  unavailableReport,
 } from "../../../../tests/e2e/journey";
 
 const expect = baseExpect.configure({ timeout: 10_000 });
@@ -72,10 +79,9 @@ export const FEATURES = [
   "rich-preparation",
   "question-review",
   "audit-run",
-  "report-and-recovery",
+  "report-link",
 ] as const;
 export type Feature = (typeof FEATURES)[number];
-export const INJECTIONS = { "report-and-recovery": ["usefulness-failure"] };
 
 export type Step = {
   index: number;
@@ -86,6 +92,7 @@ export type Step = {
 };
 
 export type DriveContext = {
+  /** The page the next `step` captures. A recipe may point it at another tab. */
   page: Page;
   dir: string;
   calls: Record<string, number>;
@@ -96,12 +103,23 @@ export type DriveContext = {
   step(name: string, action: () => Promise<void>): Promise<void>;
   /** Records an observed end state that the recipe asserted. */
   check(text: string): void;
+  /** A new tab in the same browser session (same saved data), watched like
+   * the first. */
+  newTab(): Promise<Page>;
+  /** A browser the customer has never used: no cookie, no saved data. */
+  freshBrowserPage(): Promise<Page>;
+};
+
+export type DriveHooks = {
+  newTab(): Promise<Page>;
+  freshBrowserPage(): Promise<Page>;
 };
 
 export function createContext(
   page: Page,
   dir: string,
   calls: Record<string, number>,
+  hooks: DriveHooks,
 ): DriveContext {
   const ctx: DriveContext = {
     page,
@@ -114,15 +132,20 @@ export function createContext(
       await action();
       const index = ctx.steps.length + 1;
       const base = `${String(index).padStart(2, "0")}-${name}`;
-      await page.screenshot({ path: join(dir, `${base}.png`), fullPage: true });
+      const shown = ctx.page;
+      await shown.screenshot({
+        path: join(dir, `${base}.png`),
+        fullPage: true,
+      });
       await writeFile(
         join(dir, `${base}.aria.yml`),
-        `${await page.locator("body").ariaSnapshot()}\n`,
+        `${await shown.locator("body").ariaSnapshot()}\n`,
       );
       ctx.steps.push({
         index,
         name,
-        url: page.url(),
+        // The address bar holds the private link secret; evidence never does.
+        url: shown.url().replace(/#.*$/, "#<hidden>"),
         screenshot: `${base}.png`,
         aria: `${base}.aria.yml`,
       });
@@ -130,13 +153,16 @@ export function createContext(
     check(text) {
       ctx.checks.push(text);
     },
+    newTab: hooks.newTab,
+    freshBrowserPage: hooks.freshBrowserPage,
   };
   return ctx;
 }
 
+/** The intake progress is kept in the browser's local storage (spec 016 R-29). */
 async function sessionValue(page: Page, key: string) {
   return page.evaluate(
-    (k) => JSON.parse(sessionStorage.getItem(k) ?? "null"),
+    (k) => JSON.parse(localStorage.getItem(k) ?? "null"),
     key,
   );
 }
@@ -328,10 +354,13 @@ async function smartIntakeSummary(ctx: DriveContext) {
   );
   expect(ctx.calls).toEqual({
     "GET /api/audit/identity": 1,
+    "POST /api/orders": 1,
     "POST /api/audit/extract": 1,
     "POST /api/audit/glm-questions": 1,
   });
-  ctx.check("Exactly one identity, one extract and one question request");
+  ctx.check(
+    "Exactly one identity, one order, one extract and one question request",
+  );
 }
 
 /**
@@ -551,12 +580,135 @@ async function richPreparation(ctx: DriveContext) {
   ctx.check(
     "JQ and J6 owner answers and the edited aliases freeze with exact values and origins, and confirmation produces ten questions",
   );
-  expect(ctx.calls).toEqual({
+  // A reload asks the server, for free, whether the saved order is still open.
+  const paid = Object.fromEntries(
+    Object.entries(ctx.calls).filter(
+      ([key]) => key !== "POST /api/orders/status",
+    ),
+  );
+  expect(paid).toEqual({
     "GET /api/audit/identity": 1,
+    "POST /api/orders": 1,
     "POST /api/audit/extract": 1,
     "POST /api/audit/glm-questions": 1,
   });
-  ctx.check("Exactly one identity, one extract and one question request");
+  ctx.check(
+    "Exactly one identity, one order, one extract and one question request (the free saved-order checks on reload are not counted)",
+  );
+}
+
+/**
+ * Spec 016 AC-20: the whole path, in synthetic mode against the local
+ * database. The customer types a website, confirms the business (free lookup),
+ * gives an email (order), waits for the paid reading (preparing), answers the
+ * intake and approves ten questions. The server runs the audit, so the tab is
+ * closed and reopened. The cron is started through the development trigger (it
+ * stands in for the one-minute cron). The report opens only from the emailed
+ * link, in a browser with no cookies and no saved data.
+ */
+async function deliverAudit(ctx: DriveContext) {
+  const { page } = ctx;
+  const startedAt = Date.now() - 1_000;
+  await ctx.step("entry-filled", async () => {
+    await fillEntry(page);
+  });
+  await ctx.step("brand-confirm", async () => {
+    await pressPeriksa(page);
+    await expectBrandConfirm(page);
+  });
+  expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
+  ctx.check(
+    "Brand confirm (free lookup only) is reached with no order and no paid request",
+  );
+  await ctx.step("order-summary", async () => {
+    await pressLanjut(page);
+    await expect(orderScreen(page)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: ORDER_HEADING }),
+    ).toBeVisible();
+  });
+  expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
+  ctx.check(
+    "The order summary asks for an email; still no order and no paid request",
+  );
+  await ctx.step("order-made-preparing", async () => {
+    // A short same-origin delay keeps the paid reading screen up long enough
+    // to see it; the answer itself stays the real synthetic route answer.
+    await page.route("**/api/audit/extract", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      await route.continue();
+    });
+    await submitOrder(page);
+    await expect(readingScreen(page)).toBeVisible();
+  });
+  await expectFocusScreen(page);
+  expect(ctx.calls["POST /api/orders"]).toBe(1);
+  expect(ctx.calls["POST /api/audit/extract"]).toBe(1);
+  ctx.check(
+    "`Lanjut` with an email makes one order, then the paid reading runs once",
+  );
+  await ctx.step("intake-to-questions", async () => {
+    await confirmFocus(page);
+    await throughDetailScreens(page);
+    await confirmSummary(page);
+    await expectQuestionReview(page);
+    await expectTenQuestions(page);
+  });
+  await ctx.step("audit-started", async () => {
+    await startAudit(page);
+    await expectAuditRunning(page);
+  });
+  ctx.check(
+    'Approving the questions shows "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda."',
+  );
+  expect(ctx.calls["POST /api/orders/approve"]).toBe(1);
+  expect(ctx.calls["POST /api/audit/run"]).toBeUndefined();
+  expect(ctx.calls["POST /api/audit/report"]).toBeUndefined();
+  ctx.check(
+    "The retired browser-driven /api/audit/run and /api/audit/report were never called",
+  );
+  await ctx.step("tab-closed-and-reopened", async () => {
+    await page.close();
+    ctx.page = await ctx.newTab();
+    await ctx.page.goto("/audit");
+    await expectAuditRunning(ctx.page);
+  });
+  ctx.check(
+    "After the tab is closed, a new tab in the same browser still shows the running audit",
+  );
+  await ctx.step("server-finishes-audit", async () => {
+    // Stands in for the production cron, one audit step per order per run.
+    await runServerAuditToDelivery(ctx.page);
+    await ctx.page.reload();
+    await expectAuditDelivered(ctx.page);
+  });
+  ctx.check(
+    "The server ran ten questions and the report, then the tab says the report was emailed (and does not show it)",
+  );
+  const link = await readyLinkFromMail(startedAt);
+  ctx.check("The fake mailbox holds a ready email with a private link");
+  return link;
+}
+
+async function openLinkInFreshBrowser(
+  ctx: DriveContext,
+  link: { path: string },
+) {
+  const fresh = await ctx.freshBrowserPage();
+  await ctx.step("report-by-link", async () => {
+    ctx.page = fresh;
+    const response = await fresh.goto(link.path);
+    const headers = response?.headers() ?? {};
+    expect(headers["x-robots-tag"]).toContain("noindex");
+    expect(headers["referrer-policy"]).toBe("no-referrer");
+    expect(headers["cache-control"]).toMatch(/no-store|no-cache/);
+    await expect(savedReport(fresh)).toBeVisible({ timeout: 60_000 });
+    await expect(reportLocator(fresh)).toBeVisible();
+  });
+  ctx.check(
+    "The emailed link opens the report in a browser with no cookies; the page is noindex, not cached and sends no referrer",
+  );
+  return fresh;
 }
 
 async function questionReview(ctx: DriveContext) {
@@ -579,67 +731,63 @@ async function questionReview(ctx: DriveContext) {
     );
   });
   ctx.check("An edited question keeps its wording after a reload");
+  const startedAt = Date.now() - 1_000;
   await ctx.step("audit-started", async () => {
     await startAudit(page);
-    await expect(
-      auditStage(page, "running").or(auditStage(page, "done")),
-    ).toBeVisible();
+    await expectAuditRunning(page);
   });
-  ctx.check("`Mulai audit` leaves the review and starts the audit");
-  await expectAuditDone(page);
-  const audit = await sessionValue(page, "nuave.localIntakeAudit.v2");
-  expect(audit.observations[0].question).toBe(wording);
-  ctx.check("The started audit uses the edited wording for question 1");
+  ctx.check(
+    "`Mulai audit` approves the questions and shows that the audit runs on the server",
+  );
+  await runServerAuditToDelivery(page);
+  const link = await readyLinkFromMail(startedAt);
+  const fresh = await openLinkInFreshBrowser(ctx, link);
+  await expect(fresh.locator("#report-question-1")).toHaveText(wording);
+  ctx.check("The saved report uses the edited wording for question 1");
 }
 
 async function auditRun(ctx: DriveContext) {
-  const { page } = ctx;
-  await ctx.step("question-review", async () => {
-    await toQuestions(page);
-  });
-  await ctx.step("audit-done", async () => {
-    await startAudit(page);
-    await expectAuditDone(page);
-  });
-  const report = reportLocator(page);
+  const link = await deliverAudit(ctx);
+  const fresh = await openLinkInFreshBrowser(ctx, link);
+  const report = reportLocator(fresh);
   await expect(report.locator("[data-answer-body]")).toHaveCount(10);
-  const audit = await sessionValue(page, "nuave.localIntakeAudit.v2");
-  expect(audit.observations).toHaveLength(10);
-  audit.observations.forEach((o: { prompt_id: string }, i: number) =>
-    expect(o.prompt_id).toBe(`NUAVE-DT-${String(i + 1).padStart(2, "0")}`),
-  );
-  ctx.check("Ten observations NUAVE-DT-01…10 are saved and ten answers show");
+  ctx.check("The saved report shows ten answers");
   await expect(
-    page.getByText("Audit lokal — jawaban sintetis", { exact: true }),
+    fresh.getByText("Audit uji — jawaban sintetis", { exact: true }),
   ).toBeVisible();
-  ctx.check('The report carries the "Audit lokal — jawaban sintetis" notice');
-  await ctx.step("after-reload", async () => {
-    await page.reload();
-    await expectAuditDone(page);
+  ctx.check('The report carries the "Audit uji — jawaban sintetis" notice');
+  await ctx.step("report-after-reload", async () => {
+    await fresh.reload();
+    await expect(savedReport(fresh)).toBeVisible();
   });
-  expect(ctx.calls["POST /api/audit/run"]).toBe(1);
-  expect(ctx.calls["POST /api/audit/report"]).toBe(1);
+  expect(ctx.calls["POST /api/orders"]).toBe(1);
+  expect(ctx.calls["POST /api/audit/run"]).toBeUndefined();
+  expect(ctx.calls["POST /api/audit/report"]).toBeUndefined();
   ctx.check(
-    "A reload shows the saved report with no second run or report request",
+    "One order was made, and the retired audit and report routes were never called",
   );
 }
 
-async function reportAndDownloads(ctx: DriveContext) {
-  const { page } = ctx;
-  const printCalls = await countPrintCalls(page);
-  await ctx.step("question-review", async () => {
-    await toQuestions(page);
-  });
-  await ctx.step("report", async () => {
-    await startAudit(page);
-    await expectAuditDone(page);
-    await expect(reportLocator(page)).toBeVisible();
+async function reportLink(ctx: DriveContext) {
+  const link = await deliverAudit(ctx);
+  const fresh = await ctx.freshBrowserPage();
+  const printCalls = await countPrintCalls(fresh);
+  await ctx.step("report-by-link", async () => {
+    ctx.page = fresh;
+    const response = await fresh.goto(link.path);
+    const headers = response?.headers() ?? {};
+    expect(headers["x-robots-tag"]).toContain("noindex");
+    expect(headers["referrer-policy"]).toBe("no-referrer");
+    await expect(savedReport(fresh)).toBeVisible({ timeout: 60_000 });
     await expect(
-      page.getByRole("navigation", { name: "Report contents" }),
+      fresh.getByRole("navigation", { name: "Report contents" }),
     ).toBeVisible();
   });
+  ctx.check(
+    "The emailed link opens the report in a browser with no cookies; the page is noindex and sends no referrer",
+  );
   await ctx.step("download-pdf-pressed", async () => {
-    await page
+    await fresh
       .getByRole("button", { name: "Download PDF", exact: true })
       .click();
     expect(await printCalls()).toBe(1);
@@ -647,12 +795,12 @@ async function reportAndDownloads(ctx: DriveContext) {
   ctx.check(
     "`Download PDF` opens the browser print dialog once (window.print)",
   );
-  await page.emulateMedia({ media: "print" });
-  for (const answer of await reportLocator(page)
+  await fresh.emulateMedia({ media: "print" });
+  for (const answer of await reportLocator(fresh)
     .locator("[data-answer-body]")
     .all())
     await expect(answer).toBeVisible();
-  const pdf = await page.pdf({
+  const pdf = await fresh.pdf({
     path: join(ctx.dir, "report-a4.headless.pdf"),
     format: "A4",
     printBackground: true,
@@ -662,73 +810,35 @@ async function reportAndDownloads(ctx: DriveContext) {
   ctx.artifacts.pdfPages = String(
     (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length,
   );
-  await page.emulateMedia({ media: "screen" });
+  await fresh.emulateMedia({ media: "screen" });
   ctx.check("All ten answers are visible in print media; A4 PDF saved");
-  const { download, json } = await downloadEvidenceJson(page);
+  const { download, json } = await downloadEvidenceJson(fresh);
   await download.saveAs(join(ctx.dir, "download-evidence.json"));
   ctx.artifacts.json = "download-evidence.json";
   ctx.artifacts.jsonSuggestedName = download.suggestedFilename();
   expect(json.export_version).toBe("nuave-evidence-v5");
   expect(json.observations).toHaveLength(10);
   expect(json.report).toBeTruthy();
+  expect(JSON.stringify(json)).not.toContain(ORDER_EMAIL);
   ctx.check(
-    "`Unduh bukti JSON` downloads nuave-evidence-v5 with ten observations and a report",
+    "`Unduh bukti JSON` downloads nuave-evidence-v5 with ten observations and a report, and no email",
   );
-  expect(ctx.calls["POST /api/audit/run"]).toBe(1);
-  expect(ctx.calls["POST /api/audit/report"]).toBe(1);
+  // A wrong secret gets the plain not-available page and nothing else.
+  const wrong = await ctx.freshBrowserPage();
+  await ctx.step("wrong-link-not-available", async () => {
+    ctx.page = wrong;
+    await wrong.goto(`/r#${"W".repeat(32)}`);
+    await expect(unavailableReport(wrong)).toBeVisible({ timeout: 60_000 });
+    await expect(wrong.locator("main")).toHaveText(
+      "Laporan ini tidak tersedia.",
+    );
+  });
+  ctx.check(
+    'A wrong link shows only "Laporan ini tidak tersedia." with no business name or report',
+  );
 }
 
-async function answersOnlyRecovery(ctx: DriveContext) {
-  const { page } = ctx;
-  await ctx.step("question-review", async () => {
-    await toQuestions(page);
-  });
-  await injectUsefulnessFailureOnce(page);
-  ctx.check(
-    "FAULT INJECTED: first POST /api/audit/report answered with a fake 422 REPORT_USEFULNESS_FAILURE",
-  );
-  await ctx.step("answers-only-recovery", async () => {
-    await startAudit(page);
-    await expect(auditStage(page, "report-failed")).toBeVisible({
-      timeout: 45_000,
-    });
-    await expect(
-      page
-        .getByRole("alert")
-        .filter({ hasText: "Analisis Nuave belum selesai" }),
-    ).toBeVisible();
-    await expect(page.locator("[data-report-answer]")).toHaveCount(10);
-    await expect(
-      page.getByRole("button", { name: /PDF|JSON|Unduh|Cetak/i }),
-    ).toHaveCount(0);
-  });
-  ctx.check(
-    "Recovery shows the notice and ten answers, and no PDF/JSON controls",
-  );
-  await ctx.step("recovery-after-reload", async () => {
-    await page.reload();
-    await expect(auditStage(page, "report-failed")).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Coba buat laporan lagi" }),
-    ).toBeVisible();
-  });
-  expect(ctx.calls["POST /api/audit/report"]).toBe(1);
-  ctx.check("A reload restores recovery without another report request");
-  await ctx.step("retry-finishes-report", async () => {
-    await page.getByRole("button", { name: "Coba buat laporan lagi" }).click();
-    await expectAuditDone(page);
-  });
-  expect(ctx.calls["POST /api/audit/run"]).toBe(1);
-  expect(ctx.calls["POST /api/audit/report"]).toBe(2);
-  ctx.check("The explicit retry finishes the report with no second run");
-}
-
-export function recipe(feature: Feature, inject?: string) {
-  if (
-    inject &&
-    !INJECTIONS[feature as keyof typeof INJECTIONS]?.includes(inject)
-  )
-    throw new Error(`No injection "${inject}" for ${feature}.`);
+export function recipe(feature: Feature) {
   switch (feature) {
     case "audit-entry":
       return auditEntry;
@@ -740,7 +850,7 @@ export function recipe(feature: Feature, inject?: string) {
       return questionReview;
     case "audit-run":
       return auditRun;
-    case "report-and-recovery":
-      return inject ? answersOnlyRecovery : reportAndDownloads;
+    case "report-link":
+      return reportLink;
   }
 }

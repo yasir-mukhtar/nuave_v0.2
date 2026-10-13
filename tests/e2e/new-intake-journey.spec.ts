@@ -37,6 +37,8 @@ import {
   intakeSession,
   INTAKE_SESSION_KEY,
   locationScreen,
+  ORDER_EMAIL,
+  orderScreen,
   marketScreen,
   openAliasEditor,
   pressKembali,
@@ -65,6 +67,7 @@ import {
   SENSITIVE_INPUT_NOTICE,
   serviceScreen,
   stubPreparationDraft,
+  submitOrder,
   throughDetailScreens,
   throughCompetitorContext,
   toggleCustomerNeed,
@@ -78,7 +81,7 @@ async function enter(page: Page, rich = true) {
   await toSummary(page);
 }
 
-test("failed extraction keeps validated identity and forwards its call ledger on retry", async ({
+test("failed extraction keeps the validated identity and the order, and retries under the same order", async ({
   page,
 }) => {
   const calls: string[] = [];
@@ -151,26 +154,37 @@ test("failed extraction keeps validated identity and forwards its call ledger on
   });
   await fillEntry(page);
   await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await pressLanjut(page);
+  await submitOrder(page);
   await expect(page.getByText("Ekstraksi sementara gagal.")).toBeVisible();
   const saved = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(saved.identity.canonicalUrl).toBe("https://kedai-fiksi.example/");
   expect(saved.preparationCalls).toMatchObject([failedCall]);
+  // Spec 016 R-31: the email is never kept in the browser.
+  expect(JSON.stringify(saved)).not.toContain(ORDER_EMAIL);
+  const orderId = saved.order.id as string;
   await page.reload();
-  await pressPeriksa(page);
-  await expectBrandConfirm(page);
-  await confirmBrand(page);
+  // The order is still open: the order screen has no email field, and `Lanjut`
+  // reads the website again under the same order.
+  await expect(orderScreen(page)).toBeVisible();
+  await expect(page.getByRole("textbox", { name: /Email/ })).toHaveCount(0);
+  await pressLanjut(page);
+  await expectFocusScreen(page);
   expect(
     calls.filter((call) => call === "GET /api/audit/identity"),
   ).toHaveLength(1);
   expect(
     calls.filter((call) => call === "POST /api/audit/extract"),
   ).toHaveLength(2);
-  expect(
-    (extractionBodies[1]!.budget as { calls: unknown[] }).calls,
-  ).toMatchObject([failedCall]);
+  // One order; the paid reading carries only its id (no budget, no website).
+  expect(extractionBodies).toEqual([
+    { order_id: orderId },
+    { order_id: orderId },
+  ]);
 });
 
 test("reload during question generation retains an unknown attempt and never auto-retries", async ({
@@ -191,7 +205,7 @@ test("reload during question generation retains an unknown attempt and never aut
     page.getByRole("heading", { name: "Siapkan pertanyaan audit" }),
   ).toBeVisible();
   const saved = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(saved.generationAttempts).toMatchObject([
@@ -219,7 +233,7 @@ test("a sensitive optional edit retains the last safe summary value", async ({
   ).toBeVisible();
   await expect(differentiator).toHaveValue("Racikan kopi khas");
   const saved = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(saved.selection.differentiator).toBe("Racikan kopi khas");
@@ -260,7 +274,7 @@ test("every manually selected comparator stays visible, correctable and removabl
   await confirmSummary(page);
   await expectTenQuestions(page);
   const frozen = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(frozen.frozen.context.comparators.value).toEqual({
@@ -351,7 +365,7 @@ test("the labelled rich preparation carries locations and category suggestions i
   });
   await enter(page);
   const prepared = (await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}").prepared,
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}").prepared,
     INTAKE_SESSION_KEY,
   )) as {
     locations: { proposed: unknown[]; origin: string };
@@ -387,7 +401,7 @@ test("the labelled rich preparation carries locations and category suggestions i
   await page.reload();
   await expectSummary(page);
   const restored = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}").prepared,
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}").prepared,
     INTAKE_SESSION_KEY,
   );
   expect(restored).toEqual(prepared);
@@ -405,7 +419,7 @@ test("a session stored under a previous intake version restarts at an empty entr
   page,
 }) => {
   await page.addInitScript((currentKey) => {
-    sessionStorage.setItem(
+    localStorage.setItem(
       "nuave.localIntake.v3",
       JSON.stringify({
         version: 3,
@@ -424,7 +438,7 @@ test("a session stored under a previous intake version restarts at an empty entr
     );
     // A v7 record under its own key is never read either — the previous
     // intake version is not opened at all.
-    sessionStorage.setItem(
+    localStorage.setItem(
       "nuave.localIntake.v7",
       JSON.stringify({
         version: 7,
@@ -443,7 +457,7 @@ test("a session stored under a previous intake version restarts at an empty entr
     );
     // A well-formed v4 record under its own key is never read: the current
     // key is v9, and older keys are simply not looked at.
-    sessionStorage.setItem(
+    localStorage.setItem(
       "nuave.localIntake.v4",
       JSON.stringify({
         version: 4,
@@ -482,7 +496,7 @@ test("a session stored under a previous intake version restarts at an empty entr
     );
     // A stale-version record under the current v9 key is just as unreadable —
     // it must restart at entry rather than mix old and new shape.
-    sessionStorage.setItem(
+    localStorage.setItem(
       currentKey,
       JSON.stringify({
         version: 4,
@@ -698,8 +712,11 @@ test("a name-only edit reuses the reading; changing the website reads again", as
     .fill("https://fiksi-lain.example/");
   await pressPeriksa(page);
   await expect(brandScreen(page)).toBeVisible();
-  expect(calls).toHaveLength(4);
+  // The new website is looked up for free; the paid reading waits for a new
+  // order (spec 016 R-01).
+  expect(calls).toHaveLength(3);
   await confirmBrand(page);
+  expect(calls).toHaveLength(4);
   await confirmFocus(page);
   await throughDetailScreens(page);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
@@ -723,7 +740,7 @@ test("prepared competitor names are editable; alternatives carry no company name
   const competitorRow = page.locator('section[aria-label="Bisnis pembanding"]');
   await expect(competitorRow).toContainText("Kedai Tetangga");
   const beforeEdit = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(beforeEdit.selection.comparatorMode).toBe("named");
@@ -790,7 +807,7 @@ test("empty optional screens keep no needs or facts and unknown competitors", as
     page.locator('section[aria-label="Fakta publik tambahan"]'),
   ).toContainText("Belum diisi");
   const saved = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(saved.selection).toMatchObject({
@@ -859,7 +876,7 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   });
   await expect(addition).toHaveValue("Pembanding enam");
   const saved = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(saved.selection.comparatorNames).toEqual([
@@ -878,7 +895,7 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
     .click();
   await expect(addition).toHaveValue("");
   const retried = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(retried.selection.comparatorNames).toEqual([
@@ -1301,7 +1318,7 @@ test("unsafe public facts retain the safe value and frozen R20 context", async (
     "Buka setiap hari sampai pukul 21.00.",
   );
   const saved = await page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
   expect(saved.selection.publicFact).toBe(
@@ -1375,6 +1392,7 @@ test.describe("J4 focus and target screens", () => {
     // Screen navigation spends no extra preparation calls.
     expect(calls).toEqual([
       "GET /api/audit/identity",
+      "POST /api/orders",
       "POST /api/audit/extract",
     ]);
     // Whole-brand continues through the detail screens to the summary.

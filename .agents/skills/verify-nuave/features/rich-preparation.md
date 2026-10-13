@@ -38,8 +38,8 @@ about live extraction quality. The default synthetic preparation
 - `reload-persistence`: a reload restores the identical prepared state.
 - `downstream-unchanged`: JQ and J6 owner answers and edited `Nama lain`
   aliases freeze with exact values and origins; confirming
-  produces ten questions with exactly one identity, one extract and one
-  question request.
+  produces ten questions with exactly one identity, one order, one extract
+  and one question request.
 
 ## How to get to it (user POV)
 
@@ -78,7 +78,7 @@ order:
   fact before landing on "Ini yang akan Nuave audit" — a location focus audits
   no market, so the market screen never appears. Evidence:
   `02-rich-reading-to-location`.
-- **Prepared proof.** `sessionStorage` `nuave.localIntake.v9` `prepared` is
+- **Prepared proof.** `localStorage` `nuave.localIntake.v9` `prepared` is
   asserted equal to the expected locations, suggestion lists and JQ meanings
   with their origins.
 - **Reload.** Refreshes; the review shows again and the stored `prepared`
@@ -93,8 +93,10 @@ order:
   `["Kedai Fiksi Bandung", "Kedai Fiksi Pusat"]`. The three JQ meanings
   freeze as the owner edits with origin `owner`.
   `network.json.apiCalls` is
-  exactly one `GET /api/audit/identity`, one `POST /api/audit/extract` and
-  one `POST /api/audit/glm-questions`. Evidence: `05-questions-created`.
+  exactly one `GET /api/audit/identity`, one `POST /api/orders`, one
+  `POST /api/audit/extract` and one `POST /api/audit/glm-questions` (the free
+  `POST /api/orders/status` checks made by a reload are not counted).
+  Evidence: `05-questions-created`.
 
 ## Gotchas
 

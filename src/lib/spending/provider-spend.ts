@@ -1,12 +1,12 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { APIError } from "openai";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { AuditBudgetError } from "../audit/telemetry";
 import { auditMode } from "../audit/deployment-gate";
 import {
-  createSpendLedger,
+  reserveOrderCall,
   SpendLedgerError,
   type SpendDb,
-  type SpendLedger,
 } from "./spend-ledger";
 
 export const SPEND_DB_BINDING = "SPEND_DB";
@@ -16,9 +16,14 @@ export const DEFAULT_DAILY_SPEND_LIMIT_USD = 5;
 export const SPEND_UNAVAILABLE_MESSAGE = "Audit tidak tersedia saat ini.";
 
 /** Refusal raised before a paid call is sent. It is an AuditBudgetError so the
- * existing route error handling shows the message without a provider call. */
+ * existing route error handling shows the message without a provider call.
+ * `order_limit`: the order's own hold would be passed. `order_refused`: no such
+ * order, wrong state for the call, or the hold is already settled. */
 export class SpendCapError extends AuditBudgetError {
-  constructor(readonly reason: "limit_reached" | "unavailable") {
+  constructor(
+    readonly reason:
+      "limit_reached" | "unavailable" | "order_limit" | "order_refused",
+  ) {
     super(SPEND_UNAVAILABLE_MESSAGE);
     this.name = "SpendCapError";
   }
@@ -35,37 +40,43 @@ export function dailySpendLimitUsd(): number {
   return value;
 }
 
-const ledgers = new WeakMap<object, SpendLedger>();
-
-function bindingLedger(): SpendLedger {
-  let db: unknown;
+/** The D1 binding the ledger and orders live in, or null when the request has
+ * no Worker context or no binding. */
+export function spendDatabase(): SpendDb | null {
   try {
-    db = (getCloudflareContext().env as unknown as Record<string, unknown>)[
-      SPEND_DB_BINDING
-    ];
+    const db = (
+      getCloudflareContext().env as unknown as Record<string, unknown>
+    )[SPEND_DB_BINDING];
+    return typeof db === "object" &&
+      db !== null &&
+      "prepare" in db &&
+      "batch" in db
+      ? (db as SpendDb)
+      : null;
   } catch {
-    throw new SpendCapError("unavailable");
+    return null;
   }
-  if (typeof db !== "object" || db === null || !("prepare" in db)) {
-    throw new SpendCapError("unavailable");
-  }
-  let ledger = ledgers.get(db);
-  if (!ledger) {
-    ledger = createSpendLedger(db as SpendDb, {
-      limitUsd: dailySpendLimitUsd(),
-    });
-    ledgers.set(db, ledger);
-  }
-  return ledger;
+}
+
+/** The order a paid call runs for (R-03). Every paid call in live mode is
+ * made inside `withOrderSpend`; outside it the call is refused unsent. */
+type OrderSpendScope = { db: SpendDb; orderId: string; now?: () => Date };
+const orderScope = new AsyncLocalStorage<OrderSpendScope>();
+
+export function withOrderSpend<T>(
+  scope: OrderSpendScope,
+  run: () => Promise<T>,
+): Promise<T> {
+  return orderScope.run(scope, run);
 }
 
 export type SpendReservation = { settle(actualUsd: number): Promise<void> };
 
 /**
  * Call immediately before every paid provider request. Throws SpendCapError
- * (so the request is never sent) when the daily limit is reached or the ledger
- * is unavailable. Synthetic mode makes no paid calls and needs no ledger.
- * Live mode without the D1 binding fails closed.
+ * (so the request is never sent) when there is no order, the order's state does
+ * not allow the call, its own limit would be passed, or the ledger is
+ * unavailable. Synthetic mode makes no paid calls and needs no ledger.
  */
 export async function reserveProviderSpend(input: {
   provider: string;
@@ -75,11 +86,15 @@ export async function reserveProviderSpend(input: {
   if (auditMode() !== "live") {
     return { settle: async () => {} };
   }
+  const scope = orderScope.getStore();
+  if (!scope) throw new SpendCapError("order_refused");
   try {
-    const ledger = bindingLedger();
-    return await ledger.reserve(input);
+    return await reserveOrderCall(scope.db, {
+      orderId: scope.orderId,
+      now: scope.now,
+      ...input,
+    });
   } catch (error) {
-    if (error instanceof SpendCapError) throw error;
     throw new SpendCapError(
       error instanceof SpendLedgerError ? error.code : "unavailable",
     );

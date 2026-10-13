@@ -13,8 +13,10 @@ the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
 - Mode is synthetic. Every answer, question and report comes from a labelled
   synthetic substitute. Live mode is out of scope for this skill.
 - Every drive starts from an empty browser session (a new context). The
-  journey state lives in `sessionStorage` (`nuave.localIntake.v9`,
-  `nuave.localIntakeAudit.v2`), so a new context is the baseline.
+  intake progress lives in the browser's `localStorage`
+  (`nuave.localIntake.v9`, and `nuave.activeOrder.v1` for the order id; spec
+  016 R-29), so a new context is the baseline. The report is not in the browser
+  at all: it opens only from the emailed link.
 - The fictional business is `Kedai Fiksi` at `https://kedai-fiksi.example/`.
 
 ## Driving conventions
@@ -23,8 +25,8 @@ the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
   `tests/e2e/journey.ts`, the shared driver the e2e specs also use.
 - Use ARIA roles and accessible names, plus the stable `data-*` handles the app
   exposes: `data-intake-screen`, `data-smart-summary`, `data-question-slot`,
-  `data-local-audit-stage`, `data-direct-ten-report`, `data-answer-body`,
-  `data-report-answer`. Never use coordinates.
+  `data-order-stage`, `data-saved-report`, `data-direct-ten-report`,
+  `data-answer-body`, `data-report-answer`. Never use coordinates.
 - UI text is Indonesian. Copy names exactly, including the em dash in
   `Sudah sesuai — buat pertanyaan audit`.
 - A new step goes into `tests/e2e/journey.ts` first, then into the recipe in
@@ -39,9 +41,6 @@ the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
 - Every artifact carries the feature ID (its folder) and the drive-time
   `HEAD` and dirty flag.
 - The network log must show zero unexpected external requests.
-- A fault-injected drive reports
-  `fault-injected (not user-reachable in synthetic mode)`. Never report it as
-  `passed`, and never count it as proof of a user path.
 - An entry point that is not driven is reported as not driven. Do not report
   it as verified through another path.
 
@@ -72,9 +71,9 @@ user-visible behavior. It then uses exactly four H2 sections in this order:
   competitor suggestions in the session, reload persistence, and downstream
   question creation.
 - [Question review](./question-review.md) covers "Periksa pertanyaan audit",
-  question edits, and `Mulai audit`.
-- [Audit run](./audit-run.md) covers the ten synthetic observations, the
-  synthetic label, and no duplicate run on reload.
-- [Report and recovery](./report-and-recovery.md) covers the report,
-  `Download PDF`, the JSON download, and the fault-injected answers-only
-  recovery.
+  question edits, and `Mulai audit` (the questions are approved on the server).
+- [Audit run](./audit-run.md) covers the whole order path: free brand confirm,
+  order summary, paid reading, intake, ten questions, closing the tab, the
+  server audit and the report opened from the emailed link.
+- [Report link](./report-link.md) covers the saved report page, `Download PDF`,
+  the JSON download and the not-available page.

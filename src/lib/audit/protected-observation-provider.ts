@@ -26,6 +26,7 @@ import {
   reserveProviderSpend,
 } from "../spending/provider-spend";
 import { throwIfAuditAborted, type QuestionExecuteInput } from "./retry";
+import { OBSERVATION_CALL_TIMEOUT_MS } from "./call-timeouts";
 import type { AuditObservation, Source } from "./types";
 
 type CostControlledResponseParams = ResponseCreateParamsWithTools & {
@@ -148,10 +149,10 @@ export async function executeAbortableProtectedObservation(
   const startedAt = Date.now();
 
   try {
-    const response = await client().responses.create(
-      request,
-      input.signal ? { signal: input.signal } : undefined,
-    );
+    const response = await client().responses.create(request, {
+      timeout: OBSERVATION_CALL_TIMEOUT_MS,
+      ...(input.signal ? { signal: input.signal } : {}),
+    });
     const completed = completedCallTelemetry({
       stage: "observation",
       started_at_ms: startedAt,

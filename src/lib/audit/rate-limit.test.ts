@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  AUDIT_REPORT_CALLER_RATE_LIMITER,
-  AUDIT_RUN_CALLER_RATE_LIMITER,
   EXTRACT_CALLER_RATE_LIMITER,
   GLM_CALLER_RATE_LIMITER,
   IDENTITY_CALLER_RATE_LIMITER,
   IDENTITY_DESTINATION_RATE_LIMITER,
+  ORDER_CREATE_CALLER_RATE_LIMITER,
+  ORDER_STATUS_CALLER_RATE_LIMITER,
 } from "./rate-limit";
 import { SafeSourceFetchError } from "./safe-source-fetch";
 
@@ -30,11 +30,11 @@ vi.mock("@/lib/audit/provider", () => ({
 }));
 
 import { GET as identityGET } from "../../app/api/audit/identity/route";
-import { GET as extractGET } from "../../app/api/audit/extract/route";
 import { POST as extractPOST } from "../../app/api/audit/extract/route";
 import { POST as glmQuestionsPOST } from "../../app/api/audit/glm-questions/route";
-import { POST as runPOST } from "../../app/api/audit/run/route";
-import { POST as reportPOST } from "../../app/api/audit/report/route";
+import { POST as orderCreatePOST } from "../../app/api/orders/route";
+import { POST as orderStatusPOST } from "../../app/api/orders/status/route";
+import { POST as orderApprovePOST } from "../../app/api/orders/approve/route";
 
 function rateLimiter(success = true) {
   return { limit: vi.fn(async () => ({ success })) };
@@ -45,8 +45,8 @@ function setCloudflareBindings(bindings: {
   identityDestination?: ReturnType<typeof rateLimiter>;
   extractCaller?: ReturnType<typeof rateLimiter>;
   glmCaller?: ReturnType<typeof rateLimiter>;
-  runCaller?: ReturnType<typeof rateLimiter>;
-  reportCaller?: ReturnType<typeof rateLimiter>;
+  orderCreateCaller?: ReturnType<typeof rateLimiter>;
+  orderStatusCaller?: ReturnType<typeof rateLimiter>;
 }) {
   mocks.getCloudflareContext.mockReturnValue({
     env: {
@@ -54,8 +54,8 @@ function setCloudflareBindings(bindings: {
       [IDENTITY_DESTINATION_RATE_LIMITER]: bindings.identityDestination,
       [EXTRACT_CALLER_RATE_LIMITER]: bindings.extractCaller,
       [GLM_CALLER_RATE_LIMITER]: bindings.glmCaller,
-      [AUDIT_RUN_CALLER_RATE_LIMITER]: bindings.runCaller,
-      [AUDIT_REPORT_CALLER_RATE_LIMITER]: bindings.reportCaller,
+      [ORDER_CREATE_CALLER_RATE_LIMITER]: bindings.orderCreateCaller,
+      [ORDER_STATUS_CALLER_RATE_LIMITER]: bindings.orderStatusCaller,
     },
   });
 }
@@ -193,24 +193,11 @@ describe("D1 route rate limits", () => {
       }),
     );
 
-    expect(response.status).toBe(400);
+    // Past the limiter, then refused for want of an order (spec 016 R-03).
+    expect(response.status).toBe(409);
     expect(extractCaller.limit).toHaveBeenCalledWith({ key: "198.51.100.12" });
     expect(mocks.assertConfigured).not.toHaveBeenCalled();
     expect(mocks.extract).not.toHaveBeenCalled();
-  });
-
-  it("also limits the extraction budget bootstrap by caller IP", async () => {
-    const extractCaller = rateLimiter();
-    setCloudflareBindings({ extractCaller });
-
-    const response = await extractGET(
-      new Request("https://nuave.test/api/audit/extract", {
-        headers: { "CF-Connecting-IP": "198.51.100.14" },
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(extractCaller.limit).toHaveBeenCalledWith({ key: "198.51.100.14" });
   });
 
   it("returns a plain Indonesian error when extraction caller limit refuses", async () => {
@@ -382,16 +369,12 @@ describe("Spec 010 R-03 paid-stage caller limiters", () => {
     expect(glmCaller.limit).toHaveBeenCalledWith({ key: "203.0.113.60" });
   });
 
-  it("limits run by caller IP before any provider work", async () => {
-    const runCaller = rateLimiter(false);
-    setCloudflareBindings({ runCaller });
+  it("limits order creation by caller IP before anything is written", async () => {
+    const orderCreateCaller = rateLimiter(false);
+    setCloudflareBindings({ orderCreateCaller });
 
-    const response = await runPOST(
-      jsonPost(
-        "/api/audit/run",
-        { question_method: "direct-ten" },
-        "203.0.113.61",
-      ),
+    const response = await orderCreatePOST(
+      jsonPost("/api/orders", { email: "owner@example.com" }, "203.0.113.61"),
     );
     const body = await response.json();
 
@@ -400,67 +383,59 @@ describe("Spec 010 R-03 paid-stage caller limiters", () => {
       error: "Terlalu banyak permintaan, coba lagi dalam beberapa menit.",
       code: "RATE_LIMITED",
     });
-    expect(runCaller.limit).toHaveBeenCalledWith({ key: "203.0.113.61" });
-  });
-
-  it("limits report by caller IP before any provider work", async () => {
-    const reportCaller = rateLimiter(false);
-    setCloudflareBindings({ reportCaller });
-
-    const response = await reportPOST(
-      jsonPost(
-        "/api/audit/report",
-        { question_method: "direct-ten" },
-        "203.0.113.62",
-      ),
-    );
-    const body = await response.json();
-
-    expect(response.status).toBe(429);
-    expect(body).toEqual({
-      error: "Terlalu banyak permintaan, coba lagi dalam beberapa menit.",
-      code: "RATE_LIMITED",
+    expect(orderCreateCaller.limit).toHaveBeenCalledWith({
+      key: "203.0.113.61",
     });
-    expect(reportCaller.limit).toHaveBeenCalledWith({ key: "203.0.113.62" });
-  });
-
-  it("method rejection precedes the limiter — a legacy method never consumes quota", async () => {
-    const runCaller = rateLimiter(false);
-    setCloudflareBindings({ runCaller });
-
-    const response = await runPOST(
-      jsonPost(
-        "/api/audit/run",
-        { question_method: "canonical" },
-        "203.0.113.63",
-      ),
-    );
-
-    expect(response.status).toBe(400);
-    expect(runCaller.limit).not.toHaveBeenCalled();
   });
 
   it.each([
-    ["glm-questions", { method: "direct-ten" }, "glmCaller"],
-    ["run", { question_method: "direct-ten" }, "runCaller"],
-    ["report", { question_method: "direct-ten" }, "reportCaller"],
+    ["order status", orderStatusPOST, "/api/orders/status"],
+    ["order approval", orderApprovePOST, "/api/orders/approve"],
+  ] as const)("limits %s by caller IP", async (_name, route, path) => {
+    const orderStatusCaller = rateLimiter(false);
+    setCloudflareBindings({ orderStatusCaller });
+
+    const response = await route(
+      jsonPost(path, { order_id: "a".repeat(32) }, "203.0.113.62"),
+    );
+
+    expect(response.status).toBe(429);
+    expect(orderStatusCaller.limit).toHaveBeenCalledWith({
+      key: "203.0.113.62",
+    });
+  });
+
+  it.each([
+    ["glm-questions", glmQuestionsPOST, "/api/audit/glm-questions"],
+    ["orders", orderCreatePOST, "/api/orders"],
+    ["orders/status", orderStatusPOST, "/api/orders/status"],
+    ["orders/approve", orderApprovePOST, "/api/orders/approve"],
   ] as const)(
     "fails closed with 503 when the %s binding is missing",
-    async (path, body, bindingName) => {
+    async (_name, route, path) => {
       setCloudflareBindings({});
 
-      const response = await {
-        "glm-questions": glmQuestionsPOST,
-        run: runPOST,
-        report: reportPOST,
-      }[path](jsonPost(`/api/audit/${path}`, body, "203.0.113.64"));
+      const response = await route(
+        jsonPost(path, { method: "direct-ten" }, "203.0.113.64"),
+      );
 
       expect(response.status).toBe(503);
       const payload = await response.json();
       expect(payload).toMatchObject({ code: "RATE_LIMIT_UNAVAILABLE" });
-      void bindingName;
     },
   );
+
+  it("a missing binding in local development is not a 503 (spec 016 R-33)", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    setCloudflareBindings({});
+
+    const response = await orderCreatePOST(
+      jsonPost("/api/orders", {}, "203.0.113.66"),
+    );
+
+    // Past the limiter: the route's own validation answers.
+    expect(response.status).toBe(400);
+  });
 
   it("fails closed with 503 in production when the Worker context is unavailable", async () => {
     vi.stubEnv("NODE_ENV", "production");
@@ -468,12 +443,8 @@ describe("Spec 010 R-03 paid-stage caller limiters", () => {
       throw new Error("request context unavailable");
     });
 
-    const response = await runPOST(
-      jsonPost(
-        "/api/audit/run",
-        { question_method: "direct-ten" },
-        "203.0.113.65",
-      ),
+    const response = await orderCreatePOST(
+      jsonPost("/api/orders", { email: "a@example.com" }, "203.0.113.65"),
     );
 
     expect(response.status).toBe(503);

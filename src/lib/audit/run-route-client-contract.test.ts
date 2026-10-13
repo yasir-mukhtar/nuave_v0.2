@@ -13,9 +13,12 @@ const providerMocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/audit/provider", () => providerMocks);
 
-import { POST } from "../../app/api/audit/run/route";
+// Spec 016: the browser-driven /api/audit/run is retired. The client contract
+// guard and the switch guard now protect the step that replaced it, approving
+// the ten questions.
+import { POST } from "../../app/api/orders/approve/route";
 
-describe("POST /api/audit/run client contract guard", () => {
+describe("POST /api/orders/approve client contract guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NUAVE_NEW_AUDIT_ENABLED = "1";
@@ -23,7 +26,7 @@ describe("POST /api/audit/run client contract guard", () => {
   });
 
   it.each([undefined, "older-live-audit-stream"])(
-    "rejects stale client contract %s before provider setup",
+    "rejects stale client contract %s before any provider setup",
     async (clientContractVersion) => {
       const body = clientContractVersion
         ? {
@@ -32,7 +35,7 @@ describe("POST /api/audit/run client contract guard", () => {
           }
         : { question_method: "direct-ten" };
       const response = await POST(
-        new Request("https://nuave.test/api/audit/run", {
+        new Request("https://nuave.test/api/orders/approve", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -56,7 +59,7 @@ describe("POST /api/audit/run client contract guard", () => {
   );
 });
 
-describe("POST /api/audit/run switch guard (Spec 010 R-01)", () => {
+describe("POST /api/orders/approve switch guard (Spec 010 R-01)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.NUAVE_NEW_AUDIT_ENABLED;
@@ -64,7 +67,7 @@ describe("POST /api/audit/run switch guard (Spec 010 R-01)", () => {
 
   it("fails closed with 404 and zero provider work when the switch is off", async () => {
     const response = await POST(
-      new Request("https://nuave.test/api/audit/run", {
+      new Request("https://nuave.test/api/orders/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -26,7 +26,9 @@ audit questions.
 - `reading-screen`: `Periksa` opens "Sebentar, Nuave sedang membaca" with the
   labelled synthetic-mode note while the identity and extract requests run.
 - `brand-confirm`: the brand check shows the business name and source with
-  `Kembali` and `Lanjut`; `Lanjut` opens the focus screen.
+  `Kembali` and `Lanjut`; `Lanjut` opens the order summary (spec 016), and
+  the shared `confirmBrand` step types the test email there, so the paid
+  reading runs and the focus screen opens.
 - `focus-screen`: whole brand carries `Saran Nuave`; the location scope shows
   as a card only when usable published locations exist — otherwise as the
   `Isi lokasi secara manual` link.
@@ -129,14 +131,15 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
 - **Confirm.** Presses `Sudah sesuai — buat pertanyaan audit`. The heading
   "Periksa pertanyaan audit" and ten `[data-question-slot]` show. Evidence:
   `06-questions-created`.
-- **Proof.** The frozen context in `sessionStorage` `nuave.localIntake.v9`
+- **Proof.** The frozen context in `localStorage` `nuave.localIntake.v9`
   has category `kedai kopi` (origin `owner`), focus
   `{kind: "produk", name: "kopi susu"}`, reach `seluruh`, no optional
   customer meanings (target customer, needs, considerations, differentiator
   are absent), empty aliases, unknown competitor mode and a blank public
   fact.
   `network.json.apiCalls` is exactly one `GET /api/audit/identity`, one
-  `POST /api/audit/extract` and one `POST /api/audit/glm-questions`.
+  `POST /api/orders`, one `POST /api/audit/extract` and one
+  `POST /api/audit/glm-questions`.
 
 ## Gotchas
 

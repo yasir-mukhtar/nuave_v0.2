@@ -18,6 +18,25 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.context,
 }));
+// Spec 016: the paid reading needs an open order and reads the website saved on
+// it. The order and ledger mechanics are tested in orders/*.test.ts; here the
+// order is a stub carrying the website the UI ordered for.
+const orderStub = vi.hoisted(() => ({
+  id: "0123456789abcdef0123456789abcdef",
+  website: "",
+  name: "",
+}));
+vi.mock("@/lib/orders/http", () => ({
+  orderRuntime: () => ({ db: {}, environment: "production", mode: "live" }),
+}));
+vi.mock("@/lib/orders/store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/orders/store")>()),
+  orderInState: async () => ({
+    id: orderStub.id,
+    website: orderStub.website,
+    business_name: orderStub.name,
+  }),
+}));
 vi.mock("node:dns", async (importOriginal) => {
   const original = await importOriginal<typeof import("node:dns")>();
   const promises = {
@@ -167,6 +186,7 @@ function sdkResponse() {
 }
 beforeEach(() => {
   window.sessionStorage.clear();
+  window.localStorage.clear();
   vi.clearAllMocks();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
   // Native fetch byte chunks and jsdom typed arrays belong to different realms.
@@ -212,6 +232,22 @@ beforeEach(() => {
     vi.fn(
       async (url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
         const value = String(url);
+        if (value === "/api/orders") {
+          const sent = JSON.parse(String(init?.body)) as {
+            website: string;
+            business_name: string;
+          };
+          orderStub.website = sent.website;
+          orderStub.name = sent.business_name;
+          return Response.json({ order_id: orderStub.id, state: "open" });
+        }
+        if (value === "/api/orders/status")
+          return Response.json({
+            state: "open",
+            completed: 0,
+            total: 10,
+            questions: [],
+          });
         if (value.startsWith("/api/audit/")) {
           clientRequests.push(value);
           if (init?.body) clientBodies.push(JSON.parse(String(init.body)));
@@ -287,13 +323,34 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 async function post(value: Record<string, unknown> = input()) {
+  // The website and brand come from the order; everything else the browser
+  // sends is ignored by the route (spec 016 R-04).
+  orderStub.website = String(value.website_url ?? source);
+  orderStub.name = String(value.brand_name ?? "");
   return extractPOST(
     new Request("https://nuave.test/api/audit/extract", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(value),
+      body: JSON.stringify({ ...value, order_id: orderStub.id }),
     }),
   );
+}
+async function passOrder() {
+  await screen.findByRole("heading", { name: "Ringkasan pesanan" });
+  fireEvent.change(screen.getByRole("textbox", { name: /Email/ }), {
+    target: { value: "pemilik@example.com" },
+  });
+  fireEvent.click(lanjut());
+}
+/** Screens 1-3a: the free lookup, the brand check, then the order. The paid
+ * reading (screen 3b) starts when the order is made. */
+async function inspectAndOrder() {
+  await inspect();
+  await screen.findByRole("heading", {
+    name: "Ini brand yang ingin Anda audit?",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  await passOrder();
 }
 async function inspect() {
   await screen.findByRole("textbox", { name: "Nama bisnis" });
@@ -312,12 +369,15 @@ async function inspect() {
 // differentiator → public fact → summary. These fixtures carry prepared
 // values, so each screen's `Lanjut` is already enabled.
 const lanjut = () => screen.getByRole("button", { name: "Lanjut" });
-async function throughBrandToMarket() {
+async function throughOrderToFocus() {
   await screen.findByRole("heading", {
     name: "Ini brand yang ingin Anda audit?",
   });
   fireEvent.click(lanjut());
+  await passOrder();
   await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+}
+async function fromFocusToMarket() {
   fireEvent.click(lanjut());
   await screen.findByRole("heading", { name: /biasanya disebut apa\?$/ });
   fireEvent.click(lanjut());
@@ -343,8 +403,11 @@ async function throughBrandToMarket() {
     name: "Di mana pelanggan Anda berada?",
   });
 }
-async function throughBrand() {
-  await throughBrandToMarket();
+async function throughBrandToMarket() {
+  await throughOrderToFocus();
+  await fromFocusToMarket();
+}
+async function fromMarketToSummary() {
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
     name: "Ini yang mungkin dibandingkan dengan Anda",
@@ -359,6 +422,10 @@ async function throughBrand() {
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+}
+async function throughBrand() {
+  await throughBrandToMarket();
+  await fromMarketToSummary();
 }
 
 describe("server excerpt through the active Smart preparation", () => {
@@ -379,7 +446,7 @@ describe("server excerpt through the active Smart preparation", () => {
         JSON.parse(requests[0].input[1].content).public_source_data.text,
       ).toBe(text);
       const saved = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(saved?.prepared?.offerings).toEqual({
         proposed: [text],
@@ -393,7 +460,7 @@ describe("server excerpt through the active Smart preparation", () => {
       );
       await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
       const confirmed = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(confirmed?.frozen?.context.offerings).toEqual({
         value: [text],
@@ -422,16 +489,17 @@ describe("server excerpt through the active Smart preparation", () => {
       expect(SOURCE_EXCERPT_RESTRICTED_MESSAGE).toBe(expected);
       const initial = freshSmartSession();
       initial.preparationCalls = input().budget.calls;
-      window.sessionStorage.setItem(
+      initial.savedAt = new Date().toISOString();
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify(initial),
       );
       pageHtml = `<head><title>Kedai Pelangi Fiksi</title></head><p>${text}</p>`;
       const mounted = render(<SmartIntakeJourney live />);
-      await inspect();
+      await inspectAndOrder();
       expect((await screen.findByRole("alert")).textContent).toBe(expected);
       const saved = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(saved?.preparationCalls).toEqual(initial.preparationCalls);
       expect(saved?.entry).toEqual({ name: "Kedai Pelangi Fiksi", source });
@@ -450,9 +518,8 @@ describe("server excerpt through the active Smart preparation", () => {
       expect(requests).toHaveLength(0);
       expect(reserveAuditCall).not.toHaveBeenCalled();
       expect(
-        parseSmartSession(
-          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
-        )?.preparationCalls,
+        parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+          ?.preparationCalls,
       ).toEqual(initial.preparationCalls);
     },
   );
@@ -473,13 +540,13 @@ describe("server excerpt through the active Smart preparation", () => {
       expect((await screen.findByRole("alert")).textContent).toBe(expected);
       expect(clientRequests).toHaveLength(0);
       expect(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
       ).not.toContain(text);
       parsedDraft = { ...draft(), verified_offerings: [text] };
-      await inspect();
+      await inspectAndOrder();
       expect((await screen.findByRole("alert")).textContent).toBe(expected);
       const rejected = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(rejected?.prepared).toBeNull();
       expect(rejected?.preparationCalls).toHaveLength(1);
@@ -489,6 +556,7 @@ describe("server excerpt through the active Smart preparation", () => {
       mounted.unmount();
       // A separate safe preparation exercises the existing owner-edit guard.
       window.sessionStorage.clear();
+      window.localStorage.clear();
       parsedDraft = draft();
       render(<SmartIntakeJourney live />);
       await inspect();
@@ -506,12 +574,12 @@ describe("server excerpt through the active Smart preparation", () => {
       fireEvent.click(
         screen.getByRole("button", { name: "Tulis kategori sendiri" }),
       );
-      const before = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY);
+      const before = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY);
       fireEvent.change(screen.getByRole("textbox", { name: "Kategori" }), {
         target: { value: text },
       });
       expect((await screen.findByRole("alert")).textContent).toBe(expected);
-      expect(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(
+      expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(
         before,
       );
       expect(clientRequests).toEqual(calls);
@@ -555,7 +623,7 @@ describe("server excerpt through the active Smart preparation", () => {
     );
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     expect(
-      parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
         ?.frozen?.context.category,
     ).toEqual({ value: text, origin: "owner" });
     expect(requests).toHaveLength(1);
@@ -640,7 +708,7 @@ describe("server excerpt through the active Smart preparation", () => {
       // the summary with a gap.
       await throughBrandToMarket();
       const saved = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(saved?.frozen).toBeNull();
       expect(saved?.selection).toMatchObject({
@@ -759,7 +827,7 @@ describe("server excerpt through the active Smart preparation", () => {
       source_url: source,
       retrieved_at: expect.any(String),
     });
-    const stored = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
+    const stored = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
     expect(stored).not.toContain("Penanda teks publik");
     expect(stored).not.toContain("public_source_data");
     expect(stored).not.toContain("<html>");
@@ -832,7 +900,7 @@ describe("server excerpt through the active Smart preparation", () => {
     await inspect();
     await throughBrand();
     const saved = parseSmartSession(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
     );
     expect(saved?.prepared?.locations).toEqual({
       proposed: [
@@ -865,7 +933,7 @@ describe("server excerpt through the active Smart preparation", () => {
     render(<SmartIntakeJourney live />);
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
-      parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
         ?.prepared,
     ).toEqual(saved?.prepared);
     expect(requests).toHaveLength(1);
@@ -895,7 +963,7 @@ describe("server excerpt through the active Smart preparation", () => {
     await inspect();
     await throughBrand();
     const saved = parseSmartSession(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
     );
     expect(saved?.prepared?.locations).toEqual({
       proposed: [
@@ -924,6 +992,7 @@ describe("server excerpt through the active Smart preparation", () => {
       name: "Ini brand yang ingin Anda audit?",
     });
     fireEvent.click(lanjut());
+    await passOrder();
     await screen.findByRole("heading", {
       name: "Apa yang ingin Anda audit?",
     });
@@ -933,7 +1002,7 @@ describe("server excerpt through the active Smart preparation", () => {
     });
     expect((lanjut() as HTMLButtonElement).disabled).toBe(true);
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
     );
     expect(saved.selection.category).toBe("");
     expect(saved.selection.offerings).toEqual([]);
@@ -957,13 +1026,15 @@ describe("server excerpt through the active Smart preparation", () => {
     async (_label, body) => {
       pageHtml = `<head><title>Kedai Pelangi Fiksi</title></head>${body}`;
       const first = render(<SmartIntakeJourney live />);
-      await inspect();
-      // J2: the no-usable-text note first lands on the brand check.
+      await inspectAndOrder();
+      // The no-usable-text note first lands on the first screen after the paid
+      // reading (J2 moved it there: the brand check is now free and earlier).
       await screen.findByText(SOURCE_EXCERPT_EMPTY_NOTICE);
       expect(JSON.parse(requests[0].input[1].content)).not.toHaveProperty(
         "public_source_data",
       );
-      await throughBrand();
+      await fromFocusToMarket();
+      await fromMarketToSummary();
       expect(screen.getByText("Kopi susu, Roti panggang")).toBeTruthy();
       fireEvent.click(
         within(screen.getByRole("region", { name: "Bisnis" })).getByRole(
@@ -980,32 +1051,37 @@ describe("server excerpt through the active Smart preparation", () => {
         SOURCE_EXCERPT_EMPTY_NOTICE,
       );
       expect(
-        JSON.parse(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!)
+        JSON.parse(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!)
           .sourceExcerptStatus,
       ).toBe("no-usable-text");
       expect(requests).toHaveLength(1);
       expect(pageReads).toBe(2);
+      // identity + extract; the saved-order check is not a provider request.
       expect(clientRequests).toHaveLength(2);
     },
   );
-  it("source failure persists safe identity/status, reload does no work and explicit retry reuses identity", async () => {
+  it("source failure persists safe identity/status, reload does no work and explicit retry reuses identity and order", async () => {
     failPage = 2;
     const first = render(<SmartIntakeJourney live />);
-    await inspect();
+    await inspectAndOrder();
     await screen.findByText(SOURCE_EXCERPT_UNAVAILABLE_MESSAGE);
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
     );
     expect(saved.identity.canonicalUrl).toBe(source);
     expect(saved.sourceExcerptStatus).toBe("unavailable");
+    expect(saved.order.id).toBe(orderStub.id);
     expect(requests).toHaveLength(0);
     first.unmount();
     render(<SmartIntakeJourney live />);
     await screen.findByText(SOURCE_EXCERPT_UNAVAILABLE_MESSAGE);
     expect(pageReads).toBe(2);
     failPage = 0;
-    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
-    await throughBrand();
+    // The saved order is still open: Lanjut reads again, with no new order and
+    // no email typed again.
+    expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    fireEvent.click(lanjut());
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     expect(pageReads).toBe(3);
     expect(iconReads).toBe(1);
     expect(
@@ -1035,10 +1111,10 @@ describe("server excerpt through the active Smart preparation", () => {
           .mockResolvedValueOnce({ success: true })
           .mockResolvedValue({ success: false });
       const first = render(<SmartIntakeJourney live />);
-      await inspect();
+      await inspectAndOrder();
       await screen.findByRole("alert");
       const expected = kind === "privacy" ? "restricted" : "rate-limited";
-      const raw = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
+      const raw = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
       const saved = JSON.parse(raw);
       expect(saved.sourceExcerptStatus).toBe(expected);
       expect(saved.identity.canonicalUrl).toBe(source);
@@ -1055,23 +1131,23 @@ describe("server excerpt through the active Smart preparation", () => {
   it("a failed extraction restores its source outcome and ledger without replay or reset", async () => {
     providerError = true;
     const first = render(<SmartIntakeJourney live />);
-    await inspect();
+    await inspectAndOrder();
     await screen.findByRole("alert");
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
     );
     expect(saved.sourceExcerptStatus).toBe("included");
     expect(saved.preparationCalls).toHaveLength(1);
     expect(saved.preparationCalls[0].status).toBe("failed");
     first.unmount();
     render(<SmartIntakeJourney live />);
-    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    await screen.findByRole("heading", { name: "Ringkasan pesanan" });
     expect(requests).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+    // An explicit retry reads again under the same order; the browser's budget
+    // history is no longer sent at all (the order's own limit decides).
+    fireEvent.click(lanjut());
     await screen.findByRole("alert");
-    expect(clientBodies.at(-1)!.budget).toMatchObject({
-      calls: saved.preparationCalls,
-    });
+    expect(clientBodies.at(-1)).toEqual({ order_id: orderStub.id });
     expect(requests).toHaveLength(2);
     expect(
       clientRequests.filter((url) => url.startsWith("/api/audit/identity")),
@@ -1133,13 +1209,17 @@ describe("real extraction route and SDK controls", () => {
     },
   );
   it("removing only supplemental user data restores full protected request equivalence", async () => {
-    await extractBusinessDraft(input());
+    // An order's reading is always an unverified identity (spec 016 R-01).
+    await extractBusinessDraft({ ...input(), identity_unverified: true });
     const baseline = structuredClone(requests[0]);
     await post();
     const withSource = structuredClone(requests[1]);
     const payload = JSON.parse(withSource.input[1].content);
     delete payload.public_source_data;
     withSource.input[1].content = JSON.stringify(payload);
+    // The safety identifier now comes from the order id (spec 016 R-04).
+    delete baseline.safety_identifier;
+    delete withSource.safety_identifier;
     expect(withSource).toEqual(baseline);
   });
   it("permitted technical retry reuses the same excerpt and running ledger without refetch", async () => {

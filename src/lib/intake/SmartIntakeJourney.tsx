@@ -7,7 +7,6 @@ import { IconCheck, IconCircle, IconLoader2 } from "@tabler/icons-react";
 import { AuditNotice } from "@/components/product/AuditNotice";
 import IntakeChapterProgress from "./progress";
 import {
-  AUDIT_COST_LIMIT_USD,
   auditCallTelemetrySchema,
   sourceExcerptStatusSchema,
   SOURCE_EXCERPT_EMPTY_NOTICE,
@@ -18,6 +17,7 @@ import {
   type ExtractionDraft,
 } from "../audit/types";
 import { parseSourceInput } from "../audit/source-input";
+import { AUDIT_CLIENT_CONTRACT_VERSION } from "../audit/client-contract";
 import { canonicalLockedDirectTenPack } from "../audit/locked-question-pack";
 import { dedupeCalls } from "./local-audit-session";
 import { readHistoricalAudit } from "./historical-audit";
@@ -39,13 +39,17 @@ import {
   type SmartSelection,
 } from "./smart-intake-contract";
 import {
+  clearSmartSession,
   freshSmartSession,
+  readActiveOrder,
   readSmartSession,
   smartPackPrompts,
+  writeActiveOrder,
   writeSmartSession,
   type SmartQuestionPack,
   type SmartSession,
 } from "./smart-session";
+import { FreeBrandScreen, OrderScreen } from "./order-screens";
 import type { GenerationAttempt } from "./local-session";
 import {
   questionPublicCost,
@@ -76,11 +80,18 @@ import {
 import SmartQuestionsScreen from "./SmartQuestionsScreen";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
 
+/** Screen 2: the free lookup. No AI runs here (spec 016 D1). */
+const LOOKUP_STEPS = ["Memeriksa website Anda"] as const;
+
+/** Screen 3b: the paid reading, which runs under the order. */
 const READING_STEPS = [
   "Membaca sumber Anda",
   "Menemukan produk dan lokasi",
   "Memperkirakan pelanggan dan pembanding",
 ] as const;
+
+const ORDER_ENDED_NOTICE =
+  "Pesanan Anda sudah berakhir. Isian Anda tetap tersimpan. Masukkan email Anda lagi untuk melanjutkan.";
 
 const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
@@ -213,10 +224,10 @@ function backTargetFor(session: SmartSession): SmartStage | null {
       return marker ?? "differentiator";
     case "summary":
       return "public-fact";
+    case "order":
+      return "brand";
     case "questions":
       return "summary";
-    case "audit":
-      return "questions";
     default:
       return null;
   }
@@ -290,7 +301,8 @@ function stageProgress(session: SmartSession) {
     "differentiator",
     "public-fact",
   ];
-  if (session.stage === "brand") return fills(1, 1);
+  if (session.stage === "brand" || session.stage === "order")
+    return fills(1, 1);
   const index2 = bab2.indexOf(session.stage);
   if (index2 >= 0) return fills(2, (index2 + 1) / bab2.length);
   const index3 = bab3.indexOf(session.stage);
@@ -368,12 +380,18 @@ export default function SmartIntakeJourney({
   const [session, setSession] = useState<SmartSession>(freshSmartSession);
   const [ready, setReady] = useState(false);
   const [historical, setHistorical] = useState(false);
-  const [busy, setBusy] = useState<"reading" | "questions" | null>(null);
+  const [busy, setBusy] = useState<
+    "lookup" | "reading" | "questions" | "approving" | null
+  >(null);
   const [readingStep, setReadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [interrupted, setInterrupted] = useState(false);
-  const [autoStart, setAutoStart] = useState(false);
   const [editingBrandName, setEditingBrandName] = useState(false);
+  // Spec 016 R-31: the email is typed here and never stored in the browser.
+  const [email, setEmail] = useState("");
+  // The order whose audit is running on the server (after the questions are
+  // approved). Only its id stays in the browser.
+  const [activeOrder, setActiveOrder] = useState<string | null>(null);
   const inFlight = useRef(false);
   const mounted = useRef(true);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -396,21 +414,95 @@ export default function SmartIntakeJourney({
   useEffect(() => {
     queueMicrotask(() => {
       const saved = readSmartSession();
+      const runningOrder = readActiveOrder();
+      if (!saved && runningOrder) {
+        // R-31: a reload during or after the audit shows its progress or
+        // result; the intake progress is already gone.
+        setActiveOrder(runningOrder);
+        setReady(true);
+        return;
+      }
       if (saved) {
+        let restoredStage = saved.stage;
         if (saved.stage === "reading") {
           // A stored reading session means the page was reloaded mid-read:
-          // return to entry with the fields kept and never replay the call.
-          const next: SmartSession = { ...saved, stage: "entry" };
+          // return to the order screen (or the entry) with the fields kept and
+          // never replay the call.
+          const next: SmartSession = {
+            ...saved,
+            stage: saved.order ? "order" : "entry",
+          };
+          restoredStage = next.stage;
           writeSmartSession(next);
           setSession(next);
           setInterrupted(true);
         } else {
           setSession(saved);
         }
-      } else setHistorical(Boolean(readHistoricalAudit()));
+        if (saved.order && restoredStage !== "order") void checkOrder(saved);
+      } else {
+        try {
+          setHistorical(Boolean(readHistoricalAudit()));
+        } catch {
+          // Browser storage is blocked: there is no old audit to hold.
+        }
+      }
       setReady(true);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** R-30: if the saved order has ended, the customer sees the order screen
+   * again and types the email again; the saved progress continues on the new
+   * order with no new paid call. */
+  async function checkOrder(saved: SmartSession) {
+    try {
+      const response = await fetch("/api/orders/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: saved.order!.id }),
+      });
+      if (!mounted.current) return;
+      const state = response.ok
+        ? ((await response.json()) as { state?: string }).state
+        : response.status === 404
+          ? "gone"
+          : "open";
+      if (state === "open") return;
+      // The answer may arrive late (a slow server): if the customer has already
+      // approved the questions, the saved progress is gone and the order is
+      // running, not ended. Only act while this same saved order is still the
+      // journey's own.
+      const current = readSmartSession();
+      if (!mounted.current || !current || current.order?.id !== saved.order!.id)
+        return;
+      if (state === "expired" || state === "gone") {
+        expireOrder(current);
+        return;
+      }
+      // Approved elsewhere (another tab): running, reporting, delivered or
+      // failed all go to the progress view; the intake progress is done (R-31).
+      writeActiveOrder(saved.order!.id);
+      clearSmartSession();
+      setActiveOrder(saved.order!.id);
+    } catch {
+      // Offline or the server is busy: keep the saved order and carry on.
+    }
+  }
+
+  /** The order is over or unknown: back to the order screen, progress kept. */
+  function expireOrder(from: SmartSession, resumeAt?: SmartSession["stage"]) {
+    const resume = resumeAt ?? from.afterOrder ?? from.stage;
+    const next: SmartSession = {
+      ...from,
+      order: null,
+      stage: "order",
+      afterOrder: resume === "order" ? "focus" : resume,
+    };
+    writeSmartSession(next);
+    setSession(next);
+    setError(ORDER_ENDED_NOTICE);
+  }
 
   // History ownership: every in-flow entry is marked `nuaveIntake` and a
   // marked duplicate stays on top while the stage has a back target. A real
@@ -436,7 +528,6 @@ export default function SmartIntakeJourney({
         ...backMarkerFields(current, target),
       };
       setError(null);
-      setAutoStart(false);
       writeSmartSession(next);
       setSession(next);
       if (backTargetFor(next)) window.history.pushState(intakeMark(), "");
@@ -494,13 +585,18 @@ export default function SmartIntakeJourney({
     setError(INTAKE_TEXT_RESTRICTED_MESSAGE);
   }
   function newJourney() {
+    clearSmartSession();
+    setActiveOrder(null);
     const next = freshSmartSession();
     persist(next);
     setHistorical(false);
     setError(null);
     setInterrupted(false);
-    setAutoStart(false);
+    setEmail("");
   }
+
+  /** Screens 1-3: the FREE lookup only. No AI runs here, and no order exists
+   * yet (spec 016 R-01, D1). */
   async function inspect() {
     if (inFlight.current) return;
     const parsed = parseSourceInput(session.entry.source);
@@ -518,108 +614,217 @@ export default function SmartIntakeJourney({
     }
     setInterrupted(false);
     setError(null);
-    // The source is unchanged: preparation stays reusable and a name-only
+    // The source is unchanged: the lookup stays reusable and a name-only
     // correction applies without another call (Spec 013 R-05/R-09).
     if (
-      session.prepared &&
-      session.selection &&
       session.identity &&
       parsed.normalizedUrl === session.identity.inputSource
     ) {
-      if (name !== session.prepared.typedName) {
-        // The stored discovered name was deduped against the old typed name;
-        // recompute it so the website's name is offered when it now differs
-        // and hidden when it now matches (R-09).
-        const discovered = session.identity.displayName?.trim();
-        goStage({
-          ...session,
-          stage: "brand",
-          entry: { ...session.entry, name },
-          identity: { ...session.identity, inputName: name },
-          prepared: {
-            ...session.prepared,
-            typedName: name,
-            discoveredName:
-              discovered && discovered !== name ? discovered : null,
-          },
-          selection: {
-            ...session.selection,
-            name,
-            nameOrigin: "owner",
-          },
-          confirmedSelection: null,
-          frozen: null,
-          pack: null,
-        });
-      } else {
-        goStage({ ...session, stage: "brand" });
+      if (session.prepared && session.selection) {
+        if (name !== session.prepared.typedName) {
+          // The stored discovered name was deduped against the old typed name;
+          // recompute it so the website's name is offered when it now differs
+          // and hidden when it now matches (R-09).
+          const discovered = session.identity.displayName?.trim();
+          goStage({
+            ...session,
+            stage: "brand",
+            entry: { ...session.entry, name },
+            identity: { ...session.identity, inputName: name },
+            prepared: {
+              ...session.prepared,
+              typedName: name,
+              discoveredName:
+                discovered && discovered !== name ? discovered : null,
+            },
+            selection: {
+              ...session.selection,
+              name,
+              nameOrigin: "owner",
+            },
+            confirmedSelection: null,
+            frozen: null,
+            pack: null,
+          });
+        } else {
+          goStage({ ...session, stage: "brand" });
+        }
+        return;
       }
+      goStage({
+        ...session,
+        stage: "brand",
+        entry: { ...session.entry, name },
+        identity: { ...session.identity, inputName: name },
+        brand:
+          session.brand && name === session.identity.inputName
+            ? session.brand
+            : { name, origin: "owner" },
+      });
       return;
     }
     inFlight.current = true;
-    setBusy("reading");
+    setBusy("lookup");
     setReadingStep(0);
-    let working: SmartSession = { ...session, stage: "reading" };
+    const working: SmartSession = { ...session, stage: "reading" };
     persist(working);
     try {
-      let identity = working.identity;
+      const response = await fetch(
+        `/api/audit/identity?source=${encodeURIComponent(parsed.normalizedUrl)}`,
+      );
+      const result = (await response.json().catch(() => ({}))) as {
+        canonical_url?: string;
+        display_name?: string;
+        preparation_mode?: string;
+        error?: string;
+      };
+      if (!response.ok || typeof result.canonical_url !== "string")
+        throw new Error(result.error || "Sumber bisnis belum dapat dibaca.");
+      const canonical = parseSourceInput(result.canonical_url);
       if (
-        !identity ||
-        identity.inputName !== name ||
-        identity.inputSource !== parsed.normalizedUrl
-      ) {
-        const response = await fetch(
-          `/api/audit/identity?source=${encodeURIComponent(parsed.normalizedUrl)}`,
+        !canonical ||
+        unsafeSmartSource(canonical.normalizedUrl) ||
+        (typeof result.display_name === "string" &&
+          unsafeSmartName(result.display_name))
+      )
+        throw new Error(
+          "Sumber bisnis berisi informasi yang tidak dapat digunakan.",
         );
-        const result = (await response.json().catch(() => ({}))) as {
-          canonical_url?: string;
-          display_name?: string;
-          preparation_mode?: string;
+      const identity = {
+        inputName: name,
+        inputSource: parsed.normalizedUrl,
+        canonicalUrl: canonical.normalizedUrl,
+        displayName:
+          typeof result.display_name === "string" ? result.display_name : null,
+        preparationMode:
+          result.preparation_mode === "live"
+            ? ("live" as const)
+            : ("synthetic-local" as const),
+      };
+      goStage({
+        ...working,
+        stage: "brand",
+        identity,
+        brand: { name, origin: "owner" },
+        prepared: null,
+        selection: null,
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        order: null,
+        supersededOrder: session.order?.id ?? session.supersededOrder ?? null,
+        afterOrder: null,
+      });
+    } catch (cause) {
+      persist({ ...working, stage: "entry" });
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Persiapan terhenti. Periksa sumber dan coba lagi.",
+      );
+    } finally {
+      inFlight.current = false;
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Screen 3a `Lanjut` (spec 016 R-01): make ONE order from the email, then run
+   * the paid reading (screen 3b) on the website saved on the order. A returning
+   * customer whose order is still open does not make another one; one whose
+   * order ended (R-30) types the email again and the saved progress continues on
+   * the new order with no new paid call.
+   */
+  async function continueFromOrder() {
+    if (inFlight.current) return;
+    const identity = session.identity;
+    const brand = session.brand ?? {
+      name: session.entry.name.trim(),
+      origin: "owner" as const,
+    };
+    if (!identity || !brand.name) return;
+    let order = session.order ?? null;
+    let previousOrderId = session.supersededOrder ?? null;
+    // Going back past this screen to change the website or the brand starts a
+    // new order (R-01).
+    if (
+      order &&
+      (order.website !== identity.canonicalUrl || order.name !== brand.name)
+    ) {
+      previousOrderId = order.id;
+      order = null;
+    }
+    if (!order && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      setError("Masukkan satu alamat email yang valid.");
+      return;
+    }
+    setInterrupted(false);
+    setError(null);
+    inFlight.current = true;
+    setBusy("reading");
+    setReadingStep(0);
+    let working: SmartSession = { ...session, order };
+    try {
+      if (!order) {
+        const created = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim(),
+            business_name: brand.name,
+            website: identity.canonicalUrl,
+            // The old order, if any, is expired by the server so it stops
+            // holding part of the daily cap.
+            ...(previousOrderId ? { previous_order_id: previousOrderId } : {}),
+          }),
+        });
+        const body = (await created.json().catch(() => ({}))) as {
+          order_id?: string;
           error?: string;
         };
-        if (!response.ok || typeof result.canonical_url !== "string")
-          throw new Error(result.error || "Sumber bisnis belum dapat dibaca.");
-        const canonical = parseSourceInput(result.canonical_url);
-        if (
-          !canonical ||
-          unsafeSmartSource(canonical.normalizedUrl) ||
-          (typeof result.display_name === "string" &&
-            unsafeSmartName(result.display_name))
-        )
-          throw new Error(
-            "Sumber bisnis berisi informasi yang tidak dapat digunakan.",
-          );
-        identity = {
-          inputName: name,
-          inputSource: parsed.normalizedUrl,
-          canonicalUrl: canonical.normalizedUrl,
-          displayName:
-            typeof result.display_name === "string"
-              ? result.display_name
-              : null,
-          preparationMode:
-            result.preparation_mode === "live" ? "live" : "synthetic-local",
+        if (!created.ok || typeof body.order_id !== "string") {
+          setError(body.error || "Pesanan belum dapat dibuat. Coba lagi.");
+          return;
+        }
+        order = {
+          id: body.order_id,
+          website: identity.canonicalUrl,
+          name: brand.name,
         };
-        working = { ...working, identity };
+        working = { ...working, order, supersededOrder: null };
         persist(working);
       }
-      setReadingStep(1);
+      // R-30: saved progress continues on the new order, no new paid call.
+      if (working.prepared && working.selection) {
+        const target = working.afterOrder ?? "focus";
+        goStage({ ...working, stage: target, afterOrder: null });
+        return;
+      }
+      working = { ...working, stage: "reading" };
+      persist(working);
+      await readWebsite(working, order.id, brand);
+    } finally {
+      inFlight.current = false;
+      setBusy(null);
+      setReadingStep(0);
+    }
+  }
+
+  /** Screen 3b: the paid website reading, under the order. The server reads the
+   * website saved on the order; the browser sends only the order id. */
+  async function readWebsite(
+    start: SmartSession,
+    orderId: string,
+    brand: { name: string; origin: "owner" | "website" },
+  ) {
+    let working = start;
+    const identity = working.identity!;
+    try {
+      setReadingStep(0);
       const extractionResponse = await fetch("/api/audit/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          website_url: identity.canonicalUrl,
-          brand_name: name,
-          market_context: "",
-          category: "",
-          identity_unverified: true,
-          safety_identifier: `local-${crypto.randomUUID()}`,
-          budget: {
-            limit_usd: AUDIT_COST_LIMIT_USD,
-            carryover_cost_usd: 0,
-            calls: working.preparationCalls,
-          },
-        }),
+        body: JSON.stringify({ order_id: orderId }),
       });
       const extraction = (await extractionResponse
         .json()
@@ -628,8 +833,16 @@ export default function SmartIntakeJourney({
         telemetry?: AuditCallTelemetry[];
         preparation_mode?: string;
         source_excerpt_status?: unknown;
+        code?: string;
         error?: string;
       };
+      if (
+        extractionResponse.status === 409 &&
+        extraction.code === "ORDER_REQUIRED"
+      ) {
+        expireOrder({ ...working, stage: "order" }, "focus");
+        return;
+      }
       const sourceStatus = sourceExcerptStatusSchema.safeParse(
         extraction.source_excerpt_status,
       );
@@ -667,24 +880,85 @@ export default function SmartIntakeJourney({
       });
       goStage({
         ...working,
-        stage: "brand",
+        stage: "focus",
         prepared,
-        selection: initialSmartSelection(prepared),
+        selection: {
+          ...initialSmartSelection(prepared),
+          name: brand.name,
+          nameOrigin: brand.origin,
+        },
         confirmedSelection: null,
         frozen: null,
         pack: null,
+        afterOrder: null,
       });
     } catch (cause) {
-      persist({ ...working, stage: "entry" });
+      persist({ ...working, stage: "order" });
       setError(
         cause instanceof Error
           ? cause.message
           : "Persiapan terhenti. Periksa sumber dan coba lagi.",
       );
+    }
+  }
+
+  /** Approve the ten questions (spec 016 R-17): the server saves them and the
+   * audit then runs there. The intake progress leaves the browser now (R-31);
+   * only the order id stays until the order ends. */
+  async function approveQuestions() {
+    if (inFlight.current || !session.pack || !session.frozen) return;
+    const order = session.order;
+    try {
+      canonicalLockedDirectTenPack(
+        smartPackPrompts(session.pack),
+        session.frozen.context,
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Periksa pertanyaan audit.",
+      );
+      return;
+    }
+    if (!order) {
+      expireOrder(session, "questions");
+      return;
+    }
+    inFlight.current = true;
+    setBusy("approving");
+    setError(null);
+    try {
+      const response = await fetch("/api/orders/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: order.id,
+          client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+          question_method: "direct-ten",
+          context: session.frozen.context,
+          prompts: smartPackPrompts(session.pack),
+          originals: session.pack.originals,
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        code?: string;
+      };
+      if (response.ok) {
+        writeActiveOrder(order.id);
+        clearSmartSession();
+        if (mounted.current) setActiveOrder(order.id);
+        return;
+      }
+      if (response.status === 404 || body.code === "ORDER_STATE") {
+        expireOrder(session, "questions");
+        return;
+      }
+      setError(body.error || "Audit belum dapat dimulai. Coba lagi.");
+    } catch {
+      setError("Audit belum dapat dimulai. Periksa koneksi dan coba lagi.");
     } finally {
       inFlight.current = false;
       setBusy(null);
-      setReadingStep(0);
     }
   }
 
@@ -751,6 +1025,7 @@ export default function SmartIntakeJourney({
         body: JSON.stringify({
           intake: frozen,
           method: "direct-ten",
+          order_id: session.order?.id,
           ...(glmStubBehavior ? { stubBehavior: glmStubBehavior } : {}),
         }),
       });
@@ -758,6 +1033,12 @@ export default function SmartIntakeJourney({
         .json()
         .catch(() => null)) as QuestionPublicOutcome | null;
       if (!outcome) throw new Error("Question response unavailable");
+      if (outcome.status === "failed" && outcome.code === "ORDER_REQUIRED") {
+        // The order ended before the questions were written; nothing was
+        // sent. The progress stays and continues on a new order (R-30).
+        expireOrder(session, "summary");
+        return;
+      }
       failureMessage = questionPublicMessage(outcome, live);
       if (outcome.status === "ok") {
         const provenance = outcome.provenance;
@@ -842,6 +1123,8 @@ export default function SmartIntakeJourney({
         Menyiapkan sesi audit…
       </section>
     );
+  if (activeOrder)
+    return <SmartAuditStage orderId={activeOrder} onRestart={newJourney} />;
   if (historical)
     return (
       <section
@@ -869,24 +1152,8 @@ export default function SmartIntakeJourney({
             context={session.frozen.context}
             onChange={(pack) => persist({ ...session, pack })}
             onBack={goBack}
-            onApprove={() => {
-              if (inFlight.current) return;
-              try {
-                canonicalLockedDirectTenPack(
-                  smartPackPrompts(session.pack!),
-                  session.frozen!.context,
-                );
-              } catch (cause) {
-                setError(
-                  cause instanceof Error
-                    ? cause.message
-                    : "Periksa pertanyaan audit.",
-                );
-                return;
-              }
-              goStage({ ...session, stage: "audit" });
-              setAutoStart(true);
-            }}
+            approving={busy === "approving"}
+            onApprove={() => void approveQuestions()}
           />
         ) : (
           <section className="mx-auto grid max-w-3xl gap-4 px-5 py-14">
@@ -926,22 +1193,6 @@ export default function SmartIntakeJourney({
         ) : null}
       </>
     );
-  if (session.stage === "audit" && session.frozen && session.pack)
-    return (
-      <SmartAuditStage
-        pack={session.pack}
-        input={session.frozen}
-        autoStart={autoStart}
-        preparationCalls={session.preparationCalls}
-        preparationMode={session.preparationMode}
-        generationAttempts={session.generationAttempts}
-        onExit={() => {
-          window.history.back();
-        }}
-        onRestart={newJourney}
-      />
-    );
-
   // Framed intake screens (Spec 013 J2+J4): entry → reading → brand → focus
   // → location/product → summary.
   const progress = stageProgress(session);
@@ -1016,6 +1267,11 @@ export default function SmartIntakeJourney({
                     confirmedSelection: null,
                     frozen: null,
                     pack: null,
+                    brand: null,
+                    order: null,
+                    supersededOrder:
+                      session.order?.id ?? session.supersededOrder ?? null,
+                    afterOrder: null,
                     editReturn: undefined,
                     editBaseline: undefined,
                   });
@@ -1033,7 +1289,7 @@ export default function SmartIntakeJourney({
               disabled={busy !== null}
               onClick={() => void inspect()}
             >
-              {busy === "reading" ? "Memeriksa…" : "Periksa"}
+              {busy === "lookup" ? "Memeriksa…" : "Periksa"}
             </Button>
             {!live ? (
               <p className="type-copy-sm text-muted-foreground">
@@ -1056,47 +1312,49 @@ export default function SmartIntakeJourney({
               aria-live="polite"
               className="m-0 grid list-none gap-4 p-0"
             >
-              {READING_STEPS.map((step, index) => {
-                const state =
-                  index < readingStep
-                    ? "done"
-                    : index === readingStep
-                      ? "active"
-                      : "pending";
-                return (
-                  <li
-                    key={step}
-                    data-reading-step={state}
-                    className="flex items-center gap-3 type-copy"
-                  >
-                    {state === "done" ? (
-                      <IconCheck
-                        className="size-5 shrink-0 text-[var(--action)]"
-                        aria-hidden
-                      />
-                    ) : state === "active" ? (
-                      <IconLoader2
-                        className="size-5 shrink-0 animate-spin text-[var(--action)]"
-                        aria-hidden
-                      />
-                    ) : (
-                      <IconCircle
-                        className="size-5 shrink-0 text-muted-foreground"
-                        aria-hidden
-                      />
-                    )}
-                    <span
-                      className={
-                        state === "pending"
-                          ? "text-muted-foreground"
-                          : undefined
-                      }
+              {(busy === "lookup" ? LOOKUP_STEPS : READING_STEPS).map(
+                (step, index) => {
+                  const state =
+                    index < readingStep
+                      ? "done"
+                      : index === readingStep
+                        ? "active"
+                        : "pending";
+                  return (
+                    <li
+                      key={step}
+                      data-reading-step={state}
+                      className="flex items-center gap-3 type-copy"
                     >
-                      {step}
-                    </span>
-                  </li>
-                );
-              })}
+                      {state === "done" ? (
+                        <IconCheck
+                          className="size-5 shrink-0 text-[var(--action)]"
+                          aria-hidden
+                        />
+                      ) : state === "active" ? (
+                        <IconLoader2
+                          className="size-5 shrink-0 animate-spin text-[var(--action)]"
+                          aria-hidden
+                        />
+                      ) : (
+                        <IconCircle
+                          className="size-5 shrink-0 text-muted-foreground"
+                          aria-hidden
+                        />
+                      )}
+                      <span
+                        className={
+                          state === "pending"
+                            ? "text-muted-foreground"
+                            : undefined
+                        }
+                      >
+                        {step}
+                      </span>
+                    </li>
+                  );
+                },
+              )}
             </ul>
             <p className="type-copy-sm text-muted-foreground">
               Semua bisa Anda koreksi. Anda yang paling tahu bisnis Anda.
@@ -1107,6 +1365,53 @@ export default function SmartIntakeJourney({
               </p>
             ) : null}
           </section>
+        ) : null}
+        {session.stage === "brand" && !session.prepared && session.identity ? (
+          <FreeBrandScreen
+            headingRef={headingRef}
+            typedName={session.entry.name.trim()}
+            discoveredName={session.identity.displayName?.trim() || null}
+            source={session.identity.canonicalUrl}
+            brand={
+              session.brand ?? {
+                name: session.entry.name.trim(),
+                origin: "owner",
+              }
+            }
+            editing={editingBrandName}
+            onToggleEditing={() => setEditingBrandName((value) => !value)}
+            onChange={(brand) => {
+              if (unsafeSmartName(brand.name)) {
+                stopSensitiveInput();
+                return;
+              }
+              persist({ ...session, brand });
+              setError(null);
+            }}
+            error={error}
+          />
+        ) : null}
+        {session.stage === "order" && session.identity ? (
+          <OrderScreen
+            headingRef={headingRef}
+            businessName={session.brand?.name ?? session.entry.name.trim()}
+            website={session.identity.canonicalUrl}
+            hasOrder={Boolean(
+              session.order &&
+              session.order.website === session.identity.canonicalUrl &&
+              session.order.name ===
+                (session.brand?.name ?? session.entry.name.trim()),
+            )}
+            email={email}
+            onEmailChange={(value) => {
+              setEmail(value);
+              setError(null);
+            }}
+            busy={busy !== null}
+            notice={interrupted ? READING_INTERRUPTED_NOTICE : null}
+            error={error || restoredSourceError}
+            live={live}
+          />
         ) : null}
         {session.stage === "brand" && session.prepared && session.selection ? (
           <section className="grid gap-5" data-intake-screen="brand">
@@ -1221,6 +1526,12 @@ export default function SmartIntakeJourney({
               </p>
             ) : null}
           </section>
+        ) : null}
+        {session.stage === "focus" &&
+        session.sourceExcerptStatus === "no-usable-text" ? (
+          <p role="status" className="type-copy-sm text-muted-foreground">
+            {SOURCE_EXCERPT_EMPTY_NOTICE}
+          </p>
         ) : null}
         {session.stage === "focus" && session.prepared && session.selection ? (
           <SmartFocusScreen
@@ -1567,7 +1878,35 @@ export default function SmartIntakeJourney({
             >
               Kembali
             </Button>
-            {session.stage === "brand" ? (
+            {session.stage === "order" ? (
+              <Button
+                className="min-h-11 rounded-full px-6"
+                disabled={busy !== null}
+                onClick={() => void continueFromOrder()}
+              >
+                Lanjut
+              </Button>
+            ) : session.stage === "brand" && !session.prepared ? (
+              <Button
+                className="min-h-11 rounded-full px-6"
+                disabled={!(session.brand?.name ?? session.entry.name).trim()}
+                onClick={() => {
+                  setEditingBrandName(false);
+                  // Spec 016 D1: the free brand check is followed by the order
+                  // screen; the paid reading starts only after the order.
+                  goStage({
+                    ...session,
+                    stage: "order",
+                    brand: session.brand ?? {
+                      name: session.entry.name.trim(),
+                      origin: "owner",
+                    },
+                  });
+                }}
+              >
+                Lanjut
+              </Button>
+            ) : session.stage === "brand" ? (
               <Button
                 className="min-h-11 rounded-full px-6"
                 disabled={!session.selection?.name.trim()}

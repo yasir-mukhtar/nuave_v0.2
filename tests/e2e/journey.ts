@@ -1,5 +1,6 @@
 import { expect as baseExpect, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
+import { join } from "node:path";
 import type { ExtractionDraft } from "../../src/lib/audit/types";
 
 /**
@@ -42,6 +43,9 @@ export const DIFFERENTIATOR_HEADING = "Apa yang membedakan bisnis Anda?";
 export const PUBLIC_FACT_HEADING =
   "Apa yang tidak boleh salah dipahami tentang brand Anda?";
 export const READING_HEADING = "Sebentar, Nuave sedang membaca";
+export const ORDER_HEADING = "Ringkasan pesanan";
+/** The email the synthetic journeys order with (never stored in the browser). */
+export const ORDER_EMAIL = "pemilik@example.com";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
@@ -179,7 +183,9 @@ export async function openAuditFromLanding(
   ).toBeVisible();
   await hero.getByPlaceholder("https://bisnisanda.com").fill(website);
   await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
-  await expect(page).toHaveURL(/\/audit$/);
+  // The dev server compiles /audit on its first visit; on a cold CI runner
+  // that can take longer than the default 10 s expect timeout.
+  await expect(page).toHaveURL(/\/audit$/, { timeout: 30_000 });
 }
 
 export function entryScreen(page: Page) {
@@ -192,6 +198,10 @@ export function readingScreen(page: Page) {
 
 export function brandScreen(page: Page) {
   return page.locator('[data-intake-screen="brand"]');
+}
+
+export function orderScreen(page: Page) {
+  return page.locator('[data-intake-screen="order"]');
 }
 
 export function focusScreen(page: Page) {
@@ -592,10 +602,11 @@ export async function removeAlias(
   } else await chip.click();
 }
 
-/** Reads the stored v9 intake session from sessionStorage. */
+/** Reads the stored v9 intake session. Spec 016 R-29: the intake progress is
+ * kept in the browser's local storage, so it survives a closed tab. */
 export async function intakeSession(page: Page) {
   return page.evaluate(
-    (key) => JSON.parse(sessionStorage.getItem(key) ?? "{}"),
+    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
     INTAKE_SESSION_KEY,
   );
 }
@@ -612,9 +623,26 @@ export async function expectBrandConfirm(
   await expect(brandScreen(page)).toContainText(name);
 }
 
-/** Brand confirm → `Lanjut` (in the frame footer) → the focus screen. */
-export async function confirmBrand(page: Page) {
+/** Screen 3a: type the email and press `Lanjut`. The order is made and the
+ * paid reading (screen 3b) runs. */
+export async function submitOrder(page: Page, email: string = ORDER_EMAIL) {
+  await expect(orderScreen(page)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: ORDER_HEADING }),
+  ).toBeVisible();
+  await page.getByRole("textbox", { name: /Email/ }).fill(email);
+  await pressLanjut(page);
+}
+
+/** Brand confirm → `Lanjut` → order screen → email → `Lanjut` → the focus
+ * screen. (A saved, still-open order skips the order screen's email field.) */
+export async function confirmBrand(page: Page, email: string = ORDER_EMAIL) {
   await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
+  await page
+    .locator('[data-intake-screen="order"], [data-intake-screen="focus"]')
+    .first()
+    .waitFor();
+  if (await orderScreen(page).isVisible()) await submitOrder(page, email);
   await expectFocusScreen(page);
 }
 
@@ -737,16 +765,46 @@ export async function editQuestion(page: Page, slot: number, wording: string) {
   await page.getByRole("button", { name: "Simpan", exact: true }).click();
 }
 
+/** Approving the ten questions saves them on the server (spec 016 R-17). */
 export async function startAudit(page: Page) {
   await page.getByRole("button", { name: "Mulai audit" }).click();
 }
 
+/** Screens 15 and 15a: the server-side audit's progress and result. */
 export function auditStage(page: Page, stage: string) {
-  return page.locator(`[data-local-audit-stage="${stage}"]`);
+  return page.locator(`[data-order-stage="${stage}"]`);
 }
 
-export async function expectAuditDone(page: Page, timeout = 45_000) {
-  await expect(auditStage(page, "done")).toBeVisible({ timeout });
+export const CLOSE_OK_NOTE =
+  "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda.";
+
+/** The audit is running on the server and the tab says it may be closed. */
+export async function expectAuditRunning(page: Page, timeout = 15_000) {
+  await expect(
+    page.locator(
+      '[data-order-stage="running"], [data-order-stage="reporting"]',
+    ),
+  ).toBeVisible({ timeout });
+  await expect(page.getByText(CLOSE_OK_NOTE)).toBeVisible();
+}
+
+/** Screen 15a: the report is ready and was emailed. The tab never shows the
+ * report itself. */
+export async function expectAuditDelivered(page: Page, timeout = 45_000) {
+  await expect(auditStage(page, "delivered")).toBeVisible({ timeout });
+  await expect(
+    page.getByText("Laporan Anda sudah siap dan kami kirim ke email Anda."),
+  ).toBeVisible();
+}
+
+/**
+ * Local tests only: runs one cron pass through the development trigger
+ * (spec 016 R-33). The trigger exists only under `next dev` in synthetic mode.
+ */
+export async function runRunnerOnce(page: Page) {
+  const response = await page.request.post("/api/dev/run-cron");
+  expect(response.status()).toBe(200);
+  return (await response.json()) as { ran: boolean; outcomes?: string[] };
 }
 
 export function reportLocator(page: Page) {
@@ -767,26 +825,69 @@ export async function downloadEvidenceJson(
   return { download: saved, text, json: JSON.parse(text) };
 }
 
-/**
- * Fault injection, not a user path: answers the first `/api/audit/report`
- * with the 422 `REPORT_USEFULNESS_FAILURE` that opens answers-only recovery,
- * then lets later report requests through. Synthetic mode never produces
- * this failure on its own.
- */
-export async function injectUsefulnessFailureOnce(page: Page) {
-  let failed = false;
-  await page.route("**/api/audit/report", (route) => {
-    if (failed) return route.fallback();
-    failed = true;
-    return route.fulfill({
-      status: 422,
-      contentType: "application/json",
-      body: JSON.stringify({
-        error: "Laporan belum memenuhi syarat laporan.",
-        code: "REPORT_USEFULNESS_FAILURE",
-        telemetry: [],
-        diagnostics: ["usefulness_minimum_not_met"],
-      }),
+/** The ready email the fake sender wrote (spec 016 R-28). */
+export type TestMail = { to: string; subject: string; text: string };
+
+/** The fake sender's local files, written only in local development to the
+ * ignored folder `.local-evidence/test-mail/`, newest last. */
+export async function readTestMail(since: number): Promise<TestMail[]> {
+  const folder = join(process.cwd(), ".local-evidence", "test-mail");
+  let names: string[] = [];
+  try {
+    names = await readdir(folder);
+  } catch {
+    return [];
+  }
+  const found: Array<{ at: number; mail: TestMail }> = [];
+  for (const name of names) {
+    const path = join(folder, name);
+    const info = await stat(path);
+    if (info.mtimeMs < since) continue;
+    found.push({
+      at: info.mtimeMs,
+      mail: JSON.parse(await readFile(path, "utf8")) as TestMail,
     });
-  });
+  }
+  return found.sort((a, b) => a.at - b.at).map((item) => item.mail);
+}
+
+/** The private link inside the newest ready email to `to`, as a path with its
+ * fragment (`/r#secret`) so it opens on whatever address the test server has. */
+export async function readyLinkFromMail(
+  since: number,
+  to: string = ORDER_EMAIL,
+): Promise<{ path: string; secret: string; mail: TestMail }> {
+  const ready = (await readTestMail(since)).filter(
+    (mail) => mail.to === to && /siap/.test(mail.subject),
+  );
+  const mail = ready.at(-1);
+  const secret = mail ? /\/r#([A-Za-z0-9_-]+)/.exec(mail.text)?.[1] : undefined;
+  if (!mail || !secret) throw new Error("no ready email with a link was found");
+  return { path: `/r#${secret}`, secret, mail };
+}
+
+/** Local tests only: runs the cron through the development trigger until the
+ * ready email has gone out (ten questions, then the report). */
+export async function runServerAuditToDelivery(
+  page: Page,
+  maxRuns = 16,
+): Promise<string[]> {
+  const outcomes: string[] = [];
+  for (let run = 0; run < maxRuns; run += 1) {
+    const result = await runRunnerOnce(page);
+    expect(result.ran).toBe(true);
+    outcomes.push(...(result.outcomes ?? []));
+    if (outcomes.includes("report_saved")) return outcomes;
+  }
+  throw new Error(`the audit did not reach a saved report in ${maxRuns} runs`);
+}
+
+/** The saved report page (spec 016 R-26) once it has opened a valid link. */
+export function savedReport(page: Page) {
+  return page.locator('[data-saved-report="ready"]');
+}
+
+/** The "not available" page for a link that does not work (R-27). */
+export function unavailableReport(page: Page) {
+  return page.locator('[data-saved-report="unavailable"]');
 }

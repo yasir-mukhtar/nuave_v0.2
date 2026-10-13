@@ -18,12 +18,15 @@ export default function SmartQuestionsScreen({
   onApprove,
   onBack,
   headingRef,
+  approving = false,
 }: {
   pack: SmartQuestionPack;
   context: DirectTenAuditContext;
   onChange: (pack: SmartQuestionPack) => void;
   onApprove: () => void;
   onBack: () => void;
+  /** The approval is being saved on the server. */
+  approving?: boolean;
   /** The intake frame focuses this heading on screen arrival (R-27). */
   headingRef?: RefObject<HTMLHeadingElement | null>;
 }) {
@@ -169,7 +172,7 @@ export default function SmartQuestionsScreen({
         <Button variant="ghost" onClick={onBack}>
           Kembali ke informasi bisnis
         </Button>
-        <Button disabled={editing !== null} onClick={onApprove}>
+        <Button disabled={editing !== null || approving} onClick={onApprove}>
           Mulai audit
         </Button>
       </div>

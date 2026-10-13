@@ -150,7 +150,7 @@ const defaultSleep = (ms: number, signal?: AbortSignal) =>
     signal?.addEventListener("abort", onAbort, { once: true });
   });
 
-function stampTelemetryAttempt(
+export function stampTelemetryAttempt(
   observation: AuditObservation,
   attempt: number,
 ): AuditObservation {
@@ -164,7 +164,7 @@ function stampTelemetryAttempt(
   };
 }
 
-function stampTelemetryFailureCategory(
+export function stampTelemetryFailureCategory(
   observation: AuditObservation,
   category: SafeFailureCategory,
 ): AuditObservation {

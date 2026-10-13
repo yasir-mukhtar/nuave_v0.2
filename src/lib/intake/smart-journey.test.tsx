@@ -23,6 +23,7 @@ import { projectQuestionOutcome } from "./question-public-errors";
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  window.localStorage.clear();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
 });
 afterEach(() => {
@@ -100,11 +101,22 @@ async function throughDetails(focus: "brand" | "cabang" | "produk" = "brand") {
   await fromOfferings(focus);
 }
 
+/** Spec 016: the free brand check is followed by the order screen. The email
+ * is typed, `Lanjut` makes the order, and the paid reading then runs. */
+async function passOrder(email = "pemilik@example.com") {
+  await screen.findByRole("heading", { name: "Ringkasan pesanan" });
+  fireEvent.change(screen.getByRole("textbox", { name: /Email/ }), {
+    target: { value: email },
+  });
+  lanjut();
+}
+
 async function throughBrand() {
   await screen.findByRole("heading", {
     name: "Ini brand yang ingin Anda audit?",
   });
   lanjut();
+  await passOrder();
   await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
   lanjut();
   await throughDetails();
@@ -185,10 +197,11 @@ describe("smart blank intake", () => {
           cost_usd: null,
         },
       ];
-      window.sessionStorage.setItem(
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({
           ...freshSmartSession(),
+          savedAt: new Date().toISOString(),
           stage: "summary",
           prepared,
           selection,
@@ -316,7 +329,7 @@ describe("smart blank intake", () => {
         ).toBeNull();
       }
       const saved = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       )!;
       expect(saved.generationAttempts.slice(0, history.length)).toEqual(
         history,
@@ -337,7 +350,7 @@ describe("smart blank intake", () => {
       } else {
         expect(saved.pack).toBeNull();
         expect(
-          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+          window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
         ).not.toMatch(/MOCK_ONLY|identitiesWithheld/);
       }
       cleanup();
@@ -351,7 +364,7 @@ describe("smart blank intake", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(
         parseSmartSession(
-          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+          window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
         )!.generationAttempts,
       ).toEqual(saved.generationAttempts);
       if (!valid) {
@@ -365,7 +378,7 @@ describe("smart blank intake", () => {
         expect(requests[1]).toEqual(requests[0]);
         expect(
           parseSmartSession(
-            window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+            window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
           )!.frozen,
         ).toEqual(saved.frozen);
       }
@@ -470,10 +483,11 @@ describe("smart blank intake", () => {
           differentiator: "owner" as const,
         },
       };
-      window.sessionStorage.setItem(
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({
           ...freshSmartSession(),
+          savedAt: new Date().toISOString(),
           stage: "summary",
           prepared,
           selection,
@@ -555,7 +569,7 @@ describe("smart blank intake", () => {
       expect(alert.textContent).toBe(message);
       expect(document.body.textContent).not.toContain("MOCK_ONLY");
       const saved = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       )!;
       expect(saved.pack).toBeNull();
       expect(saved.selection).toEqual(selection);
@@ -583,7 +597,7 @@ describe("smart blank intake", () => {
           execution: uncertain ? "unknown" : "confirmed",
           cost_usd: uncertain ? null : cost,
         });
-      const raw = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
+      const raw = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
       expect(raw).not.toMatch(/MOCK_ONLY|identitiesWithheld/);
       cleanup();
       render(<SmartIntakeJourney live={live} />);
@@ -593,7 +607,7 @@ describe("smart blank intake", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(
         parseSmartSession(
-          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+          window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
         )!.generationAttempts,
       ).toEqual(saved.generationAttempts);
       fireEvent.click(retry);
@@ -624,10 +638,11 @@ describe("smart blank intake", () => {
         differentiator: "owner" as const,
       },
     };
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
         ...freshSmartSession(),
+        savedAt: new Date().toISOString(),
         stage: "summary",
         prepared,
         selection,
@@ -702,7 +717,7 @@ describe("smart blank intake", () => {
     expect(alert.textContent).not.toMatch(/finish_reason|provider prose/);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const failed = parseSmartSession(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
     )!;
     expect(failed.pack).toBeNull();
     expect(screen.queryByRole("button", { name: "Mulai audit" })).toBeNull();
@@ -712,7 +727,7 @@ describe("smart blank intake", () => {
         "Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI.",
       ),
     ).toBeDefined();
-    expect(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)).not.toMatch(
+    expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).not.toMatch(
       /diagnostics|instructionVersion|finishReason|prompt_tokens/,
     );
     cleanup();
@@ -732,7 +747,7 @@ describe("smart blank intake", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(requests[1]).toEqual(requests[0]);
     const recovered = parseSmartSession(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
     )!;
     expect(recovered.frozen).toEqual(failed.frozen);
     expect(recovered.selection).toEqual(selection);
@@ -766,10 +781,11 @@ describe("smart blank intake", () => {
         discoveredName: null,
         canonicalSource: "https://kedai-fiksi.example/",
       });
-      window.sessionStorage.setItem(
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({
           ...freshSmartSession(),
+          savedAt: new Date().toISOString(),
           stage: "summary",
           prepared,
           selection: initialSmartSelection(prepared),
@@ -810,7 +826,7 @@ describe("smart blank intake", () => {
         screen.getByRole("button", { name: "Coba siapkan pertanyaan" }),
       ).toBeDefined();
       expect(screen.queryByText(notice) !== null).toBe(initialLive);
-      const saved = window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
+      const saved = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
       const session = parseSmartSession(saved)!;
       expect(session.generationAttempts).toHaveLength(1);
       expect(session.generationAttempts[0]).toMatchObject({
@@ -830,9 +846,7 @@ describe("smart blank intake", () => {
       expect(screen.queryByRole("alert")).toBeNull();
       expect(screen.queryByText(notice) !== null).toBe(currentLive);
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(
-        saved,
-      );
+      expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(saved);
       expect(saved).not.toMatch(
         /diagnostics|instructionVersion|finishReason|prompt_tokens/,
       );
@@ -840,6 +854,7 @@ describe("smart blank intake", () => {
   );
 
   it("demonstrates the existing live/synthetic failed-attempt persistence collision (R-30 fence dependency)", async () => {
+    const seededAt = new Date().toISOString(); // before the date is mocked
     vi.spyOn(Date.prototype, "toISOString").mockReturnValue(
       "2026-10-04T00:00:00.000Z",
     );
@@ -851,6 +866,7 @@ describe("smart blank intake", () => {
     });
     const seed = {
       ...freshSmartSession(),
+      savedAt: seededAt,
       stage: "summary",
       prepared,
       selection: initialSmartSelection(prepared),
@@ -859,7 +875,8 @@ describe("smart blank intake", () => {
     for (const transport of ["synthetic-stub", "cheaper-inference"]) {
       cleanup();
       window.sessionStorage.clear();
-      window.sessionStorage.setItem(
+      window.localStorage.clear();
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify(seed),
       );
@@ -890,7 +907,7 @@ describe("smart blank intake", () => {
       );
       await screen.findByRole("alert");
       snapshots.push(
-        JSON.parse(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY)!),
+        JSON.parse(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!),
       );
     }
     expect(snapshots[0]).toEqual(snapshots[1]);
@@ -913,6 +930,8 @@ describe("smart blank intake", () => {
             display_name: "Kedai Fiksi",
             preparation_mode: "synthetic-local",
           });
+        if (url === "/api/orders")
+          return Response.json({ order_id: ORDER_ID, state: "open" });
         if (url === "/api/audit/extract")
           return Response.json({
             draft,
@@ -955,10 +974,19 @@ describe("smart blank intake", () => {
     fireEvent.click(inspect);
     fireEvent.click(inspect);
     await throughBrand();
+    // Spec 016 R-01/AC-01: the free lookup, then the order, and only then the
+    // paid reading, which carries only the order id.
     expect(requests.map((item) => item.url)).toEqual([
       "/api/audit/identity?source=https%3A%2F%2Fkedai-fiksi.example%2F",
+      "/api/orders",
       "/api/audit/extract",
     ]);
+    expect(requests[1]!.body).toEqual({
+      email: "pemilik@example.com",
+      business_name: "Kedai Fiksi",
+      website: "https://kedai-fiksi.example/",
+    });
+    expect(requests[2]!.body).toEqual({ order_id: ORDER_ID });
     expect(
       screen.getByRole("region", { name: "Fokus audit" }).textContent,
     ).toContain("Brand secara keseluruhan");
@@ -973,8 +1001,9 @@ describe("smart blank intake", () => {
     expect(
       await screen.findByRole("heading", { name: "Periksa pertanyaan audit" }),
     ).toBeTruthy();
-    expect(requests).toHaveLength(3);
-    const sent = requests[2]!.body!;
+    expect(requests).toHaveLength(4);
+    const sent = requests[3]!.body!;
+    expect(sent.order_id).toBe(ORDER_ID);
     expect(sent).not.toHaveProperty("brief");
     expect(sent.intake).toMatchObject({
       version: "nuave-local-intake-input-v2",
@@ -991,11 +1020,9 @@ describe("smart blank intake", () => {
       screen.getAllByRole("button", { name: /Ubah pertanyaan/ }),
     ).toHaveLength(10);
     expect(
-      JSON.parse(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
-      ),
+      JSON.parse(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}"),
     ).toMatchObject({ version: 9, stage: "questions" });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
   });
 
   it("holds a literal started v1 pair without changing its bytes or calling a provider", async () => {
@@ -1033,6 +1060,8 @@ describe("smart blank intake", () => {
   });
 });
 
+const ORDER_ID = "0123456789abcdef0123456789abcdef";
+
 const questionsResponse = () =>
   Response.json({
     status: "ok",
@@ -1054,6 +1083,7 @@ const questionsResponse = () =>
 
 function stubPreparation(
   options: {
+    holdIdentity?: Promise<void>;
     holdExtract?: Promise<void>;
     draft?: Record<string, unknown>;
   } = {},
@@ -1062,11 +1092,22 @@ function stubPreparation(
   const fetchMock = vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
     const url = String(input);
     calls.push(url.startsWith("/api/audit/identity") ? "identity" : url);
-    if (url.startsWith("/api/audit/identity"))
+    if (url.startsWith("/api/audit/identity")) {
+      if (options.holdIdentity) await options.holdIdentity;
       return Response.json({
         canonical_url: "https://kedai-fiksi.example/",
         display_name: "Kedai Fiksi",
         preparation_mode: "synthetic-local",
+      });
+    }
+    if (url === "/api/orders")
+      return Response.json({ order_id: ORDER_ID, state: "open" });
+    if (url === "/api/orders/status")
+      return Response.json({
+        state: "open",
+        completed: 0,
+        total: 10,
+        questions: [],
       });
     if (url === "/api/audit/extract") {
       if (options.holdExtract) await options.holdExtract;
@@ -1111,12 +1152,44 @@ describe("Spec 013 J2 screen frame", () => {
     expect(screen.queryByRole("button", { name: "Lanjut" })).toBeNull();
   });
 
-  it("shows the labelled reading screen while preparation is in flight, then the brand check", async () => {
+  it("shows the free lookup, then the brand check, the order screen and the labelled paid reading in turn", async () => {
+    let releaseLookup!: () => void;
+    const holdIdentity = new Promise<void>(
+      (resolve) => (releaseLookup = resolve),
+    );
     let release!: () => void;
     const holdExtract = new Promise<void>((resolve) => (release = resolve));
-    stubPreparation({ holdExtract });
+    const { calls } = stubPreparation({ holdIdentity, holdExtract });
     render(<SmartIntakeJourney live={false} />);
     await fillAndPeriksa();
+    // Screen 2: the free lookup. No AI reading steps, and no order yet.
+    const lookup = await screen.findByRole("region", {
+      name: "Pembacaan sumber",
+    });
+    expect(lookup.getAttribute("data-intake-screen")).toBe("reading");
+    expect(screen.getByText("Memeriksa website Anda")).toBeTruthy();
+    expect(screen.queryByText("Membaca sumber Anda")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+    releaseLookup();
+    // Screen 3: only what the free lookup found. Still no paid call.
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    expect(calls).toEqual(["identity"]);
+    lanjut();
+    // Screen 3a: the order summary, with an email field and no price.
+    await screen.findByRole("heading", { name: "Ringkasan pesanan" });
+    expect(calls).toEqual(["identity"]);
+    expect(screen.getByRole("textbox", { name: /Email/ })).toBeTruthy();
+    expect(screen.queryByText(/Rp|IDR|USD|bayar/i)).toBeNull();
+    // A missing or bad email makes no order.
+    lanjut();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "alamat email yang valid",
+    );
+    expect(calls).toEqual(["identity"]);
+    await passOrder();
+    // Screen 3b: the paid reading, under the order.
     const reading = await screen.findByRole("region", {
       name: "Pembacaan sumber",
     });
@@ -1137,9 +1210,8 @@ describe("Spec 013 J2 screen frame", () => {
     // No navigation or submit affordance while the read is in flight.
     expect(screen.queryByRole("button")).toBeNull();
     release();
-    await screen.findByRole("heading", {
-      name: "Ini brand yang ingin Anda audit?",
-    });
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
   });
 
   it("brand check shows typed name and website, corrects inline, and keeps sensitive text out", async () => {
@@ -1163,7 +1235,7 @@ describe("Spec 013 J2 screen frame", () => {
     );
     expect(card.textContent).toContain("Kedai Fiksi Baru");
     expect(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
     ).not.toContain("nomor rekening");
   });
 
@@ -1188,7 +1260,7 @@ describe("Spec 013 J2 screen frame", () => {
     await screen.findByRole("heading", {
       name: "Ini brand yang ingin Anda audit?",
     });
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity"]);
   });
 
   it("a marked browser Back walks the flow one screen at a time and ignores foreign entries", async () => {
@@ -1251,16 +1323,16 @@ describe("Spec 013 J2 screen frame", () => {
     await screen.findByRole("textbox", { name: "Nama bisnis" });
   });
 
-  it("a reload during reading restores a filled entry with the interruption note and no replay", async () => {
+  it("a reload during the free lookup restores a filled entry with the interruption note and no replay", async () => {
     let release!: () => void;
-    const holdExtract = new Promise<void>((resolve) => (release = resolve));
-    const { fetchMock } = stubPreparation({ holdExtract });
+    const holdIdentity = new Promise<void>((resolve) => (release = resolve));
+    const { fetchMock } = stubPreparation({ holdIdentity });
     const first = render(<SmartIntakeJourney live={false} />);
     await fillAndPeriksa();
     await waitFor(() =>
       expect(
         JSON.parse(
-          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+          window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
         ).stage,
       ).toBe("reading"),
     );
@@ -1286,6 +1358,44 @@ describe("Spec 013 J2 screen frame", () => {
     release();
   });
 
+  it("a reload during the paid reading returns to the order screen on the same order, with no replay and no new order", async () => {
+    let release!: () => void;
+    const holdExtract = new Promise<void>((resolve) => (release = resolve));
+    const { fetchMock, calls } = stubPreparation({ holdExtract });
+    const first = render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    lanjut();
+    await passOrder();
+    await screen.findByText("Membaca sumber Anda");
+    const callsSoFar = fetchMock.mock.calls.length;
+    first.unmount();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Ringkasan pesanan" });
+    expect(
+      screen.getByText(
+        "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.",
+      ),
+    ).toBeTruthy();
+    // The saved order is kept: no email field, and the email is not stored.
+    expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    expect(
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+    ).not.toContain("pemilik@example.com");
+    // The interrupted read is never replayed on its own.
+    expect(fetchMock).toHaveBeenCalledTimes(callsSoFar);
+    release();
+    // An explicit Lanjut reads again under the SAME order.
+    lanjut();
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    expect(calls.filter((call) => call === "/api/orders")).toHaveLength(1);
+    expect(calls.filter((call) => call === "/api/audit/extract")).toHaveLength(
+      2,
+    );
+  });
+
   it("a stored pre-bump session restarts safely at an empty entry", async () => {
     window.sessionStorage.setItem(
       "nuave.localIntake.v3",
@@ -1305,7 +1415,7 @@ describe("Spec 013 J2 screen frame", () => {
       }),
     );
     // A stale version under the current key is rejected the same way.
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({ version: 5, stage: "entry" }),
     );
@@ -1319,14 +1429,12 @@ describe("Spec 013 J2 screen frame", () => {
     const name = await screen.findByRole("textbox", { name: "Nama bisnis" });
     expect((name as HTMLInputElement).value).toBe("");
     expect(
-      parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
-      ),
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)),
     ).toBeNull();
   });
 
   it("a corrupt stored selection at a later stage restarts at entry instead of crashing", async () => {
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
         version: 9,
@@ -1347,9 +1455,7 @@ describe("Spec 013 J2 screen frame", () => {
     render(<SmartIntakeJourney live={false} />);
     await screen.findByRole("textbox", { name: "Nama bisnis" });
     expect(
-      parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
-      ),
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)),
     ).toBeNull();
   });
 
@@ -1396,6 +1502,7 @@ describe("Spec 013 J2 screen frame", () => {
   };
   const storedSession = (overrides: Record<string, unknown> = {}) => ({
     version: 9,
+    savedAt: new Date().toISOString(),
     stage: "summary",
     entry: { name: "Kedai Lama", source: "https://lama.example/" },
     identity: null,
@@ -1424,7 +1531,7 @@ describe("Spec 013 J2 screen frame", () => {
   ])(
     "a stored session with %s in selection.aliases restarts at entry",
     async (_label, patch) => {
-      window.sessionStorage.setItem(
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify(
           storedSession({
@@ -1439,14 +1546,14 @@ describe("Spec 013 J2 screen frame", () => {
       await screen.findByRole("textbox", { name: "Nama bisnis" });
       expect(
         parseSmartSession(
-          window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+          window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
         ),
       ).toBeNull();
     },
   );
 
   it("rejects a malformed confirmedSelection alias list the same way", () => {
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify(
         storedSession({
@@ -1455,15 +1562,13 @@ describe("Spec 013 J2 screen frame", () => {
       ),
     );
     expect(
-      parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
-      ),
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)),
     ).toBeNull();
   });
 
   it("restores a valid v9 review and its stored aliases without a call", async () => {
     const { fetchMock } = stubPreparation();
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify(storedSession()),
     );
@@ -1523,7 +1628,7 @@ describe("Spec 013 J2 screen frame", () => {
     await screen.findByRole("heading", {
       name: "Ini brand yang ingin Anda audit?",
     });
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
     lanjut();
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(
@@ -1562,7 +1667,7 @@ describe("Spec 013 J2 screen frame", () => {
     expect(options[1]).toContain("Kedai Fiksi");
     expect(options[1]).toContain("Dari website Anda");
     // The name-only path still spends no new preparation call.
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity"]);
   });
 
   it("merges the website option when a name-only edit lands on the discovered name", async () => {
@@ -1595,6 +1700,7 @@ describe("Spec 013 J2 screen frame", () => {
     // The review must not show a duplicated name either — the row is
     // read-back only now (J7), so the merged name appears once as text.
     lanjut();
+    await passOrder();
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     lanjut();
     await throughDetails();
@@ -1642,6 +1748,7 @@ async function toFocusScreen() {
     name: "Ini brand yang ingin Anda audit?",
   });
   fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  await passOrder();
   await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
 }
 
@@ -1680,7 +1787,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     await throughDetails();
     expect(focusRow().getByText("Brand secara keseluruhan")).toBeTruthy();
     // Screen navigation spends no extra preparation call.
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
   });
 
   it("the location screen lists host-screened published rows and blocks Lanjut until complete", async () => {
@@ -1705,7 +1812,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     expect(focusRow().getByText("Satu lokasi")).toBeTruthy();
     expect(focusRow().getByText(/Kedai Fiksi Cimahi/)).toBeTruthy();
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection).toMatchObject({
       focus: "cabang",
@@ -1935,7 +2042,7 @@ describe("Spec 013 J4 focus and target screens", () => {
       name: "Produk atau layanan mana?",
     });
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.locationName).toBe("");
     expect(saved.selection.locationAddress).toBe("");
@@ -1968,7 +2075,7 @@ describe("Spec 013 J4 focus and target screens", () => {
       "informasi sensitif",
     );
     expect(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
     ).not.toContain("nomor rekening");
   });
 
@@ -2076,7 +2183,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     expect(name.value).toBe("Gerai Baru");
     expect(address.value).toBe("");
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.locationName).toBe("Gerai Baru");
     expect(saved.selection.locationAddress).toBe("");
@@ -2129,7 +2236,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     expect(name.value).toBe("Kedai Fiksi Dago");
     expect(address.value).toBe("Jl. Fiksi Raya No. 10, Bandung Wetan");
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.locationName).toBe("Kedai Fiksi Dago");
     expect(saved.selection.locationAddress).toBe(
@@ -2161,7 +2268,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       expect(suggestion.getAttribute("aria-checked")).toBe("true");
       expect(suggestion.textContent).toContain("Saran Nuave");
       const session = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(session?.selection).toMatchObject({
         category: "kedai kopi",
@@ -2287,7 +2394,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     add("Denpasar");
     add("DENPASAR");
     expect(
-      parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
         ?.selection?.marketAreas,
     ).toEqual([...areas, "Denpasar"]);
     expect(screen.queryByRole("alert")).toBeNull();
@@ -2386,7 +2493,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     expect(card.getAttribute("aria-checked")).toBe("true");
     expect(card.textContent).toContain("Dari Anda");
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.category).toBe("kafe hijau");
     expect(saved.selection.categoryKind).toBe("manual");
@@ -2694,7 +2801,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       "paling banyak 8",
     );
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.marketAreas).toHaveLength(8);
     expect(saved.selection.marketAreas).not.toContain("Area 9");
@@ -2705,7 +2812,7 @@ describe("Spec 013 J5 business-detail screens", () => {
     expect(lanjutButton).toHaveProperty("disabled", false);
     fireEvent.click(within(areas).getByRole("button", { name: "Area 2" }));
     const savedAfterSwitch = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(savedAfterSwitch.selection.marketAreas).toEqual(["Area 2"]);
     lanjut();
@@ -2729,6 +2836,8 @@ describe("Spec 013 J5 business-detail screens", () => {
             display_name: "Kedai Fiksi",
             preparation_mode: "synthetic-local",
           });
+        if (url === "/api/orders")
+          return Response.json({ order_id: ORDER_ID, state: "open" });
         if (url === "/api/audit/extract")
           return Response.json({
             draft: j5Draft,
@@ -2749,6 +2858,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       name: "Ini brand yang ingin Anda audit?",
     });
     lanjut();
+    await passOrder();
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
     lanjut();
@@ -2958,7 +3068,7 @@ describe("Spec 013 J5 business-detail screens", () => {
         name: "Produk atau layanan mana?",
       });
       const editing = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(editing?.editReturn).toBe("summary");
       expect(editing?.editBaseline).toBeUndefined();
@@ -2975,7 +3085,7 @@ describe("Spec 013 J5 business-detail screens", () => {
         screen.getByRole("region", { name: "Produk dan layanan" }).textContent,
       ).toContain("kopi susu");
       const returned = parseSmartSession(
-        window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+        window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
       );
       expect(returned?.stage).toBe("summary");
       expect(returned?.selection?.productTarget).toBe("kopi susu");
@@ -3007,7 +3117,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       name: "Apakah ini yang Anda tawarkan?",
     });
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.stage).toBe("offerings");
     expect(saved.selection.category).toBe("kafe");
@@ -3032,7 +3142,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       "informasi sensitif",
     );
     expect(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
     ).not.toContain("nomor rekening");
     lanjut();
     await screen.findByRole("heading", {
@@ -3046,7 +3156,7 @@ describe("Spec 013 J5 business-detail screens", () => {
       "informasi sensitif",
     );
     const saved = JSON.parse(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
     expect(saved.selection.offerings).not.toContain("nomor rekening 12345");
   });
@@ -3072,7 +3182,7 @@ describe("Spec 013 J7 final review", () => {
       }),
     );
   const savedSession = () =>
-    parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY));
+    parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY));
 
   it("reads the business name back without inline name controls", async () => {
     stubPreparation({ draft: aliasDraft });
@@ -3135,7 +3245,7 @@ describe("Spec 013 J7 final review", () => {
       expect(
         screen.getByRole("region", { name: "Bisnis" }).textContent,
       ).toContain("Kedai Fiksi Baru");
-      expect(calls).toEqual(["identity", "/api/audit/extract"]);
+      expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
     },
   );
 
@@ -3242,12 +3352,12 @@ describe("Spec 013 J7 final review", () => {
       "Kedai Fiksi Pusat",
       "KopiFiksi",
     ]);
-    expect(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
-    ).not.toContain("nomor rekening");
+    expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).not.toContain(
+      "nomor rekening",
+    );
     // Editing alone never asks for questions; a later explicit confirm sends
     // only the last safe list.
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
     confirm();
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     const questionRequest = fetchMock.mock.calls.find(
@@ -3281,7 +3391,7 @@ describe("Spec 013 J7 final review", () => {
     lanjut();
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     // No preparation call, and every answer — aliases included — is retained.
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
     expect(savedSession()?.selection).toMatchObject({
       name: "Kedai Fiksi Baru",
       aliases: ["Kedai Fiksi Pusat", "KopiFiksi", "Alias Pemilik"],
@@ -3327,12 +3437,16 @@ describe("Spec 013 J7 final review", () => {
       name: "Ini brand yang ingin Anda audit?",
     });
     lanjut();
+    // A new website starts a new order (R-01) before the paid reading.
+    await passOrder();
     // The marker is gone: the flow walks the normal chain, not the review.
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     expect(calls).toEqual([
       "identity",
+      "/api/orders",
       "/api/audit/extract",
       "identity",
+      "/api/orders",
       "/api/audit/extract",
     ]);
     // The owner alias is gone: the fresh selection re-seeds from preparation.
@@ -3354,7 +3468,7 @@ describe("Spec 013 J7 final review", () => {
     // gates Lanjut, so a normal walk cannot leave serviceChannels empty.
     const stored = savedSession()!;
     mounted.unmount();
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       SMART_INTAKE_STORAGE_KEY,
       JSON.stringify({
         ...stored,
@@ -3471,13 +3585,23 @@ describe("Spec 013 J7 final review", () => {
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
     expect(namaLain().getByText("KopiFiksi")).toBeTruthy();
     expect(savedSession()?.stage).toBe("summary");
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    // The restored session checks its saved order once (R-30), nothing paid.
+    await waitFor(() =>
+      expect(calls).toEqual([
+        "identity",
+        "/api/orders",
+        "/api/audit/extract",
+        "/api/orders/status",
+      ]),
+    );
 
     confirm();
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     expect(calls).toEqual([
       "identity",
+      "/api/orders",
       "/api/audit/extract",
+      "/api/orders/status",
       "/api/audit/glm-questions",
     ]);
   });
@@ -3537,7 +3661,7 @@ describe("Spec 013 J7 final review", () => {
           name: "Sudah sesuai — buat pertanyaan audit",
         }),
       ).toBeTruthy();
-      expect(calls).toEqual(["identity", "/api/audit/extract"]);
+      expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
     },
   );
 });
@@ -3561,7 +3685,7 @@ const jqEdit = (name: string) =>
   fireEvent.click(jqRow(name).getByRole("button", { name: "Ubah" }));
 
 const jqSession = () =>
-  parseSmartSession(window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY));
+  parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY));
 
 const jqConfirm = () =>
   fireEvent.click(
@@ -3600,6 +3724,7 @@ describe("Spec 013 JQ customer screens", () => {
       name: "Ini brand yang ingin Anda audit?",
     });
     lanjut();
+    await passOrder();
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     lanjut();
     await screen.findByRole("heading", { name: /biasanya disebut apa\?$/ });
@@ -3730,6 +3855,7 @@ describe("Spec 013 JQ customer screens", () => {
     await screen.findByRole("heading", { name: "Periksa pertanyaan audit" });
     expect(calls).toEqual([
       "identity",
+      "/api/orders",
       "/api/audit/extract",
       "/api/audit/glm-questions",
     ]);
@@ -3868,7 +3994,7 @@ describe("Spec 013 JQ customer screens", () => {
     );
     expect(input.value).toBe("nomor rekening 12345");
     expect(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
     ).not.toContain("nomor rekening");
     // Removing an owner chip is one click.
     fireEvent.click(
@@ -3914,7 +4040,7 @@ describe("Spec 013 JQ customer screens", () => {
     );
     expect(input.value).toBe("nomor rekening 12345");
     expect(
-      window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
     ).not.toContain("nomor rekening");
     // A current safe duplicate shows its own message, not the stale privacy one.
     enter("  JAM BUKA ");
@@ -4027,7 +4153,11 @@ describe("Spec 013 JQ customer screens", () => {
             differentiator: "nuave",
           },
         });
-        expect(calls).toEqual(["identity", "/api/audit/extract"]);
+        expect(calls).toEqual([
+          "identity",
+          "/api/orders",
+          "/api/audit/extract",
+        ]);
       },
     );
 
@@ -4162,7 +4292,7 @@ describe("Spec 013 JQ customer screens", () => {
   ])(
     "rejects %s and restarts safely at the empty entry",
     async (_label, patch) => {
-      window.sessionStorage.setItem(
+      window.localStorage.setItem(
         SMART_INTAKE_STORAGE_KEY,
         JSON.stringify({ ...jqStored(), ...patch }),
       );
@@ -4318,7 +4448,7 @@ describe("Spec 013 JQ customer screens", () => {
     });
     lanjut();
     await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
-    expect(calls).toEqual(["identity", "/api/audit/extract"]);
+    expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
     expect(jqSession()?.selection).toMatchObject({
       targetCustomer: "keluarga sekitar",
       decisionConsiderations: ["jam buka"],
@@ -4342,10 +4472,22 @@ describe("Spec 013 JQ customer screens", () => {
     await screen.findByRole("heading", {
       name: "Ini brand yang ingin Anda audit?",
     });
+    // The new website is looked up for free; no order or paid reading yet.
     expect(calls).toEqual([
       "identity",
+      "/api/orders",
       "/api/audit/extract",
       "identity",
+    ]);
+    lanjut();
+    await passOrder();
+    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    expect(calls).toEqual([
+      "identity",
+      "/api/orders",
+      "/api/audit/extract",
+      "identity",
+      "/api/orders",
       "/api/audit/extract",
     ]);
     expect(jqSession()?.selection).toMatchObject({

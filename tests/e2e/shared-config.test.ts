@@ -16,6 +16,8 @@ describe("offlineE2EServerEnv", () => {
     vi.stubEnv("NUAVE_LIVE_PROVIDER_TESTING", "1");
     vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "true");
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("RESEND_API_KEY", "re_real_looking");
+    vi.stubEnv("NUAVE_MAIL_FROM", "real@example.invalid");
 
     const env = offlineE2EServerEnv();
 
@@ -28,6 +30,9 @@ describe("offlineE2EServerEnv", () => {
       GEMINI_API_KEY: "",
       GROQ_API_KEY: "",
       OPENROUTER_API_KEY: "",
+      // Spec 016: the real mail sender is never configured offline.
+      RESEND_API_KEY: "",
+      NUAVE_MAIL_FROM: "",
       // Spec 010 gate: off by default; synthetic is the failure-safe mode.
       NUAVE_NEW_AUDIT_ENABLED: "false",
       NUAVE_AUDIT_MODE: "synthetic",
@@ -45,9 +50,9 @@ describe("offlineE2EServerEnv", () => {
     expect(
       offlineE2EServerEnv({ NUAVE_AUDIT_MODE: "synthetic" }).NUAVE_AUDIT_MODE,
     ).toBe("synthetic");
-    expect(() =>
-      offlineE2EServerEnv({ NUAVE_PROVIDER: "gemini" }),
-    ).toThrow("Unsupported Playwright server env override");
+    expect(() => offlineE2EServerEnv({ NUAVE_PROVIDER: "gemini" })).toThrow(
+      "Unsupported Playwright server env override",
+    );
     expect(() =>
       offlineE2EServerEnv({ NUAVE_GLM_LOCAL_EXPERIMENT: "true" }),
     ).toThrow("Unsupported Playwright server env override");

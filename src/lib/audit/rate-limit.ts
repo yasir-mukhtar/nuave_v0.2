@@ -6,14 +6,21 @@ export const IDENTITY_DESTINATION_RATE_LIMITER =
   "IDENTITY_DESTINATION_RATE_LIMITER";
 export const EXTRACT_CALLER_RATE_LIMITER = "EXTRACT_CALLER_RATE_LIMITER";
 export const GLM_CALLER_RATE_LIMITER = "GLM_CALLER_RATE_LIMITER";
-export const AUDIT_RUN_CALLER_RATE_LIMITER = "AUDIT_RUN_CALLER_RATE_LIMITER";
-export const AUDIT_REPORT_CALLER_RATE_LIMITER =
-  "AUDIT_REPORT_CALLER_RATE_LIMITER";
+/** Spec 016 R-05: order creation, per caller IP. */
+export const ORDER_CREATE_CALLER_RATE_LIMITER =
+  "ORDER_CREATE_CALLER_RATE_LIMITER";
+/** Order status and question approval, per caller IP. */
+export const ORDER_STATUS_CALLER_RATE_LIMITER =
+  "ORDER_STATUS_CALLER_RATE_LIMITER";
+
+/** Spec 016 R-27: the saved-report data route, per caller IP. */
+export const REPORT_DATA_CALLER_RATE_LIMITER =
+  "REPORT_DATA_CALLER_RATE_LIMITER";
 
 export const RATE_LIMITED_MESSAGE =
   "Permintaan terlalu banyak. Coba lagi dalam beberapa saat.";
 /** Spec 010 R-03: the caller-facing message for the new paid-stage limiters
- * (question generation, run, report). */
+ * (question generation, orders). */
 export const AUDIT_CALLER_RATE_LIMITED_MESSAGE =
   "Terlalu banyak permintaan, coba lagi dalam beberapa menit.";
 export const RATE_LIMIT_UNAVAILABLE_MESSAGE =
@@ -29,8 +36,9 @@ export interface AuditRateLimitBindings {
   identityDestination?: AuditRateLimitBinding;
   extractCaller?: AuditRateLimitBinding;
   glmCaller?: AuditRateLimitBinding;
-  runCaller?: AuditRateLimitBinding;
-  reportCaller?: AuditRateLimitBinding;
+  orderCreateCaller?: AuditRateLimitBinding;
+  orderStatusCaller?: AuditRateLimitBinding;
+  reportDataCaller?: AuditRateLimitBinding;
 }
 
 export type AuditRateLimitDecision = "allowed" | "limited" | "unavailable";
@@ -66,8 +74,15 @@ export function getAuditRateLimitBindings(): AuditRateLimitBindings {
       ),
       extractCaller: asRateLimitBinding(env[EXTRACT_CALLER_RATE_LIMITER]),
       glmCaller: asRateLimitBinding(env[GLM_CALLER_RATE_LIMITER]),
-      runCaller: asRateLimitBinding(env[AUDIT_RUN_CALLER_RATE_LIMITER]),
-      reportCaller: asRateLimitBinding(env[AUDIT_REPORT_CALLER_RATE_LIMITER]),
+      orderCreateCaller: asRateLimitBinding(
+        env[ORDER_CREATE_CALLER_RATE_LIMITER],
+      ),
+      orderStatusCaller: asRateLimitBinding(
+        env[ORDER_STATUS_CALLER_RATE_LIMITER],
+      ),
+      reportDataCaller: asRateLimitBinding(
+        env[REPORT_DATA_CALLER_RATE_LIMITER],
+      ),
     };
   } catch {
     return { contextAvailable: false };
@@ -110,10 +125,11 @@ function auditCallerRateLimitResponse(status: 429 | 503) {
 let loggedMissingRateLimitContext = false;
 
 /** Spec 010 R-03: shared per-IP limiter step for the paid audit stages
- * (glm-questions, run, report). Fails closed with 503 when the binding or
- * the Worker request context is unavailable in production; without a
- * context outside production (local `next dev`, offline tests) the limiter
- * is a no-op that logs once. Keyed by CF-Connecting-IP like `extract`. */
+ * (glm-questions) and the order routes. Fails closed with 503 when the binding
+ * or the Worker request context is unavailable in production; without a
+ * context outside production (offline tests) the limiter is a no-op that
+ * logs once, and a missing binding in local `next dev` is a no-op, not a 503
+ * (spec 016 R-33). Keyed by CF-Connecting-IP like `extract`. */
 export async function enforceAuditCallerRateLimit(
   request: Request,
   select: (
@@ -134,7 +150,11 @@ export async function enforceAuditCallerRateLimit(
     return null;
   }
   const binding = select(bindings);
-  if (!binding) return auditCallerRateLimitResponse(503);
+  if (!binding) {
+    return process.env.NODE_ENV === "development"
+      ? null
+      : auditCallerRateLimitResponse(503);
+  }
   const decision = await consumeRateLimit(
     binding,
     callerIpFromRequest(request),

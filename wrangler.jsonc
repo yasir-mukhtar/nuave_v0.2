@@ -1,12 +1,26 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "nuave-v2",
-  "main": ".open-next/worker.js",
+  // Custom entry: serves web requests through the OpenNext worker and adds the
+  // cron trigger below (spec 016 R-15).
+  "main": "worker.mjs",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
+  },
+  // Production is the only worker with a cron (R-14). Every minute: the runner
+  // does at most one audit step per order per run (R-16).
+  "triggers": {
+    "crons": ["* * * * *"],
+  },
+  // Fixed per environment, never read from a request (R-14, R-24). The mode,
+  // the emergency switch, the caps, the email list and the provider keys are
+  // Worker secrets set by the deploy job (.github/workflows/ci.yml).
+  "vars": {
+    "NUAVE_ENVIRONMENT": "production",
+    "NUAVE_SITE_URL": "https://v2.nuave.ai",
   },
   "ratelimits": [
     {
@@ -42,18 +56,26 @@
       },
     },
     {
-      "name": "AUDIT_RUN_CALLER_RATE_LIMITER",
-      "namespace_id": "302",
+      "name": "ORDER_CREATE_CALLER_RATE_LIMITER",
+      "namespace_id": "304",
       "simple": {
-        "limit": 2,
+        "limit": 5,
         "period": 60,
       },
     },
     {
-      "name": "AUDIT_REPORT_CALLER_RATE_LIMITER",
-      "namespace_id": "303",
+      "name": "ORDER_STATUS_CALLER_RATE_LIMITER",
+      "namespace_id": "305",
       "simple": {
-        "limit": 3,
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "REPORT_DATA_CALLER_RATE_LIMITER",
+      "namespace_id": "306",
+      "simple": {
+        "limit": 20,
         "period": 60,
       },
     },
@@ -63,9 +85,127 @@
       "binding": "SPEND_DB",
       "database_name": "nuave-v2-spend",
       "database_id": "e2bd6ac9-7fd9-4d3a-890c-66fcfecd23ea",
+      "migrations_dir": "migrations",
     },
   ],
   "observability": {
     "enabled": true,
+  },
+  "env": {
+    // PR previews (R-14): their own database, their own rate-limit counters,
+    // and NO cron, so a preview journey stops at the audit-running screen.
+    // Wrangler does not inherit bindings or vars into an environment, so each
+    // is declared again. A test fails if a preview cron ever appears.
+    "preview": {
+      "triggers": {
+        "crons": [],
+      },
+      "vars": {
+        "NUAVE_ENVIRONMENT": "preview",
+      },
+      "ratelimits": [
+        {
+          "name": "IDENTITY_CALLER_RATE_LIMITER",
+          "namespace_id": "411",
+          "simple": { "limit": 10, "period": 60 },
+        },
+        {
+          "name": "IDENTITY_DESTINATION_RATE_LIMITER",
+          "namespace_id": "412",
+          "simple": { "limit": 20, "period": 60 },
+        },
+        {
+          "name": "EXTRACT_CALLER_RATE_LIMITER",
+          "namespace_id": "413",
+          "simple": { "limit": 5, "period": 60 },
+        },
+        {
+          "name": "GLM_CALLER_RATE_LIMITER",
+          "namespace_id": "414",
+          "simple": { "limit": 2, "period": 60 },
+        },
+        {
+          "name": "ORDER_CREATE_CALLER_RATE_LIMITER",
+          "namespace_id": "415",
+          "simple": { "limit": 5, "period": 60 },
+        },
+        {
+          "name": "ORDER_STATUS_CALLER_RATE_LIMITER",
+          "namespace_id": "416",
+          "simple": { "limit": 30, "period": 60 },
+        },
+        {
+          "name": "REPORT_DATA_CALLER_RATE_LIMITER",
+          "namespace_id": "417",
+          "simple": { "limit": 20, "period": 60 },
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "SPEND_DB",
+          "database_name": "nuave-v2-preview",
+          "database_id": "5613a4a7-7a86-432a-810c-7ccef7e80a25",
+          "migrations_dir": "migrations",
+        },
+      ],
+    },
+    // Local development and offline tests (`next dev` and `wrangler dev`):
+    // a local database, no cron, and test-only rate limits high enough for the
+    // whole suite, because every local request is the same caller (R-33).
+    // Never deployed.
+    "dev": {
+      "triggers": {
+        "crons": [],
+      },
+      "vars": {
+        "NUAVE_ENVIRONMENT": "preview",
+        "NUAVE_SITE_URL": "http://localhost:3000",
+      },
+      "ratelimits": [
+        {
+          "name": "IDENTITY_CALLER_RATE_LIMITER",
+          "namespace_id": "511",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "IDENTITY_DESTINATION_RATE_LIMITER",
+          "namespace_id": "512",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "EXTRACT_CALLER_RATE_LIMITER",
+          "namespace_id": "513",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "GLM_CALLER_RATE_LIMITER",
+          "namespace_id": "514",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "ORDER_CREATE_CALLER_RATE_LIMITER",
+          "namespace_id": "515",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "ORDER_STATUS_CALLER_RATE_LIMITER",
+          "namespace_id": "516",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "REPORT_DATA_CALLER_RATE_LIMITER",
+          "namespace_id": "517",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "SPEND_DB",
+          "database_name": "nuave-v2-local",
+          "database_id": "local-development-database",
+          "migrations_dir": "migrations",
+        },
+      ],
+    },
   },
 }

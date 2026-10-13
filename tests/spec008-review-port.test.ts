@@ -17,8 +17,9 @@ it.each([undefined, "3307"])(
       reuseExistingServer?: boolean;
       env?: Record<string, string>;
     };
+    // The local D1 database gets its migrations before the server starts.
     expect(server.command).toBe(
-      `npm run dev -- --port ${chosen} --hostname 127.0.0.1`,
+      `npm run db:migrate:local && npm run dev -- --port ${chosen} --hostname 127.0.0.1`,
     );
     expect(server.url).toBe(`http://127.0.0.1:${chosen}`);
     expect(server.reuseExistingServer).toBe(false);

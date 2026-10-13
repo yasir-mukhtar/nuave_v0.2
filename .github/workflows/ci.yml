@@ -164,10 +164,60 @@ jobs:
       - name: Build validated OpenNext worker
         run: npm run build:cf
 
+      # Spec 016 R-13: the database changes come first. Migrations only add
+      # tables and columns that are nullable or have defaults, so the old worker
+      # keeps running between this step and the deploy. The API token needs D1
+      # edit permission (founder action Q5).
+      - name: Apply D1 migrations (production database)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply SPEND_DB --remote
+          workingDirectory: .
+
+      # Spec 016 R-15: the cron cannot see build-time values, so the deploy also
+      # sets everything the cron needs as Worker secrets (the same ones a web
+      # request sees): mode, emergency switch, caps, the founder's email list, the
+      # Resend key and from address, and the keys the live mode needs. The API
+      # token needs Worker secret permission (founder action Q5). A value that is
+      # empty here fails the deploy rather than leaving the Worker without it.
       - name: Deploy validated commit to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
+        env:
+          NUAVE_NEW_AUDIT_ENABLED: "true"
+          NUAVE_AUDIT_MODE: live
+          NUAVE_DAILY_SPEND_LIMIT_USD: "5"
+          NUAVE_ORDER_SPEND_LIMIT_USD: "2"
+          NUAVE_ORDER_EMAIL_ALLOWLIST: ${{ secrets.NUAVE_ORDER_EMAIL_ALLOWLIST }}
+          # Spec 016 R-25: the real mail sender (Resend). The cron and the order
+          # route both refuse live work when either is missing.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NUAVE_MAIL_FROM: ${{ secrets.NUAVE_MAIL_FROM }}
+          NUAVE_PROVIDER: openai
+          NUAVE_QUESTION_PROVIDER: openai
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: https://api.openai.com/v1
+          OPENAI_AUDIT_MODEL: gpt-5.6-luna
+          OPENAI_AUDIT_REASONING_EFFORT: low
+          CHEAPERINFERENCE_API_KEY: ${{ secrets.CHEAPERINFERENCE_API_KEY }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
           workingDirectory: .
+          secrets: |
+            NUAVE_NEW_AUDIT_ENABLED
+            NUAVE_AUDIT_MODE
+            NUAVE_DAILY_SPEND_LIMIT_USD
+            NUAVE_ORDER_SPEND_LIMIT_USD
+            NUAVE_ORDER_EMAIL_ALLOWLIST
+            RESEND_API_KEY
+            NUAVE_MAIL_FROM
+            NUAVE_PROVIDER
+            NUAVE_QUESTION_PROVIDER
+            OPENAI_API_KEY
+            OPENAI_BASE_URL
+            OPENAI_AUDIT_MODEL
+            OPENAI_AUDIT_REASONING_EFFORT
+            CHEAPERINFERENCE_API_KEY

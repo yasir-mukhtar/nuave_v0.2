@@ -24,6 +24,8 @@ export type SmartQuestionPack = {
   billedCostUsd: number | null;
 };
 
+export type SmartStage = SmartSession["stage"];
+
 export type SmartPreparedIdentity = {
   inputName: string;
   inputSource: string;
@@ -43,6 +45,7 @@ export type SmartSession = {
     | "entry"
     | "reading"
     | "brand"
+    | "order"
     | "focus"
     | "location"
     | "product"
@@ -57,8 +60,7 @@ export type SmartSession = {
     | "service"
     | "market"
     | "summary"
-    | "questions"
-    | "audit";
+    | "questions";
   entry: { name: string; source: string };
   /**
    * Spec 013 J5: set while a detail screen (or the focus screen) was opened
@@ -83,11 +85,54 @@ export type SmartSession = {
   confirmedSelection: SmartSelection | null;
   frozen: FrozenSmartIntake | null;
   pack: SmartQuestionPack | null;
+  /**
+   * Spec 016 R-01: the brand chosen on the free brand screen, before the paid
+   * reading. It becomes the selection's name once the reading is done.
+   */
+  brand?: { name: string; origin: "owner" | "website" } | null;
+  /**
+   * Spec 016 R-02/R-29: the saved order. The id is not a secret credential for
+   * anything but this order's own progress; the email is NEVER stored here
+   * (R-31). `website` and `name` are what the order was made for: a different
+   * website or brand needs a new order.
+   */
+  order?: { id: string; website: string; name: string } | null;
+  /** An order the customer left by changing the website or the brand. It may
+   * still be open; the next order tells the server to expire it, so it stops
+   * holding part of the daily cap (spec 016 R-08). */
+  supersededOrder?: string | null;
+  /** Where to go once an order is made again (R-30: the saved progress
+   * continues on the new order with no new paid call). */
+  afterOrder?: SmartStage | null;
+  /** Set on every save; progress older than 7 days is discarded (R-31). */
+  savedAt?: string;
   preparationCalls: AuditCallTelemetry[];
   preparationMode: "synthetic-local" | "live" | null;
   sourceExcerptStatus?: SourceExcerptStatus;
   generationAttempts: GenerationAttempt[];
 };
+
+const SMART_STAGES: readonly SmartSession["stage"][] = [
+  "entry",
+  "reading",
+  "brand",
+  "order",
+  "focus",
+  "location",
+  "product",
+  "category",
+  "offerings",
+  "target-customer",
+  "customer-needs",
+  "decision-considerations",
+  "competitors",
+  "differentiator",
+  "public-fact",
+  "service",
+  "market",
+  "summary",
+  "questions",
+];
 
 export function freshSmartSession(): SmartSession {
   return {
@@ -117,27 +162,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     if (
       !isRecord(value) ||
       value.version !== 9 ||
-      ![
-        "entry",
-        "reading",
-        "brand",
-        "focus",
-        "location",
-        "product",
-        "category",
-        "offerings",
-        "target-customer",
-        "customer-needs",
-        "decision-considerations",
-        "competitors",
-        "differentiator",
-        "public-fact",
-        "service",
-        "market",
-        "summary",
-        "questions",
-        "audit",
-      ].includes(String(value.stage)) ||
+      !SMART_STAGES.includes(value.stage as SmartSession["stage"]) ||
       !isRecord(value.entry) ||
       typeof value.entry.name !== "string" ||
       typeof value.entry.source !== "string" ||
@@ -250,8 +275,13 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
           String(item).trim().toLocaleLowerCase("id-ID"),
         ),
       ).size === selection.aliases.length;
+    // Spec 016: before the paid reading there is no prepared understanding —
+    // the free brand screen and the order screen run on the identity alone.
+    const beforeReading =
+      ["entry", "reading", "order"].includes(stage) ||
+      (stage === "brand" && value.prepared == null && value.identity != null);
     if (
-      (!["entry", "reading"].includes(stage) &&
+      (!beforeReading &&
         (!validPrepared(value.prepared) || !validSelection(value.selection))) ||
       (value.prepared != null && !validPrepared(value.prepared)) ||
       (value.selection != null && !validSelection(value.selection)) ||
@@ -261,7 +291,43 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       return null;
     const frozen = value.frozen ? parseFrozenSmartIntake(value.frozen) : null;
     if (value.frozen && !frozen) return null;
-    if (["questions", "audit"].includes(stage) && !frozen) return null;
+    if (stage === "questions" && !frozen) return null;
+    if (
+      value.brand != null &&
+      (!isRecord(value.brand) ||
+        typeof value.brand.name !== "string" ||
+        value.brand.name.length > 160 ||
+        !["owner", "website"].includes(String(value.brand.origin)))
+    )
+      return null;
+    if (
+      value.order != null &&
+      (!isRecord(value.order) ||
+        typeof value.order.id !== "string" ||
+        !/^[0-9a-f]{32}$/.test(value.order.id) ||
+        typeof value.order.website !== "string" ||
+        value.order.website.length > 2_000 ||
+        typeof value.order.name !== "string" ||
+        value.order.name.length > 160)
+    )
+      return null;
+    if (
+      value.supersededOrder != null &&
+      (typeof value.supersededOrder !== "string" ||
+        !/^[0-9a-f]{32}$/.test(value.supersededOrder))
+    )
+      return null;
+    if (
+      value.afterOrder != null &&
+      (typeof value.afterOrder !== "string" ||
+        value.afterOrder === "order" ||
+        !SMART_STAGES.includes(value.afterOrder as SmartSession["stage"]))
+    )
+      return null;
+    // The order screen runs on the identity (and the brand chosen on it).
+    if (stage === "order" && value.identity == null) return null;
+    if (value.savedAt !== undefined && typeof value.savedAt !== "string")
+      return null;
     const pack = value.pack;
     if (pack !== null && pack !== undefined) {
       if (
@@ -280,7 +346,6 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       )
         return null;
     }
-    if (stage === "audit" && !pack) return null;
     return {
       ...value,
       identity: (value.identity ?? null) as SmartPreparedIdentity | null,
@@ -292,19 +357,100 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
   }
 }
 
-export function readSmartSession(): SmartSession | null {
-  if (typeof window === "undefined") return null;
-  return parseSmartSession(
-    window.sessionStorage.getItem(SMART_INTAKE_STORAGE_KEY),
-  );
+/** R-31: intake progress older than this is removed from the browser. */
+export const SMART_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Browser storage can be missing or blocked (private window, cleared data):
+ * every access is guarded and the page works without it. */
+function progressStorage(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** R-29: the intake progress is kept in this browser's local storage, so a
+ * closed tab continues at the same screen. Progress saved more than 7 days
+ * ago is removed (R-31). */
+export function readSmartSession(now = Date.now()): SmartSession | null {
+  const storage = progressStorage();
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(SMART_INTAKE_STORAGE_KEY);
+    const session = parseSmartSession(raw);
+    if (!session) return null;
+    // Every save stamps `savedAt`; a record without one (or with one that is
+    // not a date) has no known age and is treated as expired.
+    if (
+      session.savedAt === undefined ||
+      !(now - Date.parse(session.savedAt) <= SMART_SESSION_MAX_AGE_MS)
+    ) {
+      storage.removeItem(SMART_INTAKE_STORAGE_KEY);
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
 }
 
 export function writeSmartSession(session: SmartSession): void {
-  if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(
-    SMART_INTAKE_STORAGE_KEY,
-    JSON.stringify(session),
-  );
+  const storage = progressStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify({ ...session, savedAt: new Date().toISOString() }),
+    );
+  } catch {
+    // Storage full or blocked: the journey continues without saving.
+  }
+}
+
+/** R-31: removed when the audit starts. */
+export function clearSmartSession(): void {
+  try {
+    progressStorage()?.removeItem(SMART_INTAKE_STORAGE_KEY);
+  } catch {
+    // nothing to clear
+  }
+}
+
+/** R-31: after the audit starts only the order id stays in the browser, until
+ * the order ends, so a reload shows the progress or the result. */
+export const ACTIVE_ORDER_STORAGE_KEY = "nuave.activeOrder.v1" as const;
+
+export function readActiveOrder(): string | null {
+  try {
+    const raw = progressStorage()?.getItem(ACTIVE_ORDER_STORAGE_KEY);
+    const value = raw ? (JSON.parse(raw) as { orderId?: unknown }) : null;
+    return typeof value?.orderId === "string" &&
+      /^[0-9a-f]{32}$/.test(value.orderId)
+      ? value.orderId
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeActiveOrder(orderId: string): void {
+  try {
+    progressStorage()?.setItem(
+      ACTIVE_ORDER_STORAGE_KEY,
+      JSON.stringify({ orderId }),
+    );
+  } catch {
+    // The order still runs on the server; only the reload shortcut is lost.
+  }
+}
+
+export function clearActiveOrder(): void {
+  try {
+    progressStorage()?.removeItem(ACTIVE_ORDER_STORAGE_KEY);
+  } catch {
+    // nothing to clear
+  }
 }
 
 export function smartPackPrompts(pack: SmartQuestionPack) {

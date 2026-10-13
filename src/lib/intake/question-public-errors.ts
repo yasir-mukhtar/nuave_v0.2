@@ -45,6 +45,8 @@ const messages = {
   syntheticInterrupted:
     "Permintaan pembuatan pertanyaan terputus. Pertanyaan belum diterima.",
   disabled: "Audit tidak tersedia saat ini.",
+  order:
+    "Pesanan belum dibuat atau sudah berakhir. Kembali ke langkah pesanan dan coba lagi.",
   limited: "Terlalu banyak permintaan, coba lagi dalam beberapa menit.",
   rateUnavailable: "Perlindungan akses sedang tidak tersedia. Coba lagi nanti.",
 } as const;
@@ -78,6 +80,7 @@ const codes = {
   STALE_INTAKE: "stale",
   INVALID_INTAKE: "correction",
   AUDIT_DISABLED: "disabled",
+  ORDER_REQUIRED: "order",
   RATE_LIMITED: "limited",
   RATE_LIMIT_UNAVAILABLE: "rateUnavailable",
   LIVE_CREDENTIALS_MISSING: "unavailable",

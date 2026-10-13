@@ -19,25 +19,30 @@ vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./source-excerpt")>()),
   fetchWebsiteExcerpt: vi.fn(async () => null),
 }));
+// Spec 016: the route reads the website saved on the order. The order and
+// ledger mechanics are tested in orders/*.test.ts; here the stub order carries
+// the source under test.
+const orderMocks = vi.hoisted(() => ({ website: "" }));
+vi.mock("@/lib/orders/http", () => ({
+  orderRuntime: () => ({ db: {}, environment: "production", mode: "live" }),
+}));
+vi.mock("@/lib/orders/store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/orders/store")>()),
+  orderInState: async () => ({
+    id: "a".repeat(32),
+    website: orderMocks.website,
+    business_name: "",
+  }),
+}));
 
 import { POST } from "../../app/api/audit/extract/route";
 
 function extractionRequest(website_url: string) {
+  orderMocks.website = website_url;
   return new Request("http://localhost/api/audit/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      website_url,
-      brand_name: "",
-      market_context: "",
-      category: "",
-      safety_identifier: "test-user-123",
-      budget: {
-        limit_usd: 5,
-        carryover_cost_usd: 0,
-        calls: [],
-      },
-    }),
+    body: JSON.stringify({ order_id: "a".repeat(32) }),
   });
 }
 
