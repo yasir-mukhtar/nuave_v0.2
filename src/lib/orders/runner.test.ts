@@ -809,11 +809,14 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
       result.outcomes.filter((entry) => entry === outcome).length;
     expect(tally("expired")).toBe(3);
     expect(tally("failed_deadline")).toBe(1);
-    expect(tally("question_done")).toBe(2);
-    // Two failure emails were tried (the new failure's, and one retry that
-    // was due), each as one attempt of three tries.
-    expect(rejecting.sent.length - emailsBefore).toBe(6);
-    expect(count.queries).toBeLessThanOrEqual(40);
+    // The run's meter (queries + outbound requests, at most 40) leaves room for
+    // one question step after the housekeeping; the other waits for the next run.
+    expect(tally("question_done")).toBe(1);
+    expect(tally("waiting")).toBe(1);
+    // The new failure's email was tried (one attempt of three tries).
+    expect(rejecting.sent.length - emailsBefore).toBeGreaterThanOrEqual(3);
+    const outbound = rejecting.sent.length - emailsBefore + 1; // + the paid call
+    expect(count.queries + outbound).toBeLessThanOrEqual(40);
     // Left for the next run: two open orders, nothing lost.
     expect(d1.query("SELECT id FROM orders WHERE state = 'open'")).toHaveLength(
       2,
@@ -822,8 +825,7 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     expect(
       rows("SELECT id FROM provider_spend WHERE kind = 'order_call'").length -
         callsBefore,
-    ).toBe(2);
-    // Measured when written: 40 queries (48 statements), live mode.
+    ).toBe(1);
   });
 
   it("one run with emails in it: 3 expired, 1 deadline failure with its email, 1 report saved, emailed and delivered (one report step per run), and a failure email retry, at most 40 queries", async () => {
@@ -841,7 +843,7 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     for (const id of stale) {
       await d1.db
         .prepare(
-          `UPDATE orders SET lease_owner = 'other', lease_until = '2099-01-01T00:00:00.000Z' WHERE id = '${id}'`,
+          `UPDATE orders SET lease_owner = 'other', lease_until = '${new Date(clock.getTime() + 14 * 3600_000).toISOString()}' WHERE id = '${id}'`,
         )
         .bind()
         .run();
@@ -1412,5 +1414,25 @@ describe("the ready email never harms a saved report", () => {
       limit: 1,
     });
     expect(ids).toEqual([due]);
+  });
+});
+
+describe("the deadline sweep leaves a leased order alone (R-18, R-23)", () => {
+  it("does not fail an order another run holds, and fails it once the lease is free", async () => {
+    const id = await runningOrder();
+    advance(ORDER_DEADLINE_MS + 1000);
+    await d1.db
+      .prepare(
+        `UPDATE orders SET lease_owner = 'other', lease_until = '${new Date(clock.getTime() + 60_000).toISOString()}' WHERE id = '${id}'`,
+      )
+      .bind()
+      .run();
+    const d = deps();
+    expect((await runOrders(d)).outcomes).not.toContain("failed_deadline");
+    expect(orderRow(id).state).toBe("running");
+    expect(d.mail.sent).toEqual([]);
+    advance(61_000); // the other run's lease has lapsed
+    expect((await runOrders(d)).outcomes).toContain("failed_deadline");
+    expect(orderRow(id).state).toBe("failed");
   });
 });

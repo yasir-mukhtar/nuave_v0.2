@@ -20,7 +20,7 @@ import {
   orderRuntime,
   orderUnavailableResponse,
 } from "@/lib/orders/http";
-import { createOrder } from "@/lib/orders/store";
+import { createOrder, expireSupersededOrder } from "@/lib/orders/store";
 import { dailySpendLimitUsd } from "@/lib/spending/provider-spend";
 
 export const runtime = "nodejs";
@@ -104,6 +104,13 @@ export async function POST(request: Request) {
   }
 
   try {
+    // A replacement order (the website or brand changed): the old one, if it is
+    // still open, expires first so its hold returns to the daily cap.
+    await expireSupersededOrder(server.db, {
+      orderId: record.previous_order_id,
+      environment: server.environment,
+      now: new Date(),
+    }).catch(() => false);
     const { result, orderId } = await createOrder(server.db, {
       email,
       businessName,

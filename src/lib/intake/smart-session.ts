@@ -97,6 +97,10 @@ export type SmartSession = {
    * website or brand needs a new order.
    */
   order?: { id: string; website: string; name: string } | null;
+  /** An order the customer left by changing the website or the brand. It may
+   * still be open; the next order tells the server to expire it, so it stops
+   * holding part of the daily cap (spec 016 R-08). */
+  supersededOrder?: string | null;
   /** Where to go once an order is made again (R-30: the saved progress
    * continues on the new order with no new paid call). */
   afterOrder?: SmartStage | null;
@@ -305,6 +309,12 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         value.order.website.length > 2_000 ||
         typeof value.order.name !== "string" ||
         value.order.name.length > 160)
+    )
+      return null;
+    if (
+      value.supersededOrder != null &&
+      (typeof value.supersededOrder !== "string" ||
+        !/^[0-9a-f]{32}$/.test(value.supersededOrder))
     )
       return null;
     if (

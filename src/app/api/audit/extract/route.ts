@@ -31,7 +31,7 @@ import {
 } from "@/lib/audit/source-input";
 import { orderSafetyIdentifier } from "@/lib/orders/config";
 import { orderRuntime } from "@/lib/orders/http";
-import { orderInState } from "@/lib/orders/store";
+import { orderInState, savePreparedReading } from "@/lib/orders/store";
 import { withOrderSpend } from "@/lib/spending/provider-spend";
 import {
   callerIpFromRequest,
@@ -137,6 +137,15 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+    // A reading already saved on this order is returned as it is: the website
+    // is never read, and paid for, twice (R-08).
+    if (order.prepared_json) {
+      try {
+        return NextResponse.json(JSON.parse(order.prepared_json));
+      } catch {
+        // An unreadable copy is read again below.
+      }
+    }
     const normalizedSource = parseSourceInput(order.website);
     if (!normalizedSource) {
       return NextResponse.json(
@@ -203,11 +212,17 @@ export async function POST(request: Request) {
           ...(sourceData ? { public_source_data: sourceData } : {}),
         }),
     );
-    return NextResponse.json({
+    const reading = {
       ...draft,
       preparation_mode: "live",
       source_excerpt_status: sourceStatus,
-    });
+    };
+    // Saved before answering: a repeat request returns it with no provider call.
+    await savePreparedReading(server.db, {
+      orderId: order.id,
+      preparedJson: JSON.stringify(reading),
+    }).catch(() => {});
+    return NextResponse.json(reading);
   } catch (error) {
     if (error instanceof SafeSourceFetchError) {
       if (error.code === "RATE_LIMITED")

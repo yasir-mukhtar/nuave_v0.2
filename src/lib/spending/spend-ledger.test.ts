@@ -641,3 +641,27 @@ describe("migrations (R-13)", () => {
     ).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe("usdToUnits never understates a reservation", () => {
+  it("rounds float noise away but any real fraction of a unit up", () => {
+    expect(usdToUnits(0.1 + 0.2)).toBe(30_000_000); // 0.30000000000000004
+    expect(usdToUnits(0.07)).toBe(7_000_000); // 0.07 * 1e8 = 7000000.000000001
+    expect(usdToUnits(1.005)).toBe(100_500_000);
+    expect(usdToUnits(2)).toBe(200_000_000);
+    expect(usdToUnits(0)).toBe(0);
+    expect(usdToUnits(1e-9)).toBe(1); // a tenth of a unit still costs a unit
+    expect(usdToUnits(0.123456789)).toBe(12_345_679);
+  });
+
+  it("for many amounts the units are never below the amount (up to rounding noise) and less than one unit above it", () => {
+    let seed = 12345;
+    const next = () =>
+      (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    for (let i = 0; i < 5000; i += 1) {
+      const usd = Math.round(next() * 5 * 10 ** 10) / 10 ** 10; // up to 10 decimals
+      const units = usdToUnits(usd);
+      expect(units / 1e8, String(usd)).toBeGreaterThanOrEqual(usd - 1e-9);
+      expect(units / 1e8 - usd, String(usd)).toBeLessThan(1.01e-8);
+    }
+  });
+});

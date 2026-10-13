@@ -150,32 +150,91 @@ const iso = (at: Date) => at.toISOString();
 
 export { orderSafetyIdentifier, sha256Hex };
 
-/** Per run, so one cron run stays under the Free plan's 50 D1 queries
- * (measured in runner.test.ts "one run with every cap reached"). */
+/** Per run limits. Cloudflare Free counts D1 queries as subrequests, 50 per
+ * invocation shared with outbound requests (paid provider calls and Resend
+ * sends). A run therefore keeps a meter of D1 queries plus outbound requests
+ * and starts a piece of work only if its measured worst typical cost still
+ * fits under RUN_UNIT_LIMIT (40, a margin under 50). Measured in
+ * runner-worst-case.test.ts. */
 export const MAX_ORDERS_PER_RUN = 2;
 export const MAX_EXPIRED_PER_RUN = 3;
 export const MAX_FAILURE_EMAILS_PER_RUN = 1;
 export const MAX_DEADLINE_FAILURES_PER_RUN = 1;
-/** A report step is the heaviest (up to two paid calls, then the ready email),
- * so it runs alone in its run: no other audit step before or after it. That
- * keeps the worst live run at 40 D1 queries or fewer. A report that has to wait
- * is first in line on the next run (rotation by last step). */
+export const RUN_UNIT_LIMIT = 40;
+/** Each piece of work, in D1 queries + outbound requests (with a small margin):
+ * an expiry; a deadline failure with its failure email (three tries); a
+ * question step with its paid call; an email-only retry of a ready email; a
+ * report step with up to two paid calls and the ready email; one failure-email
+ * retry (three tries). */
+export const RUN_COST = {
+  expiry: 2,
+  deadline: 12,
+  question: 18,
+  light: 9,
+  heavy: 27,
+  retry: 7,
+} as const;
 
-export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
+/** The same dependencies, counting every D1 query and outbound request. */
+function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
+  type Bound = ReturnType<ReturnType<RunnerDeps["db"]["prepare"]>["bind"]>;
+  const raw = new WeakMap<object, Bound>();
+  const wrap = (statement: Bound): Bound => {
+    const wrapped = {
+      run: () => (meter.n++, statement.run()),
+      first: <T>() => (meter.n++, statement.first<T>()),
+      all: <T>() => (meter.n++, statement.all<T>()),
+    } as Bound;
+    raw.set(wrapped, statement);
+    return wrapped;
+  };
+  return {
+    ...deps,
+    db: {
+      prepare: (sql) => ({
+        bind: (...values) => wrap(deps.db.prepare(sql).bind(...values)),
+      }),
+      batch: (statements) => {
+        meter.n += 1;
+        return deps.db.batch(statements.map((item) => raw.get(item) ?? item));
+      },
+    },
+    sender: deps.sender
+      ? (message) => {
+          meter.n += 1;
+          return deps.sender!(message);
+        }
+      : null,
+    execute: (input) => {
+      meter.n += 1;
+      return deps.execute(input);
+    },
+    generateReport: ((...args: Parameters<RunnerDeps["generateReport"]>) => {
+      meter.n += 1;
+      return deps.generateReport(...args);
+    }) as RunnerDeps["generateReport"],
+  };
+}
+
+export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   const outcomes: StepOutcome[] = [];
+  const meter = { n: 0 };
+  const deps = metered(input, meter);
+  const fits = (cost: number) => meter.n + cost <= RUN_UNIT_LIMIT;
   const startedAt = deps.now().getTime();
   const budgetMs = deps.runBudgetMs ?? RUN_BUDGET_MS;
   const owner = crypto.randomUUID();
   const scope = { environment: deps.environment, mode: deps.mode };
   const failedNow = new Set<string>();
-  let auditSteps = 0;
-  let reportRan = false;
 
   // R-22: an `open` order past its time becomes `expired`, which settles it.
   const expired = await expireOpenOrders(deps.db, {
     ...scope,
     now: deps.now(),
-    limit: MAX_EXPIRED_PER_RUN,
+    limit: Math.min(
+      MAX_EXPIRED_PER_RUN,
+      Math.floor((RUN_UNIT_LIMIT - meter.n) / RUN_COST.expiry),
+    ),
   });
   outcomes.push(...expired.map((): StepOutcome => "expired"));
 
@@ -186,6 +245,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
     now: deps.now(),
     limit: MAX_DEADLINE_FAILURES_PER_RUN,
   })) {
+    if (!fits(RUN_COST.deadline)) break; // it comes back on a later run
     if (await failOrder(deps, id, "deadline")) {
       failedNow.add(id);
       outcomes.push("failed_deadline");
@@ -205,11 +265,16 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
     ) {
       continue;
     }
-    // A report step with a real report call is the heavy one; an order that
-    // only waits for its email retry is light and does not take that slot.
-    const heavy = order.state === "reporting" && !order.report_json;
-    if (reportRan || (heavy && auditSteps > 0)) {
-      outcomes.push("waiting"); // its turn comes on a later run
+    // Start a step only if its cost still fits the run's meter; a heavy report
+    // step goes first on a later run (rotation by last step).
+    const cost =
+      order.state === "running"
+        ? RUN_COST.question
+        : order.report_json
+          ? RUN_COST.light
+          : RUN_COST.heavy;
+    if (!fits(cost)) {
+      outcomes.push("waiting");
       continue;
     }
     const stepMs =
@@ -242,9 +307,6 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
         outcomes.push("skipped");
         continue;
       }
-      const heavyNow = current.state === "reporting" && !current.report_json;
-      if (current.state === "running" || heavyNow) auditSteps += 1;
-      if (heavyNow) reportRan = true;
       const outcome =
         current.state === "running"
           ? await questionStep(deps, current, owner, stepMs)
@@ -269,6 +331,7 @@ export async function runOrders(deps: RunnerDeps): Promise<RunSummary> {
     limit: MAX_FAILURE_EMAILS_PER_RUN,
   })) {
     if (failedNow.has(id)) continue;
+    if (!fits(RUN_COST.retry)) break;
     if (await sendFailureEmail(deps, id)) outcomes.push("failure_email");
   }
   return { outcomes };
@@ -603,6 +666,16 @@ async function reportStep(
               leaseMs,
             });
             if (!renewed) throw new SpendCapError("order_refused");
+            // The language fix is a report provider call too (R-19): count it
+            // in D1 before it is sent, so an order makes at most three report
+            // calls in all, however the steps split them.
+            const counted = await claimReportAttempt(deps.db, {
+              orderId: order.id,
+              owner,
+            });
+            if (counted === null) {
+              throw new AuditBudgetError("The report call ceiling is reached.");
+            }
           }
           return deps.generateReport(...args);
         }),
@@ -645,7 +718,12 @@ async function reportStep(
     }
   }
   // R-19: `classifyReportRecovery` decides, with the attempts stored in D1.
-  const recovery = classifyReportRecovery(code, attempt);
+  // The calls made so far, as D1 counts them (a language fix counts as one).
+  const latest = await getOrder(deps.db, order.id);
+  const recovery = classifyReportRecovery(
+    code,
+    latest?.report_attempts ?? attempt,
+  );
   if (!recovery.can_retry) {
     await failOrder(deps, order.id, code.toLowerCase());
     return "report_failed";

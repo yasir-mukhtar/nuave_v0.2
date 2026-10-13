@@ -5,11 +5,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
+  extractDraft: null as null | ((...args: unknown[]) => Promise<unknown>),
 }));
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
 }));
 
+// The real reading unless a test installs its own (to count paid readings).
+vi.mock("@/lib/audit/provider", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@/lib/audit/provider")>();
+  return {
+    ...original,
+    liveExtractBusinessDraft: (
+      ...args: Parameters<typeof original.liveExtractBusinessDraft>
+    ) =>
+      mocks.extractDraft
+        ? mocks.extractDraft(...args)
+        : original.liveExtractBusinessDraft(...args),
+  };
+});
 vi.mock("@/lib/audit/source-excerpt", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/audit/source-excerpt")>()),
   fetchWebsiteExcerpt: async () => null,
@@ -69,6 +84,7 @@ beforeEach(() => {
   bind();
   fetchSpy = vi.fn(async () => new Response("{}", { status: 500 }));
   vi.stubGlobal("fetch", fetchSpy);
+  mocks.extractDraft = null;
   vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "true");
   vi.stubEnv("NUAVE_AUDIT_MODE", "live");
   vi.stubEnv("NUAVE_ENVIRONMENT", "production");
@@ -636,5 +652,120 @@ describe("order status (R-21)", () => {
       now: new Date(Date.now() - 3 * 3600_000),
     });
     expect((await (await status(id)).json()).state).toBe("expired");
+  });
+});
+
+describe("the paid website reading is made once per order (R-08)", () => {
+  it("a repeated extract request for the same open order returns the saved reading with no provider call", async () => {
+    const created = await (await create()).json();
+    const reading = { draft: { name: "Kopi Nuave" }, telemetry: [] };
+    mocks.extractDraft = vi.fn(async () => reading);
+    const ask = () =>
+      extractPOST(post("/api/audit/extract", { order_id: created.order_id }));
+    const first = await ask();
+    expect(first.status).toBe(200);
+    const firstBody = await first.json();
+    expect(mocks.extractDraft).toHaveBeenCalledTimes(1);
+    expect(
+      (orders()[0] as { prepared_json: string | null }).prepared_json,
+    ).toBeTruthy();
+    const second = await ask();
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual(firstBody);
+    expect(mocks.extractDraft).toHaveBeenCalledTimes(1); // no second reading
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("a failed reading is not saved, so a later request may try again", async () => {
+    const created = await (await create()).json();
+    mocks.extractDraft = vi.fn(async () => {
+      throw new Error("provider down");
+    });
+    const failed = await extractPOST(
+      post("/api/audit/extract", { order_id: created.order_id }),
+    );
+    expect(failed.status).toBeGreaterThanOrEqual(400);
+    expect(
+      (orders()[0] as { prepared_json: string | null }).prepared_json,
+    ).toBeNull();
+  });
+});
+
+describe("a replacement order expires the one it replaces", () => {
+  it("expires the old open order and returns its hold in the same request", async () => {
+    const first = await (await create()).json();
+    expect(ledger().map((row) => row.status)).toEqual(["reserved"]);
+    const second = await create({ previous_order_id: first.order_id });
+    expect(second.status).toBe(200);
+    const states = Object.fromEntries(
+      orders().map((row) => [row.id, row.state]),
+    );
+    expect(states[first.order_id]).toBe("expired");
+    expect(states[(await second.json()).order_id]).toBe("open");
+    // The old hold is settled to nothing: only the new order holds the cap.
+    expect(d1.heldUnitsToday(new Date().toISOString().slice(0, 10))).toBe(
+      usdToUnits(2),
+    );
+  });
+
+  it("frees the room the new order needs when the cap would otherwise be full", async () => {
+    const a = await (await create()).json();
+    await create(); // two orders hold 4 of 5
+    expect((await create()).status).toBe(503);
+    expect((await create({ previous_order_id: a.order_id })).status).toBe(200);
+  });
+
+  it("ignores an order that is not open, one of another environment, an unknown or a malformed id", async () => {
+    vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "0.5");
+    const running = await makeOrder(d1.db, {
+      mode: "live",
+      limitUsd: 0.1,
+      now: new Date(),
+    });
+    d1.query(
+      `UPDATE orders SET state = 'running' WHERE id = '${running}' RETURNING 1`,
+    );
+    const preview = await makeOrder(d1.db, {
+      mode: "live",
+      environment: "preview",
+      limitUsd: 0.1,
+      now: new Date(),
+    });
+    for (const previous_order_id of [
+      running,
+      preview,
+      "f".repeat(32),
+      "nope",
+      42,
+      null,
+    ]) {
+      expect((await create({ previous_order_id })).status).toBe(200);
+    }
+    const byId = Object.fromEntries(orders().map((row) => [row.id, row.state]));
+    expect(byId[running]).toBe("running");
+    expect(byId[preview]).toBe("open");
+  });
+});
+
+describe("the emergency switch (R-15)", () => {
+  it("keeps the status answer going while the switch is off, and still refuses new work", async () => {
+    const created = await (await create()).json();
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "false");
+    const status = await statusPOST(
+      post("/api/orders/status", { order_id: created.order_id }),
+    );
+    expect(status.status).toBe(200);
+    const answer = await status.json();
+    expect(answer.state).toBe("open");
+    expect(answer.paused).toBe(true); // waiting, nothing lost
+    // New orders and paid work stay off.
+    expect((await create()).status).not.toBe(200);
+    expect(
+      (
+        await extractPOST(
+          post("/api/audit/extract", { order_id: created.order_id }),
+        )
+      ).status,
+    ).not.toBe(200);
   });
 });

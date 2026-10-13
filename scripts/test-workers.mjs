@@ -13,6 +13,9 @@
 //      (the local form of the Worker secrets the deploy job sets), and the
 //      build environment does NOT carry the audit switch, so a cron that could
 //      not see the Worker's settings would do nothing;
+//   3a. (R-33) the FIRST thing the fresh worker receives is the cron: it expires
+//      an overdue open order put straight into the local database, proving it
+//      sees the Worker's own settings and database before any web request;
 //   4. an order is made, its questions approved, and the cron (`__scheduled`)
 //      runs the audit and delivers it, which shows the cron sees the same
 //      settings and the same local D1 database as a web request;
@@ -33,6 +36,7 @@
 
 import { spawn, spawnSync } from "node:child_process";
 import http from "node:http";
+import net from "node:net";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -136,20 +140,28 @@ function runSync(command, args, options = {}) {
   }
 }
 
+// Ready means the port accepts a connection (no HTTP request is sent), NOT a web
+// request to the worker: the first thing a fresh worker receives here is the
+// cron (R-33).
+function portOpen() {
+  return new Promise((resolvePort) => {
+    const socket = net.connect({ host: "127.0.0.1", port: PORT });
+    socket.once("connect", () => {
+      socket.destroy();
+      resolvePort(true);
+    });
+    socket.once("error", () => resolvePort(false));
+  });
+}
+
 async function waitReady(child) {
   const deadline = Date.now() + READY_TIMEOUT_MS;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) {
       throw new Error(`wrangler dev on :${PORT} exited ${child.exitCode}`);
     }
-    try {
-      await fetch(`http://127.0.0.1:${PORT}/`, {
-        signal: AbortSignal.timeout(5_000),
-      });
-      return;
-    } catch {
-      await new Promise((resolveWait) => setTimeout(resolveWait, 1_000));
-    }
+    if (await portOpen()) return;
+    await new Promise((resolveWait) => setTimeout(resolveWait, 500));
   }
   throw new Error(`wrangler dev on :${PORT} not ready within ${READY_TIMEOUT_MS}ms`);
 }
@@ -338,6 +350,23 @@ try {
   // ── 3. Enabled worker: request path and cron path ────────────────────────
   const on = await startWorker(settings);
 
+  // ── 3a. The cron comes first (R-33) ──────────────────────────────────────
+  // This worker has received no web request yet. An `open` order whose time has
+  // passed is put straight into the local database; the cron must see the
+  // Worker's own settings and the same database, and expire it.
+  const overdue = "a".repeat(32);
+  d1(
+    `INSERT INTO orders (id, email, business_name, website, mode, environment, state, created_at, expires_at)
+     VALUES ('${overdue}', 'tertunda@example.com', 'Kopi Tertunda', 'https://tertunda.example/', 'synthetic', 'production', 'open', '2026-01-01T00:00:00.000Z', '2026-01-01T02:00:00.000Z')`,
+  );
+  const firstTick = await cron();
+  const overdueRow = d1(`SELECT state FROM orders WHERE id = '${overdue}'`)[0];
+  record(
+    "the cron is the first thing a fresh worker receives, and it sees the Worker's settings and the local database (an overdue open order expires)",
+    firstTick.status === 200 && overdueRow?.state === "expired",
+    `cron status ${firstTick.status}, order ${overdueRow?.state}`,
+  );
+
   const page = await request("/audit");
   record(
     "the Worker's own settings enable the audit for a web request",
@@ -437,7 +466,9 @@ try {
     emails.length === 1 && emails[0].kind === "ready" && emails[0].result === "accepted",
     JSON.stringify(emails),
   );
-  const hashRow = d1("SELECT link_hash, report_json FROM orders")[0];
+  const hashRow = d1(
+    `SELECT link_hash, report_json FROM orders WHERE id = '${first.orderId}'`,
+  )[0];
   record(
     "only a hash of the link secret is stored, and the report is saved",
     /^[0-9a-f]{64}$/.test(hashRow.link_hash ?? "") && Boolean(hashRow.report_json),

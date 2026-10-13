@@ -360,6 +360,39 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     ).toHaveLength(1);
   });
 
+  it("a replacement order (the website changed after the order screen) names the order it replaces, once", async () => {
+    const server = stubServer({});
+    const first = render(<SmartIntakeJourney live={false} />);
+    await enterBusiness();
+    await typeEmail();
+    lanjut();
+    await heading("Apa yang ingin Anda audit?");
+    const saved = readSmartSession()!;
+    first.unmount();
+    // The saved order was made for another website, so the next `Lanjut` makes
+    // a replacement and tells the server which order it replaces.
+    writeSmartSession({
+      ...saved,
+      stage: "order",
+      order: { ...saved.order!, website: "https://lama.example/" },
+      prepared: null,
+      selection: null,
+    });
+    server.orderResponse = () =>
+      Response.json({ order_id: OTHER_ORDER_ID, state: "open" });
+    render(<SmartIntakeJourney live={false} />);
+    await heading("Ringkasan pesanan");
+    await typeEmail("baru@example.com");
+    lanjut();
+    await heading("Apa yang ingin Anda audit?");
+    const bodies = server.bodies["/api/orders"]!;
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]).not.toHaveProperty("previous_order_id");
+    expect(bodies[1]!.previous_order_id).toBe(saved.order!.id);
+    expect(readSmartSession()?.order?.id).toBe(OTHER_ORDER_ID);
+    expect(readSmartSession()?.supersededOrder ?? null).toBeNull();
+  });
+
   it("a server that no longer knows the order counts as ended", async () => {
     const server = stubServer();
     const first = render(<SmartIntakeJourney live={false} />);

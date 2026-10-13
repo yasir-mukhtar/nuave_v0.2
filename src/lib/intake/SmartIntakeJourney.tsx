@@ -697,6 +697,7 @@ export default function SmartIntakeJourney({
         frozen: null,
         pack: null,
         order: null,
+        supersededOrder: session.order?.id ?? session.supersededOrder ?? null,
         afterOrder: null,
       });
     } catch (cause) {
@@ -728,12 +729,14 @@ export default function SmartIntakeJourney({
     };
     if (!identity || !brand.name) return;
     let order = session.order ?? null;
+    let previousOrderId = session.supersededOrder ?? null;
     // Going back past this screen to change the website or the brand starts a
     // new order (R-01).
     if (
       order &&
       (order.website !== identity.canonicalUrl || order.name !== brand.name)
     ) {
+      previousOrderId = order.id;
       order = null;
     }
     if (!order && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
@@ -755,6 +758,9 @@ export default function SmartIntakeJourney({
             email: email.trim(),
             business_name: brand.name,
             website: identity.canonicalUrl,
+            // The old order, if any, is expired by the server so it stops
+            // holding part of the daily cap.
+            ...(previousOrderId ? { previous_order_id: previousOrderId } : {}),
           }),
         });
         const body = (await created.json().catch(() => ({}))) as {
@@ -770,7 +776,7 @@ export default function SmartIntakeJourney({
           website: identity.canonicalUrl,
           name: brand.name,
         };
-        working = { ...working, order };
+        working = { ...working, order, supersededOrder: null };
         persist(working);
       }
       // R-30: saved progress continues on the new order, no new paid call.
@@ -1248,6 +1254,8 @@ export default function SmartIntakeJourney({
                     pack: null,
                     brand: null,
                     order: null,
+                    supersededOrder:
+                      session.order?.id ?? session.supersededOrder ?? null,
                     afterOrder: null,
                     editReturn: undefined,
                     editBaseline: undefined,

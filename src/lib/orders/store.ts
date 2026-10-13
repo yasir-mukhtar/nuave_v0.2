@@ -65,6 +65,7 @@ export type OrderRow = {
   report_json: string | null;
   completed_at: string | null;
   report_attempts: number;
+  prepared_json: string | null;
   link_hash: string | null;
   link_expires_at: string | null;
   link_off: number;
@@ -320,8 +321,12 @@ export async function ordersPastDeadline(
 ): Promise<string[]> {
   return orderIds(
     db,
+    // An order another run holds (for example while it sends the ready email)
+    // is not failed under it; the sweep comes back once the lease is free.
     `SELECT id FROM orders WHERE state IN (${ACTIVE_STATES}) AND deadline_at <= ?1
-       AND environment = ?2 AND mode = ?3 ORDER BY created_at LIMIT ?4`,
+       AND environment = ?2 AND mode = ?3
+       AND (lease_owner IS NULL OR lease_until <= ?1)
+     ORDER BY created_at LIMIT ?4`,
     [iso(input.now), input.environment, input.mode, input.limit],
   );
 }
@@ -814,4 +819,43 @@ export async function replaceLinkHashForSupport(
     .bind(input.orderId, input.linkHash, iso(input.now))
     .run();
   return result.meta?.changes === 1;
+}
+
+/** Spec 016 R-08: the prepared website reading is saved on the order the first
+ * time it succeeds, so a repeated request never pays for it again. */
+export async function savePreparedReading(
+  db: SpendDb,
+  input: { orderId: string; preparedJson: string },
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE orders SET prepared_json = ?2
+       WHERE id = ?1 AND state = 'open' AND prepared_json IS NULL`,
+    )
+    .bind(input.orderId, input.preparedJson)
+    .run();
+}
+
+/** A customer who changed the website or the brand makes a replacement order;
+ * the old one, if still `open` and of this environment, expires now and its
+ * hold goes back to the daily cap in the same request. Any other id is ignored. */
+export async function expireSupersededOrder(
+  db: SpendDb,
+  input: {
+    orderId: unknown;
+    environment: OrderEnvironment;
+    now: Date;
+  },
+): Promise<boolean> {
+  if (!isOrderId(input.orderId)) return false;
+  const old = await getOrder(db, input.orderId);
+  if (!old || old.environment !== input.environment || old.state !== "open") {
+    return false;
+  }
+  return endOrder(db, {
+    orderId: old.id,
+    from: ["open"],
+    to: "expired",
+    now: () => input.now,
+  });
 }

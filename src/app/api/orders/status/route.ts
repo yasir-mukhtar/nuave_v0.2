@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auditSwitchResponse } from "@/lib/audit/deployment-gate";
+import { newAuditEnabled } from "@/lib/audit/deployment-gate";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import {
   orderNotFoundResponse,
@@ -16,8 +16,8 @@ export const runtime = "nodejs";
  * never the report, the email or the link secret.
  */
 export async function POST(request: Request) {
-  const switchedOff = auditSwitchResponse();
-  if (switchedOff) return switchedOff;
+  // Read-only and paid-work-free, so it keeps answering while the emergency
+  // switch is off: an open audit tab keeps waiting and keeps its order id.
   const rateLimited = await enforceAuditCallerRateLimit(
     request,
     (bindings) => bindings.orderStatusCaller,
@@ -36,9 +36,12 @@ export async function POST(request: Request) {
       now: new Date(),
     });
     if (!status) return orderNotFoundResponse();
-    return NextResponse.json(status, {
-      headers: { "Cache-Control": "no-store" },
-    });
+    // `paused` tells a tab that new work is switched off for now (it is only
+    // waiting; nothing is lost). Read-only: this route never starts paid work.
+    return NextResponse.json(
+      { ...status, ...(newAuditEnabled() ? {} : { paused: true }) },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch {
     return orderUnavailableResponse();
   }
