@@ -76,16 +76,22 @@ export function FreeBrandScreen({
         </div>
       </article>
       <div role="radiogroup" aria-label="Nama bisnis" className="grid gap-1">
-        <label className="flex min-h-11 items-center gap-3 type-copy">
-          <input
-            type="radio"
-            name="smart-brand-name"
-            checked={brand.name === typedName && brand.origin === "owner"}
-            onChange={() => onChange({ name: typedName, origin: "owner" })}
-          />
-          {typedName}{" "}
-          <span className="type-copy-sm text-muted-foreground">Dari Anda</span>
-        </label>
+        {/* Started from the landing hero, only the website is known: there is
+            no typed name to offer. */}
+        {typedName ? (
+          <label className="flex min-h-11 items-center gap-3 type-copy">
+            <input
+              type="radio"
+              name="smart-brand-name"
+              checked={brand.name === typedName && brand.origin === "owner"}
+              onChange={() => onChange({ name: typedName, origin: "owner" })}
+            />
+            {typedName}{" "}
+            <span className="type-copy-sm text-muted-foreground">
+              Dari Anda
+            </span>
+          </label>
+        ) : null}
         {discoveredName && discoveredName !== typedName ? (
           <label className="flex min-h-11 items-center gap-3 type-copy">
             <input

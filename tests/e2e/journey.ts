@@ -66,7 +66,7 @@ export function trackApiCalls(page: Page): Record<string, number> {
 }
 
 export const ENTRY_INVALID_NOTICE =
-  "Isi nama bisnis dan satu URL website publik yang valid.";
+  "Masukkan satu URL website publik yang valid.";
 
 /**
  * Spec 013 R-29: the labelled rich test preparation. Fictional business only —
@@ -172,7 +172,8 @@ export function landingHero(page: Page) {
   return page.getByRole("region", { name: "Mulai audit visibilitas AI" });
 }
 
-/** Landing hero call-to-action → `/audit`. Expects to start on `/`. */
+/** Landing hero call-to-action → `/audit`, carrying the website so the
+ * journey looks it up at once. Expects to start on `/`. */
 export async function openAuditFromLanding(
   page: Page,
   website = "example.com",
@@ -185,6 +186,7 @@ export async function openAuditFromLanding(
   await hero.getByRole("button", { name: "Cek bisnis saya di AI" }).click();
   // The dev server compiles /audit on its first visit; on a cold CI runner
   // that can take longer than the default 10 s expect timeout.
+  // The `?source=` handoff is consumed on arrival and leaves the address bar.
   await expect(page).toHaveURL(/\/audit$/, { timeout: 30_000 });
 }
 

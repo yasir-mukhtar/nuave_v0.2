@@ -317,6 +317,24 @@ const ORIGIN_TEXT = {
   owner: "Dari Anda",
 } as const;
 
+/** The website the landing hero sent as `?source=`, taken once: the parameter
+ * leaves the address bar so a reload or Back never repeats the lookup. */
+function takeSourceHandoff(): string | null {
+  const url = new URL(window.location.href);
+  const raw = url.searchParams.get("source");
+  if (raw === null) return null;
+  url.searchParams.delete("source");
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+  const parsed = parseSourceInput(raw);
+  return parsed && !unsafeSmartSource(parsed.normalizedUrl)
+    ? parsed.normalizedUrl
+    : null;
+}
+
 function intakeMark() {
   return { ...(window.history.state ?? {}), nuaveIntake: true };
 }
@@ -413,6 +431,32 @@ export default function SmartIntakeJourney({
       : null;
   useEffect(() => {
     queueMicrotask(() => {
+      const handoff = takeSourceHandoff();
+      if (handoff) {
+        // The landing hero already took the website: look it up at once so
+        // the owner lands on the brand check without typing it again. A saved
+        // journey for the same website resumes instead of starting over.
+        const saved = readSmartSession();
+        const sameSource =
+          saved &&
+          saved.stage !== "reading" &&
+          saved.identity &&
+          parseSourceInput(saved.entry.source)?.normalizedUrl === handoff;
+        setReady(true);
+        if (sameSource) {
+          setSession(saved);
+          if (saved.order) void checkOrder(saved);
+          return;
+        }
+        clearSmartSession();
+        const fresh: SmartSession = {
+          ...freshSmartSession(),
+          entry: { name: "", source: handoff },
+        };
+        persist(fresh);
+        void inspect(fresh);
+        return;
+      }
       const saved = readSmartSession();
       const runningOrder = readActiveOrder();
       if (!saved && runningOrder) {
@@ -596,13 +640,14 @@ export default function SmartIntakeJourney({
   }
 
   /** Screens 1-3: the FREE lookup only. No AI runs here, and no order exists
-   * yet (spec 016 R-01, D1). */
-  async function inspect() {
+   * yet (spec 016 R-01, D1). The business name is optional: without it the
+   * brand check offers the name found on the website, or asks for one. */
+  async function inspect(session: SmartSession = sessionRef.current) {
     if (inFlight.current) return;
     const parsed = parseSourceInput(session.entry.source);
     const name = session.entry.name.trim();
-    if (!name || !parsed) {
-      setError("Isi nama bisnis dan satu URL website publik yang valid.");
+    if (!parsed) {
+      setError("Masukkan satu URL website publik yang valid.");
       return;
     }
     if (
@@ -621,7 +666,7 @@ export default function SmartIntakeJourney({
       parsed.normalizedUrl === session.identity.inputSource
     ) {
       if (session.prepared && session.selection) {
-        if (name !== session.prepared.typedName) {
+        if (name && name !== session.prepared.typedName) {
           // The stored discovered name was deduped against the old typed name;
           // recompute it so the website's name is offered when it now differs
           // and hidden when it now matches (R-09).
@@ -701,11 +746,18 @@ export default function SmartIntakeJourney({
             ? ("live" as const)
             : ("synthetic-local" as const),
       };
+      const discovered = identity.displayName?.trim() || "";
+      // Without a typed name, the website's name is the starting choice; with
+      // neither, the brand check opens its name field for the owner.
+      if (!name && !discovered) setEditingBrandName(true);
       goStage({
         ...working,
         stage: "brand",
         identity,
-        brand: { name, origin: "owner" },
+        brand:
+          name || !discovered
+            ? { name, origin: "owner" }
+            : { name: discovered, origin: "website" },
         prepared: null,
         selection: null,
         confirmedSelection: null,
@@ -873,7 +925,7 @@ export default function SmartIntakeJourney({
           extraction.error || "Fakta bisnis belum dapat disiapkan.",
         );
       const prepared = prepareUnderstanding({
-        typedName: working.entry.name,
+        typedName: working.entry.name.trim() || brand.name,
         discoveredName: identity.displayName,
         canonicalSource: identity.canonicalUrl,
         draft: extraction.draft,
@@ -1287,7 +1339,7 @@ export default function SmartIntakeJourney({
             <Button
               className="w-fit"
               disabled={busy !== null}
-              onClick={() => void inspect()}
+              onClick={() => void inspect(session)}
             >
               {busy === "lookup" ? "Memeriksa…" : "Periksa"}
             </Button>

@@ -1138,6 +1138,67 @@ async function fillAndPeriksa() {
   fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
 }
 
+describe("landing hero handoff", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+
+  it("looks up the hero's website at once and opens on the brand check", async () => {
+    const { calls } = stubPreparation();
+    window.history.replaceState(
+      null,
+      "",
+      `/audit?source=${encodeURIComponent("https://kedai-fiksi.example/")}`,
+    );
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", {
+      name: "Ini brand yang ingin Anda audit?",
+    });
+    expect(
+      screen.queryByRole("heading", {
+        name: "Periksa visibilitas bisnis Anda",
+      }),
+    ).toBeNull();
+    expect(calls).toEqual(["identity"]);
+    // The website's name is the starting choice; no empty typed-name option.
+    expect(
+      (screen.getByRole("radio", { name: /Kedai Fiksi/ }) as HTMLInputElement)
+        .checked,
+    ).toBe(true);
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    // The parameter is taken once, so a reload never repeats the lookup.
+    expect(window.location.search).toBe("");
+    lanjut();
+    await screen.findByRole("textbox", { name: /email/i });
+  });
+
+  it("asks for the name when the website does not give one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({
+          canonical_url: "https://kedai-fiksi.example/",
+          preparation_mode: "synthetic-local",
+        }),
+      ),
+    );
+    window.history.replaceState(
+      null,
+      "",
+      `/audit?source=${encodeURIComponent("https://kedai-fiksi.example/")}`,
+    );
+    render(<SmartIntakeJourney live={false} />);
+    const field = await screen.findByRole("textbox", { name: "Nama brand" });
+    expect(
+      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    fireEvent.change(field, { target: { value: "Kedai Fiksi" } });
+    expect(
+      (screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+  });
+});
+
 describe("Spec 013 J2 screen frame", () => {
   it("focuses the entry heading on arrival and keeps entry free of flow chrome", async () => {
     stubPreparation();

@@ -8,8 +8,9 @@ import styles from "./LandingAuditHero.module.css";
 const LANDING_TILE_EXPERIMENT_ENABLED = true;
 
 /** Spec 010 R-08: the hero keeps its source-step visual but no longer embeds
- * the old identity/checkout journey — a valid source submits straight to the
- * public /audit entry, which opens on empty business fields. */
+ * the old identity/checkout journey. A valid source travels to /audit, which
+ * looks it up at once and opens on the brand check — the owner never types
+ * the website twice. */
 export default function LandingAuditHero() {
   const router = useRouter();
 
@@ -23,7 +24,9 @@ export default function LandingAuditHero() {
         initialValue=""
         extracting={false}
         error=""
-        onExtract={() => router.push("/audit")}
+        onExtract={(source) =>
+          router.push(`/audit?source=${encodeURIComponent(source)}`)
+        }
         exiting={false}
         showLogo={false}
         autoFocus={false}
