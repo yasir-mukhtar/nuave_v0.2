@@ -50,10 +50,15 @@ verification is against its acceptance criteria.
 any, and the active milestone. The entries below record each package's
 latest status.
 
+- [`017-payment-and-test-pass/SPEC.md`](./017-payment-and-test-pass/SPEC.md)
+  — **Draft** (2026-10-13, revision 1). S4: Midtrans Snap payment (sandbox),
+  founder test pass, short order number, hold moved to payment, founder cap
+  alerts. Waiting for founder answers and approval.
+
 - [`016-order-and-saved-report/SPEC.md`](./016-order-and-saved-report/SPEC.md)
-  — **Approved** (2026-10-12, revision 6). S3: order with email, per-order
-  cost limit, server-side audit that survives tab close, saved report with a
-  private emailed link. Built as S3a and S3b, released in one merge.
+  — **Verified** (2026-10-13). S3: order with email, per-order cost limit,
+  server-side audit that survives tab close, saved report with a private
+  emailed link. Merged `d641701`; AC-21 live run passed (USD 0.1372).
 
 - [`013-airbnb-intake-journey/SPEC.md`](./013-airbnb-intake-journey/SPEC.md)
   — **Verified with documented evidence exceptions** (2026-10-04).
