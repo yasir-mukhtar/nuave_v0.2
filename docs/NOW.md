@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-12
-> Stage: Stage 1 accepted; S0 private report delivery decided; S2 spending cap merged (#127); Spec 016 (S3) approved; S3a building
+> Updated: 2026-10-13
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) merged and deployed (#129, `d641701`); AC-21 live run pending
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -46,13 +46,15 @@
   `feat/s2-spend-guard-integration-20261005` branches (PRs #123 and #125
   closed). S4 adds a per-order cost limit and founder alerts at 80%, 90% and
   100% of the cap.
-- **S3: [Spec 016](../specs/016-order-and-saved-report/SPEC.md) approved**
-  ([2026-10-12](./DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). S3a
-  (order, per-order limit, server-side audit) is being built on
-  `claude/nuave-stage-3-spec-je7pqf` ([PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129)).
-  S3a and S3b go live together in one merge. Founder actions before review:
-  Resend key and domain, Resend tracking off, free D1 `nuave-v2-preview`, CI
-  token D1 and secret permissions, private email list.
+- **S3 is merged and deployed: [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129)**
+  (merge `d641701`, 2026-10-13). [CI run](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/38365476032):
+  `validate`, `verify-main-origin`, D1 migrations 0001–0005 and the deploy all
+  passed; 14 Worker secrets written; the every-minute cron is registered;
+  worker version `e7e4ee58-4e4a-49f3-a6c1-005a94806aea`. Offline criteria
+  AC-01..AC-20 pass (AC-20 with a founder-accepted evidence exception).
+  **Next:** AC-21, one live run on production with a listed email, after
+  Yasir's named approval and budget. Then S3 closeout, then the S4 spec draft.
+  Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or
   billing proof. No unidentified process was killed and no Desktop state was

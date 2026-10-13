@@ -1,10 +1,31 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-12
+> Updated: 2026-10-13
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-13 — S3 decisions after Spec 016
+
+Yasir made these decisions after Spec 016 was approved. PR #129 is merged
+(`d641701`) and deployed.
+
+1. **Late report:** a report that starts before the order's 24-hour deadline
+   and finishes just after it is still delivered. No code change; this is how
+   the merged runner works.
+2. **Secret order code stays as built:** only the customer's browser holds it.
+   It is never shown, emailed or put in a URL.
+3. **Order number (build in S4/S5):** after payment, the customer's email
+   shows a short order number. It is separate from the secret code and
+   unlocks nothing; it only helps the customer and the founder talk about one
+   order.
+4. **Plan:** stay on Cloudflare Workers Free for now. A paid plan needs a new
+   founder decision.
+
+Also on 2026-10-13, Yasir accepted the AC-20 evidence exception (browser-drive
+screenshots kept locally, not in the PR); see the Spec 016
+[verification record](../specs/016-order-and-saved-report/VERIFICATION.md).
 
 ## 2026-10-12 — Approve Spec 016 (S3)
 
