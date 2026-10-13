@@ -1,8 +1,8 @@
 # Spec 017: Payment, founder test pass and cap alerts (S4)
 
-> Status: **Draft** — waiting for founder answers to the open questions and approval. Build nothing before approval.
+> Status: **In review** — founder answers recorded (2026-10-13); independent plan review next, then founder approval. Build nothing before approval.
 > Owner: orchestrator
-> Updated: 2026-10-13 (revision 1)
+> Updated: 2026-10-13 (revision 2: founder answers Q1–Q8)
 > Implements: S4 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > Decision basis: [S0, 2026-10-05](../../docs/DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
 > (D2, D3, D5, D7); price and Midtrans methods (2026-08-17 rows);
@@ -86,7 +86,7 @@ cap use first reaches 80%, 90% and 100%.
 
 1. Free website lookup and "is this your business?" stay as today.
 2. **Order summary** (`OrderScreen`), now with: the total **Rp99.000**
-   ("sekali bayar"), the delivery promise (wording: Q5), links to `/terms`
+   ("sekali bayar"), the delivery promise (Q5), links to `/terms`
    and `/privacy`, the email field, and the button **Bayar Rp99.000**.
 3. Before the payment window opens, the server checks that the remaining
    daily cap covers one full order. If not: "Kuota audit hari ini sudah
@@ -209,7 +209,7 @@ copy.
 
 - **R-17:** After an order is marked paid, the customer gets one "payment
   received" email (Resend, same sender as S3) with the business name, the
-  order number, the amount, "laporan biasanya siap dalam ... " (Q5 wording),
+  order number, the amount, the delivery promise (Q5),
   and the support address. It contains no link and no secret. Sends are
   recorded like S3's ready and failure emails, with a fixed idempotency key
   per order.
@@ -307,33 +307,32 @@ an unchecked notification.
   one test-pass run does too. Record totals, the order numbers and the
   emails received.
 
-## Open questions (founder)
+## Founder decisions (2026-10-13)
 
-- **Q1 — Email list:** keep it in force until G1 (production keys)?
-  *Recommended: yes.* Without it, the sandbox simulator would let anyone
-  start a real AI audit.
-- **Q2 — Hold timing:** reserve the hold when the payment is confirmed
-  (R-11), accepting a small possible overshoot of the cap when two people
-  pay at the same moment? The alternative is to reserve at "Bayar" and
-  release it if the payment fails, which blocks the cap during the payment
-  window. *Recommended: at confirmation.*
-- **Q3 — Payment window:** 60 minutes? Bank transfer often allows 24 hours,
-  but the unpaid order expires after 2 hours. *Recommended: 60 minutes.*
-- **Q4 — Paid but intake not finished:** end it after 7 days as
-  `paid_not_started` with a founder email and a refund by hand?
-  *Recommended: yes.*
-- **Q5 — Delivery promise wording** on the order summary and the
-  payment-received email. *Proposed:* "Laporan biasanya siap dalam 15 menit
-  setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami
-  kembalikan uang Anda." Final legal wording stays in S5.
+All open questions are answered. Yasir chose the recommended option in each
+case.
+
+- **Q1 — Email list:** stays in force for every order while Midtrans runs on
+  sandbox (test-mode) keys, until G1.
+- **Q2 — Hold timing:** the USD 2.00 hold is reserved when the payment is
+  confirmed (R-11). A small overshoot of the daily cap when two payments land
+  at the same moment is accepted.
+- **Q3 — Payment window:** 60 minutes.
+- **Q4 — Paid but intake not finished:** after 7 days the order ends as
+  `paid_not_started`, the founder is emailed, and the founder refunds by hand.
+- **Q5 — Delivery promise wording (approved):** "Laporan biasanya siap dalam
+  15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika
+  gagal, kami kembalikan uang Anda." Final legal wording of Terms and Privacy
+  stays in S5.
 - **Q6 — Test-pass entry:** an unlinked page (for example `/uji`) with one
-  code field, plus the listed email? *Recommended: yes.*
-- **Q7 — Missed notification:** when the customer comes back to a "waiting"
-  order, may the server ask Midtrans' status API directly (rate limited) and
-  apply the same checks? *Recommended: yes.*
-- **Q8 — Founder alert address:** which address gets cap alerts and
-  `paid_not_started` notices? *Suggested:* the founder's own address, as a
-  Worker secret.
+  code field, plus an email on the founder's list.
+- **Q7 — Missed notification:** when a customer returns to a waiting order,
+  the server may ask Midtrans' status API directly (rate limited), with the
+  same checks as R-05.
+- **Q8 — Founder alert address:** `hello@nuave.ai`, set as the Worker secret
+  `NUAVE_FOUNDER_ALERT_EMAIL`. It gets cap alerts and `paid_not_started`
+  notices.
+
 - **Founder actions before AC-14:** Midtrans sandbox account with QRIS, bank
   transfer, GoPay and DANA enabled; sandbox server and client keys as GitHub
   secrets; notification URL set to

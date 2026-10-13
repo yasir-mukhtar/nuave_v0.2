@@ -6,6 +6,26 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-13 — S4 answers for Spec 017 (draft)
+
+Yasir answered the open questions of the draft
+[Spec 017](../specs/017-payment-and-test-pass/SPEC.md) (S4). The spec is not
+yet approved; an independent plan review (Opus, maximum effort) comes first,
+and the build happens in a new session after approval.
+
+- Keep the founder's email list while Midtrans runs in sandbox (test mode).
+- Reserve the USD 2.00 order hold when the payment is confirmed.
+- Payment window 60 minutes.
+- A paid order with no approved questions after 7 days ends; the founder is
+  emailed and refunds by hand.
+- Delivery promise wording approved: "Laporan biasanya siap dalam 15 menit
+  setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami
+  kembalikan uang Anda."
+- Founder test pass through an unlinked page with a secret code plus a
+  listed email.
+- The server may ask Midtrans directly about a waiting payment.
+- Founder alerts go to `hello@nuave.ai`.
+
 ## 2026-10-13 — S3 decisions after Spec 016
 
 Yasir made these decisions after Spec 016 was approved. PR #129 is merged
