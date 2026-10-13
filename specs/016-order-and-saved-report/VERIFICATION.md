@@ -4,7 +4,7 @@
 > Reviewer: independent Opus reviewer (did not write the code)
 > Date: 2026-10-12
 > Spec version: revision 6, `a006048` (approved 2026-10-12)
-> Implementation: [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129), branch `claude/nuave-stage-3-spec-je7pqf`; last reviewed head `da04910` (PASS+NOTES); notes closed in `beb86ab` and this record
+> Implementation: [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129), branch `claude/nuave-stage-3-spec-je7pqf`; last reviewed head `ae2b711` (PASS+NOTES, Opus max, [comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129#issuecomment-6139360797))
 
 ## Scope reviewed
 
@@ -30,6 +30,7 @@
 | `da04910` | S3a+S3b | PASS+NOTES | New run-mix test added in `beb86ab`; this record corrected (AC-20 evidence, figures) |
 | `a5e0920` | Full PR, Opus max | PASS+NOTES | 8 notes plus 2 Devin findings fixed in `83df277`, `b10973b` |
 | `b10973b` | Full PR, Opus max | FAIL | Saved-order check raced with approval (CI red); fixed in `cceeb90`, `cb40344` |
+| `ae2b711` | Full PR, Opus max | PASS+NOTES | Race fixed with a red-green test; notes were records only |
 
 ## Acceptance results
 
@@ -94,7 +95,7 @@ deviations, all accepted by the reviewer:
   37 (`runner-worst-case.test.ts`). A failing question step can cost slightly
   more than its estimate; the reviewer's worst count for a real run is about
   43, still under 50.
-- Worker size: 2924 KiB gzipped on `da04910` against the Free limit of 3072 KiB (95%).
+- Worker size: 2925 KiB gzipped on `ae2b711`. The project kept a 3072 KiB (3 MiB) budget; the reviewer notes that Cloudflare's page now lists a larger Free limit, so this budget is a self-imposed margin.
 - Largest single reservation: USD 0.41. A normal order holds at most about
   USD 0.61 at one time; at USD 2.00 an order survives 4 unknown-cost calls.
 - Not measured offline: CPU time per cron run against Free's 10 ms. This is
@@ -102,11 +103,13 @@ deviations, all accepted by the reviewer:
 
 ## Checks run
 
-- `npm run verify` (reviewer, at `da04910`): 114 files / 1993 unit tests;
-  Playwright 51 + 3. The sandbox's stock browser is missing, so the browser
-  run used the installed Chromium.
-- `node scripts/test-workers.mjs` (reviewer, at `da04910`): 30/30.
-- CI `validate` and `Deploy PR preview`: green on `da04910`.
+- `npm run verify` (reviewer, at `ae2b711`): 115 files / 2029 unit tests;
+  both builds; Playwright 51 + 3. The sandbox's stock browser is missing, so the
+  browser run used the installed Chromium.
+- `npx playwright test tests/e2e/new-intake-glm.spec.ts --repeat-each=5`: 40/40.
+- `node scripts/test-workers.mjs` (reviewer, at `ae2b711`): 31/31, including the
+  cron firing first in a fresh worker.
+- CI `validate` and `Deploy PR preview`: green on `ae2b711`.
 
 ## Open before merge
 
@@ -121,6 +124,9 @@ deviations, all accepted by the reviewer:
 **Pass with one pending criterion and one founder-accepted evidence exception.** All offline
 criteria pass. AC-20's browser-drive evidence is local only (see above). AC-21
 stays pending until the founder-approved live run.
+
+**Founder decision, 2026-10-13:** a report step claimed before the 24-hour
+deadline that finishes just after it is still delivered (no code change).
 
 **Founder decision, 2026-10-13:** Yasir accepted the AC-20 evidence exception
 (drive screenshots local only and from a pre-fix head; the final head is
