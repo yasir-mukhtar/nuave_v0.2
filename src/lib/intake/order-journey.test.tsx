@@ -523,6 +523,27 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
   });
 
+  it("a saved order that is already running (approved in another tab) opens the progress view, not the order screen", async () => {
+    let state = "open";
+    const server = stubServer({
+      status: () => ({ state, completed: 2, total: 10, questions: [] }),
+    });
+    const first = render(<SmartIntakeJourney live={false} />);
+    await toQuestions();
+    first.unmount();
+    state = "running";
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(/Anda boleh menutup halaman ini/);
+    expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
+    expect(readActiveOrder()).toBe(ORDER_ID);
+    expect(
+      screen.queryByRole("heading", { name: "Ringkasan pesanan" }),
+    ).toBeNull();
+    expect(
+      server.calls.filter((c) => c === "/api/orders/approve"),
+    ).toHaveLength(0);
+  });
+
   it("a slow saved-order check that answers after the questions were approved does not bring the progress back", async () => {
     const server = stubServer({});
     const first = render(<SmartIntakeJourney live={false} />);

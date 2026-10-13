@@ -7,8 +7,10 @@ const mocks = vi.hoisted(() => ({ getCloudflareContext: vi.fn() }));
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
 }));
-// Each step asks for the report and then its language fix (two provider calls)
-// and fails with a provider error, so the order is retried.
+// Follows the real pipeline (report-pipeline.ts): each step asks for the report
+// and then its language fix. If the fix is refused (the call ceiling) it is
+// skipped and the report is saved with a language warning; if the fix was made,
+// this stand-in then fails with a provider error, so the order is retried.
 vi.mock("../audit/report-pipeline", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../audit/report-pipeline")>()),
   assertReportGenerationGate: () => {},
@@ -16,9 +18,17 @@ vi.mock("../audit/report-pipeline", async (importOriginal) => ({
     input: unknown,
     generate: (...args: unknown[]) => Promise<unknown>,
   ) => {
+    const { AuditBudgetError, AuditCallExecutionError } =
+      await import("../audit/telemetry");
     await generate(input);
-    await generate(input, { draft: {}, violations: [] });
-    const { AuditCallExecutionError } = await import("../audit/telemetry");
+    try {
+      await generate(input, { draft: {}, violations: [] });
+    } catch (error) {
+      if (error instanceof AuditBudgetError) {
+        return { report_version: "nuave-report-v3" }; // saved, fix skipped
+      }
+      throw error;
+    }
     throw new AuditCallExecutionError("upstream", []);
   },
 }));
@@ -45,7 +55,7 @@ afterEach(() => {
 // Spec 016 R-19: an order makes at most three report provider calls in all. A
 // language fix is a report call, counted in D1 before it is sent.
 describe("the report call ceiling counts calls, not steps", () => {
-  it("two failing steps that each ask for a language fix make three report calls in all, never a fourth, and the order fails", async () => {
+  it("two steps that each ask for a language fix make three report calls in all, never a fourth: the second fix is skipped and the report is saved", async () => {
     const calls = { report: 0 };
     const deps: RunnerDeps = {
       db: d1.db,
@@ -67,19 +77,20 @@ describe("the report call ceiling counts calls, not steps", () => {
       d1.query<{
         state: string;
         report_attempts: number;
-        failure_code: string;
+        report_json: string | null;
       }>(
-        `SELECT state, report_attempts, failure_code FROM orders WHERE id = '${id}'`,
+        `SELECT state, report_attempts, report_json FROM orders WHERE id = '${id}'`,
       )[0]!;
-    for (let i = 0; i < 25 && row().state !== "failed"; i += 1) {
+    for (let i = 0; i < 25 && row().state !== "delivered"; i += 1) {
       await runOrders(deps);
       clock = new Date(clock.getTime() + 60_000);
     }
-    expect(row().state).toBe("failed");
-    expect(row().failure_code).toBe("report_limit_exhausted");
+    // Step 1: report + fix (2 calls, then a provider error). Step 2: the report
+    // (call 3); its fix would be a fourth call, so it is refused and skipped.
+    expect(calls.report).toBe(3);
     expect(row().report_attempts).toBe(3);
-    expect(calls.report).toBe(3); // step 1: report + fix; step 2: report only
-    // Later runs never call the provider again.
+    expect(row().report_json).toBeTruthy();
+    expect(row().state).toBe("delivered");
     for (let i = 0; i < 3; i += 1) {
       await runOrders(deps);
       clock = new Date(clock.getTime() + 60_000);
