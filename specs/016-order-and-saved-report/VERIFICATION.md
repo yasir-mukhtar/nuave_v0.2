@@ -52,7 +52,7 @@
 | AC-17 | Pass | `support.test.ts` (`resend`, `off`, `show`, bad ID, sender made before the link changes) |
 | AC-18 | Pass | `report-link.test.ts` (provider inputs and console lines); `mail.test.ts` (key never logged) |
 | AC-19 | Pass | `order-journey.test.tsx`; e2e reload, ended order, 7-day removal; synthetic order writes no ledger rows |
-| AC-20 | Pass, with evidence exception | `npm run verify` passes on `da04910` (reviewer). The verify-nuave drives (6 features, 0 external requests) passed in the worker's sandbox on a pre-fix S3b head (run `20261012T193415Z-6z5v`), with screenshots kept only in the git-ignored `.local-evidence/`. They are **not attached to the PR** and were **not re-run on the final head**: the reviewer's sandbox blocks the skill's port check (`lsof`). The same journey is covered by the browser tests in `npm run verify`. |
+| AC-20 | Pass, with founder-accepted evidence exception (2026-10-13) | `npm run verify` passes on `da04910` (reviewer). The verify-nuave drives (6 features, 0 external requests) passed in the worker's sandbox on a pre-fix S3b head (run `20261012T193415Z-6z5v`), with screenshots kept only in the git-ignored `.local-evidence/`. They are **not attached to the PR** and were **not re-run on the final head**: the reviewer's sandbox blocks the skill's port check (`lsof`). The same journey is covered by the browser tests in `npm run verify`. |
 | AC-21 | Pending | Live run on production after the combined deploy, with a listed email; needs named founder approval and budget |
 
 ## Requirements trace
@@ -106,6 +106,11 @@ deviations, all accepted by the reviewer:
 
 ## Verdict
 
-**Pass with one pending criterion and one evidence exception.** All offline
+**Pass with one pending criterion and one founder-accepted evidence exception.** All offline
 criteria pass. AC-20's browser-drive evidence is local only (see above). AC-21
 stays pending until the founder-approved live run.
+
+**Founder decision, 2026-10-13:** Yasir accepted the AC-20 evidence exception
+(drive screenshots local only and from a pre-fix head; the final head is
+covered by the browser tests in `npm run verify`). The AC-21 live run after
+the merge is the end-to-end check with real email.
