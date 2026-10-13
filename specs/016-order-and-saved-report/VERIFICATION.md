@@ -27,7 +27,9 @@
 | `52e9e98` | S3a | FAIL | Deadline cap allowed a paid step on an overdue order; fixed in `a7edecc` |
 | `a7edecc` | S3a | PASS+NOTES | Ledger now refuses calls past the deadline (`3afbf02`) |
 | `0adebd2` | S3a+S3b | PASS+NOTES | 7 notes fixed in `9caa6f5` |
-| `da04910` | S3a+S3b, final | PASS+NOTES | New run-mix test added in `beb86ab`; this record corrected (AC-20 evidence, figures) |
+| `da04910` | S3a+S3b | PASS+NOTES | New run-mix test added in `beb86ab`; this record corrected (AC-20 evidence, figures) |
+| `a5e0920` | Full PR, Opus max | PASS+NOTES | 8 notes plus 2 Devin findings fixed in `83df277`, `b10973b` |
+| `b10973b` | Full PR, Opus max | FAIL | Saved-order check raced with approval (CI red); fixed in `cceeb90`, `cb40344` |
 
 ## Acceptance results
 
@@ -71,17 +73,27 @@ deviations, all accepted by the reviewer:
   plan's limits.
 - A failed order with no accepted ready email has its link cleared. The saved
   report is kept for the founder.
+- The paid website reading is also saved on the server with its order
+  (migration 0005), so a repeat request for the same open order costs nothing.
+  This goes slightly beyond Q4 (progress kept in the browser only); the email
+  is still never stored in the browser.
+- A replacement order (website changed after the order screen) expires the old
+  open order and returns its hold at once.
+- The status answer keeps working while the emergency switch is off (`paused`),
+  and only an expired or unknown order sends a returning customer back to the
+  order screen.
 - The ready-email idempotency key includes a hash prefix of the secret, so a
   crash cannot cause a refused retry. A lost acceptance record can still
   cause a second email, and then only the newest link works (D4).
 
 ## Measurements
 
-- One cron run, worst live mixes (tests in `runner-worst-case.test.ts` and
-  `runner.test.ts`, measured on `beb86ab`): an email-only delivery plus a
-  report step uses 40 D1 queries and 10 outbound requests; a report step alone
-  uses 33 and 9; two question steps use at most 40. The tests fail above 40
-  queries or 10 outbound requests. The Free plan allows 50 of each.
+- One cron run: Cloudflare Free counts D1 queries and outbound requests
+  together (50 per run). A per-run meter starts work only if its estimated cost
+  fits under 40 combined. Across 24 tested orderings the measured maximum is
+  37 (`runner-worst-case.test.ts`). A failing question step can cost slightly
+  more than its estimate; the reviewer's worst count for a real run is about
+  43, still under 50.
 - Worker size: 2924 KiB gzipped on `da04910` against the Free limit of 3072 KiB (95%).
 - Largest single reservation: USD 0.41. A normal order holds at most about
   USD 0.61 at one time; at USD 2.00 an order survives 4 unknown-cost calls.

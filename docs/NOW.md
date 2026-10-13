@@ -131,7 +131,7 @@
   only Worker secrets. The deploy job applies D1 migrations first.
 - **Emergency stop (after PR #129):** in the Cloudflare dashboard, worker
   `nuave-v2` → Settings → Variables and Secrets, set `NUAVE_NEW_AUDIT_ENABLED`
-  to `false`. This stops new orders, paid steps and the cron within a minute; an
+  to `false` (change it; do not delete it, or the build value `true` applies). This stops new orders, paid steps and the cron within a minute; an
   open audit tab shows "waiting". The next deploy from `main` sets it back to
   `true` unless `ci.yml` is changed too. Changing only the build value in
   `ci.yml` stops nothing.
