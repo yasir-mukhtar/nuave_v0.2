@@ -469,7 +469,14 @@ export default function SmartIntakeJourney({
           ? "gone"
           : "open";
       if (state === "open") return;
-      expireOrder(saved);
+      // The answer may arrive late (a slow server): if the customer has already
+      // approved the questions, the saved progress is gone and the order is
+      // running, not ended. Only expire while this same saved order is still
+      // the journey's own.
+      const current = readSmartSession();
+      if (!mounted.current || !current || current.order?.id !== saved.order!.id)
+        return;
+      expireOrder(current);
     } catch {
       // Offline or the server is busy: keep the saved order and carry on.
     }

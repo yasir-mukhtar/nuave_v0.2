@@ -523,6 +523,50 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
   });
 
+  it("a slow saved-order check that answers after the questions were approved does not bring the progress back", async () => {
+    const server = stubServer({});
+    const first = render(<SmartIntakeJourney live={false} />);
+    await toQuestions();
+    first.unmount();
+    // Reopen: the saved order is checked, but that answer is held back.
+    const normal = globalThis.fetch;
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    let statusCalls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (String(input) === "/api/orders/status") {
+          statusCalls += 1;
+          await held;
+          // By now the audit is running on the server.
+          return Response.json({
+            state: "running",
+            completed: 0,
+            total: 10,
+            questions: [],
+          });
+        }
+        return normal(input, init);
+      }),
+    );
+    render(<SmartIntakeJourney live={false} />);
+    await heading("Periksa pertanyaan audit");
+    fireEvent.click(screen.getByRole("button", { name: "Mulai audit" }));
+    await screen.findByText(/Anda boleh menutup halaman ini/);
+    expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
+    release();
+    await waitFor(() => expect(statusCalls).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Still cleared (R-31), still the running screen, order id kept.
+    expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
+    expect(readActiveOrder()).toBe(ORDER_ID);
+    expect(screen.getByText(/Anda boleh menutup halaman ini/)).toBeTruthy();
+    expect(
+      server.calls.filter((c) => c === "/api/orders/approve"),
+    ).toHaveLength(1);
+  });
+
   it("an order that ended before approval returns to the order screen with the answers kept", async () => {
     const server = stubServer({
       approveResponse: () =>
