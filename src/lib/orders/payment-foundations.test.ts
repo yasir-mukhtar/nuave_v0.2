@@ -635,6 +635,29 @@ describe("replacing an order (R-19)", () => {
     expect(d1.query("SELECT id FROM orders")).toHaveLength(1);
   });
 
+  it("replacing a test-pass order whose calls passed its hold flags the overrun, as ending it does", async () => {
+    const old = await makeOrder(d1.db, { mode: "live", payment: "test" });
+    await write(
+      `INSERT INTO provider_spend
+         (id, day, status, provider, stage, reserved_units, held_units, created_at, kind, order_id, test)
+       VALUES ('over', '2026-10-12', 'settled', 'openai', 'observation', ?2, ?2, 'x', 'order_call', ?1, 1)`,
+      old,
+      LIMIT + 1,
+    );
+    d1.query(
+      `UPDATE orders SET lease_owner = 'x', lease_until = 'y' WHERE id = '${old}' RETURNING 1`,
+    );
+    expect(row(old).overrun).toBe(0);
+    const next = await newOrder("unpaid", { previousOrderId: old });
+    expect(next.result).toBe("created");
+    expect(row(old)).toMatchObject({
+      state: "expired",
+      overrun: 1,
+      lease_owner: null,
+      lease_until: null,
+    });
+  });
+
   it("a test-pass or legacy order that is still open is ended and its hold returns", async () => {
     for (const payment of ["test", "legacy"] as const) {
       const old = await makeOrder(d1.db, { mode: "live", payment });

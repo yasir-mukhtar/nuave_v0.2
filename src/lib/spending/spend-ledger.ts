@@ -351,7 +351,11 @@ function releaseStatements(
   return [
     db
       .prepare(
-        `UPDATE orders SET state = 'expired', ended_at = ?3
+        `UPDATE orders SET state = 'expired', ended_at = ?3,
+             lease_owner = NULL, lease_until = NULL,
+             overrun = CASE
+               WHEN ${CALL_SUM("?1")} > COALESCE(${HOLD_AMOUNT("?1")}, 0) THEN 1
+               ELSE overrun END
          WHERE id = ?1 AND environment = ?2 AND state = 'open'
            AND (payment_kind IS NULL OR payment_kind = 'test')`,
       )

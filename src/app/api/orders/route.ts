@@ -55,7 +55,20 @@ export async function POST(request: Request) {
     request,
     (bindings) => bindings.orderCreateCaller,
   );
-  if (rateLimited) return rateLimited;
+  if (rateLimited) {
+    // AC-17: a limited request that carries a test-pass code gets the same
+    // neutral answer as every other refused test pass. The body is read from a
+    // copy and never kept or logged.
+    const limitedBody = (await request
+      .clone()
+      .json()
+      .catch(() => null)) as Record<string, unknown> | null;
+    return limitedBody &&
+      typeof limitedBody === "object" &&
+      limitedBody.test_pass_code !== undefined
+      ? orderUnavailableResponse()
+      : rateLimited;
+  }
 
   // In production the mode must be set on purpose: a missing or mistyped
   // NUAVE_AUDIT_MODE makes no order (it would otherwise fall back to synthetic).

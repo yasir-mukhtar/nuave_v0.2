@@ -924,9 +924,17 @@ describe("the founder test pass, server side (R-16, R-17, R-20, AC-17)", () => {
     });
     expect((await create({ test_pass_code: "a".repeat(30) })).status).toBe(503);
     expect((await create({ test_pass_code: "b".repeat(30) })).status).toBe(503);
-    // The third caller is limited whatever it sends, even the right code.
-    expect((await createTest()).status).toBe(429);
-    expect(calls).toBe(3);
+    // The third caller is limited whatever it sends. A test-pass request gets
+    // the same neutral answer as any refusal (AC-17); an ordinary order still
+    // gets 429.
+    const limitedTest = await createTest();
+    expect(limitedTest.status).toBe(503);
+    expect(await limitedTest.json()).toEqual({
+      error: UNAVAILABLE,
+      code: "ORDER_UNAVAILABLE",
+    });
+    expect((await create()).status).toBe(429);
+    expect(calls).toBe(4);
     expect(orders()).toEqual([]);
   });
 
