@@ -692,6 +692,11 @@ case.
   The page's status check (R-14) also asks Get Status by the attempt's
   `order_id` when transaction IDs are known, still at most once per attempt
   per 30 seconds.
+- **Q13 — Screen after 7 days with no Midtrans answer (asked during the
+  build): A.** The closed-unknown screen shows the order number and
+  support only, no new payment. This settles the difference between the
+  Failure table and the Departures section in favour of the Failure table.
+- **AC-25 budget:** USD 2.00, approved 2026-10-14.
 
 **Founder actions before AC-25:**
 

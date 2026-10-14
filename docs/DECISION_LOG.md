@@ -22,6 +22,15 @@ did not decide:
   transaction IDs it already knows. A second payment try whose notification
   was lost is then found at once. It is still at most one check per attempt
   per 30 seconds.
+- **Q13 — A:** when a payment attempt has no final answer from Midtrans
+  after 7 days (R-06 "closed unknown"), the customer's screen shows only the
+  order number and "Hubungi support@nuave.ai", with no "Coba bayar lagi".
+  The founder is told after 24 hours (`payment_unknown`) and settles the
+  case by hand, so a customer is never invited to pay twice.
+
+Yasir also approved the S4 live check (Spec 017 AC-25) with a budget of
+USD 2.00, to run after he merges and deploys PR #137. It does not approve
+merge or deploy.
 
 ## 2026-10-14 — Approve Spec 017 (S4)
 

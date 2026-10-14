@@ -3,7 +3,7 @@
 > Result: **Offline criteria PASS+NOTES** (AC-01 to AC-24, final exact-head review; notes fixed). **AC-25 (live) not run**: needs a named founder approval and budget. Spec 017 is not Verified until AC-25 passes.
 > Reviewer: independent Opus reviewers per slice and on the full PR (did not write the code)
 > Date: 2026-10-14
-> Spec version: revision 6 (approved 2026-10-14, merged in PR #136 as `5db12a4`), plus founder answers Q11 and Q12 given during the build (Q13 open)
+> Spec version: revision 6 (approved 2026-10-14, merged in PR #136 as `5db12a4`), plus founder answers Q11, Q12 and Q13 given during the build
 > Implementation: [PR #137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137), branch `claude/vibrant-noether-5n3b4o`
 
 ## Scope reviewed
@@ -25,7 +25,7 @@
   return, waiting and checking screens; locks while a payment is open and
   after payment; replacement order; `/uji`; synthetic simulated payment;
   `verify-nuave` skill; `ci.yml` Worker secrets. The closed-unknown screen
-  shows only the order number and support (founder question Q13 open).
+  shows only the order number and support (founder answer Q13 A).
 - Environments: unit tests (vitest with the SQLite D1 stand-in and a fake
   Midtrans), browser tests (Playwright on `next dev` with local D1), the built
   worker in `wrangler dev` (`npm run test:workers`), the `verify-nuave`
@@ -128,9 +128,8 @@ then dropped; a chargeback of a needs-refund transaction stays on the
 
 No open blocking or should-fix finding. Notes kept, for the founder:
 
-- **Q13 (open):** after 7 days with no Midtrans answer the screen shows
-  only the order number and support, no new payment. The spec's Departures
-  allow a new payment; its Failure table shows support only.
+- **Q13 (answered A):** after 7 days with no Midtrans answer the screen
+  shows only the order number and support, no new payment.
 - **Email list in synthetic mode:** R-16 says the list "always applies in
   S4"; the code applies it in live mode only, as S3 does. Synthetic orders
   spend nothing and call no outside service.
