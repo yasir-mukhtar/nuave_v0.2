@@ -986,9 +986,10 @@ export default function SmartIntakeJourney({
           previousOrderId
         ) {
           // R-19: the old order is paid or waiting for payment: no new order.
-          // The page shows that order's own state, with ITS OWN website and
-          // business (never the ones on this screen). If this screen no longer
-          // has them, nothing is recorded and the message stands.
+          // The page shows that order's own state, with its own website and
+          // business as kept (an older saved session without them falls back
+          // to this screen's). If there is no such order, nothing is recorded
+          // and the message stands.
           if (
             previousOrder &&
             previousOrder.id === previousOrderId &&

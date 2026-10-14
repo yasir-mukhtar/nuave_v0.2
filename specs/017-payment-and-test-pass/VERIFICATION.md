@@ -43,7 +43,7 @@
 | `f591f06` | S4c re-review | FAIL (one should-fix) | A chargeback-ended order was still listed in `support refunds`; fixed in `c6f96c0` (red-green test) |
 | `0bbade8` | S4d | PASS+NOTES | 409 replacement saved the old order under the new business; lock while a payment is open; closed-unknown screen; no simulated payment on production; fixed in `cb4d3dd` |
 | `aa24489` | Full PR, exact head | PASS+NOTES | Two S4d fixes lacked tests; chargeback email wording; no refund notice after an outside refund; stuck 409 after "Coba bayar lagi"; trim test-pass secret; stale comment; fixed in `f2ce2a6` (red-green tests) |
-| `f2ce2a6`+ | Delta re-check | see PR | Re-check of the final fixes on the exact head |
+| `23cef95` | Delta re-check, exact head | PASS+NOTES | Fixes confirmed red-green; notes were wording only, fixed in the next commit |
 
 ## Acceptance results
 
@@ -72,7 +72,7 @@
 | AC-21 | Pass | `cron.test.ts` ("the cron with the emergency switch off or AI settings missing") |
 | AC-22 | Pass | `runner-worst-case.test.ts` ("the spec 017 tasks in the cron's run budget": idle run, large reconciliations, worst mix ≤ 40, waits at most one run, legacy orders) |
 | AC-23 | Pass | `order-routes.test.ts`, `payment-routes.test.ts` (email list with either production switch value) |
-| AC-24 | Pass | `npm run verify` green on `aa24489` (reviewer) and `f2ce2a6` (worker); `verify-nuave drive all` 6/6 PASSED on `aa24489` (reviewer), run `20261014T104333Z-8mas` in git-ignored `.local-evidence/`, with a local `lsof` stand-in outside the repo (this machine has no `lsof`) |
+| AC-24 | Pass | `npm run verify` green on `aa24489` (reviewer) and `f2ce2a6` (worker); `verify-nuave drive all` 6/6 PASSED on `aa24489` (reviewer), run `20261014T104333Z-8mas` in git-ignored `.local-evidence/`, with a local `lsof` stand-in outside the repo (this sandbox's `lsof` cannot see the listener) |
 | AC-25 | Not run | Live sandbox check after deploy; needs a named founder approval and budget |
 
 ## Requirements trace
@@ -121,7 +121,8 @@ then dropped; a chargeback of a needs-refund transaction stays on the
   browser 62; disabled-config 3; passed.
 - PR CI `validate`: success on `789c291` and `aa24489`; the exact merge head
   is checked by CI on the PR.
-- Every new test in `f2ce2a6` was shown failing with its fix reverted.
+- Every fix in `f2ce2a6` has a test shown failing without it (the reviewer
+  repeated this for the lock tests and the 409 test).
 
 ## Findings
 
