@@ -6,6 +6,21 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-14 — Approve Spec 017 (S4)
+
+Yasir approved [Spec 017](../specs/017-payment-and-test-pass/SPEC.md)
+revision 6 (PR #136): Midtrans Snap payment in sandbox, founder test pass,
+short order number, the order hold at payment confirmation, and founder
+notices and cap alerts. Independent plan reviews (Opus, maximum effort): FAIL
+on revisions 2, 3, 4 and 5; PASS+NOTES on revision 6, notes applied. Founder
+answers Q1–Q10 are recorded in the spec.
+
+This approves the build of S4 in a new session (Sonnet worker, Opus review),
+on a feature branch with a pull request. It does not approve merge, deploy,
+live AI calls, real emails, live sandbox payments or spending; AC-25 needs a
+separate named approval. The founder reports the Midtrans sandbox account,
+redirect URLs and GitHub secrets as set up (2026-10-14).
+
 ## 2026-10-14 — Bank transfer kept; Workers Paid before G1
 
 Yasir answered two questions raised by the plan reviews of

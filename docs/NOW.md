@@ -68,8 +68,10 @@
   [Spec 017](../specs/017-payment-and-test-pass/SPEC.md): founder answers
   recorded ([2026-10-13](./DECISION_LOG.md#2026-10-13--s4-answers-for-spec-017-draft));
   revision 6 passed five plan review rounds (last: PASS+NOTES, notes
-  applied) and is **ready for founder approval**; the build runs in a new
-  session. Build nothing before approval.
+  applied) and was **approved by Yasir on 2026-10-14**
+  ([decision](./DECISION_LOG.md#2026-10-14--approve-spec-017-s4)). **Next:**
+  build S4 in a new session (Sonnet worker, Opus review). Midtrans sandbox,
+  redirect URLs and GitHub secrets are set up by the founder.
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or

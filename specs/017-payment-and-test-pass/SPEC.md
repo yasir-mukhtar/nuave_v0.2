@@ -1,6 +1,6 @@
 # Spec 017: Payment, founder test pass and cap alerts (S4)
 
-> Status: **In review — ready for founder approval.** Revision 6 passed the diff check (PASS+NOTES, notes applied). Build nothing before approval; the build runs in a new session.
+> Status: **Approved** — Yasir approved revision 6 on 2026-10-14 ([decision](../../docs/DECISION_LOG.md#2026-10-14--approve-spec-017-s4)). Five plan review rounds; the last was PASS+NOTES with notes applied. The build runs in a new session.
 > Owner: orchestrator
 > Updated: 2026-10-14 (revision 6: closure-check findings B1–B4 and diff-check notes applied)
 > Implements: S4 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
@@ -695,8 +695,8 @@ case.
 - In the Midtrans sandbox dashboard, set the Finish, Unfinish and Error
   redirect URLs to `https://v2.nuave.ai/audit`. Midtrans uses them for
   failed tries and some wallet returns that the per-transaction fields do not
-  cover. If the old v0.1 site still uses the same Midtrans account, tell the
-  orchestrator first.
+  cover. **Done by the founder, 2026-10-14.** The sandbox account, payment
+  methods and GitHub secrets were also reported done on 2026-10-14.
 - The notification address is sent with each transaction (R-05), so the
   account's Payment Notification URL does not need to change.
 - The CI token keeps Worker-secret permission.
