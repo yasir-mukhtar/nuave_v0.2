@@ -684,6 +684,15 @@ case.
   stay on Free. This replaces the 2026-10-13 decision "stay on Workers Free
   for now". CPU time is recorded in AC-25; R-23 has no offline CPU target.
 
+- **Q11 — Partial chargeback (asked during the build): B.** A
+  `partial_chargeback` is handled like a full `chargeback` (R-15): before
+  approval, on the paying transaction, the order ends `refunded`; after, it
+  is recorded; a founder notice is always sent.
+- **Q12 — Lost notification of a second try (asked during the build): A.**
+  The page's status check (R-14) also asks Get Status by the attempt's
+  `order_id` when transaction IDs are known, still at most once per attempt
+  per 30 seconds.
+
 **Founder actions before AC-25:**
 
 - Midtrans sandbox account with QRIS, bank transfer, GoPay and DANA active.
