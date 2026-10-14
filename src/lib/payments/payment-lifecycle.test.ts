@@ -702,6 +702,28 @@ describe("refunds, partial refunds and chargebacks (R-15, AC-16)", () => {
     ).toEqual([]);
   });
 
+  it("a full chargeback after a partial chargeback of the same transaction still records its own chargeback notice, and a copy is a duplicate (Q11)", async () => {
+    const { id, tx } = await paidOrder();
+    await refundAnswer(tx, "partial_chargeback");
+    expect(await refundAnswer(tx, "chargeback", at(2 * HOUR))).toBe(
+      "refund_recorded",
+    );
+    expect(noticeKinds().sort()).toEqual(["chargeback", "partial_chargeback"]);
+    // The order stays ended once, as refunded.
+    expect(order(id)).toMatchObject({
+      state: "failed",
+      failure_code: "refunded",
+      refunded_at: at(HOUR).toISOString(),
+    });
+    expect(await refundAnswer(tx, "chargeback", at(3 * HOUR))).toBe(
+      "duplicate",
+    );
+    expect(await refundAnswer(tx, "partial_chargeback", at(3 * HOUR))).toBe(
+      "duplicate",
+    );
+    expect(notices()).toHaveLength(2);
+  });
+
   it("a partial chargeback after approval is only recorded, with a notice: the audit keeps running", async () => {
     const { id, tx } = await paidOrder();
     await approve(d1.db, id, { mode: "live", now: at(MIN) });
@@ -1077,11 +1099,52 @@ describe("cron reconciliation (R-14, AC-15)", () => {
     expect(await run(windowEnd + 200 * MIN)).toBe(0);
     expect(await run(windowEnd + 5 * HOUR)).toBe(1);
     // After 24 hours: daily.
-    expect(await run(windowEnd + 25 * HOUR)).toBe(0); // 20 hours since the last
-    expect(await run(windowEnd + 29 * HOUR)).toBe(1);
+    // The first run after 24 hours is due at once (the R-14 notice).
+    expect(await run(windowEnd + 25 * HOUR)).toBe(1);
+    expect(await run(windowEnd + 29 * HOUR)).toBe(0);
     expect(await run(windowEnd + 40 * HOUR)).toBe(0);
-    expect(await run(windowEnd + 53 * HOUR)).toBe(1);
+    expect(await run(windowEnd + 50 * HOUR)).toBe(1);
     expect(attemptRows()[0]!.id).toBe(attempt.id);
+  });
+
+  describe.each([
+    ["Get Status keeps failing", "failing"],
+    ["a transaction stays pending", "pending"],
+  ])("with the every-minute cron, when %s", (_name, kind) => {
+    it("tells the founder just after 24 hours and closes just after 7 days (R-14, R-06)", async () => {
+      const attempt = await endedAttempt(HOUR);
+      const windowEnd = HOUR;
+      const id = attempt.order_id;
+      if (kind === "failing") {
+        fake.statusMode = "http_error";
+      } else {
+        fake.addTransaction({
+          orderId: attempt.midtrans_order_id,
+          transactionId: "tx-stuck",
+          status: "pending",
+        });
+      }
+      let noticeAt: number | null = null;
+      let closedAt: number | null = null;
+      for (let m = 0; m <= 7 * 24 * 60 + 30; m += 1) {
+        const ms = windowEnd + m * MIN;
+        await reconcileDueAttempts(deps(at(ms)));
+        if (noticeAt === null && noticeKinds().includes("payment_unknown")) {
+          noticeAt = ms - windowEnd;
+        }
+        if (attemptRows(id)[0]!.status === "closed_unknown") {
+          closedAt = ms - windowEnd;
+          break;
+        }
+      }
+      expect(noticeAt).not.toBeNull();
+      expect(noticeAt!).toBeGreaterThanOrEqual(24 * HOUR);
+      expect(noticeAt!).toBeLessThanOrEqual(24 * HOUR + 5 * MIN);
+      expect(closedAt).not.toBeNull();
+      expect(closedAt!).toBeGreaterThanOrEqual(7 * 24 * HOUR);
+      expect(closedAt!).toBeLessThanOrEqual(7 * 24 * HOUR + 5 * MIN);
+      expect(noticeKinds()).toEqual(["payment_unknown"]);
+    }, 120_000);
   });
 
   it("a failing check never stops the next attempt, and a recently checked attempt is skipped (30 seconds)", async () => {

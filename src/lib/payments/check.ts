@@ -262,10 +262,18 @@ export async function reconcileDueAttempts(
     .prepare(
       `SELECT * FROM payment_attempts
        WHERE status = 'open' AND window_end <= ?1
-         AND COALESCE(last_checked_at, '') <= CASE
-           WHEN window_end > ?2 THEN ?5
-           WHEN window_end > ?3 THEN ?6
-           ELSE ?7 END
+         AND (
+           COALESCE(last_checked_at, '') <= CASE
+             WHEN window_end > ?2 THEN ?5
+             WHEN window_end > ?3 THEN ?6
+             ELSE ?7 END
+           -- R-14/R-06: the 24-hour notice and the 7-day close come at the
+           -- first run after those times, not a day after the last check.
+           OR (window_end <= ?3 AND COALESCE(last_checked_at, '') <
+             strftime('%Y-%m-%dT%H:%M:%fZ', window_end, '+24 hours'))
+           OR (window_end <= ?8 AND COALESCE(last_checked_at, '') <
+             strftime('%Y-%m-%dT%H:%M:%fZ', window_end, '+7 days'))
+         )
        ORDER BY COALESCE(last_checked_at, window_end) LIMIT ?4`,
     )
     .bind(
@@ -276,6 +284,7 @@ export async function reconcileDueAttempts(
       at(10 * 60 * 1000),
       at(HOUR_MS),
       at(24 * HOUR_MS),
+      at(7 * 24 * HOUR_MS),
     )
     .all<AttemptRow>();
   let checked = 0;

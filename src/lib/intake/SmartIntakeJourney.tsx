@@ -118,6 +118,11 @@ const BLOCKING_PAYMENT_STATES = [
   "refunded",
   "paid_ended",
 ];
+/** Q13 A, R-12: after these the order is never paid for again, so the screen
+ * is locked like the waiting states (no way back, no change, no new payment). */
+const LOCKING_PAYMENT_STATES = ["closed_unknown", "needs_refund"];
+/** Payment states of an order that was paid (R-19: locked, never replaced). */
+const PAID_PAYMENT_STATES = ["paid", "paid_ended", "refunded"];
 const PAYMENT_POLL_MS = 10_000;
 
 const READING_INTERRUPTED_NOTICE =
@@ -545,21 +550,28 @@ export default function SmartIntakeJourney({
       if (!mounted.current || !current || current.order?.id !== orderId) return;
       const payment = answer?.payment;
       if (payment) setPaymentFor({ orderId, payment });
-      if (payment?.state === "paid" && !current.order!.paid) {
+      // R-19: a paid order first seen as ended or refunded is also paid.
+      let latest = current;
+      if (
+        payment &&
+        PAID_PAYMENT_STATES.includes(payment.state) &&
+        !current.order!.paid
+      ) {
         // R-19: from now on the website and business are locked.
-        persist({
+        latest = {
           ...current,
           order: {
             ...current.order!,
             paid: true,
             ...(payment.order_number ? { number: payment.order_number } : {}),
           },
-        });
+        };
+        persist(latest);
       }
       if (payment && BLOCKING_PAYMENT_STATES.includes(payment.state)) {
         // The page shows the state on the order screen; it never starts a new
         // order from an answer like this (Experience 7, 8).
-        if (current.stage !== "order") persist({ ...current, stage: "order" });
+        if (latest.stage !== "order") persist({ ...latest, stage: "order" });
         return;
       }
       if (state === "open") return;
@@ -646,10 +658,13 @@ export default function SmartIntakeJourney({
       ? paymentFor.payment.state
       : null;
   // R-19: the server refuses a replacement while an attempt is open, so the
-  // screen locks the website and business exactly as after payment.
+  // screen locks the website and business exactly as after payment. Q13 A and
+  // R-12: a closed-unknown or needs-refund order is locked the same way.
   const paymentLocked =
     Boolean(session.order?.paid) ||
-    (paymentState !== null && POLLED_PAYMENT_STATES.includes(paymentState));
+    (paymentState !== null &&
+      (POLLED_PAYMENT_STATES.includes(paymentState) ||
+        LOCKING_PAYMENT_STATES.includes(paymentState)));
   const lockRef = useRef(paymentLocked);
   useEffect(() => {
     lockRef.current = paymentLocked;

@@ -126,7 +126,6 @@ afterEach(() => {
 
 const heading = (name: string | RegExp) =>
   screen.findByRole("heading", { name });
-const PAY = "Bayar Rp99.000";
 const button = (name: string) => screen.findByRole("button", { name });
 
 async function toOrderScreen() {
@@ -484,6 +483,42 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
         screen.queryByRole("button", { name: "Coba bayar lagi" }),
       ).toBeNull();
       expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+      expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(
+        1,
+      );
+    },
+  );
+});
+
+describe("ended payment states lock the order (Q13 A, R-12, R-19)", () => {
+  it.each(["closed_unknown", "needs_refund"])(
+    "a %s order has no Kembali, no Ubah and no way to Bayar Rp99.000",
+    async (state) => {
+      await returnWith({ state, order_number: NUMBER }, { state: "failed" });
+      await screen.findByText(NUMBER);
+      expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+      expect(screen.queryByRole("button", { name: /Ubah/ })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Bayar Rp99.000" }),
+      ).toBeNull();
+      expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    },
+  );
+
+  it.each(["paid_ended", "refunded"])(
+    "a paid order first seen as %s is stored as paid with its number, never sent as a replacement",
+    async (state) => {
+      const { stub } = await returnWith(
+        { state, order_number: NUMBER },
+        { state: "failed" },
+      );
+      await screen.findByText(NUMBER);
+      expect(readSmartSession()?.order).toMatchObject({
+        id: ORDER_ID,
+        paid: true,
+        number: NUMBER,
+      });
+      expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
       expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(
         1,
       );

@@ -116,9 +116,9 @@ export function capRoomSql(parameters: {
     + ${parameters.limitUnits} <= ${parameters.dailyLimitUnits})`;
 }
 
-/** R-10: is there room for one more order limit today? One query. S4b's
- * start-payment route uses this before it writes an attempt (the write itself
- * carries `capRoomSql` too, so two racing requests cannot both pass). */
+/** R-10: is there room for one more order limit today? One query. Only the
+ * tests use it, to read the cap. The start route does not call it: the attempt
+ * insert carries `capRoomSql` itself, so two racing requests cannot both pass. */
 export async function hasCapRoom(
   db: SpendDb,
   input: { now: Date; limitUnits: number; dailyLimitUnits: number },

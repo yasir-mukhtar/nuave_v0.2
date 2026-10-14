@@ -442,11 +442,20 @@ export async function applyRefund(
       payment_method: string | null;
     }>();
   if (!transaction) return "unknown_order";
-  if (
-    transaction.refund_state === state ||
-    transaction.refund_state === "refunded"
-  ) {
-    return "duplicate";
+  if (transaction.refund_state === "refunded") return "duplicate";
+  if (transaction.refund_state === state) {
+    // Q11: a partial chargeback and a full chargeback both store `chargeback`,
+    // but each keeps its own founder notice. A copy of an answer is a duplicate
+    // only when its own notice exists; otherwise it records the notice (the
+    // order-ending effect below is idempotent: the order is already ended).
+    if (state === "refunded") return "duplicate";
+    const own = await db
+      .prepare(
+        "SELECT 1 AS found FROM founder_notices WHERE kind = ?1 AND subject = ?2",
+      )
+      .bind(noticeKind ?? state, transactionId)
+      .first<{ found: number }>();
+    if (own) return "duplicate";
   }
   const attempt = await attemptById(db, transaction.attempt_id);
   const order = attempt ? await getOrder(db, attempt.order_id) : null;
