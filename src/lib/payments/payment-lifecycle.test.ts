@@ -419,6 +419,22 @@ describe("a paid transaction that cannot be applied is needs refund, once (R-12,
     ]);
   });
 
+  it("a settlement whose fraud status is not accept has its own reason", async () => {
+    const id = await unpaid();
+    const attempt = await begin(id);
+    const tx = fake.addTransaction({
+      orderId: attempt.midtrans_order_id,
+      status: "settlement",
+      fraud: "challenge",
+    });
+    const answer = await getStatus(deps(T0).midtrans, tx.transaction_id);
+    if (answer.kind !== "found") throw new Error("lost");
+    expect(await applyStatus(deps(T0), answer.status)).toBe("needs_refund");
+    expect(JSON.parse(notices()[0]!.detail_json!).reason).toBe(
+      "fraud_status_not_accept",
+    );
+  });
+
   it("the customer is not asked to pay again on that order", async () => {
     const id = await unpaid();
     const attempt = await begin(id);
@@ -621,6 +637,29 @@ describe("refunds, partial refunds and chargebacks (R-15, AC-16)", () => {
     expect(noticeKinds()).toEqual(["partial_refund"]);
   });
 
+  it("a partial chargeback is treated like a partial refund: a partial_chargeback notice, the order untouched", async () => {
+    const { id, tx } = await paidOrder();
+    expect(await refundAnswer(tx, "partial_chargeback")).toBe(
+      "refund_recorded",
+    );
+    expect(order(id)).toMatchObject({
+      state: "open",
+      payment_kind: "midtrans",
+      refunded_at: null,
+    });
+    expect(transaction(tx.transaction_id).refund_state).toBe("partial_refund");
+    expect(notices()).toEqual([
+      expect.objectContaining({
+        kind: "partial_chargeback",
+        subject: tx.transaction_id,
+      }),
+    ]);
+    expect(await refundAnswer(tx, "partial_chargeback", at(2 * HOUR))).toBe(
+      "duplicate",
+    );
+    expect(notices()).toHaveLength(1);
+  });
+
   it("a refund of a needs-refund transaction closes only that case and leaves the paid order running", async () => {
     const { id, attempt } = await paidOrder();
     await approve(d1.db, id, { mode: "live", now: at(MIN) });
@@ -783,6 +822,72 @@ describe("when an attempt is final (R-06, AC-11, AC-12)", () => {
     fake.setStatus("tx-dana", "expire");
     await checkAttempt(deps(at(162 * MIN)), attemptRows(id)[0]!);
     expect(attemptRows(id)[0]!.status).toBe("finally_unpaid");
+  });
+
+  it("the final answer asks every known transaction; the recovery path asks a bounded number", async () => {
+    const id = await unpaid();
+    const attempt = await begin(id);
+    // Seven transactions stored as pending; the newest-updated one is really settled.
+    for (let n = 1; n <= 7; n += 1) {
+      fake.addTransaction({
+        orderId: attempt.midtrans_order_id,
+        transactionId: `tx-${n}`,
+        status: n === 7 ? "settlement" : "expire",
+      });
+      d1.query(
+        `INSERT INTO payment_transactions (transaction_id, attempt_id, midtrans_status, outcome, first_seen_at, updated_at)
+         VALUES ('tx-${n}', '${attempt.id}', 'pending', 'pending', 't', '2026-10-14T10:0${n}:00.000Z') RETURNING 1`,
+      );
+    }
+    // Before the final time: only 5 are asked, and no order_id.
+    await checkAttempt(deps(at(100 * MIN)), attemptRows(id)[0]!);
+    expect(fake.statusRequests()).toHaveLength(5);
+    expect(order(id).payment_kind).toBe("unpaid");
+    // At the final time every one is asked (and the order_id), so the settled one is found.
+    fake.requests.length = 0;
+    await checkAttempt(deps(at(150 * MIN)), attemptRows(id)[0]!);
+    expect(fake.statusRequests()).toHaveLength(8);
+    expect(order(id).payment_kind).toBe("midtrans");
+    expect(attemptRows(id)[0]!.status).toBe("paid");
+  });
+
+  it("a poll's time budget stops further Midtrans calls and counts as unavailable", async () => {
+    const id = await unpaid();
+    const attempt = await begin(id);
+    for (let n = 1; n <= 4; n += 1) {
+      fake.addTransaction({
+        orderId: attempt.midtrans_order_id,
+        transactionId: `tx-${n}`,
+        status: "pending",
+      });
+      d1.query(
+        `INSERT INTO payment_transactions (transaction_id, attempt_id, midtrans_status, outcome, first_seen_at, updated_at)
+         VALUES ('tx-${n}', '${attempt.id}', 'pending', 'pending', 't', 't${n}') RETURNING 1`,
+      );
+    }
+    const slow = {
+      ...deps(at(5 * MIN)),
+      timeBudgetMs: 60,
+      midtrans: {
+        serverKey: fake.serverKey,
+        isProduction: false,
+        fetch: (async (...args: Parameters<typeof fetch>) => {
+          await new Promise((resolve) => setTimeout(resolve, 40));
+          return fake.fetch(...args);
+        }) as typeof fetch,
+      },
+    };
+    expect(await checkAttempt(slow, attemptRows(id)[0]!)).toBe("unavailable");
+    expect(fake.statusRequests().length).toBeGreaterThanOrEqual(1);
+    expect(fake.statusRequests().length).toBeLessThan(4);
+    expect(attemptRows(id)[0]!.check_failed_at).not.toBeNull();
+    // A spent budget asks nothing at all.
+    fake.requests.length = 0;
+    d1.query("UPDATE payment_attempts SET last_checked_at = NULL RETURNING 1");
+    expect(
+      await checkAttempt({ ...slow, timeBudgetMs: 0 }, attemptRows(id)[0]!),
+    ).toBe("unavailable");
+    expect(fake.requests).toEqual([]);
   });
 
   it("a settled transaction makes the attempt final at once (needs refund), and a paid one marks the order paid", async () => {

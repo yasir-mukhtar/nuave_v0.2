@@ -15,7 +15,12 @@ import { recordFounderNotice } from "./notices";
  * one attempt: the page's status check and the cron both use it.
  */
 
-export type CheckDeps = ApplyDeps & { midtrans: MidtransConfig };
+export type CheckDeps = ApplyDeps & {
+  midtrans: MidtransConfig;
+  /** A page poll's limit on total Midtrans time (real clock). Once it is spent,
+   * no more calls are made and the check counts as unavailable. */
+  timeBudgetMs?: number;
+};
 
 /** R-14: at most one Midtrans check per attempt per 30 seconds. */
 export const CHECK_MIN_GAP_MS = 30_000;
@@ -52,12 +57,6 @@ export async function checkAttempt(
     .run();
   if (claim.meta?.changes !== 1) return "skipped";
 
-  const known = await db
-    .prepare(
-      "SELECT transaction_id FROM payment_transactions WHERE attempt_id = ?1 LIMIT ?2",
-    )
-    .bind(attempt.id, MAX_TRANSACTIONS_PER_CHECK)
-    .all<{ transaction_id: string }>();
   // R-06: after the window, the grace and the further wait, the final answer
   // needs every known transaction and the order_id. DANA answers by
   // transaction_id only, so "not found" by order_id proves nothing before then.
@@ -66,13 +65,32 @@ export async function checkAttempt(
     PAYMENT_GRACE_MS + PAYMENT_FINAL_WAIT_MS,
   );
   const finalTime = now.getTime() >= finalFrom.getTime();
+  // R-06: the final answer asks every known transaction. The bounded list (oldest
+  // update first) is only for the recovery path before that.
+  const known = await db
+    .prepare(
+      `SELECT transaction_id FROM payment_transactions WHERE attempt_id = ?1
+       ORDER BY updated_at LIMIT ?2`,
+    )
+    .bind(attempt.id, finalTime ? -1 : MAX_TRANSACTIONS_PER_CHECK)
+    .all<{ transaction_id: string }>();
   const ids = known.results.map((row) => row.transaction_id);
   const byOrderId = ids.length === 0 || finalTime;
 
   let failed = false;
   let orderIdAnswer: StatusAnswer | null = null;
+  const startedMs = Date.now();
   const ask = async (id: string): Promise<StatusAnswer> => {
-    const answer = await getStatus(deps.midtrans, id);
+    let timeoutMs = deps.midtrans.timeoutMs;
+    if (deps.timeBudgetMs !== undefined) {
+      const left = deps.timeBudgetMs - (Date.now() - startedMs);
+      if (left <= 0) {
+        failed = true;
+        return { kind: "error" };
+      }
+      timeoutMs = Math.min(left, timeoutMs ?? left);
+    }
+    const answer = await getStatus({ ...deps.midtrans, timeoutMs }, id);
     if (answer.kind === "found") {
       // The answer must be for this attempt (never apply another order's).
       if (answer.status.order_id === attempt.midtrans_order_id) {

@@ -14,7 +14,7 @@ import {
   ORDER_GROSS_AMOUNT_TEXT,
   type MidtransStatus,
 } from "./midtrans";
-import { noticeStatement, recordFounderNotice, utcDayOf } from "./notices";
+import { noticeStatement, utcDayOf } from "./notices";
 
 /**
  * Apply one Midtrans status answer (spec 017 R-09, R-11, R-12, R-15). One
@@ -47,6 +47,10 @@ export type ApplyResult =
 /** Final answers that never took money. A `refund` or `chargeback` answer counts
  * too: the money went back, so the try holds nothing (technical choice, R-06). */
 export const UNPAID_WORDS = ["expire", "cancel", "deny", "failure"] as const;
+/** One place to change how `partial_chargeback` is read (the spec is silent; the
+ * founder is being asked). For now it is a partial refund: recorded, a founder
+ * notice of kind `partial_chargeback`, nothing else. It never ends the order. */
+const PARTIAL_CHARGEBACK_AS = "partial_refund" as const;
 const REFUND_WORDS: Record<
   string,
   "refunded" | "partial_refund" | "chargeback"
@@ -54,7 +58,7 @@ const REFUND_WORDS: Record<
   refund: "refunded",
   partial_refund: "partial_refund",
   chargeback: "chargeback",
-  partial_chargeback: "chargeback",
+  partial_chargeback: PARTIAL_CHARGEBACK_AS,
 };
 
 /** R-06/R-09: has the transaction been settled (money taken)? `settlement`, or
@@ -133,7 +137,15 @@ export async function applyStatus(
   if (!transaction) throw new Error("transaction row missing");
 
   if (refundState) {
-    return applyRefund(deps, status.transaction_id, refundState, "midtrans");
+    return applyRefund(
+      deps,
+      status.transaction_id,
+      refundState,
+      "midtrans",
+      status.transaction_status === "partial_chargeback"
+        ? "partial_chargeback"
+        : undefined,
+    );
   }
   if (settled) {
     if (
@@ -234,13 +246,43 @@ async function applySettled(
                                                  WHERE id = ?2 AND paid_transaction_id = ?1)`,
         )
         .bind(status.transaction_id, order.id, stamp),
+      // R-10: a payment confirmed after its attempt stopped being open is not in
+      // the cap count. If its hold now passes the cap, the notice is written in
+      // this same batch, and only when this batch marked the order paid.
+      ...(attempt.status !== "open" && order.mode === "live"
+        ? [
+            noticeStatement(
+              db,
+              {
+                kind: "late_payment_over_cap",
+                subject: status.transaction_id,
+                detail: {
+                  order_number: order.order_number,
+                  midtrans_order_id: status.order_id,
+                  amount: status.gross_amount,
+                  method: status.payment_type,
+                },
+                now,
+              },
+              {
+                sql: `EXISTS (SELECT 1 FROM orders WHERE id = ?6 AND paid_transaction_id = ?7)
+                  AND (SELECT COALESCE(SUM(held_units), 0) FROM provider_spend
+                       WHERE day = ?8 AND kind != 'order_call')
+                    + (SELECT COUNT(*) FROM payment_attempts WHERE status = 'open') * ?9
+                      > ?10`,
+                values: [
+                  order.id,
+                  status.transaction_id,
+                  utcDayOf(now),
+                  deps.limitUnits,
+                  deps.dailyLimitUnits,
+                ],
+              },
+            ),
+          ]
+        : []),
     ]);
     if (results[0]?.meta?.changes === 1) {
-      // R-10: a payment confirmed after its attempt stopped being open is not in
-      // the cap count; if its hold now passes the cap, tell the founder.
-      if (attempt.status !== "open" && order.mode === "live") {
-        await noticeIfOverCap(deps, order, status);
-      }
       return "paid";
     }
     // Another copy of the same notification may have won the race.
@@ -255,37 +297,6 @@ async function applySettled(
   return markNeedsRefund(deps, attempt, order, status);
 }
 
-/** R-10: today's cap total (holds, plus one order limit for every open attempt)
- * above the daily cap, after a late payment's hold. */
-async function noticeIfOverCap(
-  deps: ApplyDeps,
-  order: OrderRow,
-  status: MidtransStatus,
-): Promise<void> {
-  const row = await deps.db
-    .prepare(
-      `SELECT (SELECT COALESCE(SUM(held_units), 0) FROM provider_spend
-               WHERE day = ?1 AND kind != 'order_call')
-            + (SELECT COUNT(*) FROM payment_attempts WHERE status = 'open') * ?2
-              AS total`,
-    )
-    .bind(utcDayOf(deps.now), deps.limitUnits)
-    .first<{ total: number }>();
-  if ((row?.total ?? 0) > deps.dailyLimitUnits) {
-    await recordFounderNotice(deps.db, {
-      kind: "late_payment_over_cap",
-      subject: status.transaction_id,
-      detail: {
-        order_number: order.order_number,
-        midtrans_order_id: status.order_id,
-        amount: status.gross_amount,
-        method: status.payment_type,
-      },
-      now: deps.now,
-    });
-  }
-}
-
 /** R-12: a settled transaction that cannot be applied. Stored as "needs refund"
  * on its transaction and attempt, and the founder notice goes in the same batch.
  * It only acts if this transaction has not already paid the order. */
@@ -297,8 +308,13 @@ async function markNeedsRefund(
 ): Promise<ApplyResult> {
   const { db, now } = deps;
   const stamp = now.toISOString();
+  const amountOk =
+    status.gross_amount === ORDER_GROSS_AMOUNT_TEXT &&
+    status.currency === ORDER_CURRENCY;
   const reason = !meetsPaidRule(status)
-    ? "wrong_amount_or_currency"
+    ? amountOk
+      ? "fraud_status_not_accept"
+      : "wrong_amount_or_currency"
     : !order
       ? "order_missing"
       : order.payment_kind === "midtrans" || order.payment_kind === "simulated"
@@ -380,6 +396,7 @@ export async function applyRefund(
   transactionId: string,
   state: "refunded" | "partial_refund" | "chargeback",
   source: "midtrans" | "support",
+  noticeKind?: string,
 ): Promise<ApplyResult> {
   const { db, now } = deps;
   const stamp = now.toISOString();
@@ -460,7 +477,7 @@ export async function applyRefund(
       ? []
       : [
           noticeStatement(db, {
-            kind: state,
+            kind: noticeKind ?? state,
             subject: transactionId,
             detail: {
               order_number: order?.order_number ?? null,

@@ -165,8 +165,13 @@ export async function startAttempt(
         .bind(id, windowEnd, input.orderId),
     ]);
     changed = results[0]?.meta?.changes === 1;
-  } catch {
-    // The unique (order, attempt number) index: another start won the race.
+  } catch (error) {
+    // Only the unique (order, attempt number) index means another start won the
+    // race. Any other error (the database) is not "cap full": it goes up and
+    // the route answers "unavailable".
+    if (!/UNIQUE constraint/i.test(String((error as Error)?.message))) {
+      throw error;
+    }
     changed = false;
   }
   if (changed) {

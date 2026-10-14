@@ -338,6 +338,29 @@ describe("start payment (R-05, AC-01, AC-07, AC-10, AC-11)", () => {
     expect(fake.requests).toEqual([]);
   });
 
+  it("a database error on the start write is 'unavailable', never 'cap full' and never a cap_full notice", async () => {
+    const id = await unpaidOrder();
+    const real = d1.db;
+    mocks.getCloudflareContext.mockReturnValue({
+      env: {
+        SPEND_DB: {
+          prepare: real.prepare.bind(real),
+          batch: async () => {
+            throw new Error("database down");
+          },
+        },
+        ...limiters,
+      },
+    });
+    const response = await start(id);
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe(UNAVAILABLE);
+    bind();
+    expect(attempts()).toEqual([]);
+    expect(notices()).toEqual([]);
+    expect(fake.requests).toEqual([]);
+  });
+
   it("synthetic mode never calls Midtrans and refuses cleanly (the seam for S4d)", async () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
     const id = await makeOrder(d1.db, {
@@ -671,6 +694,49 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
     expect(order(b).payment_kind).toBe("unpaid");
   });
 
+  it("records an unknown order_id and an order mismatch without personal data, once each, still 200 (R-08)", async () => {
+    fake.addTransaction({ orderId: "NV-ZZZZZZ-1", transactionId: "tx-x" });
+    for (let i = 0; i < 3; i += 1) {
+      expect((await notify(fake.notification("tx-x"))).status).toBe(200);
+    }
+    const a = await unpaidOrder();
+    const b = await unpaidOrder();
+    await start(a);
+    await start(b);
+    const tx = fake.addTransaction({
+      orderId: `${number(b)}-1`,
+      transactionId: "tx-b",
+    });
+    for (let i = 0; i < 2; i += 1) {
+      expect(
+        (
+          await notify(
+            fake.notification(tx.transaction_id, { orderId: `${number(a)}-1` }),
+          )
+        ).status,
+      ).toBe(200);
+    }
+    const rows = d1.query<Record<string, unknown>>(
+      "SELECT transaction_id, reason, midtrans_order_id, transaction_status FROM payment_ignored_notifications ORDER BY reason",
+    );
+    expect(rows).toEqual([
+      {
+        transaction_id: "tx-b",
+        reason: "order_mismatch",
+        midtrans_order_id: `${number(a)}-1`,
+        transaction_status: "settlement",
+      },
+      {
+        transaction_id: "tx-x",
+        reason: "unknown_order",
+        midtrans_order_id: "NV-ZZZZZZ-1",
+        transaction_status: "settlement",
+      },
+    ]);
+    expect(JSON.stringify(rows)).not.toContain("example.com");
+    expect(logs).toEqual([]);
+  });
+
   it("logs nothing personal: no email, key, signature or internal order ID (R-08)", async () => {
     const id = await unpaidOrder();
     const tx = await payFor(id);
@@ -866,6 +932,22 @@ describe("the status answer (R-14, AC-12, AC-15; shapes for S4d)", () => {
       "cannot_check",
     );
     expect(attempts()[0]!.status).toBe("open");
+  });
+
+  it("does not ask Midtrans about an order of another environment or an unknown order", async () => {
+    const preview = await makeOrder(d1.db, {
+      mode: "live",
+      payment: "unpaid",
+      environment: "preview",
+      now: new Date(),
+    });
+    d1.query(
+      `INSERT INTO payment_attempts (id, order_id, attempt_number, midtrans_order_id, window_start, window_end, status, created_at, updated_at)
+       VALUES ('ap', '${preview}', 1, 'NV-PREV11-1', 't', 't', 'open', 't', 't') RETURNING 1`,
+    );
+    expect((await status({ order_id: preview })).status).toBe(404);
+    expect((await status({ order_id: "1".repeat(32) })).status).toBe(404);
+    expect(fake.requests).toEqual([]);
   });
 
   it("test-pass and legacy orders have no payment to show; other environments' orders are not found", async () => {

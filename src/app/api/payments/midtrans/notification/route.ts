@@ -6,9 +6,34 @@ import { attemptByMidtransOrderId } from "@/lib/payments/attempts";
 import { getStatus, notificationSignatureValid } from "@/lib/payments/midtrans";
 import { recordFounderNotice, utcDayOf } from "@/lib/payments/notices";
 import { dailySpendLimitUsd } from "@/lib/spending/provider-spend";
-import { usdToUnits } from "@/lib/spending/spend-ledger";
+import { usdToUnits, type SpendDb } from "@/lib/spending/spend-ledger";
 
 export const runtime = "nodejs";
+
+async function recordIgnored(
+  db: SpendDb,
+  input: {
+    transactionId: string;
+    reason: "unknown_order" | "order_mismatch";
+    orderId: string;
+    word: string | null;
+  },
+) {
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO payment_ignored_notifications
+         (transaction_id, reason, midtrans_order_id, transaction_status, received_at)
+       VALUES (?1, ?2, ?3, ?4, ?5)`,
+    )
+    .bind(
+      input.transactionId.slice(0, 100),
+      input.reason,
+      input.orderId.slice(0, 100),
+      input.word,
+      new Date().toISOString(),
+    )
+    .run();
+}
 
 const handled = () => NextResponse.json({ ok: true });
 // Midtrans retries a 503 four times over about two hours (docs.midtrans.com).
@@ -56,18 +81,37 @@ export async function POST(request: Request) {
     }
     const orderId = notification.order_id as string;
     const transactionId = notification.transaction_id;
+    const word =
+      typeof notification.transaction_status === "string"
+        ? notification.transaction_status.slice(0, 40)
+        : null;
     if (
       typeof transactionId !== "string" ||
       !transactionId ||
       !(await attemptByMidtransOrderId(server.db, orderId))
     ) {
-      // Signed, but not a payment Nuave knows: recorded nowhere, ignored.
+      // Signed, but not a payment Nuave knows: recorded without personal data,
+      // ignored.
+      await recordIgnored(server.db, {
+        transactionId: typeof transactionId === "string" ? transactionId : "",
+        reason: "unknown_order",
+        orderId,
+        word,
+      });
       return handled();
     }
     const answer = await getStatus(midtrans, transactionId);
     if (answer.kind !== "found") return retryLater();
     // A mismatch that remains after the check is ignored.
-    if (answer.status.order_id !== orderId) return handled();
+    if (answer.status.order_id !== orderId) {
+      await recordIgnored(server.db, {
+        transactionId,
+        reason: "order_mismatch",
+        orderId,
+        word: answer.status.transaction_status,
+      });
+      return handled();
+    }
     await applyStatus(
       {
         db: server.db,

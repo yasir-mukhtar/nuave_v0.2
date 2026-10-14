@@ -14,6 +14,8 @@ export type MidtransConfig = {
   isProduction: boolean;
   /** Tests inject a fake; the default is the global `fetch` at call time. */
   fetch?: typeof fetch;
+  /** Overrides the Get Status timeout (a caller with a time budget). */
+  timeoutMs?: number;
 };
 
 export const SNAP_TIMEOUT_MS = 15_000;
@@ -74,7 +76,7 @@ export async function getStatus(
           Accept: "application/json",
           Authorization: basicAuth(config.serverKey),
         },
-        signal: AbortSignal.timeout(STATUS_TIMEOUT_MS),
+        signal: AbortSignal.timeout(config.timeoutMs ?? STATUS_TIMEOUT_MS),
       },
     );
     const body = (await response.json().catch(() => null)) as Record<

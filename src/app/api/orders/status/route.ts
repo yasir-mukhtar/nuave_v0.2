@@ -42,17 +42,28 @@ export async function POST(request: Request) {
   try {
     // R-14: status recovery. Best effort: it never fails the answer.
     const midtrans = server.mode === "live" ? midtransSettings() : null;
-    if (midtrans && isOrderId(body?.order_id)) {
+    const known = isOrderId(body?.order_id)
+      ? await getOrder(server.db, body.order_id)
+      : null;
+    // The order must exist in this environment before Midtrans is asked.
+    if (
+      midtrans &&
+      known &&
+      known.environment === server.environment &&
+      known.mode === server.mode
+    ) {
       try {
         await recoverOrderPayment(
           {
             db: server.db,
             now: new Date(),
             midtrans,
+            // One poll never holds the page for long.
+            timeBudgetMs: 12_000,
             limitUnits: usdToUnits(orderSpendLimitUsd()),
             dailyLimitUnits: usdToUnits(dailySpendLimitUsd()),
           },
-          body.order_id,
+          known.id,
         );
       } catch {
         // Invalid limits: the stored state is still shown.
