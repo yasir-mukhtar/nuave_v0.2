@@ -1,8 +1,8 @@
 # Spec 017: Payment, founder test pass and cap alerts (S4)
 
-> Status: **In review** — revision 5 answers the third plan review (FAIL on revision 4). Short closure check next, then founder approval. Build nothing before approval.
+> Status: **In review** — revision 6 answers the closure check of revision 5 (B1–B4 and minor edits). Diff check next, then founder approval. Build nothing before approval.
 > Owner: orchestrator
-> Updated: 2026-10-14 (revision 5: third plan review findings 1–7 applied)
+> Updated: 2026-10-14 (revision 6: closure-check findings B1–B4 applied)
 > Implements: S4 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > Decision basis: [S0, 2026-10-05](../../docs/DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
 > (D2, D3, D5, D7); price and Midtrans methods (2026-08-17 rows);
@@ -119,13 +119,14 @@ number. The founder gets one email when the day's cap use first reaches 80%,
    **Lihat cara bayar**, which goes back to the same Midtrans page. The page
    checks the status. The customer may close the tab and come back on the
    same browser.
-7. **Not paid yet** (a try was denied, cancelled, failed or expired, or the
-   window closed): an honest message. While the attempt can still take money
-   (R-06), the page offers **Lihat cara bayar** (the same Midtrans page) and
-   no new payment. While Nuave cannot yet confirm the status with Midtrans,
-   it says "Status pembayaran belum dapat diperiksa" and offers no new
-   payment. Only when the attempt is finally unpaid does **Coba bayar lagi**
-   start a new attempt.
+7. **Not paid yet.** While the 60-minute window is running, a denied,
+   cancelled, failed or expired try shows an honest message and **Lihat cara
+   bayar** (the same Midtrans page). After the window ends, the page says
+   "Kami sedang memeriksa pembayaran Anda" with **Cek lagi**, and offers no
+   new payment, until the attempt has a final answer (R-06). If the answer is
+   "finally unpaid", the page says so and **Coba bayar lagi** returns to the
+   order summary, which starts a replacement order (R-19) with a new
+   payment.
 8. **Paid order that cannot continue on this browser** (the order ended):
    the page never offers a new payment. It shows the order number and
    "Hubungi support@nuave.ai". A customer on another browser sees the entry
@@ -185,26 +186,35 @@ copy.
   cover, so those must also point to `/audit` (founder action). The route
   returns only the Snap redirect URL.
 - **R-06:** **When an attempt can still take money.** An attempt is
-  *open* from its start until Nuave has a final answer for it:
-  - **paid** (R-09), or
+  *open* from its start until it has a final answer:
+  - **paid:** a transaction meets R-09;
+  - **needs refund:** any other settled transaction (for example a wrong
+    amount, R-12). Any settled transaction makes the attempt final;
   - **finally unpaid:** its window has ended plus a 30-minute grace and a
     further 60 minutes (longer than DANA's own expiry and Midtrans' first
-    notification retries), and Get Status by `order_id` then answers
-    `expire`, `cancel`, `deny` or `failure`, or "not found", with no paid
-    transaction among those seen.
+    notification retries), and Get Status, asked by every known
+    `transaction_id` and by `order_id`, answers `expire`, `cancel`, `deny`,
+    `failure` or "not found", with no settled transaction;
+  - **closed unknown:** no final answer 7 days after the window ended (R-14).
+    It stops counting against the cap and no longer blocks the order, and it
+    stays listed in `support refunds`; a support command can also close an
+    attempt as unknown earlier.
   Midtrans `deny`, `failure`, `cancel` or `expire` notifications before then
   change only the message: Midtrans lets one `order_id` be tried again until
-  it is paid or expires. A new attempt starts only when the order has no
-  open attempt. If Get Status cannot answer (error, wrong key), the attempt
-  stays open: the cron retries (R-14) and the page says the status cannot be
-  checked yet.
+  it is paid or expires. A new attempt on the same order starts only when the
+  order has no open attempt and has not ended; in practice a finally unpaid
+  attempt comes after the order's own end time (R-07), so the customer starts
+  again with a replacement order (Experience 7, R-19). If Get Status cannot
+  answer (error, wrong key), the attempt stays open: the cron retries (R-14)
+  and the page says the status cannot be checked yet.
 - **R-07:** **Unpaid order lifetime.** An unpaid order ends (`expired`) at
   the later of 2 hours after creation and the end of its last attempt's
   window plus the grace. The four places that apply the 2-hour rule today
   (`orderInState`, `approveOrder`, `orderStatus`, `expireOpenOrders` in
   `store.ts`) use this one rule, and an order with an open attempt (R-06)
   never ends: `orderStatus` reports "checking payment" for it instead of
-  `expired`. The write that ends an order checks, inside
+  `expired`. A replaced order (R-19) is ended in the same write. The write
+  that ends an order checks, inside
   the same statement, that the order is still unpaid and its end time has
   passed, so a payment applied a moment earlier is never undone.
 
@@ -278,12 +288,13 @@ copy.
   - Midtrans answers DANA status only by `transaction_id`, so for DANA a
     "not found" by `order_id` proves nothing before the R-06 wait has
     passed.
-  - **Cron reconciliation** runs before the expiry sweep in every cron run.
-    It checks each open attempt whose window has ended: every 10 minutes for
-    the first 2 hours, then hourly, until R-06 gives a final answer. If no
-    final answer exists 24 hours after the window ended, the founder gets a
-    `payment_unknown` notice (one per attempt); checks continue daily for 7
-    days.
+  - **Cron reconciliation** runs before the expiry sweep in every cron run,
+    for at most 2 attempts per run (oldest due first). It checks each open
+    attempt whose window has ended: every 10 minutes for the first 2 hours,
+    then hourly, until R-06 gives a final answer. If no final answer exists
+    24 hours after the window ended, the founder gets a `payment_unknown`
+    notice (one per attempt); checks continue daily, and after 7 days the
+    attempt is closed as unknown (R-06).
 - **R-15:** **Refunds and other late states.**
   - Only a full `refund` of the transaction that paid the order (R-11) ends
     the order: if its questions were not yet approved, the order ends as
@@ -313,18 +324,22 @@ copy.
 
 ### Paid-only gate and replacement
 
-- **R-18:** Every step that costs AI money needs a paid order or a test-pass
-  order: `/api/audit/extract`, `/api/audit/glm-questions`,
+- **R-18:** Every step that costs AI money needs a paid, test-pass or
+  legacy (R-23) order: `/api/audit/extract`, `/api/audit/glm-questions`,
   `/api/orders/approve`, and the cron's audit steps. An unpaid or refunded
   order is refused with the same neutral answer as today.
 - **R-19:** **Replacement.** Orders get a `replaced_by` column.
   - `POST /api/orders` with `previous_order_id` marks the old order replaced
-    only if it is unpaid and has no open attempt, checked inside the same
-    write. This also works when the old order has already expired, so a late
-    payment on it becomes "needs refund" (R-12) instead of reviving it.
-    Otherwise the new order is refused and the page shows the old order's
-    state.
-  - A paid or test-pass order is never replaced.
+    only if it is unpaid, not a test pass, and has no open attempt, checked
+    inside the same write; if the old order is still open, the same write
+    also ends it, as in S3. This also works when the old order has already
+    expired, so a late payment on it becomes "needs refund" (R-12) instead of
+    reviving it.
+  - If the old order is paid or has an open attempt, the new order is refused
+    and the page shows the old order's state. An unknown ID, or an ended
+    test-pass order, is ignored and the new order is made, as
+    `expireSupersededOrder` does today.
+  - R-05 refuses to start a payment on a replaced order.
   - The browser keeps an ended unpaid order's ID and sends it as
     `previous_order_id` when it starts a new order. After payment it locks
     the website and business, never sends a paid order as
@@ -344,8 +359,9 @@ copy.
   - The order email must be on the founder's list.
   - The order, its ledger rows and `support show` mark it `test`. It reserves
     its hold at creation, only if the cap has room by the R-10 rule. It keeps
-    the 2-hour unstarted rule (not the 7 days) and never causes a refund
-    notice.
+    the 2-hour unstarted rule (not the 7 days) and never causes a
+    `paid_not_started` or `paid_order_failed` notice. A real payment made on a
+    test-pass order is "needs refund" (R-12).
 
 ### Founder notices and cap alerts
 
@@ -395,17 +411,27 @@ copy.
     Resend settings (emails).
   - Order in each run: reconciliation, then sweeps, then audit steps, then
     emails and notices.
-  - Every run reserves room in the S3 per-run meter for at least one payment
-    email and one founder notice before it starts audit steps; if needed, a
-    run does one audit step instead of two. So no payment email or refund
-    notice waits behind audits for more than a few minutes.
+  - When a payment email or refund-case notice is due, the run reserves room
+    in the S3 per-run meter for one of each before it starts audit steps. If
+    the reservation and the next audit step do not both fit (a report step
+    costs 27 of the 40 units), the audit step runs and the email or notice is
+    sent in the next run; an email or notice that has already waited one run
+    goes before audit steps. So none waits more than about two minutes, and
+    report steps always get a run.
+  - If the worker confirms from Cloudflare's docs that outside requests and
+    D1 queries are now counted separately per invocation (Free: 50 each;
+    Paid: 10,000 and 1,000), it may rebase the meter on those limits, with
+    the evidence in the PR.
   - The worker checks the current Workers limits for outside requests and D1
     queries per invocation in Cloudflare's docs, writes them in the PR, and
     extends `runner-worst-case.test.ts` to the new tasks. CPU time cannot be
     measured offline; AC-25 records it (Q10: Workers Paid before G1).
-  - **Rollout:** orders created before S4 is deployed (S3 orders, no payment
-    kind) are marked payment kind `legacy` by the migration and may finish as
-    in S3.
+  - **Rollout:** S4 code sets a payment kind on every order it creates
+    (`unpaid` at creation). An order with no payment kind was made by S3 code
+    (before the deploy, including the gap between the migration and the
+    deploy) and counts as `legacy`: it may finish as in S3 (R-18). The
+    migration gives existing orders an order number, and any order without
+    one gets it before its next email.
 ### Support
 
 - **R-24:** `npm run support` finds an order by its internal ID, its order
@@ -421,9 +447,11 @@ copy.
 | Cap has no room | "Kuota audit sedang penuh. Coba lagi dalam beberapa jam." | Unpaid order | No money taken; `cap_full` notice |
 | Snap call fails | "Pembayaran belum bisa dimulai", retry | Order; attempt void | Retry makes a new attempt |
 | Payment pending | "Menunggu pembayaran", Lihat cara bayar | Order, attempt | Notification, status check or cron marks it paid |
-| Try denied, failed, cancelled or expired while the attempt is open | Honest message, Lihat cara bayar | Attempt (open) | Customer may try again on the same Midtrans page |
+| Try denied, failed, cancelled or expired during the window | Honest message, Lihat cara bayar | Attempt (open) | Customer may try again on the same Midtrans page |
 | Status cannot be confirmed yet | "Status pembayaran belum dapat diperiksa" | Attempt (open) | Cron keeps checking; `payment_unknown` notice after 24 h |
-| Attempt finally unpaid | Coba bayar lagi | Order until its end time | New attempt, new Midtrans ID |
+| Window ended, no final answer yet | "Kami sedang memeriksa pembayaran Anda", Cek lagi | Attempt (open) | Cron reconciliation (R-14) |
+| Attempt finally unpaid | Coba bayar lagi (back to the order summary) | Old order (ended) | Replacement order (R-19) and a new payment |
+| No final answer after 7 days | Order number and support | Attempt closed unknown | Listed in `support refunds`; founder checks Midtrans |
 | Notification never arrives | "Menunggu pembayaran" | Order | Status recovery, then cron reconciliation (R-14) |
 | Signature fails or server key missing | — | `notification_rejected` notice | 503; Midtrans retries; founder fixes the key |
 | Database or Midtrans down during a notification | — | — | 503, Midtrans retries |
@@ -501,8 +529,8 @@ Get Status) and the fake mail sender.
   refund" and a notice. A bad signature or missing server key: 503 and one
   `notification_rejected` notice per day. A database or Midtrans error: 503.
   With the emergency switch off, notifications are still recorded.
-- **AC-04:** An unpaid or refunded order is refused by every paid route and by
-  the cron's audit steps, with no ledger row.
+- **AC-04:** An unpaid, replaced or refunded order is refused by every paid
+  route and by the cron's audit steps, with no ledger row.
 - **AC-05:** The order number is unique (collision retried), shown on screen
   once paid, in every customer email of the order and in `support show`; no
   route accepts it in place of the internal order ID; support finds an order
@@ -536,11 +564,17 @@ Get Status) and the fake mail sender.
   status reads "checking payment"; with no attempt it ends after 2 hours. A
   payment applied just before the ending write keeps the order paid (race
   test). A late payment on an expired, unreplaced unpaid order revives it as
-  paid; on a replaced one it becomes "needs refund".
+  paid; on a replaced one it becomes "needs refund". After the window, the
+  page offers "Cek lagi", not "Lihat cara bayar"; once finally unpaid, "Coba
+  bayar lagi" makes a replacement order. Any settled transaction makes its
+  attempt final; an attempt with no answer after 7 days closes as unknown,
+  stops counting against the cap and is listed in `support refunds`.
 - **AC-13:** A paid order, or an order with an open attempt, is never
   replaced; an ended unpaid order sent as `previous_order_id` is marked
-  replaced; after payment the browser locks website and business and never
-  starts a new payment for that order.
+  replaced (and ended if still open); an unknown ID or ended test-pass order
+  is ignored; no payment starts on a replaced order; after payment the
+  browser locks website and business and never starts a new payment for that
+  order.
 - **AC-14:** A paid order with no approval after 7 days ends as
   `paid_not_started`: hold returned, customer failure email, one founder
   notice. A test pass still ends after 2 hours.
@@ -576,11 +610,12 @@ Get Status) and the fake mail sender.
   Preview workers run with no Midtrans keys and use the simulated payment.
 - **AC-21:** With the emergency switch off, the cron still runs
   reconciliation, payment emails and notices, and no audit step.
-- **AC-22:** The worst-case cron test passes with the new tasks: in every
-  run, one payment email and one founder notice fit before audit steps; with
-  the emergency switch off or AI settings missing, the non-AI tasks still
-  run; S3 orders marked `legacy` finish as before. The PR states the current
-  Cloudflare limits used.
+- **AC-22:** The worst-case cron test passes with the new tasks: a due payment
+  email or refund notice waits at most one run behind audit steps, report
+  steps still run, and reconciliation handles at most 2 attempts per run;
+  with the emergency switch off or AI settings missing, the non-AI tasks
+  still run; orders without a payment kind (`legacy`) finish as before and
+  get an order number. The PR states the current Cloudflare limits used.
 - **AC-23:** The email list applies to every order and test pass, with
   `MIDTRANS_IS_PRODUCTION` set to either value.
 - **AC-24:** `verify-nuave` drives URL → order summary with price →
@@ -663,9 +698,11 @@ case.
   rebuilds that check or uses the new send table, and says which.
 - The cron already runs overlapping runs (300 s budget); every new task
   claims its row before it acts.
-- For G1 (not S4): once the email list is dropped, two open unpaid attempts
-  can block a USD 5 cap for about 2.5 hours; revisit the cap or the counting
-  then.
+- Cap blocking: each open attempt holds one order limit of the cap for at
+  least 2.5 hours (window, grace and the R-06 wait), and at most 7 days if
+  Midtrans never answers. With a USD 5 cap and USD 2.00 orders, one abandoned
+  attempt plus one running paid order already leaves no room for a test pass.
+  For G1, once the email list is dropped, revisit the cap or the counting.
 - Delivery plan: one PR, Sonnet worker, Opus review on the exact head, as in
   S3. Founder merges. The build runs in a new session after approval.
 
