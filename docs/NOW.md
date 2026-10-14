@@ -67,7 +67,8 @@
   Workers Paid before G1 ([log](./DECISION_LOG.md#2026-10-14--bank-transfer-kept-workers-paid-before-g1)). Spec 016 is **Verified**. **Next:** S4,
   [Spec 017](../specs/017-payment-and-test-pass/SPEC.md): founder answers
   recorded ([2026-10-13](./DECISION_LOG.md#2026-10-13--s4-answers-for-spec-017-draft));
-  independent plan review, then founder approval; the build runs in a new
+  revision 6 passed five plan review rounds (last: PASS+NOTES, notes
+  applied) and is **ready for founder approval**; the build runs in a new
   session. Build nothing before approval.
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
