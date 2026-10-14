@@ -1,10 +1,42 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-13
+> Updated: 2026-10-14
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-14 — Approve Spec 017 (S4)
+
+Yasir approved [Spec 017](../specs/017-payment-and-test-pass/SPEC.md)
+revision 6 (PR #136): Midtrans Snap payment in sandbox, founder test pass,
+short order number, the order hold at payment confirmation, and founder
+notices and cap alerts. Independent plan reviews (Opus, maximum effort): FAIL
+on revisions 2, 3, 4 and 5; PASS+NOTES on revision 6, notes applied. Founder
+answers Q1–Q10 are recorded in the spec.
+
+This approves the build of S4 in a new session (Sonnet worker, Opus review),
+on a feature branch with a pull request. It does not approve merge, deploy,
+live AI calls, real emails, live sandbox payments or spending; AC-25 needs a
+separate named approval. The founder reports the Midtrans sandbox account,
+redirect URLs and GitHub secrets as set up (2026-10-14).
+
+## 2026-10-14 — Bank transfer kept; Workers Paid before G1
+
+Yasir answered two questions raised by the plan reviews of
+[Spec 017](../specs/017-payment-and-test-pass/SPEC.md) (S4):
+
+- **Q9:** keep bank transfer as a payment method. Midtrans cannot refund it
+  from its dashboard, so such refunds are made by hand from the founder's
+  bank and recorded with the support command. The customer's account number
+  is asked by support email only when needed and is never stored in Nuave.
+- **Q10:** move the Cloudflare account to Workers Paid (USD 5 per month)
+  before G1, the first real purchase. Reason: the S3 live run used 12–22 ms
+  of CPU per question step and 55 ms for the report, against Workers Free's
+  10 ms per cron run, and Cloudflare stops Workers that exceed it
+  consistently. S4 sandbox testing may stay on Free. **This supersedes the
+  2026-10-13 decision "stay on Workers Free for now".** No plan change is
+  made by agents; the founder upgrades the account.
 
 ## 2026-10-13 — S4 answers for Spec 017 (draft)
 

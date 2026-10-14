@@ -157,11 +157,34 @@ below were read from production D1 `nuave-v2-spend` with read-only queries
   its 13 call rows. That is about 7% of the hold.
 - Wall time is mostly waiting for the AI provider. Waiting does not count
   toward Cloudflare's CPU limit.
-- **CPU time per cron run (Free limit 10 ms): not yet recorded.** It is not
-  in D1; it must be read from the Cloudflare dashboard (worker `nuave-v2` →
-  Observability / Logs, the 11 scheduled events from 08:51 to 09:01 UTC). No
-  step failed, which suggests that no run hit the limit, but this is not a
-  measurement.
+- **CPU time per cron run (Free limit 10 ms), recorded 2026-10-14** by Yasir
+  from Cloudflare Observability (event type `scheduled`, worker version
+  `e7e4ee58`):
+
+  | Run (UTC, 2026-10-13) | Step | Wall time | CPU time |
+  |---|---|---|---|
+  | 08:50 | nothing due (questions approved 08:50:59) | 0.7 s | 5 ms |
+  | 08:51 | question 1 | 19.5 s | 22 ms |
+  | 08:54 | question 4 | 9.9 s | 15 ms |
+  | 08:55 | question 5 | 13.2 s | 15 ms |
+  | 08:56 | question 6 | 10.3 s | 14 ms |
+  | 08:57 | question 7 | 15.8 s | 15 ms |
+  | 08:59 | question 9 | 10.8 s | 12 ms |
+  | 09:00 | question 10 | 10.3 s | 12 ms |
+  | 09:01 | report | 13.5 s | **55 ms** |
+
+  Runs 08:52, 08:53 and 08:58 were not read. Every run ended `ok`.
+- **Finding:** every working run used more than Free's 10 ms CPU limit:
+  question steps 12–22 ms, the report step 55 ms. Cloudflare allows an
+  isolate to run over the limit "infrequently", but "if your Worker starts
+  hitting the limit consistently, its execution will be terminated"
+  ([Workers limits](https://developers.cloudflare.com/workers/platform/limits/#cpu-time)).
+  So R-16's assumption that one step fits in Free's CPU limit does not hold.
+  A step that is cut off is retried by the runner (attempt limits), so the
+  likely effect at more orders is failed orders and refunds. This is a
+  founder decision (Workers Free vs Workers Paid), raised as Q10 in
+  [Spec 017](../017-payment-and-test-pass/SPEC.md). AC-21 itself still
+  passes: the live order was delivered.
 
 ## Verdict
 
