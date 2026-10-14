@@ -44,13 +44,14 @@
 | `0bbade8` | S4d | PASS+NOTES | 409 replacement saved the old order under the new business; lock while a payment is open; closed-unknown screen; no simulated payment on production; fixed in `cb4d3dd` |
 | `aa24489` | Full PR, exact head | PASS+NOTES | Two S4d fixes lacked tests; chargeback email wording; no refund notice after an outside refund; stuck 409 after "Coba bayar lagi"; trim test-pass secret; stale comment; fixed in `f2ce2a6` (red-green tests) |
 | `23cef95` | Delta re-check, exact head | PASS+NOTES | Fixes confirmed red-green; notes were wording only, fixed in the next commit |
+| `38da817` | Full PR, Opus max, founder-requested ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137#issuecomment-6169705849)) | PASS+NOTES | 24 h notice and 7-day close came about a day late under the real cron; closed-unknown and needs-refund screens still offered Kembali to a new payment; a paid order first seen as refunded or ended was not locked; no chargeback notice after a partial chargeback; fixed in `8493341` (red-green tests). Four founder questions raised |
 
 ## Acceptance results
 
 | Criterion | Result | Evidence |
 |---|---|---|
 | AC-01 | Pass | `payment-routes.test.ts` (paid only after a good signature and Get Status; Snap body and override header); `midtrans.test.ts` |
-| AC-02 | Pass | `payment-routes.test.ts` (same notification or status check again; two copies at once) |
+| AC-02 | Pass | `payment-routes.test.ts` (same notification or status check again; two copies at once: one paid write, one hold). One payment email and one audit follow by design (one paid order); not asserted directly |
 | AC-03 | Pass | `payment-routes.test.ts` (unknown order 200 and recorded; wrong amount/currency needs refund; bad signature or missing key 503 with one notice per day; DB/Midtrans error 503; switch off still records) |
 | AC-04 | Pass | `payment-foundations.test.ts` and `order-routes.test.ts` ("the paid-only gate"; no ledger row) |
 | AC-05 | Pass | `payment-foundations.test.ts` (order number); `order-routes.test.ts` (number is not an order ID); `support.test.ts` (find by number and Midtrans order_id, `show`, `close`); `payment-journey.test.tsx` (number on screen once paid) |
@@ -60,19 +61,19 @@
 | AC-09 | Pass | `payment-foundations.test.ts` ("a paid order runs past a full daily cap, never past its own limit") |
 | AC-10 | Pass | `order-routes.test.ts` and `payment-routes.test.ts` (unpaid holds nothing); `payment-lifecycle.test.ts` (hold at payment, on the UTC day, once); test pass holds at creation |
 | AC-11 | Pass | `payment-routes.test.ts`, `payment-lifecycle.test.ts` (open attempt blocks a new one and returns the same page; DANA wait; void on Snap failure; no start on a test pass; every needs-refund case, one notice) |
-| AC-12 | Pass | `payment-lifecycle.test.ts` (open attempt never ends; 2-hour rule; race; revive vs needs refund; finally unpaid → replacement; closed unknown at 7 days); `payment-journey.test.tsx` and e2e (Cek lagi, Coba bayar lagi) |
-| AC-13 | Pass | `payment-foundations.test.ts` and `order-routes.test.ts` (replacement rules); `payment-journey.test.tsx` (lock in waiting, try_failed, checking and cannot_check; lock after payment; 409 keeps the old order; 409 after "Coba bayar lagi" continues as paid) and e2e (paid lock on the review) |
+| AC-12 | Pass | `payment-lifecycle.test.ts` (open attempt never ends; 2-hour rule; race; revive vs needs refund; finally unpaid → replacement; closed unknown just after 7 days with the every-minute cron); `payment-journey.test.tsx` and e2e (Cek lagi, Coba bayar lagi) |
+| AC-13 | Pass | `payment-foundations.test.ts` and `order-routes.test.ts` (replacement rules); `payment-journey.test.tsx` (lock in waiting, try_failed, checking and cannot_check; lock after payment; 409 keeps the old order; 409 after "Coba bayar lagi" continues as paid; closed-unknown and needs-refund screens locked with no path to Bayar; a paid order first seen as ended or refunded is stored as paid and locked) and e2e (paid lock on the review) |
 | AC-14 | Pass | `founder-notices.test.ts` (7 days → `paid_not_started`, hold returned, failure email, one notice; test pass keeps 2 hours) |
-| AC-15 | Pass | `payment-lifecycle.test.ts` (recovery by order_id and transaction_id; 30 s limit; return-URL words ignored; cron marks paid; Get Status failing → cannot check, `payment_unknown` at 24 h; Q12 second try found by order_id) |
+| AC-15 | Pass | `payment-lifecycle.test.ts` (recovery by order_id and transaction_id; 30 s limit; return-URL words ignored; cron marks paid; Get Status failing → cannot check, `payment_unknown` just after 24 h with the every-minute cron; Q12 second try found by order_id) |
 | AC-16 | Pass | `payment-lifecycle.test.ts` (refund/chargeback before and after approval; needs-refund refund; partial refund; Q11 partial chargeback); `support.test.ts` (`refunded` by transaction, wrangler path, half-way repeat) |
-| AC-17 | Pass | `order-routes.test.ts` ("the founder test pass, server side"; one neutral answer incl. rate limit); `uji.test.tsx`; e2e `/uji` (session storage only, not in URLs or saved intake) |
+| AC-17 | Pass | `order-routes.test.ts` ("the founder test pass, server side"; one neutral answer incl. rate limit); `uji.test.tsx`; e2e `/uji` (session storage only, not in URLs or saved intake); the full audit on a test pass: `npm run test:workers` (test-pass orders delivered by the cron) and the e2e journeys that use a test pass |
 | AC-18 | Pass | `founder-notices.test.ts` (80/90/100 once per day, restart and overlapping runs, two levels at once, per-subject once ever, refund cases retried, contents); `support.test.ts` (`refunds`) |
 | AC-19 | Pass | `founder-notices.test.ts` (payment-received email contents, no link or secret) |
 | AC-20 | Pass | `order-routes.test.ts` and `payment-routes.test.ts` (missing settings stop payment and test pass in live mode); `payment-routes.test.ts` "simulated payment (synthetic mode)"; `wrangler-config.test.ts` (preview gets no keys); PR preview pages load |
-| AC-21 | Pass | `cron.test.ts` ("the cron with the emergency switch off or AI settings missing") |
+| AC-21 | Pass | `cron.test.ts` ("the cron with the emergency switch off or AI settings missing"); live-mode reconciliation with the switch off: `runner-worst-case.test.ts` ("with the switch off or AI settings missing…") |
 | AC-22 | Pass | `runner-worst-case.test.ts` ("the spec 017 tasks in the cron's run budget": idle run, large reconciliations, worst mix ≤ 40, waits at most one run, legacy orders) |
-| AC-23 | Pass | `order-routes.test.ts`, `payment-routes.test.ts` (email list with either production switch value) |
-| AC-24 | Pass | `npm run verify` green on `aa24489` (reviewer) and `f2ce2a6` (worker); `verify-nuave drive all` 6/6 PASSED on `aa24489` (reviewer), run `20261014T104333Z-8mas` in git-ignored `.local-evidence/`, with a local `lsof` stand-in outside the repo (this sandbox's `lsof` cannot see the listener) |
+| AC-23 | Pass | `order-routes.test.ts`, `payment-routes.test.ts` (email list; the start route is tested with both production switch values, order creation and the test pass with `false`; the email-list code does not read the switch) |
+| AC-24 | Pass | `npm run verify` green on `aa24489` (reviewer) and `f2ce2a6` (worker); `verify-nuave drive all` 6/6 PASSED on `aa24489` (run `20261014T104333Z-8mas`) and on the `38da817` code (Opus max review, run `20261014T132843Z-c5tc`), both in git-ignored `.local-evidence/`, with a local `lsof` stand-in outside the repo (this sandbox's `lsof` cannot see the listener) |
 | AC-25 | Not run | Live sandbox check after deploy; needs a named founder approval and budget |
 
 ## Requirements trace
@@ -117,6 +118,9 @@ then dropped; a chargeback of a needs-refund transaction stays on the
 - `npm run verify` on `aa24489` (final reviewer): 122 unit files, 2276
   tests; browser 62; disabled-config 3; passed. `npm run test:workers` on
   `aa24489`: 31 checks green, bundle 2962.47 KiB gzipped of 3072.
+- `npm run verify` on `8493341` (worker): 2296 unit tests, browser 62,
+  disabled-config 3, passed. `npm run test:workers` on `8493341`
+  (orchestrator): 31 checks green, bundle 2963.21 KiB gzipped.
 - `npm run verify` on `f2ce2a6` (worker): 123 unit files, 2289 tests;
   browser 62; disabled-config 3; passed.
 - PR CI `validate`: success on `789c291` and `aa24489`; the exact merge head
@@ -126,7 +130,7 @@ then dropped; a chargeback of a needs-refund transaction stays on the
 
 ## Findings
 
-No open blocking or should-fix finding. Notes kept, for the founder:
+No open blocking or should-fix finding after `8493341`. Open founder questions from the Opus max review (see the PR comment): server-side refusal to replace an order whose attempt closed unknown; a Get Status answer with no `currency`; the AC-25 worst-case budget (two orders, each up to USD 2.00); a fresh start after a refund before approval. Notes kept, for the founder:
 
 - **Q13 (answered A):** after 7 days with no Midtrans answer the screen
   shows only the order number and support, no new payment.
