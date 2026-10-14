@@ -45,6 +45,7 @@
 | `aa24489` | Full PR, exact head | PASS+NOTES | Two S4d fixes lacked tests; chargeback email wording; no refund notice after an outside refund; stuck 409 after "Coba bayar lagi"; trim test-pass secret; stale comment; fixed in `f2ce2a6` (red-green tests) |
 | `23cef95` | Delta re-check, exact head | PASS+NOTES | Fixes confirmed red-green; notes were wording only, fixed in the next commit |
 | `38da817` | Full PR, Opus max, founder-requested ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137#issuecomment-6169705849)) | PASS+NOTES | 24 h notice and 7-day close came about a day late under the real cron; closed-unknown and needs-refund screens still offered Kembali to a new payment; a paid order first seen as refunded or ended was not locked; no chargeback notice after a partial chargeback; fixed in `8493341` (red-green tests). Four founder questions raised |
+| `d8ed6d5` | Founder answers Q14, Q15, Q17 (Opus) | PASS+NOTES | Refusal reason after a race; hold-guard half of Q14 untested; comments; exact 409 text; fixed in `e7d434a` (red-green where the code changed). One founder question raised (Q18) |
 
 ## Acceptance results
 
@@ -118,6 +119,9 @@ then dropped; a chargeback of a needs-refund transaction stays on the
 - `npm run verify` on `aa24489` (final reviewer): 122 unit files, 2276
   tests; browser 62; disabled-config 3; passed. `npm run test:workers` on
   `aa24489`: 31 checks green, bundle 2962.47 KiB gzipped of 3072.
+- `npm run verify` on `e7d434a` (worker): 2314 unit tests; passed. On
+  `d8ed6d5`: 2312 unit tests, browser 62 + 3, passed; `npm run test:workers`
+  31 checks green, bundle 2963.53 KiB.
 - `npm run verify` on `8493341` (worker): 2296 unit tests, browser 62,
   disabled-config 3, passed. `npm run test:workers` on `8493341`
   (orchestrator): 31 checks green, bundle 2963.21 KiB gzipped.
@@ -130,7 +134,7 @@ then dropped; a chargeback of a needs-refund transaction stays on the
 
 ## Findings
 
-No open blocking or should-fix finding after `8493341`. Open founder questions from the Opus max review (see the PR comment): server-side refusal to replace an order whose attempt closed unknown; a Get Status answer with no `currency`; the AC-25 worst-case budget (two orders, each up to USD 2.00); a fresh start after a refund before approval. Notes kept, for the founder:
+No open blocking or should-fix finding after `e7d434a`. The four questions from the Opus max review are answered (Q14–Q17) and built. Open: Q18 (screen when an earlier attempt was closed as unknown by hand and a later one ended unpaid). Notes kept, for the founder:
 
 - **Q13 (answered A):** after 7 days with no Midtrans answer the screen
   shows only the order number and support, no new payment.
