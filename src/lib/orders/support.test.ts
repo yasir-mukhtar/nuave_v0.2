@@ -13,7 +13,7 @@ import {
   executeSyntheticLocalObservation,
   generateSyntheticLocalReport,
 } from "../audit/local-direct-ten-audit";
-import { applyStatus } from "../payments/apply";
+import { applyRefund, applyStatus } from "../payments/apply";
 import { startAttempt } from "../payments/attempts";
 import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
 import { getStatus } from "../payments/midtrans";
@@ -643,6 +643,23 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
     expect(text()).toContain("Open refund cases: 0");
     expect(await support().run("refunded", "tx-nope-1")).toBe(1);
     expect(await support().run("refunded", "bad id")).toBe(2);
+  });
+
+  it("a chargeback of the paying transaction before approval ends the order and is not listed as a refund to make", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-cb" });
+    await applyRefund(
+      { db: d1.db, now: clock, limitUnits: LIMIT, dailyLimitUnits: DAILY },
+      "tx-cb",
+      "chargeback",
+      "midtrans",
+    );
+    expect(
+      q(`SELECT state, failure_code FROM orders WHERE id = '${id}'`),
+    ).toEqual([{ state: "failed", failure_code: "refunded" }]);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
   });
 
   it("a refund that stops half way through wrangler stays listed in refunds, says it is safe to repeat, and the repeat finishes it", async () => {

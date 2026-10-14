@@ -380,8 +380,8 @@ async function refunds(deps: SupportDeps): Promise<number> {
   // A paid order that ended failed (after payment, or not started in 7 days)
   // whose paying transaction is not recorded as refunded. It is judged by the
   // transaction, so a refund that stopped half way (the order ended, the
-  // transaction row not written) is still listed. A synthetic payment took no
-  // money.
+  // transaction row not written) is still listed. A chargeback already
+  // returned the money (R-15). A synthetic payment took no money.
   const { results: failed } = await deps.db
     .prepare(
       `SELECT o.order_number, o.failure_code, o.paid_transaction_id, o.ended_at,
@@ -391,7 +391,7 @@ async function refunds(deps: SupportDeps): Promise<number> {
        WHERE o.state = 'failed' AND o.payment_kind = 'midtrans'
          AND COALESCE((SELECT t.refund_state FROM payment_transactions t
                        WHERE t.transaction_id = o.paid_transaction_id), 'none')
-             != 'refunded'
+             NOT IN ('refunded', 'chargeback')
        ORDER BY o.ended_at`,
     )
     .bind()
