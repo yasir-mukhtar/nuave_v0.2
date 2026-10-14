@@ -51,9 +51,10 @@ any, and the active milestone. The entries below record each package's
 latest status.
 
 - [`017-payment-and-test-pass/SPEC.md`](./017-payment-and-test-pass/SPEC.md)
-  — **In review** (2026-10-14, revision 4). S4: Midtrans Snap payment (sandbox),
-  founder test pass, short order number, hold moved to payment, founder cap
-  alerts. Plan reviews FAIL on revisions 2 and 3; revisions 4–6 apply the findings of three plan reviews and a closure check; diff check next.
+  — **In review, ready for founder approval** (2026-10-14, revision 6). S4:
+  Midtrans Snap payment (sandbox), founder test pass, short order number,
+  hold at payment, founder notices and cap alerts. Five plan review rounds;
+  the last returned PASS+NOTES.
 
 - [`016-order-and-saved-report/SPEC.md`](./016-order-and-saved-report/SPEC.md)
   — **Verified** (2026-10-13). S3: order with email, per-order cost limit,
