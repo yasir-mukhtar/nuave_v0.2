@@ -600,6 +600,58 @@ describe("replacing an order (R-19)", () => {
     expect(row(old.orderId).state).toBe("open");
   });
 
+  it("an order with an attempt closed as unknown is never replaced (Q14), and is not ended", async () => {
+    const old = await newOrder("unpaid");
+    await addAttempt(old.orderId, "closed_unknown");
+    const before = JSON.stringify(d1.query("SELECT * FROM orders"));
+    const next = await newOrder("unpaid", { previousOrderId: old.orderId });
+    expect(next.result).toBe("previous_active");
+    expect(next.previousState).toBe("payment_unknown");
+    expect(JSON.stringify(d1.query("SELECT * FROM orders"))).toBe(before);
+    expect(row(old.orderId).state).toBe("open");
+  });
+
+  it("an order closed as unpaid by support is replaced again (Q14)", async () => {
+    const old = await newOrder("unpaid");
+    await addAttempt(old.orderId, "finally_unpaid");
+    const next = await newOrder("unpaid", { previousOrderId: old.orderId });
+    expect(next.result).toBe("created");
+  });
+
+  it("Q14 is decided inside the same write: an attempt closed as unknown just before the batch still stops the replacement", async () => {
+    const old = await newOrder("unpaid");
+    const racing = {
+      prepare: d1.db.prepare,
+      batch: async (statements: Parameters<typeof d1.db.batch>[0]) => {
+        await addAttempt(old.orderId, "closed_unknown");
+        return d1.db.batch(statements);
+      },
+    };
+    const result = await createOrderWithHold(
+      racing,
+      {
+        id: "d".repeat(32),
+        orderNumber: "NV-RACE33",
+        paymentKind: "unpaid",
+        email: "owner@example.com",
+        businessName: "Kopi",
+        website: "https://kopinuave.example/",
+        mode: "live",
+        environment: "production",
+        createdAt: T0,
+        expiresAt: new Date(T0.getTime() + 7_200_000),
+        replacing: { orderId: old.orderId },
+      },
+      null,
+    );
+    expect(result).toBe("previous_active");
+    expect(row(old.orderId)).toMatchObject({
+      state: "open",
+      replaced_by: null,
+    });
+    expect(d1.query("SELECT id FROM orders")).toHaveLength(1);
+  });
+
   it("the refusal is decided inside the same write: an attempt that opens after the checks but before the batch still stops the replacement", async () => {
     const old = await newOrder("unpaid");
     // A racing start-payment request lands its attempt just before the batch.

@@ -13,7 +13,7 @@ export type FakeTransaction = {
   transaction_status: string;
   fraud_status?: string;
   gross_amount: string;
-  currency: string;
+  currency?: string;
   payment_type: string;
 };
 
@@ -147,7 +147,8 @@ export function createFakeMidtrans(
       status?: string;
       fraud?: string;
       amount?: string;
-      currency?: string;
+      /** `null` leaves `currency` out of the answer, as Midtrans sometimes does. */
+      currency?: string | null;
       paymentType?: string;
     }): FakeTransaction {
       const transaction: FakeTransaction = {
@@ -158,7 +159,9 @@ export function createFakeMidtrans(
         transaction_status: input.status ?? "settlement",
         ...(input.fraud ? { fraud_status: input.fraud } : {}),
         gross_amount: input.amount ?? "99000.00",
-        currency: input.currency ?? "IDR",
+        ...(input.currency === null
+          ? {}
+          : { currency: input.currency ?? "IDR" }),
         payment_type: input.paymentType ?? "qris",
       };
       const index = transactions.findIndex(

@@ -659,6 +659,44 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
     }
   });
 
+  it.each([
+    ["missing", null, "settlement", undefined, "paid"],
+    ["empty", "", "settlement", undefined, "paid"],
+    ["IDR", "IDR", "settlement", undefined, "paid"],
+    [
+      "missing on a capture with fraud accept",
+      null,
+      "capture",
+      "accept",
+      "paid",
+    ],
+    ["USD", "USD", "settlement", undefined, "needs_refund"],
+  ] as const)(
+    "Q15: a settled 99000.00 answer with currency %s",
+    async (_name, currency, status, fraud, outcome) => {
+      const id = await unpaidOrder();
+      await start(id);
+      const tx = fake.addTransaction({
+        orderId: `${number(id)}-1`,
+        status,
+        fraud,
+        currency,
+      });
+      expect((await notify(fake.notification(tx.transaction_id))).status).toBe(
+        200,
+      );
+      expect(
+        d1.query(
+          "SELECT outcome FROM payment_transactions WHERE transaction_id = ?",
+          tx.transaction_id,
+        ),
+      ).toEqual([{ outcome }]);
+      expect(order(id).payment_kind).toBe(
+        outcome === "paid" ? "midtrans" : "unpaid",
+      );
+    },
+  );
+
   it("a bad signature or a missing server key is 503 with one notification_rejected notice per day (AC-03)", async () => {
     const id = await unpaidOrder();
     const tx = await payFor(id);

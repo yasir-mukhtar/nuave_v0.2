@@ -490,6 +490,87 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
   );
 });
 
+describe("Mulai pesanan baru after a refund (Q17)", () => {
+  it.each(["closed_unknown", "needs_refund", "paid_ended", "unpaid_final"])(
+    "a %s order has no Mulai pesanan baru",
+    async (state) => {
+      await returnWith({ state, order_number: NUMBER }, { state: "failed" });
+      await screen.findAllByRole("heading", { level: 2 });
+      expect(
+        screen.queryByRole("button", { name: "Mulai pesanan baru" }),
+      ).toBeNull();
+    },
+  );
+
+  it("a refunded order offers it; it returns to the entry and the next order carries no previous_order_id", async () => {
+    const { stub, set } = await returnWith(
+      { state: "refunded", order_number: NUMBER },
+      { state: "failed" },
+    );
+    await heading("Pembayaran sudah dikembalikan");
+    fireEvent.click(await button("Mulai pesanan baru"));
+    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    expect(readSmartSession()?.order ?? null).toBeNull();
+    expect(readSmartSession()?.supersededOrder ?? null).toBeNull();
+    // A fresh journey: a new order is made with no previous_order_id.
+    set({ state: "open", payment: { state: "unpaid" } });
+    await toOrderScreen();
+    await pay();
+    await waitFor(() => expect(stub.bodies["/api/orders"]).toHaveLength(2));
+    expect(stub.bodies["/api/orders"]![1]).not.toHaveProperty(
+      "previous_order_id",
+    );
+  });
+});
+
+describe("a replacement refused because the payment is unknown (Q14)", () => {
+  it("shows the old order's closed-unknown screen and starts no new payment", async () => {
+    let created = 0;
+    let answer: Record<string, unknown> = {
+      state: "open",
+      payment: { state: "unpaid" },
+    };
+    const stub = stubServer({
+      status: () => answer,
+      create: () => {
+        created += 1;
+        return created === 1
+          ? Response.json({ order_id: ORDER_ID, state: "open" })
+          : Response.json(
+              {
+                error: "Pembayaran pesanan sebelumnya belum dapat dipastikan.",
+                code: "PREVIOUS_ORDER_ACTIVE",
+                previous_state: "payment_unknown",
+              },
+              { status: 409 },
+            );
+      },
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
+    answer = { state: "expired", payment: { state: "unpaid_final" } };
+    await reloadWith(stub);
+    fireEvent.click(await button("Coba bayar lagi"));
+    // Meanwhile the old attempt closed as unknown.
+    answer = {
+      state: "failed",
+      payment: { state: "closed_unknown", order_number: NUMBER },
+    };
+    await typeEmail();
+    fireEvent.click(await button("Bayar Rp99.000"));
+    await heading("Pembayaran belum dapat dipastikan");
+    expect(screen.getByText(NUMBER)).toBeTruthy();
+    expect(created).toBe(2);
+    expect(stub.calls.filter((c) => c === "/api/payments/start")).toHaveLength(
+      1,
+    );
+    expect(readSmartSession()?.order?.id).toBe(ORDER_ID);
+    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+  });
+});
+
 describe("ended payment states lock the order (Q13 A, R-12, R-19)", () => {
   it.each(["closed_unknown", "needs_refund"])(
     "a %s order has no Kembali, no Ubah and no way to Bayar Rp99.000",

@@ -34,10 +34,11 @@ export const runtime = "nodejs";
  * website from the free lookup, plus two optional fields:
  *
  * - `previous_order_id` (R-19): the order this one replaces. Replaced only if it
- *   is unpaid, not a test pass and has no open payment attempt. If it is paid or
- *   has an open attempt nothing is made and the answer is 409
- *   `PREVIOUS_ORDER_ACTIVE` with `previous_state` "paid" or "payment_open" (the
- *   page then shows the old order's state, never a new order).
+ *   is unpaid, not a test pass and has no open payment attempt. If it is paid,
+ *   has an open attempt or (Q14) an attempt closed as unknown, nothing is made
+ *   and the answer is 409 `PREVIOUS_ORDER_ACTIVE` with `previous_state` "paid",
+ *   "payment_open" or "payment_unknown" (the page then shows the old order's
+ *   state, never a new order).
  * - `test_pass_code` (R-20): the founder test pass. A right code, with a listed
  *   email and the payment settings in place, makes an order with payment kind
  *   `test`. Every other case (wrong code, no or short secret, missing settings,
@@ -163,7 +164,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Pesanan sebelumnya sudah dibayar atau sedang menunggu pembayaran.",
+            previousState === "payment_unknown"
+              ? "Pembayaran pesanan sebelumnya belum dapat dipastikan. Hubungi support@nuave.ai."
+              : "Pesanan sebelumnya sudah dibayar atau sedang menunggu pembayaran.",
           code: "PREVIOUS_ORDER_ACTIVE",
           previous_state: previousState,
         },

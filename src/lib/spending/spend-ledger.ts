@@ -237,15 +237,17 @@ export type CreateOrderResult =
   | "created"
   /** A test pass that found no room in the daily cap (R-10). */
   | "cap_full"
-  /** R-19: the replaced order is paid or has an open payment attempt, so
-   * nothing was written. */
+  /** R-19: the replaced order is paid or has an open or unknown payment
+   * attempt, so nothing was written. */
   | "previous_active";
 
 /** R-19: an older order that cannot be replaced: paid (kind midtrans or
- * simulated) or with an open payment attempt. `p` is the older order's alias. */
+ * simulated) or with an open payment attempt. Q14: also one with an attempt
+ * closed as unknown (R-06) until support closes it as unpaid. `p` is the older
+ * order's alias. */
 const PREVIOUS_ACTIVE = `(p.payment_kind IN ('midtrans', 'simulated')
   OR EXISTS (SELECT 1 FROM payment_attempts a
-             WHERE a.order_id = p.id AND a.status = 'open'))`;
+             WHERE a.order_id = p.id AND a.status IN ('open', 'closed_unknown')))`;
 
 /**
  * Write the order, and for a test pass its hold, as one batch (R-08, R-10,

@@ -1733,6 +1733,7 @@ export default function SmartIntakeJourney({
             testPass={testPass}
             onCheckAgain={() => void checkOrder(session)}
             onPayAgain={payAgain}
+            onNewOrder={newJourney}
           />
         ) : null}
         {session.stage === "brand" && session.prepared && session.selection ? (

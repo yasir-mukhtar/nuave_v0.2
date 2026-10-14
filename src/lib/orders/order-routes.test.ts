@@ -45,6 +45,7 @@ import {
   SMART_INTAKE_INPUT_VERSION,
 } from "../intake/smart-intake-contract";
 import { usdToUnits } from "../spending/spend-ledger";
+import { runSupport } from "./support";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import {
   CONTEXT,
@@ -1036,6 +1037,46 @@ describe("replacing an order through the route (R-19, AC-13 server parts)", () =
     expect((await response.json()).previous_state).toBe("payment_open");
     expect(orders()).toHaveLength(1);
     expect(orders()[0]).toMatchObject({ state: "open", replaced_by: null });
+  });
+
+  it("an order with an attempt closed as unknown is not replaced (Q14): previous_state payment_unknown, nothing written", async () => {
+    const first = await (await create()).json();
+    attempt(first.order_id, "closed_unknown");
+    const before = JSON.stringify([orders(), ledger()]);
+    const response = await create({ previous_order_id: first.order_id });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      code: "PREVIOUS_ORDER_ACTIVE",
+      previous_state: "payment_unknown",
+    });
+    expect(JSON.stringify([orders(), ledger()])).toBe(before);
+  });
+
+  it("after support closes the unknown attempt as unpaid the order is replaced again (Q14)", async () => {
+    const first = await (await create()).json();
+    attempt(first.order_id, "closed_unknown");
+    expect((await create({ previous_order_id: first.order_id })).status).toBe(
+      409,
+    );
+    const midtransId = `NV-${first.order_id
+      .slice(0, 6)
+      .toUpperCase()
+      .replace(/[0-9]/g, "A")}-1`;
+    const code = await runSupport(["close", midtransId, "unpaid"], {
+      db: d1.db,
+      makeSender: async () => {
+        throw new Error("no email expected");
+      },
+      siteOrigin: "https://nuave.test",
+      now: () => new Date(),
+      out: () => {},
+    });
+    expect(code).toBe(0);
+    const response = await create({ previous_order_id: first.order_id });
+    expect(response.status).toBe(200);
+    expect(orders().find((row) => row.id === first.order_id)?.replaced_by).toBe(
+      (await response.json()).order_id,
+    );
   });
 
   it("once the attempt is final the order is replaced, even though it expired", async () => {

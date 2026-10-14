@@ -226,7 +226,7 @@ export async function createOrder(
   orderId: string;
   orderNumber: string;
   /** With "previous_active": why the older order could not be replaced. */
-  previousState?: "paid" | "payment_open";
+  previousState?: "paid" | "payment_open" | "payment_unknown";
 }> {
   const orderId = newOrderId();
   const draw = input.newOrderNumber ?? makeOrderNumber;
@@ -281,14 +281,21 @@ export async function createOrder(
 async function previousOrderState(
   db: SpendDb,
   orderId: string,
-): Promise<"paid" | "payment_open"> {
+): Promise<"paid" | "payment_open" | "payment_unknown"> {
   const row = await db
-    .prepare("SELECT payment_kind FROM orders WHERE id = ?1")
+    .prepare(
+      `SELECT payment_kind,
+              EXISTS (SELECT 1 FROM payment_attempts
+                      WHERE order_id = ?1 AND status = 'open') AS is_open
+       FROM orders WHERE id = ?1`,
+    )
     .bind(orderId)
-    .first<{ payment_kind: PaymentKind | null }>();
-  return row?.payment_kind === "midtrans" || row?.payment_kind === "simulated"
-    ? "paid"
-    : "payment_open";
+    .first<{ payment_kind: PaymentKind | null; is_open: number }>();
+  if (row?.payment_kind === "midtrans" || row?.payment_kind === "simulated") {
+    return "paid";
+  }
+  // Q14: neither paid nor open, yet active: an attempt closed as unknown.
+  return row?.is_open ? "payment_open" : "payment_unknown";
 }
 
 /** R-23: an order made by S3 code has no number. Give it one before its next

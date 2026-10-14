@@ -71,13 +71,18 @@ function settledWord(status: MidtransStatus): boolean {
   );
 }
 
+/** Q15: a missing or empty `currency` counts as IDR (the account takes only
+ * rupiah); a stated currency other than IDR does not. */
+const currencyIsIdr = (status: MidtransStatus): boolean =>
+  (status.currency ?? ORDER_CURRENCY) === ORDER_CURRENCY;
+
 /** R-09: settled, a `fraud_status` (when present) of `accept`, `99000.00`, IDR. */
 export function meetsPaidRule(status: MidtransStatus): boolean {
   return (
     settledWord(status) &&
     (status.fraud_status === null || status.fraud_status === "accept") &&
     status.gross_amount === ORDER_GROSS_AMOUNT_TEXT &&
-    status.currency === ORDER_CURRENCY
+    currencyIsIdr(status)
   );
 }
 
@@ -337,8 +342,7 @@ async function markNeedsRefund(
   const { db, now } = deps;
   const stamp = now.toISOString();
   const amountOk =
-    status.gross_amount === ORDER_GROSS_AMOUNT_TEXT &&
-    status.currency === ORDER_CURRENCY;
+    status.gross_amount === ORDER_GROSS_AMOUNT_TEXT && currencyIsIdr(status);
   const reason = !meetsPaidRule(status)
     ? amountOk
       ? "fraud_status_not_accept"

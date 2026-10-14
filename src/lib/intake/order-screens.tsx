@@ -181,11 +181,13 @@ function PaymentPanel({
   checking,
   onCheckAgain,
   onPayAgain,
+  onNewOrder,
 }: {
   payment: OrderPayment;
   checking: boolean;
   onCheckAgain: () => void;
   onPayAgain: () => void;
+  onNewOrder: () => void;
 }) {
   const link = payment.redirect_url ? (
     <a
@@ -303,6 +305,10 @@ function PaymentPanel({
         <>
           <OrderNumber number={payment.order_number} />
           <Support />
+          {/* Q17: a fresh start; the refunded order stays ended on the server. */}
+          <Button className="min-h-11 w-fit px-4" onClick={onNewOrder}>
+            Mulai pesanan baru
+          </Button>
         </>,
         true,
       );
@@ -345,6 +351,7 @@ export function OrderScreen({
   testPass,
   onCheckAgain,
   onPayAgain,
+  onNewOrder,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   businessName: string;
@@ -365,6 +372,7 @@ export function OrderScreen({
   testPass: boolean;
   onCheckAgain: () => void;
   onPayAgain: () => void;
+  onNewOrder: () => void;
 }) {
   const panel = hasPaymentPanel(payment);
   const free = payment?.state === "not_required";
@@ -393,6 +401,7 @@ export function OrderScreen({
           checking={checking}
           onCheckAgain={onCheckAgain}
           onPayAgain={onPayAgain}
+          onNewOrder={onNewOrder}
         />
       ) : null}
       <div className="grid gap-2">
