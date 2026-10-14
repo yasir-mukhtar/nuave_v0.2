@@ -32,6 +32,13 @@ Yasir also approved the S4 live check (Spec 017 AC-25) with a budget of
 USD 2.00, to run after he merges and deploys PR #137. It does not approve
 merge or deploy.
 
+After the Opus max review of PR #137, Yasir answered four more questions
+(recorded in the spec as Q14–Q17): an order with a payment attempt closed
+as unknown cannot be replaced until the founder settles it; a settled
+`99000.00` answer without a currency counts as IDR; the AC-25 budget is a
+worst case of USD 4.00 (expected about USD 0.30); and a customer refunded
+before approval gets a "Mulai pesanan baru" button for a fresh start.
+
 ## 2026-10-14 — Approve Spec 017 (S4)
 
 Yasir approved [Spec 017](../specs/017-payment-and-test-pass/SPEC.md)

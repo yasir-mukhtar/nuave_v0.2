@@ -696,7 +696,20 @@ case.
   build): A.** The closed-unknown screen shows the order number and
   support only, no new payment. This settles the difference between the
   Failure table and the Departures section in favour of the Failure table.
-- **AC-25 budget:** USD 2.00, approved 2026-10-14.
+- **Q14 — Unknown payment blocks a replacement (raised by the final
+  review): yes.** While an order has an attempt closed as unknown (R-06),
+  `POST /api/orders` refuses to replace it (as R-19 does for a paid order or
+  an open attempt). Once the founder closes the attempt as unpaid with the
+  support command, a replacement is allowed again.
+- **Q15 — Missing currency: yes.** A Get Status answer that is settled for
+  `99000.00` and gives no `currency` counts as IDR (the account takes only
+  rupiah). A stated currency other than IDR stays "needs refund" (R-09).
+- **Q16 — AC-25 budget:** USD 2.00 approved, then raised to a worst case
+  of USD 4.00 (two orders, each up to its USD 2.00 order limit); expected
+  about USD 0.30.
+- **Q17 — Fresh start after a refund before approval: yes.** The refunded
+  screen offers "Mulai pesanan baru", which clears the browser's saved order
+  and returns to the website entry. The refunded order stays ended.
 
 **Founder actions before AC-25:**
 

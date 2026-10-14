@@ -74,11 +74,11 @@
   not merged). Offline criteria AC-01..AC-24 pass (independent review per
   slice and on the full PR, PASS+NOTES;
   [record](../specs/017-payment-and-test-pass/VERIFICATION.md)). Founder
-  answers during the build: Q11 B, Q12 A, Q13 A
+  answers during the build: Q11 B, Q12 A, Q13 A, Q14–Q17
   ([log](./DECISION_LOG.md#2026-10-14--s4-build-partial-chargeback-and-lost-second-payment-try)).
   **Next:** the founder merges and deploys (migrations 0006–0008, four new
   Worker secrets), then AC-25: one sandbox payment and one test pass on
-  production. Yasir approved AC-25 with a USD 2.00 budget (2026-10-14). Midtrans sandbox, redirect
+  production. Yasir approved AC-25 with a worst-case budget of USD 4.00, expected about USD 0.30 (2026-10-14). Midtrans sandbox, redirect
   URLs and GitHub secrets are set up by the founder.
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
