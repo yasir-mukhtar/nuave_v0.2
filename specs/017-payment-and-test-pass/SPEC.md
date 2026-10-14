@@ -1,6 +1,6 @@
 # Spec 017: Payment, founder test pass and cap alerts (S4)
 
-> Status: **In review** — revision 4 answers the second plan review (FAIL on revision 3). One founder question is open (Q9). Build nothing before approval.
+> Status: **In review** — revision 4 answers the second plan review (FAIL on revision 3). Founder questions Q9 and Q10 are open. Build nothing before approval.
 > Owner: orchestrator
 > Updated: 2026-10-14 (revision 4: second plan review findings N1–N14 applied)
 > Implements: S4 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
@@ -563,6 +563,23 @@ case.
   - **B:** drop bank transfer and offer QRIS, GoPay and DANA only. All
     refunds then go through the Midtrans dashboard. QRIS can be paid from
     most banking apps, so most bank customers can still pay.
+
+- **Q10 — Workers Free CPU limit.** The S3 live run (Spec 016 AC-21,
+  measured 2026-10-14) used 12–22 ms of CPU per question step and 55 ms for
+  the report step. Free allows 10 ms per cron run. Cloudflare tolerates
+  running over "infrequently" but stops a Worker that does it consistently,
+  which every audit does. Options:
+  - **A (recommended):** move the account to Workers Paid (USD 5 per month)
+    before G1, the first real purchase. The cron limit becomes 30 seconds of
+    CPU; the 50-subrequest limit per run also rises. S4's sandbox testing
+    can stay on Free. This reverses the 2026-10-13 decision "stay on Workers
+    Free for now".
+  - **B:** stay on Free and try to cut CPU use. Getting the report step from
+    55 ms under 10 ms is unlikely without moving work elsewhere, which is a
+    larger build than S4.
+  R-23's "10 ms CPU" target applies only while the account is on Free; on
+  Paid, R-23 keeps the D1 and outside-request budget and drops the 10 ms
+  target.
 
 **Founder actions before AC-25:**
 
