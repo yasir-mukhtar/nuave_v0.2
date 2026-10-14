@@ -751,6 +751,8 @@ case.
 Complete after implementation:
 
 - Verification artifact: `specs/017-payment-and-test-pass/VERIFICATION.md`
-- Result: Pending
-- Date: Pending
-- Verified commit or working-tree state: Pending
+- Result: offline criteria AC-01..AC-24 PASS+NOTES (notes fixed); AC-25
+  (live) pending a named founder approval
+- Date: 2026-10-14
+- Verified commit or working-tree state: PR #137, branch
+  `claude/vibrant-noether-5n3b4o`
