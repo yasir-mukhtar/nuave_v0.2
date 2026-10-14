@@ -11,7 +11,15 @@ import {
   liveGenerateReportContent,
 } from "../audit/provider";
 import { dailySpendLimitUsd, spendDatabase } from "../spending/provider-spend";
-import { orderEnvironment, resendSettings, siteOrigin } from "./config";
+import { reconcileDueAttempts } from "../payments/check";
+import { usdToUnits } from "../spending/spend-ledger";
+import {
+  midtransSettings,
+  orderEnvironment,
+  orderSpendLimitUsd,
+  resendSettings,
+  siteOrigin,
+} from "./config";
 import { fakeMailSender, resendMailSender, type MailSender } from "./mail";
 import { runOrders, type RunSummary } from "./runner";
 import type { OrderMode } from "./store";
@@ -68,6 +76,24 @@ export async function runScheduledOrders(
     sender = resendMailSender(resend);
   } else {
     sender = fakeMailSender({ writeLocalFile: options.devTrigger === true });
+  }
+
+  // R-14: reconciliation of payment attempts runs before the expiry sweep (which
+  // is the first thing `runOrders` does), at most 2 attempts per run. S4c puts it
+  // in the run's budget and lets it run while the emergency switch is off.
+  const midtrans = mode === "live" ? midtransSettings() : null;
+  if (midtrans) {
+    try {
+      await reconcileDueAttempts({
+        db,
+        now: new Date(),
+        midtrans,
+        limitUnits: usdToUnits(orderSpendLimitUsd()),
+        dailyLimitUnits: usdToUnits(dailySpendLimitUsd()),
+      });
+    } catch {
+      // A failing check never stops the audit steps.
+    }
   }
 
   const { outcomes } = await runOrders({

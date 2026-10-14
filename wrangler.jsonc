@@ -79,6 +79,14 @@
         "period": 60,
       },
     },
+    {
+      "name": "PAYMENT_START_CALLER_RATE_LIMITER",
+      "namespace_id": "307",
+      "simple": {
+        "limit": 5,
+        "period": 60,
+      },
+    },
   ],
   "d1_databases": [
     {
@@ -139,6 +147,11 @@
           "namespace_id": "417",
           "simple": { "limit": 20, "period": 60 },
         },
+        {
+          "name": "PAYMENT_START_CALLER_RATE_LIMITER",
+          "namespace_id": "418",
+          "simple": { "limit": 5, "period": 60 },
+        },
       ],
       "d1_databases": [
         {
@@ -195,6 +208,11 @@
         {
           "name": "REPORT_DATA_CALLER_RATE_LIMITER",
           "namespace_id": "517",
+          "simple": { "limit": 100000, "period": 60 },
+        },
+        {
+          "name": "PAYMENT_START_CALLER_RATE_LIMITER",
+          "namespace_id": "518",
           "simple": { "limit": 100000, "period": 60 },
         },
       ],

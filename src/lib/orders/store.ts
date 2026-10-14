@@ -121,6 +121,37 @@ export function orderMayRunPaidWork(
 const ACTIVE_STATES = `'running', 'reporting'`;
 const iso = (at: Date) => at.toISOString();
 
+/** R-07: one rule for "the order's end time has passed". `expires_at` is the end
+ * time: created + 2 hours; pushed out to the attempt's window end + grace when a
+ * payment attempt starts; paid time + 7 days once paid (R-11, R-13). An order
+ * with an open payment attempt never ends. `now` is a SQL parameter (`?2`). */
+export const orderPastEndSql = (now: string) =>
+  `(expires_at <= ${now} AND NOT EXISTS (SELECT 1 FROM payment_attempts a
+                                         WHERE a.order_id = orders.id AND a.status = 'open'))`;
+
+/** R-07 on a row already read. */
+export async function orderPastEnd(
+  db: SpendDb,
+  order: Pick<OrderRow, "id" | "state" | "expires_at">,
+  now: Date,
+): Promise<boolean> {
+  if (order.state !== "open" || order.expires_at > iso(now)) return false;
+  return !(await hasOpenAttempt(db, order.id));
+}
+
+export async function hasOpenAttempt(
+  db: SpendDb,
+  orderId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT 1 AS open FROM payment_attempts WHERE order_id = ?1 AND status = 'open' LIMIT 1",
+    )
+    .bind(orderId)
+    .first<{ open: number }>();
+  return row !== null;
+}
+
 export async function getOrder(
   db: SpendDb,
   orderId: string,
@@ -156,8 +187,8 @@ export async function orderInState(
   ) {
     return null;
   }
-  // An open order past its time is as good as expired (R-22).
-  if (order.state === "open" && order.expires_at <= iso(input.now)) return null;
+  // An open order past its end time is as good as expired (R-22, R-07).
+  if (await orderPastEnd(db, order, input.now)) return null;
   return order;
 }
 
@@ -336,7 +367,7 @@ export async function approveOrder(
         `UPDATE orders
          SET state = 'running', started_at = ?2, deadline_at = ?3,
              intake_json = ?4, business_name = ?5
-         WHERE id = ?1 AND state = 'open' AND expires_at > ?2
+         WHERE id = ?1 AND state = 'open' AND NOT ${orderPastEndSql("?2")}
            AND environment = ?6 AND mode = ?7 AND ${PAID_GATE_SQL}`,
       )
       .bind(
@@ -409,12 +440,11 @@ export async function orderStatus(
             : "pending") as QuestionProgress,
   }));
   return {
-    // An open order past its time reads as expired even before the cron
-    // settles it, so a returning customer is sent back to the order screen.
-    state:
-      order.state === "open" && order.expires_at <= now
-        ? "expired"
-        : order.state,
+    // An open order past its end time reads as expired even before the cron
+    // settles it, so a returning customer is sent back to the order screen. An
+    // order with an open payment attempt never does (R-07): its `payment` shows
+    // "checking".
+    state: (await orderPastEnd(db, order, input.now)) ? "expired" : order.state,
     completed: mapped.filter((item) => item.status === "completed").length,
     total: 10,
     questions: mapped,
@@ -434,7 +464,7 @@ export async function expireOpenOrders(
 ): Promise<string[]> {
   const ids = await orderIds(
     db,
-    `SELECT id FROM orders WHERE state = 'open' AND expires_at <= ?1
+    `SELECT id FROM orders WHERE state = 'open' AND paid_at IS NULL AND ${orderPastEndSql("?1")}
        AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
     [iso(input.now), input.environment, input.mode, input.limit],
   );
@@ -445,6 +475,8 @@ export async function expireOpenOrders(
         orderId: id,
         from: ["open"],
         to: "expired",
+        // R-07: re-checked inside the ending write itself.
+        onlyIfUnpaidPastEnd: true,
         now: () => input.now,
       })
     ) {
@@ -527,6 +559,8 @@ export async function failedOrdersNeedingEmail(
            WHERE e.order_id = orders.id AND e.kind = 'failure') AS last_at
        FROM orders
        WHERE state = 'failed' AND environment = ?1 AND mode = ?2 AND ended_at > ?3
+         -- R-15: a refund ended this order; the customer already has their money.
+         AND (failure_code IS NULL OR failure_code != 'refunded')
          AND NOT EXISTS (SELECT 1 FROM order_emails e
                          WHERE e.order_id = orders.id AND e.kind = 'failure'
                            AND e.result = 'accepted'))

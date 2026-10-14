@@ -151,6 +151,9 @@ export function orderHoldStatement(
     limitUnits: number;
     dailyLimitUnits: number | null;
     test: boolean;
+    /** Only when the order was just marked paid by this transaction (R-11), so
+     * a batch whose mark-paid write did nothing writes no hold. */
+    paidTransactionId?: string;
   },
 ): SpendStatement {
   return db
@@ -163,7 +166,9 @@ export function orderHoldStatement(
                        AND state NOT IN (${TERMINAL_STATES_SQL}))
          AND NOT EXISTS (SELECT 1 FROM provider_spend
                          WHERE kind = 'order_hold' AND order_id = ?5)
-         AND (?7 IS NULL OR ${capRoomSql({ day: "?2", limitUnits: "?3", dailyLimitUnits: "?7" })})`,
+         AND (?7 IS NULL OR ${capRoomSql({ day: "?2", limitUnits: "?3", dailyLimitUnits: "?7" })})
+         AND (?8 IS NULL OR EXISTS (SELECT 1 FROM orders
+                                    WHERE id = ?5 AND paid_transaction_id = ?8))`,
     )
     .bind(
       crypto.randomUUID(),
@@ -173,6 +178,7 @@ export function orderHoldStatement(
       input.orderId,
       input.test ? 1 : 0,
       input.dailyLimitUnits,
+      input.paidTransactionId ?? null,
     );
 }
 
@@ -579,6 +585,11 @@ export async function endOrder(
     /** For `failed`: in the same batch, clear a link hash whose ready email
      * was never accepted (spec 016 R-24). */
     clearUndeliveredLink?: boolean;
+    /** R-07: the unpaid-order ending. The write re-checks, in the same
+     * statement, that the order is still unpaid, its end time has passed and no
+     * payment attempt is open, so a payment applied a moment earlier is never
+     * undone. */
+    onlyIfUnpaidPastEnd?: boolean;
     now?: () => Date;
   },
 ): Promise<boolean> {
@@ -592,7 +603,14 @@ export async function endOrder(
              overrun = CASE
                WHEN ${CALL_SUM("?1")} > COALESCE(${HOLD_AMOUNT("?1")}, 0) THEN 1
                ELSE overrun END
-         WHERE id = ?1 AND state IN (${inList(input.from)})`,
+         WHERE id = ?1 AND state IN (${inList(input.from)})
+           ${
+             input.onlyIfUnpaidPastEnd
+               ? `AND paid_at IS NULL AND expires_at <= ?3
+                  AND NOT EXISTS (SELECT 1 FROM payment_attempts a
+                                  WHERE a.order_id = ?1 AND a.status = 'open')`
+               : ""
+           }`,
       )
       .bind(input.orderId, input.to, at, input.failureCode ?? null),
     db

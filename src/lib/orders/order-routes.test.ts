@@ -634,6 +634,7 @@ describe("order status (R-21)", () => {
     const json = await response.json();
     expect(Object.keys(json).sort()).toEqual([
       "completed",
+      "payment",
       "questions",
       "state",
       "total",
