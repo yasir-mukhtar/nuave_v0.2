@@ -371,11 +371,13 @@ describe("start payment (R-05, AC-01, AC-07, AC-10, AC-11)", () => {
 
     it("marks the order paid as simulated, calls no Midtrans, and works with no Midtrans settings", async () => {
       vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+      vi.stubEnv("NUAVE_ENVIRONMENT", "preview");
       vi.stubEnv("MIDTRANS_SERVER_KEY", "");
       vi.stubEnv("MIDTRANS_IS_PRODUCTION", "");
       vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "");
       const id = await makeOrder(d1.db, {
         mode: "synthetic",
+        environment: "preview",
         payment: "unpaid",
         now: new Date(),
       });
@@ -397,10 +399,25 @@ describe("start payment (R-05, AC-01, AC-07, AC-10, AC-11)", () => {
       expect(paidRow(id).paid_at).toBe(row.paid_at);
     });
 
+    it("never runs on the production environment, even in synthetic mode (R-17)", async () => {
+      vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+      const id = await makeOrder(d1.db, {
+        mode: "synthetic",
+        payment: "unpaid",
+        now: new Date(),
+      });
+      const response = await start(id);
+      expect(response.status).toBe(503);
+      expect(paidRow(id).payment_kind).toBe("unpaid");
+      expect(fake.requests).toEqual([]);
+    });
+
     it("refuses a test-pass order", async () => {
       vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+      vi.stubEnv("NUAVE_ENVIRONMENT", "preview");
       const test = await makeOrder(d1.db, {
         mode: "synthetic",
+        environment: "preview",
         payment: "test",
         now: new Date(),
       });

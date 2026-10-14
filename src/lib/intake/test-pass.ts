@@ -33,11 +33,3 @@ export function writeTestPassCode(code: string): boolean {
     return false;
   }
 }
-
-export function clearTestPassCode(): void {
-  try {
-    tabStorage()?.removeItem(TEST_PASS_STORAGE_KEY);
-  } catch {
-    // nothing to clear
-  }
-}

@@ -126,6 +126,7 @@ afterEach(() => {
 
 const heading = (name: string | RegExp) =>
   screen.findByRole("heading", { name });
+const PAY = "Bayar Rp99.000";
 const button = (name: string) => screen.findByRole("button", { name });
 
 async function toOrderScreen() {
@@ -468,6 +469,66 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
       );
     },
   );
+});
+
+describe("a replacement refused because the old order is active (R-19)", () => {
+  it("keeps the old order with its own website and business, and makes no new order", async () => {
+    let created = 0;
+    const stub = stubServer({
+      start: () =>
+        Response.json(
+          {
+            error: "Pembayaran belum bisa dimulai.",
+            code: "PAYMENT_START_FAILED",
+          },
+          { status: 502 },
+        ),
+      create: () => {
+        created += 1;
+        return created === 1
+          ? Response.json({ order_id: ORDER_ID, state: "open" })
+          : Response.json(
+              {
+                error: "Pesanan sebelumnya sudah dibayar.",
+                code: "PREVIOUS_ORDER_ACTIVE",
+              },
+              { status: 409 },
+            );
+      },
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    await screen.findByRole("alert");
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull(),
+    );
+    // Back to the brand check, a different business name, forward again.
+    fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
+    await heading("Ini brand yang ingin Anda audit?");
+    fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Nama brand" }), {
+      target: { value: "Nama Lain Fiksi" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+    await heading("Ringkasan pesanan");
+    await typeEmail();
+    fireEvent.click(await button("Bayar Rp99.000"));
+    await waitFor(() => expect(created).toBe(2));
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain("sudah dibayar"),
+    );
+    expect(stub.calls.filter((c) => c === "/api/payments/start")).toHaveLength(
+      1,
+    );
+    const saved = readSmartSession()!;
+    expect(saved.order).toMatchObject({
+      id: ORDER_ID,
+      name: "Kedai Fiksi",
+      website: "https://kedai-fiksi.example/",
+    });
+    expect(saved.brand?.name).toBe("Kedai Fiksi");
+  });
 });
 
 describe("locks after payment (R-19, AC-13)", () => {

@@ -202,12 +202,15 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
  * screen, and a changed focus or category passes the category checkpoint
  * before returning (R-05/R-21).
  */
-function backTargetFor(session: SmartSession): SmartStage | null {
+function backTargetFor(
+  session: SmartSession,
+  locked = Boolean(session.order?.paid),
+): SmartStage | null {
   const marker = session.editReturn;
   const selection = session.selection;
-  // Spec 017 R-19: once paid, the website and business are locked, so nothing
-  // steps back to the screens that change them.
-  const locked = Boolean(session.order?.paid);
+  // Spec 017 R-19: once paid, or while a payment attempt is open, the website
+  // and business are locked, so nothing steps back to the screens that change
+  // them.
   switch (session.stage) {
     case "brand":
       // A review-opened name edit backs out to the review (J7); the normal
@@ -631,6 +634,15 @@ export default function SmartIntakeJourney({
     paymentFor && paymentFor.orderId === session.order?.id
       ? paymentFor.payment.state
       : null;
+  // R-19: the server refuses a replacement while an attempt is open, so the
+  // screen locks the website and business exactly as after payment.
+  const paymentLocked =
+    Boolean(session.order?.paid) ||
+    (paymentState !== null && POLLED_PAYMENT_STATES.includes(paymentState));
+  const lockRef = useRef(paymentLocked);
+  useEffect(() => {
+    lockRef.current = paymentLocked;
+  });
   useEffect(() => {
     if (
       !ready ||
@@ -660,13 +672,13 @@ export default function SmartIntakeJourney({
     if (!ready) return;
     if (window.history.state?.nuaveIntake !== true)
       window.history.replaceState(intakeMark(), "");
-    if (backTargetFor(sessionRef.current))
+    if (backTargetFor(sessionRef.current, lockRef.current))
       window.history.pushState(intakeMark(), "");
     const onBack = (event: PopStateEvent) => {
       // Fragment or foreign history events must not move the intake flow.
       if (event.state?.nuaveIntake !== true) return;
       const current = sessionRef.current;
-      const target = backTargetFor(current);
+      const target = backTargetFor(current, lockRef.current);
       if (!target) return;
       // The review-return marker survives a back hop onto the focus or
       // category checkpoint; landing anywhere else consumes it.
@@ -678,7 +690,8 @@ export default function SmartIntakeJourney({
       setError(null);
       writeSmartSession(next);
       setSession(next);
-      if (backTargetFor(next)) window.history.pushState(intakeMark(), "");
+      if (backTargetFor(next, lockRef.current))
+        window.history.pushState(intakeMark(), "");
     };
     window.addEventListener("popstate", onBack);
     return () => window.removeEventListener("popstate", onBack);
@@ -720,7 +733,7 @@ export default function SmartIntakeJourney({
   // The frame's `Kembali` moves in-flow without touching the stack; the trap
   // stays on top, so a later real Back still steps back from the new stage.
   const goBack = () => {
-    const target = backTargetFor(session);
+    const target = backTargetFor(session, paymentLocked);
     if (!target) return;
     persist({
       ...session,
@@ -894,6 +907,7 @@ export default function SmartIntakeJourney({
     };
     if (!identity || !brand.name) return;
     let order = session.order ?? null;
+    const previousOrder = order;
     let previousOrderId = session.supersededOrder ?? null;
     // Going back past this screen to change the website or the brand starts a
     // new order (R-01). A paid order is locked: it is never replaced (R-19).
@@ -950,19 +964,24 @@ export default function SmartIntakeJourney({
           previousOrderId
         ) {
           // R-19: the old order is paid or waiting for payment: no new order.
-          // The page shows that order's own state instead.
-          working = {
-            ...working,
-            order: {
-              id: previousOrderId,
-              website: identity.canonicalUrl,
-              name: brand.name,
-            },
-            supersededOrder: null,
-          };
-          persist(working);
+          // The page shows that order's own state, with ITS OWN website and
+          // business (never the ones on this screen). If this screen no longer
+          // has them, nothing is recorded and the message stands.
+          if (
+            previousOrder &&
+            previousOrder.id === previousOrderId &&
+            previousOrder.website === identity.canonicalUrl
+          ) {
+            working = {
+              ...working,
+              order: previousOrder,
+              brand: { name: previousOrder.name, origin: brand.origin },
+              supersededOrder: null,
+            };
+            persist(working);
+            void checkOrder(working);
+          }
           setError(body.error || "Pesanan sebelumnya masih berjalan.");
-          void checkOrder(working);
           return;
         }
         if (!created.ok || typeof body.order_id !== "string") {
@@ -1431,10 +1450,10 @@ export default function SmartIntakeJourney({
   // Framed intake screens (Spec 013 J2+J4): entry → reading → brand → focus
   // → location/product → summary.
   const progress = stageProgress(session);
-  const backTarget = backTargetFor(session);
+  const backTarget = backTargetFor(session, paymentLocked);
   // Spec 017: the saved order is the one for this website and business; what
   // the server last said about its payment; and what the main button does.
-  const lockedAfterPayment = Boolean(session.order?.paid);
+  const lockedAfterPayment = paymentLocked;
   const orderMatches = Boolean(
     session.order &&
     session.identity &&

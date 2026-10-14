@@ -103,6 +103,8 @@ export async function POST(request: Request) {
   // the alert address (fail closed). Synthetic mode never calls Midtrans: it
   // uses the labeled simulated payment instead.
   if (server.mode === "synthetic") {
+    // R-17: the simulated payment is for local, tests and previews only.
+    if (server.environment === "production") return orderUnavailableResponse();
     return simulatedPayment(server.db, server.environment, body?.order_id);
   }
   const midtrans = midtransSettings();

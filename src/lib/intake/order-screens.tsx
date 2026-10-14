@@ -285,9 +285,6 @@ function PaymentPanel({
         <>
           <OrderNumber number={payment.order_number} />
           <Support />
-          <Button className="min-h-11 w-fit px-4" onClick={onPayAgain}>
-            Coba bayar lagi
-          </Button>
         </>,
         true,
       );
