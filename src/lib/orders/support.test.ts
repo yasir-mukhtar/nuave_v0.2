@@ -645,6 +645,44 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
     expect(await support().run("refunded", "bad id")).toBe(2);
   });
 
+  it("a refund that stops half way through wrangler stays listed in refunds, says it is safe to repeat, and the repeat finishes it", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-half" });
+    let fail = true;
+    const execute = async (sql: string) => {
+      // The batch that writes the transaction row is the last step.
+      if (fail && sql.includes("UPDATE payment_transactions")) {
+        throw new Error("wrangler d1 execute failed");
+      }
+      const results = [];
+      for (const part of sql.split(";\n")) {
+        const statement = d1.db.prepare(part).bind();
+        results.push(
+          /^\s*select/i.test(part)
+            ? { results: (await statement.all()).results }
+            : { meta: (await statement.run()).meta },
+        );
+      }
+      return results;
+    };
+    const s = support({ db: d1ThroughWrangler(execute) });
+    expect(await s.run("refunded", "tx-half")).toBe(1);
+    expect(text()).toContain("safe to run the same command again");
+    // The order already ended; the transaction row is not written.
+    expect(
+      q(`SELECT state, failure_code FROM orders WHERE id = '${id}'`),
+    ).toEqual([{ state: "failed", failure_code: "refunded" }]);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 1");
+    expect(text()).toContain("tx-half");
+    fail = false;
+    output.length = 0;
+    expect(await s.run("refunded", "tx-half")).toBe(0);
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+  });
+
   it("close ends an open attempt by its Midtrans order_id: unknown stays on refunds, unpaid takes it off", async () => {
     const { attempt } = await orderWithAttempt();
     const id = attempt.midtrans_order_id;

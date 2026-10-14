@@ -118,15 +118,14 @@ export async function runScheduledOrders(
         : generateSyntheticLocalReport,
     sender,
     auditEnabled: auditSkipped === undefined,
-    payments: limits
-      ? {
-          // Live mode only, with the key set (R-17); a failing check never
-          // stops the rest of the run.
-          midtrans: mode === "live" ? midtransSettings() : null,
-          ...limits,
-          founderEmail: founderAlertEmail(),
-        }
-      : undefined,
+    // The notices and the payment email need only the database and Resend; the
+    // cap settings matter only to reconciliation and cap alerts (R-23).
+    payments: {
+      midtrans: mode === "live" && limits ? midtransSettings() : null,
+      limitUnits: limits?.limitUnits ?? null,
+      dailyLimitUnits: limits?.dailyLimitUnits ?? null,
+      founderEmail: founderAlertEmail(),
+    },
   });
   return auditSkipped
     ? { ran: true, outcomes, auditSkipped }

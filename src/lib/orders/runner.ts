@@ -134,8 +134,10 @@ export type RunnerDeps = {
   payments?: {
     /** Null in synthetic mode or when the key is missing: no reconciliation. */
     midtrans: MidtransConfig | null;
-    limitUnits: number;
-    dailyLimitUnits: number;
+    /** Null when the cap settings are not valid: no reconciliation (it applies
+     * payments) and no cap alerts; notices and emails still go out. */
+    limitUnits: number | null;
+    dailyLimitUnits: number | null;
     /** Null: no founder notice can be sent. */
     founderEmail: string | null;
   };
@@ -223,9 +225,11 @@ export const RUN_COST = {
   /** One founder notice (the claim, three tries, the mark). */
   notice: 6,
 } as const;
-/** R-23: reconciliation may spend the meter up to here; the rest is kept for
- * the fixed queries that follow it (about 8) so the run still fits. */
-export const RECONCILE_UNIT_LIMIT = RUN_UNIT_LIMIT - 8;
+/** R-23: reconciliation may spend the meter up to here. The rest is kept for the
+ * queries that follow it and cannot be skipped: the expiry, 7-day, deadline,
+ * cap-alert (a select and a batch), payment-email, notice, active-order and
+ * failure-email lists, and the two order reads of the audit loop (11). */
+export const RECONCILE_UNIT_LIMIT = RUN_UNIT_LIMIT - 11;
 /** R-23: a payment email or notice that is due and has existed this long has
  * already waited a run (runs are a minute apart): it goes before audit steps. */
 export const RUN_INTERVAL_MS = 60_000;
@@ -296,7 +300,11 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
 
   // R-14, R-23: reconciliation comes first (at most 2 attempts), inside the
   // run's meter. It runs with the emergency switch off too.
-  if (payments?.midtrans) {
+  if (
+    payments?.midtrans &&
+    payments.limitUnits !== null &&
+    payments.dailyLimitUnits !== null
+  ) {
     try {
       const checked = await reconcileDueAttempts({
         db: deps.db,
@@ -358,7 +366,11 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   // R-21: the day's cap use, then what is due to send. A payment email or a
   // refund notice that already waited a run goes before the audit steps.
   const founderEmail = payments?.founderEmail ?? null;
-  if (founderEmail && payments && deps.mode === "live") {
+  if (
+    founderEmail &&
+    payments?.dailyLimitUnits != null &&
+    deps.mode === "live"
+  ) {
     await recordCapAlerts(deps.db, {
       now: deps.now(),
       dailyLimitUnits: payments.dailyLimitUnits,

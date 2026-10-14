@@ -408,6 +408,36 @@ describe("the cron with the emergency switch off or AI settings missing (R-23, A
     vi.unstubAllGlobals();
   });
 
+  it("founder notices and payment emails need only the database and Resend: with the cap settings missing, a refund notice is still sent", async () => {
+    const sent: { to: string; subject: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: unknown, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body));
+        sent.push({ to: body.to[0], subject: body.subject });
+        return Response.json({ id: "re-1" });
+      }),
+    );
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", ""); // the cap is missing
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+    vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "founder@example.test");
+    d1.query(
+      `INSERT INTO founder_notices (id, kind, subject, detail_json, status, created_at)
+       VALUES ('n1', 'needs_refund', 'tx-1', '{"order_number":"NV-AAAAAA","amount":"99000.00"}', 'pending', '2026-10-12T10:00:00.000Z') RETURNING 1`,
+    );
+    const result = await runScheduledOrders();
+    expect(result).toMatchObject({ ran: true, outcomes: ["notice"] });
+    expect(sent).toEqual([
+      expect.objectContaining({
+        to: "founder@example.test",
+        subject: expect.stringContaining("NV-AAAAAA"),
+      }),
+    ]);
+    vi.unstubAllGlobals();
+  });
+
   it("an order made before payment existed (no payment kind) finishes, gets an order number, and its ready email shows it", async () => {
     const id = await makeOrder(d1.db, { payment: "legacy", now: new Date() });
     d1.query(

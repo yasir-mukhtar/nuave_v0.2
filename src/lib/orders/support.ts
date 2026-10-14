@@ -378,7 +378,10 @@ async function refunds(deps: SupportDeps): Promise<number> {
     .bind()
     .all<Row>();
   // A paid order that ended failed (after payment, or not started in 7 days)
-  // whose paying transaction was not refunded. A synthetic payment took no money.
+  // whose paying transaction is not recorded as refunded. It is judged by the
+  // transaction, so a refund that stopped half way (the order ended, the
+  // transaction row not written) is still listed. A synthetic payment took no
+  // money.
   const { results: failed } = await deps.db
     .prepare(
       `SELECT o.order_number, o.failure_code, o.paid_transaction_id, o.ended_at,
@@ -386,7 +389,9 @@ async function refunds(deps: SupportDeps): Promise<number> {
                WHERE t.transaction_id = o.paid_transaction_id) AS amount
        FROM orders o
        WHERE o.state = 'failed' AND o.payment_kind = 'midtrans'
-         AND o.refunded_at IS NULL AND COALESCE(o.failure_code, '') != 'refunded'
+         AND COALESCE((SELECT t.refund_state FROM payment_transactions t
+                       WHERE t.transaction_id = o.paid_transaction_id), 'none')
+             != 'refunded'
        ORDER BY o.ended_at`,
     )
     .bind()
@@ -433,13 +438,24 @@ async function refunded(
     deps.out("That is not a Midtrans transaction ID.");
     return 2;
   }
-  const result = await applyRefund(
-    // The refund path never uses the limits.
-    { db: deps.db, now: deps.now(), limitUnits: 0, dailyLimitUnits: 0 },
-    transactionId,
-    "refunded",
-    "support",
-  );
+  let result: Awaited<ReturnType<typeof applyRefund>>;
+  try {
+    result = await applyRefund(
+      // The refund path never uses the limits.
+      { db: deps.db, now: deps.now(), limitUnits: 0, dailyLimitUnits: 0 },
+      transactionId,
+      "refunded",
+      "support",
+    );
+  } catch {
+    // The writes go one command at a time through wrangler. The order is ended
+    // first and the transaction row last, and `refunds` judges by the
+    // transaction row, so a half-done run stays listed and a repeat finishes it.
+    deps.out(
+      "The refund could not be fully recorded (the database did not answer). It is safe to run the same command again; `refunds` still lists the case until it is done.",
+    );
+    return 1;
+  }
   if (result === "unknown_order") {
     deps.out("No transaction with that ID.");
     return 1;

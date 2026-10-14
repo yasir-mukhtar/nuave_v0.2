@@ -11,7 +11,7 @@ import { runOrders, type RunnerDeps } from "../orders/runner";
 import { ORDER_PAID_MS } from "../orders/store";
 import { usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
-import { noticeEmail } from "./founder-notices";
+import { noticeEmail, recordCapAlerts } from "./founder-notices";
 import { recordFounderNotice } from "./notices";
 
 // Spec 017 S4c: founder notices (R-21, AC-18), the payment-received email (R-22,
@@ -130,6 +130,24 @@ describe("cap alerts (R-21, AC-18)", () => {
     expect(toFounder(mail)[0]!.subject).toContain("90%");
     expect(notices().map((row) => row.kind)).toEqual(["cap_80", "cap_90"]);
     expect(notices().every((row) => row.status === "sent")).toBe(true);
+  });
+
+  it("a lower level an overlapping run left pending is set to sent: only the highest is ever sent", async () => {
+    const mail = mailbox();
+    for (let i = 0; i < 4; i += 1) await paid(2); // USD 8: 80%
+    // A run that saw only 80% recorded it and has not sent it yet.
+    await recordCapAlerts(d1.db, { now: clock, dailyLimitUnits: DAILY });
+    expect(notices()).toEqual([
+      { kind: "cap_80", subject: "2026-10-12", status: "pending" },
+    ]);
+    await paid(1.2); // USD 9.2: 90% too, before the first email went out
+    await run(mail.sender);
+    expect(toFounder(mail)).toHaveLength(1);
+    expect(toFounder(mail)[0]!.subject).toContain("90%");
+    expect(notices().map((row) => `${row.kind}:${row.status}`)).toEqual([
+      "cap_80:sent",
+      "cap_90:sent",
+    ]);
   });
 
   it("the next UTC day starts again from nothing", async () => {
@@ -304,6 +322,32 @@ describe("paid orders that fail (R-21, AC-18) and the 7-day sweep (R-13, AC-14)"
       1,
     );
     await run(mail.sender);
+    expect(notices().filter((row) => row.kind.startsWith("paid_"))).toEqual([]);
+  });
+
+  it("a simulated payment took no money: its failure or 7-day end records no refund notice", async () => {
+    const mail = mailbox();
+    const failing = await makeOrder(d1.db, {
+      payment: "simulated",
+      email: CUSTOMER,
+      now: clock,
+      dailyLimitUsd: 100,
+    });
+    await approve(d1.db, failing, { now: clock });
+    await makeOrder(d1.db, {
+      payment: "simulated",
+      email: CUSTOMER,
+      now: clock,
+      dailyLimitUsd: 100,
+    });
+    advance(25 * HOUR);
+    await run(mail.sender, { mode: "synthetic" });
+    advance(8 * DAY);
+    await run(mail.sender, { mode: "synthetic" });
+    const states = d1.query<{ state: string; failure_code: string }>(
+      "SELECT state, failure_code FROM orders ORDER BY created_at",
+    );
+    expect(states.map((row) => row.state)).toEqual(["failed", "failed"]);
     expect(notices().filter((row) => row.kind.startsWith("paid_"))).toEqual([]);
   });
 

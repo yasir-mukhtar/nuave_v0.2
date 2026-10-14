@@ -88,6 +88,7 @@ export async function sendFounderNotice(
   row: NoticeRow,
 ): Promise<boolean | null> {
   const { db } = deps;
+  const owner = crypto.randomUUID();
   const claim = await db
     .prepare(
       `UPDATE founder_notices
@@ -98,7 +99,7 @@ export async function sendFounderNotice(
     )
     .bind(
       row.id,
-      crypto.randomUUID(),
+      owner,
       iso(new Date(deps.now.getTime() + CLAIM_MS)),
       iso(deps.now),
       row.attempts,
@@ -121,12 +122,13 @@ export async function sendFounderNotice(
     .prepare(
       `UPDATE founder_notices
        SET status = ?2, sent_at = ?3, claim_owner = NULL, claim_until = NULL
-       WHERE id = ?1`,
+       WHERE id = ?1 AND claim_owner = ?4`,
     )
     .bind(
       row.id,
       result.accepted ? "sent" : "pending",
       result.accepted ? iso(deps.now) : null,
+      owner,
     )
     .run();
   return result.accepted;
@@ -162,36 +164,40 @@ export async function recordCapAlerts(
     .first<{ total: number; seen: string | null }>();
   const total = row?.total ?? 0;
   const seen = (row?.seen ?? "").split(",");
-  const fresh = CAP_LEVELS.filter(
-    (level) =>
-      total * 100 >= level * input.dailyLimitUnits &&
-      !seen.includes(`cap_${level}`),
+  const reached = CAP_LEVELS.filter(
+    (level) => total * 100 >= level * input.dailyLimitUnits,
   );
-  if (fresh.length === 0) return [];
-  const highest = fresh[fresh.length - 1];
+  const highest = reached[reached.length - 1];
+  const fresh = reached.filter((level) => !seen.includes(`cap_${level}`));
+  // Nothing new, or only a level below one already recorded.
+  if (highest === undefined || !fresh.includes(highest)) return [];
   const at = iso(input.now);
+  const detail = (level: number) =>
+    JSON.stringify({
+      level,
+      day,
+      spent_usd: usd(total),
+      cap_usd: usd(input.dailyLimitUnits),
+    });
+  // Only the highest level is ever pending for the day (one email). A lower
+  // level is written as sent, or, if an overlapping run left it pending, set to
+  // sent, so two runs can never leave two levels to send.
   await db.batch(
-    fresh.map((level) =>
+    reached.map((level) =>
       db
         .prepare(
-          `INSERT OR IGNORE INTO founder_notices
-             (id, kind, subject, detail_json, status, sent_at, created_at)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+          level === highest
+            ? `INSERT OR IGNORE INTO founder_notices
+                 (id, kind, subject, detail_json, status, created_at)
+               VALUES (?1, ?2, ?3, ?4, 'pending', ?5)`
+            : `INSERT INTO founder_notices
+                 (id, kind, subject, detail_json, status, sent_at, created_at)
+               VALUES (?1, ?2, ?3, ?4, 'sent', ?5, ?5)
+               ON CONFLICT(kind, subject) DO UPDATE SET
+                 status = 'sent', sent_at = excluded.sent_at
+               WHERE founder_notices.status = 'pending'`,
         )
-        .bind(
-          crypto.randomUUID(),
-          `cap_${level}`,
-          day,
-          JSON.stringify({
-            level,
-            day,
-            spent_usd: usd(total),
-            cap_usd: usd(input.dailyLimitUnits),
-          }),
-          level === highest ? "pending" : "sent",
-          level === highest ? null : at,
-          at,
-        ),
+        .bind(crypto.randomUUID(), `cap_${level}`, day, detail(level), at),
     ),
   );
   return [...fresh];

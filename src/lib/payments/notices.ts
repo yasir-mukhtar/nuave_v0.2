@@ -55,8 +55,8 @@ export async function recordFounderNotice(
  * R-21: the founder notice for a paid, non-test order that ended `failed`:
  * `paid_not_started` for the 7-day sweep (R-13), `paid_order_failed` for any
  * other code. It rides in the batch that ends the order and writes only if the
- * order is now `failed` with this code, was paid (Midtrans or the labeled
- * simulated payment, never a test pass or a legacy order) and has a number.
+ * order is now `failed` with this code, was paid through Midtrans (a real payment: never the
+ * labeled simulated one, a test pass or a legacy order) and has a number.
  * The facts are read in SQL (one statement, no extra query); the subject is the
  * order number, never the internal order ID.
  */
@@ -78,7 +78,7 @@ export function orderFailedNoticeStatement(
               'pending', ?5
        FROM orders o
        WHERE o.id = ?2 AND o.state = 'failed' AND o.failure_code = ?3
-         AND o.payment_kind IN ('midtrans', 'simulated')
+         AND o.payment_kind = 'midtrans'
          AND o.order_number IS NOT NULL`,
     )
     .bind(

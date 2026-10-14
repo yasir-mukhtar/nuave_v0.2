@@ -25,10 +25,13 @@ export type CheckDeps = ApplyDeps & {
   hasRoom?: (units: number) => boolean;
 };
 
-/** R-23: the meter units one Midtrans answer can cost (the call and applying
- * it, refund path excepted), and one check's own fixed queries. */
-export const RECONCILE_ASK_UNITS = 8;
-export const RECONCILE_ATTEMPT_UNITS = 7;
+/** R-23: the meter units one Midtrans answer can cost at most (the call, applying
+ * it with the refund path, and marking the transaction checked), the queries a
+ * check still makes after its last answer, and the ones it makes first (the
+ * claim and the list of transactions). */
+export const RECONCILE_ASK_UNITS = 11;
+export const RECONCILE_AFTER_UNITS = 6;
+export const RECONCILE_ATTEMPT_UNITS = 2;
 
 /** R-14: at most one Midtrans check per attempt per 30 seconds. */
 export const CHECK_MIN_GAP_MS = 30_000;
@@ -73,25 +76,46 @@ export async function checkAttempt(
     PAYMENT_GRACE_MS + PAYMENT_FINAL_WAIT_MS,
   );
   const finalTime = now.getTime() >= finalFrom.getTime();
-  // R-06: the final answer asks every known transaction. The bounded list (oldest
-  // update first) is only for the recovery path before that.
+  // R-06: the final answer asks every known transaction, oldest-checked first.
+  // A transaction already checked since the final time with a final-not-paid
+  // answer is not asked again, so a decision can build up over several runs
+  // when a run's meter allows only some asks (R-23). Before the final time the
+  // bounded list (oldest update first) is only for the recovery path.
   const known = await db
     .prepare(
-      `SELECT transaction_id FROM payment_transactions WHERE attempt_id = ?1
-       ORDER BY updated_at LIMIT ?2`,
+      `SELECT transaction_id, midtrans_status, checked_at FROM payment_transactions
+       WHERE attempt_id = ?1 ORDER BY COALESCE(checked_at, ''), updated_at`,
     )
-    .bind(attempt.id, finalTime ? -1 : MAX_TRANSACTIONS_PER_CHECK)
-    .all<{ transaction_id: string }>();
-  const ids = known.results.map((row) => row.transaction_id);
-  // Q12 = A: always ask by order_id too, so a paying second try whose
-  // notification was lost is found at once (the answer is the latest try).
+    .bind(attempt.id)
+    .all<{
+      transaction_id: string;
+      midtrans_status: string;
+      checked_at: string | null;
+    }>();
+  const finalFromIso = iso(finalFrom);
+  const askedSinceFinal = (row: {
+    midtrans_status: string;
+    checked_at: string | null;
+  }) =>
+    row.checked_at !== null &&
+    row.checked_at >= finalFromIso &&
+    isFinalNotPaid(row.midtrans_status);
+  const ids = (
+    finalTime
+      ? known.results.filter((row) => !askedSinceFinal(row))
+      : known.results.slice(0, MAX_TRANSACTIONS_PER_CHECK)
+  ).map((row) => row.transaction_id);
 
   let failed = false;
   let outOfRoom = false;
   let orderIdAnswer: StatusAnswer | null = null;
   const startedMs = Date.now();
   const ask = async (id: string): Promise<StatusAnswer> => {
-    if (outOfRoom || (deps.hasRoom && !deps.hasRoom(RECONCILE_ASK_UNITS))) {
+    if (
+      outOfRoom ||
+      (deps.hasRoom &&
+        !deps.hasRoom(RECONCILE_ASK_UNITS + RECONCILE_AFTER_UNITS))
+    ) {
       outOfRoom = true;
       return { kind: "error" };
     }
@@ -109,6 +133,14 @@ export async function checkAttempt(
       // The answer must be for this attempt (never apply another order's).
       if (answer.status.order_id === attempt.midtrans_order_id) {
         await applyStatus(deps, answer.status);
+        if (finalTime && id === answer.status.transaction_id) {
+          await db
+            .prepare(
+              "UPDATE payment_transactions SET checked_at = ?2 WHERE transaction_id = ?1",
+            )
+            .bind(id, iso(now))
+            .run();
+        }
       } else {
         failed = true;
       }
@@ -117,46 +149,44 @@ export async function checkAttempt(
     }
     return answer;
   };
-  for (const id of ids) await ask(id);
+  // Q12 = A: the order_id first, every check, so a paying second try whose
+  // notification was lost is found at once (the answer is the latest try).
   orderIdAnswer = await ask(attempt.midtrans_order_id);
+  for (const id of ids) await ask(id);
 
-  if (outOfRoom) {
-    // R-23: the run's meter is spent. Nothing was decided; make the attempt due
-    // again at once, so the next run (oldest due first) takes it.
+  // R-23: when the run's meter ran out, nothing more is decided now, but the
+  // attempt keeps its normal schedule (so it never takes every run) and the
+  // time-based notice and close below still apply (they need no answer).
+  if (!outOfRoom) {
     await db
-      .prepare(
-        "UPDATE payment_attempts SET last_checked_at = NULL WHERE id = ?1",
-      )
-      .bind(attempt.id)
+      .prepare("UPDATE payment_attempts SET check_failed_at = ?2 WHERE id = ?1")
+      .bind(attempt.id, failed ? iso(now) : null)
       .run();
-    return "unavailable";
   }
-  await db
-    .prepare("UPDATE payment_attempts SET check_failed_at = ?2 WHERE id = ?1")
-    .bind(attempt.id, failed ? iso(now) : null)
-    .run();
 
   const current = await attemptById(db, attempt.id);
   if (!current || current.status !== "open")
-    return failed ? "unavailable" : "answered";
+    return failed || outOfRoom ? "unavailable" : "answered";
 
   // R-06 finally unpaid: Midtrans answered for every known transaction and for
   // the order_id with expire, cancel, deny, failure or "not found", and no
   // transaction is settled or still pending.
-  if (finalTime && !failed && orderIdAnswer) {
+  if (finalTime && !failed && !outOfRoom && orderIdAnswer) {
     const states = await db
       .prepare(
-        "SELECT midtrans_status FROM payment_transactions WHERE attempt_id = ?1",
+        "SELECT midtrans_status, checked_at FROM payment_transactions WHERE attempt_id = ?1",
       )
       .bind(attempt.id)
-      .all<{ midtrans_status: string }>();
+      .all<{ midtrans_status: string; checked_at: string | null }>();
     const orderIdFinal =
       orderIdAnswer.kind === "not_found" ||
       (orderIdAnswer.kind === "found" &&
         isFinalNotPaid(orderIdAnswer.status.transaction_status));
     if (
       orderIdFinal &&
-      states.results.every((row) => isFinalNotPaid(row.midtrans_status))
+      // Every known transaction was asked since the final time (maybe over
+      // several runs) and none is settled or pending.
+      states.results.every(askedSinceFinal)
     ) {
       await db
         .prepare(
@@ -200,7 +230,7 @@ export async function checkAttempt(
       .bind(attempt.id, iso(now))
       .run();
   }
-  return failed ? "unavailable" : "answered";
+  return failed || outOfRoom ? "unavailable" : "answered";
 }
 
 /** R-14: the page asked about an order. If it has an open attempt, ask Midtrans
@@ -252,7 +282,9 @@ export async function reconcileDueAttempts(
   for (const attempt of results) {
     if (
       deps.hasRoom &&
-      !deps.hasRoom(RECONCILE_ATTEMPT_UNITS + RECONCILE_ASK_UNITS)
+      !deps.hasRoom(
+        RECONCILE_ATTEMPT_UNITS + RECONCILE_ASK_UNITS + RECONCILE_AFTER_UNITS,
+      )
     ) {
       break; // the rest are due again next run
     }

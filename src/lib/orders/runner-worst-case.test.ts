@@ -252,8 +252,8 @@ describe("the worst live run (Free plan: D1 queries + outbound requests)", () =>
 // (Resend, Midtrans, paid provider calls) together; it must stay at or below 40.
 // Measured when written (see each test for the number it asserts):
 //   idle live run with every S4 task on        9 queries, 0 outbound
-//   reconciliation of an attempt with 3 transactions at the final check (3 + the
-//   order_id answers, 4 Midtrans calls)        27 queries + 4 outbound, run total 36
+//   reconciliation: at most 2 Midtrans answers per attempt per run (the order_id
+//   and one transaction), then more on the next checks until all were asked
 describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () => {
   const MIN = 60_000;
   const FOUNDER = "founder@example.test";
@@ -330,7 +330,7 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
     };
     /** An unpaid live order with an open attempt started at `clock`, holding
      * `transactions` Midtrans transactions (all `expire`, so nothing settles). */
-    const attempt = async (transactions: number) => {
+    const attempt = async (transactions: number, status = "expire") => {
       const id = await makeOrder(d1.db, {
         mode: "live",
         payment: "unpaid",
@@ -349,7 +349,7 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
         const tx = fake.addTransaction({
           orderId: started.attempt.midtrans_order_id,
           transactionId: `tx-${started.attempt.midtrans_order_id}-${i}`,
-          status: "expire",
+          status,
           paymentType: "qris",
         });
         const answer = await getStatus(midtrans, tx.transaction_id);
@@ -386,59 +386,185 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
     expect(idle.total + 27).toBeLessThanOrEqual(COMBINED_LIMIT);
   });
 
-  it("reconciliation of an attempt with several transaction IDs at the final check fits the run, and asks every one", async () => {
-    const { counted, attempt, fake } = await setup();
-    const open = await attempt(3);
-    // Window end (60 min) + grace (30) + the further wait (60), plus a minute.
-    advance(60 * MIN + 91 * MIN);
-    fake.requests.length = 0;
-    const run = await counted();
-    expect(run.outcomes).toContain("reconciled");
-    expect(run.total).toBeLessThanOrEqual(COMBINED_LIMIT);
-    // Three transactions and the order_id: four Get Status calls.
-    expect(fake.statusRequests()).toHaveLength(4);
-    expect(
+  /** Runs the cron every `stepMs` until the attempt has a final answer. */
+  async function untilDecided(
+    counted: (extra?: Partial<RunnerDeps>) => Promise<{ total: number }>,
+    attemptId: string,
+    stepMs: number,
+    maxRuns: number,
+  ) {
+    const status = () =>
+      d1.query<{ status: string }>(
+        `SELECT status FROM payment_attempts WHERE id = '${attemptId}'`,
+      )[0]!.status;
+    let runs = 0;
+    while (status() === "open" && runs < maxRuns) {
+      const run = await counted();
+      expect(run.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+      runs += 1;
+      advance(stepMs);
+    }
+    return { runs, status: status() };
+  }
+
+  it("an attempt with 3, 5 or 6 transaction IDs at the final check is decided over several runs, each inside the meter, asking every one", async () => {
+    for (const transactions of [3, 5, 6]) {
+      const { counted, attempt, fake } = await setup();
+      const open = await attempt(transactions);
+      // Window end (60 min) + grace (30) + the further wait (60), plus a minute.
+      advance(60 * MIN + 91 * MIN);
+      fake.requests.length = 0;
+      // Checks come every 10 minutes at first, then hourly (R-14).
+      const result = await untilDecided(counted, open.id, 10 * MIN, 40);
+      expect(result.status, `${transactions} transactions`).toBe(
+        "finally_unpaid",
+      );
+      // Every transaction was asked at least once since the final time.
+      const asked = new Set(
+        fake
+          .statusRequests()
+          .map((request) => request.url.split("/v2/")[1]!.split("/")[0]),
+      );
+      for (let i = 0; i < transactions; i += 1) {
+        expect(asked.has(`tx-${open.midtrans_order_id}-${i}`)).toBe(true);
+      }
+      d1.close();
+      d1 = openFileD1(join(dir, `worst-${transactions}.sqlite`));
+    }
+  });
+
+  it("an attempt nobody can answer for: payment_unknown at 24 hours and closed at 7 days, even when its checks run out of meter", async () => {
+    const { counted, attempt } = await setup();
+    const open = await attempt(6, "pending");
+    const notices = () =>
+      d1.query<{ kind: string }>(
+        "SELECT kind FROM founder_notices WHERE kind = 'payment_unknown'",
+      ).length;
+    const status = () =>
       d1.query<{ status: string }>(
         `SELECT status FROM payment_attempts WHERE id = '${open.id}'`,
-      )[0]!.status,
-    ).toBe("finally_unpaid");
-    // Measured: 27 queries + 4 outbound requests inside a run of 36.
-    expect(run.total).toBe(36);
+      )[0]!.status;
+    advance(60 * MIN + 25 * 3600_000);
+    const day = await counted();
+    expect(day.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+    expect(notices()).toBe(1);
+    expect(status()).toBe("open");
+    advance(7 * 24 * 3600_000);
+    const week = await counted();
+    expect(week.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+    expect(status()).toBe("closed_unknown");
   });
 
-  it("an attempt with too many transactions for one run is not decided half way: it is due again at once and finishes on the next run", async () => {
-    const { counted, attempt, fake } = await setup();
-    const open = await attempt(6);
+  it("a big attempt never blocks a report step or a due payment email: five runs in a row both get through", async () => {
+    const { base, counted, attempt, outbound } = await setup();
+    const heavy = await heavyOrder(base);
+    await attempt(6, "pending");
+    const { recordFounderNotice } = await import("../payments/notices");
+    await makeOrder(d1.db, {
+      mode: "live",
+      payment: "paid",
+      limitUsd: 2,
+      dailyLimitUsd: 1000,
+      now: clock,
+    });
+    await recordFounderNotice(d1.db, {
+      kind: "needs_refund",
+      subject: "tx-busy",
+      now: clock,
+    });
     advance(60 * MIN + 91 * MIN);
-    fake.requests.length = 0;
-    const first = await counted();
-    expect(first.total).toBeLessThanOrEqual(COMBINED_LIMIT);
-    const row = () =>
-      d1.query<{ status: string; last_checked_at: string | null }>(
-        `SELECT status, last_checked_at FROM payment_attempts WHERE id = '${open.id}'`,
-      )[0]!;
-    expect(row()).toEqual({ status: "open", last_checked_at: null });
-    advance(MIN);
-    const second = await counted();
-    expect(second.total).toBeLessThanOrEqual(COMBINED_LIMIT);
-    // Honest limit: six transactions need more asks than one run's meter has,
-    // so the same first asks repeat; the attempt stays open (never wrongly
-    // closed) and the founder is told after 24 hours (R-14).
-    expect(row().status).toBe("open");
+    const outcomes: string[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      const run = await counted();
+      expect(run.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+      outcomes.push(...run.outcomes);
+      advance(MIN);
+    }
+    expect(outcomes).toContain("report_saved");
+    expect(outcomes).toContain("payment_email");
+    expect(outcomes).toContain("notice");
+    expect(orderRow(heavy).report_json).toBeTruthy();
+    expect(
+      outbound.mail.some((subject) => subject.includes("Pembayaran")),
+    ).toBe(true);
+    // The attempt was checked once in those five runs, not in every one.
+    expect(outcomes.filter((entry) => entry === "reconciled")).toHaveLength(1);
   });
 
-  it("reconciles at most 2 attempts per run, oldest due first", async () => {
+  it("the worst mix never passes 40: two big attempts to reconcile, 3 expiries, a cap alert, a due notice and payment email, and two running orders", async () => {
+    const { base, counted, attempt } = await setup();
+    const { usdToUnits } = await import("../spending/spend-ledger");
+    const { recordFounderNotice } = await import("../payments/notices");
+    // Two live orders ready for a question step, and a paid order (a due email).
+    for (let i = 0; i < 2; i += 1) {
+      const id = await makeOrder(d1.db, {
+        mode: "live",
+        limitUsd: 2,
+        dailyLimitUsd: 1000,
+        now: clock,
+      });
+      await approve(d1.db, id, { mode: "live", now: clock });
+    }
+    await makeOrder(d1.db, {
+      mode: "live",
+      payment: "paid",
+      limitUsd: 2,
+      dailyLimitUsd: 1000,
+      now: clock,
+    });
+    await attempt(6, "pending");
+    await attempt(6, "pending");
+    for (let i = 0; i < 3; i += 1) {
+      await makeOrder(d1.db, {
+        mode: "live",
+        payment: "unpaid",
+        now: new Date(clock.getTime() - 3 * 3600_000),
+      });
+    }
+    await recordFounderNotice(d1.db, {
+      kind: "needs_refund",
+      subject: "tx-worst",
+      now: new Date(clock.getTime() - 5 * MIN),
+    });
+    advance(60 * MIN + 91 * MIN);
+    // The cap alert: today's holds are over 80% of a small cap.
+    const small = {
+      ...base().payments!,
+      dailyLimitUnits: usdToUnits(8),
+    };
+    const run = await counted({ payments: small });
+    expect(run.outcomes).toContain("reconciled");
+    expect(run.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+    // The same mix, next run (the leftovers), still inside the meter.
+    advance(MIN);
+    expect((await counted({ payments: small })).total).toBeLessThanOrEqual(
+      COMBINED_LIMIT,
+    );
+  });
+
+  it("reconciles at most 2 attempts per run (the meter may allow fewer), oldest due first, and all three within three runs", async () => {
     const { counted, attempt } = await setup();
     for (let i = 0; i < 3; i += 1) {
       await attempt(1);
       advance(MIN);
     }
     advance(2 * 3600_000);
-    const run = await counted();
-    expect(run.outcomes.filter((entry) => entry === "reconciled")).toHaveLength(
-      2,
-    );
-    expect(run.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+    const reconciled = (outcomes: string[]) =>
+      outcomes.filter((entry) => entry === "reconciled").length;
+    const first = await counted();
+    expect(reconciled(first.outcomes)).toBeGreaterThanOrEqual(1);
+    expect(reconciled(first.outcomes)).toBeLessThanOrEqual(2);
+    expect(first.total).toBeLessThanOrEqual(COMBINED_LIMIT);
+    advance(MIN);
+    const second = await counted();
+    expect(reconciled(second.outcomes)).toBeLessThanOrEqual(2);
+    advance(MIN);
+    const third = await counted();
+    expect(
+      reconciled(first.outcomes) +
+        reconciled(second.outcomes) +
+        reconciled(third.outcomes),
+    ).toBe(3);
   });
 
   async function heavyOrder(base: (extra?: Partial<RunnerDeps>) => RunnerDeps) {
