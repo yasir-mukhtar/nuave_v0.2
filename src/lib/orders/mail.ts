@@ -59,6 +59,22 @@ export function failureEmail(input: {
   return { subject: "Audit Nuave Anda belum bisa diselesaikan", text, html };
 }
 
+/** Spec 017 Q5 (approved wording): the delivery promise, word for word. The order
+ * screen and the payment-received email both use it. */
+export const DELIVERY_PROMISE =
+  "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.";
+
+/** R-22: the payment-received email. It has no link and no secret; it names the
+ * business, the order number, the amount, the promise and the browser line. */
+export function paymentReceivedEmail(input: {
+  businessName: string;
+  orderNumber: string;
+}) {
+  const text = `Pembayaran Rp99.000 untuk audit ${input.businessName} sudah kami terima. Nomor pesanan: ${input.orderNumber}. ${DELIVERY_PROMISE} Lanjutkan di browser yang sama untuk mengisi data bisnis Anda. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Pembayaran Rp99.000 untuk audit ${escapeHtml(input.businessName)} sudah kami terima.</p><p>Nomor pesanan: ${escapeHtml(input.orderNumber)}.</p><p>${DELIVERY_PROMISE}</p><p>Lanjutkan di browser yang sama untuk mengisi data bisnis Anda.</p><p>Bantuan: ${SUPPORT_EMAIL}.</p>`;
+  return { subject: "Pembayaran Nuave Anda sudah diterima", text, html };
+}
+
 export const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const RESEND_TIMEOUT_MS = 10_000;
 

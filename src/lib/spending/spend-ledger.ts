@@ -590,6 +590,10 @@ export async function endOrder(
      * payment attempt is open, so a payment applied a moment earlier is never
      * undone. */
     onlyIfUnpaidPastEnd?: boolean;
+    /** Statements that ride in the same batch after the ending write (for
+     * example a founder notice, R-21). Each must guard itself on the order's
+     * new state. */
+    alsoRun?: SpendStatement[];
     now?: () => Date;
   },
 ): Promise<boolean> {
@@ -635,6 +639,7 @@ export async function endOrder(
             .bind(input.orderId),
         ]
       : []),
+    ...(input.alsoRun ?? []),
   ]);
   return results[0]?.meta?.changes === 1;
 }

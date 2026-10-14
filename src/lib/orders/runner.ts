@@ -34,7 +34,27 @@ import type {
   AuditPrompt,
 } from "../audit/types";
 import { SpendCapError, withOrderSpend } from "../spending/provider-spend";
-import { endOrder, type SpendDb } from "../spending/spend-ledger";
+import {
+  endOrder,
+  type OrderState,
+  type SpendDb,
+} from "../spending/spend-ledger";
+import { reconcileDueAttempts } from "../payments/check";
+import {
+  dueFounderNotices,
+  isRefundNotice,
+  recordCapAlerts,
+  sendFounderNotice,
+  type NoticeRow,
+} from "../payments/founder-notices";
+import type { MidtransConfig } from "../payments/midtrans";
+import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
+import { orderFailedNoticeStatement } from "../payments/notices";
+import {
+  duePaymentEmail,
+  sendPaymentEmail,
+  type DuePaymentEmail,
+} from "../payments/payment-email";
 import {
   failureEmail,
   readyEmail,
@@ -57,6 +77,7 @@ import {
   listQuestions,
   moveToReporting,
   ordersPastDeadline,
+  paidNotStartedOrders,
   recordEmail,
   refundReportAttempt,
   releaseOrderLease,
@@ -104,6 +125,20 @@ export type RunnerDeps = {
   /** Null when no sender is configured: no email can be accepted. */
   sender: MailSender | null;
   runBudgetMs?: number;
+  /** Spec 017 R-23: false when the emergency switch is off or the AI settings
+   * are missing. Only audit steps (and the deadline sweep, which needs them)
+   * stop; every other task still runs. Default true. */
+  auditEnabled?: boolean;
+  /** Spec 017 tasks that need settings. Absent: no reconciliation, no cap
+   * alerts, no founder notices. */
+  payments?: {
+    /** Null in synthetic mode or when the key is missing: no reconciliation. */
+    midtrans: MidtransConfig | null;
+    limitUnits: number;
+    dailyLimitUnits: number;
+    /** Null: no founder notice can be sent. */
+    founderEmail: string | null;
+  };
 };
 
 export type StepOutcome =
@@ -121,7 +156,11 @@ export type StepOutcome =
   | "delivered"
   | "email_pending"
   | "failed"
-  | "failure_email";
+  | "failure_email"
+  | "reconciled"
+  | "paid_not_started"
+  | "payment_email"
+  | "notice";
 
 export type RunSummary = {
   /** One entry per thing done. No ids, emails or secrets. */
@@ -156,7 +195,12 @@ export { orderSafetyIdentifier, sha256Hex };
  * sends). A run therefore keeps a meter of D1 queries plus outbound requests
  * and starts a piece of work only if its measured worst typical cost still
  * fits under RUN_UNIT_LIMIT (40, a margin under 50). Measured in
- * runner-worst-case.test.ts. */
+ * runner-worst-case.test.ts.
+ *
+ * Spec 017 R-23: Cloudflare's limits pages (read 2026-10-14) list "Subrequests per
+ * invocation" (Free 50, Paid 10,000) and "Subrequests to internal services"
+ * (Free 1,000, Paid default 10,000) but do not say which one D1 queries count
+ * toward, so separate counting is not confirmed and the 40-unit meter stays. */
 export const MAX_ORDERS_PER_RUN = 2;
 export const MAX_EXPIRED_PER_RUN = 3;
 export const MAX_FAILURE_EMAILS_PER_RUN = 1;
@@ -174,7 +218,17 @@ export const RUN_COST = {
   light: 9,
   heavy: 27,
   retry: 7,
+  /** One payment-received email (getting its number, three tries, the record). */
+  paymentEmail: 6,
+  /** One founder notice (the claim, three tries, the mark). */
+  notice: 6,
 } as const;
+/** R-23: reconciliation may spend the meter up to here; the rest is kept for
+ * the fixed queries that follow it (about 8) so the run still fits. */
+export const RECONCILE_UNIT_LIMIT = RUN_UNIT_LIMIT - 8;
+/** R-23: a payment email or notice that is due and has existed this long has
+ * already waited a run (runs are a minute apart): it goes before audit steps. */
+export const RUN_INTERVAL_MS = 60_000;
 
 /** The same dependencies, counting every D1 query and outbound request. */
 function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
@@ -198,6 +252,16 @@ function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
       batch: (statements) => {
         meter.n += 1;
         return deps.db.batch(statements.map((item) => raw.get(item) ?? item));
+      },
+    },
+    payments: deps.payments && {
+      ...deps.payments,
+      midtrans: deps.payments.midtrans && {
+        ...deps.payments.midtrans,
+        fetch: (...args: Parameters<typeof fetch>) => {
+          meter.n += 1;
+          return (deps.payments!.midtrans!.fetch ?? fetch)(...args);
+        },
       },
     },
     sender: deps.sender
@@ -227,6 +291,28 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   const owner = crypto.randomUUID();
   const scope = { environment: deps.environment, mode: deps.mode };
   const failedNow = new Set<string>();
+  const audit = deps.auditEnabled !== false;
+  const payments = deps.payments;
+
+  // R-14, R-23: reconciliation comes first (at most 2 attempts), inside the
+  // run's meter. It runs with the emergency switch off too.
+  if (payments?.midtrans) {
+    try {
+      const checked = await reconcileDueAttempts({
+        db: deps.db,
+        now: deps.now(),
+        midtrans: payments.midtrans,
+        limitUnits: payments.limitUnits,
+        dailyLimitUnits: payments.dailyLimitUnits,
+        hasRoom: (units) => meter.n + units <= RECONCILE_UNIT_LIMIT,
+      });
+      outcomes.push(
+        ...Array.from({ length: checked }, (): StepOutcome => "reconciled"),
+      );
+    } catch {
+      // A failing check never stops the rest of the run.
+    }
+  }
 
   // R-22: an `open` order past its time becomes `expired`, which settles it.
   const expired = await expireOpenOrders(deps.db, {
@@ -239,13 +325,29 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   });
   outcomes.push(...expired.map((): StepOutcome => "expired"));
 
-  // R-23: at the deadline an order not yet delivered becomes `failed` (once)
-  // and sends the failure email.
-  for (const id of await ordersPastDeadline(deps.db, {
+  // R-13: a paid order whose questions were not approved within 7 days becomes
+  // `failed` (code paid_not_started): hold returned, failure email, founder notice.
+  for (const id of await paidNotStartedOrders(deps.db, {
     ...scope,
     now: deps.now(),
-    limit: MAX_DEADLINE_FAILURES_PER_RUN,
+    limit: 1,
   })) {
+    if (!fits(RUN_COST.deadline)) break; // it comes back on a later run
+    if (await failOrder(deps, id, "paid_not_started", ["open"])) {
+      failedNow.add(id);
+      outcomes.push("paid_not_started");
+    }
+  }
+
+  // R-23: at the deadline an order not yet delivered becomes `failed` (once)
+  // and sends the failure email.
+  for (const id of audit
+    ? await ordersPastDeadline(deps.db, {
+        ...scope,
+        now: deps.now(),
+        limit: MAX_DEADLINE_FAILURES_PER_RUN,
+      })
+    : []) {
     if (!fits(RUN_COST.deadline)) break; // it comes back on a later run
     if (await failOrder(deps, id, "deadline")) {
       failedNow.add(id);
@@ -253,11 +355,87 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     }
   }
 
-  for (const id of await activeOrders(deps.db, {
-    ...scope,
-    now: deps.now(),
-    limit: MAX_ORDERS_PER_RUN,
-  })) {
+  // R-21: the day's cap use, then what is due to send. A payment email or a
+  // refund notice that already waited a run goes before the audit steps.
+  const founderEmail = payments?.founderEmail ?? null;
+  if (founderEmail && payments && deps.mode === "live") {
+    await recordCapAlerts(deps.db, {
+      now: deps.now(),
+      dailyLimitUnits: payments.dailyLimitUnits,
+    });
+  }
+  let email: DuePaymentEmail | null = deps.sender
+    ? await duePaymentEmail(deps.db, { ...scope, now: deps.now() })
+    : null;
+  let notices: NoticeRow[] =
+    deps.sender && founderEmail
+      ? await dueFounderNotices(deps.db, deps.now())
+      : [];
+  const waited = (at: string) =>
+    deps.now().getTime() - new Date(at).getTime() >= RUN_INTERVAL_MS;
+  const sendEmail = async () => {
+    if (!email || !deps.sender || !fits(RUN_COST.paymentEmail)) return;
+    const due = email;
+    email = null;
+    try {
+      if (
+        await sendPaymentEmail(
+          {
+            db: deps.db,
+            sender: deps.sender,
+            now: deps.now(),
+            sleep: deps.sleep,
+          },
+          due,
+        )
+      ) {
+        outcomes.push("payment_email");
+      }
+    } catch {
+      // Tried again on a later run; never stops the audit steps.
+    }
+  };
+  const sendNotice = async (row: NoticeRow | undefined) => {
+    if (!row || !deps.sender || !founderEmail || !fits(RUN_COST.notice)) return;
+    notices = notices.filter((item) => item.id !== row.id);
+    try {
+      const sent = await sendFounderNotice(
+        {
+          db: deps.db,
+          sender: deps.sender,
+          to: founderEmail,
+          now: deps.now(),
+          sleep: deps.sleep,
+        },
+        row,
+      );
+      if (sent) outcomes.push("notice");
+    } catch {
+      // Tried again on a later run; never stops the audit steps.
+    }
+  };
+  const refundNotice = () => notices.find((row) => isRefundNotice(row.kind));
+  const otherNotice = () => notices.find((row) => !isRefundNotice(row.kind));
+  if (email && waited(email.paid_at)) await sendEmail();
+  const firstRefund = refundNotice();
+  if (firstRefund && waited(firstRefund.created_at))
+    await sendNotice(firstRefund);
+
+  // The room kept for one payment email and one refund notice that are due but
+  // have not waited yet. The first audit step needs only to fit on its own (a
+  // report step is 27 of 40); later ones must leave this room (R-23).
+  let reserve = 0;
+  if (email) reserve += RUN_COST.paymentEmail;
+  if (refundNotice()) reserve += RUN_COST.notice;
+  let stepsStarted = 0;
+
+  for (const id of audit
+    ? await activeOrders(deps.db, {
+        ...scope,
+        now: deps.now(),
+        limit: MAX_ORDERS_PER_RUN,
+      })
+    : []) {
     const order = await getOrder(deps.db, id);
     if (
       !order ||
@@ -274,7 +452,7 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
         : order.report_json
           ? RUN_COST.light
           : RUN_COST.heavy;
-    if (!fits(cost)) {
+    if (!fits(stepsStarted === 0 ? cost : cost + reserve)) {
       outcomes.push("waiting");
       continue;
     }
@@ -295,6 +473,7 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
       outcomes.push("skipped"); // another runner has it
       continue;
     }
+    stepsStarted += 1;
     try {
       // Read the order again now that the lease is ours: another runner may have
       // moved it on between the first read and the claim.
@@ -325,6 +504,11 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     }
   }
 
+  // R-23: then the emails and notices that had not waited yet.
+  await sendEmail();
+  await sendNotice(refundNotice());
+  await sendNotice(otherNotice());
+
   // R-25: the failure email is retried for 24 hours after the failure.
   for (const id of await failedOrdersNeedingEmail(deps.db, {
     ...scope,
@@ -338,20 +522,32 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   return { outcomes };
 }
 
-/** Becoming `failed` happens once and sends the failure email. */
+/** Becoming `failed` happens once and sends the failure email. A paid order
+ * (not a test pass, not a legacy order) that fails also records one founder
+ * notice in the same write (R-21): `paid_not_started` for the 7-day sweep,
+ * `paid_order_failed` for any other code. */
 async function failOrder(
   deps: RunnerDeps,
   orderId: string,
   code: string,
+  from: readonly OrderState[] = ["running", "reporting"],
 ): Promise<boolean> {
   const ended = await endOrder(deps.db, {
     orderId,
-    from: ["running", "reporting"],
+    from,
     to: "failed",
     failureCode: code,
     // No accepted ready email: a link that may have got through stops working.
     clearUndeliveredLink: true,
     now: deps.now,
+    alsoRun: [
+      orderFailedNoticeStatement(deps.db, {
+        orderId,
+        code,
+        amount: ORDER_GROSS_AMOUNT_TEXT,
+        now: deps.now(),
+      }),
+    ],
   });
   if (ended) await sendFailureEmail(deps, orderId);
   return ended;

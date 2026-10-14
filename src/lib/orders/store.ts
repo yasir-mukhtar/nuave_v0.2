@@ -507,6 +507,28 @@ export async function ordersPastDeadline(
   );
 }
 
+/** R-13: paid orders whose questions were not approved within 7 days of payment
+ * (`expires_at` is paid time + 7 days, R-11). A founder test pass is never in
+ * this list: it keeps the 2-hour rule. */
+export async function paidNotStartedOrders(
+  db: SpendDb,
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
+): Promise<string[]> {
+  return orderIds(
+    db,
+    `SELECT id FROM orders
+     WHERE state = 'open' AND payment_kind IN ('midtrans', 'simulated')
+       AND paid_at IS NOT NULL AND expires_at <= ?1
+       AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
+    [iso(input.now), input.environment, input.mode, input.limit],
+  );
+}
+
 export async function activeOrders(
   db: SpendDb,
   input: {

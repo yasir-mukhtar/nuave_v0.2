@@ -50,3 +50,42 @@ export async function recordFounderNotice(
   const result = await noticeStatement(db, input).run();
   return result.meta?.changes === 1;
 }
+
+/**
+ * R-21: the founder notice for a paid, non-test order that ended `failed`:
+ * `paid_not_started` for the 7-day sweep (R-13), `paid_order_failed` for any
+ * other code. It rides in the batch that ends the order and writes only if the
+ * order is now `failed` with this code, was paid (Midtrans or the labeled
+ * simulated payment, never a test pass or a legacy order) and has a number.
+ * The facts are read in SQL (one statement, no extra query); the subject is the
+ * order number, never the internal order ID.
+ */
+export function orderFailedNoticeStatement(
+  db: SpendDb,
+  input: { orderId: string; code: string; amount: string; now: Date },
+): SpendStatement {
+  return db
+    .prepare(
+      `INSERT OR IGNORE INTO founder_notices
+         (id, kind, subject, detail_json, status, created_at)
+       SELECT ?1, CASE WHEN ?3 = 'paid_not_started' THEN 'paid_not_started'
+                       ELSE 'paid_order_failed' END,
+              o.order_number,
+              json_object('order_number', o.order_number, 'amount', ?4,
+                'method', COALESCE((SELECT a.payment_method FROM payment_attempts a
+                                    WHERE a.id = o.paid_attempt_id), o.payment_kind),
+                'reason', ?3),
+              'pending', ?5
+       FROM orders o
+       WHERE o.id = ?2 AND o.state = 'failed' AND o.failure_code = ?3
+         AND o.payment_kind IN ('midtrans', 'simulated')
+         AND o.order_number IS NOT NULL`,
+    )
+    .bind(
+      crypto.randomUUID(),
+      input.orderId,
+      input.code,
+      input.amount,
+      input.now.toISOString(),
+    );
+}

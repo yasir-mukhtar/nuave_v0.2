@@ -20,7 +20,15 @@ export type CheckDeps = ApplyDeps & {
   /** A page poll's limit on total Midtrans time (real clock). Once it is spent,
    * no more calls are made and the check counts as unavailable. */
   timeBudgetMs?: number;
+  /** The cron's per-run meter (R-23): does this many more units still fit? Absent
+   * for a page poll. When it says no, the check stops and is tried again next run. */
+  hasRoom?: (units: number) => boolean;
 };
+
+/** R-23: the meter units one Midtrans answer can cost (the call and applying
+ * it, refund path excepted), and one check's own fixed queries. */
+export const RECONCILE_ASK_UNITS = 8;
+export const RECONCILE_ATTEMPT_UNITS = 7;
 
 /** R-14: at most one Midtrans check per attempt per 30 seconds. */
 export const CHECK_MIN_GAP_MS = 30_000;
@@ -75,12 +83,18 @@ export async function checkAttempt(
     .bind(attempt.id, finalTime ? -1 : MAX_TRANSACTIONS_PER_CHECK)
     .all<{ transaction_id: string }>();
   const ids = known.results.map((row) => row.transaction_id);
-  const byOrderId = ids.length === 0 || finalTime;
+  // Q12 = A: always ask by order_id too, so a paying second try whose
+  // notification was lost is found at once (the answer is the latest try).
 
   let failed = false;
+  let outOfRoom = false;
   let orderIdAnswer: StatusAnswer | null = null;
   const startedMs = Date.now();
   const ask = async (id: string): Promise<StatusAnswer> => {
+    if (outOfRoom || (deps.hasRoom && !deps.hasRoom(RECONCILE_ASK_UNITS))) {
+      outOfRoom = true;
+      return { kind: "error" };
+    }
     let timeoutMs = deps.midtrans.timeoutMs;
     if (deps.timeBudgetMs !== undefined) {
       const left = deps.timeBudgetMs - (Date.now() - startedMs);
@@ -104,8 +118,19 @@ export async function checkAttempt(
     return answer;
   };
   for (const id of ids) await ask(id);
-  if (byOrderId) orderIdAnswer = await ask(attempt.midtrans_order_id);
+  orderIdAnswer = await ask(attempt.midtrans_order_id);
 
+  if (outOfRoom) {
+    // R-23: the run's meter is spent. Nothing was decided; make the attempt due
+    // again at once, so the next run (oldest due first) takes it.
+    await db
+      .prepare(
+        "UPDATE payment_attempts SET last_checked_at = NULL WHERE id = ?1",
+      )
+      .bind(attempt.id)
+      .run();
+    return "unavailable";
+  }
   await db
     .prepare("UPDATE payment_attempts SET check_failed_at = ?2 WHERE id = ?1")
     .bind(attempt.id, failed ? iso(now) : null)
@@ -225,6 +250,12 @@ export async function reconcileDueAttempts(
     .all<AttemptRow>();
   let checked = 0;
   for (const attempt of results) {
+    if (
+      deps.hasRoom &&
+      !deps.hasRoom(RECONCILE_ATTEMPT_UNITS + RECONCILE_ASK_UNITS)
+    ) {
+      break; // the rest are due again next run
+    }
     try {
       if ((await checkAttempt(deps, attempt)) !== "skipped") checked += 1;
     } catch {

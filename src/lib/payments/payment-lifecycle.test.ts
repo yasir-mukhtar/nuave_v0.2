@@ -16,7 +16,12 @@ import { endOrder, hasCapRoom, usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { applyRefund, applyStatus } from "./apply";
 import { startAttempt, type AttemptRow } from "./attempts";
-import { checkAttempt, reconcileDueAttempts, type CheckDeps } from "./check";
+import {
+  checkAttempt,
+  reconcileDueAttempts,
+  recoverOrderPayment,
+  type CheckDeps,
+} from "./check";
 import {
   createFakeMidtrans,
   type FakeMidtrans,
@@ -637,17 +642,19 @@ describe("refunds, partial refunds and chargebacks (R-15, AC-16)", () => {
     expect(noticeKinds()).toEqual(["partial_refund"]);
   });
 
-  it("a partial chargeback is treated like a partial refund: a partial_chargeback notice, the order untouched", async () => {
+  // Founder decision Q11 = B: a partial chargeback is treated exactly like a
+  // full chargeback, with its own notice kind.
+  it("a partial chargeback before approval ends the order refunded, like a chargeback, with a partial_chargeback notice", async () => {
     const { id, tx } = await paidOrder();
     expect(await refundAnswer(tx, "partial_chargeback")).toBe(
       "refund_recorded",
     );
     expect(order(id)).toMatchObject({
-      state: "open",
-      payment_kind: "midtrans",
-      refunded_at: null,
+      state: "failed",
+      failure_code: "refunded",
+      refunded_at: at(HOUR).toISOString(),
     });
-    expect(transaction(tx.transaction_id).refund_state).toBe("partial_refund");
+    expect(transaction(tx.transaction_id).refund_state).toBe("chargeback");
     expect(notices()).toEqual([
       expect.objectContaining({
         kind: "partial_chargeback",
@@ -658,6 +665,40 @@ describe("refunds, partial refunds and chargebacks (R-15, AC-16)", () => {
       "duplicate",
     );
     expect(notices()).toHaveLength(1);
+    // No AI work and no customer failure email for a refunded order.
+    expect(
+      await failedOrdersNeedingEmail(d1.db, {
+        environment: "production",
+        mode: "live",
+        now: at(2 * HOUR),
+        limit: 10,
+      }),
+    ).toEqual([]);
+  });
+
+  it("a partial chargeback after approval is only recorded, with a notice: the audit keeps running", async () => {
+    const { id, tx } = await paidOrder();
+    await approve(d1.db, id, { mode: "live", now: at(MIN) });
+    expect(await refundAnswer(tx, "partial_chargeback")).toBe(
+      "refund_recorded",
+    );
+    expect(order(id)).toMatchObject({ state: "running", failure_code: null });
+    expect(transaction(tx.transaction_id).refund_state).toBe("chargeback");
+    expect(noticeKinds()).toEqual(["partial_chargeback"]);
+  });
+
+  it("a partial chargeback of a needs-refund transaction is recorded with a notice and the paid order keeps running", async () => {
+    const { id, attempt } = await paidOrder();
+    const { tx: second } = await settle(attempt, { transactionId: "tx-dup" });
+    expect(await refundAnswer(second, "partial_chargeback")).toBe(
+      "refund_recorded",
+    );
+    expect(transaction("tx-dup")).toMatchObject({
+      outcome: "needs_refund",
+      refund_state: "chargeback",
+    });
+    expect(order(id)).toMatchObject({ state: "open", failure_code: null });
+    expect(noticeKinds()).toContain("partial_chargeback");
   });
 
   it("a refund of a needs-refund transaction closes only that case and leaves the paid order running", async () => {
@@ -827,21 +868,22 @@ describe("when an attempt is final (R-06, AC-11, AC-12)", () => {
   it("the final answer asks every known transaction; the recovery path asks a bounded number", async () => {
     const id = await unpaid();
     const attempt = await begin(id);
-    // Seven transactions stored as pending; the newest-updated one is really settled.
+    // Seven transactions stored as pending; the sixth is really settled (not among
+    // the oldest five, and not the latest one that the order_id answers with).
     for (let n = 1; n <= 7; n += 1) {
       fake.addTransaction({
         orderId: attempt.midtrans_order_id,
         transactionId: `tx-${n}`,
-        status: n === 7 ? "settlement" : "expire",
+        status: n === 6 ? "settlement" : "expire",
       });
       d1.query(
         `INSERT INTO payment_transactions (transaction_id, attempt_id, midtrans_status, outcome, first_seen_at, updated_at)
          VALUES ('tx-${n}', '${attempt.id}', 'pending', 'pending', 't', '2026-10-14T10:0${n}:00.000Z') RETURNING 1`,
       );
     }
-    // Before the final time: only 5 are asked, and no order_id.
+    // Before the final time: 5 known ones and the order_id are asked (Q12).
     await checkAttempt(deps(at(100 * MIN)), attemptRows(id)[0]!);
-    expect(fake.statusRequests()).toHaveLength(5);
+    expect(fake.statusRequests()).toHaveLength(6);
     expect(order(id).payment_kind).toBe("unpaid");
     // At the final time every one is asked (and the order_id), so the settled one is found.
     fake.requests.length = 0;
@@ -1036,6 +1078,34 @@ describe("cron reconciliation (R-14, AC-15)", () => {
     );
     expect(await reconcileDueAttempts(deps(at(3 * HOUR)))).toBe(0);
     expect(fake.requests).toEqual([]);
+  });
+});
+
+// Founder decision Q12 = A: the status check also asks by order_id when
+// transaction IDs are known, so a paying second try is found at once.
+describe("status recovery asks by order_id too (R-14, Q12)", () => {
+  it("one known expired try and a second, settled try known only by order_id: the customer's check marks the order paid", async () => {
+    const id = await unpaid();
+    const attempt = await begin(id);
+    await settle(attempt, { transactionId: "tx-first", status: "expire" });
+    expect(order(id).paid_at).toBeNull();
+    // The second try's notification was lost: only Midtrans knows it.
+    fake.addTransaction({
+      orderId: attempt.midtrans_order_id,
+      transactionId: "tx-second",
+      paymentType: "gopay",
+    });
+    fake.requests.length = 0;
+    await recoverOrderPayment(deps(at(10 * MIN)), id);
+    expect(order(id)).toMatchObject({
+      payment_kind: "midtrans",
+      paid_transaction_id: "tx-second",
+    });
+    // One call for the known try and one by order_id.
+    expect(fake.statusRequests()).toHaveLength(2);
+    // At most one check per attempt per 30 seconds.
+    await recoverOrderPayment(deps(at(10 * MIN + 5_000)), id);
+    expect(fake.statusRequests()).toHaveLength(2);
   });
 });
 

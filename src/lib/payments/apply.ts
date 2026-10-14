@@ -47,10 +47,10 @@ export type ApplyResult =
 /** Final answers that never took money. A `refund` or `chargeback` answer counts
  * too: the money went back, so the try holds nothing (technical choice, R-06). */
 export const UNPAID_WORDS = ["expire", "cancel", "deny", "failure"] as const;
-/** One place to change how `partial_chargeback` is read (the spec is silent; the
- * founder is being asked). For now it is a partial refund: recorded, a founder
- * notice of kind `partial_chargeback`, nothing else. It never ends the order. */
-const PARTIAL_CHARGEBACK_AS = "partial_refund" as const;
+/** One place to change how `partial_chargeback` is read. Founder decision Q11 =
+ * B (2026-10-14): exactly like a full `chargeback` (R-15). The founder notice
+ * keeps its own kind, `partial_chargeback`. */
+const PARTIAL_CHARGEBACK_AS = "chargeback" as const;
 const REFUND_WORDS: Record<
   string,
   "refunded" | "partial_refund" | "chargeback"
