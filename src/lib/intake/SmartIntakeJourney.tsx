@@ -49,7 +49,12 @@ import {
   type SmartQuestionPack,
   type SmartSession,
 } from "./smart-session";
-import { FreeBrandScreen, OrderScreen } from "./order-screens";
+import {
+  FreeBrandScreen,
+  OrderScreen,
+  type OrderPayment,
+} from "./order-screens";
+import { readTestPassCode } from "./test-pass";
 import type { GenerationAttempt } from "./local-session";
 import {
   questionPublicCost,
@@ -92,6 +97,28 @@ const READING_STEPS = [
 
 const ORDER_ENDED_NOTICE =
   "Pesanan Anda sudah berakhir. Isian Anda tetap tersimpan. Masukkan email Anda lagi untuk melanjutkan.";
+
+const PAY_START_FAILED_NOTICE =
+  "Pembayaran belum bisa dimulai. Periksa koneksi dan coba lagi.";
+
+/** Spec 017 R-14: payment states that can still change by themselves, so the
+ * page asks the status again, politely, while it is open and visible. */
+const POLLED_PAYMENT_STATES = [
+  "waiting",
+  "try_failed",
+  "checking",
+  "cannot_check",
+];
+/** Payment states that end this order's journey on this screen: the page shows
+ * them instead of the pay form, and the saved order is never made a new one. */
+const BLOCKING_PAYMENT_STATES = [
+  "unpaid_final",
+  "closed_unknown",
+  "needs_refund",
+  "refunded",
+  "paid_ended",
+];
+const PAYMENT_POLL_MS = 10_000;
 
 const READING_INTERRUPTED_NOTICE =
   "Pembacaan sumber sebelumnya terputus. Isian Anda tetap tersimpan — tekan Periksa untuk membaca ulang.";
@@ -178,13 +205,16 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
 function backTargetFor(session: SmartSession): SmartStage | null {
   const marker = session.editReturn;
   const selection = session.selection;
+  // Spec 017 R-19: once paid, the website and business are locked, so nothing
+  // steps back to the screens that change them.
+  const locked = Boolean(session.order?.paid);
   switch (session.stage) {
     case "brand":
       // A review-opened name edit backs out to the review (J7); the normal
       // brand check still steps back to the entry screen.
-      return marker ?? "entry";
+      return locked ? null : (marker ?? "entry");
     case "focus": {
-      if (!marker || !selection) return "brand";
+      if (!marker || !selection) return locked ? null : "brand";
       if (selection.focus === "cabang" && !smartLocationReady(selection))
         return "location";
       if (selection.focus === "produk" && !smartProductReady(selection))
@@ -225,7 +255,7 @@ function backTargetFor(session: SmartSession): SmartStage | null {
     case "summary":
       return "public-fact";
     case "order":
-      return "brand";
+      return locked ? null : "brand";
     case "questions":
       return "summary";
     default:
@@ -381,7 +411,7 @@ export default function SmartIntakeJourney({
   const [ready, setReady] = useState(false);
   const [historical, setHistorical] = useState(false);
   const [busy, setBusy] = useState<
-    "lookup" | "reading" | "questions" | "approving" | null
+    "lookup" | "reading" | "paying" | "questions" | "approving" | null
   >(null);
   const [readingStep, setReadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -392,6 +422,15 @@ export default function SmartIntakeJourney({
   // The order whose audit is running on the server (after the questions are
   // approved). Only its id stays in the browser.
   const [activeOrder, setActiveOrder] = useState<string | null>(null);
+  // Spec 017: what the server last said about the saved order's payment, and
+  // for which order; a check is running; this tab holds the founder test code.
+  const [paymentFor, setPaymentFor] = useState<{
+    orderId: string;
+    payment: OrderPayment;
+  } | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [testPass, setTestPass] = useState(false);
+  const returningOrder = useRef(false);
   const inFlight = useRef(false);
   const mounted = useRef(true);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -413,6 +452,7 @@ export default function SmartIntakeJourney({
       : null;
   useEffect(() => {
     queueMicrotask(() => {
+      setTestPass(readTestPassCode() !== null);
       const saved = readSmartSession();
       const runningOrder = readActiveOrder();
       if (!saved && runningOrder) {
@@ -423,7 +463,6 @@ export default function SmartIntakeJourney({
         return;
       }
       if (saved) {
-        let restoredStage = saved.stage;
         if (saved.stage === "reading") {
           // A stored reading session means the page was reloaded mid-read:
           // return to the order screen (or the entry) with the fields kept and
@@ -432,14 +471,16 @@ export default function SmartIntakeJourney({
             ...saved,
             stage: saved.order ? "order" : "entry",
           };
-          restoredStage = next.stage;
           writeSmartSession(next);
           setSession(next);
           setInterrupted(true);
         } else {
           setSession(saved);
         }
-        if (saved.order && restoredStage !== "order") void checkOrder(saved);
+        // Spec 017 Experience 5-8: coming back (also from Midtrans) always asks
+        // the server for the order's state; the return URL's words are never
+        // read.
+        if (saved.order) returningOrder.current = true;
       } else {
         try {
           setHistorical(Boolean(readHistoricalAudit()));
@@ -449,53 +490,118 @@ export default function SmartIntakeJourney({
       }
       setReady(true);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** R-30: if the saved order has ended, the customer sees the order screen
    * again and types the email again; the saved progress continues on the new
-   * order with no new paid call. */
+   * order with no new paid call. Spec 017 R-14: the answer also carries the
+   * payment, which the order screen shows (paid, waiting, checking ...). */
   async function checkOrder(saved: SmartSession) {
+    if (!saved.order) return;
+    const orderId = saved.order.id;
+    const unknown = () =>
+      setPaymentFor((last) =>
+        last?.orderId === orderId
+          ? last
+          : { orderId, payment: { state: "cannot_check" } },
+      );
+    setCheckingPayment(true);
     try {
       const response = await fetch("/api/orders/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: saved.order!.id }),
+        body: JSON.stringify({ order_id: orderId }),
       });
       if (!mounted.current) return;
-      const state = response.ok
-        ? ((await response.json()) as { state?: string }).state
-        : response.status === 404
-          ? "gone"
-          : "open";
-      if (state === "open") return;
+      if (!response.ok && response.status !== 404) {
+        // Offline or the server is busy: keep the saved order and carry on.
+        unknown();
+        return;
+      }
+      const answer = response.ok
+        ? ((await response.json()) as {
+            state?: string;
+            payment?: OrderPayment;
+          })
+        : null;
+      const state = answer ? answer.state : "gone";
       // The answer may arrive late (a slow server): if the customer has already
       // approved the questions, the saved progress is gone and the order is
       // running, not ended. Only act while this same saved order is still the
       // journey's own.
       const current = readSmartSession();
-      if (!mounted.current || !current || current.order?.id !== saved.order!.id)
+      if (!mounted.current || !current || current.order?.id !== orderId) return;
+      const payment = answer?.payment;
+      if (payment) setPaymentFor({ orderId, payment });
+      if (payment?.state === "paid" && !current.order!.paid) {
+        // R-19: from now on the website and business are locked.
+        persist({
+          ...current,
+          order: {
+            ...current.order!,
+            paid: true,
+            ...(payment.order_number ? { number: payment.order_number } : {}),
+          },
+        });
+      }
+      if (payment && BLOCKING_PAYMENT_STATES.includes(payment.state)) {
+        // The page shows the state on the order screen; it never starts a new
+        // order from an answer like this (Experience 7, 8).
+        if (current.stage !== "order") persist({ ...current, stage: "order" });
         return;
+      }
+      if (state === "open") return;
       if (state === "expired" || state === "gone") {
         expireOrder(current);
         return;
       }
       // Approved elsewhere (another tab): running, reporting, delivered or
       // failed all go to the progress view; the intake progress is done (R-31).
-      writeActiveOrder(saved.order!.id);
+      writeActiveOrder(orderId);
       clearSmartSession();
-      setActiveOrder(saved.order!.id);
+      setActiveOrder(orderId);
     } catch {
       // Offline or the server is busy: keep the saved order and carry on.
+      unknown();
+    } finally {
+      if (mounted.current) setCheckingPayment(false);
     }
   }
 
-  /** The order is over or unknown: back to the order screen, progress kept. */
+  // A returning customer (also from Midtrans): ask the server once, as soon as
+  // the saved session is loaded.
+  useEffect(() => {
+    if (!ready || !returningOrder.current) return;
+    returningOrder.current = false;
+    queueMicrotask(() => {
+      const saved = readSmartSession();
+      if (saved?.order) void checkOrder(saved);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
+  /** The order is over or unknown: back to the order screen, progress kept.
+   * R-19: a PAID order is never turned into a new one; the page shows its
+   * number and the support address instead. */
   function expireOrder(from: SmartSession, resumeAt?: SmartSession["stage"]) {
+    if (from.order?.paid) {
+      setPaymentFor({
+        orderId: from.order.id,
+        payment: {
+          state: "paid_ended",
+          ...(from.order.number ? { order_number: from.order.number } : {}),
+        },
+      });
+      if (from.stage !== "order") persist({ ...from, stage: "order" });
+      return;
+    }
     const resume = resumeAt ?? from.afterOrder ?? from.stage;
     const next: SmartSession = {
       ...from,
       order: null,
+      // R-19: the ended unpaid order's id goes with the next order, so the
+      // server marks it replaced.
+      supersededOrder: from.order?.id ?? from.supersededOrder ?? null,
       stage: "order",
       afterOrder: resume === "order" ? "focus" : resume,
     };
@@ -503,6 +609,48 @@ export default function SmartIntakeJourney({
     setSession(next);
     setError(ORDER_ENDED_NOTICE);
   }
+
+  /** Experience 7: "Coba bayar lagi" returns to the order summary, which makes
+   * a replacement order (R-19) from the email the customer types again. */
+  function payAgain() {
+    const order = session.order;
+    if (order?.paid) return;
+    persist({
+      ...session,
+      order: null,
+      supersededOrder: order?.id ?? session.supersededOrder ?? null,
+      stage: "order",
+    });
+    setError(null);
+  }
+
+  // Spec 017 R-14: while a payment can still change, ask again every few
+  // seconds and when the tab becomes visible again (coming back from a wallet
+  // app). The server limits its own Midtrans checks.
+  const paymentState =
+    paymentFor && paymentFor.orderId === session.order?.id
+      ? paymentFor.payment.state
+      : null;
+  useEffect(() => {
+    if (
+      !ready ||
+      session.stage !== "order" ||
+      !paymentState ||
+      !POLLED_PAYMENT_STATES.includes(paymentState)
+    )
+      return;
+    const ask = () => {
+      if (document.visibilityState === "visible" && sessionRef.current.order)
+        void checkOrder(sessionRef.current);
+    };
+    const timer = window.setInterval(ask, PAYMENT_POLL_MS);
+    document.addEventListener("visibilitychange", ask);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", ask);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, session.stage, session.order?.id, paymentState]);
 
   // History ownership: every in-flow entry is marked `nuaveIntake` and a
   // marked duplicate stays on top while the stage has a back target. A real
@@ -729,11 +877,13 @@ export default function SmartIntakeJourney({
   }
 
   /**
-   * Screen 3a `Lanjut` (spec 016 R-01): make ONE order from the email, then run
-   * the paid reading (screen 3b) on the website saved on the order. A returning
-   * customer whose order is still open does not make another one; one whose
-   * order ended (R-30) types the email again and the saved progress continues on
-   * the new order with no new paid call.
+   * Screen 3a (spec 016 R-01, spec 017 Experience 2-3): make ONE order from the
+   * email, start its payment and send the browser to Midtrans. Back from the
+   * payment (or with a test pass, or a paid order) the same button runs the paid
+   * reading (screen 3b) on the website saved on the order. A returning customer
+   * whose order is still open does not make another one; one whose order ended
+   * (R-30) types the email again and the saved progress continues on the new
+   * order with no new paid call.
    */
   async function continueFromOrder() {
     if (inFlight.current) return;
@@ -746,9 +896,10 @@ export default function SmartIntakeJourney({
     let order = session.order ?? null;
     let previousOrderId = session.supersededOrder ?? null;
     // Going back past this screen to change the website or the brand starts a
-    // new order (R-01).
+    // new order (R-01). A paid order is locked: it is never replaced (R-19).
     if (
       order &&
+      !order.paid &&
       (order.website !== identity.canonicalUrl || order.name !== brand.name)
     ) {
       previousOrderId = order.id;
@@ -758,10 +909,19 @@ export default function SmartIntakeJourney({
       setError("Masukkan satu alamat email yang valid.");
       return;
     }
+    // R-20: the code from `/uji` goes only in this request's body.
+    const testCode = order ? null : readTestPassCode();
+    // An order that needs no payment (test pass, legacy) or is paid reads now.
+    const state =
+      paymentFor?.orderId === order?.id ? paymentFor?.payment.state : null;
+    if (order && !order.paid && state !== "unpaid" && state !== "not_required")
+      return;
     setInterrupted(false);
     setError(null);
     inFlight.current = true;
-    setBusy("reading");
+    setBusy(
+      order && (order.paid || state === "not_required") ? "reading" : "paying",
+    );
     setReadingStep(0);
     let working: SmartSession = { ...session, order };
     try {
@@ -773,15 +933,38 @@ export default function SmartIntakeJourney({
             email: email.trim(),
             business_name: brand.name,
             website: identity.canonicalUrl,
-            // The old order, if any, is expired by the server so it stops
-            // holding part of the daily cap.
+            // The old order, if any, is retired by the server so it stops
+            // holding part of the daily cap (R-19).
             ...(previousOrderId ? { previous_order_id: previousOrderId } : {}),
+            ...(testCode ? { test_pass_code: testCode } : {}),
           }),
         });
         const body = (await created.json().catch(() => ({}))) as {
           order_id?: string;
           error?: string;
+          code?: string;
         };
+        if (
+          created.status === 409 &&
+          body.code === "PREVIOUS_ORDER_ACTIVE" &&
+          previousOrderId
+        ) {
+          // R-19: the old order is paid or waiting for payment: no new order.
+          // The page shows that order's own state instead.
+          working = {
+            ...working,
+            order: {
+              id: previousOrderId,
+              website: identity.canonicalUrl,
+              name: brand.name,
+            },
+            supersededOrder: null,
+          };
+          persist(working);
+          setError(body.error || "Pesanan sebelumnya masih berjalan.");
+          void checkOrder(working);
+          return;
+        }
         if (!created.ok || typeof body.order_id !== "string") {
           setError(body.error || "Pesanan belum dapat dibuat. Coba lagi.");
           return;
@@ -793,6 +976,18 @@ export default function SmartIntakeJourney({
         };
         working = { ...working, order, supersededOrder: null };
         persist(working);
+        if (testCode) {
+          setPaymentFor({
+            orderId: order.id,
+            payment: { state: "not_required" },
+          });
+        } else {
+          await startPayment(working, order.id);
+          return;
+        }
+      } else if (!order.paid && state === "unpaid") {
+        await startPayment(working, order.id);
+        return;
       }
       // R-30: saved progress continues on the new order, no new paid call.
       if (working.prepared && working.selection) {
@@ -800,6 +995,7 @@ export default function SmartIntakeJourney({
         goStage({ ...working, stage: target, afterOrder: null });
         return;
       }
+      setBusy("reading");
       working = { ...working, stage: "reading" };
       persist(working);
       await readWebsite(working, order.id, brand);
@@ -807,6 +1003,45 @@ export default function SmartIntakeJourney({
       inFlight.current = false;
       setBusy(null);
       setReadingStep(0);
+    }
+  }
+
+  /** Spec 017 R-05, R-17: ask the server to start the payment. A real payment
+   * sends the browser to the Midtrans page it answers with; the simulated one
+   * (synthetic mode only) is marked paid right there and the page then asks the
+   * status like any return from a payment. */
+  async function startPayment(working: SmartSession, orderId: string) {
+    try {
+      const response = await fetch("/api/payments/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: orderId }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        redirect_url?: unknown;
+        simulated?: boolean;
+        error?: string;
+        code?: string;
+      };
+      if (response.ok && body.simulated) {
+        await checkOrder(working);
+        return;
+      }
+      if (
+        (response.ok || body.code === "PAYMENT_ALREADY_OPEN") &&
+        typeof body.redirect_url === "string" &&
+        body.redirect_url.startsWith("https://")
+      ) {
+        window.location.assign(body.redirect_url);
+        return;
+      }
+      // The order exists and is not paid: the page asks its state, so it shows
+      // the right button (try again) or the real state (already paying).
+      void checkOrder(working);
+      setError(body.error || PAY_START_FAILED_NOTICE);
+    } catch {
+      void checkOrder(working);
+      setError(PAY_START_FAILED_NOTICE);
     }
   }
 
@@ -1197,6 +1432,29 @@ export default function SmartIntakeJourney({
   // → location/product → summary.
   const progress = stageProgress(session);
   const backTarget = backTargetFor(session);
+  // Spec 017: the saved order is the one for this website and business; what
+  // the server last said about its payment; and what the main button does.
+  const lockedAfterPayment = Boolean(session.order?.paid);
+  const orderMatches = Boolean(
+    session.order &&
+    session.identity &&
+    session.order.website === session.identity.canonicalUrl &&
+    session.order.name === (session.brand?.name ?? session.entry.name.trim()),
+  );
+  const currentPayment =
+    paymentFor && paymentFor.orderId === session.order?.id
+      ? paymentFor.payment
+      : null;
+  const orderAction: string | null = !orderMatches
+    ? testPass
+      ? "Lanjut"
+      : "Bayar Rp99.000"
+    : currentPayment?.state === "paid" ||
+        currentPayment?.state === "not_required"
+      ? "Lanjut"
+      : currentPayment?.state === "unpaid"
+        ? "Bayar Rp99.000"
+        : null;
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-[560px] flex-col px-6 pb-[calc(148px+env(safe-area-inset-bottom,0px))] pt-8 sm:px-8">
       <header>
@@ -1396,12 +1654,7 @@ export default function SmartIntakeJourney({
             headingRef={headingRef}
             businessName={session.brand?.name ?? session.entry.name.trim()}
             website={session.identity.canonicalUrl}
-            hasOrder={Boolean(
-              session.order &&
-              session.order.website === session.identity.canonicalUrl &&
-              session.order.name ===
-                (session.brand?.name ?? session.entry.name.trim()),
-            )}
+            hasOrder={orderMatches}
             email={email}
             onEmailChange={(value) => {
               setEmail(value);
@@ -1411,6 +1664,11 @@ export default function SmartIntakeJourney({
             notice={interrupted ? READING_INTERRUPTED_NOTICE : null}
             error={error || restoredSourceError}
             live={live}
+            payment={orderMatches ? currentPayment : null}
+            checking={checkingPayment}
+            testPass={testPass}
+            onCheckAgain={() => void checkOrder(session)}
+            onPayAgain={payAgain}
           />
         ) : null}
         {session.stage === "brand" && session.prepared && session.selection ? (
@@ -1711,29 +1969,37 @@ export default function SmartIntakeJourney({
                 });
                 setError(null);
               }}
-              onEditBrand={() => {
-                // The business row's Ubah opens the existing brand screen;
-                // its Lanjut and Back then return to the review (J7).
-                goStage({
-                  ...session,
-                  stage: "brand",
-                  editReturn: "summary",
-                  editBaseline: undefined,
-                });
-                setError(null);
-              }}
-              onEditSource={() => {
-                // The marker lets a same-source/name-only correction come
-                // back through the brand check; a changed URL clears it and
-                // resets preparation/frozen state on input change.
-                persist({
-                  ...session,
-                  stage: "entry",
-                  editReturn: "summary",
-                  editBaseline: undefined,
-                });
-                setError(null);
-              }}
+              onEditBrand={
+                lockedAfterPayment
+                  ? undefined
+                  : () => {
+                      // The business row's Ubah opens the existing brand screen;
+                      // its Lanjut and Back then return to the review (J7).
+                      goStage({
+                        ...session,
+                        stage: "brand",
+                        editReturn: "summary",
+                        editBaseline: undefined,
+                      });
+                      setError(null);
+                    }
+              }
+              onEditSource={
+                lockedAfterPayment
+                  ? undefined
+                  : () => {
+                      // The marker lets a same-source/name-only correction come
+                      // back through the brand check; a changed URL clears it and
+                      // resets preparation/frozen state on input change.
+                      persist({
+                        ...session,
+                        stage: "entry",
+                        editReturn: "summary",
+                        editBaseline: undefined,
+                      });
+                      setError(null);
+                    }
+              }
               onEditFocus={() => {
                 // The summary row reviews focus; the dedicated screen owns
                 // the change, and this marker sends the detour back here
@@ -1868,24 +2134,32 @@ export default function SmartIntakeJourney({
           </>
         ) : null}
       </main>
-      {backTarget ? (
+      {backTarget || (lockedAfterPayment && session.stage !== "reading") ? (
         <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background">
           <div className="mx-auto flex w-full max-w-[560px] items-center justify-between gap-3 px-6 py-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))] sm:px-8">
-            <Button
-              variant="ghost"
-              className="min-h-11 px-2 underline underline-offset-8"
-              onClick={goBack}
-            >
-              Kembali
-            </Button>
-            {session.stage === "order" ? (
+            {backTarget ? (
               <Button
-                className="min-h-11 rounded-full px-6"
-                disabled={busy !== null}
-                onClick={() => void continueFromOrder()}
+                variant="ghost"
+                className="min-h-11 px-2 underline underline-offset-8"
+                onClick={goBack}
               >
-                Lanjut
+                Kembali
               </Button>
+            ) : (
+              <span />
+            )}
+            {session.stage === "order" ? (
+              orderAction ? (
+                <Button
+                  className="min-h-11 rounded-full px-6"
+                  disabled={busy !== null}
+                  onClick={() => void continueFromOrder()}
+                >
+                  {orderAction}
+                </Button>
+              ) : (
+                <span />
+              )
             ) : session.stage === "brand" && !session.prepared ? (
               <Button
                 className="min-h-11 rounded-full px-6"

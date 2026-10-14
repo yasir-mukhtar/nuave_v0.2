@@ -12,7 +12,7 @@ import { journeyWebServer } from "./tests/e2e/shared-config";
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch:
-    /(audit-entry|offline-network|new-intake-journey|new-intake-glm|smart-intake)\.spec\.ts/,
+    /(audit-entry|offline-network|new-intake-journey|new-intake-glm|smart-intake|payment-screens)\.spec\.ts/,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -29,5 +29,8 @@ export default defineConfig({
     // offlineE2EServerEnv.
     NUAVE_NEW_AUDIT_ENABLED: "true",
     NUAVE_AUDIT_MODE: "synthetic",
+    // Spec 017 R-20: a fake test-pass code (at least 24 characters) for the
+    // `/uji` specs. Mirrors `E2E_TEST_PASS_CODE` in tests/e2e/journey.ts.
+    NUAVE_TEST_PASS_CODE: "e2e-test-pass-code-not-a-secret-0001",
   }),
 });

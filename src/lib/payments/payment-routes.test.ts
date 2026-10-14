@@ -361,20 +361,68 @@ describe("start payment (R-05, AC-01, AC-07, AC-10, AC-11)", () => {
     expect(fake.requests).toEqual([]);
   });
 
-  it("synthetic mode never calls Midtrans and refuses cleanly (the seam for S4d)", async () => {
-    vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
-    const id = await makeOrder(d1.db, {
-      mode: "synthetic",
-      payment: "unpaid",
-      now: new Date(),
+  describe("simulated payment (synthetic mode, R-17, AC-20, AC-24)", () => {
+    const paidRow = (id: string) =>
+      order(id) as {
+        payment_kind: string;
+        paid_at: string | null;
+        expires_at: string;
+      };
+
+    it("marks the order paid as simulated, calls no Midtrans, and works with no Midtrans settings", async () => {
+      vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+      vi.stubEnv("MIDTRANS_SERVER_KEY", "");
+      vi.stubEnv("MIDTRANS_IS_PRODUCTION", "");
+      vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "");
+      const id = await makeOrder(d1.db, {
+        mode: "synthetic",
+        payment: "unpaid",
+        now: new Date(),
+      });
+      const response = await start(id);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ simulated: true });
+      const row = paidRow(id);
+      expect(row.payment_kind).toBe("simulated");
+      expect(row.paid_at).not.toBeNull();
+      // The same paid lifetime as a real payment (R-13).
+      expect(Date.parse(row.expires_at) - Date.parse(row.paid_at!)).toBe(
+        7 * 24 * 60 * 60 * 1000,
+      );
+      expect(fake.requests).toEqual([]);
+      expect(attempts()).toEqual([]);
+      // Asking again changes nothing.
+      const again = await start(id);
+      expect(again.status).toBe(200);
+      expect(paidRow(id).paid_at).toBe(row.paid_at);
     });
-    const response = await start(id);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({
-      code: "SIMULATED_PAYMENT_UNAVAILABLE",
+
+    it("refuses a test-pass order", async () => {
+      vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+      const test = await makeOrder(d1.db, {
+        mode: "synthetic",
+        payment: "test",
+        now: new Date(),
+      });
+      const response = await start(test);
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({
+        code: "PAYMENT_NOT_AVAILABLE",
+      });
+      expect(paidRow(test).payment_kind).toBe("test");
     });
-    expect(fake.requests).toEqual([]);
-    expect(attempts()).toEqual([]);
+
+    it("is impossible in live mode: a live order stays unpaid and Midtrans settings still rule", async () => {
+      const id = await unpaidOrder();
+      vi.stubEnv("MIDTRANS_SERVER_KEY", "");
+      const response = await start(id);
+      expect(response.status).toBe(503);
+      expect(paidRow(id).payment_kind).toBe("unpaid");
+      // And a live order cannot be paid by the simulated write itself.
+      const { applySimulatedPayment } = await import("./apply");
+      expect(await applySimulatedPayment(d1.db, id, new Date())).toBe(false);
+      expect(paidRow(id).payment_kind).toBe("unpaid");
+    });
   });
 
   it("with no room, starts nothing, shows the full message and records one cap_full notice per day (AC-07)", async () => {

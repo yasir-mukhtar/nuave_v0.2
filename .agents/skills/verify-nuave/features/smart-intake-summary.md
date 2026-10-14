@@ -138,8 +138,8 @@ manual` link. Evidence: `03-brand-confirm-to-focus`.
   are absent), empty aliases, unknown competitor mode and a blank public
   fact.
   `network.json.apiCalls` is exactly one `GET /api/audit/identity`, one
-  `POST /api/orders`, one `POST /api/audit/extract` and one
-  `POST /api/audit/glm-questions`.
+  `POST /api/orders`, one `POST /api/payments/start` (the simulated payment),
+  one `POST /api/audit/extract` and one `POST /api/audit/glm-questions`.
 
 ## Gotchas
 

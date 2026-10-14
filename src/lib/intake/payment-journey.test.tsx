@@ -1,0 +1,556 @@
+// @vitest-environment jsdom
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { extractionDraftSchema } from "../audit/types";
+import { DELIVERY_PROMISE } from "../orders/promise";
+import SmartIntakeJourney from "./SmartIntakeJourney";
+import { readSmartSession } from "./smart-session";
+
+// Spec 017 Experience 2-8 in the browser: the order summary with its price, the
+// payment states the status route can answer, the replacement order after a
+// finally unpaid attempt, and the locks after payment. The server is a fetch
+// stub; the payment mechanics are in payments/*.test.ts.
+
+const ORDER_ID = "0123456789abcdef0123456789abcdef";
+const EMAIL = "pemilik@example.com";
+const NUMBER = "NV-7K3Q9P";
+const MIDTRANS_PAGE =
+  "https://app.sandbox.midtrans.com/snap/v4/redirection/abc";
+
+const draft = extractionDraftSchema.parse({
+  brand_name: "Kedai Fiksi",
+  entity_scope: "",
+  brand_type: "",
+  category: "kedai kopi",
+  market_context: "",
+  service_channels: ["on_premise"],
+  market_reach: "sekitar",
+  market_areas: ["Bandung"],
+  target_customer: "pekerja sekitar",
+  official_sources: ["https://kedai-fiksi.example/"],
+  verified_offerings: ["kopi susu"],
+  verified_customer_needs: ["minuman dekat kantor"],
+  verified_decision_criteria: ["lokasi"],
+  similar_businesses: [],
+  brand_name_variants: [],
+  priority_offering: "",
+  conversion_action: "",
+  customer_supplied_facts: [],
+  known_accuracy_questions: [],
+  usp: "Racikan fiktif",
+  regulated_category_notes: "",
+  evidence: [],
+  warnings: [],
+});
+
+type Stub = {
+  calls: string[];
+  bodies: Record<string, Array<Record<string, unknown>>>;
+  /** Answers by route, replaceable per test. */
+  status: () => Record<string, unknown> | Response;
+  start: () => Response;
+  create: () => Response;
+};
+
+let navigated: string | null = null;
+const assign = vi.fn((url: string) => {
+  navigated = url;
+});
+
+function stubServer(overrides: Partial<Stub> = {}): Stub {
+  const stub: Stub = {
+    calls: [],
+    bodies: {},
+    status: () => ({ state: "open", payment: { state: "unpaid" } }),
+    start: () => Response.json({ redirect_url: MIDTRANS_PAGE }),
+    create: () => Response.json({ order_id: ORDER_ID, state: "open" }),
+    ...overrides,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const key = url.startsWith("/api/audit/identity") ? "identity" : url;
+      stub.calls.push(key);
+      if (init?.body)
+        (stub.bodies[key] ??= []).push(
+          JSON.parse(String(init.body)) as Record<string, unknown>,
+        );
+      if (key === "identity")
+        return Response.json({
+          canonical_url: "https://kedai-fiksi.example/",
+          display_name: "Kedai Fiksi",
+          preparation_mode: "synthetic-local",
+        });
+      if (key === "/api/orders") return stub.create();
+      if (key === "/api/payments/start") return stub.start();
+      if (key === "/api/orders/status") {
+        const answer = stub.status();
+        return answer instanceof Response ? answer : Response.json(answer);
+      }
+      if (key === "/api/audit/extract")
+        return Response.json({
+          draft,
+          telemetry: [],
+          preparation_mode: "synthetic-local",
+        });
+      throw new Error(`Unexpected request ${url}`);
+    }),
+  );
+  return stub;
+}
+
+beforeEach(() => {
+  navigated = null;
+  assign.mockClear();
+  window.sessionStorage.clear();
+  window.localStorage.clear();
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  // jsdom cannot navigate: capture the Midtrans redirect.
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: { ...window.location, assign },
+  });
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+const heading = (name: string | RegExp) =>
+  screen.findByRole("heading", { name });
+const button = (name: string) => screen.findByRole("button", { name });
+
+async function toOrderScreen() {
+  await screen.findByRole("textbox", { name: "Nama bisnis" });
+  fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
+    target: { value: "Kedai Fiksi" },
+  });
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "URL website publik" }),
+    { target: { value: "https://kedai-fiksi.example/" } },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
+  await heading("Ini brand yang ingin Anda audit?");
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  await heading("Ringkasan pesanan");
+}
+async function typeEmail() {
+  fireEvent.change(screen.getByRole("textbox", { name: /Email/ }), {
+    target: { value: EMAIL },
+  });
+}
+async function pay() {
+  await typeEmail();
+  fireEvent.click(await button("Bayar Rp99.000"));
+}
+/** The saved session of a customer who made an order and left to pay. */
+async function reloadWith(stub: Stub) {
+  cleanup();
+  render(<SmartIntakeJourney live />);
+  await heading("Ringkasan pesanan");
+  return stub;
+}
+
+describe("the order summary (Experience 2, 3)", () => {
+  it("shows the price, the delivery promise, the Terms and Privacy links and the pay button", async () => {
+    stubServer();
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    expect(screen.getByText("Rp99.000")).toBeTruthy();
+    expect(screen.getByText("sekali bayar")).toBeTruthy();
+    expect(screen.getByText(DELIVERY_PROMISE)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Syarat Penggunaan" })
+        .getAttribute("href"),
+    ).toBe("/terms");
+    expect(
+      screen
+        .getByRole("link", { name: "Kebijakan Privasi" })
+        .getAttribute("href"),
+    ).toBe("/privacy");
+    expect(screen.getByRole("textbox", { name: /Email/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bayar Rp99.000" })).toBeTruthy();
+    // A real payment screen has no simulation label.
+    expect(document.body.textContent).not.toContain("Pembayaran simulasi");
+  });
+
+  it("in synthetic mode the labelled simulated payment pays at once and shows the order number", async () => {
+    let paid = false;
+    const stub = stubServer({
+      start: () => {
+        paid = true;
+        return Response.json({ simulated: true });
+      },
+      status: () => ({
+        state: "open",
+        payment: paid
+          ? { state: "paid", order_number: NUMBER }
+          : { state: "unpaid" },
+      }),
+    });
+    render(<SmartIntakeJourney live={false} />);
+    await toOrderScreen();
+    expect(document.body.textContent).toContain("Pembayaran simulasi");
+    await pay();
+    await heading("Pembayaran diterima");
+    expect(screen.getByText(NUMBER)).toBeTruthy();
+    expect(navigated).toBeNull();
+    expect(stub.calls).toEqual([
+      "identity",
+      "/api/orders",
+      "/api/payments/start",
+      "/api/orders/status",
+    ]);
+    // Paid: the website and business are locked and the order number is kept.
+    expect(readSmartSession()?.order).toMatchObject({
+      id: ORDER_ID,
+      paid: true,
+      number: NUMBER,
+    });
+    // The intake continues as today.
+    fireEvent.click(await button("Lanjut"));
+    await heading("Apa yang ingin Anda audit?");
+    expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
+    expect(stub.calls).toContain("/api/audit/extract");
+  });
+
+  it("creates the order, starts the payment and sends the browser to the Midtrans page", async () => {
+    const stub = stubServer();
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
+    expect(stub.bodies["/api/orders"]).toEqual([
+      {
+        email: EMAIL,
+        business_name: "Kedai Fiksi",
+        website: "https://kedai-fiksi.example/",
+      },
+    ]);
+    // The order is saved before leaving, the email never is.
+    expect(readSmartSession()?.order?.id).toBe(ORDER_ID);
+    expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
+    expect(stub.bodies["/api/payments/start"]).toEqual([
+      { order_id: ORDER_ID },
+    ]);
+  });
+
+  it("shows the cap-full message and starts no payment", async () => {
+    stubServer({
+      start: () =>
+        Response.json(
+          {
+            error: "Kuota audit sedang penuh. Coba lagi dalam beberapa jam.",
+            code: "CAP_FULL",
+          },
+          { status: 409 },
+        ),
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Kuota audit sedang penuh. Coba lagi dalam beberapa jam.",
+    );
+    expect(navigated).toBeNull();
+    // Nothing is lost: the same order can be tried again later.
+    expect(await button("Bayar Rp99.000")).toBeTruthy();
+  });
+
+  it("shows 'Pembayaran belum bisa dimulai' when Snap fails, and the retry reuses the same order", async () => {
+    let failing = true;
+    const stub = stubServer({
+      start: () =>
+        failing
+          ? Response.json(
+              {
+                error: "Pembayaran belum bisa dimulai.",
+                code: "PAYMENT_START_FAILED",
+              },
+              { status: 502 },
+            )
+          : Response.json({ redirect_url: MIDTRANS_PAGE }),
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Pembayaran belum bisa dimulai",
+    );
+    // The order exists; the order screen now asks the status and offers the
+    // button again with no email field.
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull(),
+    );
+    failing = false;
+    fireEvent.click(await button("Bayar Rp99.000"));
+    await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
+    expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
+  });
+
+  it("shows the neutral unavailable answer when the settings are missing", async () => {
+    stubServer({
+      create: () =>
+        Response.json(
+          {
+            error: "Audit tidak tersedia saat ini.",
+            code: "ORDER_UNAVAILABLE",
+          },
+          { status: 503 },
+        ),
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Audit tidak tersedia saat ini.",
+    );
+  });
+});
+
+/** Make an order and leave for Midtrans; then come back with `payment`. */
+async function returnWith(
+  payment: Record<string, unknown>,
+  top: Record<string, unknown> = { state: "open" },
+) {
+  let answer: Record<string, unknown> = {
+    state: "open",
+    payment: { state: "unpaid" },
+  };
+  const stub = stubServer({ status: () => answer });
+  render(<SmartIntakeJourney live />);
+  await toOrderScreen();
+  await pay();
+  await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
+  answer = { ...top, payment };
+  await reloadWith(stub);
+  return { stub, set: (next: Record<string, unknown>) => (answer = next) };
+}
+
+describe("coming back from Midtrans (Experience 5-8)", () => {
+  it("shows 'Menunggu pembayaran' with 'Lihat cara bayar' to the same Midtrans page", async () => {
+    await returnWith({ state: "waiting", redirect_url: MIDTRANS_PAGE });
+    await heading("Menunggu pembayaran");
+    expect(
+      screen
+        .getByRole("link", { name: "Lihat cara bayar" })
+        .getAttribute("href"),
+    ).toBe(MIDTRANS_PAGE);
+    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+  });
+
+  it.each([
+    ["denied", "Pembayaran ditolak"],
+    ["cancelled", "Pembayaran dibatalkan"],
+    ["failed", "Pembayaran gagal"],
+    ["expired", "Waktu pembayaran"],
+  ])(
+    "shows an honest message for a %s try and the same Midtrans page",
+    async (last, text) => {
+      await returnWith({
+        state: "try_failed",
+        last_try: last,
+        redirect_url: MIDTRANS_PAGE,
+      });
+      await heading("Pembayaran belum berhasil");
+      expect(document.body.textContent).toContain(text);
+      expect(
+        screen.getByRole("link", { name: "Lihat cara bayar" }),
+      ).toBeTruthy();
+    },
+  );
+
+  it("after the window says 'Kami sedang memeriksa pembayaran Anda' with 'Cek lagi' and no new payment", async () => {
+    const { stub, set } = await returnWith({ state: "checking" });
+    await heading("Kami sedang memeriksa pembayaran Anda");
+    expect(screen.queryByRole("link", { name: "Lihat cara bayar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Lanjut" })).toBeNull();
+    // Cek lagi asks the status again, and the answer is shown.
+    const before = stub.calls.filter(
+      (call) => call === "/api/orders/status",
+    ).length;
+    set({ state: "open", payment: { state: "cannot_check" } });
+    fireEvent.click(await button("Cek lagi"));
+    await heading("Status pembayaran belum dapat diperiksa");
+    expect(
+      stub.calls.filter((call) => call === "/api/orders/status").length,
+    ).toBe(before + 1);
+    expect(await button("Cek lagi")).toBeTruthy();
+    expect(
+      stub.calls.filter((call) => call === "/api/payments/start"),
+    ).toHaveLength(1);
+  });
+
+  it("when the status cannot be fetched at all it says it cannot be checked", async () => {
+    let down = false;
+    const stub = stubServer({
+      status: () =>
+        down
+          ? new Response("", { status: 503 })
+          : { state: "open", payment: { state: "unpaid" } },
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
+    down = true;
+    await reloadWith(stub);
+    await heading("Status pembayaran belum dapat diperiksa");
+    expect(await button("Cek lagi")).toBeTruthy();
+  });
+
+  it("polls the status while waiting and moves on when it is paid", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { set } = await returnWith({
+        state: "waiting",
+        redirect_url: MIDTRANS_PAGE,
+      });
+      await heading("Menunggu pembayaran");
+      set({ state: "open", payment: { state: "paid", order_number: NUMBER } });
+      await vi.advanceTimersByTimeAsync(10_500);
+      await heading("Pembayaran diterima");
+      expect(screen.getByText(NUMBER)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("finally unpaid: 'Coba bayar lagi' returns to the summary and starts a replacement order", async () => {
+    const { stub, set } = await returnWith(
+      { state: "unpaid_final" },
+      { state: "expired" },
+    );
+    await heading("Pembayaran tidak kami terima");
+    // The page keeps the ended order and never makes a new one by itself.
+    expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
+    set({ state: "open", payment: { state: "unpaid" } });
+    fireEvent.click(await button("Coba bayar lagi"));
+    await typeEmail();
+    fireEvent.click(await button("Bayar Rp99.000"));
+    await waitFor(() => expect(stub.bodies["/api/orders"]).toHaveLength(2));
+    expect(stub.bodies["/api/orders"]![1]).toMatchObject({
+      email: EMAIL,
+      previous_order_id: ORDER_ID,
+    });
+  });
+
+  it.each(["needs_refund", "paid_ended", "refunded"])(
+    "a %s order shows the order number and the support address, never a new payment",
+    async (state) => {
+      const { stub } = await returnWith(
+        { state, order_number: NUMBER },
+        { state: "failed" },
+      );
+      await screen.findByText(NUMBER);
+      expect(
+        screen.getByRole("link", { name: "support@nuave.ai" }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole("button", { name: "Bayar Rp99.000" }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Coba bayar lagi" }),
+      ).toBeNull();
+      expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+      expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(
+        1,
+      );
+    },
+  );
+});
+
+describe("locks after payment (R-19, AC-13)", () => {
+  async function paidAtFocus() {
+    let paid = false;
+    const stub = stubServer({
+      start: () => {
+        paid = true;
+        return Response.json({ simulated: true });
+      },
+      status: () => ({
+        state: "open",
+        payment: paid
+          ? { state: "paid", order_number: NUMBER }
+          : { state: "unpaid" },
+      }),
+    });
+    render(<SmartIntakeJourney live={false} />);
+    await toOrderScreen();
+    await pay();
+    fireEvent.click(await button("Lanjut"));
+    await heading("Apa yang ingin Anda audit?");
+    return stub;
+  }
+
+  it("has no way back to the business or the website", async () => {
+    await paidAtFocus();
+    expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+    // The main button still works.
+    expect(screen.getByRole("button", { name: "Lanjut" })).toBeTruthy();
+  });
+
+  it("a paid order that the server no longer knows is never turned into a new order", async () => {
+    const stub = await paidAtFocus();
+    stub.status = () => new Response("", { status: 404 });
+    cleanup();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(NUMBER);
+    expect(screen.getByRole("link", { name: "support@nuave.ai" })).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
+    // The saved order keeps its paid mark, so it is never sent as a replacement.
+    expect(readSmartSession()?.order?.paid).toBe(true);
+  });
+
+  it("an ended answer for a paid order shows support, not the entry of a new order", async () => {
+    const stub = await paidAtFocus();
+    stub.status = () => ({ state: "expired", payment: { state: "paid" } });
+    cleanup();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(NUMBER);
+    expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
+  });
+});
+
+describe("the founder test pass (R-20)", () => {
+  it("sends the code only in the order body, then continues with no payment", async () => {
+    window.sessionStorage.setItem(
+      "nuave.testPass.v1",
+      "founder-code-0123456789abcdef",
+    );
+    const stub = stubServer({
+      status: () => ({ state: "open", payment: { state: "not_required" } }),
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    expect(screen.queryByText("Rp99.000")).toBeNull();
+    await typeEmail();
+    fireEvent.click(await button("Lanjut"));
+    await heading("Apa yang ingin Anda audit?");
+    expect(stub.bodies["/api/orders"]![0]).toMatchObject({
+      test_pass_code: "founder-code-0123456789abcdef",
+    });
+    expect(stub.calls).not.toContain("/api/payments/start");
+    // Never in local storage, a URL or any other request.
+    expect(JSON.stringify({ ...window.localStorage })).not.toContain(
+      "founder-code",
+    );
+    for (const [key, bodies] of Object.entries(stub.bodies)) {
+      if (key !== "/api/orders")
+        expect(JSON.stringify(bodies)).not.toContain("founder-code");
+    }
+    expect(window.location.href).not.toContain("founder-code");
+  });
+});

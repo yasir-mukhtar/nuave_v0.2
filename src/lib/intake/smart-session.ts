@@ -96,7 +96,18 @@ export type SmartSession = {
    * (R-31). `website` and `name` are what the order was made for: a different
    * website or brand needs a new order.
    */
-  order?: { id: string; website: string; name: string } | null;
+  order?: {
+    id: string;
+    website: string;
+    name: string;
+    /** Spec 017 R-19: set once the server said this order is paid. From then
+     * on the website and business are locked and the order is never sent as
+     * `previous_order_id`. */
+    paid?: boolean;
+    /** The order number the server showed once paid (R-01), so the page can
+     * still show it if the order later ends. */
+    number?: string;
+  } | null;
   /** An order the customer left by changing the website or the brand. It may
    * still be open; the next order tells the server to expire it, so it stops
    * holding part of the daily cap (spec 016 R-08). */
@@ -308,7 +319,11 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         typeof value.order.website !== "string" ||
         value.order.website.length > 2_000 ||
         typeof value.order.name !== "string" ||
-        value.order.name.length > 160)
+        value.order.name.length > 160 ||
+        (value.order.paid !== undefined && value.order.paid !== true) ||
+        (value.order.number !== undefined &&
+          (typeof value.order.number !== "string" ||
+            !/^NV-[A-Z0-9]{6}$/.test(value.order.number))))
     )
       return null;
     if (

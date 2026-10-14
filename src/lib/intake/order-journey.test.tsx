@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TEST_PASS_STORAGE_KEY } from "./test-pass";
 import SmartAuditStage from "@/app/audit/SmartAuditStage";
 import { extractionDraftSchema } from "../audit/types";
 import { SMART_INTAKE_STORAGE_KEY } from "./smart-intake-contract";
@@ -69,7 +70,13 @@ function stubServer(overrides: Partial<Stub> = {}): Stub {
   const stub: Stub = {
     calls: [],
     bodies: {},
-    status: () => ({ state: "open", completed: 0, total: 10, questions: [] }),
+    status: () => ({
+      state: "open",
+      payment: { state: "not_required" },
+      completed: 0,
+      total: 10,
+      questions: [],
+    }),
     orderResponse: () => Response.json({ order_id: ORDER_ID, state: "open" }),
     approveResponse: () => Response.json({ state: "running" }),
     glmResponse: () =>
@@ -127,6 +134,9 @@ function stubServer(overrides: Partial<Stub> = {}): Stub {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  // Spec 017 R-20: these journeys run on a founder test pass (no payment); the
+  // paid screens have their own tests in payment-journey.test.tsx.
+  window.sessionStorage.setItem(TEST_PASS_STORAGE_KEY, "test-code");
   window.localStorage.clear();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
 });
@@ -194,7 +204,7 @@ async function toQuestions() {
 }
 
 describe("the order screen (R-01, R-06, AC-01)", () => {
-  it("shows the business, what the report includes and an email field, with no price and no payment", async () => {
+  it("shows the business, what the report includes and an email field, with no price on a founder test pass", async () => {
     stubServer();
     render(<SmartIntakeJourney live={false} />);
     await enterBusiness();
@@ -203,9 +213,8 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
     ).toContain("Kedai Fiksi");
     expect(screen.getByText("Isi laporan")).toBeTruthy();
     expect(screen.getByRole("textbox", { name: /Email/ })).toBeTruthy();
-    expect(document.body.textContent).not.toMatch(
-      /Rp\s?\d|IDR|USD|bayar|harga/i,
-    );
+    expect(document.body.textContent).not.toMatch(/Rp\s?\d|IDR|USD|harga/i);
+    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
   });
 
   it("makes no order and no paid call for a missing or bad email", async () => {
@@ -267,6 +276,7 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
         email: EMAIL,
         business_name: "Kedai Fiksi",
         website: "https://kedai-fiksi.example/",
+        test_pass_code: "test-code",
       },
     ]);
     for (const key of Object.keys(server.bodies)) {

@@ -162,6 +162,34 @@ export async function applyStatus(
   return "recorded";
 }
 
+/**
+ * R-17 (AC-20, AC-24): the labeled simulated payment of synthetic mode (local,
+ * tests, previews). It calls nothing outside and writes no attempt or
+ * transaction: one write marks an open, unpaid, unreplaced synthetic order paid
+ * with kind `simulated`, and gives it the same 7-day paid lifetime as R-11. It
+ * holds nothing (synthetic orders reserve no cap). A live order never matches:
+ * the SQL itself names the mode. Returns true only when this write paid it.
+ */
+export async function applySimulatedPayment(
+  db: SpendDb,
+  orderId: string,
+  now: Date,
+): Promise<boolean> {
+  const stamp = now.toISOString();
+  const paidEnd = new Date(now.getTime() + ORDER_PAID_MS).toISOString();
+  const result = await db
+    .prepare(
+      `UPDATE orders
+       SET payment_kind = 'simulated', paid_at = ?2, expires_at = ?3
+       WHERE id = ?1 AND payment_kind = 'unpaid' AND replaced_by IS NULL
+         AND paid_at IS NULL AND mode = 'synthetic' AND state = 'open'
+         AND expires_at > ?2`,
+    )
+    .bind(orderId, stamp, paidEnd)
+    .run();
+  return result.meta?.changes === 1;
+}
+
 /** Keep the last status word, method, amount and currency on the attempt. */
 async function touchAttempt(
   deps: ApplyDeps,

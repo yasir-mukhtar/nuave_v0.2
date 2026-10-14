@@ -25,6 +25,7 @@ import {
   expectDifferentiatorScreen,
   expectEmptyEntry,
   expectFocusScreen,
+  expectOrderSummaryPrice,
   expectLocationScreen,
   expectOfferingsScreen,
   expectPublicFactScreen,
@@ -62,7 +63,7 @@ import {
   SENSITIVE_INPUT_NOTICE,
   startAudit,
   stubPreparationDraft,
-  submitOrder,
+  payOrder,
   targetCustomerScreen,
   toggleConsideration,
   toggleCustomerNeed,
@@ -90,6 +91,16 @@ export type Step = {
   screenshot: string;
   aria: string;
 };
+
+/** The paid-path request counts, without the free saved-order status checks
+ * (a reload asks the server whether the saved order is still open). */
+function journeyCalls(ctx: { calls: Record<string, number> }) {
+  return Object.fromEntries(
+    Object.entries(ctx.calls).filter(
+      ([key]) => key !== "POST /api/orders/status",
+    ),
+  );
+}
 
 export type DriveContext = {
   /** The page the next `step` captures. A recipe may point it at another tab. */
@@ -352,14 +363,15 @@ async function smartIntakeSummary(ctx: DriveContext) {
   ctx.check(
     "Frozen context keeps unknown competitors and omits empty optional JQ/J6 values alongside the edited category, product focus and nationwide reach",
   );
-  expect(ctx.calls).toEqual({
+  expect(journeyCalls(ctx)).toEqual({
     "GET /api/audit/identity": 1,
     "POST /api/orders": 1,
+    "POST /api/payments/start": 1,
     "POST /api/audit/extract": 1,
     "POST /api/audit/glm-questions": 1,
   });
   ctx.check(
-    "Exactly one identity, one order, one extract and one question request",
+    "Exactly one identity, one order, one simulated payment, one extract and one question request",
   );
 }
 
@@ -580,20 +592,15 @@ async function richPreparation(ctx: DriveContext) {
   ctx.check(
     "JQ and J6 owner answers and the edited aliases freeze with exact values and origins, and confirmation produces ten questions",
   );
-  // A reload asks the server, for free, whether the saved order is still open.
-  const paid = Object.fromEntries(
-    Object.entries(ctx.calls).filter(
-      ([key]) => key !== "POST /api/orders/status",
-    ),
-  );
-  expect(paid).toEqual({
+  expect(journeyCalls(ctx)).toEqual({
     "GET /api/audit/identity": 1,
     "POST /api/orders": 1,
+    "POST /api/payments/start": 1,
     "POST /api/audit/extract": 1,
     "POST /api/audit/glm-questions": 1,
   });
   ctx.check(
-    "Exactly one identity, one order, one extract and one question request (the free saved-order checks on reload are not counted)",
+    "Exactly one identity, one order, one simulated payment, one extract and one question request (the free saved-order status checks are not counted)",
   );
 }
 
@@ -626,10 +633,21 @@ async function deliverAudit(ctx: DriveContext) {
     await expect(
       page.getByRole("heading", { name: ORDER_HEADING }),
     ).toBeVisible();
+    await expectOrderSummaryPrice(page);
   });
   expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
   ctx.check(
-    "The order summary asks for an email; still no order and no paid request",
+    "The order summary shows Rp99.000 sekali bayar, the delivery promise, the Terms and Privacy links and the Bayar Rp99.000 button, and asks for an email; still no order and no paid request",
+  );
+  let orderNumber = "";
+  await ctx.step("simulated-payment", async () => {
+    orderNumber = await payOrder(page);
+  });
+  expect(ctx.calls["POST /api/orders"]).toBe(1);
+  expect(ctx.calls["POST /api/payments/start"]).toBe(1);
+  expect(ctx.calls["POST /api/audit/extract"]).toBeUndefined();
+  ctx.check(
+    `The labelled simulated payment (no Midtrans) shows "Pembayaran diterima" with order number ${orderNumber}; no paid reading has run yet`,
   );
   await ctx.step("order-made-preparing", async () => {
     // A short same-origin delay keeps the paid reading screen up long enough
@@ -638,14 +656,14 @@ async function deliverAudit(ctx: DriveContext) {
       await new Promise((resolve) => setTimeout(resolve, 600));
       await route.continue();
     });
-    await submitOrder(page);
+    await pressLanjut(page);
     await expect(readingScreen(page)).toBeVisible();
   });
   await expectFocusScreen(page);
   expect(ctx.calls["POST /api/orders"]).toBe(1);
   expect(ctx.calls["POST /api/audit/extract"]).toBe(1);
   ctx.check(
-    "`Lanjut` with an email makes one order, then the paid reading runs once",
+    "After payment, `Lanjut` runs the paid reading once, under the same single order",
   );
   await ctx.step("intake-to-questions", async () => {
     await confirmFocus(page);

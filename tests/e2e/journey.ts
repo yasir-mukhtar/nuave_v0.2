@@ -623,15 +623,72 @@ export async function expectBrandConfirm(
   await expect(brandScreen(page)).toContainText(name);
 }
 
-/** Screen 3a: type the email and press `Lanjut`. The order is made and the
- * paid reading (screen 3b) runs. */
-export async function submitOrder(page: Page, email: string = ORDER_EMAIL) {
+/** Spec 017: the summary's price and button. */
+export const PAY_BUTTON = "Bayar Rp99.000";
+export const PAID_HEADING = "Pembayaran diterima";
+/** Q5, word for word: mirrors `DELIVERY_PROMISE` in `src/lib/orders/promise.ts`. */
+export const ORDER_DELIVERY_PROMISE =
+  "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.";
+/** The code `/uji` keeps in session storage (the e2e server's own test code). */
+export const E2E_TEST_PASS_CODE = "e2e-test-pass-code-not-a-secret-0001";
+/** Mirrors `TEST_PASS_STORAGE_KEY` in `src/lib/intake/test-pass.ts`. */
+export const TEST_PASS_SESSION_KEY = "nuave.testPass.v1";
+
+/** The order summary shows the price, the delivery promise, the Terms and
+ * Privacy links and the pay button (spec 017 Experience 2). */
+export async function expectOrderSummaryPrice(page: Page) {
+  const screen = orderScreen(page);
+  await expect(screen.getByText("Rp99.000")).toBeVisible();
+  await expect(screen.getByText("sekali bayar")).toBeVisible();
+  await expect(screen.getByText(ORDER_DELIVERY_PROMISE)).toBeVisible();
+  await expect(
+    screen.getByRole("link", { name: "Syarat Penggunaan" }),
+  ).toHaveAttribute("href", "/terms");
+  await expect(
+    screen.getByRole("link", { name: "Kebijakan Privasi" }),
+  ).toHaveAttribute("href", "/privacy");
+  await expect(page.getByRole("button", { name: PAY_BUTTON })).toBeVisible();
+}
+
+/** Screen 3a: type the email and press the pay button. In synthetic mode the
+ * labelled simulated payment pays at once: the page says "Pembayaran diterima"
+ * with the order number. Returns that order number. */
+export async function payOrder(page: Page, email: string = ORDER_EMAIL) {
   await expect(orderScreen(page)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: ORDER_HEADING }),
   ).toBeVisible();
   await page.getByRole("textbox", { name: /Email/ }).fill(email);
+  await page.getByRole("button", { name: PAY_BUTTON }).click();
+  await expect(page.getByRole("heading", { name: PAID_HEADING })).toBeVisible();
+  const number = (await orderScreen(page).textContent())?.match(
+    /NV-[A-Z0-9]{6}/,
+  )?.[0];
+  expect(number).toBeTruthy();
+  return number!;
+}
+
+/** Screen 3a to the paid reading: pay (see `payOrder`), then `Lanjut` runs the
+ * paid reading (screen 3b). A tab that holds the founder test code
+ * (`useTestPass`) has no payment, only `Lanjut`. */
+export async function submitOrder(page: Page, email: string = ORDER_EMAIL) {
+  await expect(orderScreen(page)).toBeVisible();
+  if (await page.getByRole("button", { name: PAY_BUTTON }).isVisible()) {
+    await payOrder(page, email);
+  } else {
+    await page.getByRole("textbox", { name: /Email/ }).fill(email);
+  }
   await pressLanjut(page);
+}
+
+/** This tab is the founder's: the code is in session storage before the page
+ * loads, exactly as `/uji` leaves it. No payment, and the order is not locked
+ * by a payment. */
+export async function useTestPass(page: Page) {
+  await page.addInitScript(([key, code]) => sessionStorage.setItem(key, code), [
+    TEST_PASS_SESSION_KEY,
+    E2E_TEST_PASS_CODE,
+  ] as const);
 }
 
 /** Brand confirm → `Lanjut` → order screen → email → `Lanjut` → the focus

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readWranglerConfig } from "./wrangler-config.test-helper";
 
@@ -53,8 +55,60 @@ describe("wrangler.jsonc environments", () => {
       "CHEAPERINFERENCE_API_KEY",
       "NUAVE_AUDIT_MODE",
       "NUAVE_NEW_AUDIT_ENABLED",
+      // Spec 017 R-17: payment settings are Worker secrets too.
+      "MIDTRANS_SERVER_KEY",
+      "MIDTRANS_IS_PRODUCTION",
+      "NUAVE_TEST_PASS_CODE",
+      "NUAVE_FOUNDER_ALERT_EMAIL",
     ]) {
       expect(text).not.toContain(name);
+    }
+  });
+
+  it("every environment has the payment start rate limit, each with its own counter", () => {
+    const environments = [config, ...Object.values(config.env ?? {})];
+    const ids = environments.map(
+      (environment) =>
+        (
+          environment.ratelimits as
+            Array<{ name: string; namespace_id: string }> | undefined
+        )?.find((item) => item.name === "PAYMENT_START_CALLER_RATE_LIMITER")
+          ?.namespace_id,
+    );
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// Spec 017 R-17, AC-20: the deploy job writes the payment settings as Worker
+// secrets, and preview workers never get a real key.
+describe("workflows and the payment settings", () => {
+  const read = (name: string) =>
+    readFileSync(join(process.cwd(), ".github/workflows", name), "utf8");
+
+  it("the deploy job writes the payment settings as Worker secrets, with the production switch off", () => {
+    const ci = read("ci.yml");
+    for (const name of [
+      "MIDTRANS_SERVER_KEY",
+      "NUAVE_TEST_PASS_CODE",
+      "NUAVE_FOUNDER_ALERT_EMAIL",
+    ]) {
+      expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+      expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+    }
+    expect(ci).toContain('MIDTRANS_IS_PRODUCTION: "false"');
+    expect(ci).toMatch(/^\s+MIDTRANS_IS_PRODUCTION$/m);
+  });
+
+  it("preview workers get no payment key, test code or alert address", () => {
+    const preview = read("pr-preview.yml");
+    for (const name of [
+      "MIDTRANS_SERVER_KEY",
+      "MIDTRANS_IS_PRODUCTION",
+      "NUAVE_TEST_PASS_CODE",
+      "NUAVE_FOUNDER_ALERT_EMAIL",
+    ]) {
+      expect(preview).not.toContain(name);
     }
   });
 });

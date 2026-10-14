@@ -194,6 +194,15 @@ jobs:
           # route both refuse live work when either is missing.
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NUAVE_MAIL_FROM: ${{ secrets.NUAVE_MAIL_FROM }}
+          # Spec 017 R-17: Midtrans sandbox (the production switch stays false
+          # until G1), the founder test-pass code (at least 24 characters) and
+          # the founder's alert address. Without the key and the alert address no
+          # payment and no test pass start (fail closed). Preview workers get
+          # none of these.
+          MIDTRANS_SERVER_KEY: ${{ secrets.MIDTRANS_SERVER_KEY }}
+          MIDTRANS_IS_PRODUCTION: "false"
+          NUAVE_TEST_PASS_CODE: ${{ secrets.NUAVE_TEST_PASS_CODE }}
+          NUAVE_FOUNDER_ALERT_EMAIL: ${{ secrets.NUAVE_FOUNDER_ALERT_EMAIL }}
           NUAVE_PROVIDER: openai
           NUAVE_QUESTION_PROVIDER: openai
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -214,6 +223,10 @@ jobs:
             NUAVE_ORDER_EMAIL_ALLOWLIST
             RESEND_API_KEY
             NUAVE_MAIL_FROM
+            MIDTRANS_SERVER_KEY
+            MIDTRANS_IS_PRODUCTION
+            NUAVE_TEST_PASS_CODE
+            NUAVE_FOUNDER_ALERT_EMAIL
             NUAVE_PROVIDER
             NUAVE_QUESTION_PROVIDER
             OPENAI_API_KEY

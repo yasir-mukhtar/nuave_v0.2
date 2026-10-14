@@ -1,15 +1,16 @@
 "use client";
 
 import type { RefObject } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DELIVERY_PROMISE } from "@/lib/orders/promise";
 
 /**
  * Screens 3 and 3a of the order flow (spec 016). Screen 3 is the FREE brand
  * check: it shows only what the free lookup found, and no AI has run. Screen 3a
- * is the order summary: the business, what the report includes, and the email
- * the report link goes to. No price, no payment. Wording is the draft that S5
- * finalizes.
+ * is the order summary: the business, what the report includes, the price, the
+ * delivery promise, the email the report link goes to, and (spec 017) the state
+ * of the payment. Wording is the draft that S5 finalizes.
  */
 
 const SYNTHETIC_LABEL =
@@ -131,6 +132,206 @@ export function FreeBrandScreen({
   );
 }
 
+/** What `/api/orders/status` says about the payment (spec 017 R-14). */
+export type OrderPayment = {
+  state: string;
+  order_number?: string;
+  redirect_url?: string;
+  last_try?: string;
+};
+
+const SUPPORT_EMAIL = "support@nuave.ai";
+
+const TRY_MESSAGE: Record<string, string> = {
+  denied: "Pembayaran ditolak. Anda bisa mencoba lagi di halaman pembayaran.",
+  cancelled:
+    "Pembayaran dibatalkan. Anda bisa mencoba lagi di halaman pembayaran.",
+  failed: "Pembayaran gagal. Anda bisa mencoba lagi di halaman pembayaran.",
+  expired:
+    "Waktu pembayaran untuk cara ini habis. Anda bisa memilih cara lain di halaman pembayaran.",
+};
+
+function OrderNumber({ number }: { number?: string }) {
+  return number ? (
+    <p className="type-copy m-0">
+      Nomor pesanan: <span className="select-all font-semibold">{number}</span>
+    </p>
+  ) : null;
+}
+
+function Support() {
+  return (
+    <p className="type-copy m-0">
+      Hubungi{" "}
+      <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
+        {SUPPORT_EMAIL}
+      </a>
+      .
+    </p>
+  );
+}
+
+/**
+ * Spec 017 Experience 5-8: what the customer sees for each payment state. Only
+ * the states that replace the pay form have a panel; `unpaid`, `not_required`
+ * and an unknown state (null) have none.
+ */
+function PaymentPanel({
+  payment,
+  checking,
+  onCheckAgain,
+  onPayAgain,
+}: {
+  payment: OrderPayment;
+  checking: boolean;
+  onCheckAgain: () => void;
+  onPayAgain: () => void;
+}) {
+  const link = payment.redirect_url ? (
+    <a
+      className={buttonVariants({ className: "min-h-11 w-fit px-4" })}
+      href={payment.redirect_url}
+    >
+      Lihat cara bayar
+    </a>
+  ) : null;
+  const again = (
+    <Button
+      className="min-h-11 w-fit px-4"
+      disabled={checking}
+      onClick={onCheckAgain}
+    >
+      Cek lagi
+    </Button>
+  );
+  const box = (title: string, children: React.ReactNode, urgent = false) => (
+    <article
+      className="grid gap-3 rounded-xl border border-border p-5"
+      data-payment-state={payment.state}
+      role={urgent ? "alert" : "status"}
+    >
+      <h2 className="type-heading-sm m-0">{title}</h2>
+      {children}
+    </article>
+  );
+  switch (payment.state) {
+    case "paid":
+      return box(
+        "Pembayaran diterima",
+        <>
+          <OrderNumber number={payment.order_number} />
+          <p className="type-copy m-0">
+            Tekan Lanjut untuk mengisi data bisnis Anda.
+          </p>
+        </>,
+      );
+    case "waiting":
+      return box(
+        "Menunggu pembayaran",
+        <>
+          <p className="type-copy m-0">
+            Selesaikan pembayaran di halaman Midtrans. Halaman ini memeriksa
+            statusnya sendiri.
+          </p>
+          {link}
+        </>,
+      );
+    case "try_failed":
+      return box(
+        "Pembayaran belum berhasil",
+        <>
+          <p className="type-copy m-0">
+            {TRY_MESSAGE[payment.last_try ?? ""] ?? TRY_MESSAGE.failed}
+          </p>
+          {link}
+        </>,
+      );
+    case "checking":
+      return box(
+        "Kami sedang memeriksa pembayaran Anda",
+        <>
+          <p className="type-copy m-0">
+            Jangan bayar lagi. Kami memberi tahu hasilnya di halaman ini.
+          </p>
+          {again}
+        </>,
+      );
+    case "cannot_check":
+      return box(
+        "Status pembayaran belum dapat diperiksa",
+        <>
+          <p className="type-copy m-0">
+            Jangan bayar lagi. Coba periksa lagi sebentar lagi.
+          </p>
+          {again}
+        </>,
+      );
+    case "unpaid_final":
+      return box(
+        "Pembayaran tidak kami terima",
+        <>
+          <p className="type-copy m-0">
+            Pesanan ini tidak dibayar dan sudah berakhir. Isian Anda tetap
+            tersimpan.
+          </p>
+          <Button className="min-h-11 w-fit px-4" onClick={onPayAgain}>
+            Coba bayar lagi
+          </Button>
+        </>,
+      );
+    case "closed_unknown":
+      return box(
+        "Pembayaran belum dapat dipastikan",
+        <>
+          <OrderNumber number={payment.order_number} />
+          <Support />
+          <Button className="min-h-11 w-fit px-4" onClick={onPayAgain}>
+            Coba bayar lagi
+          </Button>
+        </>,
+        true,
+      );
+    case "needs_refund":
+      return box(
+        "Pembayaran ini tidak dapat dipakai untuk pesanan ini",
+        <>
+          <OrderNumber number={payment.order_number} />
+          <Support />
+        </>,
+        true,
+      );
+    case "refunded":
+      return box(
+        "Pembayaran sudah dikembalikan",
+        <>
+          <OrderNumber number={payment.order_number} />
+          <Support />
+        </>,
+        true,
+      );
+    case "paid_ended":
+      return box(
+        "Pesanan ini tidak dapat dilanjutkan di sini",
+        <>
+          <OrderNumber number={payment.order_number} />
+          <Support />
+        </>,
+        true,
+      );
+    default:
+      return null;
+  }
+}
+
+/** True when the payment has a panel that replaces the pay form. */
+export function hasPaymentPanel(payment: OrderPayment | null): boolean {
+  return (
+    payment !== null &&
+    payment.state !== "unpaid" &&
+    payment.state !== "not_required"
+  );
+}
+
 export function OrderScreen({
   headingRef,
   businessName,
@@ -142,6 +343,11 @@ export function OrderScreen({
   notice,
   error,
   live,
+  payment,
+  checking,
+  testPass,
+  onCheckAgain,
+  onPayAgain,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   businessName: string;
@@ -154,7 +360,17 @@ export function OrderScreen({
   notice: string | null;
   error: string | null;
   live: boolean;
+  /** The saved order's payment, from the server; null until it has answered. */
+  payment: OrderPayment | null;
+  /** A status check is running. */
+  checking: boolean;
+  /** This tab holds the founder test code (`/uji`): no payment (R-20). */
+  testPass: boolean;
+  onCheckAgain: () => void;
+  onPayAgain: () => void;
 }) {
+  const panel = hasPaymentPanel(payment);
+  const free = payment?.state === "not_required";
   return (
     <section className="grid gap-5" data-intake-screen="order" aria-busy={busy}>
       <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
@@ -174,6 +390,14 @@ export function OrderScreen({
           {website}
         </p>
       </article>
+      {hasOrder && payment && panel ? (
+        <PaymentPanel
+          payment={payment}
+          checking={checking}
+          onCheckAgain={onCheckAgain}
+          onPayAgain={onPayAgain}
+        />
+      ) : null}
       <div className="grid gap-2">
         <h2 className="type-heading-sm m-0">Isi laporan</h2>
         <ul className="type-copy m-0 grid list-disc gap-1 pl-5">
@@ -184,11 +408,62 @@ export function OrderScreen({
           <li>Dikirim ke email Anda lewat link pribadi.</li>
         </ul>
       </div>
-      {hasOrder ? (
-        <p role="status" className="type-copy">
-          Pesanan Anda sudah dibuat. Tekan Lanjut untuk meneruskan.
+      {!panel && !testPass && !free ? (
+        <div className="grid gap-3" data-order-price>
+          <div className="grid gap-1 rounded-xl border border-border p-5">
+            <p className="type-copy-sm m-0 text-muted-foreground">Total</p>
+            <p className="type-heading-md m-0">
+              Rp99.000{" "}
+              <span className="type-copy-sm font-normal text-muted-foreground">
+                sekali bayar
+              </span>
+            </p>
+          </div>
+          <p className="type-copy m-0">{DELIVERY_PROMISE}</p>
+          <p className="type-copy-sm m-0 text-muted-foreground">
+            Dengan membayar, Anda menyetujui{" "}
+            <a
+              className="underline"
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Syarat Penggunaan
+            </a>{" "}
+            dan{" "}
+            <a
+              className="underline"
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Kebijakan Privasi
+            </a>{" "}
+            kami.
+          </p>
+          {!live ? (
+            <p className="type-copy-sm m-0 text-muted-foreground">
+              Pembayaran simulasi: tidak ada uang yang dibayar dan Midtrans
+              tidak dipanggil.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {testPass && !hasOrder ? (
+        <p className="type-copy-sm m-0 text-muted-foreground">
+          Mode uji pendiri: pesanan ini tidak memakai pembayaran.
         </p>
-      ) : (
+      ) : null}
+      {hasOrder && !panel ? (
+        <p role="status" className="type-copy">
+          {payment === null
+            ? "Memeriksa status pesanan Anda…"
+            : free
+              ? "Pesanan Anda sudah dibuat. Tekan Lanjut untuk meneruskan."
+              : "Pesanan Anda sudah dibuat. Tekan Bayar Rp99.000 untuk membayar."}
+        </p>
+      ) : null}
+      {!hasOrder ? (
         <label className="grid gap-2 type-label">
           Email untuk link laporan
           <Input
@@ -204,7 +479,7 @@ export function OrderScreen({
             Kami memakai email ini untuk mengirim link laporan.
           </span>
         </label>
-      )}
+      ) : null}
       {error ? (
         <p role="alert" className="type-copy text-destructive">
           {error}

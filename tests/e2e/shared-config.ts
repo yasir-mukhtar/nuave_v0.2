@@ -19,6 +19,8 @@ const SAFE_INHERITED_ENV_KEYS = [
 const ALLOWED_SERVER_OVERRIDES = new Set([
   "NUAVE_NEW_AUDIT_ENABLED",
   "NUAVE_AUDIT_MODE",
+  // Spec 017: a fixed fake code, so the test pass can be driven offline.
+  "NUAVE_TEST_PASS_CODE",
 ]);
 
 /**
@@ -75,7 +77,7 @@ export function offlineE2EServerEnv(
     // synthetic mode uses the labeled simulated payment.
     MIDTRANS_SERVER_KEY: "",
     MIDTRANS_IS_PRODUCTION: "",
-    NUAVE_TEST_PASS_CODE: "",
+    NUAVE_TEST_PASS_CODE: overrides.NUAVE_TEST_PASS_CODE ?? "",
     NUAVE_FOUNDER_ALERT_EMAIL: "",
     // Spec 010: the public audit journey stays switched off unless a suite
     // enables it; "synthetic" is the failure-safe default and the only mode

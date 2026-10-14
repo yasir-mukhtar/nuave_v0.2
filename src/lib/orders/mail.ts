@@ -9,6 +9,10 @@
  * serves the message over HTTP.
  */
 
+import { DELIVERY_PROMISE } from "./promise";
+
+export { DELIVERY_PROMISE };
+
 export type MailMessage = {
   to: string;
   subject: string;
@@ -58,11 +62,6 @@ export function failureEmail(input: {
   const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${escapeHtml(input.orderNumber)}. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Audit Nuave Anda belum bisa diselesaikan", text, html };
 }
-
-/** Spec 017 Q5 (approved wording): the delivery promise, word for word. The order
- * screen and the payment-received email both use it. */
-export const DELIVERY_PROMISE =
-  "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.";
 
 /** R-22: the payment-received email. It has no link and no secret; it names the
  * business, the order number, the amount, the promise and the browser line. */

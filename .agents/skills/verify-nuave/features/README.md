@@ -73,7 +73,8 @@ user-visible behavior. It then uses exactly four H2 sections in this order:
 - [Question review](./question-review.md) covers "Periksa pertanyaan audit",
   question edits, and `Mulai audit` (the questions are approved on the server).
 - [Audit run](./audit-run.md) covers the whole order path: free brand confirm,
-  order summary, paid reading, intake, ten questions, closing the tab, the
-  server audit and the report opened from the emailed link.
+  order summary with its price, simulated payment, paid reading, intake, ten
+  questions, closing the tab, the server audit and the report opened from the
+  emailed link.
 - [Report link](./report-link.md) covers the saved report page, `Download PDF`,
   the JSON download and the not-available page.

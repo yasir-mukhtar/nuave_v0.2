@@ -30,6 +30,7 @@ import {
   toSummary,
   trackApiCalls as track,
   unavailableReport,
+  useTestPass,
 } from "./journey";
 
 // Spec 016 S3a: the order flow in synthetic mode against the local D1 database,
@@ -43,6 +44,7 @@ const allowed = new Set([
   "/api/audit/glm-questions",
   "/api/orders",
   "/api/orders/status",
+  "/api/payments/start",
   "/api/orders/approve",
   "/api/dev/run-cron",
   "/api/report",
@@ -202,6 +204,9 @@ test("a reload at an intake screen continues at the same screen with the same an
 test("an ended order sends the customer back to the order screen; a new order continues with the answers and no new paid call", async ({
   page,
 }) => {
+  // A test-pass order: an ended PAID order never becomes a new one (spec 017
+  // R-19; see payment-screens.spec.ts).
+  await useTestPass(page);
   const calls = track(page);
   await toSummary(page);
   const sessionBefore = await intakeSession(page);
