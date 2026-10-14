@@ -1,8 +1,8 @@
 # Spec 017: Payment, founder test pass and cap alerts (S4)
 
-> Status: **In review** — revision 4 answers the second plan review (FAIL on revision 3). Founder questions Q9 and Q10 are open. Build nothing before approval.
+> Status: **In review** — revision 4 answers the second plan review (FAIL on revision 3); founder answered Q9 and Q10 (2026-10-14). Third plan review next, then founder approval. Build nothing before approval.
 > Owner: orchestrator
-> Updated: 2026-10-14 (revision 4: second plan review findings N1–N14 applied)
+> Updated: 2026-10-14 (revision 4: second plan review findings N1–N14 applied; Q9, Q10 answered)
 > Implements: S4 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
 > Decision basis: [S0, 2026-10-05](../../docs/DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)
 > (D2, D3, D5, D7); price and Midtrans methods (2026-08-17 rows);
@@ -550,36 +550,19 @@ case.
 - **Q8 — Founder alert address:** `hello@nuave.ai`, set as the Worker secret
   `NUAVE_FOUNDER_ALERT_EMAIL`.
 
-## Open question (founder)
+## Founder decisions (2026-10-14)
 
-- **Q9 — Bank transfer refunds.** Midtrans can refund QRIS, GoPay and DANA
-  payments from its dashboard, but **not bank transfers**. A bank transfer
-  refund must be sent by hand from the founder's bank, which needs the
-  customer's bank account details at that moment (asked by support email,
-  never stored in Nuave). Options:
-  - **A (recommended):** keep bank transfer. Refunds for it are made by hand
-    and recorded with the support command (R-15). It is rare (failed audits
-    only) and many Indonesian customers prefer bank transfer.
-  - **B:** drop bank transfer and offer QRIS, GoPay and DANA only. All
-    refunds then go through the Midtrans dashboard. QRIS can be paid from
-    most banking apps, so most bank customers can still pay.
-
-- **Q10 — Workers Free CPU limit.** The S3 live run (Spec 016 AC-21,
-  measured 2026-10-14) used 12–22 ms of CPU per question step and 55 ms for
-  the report step. Free allows 10 ms per cron run. Cloudflare tolerates
-  running over "infrequently" but stops a Worker that does it consistently,
-  which every audit does. Options:
-  - **A (recommended):** move the account to Workers Paid (USD 5 per month)
-    before G1, the first real purchase. The cron limit becomes 30 seconds of
-    CPU; the 50-subrequest limit per run also rises. S4's sandbox testing
-    can stay on Free. This reverses the 2026-10-13 decision "stay on Workers
-    Free for now".
-  - **B:** stay on Free and try to cut CPU use. Getting the report step from
-    55 ms under 10 ms is unlikely without moving work elsewhere, which is a
-    larger build than S4.
-  R-23's "10 ms CPU" target applies only while the account is on Free; on
-  Paid, R-23 keeps the D1 and outside-request budget and drops the 10 ms
-  target.
+- **Q9 — Bank transfer refunds: A.** Bank transfer stays. Midtrans cannot
+  refund it from the dashboard, so the founder refunds a bank transfer by
+  hand from the founder's bank, asking the customer for the account number
+  by support email at that moment (never stored in Nuave), and records it
+  with the support command (R-15).
+- **Q10 — Workers plan: A.** The account moves to Workers Paid (USD 5 per
+  month) before G1, the first real purchase, because the S3 live run used
+  12–55 ms of CPU per cron run against Free's 10 ms. S4's sandbox testing may
+  stay on Free. This replaces the 2026-10-13 decision "stay on Workers Free
+  for now". R-23's 10 ms CPU target applies only while on Free; on Paid,
+  R-23 keeps the D1 and outside-request budget.
 
 **Founder actions before AC-25:**
 

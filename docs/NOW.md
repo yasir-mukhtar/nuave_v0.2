@@ -63,8 +63,8 @@
   ([record](../specs/016-order-and-saved-report/VERIFICATION.md#ac-21-live-run-2026-10-13)).
   Cron CPU time (read 2026-10-14): 12–22 ms per question step and 55 ms for
   the report, above Workers Free's 10 ms per run; Cloudflare stops Workers
-  that exceed it consistently. Founder decision Q10 in Spec 017 (Workers
-  Paid before G1 recommended). Spec 016 is **Verified**. **Next:** S4,
+  that exceed it consistently. Founder decision 2026-10-14: move to
+  Workers Paid before G1 ([log](./DECISION_LOG.md#2026-10-14--bank-transfer-kept-workers-paid-before-g1)). Spec 016 is **Verified**. **Next:** S4,
   [Spec 017](../specs/017-payment-and-test-pass/SPEC.md): founder answers
   recorded ([2026-10-13](./DECISION_LOG.md#2026-10-13--s4-answers-for-spec-017-draft));
   independent plan review, then founder approval; the build runs in a new
