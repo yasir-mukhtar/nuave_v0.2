@@ -3,6 +3,7 @@ import { newLinkSecret, sha256Hex } from "./link-secret";
 import { readyEmail, sendWithinAttempt, type MailSender } from "./mail";
 import {
   emailHistory,
+  ensureOrderNumber,
   getOrder,
   isOrderId,
   listQuestions,
@@ -114,10 +115,14 @@ async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
     orderId: order.id,
     kind: "ready",
   });
-  const idempotencyKey = `nuave-order-${order.id}-ready-${history.next}-${linkHash.slice(0, 12)}`;
+  // R-03: the key names the order number, never the internal order ID. An order
+  // made by S3 code gets its number now (R-23).
+  const orderNumber = await ensureOrderNumber(deps.db, order);
+  const idempotencyKey = `nuave-order-${orderNumber}-ready-${history.next}-${linkHash.slice(0, 12)}`;
   const mail = readyEmail({
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
+    orderNumber,
   });
   // Always to the address saved on the order; there is no way to name another.
   const result = await sendWithinAttempt(
@@ -158,6 +163,8 @@ async function show(
   const line = (label: string, value: unknown) =>
     deps.out(`${label}: ${value ?? "-"}`);
   line("Order", order.id);
+  line("Order number", order.order_number);
+  line("Payment kind", order.payment_kind ?? "legacy (made before payment)");
   line("State", order.state);
   line("Mode", `${order.mode}, ${order.environment}`);
   line("Business", order.business_name);

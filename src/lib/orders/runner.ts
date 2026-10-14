@@ -49,6 +49,7 @@ import {
   claimReportAttempt,
   emailBackingOff,
   emailHistory,
+  ensureOrderNumber,
   exhaustSpentQuestions,
   expireOpenOrders,
   failedOrdersNeedingEmail,
@@ -367,8 +368,14 @@ async function sendFailureEmail(
   // are still waiting, so this only guards a direct call.
   if (emailBackingOff(history, deps.now())) return false;
   const attempt = history.next;
-  const idempotencyKey = `nuave-order-${orderId}-failure-${attempt}`;
-  const mail = failureEmail({ businessName: order.business_name });
+  // R-03: the key names the order number, never the internal order ID. An order
+  // made by S3 code gets its number now (R-23).
+  const orderNumber = await ensureOrderNumber(deps.db, order);
+  const idempotencyKey = `nuave-order-${orderNumber}-failure-${attempt}`;
+  const mail = failureEmail({
+    businessName: order.business_name,
+    orderNumber,
+  });
   const result = await sendWithinAttempt(
     deps.sender,
     { to: order.email, ...mail, idempotencyKey },
@@ -765,13 +772,17 @@ async function readyEmailStep(
   });
   if (!replaced) return "email_pending"; // link switched off, or order moved on
   const attempt = history.next;
+  // R-03: the order number, never the internal order ID (R-23: an order made by
+  // S3 code gets its number now).
+  const orderNumber = await ensureOrderNumber(deps.db, order);
   // The key names this secret: if a crash lost the record of an accepted send,
   // the next try has another secret and so another key, and is never refused
   // by Resend as the same key with a different body.
-  const idempotencyKey = `nuave-order-${order.id}-ready-${attempt}-${linkHash.slice(0, 12)}`;
+  const idempotencyKey = `nuave-order-${orderNumber}-ready-${attempt}-${linkHash.slice(0, 12)}`;
   const mail = readyEmail({
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
+    orderNumber,
   });
   const result = await sendWithinAttempt(
     deps.sender,

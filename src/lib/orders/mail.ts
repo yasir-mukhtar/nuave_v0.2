@@ -38,16 +38,24 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-/** Draft wording; S5 finalizes. The business name is escaped in the HTML. */
-export function readyEmail(input: { businessName: string; link: string }) {
-  const text = `Laporan audit untuk ${input.businessName} sudah siap: ${input.link}. Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Bantuan: ${SUPPORT_EMAIL}.`;
-  const html = `<p>Laporan audit untuk ${escapeHtml(input.businessName)} sudah siap: <a href="${escapeHtml(input.link)}">${escapeHtml(input.link)}</a>.</p><p>Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Bantuan: ${SUPPORT_EMAIL}.</p>`;
+/** Draft wording; S5 finalizes. The business name is escaped in the HTML. The
+ * order number (spec 017 R-01) is in every customer email. */
+export function readyEmail(input: {
+  businessName: string;
+  link: string;
+  orderNumber: string;
+}) {
+  const text = `Laporan audit untuk ${input.businessName} sudah siap: ${input.link}. Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Nomor pesanan: ${input.orderNumber}. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Laporan audit untuk ${escapeHtml(input.businessName)} sudah siap: <a href="${escapeHtml(input.link)}">${escapeHtml(input.link)}</a>.</p><p>Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan.</p><p>Nomor pesanan: ${escapeHtml(input.orderNumber)}. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Laporan audit Nuave Anda sudah siap", text, html };
 }
 
-export function failureEmail(input: { businessName: string }) {
-  const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.`;
-  const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.</p>`;
+export function failureEmail(input: {
+  businessName: string;
+  orderNumber: string;
+}) {
+  const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${input.orderNumber}. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${escapeHtml(input.orderNumber)}. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Audit Nuave Anda belum bisa diselesaikan", text, html };
 }
 

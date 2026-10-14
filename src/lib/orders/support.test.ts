@@ -156,9 +156,14 @@ describe("resend (AC-17)", () => {
     expect(order(id).report_json).toBe(reportBefore);
     expect(order(id).state).toBe("delivered");
     // A new idempotency key per send, and a send record.
+    // R-03: the key names the order number, never the internal order ID.
     expect(mail.idempotencyKey).toMatch(
-      new RegExp(`^nuave-order-${id}-ready-2-[0-9a-f]{12}$`),
+      new RegExp(
+        `^nuave-order-${order(id).order_number}-ready-2-[0-9a-f]{12}$`,
+      ),
     );
+    expect(mail.idempotencyKey).not.toContain(id);
+    expect(mail.text).toContain(`Nomor pesanan: ${order(id).order_number}`);
     expect(
       d1.query("SELECT attempt, result FROM order_emails ORDER BY attempt"),
     ).toEqual([

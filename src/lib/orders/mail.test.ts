@@ -118,21 +118,33 @@ describe("email wording", () => {
     const ready = readyEmail({
       businessName: name,
       link: "https://v2.nuave.test/r#abc",
+      orderNumber: "NV-7K3Q9P",
     });
     expect(ready.html).not.toContain("<script>");
     expect(ready.html).toContain(
       "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; Kopi &#39;Nuave&#39;",
     );
     expect(ready.text).toContain(name);
-    const failed = failureEmail({ businessName: name });
+    const failed = failureEmail({
+      businessName: name,
+      orderNumber: "NV-7K3Q9P",
+    });
     expect(failed.html).not.toContain("<script>");
   });
 
-  it("the ready email carries the link, the 12-month note and the support address", () => {
+  it("the ready email carries the link, the 12-month note, the order number and the support address", () => {
     const ready = readyEmail({
       businessName: "Kopi Nuave",
       link: "https://v2.nuave.test/r#abc",
+      orderNumber: "NV-7K3Q9P",
     });
+    expect(ready.text).toContain("Nomor pesanan: NV-7K3Q9P");
+    expect(ready.html).toContain("NV-7K3Q9P");
+    const failed = failureEmail({
+      businessName: "Kopi Nuave",
+      orderNumber: "NV-7K3Q9P",
+    });
+    expect(failed.text).toContain("Nomor pesanan: NV-7K3Q9P");
     expect(ready.text).toContain("https://v2.nuave.test/r#abc");
     expect(ready.text).toContain("Link berlaku 12 bulan");
     expect(ready.text).toContain("support@nuave.ai");

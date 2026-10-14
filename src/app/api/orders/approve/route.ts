@@ -21,7 +21,12 @@ import {
   orderRuntime,
   orderUnavailableResponse,
 } from "@/lib/orders/http";
-import { approveOrder, getOrder, isOrderId } from "@/lib/orders/store";
+import {
+  approveOrder,
+  getOrder,
+  isOrderId,
+  orderMayRunPaidWork,
+} from "@/lib/orders/store";
 
 export const runtime = "nodejs";
 
@@ -136,6 +141,14 @@ export async function POST(request: Request) {
       parseSourceInput(input.context.identity.source)?.normalizedUrl !==
       order.website
     ) {
+      return NextResponse.json(
+        { error: "Pesanan ini tidak dapat dilanjutkan.", code: "ORDER_STATE" },
+        { status: 409 },
+      );
+    }
+    // R-18: an unpaid or replaced order is refused with the same answer as an
+    // order that cannot continue, before anything is written.
+    if (!orderMayRunPaidWork(order)) {
       return NextResponse.json(
         { error: "Pesanan ini tidak dapat dilanjutkan.", code: "ORDER_STATE" },
         { status: 409 },

@@ -51,6 +51,7 @@ import {
   ORIGINALS,
   WIRE_PROMPTS,
   makeOrder,
+  makePaidOrder,
 } from "./orders.test-helper";
 
 // Spec 016 AC-01..AC-05 at the route level: the real routes and the real
@@ -58,6 +59,7 @@ import {
 // the test if it is reached when it must not be.
 
 const UNAVAILABLE = "Audit tidak tersedia saat ini.";
+const TEST_CODE = "test-pass-code-of-at-least-24-chars";
 const allow = { limit: async () => ({ success: true }) };
 
 let dir: string;
@@ -101,6 +103,11 @@ beforeEach(() => {
   vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
   vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "");
   vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "");
+  // Spec 017 R-17/R-20: the settings a founder test pass needs.
+  vi.stubEnv("NUAVE_TEST_PASS_CODE", TEST_CODE);
+  vi.stubEnv("MIDTRANS_SERVER_KEY", "SB-Mid-server-offline-key");
+  vi.stubEnv("MIDTRANS_IS_PRODUCTION", "false");
+  vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "hello@nuave.test");
 });
 afterEach(() => {
   d1.close();
@@ -133,18 +140,24 @@ const create = (body: Record<string, unknown> = {}, headers = {}) =>
       headers,
     ),
   );
+// A founder test pass: the order is made with payment kind `test`, which holds
+// at creation and may run, as S3 orders did (spec 017 R-20).
+const createTest = (body: Record<string, unknown> = {}, headers = {}) =>
+  create({ test_pass_code: TEST_CODE, ...body }, headers);
 const orders = () => d1.query<Record<string, unknown>>("SELECT * FROM orders");
 const ledger = () =>
   d1.query<Record<string, unknown>>("SELECT * FROM provider_spend");
 
 describe("making an order (R-01, R-02, R-06, AC-01)", () => {
-  it("makes one open order for a listed email: server-made id, server-set mode and environment, a hold row", async () => {
+  it("makes one open unpaid order for a listed email: server-made id, order number, server-set mode and environment, no hold (R-01, R-10, R-23, AC-10)", async () => {
     const response = await create();
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.order_id).toMatch(/^[0-9a-f]{32}$/); // 128 bits
     expect(body.state).toBe("open");
     expect(JSON.stringify(body)).not.toContain("example.com");
+    // The order number is not shown before payment.
+    expect(JSON.stringify(body)).not.toContain("NV-");
     const [row] = orders();
     expect(row).toMatchObject({
       id: body.order_id,
@@ -154,12 +167,13 @@ describe("making an order (R-01, R-02, R-06, AC-01)", () => {
       mode: "live",
       environment: "production",
       state: "open",
+      payment_kind: "unpaid",
+      paid_at: null,
+      replaced_by: null,
     });
-    expect(ledger()).toHaveLength(1);
-    expect(ledger()[0]).toMatchObject({
-      kind: "order_hold",
-      order_id: body.order_id,
-    });
+    expect(row.order_number).toMatch(/^NV-[23456789A-HJKMNP-Z]{6}$/);
+    // AC-10: an unpaid order holds nothing.
+    expect(ledger()).toEqual([]);
     expect(fetchSpy).not.toHaveBeenCalled(); // no paid call by making an order
   });
 
@@ -355,15 +369,15 @@ describe("the per-order limit setting (R-07, AC-04) and the daily cap (R-08, AC-
 
   it("a limit above the daily cap fails closed, whatever the cap is", async () => {
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "1.5");
-    expect((await create()).status).toBe(503); // default limit 2.00 > 1.50
+    expect((await createTest()).status).toBe(503); // default limit 2.00 > 1.50
     vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "1.5");
-    expect((await create()).status).toBe(200);
+    expect((await createTest()).status).toBe(200);
   });
 
-  it("defaults to USD 2.00 and holds exactly the configured limit", async () => {
-    await create();
+  it("a test pass defaults to USD 2.00 and holds exactly the configured limit", async () => {
+    await createTest();
     vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "1.25");
-    await create();
+    await createTest();
     expect(ledger().map((row) => row.held_units)).toEqual([
       usdToUnits(2),
       usdToUnits(1.25),
@@ -371,10 +385,10 @@ describe("the per-order limit setting (R-07, AC-04) and the daily cap (R-08, AC-
   });
 
   it("with less room in the daily cap than one limit, refuses and leaves the database unchanged", async () => {
-    expect((await create()).status).toBe(200);
-    expect((await create()).status).toBe(200);
+    expect((await createTest()).status).toBe(200);
+    expect((await createTest()).status).toBe(200);
     const before = JSON.stringify([orders(), ledger()]);
-    const response = await create(); // 2 + 2 + 2 > 5
+    const response = await createTest(); // 2 + 2 + 2 > 5
     expect(response.status).toBe(503);
     expect(JSON.stringify(await response.json())).toContain(UNAVAILABLE);
     expect(JSON.stringify([orders(), ledger()])).toBe(before);
@@ -657,7 +671,7 @@ describe("order status (R-21)", () => {
 
 describe("the paid website reading is made once per order (R-08)", () => {
   it("a repeated extract request for the same open order returns the saved reading with no provider call", async () => {
-    const created = await (await create()).json();
+    const created = await (await createTest()).json();
     const reading = { draft: { name: "Kopi Nuave" }, telemetry: [] };
     mocks.extractDraft = vi.fn(async () => reading);
     const ask = () =>
@@ -677,7 +691,7 @@ describe("the paid website reading is made once per order (R-08)", () => {
   });
 
   it("a failed reading is not saved, so a later request may try again", async () => {
-    const created = await (await create()).json();
+    const created = await (await createTest()).json();
     mocks.extractDraft = vi.fn(async () => {
       throw new Error("provider down");
     });
@@ -691,11 +705,11 @@ describe("the paid website reading is made once per order (R-08)", () => {
   });
 });
 
-describe("a replacement order expires the one it replaces", () => {
-  it("expires the old open order and returns its hold in the same request", async () => {
-    const first = await (await create()).json();
+describe("a replacement order expires the test or legacy order it replaces (R-19)", () => {
+  it("expires the old open test-pass order and returns its hold in the same request", async () => {
+    const first = await (await createTest()).json();
     expect(ledger().map((row) => row.status)).toEqual(["reserved"]);
-    const second = await create({ previous_order_id: first.order_id });
+    const second = await createTest({ previous_order_id: first.order_id });
     expect(second.status).toBe(200);
     const states = Object.fromEntries(
       orders().map((row) => [row.id, row.state]),
@@ -708,11 +722,13 @@ describe("a replacement order expires the one it replaces", () => {
     );
   });
 
-  it("frees the room the new order needs when the cap would otherwise be full", async () => {
-    const a = await (await create()).json();
-    await create(); // two orders hold 4 of 5
-    expect((await create()).status).toBe(503);
-    expect((await create({ previous_order_id: a.order_id })).status).toBe(200);
+  it("frees the room the new test pass needs when the cap would otherwise be full", async () => {
+    const a = await (await createTest()).json();
+    await createTest(); // two orders hold 4 of 5
+    expect((await createTest()).status).toBe(503);
+    expect((await createTest({ previous_order_id: a.order_id })).status).toBe(
+      200,
+    );
   });
 
   it("ignores an order that is not open, one of another environment, an unknown or a malformed id", async () => {
@@ -739,7 +755,7 @@ describe("a replacement order expires the one it replaces", () => {
       42,
       null,
     ]) {
-      expect((await create({ previous_order_id })).status).toBe(200);
+      expect((await createTest({ previous_order_id })).status).toBe(200);
     }
     const byId = Object.fromEntries(orders().map((row) => [row.id, row.state]));
     expect(byId[running]).toBe("running");
@@ -767,5 +783,407 @@ describe("the emergency switch (R-15)", () => {
         )
       ).status,
     ).not.toBe(200);
+  });
+});
+
+describe("the founder test pass, server side (R-16, R-17, R-20, AC-17)", () => {
+  const SECRET_PATTERN = /test-pass-code/;
+
+  it("a right code, a listed email and the settings make a test order: kind test, hold reserved and marked, 2-hour rule", async () => {
+    const response = await createTest();
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ order_id: expect.any(String), state: "open" });
+    expect(JSON.stringify(body)).not.toMatch(SECRET_PATTERN);
+    const [row] = orders();
+    expect(row).toMatchObject({
+      payment_kind: "test",
+      state: "open",
+      paid_at: null,
+    });
+    expect(
+      Date.parse(String(row.expires_at)) - Date.parse(String(row.created_at)),
+    ).toBe(2 * 3600_000);
+    expect(ledger()).toMatchObject([
+      { kind: "order_hold", order_id: body.order_id, test: 1 },
+    ]);
+    // The code is kept nowhere: not in D1, not echoed.
+    expect(JSON.stringify([orders(), ledger()])).not.toMatch(SECRET_PATTERN);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("never logs or echoes the code, for a right or a wrong one", async () => {
+    const logs: string[] = [];
+    for (const level of ["log", "info", "warn", "error", "debug"] as const) {
+      vi.spyOn(console, level).mockImplementation((...args: unknown[]) => {
+        logs.push(args.map(String).join(" "));
+      });
+    }
+    const right = await createTest();
+    const wrong = await create({
+      test_pass_code: "wrong-code-wrong-code-wrong-code",
+    });
+    expect(logs.join("\n")).not.toMatch(SECRET_PATTERN);
+    expect(logs.join("\n")).not.toContain("wrong-code");
+    expect(JSON.stringify(await wrong.json())).not.toContain("wrong-code");
+    expect(JSON.stringify(await right.json())).not.toMatch(SECRET_PATTERN);
+    vi.restoreAllMocks();
+  });
+
+  it("every refusal gives the same neutral answer as any refused order", async () => {
+    const neutral = await create({ email: "stranger@example.com" });
+    const expected = { status: neutral.status, body: await neutral.json() };
+    expect(expected.status).toBe(503);
+    expect(JSON.stringify(expected.body)).toContain(UNAVAILABLE);
+    const refusals: Array<[string, () => Promise<Response>]> = [
+      ["a wrong code", () => create({ test_pass_code: "x".repeat(40) })],
+      ["an empty code", () => create({ test_pass_code: "" })],
+      ["a code that is not text", () => create({ test_pass_code: 12345 })],
+      ["a null code", () => create({ test_pass_code: null })],
+      [
+        "an unlisted email with the right code",
+        () => createTest({ email: "stranger@example.com" }),
+      ],
+      [
+        "a secret under 24 characters",
+        async () => {
+          vi.stubEnv("NUAVE_TEST_PASS_CODE", "x".repeat(23));
+          return create({ test_pass_code: "x".repeat(23) });
+        },
+      ],
+      [
+        "no secret at all",
+        async () => {
+          vi.stubEnv("NUAVE_TEST_PASS_CODE", "");
+          return create({ test_pass_code: "" });
+        },
+      ],
+      [
+        "a missing Midtrans key",
+        async () => {
+          vi.stubEnv("MIDTRANS_SERVER_KEY", "");
+          return createTest();
+        },
+      ],
+      [
+        "a missing production switch",
+        async () => {
+          vi.stubEnv("MIDTRANS_IS_PRODUCTION", "");
+          return createTest();
+        },
+      ],
+      [
+        "a production switch that is not true or false",
+        async () => {
+          vi.stubEnv("MIDTRANS_IS_PRODUCTION", "yes");
+          return createTest();
+        },
+      ],
+      [
+        "a missing alert address",
+        async () => {
+          vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "");
+          return createTest();
+        },
+      ],
+    ];
+    for (const [name, attempt] of refusals) {
+      // Each case starts from the full set of settings again.
+      vi.stubEnv("NUAVE_TEST_PASS_CODE", TEST_CODE);
+      vi.stubEnv("MIDTRANS_SERVER_KEY", "SB-Mid-server-offline-key");
+      vi.stubEnv("MIDTRANS_IS_PRODUCTION", "false");
+      vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "hello@nuave.test");
+      const response = await attempt();
+      expect(response.status, name).toBe(expected.status);
+      expect(await response.json(), name).toEqual(expected.body);
+    }
+    expect(orders()).toEqual([]);
+    expect(ledger()).toEqual([]);
+  });
+
+  it("a secret of exactly 24 characters is enough", async () => {
+    vi.stubEnv("NUAVE_TEST_PASS_CODE", "y".repeat(24));
+    expect((await create({ test_pass_code: "y".repeat(24) })).status).toBe(200);
+    expect(orders()[0]).toMatchObject({ payment_kind: "test" });
+  });
+
+  it("a wrong code never falls back to a normal order", async () => {
+    expect((await create({ test_pass_code: "wrong" })).status).toBe(503);
+    expect(orders()).toEqual([]);
+  });
+
+  it("wrong codes share the order rate limit with every other request", async () => {
+    let calls = 0;
+    bind({
+      ORDER_CREATE_CALLER_RATE_LIMITER: {
+        limit: async () => {
+          calls += 1;
+          return { success: calls <= 2 };
+        },
+      },
+    });
+    expect((await create({ test_pass_code: "a".repeat(30) })).status).toBe(503);
+    expect((await create({ test_pass_code: "b".repeat(30) })).status).toBe(503);
+    // The third caller is limited whatever it sends, even the right code.
+    expect((await createTest()).status).toBe(429);
+    expect(calls).toBe(3);
+    expect(orders()).toEqual([]);
+  });
+
+  it("is refused with the same answer when the cap has no room, counting open attempts (R-10)", async () => {
+    await createTest();
+    await createTest(); // 4 of 5 held
+    const full = await createTest();
+    expect(full.status).toBe(503);
+    expect(JSON.stringify(await full.json())).toContain(UNAVAILABLE);
+    expect(orders()).toHaveLength(2);
+    // Room again once one is ended; then open attempts take it back.
+    d1.query("UPDATE orders SET state = 'expired' WHERE rowid = 1 RETURNING 1");
+    d1.query(
+      "UPDATE provider_spend SET status = 'settled', held_units = 0 WHERE rowid = 1 RETURNING 1",
+    );
+    const unpaid = await makeOrder(d1.db, { payment: "unpaid" });
+    d1.query(
+      `INSERT INTO payment_attempts (id, order_id, attempt_number, midtrans_order_id, window_start, window_end, created_at, updated_at)
+       VALUES ('a1', '${unpaid}', 1, 'NV-AAAAAA-1', 'x', 'y', 'x', 'x') RETURNING 1`,
+    );
+    expect((await createTest()).status).toBe(503); // 2 held + 2 open + 2 > 5
+    d1.query("UPDATE payment_attempts SET status = 'void' RETURNING 1");
+    expect((await createTest()).status).toBe(200);
+  });
+
+  it("the founder email list still applies in live mode, to the test pass too (R-16)", async () => {
+    vi.stubEnv("NUAVE_ORDER_EMAIL_ALLOWLIST", "");
+    expect((await createTest()).status).toBe(503);
+    expect(orders()).toEqual([]);
+  });
+
+  it("in synthetic mode a test pass needs the code but no Midtrans settings, and writes no ledger row", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "");
+    vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "");
+    expect((await createTest()).status).toBe(200);
+    expect(orders()[0]).toMatchObject({
+      payment_kind: "test",
+      mode: "synthetic",
+    });
+    expect(ledger()).toEqual([]);
+    expect((await create({ test_pass_code: "nope" })).status).toBe(503);
+  });
+
+  it("an ordinary order needs no test-pass or Midtrans settings", async () => {
+    vi.stubEnv("NUAVE_TEST_PASS_CODE", "");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "");
+    vi.stubEnv("MIDTRANS_IS_PRODUCTION", "");
+    vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "");
+    expect((await create()).status).toBe(200);
+    expect(orders()[0]).toMatchObject({ payment_kind: "unpaid" });
+  });
+});
+
+describe("replacing an order through the route (R-19, AC-13 server parts)", () => {
+  const attempt = (orderId: string, status: string) =>
+    d1.query(
+      `INSERT INTO payment_attempts (id, order_id, attempt_number, midtrans_order_id, window_start, window_end, status, created_at, updated_at)
+       VALUES ('a-${orderId.slice(0, 4)}', '${orderId}', 1, 'NV-${orderId.slice(0, 6).toUpperCase().replace(/[0-9]/g, "A")}-1', 'x', 'y', '${status}', 'x', 'x') RETURNING 1`,
+    );
+
+  it("an unpaid order is marked replaced by the new one, and ended", async () => {
+    const first = await (await create()).json();
+    const second = await create({ previous_order_id: first.order_id });
+    expect(second.status).toBe(200);
+    const next = await second.json();
+    const byId = Object.fromEntries(orders().map((row) => [row.id, row]));
+    expect(byId[first.order_id]).toMatchObject({
+      state: "expired",
+      replaced_by: next.order_id,
+    });
+    expect(byId[next.order_id]).toMatchObject({
+      state: "open",
+      replaced_by: null,
+      payment_kind: "unpaid",
+    });
+  });
+
+  it("a paid order is not replaced: 409 PREVIOUS_ORDER_ACTIVE with previous_state paid, and nothing is written", async () => {
+    const paid = await makePaidOrder(d1.db, { mode: "live", now: new Date() });
+    const before = JSON.stringify([orders(), ledger()]);
+    const response = await create({ previous_order_id: paid });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      error:
+        "Pesanan sebelumnya sudah dibayar atau sedang menunggu pembayaran.",
+      code: "PREVIOUS_ORDER_ACTIVE",
+      previous_state: "paid",
+    });
+    expect(JSON.stringify([orders(), ledger()])).toBe(before);
+  });
+
+  it("an order with an open payment attempt is not replaced: previous_state payment_open, and it stays open", async () => {
+    const first = await (await create()).json();
+    attempt(first.order_id, "open");
+    const response = await create({ previous_order_id: first.order_id });
+    expect(response.status).toBe(409);
+    expect((await response.json()).previous_state).toBe("payment_open");
+    expect(orders()).toHaveLength(1);
+    expect(orders()[0]).toMatchObject({ state: "open", replaced_by: null });
+  });
+
+  it("once the attempt is final the order is replaced, even though it expired", async () => {
+    const first = await (await create()).json();
+    attempt(first.order_id, "finally_unpaid");
+    d1.query(
+      `UPDATE orders SET state = 'expired' WHERE id = '${first.order_id}' RETURNING 1`,
+    );
+    const response = await create({ previous_order_id: first.order_id });
+    expect(response.status).toBe(200);
+    expect(orders().find((row) => row.id === first.order_id)?.replaced_by).toBe(
+      (await response.json()).order_id,
+    );
+  });
+
+  it("an unknown id is ignored and the new order is made", async () => {
+    expect((await create({ previous_order_id: "a".repeat(32) })).status).toBe(
+      200,
+    );
+    expect(orders()).toHaveLength(1);
+  });
+});
+
+describe("the paid-only gate at every paid route (R-18, AC-04)", () => {
+  const extract = (body: unknown) =>
+    extractPOST(post("/api/audit/extract", body));
+  const glm = (order_id: unknown) => {
+    const base = {
+      version: SMART_INTAKE_INPUT_VERSION,
+      factVersion: 1,
+      context: CONTEXT,
+    };
+    return glmPOST(
+      post("/api/audit/glm-questions", {
+        method: "direct-ten",
+        intake: { ...base, fingerprint: smartFingerprint(base) },
+        order_id,
+      }),
+    );
+  };
+  const approveBody = (order_id: string) => ({
+    order_id,
+    client_contract_version: AUDIT_CLIENT_CONTRACT_VERSION,
+    question_method: "direct-ten",
+    context: CONTEXT,
+    prompts: WIRE_PROMPTS,
+    originals: ORIGINALS,
+  });
+  const noLedgerRow = () =>
+    expect(
+      d1.query("SELECT * FROM provider_spend WHERE kind = 'order_call'"),
+    ).toEqual([]);
+
+  it("refuses an unpaid order at extract, question writing and approval, with no provider call and no ledger row", async () => {
+    const created = await (await create()).json();
+    const missing = await extract({ order_id: "f".repeat(32) });
+    const missingBody = await missing.json();
+    const refused = await extract({ order_id: created.order_id });
+    expect(refused.status).toBe(409);
+    // The same neutral answer as an order that does not exist.
+    expect(await refused.json()).toEqual(missingBody);
+    const refusedGlm = await glm(created.order_id);
+    expect(refusedGlm.status).toBe(409);
+    expect(await refusedGlm.json()).toEqual(
+      await (await glm("f".repeat(32))).json(),
+    );
+    const refusedApprove = await approvePOST(
+      post("/api/orders/approve", approveBody(created.order_id)),
+    );
+    expect(refusedApprove.status).toBe(409);
+    expect((await refusedApprove.json()).code).toBe("ORDER_STATE");
+    expect(orders()[0]).toMatchObject({ state: "open", started_at: null });
+    expect(d1.query("SELECT * FROM order_questions")).toEqual([]);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    noLedgerRow();
+    expect(ledger()).toEqual([]);
+  });
+
+  it("refuses a replaced order the same way", async () => {
+    const first = await (await create()).json();
+    await create({ previous_order_id: first.order_id });
+    expect((await extract({ order_id: first.order_id })).status).toBe(409);
+    expect((await glm(first.order_id)).status).toBe(409);
+    expect(
+      (
+        await approvePOST(
+          post("/api/orders/approve", approveBody(first.order_id)),
+        )
+      ).status,
+    ).toBe(409);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    noLedgerRow();
+  });
+
+  it("lets a paid order through (the reading, the questions and the approval)", async () => {
+    const paid = await makePaidOrder(d1.db, { mode: "live", now: new Date() });
+    mocks.extractDraft = vi.fn(async () => ({ draft: {}, telemetry: [] }));
+    expect((await extract({ order_id: paid })).status).toBe(200);
+    expect(mocks.extractDraft).toHaveBeenCalledTimes(1);
+    expect(
+      (await approvePOST(post("/api/orders/approve", approveBody(paid))))
+        .status,
+    ).toBe(200);
+    expect(orders()[0]).toMatchObject({ state: "running" });
+  });
+
+  it("lets a test-pass and a legacy order through", async () => {
+    mocks.extractDraft = vi.fn(async () => ({ draft: {}, telemetry: [] }));
+    for (const payment of ["test", "legacy"] as const) {
+      const id = await makeOrder(d1.db, {
+        mode: "live",
+        payment,
+        now: new Date(),
+        limitUsd: 0.5,
+      });
+      expect((await extract({ order_id: id })).status, payment).toBe(200);
+    }
+  });
+
+  it("the simulated payment counts as paid in synthetic mode only", async () => {
+    const live = await makeOrder(d1.db, {
+      mode: "live",
+      payment: "simulated",
+      now: new Date(),
+    });
+    expect((await extract({ order_id: live })).status).toBe(409);
+    expect(
+      (await approvePOST(post("/api/orders/approve", approveBody(live))))
+        .status,
+    ).toBe(409);
+    vi.stubEnv("NUAVE_AUDIT_MODE", "synthetic");
+    const synthetic = await makeOrder(d1.db, {
+      mode: "synthetic",
+      payment: "simulated",
+      now: new Date(),
+    });
+    expect((await extract({ order_id: synthetic })).status).toBe(200);
+    expect(
+      (await approvePOST(post("/api/orders/approve", approveBody(synthetic))))
+        .status,
+    ).toBe(200);
+  });
+
+  it("an order number is not an order ID anywhere", async () => {
+    await createTest();
+    const number = String(orders()[0]!.order_number);
+    expect(number).toMatch(/^NV-/);
+    expect((await extract({ order_id: number })).status).toBe(409);
+    expect((await glm(number)).status).toBe(409);
+    expect(
+      (await approvePOST(post("/api/orders/approve", approveBody(number))))
+        .status,
+    ).toBe(400);
+    const status = await statusPOST(
+      post("/api/orders/status", { order_id: number }),
+    );
+    expect(status.status).toBe(404);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
