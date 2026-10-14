@@ -282,8 +282,8 @@ const settings = {
   NUAVE_NEW_AUDIT_ENABLED: "true",
   NUAVE_AUDIT_MODE: "synthetic",
   NUAVE_DAILY_SPEND_LIMIT_USD: "7",
-  // Spec 017: an unpaid order may not be approved, and the simulated payment is
-  // a later slice, so these orders are founder test passes (24+ characters).
+  // Spec 017: an unpaid order may not be approved and this check does not drive the
+  // payment screens, so these orders are founder test passes (24+ characters).
   NUAVE_TEST_PASS_CODE: "workers-check-test-pass-code-0123",
 };
 

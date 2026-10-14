@@ -1,3 +1,4 @@
+import { noticeEmail } from "./founder-notices";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -611,6 +612,31 @@ describe("refunds, partial refunds and chargebacks (R-15, AC-16)", () => {
         subject: tx.transaction_id,
       }),
     ]);
+  });
+
+  it("the chargeback notice says whether the order ended or was only recorded", async () => {
+    const before = await paidOrder();
+    await refundAnswer(before.tx, "chargeback");
+    const ended = noticeEmail(
+      d1.query<{ kind: string; subject: string; detail_json: string }>(
+        "SELECT kind, subject, detail_json FROM founder_notices",
+      )[0]!,
+    );
+    expect(ended.text).toContain("ended as refunded");
+    expect(ended.text).not.toContain("nothing else changed");
+  });
+
+  it("the chargeback notice after approval says it was only recorded", async () => {
+    const { id, tx } = await paidOrder();
+    await approve(d1.db, id, { mode: "live", now: at(MIN) });
+    await refundAnswer(tx, "chargeback");
+    const recorded = noticeEmail(
+      d1.query<{ kind: string; subject: string; detail_json: string }>(
+        "SELECT kind, subject, detail_json FROM founder_notices",
+      )[0]!,
+    );
+    expect(recorded.text).toContain("only recorded");
+    expect(recorded.text).not.toContain("ended as refunded");
   });
 
   it("after approval a full refund is only recorded: the audit keeps running", async () => {

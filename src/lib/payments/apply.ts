@@ -451,6 +451,9 @@ export async function applyRefund(
   const attempt = await attemptById(db, transaction.attempt_id);
   const order = attempt ? await getOrder(db, attempt.order_id) : null;
   const full = state === "refunded" || state === "chargeback";
+  // What the founder's email must say: did this end the order (before approval)
+  // or was it only recorded?
+  let orderEnded = false;
   if (
     order &&
     full &&
@@ -470,6 +473,7 @@ export async function applyRefund(
       )
       .bind(order.id, stamp)
       .run();
+    orderEnded = (await getOrder(db, order.id))?.failure_code === "refunded";
   }
   await db.batch([
     db
@@ -512,6 +516,7 @@ export async function applyRefund(
               midtrans_order_id: attempt?.midtrans_order_id ?? null,
               amount: transaction.amount,
               method: transaction.payment_method,
+              order_ended: orderEnded ? "yes" : "no",
             },
             now,
           }),

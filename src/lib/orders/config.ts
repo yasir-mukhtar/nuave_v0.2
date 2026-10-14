@@ -154,11 +154,15 @@ function sameHex(left: string, right: string): boolean {
  * stored or echoed.
  */
 export async function testPassCodeMatches(code: unknown): Promise<boolean> {
-  const secret =
-    setting("NUAVE_TEST_PASS_CODE", process.env.NUAVE_TEST_PASS_CODE) ?? "";
+  // The /uji form trims what is typed, so both sides are trimmed (a secret
+  // saved with a trailing newline still works); the 24-character rule counts
+  // the trimmed secret.
+  const secret = (
+    setting("NUAVE_TEST_PASS_CODE", process.env.NUAVE_TEST_PASS_CODE) ?? ""
+  ).trim();
   const given =
     typeof code === "string" && code.length <= TEST_PASS_MAX_CODE_LENGTH
-      ? code
+      ? code.trim()
       : "";
   const [givenHash, secretHash] = await Promise.all([
     sha256Hex(given),

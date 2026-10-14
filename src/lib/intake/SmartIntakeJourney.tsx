@@ -192,6 +192,15 @@ function forwardStageFor(session: SmartSession): SmartStage | null {
   }
 }
 
+/** R-19: what the old order was made for, kept with its id when the customer
+ * leaves it, so a late payment on it (409 on the next order) can be shown with
+ * its OWN website and business. */
+function supersededInfoOf(session: SmartSession) {
+  return session.order
+    ? { website: session.order.website, name: session.order.name }
+    : (session.supersededInfo ?? null);
+}
+
 /**
  * In-flow target of the frame's `Kembali` and of a marked browser Back.
  * `entry` and `reading` have no back target; `reading` is never a target.
@@ -605,6 +614,7 @@ export default function SmartIntakeJourney({
       // R-19: the ended unpaid order's id goes with the next order, so the
       // server marks it replaced.
       supersededOrder: from.order?.id ?? from.supersededOrder ?? null,
+      supersededInfo: supersededInfoOf(from),
       stage: "order",
       afterOrder: resume === "order" ? "focus" : resume,
     };
@@ -622,6 +632,7 @@ export default function SmartIntakeJourney({
       ...session,
       order: null,
       supersededOrder: order?.id ?? session.supersededOrder ?? null,
+      supersededInfo: supersededInfoOf(session),
       stage: "order",
     });
     setError(null);
@@ -874,6 +885,7 @@ export default function SmartIntakeJourney({
         pack: null,
         order: null,
         supersededOrder: session.order?.id ?? session.supersededOrder ?? null,
+        supersededInfo: supersededInfoOf(session),
         afterOrder: null,
       });
     } catch (cause) {
@@ -907,7 +919,6 @@ export default function SmartIntakeJourney({
     };
     if (!identity || !brand.name) return;
     let order = session.order ?? null;
-    const previousOrder = order;
     let previousOrderId = session.supersededOrder ?? null;
     // Going back past this screen to change the website or the brand starts a
     // new order (R-01). A paid order is locked: it is never replaced (R-19).
@@ -919,6 +930,17 @@ export default function SmartIntakeJourney({
       previousOrderId = order.id;
       order = null;
     }
+    // The order a 409 answer is about: the one this screen held, or the one the
+    // customer left (its own website and business if kept, else this screen's).
+    const previousOrder =
+      session.order ??
+      (previousOrderId
+        ? {
+            id: previousOrderId,
+            website: session.supersededInfo?.website ?? identity.canonicalUrl,
+            name: session.supersededInfo?.name ?? brand.name,
+          }
+        : null);
     if (!order && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
       setError("Masukkan satu alamat email yang valid.");
       return;
@@ -977,6 +999,7 @@ export default function SmartIntakeJourney({
               order: previousOrder,
               brand: { name: previousOrder.name, origin: brand.origin },
               supersededOrder: null,
+              supersededInfo: null,
             };
             persist(working);
             void checkOrder(working);
@@ -993,7 +1016,12 @@ export default function SmartIntakeJourney({
           website: identity.canonicalUrl,
           name: brand.name,
         };
-        working = { ...working, order, supersededOrder: null };
+        working = {
+          ...working,
+          order,
+          supersededOrder: null,
+          supersededInfo: null,
+        };
         persist(working);
         if (testCode) {
           setPaymentFor({
@@ -1548,6 +1576,7 @@ export default function SmartIntakeJourney({
                     order: null,
                     supersededOrder:
                       session.order?.id ?? session.supersededOrder ?? null,
+                    supersededInfo: supersededInfoOf(session),
                     afterOrder: null,
                     editReturn: undefined,
                     editBaseline: undefined,

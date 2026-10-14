@@ -305,17 +305,26 @@ export function noticeEmail(
       break;
     case "partial_refund":
     case "partial_chargeback":
-    case "chargeback":
+    case "chargeback": {
+      // R-15: a chargeback of the paying transaction before approval ends the
+      // order as refunded; otherwise it is only recorded.
+      const result =
+        d.order_ended === "yes"
+          ? "The order was ended as refunded and no audit work will run."
+          : d.order_ended === "no" && row.kind !== "partial_refund"
+            ? "It was only recorded; the order was not ended (already approved, or this transaction did not pay it)."
+            : "It was recorded; nothing else changed.";
       built = {
         subject: `Nuave: ${row.kind.replace("_", " ")}${order ? ` (${order})` : ""}`,
         lines: [
-          `Midtrans reported a ${row.kind.replace("_", " ")} for transaction ${row.subject}. It was recorded; nothing else changed.`,
+          `Midtrans reported a ${row.kind.replace("_", " ")} for transaction ${row.subject}. ${result}`,
           order ? `Order number: ${order}.` : null,
           money,
           "Check the Midtrans dashboard and decide what to do.",
         ],
       };
       break;
+    }
     default:
       built = {
         subject: `Nuave: ${row.kind}`,

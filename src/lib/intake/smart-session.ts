@@ -112,6 +112,8 @@ export type SmartSession = {
    * still be open; the next order tells the server to expire it, so it stops
    * holding part of the daily cap (spec 016 R-08). */
   supersededOrder?: string | null;
+  /** What that order was made for (website and business). */
+  supersededInfo?: { website: string; name: string } | null;
   /** Where to go once an order is made again (R-30: the saved progress
    * continues on the new order with no new paid call). */
   afterOrder?: SmartStage | null;
@@ -324,6 +326,15 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         (value.order.number !== undefined &&
           (typeof value.order.number !== "string" ||
             !/^NV-[A-Z0-9]{6}$/.test(value.order.number))))
+    )
+      return null;
+    if (
+      value.supersededInfo != null &&
+      (!isRecord(value.supersededInfo) ||
+        typeof value.supersededInfo.website !== "string" ||
+        value.supersededInfo.website.length > 2_000 ||
+        typeof value.supersededInfo.name !== "string" ||
+        value.supersededInfo.name.length > 160)
     )
       return null;
     if (

@@ -79,7 +79,12 @@ export function orderFailedNoticeStatement(
        FROM orders o
        WHERE o.id = ?2 AND o.state = 'failed' AND o.failure_code = ?3
          AND o.payment_kind = 'midtrans'
-         AND o.order_number IS NOT NULL`,
+         AND o.order_number IS NOT NULL
+         -- The money already went back (a full refund or chargeback of the
+         -- paying transaction, recorded after approval): nothing to refund.
+         AND NOT EXISTS (SELECT 1 FROM payment_transactions t
+                         WHERE t.transaction_id = o.paid_transaction_id
+                           AND t.refund_state IN ('refunded', 'chargeback'))`,
     )
     .bind(
       crypto.randomUUID(),

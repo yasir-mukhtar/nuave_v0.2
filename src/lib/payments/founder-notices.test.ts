@@ -276,6 +276,34 @@ describe("per-subject notices (R-21, AC-18)", () => {
 });
 
 describe("paid orders that fail (R-21, AC-18) and the 7-day sweep (R-13, AC-14)", () => {
+  it.each(["refunded", "chargeback"])(
+    "no paid_order_failed notice when the paying transaction was already %s after approval",
+    async (refundState) => {
+      const mail = mailbox();
+      const id = await paid(2);
+      await approve(d1.db, id, { mode: "live", now: clock });
+      d1.query(`INSERT INTO payment_attempts
+        (id, order_id, attempt_number, midtrans_order_id, window_start, window_end, status, created_at, updated_at)
+        VALUES ('att1', '${id}', 1, 'NV-TEST01-1', '${clock.toISOString()}', '${clock.toISOString()}', 'paid', '${clock.toISOString()}', '${clock.toISOString()}')`);
+      d1.query(`INSERT INTO payment_transactions
+        (transaction_id, attempt_id, midtrans_status, outcome, refund_state, first_seen_at, updated_at)
+        VALUES ('tx1', 'att1', 'settlement', 'paid', '${refundState}', '${clock.toISOString()}', '${clock.toISOString()}')`);
+      d1.query(
+        `UPDATE orders SET paid_transaction_id = 'tx1', paid_attempt_id = 'att1' WHERE id = '${id}'`,
+      );
+      advance(25 * HOUR);
+      await run(mail.sender, { auditEnabled: true });
+      expect(
+        d1.query<{ state: string }>(
+          `SELECT state FROM orders WHERE id = '${id}'`,
+        )[0]!.state,
+      ).toBe("failed");
+      expect(
+        notices().filter((row) => row.kind === "paid_order_failed"),
+      ).toEqual([]);
+    },
+  );
+
   it("a paid order that ends failed records one paid_order_failed notice with its order number, amount and method", async () => {
     const mail = mailbox();
     const id = await paid(2);

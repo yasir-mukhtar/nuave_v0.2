@@ -446,7 +446,27 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
     });
   });
 
-  it.each(["needs_refund", "paid_ended", "refunded"])(
+  it.each([
+    ["waiting", { state: "waiting", redirect_url: MIDTRANS_PAGE }],
+    [
+      "try_failed",
+      { state: "try_failed", last_try: "denied", redirect_url: MIDTRANS_PAGE },
+    ],
+    ["checking", { state: "checking" }],
+    ["cannot_check", { state: "cannot_check" }],
+  ])(
+    "while %s the website and business are locked: no Kembali to the brand check",
+    async (_name, payment) => {
+      await returnWith(payment);
+      await screen.findAllByText(
+        /Menunggu|belum berhasil|memeriksa|belum dapat diperiksa/,
+      );
+      expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+      expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    },
+  );
+
+  it.each(["closed_unknown", "needs_refund", "paid_ended", "refunded"])(
     "a %s order shows the order number and the support address, never a new payment",
     async (state) => {
       const { stub } = await returnWith(
@@ -469,6 +489,62 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
       );
     },
   );
+});
+
+describe("a late payment after Coba bayar lagi (R-11, R-19)", () => {
+  it("the 409 restores the old order from the kept id and the page continues as paid", async () => {
+    let created = 0;
+    let answer: Record<string, unknown> = {
+      state: "open",
+      payment: { state: "unpaid" },
+    };
+    const stub = stubServer({
+      status: () => answer,
+      create: () => {
+        created += 1;
+        return created === 1
+          ? Response.json({ order_id: ORDER_ID, state: "open" })
+          : Response.json(
+              {
+                error: "Pesanan sebelumnya sudah dibayar.",
+                code: "PREVIOUS_ORDER_ACTIVE",
+                previous_state: "paid",
+              },
+              { status: 409 },
+            );
+      },
+    });
+    render(<SmartIntakeJourney live />);
+    await toOrderScreen();
+    await pay();
+    await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
+    // Back from Midtrans: the attempt ended unpaid, so Coba bayar lagi.
+    answer = { state: "expired", payment: { state: "unpaid_final" } };
+    await reloadWith(stub);
+    fireEvent.click(await button("Coba bayar lagi"));
+    expect(readSmartSession()?.order).toBeNull();
+    // Meanwhile a late payment revived the old order.
+    answer = {
+      state: "open",
+      payment: { state: "paid", order_number: NUMBER },
+    };
+    await typeEmail();
+    fireEvent.click(await button("Bayar Rp99.000"));
+    await heading("Pembayaran diterima");
+    expect(screen.getByText(NUMBER)).toBeTruthy();
+    expect(created).toBe(2);
+    expect(readSmartSession()?.order).toMatchObject({
+      id: ORDER_ID,
+      paid: true,
+      name: "Kedai Fiksi",
+      website: "https://kedai-fiksi.example/",
+    });
+    // No second payment was started and the page offers to continue.
+    expect(stub.calls.filter((c) => c === "/api/payments/start")).toHaveLength(
+      1,
+    );
+    expect(await button("Lanjut")).toBeTruthy();
+  });
 });
 
 describe("a replacement refused because the old order is active (R-19)", () => {
