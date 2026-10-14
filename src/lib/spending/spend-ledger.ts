@@ -260,8 +260,8 @@ const PREVIOUS_ACTIVE = `(p.payment_kind IN ('midtrans', 'simulated')
  * replaced and, if still open, ended; an older test-pass or legacy order that is
  * still open is ended first and its hold returns (as S3 did), so the room it
  * frees counts for the new order; anything else started or ended is left alone.
- * If the older order is paid or has an open attempt, the new order is not
- * written at all ("previous_active").
+ * If the older order is paid, has an open attempt or an attempt closed as
+ * unknown (Q14), the new order is not written at all ("previous_active").
  */
 export async function createOrderWithHold(
   db: SpendDb,

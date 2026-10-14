@@ -1045,7 +1045,9 @@ describe("replacing an order through the route (R-19, AC-13 server parts)", () =
     const before = JSON.stringify([orders(), ledger()]);
     const response = await create({ previous_order_id: first.order_id });
     expect(response.status).toBe(409);
-    expect(await response.json()).toMatchObject({
+    expect(await response.json()).toEqual({
+      error:
+        "Pembayaran pesanan sebelumnya belum dapat dipastikan. Hubungi support@nuave.ai.",
       code: "PREVIOUS_ORDER_ACTIVE",
       previous_state: "payment_unknown",
     });

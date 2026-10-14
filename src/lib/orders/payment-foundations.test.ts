@@ -618,6 +618,47 @@ describe("replacing an order (R-19)", () => {
     expect(next.result).toBe("created");
   });
 
+  it("a test pass replacing an order with an attempt closed as unknown is refused and writes no hold (Q14)", async () => {
+    const old = await newOrder("unpaid");
+    await addAttempt(old.orderId, "closed_unknown");
+    const next = await newOrder("test", { previousOrderId: old.orderId });
+    expect(next.result).toBe("previous_active");
+    expect(next.previousState).toBe("payment_unknown");
+    expect(holds()).toEqual([]);
+    expect(d1.query("SELECT id FROM orders")).toHaveLength(1);
+  });
+
+  it("if the attempt is no longer closed as unknown when the refusal is explained, the answer is payment_open, not payment_unknown", async () => {
+    const old = await newOrder("unpaid");
+    await addAttempt(old.orderId, "open");
+    // The attempt becomes final after the batch, just before the state read.
+    const racing = {
+      prepare: (sql: string) => {
+        if (sql.includes("SELECT payment_kind")) {
+          d1.query(
+            "UPDATE payment_attempts SET status = 'finally_unpaid' RETURNING 1",
+          );
+        }
+        return d1.db.prepare(sql);
+      },
+      batch: d1.db.batch,
+    };
+    const next = await createOrder(racing, {
+      email: "owner@example.com",
+      businessName: "Kopi Nuave",
+      website: "https://kopinuave.example/",
+      mode: "live",
+      environment: "production",
+      paymentKind: "unpaid",
+      limitUsd: 2,
+      dailyLimitUsd: 5,
+      previousOrderId: old.orderId,
+      now: T0,
+    });
+    expect(next.result).toBe("previous_active");
+    expect(next.previousState).toBe("payment_open");
+  });
+
   it("Q14 is decided inside the same write: an attempt closed as unknown just before the batch still stops the replacement", async () => {
     const old = await newOrder("unpaid");
     const racing = {

@@ -202,7 +202,8 @@ const ORDER_NUMBER_TRIES = 5;
  * live mode only and only if the daily cap has room. The order number is made
  * here, and a collision with an existing one is retried (R-01). With
  * `previousOrderId` the older order is replaced in the same write (R-19): the
- * result is "previous_active" when it is paid or has an open payment attempt.
+ * result is "previous_active" when it is paid, has an open payment attempt or
+ * (Q14) an attempt closed as unknown.
  */
 export async function createOrder(
   db: SpendDb,
@@ -286,16 +287,17 @@ async function previousOrderState(
     .prepare(
       `SELECT payment_kind,
               EXISTS (SELECT 1 FROM payment_attempts
-                      WHERE order_id = ?1 AND status = 'open') AS is_open
+                      WHERE order_id = ?1 AND status = 'closed_unknown') AS unknown
        FROM orders WHERE id = ?1`,
     )
     .bind(orderId)
-    .first<{ payment_kind: PaymentKind | null; is_open: number }>();
+    .first<{ payment_kind: PaymentKind | null; unknown: number }>();
   if (row?.payment_kind === "midtrans" || row?.payment_kind === "simulated") {
     return "paid";
   }
-  // Q14: neither paid nor open, yet active: an attempt closed as unknown.
-  return row?.is_open ? "payment_open" : "payment_unknown";
+  // Q14: only an attempt still closed as unknown says so; anything else (an
+  // open attempt, or one that changed since the refusal) stays "payment_open".
+  return row?.unknown ? "payment_unknown" : "payment_open";
 }
 
 /** R-23: an order made by S3 code has no number. Give it one before its next
