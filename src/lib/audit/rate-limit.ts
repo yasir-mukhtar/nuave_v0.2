@@ -13,6 +13,10 @@ export const ORDER_CREATE_CALLER_RATE_LIMITER =
 export const ORDER_STATUS_CALLER_RATE_LIMITER =
   "ORDER_STATUS_CALLER_RATE_LIMITER";
 
+/** Spec 017 R-05: starting a payment, per caller IP. */
+export const PAYMENT_START_CALLER_RATE_LIMITER =
+  "PAYMENT_START_CALLER_RATE_LIMITER";
+
 /** Spec 016 R-27: the saved-report data route, per caller IP. */
 export const REPORT_DATA_CALLER_RATE_LIMITER =
   "REPORT_DATA_CALLER_RATE_LIMITER";
@@ -39,6 +43,7 @@ export interface AuditRateLimitBindings {
   orderCreateCaller?: AuditRateLimitBinding;
   orderStatusCaller?: AuditRateLimitBinding;
   reportDataCaller?: AuditRateLimitBinding;
+  paymentStartCaller?: AuditRateLimitBinding;
 }
 
 export type AuditRateLimitDecision = "allowed" | "limited" | "unavailable";
@@ -82,6 +87,9 @@ export function getAuditRateLimitBindings(): AuditRateLimitBindings {
       ),
       reportDataCaller: asRateLimitBinding(
         env[REPORT_DATA_CALLER_RATE_LIMITER],
+      ),
+      paymentStartCaller: asRateLimitBinding(
+        env[PAYMENT_START_CALLER_RATE_LIMITER],
       ),
     };
   } catch {

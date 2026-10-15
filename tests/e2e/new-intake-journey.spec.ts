@@ -72,6 +72,7 @@ import {
   throughCompetitorContext,
   toggleCustomerNeed,
   toSummary,
+  useTestPass,
 } from "./journey";
 
 const richDraft = RICH_PREPARATION_DRAFT;
@@ -680,6 +681,9 @@ test("material correction invalidates the old questions; cancel keeps the commit
 test("a name-only edit reuses the reading; changing the website reads again", async ({
   page,
 }) => {
+  // A test-pass order: these steps change the website or the business, which a
+  // PAID order locks (spec 017 R-19; see payment-screens.spec.ts).
+  await useTestPass(page);
   const calls: string[] = [];
   page.on("request", (request) => {
     if (
@@ -1354,6 +1358,9 @@ test.describe("J4 focus and target screens", () => {
   test("the focus screen offers the three scopes with honest labels and a keyboard-driven pick", async ({
     page,
   }) => {
+    // A test-pass order: these steps change the website or the business, which a
+    // PAID order locks (spec 017 R-19; see payment-screens.spec.ts).
+    await useTestPass(page);
     const calls: string[] = [];
     page.on("request", (request) => {
       const path = new URL(request.url()).pathname;
@@ -1776,6 +1783,9 @@ test.describe("J7 review and Nama lain aliases", () => {
   test("the Bisnis row returns brand edits by Lanjut, Kembali, and browser Back", async ({
     page,
   }) => {
+    // A test-pass order: these steps change the website or the business, which a
+    // PAID order locks (spec 017 R-19; see payment-screens.spec.ts).
+    await useTestPass(page);
     await enter(page);
     for (const back of ["lanjut", "footer", "browser"] as const) {
       await editBusinessFromReview(page);

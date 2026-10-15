@@ -6,6 +6,39 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-14 — S4 build: partial chargeback and lost second payment try
+
+Yasir answered two questions found while building
+[Spec 017](../specs/017-payment-and-test-pass/SPEC.md) (S4), where the spec
+did not decide:
+
+- **Q11 — B:** a Midtrans `partial_chargeback` is handled like a full
+  chargeback (R-15). Before the questions are approved, a partial chargeback
+  of the paying transaction ends the order (`failed`, code `refunded`), with
+  no AI work and no failure email. After approval it is only recorded. The
+  founder gets a notice in every case.
+- **Q12 — A:** when the customer's page checks a waiting payment (R-14),
+  Nuave also asks Midtrans by the attempt's `order_id`, not only by the
+  transaction IDs it already knows. A second payment try whose notification
+  was lost is then found at once. It is still at most one check per attempt
+  per 30 seconds.
+- **Q13 — A:** when a payment attempt has no final answer from Midtrans
+  after 7 days (R-06 "closed unknown"), the customer's screen shows only the
+  order number and "Hubungi support@nuave.ai", with no "Coba bayar lagi".
+  The founder is told after 24 hours (`payment_unknown`) and settles the
+  case by hand, so a customer is never invited to pay twice.
+
+Yasir also approved the S4 live check (Spec 017 AC-25) with a budget of
+USD 2.00, to run after he merges and deploys PR #137. It does not approve
+merge or deploy.
+
+After the Opus max review of PR #137, Yasir answered four more questions
+(recorded in the spec as Q14–Q17): an order with a payment attempt closed
+as unknown cannot be replaced until the founder settles it; a settled
+`99000.00` answer without a currency counts as IDR; the AC-25 budget is a
+worst case of USD 4.00 (expected about USD 0.30); and a customer refunded
+before approval gets a "Mulai pesanan baru" button for a fresh start.
+
 ## 2026-10-14 — Approve Spec 017 (S4)
 
 Yasir approved [Spec 017](../specs/017-payment-and-test-pass/SPEC.md)

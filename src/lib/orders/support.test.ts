@@ -13,7 +13,11 @@ import {
   executeSyntheticLocalObservation,
   generateSyntheticLocalReport,
 } from "../audit/local-direct-ten-audit";
-import { reserveOrderCall } from "../spending/spend-ledger";
+import { applyRefund, applyStatus } from "../payments/apply";
+import { startAttempt } from "../payments/attempts";
+import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
+import { getStatus } from "../payments/midtrans";
+import { reserveOrderCall, usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { runOrders, type RunnerDeps } from "./runner";
 import {
@@ -156,9 +160,14 @@ describe("resend (AC-17)", () => {
     expect(order(id).report_json).toBe(reportBefore);
     expect(order(id).state).toBe("delivered");
     // A new idempotency key per send, and a send record.
+    // R-03: the key names the order number, never the internal order ID.
     expect(mail.idempotencyKey).toMatch(
-      new RegExp(`^nuave-order-${id}-ready-2-[0-9a-f]{12}$`),
+      new RegExp(
+        `^nuave-order-${order(id).order_number}-ready-2-[0-9a-f]{12}$`,
+      ),
     );
+    expect(mail.idempotencyKey).not.toContain(id);
+    expect(mail.text).toContain(`Nomor pesanan: ${order(id).order_number}`);
     expect(
       d1.query("SELECT attempt, result FROM order_emails ORDER BY attempt"),
     ).toEqual([
@@ -220,7 +229,7 @@ describe("resend (AC-17)", () => {
       expect(await s.run("resend", bad), bad).toBe(2);
     }
     expect(await s.run("resend", "f".repeat(32))).toBe(1); // well formed, unknown
-    expect(output.join("\n")).toContain("No order with that ID.");
+    expect(output.join("\n")).toContain("No order with that ID or number.");
     expect(s.sender.sent).toEqual([]);
     expect(s.makeSender).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -429,5 +438,312 @@ describe("the database through wrangler", () => {
     // The command made a real change through that path.
     expect((await openLink(newSecret)).status).toBe(200);
     expect(output.join("\n")).toContain(`Email: ${EMAIL}`);
+  });
+});
+
+describe("payment support (spec 017 R-24, AC-05)", () => {
+  const LIMIT = usdToUnits(2);
+  const DAILY = usdToUnits(50);
+  const fake = createFakeMidtrans();
+  const midtrans = {
+    serverKey: fake.serverKey,
+    isProduction: false,
+    fetch: fake.fetch,
+  };
+  const q = (sql: string) => d1.query<Record<string, unknown>>(sql);
+  const text = () => output.join("\n");
+
+  async function orderWithAttempt(payment: "unpaid" | "test" = "unpaid") {
+    const id = await makeOrder(d1.db, {
+      mode: "live",
+      payment,
+      now: clock,
+      dailyLimitUsd: 100,
+    });
+    const started = await startAttempt(d1.db, {
+      orderId: id,
+      environment: "production",
+      mode: "live",
+      now: clock,
+      limitUnits: LIMIT,
+      dailyLimitUnits: DAILY,
+    });
+    if (started.result !== "started") throw new Error("no attempt");
+    return { id, attempt: started.attempt };
+  }
+  async function pay(
+    attempt: { midtrans_order_id: string },
+    options: { transactionId: string; amount?: string; method?: string },
+  ) {
+    const tx = fake.addTransaction({
+      orderId: attempt.midtrans_order_id,
+      transactionId: options.transactionId,
+      amount: options.amount,
+      paymentType: options.method ?? "qris",
+    });
+    const answer = await getStatus(midtrans, tx.transaction_id);
+    if (answer.kind !== "found") throw new Error("fake lost it");
+    await applyStatus(
+      { db: d1.db, now: clock, limitUnits: LIMIT, dailyLimitUnits: DAILY },
+      answer.status,
+    );
+  }
+
+  it("finds an order by its internal ID, its order number or a Midtrans order_id, and show prints the payment lines", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-show-1" });
+    const number = String(
+      q(`SELECT order_number FROM orders WHERE id = '${id}'`)[0]!.order_number,
+    );
+    for (const reference of [id, number, attempt.midtrans_order_id]) {
+      output.length = 0;
+      expect(await support().run("show", reference)).toBe(0);
+      const shown = text();
+      expect(shown).toContain(`Order number: ${number}`);
+      expect(shown).toContain("Payment kind: midtrans");
+      expect(shown).toMatch(/Paid: 2026-10-12T10:00:00/);
+      expect(shown).toContain("Payment attempts: 1");
+      expect(shown).toContain(`${attempt.midtrans_order_id} paid`);
+      expect(shown).toContain("transaction tx-show-1: settlement, paid");
+      expect(shown).toContain("Test pass: no");
+      expect(shown).not.toContain("owner@example.com");
+    }
+  });
+
+  it("show marks a founder test pass, and a needs-refund transaction", async () => {
+    const test = await orderWithAttempt("test").catch(() => null);
+    expect(test).toBeNull(); // R-05: no payment starts on a test pass
+    const id = await makeOrder(d1.db, {
+      mode: "live",
+      payment: "test",
+      now: clock,
+    });
+    expect(await support().run("show", id)).toBe(0);
+    expect(text()).toContain("Test pass: yes (test)");
+    expect(text()).toContain("Payment kind: test");
+    output.length = 0;
+    const { attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-wrong", amount: "50000.00" });
+    expect(await support().run("show", attempt.midtrans_order_id)).toBe(0);
+    expect(text()).toContain("(NEEDS REFUND)");
+    expect(text()).toContain("refund needs_refund");
+  });
+
+  it("an unknown number or order_id finds nothing; a badly formed one is bad usage; the number unlocks nothing", async () => {
+    expect(await support().run("show", "NV-AAAAAA")).toBe(1);
+    expect(await support().run("show", "NV-AAAAAA-1")).toBe(1);
+    for (const bad of ["NV-AAAAA", "nv-aaaaaa", "NV-OOOOOO", "NV-AAAAAA-x"]) {
+      expect(await support().run("show", bad), bad).toBe(2);
+    }
+    const { id } = await orderWithAttempt();
+    const number = String(
+      q(`SELECT order_number FROM orders WHERE id = '${id}'`)[0]!.order_number,
+    );
+    // `resend` by number still needs a saved report: the number proves nothing.
+    expect(await support().run("resend", number)).toBe(1);
+  });
+
+  it("refunds lists every open refund case: needs-refund transactions, paid orders that ended, and attempts with no final answer", async () => {
+    expect(await support().run("refunds")).toBe(0);
+    expect(text()).toContain("Open refund cases: 0");
+    // 1: a settled transaction that cannot be applied.
+    const wrong = await orderWithAttempt();
+    await pay(wrong.attempt, { transactionId: "tx-wrong", amount: "50000.00" });
+    // 2: a paid order that ended (not started).
+    const ended = await orderWithAttempt();
+    await pay(ended.attempt, { transactionId: "tx-ended" });
+    q(
+      `UPDATE orders SET state = 'failed', failure_code = 'paid_not_started', ended_at = '2026-10-19T10:00:00.000Z' WHERE id = '${ended.id}' RETURNING 1`,
+    );
+    // 3: an attempt closed as unknown, and an open one with a payment_unknown notice.
+    const unknownOne = await orderWithAttempt();
+    q(
+      `UPDATE payment_attempts SET status = 'closed_unknown' WHERE id = '${unknownOne.attempt.id}' RETURNING 1`,
+    );
+    const unknownTwo = await orderWithAttempt();
+    q(
+      `INSERT INTO founder_notices (id, kind, subject, status, created_at) VALUES ('n1', 'payment_unknown', '${unknownTwo.attempt.midtrans_order_id}', 'sent', '2026-10-13T10:00:00.000Z') RETURNING 1`,
+    );
+    // Not cases: an ordinary paid order that is running, and a plain open attempt.
+    const fine = await orderWithAttempt();
+    await pay(fine.attempt, { transactionId: "tx-fine" });
+    await orderWithAttempt();
+    output.length = 0;
+    expect(await support().run("refunds")).toBe(0);
+    const shown = text();
+    expect(shown).toContain("Open refund cases: 4");
+    expect(shown).toContain("NEEDS REFUND");
+    expect(shown).toContain("tx-wrong");
+    expect(shown).toContain("PAID ORDER ENDED (paid_not_started)");
+    expect(shown).toContain("tx-ended");
+    expect(shown).toContain(unknownOne.attempt.midtrans_order_id);
+    expect(shown).toContain(unknownTwo.attempt.midtrans_order_id);
+    expect(shown).not.toContain("tx-fine");
+    expect(shown).toContain("three business days");
+  });
+
+  it("refunded records an outside refund by transaction, like a Midtrans refund of it: a needs-refund case closes and the paid order keeps running", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-paid" });
+    await pay(attempt, { transactionId: "tx-second" }); // a second payment: needs refund
+    expect(
+      q(
+        `SELECT outcome FROM payment_transactions WHERE transaction_id = 'tx-second'`,
+      )[0]!.outcome,
+    ).toBe("needs_refund");
+    expect(await support().run("refunded", "tx-second")).toBe(0);
+    expect(
+      q(
+        `SELECT refund_state, refund_source FROM payment_transactions WHERE transaction_id = 'tx-second'`,
+      ),
+    ).toEqual([{ refund_state: "refunded", refund_source: "support" }]);
+    expect(
+      q(`SELECT state, failure_code FROM orders WHERE id = '${id}'`),
+    ).toEqual([{ state: "open", failure_code: null }]);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+    // Again: nothing changes.
+    expect(await support().run("refunded", "tx-second")).toBe(0);
+    expect(text()).toContain("already recorded");
+  });
+
+  it("refunded on the paying transaction before approval ends the order as refunded, through the wrangler path too", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-pays" });
+    // The wrangler path: each command (a batch is several statements) is one
+    // call to the runner; the test runs them in order on the test database.
+    const execute = async (sql: string) => {
+      sqlSeen.push(sql);
+      const results = [];
+      for (const part of sql.split(";\n")) {
+        const statement = d1.db.prepare(part).bind();
+        if (/^\s*select/i.test(part)) {
+          results.push({ results: (await statement.all()).results });
+        } else {
+          results.push({ meta: (await statement.run()).meta });
+        }
+      }
+      return results;
+    };
+    const s = support({ db: d1ThroughWrangler(execute) });
+    expect(await s.run("refunded", "tx-pays")).toBe(0);
+    expect(
+      q(`SELECT state, failure_code FROM orders WHERE id = '${id}'`),
+    ).toEqual([{ state: "failed", failure_code: "refunded" }]);
+    expect(
+      q(
+        `SELECT refund_state, refund_source FROM payment_transactions WHERE transaction_id = 'tx-pays'`,
+      ),
+    ).toEqual([{ refund_state: "refunded", refund_source: "support" }]);
+    for (const sql of sqlSeen) expect(sql).not.toContain("@");
+    // It is no longer an open case.
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+    expect(await support().run("refunded", "tx-nope-1")).toBe(1);
+    expect(await support().run("refunded", "bad id")).toBe(2);
+  });
+
+  it("a chargeback of the paying transaction before approval ends the order and is not listed as a refund to make", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-cb" });
+    await applyRefund(
+      { db: d1.db, now: clock, limitUnits: LIMIT, dailyLimitUnits: DAILY },
+      "tx-cb",
+      "chargeback",
+      "midtrans",
+    );
+    expect(
+      q(`SELECT state, failure_code FROM orders WHERE id = '${id}'`),
+    ).toEqual([{ state: "failed", failure_code: "refunded" }]);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+  });
+
+  it("a refund that stops half way through wrangler stays listed in refunds, says it is safe to repeat, and the repeat finishes it", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-half" });
+    let fail = true;
+    const execute = async (sql: string) => {
+      // The batch that writes the transaction row is the last step.
+      if (fail && sql.includes("UPDATE payment_transactions")) {
+        throw new Error("wrangler d1 execute failed");
+      }
+      const results = [];
+      for (const part of sql.split(";\n")) {
+        const statement = d1.db.prepare(part).bind();
+        results.push(
+          /^\s*select/i.test(part)
+            ? { results: (await statement.all()).results }
+            : { meta: (await statement.run()).meta },
+        );
+      }
+      return results;
+    };
+    const s = support({ db: d1ThroughWrangler(execute) });
+    expect(await s.run("refunded", "tx-half")).toBe(1);
+    expect(text()).toContain("safe to run the same command again");
+    // The order already ended; the transaction row is not written.
+    expect(
+      q(`SELECT state, failure_code FROM orders WHERE id = '${id}'`),
+    ).toEqual([{ state: "failed", failure_code: "refunded" }]);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 1");
+    expect(text()).toContain("tx-half");
+    fail = false;
+    output.length = 0;
+    expect(await s.run("refunded", "tx-half")).toBe(0);
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+  });
+
+  it("close ends an open attempt by its Midtrans order_id: unknown stays on refunds, unpaid takes it off", async () => {
+    const { attempt } = await orderWithAttempt();
+    const id = attempt.midtrans_order_id;
+    expect(await support().run("close", id, "unknown")).toBe(0);
+    expect(
+      q(
+        `SELECT status FROM payment_attempts WHERE midtrans_order_id = '${id}'`,
+      )[0]!.status,
+    ).toBe("closed_unknown");
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain(id);
+    expect(await support().run("close", id, "unpaid")).toBe(0);
+    expect(
+      q(
+        `SELECT status FROM payment_attempts WHERE midtrans_order_id = '${id}'`,
+      )[0]!.status,
+    ).toBe("finally_unpaid");
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+    // It no longer counts against the cap.
+    expect(
+      q("SELECT COUNT(*) AS n FROM payment_attempts WHERE status = 'open'")[0]!
+        .n,
+    ).toBe(0);
+  });
+
+  it("close refuses a settled attempt, an unknown order_id and a bad word, and changes nothing", async () => {
+    const { attempt } = await orderWithAttempt();
+    await pay(attempt, { transactionId: "tx-settled" });
+    expect(
+      await support().run("close", attempt.midtrans_order_id, "unpaid"),
+    ).toBe(1);
+    expect(
+      q(`SELECT status FROM payment_attempts WHERE id = '${attempt.id}'`)[0]!
+        .status,
+    ).toBe("paid");
+    expect(await support().run("close", "NV-ZZZZZZ-1", "unknown")).toBe(1);
+    expect(
+      await support().run("close", attempt.midtrans_order_id, "maybe"),
+    ).toBe(2);
+    expect(await support().run("close", attempt.midtrans_order_id)).toBe(2);
+    expect(await support().run("refunds", "extra")).toBe(2);
+    expect(output).toContain(SUPPORT_USAGE);
   });
 });

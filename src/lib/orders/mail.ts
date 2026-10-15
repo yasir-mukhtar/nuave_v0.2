@@ -9,6 +9,10 @@
  * serves the message over HTTP.
  */
 
+import { DELIVERY_PROMISE } from "./promise";
+
+export { DELIVERY_PROMISE };
+
 export type MailMessage = {
   to: string;
   subject: string;
@@ -38,17 +42,36 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-/** Draft wording; S5 finalizes. The business name is escaped in the HTML. */
-export function readyEmail(input: { businessName: string; link: string }) {
-  const text = `Laporan audit untuk ${input.businessName} sudah siap: ${input.link}. Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Bantuan: ${SUPPORT_EMAIL}.`;
-  const html = `<p>Laporan audit untuk ${escapeHtml(input.businessName)} sudah siap: <a href="${escapeHtml(input.link)}">${escapeHtml(input.link)}</a>.</p><p>Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Bantuan: ${SUPPORT_EMAIL}.</p>`;
+/** Draft wording; S5 finalizes. The business name is escaped in the HTML. The
+ * order number (spec 017 R-01) is in every customer email. */
+export function readyEmail(input: {
+  businessName: string;
+  link: string;
+  orderNumber: string;
+}) {
+  const text = `Laporan audit untuk ${input.businessName} sudah siap: ${input.link}. Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Nomor pesanan: ${input.orderNumber}. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Laporan audit untuk ${escapeHtml(input.businessName)} sudah siap: <a href="${escapeHtml(input.link)}">${escapeHtml(input.link)}</a>.</p><p>Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan.</p><p>Nomor pesanan: ${escapeHtml(input.orderNumber)}. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Laporan audit Nuave Anda sudah siap", text, html };
 }
 
-export function failureEmail(input: { businessName: string }) {
-  const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.`;
-  const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.</p>`;
+export function failureEmail(input: {
+  businessName: string;
+  orderNumber: string;
+}) {
+  const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${input.orderNumber}. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${escapeHtml(input.orderNumber)}. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Audit Nuave Anda belum bisa diselesaikan", text, html };
+}
+
+/** R-22: the payment-received email. It has no link and no secret; it names the
+ * business, the order number, the amount, the promise and the browser line. */
+export function paymentReceivedEmail(input: {
+  businessName: string;
+  orderNumber: string;
+}) {
+  const text = `Pembayaran Rp99.000 untuk audit ${input.businessName} sudah kami terima. Nomor pesanan: ${input.orderNumber}. ${DELIVERY_PROMISE} Lanjutkan di browser yang sama untuk mengisi data bisnis Anda. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Pembayaran Rp99.000 untuk audit ${escapeHtml(input.businessName)} sudah kami terima.</p><p>Nomor pesanan: ${escapeHtml(input.orderNumber)}.</p><p>${DELIVERY_PROMISE}</p><p>Lanjutkan di browser yang sama untuk mengisi data bisnis Anda.</p><p>Bantuan: ${SUPPORT_EMAIL}.</p>`;
+  return { subject: "Pembayaran Nuave Anda sudah diterima", text, html };
 }
 
 export const RESEND_ENDPOINT = "https://api.resend.com/emails";

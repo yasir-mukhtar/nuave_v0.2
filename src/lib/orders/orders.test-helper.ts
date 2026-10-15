@@ -7,9 +7,11 @@ import type { MailMessage, MailSender } from "./mail";
 import {
   approveOrder,
   createOrder,
+  ORDER_PAID_MS,
   type OrderEnvironment,
   type OrderMode,
 } from "./store";
+import { reserveOrderHold, usdToUnits } from "../spending/spend-ledger";
 import type { SpendDb } from "../spending/spend-ledger";
 
 /** Shared fixtures for the order tests (offline, sqlite D1 helper). */
@@ -56,7 +58,24 @@ export function intakeJson(): string {
   });
 }
 
-/** Make an `open` order. Live orders hold `limitUsd` against `dailyLimitUsd`. */
+/** How a test order is paid for (spec 017 R-23):
+ *
+ * - `test` (the default): a founder test pass made by the real creation code.
+ *   It behaves like an S3 order: its hold is reserved at creation (live), it
+ *   ends after 2 hours unstarted, and it may run. Most S3 tests use this.
+ * - `unpaid`: the customer's order before payment; holds nothing, may not run.
+ * - `paid`: an order paid through Midtrans. The columns are set directly (no
+ *   fake Midtrans is needed): kind `midtrans`, the paid time, an end time 7 days
+ *   later (R-11), and, live, its hold on the day of payment even if the cap is
+ *   full.
+ * - `simulated`: the same as `paid`, with the synthetic-mode simulated kind.
+ * - `legacy`: an order made by S3 code: no payment kind, hold at creation.
+ */
+export type TestOrderPayment =
+  "test" | "unpaid" | "paid" | "simulated" | "legacy";
+
+/** Make an `open` order. Live orders that hold (test, paid, simulated, legacy)
+ * hold `limitUsd` against `dailyLimitUsd`. */
 export async function makeOrder(
   db: SpendDb,
   options: {
@@ -66,20 +85,94 @@ export async function makeOrder(
     limitUsd?: number;
     dailyLimitUsd?: number;
     now?: Date;
+    payment?: TestOrderPayment;
+    previousOrderId?: unknown;
   } = {},
 ) {
+  const payment = options.payment ?? "test";
+  const mode = options.mode ?? "synthetic";
+  const now = options.now ?? T0;
+  const limitUsd = options.limitUsd ?? 2;
+  const dailyLimitUsd = options.dailyLimitUsd ?? 5;
   const { result, orderId } = await createOrder(db, {
     email: options.email ?? "owner@example.com",
     businessName: "Kopi Nuave",
     website: "https://kopinuave.example/",
-    mode: options.mode ?? "synthetic",
+    mode,
     environment: options.environment ?? "production",
-    limitUsd: options.limitUsd ?? 2,
-    dailyLimitUsd: options.dailyLimitUsd ?? 5,
-    now: options.now ?? T0,
+    // A paid order is made unpaid (holding nothing) and then paid below.
+    paymentKind:
+      payment === "unpaid" || payment === "paid" || payment === "simulated"
+        ? "unpaid"
+        : "test",
+    limitUsd,
+    dailyLimitUsd,
+    previousOrderId: options.previousOrderId,
+    now,
   });
   if (result !== "created") throw new Error("test order was not created");
+  if (payment === "legacy") {
+    await db
+      .prepare("UPDATE orders SET payment_kind = NULL WHERE id = ?1")
+      .bind(orderId)
+      .run();
+    await db
+      .prepare("UPDATE provider_spend SET test = 0 WHERE order_id = ?1")
+      .bind(orderId)
+      .run();
+  }
+  if (payment === "paid" || payment === "simulated") {
+    await markPaidForTest(db, orderId, {
+      kind: payment === "paid" ? "midtrans" : "simulated",
+      mode,
+      limitUsd,
+      now,
+    });
+  }
   return orderId;
+}
+
+/** A paid order, for tests that need one: the same as
+ * `makeOrder(db, { payment: "paid" })`. */
+export const makePaidOrder = (
+  db: SpendDb,
+  options: Parameters<typeof makeOrder>[1] = {},
+) => makeOrder(db, { ...options, payment: "paid" });
+
+/** Set the paid columns directly (no Midtrans) and, for a live order, reserve
+ * its hold on the UTC day of `now` with no cap check, as R-11 does. */
+export async function markPaidForTest(
+  db: SpendDb,
+  orderId: string,
+  options: {
+    kind?: "midtrans" | "simulated";
+    mode?: OrderMode;
+    limitUsd?: number;
+    now?: Date;
+  } = {},
+) {
+  const now = options.now ?? T0;
+  await db
+    .prepare(
+      `UPDATE orders SET payment_kind = ?2, paid_at = ?3, expires_at = ?4
+       WHERE id = ?1`,
+    )
+    .bind(
+      orderId,
+      options.kind ?? "midtrans",
+      now.toISOString(),
+      new Date(now.getTime() + ORDER_PAID_MS).toISOString(),
+    )
+    .run();
+  if ((options.mode ?? "synthetic") === "live") {
+    await reserveOrderHold(db, {
+      orderId,
+      now,
+      limitUnits: usdToUnits(options.limitUsd ?? 2),
+      dailyLimitUnits: null,
+      test: false,
+    });
+  }
 }
 
 /** Approve the ten questions: the order becomes `running` (R-17). */

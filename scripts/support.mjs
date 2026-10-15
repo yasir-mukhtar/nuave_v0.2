@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 // Founder support commands for orders (spec 016 R-32):
 //
-//   npm run support -- resend <order-id>        a new link, old one stops
-//   npm run support -- off <order-id>           switch the link off
-//   npm run support -- show <order-id> [--email]
+//   npm run support -- resend <order>           a new link, old one stops
+//   npm run support -- off <order>              switch the link off
+//   npm run support -- show <order> [--email]
+//
+// <order> is the internal order ID, the order number (NV-7K3Q9P) or a Midtrans
+// order_id (NV-7K3Q9P-2). Spec 017 (R-24) adds:
+//
+//   npm run support -- refunds                  every open refund case
+//   npm run support -- refunded <transaction-id>  a refund made outside Midtrans
+//   npm run support -- close <midtrans-order-id> <unknown|unpaid>
 //
 // It reads and writes the production D1 database through `wrangler d1 execute
 // --remote` (add `--local` to use the local development database instead), and
@@ -50,7 +57,9 @@ await require("esbuild").build({
   packages: "external",
   logLevel: "error",
 });
-const { runSupport, d1ThroughWrangler } = await import(pathToFileURL(outfile).href);
+const { runSupport, d1ThroughWrangler } = await import(
+  pathToFileURL(outfile).href
+);
 const { resendMailSender } = await import(pathToFileURL(mailOutfile).href);
 
 function wranglerExecute(sql) {
@@ -73,7 +82,11 @@ function wranglerExecute(sql) {
         if (error) {
           // The statement holds no email and no secret, but print only a
           // short reason, never the command line.
-          rejectRun(new Error(`wrangler d1 execute failed: ${String(stderr).split("\n")[0]}`));
+          rejectRun(
+            new Error(
+              `wrangler d1 execute failed: ${String(stderr).split("\n")[0]}`,
+            ),
+          );
           return;
         }
         try {
@@ -102,7 +115,9 @@ function siteOrigin() {
       .replace(/,\s*([}\]])/g, "$1"),
   );
   return new URL(
-    local ? (config.env?.dev?.vars?.NUAVE_SITE_URL ?? "") : (config.vars?.NUAVE_SITE_URL ?? ""),
+    local
+      ? (config.env?.dev?.vars?.NUAVE_SITE_URL ?? "")
+      : (config.vars?.NUAVE_SITE_URL ?? ""),
   ).origin;
 }
 

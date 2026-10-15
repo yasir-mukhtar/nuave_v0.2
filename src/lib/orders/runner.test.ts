@@ -877,16 +877,21 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
       result.outcomes.filter((entry) => entry === outcome).length;
     expect(tally("expired")).toBe(3);
     expect(tally("failed_deadline")).toBe(1);
-    expect(tally("report_saved")).toBe(1);
-    expect(tally("waiting")).toBe(1);
+    // Spec 017 R-23: the new fixed queries (the 7-day sweep and the payment
+    // email check) leave this housekeeping-heavy run too little room for the
+    // report step (27 of 40); it waits and the next run makes the report.
+    expect(tally("report_saved")).toBe(0);
+    expect(tally("waiting")).toBe(2);
     expect(tally("failure_email")).toBe(1);
+    expect(count.queries).toBeLessThanOrEqual(40);
+    const next = await runOrders(deps({ sender: accepting.sender }));
+    expect(next.outcomes).toContain("report_saved");
     expect(
       reporting.filter((id) => orderRow(id).state === "delivered"),
     ).toHaveLength(1);
     expect(
       accepting.sent.filter((m) => m.subject.includes("siap")),
     ).toHaveLength(1);
-    expect(count.queries).toBeLessThanOrEqual(40);
     // The worst live mix (a report step with both paid calls) is measured in
     // runner-worst-case.test.ts.
   });
@@ -1353,9 +1358,12 @@ describe("the ready email never harms a saved report", () => {
       )
       .bind()
       .run();
+    // The email-only step (9) and the report step (27) no longer fit one run
+    // with the fixed queries of spec 017 (R-23); the report step is next.
     const result = await runOrders(d);
-    expect(result.outcomes).toEqual(["delivered", "report_saved"]);
+    expect(result.outcomes).toEqual(["delivered", "waiting"]);
     expect(orderRow(waiting).state).toBe("delivered");
+    expect((await runOrders(d)).outcomes).toEqual(["report_saved"]);
     expect(orderRow(needs).report_json).toBeTruthy();
   });
 

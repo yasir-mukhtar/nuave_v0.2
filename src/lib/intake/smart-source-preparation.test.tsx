@@ -9,6 +9,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TEST_PASS_STORAGE_KEY } from "./test-pass";
 import { Buffer } from "node:buffer";
 const mocks = vi.hoisted(() => ({
   context: vi.fn(),
@@ -186,6 +187,9 @@ function sdkResponse() {
 }
 beforeEach(() => {
   window.sessionStorage.clear();
+  // Spec 017 R-20: these journeys run on a founder test pass (no payment); the
+  // paid screens have their own tests in payment-journey.test.tsx.
+  window.sessionStorage.setItem(TEST_PASS_STORAGE_KEY, "test-code");
   window.localStorage.clear();
   vi.clearAllMocks();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
@@ -244,6 +248,7 @@ beforeEach(() => {
         if (value === "/api/orders/status")
           return Response.json({
             state: "open",
+            payment: { state: "not_required" },
             completed: 0,
             total: 10,
             questions: [],
@@ -556,6 +561,7 @@ describe("server excerpt through the active Smart preparation", () => {
       mounted.unmount();
       // A separate safe preparation exercises the existing owner-edit guard.
       window.sessionStorage.clear();
+      window.sessionStorage.setItem(TEST_PASS_STORAGE_KEY, "test-code");
       window.localStorage.clear();
       parsedDraft = draft();
       render(<SmartIntakeJourney live />);
@@ -1080,6 +1086,7 @@ describe("server excerpt through the active Smart preparation", () => {
     // The saved order is still open: Lanjut reads again, with no new order and
     // no email typed again.
     expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
+    await screen.findByRole("button", { name: "Lanjut" });
     fireEvent.click(lanjut());
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     expect(pageReads).toBe(3);
@@ -1145,6 +1152,7 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(requests).toHaveLength(1);
     // An explicit retry reads again under the same order; the browser's budget
     // history is no longer sent at all (the order's own limit decides).
+    await screen.findByRole("button", { name: "Lanjut" });
     fireEvent.click(lanjut());
     await screen.findByRole("alert");
     expect(clientBodies.at(-1)).toEqual({ order_id: orderStub.id });

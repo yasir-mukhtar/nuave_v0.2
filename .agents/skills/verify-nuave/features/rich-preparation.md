@@ -38,8 +38,8 @@ about live extraction quality. The default synthetic preparation
 - `reload-persistence`: a reload restores the identical prepared state.
 - `downstream-unchanged`: JQ and J6 owner answers and edited `Nama lain`
   aliases freeze with exact values and origins; confirming
-  produces ten questions with exactly one identity, one order, one extract
-  and one question request.
+  produces ten questions with exactly one identity, one order, one simulated
+  payment, one extract and one question request.
 
 ## How to get to it (user POV)
 
@@ -94,7 +94,8 @@ order:
   freeze as the owner edits with origin `owner`.
   `network.json.apiCalls` is
   exactly one `GET /api/audit/identity`, one `POST /api/orders`, one
-  `POST /api/audit/extract` and one `POST /api/audit/glm-questions` (the free
+  `POST /api/payments/start`, one `POST /api/audit/extract` and one
+  `POST /api/audit/glm-questions` (the free
   `POST /api/orders/status` checks made by a reload are not counted).
   Evidence: `05-questions-created`.
 

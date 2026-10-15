@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-13
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); next: S4 spec draft
+> Updated: 2026-10-14
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) built in PR #137, offline checks pass; next: founder merge, then AC-25 live check
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -69,9 +69,17 @@
   recorded ([2026-10-13](./DECISION_LOG.md#2026-10-13--s4-answers-for-spec-017-draft));
   revision 6 passed five plan review rounds (last: PASS+NOTES, notes
   applied) and was **approved by Yasir on 2026-10-14**
-  ([decision](./DECISION_LOG.md#2026-10-14--approve-spec-017-s4)). **Next:**
-  build S4 in a new session (Sonnet worker, Opus review). Midtrans sandbox,
-  redirect URLs and GitHub secrets are set up by the founder.
+  ([decision](./DECISION_LOG.md#2026-10-14--approve-spec-017-s4)). **S4 is built:**
+  [PR #137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137) (draft,
+  not merged). Offline criteria AC-01..AC-24 pass (independent review per
+  slice and on the full PR, PASS+NOTES;
+  [record](../specs/017-payment-and-test-pass/VERIFICATION.md)). Founder
+  answers during the build: Q11 B, Q12 A, Q13 A, Q14–Q17
+  ([log](./DECISION_LOG.md#2026-10-14--s4-build-partial-chargeback-and-lost-second-payment-try)).
+  **Next:** the founder merges and deploys (migrations 0006–0008, four new
+  Worker secrets), then AC-25: one sandbox payment and one test pass on
+  production. Yasir approved AC-25 with a worst-case budget of USD 4.00, expected about USD 0.30 (2026-10-14). Midtrans sandbox, redirect
+  URLs and GitHub secrets are set up by the founder.
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or

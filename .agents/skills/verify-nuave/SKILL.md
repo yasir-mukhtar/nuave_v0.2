@@ -1,6 +1,6 @@
 ---
 name: verify-nuave
-description: Drive the Nuave web app's public audit journey (landing → /audit entry → brand confirm → order → paid reading → intake → ten questions → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
+description: Drive the Nuave web app's public audit journey (landing → /audit entry → brand confirm → order summary with the Rp99.000 price → simulated payment → paid reading → intake → ten questions → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
 ---
 
 # verify-nuave
@@ -26,7 +26,9 @@ Always run `cleanup`, even after a failure.
   root as its own process group, with the environment from
   `offlineE2EServerEnv({ NUAVE_NEW_AUDIT_ENABLED: "true", NUAVE_AUDIT_MODE: "synthetic" })`
   (`tests/e2e/shared-config.ts`): provider keys and the Resend settings
-  blanked, audit on, synthetic. Before it starts the server it applies the
+  blanked (so are the Midtrans key, the test-pass code and the founder alert
+  address: payment is the labelled simulated one, and Midtrans is never
+  called), audit on, synthetic. Before it starts the server it applies the
   local D1 migrations (`npm run db:migrate:local`), because orders and saved
   reports live in that local database (spec 016 R-33).
 - Refuses a port that is already in use. Never drive a server this run did not

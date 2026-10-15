@@ -6,6 +6,10 @@ import {
   type OrderState,
   type SpendDb,
 } from "../spending/spend-ledger";
+import {
+  isOrderNumberCollision,
+  newOrderNumber as makeOrderNumber,
+} from "./order-number";
 
 /**
  * D1 access for orders (spec 016). Every state change is one conditional
@@ -15,6 +19,9 @@ import {
 
 export const ORDER_OPEN_MS = 2 * 60 * 60 * 1000; // Q2: 2 hours
 export const ORDER_DEADLINE_MS = 24 * 60 * 60 * 1000; // D2: start + 24 hours
+/** Spec 017 R-11/R-13: a paid order waits this long, from payment, for its
+ * questions to be approved. */
+export const ORDER_PAID_MS = 7 * 24 * 60 * 60 * 1000;
 export const FAILURE_EMAIL_WINDOW_MS = 24 * 60 * 60 * 1000; // R-25
 /** Email retries back off: after the first failed attempt wait 2 minutes, then
  * 4, 8, 16 and 32, and at most 60 minutes between attempts from then on. */
@@ -32,6 +39,9 @@ export const MAX_REPORT_ATTEMPTS = 3; // R-19, as classifyReportRecovery
 
 export type OrderMode = "live" | "synthetic";
 export type OrderEnvironment = "production" | "preview";
+
+/** Spec 017 R-23. NULL in the database means `legacy`: made by S3 code. */
+export type PaymentKind = "unpaid" | "test" | "midtrans" | "simulated";
 
 export const ORDER_ID_PATTERN = /^[0-9a-f]{32}$/;
 
@@ -72,10 +82,75 @@ export type OrderRow = {
   ended_at: string | null;
   failure_code: string | null;
   overrun: number;
+  /** Spec 017 (migration 6). */
+  order_number: string | null;
+  paid_at: string | null;
+  /** NULL = legacy (R-23). */
+  payment_kind: PaymentKind | null;
+  replaced_by: string | null;
+  paid_attempt_id: string | null;
+  paid_transaction_id: string | null;
+  refunded_at: string | null;
 };
+
+/** R-18: SQL for "this order may run paid work": paid through Midtrans, a
+ * founder test pass, legacy (NULL), or the synthetic-mode simulated payment (in
+ * a synthetic order only), and not replaced. An `unpaid` order never passes. */
+export const PAID_GATE_SQL = `(payment_kind IS NULL
+  OR payment_kind IN ('midtrans', 'test')
+  OR (payment_kind = 'simulated' AND mode = 'synthetic'))
+  AND replaced_by IS NULL`;
+
+/** R-18: the same rule on a row already read. */
+export function orderMayRunPaidWork(
+  order: Pick<OrderRow, "payment_kind" | "mode" | "replaced_by">,
+): boolean {
+  if (order.replaced_by !== null) return false;
+  switch (order.payment_kind) {
+    case null:
+    case "midtrans":
+    case "test":
+      return true;
+    case "simulated":
+      return order.mode === "synthetic";
+    default:
+      return false;
+  }
+}
 
 const ACTIVE_STATES = `'running', 'reporting'`;
 const iso = (at: Date) => at.toISOString();
+
+/** R-07: one rule for "the order's end time has passed". `expires_at` is the end
+ * time: created + 2 hours; pushed out to the attempt's window end + grace when a
+ * payment attempt starts; paid time + 7 days once paid (R-11, R-13). An order
+ * with an open payment attempt never ends. `now` is a SQL parameter (`?2`). */
+export const orderPastEndSql = (now: string) =>
+  `(expires_at <= ${now} AND NOT EXISTS (SELECT 1 FROM payment_attempts a
+                                         WHERE a.order_id = orders.id AND a.status = 'open'))`;
+
+/** R-07 on a row already read. */
+export async function orderPastEnd(
+  db: SpendDb,
+  order: Pick<OrderRow, "id" | "state" | "expires_at">,
+  now: Date,
+): Promise<boolean> {
+  if (order.state !== "open" || order.expires_at > iso(now)) return false;
+  return !(await hasOpenAttempt(db, order.id));
+}
+
+export async function hasOpenAttempt(
+  db: SpendDb,
+  orderId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT 1 AS open FROM payment_attempts WHERE order_id = ?1 AND status = 'open' LIMIT 1",
+    )
+    .bind(orderId)
+    .first<{ open: number }>();
+  return row !== null;
+}
 
 export async function getOrder(
   db: SpendDb,
@@ -106,15 +181,30 @@ export async function orderInState(
     !order ||
     order.environment !== input.environment ||
     order.mode !== input.mode ||
-    !input.states.includes(order.state)
+    !input.states.includes(order.state) ||
+    // R-18: an unpaid or replaced order is refused like a missing one.
+    !orderMayRunPaidWork(order)
   ) {
     return null;
   }
-  // An open order past its time is as good as expired (R-22).
-  if (order.state === "open" && order.expires_at <= iso(input.now)) return null;
+  // An open order past its end time is as good as expired (R-22, R-07).
+  if (await orderPastEnd(db, order, input.now)) return null;
   return order;
 }
 
+/** How many times a new order number is drawn when the unique index says it is
+ * taken (R-01). 31^6 numbers make even one retry very unlikely. */
+const ORDER_NUMBER_TRIES = 5;
+
+/**
+ * Spec 017: make one order. `unpaid` (the customer's order) holds nothing
+ * (R-10, AC-10); `test` (the founder test pass, R-20) reserves its hold now,
+ * live mode only and only if the daily cap has room. The order number is made
+ * here, and a collision with an existing one is retried (R-01). With
+ * `previousOrderId` the older order is replaced in the same write (R-19): the
+ * result is "previous_active" when it is paid, has an open payment attempt or
+ * (Q14) an attempt closed as unknown.
+ */
 export async function createOrder(
   db: SpendDb,
   input: {
@@ -123,33 +213,126 @@ export async function createOrder(
     website: string;
     mode: OrderMode;
     environment: OrderEnvironment;
-    /** Live orders: the limit held against the daily cap (R-08). */
+    paymentKind: "unpaid" | "test";
+    /** The test pass's hold, against the daily cap (R-08, R-10). */
     limitUsd: number;
     dailyLimitUsd: number;
+    previousOrderId?: unknown;
     now: Date;
+    /** Tests only: where order numbers come from. */
+    newOrderNumber?: () => string;
   },
-): Promise<{ result: CreateOrderResult; orderId: string }> {
+): Promise<{
+  result: CreateOrderResult;
+  orderId: string;
+  orderNumber: string;
+  /** With "previous_active": why the older order could not be replaced. */
+  previousState?: "paid" | "payment_open" | "payment_unknown";
+}> {
   const orderId = newOrderId();
-  const result = await createOrderWithHold(
-    db,
-    {
-      id: orderId,
-      email: input.email,
-      businessName: input.businessName,
-      website: input.website,
-      mode: input.mode,
-      environment: input.environment,
-      createdAt: input.now,
-      expiresAt: new Date(input.now.getTime() + ORDER_OPEN_MS),
-    },
-    input.mode === "live"
-      ? {
-          limitUnits: usdToUnits(input.limitUsd),
-          dailyLimitUnits: usdToUnits(input.dailyLimitUsd),
-        }
-      : null,
-  );
-  return { result, orderId };
+  const draw = input.newOrderNumber ?? makeOrderNumber;
+  for (let tries = 1; ; tries += 1) {
+    const orderNumber = draw();
+    try {
+      const result = await createOrderWithHold(
+        db,
+        {
+          id: orderId,
+          orderNumber,
+          paymentKind: input.paymentKind,
+          email: input.email,
+          businessName: input.businessName,
+          website: input.website,
+          mode: input.mode,
+          environment: input.environment,
+          createdAt: input.now,
+          expiresAt: new Date(input.now.getTime() + ORDER_OPEN_MS),
+          ...(isOrderId(input.previousOrderId)
+            ? { replacing: { orderId: input.previousOrderId } }
+            : {}),
+        },
+        input.paymentKind === "test" && input.mode === "live"
+          ? {
+              limitUnits: usdToUnits(input.limitUsd),
+              dailyLimitUnits: usdToUnits(input.dailyLimitUsd),
+            }
+          : null,
+      );
+      return {
+        result,
+        orderId,
+        orderNumber,
+        ...(result === "previous_active"
+          ? {
+              previousState: await previousOrderState(
+                db,
+                input.previousOrderId as string,
+              ),
+            }
+          : {}),
+      };
+    } catch (error) {
+      if (!isOrderNumberCollision(error) || tries >= ORDER_NUMBER_TRIES) {
+        throw error;
+      }
+    }
+  }
+}
+
+async function previousOrderState(
+  db: SpendDb,
+  orderId: string,
+): Promise<"paid" | "payment_open" | "payment_unknown"> {
+  const row = await db
+    .prepare(
+      `SELECT payment_kind,
+              EXISTS (SELECT 1 FROM payment_attempts
+                      WHERE order_id = ?1 AND status = 'closed_unknown') AS unknown
+       FROM orders WHERE id = ?1`,
+    )
+    .bind(orderId)
+    .first<{ payment_kind: PaymentKind | null; unknown: number }>();
+  if (row?.payment_kind === "midtrans" || row?.payment_kind === "simulated") {
+    return "paid";
+  }
+  // Q14: only an attempt still closed as unknown says so; anything else (an
+  // open attempt, or one that changed since the refusal) stays "payment_open".
+  return row?.unknown ? "payment_unknown" : "payment_open";
+}
+
+/** R-23: an order made by S3 code has no number. Give it one before its next
+ * email (the S3 ready and failure emails do). Returns the order's number,
+ * whoever wrote it; a collision with another order's number draws again. */
+export async function ensureOrderNumber(
+  db: SpendDb,
+  order: Pick<OrderRow, "id" | "order_number">,
+  draw: () => string = makeOrderNumber,
+): Promise<string> {
+  if (order.order_number) return order.order_number;
+  for (let tries = 1; ; tries += 1) {
+    const candidate = draw();
+    try {
+      const result = await db
+        .prepare(
+          `UPDATE orders SET order_number = ?2
+           WHERE id = ?1 AND order_number IS NULL`,
+        )
+        .bind(order.id, candidate)
+        .run();
+      if (result.meta?.changes === 1) return candidate;
+      // Another run gave it a number first: use that one.
+      const row = await db
+        .prepare("SELECT order_number FROM orders WHERE id = ?1")
+        .bind(order.id)
+        .first<{ order_number: string | null }>();
+      if (row?.order_number) return row.order_number;
+      throw new Error("order number could not be assigned");
+    } catch (error) {
+      if (!isOrderNumberCollision(error) || tries >= ORDER_NUMBER_TRIES) {
+        throw error;
+      }
+    }
+  }
 }
 
 export type OrderQuestionRow = {
@@ -170,7 +353,8 @@ export type OrderQuestionRow = {
  * R-17: move the order to `running` and save, unchanged from then on, the
  * confirmed business details, the approved and original questions, the start
  * time (the D2 clock) and the deadline. One batch; only an `open` order that
- * has not passed its time can be approved.
+ * has not passed its time, and that is paid, a test pass or legacy (R-18), can
+ * be approved.
  */
 export async function approveOrder(
   db: SpendDb,
@@ -192,8 +376,8 @@ export async function approveOrder(
         `UPDATE orders
          SET state = 'running', started_at = ?2, deadline_at = ?3,
              intake_json = ?4, business_name = ?5
-         WHERE id = ?1 AND state = 'open' AND expires_at > ?2
-           AND environment = ?6 AND mode = ?7`,
+         WHERE id = ?1 AND state = 'open' AND NOT ${orderPastEndSql("?2")}
+           AND environment = ?6 AND mode = ?7 AND ${PAID_GATE_SQL}`,
       )
       .bind(
         input.orderId,
@@ -265,12 +449,11 @@ export async function orderStatus(
             : "pending") as QuestionProgress,
   }));
   return {
-    // An open order past its time reads as expired even before the cron
-    // settles it, so a returning customer is sent back to the order screen.
-    state:
-      order.state === "open" && order.expires_at <= now
-        ? "expired"
-        : order.state,
+    // An open order past its end time reads as expired even before the cron
+    // settles it, so a returning customer is sent back to the order screen. An
+    // order with an open payment attempt never does (R-07): its `payment` shows
+    // "checking".
+    state: (await orderPastEnd(db, order, input.now)) ? "expired" : order.state,
     completed: mapped.filter((item) => item.status === "completed").length,
     total: 10,
     questions: mapped,
@@ -290,7 +473,7 @@ export async function expireOpenOrders(
 ): Promise<string[]> {
   const ids = await orderIds(
     db,
-    `SELECT id FROM orders WHERE state = 'open' AND expires_at <= ?1
+    `SELECT id FROM orders WHERE state = 'open' AND paid_at IS NULL AND ${orderPastEndSql("?1")}
        AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
     [iso(input.now), input.environment, input.mode, input.limit],
   );
@@ -301,6 +484,8 @@ export async function expireOpenOrders(
         orderId: id,
         from: ["open"],
         to: "expired",
+        // R-07: re-checked inside the ending write itself.
+        onlyIfUnpaidPastEnd: true,
         now: () => input.now,
       })
     ) {
@@ -331,6 +516,28 @@ export async function ordersPastDeadline(
   );
 }
 
+/** R-13: paid orders whose questions were not approved within 7 days of payment
+ * (`expires_at` is paid time + 7 days, R-11). A founder test pass is never in
+ * this list: it keeps the 2-hour rule. */
+export async function paidNotStartedOrders(
+  db: SpendDb,
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
+): Promise<string[]> {
+  return orderIds(
+    db,
+    `SELECT id FROM orders
+     WHERE state = 'open' AND payment_kind IN ('midtrans', 'simulated')
+       AND paid_at IS NOT NULL AND expires_at <= ?1
+       AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
+    [iso(input.now), input.environment, input.mode, input.limit],
+  );
+}
+
 export async function activeOrders(
   db: SpendDb,
   input: {
@@ -348,6 +555,7 @@ export async function activeOrders(
     db,
     `SELECT id FROM orders WHERE state IN (${ACTIVE_STATES})
        AND environment = ?1 AND mode = ?2
+       AND ${PAID_GATE_SQL}
        AND deadline_at > ?3
        AND (lease_owner IS NULL OR lease_until <= ?3)
      ORDER BY last_step_at IS NOT NULL, last_step_at, created_at LIMIT ?4`,
@@ -382,6 +590,8 @@ export async function failedOrdersNeedingEmail(
            WHERE e.order_id = orders.id AND e.kind = 'failure') AS last_at
        FROM orders
        WHERE state = 'failed' AND environment = ?1 AND mode = ?2 AND ended_at > ?3
+         -- R-15: a refund ended this order; the customer already has their money.
+         AND (failure_code IS NULL OR failure_code != 'refunded')
          AND NOT EXISTS (SELECT 1 FROM order_emails e
                          WHERE e.order_id = orders.id AND e.kind = 'failure'
                            AND e.result = 'accepted'))
@@ -426,6 +636,7 @@ export async function claimOrderLease(
     .prepare(
       `UPDATE orders SET lease_owner = ?2, lease_until = ?3, last_step_at = ?4
        WHERE id = ?1 AND state IN (${ACTIVE_STATES})
+         AND ${PAID_GATE_SQL}
          AND deadline_at > ?4
          AND (lease_owner IS NULL OR lease_until <= ?4)`,
     )
@@ -834,28 +1045,4 @@ export async function savePreparedReading(
     )
     .bind(input.orderId, input.preparedJson)
     .run();
-}
-
-/** A customer who changed the website or the brand makes a replacement order;
- * the old one, if still `open` and of this environment, expires now and its
- * hold goes back to the daily cap in the same request. Any other id is ignored. */
-export async function expireSupersededOrder(
-  db: SpendDb,
-  input: {
-    orderId: unknown;
-    environment: OrderEnvironment;
-    now: Date;
-  },
-): Promise<boolean> {
-  if (!isOrderId(input.orderId)) return false;
-  const old = await getOrder(db, input.orderId);
-  if (!old || old.environment !== input.environment || old.state !== "open") {
-    return false;
-  }
-  return endOrder(db, {
-    orderId: old.id,
-    from: ["open"],
-    to: "expired",
-    now: () => input.now,
-  });
 }

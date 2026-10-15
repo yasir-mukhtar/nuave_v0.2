@@ -684,6 +684,33 @@ case.
   stay on Free. This replaces the 2026-10-13 decision "stay on Workers Free
   for now". CPU time is recorded in AC-25; R-23 has no offline CPU target.
 
+- **Q11 — Partial chargeback (asked during the build): B.** A
+  `partial_chargeback` is handled like a full `chargeback` (R-15): before
+  approval, on the paying transaction, the order ends `refunded`; after, it
+  is recorded; a founder notice is always sent.
+- **Q12 — Lost notification of a second try (asked during the build): A.**
+  The page's status check (R-14) also asks Get Status by the attempt's
+  `order_id` when transaction IDs are known, still at most once per attempt
+  per 30 seconds.
+- **Q13 — Screen after 7 days with no Midtrans answer (asked during the
+  build): A.** The closed-unknown screen shows the order number and
+  support only, no new payment. This settles the difference between the
+  Failure table and the Departures section in favour of the Failure table.
+- **Q14 — Unknown payment blocks a replacement (raised by the final
+  review): yes.** While an order has an attempt closed as unknown (R-06),
+  `POST /api/orders` refuses to replace it (as R-19 does for a paid order or
+  an open attempt). Once the founder closes the attempt as unpaid with the
+  support command, a replacement is allowed again.
+- **Q15 — Missing currency: yes.** A Get Status answer that is settled for
+  `99000.00` and gives no `currency` counts as IDR (the account takes only
+  rupiah). A stated currency other than IDR stays "needs refund" (R-09).
+- **Q16 — AC-25 budget:** USD 2.00 approved, then raised to a worst case
+  of USD 4.00 (two orders, each up to its USD 2.00 order limit); expected
+  about USD 0.30.
+- **Q17 — Fresh start after a refund before approval: yes.** The refunded
+  screen offers "Mulai pesanan baru", which clears the browser's saved order
+  and returns to the website entry. The refunded order stays ended.
+
 **Founder actions before AC-25:**
 
 - Midtrans sandbox account with QRIS, bank transfer, GoPay and DANA active.
@@ -742,6 +769,8 @@ case.
 Complete after implementation:
 
 - Verification artifact: `specs/017-payment-and-test-pass/VERIFICATION.md`
-- Result: Pending
-- Date: Pending
-- Verified commit or working-tree state: Pending
+- Result: offline criteria AC-01..AC-24 PASS+NOTES (notes fixed); AC-25
+  (live) pending a named founder approval
+- Date: 2026-10-14
+- Verified commit or working-tree state: PR #137, branch
+  `claude/vibrant-noether-5n3b4o`
