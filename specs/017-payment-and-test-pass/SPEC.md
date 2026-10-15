@@ -710,6 +710,12 @@ case.
 - **Q17 — Fresh start after a refund before approval: yes.** The refunded
   screen offers "Mulai pesanan baru", which clears the browser's saved order
   and returns to the website entry. The refunded order stays ended.
+- **Q18 — An earlier unknown try, then a finally unpaid one (2026-10-15):
+  A.** When an order has an attempt closed as unknown and its latest
+  attempt is finally unpaid, the screen shows the closed-unknown support
+  screen ("Pembayaran belum dapat dipastikan", order number, support) and no
+  "Coba bayar lagi", because Q14 refuses that replacement. After the founder
+  closes the unknown attempt as unpaid, "Coba bayar lagi" returns.
 
 **Founder actions before AC-25:**
 

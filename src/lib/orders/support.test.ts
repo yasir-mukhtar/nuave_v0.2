@@ -14,12 +14,13 @@ import {
   generateSyntheticLocalReport,
 } from "../audit/local-direct-ten-audit";
 import { applyRefund, applyStatus } from "../payments/apply";
-import { startAttempt } from "../payments/attempts";
+import { paymentView, startAttempt } from "../payments/attempts";
 import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
 import { getStatus } from "../payments/midtrans";
 import { reserveOrderCall, usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { runOrders, type RunnerDeps } from "./runner";
+import { createOrder, getOrder } from "./store";
 import {
   approve,
   makeOrder,
@@ -726,6 +727,49 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
       q("SELECT COUNT(*) AS n FROM payment_attempts WHERE status = 'open'")[0]!
         .n,
     ).toBe(0);
+  });
+
+  it("an earlier try closed as unknown makes a finally unpaid latest try read as support-only; closing it as unpaid brings back unpaid_final (Q18)", async () => {
+    const { id, attempt } = await orderWithAttempt();
+    const first = attempt.midtrans_order_id;
+    expect(await support().run("close", first, "unknown")).toBe(0);
+    const second = await startAttempt(d1.db, {
+      orderId: id,
+      environment: "production",
+      mode: "live",
+      now: clock,
+      limitUnits: LIMIT,
+      dailyLimitUnits: DAILY,
+    });
+    if (second.result !== "started") throw new Error("no second attempt");
+    expect(
+      await support().run("close", second.attempt.midtrans_order_id, "unpaid"),
+    ).toBe(0);
+    const view = async () =>
+      paymentView(d1.db, (await getOrder(d1.db, id))!, clock);
+    const number = order(id).order_number as string;
+    // The page and the Q14 guard agree: no replacement while one try is unknown.
+    const replace = () =>
+      createOrder(d1.db, {
+        email: "owner@example.com",
+        businessName: "Pengganti",
+        website: "https://pengganti.example",
+        mode: "live",
+        environment: "production",
+        paymentKind: "unpaid",
+        limitUsd: 2,
+        dailyLimitUsd: 100,
+        previousOrderId: id,
+        now: clock,
+      });
+    expect(await view()).toEqual({
+      state: "closed_unknown",
+      order_number: number,
+    });
+    expect((await replace()).result).toBe("previous_active");
+    expect(await support().run("close", first, "unpaid")).toBe(0);
+    expect(await view()).toEqual({ state: "unpaid_final" });
+    expect((await replace()).result).toBe("created");
   });
 
   it("close refuses a settled attempt, an unknown order_id and a bad word, and changes nothing", async () => {

@@ -6,6 +6,14 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-15 — S4 merged; Q18
+
+Yasir merged PR #137 (Spec 017, S4) on 2026-10-15 as `15842d4`, and
+answered **Q18 — A**: when an order has a payment attempt closed as unknown
+and its latest attempt ended unpaid, the customer sees the support-only
+screen, not "Coba bayar lagi" (which Q14 would refuse). Recorded in the
+spec; built in a follow-up PR.
+
 ## 2026-10-14 — S4 build: partial chargeback and lost second payment try
 
 Yasir answered two questions found while building

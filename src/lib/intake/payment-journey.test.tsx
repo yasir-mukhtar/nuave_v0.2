@@ -490,6 +490,20 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
   );
 });
 
+describe("a latest try finally unpaid after an earlier unknown try (Q18 A)", () => {
+  it("the status answer is closed_unknown: the page is support-only and offers neither Coba bayar lagi nor Kembali", async () => {
+    // The server answers closed_unknown (not unpaid_final) for this order.
+    await returnWith({ state: "closed_unknown", order_number: NUMBER });
+    await heading("Pembayaran belum dapat dipastikan");
+    expect(screen.getByText(NUMBER)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "support@nuave.ai" })).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Coba bayar lagi" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+  });
+});
+
 describe("Mulai pesanan baru after a refund (Q17)", () => {
   it.each(["closed_unknown", "needs_refund", "paid_ended", "unpaid_final"])(
     "a %s order has no Mulai pesanan baru",
