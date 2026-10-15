@@ -20,7 +20,7 @@ import { getStatus } from "../payments/midtrans";
 import { reserveOrderCall, usdToUnits } from "../spending/spend-ledger";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { runOrders, type RunnerDeps } from "./runner";
-import { getOrder } from "./store";
+import { createOrder, getOrder } from "./store";
 import {
   approve,
   makeOrder,
@@ -748,12 +748,28 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
     const view = async () =>
       paymentView(d1.db, (await getOrder(d1.db, id))!, clock);
     const number = order(id).order_number as string;
+    // The page and the Q14 guard agree: no replacement while one try is unknown.
+    const replace = () =>
+      createOrder(d1.db, {
+        email: "owner@example.com",
+        businessName: "Pengganti",
+        website: "https://pengganti.example",
+        mode: "live",
+        environment: "production",
+        paymentKind: "unpaid",
+        limitUsd: 2,
+        dailyLimitUsd: 100,
+        previousOrderId: id,
+        now: clock,
+      });
     expect(await view()).toEqual({
       state: "closed_unknown",
       order_number: number,
     });
+    expect((await replace()).result).toBe("previous_active");
     expect(await support().run("close", first, "unpaid")).toBe(0);
     expect(await view()).toEqual({ state: "unpaid_final" });
+    expect((await replace()).result).toBe("created");
   });
 
   it("close refuses a settled attempt, an unknown order_id and a bad word, and changes nothing", async () => {
