@@ -348,8 +348,20 @@ export async function paymentView(
       }
       return { state: latest.check_failed_at ? "cannot_check" : "checking" };
     }
-    case "finally_unpaid":
-      return { state: "unpaid_final" };
+    case "finally_unpaid": {
+      // Q18: an earlier try closed as unknown means the server refuses a
+      // replacement (Q14), so "Coba bayar lagi" would loop. Show support-only.
+      const unknown = await db
+        .prepare(
+          `SELECT 1 AS n FROM payment_attempts
+           WHERE order_id = ?1 AND status = 'closed_unknown' LIMIT 1`,
+        )
+        .bind(order.id)
+        .first();
+      return unknown
+        ? { state: "closed_unknown", ...number }
+        : { state: "unpaid_final" };
+    }
     case "closed_unknown":
       return { state: "closed_unknown", ...number };
     case "needs_refund":
