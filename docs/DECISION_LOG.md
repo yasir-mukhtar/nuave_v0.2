@@ -1,10 +1,24 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-14
+> Updated: 2026-10-18
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-18 — Report link lasts 12 months; Figma AI images for the redesign
+
+- **Report link life:** Yasir decided that the private report link in the
+  report-ready email works for **12 months**. The email design says "Link
+  ini pribadi dan berlaku selama 12 bulan." This is the finite-access
+  wording that
+  [`06 — Audit Report`](./journey/06-audit-report.md#report-ready-email-and-delivery-ownership)
+  left for approval. How access is checked, renewed or recovered stays with
+  the [access-and-recovery brief](./briefs/REPORT_ACCESS_RECOVERY.md).
+- **Figma AI images:** Yasir approved spending Figma AI credits on the 3D
+  pictures for the redesigned audit journey in the Figma design file. This
+  covers design work only. It does not change the live site or add a paid
+  tool to the product.
 
 ## 2026-10-18 — S4 live check; slow websites; refund check at G1
 
