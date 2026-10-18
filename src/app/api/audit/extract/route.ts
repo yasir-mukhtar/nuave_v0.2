@@ -44,6 +44,31 @@ import { syntheticLocalExtraction } from "@/lib/audit/local-direct-ten-audit";
 
 export const runtime = "nodejs";
 
+// A slow site can time out once and answer on the next press (seen live,
+// 2026-10-18). Only these two codes are transient: the error carries no HTTP
+// status, so HTTP_ERROR (a 404 looks the same as a 503) is never retried.
+const TRANSIENT_SOURCE_CODES = new Set(["TIMEOUT", "FETCH_FAILED"]);
+const SOURCE_RETRY_PAUSE_MS = 500;
+
+// One automatic extra read before the customer sees "unavailable". Every
+// attempt runs the full safe fetch, including the destination rate limiter.
+// No AI call has happened yet, so a retry costs no provider spend.
+async function fetchWebsiteExcerptWithRetry(
+  ...args: Parameters<typeof fetchWebsiteExcerpt>
+) {
+  try {
+    return await fetchWebsiteExcerpt(...args);
+  } catch (error) {
+    if (
+      !(error instanceof SafeSourceFetchError) ||
+      !TRANSIENT_SOURCE_CODES.has(error.code)
+    )
+      throw error;
+    await new Promise((resolve) => setTimeout(resolve, SOURCE_RETRY_PAUSE_MS));
+    return fetchWebsiteExcerpt(...args);
+  }
+}
+
 function extractionRateLimitResponse(
   status: 429 | 503,
   sourceStatus: SourceExcerptStatus = status === 429
@@ -197,7 +222,7 @@ export async function POST(request: Request) {
       ) {
         return extractionRateLimitResponse(503, "rate-unavailable");
       }
-      sourceData = await fetchWebsiteExcerpt(input.website_url, {
+      sourceData = await fetchWebsiteExcerptWithRetry(input.website_url, {
         destinationRateLimiter: bindings.identityDestination ?? {
           limit: async () => ({ success: true }),
         },
