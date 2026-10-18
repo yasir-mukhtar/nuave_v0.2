@@ -1,6 +1,6 @@
 # Verification: Spec 017 — Payment, founder test pass and cap alerts (S4)
 
-> Result: **Offline criteria PASS+NOTES** (AC-01 to AC-24, final exact-head review; notes fixed). **AC-25 (live) not run**: needs a named founder approval and budget. Spec 017 is not Verified until AC-25 passes.
+> Result: **Verified, with a founder-accepted exception.** Offline criteria AC-01 to AC-24 PASS+NOTES; AC-25 live run PASS on 2026-10-18, except the refund-notification check, which the Midtrans sandbox could not run (no merchant balance) and the founder moved to G1 (Midtrans production).
 > Reviewer: independent Opus reviewers per slice and on the full PR (did not write the code)
 > Date: 2026-10-14
 > Spec version: revision 6 (approved 2026-10-14, merged in PR #136 as `5db12a4`), plus founder answers Q11, Q12 and Q13 given during the build
@@ -75,7 +75,7 @@
 | AC-22 | Pass | `runner-worst-case.test.ts` ("the spec 017 tasks in the cron's run budget": idle run, large reconciliations, worst mix ≤ 40, waits at most one run, legacy orders) |
 | AC-23 | Pass | `order-routes.test.ts`, `payment-routes.test.ts` (email list; the start route is tested with both production switch values, order creation and the test pass with `false`; the email-list code does not read the switch) |
 | AC-24 | Pass | `npm run verify` green on `aa24489` (reviewer) and `f2ce2a6` (worker); `verify-nuave drive all` 6/6 PASSED on `aa24489` (run `20261014T104333Z-8mas`) and on the `38da817` code (Opus max review, run `20261014T132843Z-c5tc`), both in git-ignored `.local-evidence/`, with a local `lsof` stand-in outside the repo (this sandbox's `lsof` cannot see the listener) |
-| AC-25 | Not run | Live sandbox check after deploy; needs a named founder approval and budget |
+| AC-25 | Pass, with founder-accepted exception (2026-10-18) | Founder-run on production, budget worst case USD 4.00 approved. Paid order NV-45M3AW and test-pass order NV-SQ7SPT both reached the report by email link; total USD 0.4048. Refund check moved to G1. See [AC-25 live run](#ac-25-live-run-2026-10-18) |
 
 ## Requirements trace
 
@@ -134,7 +134,7 @@ then dropped; a chargeback of a needs-refund transaction stays on the
 
 ## Findings
 
-No open blocking or should-fix finding after `e7d434a`. The four questions from the Opus max review are answered (Q14–Q17) and built. Open: Q18 (screen when an earlier attempt was closed as unknown by hand and a later one ended unpaid). Notes kept, for the founder:
+No open blocking or should-fix finding. The questions from the Opus max review are answered (Q14–Q17) and built; Q18 (A) is built in PR #138. Notes kept, for the founder:
 
 - **Q13 (answered A):** after 7 days with no Midtrans answer the screen
   shows only the order number and support, no new payment.
@@ -147,8 +147,68 @@ No open blocking or should-fix finding after `e7d434a`. The four questions from 
   wrangler batch against a remote database (it is safe to repeat). AC-25
   covers the first two.
 
+## AC-25 live run (2026-10-18)
+
+Run by Yasir on production (`v2.nuave.ai`, worker version
+`e2e70345-3bcb-4cbd-9f1c-40c70b3e7d6a`, PRs #137 and #138 deployed), with
+Midtrans sandbox keys and an email on the founder's list. Budget: worst case
+USD 4.00 approved (Q16). Order rows read from production D1 with read-only
+queries; no write was made by an agent.
+
+**Paid order NV-45M3AW** (QRIS through GoPay, sandbox):
+
+| Step | Time (UTC) | Evidence |
+|---|---|---|
+| Order created | 04:46:20 | `orders.payment_kind = midtrans` after payment |
+| Paid | 04:49:17 | One attempt `NV-45M3AW-1`; Midtrans dashboard "Settlement", QRIS, Rp99.000; stored transaction `settlement / paid / qris / IDR / 99000.00` |
+| Payment-received email | 04:50 | Received by the founder; order number, amount, promise, "browser yang sama" line, support address, no link |
+| Questions approved | 04:52:42 | |
+| Report saved, ready email | 05:03:17 | Received; private link, order number, support address |
+| Hold | — | Reserved on the payment day (2026-10-18), settled to USD 0.202972 of 2.00; no overrun |
+
+- Return URL carried `order_id=NV-45M3AW-1&status_code=200&transaction_status=settlement`;
+  the page ignored those words and showed "Pembayaran diterima" from the
+  server's own status.
+- The Midtrans page showed QRIS, bank transfer, GoPay and DANA (founder,
+  2026-10-18). Q15 (missing currency) was not needed: the answer carried
+  `IDR`.
+- The first press of "Lanjut" after payment showed "Halaman website belum
+  dapat dibaca…": the founder's site answered Nuave's server slowly. A
+  second press worked. No AI spend happened before the read. Fixed by
+  PR #139 (one automatic retry) and a follow-up that lets each read wait
+  up to 10 seconds (founder Option A).
+
+**Test pass NV-SQ7SPT** (`/uji`, no payment): created 07:02:58, approved
+07:04:07, report saved and ready email accepted 07:15:19; received by the
+founder. `payment_kind = test`, no payment attempt, every ledger row marked
+`test`, hold settled to USD 0.188271 of 2.00. An earlier test-pass order
+NV-J25U6S was ended when the founder started NV-SQ7SPT (one website reading,
+USD 0.013517).
+
+**Total live spend:** USD 0.404760 (0.202972 + 0.188271 + 0.013517).
+Question writing is still counted at its full USD 0.05 reservation per
+order, as in S3 (the provider's actual cost is not settled).
+
+**Refund check: founder-accepted exception.** A refund of NV-45M3AW from the
+Midtrans sandbox dashboard was refused by Midtrans: "Sorry, your refund
+request was declined due to merchant insufficient funds." The sandbox account
+holds no balance, so whether a dashboard refund sends its notification to the
+per-transaction address, and whether a DANA payment can be refunded from the
+dashboard, could not be observed. Yasir moved both checks to G1 (the first
+real purchase and refund, on Midtrans production), 2026-10-18.
+
+**Cloudflare (dashboard, last 24 hours, all invocations of `nuave-v2`, not
+only the cron):** CPU time P50 197 ms, P90 337 ms, P99 414 ms, P999 418 ms;
+median CPU 196.84 ms; 1.89k invocations; errors 0, "Exceeded CPU Time
+Limits" 0. Outside requests in the window: api.openai.com 12, masryef.com 3,
+api.resend.com 2, api.sandbox.midtrans.com 2, api.cheaperinference.com 1,
+app.sandbox.midtrans.com 1. The account is still on Workers Free; these
+figures are far above Free's 10 ms, which supports Q10 (move to Workers Paid
+before G1).
+
 ## Verdict
 
-**Offline: PASS (with notes).** AC-01 to AC-24 pass on the final head.
-**Spec 017 stays "built, not verified"** until AC-25, the live sandbox run
-after the founder merges and deploys, passes with a named approval.
+**Verified, with a founder-accepted exception (2026-10-18).** AC-01 to AC-24
+pass offline on the final head; AC-25 passes on production for the paid path
+and the test pass. The refund-notification and DANA-refund checks move to G1
+on Midtrans production.
