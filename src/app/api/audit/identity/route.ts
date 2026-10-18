@@ -3,6 +3,7 @@ import {
   SafeSourceFetchError,
   type SourceDestinationRateLimiter,
 } from "@/lib/audit/safe-source-fetch";
+import { retryTransientSourceRead } from "@/lib/audit/retry-transient-read";
 import { fetchSourceIdentity } from "@/lib/audit/source-identity";
 import {
   parseSourceInput,
@@ -107,10 +108,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const identity = await fetchSourceIdentity(parsedSource, {
-      destinationRateLimiter:
-        bindings.identityDestination ?? LOCAL_DESTINATION_RATE_LIMITER,
-    });
+    // One automatic retry on a transient failure; no AI runs in this step.
+    const identity = await retryTransientSourceRead(() =>
+      fetchSourceIdentity(parsedSource, {
+        destinationRateLimiter:
+          bindings.identityDestination ?? LOCAL_DESTINATION_RATE_LIMITER,
+      }),
+    );
     return NextResponse.json({ ...identity, preparation_mode: "live" });
   } catch (error) {
     if (

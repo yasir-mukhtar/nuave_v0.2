@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  SOURCE_EXCERPT_UNAVAILABLE_MESSAGE,
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
   type AuditCallTelemetry,
 } from "./types";
@@ -53,6 +54,7 @@ vi.mock("@/lib/audit/source-identity", () => sourceMocks);
 
 import { GET as identityGET } from "../../app/api/audit/identity/route";
 import { POST as questionsPOST } from "../../app/api/audit/glm-questions/route";
+import { SafeSourceFetchError } from "./safe-source-fetch";
 import * as gates from "./deployment-gate";
 import * as limiter from "./rate-limit";
 import * as questions from "../intake/glm-local";
@@ -375,6 +377,69 @@ describe("GET /api/audit/identity server-selected mode", () => {
     expect(String(data.error)).toContain("identity");
     expect(sourceMocks.fetchSourceIdentity).not.toHaveBeenCalled();
   });
+
+  describe("one automatic retry of the website read", () => {
+    const UNAVAILABLE_BODY = {
+      error:
+        "Kami tidak dapat membaca sumber publik ini. Periksa URL dan coba lagi.",
+      code: "SOURCE_UNAVAILABLE",
+    };
+
+    it.each(["TIMEOUT", "FETCH_FAILED"] as const)(
+      "%s once, then success: 200 with the identity",
+      async (code) => {
+        liveMode();
+        sourceMocks.fetchSourceIdentity
+          .mockReset()
+          .mockRejectedValueOnce(new SafeSourceFetchError(code, "slow"))
+          .mockResolvedValueOnce(liveIdentity());
+        const response = await identityGET(identityRequest());
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.preparation_mode).toBe("live");
+        expect(data.display_name).toBe("Batik Laras Official");
+        expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it("both attempts fail: the same 400 SOURCE_UNAVAILABLE", async () => {
+      liveMode();
+      sourceMocks.fetchSourceIdentity
+        .mockReset()
+        .mockRejectedValue(new SafeSourceFetchError("TIMEOUT", "slow"));
+      const response = await identityGET(identityRequest());
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual(UNAVAILABLE_BODY);
+      expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(2);
+    });
+
+    it.each(["HTTP_ERROR", "RESERVED_ADDRESS", "DNS_FAILURE"] as const)(
+      "permanent %s: exactly one attempt",
+      async (code) => {
+        liveMode();
+        sourceMocks.fetchSourceIdentity
+          .mockReset()
+          .mockRejectedValue(new SafeSourceFetchError(code, "no"));
+        const response = await identityGET(identityRequest());
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual(UNAVAILABLE_BODY);
+        expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it.each([
+      ["RATE_LIMITED", 429],
+      ["RATE_LIMIT_UNAVAILABLE", 503],
+    ] as const)("%s is never retried", async (code, status) => {
+      liveMode();
+      sourceMocks.fetchSourceIdentity
+        .mockReset()
+        .mockRejectedValue(new SafeSourceFetchError(code, "limit"));
+      const response = await identityGET(identityRequest());
+      expect(response.status).toBe(status);
+      expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe("POST /api/audit/extract server-selected mode", () => {
@@ -450,6 +515,82 @@ describe("POST /api/audit/extract server-selected mode", () => {
     expect(
       providerMocks.assertLiveProviderCredentialsConfigured,
     ).toHaveBeenCalled();
+  });
+
+  describe("one automatic retry of the website read", () => {
+    const UNAVAILABLE = {
+      code: "SOURCE_UNAVAILABLE",
+      source_excerpt_status: "unavailable",
+    };
+    const page = {
+      source_url: "https://batiklaras.example/",
+      retrieved_at: "2026-10-18T00:00:00.000Z",
+      text: "Batik tulis Pekalongan",
+    };
+
+    afterEach(() => {
+      vi.mocked(fetchWebsiteExcerpt).mockReset();
+      vi.mocked(fetchWebsiteExcerpt).mockResolvedValue(null);
+    });
+
+    it.each(["TIMEOUT", "FETCH_FAILED"] as const)(
+      "%s once, then success: extraction proceeds with the page text",
+      async (code) => {
+        liveMode();
+        vi.mocked(fetchWebsiteExcerpt)
+          .mockRejectedValueOnce(new SafeSourceFetchError(code, "slow"))
+          .mockResolvedValueOnce(page);
+        const response = await extractPOST(extractRequest());
+        expect(response.status).toBe(200);
+        expect((await response.json()).source_excerpt_status).toBe("included");
+        expect(fetchWebsiteExcerpt).toHaveBeenCalledTimes(2);
+        expect(
+          providerMocks.liveExtractBusinessDraft.mock.calls[0][0]
+            .public_source_data.text,
+        ).toBe(page.text);
+      },
+    );
+
+    it("both attempts fail: the same unavailable answer, no AI call", async () => {
+      liveMode();
+      vi.mocked(fetchWebsiteExcerpt).mockRejectedValue(
+        new SafeSourceFetchError("TIMEOUT", "slow"),
+      );
+      const response = await extractPOST(extractRequest());
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data).toMatchObject(UNAVAILABLE);
+      expect(data.error).toBe(SOURCE_EXCERPT_UNAVAILABLE_MESSAGE);
+      expect(fetchWebsiteExcerpt).toHaveBeenCalledTimes(2);
+      expect(providerMocks.liveExtractBusinessDraft).not.toHaveBeenCalled();
+    });
+
+    it.each(["HTTP_ERROR", "RESERVED_ADDRESS", "DNS_FAILURE"] as const)(
+      "permanent %s: exactly one attempt",
+      async (code) => {
+        liveMode();
+        vi.mocked(fetchWebsiteExcerpt).mockRejectedValue(
+          new SafeSourceFetchError(code, "no"),
+        );
+        const response = await extractPOST(extractRequest());
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject(UNAVAILABLE);
+        expect(fetchWebsiteExcerpt).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it.each([
+      ["RATE_LIMITED", 429],
+      ["RATE_LIMIT_UNAVAILABLE", 503],
+    ] as const)("%s is never retried", async (code, status) => {
+      liveMode();
+      vi.mocked(fetchWebsiteExcerpt).mockRejectedValue(
+        new SafeSourceFetchError(code, "limit"),
+      );
+      const response = await extractPOST(extractRequest());
+      expect(response.status).toBe(status);
+      expect(fetchWebsiteExcerpt).toHaveBeenCalledTimes(1);
+    });
   });
 
   it.each(["gemini", "groq", "openrouter"])(
