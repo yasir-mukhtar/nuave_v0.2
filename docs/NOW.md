@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-14
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) built in PR #137, offline checks pass; next: founder merge, then AC-25 live check
+> Updated: 2026-10-18
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: S5 (terms, price and promise wording)
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -76,10 +76,16 @@
   [record](../specs/017-payment-and-test-pass/VERIFICATION.md)). Founder
   answers during the build: Q11 B, Q12 A, Q13 A, Q14–Q17
   ([log](./DECISION_LOG.md#2026-10-14--s4-build-partial-chargeback-and-lost-second-payment-try)).
-  **Next:** the founder merges and deploys (migrations 0006–0008, four new
-  Worker secrets), then AC-25: one sandbox payment and one test pass on
-  production. Yasir approved AC-25 with a worst-case budget of USD 4.00, expected about USD 0.30 (2026-10-14). Midtrans sandbox, redirect
-  URLs and GitHub secrets are set up by the founder.
+  Merged and deployed 2026-10-15 (#137 `15842d4`, #138 `b879afe`; migrations
+  0006–0008 and four new Worker secrets applied) and 2026-10-18 (#139
+  `d42032d`, website-read retry). **AC-25 passed** 2026-10-18 (founder-run,
+  USD 4.00 worst case approved): paid order NV-45M3AW (QRIS, sandbox) and
+  test pass NV-SQ7SPT both reached the report by email link; total USD
+  0.4048. The refund-notification and DANA-refund checks could not run in
+  the sandbox (no merchant balance) and move to G1. Spec 017 is
+  **Verified** with that exception. Cloudflare CPU per invocation is about
+  200 ms (P50) on Workers Free; Q10 (Workers Paid before G1) stands.
+  **Next:** S5, then the founder moves to Workers Paid and runs G1.
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or

@@ -6,6 +6,20 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-18 — S4 live check; slow websites; refund check at G1
+
+- **AC-25 accepted** with one exception: the Midtrans sandbox refused the
+  refund ("merchant insufficient funds"), so the refund notification and a
+  DANA dashboard refund are checked at G1 on Midtrans production. Spec 017
+  is Verified with that exception.
+- **Slow websites (Option A):** Nuave retries a slow website read once
+  (PR #139) and lets each try wait up to 10 seconds instead of 5 (12 seconds
+  in total per read). A
+  customer may wait longer on a slow site before an error, but fewer slow
+  sites fail.
+- **Workers plan:** the account is still on Workers Free. Q10 stands: move
+  to Workers Paid before G1 (live CPU is about 200 ms per invocation).
+
 ## 2026-10-15 — S4 merged; Q18
 
 Yasir merged PR #137 (Spec 017, S4) on 2026-10-15 as `15842d4`, and

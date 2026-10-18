@@ -513,9 +513,11 @@ describe("safe public source response bounds", () => {
     expect(headers.get("accept")).toBe("text/html, application/xhtml+xml");
   });
 
-  it("uses a five-second request signal and enforces the ten-second total budget", async () => {
-    expect(SOURCE_REQUEST_TIMEOUT_MS).toBe(5_000);
-    expect(SOURCE_TOTAL_TIMEOUT_MS).toBe(10_000);
+  it("uses a ten-second request signal and enforces the twelve-second total budget", async () => {
+    expect(SOURCE_REQUEST_TIMEOUT_MS).toBe(10_000);
+    expect(SOURCE_TOTAL_TIMEOUT_MS).toBe(12_000);
+    // One DNS lookup or one redirect must still fit after a full request.
+    expect(SOURCE_TOTAL_TIMEOUT_MS).toBeGreaterThan(SOURCE_REQUEST_TIMEOUT_MS);
 
     const timeoutSignal = vi.fn(() => new AbortController().signal);
     const options = safeFetchOptions({ timeoutSignal });
@@ -531,6 +533,66 @@ describe("safe public source response bounds", () => {
       safeFetchPublicResource("https://expired.example/", expired),
     ).rejects.toMatchObject({ code: "TIMEOUT" });
     expect(expired.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  describe("slow website (fake clock)", () => {
+    // A fake site that answers after `delayMs` and honours the abort signal.
+    function slowSite(delayMs: number) {
+      return vi.fn<typeof fetch>(
+        (_url, init) =>
+          new Promise<Response>((resolve, reject) => {
+            const timer = setTimeout(() => resolve(htmlResponse()), delayMs);
+            init?.signal?.addEventListener("abort", () => {
+              clearTimeout(timer);
+              reject(new DOMException("aborted", "AbortError"));
+            });
+          }),
+      );
+    }
+    const fakeTimeoutSignal = (milliseconds: number) => {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), milliseconds);
+      return controller.signal;
+    };
+
+    it("reads a site that answers after about seven seconds", async () => {
+      vi.useFakeTimers();
+      try {
+        const read = safeFetchPublicResource(
+          "https://slow.example/",
+          safeFetchOptions({
+            fetchImpl: slowSite(7_000),
+            timeoutSignal: fakeTimeoutSignal,
+          }),
+        );
+        await vi.advanceTimersByTimeAsync(7_000);
+        await expect(read).resolves.toMatchObject({
+          url: "https://slow.example/",
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("still fails with TIMEOUT when the site answers beyond the limit", async () => {
+      vi.useFakeTimers();
+      try {
+        const read = safeFetchPublicResource(
+          "https://too-slow.example/",
+          safeFetchOptions({
+            fetchImpl: slowSite(SOURCE_REQUEST_TIMEOUT_MS + 1_000),
+            timeoutSignal: fakeTimeoutSignal,
+          }),
+        );
+        const assertion = expect(read).rejects.toMatchObject({
+          code: "TIMEOUT",
+        });
+        await vi.advanceTimersByTimeAsync(SOURCE_REQUEST_TIMEOUT_MS);
+        await assertion;
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it("rejects a non-HTML response before reading its body", async () => {

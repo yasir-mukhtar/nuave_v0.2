@@ -1,6 +1,6 @@
 # Spec 017: Payment, founder test pass and cap alerts (S4)
 
-> Status: **Approved** — Yasir approved revision 6 on 2026-10-14 ([decision](../../docs/DECISION_LOG.md#2026-10-14--approve-spec-017-s4)). Five plan review rounds; the last was PASS+NOTES with notes applied. The build runs in a new session.
+> Status: **Verified** (2026-10-18), with a founder-accepted exception: the refund-notification and DANA-refund checks of AC-25 move to G1 ([record](./VERIFICATION.md)). Approved revision 6 on 2026-10-14 ([decision](../../docs/DECISION_LOG.md#2026-10-14--approve-spec-017-s4)); built in PRs #137, #138 and #139.
 > Owner: orchestrator
 > Updated: 2026-10-14 (revision 6: closure-check findings B1–B4 and diff-check notes applied)
 > Implements: S4 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)
@@ -775,8 +775,9 @@ case.
 Complete after implementation:
 
 - Verification artifact: `specs/017-payment-and-test-pass/VERIFICATION.md`
-- Result: offline criteria AC-01..AC-24 PASS+NOTES (notes fixed); AC-25
-  (live) pending a named founder approval
-- Date: 2026-10-14
-- Verified commit or working-tree state: PR #137, branch
-  `claude/vibrant-noether-5n3b4o`
+- Result: Verified with a founder-accepted exception. AC-01..AC-24 PASS+NOTES
+  offline; AC-25 PASS on production 2026-10-18 (orders NV-45M3AW paid and
+  NV-SQ7SPT test pass, USD 0.4048); refund checks moved to G1
+- Date: 2026-10-18
+- Verified commit or working-tree state: production worker
+  `e2e70345-3bcb-4cbd-9f1c-40c70b3e7d6a` (main `b879afe`, PRs #137 and #138)
