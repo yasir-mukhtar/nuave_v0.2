@@ -377,6 +377,69 @@ describe("GET /api/audit/identity server-selected mode", () => {
     expect(String(data.error)).toContain("identity");
     expect(sourceMocks.fetchSourceIdentity).not.toHaveBeenCalled();
   });
+
+  describe("one automatic retry of the website read", () => {
+    const UNAVAILABLE_BODY = {
+      error:
+        "Kami tidak dapat membaca sumber publik ini. Periksa URL dan coba lagi.",
+      code: "SOURCE_UNAVAILABLE",
+    };
+
+    it.each(["TIMEOUT", "FETCH_FAILED"] as const)(
+      "%s once, then success: 200 with the identity",
+      async (code) => {
+        liveMode();
+        sourceMocks.fetchSourceIdentity
+          .mockReset()
+          .mockRejectedValueOnce(new SafeSourceFetchError(code, "slow"))
+          .mockResolvedValueOnce(liveIdentity());
+        const response = await identityGET(identityRequest());
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data.preparation_mode).toBe("live");
+        expect(data.display_name).toBe("Batik Laras Official");
+        expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it("both attempts fail: the same 400 SOURCE_UNAVAILABLE", async () => {
+      liveMode();
+      sourceMocks.fetchSourceIdentity
+        .mockReset()
+        .mockRejectedValue(new SafeSourceFetchError("TIMEOUT", "slow"));
+      const response = await identityGET(identityRequest());
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual(UNAVAILABLE_BODY);
+      expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(2);
+    });
+
+    it.each(["HTTP_ERROR", "RESERVED_ADDRESS", "DNS_FAILURE"] as const)(
+      "permanent %s: exactly one attempt",
+      async (code) => {
+        liveMode();
+        sourceMocks.fetchSourceIdentity
+          .mockReset()
+          .mockRejectedValue(new SafeSourceFetchError(code, "no"));
+        const response = await identityGET(identityRequest());
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual(UNAVAILABLE_BODY);
+        expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it.each([
+      ["RATE_LIMITED", 429],
+      ["RATE_LIMIT_UNAVAILABLE", 503],
+    ] as const)("%s is never retried", async (code, status) => {
+      liveMode();
+      sourceMocks.fetchSourceIdentity
+        .mockReset()
+        .mockRejectedValue(new SafeSourceFetchError(code, "limit"));
+      const response = await identityGET(identityRequest());
+      expect(response.status).toBe(status);
+      expect(sourceMocks.fetchSourceIdentity).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe("POST /api/audit/extract server-selected mode", () => {
