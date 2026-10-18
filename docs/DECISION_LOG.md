@@ -13,7 +13,8 @@ old rows to make history cleaner; add a superseding row.
   DANA dashboard refund are checked at G1 on Midtrans production. Spec 017
   is Verified with that exception.
 - **Slow websites (Option A):** Nuave retries a slow website read once
-  (PR #139) and lets each read wait up to 10 seconds instead of 5. A
+  (PR #139) and lets each try wait up to 10 seconds instead of 5 (12 seconds
+  in total per read). A
   customer may wait longer on a slow site before an error, but fewer slow
   sites fail.
 - **Workers plan:** the account is still on Workers Free. Q10 stands: move

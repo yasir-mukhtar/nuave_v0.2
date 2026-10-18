@@ -174,9 +174,11 @@ queries; no write was made by an agent.
   `IDR`.
 - The first press of "Lanjut" after payment showed "Halaman website belum
   dapat dibaca…": the founder's site answered Nuave's server slowly. A
-  second press worked. No AI spend happened before the read. Fixed by
-  PR #139 (one automatic retry) and a follow-up that lets each read wait
-  up to 10 seconds (founder Option A).
+  second press worked. No AI spend happened before the read. Addressed by
+  PR #139 (one automatic retry) and a follow-up (founder Option A: up to
+  10 s per try, 12 s per read). After #139 was deployed, the free first
+  check on masryef.com still failed 3/3 (both tries timed out); the live
+  re-check after Option A is pending.
 
 **Test pass NV-SQ7SPT** (`/uji`, no payment): created 07:02:58, approved
 07:04:07, report saved and ready email accepted 07:15:19; received by the
