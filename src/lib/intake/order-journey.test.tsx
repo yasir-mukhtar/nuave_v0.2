@@ -163,7 +163,9 @@ async function enterBusiness() {
     }),
     { target: { value: "https://kedai-fiksi.example/" } },
   );
-  fireEvent.click(screen.getByRole("button", { name: "Cek bisnis saya di AI" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Cek bisnis saya di AI" }),
+  );
   await heading("Kami menemukan bisnis Anda");
   fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
   await heading("Tinggal 3 langkah");
@@ -171,9 +173,10 @@ async function enterBusiness() {
   await heading("Konfirmasi dan bayar");
 }
 async function typeEmail(value = EMAIL) {
-  fireEvent.change(screen.getByRole("textbox", { name: /Email/ }), {
-    target: { value },
-  });
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "Email penerima laporan" }),
+    { target: { value } },
+  );
 }
 /** The paid reading (J09) runs by itself after the order and lands on the
  * Step 2 cover (J10); its "Mulai" opens the focus screen. */
@@ -209,7 +212,9 @@ function makeQuestions() {
       name: "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.",
     }),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Buat pertanyaan audit" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Buat pertanyaan audit" }),
+  );
 }
 async function toQuestions() {
   await enterBusiness();
@@ -221,7 +226,9 @@ async function toQuestions() {
 }
 /** J27 → J27b: "Jalankan audit" opens the start sheet; its button approves. */
 async function startAudit() {
-  fireEvent.click(screen.getByRole("button", { name: "Jalankan audit" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Jalankan audit" }),
+  );
   const sheet = await screen.findByRole("dialog", {
     name: "Mulai audit sekarang?",
   });
@@ -235,11 +242,16 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
     stubServer();
     render(<SmartIntakeJourney live={false} />);
     await enterBusiness();
+    const summary = screen.getByRole("article", { name: "Ringkasan pesanan" });
+    expect(summary.textContent).toContain("Kedai Fiksi");
+    // What the report includes: one AI Visibility Report on ten questions.
+    expect(within(summary).getByText("AI Visibility Report")).toBeTruthy();
     expect(
-      screen.getByRole("article", { name: "Bisnis yang diaudit" }).textContent,
-    ).toContain("Kedai Fiksi");
-    expect(screen.getByText("Isi laporan")).toBeTruthy();
-    expect(screen.getByRole("textbox", { name: /Email/ })).toBeTruthy();
+      within(summary).getByText("Kedai Fiksi · 10 pertanyaan"),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", { name: "Email penerima laporan" }),
+    ).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Rp\s?\d|IDR|USD|harga/i);
     expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
   });
@@ -287,7 +299,7 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
     ).toBeNull();
     // The customer is still on the order screen with the progress kept.
     expect(
-      screen.getByRole("heading", { name: "Ringkasan pesanan" }),
+      screen.getByRole("heading", { name: "Konfirmasi dan bayar" }),
     ).toBeTruthy();
   });
 
@@ -297,7 +309,7 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
     await enterBusiness();
     await typeEmail();
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     expect(server.bodies["/api/orders"]).toEqual([
       {
         email: EMAIL,
@@ -326,11 +338,11 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await enterBusiness();
     await typeEmail();
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     lanjut();
-    await heading(/biasanya disebut apa\?$/);
+    await heading("Bisnis Anda biasanya disebut apa?");
     lanjut();
-    await heading(/yang Anda tawarkan\?$/);
+    await heading("Apa saja yang Anda jual?");
     const before = readSmartSession();
     expect(before?.stage).toBe("offerings");
     const paidBefore = server.calls.filter((call) =>
@@ -343,7 +355,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     first.unmount();
 
     render(<SmartIntakeJourney live={false} />);
-    await heading(/yang Anda tawarkan\?$/);
+    await heading("Apa saja yang Anda jual?");
     expect(readSmartSession()?.selection).toEqual(before?.selection);
     expect(
       server.calls.filter((call) =>
@@ -365,15 +377,15 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await enterBusiness();
     await typeEmail();
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     lanjut();
-    await heading(/biasanya disebut apa\?$/);
+    await heading("Bisnis Anda biasanya disebut apa?");
     const savedSelection = readSmartSession()?.selection;
     first.unmount();
 
     state = "expired";
     render(<SmartIntakeJourney live={false} />);
-    await heading("Ringkasan pesanan");
+    await heading("Konfirmasi dan bayar");
     expect(
       screen.getByText(
         /Pesanan Anda sudah berakhir\. Isian Anda tetap tersimpan/,
@@ -385,7 +397,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
       Response.json({ order_id: OTHER_ORDER_ID, state: "open" });
     await typeEmail("baru@example.com");
     lanjut();
-    await heading(/biasanya disebut apa\?$/);
+    await heading("Bisnis Anda biasanya disebut apa?");
     const after = readSmartSession();
     expect(after?.order?.id).toBe(OTHER_ORDER_ID);
     expect(after?.selection).toEqual(savedSelection);
@@ -403,7 +415,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await enterBusiness();
     await typeEmail();
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     const saved = readSmartSession()!;
     first.unmount();
     // The saved order was made for another website, so the next `Lanjut` makes
@@ -418,10 +430,10 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     server.orderResponse = () =>
       Response.json({ order_id: OTHER_ORDER_ID, state: "open" });
     render(<SmartIntakeJourney live={false} />);
-    await heading("Ringkasan pesanan");
+    await heading("Konfirmasi dan bayar");
     await typeEmail("baru@example.com");
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     const bodies = server.bodies["/api/orders"]!;
     expect(bodies).toHaveLength(2);
     expect(bodies[0]).not.toHaveProperty("previous_order_id");
@@ -436,14 +448,14 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await enterBusiness();
     await typeEmail();
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     first.unmount();
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => Response.json({ error: "Not found" }, { status: 404 })),
     );
     render(<SmartIntakeJourney live={false} />);
-    await heading("Ringkasan pesanan");
+    await heading("Konfirmasi dan bayar");
     void server;
   });
 
@@ -458,8 +470,10 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     };
     window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, JSON.stringify(old));
     render(<SmartIntakeJourney live={false} />);
-    const name = await screen.findByRole("textbox", { name: "Nama bisnis" });
-    expect((name as HTMLInputElement).value).toBe("");
+    const website = await screen.findByRole("textbox", {
+      name: "Website atau akun Instagram bisnis",
+    });
+    expect((website as HTMLInputElement).value).toBe("");
     expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
   });
 
@@ -515,7 +529,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await enterBusiness();
     await typeEmail();
     lanjut();
-    await heading("Apa yang ingin Anda audit?");
+    await toFocus();
     const raw = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!;
     expect(raw).not.toMatch(/email/i);
     expect(parseSmartSession(raw)?.order).toEqual({
@@ -532,13 +546,17 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     render(<SmartIntakeJourney live={false} />);
     await toQuestions();
     fireEvent.click(screen.getByRole("button", { name: "Ubah pertanyaan 1" }));
+    const editor = await screen.findByRole("dialog", {
+      name: "Ubah pertanyaan 1",
+    });
     const edited =
       "Pilihan kedai kopi apa yang cocok untuk pekerja di Bandung?";
-    fireEvent.change(screen.getByRole("textbox", { name: "Pertanyaan 1" }), {
-      target: { value: edited },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Simpan" }));
-    fireEvent.click(screen.getByRole("button", { name: "Mulai audit" }));
+    fireEvent.change(
+      within(editor).getByRole("textbox", { name: /^Pertanyaan 1/ }),
+      { target: { value: edited } },
+    );
+    fireEvent.click(within(editor).getByRole("button", { name: "Simpan" }));
+    await startAudit();
     await screen.findByText(/Anda boleh menutup halaman ini/);
     const [sent] = server.bodies["/api/orders/approve"] as Array<{
       order_id: string;
@@ -554,10 +572,10 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     // R-31.
     expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
     expect(readActiveOrder()).toBe(ORDER_ID);
+    expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
     expect(window.localStorage.getItem(ACTIVE_ORDER_STORAGE_KEY)).toBe(
       JSON.stringify({ orderId: ORDER_ID }),
     );
-    expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
   });
 
   it("a saved order that is already running (approved in another tab) opens the progress view, not the order screen", async () => {
@@ -574,7 +592,7 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
     expect(readActiveOrder()).toBe(ORDER_ID);
     expect(
-      screen.queryByRole("heading", { name: "Ringkasan pesanan" }),
+      screen.queryByRole("heading", { name: "Konfirmasi dan bayar" }),
     ).toBeNull();
     expect(
       server.calls.filter((c) => c === "/api/orders/approve"),
@@ -609,8 +627,8 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
       }),
     );
     render(<SmartIntakeJourney live={false} />);
-    await heading("Periksa pertanyaan audit");
-    fireEvent.click(screen.getByRole("button", { name: "Mulai audit" }));
+    await heading("10 pertanyaan untuk AI");
+    await startAudit();
     await screen.findByText(/Anda boleh menutup halaman ini/);
     expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
     release();
@@ -638,8 +656,8 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     });
     render(<SmartIntakeJourney live={false} />);
     await toQuestions();
-    fireEvent.click(screen.getByRole("button", { name: "Mulai audit" }));
-    await heading("Ringkasan pesanan");
+    await startAudit();
+    await heading("Konfirmasi dan bayar");
     expect(readSmartSession()?.pack).not.toBeNull();
     expect(readSmartSession()?.afterOrder).toBe("questions");
     expect(readActiveOrder()).toBeNull();
@@ -653,7 +671,7 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     });
     render(<SmartIntakeJourney live={false} />);
     await toQuestions();
-    fireEvent.click(screen.getByRole("button", { name: "Mulai audit" }));
+    await startAudit();
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Periksa data audit.",
     );
@@ -679,12 +697,8 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     await typeEmail();
     lanjut();
     await throughDetails();
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Sudah sesuai — buat pertanyaan audit",
-      }),
-    );
-    await heading("Ringkasan pesanan");
+    makeQuestions();
+    await heading("Konfirmasi dan bayar");
     const saved = readSmartSession();
     expect(saved?.order).toBeNull();
     expect(saved?.afterOrder).toBe("summary");
@@ -725,7 +739,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
     render(<SmartIntakeJourney live={false} />);
     expect(
       await screen.findByText(
-        "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda.",
+        "Anda boleh menutup halaman ini. Audit akan tetap berjalan, dan link laporan dikirim ke email Anda.",
       ),
     ).toBeTruthy();
     await waitFor(() =>
@@ -753,9 +767,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
     });
     render(<SmartIntakeJourney live={false} />);
     expect(
-      await screen.findByRole("heading", {
-        name: "Laporan Anda sudah siap dan kami kirim ke email Anda.",
-      }),
+      await screen.findByRole("heading", { name: "Laporan Anda sudah siap" }),
     ).toBeTruthy();
     // The tab never shows the report itself.
     expect(document.querySelector("[data-direct-ten-report]")).toBeNull();
@@ -775,7 +787,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
     render(<SmartIntakeJourney live={false} />);
     expect(
       await screen.findByRole("heading", {
-        name: "Audit belum bisa diselesaikan.",
+        name: "Audit belum bisa diselesaikan",
       }),
     ).toBeTruthy();
     expect(
