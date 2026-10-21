@@ -442,6 +442,86 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     expect(readSmartSession()?.supersededOrder ?? null).toBeNull();
   });
 
+  it("a saved test-pass order made for another website never starts the paid reading by itself; the email typed again makes the replacement", async () => {
+    const server = stubServer();
+    const first = render(<SmartIntakeJourney live={false} />);
+    await enterBusiness();
+    await typeEmail();
+    lanjut();
+    await toFocus();
+    const saved = readSmartSession()!;
+    first.unmount();
+    writeSmartSession({
+      ...saved,
+      stage: "order",
+      order: { ...saved.order!, website: "https://lama.example/" },
+      prepared: null,
+      selection: null,
+    });
+    server.orderResponse = () =>
+      Response.json({ order_id: OTHER_ORDER_ID, state: "open" });
+    const before = server.calls.length;
+    render(<SmartIntakeJourney live={false} />);
+    await heading("Konfirmasi dan bayar");
+    // The page asks about the saved order (it needs no payment) and is given
+    // time to act on the answer.
+    await waitFor(() =>
+      expect(server.calls.slice(before)).toEqual(["/api/orders/status"]),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Before the person acts: no error, no order and no reading.
+    expect(
+      screen.queryByText("Masukkan satu alamat email yang valid."),
+    ).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(server.calls.slice(before)).toEqual(["/api/orders/status"]);
+    // The email typed again makes the replacement order, then the reading.
+    await typeEmail("baru@example.com");
+    lanjut();
+    await toFocus();
+    expect(server.calls.slice(before)).toEqual([
+      "/api/orders/status",
+      "/api/orders",
+      "/api/audit/extract",
+    ]);
+    expect(server.bodies["/api/orders"]![1]).toMatchObject({
+      email: "baru@example.com",
+      previous_order_id: ORDER_ID,
+    });
+    expect(readSmartSession()?.order?.id).toBe(OTHER_ORDER_ID);
+  });
+
+  it("a saved test-pass order that still fits starts the paid reading by itself on reload, once", async () => {
+    const server = stubServer();
+    const first = render(<SmartIntakeJourney live={false} />);
+    await enterBusiness();
+    await typeEmail();
+    lanjut();
+    await toFocus();
+    const saved = readSmartSession()!;
+    first.unmount();
+    // The order was made for this website, but its paid reading has not run.
+    writeSmartSession({
+      ...saved,
+      stage: "order",
+      prepared: null,
+      selection: null,
+    });
+    const before = server.calls.length;
+    render(<SmartIntakeJourney live={false} />);
+    // No Lanjut: the reading runs by itself and lands on the Step 2 cover.
+    await toFocus();
+    expect(server.calls.slice(before)).toEqual([
+      "/api/orders/status",
+      "/api/audit/extract",
+    ]);
+    expect(server.bodies["/api/audit/extract"]).toEqual([
+      { order_id: ORDER_ID },
+      { order_id: ORDER_ID },
+    ]);
+    expect(readSmartSession()?.order?.id).toBe(ORDER_ID);
+  });
+
   it("a server that no longer knows the order counts as ended", async () => {
     const server = stubServer();
     const first = render(<SmartIntakeJourney live={false} />);
@@ -552,7 +632,7 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     const edited =
       "Pilihan kedai kopi apa yang cocok untuk pekerja di Bandung?";
     fireEvent.change(
-      within(editor).getByRole("textbox", { name: /^Pertanyaan 1/ }),
+      within(editor).getByRole("textbox", { name: "Pertanyaan 1" }),
       { target: { value: edited } },
     );
     fireEvent.click(within(editor).getByRole("button", { name: "Simpan" }));
@@ -572,10 +652,10 @@ describe("approving the questions and the audit starting (R-17, R-31)", () => {
     // R-31.
     expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();
     expect(readActiveOrder()).toBe(ORDER_ID);
-    expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
     expect(window.localStorage.getItem(ACTIVE_ORDER_STORAGE_KEY)).toBe(
       JSON.stringify({ orderId: ORDER_ID }),
     );
+    expect(JSON.stringify({ ...window.localStorage })).not.toContain(EMAIL);
   });
 
   it("a saved order that is already running (approved in another tab) opens the progress view, not the order screen", async () => {

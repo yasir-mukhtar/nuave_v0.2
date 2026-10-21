@@ -66,8 +66,12 @@ test.describe("preview disabled", () => {
   }) => {
     const requests = collectRequests(page);
     await page.goto("/");
+    // J01: the hero is the website field and its button.
     await expect(
-      page.getByRole("link", { name: "Cek bisnis saya di AI" }).first(),
+      page.getByRole("textbox", { name: "Website atau akun Instagram bisnis" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Cek bisnis saya di AI" }).first(),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Audit bisnis saya" }),
@@ -75,6 +79,20 @@ test.describe("preview disabled", () => {
     await expect(
       page.getByRole("link", { name: "Mulai pratinjau fiktif" }),
     ).toHaveCount(0);
+    // The website handed to /audit cannot start the switched-off journey:
+    // the entry is unavailable and no check runs.
+    await page
+      .getByRole("textbox", { name: "Website atau akun Instagram bisnis" })
+      .fill("example.com");
+    await page
+      .getByRole("button", { name: "Cek bisnis saya di AI" })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/audit$/, { timeout: 30_000 });
+    await expect(
+      page.getByRole("heading", { name: "Audit tidak tersedia saat ini." }),
+    ).toBeVisible();
+    await expect(page.locator("[data-intake-screen]")).toHaveCount(0);
     await assertNoSideEffects(page, requests);
   });
 });
