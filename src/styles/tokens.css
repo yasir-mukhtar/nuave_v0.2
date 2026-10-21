@@ -21,6 +21,9 @@
   --ember-400: #ff7b3a;
   --ember-500: #fa5d19;
   --ember-600: #e2470b;
+  /* The commit buttons' fill: the Figma ember-600 darkened just enough for
+     white 16-18px labels to reach WCAG AA (4.6:1; ember-600 is 4.1:1). */
+  --ember-650: #d4420b;
   --ember-700: #be390b;
   --ember-800: #962f10;
   --ember-900: #7a2910;
@@ -59,7 +62,7 @@
   --action-hover: var(--ink-800);
   --action-soft: var(--stone-100);
   --action-foreground: #ffffff;
-  --commit: var(--ember-600);
+  --commit: var(--ember-650);
   --commit-hover: var(--ember-700);
   --commit-foreground: #ffffff;
   --purple: var(--action);
@@ -153,6 +156,17 @@
   --type-label-sm-weight: 500;
   --type-label-sm-leading: 1.3333;
   --type-label-sm-tracking: normal;
+
+  /* v2 strong labels: text links and eyebrows (semibold). */
+  --type-label-strong-size: var(--type-size-sm);
+  --type-label-strong-weight: 600;
+  --type-label-strong-leading: 1.4;
+  --type-label-strong-tracking: normal;
+
+  --type-label-sm-strong-size: var(--type-size-xs);
+  --type-label-sm-strong-weight: 600;
+  --type-label-sm-strong-leading: 1.3333;
+  --type-label-sm-strong-tracking: normal;
 
   /* v2 small print: notes, consent lines and illustration captions. */
   --type-caption-size: var(--type-size-xs);
@@ -263,6 +277,32 @@
     0 1px 2px rgb(28 25 23 / 0.05), 0 6px 18px rgb(28 25 23 / 0.07);
   --elevation-float:
     0 2px 6px rgb(28 25 23 / 0.06), 0 14px 36px rgb(28 25 23 / 0.12);
+  /* The ember paid reading (J09) floats its pill and card on orange, so its
+     two elevations are tinted ember-900 instead of ink. */
+  --elevation-ember-pill: 0 6px 16px rgb(122 41 16 / 0.12);
+  --elevation-ember-card: 0 12px 32px rgb(122 41 16 / 0.16);
+  /* J09's soft light behind the reading art. */
+  --glow-reading: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.28),
+    rgb(255 255 255 / 0)
+  );
+  /* Selection and focus: the 2px edge is a 1px border plus this inset. */
+  --edge-ink: inset 0 0 0 1px var(--ink-900);
+  --edge-ember: inset 0 0 0 1px var(--ember-700);
+  /* Report beads (J32): a lit ball for a hit, ember or ink. */
+  --bead-ember: radial-gradient(
+    circle at 35% 30%,
+    var(--ember-300),
+    var(--ember-600)
+  );
+  --bead-ink: radial-gradient(
+    circle at 35% 30%,
+    var(--ink-500),
+    var(--ink-900)
+  );
+  --bead-ember-shadow: 0 2px 4px rgb(190 57 11 / 0.25);
+  --bead-ink-shadow: 0 2px 4px rgb(28 25 23 / 0.25);
 
   /* ── Accessibility Foundations (R-07) ── */
   --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--action);

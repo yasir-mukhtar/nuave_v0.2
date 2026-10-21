@@ -36,6 +36,9 @@ export type SmartPreparedIdentity = {
   description?: string | null;
   /** The website's icon as an image data URL, when small enough to keep. */
   iconDataUrl?: string | null;
+  /** The free check did not finish (J04): the owner continued with a name
+   * guessed from the address, and nothing was read from the website yet. */
+  guessed?: true;
 };
 
 export type SmartSession = {
@@ -248,7 +251,9 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         (value.identity.iconDataUrl != null &&
           (typeof value.identity.iconDataUrl !== "string" ||
             value.identity.iconDataUrl.length > IDENTITY_ICON_MAX ||
-            !value.identity.iconDataUrl.startsWith("data:image/"))))
+            !value.identity.iconDataUrl.startsWith("data:image/"))) ||
+        (value.identity.guessed !== undefined &&
+          value.identity.guessed !== true))
     )
       return null;
     // Spec 013 J3: a prepared record must carry the R-24 lists; anything

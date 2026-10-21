@@ -141,7 +141,7 @@ export function WebsiteForm({
         onSubmit();
       }}
     >
-      <label className="flex h-[60px] items-center gap-3 rounded-chip border border-line-200 bg-white px-5 shadow-float transition-[box-shadow,border-color] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[inset_0_0_0_1px_var(--ink-900),var(--elevation-float)] has-[[aria-invalid=true]]:border-ember-700">
+      <label className="flex h-[60px] items-center gap-3 rounded-chip border border-line-200 bg-white px-5 shadow-float transition-[box-shadow,border-color] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[var(--edge-ink),var(--elevation-float)] has-[[aria-invalid=true]]:border-ember-700">
         <IconWorld
           size={22}
           stroke={1.75}
@@ -249,7 +249,9 @@ export function EntryScreen({
 }) {
   return (
     <section className="grid gap-6" data-intake-screen="entry">
-      <div className="-mx-6 flex justify-center overflow-hidden">
+      {/* min-w-0: on a 320px phone the art is trimmed at its sides instead
+          of widening the page (R-27). */}
+      <div className="-mx-6 flex min-w-0 justify-center overflow-hidden">
         <Art name="kedaiBusy" width={340} priority enter />
       </div>
       <HeroHeadline headingRef={headingRef} />
@@ -323,9 +325,9 @@ function StepIcon({ state }: { state: "done" | "active" | "pending" }) {
         <motion.span
           key={state}
           className="grid place-items-center"
-          initial={{ scale: 0.5, opacity: 0 }}
+          initial={animate ? { scale: 0.5, opacity: 0 } : { opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.5, opacity: 0 }}
+          exit={animate ? { scale: 0.5, opacity: 0 } : { opacity: 0 }}
           transition={state === "done" ? SPRING_POP : { duration: 0.15 }}
         >
           {icon}
@@ -494,6 +496,7 @@ export function BusinessCheckScreen({
   /** The synthetic-mode label (Spec 013 R-07). */
   footnote?: ReactNode;
 }) {
+  const animate = useMotionAllowed();
   const states: ("done" | "active" | "pending")[] = finished
     ? ["done", "done", "done"]
     : elapsed < 1_200
@@ -518,7 +521,7 @@ export function BusinessCheckScreen({
       {phase === "wayout" ? (
         <motion.div
           className="grid"
-          initial={{ opacity: 0, y: 8 }}
+          initial={animate ? { opacity: 0, y: 8 } : false}
           animate={{ opacity: 1, y: 0 }}
           transition={SPRING_SETTLE}
         >
@@ -526,7 +529,7 @@ export function BusinessCheckScreen({
             headingRef={headingRef}
             live
             title="Website Anda butuh waktu lebih lama"
-            lead="Anda bisa lanjut sekarang. Kami tetap membaca website di belakang layar."
+            lead="Anda bisa lanjut sekarang dengan nama bisnis Anda. Website Anda kami baca lengkap setelah pembayaran."
           />
           <div className="mt-6">
             <FloatingField
@@ -590,7 +593,7 @@ export function BusinessCheckScreen({
           {phase === "long" ? (
             <motion.div
               className="mt-8 grid gap-3"
-              initial={{ opacity: 0, y: 12 }}
+              initial={animate ? { opacity: 0, y: 12 } : false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...SPRING_SETTLE, delay: 0.15 }}
             >
@@ -679,12 +682,16 @@ export function BusinessFoundScreen({
   onChangeWebsite,
   notice,
   error,
+  guessed = false,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   name: string;
   source: string;
   description?: string | null;
   iconDataUrl?: string | null;
+  /** The free check did not finish (J04): the name is the owner's, and
+   * nothing was read from the website yet, so nothing claims it was. */
+  guessed?: boolean;
   /** Save a corrected name (J05b). Returns false when it was refused. */
   onRename: (name: string) => boolean;
   /** Absent once the website is locked by a payment (R-19). */
@@ -705,8 +712,14 @@ export function BusinessFoundScreen({
     <section className="grid gap-3" data-intake-screen="brand">
       <ScreenHeader
         headingRef={headingRef}
-        title="Kami menemukan bisnis Anda"
-        lead="Ini yang kami baca dari website Anda. Hasil audit belum ada di sini."
+        title={
+          guessed ? "Bisnis yang akan diaudit" : "Kami menemukan bisnis Anda"
+        }
+        lead={
+          guessed
+            ? "Nama ini dari Anda. Website Anda belum terbaca; kami membacanya lengkap setelah pembayaran."
+            : "Ini yang kami baca dari website Anda. Hasil audit belum ada di sini."
+        }
       />
       {notice}
       <motion.article
@@ -716,7 +729,11 @@ export function BusinessFoundScreen({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ ...SPRING_SETTLE, delay: 0.05 }}
       >
-        <BusinessMark name={name} iconDataUrl={iconDataUrl} verified />
+        <BusinessMark
+          name={name}
+          iconDataUrl={iconDataUrl}
+          verified={!guessed}
+        />
         <h2 className="type-heading-md m-0 mt-4 break-words text-ink-900">
           {name}
         </h2>
@@ -755,7 +772,7 @@ export function BusinessFoundScreen({
           <button
             type="button"
             onClick={onChangeWebsite}
-            className="type-copy-sm min-h-11 font-semibold text-ink-900 underline decoration-1 underline-offset-4 sm:min-h-0"
+            className="type-label-strong min-h-11 text-ink-900 underline decoration-1 underline-offset-4 sm:min-h-0"
           >
             Ganti tautan bisnis
           </button>

@@ -553,7 +553,7 @@ export function OrderScreen({
               Maksud Anda
               <button
                 type="button"
-                className="type-copy-sm min-h-11 font-semibold text-ink-900 underline decoration-1 underline-offset-4 sm:min-h-0"
+                className="type-label-strong min-h-11 text-ink-900 underline decoration-1 underline-offset-4 sm:min-h-0"
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={() => {
                   onEmailChange(typo);

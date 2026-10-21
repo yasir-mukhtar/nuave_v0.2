@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode, type RefObject } from "react";
+import { useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Checkbox } from "@base-ui/react";
 import {
   IconBuildingStore,
@@ -32,6 +32,11 @@ import {
   type SmartSelection,
 } from "./smart-intake-contract";
 import { ChipAdder } from "./ChipAdder";
+import {
+  flushPendingAdds,
+  PendingAddsContext,
+  type PendingAdds,
+} from "./pending-adds";
 import { ScreenError, sameText } from "./intake-bits";
 import { ScreenHeader, displayHost } from "./step-one-screens";
 import {
@@ -338,9 +343,15 @@ export default function SmartReview({
   const [section, setSection] = useState<Section>("business");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [draft, setDraft] = useState<SmartSelection>(selection);
+  // The draft as of the last change, for Simpan right after a field's
+  // typed text was added (before React re-renders).
+  const draftRef = useRef(draft);
   const [sheetError, setSheetError] = useState<string | null>(null);
+  // The sheet's open "+ Lainnya" fields, added on Simpan (pending-adds).
+  const [sheetAdds] = useState<PendingAdds>(() => new Set());
   const gaps = requiredSmartGaps(selection);
   const open = (next: Section) => {
+    draftRef.current = selection;
     setDraft(selection);
     setSheetError(null);
     setSection(next);
@@ -354,11 +365,13 @@ export default function SmartReview({
       return false;
     }
     setSheetError(null);
+    draftRef.current = next;
     setDraft(next);
     return true;
   };
   const save = () => {
-    if (onChange(draft) === false) return;
+    if (!flushPendingAdds(sheetAdds)) return;
+    if (onChange(draftRef.current) === false) return;
     close();
   };
   const ready = sectionReady(section, draft);
@@ -392,7 +405,7 @@ export default function SmartReview({
             type="button"
             onClick={onUndo}
             disabled={busy}
-            className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
+            className="type-label-strong min-h-11 text-ink-900 underline underline-offset-4"
           >
             Batalkan perubahan
           </button>
@@ -542,141 +555,172 @@ export default function SmartReview({
           />
         }
       >
-        {section === "business" ? (
-          <div className="grid gap-[26px] pt-2">
-            <SheetBlock title="Fokus audit">
-              <p className="type-copy m-0 text-ink-900">{focusText(draft)}</p>
-              <button
-                type="button"
-                className="type-label justify-self-start font-semibold text-ink-900 underline underline-offset-4"
-                onClick={() => {
-                  close();
-                  onEditFocus();
-                }}
-              >
-                Ganti fokus audit
-              </button>
-            </SheetBlock>
-            <SheetBlock title="Nama">
-              <p className="type-copy m-0 text-ink-900">{draft.name}</p>
-              {onEditBrand || onEditSource ? (
-                <div className="flex flex-wrap gap-x-4">
-                  {onEditBrand ? (
-                    <button
-                      type="button"
-                      className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
-                      onClick={() => {
-                        close();
-                        onEditBrand();
-                      }}
-                    >
-                      Ubah nama
-                    </button>
-                  ) : null}
-                  {onEditSource ? (
-                    <button
-                      type="button"
-                      className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
-                      onClick={() => {
-                        close();
-                        onEditSource();
-                      }}
-                    >
-                      Ganti website
-                    </button>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="type-copy-sm m-0 text-ink-500">
-                  Nama dan website sudah terkunci untuk pesanan ini.
-                </p>
-              )}
-            </SheetBlock>
-            <SheetBlock title="Nama lain">
-              <AliasFields selection={draft} onChange={changeDraft} />
-            </SheetBlock>
-            <SheetBlock title="Disebut sebagai">
-              <CategoryFields
-                prepared={prepared}
-                selection={draft}
-                onChange={changeDraft}
-                showPreview={false}
-              />
-            </SheetBlock>
-            {draft.focus !== "produk" ? (
-              <SheetBlock title="Menjual">
-                <OfferingsFields
+        <PendingAddsContext.Provider value={sheetAdds}>
+          {section === "business" ? (
+            <div className="grid gap-[26px] pt-2">
+              <SheetBlock title="Fokus audit">
+                <p className="type-copy m-0 text-ink-900">{focusText(draft)}</p>
+                <button
+                  type="button"
+                  className="type-label-strong min-h-11 justify-self-start text-ink-900 underline underline-offset-4"
+                  onClick={() => {
+                    close();
+                    onEditFocus();
+                  }}
+                >
+                  Ganti fokus audit
+                </button>
+              </SheetBlock>
+              <SheetBlock title="Nama">
+                <p className="type-copy m-0 text-ink-900">{draft.name}</p>
+                {onEditBrand || onEditSource ? (
+                  <div className="flex flex-wrap gap-x-4">
+                    {onEditBrand ? (
+                      <button
+                        type="button"
+                        className="type-label-strong min-h-11 text-ink-900 underline underline-offset-4"
+                        onClick={() => {
+                          close();
+                          onEditBrand();
+                        }}
+                      >
+                        Ubah nama
+                      </button>
+                    ) : null}
+                    {onEditSource ? (
+                      <button
+                        type="button"
+                        className="type-label-strong min-h-11 text-ink-900 underline underline-offset-4"
+                        onClick={() => {
+                          close();
+                          onEditSource();
+                        }}
+                      >
+                        Ganti website
+                      </button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="type-copy-sm m-0 text-ink-500">
+                    Nama dan website sudah terkunci untuk pesanan ini.
+                  </p>
+                )}
+              </SheetBlock>
+              <SheetBlock title="Nama lain">
+                <AliasFields selection={draft} onChange={changeDraft} />
+              </SheetBlock>
+              <SheetBlock title="Disebut sebagai">
+                <CategoryFields
                   prepared={prepared}
                   selection={draft}
                   onChange={changeDraft}
+                  showPreview={false}
                 />
               </SheetBlock>
-            ) : null}
-          </div>
-        ) : section === "customers" ? (
-          <div className="grid gap-[26px] pt-2">
-            <SheetBlock title="Siapa yang biasanya mencari bisnis Anda?">
-              <CustomerFields
-                prepared={prepared}
-                selection={draft}
-                onChange={changeDraft}
-                onRefuse={setSheetError}
-              />
-            </SheetBlock>
-            <NeedsFields
-              prepared={prepared}
-              selection={draft}
-              onChange={changeDraft}
-              onRefuse={setSheetError}
-            />
-            <SheetBlock title="Bagaimana pelanggan mendapatkannya?">
-              <ServiceFields
-                prepared={prepared}
-                selection={draft}
-                onChange={changeDraft}
-              />
-            </SheetBlock>
-            {draft.focus !== "cabang" ? (
-              <SheetBlock title="Di mana pelanggan Anda berada?">
-                <MarketFields
+              {draft.focus !== "produk" ? (
+                <SheetBlock title="Menjual">
+                  <OfferingsFields
+                    prepared={prepared}
+                    selection={draft}
+                    onChange={changeDraft}
+                  />
+                </SheetBlock>
+              ) : null}
+            </div>
+          ) : section === "customers" ? (
+            <div className="grid gap-[26px] pt-2">
+              <SheetBlock title="Siapa yang biasanya mencari bisnis Anda?">
+                <CustomerFields
                   prepared={prepared}
                   selection={draft}
                   onChange={changeDraft}
                   onRefuse={setSheetError}
                 />
               </SheetBlock>
-            ) : null}
-          </div>
-        ) : (
-          <div className="grid gap-[26px] pt-2">
-            <SheetBlock title="Bisnis pembanding">
-              <CompetitorFields
+              <NeedsFields
                 prepared={prepared}
                 selection={draft}
                 onChange={changeDraft}
                 onRefuse={setSheetError}
               />
-            </SheetBlock>
-            <SheetBlock title="Yang membedakan Anda">
-              <DifferentiatorFields
-                prepared={prepared}
-                selection={draft}
-                onChange={changeDraft}
-                showExamples={false}
-              />
-            </SheetBlock>
-          </div>
-        )}
-        {sheetError ? (
-          <p role="alert" className="type-copy-sm m-0 mt-4 text-ember-700">
-            {sheetError}
-          </p>
-        ) : null}
-        {!ready ? (
-          <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
-            Lengkapi pilihan yang wajib sebelum menyimpan.
-          </p>
-        ) : null}
+              <SheetBlock title="Bagaimana pelanggan mendapatkannya?">
+                <ServiceFields
+                  prepared={prepared}
+                  selection={draft}
+                  onChange={changeDraft}
+                />
+              </SheetBlock>
+              {draft.focus !== "cabang" ? (
+                <SheetBlock title="Di mana pelanggan Anda berada?">
+                  <MarketFields
+                    prepared={prepared}
+                    selection={draft}
+                    onChange={changeDraft}
+                    onRefuse={setSheetError}
+                  />
+                </SheetBlock>
+              ) : null}
+            </div>
+          ) : (
+            <div className="grid gap-[26px] pt-2">
+              <SheetBlock title="Bisnis pembanding">
+                <CompetitorFields
+                  prepared={prepared}
+                  selection={draft}
+                  onChange={changeDraft}
+                  onRefuse={setSheetError}
+                />
+                {/* R-18's other two choices; ticking a name above chooses
+                    "named" again. */}
+                <ChipGroup label="Atau pilih">
+                  {(
+                    [
+                      ["unknown", "Belum tahu"],
+                      [
+                        "category-alternatives",
+                        "Tidak ada pembanding langsung",
+                      ],
+                    ] as const
+                  ).map(([mode, label]) => (
+                    <Chip
+                      key={mode}
+                      label={label}
+                      selected={draft.comparatorMode === mode}
+                      selectedIndicator="check"
+                      onToggle={(on) => {
+                        if (on)
+                          changeDraft({
+                            ...draft,
+                            comparatorMode: mode,
+                            comparatorNames: [],
+                            origins: { ...draft.origins, comparators: "owner" },
+                          });
+                      }}
+                    />
+                  ))}
+                </ChipGroup>
+              </SheetBlock>
+              <SheetBlock title="Yang membedakan Anda">
+                <DifferentiatorFields
+                  prepared={prepared}
+                  selection={draft}
+                  onChange={changeDraft}
+                  showExamples={false}
+                />
+              </SheetBlock>
+            </div>
+          )}
+          {sheetError ? (
+            <p role="alert" className="type-copy-sm m-0 mt-4 text-ember-700">
+              {sheetError}
+            </p>
+          ) : null}
+          {!ready ? (
+            <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
+              Lengkapi pilihan yang wajib sebelum menyimpan.
+            </p>
+          ) : null}
+        </PendingAddsContext.Provider>
       </BottomSheet>
     </section>
   );

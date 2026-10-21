@@ -32,6 +32,19 @@ shows the same 480px column.
 - **Unchanged:** server-side provider and spending gates, the audit and
   report method and wording rules, validation limits, what the browser
   stores (R-31: the email never), Spec 017 payment states and locks.
+- **Spec 013's screen-level presentation follows the design where they
+  differ** (Yasir's Figma file is the founder's direction for it): one
+  website field and "Cek bisnis saya di AI" instead of R-06's two fields and
+  R-01's `Periksa`; the review (J25) reads the answers back without
+  repeating each one's source label, which stays on the answer's own screen
+  (R-02, R-21), and edits by section in sheets (J26) instead of one screen
+  per row; its confirmation is J25's tick plus "Buat pertanyaan audit"
+  instead of R-21's exact `Sudah sesuai — buat pertanyaan audit`, and it
+  calls the same confirmation and freeze. Behaviour Spec 013 fixes is kept:
+  R-18/AC-09's three competitor choices (named, "Tidak ada pembanding
+  langsung", "Belum tahu"), each freezing as itself, and unticking the last
+  name keeps "named" and blocks `Lanjut` until a name or another choice is
+  picked.
 - **Where the build differs from the Figma file, and why:**
   1. The website field accepts a website or an Instagram account, not a
      Google Maps link (the source parser does not accept one).
@@ -47,7 +60,7 @@ shows the same 480px column.
      (it is never stored in the browser).
   7. The running page shows the question texts and the elapsed time only in
      the tab that approved them (both stay in memory, never in browser
-     storage); after a reload it shows each question's category label and
+     storage); after a reload it shows "Pertanyaan 1" to "Pertanyaan 10" and
      no clock.
   8. The differentiator counter shows the real limit (1,000 characters),
      not 160; competitor names allow up to 5 (the context limit), and the
@@ -58,6 +71,23 @@ shows the same 480px column.
       header facts for the system and model tested.
   11. Areas typed on J19b show as chips above the field, as products do on
       J14/J15, rather than as tokens inside the field.
+  12. J04 says the website is read after payment, because continuing with a
+      name stops the free check; J05 then shows "Bisnis yang akan diaudit"
+      without the found tick (the design's "Kami tetap membaca website di
+      belakang layar" would not be true).
+  13. The free check's third line reads "Membaca deskripsi bisnis", not
+      "Mencari cabang dan produk": the free check reads only the name, logo
+      and description; branches and products come from the paid reading.
+  14. J12 does not pre-select a branch: the owner picks the one to audit.
+  15. J20 rows show a "Saran Nuave" or "Dari Anda" tag instead of a source
+      line, and the screen adds "Tidak ada pembanding langsung? Lewati
+      juga." under "Belum tahu? Lewati" (R-18's third choice; the review's
+      sheet offers both).
+  16. J10 has no `Kembali` after payment: the website and business are
+      locked (R-19).
+  17. The commit buttons (pay, start the audit, open the report) are filled
+      #d4420b instead of ember-600 #e2470b, so their white labels reach WCAG
+      AA (4.6:1; ember-600 gives 4.1:1).
 
 ## 2026-10-18 — S4 live check; slow websites; refund check at G1
 

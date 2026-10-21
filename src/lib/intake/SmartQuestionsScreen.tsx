@@ -180,7 +180,7 @@ function QuestionEditor({
     <div className="grid gap-3.5 pt-1">
       <label
         htmlFor={`smart-question-${index}`}
-        className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-[inset_0_0_0_1px_var(--ink-900)]"
+        className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-(--edge-ink)"
       >
         <span id={labelId} className="sr-only">
           Pertanyaan {index + 1}
@@ -253,7 +253,7 @@ function QuestionEditor({
             {draft !== original ? (
               <button
                 type="button"
-                className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
+                className="type-label-strong min-h-11 text-ink-900 underline underline-offset-4"
                 onClick={() => {
                   onDraftChange(original);
                   field.current?.focus();
@@ -282,7 +282,7 @@ function QuestionEditor({
       {!own && !comparator && draft !== original ? (
         <button
           type="button"
-          className="type-label min-h-11 justify-self-start font-semibold text-ink-900 underline underline-offset-4"
+          className="type-label-strong min-h-11 justify-self-start text-ink-900 underline underline-offset-4"
           onClick={() => {
             onDraftChange(original);
             field.current?.focus();
@@ -423,10 +423,21 @@ export default function SmartQuestionsScreen({
   const save = () => {
     const next = [...pack.approved];
     next[index] = draft.trim();
-    const found = validateDirectTenQuestions(next, {
-      brief: guard,
-      comparators,
-    }).filter((issue) => issue.slot === index + 1 || issue.slot === null);
+    const rules = { brief: guard, comparators };
+    // This question's own problems, and any this edit creates elsewhere (a
+    // duplicate is reported on the other copy's slot); problems another
+    // question already had stay with that question.
+    const key = (issue: { slot: number | null; message: string }) =>
+      `${issue.slot}|${issue.message}`;
+    const before = new Set(
+      validateDirectTenQuestions(pack.approved, rules).map(key),
+    );
+    const found = validateDirectTenQuestions(next, rules).filter(
+      (issue) =>
+        issue.slot === index + 1 ||
+        issue.slot === null ||
+        !before.has(key(issue)),
+    );
     if (found.length) {
       setIssues(found.map((issue) => issue.message));
       return;
@@ -446,7 +457,7 @@ export default function SmartQuestionsScreen({
         <OriginTag>10 Tanpa menyebut bisnis Anda</OriginTag>
       </div>
       <Collapsible.Root className="mt-3">
-        <Collapsible.Trigger className="type-label inline-flex min-h-11 items-center gap-2 text-left font-semibold text-ink-900 underline underline-offset-4">
+        <Collapsible.Trigger className="type-label-strong inline-flex min-h-11 items-center gap-2 text-left text-ink-900 underline underline-offset-4">
           <IconInfoCircle size={18} stroke={1.75} aria-hidden="true" />
           Kenapa pertanyaannya tanpa nama bisnis?
         </Collapsible.Trigger>
@@ -470,7 +481,7 @@ export default function SmartQuestionsScreen({
             transition={{ ...SPRING_SETTLE, delay: animate ? slot * 0.035 : 0 }}
           >
             <span
-              className="type-mono-sm mt-0.5 w-5 shrink-0 font-medium text-ink-500 tabular-nums"
+              className="type-mono-sm mt-0.5 w-5 shrink-0 text-ink-500 tabular-nums"
               aria-hidden="true"
             >
               {String(slot + 1).padStart(2, "0")}
@@ -600,7 +611,7 @@ export function QuestionsPreparing({
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: animate ? slot * 0.08 : 0 }}
             >
-              <span className="type-mono-sm mt-0.5 w-5 shrink-0 text-ink-400 tabular-nums">
+              <span className="type-mono-sm mt-0.5 w-5 shrink-0 text-ink-500 tabular-nums">
                 {String(slot + 1).padStart(2, "0")}
               </span>
               <span className="grid flex-1 gap-2 pt-1">

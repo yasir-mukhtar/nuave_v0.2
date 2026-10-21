@@ -53,7 +53,7 @@ export function PaidReadingScreen({
       aria-label="Pembacaan website"
     >
       <motion.p
-        className="type-label m-0 flex items-center gap-2 rounded-chip bg-white py-2 pr-4 pl-3 text-ink-900 shadow-[0_6px_16px_rgb(122_41_16/0.12)]"
+        className="type-label m-0 flex items-center gap-2 rounded-chip bg-white py-2 pr-4 pl-3 text-ink-900 shadow-(--elevation-ember-pill)"
         initial={animate ? { opacity: 0, y: -14, scale: 0.94 } : false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ ...SPRING_POP, delay: 0.1 }}
@@ -65,7 +65,7 @@ export function PaidReadingScreen({
       </motion.p>
       <div className="relative mt-3 h-[260px] w-[330px]" aria-hidden="true">
         <motion.div
-          className="absolute inset-0 rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.28),rgb(255_255_255/0))]"
+          className="absolute inset-0 rounded-full bg-(image:--glow-reading)"
           animate={
             animate && reading
               ? { scale: [0.94, 1.04, 0.94], opacity: [0.8, 1, 0.8] }
@@ -115,7 +115,7 @@ export function PaidReadingScreen({
             : "Nuave sedang membaca website Anda"}
       </motion.h1>
       <motion.div
-        className="mt-8 grid w-full gap-3.5 rounded-[28px] bg-white px-[22px] pt-[22px] pb-5 text-left shadow-[0_12px_32px_rgb(122_41_16/0.16)]"
+        className="mt-8 grid w-full gap-3.5 rounded-[28px] bg-white px-[22px] pt-[22px] pb-5 text-left shadow-(--elevation-ember-card)"
         initial={animate ? { opacity: 0, y: 40 } : false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...SPRING_SETTLE, delay: 0.3 }}

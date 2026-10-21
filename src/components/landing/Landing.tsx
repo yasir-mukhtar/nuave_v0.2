@@ -135,12 +135,12 @@ function Beads({ on, tone }: { on: number[]; tone: "ember" | "ink" }) {
               className={
                 hit
                   ? tone === "ember"
-                    ? "size-[22px] rounded-full bg-[radial-gradient(circle_at_35%_30%,var(--ember-300),var(--ember-600))]"
-                    : "size-[22px] rounded-full bg-[radial-gradient(circle_at_35%_30%,var(--ink-500),var(--ink-900))]"
+                    ? "size-[22px] rounded-full bg-(image:--bead-ember)"
+                    : "size-[22px] rounded-full bg-(image:--bead-ink)"
                   : "size-[22px] rounded-full border border-line-300 bg-stone-50"
               }
             />
-            <span className="type-mono-sm text-ink-400">{index + 1}</span>
+            <span className="type-mono-sm text-ink-500">{index + 1}</span>
           </li>
         );
       })}
@@ -165,7 +165,7 @@ function ExampleReportSheet({
         </p>
         <div className="flex items-center gap-3">
           <div className="grid flex-1 gap-1">
-            <p className="type-label-sm m-0 font-semibold text-ember-700">
+            <p className="type-label-sm-strong m-0 text-ember-700">
               AI Visibility Report
             </p>
             <p className="type-heading-md m-0 text-ink-900">Kedai Fiksi</p>
@@ -191,7 +191,7 @@ function ExampleReportSheet({
           <Beads on={EXAMPLE_RECOMMENDED} tone="ink" />
         </div>
         <div className="grid gap-2 rounded-card bg-stone-50 p-4">
-          <p className="type-label-sm m-0 font-semibold text-ember-700">
+          <p className="type-label-sm-strong m-0 text-ember-700">
             Pertanyaan 2
           </p>
           <p className="type-title-sm m-0 text-ink-900">
@@ -298,7 +298,9 @@ export default function Landing() {
         <main>
           <section className="grid px-6">
             <ResumeBanner />
-            <div className="-mx-6 flex h-[290px] justify-center overflow-hidden">
+            {/* min-w-0: on a 320px phone the art is trimmed at its sides
+                instead of widening the page. */}
+            <div className="-mx-6 flex h-[290px] min-w-0 justify-center overflow-hidden">
               <Art
                 name="kedaiBusy"
                 width={390}
@@ -408,7 +410,7 @@ export default function Landing() {
               type="button"
               onClick={() => setExampleOpen(true)}
               aria-haspopup="dialog"
-              className="type-label justify-self-start font-semibold text-ink-900 underline underline-offset-4"
+              className="type-label-strong justify-self-start text-ink-900 underline underline-offset-4"
             >
               Lihat contoh laporan
             </button>

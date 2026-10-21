@@ -163,7 +163,7 @@ describe("email wording", () => {
     );
     // The location's own name repeats the business; the email says it once.
     expect(ready.text).toContain(
-      "AI Visibility Report untuk Kedai Fiksi, Dago. Jawaban diamati pada 18 Oktober 2026.",
+      "AI Visibility Report untuk Kedai Fiksi, Dago. Jawaban diamati pada 18 Oktober 2026 (UTC).",
     );
     expect(ready.html.match(/>Buka laporan</g)).toHaveLength(1);
     expect(ready.html).toContain('href="https://v2.nuave.test/r#abc"');

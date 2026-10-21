@@ -3,6 +3,7 @@ import "./globals.css";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { geistMono, geistSans } from "@/app/fonts";
+import { MotionPreferences } from "@/components/motion/MotionPreferences";
 
 export const metadata: Metadata = {
   title: "Nuave · Apakah brand Anda muncul di ChatGPT?",
@@ -35,7 +36,7 @@ export default async function RootLayout({
     >
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <MotionPreferences>{children}</MotionPreferences>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -332,7 +332,7 @@ export default function SmartAuditStage({
             Butuh bantuan? {SUPPORT_EMAIL}
           </p>
           {orderNumber ? (
-            <p className="type-mono-sm m-0 font-medium text-ink-500">
+            <p className="type-mono-sm m-0 text-ink-500">
               No. pesanan {orderNumber}
             </p>
           ) : null}
@@ -358,7 +358,7 @@ export default function SmartAuditStage({
               Kami sudah mencatatnya dan akan menghubungi Anda lewat email.
             </p>
             {orderNumber ? (
-              <p className="type-mono-sm m-0 mt-2 font-medium text-ink-500">
+              <p className="type-mono-sm m-0 mt-2 text-ink-500">
                 No. pesanan {orderNumber}
               </p>
             ) : null}
@@ -428,7 +428,7 @@ export default function SmartAuditStage({
               className="flex items-start gap-2.5 rounded-input border border-ember-100 bg-ember-50 p-3"
               initial={animate ? { opacity: 0, y: 8 } : false}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
+              exit={animate ? { opacity: 0, y: -8 } : { opacity: 0 }}
               transition={SPRING_SETTLE}
             >
               <IconLoader2
@@ -438,12 +438,12 @@ export default function SmartAuditStage({
                 aria-hidden="true"
               />
               <span className="grid min-w-0 gap-[3px] text-left">
-                <span className="type-label-sm font-semibold text-ember-700">
+                <span className="type-label-sm-strong text-ember-700">
                   {reporting
                     ? "Sedang menyusun laporan"
                     : `Sedang diuji · pertanyaan ${current + 1}`}
                 </span>
-                <span className="type-copy font-semibold text-ink-900">
+                <span className="type-title-sm text-ink-900">
                   {reporting
                     ? "Jawaban model AI sedang dibaca dan diringkas."
                     : textOf(current, rows[current]!.prompt_id)}
@@ -480,9 +480,7 @@ export default function SmartAuditStage({
                       "type-label-sm",
                       row.status === "running" || row.status === "retrying"
                         ? "text-ember-700"
-                        : row.status === "pending"
-                          ? "text-ink-400"
-                          : "text-ink-500",
+                        : "text-ink-500",
                     )}
                   >
                     {ROW_STATUS[row.status]}

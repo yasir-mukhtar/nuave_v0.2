@@ -176,8 +176,8 @@ export function DirectTenReportBody({
                 <p>
                   <strong>{competitor.name}</strong>
                   <span className={styles.relation}>
-                    {" "}
-                    — {relationships[competitor.relationship]}
+                    {" · "}
+                    {relationships[competitor.relationship]}
                   </span>
                 </p>
                 <ReportReferences

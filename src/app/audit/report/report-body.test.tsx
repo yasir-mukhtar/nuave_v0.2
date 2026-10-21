@@ -686,7 +686,7 @@ describe("Spec 012 B1 final header and contents (AC-13)", () => {
     const view = render(<ReportView {...location} onDownloadJson={() => {}} />);
     const locationHeader = view.container.querySelector("header")!;
     expect(locationHeader.querySelector("p:nth-of-type(2)")?.textContent).toBe(
-      "Lokasi: Kedai Fiksi Dago — Jl. Fiksi 1, Bandung",
+      "Lokasi: Kedai Fiksi Dago (Jl. Fiksi 1, Bandung)",
     );
     for (const invented of ["undefined", "null", "Pelanggan", "Pembanding"])
       expect(locationHeader).not.toHaveTextContent(invented);

@@ -45,17 +45,19 @@ export function escapeHtml(value: string): string {
 const EMAIL_FONT =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
-/** "18 Oktober 2026", in the report's own time zone (UTC). */
+/** "18 Oktober 2026 (UTC)": the day in the report's own time zone. */
 export function observedOnText(value: string): string | null {
   const date = new Date(value);
+  // The report's header shows its times in UTC and names the zone (Spec 012
+  // R-12); the email gives the same day, named the same way.
   return Number.isNaN(date.getTime())
     ? null
-    : new Intl.DateTimeFormat("id-ID", {
+    : `${new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
         month: "long",
         year: "numeric",
         timeZone: "UTC",
-      }).format(date);
+      }).format(date)} (UTC)`;
 }
 
 /**
@@ -125,7 +127,7 @@ ${
 }
 <tr><td style="padding:22px 24px 0;"><h1 style="margin:0;font-family:${EMAIL_FONT};font-size:24px;line-height:30px;font-weight:600;color:#1c1917;">Laporan Anda sudah siap</h1>
 <p style="margin:10px 0 0;font-family:${EMAIL_FONT};font-size:16px;line-height:24px;color:#57534e;">${escapeHtml(about)}</p></td></tr>
-<tr><td style="padding:22px 24px 0;"><a href="${href}" style="display:block;background:#e2470b;border-radius:14px;padding:17px 24px;font-family:${EMAIL_FONT};font-size:18px;line-height:22px;font-weight:600;color:#ffffff;text-align:center;text-decoration:none;">Buka laporan</a>
+<tr><td style="padding:22px 24px 0;"><a href="${href}" style="display:block;background:#d4420b;border-radius:14px;padding:17px 24px;font-family:${EMAIL_FONT};font-size:18px;line-height:22px;font-weight:600;color:#ffffff;text-align:center;text-decoration:none;">Buka laporan</a>
 <p style="${muted}margin-top:12px;text-align:center;color:#78716c;">Di halaman laporan, pilih Download PDF untuk menyimpan versi PDF.</p></td></tr>
 <tr><td style="padding:20px 24px 0;"><div style="height:1px;background:#e7e5e4;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
 <tr><td style="padding:16px 24px 0;"><p style="${muted}">Link ini pribadi: siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan email ini. Link berlaku 12 bulan.</p>

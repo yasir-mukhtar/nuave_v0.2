@@ -428,8 +428,13 @@ test("every manually selected comparator stays visible, correctable and removabl
   await expect(competitorRow(sheet, "Kedai Samping")).toBeChecked();
   await competitorRow(sheet, "Kedai Samping").click();
   await expect(sheet.getByRole("checkbox", { checked: true })).toHaveCount(0);
+  // R-18: with every name unticked "named" stays chosen, so Simpan waits for
+  // a name or another choice; "Belum tahu" is picked on purpose.
+  await expect(
+    sheet.getByRole("button", { name: "Simpan", exact: true }),
+  ).toBeDisabled();
+  await sheet.getByRole("button", { name: "Belum tahu", exact: true }).click();
   await saveReviewSheet(page, "Pembanding");
-  // Unticking every name means "not sure".
   expect((await intakeSession(page)).selection).toMatchObject({
     comparatorMode: "unknown",
     comparatorNames: [],
@@ -833,7 +838,7 @@ test("a name-only edit reuses the reading; changing the website reads again", as
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
 });
 
-test("prepared competitor names are editable; not sure carries no company names", async ({
+test("prepared competitor names are editable; alternatives carry no company names", async ({
   page,
 }) => {
   const contexts = questionContexts(page);
@@ -861,19 +866,26 @@ test("prepared competitor names are editable; not sure carries no company names"
     },
   });
   await backToReview(page);
-  // Unticking every name means "not sure": Nuave compares with similar
-  // businesses and names none.
+  // R-18: unticking every name keeps "named", so Simpan waits for a name or
+  // another choice; "Tidak ada pembanding langsung" freezes as itself and
+  // names no company.
   sheet = await openReviewSheet(page, "Pembanding");
   await competitorRow(sheet, "Kedai Tetangga").click();
   await competitorRow(sheet, "Warung Fiksi").click();
+  await expect(
+    sheet.getByRole("button", { name: "Simpan", exact: true }),
+  ).toBeDisabled();
+  await sheet
+    .getByRole("button", { name: "Tidak ada pembanding langsung", exact: true })
+    .click();
   await saveReviewSheet(page, "Pembanding");
   await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
-    "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+    "Tidak ada pembanding langsung. Nuave membandingkan dengan bisnis sejenis.",
   );
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
-    comparators: { value: { mode: "unknown" } },
+    comparators: { value: { mode: "category-alternatives" } },
   });
   expect(
     (contexts[1]!.comparators as { value: Record<string, unknown> }).value,

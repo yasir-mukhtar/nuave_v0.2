@@ -147,7 +147,7 @@ function ChosenFocus({
       type="button"
       onClick={onChange}
       aria-label={`${title}. Ganti fokus audit`}
-      className="flex w-full items-center gap-4 rounded-tile border border-ink-900 bg-stone-50 py-[18px] pr-4 pl-5 text-left shadow-[inset_0_0_0_1px_var(--ink-900)] transition-transform active:scale-[0.985]"
+      className="flex w-full items-center gap-4 rounded-tile border border-ink-900 bg-stone-50 py-[18px] pr-4 pl-5 text-left shadow-(--edge-ink) transition-transform active:scale-[0.985]"
     >
       <span className="grid min-w-0 flex-1 gap-1">
         <span className="type-title text-ink-900">{title}</span>

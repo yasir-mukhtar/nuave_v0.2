@@ -32,8 +32,8 @@ export function TenBeads({
                 "size-[22px] rounded-full",
                 mark === "hit"
                   ? tone === "ember"
-                    ? "bg-[radial-gradient(circle_at_35%_30%,var(--ember-300),var(--ember-600))] shadow-[0_2px_4px_rgb(190_57_11/0.25)]"
-                    : "bg-[radial-gradient(circle_at_35%_30%,var(--ink-500),var(--ink-900))] shadow-[0_2px_4px_rgb(28_25_23/0.25)]"
+                    ? "bg-(image:--bead-ember) shadow-(--bead-ember-shadow)"
+                    : "bg-(image:--bead-ink) shadow-(--bead-ink-shadow)"
                   : mark === "untested"
                     ? "border border-dashed border-ink-400"
                     : "border border-line-300 bg-stone-50",
@@ -41,8 +41,8 @@ export function TenBeads({
             />
             <span
               className={cn(
-                "type-mono-sm leading-none",
-                mark === "hit" ? "text-ink-600" : "text-ink-400",
+                "type-mono-sm",
+                mark === "hit" ? "text-ink-700" : "text-ink-500",
               )}
             >
               {index + 1}

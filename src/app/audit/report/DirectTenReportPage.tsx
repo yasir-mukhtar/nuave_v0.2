@@ -83,7 +83,7 @@ export function DirectTenReportPage({
       ? `Seluruh brand ${brandName}`
       : brief.focus.value.kind === "produk"
         ? `Produk atau layanan: ${brief.focus.value.name}`
-        : `Lokasi: ${brief.focus.value.name} — ${brief.focus.value.address}`;
+        : `Lokasi: ${brief.focus.value.name} (${brief.focus.value.address})`;
   const marketLabel = contextMarketLabel(brief);
   // Spec 012 R-12: header facts come only from the same validated retained
   // answers the body renders; invalid bindings show no invented date.
@@ -135,7 +135,7 @@ export function DirectTenReportPage({
         {previewNotice ? <div className="pt-4">{previewNotice}</div> : null}
         <header className="grid gap-4 pt-[18px]" id="stage-5" tabIndex={-1}>
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
-            <p className="type-label-sm col-start-1 row-start-1 m-0 font-semibold text-ember-700">
+            <p className="type-label-sm-strong col-start-1 row-start-1 m-0 text-ember-700">
               AI Visibility Report
             </p>
             <h1 className="type-heading-xl col-start-1 row-start-2 m-0 break-words text-ink-900">
@@ -199,7 +199,7 @@ export function DirectTenReportPage({
         </header>
         <p
           className={cn(
-            "type-label-sm m-0 mt-6 font-semibold text-ink-500",
+            "type-label-sm-strong m-0 mt-6 text-ink-500",
             auditStyles.noPrint,
           )}
           aria-hidden="true"

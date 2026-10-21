@@ -492,16 +492,17 @@ export function CompetitorFields({
     names.filter((name) => !proposed.some((row) => sameText(row, name))),
   );
   const { problem, refuse, clear } = useRefusal(onRefuse);
-  // Nothing ticked means "not sure": the audit then compares with similar
-  // businesses in the category (the stored "unknown"). A change the screen
-  // refused shows the screen's own message instead.
+  // R-18: ticking a name chooses "named"; unticking the last one keeps
+  // "named" (Lanjut waits for a name or another choice) rather than quietly
+  // becoming "Belum tahu". A change the screen refused shows the screen's
+  // own message instead.
   const write = (next: string[]) => {
     clear();
     return (
       onChange({
         ...selection,
         comparatorNames: next,
-        comparatorMode: next.length ? "named" : "unknown",
+        comparatorMode: next.length ? "named" : selection.comparatorMode,
         origins: { ...selection.origins, comparators: "owner" },
       }) !== false
     );
@@ -598,8 +599,15 @@ export function SmartCompetitorsScreen({
   error,
   onRefuse,
   onSkip,
-}: ScreenProps & { onSkip: () => void }) {
+}: ScreenProps & {
+  /** R-18's other two choices: "Belum tahu" or "Tidak ada pembanding
+   * langsung"; either names nobody and moves on. */
+  onSkip: (mode: "unknown" | "category-alternatives") => void;
+}) {
   const found = Boolean(prepared.comparatorSuggestions.proposed?.length);
+  const noneTicked =
+    selection.comparatorMode === "named" &&
+    !cleanNames(selection.comparatorNames).length;
   return (
     <section className="grid" data-intake-screen="competitors">
       <ScreenHeader
@@ -621,22 +629,32 @@ export function SmartCompetitorsScreen({
           selection={selection}
           onChange={onChange}
           onRefuse={onRefuse}
-          onSkip={onSkip}
+          onSkip={() => onSkip("unknown")}
         />
       </div>
       {!smartComparatorsReady(selection) ? (
         <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
-          Periksa daftar pembanding: tanpa nama kosong atau ganda, paling banyak
-          5 nama.
+          {noneTicked
+            ? "Centang atau tulis satu nama, atau pilih salah satu pilihan di bawah."
+            : "Periksa daftar pembanding: tanpa nama kosong atau ganda, paling banyak 5 nama."}
         </p>
       ) : null}
-      <button
-        type="button"
-        className="type-label m-0 mt-5 justify-self-start text-left font-semibold text-ink-900 underline underline-offset-4"
-        onClick={onSkip}
-      >
-        Belum tahu? Lewati, kami bandingkan dengan bisnis sejenis.
-      </button>
+      <div className="mt-5 grid justify-items-start gap-1">
+        <button
+          type="button"
+          className="type-label-strong m-0 min-h-11 text-left text-ink-900 underline underline-offset-4"
+          onClick={() => onSkip("unknown")}
+        >
+          Belum tahu? Lewati, kami bandingkan dengan bisnis sejenis.
+        </button>
+        <button
+          type="button"
+          className="type-label-strong m-0 min-h-11 text-left text-ink-900 underline underline-offset-4"
+          onClick={() => onSkip("category-alternatives")}
+        >
+          Tidak ada pembanding langsung? Lewati juga.
+        </button>
+      </div>
       <ScreenError error={error} />
     </section>
   );
@@ -816,7 +834,11 @@ export function DifferentiatorFields({
                 animate ? { opacity: 0, height: 0, marginTop: 0 } : false
               }
               animate={{ opacity: 1, height: "auto", marginTop: 12 }}
-              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+              exit={
+                animate
+                  ? { opacity: 0, height: 0, marginTop: 0 }
+                  : { opacity: 0 }
+              }
               transition={SPRING_SETTLE}
             >
               <IconBulb

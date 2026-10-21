@@ -65,10 +65,14 @@ export function BottomSheet({
                 <motion.div
                   initial={animate ? { y: "100%" } : false}
                   animate={{ y: 0, transition: SPRING_SHEET }}
-                  exit={{
-                    y: "100%",
-                    transition: { duration: 0.2, ease: EASE_EXIT },
-                  }}
+                  exit={
+                    animate
+                      ? {
+                          y: "100%",
+                          transition: { duration: 0.2, ease: EASE_EXIT },
+                        }
+                      : { opacity: 0, transition: { duration: 0.12 } }
+                  }
                   drag={animate ? "y" : false}
                   dragListener={false}
                   dragControls={drag}

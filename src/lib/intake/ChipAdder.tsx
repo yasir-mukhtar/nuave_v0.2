@@ -8,6 +8,7 @@ import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { AddChip } from "@/components/product/selection/Chip";
 import { FloatingField } from "@/components/product/journey/FloatingField";
 import { KeyboardAccessory } from "@/components/product/journey/KeyboardAccessory";
+import { usePendingAdd } from "./pending-adds";
 
 /** "matcha, es teh" → ["matcha", "es teh"]: trimmed, distinct, non-empty. */
 export function splitList(value: string, onComma = true): string[] {
@@ -68,10 +69,14 @@ export function ChipAdder({
   const alwaysOpen = variant === "field" || startOpen;
   const [open, setOpen] = useState(alwaysOpen);
   const [draft, setDraft] = useState("");
+  // The text the last add refused (a limit or the privacy stop); it stays in
+  // the field for correction until it is changed.
+  const [refused, setRefused] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
   const field = useRef<HTMLInputElement>(null);
   const panelId = useId();
   const items = splitList(draft, splitOnComma);
+  const wasRefused = refused !== null && refused === draft;
   const suggestions = suggestionsFor ? suggestionsFor(draft) : [];
   useEffect(() => {
     if (open && !alwaysOpen) field.current?.focus();
@@ -124,8 +129,21 @@ export function ChipAdder({
   const add = (values: string[]) => {
     if (!values.length) return;
     if (onAdd(values)) setDraft("");
+    else setRefused(draft);
     field.current?.focus();
   };
+  // `Lanjut` or `Simpan` adds what the bar says will be added. Text the
+  // person already saw refused is left behind (its message was shown); new
+  // text that is refused now keeps the screen, with its message.
+  usePendingAdd(() => {
+    if (!items.length || wasRefused) return true;
+    if (!onAdd(items)) {
+      setRefused(draft);
+      return false;
+    }
+    setDraft("");
+    return true;
+  });
   if (!open)
     return (
       <AddChip
@@ -171,27 +189,32 @@ export function ChipAdder({
       />
       <KeyboardAccessory open={focused || Boolean(draft)} label={fieldLabel}>
         {suggestions.length ? (
-          suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              className="type-label-lg h-10 shrink-0 rounded-chip border border-line-300 bg-white px-[18px] text-ink-900 transition-transform active:scale-[0.96]"
-              onClick={() => add([suggestion])}
-            >
-              {suggestion}
-            </button>
-          ))
+          // J19b: the suggestions scroll sideways in the room they have, so
+          // Tambah stays on screen however many there are.
+          <div className="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 [scrollbar-width:none]">
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                className="type-label-lg h-10 shrink-0 rounded-chip border border-line-300 bg-white px-[18px] text-ink-900 transition-transform active:scale-[0.96]"
+                onClick={() => add([suggestion])}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         ) : (
           <p
             className="type-copy-sm m-0 min-w-0 flex-1 truncate text-ink-600"
             aria-live="polite"
           >
-            {items.length
-              ? `${items.length} akan ditambahkan: ${items.join(", ")}`
-              : "Enter untuk menambah. Bisa lebih dari satu."}
+            {!items.length
+              ? "Enter untuk menambah. Bisa lebih dari satu."
+              : wasRefused
+                ? `Belum ditambahkan: ${items.join(", ")}`
+                : `${items.length} akan ditambahkan: ${items.join(", ")}`}
           </p>
         )}
-        {suggestions.length ? <span className="flex-1" /> : null}
         {accessoryExtra}
         <Button
           type="button"

@@ -10,6 +10,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TEST_PASS_STORAGE_KEY } from "./test-pass";
+import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "../audit/source-handoff";
 import historicalPair from "../../../tests/spec011-v1-records.json";
 import {
   extractionDraftSchema,
@@ -4749,5 +4750,373 @@ describe("Spec 013 JQ customer screens", () => {
         origin: "owner",
       },
     });
+  });
+});
+
+describe("independent review, round 1", () => {
+  const KEDAI = "https://kedai-fiksi.example/";
+  const savedOrder = (paid: boolean) =>
+    JSON.stringify({
+      ...freshSmartSession(),
+      stage: "order",
+      entry: { name: "", source: KEDAI },
+      identity: {
+        inputName: "Kedai Fiksi",
+        inputSource: KEDAI,
+        canonicalUrl: KEDAI,
+        displayName: "Kedai Fiksi",
+        preparationMode: "synthetic-local",
+      },
+      brand: { name: "Kedai Fiksi", origin: "website" },
+      order: {
+        id: ORDER_ID,
+        website: KEDAI,
+        name: "Kedai Fiksi",
+        ...(paid ? { paid: true } : {}),
+      },
+      savedAt: new Date().toISOString(),
+    });
+  /** The order's status and the free check of another website. */
+  function stubSavedOrder(payment: string) {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        calls.push(url);
+        if (url === "/api/orders/status")
+          return Response.json({
+            state: "open",
+            payment: { state: payment },
+            completed: 0,
+            total: 10,
+            questions: [],
+          });
+        if (url.startsWith("/api/audit/identity"))
+          return Response.json({
+            canonical_url: "https://toko-lain.example/",
+            display_name: "Toko Lain",
+            preparation_mode: "synthetic-local",
+          });
+        if (url === "/api/audit/extract") return new Promise(() => {});
+        throw new Error(`Unexpected request ${url}`);
+      }),
+    );
+    return calls;
+  }
+
+  it("says a website typed on the landing page was not checked while an order is saved, and checks it on request", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const calls = stubSavedOrder("unpaid");
+    render(<SmartIntakeJourney live={false} />);
+    const notice = await screen.findByText(
+      /Website toko-lain\.example belum diperiksa, karena pesanan untuk Kedai Fiksi masih tersimpan/,
+    );
+    expect(notice.closest("[role=status]")).not.toBeNull();
+    await waitFor(() => expect(calls).toContain("/api/orders/status"));
+    expect(calls.some((url) => url.startsWith("/api/audit/identity"))).toBe(
+      false,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Periksa toko-lain.example" }),
+    );
+    await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
+    expect(
+      calls.filter((url) => url.startsWith("/api/audit/identity")),
+    ).toEqual([
+      `/api/audit/identity?source=${encodeURIComponent("https://toko-lain.example/")}`,
+    ]);
+    const saved = parseSmartSession(
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    )!;
+    // The old order is retired by the next one (R-19).
+    expect(saved.order).toBeNull();
+    expect(saved.supersededOrder).toBe(ORDER_ID);
+    expect(screen.queryByText(/belum diperiksa/)).toBeNull();
+  });
+
+  it("keeps a paid order and says the typed website was not checked, with no way to switch", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(true));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const calls = stubSavedOrder("paid");
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(
+      /Website toko-lain\.example belum diperiksa\. Pesanan untuk Kedai Fiksi sudah dibayar atau sedang dibayar/,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Periksa toko-lain.example" }),
+    ).toBeNull();
+    expect(calls.some((url) => url.startsWith("/api/audit/identity"))).toBe(
+      false,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Tutup" }));
+    expect(screen.queryByText(/belum diperiksa/)).toBeNull();
+  });
+
+  it("continuing with a name on J04 says the website is read after payment, and J05 then claims nothing was read", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      stubPreparation({ holdIdentity: new Promise(() => {}) });
+      render(<SmartIntakeJourney live={false} />);
+      await fillAndPeriksa();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(31_000);
+      });
+      await screen.findByRole("heading", {
+        name: "Website Anda butuh waktu lebih lama",
+      });
+      expect(
+        screen.getByText(
+          "Anda bisa lanjut sekarang dengan nama bisnis Anda. Website Anda kami baca lengkap setelah pembayaran.",
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByText(/di belakang layar/)).toBeNull();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Lanjut dengan nama ini" }),
+      );
+      await screen.findByRole("heading", { name: "Tinggal 3 langkah" });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Halaman sebelumnya" }),
+      );
+      await screen.findByRole("heading", { name: "Bisnis yang akan diaudit" });
+      expect(screen.queryByText(/Ini yang kami baca dari website/)).toBeNull();
+      expect(
+        parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+          ?.identity?.guessed,
+      ).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("adds text typed into an open add field on Lanjut, one field after another", async () => {
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await toFocusScreen();
+    lanjut();
+    await screen.findByRole("heading", { name: /biasanya disebut apa\?/ });
+    lanjut();
+    await screen.findByRole("heading", { name: "Apa saja yang Anda jual?" });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Produk atau layanan lain" }),
+      { target: { value: "matcha, es teh" } },
+    );
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Siapa yang biasanya mencari bisnis Anda?",
+    });
+    expect(currentSelection().offerings).toEqual(
+      expect.arrayContaining(["matcha", "es teh"]),
+    );
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Apa yang mereka cari saat memilih?",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Lainnya ?\(kebutuhan\)$/ }),
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Kebutuhan pelanggan lain" }),
+      { target: { value: "tempat rapat" } },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Lainnya ?\(pertimbangan\)$/ }),
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Pertimbangan pembeli lain" }),
+      { target: { value: "parkir luas" } },
+    );
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Bagaimana pelanggan mendapatkannya?",
+    });
+    // Both fields' text arrived; neither wrote over the other.
+    expect(currentSelection().customerNeeds).toContain("tempat rapat");
+    expect(currentSelection().decisionConsiderations).toContain("parkir luas");
+  });
+
+  it("text refused once is left behind on Lanjut; new refused text keeps the screen", async () => {
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await toFocusScreen();
+    for (const heading of [
+      "Apa yang ingin Anda audit?",
+      "Bisnis Anda biasanya disebut apa?",
+      "Apa saja yang Anda jual?",
+      "Siapa yang biasanya mencari bisnis Anda?",
+    ]) {
+      await screen.findByRole("heading", { name: heading });
+      lanjut();
+    }
+    await screen.findByRole("heading", {
+      name: "Apa yang mereka cari saat memilih?",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Lainnya ?\(kebutuhan\)$/ }),
+    );
+    const tooLong = "x".repeat(301);
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Kebutuhan pelanggan lain" }),
+      { target: { value: tooLong } },
+    );
+    lanjut();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Setiap kebutuhan paling panjang 300 karakter.",
+    );
+    expect(
+      screen.getByRole("heading", {
+        name: "Apa yang mereka cari saat memilih?",
+      }),
+    ).toBeTruthy();
+    expect(
+      within(
+        screen.getByRole("group", { name: "Kebutuhan pelanggan lain" }),
+      ).getByText(/^Belum ditambahkan:/),
+    ).toBeTruthy();
+    lanjut();
+    await screen.findByRole("heading", {
+      name: "Bagaimana pelanggan mendapatkannya?",
+    });
+    expect(currentSelection().customerNeeds).not.toContain(tooLong);
+  });
+
+  it("the review sheet's Simpan adds text still typed in its add field", async () => {
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    const sheet = await openSheet("Calon pelanggan");
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: /^Lainnya ?\(kebutuhan\)$/ }),
+    );
+    fireEvent.change(
+      within(sheet).getByRole("textbox", { name: "Kebutuhan pelanggan lain" }),
+      { target: { value: "tempat rapat" } },
+    );
+    await closeSheet(sheet, "Simpan");
+    expect(currentSelection().customerNeeds).toContain("tempat rapat");
+  });
+
+  it("a reload during the found pause opens the Step 2 cover without reading again", async () => {
+    const { calls } = stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await toOrder();
+    await passOrder();
+    await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+    const statusBefore = calls.filter(
+      (url) => url === "/api/orders/status",
+    ).length;
+    const saved = JSON.parse(
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)!,
+    );
+    // The reading is saved with the stage still "reading" during J09's pause.
+    window.localStorage.setItem(
+      SMART_INTAKE_STORAGE_KEY,
+      JSON.stringify({ ...saved, stage: "reading" }),
+    );
+    cleanup();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+    expect(screen.queryByText(/sebelumnya terputus/)).toBeNull();
+    // The returning page asks about the order, and reads nothing again.
+    await waitFor(() =>
+      expect(calls.filter((url) => url === "/api/orders/status").length).toBe(
+        statusBefore + 1,
+      ),
+    );
+    expect(calls.filter((url) => url === "/api/audit/extract")).toHaveLength(1);
+  });
+
+  it("the question editor will not save a question that duplicates another", async () => {
+    stubPreparation();
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    tickReview();
+    fireEvent.click(buatPertanyaan());
+    await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" });
+    fireEvent.click(screen.getByRole("button", { name: "Ubah pertanyaan 3" }));
+    const sheet = await screen.findByRole("dialog");
+    fireEvent.change(
+      within(sheet).getByRole("textbox", { name: "Pertanyaan 3" }),
+      { target: { value: "Pertanyaan fiksi nomor 5?" } },
+    );
+    fireEvent.click(sheetSave(sheet));
+    expect((await within(sheet).findByRole("alert")).textContent).toContain(
+      "sama dengan pertanyaan lain",
+    );
+    expect(screen.getByRole("dialog")).toBe(sheet);
+    expect(
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.pack?.approved[2],
+    ).toBe("Pertanyaan fiksi nomor 3?");
+  });
+
+  it("R-18: unticking the last name keeps 'named' and blocks Lanjut; 'Tidak ada pembanding langsung' freezes as itself", async () => {
+    stubPreparation({
+      draft: { ...draft, similar_businesses: [{ name: "Kopi Tetangga" }] },
+    });
+    render(<SmartIntakeJourney live={false} />);
+    await toFocusScreen();
+    lanjut();
+    await screen.findByRole("heading", { name: /biasanya disebut apa\?/ });
+    lanjut();
+    for (const heading of [
+      "Apa saja yang Anda jual?",
+      "Siapa yang biasanya mencari bisnis Anda?",
+      "Apa yang mereka cari saat memilih?",
+      "Bagaimana pelanggan mendapatkannya?",
+      "Di mana pelanggan Anda berada?",
+    ]) {
+      await screen.findByRole("heading", { name: heading });
+      lanjut();
+    }
+    await screen.findByRole("heading", {
+      name: "Siapa yang mungkin dibandingkan dengan Anda?",
+    });
+    const row = screen.getByRole("checkbox", { name: /Kopi Tetangga/ });
+    if (row.getAttribute("aria-checked") === "true") fireEvent.click(row);
+    await waitFor(() => expect(lanjutButton().disabled).toBe(true));
+    expect(currentSelection()).toMatchObject({
+      comparatorMode: "named",
+      comparatorNames: [],
+    });
+    expect(
+      screen.getByText(
+        "Centang atau tulis satu nama, atau pilih salah satu pilihan di bawah.",
+      ),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Tidak ada pembanding langsung? Lewati juga.",
+      }),
+    );
+    await screen.findByRole("heading", {
+      name: "Apa yang membuat bisnis Anda berbeda?",
+    });
+    expect(currentSelection()).toMatchObject({
+      comparatorMode: "category-alternatives",
+      comparatorNames: [],
+    });
+    lanjut();
+    await throughReviewCover();
+    expect(fact("Bisnis pembanding").textContent).toContain(
+      "Tidak ada pembanding langsung",
+    );
+    tickReview();
+    fireEvent.click(buatPertanyaan());
+    await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" });
+    expect(
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.frozen?.context.comparators,
+    ).toMatchObject({ value: { mode: "category-alternatives" } });
   });
 });

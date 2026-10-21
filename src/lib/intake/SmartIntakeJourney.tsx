@@ -60,6 +60,11 @@ import {
 } from "./question-public-errors";
 import SmartReview from "./SmartReview";
 import {
+  flushPendingAdds,
+  PendingAddsContext,
+  type PendingAdds,
+} from "./pending-adds";
+import {
   SmartFocusScreen,
   SmartLocationScreen,
   SmartProductScreen,
@@ -89,12 +94,14 @@ import { pauseForMotion } from "@/components/motion/useMotionAllowed";
 import {
   BottomBar,
   JourneyPage,
+  SUPPORT_EMAIL,
   TopBar,
 } from "@/components/product/journey/JourneyBars";
 import {
   BusinessCheckScreen,
   BusinessFoundScreen,
   checkPhaseFor,
+  displayHost,
   EntryScreen,
   nameFromAddress,
   ScreenHeader,
@@ -238,6 +245,35 @@ function supersededInfoOf(session: SmartSession) {
   return session.order
     ? { website: session.order.website, name: session.order.name }
     : (session.supersededInfo ?? null);
+}
+
+/** A new website (typed on the entry, or on the landing page): everything
+ * read from the old one goes, and its order is retired by the next one
+ * (R-19). The same website keeps everything. */
+function withNewSource(session: SmartSession, value: string): SmartSession {
+  const unchangedSource =
+    session.identity &&
+    parseSourceInput(value)?.normalizedUrl === session.identity.inputSource;
+  return unchangedSource
+    ? { ...session, entry: { ...session.entry, source: value } }
+    : {
+        ...session,
+        entry: { ...session.entry, source: value },
+        identity: null,
+        sourceExcerptStatus: undefined,
+        prepared: null,
+        selection: null,
+        confirmedSelection: null,
+        frozen: null,
+        pack: null,
+        brand: null,
+        order: null,
+        supersededOrder: session.order?.id ?? session.supersededOrder ?? null,
+        supersededInfo: supersededInfoOf(session),
+        afterOrder: null,
+        editReturn: undefined,
+        editBaseline: undefined,
+      };
 }
 
 /**
@@ -548,6 +584,9 @@ export default function SmartIntakeJourney({
   // When this tab started that audit (memory only, like the texts), for the
   // elapsed time on the running page.
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  // A website typed on the landing page while this browser still holds an
+  // order: it is not checked by itself, and the page says so (J01).
+  const [skippedHandoff, setSkippedHandoff] = useState<string | null>(null);
   const returningOrder = useRef(false);
   const inFlight = useRef(false);
   const mounted = useRef(true);
@@ -557,6 +596,8 @@ export default function SmartIntakeJourney({
   const lookupAbort = useRef<AbortController | null>(null);
   const autoReadOrder = useRef<string | null>(null);
   const pendingHandoff = useRef<string | null>(null);
+  // The open "+ Lainnya" fields' typed text, added on Lanjut (pending-adds).
+  const [pendingAdds] = useState<PendingAdds>(() => new Set());
   const sessionRef = useRef(session);
   useEffect(() => {
     sessionRef.current = session;
@@ -597,7 +638,13 @@ export default function SmartIntakeJourney({
         return;
       }
       if (saved && (saved.order || !handoffSource)) {
-        if (saved.stage === "reading") {
+        if (saved.stage === "reading" && saved.prepared) {
+          // Reloaded during J09's short "found" pause: the reading is already
+          // saved, so the journey simply goes on to the Step 2 cover.
+          const next: SmartSession = { ...saved, stage: "intro-business" };
+          writeSmartSession(next);
+          setSession(next);
+        } else if (saved.stage === "reading") {
           // A stored reading session means the page was reloaded mid-read:
           // return to the order screen (or the entry) with the fields kept and
           // never replay the call.
@@ -615,6 +662,13 @@ export default function SmartIntakeJourney({
         // the server for the order's state; the return URL's words are never
         // read.
         if (saved.order) returningOrder.current = true;
+        if (
+          handoffSource &&
+          saved.order &&
+          handoffSource.normalizedUrl !== saved.identity?.inputSource &&
+          handoffSource.normalizedUrl !== saved.order.website
+        )
+          setSkippedHandoff(handoffSource.normalizedUrl);
       } else {
         if (handoffSource) {
           // A fresh check of the website from the landing page. Progress
@@ -992,6 +1046,18 @@ export default function SmartIntakeJourney({
     setLookupFinished(false);
   }
 
+  /** J01's website, typed while an unlocked order was saved: check it now,
+   * exactly as typing it on the entry would (the old order is retired by the
+   * next one, R-19). */
+  function checkSkippedWebsite() {
+    const url = skippedHandoff;
+    if (!url || lockRef.current) return;
+    setSkippedHandoff(null);
+    setInterrupted(false);
+    persist(withNewSource(sessionRef.current, url));
+    queueMicrotask(() => void inspect());
+  }
+
   /** Back to the website field, with what was typed kept for correction. */
   function editWebsite() {
     cancelLookup();
@@ -1155,6 +1221,7 @@ export default function SmartIntakeJourney({
         preparationMode: live ? "live" : "synthetic-local",
         description: null,
         iconDataUrl: null,
+        guessed: true,
       },
       brand: { name, origin: "owner" },
       prepared: null,
@@ -1698,6 +1765,7 @@ export default function SmartIntakeJourney({
 
   /** "Simpan & keluar": progress is already saved in this browser; leave. */
   function saveAndExit() {
+    if (!flushPendingAdds(pendingAdds)) return;
     writeSmartSession(sessionRef.current);
     window.location.assign("/");
   }
@@ -1823,12 +1891,16 @@ export default function SmartIntakeJourney({
         (session.stage === "market" && !smartMarketReady(selection)) ||
         (session.stage === "competitors" && !smartComparatorsReady(selection)),
       onClick: () => {
-        const target = forwardStageFor(session);
+        // Text typed into an add field is added first (or its refusal
+        // keeps the screen).
+        if (!flushPendingAdds(pendingAdds)) return;
+        const latest = sessionRef.current;
+        const target = forwardStageFor(latest);
         if (!target) return;
         goStage({
-          ...session,
+          ...latest,
           stage: target,
-          ...markerFields(session, target),
+          ...markerFields(latest, target),
         });
         // A message about this screen does not follow to the next one.
         setError(null);
@@ -2060,33 +2132,7 @@ export default function SmartIntakeJourney({
           }
           // A website change invalidates preparation: the next check reads
           // the new source from scratch.
-          const unchangedSource =
-            session.identity &&
-            parseSourceInput(value)?.normalizedUrl ===
-              session.identity.inputSource;
-          persist(
-            unchangedSource
-              ? { ...session, entry: { ...session.entry, source: value } }
-              : {
-                  ...session,
-                  entry: { ...session.entry, source: value },
-                  identity: null,
-                  sourceExcerptStatus: undefined,
-                  prepared: null,
-                  selection: null,
-                  confirmedSelection: null,
-                  frozen: null,
-                  pack: null,
-                  brand: null,
-                  order: null,
-                  supersededOrder:
-                    session.order?.id ?? session.supersededOrder ?? null,
-                  supersededInfo: supersededInfoOf(session),
-                  afterOrder: null,
-                  editReturn: undefined,
-                  editBaseline: undefined,
-                },
-          );
+          persist(withNewSource(session, value));
           setError(null);
         }}
         onSubmit={() => void inspect()}
@@ -2137,6 +2183,7 @@ export default function SmartIntakeJourney({
         source={session.identity.canonicalUrl}
         description={session.identity.description}
         iconDataUrl={session.identity.iconDataUrl}
+        guessed={session.identity.guessed === true}
         onRename={(name) => {
           if (unsafeSmartName(name)) {
             stopSensitiveInput();
@@ -2281,16 +2328,17 @@ export default function SmartIntakeJourney({
       ) : session.stage === "competitors" ? (
         <SmartCompetitorsScreen
           {...shared}
-          onSkip={() => {
-            // "Belum tahu? Lewati": nothing named, so the audit compares
-            // with similar businesses in the category.
+          onSkip={(mode) => {
+            // R-18: "Belum tahu" or "Tidak ada pembanding langsung": nothing
+            // named, so the audit compares with similar businesses in the
+            // category, and each choice freezes as itself.
             const target = forwardStageFor(session);
             if (!target) return;
             goStage({
               ...session,
               selection: {
                 ...selection,
-                comparatorMode: "unknown",
+                comparatorMode: mode,
                 comparatorNames: [],
                 origins: { ...selection.origins, comparators: "owner" },
               },
@@ -2401,25 +2449,71 @@ export default function SmartIntakeJourney({
     );
   }
 
-  return (
-    <JourneyPage
-      tone={isPaidReading ? "ember" : "plain"}
-      hasBottomBar={bottom !== null}
-    >
-      {top}
-      <JourneyScene
-        sceneKey={sceneKey}
-        direction={motionDirection.direction}
-        kind={motionDirection.kind}
-        onEnter={arrive}
-        className={cn(
-          "flex-1",
-          session.stage === "entry" ? "pt-2" : isPaidReading ? "pt-4" : "pt-5",
-        )}
+  // J01 → saved order: the typed website was not checked; say so, and offer
+  // the check while the order can still be replaced.
+  const savedFor = session.order?.name ?? session.brand?.name ?? "";
+  const handoffNotice =
+    skippedHandoff && session.order ? (
+      <div
+        role="status"
+        className="mt-2 grid gap-2.5 rounded-tile bg-stone-50 px-4 py-3.5"
       >
-        {screen}
-      </JourneyScene>
-      {bottom}
-    </JourneyPage>
+        <p className="type-copy-sm m-0 text-ink-700">
+          {paymentLocked
+            ? `Website ${displayHost(skippedHandoff)} belum diperiksa. Pesanan untuk ${savedFor} sudah dibayar atau sedang dibayar, jadi selesaikan audit ini dulu. Butuh bantuan? ${SUPPORT_EMAIL}`
+            : `Website ${displayHost(skippedHandoff)} belum diperiksa, karena pesanan untuk ${savedFor} masih tersimpan di browser ini.`}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {paymentLocked ? null : (
+            <Button
+              type="button"
+              variant="inkOutline"
+              size="sm"
+              className="min-h-11 rounded-chip px-4"
+              onClick={checkSkippedWebsite}
+            >
+              Periksa {displayHost(skippedHandoff)}
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="inkLink"
+            size="sm"
+            className="min-h-11"
+            onClick={() => setSkippedHandoff(null)}
+          >
+            {paymentLocked ? "Tutup" : `Lanjutkan pesanan ${savedFor}`}
+          </Button>
+        </div>
+      </div>
+    ) : null;
+
+  return (
+    <PendingAddsContext.Provider value={pendingAdds}>
+      <JourneyPage
+        tone={isPaidReading ? "ember" : "plain"}
+        hasBottomBar={bottom !== null}
+      >
+        {top}
+        {handoffNotice}
+        <JourneyScene
+          sceneKey={sceneKey}
+          direction={motionDirection.direction}
+          kind={motionDirection.kind}
+          onEnter={arrive}
+          className={cn(
+            "flex-1",
+            session.stage === "entry"
+              ? "pt-2"
+              : isPaidReading
+                ? "pt-4"
+                : "pt-5",
+          )}
+        >
+          {screen}
+        </JourneyScene>
+        {bottom}
+      </JourneyPage>
+    </PendingAddsContext.Provider>
   );
 }

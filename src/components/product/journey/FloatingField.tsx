@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const boxClass =
-  "group/field relative grid w-full gap-0.5 rounded-input border border-line-300 bg-white px-4 py-2.5 text-left transition-[border-color,box-shadow] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[inset_0_0_0_1px_var(--ink-900)] has-[[aria-invalid=true]]:border-ember-700 has-[[aria-invalid=true]]:shadow-[inset_0_0_0_1px_var(--ember-700)]";
+  "group/field relative grid w-full gap-0.5 rounded-input border border-line-300 bg-white px-4 py-2.5 text-left transition-[border-color,box-shadow] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-(--edge-ink) has-[[aria-invalid=true]]:border-ember-700 has-[[aria-invalid=true]]:shadow-(--edge-ember)";
 
 const controlClass =
   "h-auto min-h-0 w-full rounded-none border-0 bg-transparent p-0 text-base text-ink-900 shadow-none outline-none placeholder:text-ink-500 focus-visible:border-0 focus-visible:ring-0 aria-invalid:ring-0 md:text-base";

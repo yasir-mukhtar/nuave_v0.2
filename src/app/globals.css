@@ -130,6 +130,22 @@
     letter-spacing: var(--type-label-sm-tracking);
   }
 
+  .type-label-strong {
+    font-family: var(--font-ui);
+    font-size: var(--type-label-strong-size);
+    font-weight: var(--type-label-strong-weight);
+    line-height: var(--type-label-strong-leading);
+    letter-spacing: var(--type-label-strong-tracking);
+  }
+
+  .type-label-sm-strong {
+    font-family: var(--font-ui);
+    font-size: var(--type-label-sm-strong-size);
+    font-weight: var(--type-label-sm-strong-weight);
+    line-height: var(--type-label-sm-strong-leading);
+    letter-spacing: var(--type-label-sm-strong-tracking);
+  }
+
   .type-mono {
     font-family: var(--font-code);
     font-size: var(--type-mono-size);

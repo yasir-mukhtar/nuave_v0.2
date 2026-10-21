@@ -105,7 +105,7 @@ function CustomerQuestionPreview({ selection }: { selection: SmartSelection }) {
             className="font-semibold text-ember-700"
             initial={animate ? { opacity: 0, y: 6 } : false}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
+            exit={animate ? { opacity: 0, y: -6 } : { opacity: 0 }}
             transition={SPRING_SETTLE}
           >
             {area ? capitalise(category) : `Rekomendasi ${category}`}
@@ -530,6 +530,7 @@ export function MarketFields({
   onChange,
   onRefuse,
 }: FieldsProps) {
+  const animate = useMotionAllowed();
   const proposed = prepared.marketAreas.proposed ?? [];
   const ownerAdded = selection.marketAreas.filter(
     (item) => !proposed.some((row) => sameText(row, item)),
@@ -624,9 +625,9 @@ export function MarketFields({
           <motion.div
             key="areas"
             className="grid gap-3 overflow-hidden"
-            initial={{ opacity: 0, height: 0 }}
+            initial={animate ? { opacity: 0, height: 0 } : false}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            exit={animate ? { opacity: 0, height: 0 } : { opacity: 0 }}
             transition={SPRING_SETTLE}
           >
             <h2

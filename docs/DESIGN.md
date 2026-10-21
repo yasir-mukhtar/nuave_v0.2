@@ -34,12 +34,19 @@ accent**. The historical Nuave purple skin is retired from the journey.
   `--stone-100/50`, cream `--cream` for the two calm moments (the "how
   customers ask" band and the report-ready page). Ember `--ember-50…900`
   appears at most once per screen: the commit buttons (`--commit`,
-  ember-600: pay, run the audit, open the report), a brand accent word
-  (ember-500) and small orange text (ember-700, for contrast). Selection is
-  ink, never ember: a 2px ink edge on stone-50.
+  `--ember-650` #d4420b: pay, run the audit, open the report; the Figma
+  ember-600 darkened just enough for white labels to reach WCAG AA), a
+  brand accent word (ember-500) and small orange text (ember-700, for
+  contrast). Small grey text is ink-500 or darker (ink-400 is for borders,
+  icons and disabled controls only). Selection is ink, never ember: a 2px
+  ink edge on stone-50 (`--edge-ink`).
 - **Shape.** Chips 22px pill, buttons and inputs 14px, tiles 16px, cards
-  20–24px, sheets 28px (`--radius-token-*`). Two shadows only:
-  `--elevation-card` and `--elevation-float`.
+  20–24px, sheets 28px (`--radius-token-*`). Two shadows on the white
+  canvas: `--elevation-card` and `--elevation-float`. The ember paid
+  reading (J09) uses its warm pair, `--elevation-ember-pill` and
+  `--elevation-ember-card`, and `--glow-reading`; the report beads use
+  `--bead-ember` / `--bead-ink` and their shadows. Components name these
+  tokens; they do not write colours or shadows inline.
 - **Frame.** The journey is one 480px phone column (`JourneyPage`): a top bar
   (back · Bantuan, or Simpan & keluar · Bantuan) and a fixed bottom bar with
   the three-step progress on its top edge, "Kembali" left and the one forward
@@ -134,6 +141,9 @@ Prefer semantic role classes for product and marketing copy:
 - `type-mono` — 14px technical/code text.
 - `type-mono-sm` — 12px compact technical identifiers.
 - `type-label-lg` — 16px medium labels (chips, step eyebrows).
+- `type-label-strong` — 14px semibold text links and emphasised labels.
+- `type-label-sm-strong` — 12px semibold eyebrows (e.g. "AI Visibility
+  Report").
 - `type-caption` — 12px regular notes and counters.
 - `type-title` — 18px semibold titles inside a screen (section titles).
 - `type-title-sm` — 16px semibold titles (rows, sheet headers).
@@ -196,7 +206,10 @@ a website is really being read. Do not use
 decorative perpetual loops, cursor glows, marquees, drifting gradients, or
 animated filler. Indeterminate activity indicators may loop only while genuine
 work is in progress. Reduced-motion mode must remove unnecessary spatial motion
-while preserving the state and information. Do not retain global Lenis scrolling
+while preserving the state and information: every enter, exit and height
+change checks `useMotionAllowed` (fades may stay), and `MotionPreferences`
+(Motion's `reducedMotion="user"`, around the whole app) drops any movement a
+component forgot to check. Do not retain global Lenis scrolling
 unless a concrete customer experience justifies it here.
 
 All migrated interactions preserve keyboard operation, visible focus, Escape
