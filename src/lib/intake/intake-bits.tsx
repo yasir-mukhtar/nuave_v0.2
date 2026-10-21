@@ -7,12 +7,15 @@ import { cn } from "@/lib/utils";
 export function OriginTag({
   children,
   className,
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <span
+      id={id}
       className={cn(
         "type-label-sm inline-flex shrink-0 rounded-chip bg-stone-100 px-2.5 py-1 text-ink-700",
         className,

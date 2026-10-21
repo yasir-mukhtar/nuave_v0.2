@@ -45,8 +45,10 @@ shows the same 480px column.
      "Minta kirim ulang email" opens an email to support.
   6. The running and ready pages do not show the order email, masked or not
      (it is never stored in the browser).
-  7. The running page shows the question texts only in the tab that approved
-     them; after a reload it shows each question's category label.
+  7. The running page shows the question texts and the elapsed time only in
+     the tab that approved them (both stay in memory, never in browser
+     storage); after a reload it shows each question's category label and
+     no clock.
   8. The differentiator counter shows the real limit (1,000 characters),
      not 160; competitor names allow up to 5 (the context limit), and the
      copy says so.

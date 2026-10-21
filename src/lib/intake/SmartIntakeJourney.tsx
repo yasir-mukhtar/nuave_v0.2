@@ -545,6 +545,9 @@ export default function SmartIntakeJourney({
   const [startedQuestions, setStartedQuestions] = useState<string[] | null>(
     null,
   );
+  // When this tab started that audit (memory only, like the texts), for the
+  // elapsed time on the running page.
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const returningOrder = useRef(false);
   const inFlight = useRef(false);
   const mounted = useRef(true);
@@ -827,6 +830,15 @@ export default function SmartIntakeJourney({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, session.stage, session.order?.id, paymentState]);
 
+  // An unpaid order made for another website or name is replaced on Lanjut,
+  // which needs the email typed again (R-01), so it never starts by itself.
+  const orderStillFits = Boolean(
+    session.order &&
+    (session.order.paid ||
+      (session.order.website === session.identity?.canonicalUrl &&
+        session.order.name ===
+          (session.brand?.name ?? session.entry.name.trim()))),
+  );
   // J09: once the server says the order is paid (or needs no payment), the
   // paid reading starts by itself, once per order in this tab. A reading that
   // failed here, or one a reload interrupted, waits for the customer's own
@@ -837,6 +849,7 @@ export default function SmartIntakeJourney({
       !ready ||
       session.stage !== "order" ||
       !order ||
+      !orderStillFits ||
       session.prepared ||
       busy !== null ||
       error ||
@@ -856,6 +869,7 @@ export default function SmartIntakeJourney({
     session.stage,
     session.order?.id,
     session.order?.paid,
+    orderStillFits,
     paymentState,
     busy,
     error,
@@ -949,6 +963,7 @@ export default function SmartIntakeJourney({
     setInterrupted(false);
     setEmail("");
     setStartedQuestions(null);
+    setStartedAt(null);
   }
 
   /** Stop the free check the person walked away from; a late answer is then
@@ -1481,11 +1496,12 @@ export default function SmartIntakeJourney({
         code?: string;
       };
       if (response.ok) {
-        writeActiveOrder(order.id, Date.now());
+        writeActiveOrder(order.id);
         clearSmartSession();
         setStartSheetOpen(false);
         if (mounted.current) {
           setStartedQuestions([...session.pack.approved]);
+          setStartedAt(Date.now());
           setActiveOrder(order.id);
         }
         return;
@@ -1712,6 +1728,7 @@ export default function SmartIntakeJourney({
         orderId={activeOrder}
         onRestart={newJourney}
         questions={startedQuestions}
+        startedAt={startedAt}
       />
     );
   if (historical)

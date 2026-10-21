@@ -498,31 +498,11 @@ export function readActiveOrder(): string | null {
   }
 }
 
-/** When this browser started the running audit (ms), for the elapsed time
- * on the progress page (J29). Null when unknown (an older record). */
-export function readActiveOrderStartedAt(orderId: string): number | null {
-  try {
-    const raw = progressStorage()?.getItem(ACTIVE_ORDER_STORAGE_KEY);
-    const value = raw
-      ? (JSON.parse(raw) as { orderId?: unknown; startedAt?: unknown })
-      : null;
-    return value?.orderId === orderId &&
-      typeof value.startedAt === "number" &&
-      Number.isFinite(value.startedAt)
-      ? value.startedAt
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-export function writeActiveOrder(orderId: string, startedAt?: number): void {
+export function writeActiveOrder(orderId: string): void {
   try {
     progressStorage()?.setItem(
       ACTIVE_ORDER_STORAGE_KEY,
-      JSON.stringify(
-        startedAt === undefined ? { orderId } : { orderId, startedAt },
-      ),
+      JSON.stringify({ orderId }),
     );
   } catch {
     // The order still runs on the server; only the reload shortcut is lost.

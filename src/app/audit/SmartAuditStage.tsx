@@ -21,10 +21,7 @@ import {
   TopBar,
 } from "@/components/product/journey/JourneyBars";
 import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
-import {
-  clearActiveOrder,
-  readActiveOrderStartedAt,
-} from "@/lib/intake/smart-session";
+import { clearActiveOrder } from "@/lib/intake/smart-session";
 import { cn } from "@/lib/utils";
 
 /**
@@ -156,19 +153,21 @@ export default function SmartAuditStage({
   pollMs = POLL_MS,
   onRestart,
   questions,
+  startedAt = null,
 }: {
   orderId: string;
   pollMs?: number;
   onRestart: () => void;
   /** The approved texts, while this tab still holds them. */
   questions?: string[] | null;
+  /** When this tab started the audit (ms), while it still holds it. */
+  startedAt?: number | null;
 }) {
   const animate = useMotionAllowed();
   const [status, setStatus] = useState<OrderStatusAnswer | null>(null);
   const [ended, setEnded] = useState<"gone" | null>(null);
   const [unreachable, setUnreachable] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const [startedAt] = useState(() => readActiveOrderStartedAt(orderId));
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {

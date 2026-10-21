@@ -173,6 +173,8 @@ function QuestionEditor({
   const comparator = ranges.some((range) => range.kind === "comparator");
   const issueId = `question-${index}-issues`;
   const warningId = `question-${index}-names`;
+  const labelId = `question-${index}-label`;
+  const tagId = `question-${index}-tag`;
   const text = "type-copy-lg whitespace-pre-wrap [overflow-wrap:anywhere]";
   return (
     <div className="grid gap-3.5 pt-1">
@@ -180,7 +182,9 @@ function QuestionEditor({
         htmlFor={`smart-question-${index}`}
         className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-[inset_0_0_0_1px_var(--ink-900)]"
       >
-        <span className="sr-only">Pertanyaan {index + 1}</span>
+        <span id={labelId} className="sr-only">
+          Pertanyaan {index + 1}
+        </span>
         <span className="relative block">
           <span aria-hidden="true" className={cn(text, "block text-ink-900")}>
             <Marked text={draft} ranges={ranges} />
@@ -194,10 +198,13 @@ function QuestionEditor({
             // names drawn underneath.
             spellCheck={false}
             aria-invalid={issues.length || own || comparator ? true : undefined}
+            // The tag inside the box describes the field; it is not its name.
+            aria-labelledby={labelId}
             aria-describedby={
               [
                 own || comparator ? warningId : null,
                 issues.length ? issueId : null,
+                tagId,
               ]
                 .filter(Boolean)
                 .join(" ") || undefined
@@ -209,7 +216,7 @@ function QuestionEditor({
             )}
           />
         </span>
-        <OriginTag className="justify-self-start">
+        <OriginTag id={tagId} className="justify-self-start">
           Tanpa menyebut bisnis Anda
         </OriginTag>
       </label>
