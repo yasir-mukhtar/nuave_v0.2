@@ -4740,27 +4740,3 @@ describe("Spec 013 JQ customer screens", () => {
     });
   });
 });
-
-describe("PROBE", () => {
-  it("PROBE j05b alert", async () => {
-    stubPreparation();
-    render(<SmartIntakeJourney live={false} />);
-    await fillAndPeriksa();
-    await screen.findByRole("article", { name: "Bisnis yang ditemukan" });
-    fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
-    const sheet = await screen.findByRole("dialog", { name: "Nama bisnis" });
-    const marks = () =>
-      Array.from(document.querySelectorAll("[aria-hidden='true'],[inert],[data-base-ui-inert]"))
-        .filter((node) => node.contains(screen.getByText("Bukan bisnis Anda?", { exact: false })))
-        .map((node) => `${node.tagName}.${node.getAttribute("class")?.slice(0, 20)}`);
-    console.log("A after open: outside button visible", screen.queryByRole("button", { name: "Ya, ini bisnis saya" }) !== null, marks());
-    await new Promise((r) => setTimeout(r, 50));
-    console.log("B +50ms: outside button visible", screen.queryByRole("button", { name: "Ya, ini bisnis saya" }) !== null, marks());
-    fireEvent.change(within(sheet).getByRole("textbox", { name: "Nama bisnis" }), { target: { value: "nomor rekening 12345" } });
-    fireEvent.click(within(sheet).getByRole("button", { name: "Simpan" }));
-    console.log("C after refusal: alerts", screen.queryAllByRole("alert").length, "hidden alerts", screen.queryAllByRole("alert", { hidden: true }).length, marks());
-    await new Promise((r) => setTimeout(r, 300));
-    console.log("D +300ms: alerts", screen.queryAllByRole("alert").length, marks());
-    expect("PROBE-END").toBe("show logs");
-  });
-});
