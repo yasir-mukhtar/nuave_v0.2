@@ -1,10 +1,59 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-14
+> Updated: 2026-10-21
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-21 — Adopt the v2 mobile journey design (Figma J01–J35)
+
+Yasir asked to adopt the new audit journey design from the Figma file
+(`eXCVryQzgx93oaYTR9NYGA`, mobile, J01–J35) on v2.nuave.ai, with intentional
+animation benchmarked on Airbnb, reviewed by an independent Opus review loop
+before merging. Desktop follows when its design is ready; until then desktop
+shows the same 480px column.
+
+- **What the customer sees:** the landing page (J01) is the website field,
+  "how customers ask", three steps and what the report holds. One website
+  field starts the free check (J02–J04, with a way out after 30 seconds);
+  the business card (J05), the three steps (J06), checkout (J07/J08), the
+  paid reading (J09), Step 2 (J10–J23), the profile review with edit sheets
+  (J25/J26), the ten questions with an edit sheet and a final start sheet
+  (J27/J27b/J28), the running and ready pages (J29/J30), the ready email
+  (J31) and the report (J32–J35) follow the design.
+- **Supersedes the screen split of 2026-10-02 (JQ):** decision
+  considerations share one optional screen with customer needs (J17); the
+  public fact sits under the differentiator (J22) instead of its own screen;
+  the target customer is picked as chips and stored as one phrase.
+- **After payment the paid reading starts by itself** (once per order in a
+  tab), as the design shows. A reading interrupted by a reload, or one that
+  failed, still waits for "Lanjut": a refresh never replays the call.
+- **Unchanged:** server-side provider and spending gates, the audit and
+  report method and wording rules, validation limits, what the browser
+  stores (R-31: the email never), Spec 017 payment states and locks.
+- **Where the build differs from the Figma file, and why:**
+  1. The website field accepts a website or an Instagram account, not a
+     Google Maps link (the source parser does not accept one).
+  2. Payment methods are shown for information; the choice happens on the
+     Midtrans page.
+  3. No address autocomplete or location permission for branches (J12b);
+     areas get one-tap Indonesian place suggestions instead (J19b).
+  4. All ten questions are asked without the business name (the current
+     direct-ten method); the design's 6 + 4 split is not built.
+  5. No "Kirim ulang email" (there is no resend service for customers):
+     "Minta kirim ulang email" opens an email to support.
+  6. The running and ready pages do not show the order email, masked or not
+     (it is never stored in the browser).
+  7. The running page shows the question texts only in the tab that approved
+     them; after a reload it shows each question's category label.
+  8. The differentiator counter shows the real limit (1,000 characters),
+     not 160; competitor names allow up to 5 (the context limit), and the
+     copy says so.
+  9. The payment consent links name the real page, "Syarat Penggunaan", not
+     "Ketentuan Layanan".
+  10. The report keeps both downloads (PDF and the evidence JSON) and the
+      header facts for the system and model tested.
 
 ## 2026-10-18 — S4 live check; slow websites; refund check at G1
 

@@ -32,6 +32,10 @@ export type SmartPreparedIdentity = {
   canonicalUrl: string;
   displayName: string | null;
   preparationMode: "synthetic-local" | "live";
+  /** The website's own short description, shown on the found card (J05). */
+  description?: string | null;
+  /** The website's icon as an image data URL, when small enough to keep. */
+  iconDataUrl?: string | null;
 };
 
 export type SmartSession = {
@@ -45,7 +49,9 @@ export type SmartSession = {
     | "entry"
     | "reading"
     | "brand"
+    | "steps"
     | "order"
+    | "intro-business"
     | "focus"
     | "location"
     | "product"
@@ -53,12 +59,11 @@ export type SmartSession = {
     | "offerings"
     | "target-customer"
     | "customer-needs"
-    | "decision-considerations"
     | "competitors"
     | "differentiator"
-    | "public-fact"
     | "service"
     | "market"
+    | "intro-review"
     | "summary"
     | "questions";
   entry: { name: string; source: string };
@@ -129,7 +134,9 @@ const SMART_STAGES: readonly SmartSession["stage"][] = [
   "entry",
   "reading",
   "brand",
+  "steps",
   "order",
+  "intro-business",
   "focus",
   "location",
   "product",
@@ -137,15 +144,36 @@ const SMART_STAGES: readonly SmartSession["stage"][] = [
   "offerings",
   "target-customer",
   "customer-needs",
-  "decision-considerations",
   "competitors",
   "differentiator",
-  "public-fact",
   "service",
   "market",
+  "intro-review",
   "summary",
   "questions",
 ];
+
+/**
+ * Screens the v2 journey folded into a neighbour: what customers compare now
+ * shares the needs screen (J17), and the often-wrong public fact sits inside
+ * the differentiator screen (J22). Progress saved on one of them reopens on
+ * the screen that now owns it.
+ */
+const FOLDED_STAGES: Readonly<Record<string, SmartSession["stage"]>> = {
+  "decision-considerations": "customer-needs",
+  "public-fact": "differentiator",
+};
+
+function knownStage(value: unknown): SmartSession["stage"] | null {
+  if (typeof value !== "string") return null;
+  if (SMART_STAGES.includes(value as SmartSession["stage"]))
+    return value as SmartSession["stage"];
+  return FOLDED_STAGES[value] ?? null;
+}
+
+/** The longest website description and icon a saved session keeps. */
+export const IDENTITY_DESCRIPTION_MAX = 300;
+export const IDENTITY_ICON_MAX = 60_000;
 
 export function freshSmartSession(): SmartSession {
   return {
@@ -175,7 +203,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     if (
       !isRecord(value) ||
       value.version !== 9 ||
-      !SMART_STAGES.includes(value.stage as SmartSession["stage"]) ||
+      !knownStage(value.stage) ||
       !isRecord(value.entry) ||
       typeof value.entry.name !== "string" ||
       typeof value.entry.source !== "string" ||
@@ -193,7 +221,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
           value.editBaseline.category.length > 300))
     )
       return null;
-    const stage = value.stage as SmartSession["stage"];
+    const stage = knownStage(value.stage)!;
     if (
       value.sourceExcerptStatus !== undefined &&
       !sourceExcerptStatusSchema.safeParse(value.sourceExcerptStatus).success
@@ -209,7 +237,14 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
           typeof value.identity.displayName !== "string") ||
         !["live", "synthetic-local"].includes(
           String(value.identity.preparationMode),
-        ))
+        ) ||
+        (value.identity.description != null &&
+          (typeof value.identity.description !== "string" ||
+            value.identity.description.length > IDENTITY_DESCRIPTION_MAX)) ||
+        (value.identity.iconDataUrl != null &&
+          (typeof value.identity.iconDataUrl !== "string" ||
+            value.identity.iconDataUrl.length > IDENTITY_ICON_MAX ||
+            !value.identity.iconDataUrl.startsWith("data:image/"))))
     )
       return null;
     // Spec 013 J3: a prepared record must carry the R-24 lists; anything
@@ -291,7 +326,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     // Spec 016: before the paid reading there is no prepared understanding —
     // the free brand screen and the order screen run on the identity alone.
     const beforeReading =
-      ["entry", "reading", "order"].includes(stage) ||
+      ["entry", "reading", "steps", "order"].includes(stage) ||
       (stage === "brand" && value.prepared == null && value.identity != null);
     if (
       (!beforeReading &&
@@ -345,13 +380,12 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       return null;
     if (
       value.afterOrder != null &&
-      (typeof value.afterOrder !== "string" ||
-        value.afterOrder === "order" ||
-        !SMART_STAGES.includes(value.afterOrder as SmartSession["stage"]))
+      (value.afterOrder === "order" || !knownStage(value.afterOrder))
     )
       return null;
-    // The order screen runs on the identity (and the brand chosen on it).
-    if (stage === "order" && value.identity == null) return null;
+    // The order screens run on the identity (and the brand chosen on it).
+    if ((stage === "order" || stage === "steps") && value.identity == null)
+      return null;
     if (value.savedAt !== undefined && typeof value.savedAt !== "string")
       return null;
     const pack = value.pack;
@@ -374,6 +408,10 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     }
     return {
       ...value,
+      stage,
+      ...(value.afterOrder != null
+        ? { afterOrder: knownStage(value.afterOrder) }
+        : {}),
       identity: (value.identity ?? null) as SmartPreparedIdentity | null,
       frozen,
       pack: (pack ?? null) as SmartQuestionPack | null,
@@ -460,11 +498,31 @@ export function readActiveOrder(): string | null {
   }
 }
 
-export function writeActiveOrder(orderId: string): void {
+/** When this browser started the running audit (ms), for the elapsed time
+ * on the progress page (J29). Null when unknown (an older record). */
+export function readActiveOrderStartedAt(orderId: string): number | null {
+  try {
+    const raw = progressStorage()?.getItem(ACTIVE_ORDER_STORAGE_KEY);
+    const value = raw
+      ? (JSON.parse(raw) as { orderId?: unknown; startedAt?: unknown })
+      : null;
+    return value?.orderId === orderId &&
+      typeof value.startedAt === "number" &&
+      Number.isFinite(value.startedAt)
+      ? value.startedAt
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeActiveOrder(orderId: string, startedAt?: number): void {
   try {
     progressStorage()?.setItem(
       ACTIVE_ORDER_STORAGE_KEY,
-      JSON.stringify({ orderId }),
+      JSON.stringify(
+        startedAt === undefined ? { orderId } : { orderId, startedAt },
+      ),
     );
   } catch {
     // The order still runs on the server; only the reload shortcut is lost.

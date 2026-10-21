@@ -40,6 +40,7 @@ import {
 import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import styles from "./audit.module.css";
 import { DirectTenReportBody } from "./report/DirectTenReportBody";
+import { DirectTenReportPage } from "./report/DirectTenReportPage";
 
 function measurementLabel(promptId: string) {
   return (
@@ -194,6 +195,17 @@ export default function ReportView({
   previewNotice?: React.ReactNode;
 }) {
   const isDirectTen = report.provenance?.question_method === "direct-ten";
+  // The v2 report (J32–J35); the historical renderer below stays as it was.
+  if (isDirectTen && isDirectTenAuditContext(brief))
+    return (
+      <DirectTenReportPage
+        report={report}
+        brief={brief}
+        observations={observations}
+        onDownloadJson={onDownloadJson}
+        previewNotice={previewNotice}
+      />
+    );
   const brandName = subjectBrandName(brief);
   const scopeLabel = isDirectTenAuditContext(brief)
     ? brief.focus.value.kind === "brand"

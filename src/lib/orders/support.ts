@@ -3,6 +3,7 @@ import type { SpendDb, SpendStatement } from "../spending/spend-ledger";
 import { newLinkSecret, sha256Hex } from "./link-secret";
 import { isOrderNumber } from "./order-number";
 import { readyEmail, sendWithinAttempt, type MailSender } from "./mail";
+import { readyEmailDetails } from "./ready-email-details";
 import {
   emailHistory,
   ensureOrderNumber,
@@ -176,6 +177,7 @@ async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
     orderNumber,
+    ...(await readyEmailDetails(deps.db, order)),
   });
   // Always to the address saved on the order; there is no way to name another.
   const result = await sendWithinAttempt(

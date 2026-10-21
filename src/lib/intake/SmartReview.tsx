@@ -1,50 +1,69 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { Button } from "@/components/ui/button";
-import { Chip, ChipGroup } from "@/components/product/selection/Chip";
-import { AddLine } from "@/components/product/selection/AddLine";
+import { useId, useState, type ReactNode, type RefObject } from "react";
+import { Checkbox } from "@base-ui/react";
 import {
+  IconBuildingStore,
+  IconCheck,
+  IconSwords,
+  IconUsers,
+} from "@tabler/icons-react";
+import {
+  BottomSheet,
+  SheetActionsHeader,
+} from "@/components/motion/BottomSheet";
+import { Chip, ChipGroup } from "@/components/product/selection/Chip";
+import { Reveal } from "@/components/product/selection/Reveal";
+import { cn } from "@/lib/utils";
+import {
+  INTAKE_TEXT_RESTRICTED_MESSAGE,
   SOURCE_EXCERPT_EMPTY_NOTICE,
   type SourceExcerptStatus,
 } from "../audit/types";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   requiredSmartGaps,
-  unsafeSmartName,
+  smartAliasesReady,
+  smartCategoryReady,
+  smartComparatorsReady,
+  smartMarketReady,
+  smartServiceReady,
+  unsafeSmartSelection,
   type PreparedUnderstanding,
   type SmartSelection,
 } from "./smart-intake-contract";
+import { ChipAdder } from "./ChipAdder";
+import { ScreenError, sameText } from "./intake-bits";
+import { ScreenHeader, displayHost } from "./step-one-screens";
+import {
+  CategoryFields,
+  MarketFields,
+  OfferingsFields,
+  ServiceFields,
+} from "./smart-detail-screens";
+import {
+  CompetitorFields,
+  CustomerFields,
+  DifferentiatorFields,
+  NeedsFields,
+} from "./smart-customer-screens";
 
 type Props = {
   prepared: PreparedUnderstanding;
   selection: SmartSelection;
-  onChange: (next: SmartSelection) => void;
-  onConfirm: () => void;
-  /** Opens the dedicated screen that owns the first still-missing meaning. */
-  onFillGaps: () => void;
-  /** J7: opens the brand check so a name correction keeps its own screen. */
+  /** Saves a section; false when the journey refused it. */
+  onChange: (next: SmartSelection) => boolean | void;
+  /** The owner's tick on the confirmation sentence (J25). */
+  confirmed: boolean;
+  onConfirmedChange: (confirmed: boolean) => void;
+  /** Opens the brand check for a name correction (absent once paid). */
   onEditBrand?: () => void;
+  /** Opens the website entry (absent once paid). */
   onEditSource?: () => void;
-  /** J4: opens the dedicated focus screen so the row itself stays read-back. */
-  onEditFocus?: () => void;
-  /** J5: each business-detail row opens its own screen instead of editing inline. */
-  onEditCategory?: () => void;
-  onEditOfferings?: () => void;
-  onEditService?: () => void;
-  onEditMarket?: () => void;
-  onEditCustomerNeeds?: () => void;
-  onEditCompetitors?: () => void;
-  onEditPublicFact?: () => void;
-  /** JQ: each retained R-20 meaning opens its own dedicated screen. */
-  onEditTargetCustomer?: () => void;
-  onEditDecisionConsiderations?: () => void;
-  onEditDifferentiator?: () => void;
+  /** Opens the focus screen; the chain then returns here (R-05/R-21). */
+  onEditFocus: () => void;
+  /** The profile changed after the questions were made from it. */
+  canUndo: boolean;
+  onUndo: () => void;
   busy?: boolean;
   error?: string | null;
   sourceExcerptStatus?: SourceExcerptStatus;
@@ -52,488 +71,607 @@ type Props = {
   headingRef?: RefObject<HTMLHeadingElement | null>;
 };
 
-const channels = [
-  ["on_premise", "Di lokasi bisnis Anda"],
-  ["on_customer", "Di lokasi pelanggan"],
-  ["delivery", "Dikirim ke pelanggan"],
-  ["online", "Digunakan secara online"],
-] as const;
-const reaches = [
-  ["sekitar", "Sekitar bisnis"],
-  ["beberapa", "Beberapa area"],
-  ["seluruh", "Seluruh Indonesia"],
-  ["luar", "Indonesia dan luar negeri"],
-] as const;
-const originText = {
-  website: "Dari website Anda",
-  nuave: "Saran Nuave",
-  owner: "Dari Anda",
-} as const;
+type Section = "business" | "customers" | "comparison";
 
-function rowOrigin(selection: SmartSelection, key: string) {
-  return originText[selection.origins[key] ?? "owner"];
+const SECTION_TITLES: Record<Section, string> = {
+  business: "Bisnis",
+  customers: "Calon pelanggan",
+  comparison: "Pembanding",
+};
+
+const CHANNEL_WORDS: Record<string, string> = {
+  on_premise: "datang ke tempat",
+  delivery: "dikirim",
+  on_customer: "Anda yang datang",
+  online: "online",
+};
+
+function focusText(selection: SmartSelection): string {
+  if (selection.focus === "cabang")
+    return selection.locationName.trim()
+      ? `Satu cabang: ${selection.locationName.trim()}`
+      : "Satu cabang";
+  if (selection.focus === "produk")
+    return selection.productTarget.trim()
+      ? `Satu produk: ${selection.productTarget.trim()}`
+      : "Satu produk";
+  return "Seluruh brand";
 }
 
-function Row({
-  title,
-  origin,
+function areaText(selection: SmartSelection): string {
+  switch (selection.marketReach) {
+    case "sekitar":
+    case "beberapa":
+      return selection.marketAreas.join(", ");
+    case "seluruh":
+      return "Seluruh Indonesia";
+    case "luar":
+      return "Indonesia dan luar negeri";
+    default:
+      return "";
+  }
+}
+
+function comparatorText(selection: SmartSelection): string {
+  if (selection.comparatorMode === "named")
+    return selection.comparatorNames.join(", ");
+  if (selection.comparatorMode === "category-alternatives")
+    return "Tidak ada pembanding langsung. Nuave membandingkan dengan bisnis sejenis.";
+  return "Belum tahu. Nuave membandingkan dengan bisnis sejenis.";
+}
+
+/** One read-back line: a quiet label over the value. */
+function Fact({
+  label,
+  value,
+  empty = "Belum diisi",
+  required = false,
   children,
 }: {
-  title: string;
-  /** The row's provenance label; an empty optional answer shows none (J6). */
-  origin?: string;
-  children: React.ReactNode;
+  label: string;
+  value: string;
+  /** Shown when nothing was chosen. */
+  empty?: string;
+  /** A missing required answer reads as something to fix. */
+  required?: boolean;
+  children?: ReactNode;
 }) {
+  const missing = !value.trim();
   return (
-    <section
-      className="grid min-w-0 grid-cols-1 gap-3 border-t border-border py-5"
-      aria-label={title}
-    >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="type-heading-sm">{title}</h2>
-        {origin ? (
-          <span className="type-copy-sm text-muted-foreground">{origin}</span>
-        ) : null}
+    <div className="grid gap-[3px] border-b border-line-200 py-3">
+      <dt className="type-label-sm text-ink-500">{label}</dt>
+      <dd
+        className={cn(
+          "type-copy m-0 break-words",
+          missing
+            ? required
+              ? "text-ember-700"
+              : "text-ink-500"
+            : "text-ink-900",
+        )}
+      >
+        {missing ? (required ? "Perlu dipastikan" : empty) : value}
+        {children}
+      </dd>
+    </div>
+  );
+}
+
+function ReviewSection({
+  icon,
+  title,
+  onEdit,
+  disabled,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  onEdit: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  const headingId = useId();
+  return (
+    <section aria-labelledby={headingId} className="mt-6">
+      <div className="flex items-center gap-3">
+        <span
+          className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-stone-100 text-ink-700"
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+        <h2 id={headingId} className="type-heading-sm m-0 flex-1 text-ink-900">
+          {title}
+        </h2>
+        <button
+          type="button"
+          onClick={onEdit}
+          disabled={disabled}
+          aria-label={`Ubah ${title}`}
+          className="type-title-sm min-h-11 px-1 text-ink-900 underline underline-offset-4 transition-colors hover:text-ink-700 disabled:text-ink-400 disabled:no-underline"
+        >
+          Ubah
+        </button>
       </div>
-      {children}
+      <dl className="m-0 mt-2">{children}</dl>
     </section>
   );
 }
 
+/** A titled block inside an edit sheet. */
+function SheetBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-3">
+      <h3 className="type-title m-0 text-ink-900">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+/** Other names the business goes by (R-21/R-22), edited in the Bisnis sheet. */
+function AliasFields({
+  selection,
+  onChange,
+}: {
+  selection: SmartSelection;
+  onChange: (next: SmartSelection) => boolean | void;
+}) {
+  const [problem, setProblem] = useState<string | null>(null);
+  const write = (aliases: string[]) => {
+    const ok =
+      onChange({
+        ...selection,
+        aliases,
+        origins: { ...selection.origins, aliases: "owner" },
+      }) !== false;
+    if (ok) setProblem(null);
+    return ok;
+  };
+  return (
+    <div className="grid gap-3">
+      <div className="flex flex-wrap items-start gap-2.5">
+        {selection.aliases.length ? (
+          <ChipGroup label="Nama lain">
+            {selection.aliases.map((alias, index) => (
+              <Chip
+                key={`${alias}-${index}`}
+                label={alias}
+                selected
+                onToggle={(on) => {
+                  if (!on)
+                    write(
+                      selection.aliases.filter((_, item) => item !== index),
+                    );
+                }}
+              />
+            ))}
+          </ChipGroup>
+        ) : null}
+        <ChipAdder
+          addLabel="Tambah nama lain"
+          fieldLabel="Nama lain baru"
+          placeholder="Contoh: singkatan atau nama lama"
+          maxLength={160}
+          onAdd={(items) => {
+            let next = [...selection.aliases];
+            for (const alias of items) {
+              if (next.some((item) => sameText(item, alias))) {
+                setProblem("Nama lain ini sudah ada.");
+                return false;
+              }
+              if (alias.length > 160) {
+                setProblem("Setiap nama lain paling panjang 160 karakter.");
+                return false;
+              }
+              if (next.length >= 12) {
+                setProblem("Pilih paling banyak 12 nama lain.");
+                return false;
+              }
+              next = [...next, alias];
+            }
+            return write(next);
+          }}
+        />
+      </div>
+      <p className="type-copy-sm m-0 text-ink-500">
+        Nama lain membantu Nuave memastikan pertanyaan tanpa nama bisnis
+        benar-benar tidak menyebut bisnis Anda.
+      </p>
+      {problem ? (
+        <p role="alert" className="type-copy-sm m-0 text-ember-700">
+          {problem}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Whether a section's draft can be saved: the same rules as its screens. */
+function sectionReady(section: Section, draft: SmartSelection): boolean {
+  if (section === "business")
+    return (
+      smartCategoryReady(draft) &&
+      (draft.focus === "produk" || draft.offerings.length > 0) &&
+      smartAliasesReady(draft)
+    );
+  if (section === "customers")
+    return (
+      smartServiceReady(draft) &&
+      (draft.focus === "cabang" || smartMarketReady(draft))
+    );
+  return smartComparatorsReady(draft);
+}
+
+/**
+ * J25/J26: the profile the audit will use, read back in three plain
+ * sections. Each "Ubah" opens a sheet with the same pickers as the screens
+ * before; "Simpan" applies the change in place and "Batal" drops it. The
+ * owner's one tick on the confirmation sentence unlocks "Buat pertanyaan
+ * audit" in the bottom bar.
+ */
 export default function SmartReview({
   prepared,
   selection,
   onChange,
-  onConfirm,
-  onFillGaps,
+  confirmed,
+  onConfirmedChange,
   onEditBrand,
   onEditSource,
   onEditFocus,
-  onEditCategory,
-  onEditOfferings,
-  onEditService,
-  onEditMarket,
-  onEditCustomerNeeds,
-  onEditCompetitors,
-  onEditPublicFact,
-  onEditTargetCustomer,
-  onEditDecisionConsiderations,
-  onEditDifferentiator,
+  canUndo,
+  onUndo,
   busy = false,
   error,
   sourceExcerptStatus,
   headingRef,
 }: Props) {
-  const [editingAliases, setEditingAliases] = useState(false);
-  const [aliasError, setAliasError] = useState<string | null>(null);
-  const aliasEditorRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (editingAliases) aliasEditorRef.current?.querySelector("input")?.focus();
-  }, [editingAliases]);
-  const update = (patch: Partial<SmartSelection>, originKey?: string) =>
-    onChange({
-      ...selection,
-      ...patch,
-      origins: originKey
-        ? { ...selection.origins, [originKey]: "owner" }
-        : selection.origins,
-    });
-  const sameAlias = (a: string, b: string) =>
-    a.trim().toLocaleLowerCase("id-ID") === b.trim().toLocaleLowerCase("id-ID");
-  // A refused add returns false so the AddLine draft stays for correction.
-  const addAlias = (value: string): boolean => {
-    const alias = value.trim();
-    if (!alias) return false;
-    if (unsafeSmartName(alias)) {
-      // The journey's privacy path refuses the update and shows the shared
-      // notice; nothing unsafe is committed or stored.
-      update({ aliases: [...selection.aliases, alias] }, "aliases");
+  // The section stays set while the sheet slides away, so its content does
+  // not change during the exit.
+  const [section, setSection] = useState<Section>("business");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [draft, setDraft] = useState<SmartSelection>(selection);
+  const [sheetError, setSheetError] = useState<string | null>(null);
+  const gaps = requiredSmartGaps(selection);
+  const open = (next: Section) => {
+    setDraft(selection);
+    setSheetError(null);
+    setSection(next);
+    setSheetOpen(true);
+  };
+  const close = () => setSheetOpen(false);
+  // Sensitive text never enters even the draft (R-31 privacy path).
+  const changeDraft = (next: SmartSelection): boolean => {
+    if (unsafeSmartSelection(next)) {
+      setSheetError(INTAKE_TEXT_RESTRICTED_MESSAGE);
       return false;
     }
-    if (selection.aliases.some((item) => sameAlias(item, alias))) {
-      setAliasError("Nama lain ini sudah ada.");
-      return false;
-    }
-    if (alias.length > 160) {
-      setAliasError("Setiap nama lain paling panjang 160 karakter.");
-      return false;
-    }
-    if (selection.aliases.length >= 12) {
-      setAliasError("Pilih paling banyak 12 nama lain.");
-      return false;
-    }
-    setAliasError(null);
-    update({ aliases: [...selection.aliases, alias] }, "aliases");
+    setSheetError(null);
+    setDraft(next);
     return true;
   };
-  const removeAlias = (index: number) => {
-    setAliasError(null);
-    update(
-      { aliases: selection.aliases.filter((_, item) => item !== index) },
-      "aliases",
-    );
+  const save = () => {
+    if (onChange(draft) === false) return;
+    close();
   };
-  const gaps = requiredSmartGaps(selection);
-  const reachLabel =
-    reaches.find(([value]) => value === selection.marketReach)?.[1] ?? "";
-  const areaBased =
-    selection.marketReach === "sekitar" || selection.marketReach === "beberapa";
+  const ready = sectionReady(section, draft);
+  const offeringsText =
+    selection.focus === "produk"
+      ? selection.productTarget
+      : selection.offerings.join(", ");
 
   return (
     <section
-      className="w-full min-w-0 pb-10"
+      className="grid w-full min-w-0 pb-4"
       data-smart-summary="ready"
       data-intake-screen="review"
     >
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Ini yang akan Nuave audit
-      </h1>
-      <p className="type-copy mt-2 text-muted-foreground">
-        Periksa pilihan yang sudah disiapkan. Ubah hanya yang belum sesuai, lalu
-        konfirmasi sekali sebelum pertanyaan audit dibuat.
-      </p>
+      <ScreenHeader
+        headingRef={headingRef}
+        title="Ini profil yang akan Nuave pakai"
+        lead="Cek sekilas. Ketuk Ubah jika ada yang kurang tepat."
+      />
       {sourceExcerptStatus === "no-usable-text" ? (
-        <p role="status" className="type-copy-sm mt-3 text-muted-foreground">
+        <p role="status" className="type-copy-sm m-0 mt-3 text-ink-600">
           {SOURCE_EXCERPT_EMPTY_NOTICE}
         </p>
       ) : null}
-
-      <Row title="Bisnis" origin={originText[selection.nameOrigin]}>
-        <p className="type-copy break-words">{selection.name}</p>
-        <p className="type-copy-sm text-muted-foreground break-all">
-          {prepared.canonicalSource} · Dari Anda
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {onEditBrand ? (
-            <Button variant="link" className="w-fit" onClick={onEditBrand}>
-              Ubah
-            </Button>
-          ) : null}
-          {onEditSource ? (
-            <Button variant="link" className="w-fit" onClick={onEditSource}>
-              Ubah website
-            </Button>
-          ) : null}
+      {canUndo ? (
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-tile bg-stone-50 px-4 py-3">
+          <p className="type-copy-sm m-0 flex-1 text-ink-700">
+            Profil berubah setelah pertanyaan dibuat.
+          </p>
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={busy}
+            className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
+          >
+            Batalkan perubahan
+          </button>
         </div>
-      </Row>
-
-      <Row title="Fokus audit" origin={rowOrigin(selection, "focus")}>
-        <p className="type-copy">
-          {selection.focus === "cabang"
-            ? "Satu lokasi"
-            : selection.focus === "produk"
-              ? "Satu produk atau layanan"
-              : "Brand secara keseluruhan"}
-        </p>
-        {selection.focus === "cabang" ? (
-          <p className="type-copy-sm text-muted-foreground">
-            {selection.locationName || "Lokasi belum dipilih"}
-            {selection.locationAddress.trim()
-              ? ` — ${selection.locationAddress}`
-              : ""}
-          </p>
-        ) : selection.focus === "produk" ? (
-          <p className="type-copy-sm text-muted-foreground">
-            {selection.productTarget || "Pilih satu produk atau layanan"}
-          </p>
-        ) : null}
-        {onEditFocus ? (
-          <Button variant="link" className="w-fit" onClick={onEditFocus}>
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-
-      <Row title="Kategori" origin={rowOrigin(selection, "category")}>
-        <p className="type-copy">
-          {selection.category || "Kategori belum tersedia"}
-        </p>
-        {onEditCategory ? (
-          <Button variant="link" className="w-fit" onClick={onEditCategory}>
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-
-      <Row
-        title="Produk dan layanan"
-        origin={
-          selection.focus === "produk"
-            ? rowOrigin(selection, "focus")
-            : rowOrigin(selection, "offerings")
-        }
-      >
-        <p className="type-copy">
-          {selection.focus === "produk"
-            ? selection.productTarget || "Pilih satu produk atau layanan"
-            : selection.offerings.join(", ") ||
-              "Penawaran utama belum tersedia"}
-        </p>
-        {onEditOfferings ? (
-          <Button variant="link" className="w-fit" onClick={onEditOfferings}>
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-
-      <Row
-        title="Cara layanan"
-        origin={rowOrigin(selection, "serviceChannels")}
-      >
-        <p className="type-copy">
-          {selection.serviceChannels
-            .map(
-              (channel) =>
-                channels.find(([value]) => value === channel)?.[1] ?? channel,
-            )
-            .join(", ") || "Belum dipilih"}
-        </p>
-        {onEditService ? (
-          <Button variant="link" className="w-fit" onClick={onEditService}>
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-
-      {selection.focus !== "cabang" ? (
-        <Row title="Jangkauan pasar" origin={rowOrigin(selection, "market")}>
-          <p className="type-copy">
-            {reachLabel || "Belum dipilih"}
-            {areaBased && selection.marketAreas.length
-              ? ` — ${selection.marketAreas.join(", ")}`
-              : ""}
-          </p>
-          {onEditMarket ? (
-            <Button variant="link" className="w-fit" onClick={onEditMarket}>
-              Ubah
-            </Button>
-          ) : null}
-        </Row>
-      ) : null}
-
-      <Row
-        title="Kebutuhan pelanggan"
-        origin={rowOrigin(selection, "customerNeeds")}
-      >
-        <p className="type-copy break-words">
-          {selection.customerNeeds.join(", ") || "Belum diisi"}
-        </p>
-        {onEditCustomerNeeds ? (
-          <Button
-            variant="link"
-            className="w-fit"
-            onClick={onEditCustomerNeeds}
-          >
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-      <Row
-        title="Bisnis pembanding"
-        origin={rowOrigin(selection, "comparators")}
-      >
-        <p className="type-copy break-words">
-          {selection.comparatorMode === "named"
-            ? selection.comparatorNames.join(", ") ||
-              "Tambahkan nama pembanding atau pilih pilihan lain"
-            : selection.comparatorMode === "category-alternatives"
-              ? "Tidak ada pembanding langsung; bandingkan kategori alternatif"
-              : "Belum tahu"}
-        </p>
-        {onEditCompetitors ? (
-          <Button variant="link" className="w-fit" onClick={onEditCompetitors}>
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-      <Row
-        title="Fakta publik tambahan"
-        origin={
-          selection.publicFact.trim()
-            ? rowOrigin(selection, "publicFact")
-            : undefined
-        }
-      >
-        <p className="type-copy break-words">
-          {selection.publicFact || "Belum diisi"}
-        </p>
-        {onEditPublicFact ? (
-          <Button variant="link" className="w-fit" onClick={onEditPublicFact}>
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-      <Row
-        title="Nama lain"
-        origin={
-          selection.aliases.length ? rowOrigin(selection, "aliases") : undefined
-        }
-      >
-        <p className="type-copy break-words">
-          {selection.aliases.join(", ") || "Belum diisi"}
-        </p>
-        <p className="type-copy-sm text-muted-foreground">
-          Nama lain membantu Nuave memeriksa agar pertanyaan audit tidak
-          menyebut bisnis Anda.
-        </p>
-        <Button
-          variant="link"
-          className="w-fit"
-          aria-expanded={editingAliases}
-          onClick={() => setEditingAliases((value) => !value)}
-        >
-          Ubah
-        </Button>
-        {editingAliases ? (
-          <div ref={aliasEditorRef} className="grid min-w-0 grid-cols-1 gap-3">
-            {selection.aliases.length ? (
-              <ChipGroup label="Nama lain">
-                {selection.aliases.map((alias, index) => (
-                  <Chip
-                    key={alias}
-                    label={alias}
-                    selected
-                    onToggle={(on) => {
-                      if (!on) removeAlias(index);
-                    }}
-                  />
-                ))}
-              </ChipGroup>
-            ) : null}
-            <AddLine
-              inputLabel="Nama lain baru"
-              placeholder="Tambah nama lain"
-              onCommit={addAlias}
-            />
-            {aliasError ? (
-              <p role="alert" className="type-copy-sm text-destructive">
-                {aliasError}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-      </Row>
-      <Row
-        title="Pelanggan sasaran"
-        origin={
-          selection.targetCustomer.trim()
-            ? rowOrigin(selection, "targetCustomer")
-            : undefined
-        }
-      >
-        <p className="type-copy break-words">
-          {selection.targetCustomer.trim()
-            ? selection.targetCustomer
-            : "Belum diisi."}
-        </p>
-        {onEditTargetCustomer ? (
-          <Button
-            variant="link"
-            className="w-fit"
-            onClick={onEditTargetCustomer}
-            disabled={busy}
-          >
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-      <Row
-        title="Pertimbangan pembeli"
-        origin={
-          selection.decisionConsiderations.length
-            ? rowOrigin(selection, "decisionConsiderations")
-            : undefined
-        }
-      >
-        <p className="type-copy break-words">
-          {selection.decisionConsiderations.join("; ") || "Belum diisi."}
-        </p>
-        {onEditDecisionConsiderations ? (
-          <Button
-            variant="link"
-            className="w-fit"
-            onClick={onEditDecisionConsiderations}
-            disabled={busy}
-          >
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-      <Row
-        title="Pembeda bisnis"
-        origin={
-          selection.differentiator.trim()
-            ? rowOrigin(selection, "differentiator")
-            : undefined
-        }
-      >
-        <p className="type-copy break-words">
-          {selection.differentiator.trim()
-            ? selection.differentiator
-            : "Belum diisi."}
-        </p>
-        {onEditDifferentiator ? (
-          <Button
-            variant="link"
-            className="w-fit"
-            onClick={onEditDifferentiator}
-            disabled={busy}
-          >
-            Ubah
-          </Button>
-        ) : null}
-      </Row>
-
-      {prepared.sourceLinks.length ? (
-        <Accordion>
-          <AccordionItem value="sources">
-            <AccordionTrigger>Lihat sumber</AccordionTrigger>
-            <AccordionContent>
-              <ul className="list-disc pl-5">
-                {prepared.sourceLinks.map((url) => (
-                  <li key={url}>
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="break-all underline"
-                    >
-                      {url}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      ) : null}
-
-      {error ? (
-        <p role="alert" className="type-copy text-destructive">
-          {error}
-        </p>
       ) : null}
       {gaps.length ? (
-        <p role="status" className="type-copy-sm mt-4 text-muted-foreground">
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ember-700">
           Perlu dipastikan: {gaps.join(", ")}.
         </p>
       ) : null}
-      <div className="mt-6 flex flex-wrap gap-3">
-        {gaps.length ? (
-          <Button type="button" className="min-h-11" onClick={onFillGaps}>
-            Lengkapi yang perlu dipastikan
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            className="min-h-11"
-            onClick={onConfirm}
-            disabled={busy}
-          >
-            Sudah sesuai — buat pertanyaan audit
-          </Button>
-        )}
+
+      <div className="mt-6">
+        <ReviewSection
+          icon={<IconBuildingStore size={20} stroke={1.75} />}
+          title={SECTION_TITLES.business}
+          onEdit={() => open("business")}
+          disabled={busy}
+        >
+          <Fact label="Nama" value={selection.name} required>
+            {selection.aliases.length ? (
+              <span className="type-copy-sm mt-0.5 block text-ink-600">
+                Juga disebut: {selection.aliases.join(", ")}
+              </span>
+            ) : null}
+          </Fact>
+          <Fact label="Website" value={displayHost(prepared.canonicalSource)} />
+          <Fact label="Fokus audit" value={focusText(selection)}>
+            {selection.focus === "cabang" &&
+            selection.locationAddress.trim() ? (
+              <span className="type-copy-sm mt-0.5 block text-ink-600">
+                {selection.locationAddress}
+              </span>
+            ) : null}
+          </Fact>
+          <Fact label="Disebut sebagai" value={selection.category} required />
+          <Fact label="Menjual" value={offeringsText} required />
+        </ReviewSection>
+
+        <ReviewSection
+          icon={<IconUsers size={20} stroke={1.75} />}
+          title={SECTION_TITLES.customers}
+          onEdit={() => open("customers")}
+          disabled={busy}
+        >
+          <Fact label="Siapa" value={selection.targetCustomer} />
+          <Fact
+            label="Mereka butuh"
+            value={selection.customerNeeds.join(", ")}
+          />
+          <Fact
+            label="Mereka membandingkan"
+            value={selection.decisionConsiderations.join(", ")}
+          />
+          <Fact
+            label="Cara mendapatkan"
+            value={selection.serviceChannels
+              .map((channel) => CHANNEL_WORDS[channel] ?? channel)
+              .join(", ")}
+            required
+          />
+          {selection.focus !== "cabang" ? (
+            <Fact
+              label="Area"
+              value={smartMarketReady(selection) ? areaText(selection) : ""}
+              required
+            />
+          ) : null}
+        </ReviewSection>
+
+        <ReviewSection
+          icon={<IconSwords size={20} stroke={1.75} />}
+          title={SECTION_TITLES.comparison}
+          onEdit={() => open("comparison")}
+          disabled={busy}
+        >
+          <Fact
+            label="Bisnis pembanding"
+            value={
+              smartComparatorsReady(selection) ? comparatorText(selection) : ""
+            }
+            required
+          />
+          <Fact label="Yang membedakan Anda" value={selection.differentiator} />
+          <Fact
+            label="Info yang sering salah"
+            value={selection.publicFact}
+            empty="Tidak ada"
+          />
+        </ReviewSection>
       </div>
+
+      {prepared.sourceLinks.length ? (
+        <div className="mt-4">
+          <Reveal trigger={`Lihat sumber (${prepared.sourceLinks.length})`}>
+            <ul className="type-copy-sm m-0 grid list-none gap-2 p-0 text-ink-600">
+              {prepared.sourceLinks.map((url) => (
+                <li key={url}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all underline underline-offset-2"
+                  >
+                    {url}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+      ) : null}
+
+      {!gaps.length ? (
+        <Checkbox.Root
+          checked={confirmed}
+          onCheckedChange={(next) => onConfirmedChange(next)}
+          disabled={busy}
+          aria-labelledby="review-confirmation"
+          className="group mt-6 flex w-full cursor-pointer items-start gap-3 rounded-tile bg-stone-50 p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2 data-[disabled]:cursor-default"
+        >
+          <span
+            className="mt-px grid size-6 shrink-0 place-items-center rounded-[7px] border-[1.5px] border-line-300 bg-white text-white transition-colors group-data-[checked]:border-ink-900 group-data-[checked]:bg-ink-900"
+            aria-hidden="true"
+          >
+            {confirmed ? <IconCheck size={16} stroke={2.5} /> : null}
+          </span>
+          <span id="review-confirmation" className="type-copy text-ink-900">
+            Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan
+            dalam pertanyaan audit.
+          </span>
+        </Checkbox.Root>
+      ) : null}
+      <ScreenError error={error} />
+
+      <BottomSheet
+        open={sheetOpen}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+        title={`Ubah ${SECTION_TITLES[section]}`}
+        header={
+          <SheetActionsHeader
+            title={SECTION_TITLES[section]}
+            onCancel={close}
+            onSave={save}
+            saveDisabled={!ready}
+          />
+        }
+      >
+        {section === "business" ? (
+          <div className="grid gap-[26px] pt-2">
+            <SheetBlock title="Fokus audit">
+              <p className="type-copy m-0 text-ink-900">{focusText(draft)}</p>
+              <button
+                type="button"
+                className="type-label justify-self-start font-semibold text-ink-900 underline underline-offset-4"
+                onClick={() => {
+                  close();
+                  onEditFocus();
+                }}
+              >
+                Ganti fokus audit
+              </button>
+            </SheetBlock>
+            <SheetBlock title="Nama">
+              <p className="type-copy m-0 text-ink-900">{draft.name}</p>
+              {onEditBrand || onEditSource ? (
+                <div className="flex flex-wrap gap-x-4">
+                  {onEditBrand ? (
+                    <button
+                      type="button"
+                      className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
+                      onClick={() => {
+                        close();
+                        onEditBrand();
+                      }}
+                    >
+                      Ubah nama
+                    </button>
+                  ) : null}
+                  {onEditSource ? (
+                    <button
+                      type="button"
+                      className="type-label min-h-11 font-semibold text-ink-900 underline underline-offset-4"
+                      onClick={() => {
+                        close();
+                        onEditSource();
+                      }}
+                    >
+                      Ganti website
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="type-copy-sm m-0 text-ink-500">
+                  Nama dan website sudah terkunci untuk pesanan ini.
+                </p>
+              )}
+            </SheetBlock>
+            <SheetBlock title="Nama lain">
+              <AliasFields selection={draft} onChange={changeDraft} />
+            </SheetBlock>
+            <SheetBlock title="Disebut sebagai">
+              <CategoryFields
+                prepared={prepared}
+                selection={draft}
+                onChange={changeDraft}
+                showPreview={false}
+              />
+            </SheetBlock>
+            {draft.focus !== "produk" ? (
+              <SheetBlock title="Menjual">
+                <OfferingsFields
+                  prepared={prepared}
+                  selection={draft}
+                  onChange={changeDraft}
+                />
+              </SheetBlock>
+            ) : null}
+          </div>
+        ) : section === "customers" ? (
+          <div className="grid gap-[26px] pt-2">
+            <SheetBlock title="Siapa yang biasanya mencari bisnis Anda?">
+              <CustomerFields
+                prepared={prepared}
+                selection={draft}
+                onChange={changeDraft}
+              />
+            </SheetBlock>
+            <NeedsFields
+              prepared={prepared}
+              selection={draft}
+              onChange={changeDraft}
+            />
+            <SheetBlock title="Bagaimana pelanggan mendapatkannya?">
+              <ServiceFields
+                prepared={prepared}
+                selection={draft}
+                onChange={changeDraft}
+              />
+            </SheetBlock>
+            {draft.focus !== "cabang" ? (
+              <SheetBlock title="Di mana pelanggan Anda berada?">
+                <MarketFields
+                  prepared={prepared}
+                  selection={draft}
+                  onChange={changeDraft}
+                />
+              </SheetBlock>
+            ) : null}
+          </div>
+        ) : (
+          <div className="grid gap-[26px] pt-2">
+            <SheetBlock title="Bisnis pembanding">
+              <CompetitorFields
+                prepared={prepared}
+                selection={draft}
+                onChange={changeDraft}
+              />
+            </SheetBlock>
+            <SheetBlock title="Yang membedakan Anda">
+              <DifferentiatorFields
+                prepared={prepared}
+                selection={draft}
+                onChange={changeDraft}
+                showExamples={false}
+              />
+            </SheetBlock>
+          </div>
+        )}
+        {sheetError ? (
+          <p role="alert" className="type-copy-sm m-0 mt-4 text-ember-700">
+            {sheetError}
+          </p>
+        ) : null}
+        {!ready ? (
+          <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
+            Lengkapi pilihan yang wajib sebelum menyimpan.
+          </p>
+        ) : null}
+      </BottomSheet>
     </section>
   );
 }

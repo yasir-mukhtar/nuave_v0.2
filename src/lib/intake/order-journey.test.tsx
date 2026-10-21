@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TEST_PASS_STORAGE_KEY } from "./test-pass";
@@ -148,59 +149,85 @@ afterEach(() => {
 
 const lanjut = () =>
   fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+const mulai = () =>
+  fireEvent.click(screen.getByRole("button", { name: "Mulai" }));
 const heading = (name: string | RegExp) =>
   screen.findByRole("heading", { name });
 
+/** J01 → J05 → J06 → J07: one website field, the found business, the three
+ * steps, then the order screen. The business name is read from the site. */
 async function enterBusiness() {
-  await screen.findByRole("textbox", { name: "Nama bisnis" });
-  fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
-    target: { value: "Kedai Fiksi" },
-  });
   fireEvent.change(
-    screen.getByRole("textbox", { name: "URL website publik" }),
+    await screen.findByRole("textbox", {
+      name: "Website atau akun Instagram bisnis",
+    }),
     { target: { value: "https://kedai-fiksi.example/" } },
   );
-  fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
-  await heading("Ini brand yang ingin Anda audit?");
-  lanjut();
-  await heading("Ringkasan pesanan");
+  fireEvent.click(screen.getByRole("button", { name: "Cek bisnis saya di AI" }));
+  await heading("Kami menemukan bisnis Anda");
+  fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
+  await heading("Tinggal 3 langkah");
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut ke pembayaran" }));
+  await heading("Konfirmasi dan bayar");
 }
 async function typeEmail(value = EMAIL) {
   fireEvent.change(screen.getByRole("textbox", { name: /Email/ }), {
     target: { value },
   });
 }
-async function throughDetails() {
+/** The paid reading (J09) runs by itself after the order and lands on the
+ * Step 2 cover (J10); its "Mulai" opens the focus screen. */
+async function toFocus() {
+  await heading("Ceritakan bisnis Anda");
+  mulai();
   await heading("Apa yang ingin Anda audit?");
+}
+async function throughDetails() {
+  await toFocus();
   for (const name of [
-    /biasanya disebut apa\?$/,
-    /yang Anda tawarkan\?$/,
-    "Siapa pelanggan utama Anda?",
-    "Kenapa pelanggan biasanya mencari yang seperti ini?",
-    "Apa yang dipertimbangkan pelanggan saat memilih?",
-    "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+    "Bisnis Anda biasanya disebut apa?",
+    "Apa saja yang Anda jual?",
+    "Siapa yang biasanya mencari bisnis Anda?",
+    "Apa yang mereka cari saat memilih?",
+    "Bagaimana pelanggan mendapatkannya?",
     "Di mana pelanggan Anda berada?",
-    "Ini yang mungkin dibandingkan dengan Anda",
-    "Apa yang membedakan bisnis Anda?",
-    "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+    "Bisnis mana yang sering dibandingkan dengan Anda?",
+    "Apa yang membuat bisnis Anda berbeda?",
   ]) {
     lanjut();
     await heading(name);
   }
   lanjut();
-  await heading("Ini yang akan Nuave audit");
+  await heading("Periksa, lalu jalankan audit");
+  mulai();
+  await heading("Ini profil yang akan Nuave pakai");
+}
+/** J25: the owner ticks the confirmation, then asks for the questions. */
+function makeQuestions() {
+  fireEvent.click(
+    screen.getByRole("checkbox", {
+      name: "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.",
+    }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Buat pertanyaan audit" }));
 }
 async function toQuestions() {
   await enterBusiness();
   await typeEmail();
   lanjut();
   await throughDetails();
+  makeQuestions();
+  await heading("10 pertanyaan untuk AI");
+}
+/** J27 → J27b: "Jalankan audit" opens the start sheet; its button approves. */
+async function startAudit() {
+  fireEvent.click(screen.getByRole("button", { name: "Jalankan audit" }));
+  const sheet = await screen.findByRole("dialog", {
+    name: "Mulai audit sekarang?",
+  });
   fireEvent.click(
-    screen.getByRole("button", {
-      name: "Sudah sesuai — buat pertanyaan audit",
-    }),
+    within(sheet).getByRole("button", { name: "Mulai audit sekarang" }),
   );
-  await heading("Periksa pertanyaan audit");
 }
 
 describe("the order screen (R-01, R-06, AC-01)", () => {

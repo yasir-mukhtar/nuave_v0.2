@@ -1,28 +1,67 @@
 :root {
+  /* ── v2 palette (Figma "Nuave v2: warm, tactile, decisive") ──
+     Warm ink and stone neutrals, one ember accent. Ember appears at most
+     once per screen outside the 3D art: the commit button, an accent word or
+     "you" in the data. Small orange text uses ember-700 for contrast. */
+  --ink-900: #1c1917;
+  --ink-800: #292524;
+  --ink-700: #44403c;
+  --ink-600: #57534e; /* 7.6:1 on #ffffff */
+  --ink-500: #78716c; /* 4.8:1 on #ffffff */
+  --ink-400: #a8a29e;
+  --line-300: #d6d3d1;
+  --line-200: #e7e5e4;
+  --stone-100: #f5f5f4;
+  --stone-50: #fafaf9;
+  --cream: #f6f1ea;
+  --ember-50: #fff5ee;
+  --ember-100: #ffe7d6;
+  --ember-200: #ffcbaa;
+  --ember-300: #ffa472;
+  --ember-400: #ff7b3a;
+  --ember-500: #fa5d19;
+  --ember-600: #e2470b;
+  --ember-700: #be390b;
+  --ember-800: #962f10;
+  --ember-900: #7a2910;
+
   /* ── Colors: Canvas & Surfaces ── */
   --bg-page: #ffffff;
-  --bg-surface: #fafafa;
-  --bg-surface-raised: #f4f4f5;
-  --bg-neutral: #f4f4f5;
-  --bg-muted: #f4f4f5;
+  --bg-surface: var(--stone-50);
+  --bg-surface-raised: var(--stone-100);
+  --bg-neutral: var(--stone-100);
+  --bg-muted: var(--stone-100);
   --surface-muted: var(--bg-muted);
+  --surface-cream: var(--cream);
+  /* The paid moment (J09): the one full-ember screen. */
+  --surface-ember: linear-gradient(
+    180deg,
+    #ff6a24 0%,
+    #f2520f 55%,
+    #d9420a 100%
+  );
 
   /* ── Colors: Hairlines & Borders ── */
-  --border-default: #e5e7eb;
-  --border-light: #ececec;
-  --border-strong: #d1d5db;
+  --border-default: var(--line-200);
+  --border-light: var(--line-200);
+  --border-strong: var(--line-300);
 
   /* ── Colors: Typography ── */
-  --text-heading: #18181b;
-  --text-body: #3f3f46;
-  --text-muted: #52525b; /* 7.4:1 on #ffffff */
-  --text-placeholder: #a1a1aa;
+  --text-heading: var(--ink-900);
+  --text-body: var(--ink-700);
+  --text-muted: var(--ink-600);
+  --text-subtle: var(--ink-500);
+  --text-placeholder: var(--ink-500);
+  --text-accent: var(--ember-700);
 
-  /* ── Colors: BeUI light action accent and compatibility aliases ── */
-  --action: #18181b;
-  --action-hover: #27272a;
-  --action-soft: #f4f4f5;
+  /* ── Colors: action (near-black) and commit (ember) ── */
+  --action: var(--ink-900);
+  --action-hover: var(--ink-800);
+  --action-soft: var(--stone-100);
   --action-foreground: #ffffff;
+  --commit: var(--ember-600);
+  --commit-hover: var(--ember-700);
+  --commit-foreground: #ffffff;
   --purple: var(--action);
   --purple-dark: var(--action-hover);
   --purple-light: var(--action-soft);
@@ -60,10 +99,10 @@
   --type-size-5xl: 4rem; /* 64px */
 
   /* ── Productive and expressive semantic roles ── */
-  --type-display-size: clamp(2.25rem, 5vw, 4rem);
+  --type-display-size: clamp(3rem, 5vw, 4rem);
   --type-display-weight: 600;
-  --type-display-leading: 1;
-  --type-display-tracking: -0.04em;
+  --type-display-leading: 1.08;
+  --type-display-tracking: -0.03em;
 
   --type-heading-xl-size: clamp(2rem, 4vw, 3rem);
   --type-heading-xl-weight: 600;
@@ -72,23 +111,23 @@
 
   --type-heading-lg-size: var(--type-size-3xl);
   --type-heading-lg-weight: 600;
-  --type-heading-lg-leading: 1.15;
-  --type-heading-lg-tracking: -0.03em;
+  --type-heading-lg-leading: 1.1875;
+  --type-heading-lg-tracking: -0.02em;
 
   --type-heading-md-size: var(--type-size-2xl);
   --type-heading-md-weight: 600;
   --type-heading-md-leading: 1.25;
-  --type-heading-md-tracking: -0.025em;
+  --type-heading-md-tracking: -0.015em;
 
   --type-heading-sm-size: var(--type-size-xl);
   --type-heading-sm-weight: 600;
   --type-heading-sm-leading: 1.3;
-  --type-heading-sm-tracking: -0.02em;
+  --type-heading-sm-tracking: -0.01em;
 
   --type-copy-lg-size: var(--type-size-lg);
   --type-copy-lg-weight: 400;
-  --type-copy-lg-leading: 1.5;
-  --type-copy-lg-tracking: -0.01em;
+  --type-copy-lg-leading: 1.5556;
+  --type-copy-lg-tracking: normal;
 
   --type-copy-size: var(--type-size-base);
   --type-copy-weight: 400;
@@ -97,8 +136,13 @@
 
   --type-copy-sm-size: var(--type-size-sm);
   --type-copy-sm-weight: 400;
-  --type-copy-sm-leading: 1.5;
+  --type-copy-sm-leading: 1.4286;
   --type-copy-sm-tracking: normal;
+
+  --type-label-lg-size: var(--type-size-base);
+  --type-label-lg-weight: 500;
+  --type-label-lg-leading: 1.375;
+  --type-label-lg-tracking: normal;
 
   --type-label-size: var(--type-size-sm);
   --type-label-weight: 500;
@@ -107,8 +151,30 @@
 
   --type-label-sm-size: var(--type-size-xs);
   --type-label-sm-weight: 500;
-  --type-label-sm-leading: 1.35;
+  --type-label-sm-leading: 1.3333;
   --type-label-sm-tracking: normal;
+
+  /* v2 small print: notes, consent lines and illustration captions. */
+  --type-caption-size: var(--type-size-xs);
+  --type-caption-weight: 400;
+  --type-caption-leading: 1.5;
+  --type-caption-tracking: normal;
+
+  /* v2 product roles: row and step titles, and the big report numbers. */
+  --type-title-size: var(--type-size-lg);
+  --type-title-weight: 600;
+  --type-title-leading: 1.3333;
+  --type-title-tracking: normal;
+
+  --type-title-sm-size: var(--type-size-base);
+  --type-title-sm-weight: 600;
+  --type-title-sm-leading: 1.25;
+  --type-title-sm-tracking: normal;
+
+  --type-number-size: var(--type-size-5xl);
+  --type-number-weight: 600;
+  --type-number-leading: 1;
+  --type-number-tracking: -0.03em;
 
   --type-mono-size: var(--type-size-sm);
   --type-mono-weight: 400;
@@ -160,6 +226,15 @@
   --radius-token-3xl: 24px;
   --radius-token-full: 9999px;
 
+  /* v2 shape: chips full, buttons and inputs 14, tiles and rows 16, cards
+     20, sheets 28. */
+  --radius-token-chip: var(--radius-token-full);
+  --radius-token-button: 14px;
+  --radius-token-input: 14px;
+  --radius-token-tile: var(--radius-token-xl);
+  --radius-token-card: var(--radius-token-2xl);
+  --radius-token-sheet: 28px;
+
   /* ── Icons ── */
   --icon-stroke: 1.6;
 
@@ -169,6 +244,10 @@
   --motion-duration-slow: 400ms;
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Press feedback and quick state changes (v2). */
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-press-scale: 0.97;
 
   --transition-fast: var(--motion-duration-fast) var(--motion-ease-out);
   --transition-base: var(--motion-duration-base) var(--motion-ease-out);
@@ -179,6 +258,11 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-focus: 0 0 0 3px rgb(24 24 27 / 0.18);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+  /* v2 elevations: two only, warm-tinted, no borders on raised things. */
+  --elevation-card:
+    0 1px 2px rgb(28 25 23 / 0.05), 0 6px 18px rgb(28 25 23 / 0.07);
+  --elevation-float:
+    0 2px 6px rgb(28 25 23 / 0.06), 0 14px 36px rgb(28 25 23 / 0.12);
 
   /* ── Accessibility Foundations (R-07) ── */
   --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--action);

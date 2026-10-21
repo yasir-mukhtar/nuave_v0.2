@@ -1,42 +1,49 @@
-/* Selection primitives (Spec 007 R-27). Composition sits on tokens.css only;
-   no raw font sizes — typography comes from --type-* roles. */
+/* Selection primitives (Spec 007 R-27), v2 kit look (Figma "v2/Option row",
+   "v2/Chip", "v2/Tile"). Composition sits on tokens.css only; no raw font
+   sizes — typography comes from --type-* roles. Selection is near-black:
+   a 2px ink edge on a stone-50 fill, never ember. */
 
 .group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 12px;
 }
 
-/* ── Selection card (single choice) ── */
+/* ── Option row (single choice, "v2/Option row") ── */
 
 .card {
+  position: relative;
   display: flex;
   gap: var(--space-md);
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   min-height: var(--target-min-size);
-  padding: var(--space-md);
+  padding: 18px 16px 18px 20px;
   text-align: left;
   background: var(--bg-page);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-token-lg);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--line-300);
+  border-radius: var(--radius-token-tile);
   cursor: pointer;
   transition:
-    border-color var(--motion-duration-fast) var(--motion-ease-out),
-    background var(--motion-duration-fast) var(--motion-ease-out);
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .card:hover {
-  border-color: var(--border-strong);
+  border-color: var(--ink-400);
 }
 
+.card:active:not([data-disabled]) {
+  transform: scale(0.985);
+}
+
+/* The 2px edge is drawn with a shadow so selecting never shifts the text. */
 .card[data-checked] {
-  border-color: var(--action);
-  background: var(--action-soft);
-  box-shadow:
-    0 0 0 1px var(--action),
-    var(--shadow-card);
+  border-color: var(--ink-900);
+  background: var(--stone-50);
+  box-shadow: inset 0 0 0 1px var(--ink-900);
 }
 
 .card[data-disabled] {
@@ -45,42 +52,53 @@
 }
 
 .card:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
 }
 
 .cardBody {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .cardTitle {
   color: var(--text-heading);
-  font-size: var(--type-copy-size);
-  font-weight: var(--type-label-weight);
-  line-height: var(--type-copy-leading);
+  font-size: var(--type-copy-lg-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-title-leading);
+  overflow-wrap: anywhere;
 }
 
 .cardDescription {
-  margin-top: 2px;
   color: var(--text-muted);
   font-size: var(--type-copy-sm-size);
   line-height: var(--type-copy-sm-leading);
+  overflow-wrap: anywhere;
 }
 
 /* Rendered as <small> so chapter styles that resize `span + span` children
-   leave provenance labels at the muted small-copy size. */
+   leave provenance labels at the small size. */
 .cardMeta,
 .rowMeta {
-  margin-top: 2px;
-  color: var(--text-muted);
-  font-size: var(--type-copy-sm-size);
-  line-height: var(--type-copy-sm-leading);
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 10px;
+  color: var(--ink-600);
+  background: var(--stone-100);
+  border-radius: var(--radius-token-full);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
 }
 
 .cardIcon {
+  display: grid;
   flex: none;
-  margin-top: 2px;
+  place-items: center;
+  order: 2;
   color: var(--text-muted);
 }
 
@@ -88,36 +106,54 @@
   color: var(--text-heading);
 }
 
-/* ── Selection row (choice from a detected list) ── */
+/* A 3D miniature on the right of the row (J11): 64 x 64. */
+.cardImage {
+  flex: none;
+  order: 2;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  transition: transform var(--motion-duration-base) var(--motion-ease-out);
+}
+
+.card[data-checked] .cardImage {
+  transform: scale(1.06) rotate(-3deg);
+}
+
+/* ── Radio row (one item from a found list, J12) ── */
 
 .row {
+  position: relative;
   display: flex;
   gap: var(--space-md);
   align-items: center;
   width: 100%;
   min-height: var(--target-min-size);
-  padding: var(--space-md);
+  padding: 16px 18px 16px 20px;
   text-align: left;
   background: var(--bg-page);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-token-lg);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--line-300);
+  border-radius: var(--radius-token-tile);
   cursor: pointer;
   transition:
-    border-color var(--motion-duration-fast) var(--motion-ease-out),
-    background var(--motion-duration-fast) var(--motion-ease-out);
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .row:hover {
-  border-color: var(--border-strong);
+  border-color: var(--ink-400);
+}
+
+.row:active:not([data-disabled]) {
+  transform: scale(0.985);
 }
 
 .row[data-checked] {
-  border-color: var(--action);
-  background: var(--action-soft);
-  box-shadow:
-    0 0 0 1px var(--action),
-    var(--shadow-card);
+  border-color: var(--ink-900);
+  background: var(--stone-50);
+  box-shadow: inset 0 0 0 1px var(--ink-900);
 }
 
 .row[data-disabled] {
@@ -126,49 +162,72 @@
 }
 
 .row:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
 }
 
+/* The radio sits on the right, like the design's list. */
 .rowDot {
+  position: relative;
   flex: none;
+  order: 2;
   box-sizing: border-box;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--border-strong);
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--line-300);
   border-radius: var(--radius-token-full);
   background: var(--bg-page);
+  transition: border-color var(--motion-duration-fast)
+    var(--motion-ease-standard);
+}
+
+.rowDot::after {
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-token-full);
+  background: var(--ink-900);
+  content: "";
+  transform: scale(0);
+  transition: transform var(--motion-duration-base) var(--motion-ease-out);
 }
 
 .row[data-checked] .rowDot {
-  border: 5px solid var(--action);
+  border-color: var(--ink-900);
+}
+
+.row[data-checked] .rowDot::after {
+  transform: scale(1);
 }
 
 .rowBody {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .rowTitle {
   color: var(--text-heading);
   font-size: var(--type-copy-size);
-  font-weight: var(--type-label-weight);
+  font-weight: var(--type-heading-sm-weight);
   line-height: var(--type-copy-leading);
+  overflow-wrap: anywhere;
 }
 
 .rowDescription {
-  margin-top: 2px;
   color: var(--text-muted);
   font-size: var(--type-copy-sm-size);
   line-height: var(--type-copy-sm-leading);
+  overflow-wrap: anywhere;
 }
 
-/* ── Chip (multi-select and removal) ── */
+/* ── Chip (multi-select, "v2/Chip") ── */
 
 .chipList {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: 10px;
 }
 
 .chip {
@@ -178,33 +237,56 @@
   min-width: 0;
   max-width: 100%;
   min-height: var(--target-min-size);
-  padding: var(--space-sm) var(--space-md);
-  color: var(--text-body);
+  padding: 9px 18px;
+  color: var(--text-heading);
   background: var(--bg-page);
-  border: 1px solid var(--border-default);
-  /* Keep wrapped labels inside the selected background; a full pill radius
-     grows with multiline chip height and can hide the corner text. */
-  border-radius: var(--radius-token-3xl);
+  border: 1px solid var(--line-300);
+  /* Half the 44px height: a pill on one line that keeps wrapped labels
+     inside the selected background. */
+  border-radius: 22px;
   cursor: pointer;
   transition:
-    border-color var(--motion-duration-fast) var(--motion-ease-out),
-    background var(--motion-duration-fast) var(--motion-ease-out),
-    color var(--motion-duration-fast) var(--motion-ease-out);
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    padding var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .chip:hover {
-  border-color: var(--border-strong);
+  border-color: var(--ink-400);
+}
+
+.chip:active:not([data-disabled]) {
+  transform: scale(0.96);
 }
 
 .chipSelected {
-  color: var(--action-foreground);
-  background: var(--action);
-  border-color: var(--action);
+  padding-left: 14px;
+  color: #ffffff;
+  background: var(--ink-900);
+  border-color: var(--ink-900);
 }
 
 .chipSelected:hover {
-  background: var(--action-hover);
-  border-color: var(--action-hover);
+  background: var(--ink-800);
+  border-color: var(--ink-800);
+}
+
+.chipSelected svg {
+  animation: chip-check-in var(--motion-duration-base) var(--motion-ease-out)
+    both;
+}
+
+@keyframes chip-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .chip[data-disabled] {
@@ -213,21 +295,32 @@
 }
 
 .chip:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
 }
 
 .chipLabel {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: var(--type-copy-size);
+  font-weight: var(--type-label-weight);
   line-height: var(--type-copy-leading);
 }
 
 .chipRemove {
   display: inline-flex;
   flex: none;
-  opacity: 0.6;
+  opacity: 0.7;
+}
+
+/* "+ Lainnya": opens the typed escape hatch. */
+.chipAdd {
+  color: var(--ink-600);
+  padding-left: 14px;
+}
+
+.chipAdd:hover {
+  color: var(--ink-900);
 }
 
 /* ── Add line (typed escape hatch) ── */
@@ -255,15 +348,15 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--target-min-size);
-  padding: 0 var(--space-sm);
+  padding: 0 var(--space-xs);
   color: var(--text-heading);
   background: none;
   border: 0;
   cursor: pointer;
   font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
+  font-weight: var(--type-heading-sm-weight);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
 }
 
 .revealTrigger:hover {
@@ -271,13 +364,198 @@
 }
 
 .revealTrigger:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
   border-radius: var(--radius-token-xs);
 }
 
 .revealPanel {
-  margin-top: var(--space-lg);
-  padding: var(--space-md) 0 var(--space-xs) var(--space-md);
-  border-left: 2px solid var(--border-strong);
+  overflow: hidden;
+  height: var(--collapsible-panel-height);
+  margin-top: var(--space-md);
+  transition: height var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.revealPanel[data-starting-style],
+.revealPanel[data-ending-style] {
+  height: 0;
+}
+
+/* ── Tile ("v2/Tile", J18 and J19): 2 x 2 compact choices ── */
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 108px;
+  padding: var(--space-md);
+  text-align: left;
+  color: var(--text-heading);
+  background: var(--bg-page);
+  border: 1px solid var(--line-300);
+  border-radius: var(--radius-token-tile);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.tile:hover {
+  border-color: var(--ink-400);
+}
+
+.tile:active:not([data-disabled]) {
+  transform: scale(0.97);
+}
+
+.tile[data-pressed],
+.tile[data-checked] {
+  border-color: var(--ink-900);
+  background: var(--stone-50);
+  box-shadow: inset 0 0 0 1px var(--ink-900);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
+
+.tileIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transition: transform var(--motion-duration-base) var(--motion-ease-out);
+}
+
+.tile[data-pressed] .tileIcon,
+.tile[data-checked] .tileIcon {
+  transform: translateY(-2px) scale(1.08);
+}
+
+.tileLabel {
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-title-sm-leading);
+  overflow-wrap: anywhere;
+}
+
+/* ── Check row (several from a found list, J20) ── */
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkRow {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-height: var(--target-min-size);
+  padding: var(--space-md);
+  text-align: left;
+  background: var(--bg-page);
+  border: 1px solid var(--line-300);
+  border-radius: var(--radius-token-tile);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.checkRow:hover {
+  border-color: var(--ink-400);
+}
+
+.checkRow:active:not([data-disabled]) {
+  transform: scale(0.985);
+}
+
+.checkRow[data-checked] {
+  border-color: var(--ink-900);
+  background: var(--stone-50);
+  box-shadow: inset 0 0 0 1px var(--ink-900);
+}
+
+.checkRow:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
+
+.checkAvatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ink-700);
+  background: var(--stone-100);
+  border-radius: var(--radius-token-full);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: 1;
+}
+
+.checkBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.checkTitle {
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-copy-leading);
+  overflow-wrap: anywhere;
+}
+
+.checkSub {
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+  overflow-wrap: anywhere;
+}
+
+/* The box sits on the right; ticking fills it with ink. */
+.checkBox {
+  display: grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  color: #ffffff;
+  border: 1.5px solid var(--line-300);
+  border-radius: 7px;
+  background: var(--bg-page);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.checkRow[data-checked] .checkBox {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+
+.checkRow[data-checked] .checkBox svg {
+  animation: chip-check-in var(--motion-duration-base) var(--motion-ease-out)
+    both;
 }
