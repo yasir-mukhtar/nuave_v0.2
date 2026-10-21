@@ -4813,6 +4813,91 @@ describe("independent review, round 1", () => {
     return calls;
   }
 
+  /** Holds the saved order's status answer until `answer` releases it. */
+  function stubHeldStatus() {
+    const calls: string[] = [];
+    let release: (payment: string) => void = () => {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        calls.push(url);
+        if (url === "/api/orders/status")
+          return new Promise<Response>((resolve) => {
+            release = (payment) =>
+              resolve(
+                Response.json({
+                  state: "open",
+                  payment: { state: payment },
+                  completed: 0,
+                  total: 10,
+                  questions: [],
+                }),
+              );
+          });
+        // A paid order's reading starts by itself (J09); it never answers here.
+        if (url === "/api/audit/extract") return new Promise(() => {});
+        throw new Error(`Unexpected request ${url}`);
+      }),
+    );
+    return { calls, answer: (payment: string) => release(payment) };
+  }
+
+  it("offers Periksa only once the saved order's answer is in, and never for an order that turns out paid", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const server = stubHeldStatus();
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(
+      /Website toko-lain\.example belum diperiksa, karena pesanan untuk Kedai Fiksi masih tersimpan/,
+    );
+    await waitFor(() => expect(server.calls).toContain("/api/orders/status"));
+    // R-19: while the answer is out the order may be paid, so nothing on the
+    // notice can replace it; it can only be dismissed.
+    expect(
+      screen.queryByRole("button", { name: "Periksa toko-lain.example" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Lanjutkan pesanan Kedai Fiksi" }),
+    ).toBeTruthy();
+    await act(async () => server.answer("paid"));
+    await screen.findByText(
+      /Website toko-lain\.example belum diperiksa\. Pesanan untuk Kedai Fiksi sudah dibayar atau sedang dibayar/,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Periksa toko-lain.example" }),
+    ).toBeNull();
+    expect(
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.order,
+    ).toMatchObject({ id: ORDER_ID, paid: true });
+    // The typed website was never checked.
+    expect(
+      server.calls.some((url) => url.startsWith("/api/audit/identity")),
+    ).toBe(false);
+  });
+
+  it("offers Periksa once the saved order's answer says it is still unpaid", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const server = stubHeldStatus();
+    render(<SmartIntakeJourney live={false} />);
+    await waitFor(() => expect(server.calls).toContain("/api/orders/status"));
+    expect(
+      screen.queryByRole("button", { name: "Periksa toko-lain.example" }),
+    ).toBeNull();
+    await act(async () => server.answer("unpaid"));
+    expect(
+      await screen.findByRole("button", { name: "Periksa toko-lain.example" }),
+    ).toBeTruthy();
+  });
+
   it("says a website typed on the landing page was not checked while an order is saved, and checks it on request", async () => {
     window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
     window.sessionStorage.setItem(
@@ -4830,7 +4915,7 @@ describe("independent review, round 1", () => {
       false,
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Periksa toko-lain.example" }),
+      await screen.findByRole("button", { name: "Periksa toko-lain.example" }),
     );
     await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
     expect(

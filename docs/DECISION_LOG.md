@@ -88,6 +88,9 @@ shows the same 480px column.
   17. The commit buttons (pay, start the audit, open the report) are filled
       #d4420b instead of ember-600 #e2470b, so their white labels reach WCAG
       AA (4.6:1; ember-600 gives 4.1:1).
+  18. Small grey text on cream (J01's sample note, J30's help line and
+      order number) is ink-600 instead of ink-500, so it reaches WCAG AA
+      (6.8:1; ink-500 gives 4.3:1 on cream).
 
 ## 2026-10-18 — S4 live check; slow websites; refund check at G1
 

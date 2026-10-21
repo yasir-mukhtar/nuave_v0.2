@@ -334,11 +334,11 @@ export default function SmartAuditStage({
           >
             Minta kirim ulang email
           </a>
-          <p className="type-caption m-0 text-ink-500">
+          <p className="type-caption m-0 text-ink-600">
             Butuh bantuan? {SUPPORT_EMAIL}
           </p>
           {orderNumber ? (
-            <p className="type-mono-sm m-0 text-ink-500">
+            <p className="type-mono-sm m-0 text-ink-600">
               No. pesanan {orderNumber}
             </p>
           ) : null}

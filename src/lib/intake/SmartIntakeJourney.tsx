@@ -562,6 +562,9 @@ export default function SmartIntakeJourney({
     payment: OrderPayment;
   } | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  // The saved order whose status answer this page has seen. Until then it
+  // may be paid, so J01's notice does not offer to replace it (R-19).
+  const [checkedOrder, setCheckedOrder] = useState<string | null>(null);
   const [testPass, setTestPass] = useState(false);
   // J02–J04: when the free check started, the clock it is shown against, the
   // moment it finished, and the J04 name field.
@@ -755,6 +758,7 @@ export default function SmartIntakeJourney({
         };
         persist(latest);
       }
+      setCheckedOrder(orderId);
       if (payment && BLOCKING_PAYMENT_STATES.includes(payment.state)) {
         // The page shows the state on the order screen; it never starts a new
         // order from an answer like this (Experience 7, 8).
@@ -1063,7 +1067,8 @@ export default function SmartIntakeJourney({
    * next one, R-19). */
   function checkSkippedWebsite() {
     const url = skippedHandoff;
-    if (!url || lockRef.current) return;
+    const order = sessionRef.current.order;
+    if (!url || lockRef.current || (order && checkedOrder !== order.id)) return;
     setSkippedHandoff(null);
     setInterrupted(false);
     persist(withNewSource(sessionRef.current, url));
@@ -1823,7 +1828,13 @@ export default function SmartIntakeJourney({
   // J01 → a saved order or audit: the typed website was not checked; say so,
   // and offer the check while nothing locks the saved progress.
   const savedFor = session.order?.name ?? session.brand?.name ?? "";
-  const canCheckSkipped = !activeOrder && !paymentLocked;
+  // R-19: checking another website replaces the saved order, so it waits for
+  // the order's status answer (the order may be paid) and never replaces a
+  // paid or paying one.
+  const canCheckSkipped =
+    !activeOrder &&
+    !paymentLocked &&
+    (!session.order || checkedOrder === session.order.id);
   const handoffNotice = skippedHandoff ? (
     <div
       role="status"
@@ -1855,9 +1866,9 @@ export default function SmartIntakeJourney({
           className="min-h-11"
           onClick={() => setSkippedHandoff(null)}
         >
-          {canCheckSkipped
-            ? `Lanjutkan ${session.order ? "pesanan" : "audit"} ${savedFor}`
-            : "Tutup"}
+          {activeOrder || paymentLocked
+            ? "Tutup"
+            : `Lanjutkan ${session.order ? "pesanan" : "audit"} ${savedFor}`}
         </Button>
       </div>
     </div>

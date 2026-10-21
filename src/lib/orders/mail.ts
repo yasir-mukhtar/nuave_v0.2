@@ -135,7 +135,7 @@ ${
 <tr><td style="padding:16px 24px 0;"><div style="height:1px;background:#e7e5e4;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
 <tr><td style="padding:16px 24px 24px;"><p style="${muted}color:#78716c;">Ada masalah dengan laporan? Balas email ini atau tulis ke <a href="mailto:${SUPPORT_EMAIL}" style="color:#1c1917;">${SUPPORT_EMAIL}</a>.</p>
 <p style="margin:10px 0 0;font-family:ui-monospace, Menlo, Consolas, monospace;font-size:12px;line-height:16px;color:#78716c;">No. pesanan ${escapeHtml(input.orderNumber)}</p>
-<p style="${muted}margin-top:14px;font-size:12px;color:#a8a29e;">Jika tombol tidak bisa dibuka, salin link ini: <span style="word-break:break-all;">${href}</span></p></td></tr>
+<p style="${muted}margin-top:14px;font-size:12px;color:#78716c;">Jika tombol tidak bisa dibuka, salin link ini: <span style="word-break:break-all;">${href}</span></p></td></tr>
 </table></td></tr></table></body></html>`;
   return {
     subject: `AI Visibility Report untuk ${input.businessName} sudah siap`,
