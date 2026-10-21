@@ -623,7 +623,9 @@ export async function payOrder(page: Page, email: string = ORDER_EMAIL) {
   await payButton(page).click();
   const reading = paidReadingScreen(page);
   await expect(reading).toBeVisible({ timeout: 15_000 });
-  const paid = reading.getByText(PAID_HEADING);
+  // The whole pill: "Pembayaran diterima · NV-…" (its parts wrap apart on a
+  // narrow phone, so they are separate elements).
+  const paid = reading.locator("p", { hasText: PAID_HEADING });
   await expect(paid).toContainText(/NV-[A-Z0-9]{6}/);
   const number = (await paid.textContent())?.match(/NV-[A-Z0-9]{6}/)?.[0];
   expect(number).toBeTruthy();
