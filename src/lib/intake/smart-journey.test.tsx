@@ -1879,16 +1879,71 @@ const j4Draft = {
 
 async function toFocusScreen() {
   await fillAndPeriksa();
-  await screen.findByRole("heading", {
-    name: "Ini brand yang ingin Anda audit?",
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+  await toOrder();
   await passOrder();
-  await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+  await startStepTwo();
 }
 
-const focusRow = () =>
-  within(screen.getByRole("region", { name: "Fokus audit" }));
+/**
+ * J11 by keyboard: an arrow key only selects a focus card (Lanjut then opens
+ * its list), like the old pick-then-Lanjut. A tap opens the list at once; that
+ * is checked on its own in the focus-card test.
+ */
+async function selectFocus(card: RegExp) {
+  const radios = within(
+    screen.getByRole("radiogroup", { name: "Fokus audit" }),
+  ).getAllByRole("radio");
+  const index = radios.findIndex((radio) => card.test(radio.textContent ?? ""));
+  const target = radios[index]!;
+  if (target.getAttribute("aria-checked") === "true") return;
+  const from = radios[index === 0 ? 1 : index - 1]!;
+  from.focus();
+  fireEvent.keyDown(from, { key: index === 0 ? "ArrowUp" : "ArrowDown" });
+  await waitFor(() => expect(target.getAttribute("aria-checked")).toBe("true"));
+}
+
+/** J11 itself (the J12 list screens repeat its heading). */
+const focusScreen = () =>
+  screen.findByRole("radiogroup", { name: "Fokus audit" });
+
+/** J26: "Ganti fokus audit" in the Bisnis sheet opens the focus screen as a
+ * detour that returns to the review. */
+async function editFocus() {
+  const sheet = await openSheet("Bisnis");
+  fireEvent.click(
+    within(sheet).getByRole("button", { name: "Ganti fokus audit" }),
+  );
+  await focusScreen();
+}
+
+/** J12b: a branch the owner adds in the "Tambah cabang" sheet. */
+async function addBranch(name: string, address: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Tambah cabang" }));
+  const sheet = await screen.findByRole("dialog", { name: "Tambah cabang" });
+  fireEvent.change(
+    within(sheet).getByRole("textbox", { name: "Nama cabang" }),
+    { target: { value: name } },
+  );
+  fireEvent.change(
+    within(sheet).getByRole("textbox", { name: "Alamat cabang" }),
+    { target: { value: address } },
+  );
+  await closeSheet(sheet, "Simpan");
+}
+
+/** J12b: a product the owner adds in the "Tambah produk" sheet. */
+async function addProduct(name: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Tambah produk" }));
+  const sheet = await screen.findByRole("dialog", { name: "Tambah produk" });
+  fireEvent.change(
+    within(sheet).getByRole("textbox", { name: "Nama produk atau layanan" }),
+    { target: { value: name } },
+  );
+  await closeSheet(sheet, "Simpan");
+}
+
+const lanjutButton = () =>
+  screen.getByRole("button", { name: "Lanjut" }) as HTMLButtonElement;
 
 // Types one character at a time — bulk fireEvent.change skips the
 // intermediate values a real keystroke sequence passes through.
@@ -1903,49 +1958,58 @@ describe("Spec 013 J4 focus and target screens", () => {
     const { calls } = stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    const whole = screen.getByRole("radio", {
-      name: /Brand secara keseluruhan/,
-    });
+    const whole = screen.getByRole("radio", { name: /Seluruh brand/ });
     expect(whole.getAttribute("aria-checked")).toBe("true");
-    expect(whole.textContent).toContain("Saran Nuave");
+    // Nuave's proposal is labelled once, on the screen.
+    expect(screen.getByText("Saran Nuave")).toBeTruthy();
+    expect(screen.getByText("sudah dipilih. Ganti jika perlu.")).toBeTruthy();
     expect(
       screen
-        .getByRole("radio", { name: /Satu lokasi/ })
+        .getByRole("radio", { name: /Satu cabang/ })
         .getAttribute("aria-checked"),
     ).toBe("false");
-    expect(
-      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
-    ).toBeTruthy();
-    // Chapter progress marks bab 2 of 4 on the focus screen.
-    expect(screen.getByRole("img", { name: "Bab 2 dari 4" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /Satu produk/ })).toBeTruthy();
+    // Step progress marks Step 2 of 3 on the focus screen.
+    expect(screen.getByRole("img", { name: "Langkah 2 dari 3" })).toBeTruthy();
     lanjut();
     await throughDetails();
-    expect(focusRow().getByText("Brand secara keseluruhan")).toBeTruthy();
+    expect(fact("Fokus audit").textContent).toBe("Seluruh brand");
     // Screen navigation spends no extra preparation call.
     expect(calls).toEqual(["identity", "/api/orders", "/api/audit/extract"]);
+    // J11: tapping "Satu cabang" or "Satu produk" opens its list at once.
+    await editFocus();
+    fireEvent.click(screen.getByRole("radio", { name: /Satu cabang/ }));
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    kembali();
+    await focusScreen();
+    fireEvent.click(screen.getByRole("radio", { name: /Satu produk/ }));
+    await screen.findByRole("heading", { name: "Produk mana?" });
   });
 
   it("the location screen lists host-screened published rows and blocks Lanjut until complete", async () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    // Nothing is picked yet: Lanjut waits.
+    expect(lanjutButton().disabled).toBe(true);
     const dago = screen.getByRole("radio", { name: /Kedai Fiksi Dago/ });
     const cimahi = screen.getByRole("radio", { name: /Kedai Fiksi Cimahi/ });
     expect(dago.textContent).toContain("Jl. Fiksi Raya No. 10, Bandung");
-    expect(dago.textContent).toContain("Dari website Anda");
-    // A www.-equivalent page still counts as published by the business.
-    expect(cimahi.textContent).toContain("Dari website Anda");
+    // A www.-equivalent page still counts as published by the business; the
+    // screen says once that the rows come from the website.
+    expect(cimahi.textContent).toContain("Jl. Contoh Fiksi No. 2, Cimahi");
+    expect(screen.getAllByText("Ditemukan di website")).toHaveLength(1);
     fireEvent.click(cimahi);
     expect(cimahi.getAttribute("aria-checked")).toBe("true");
+    expect(lanjutButton().disabled).toBe(false);
     lanjut();
     await throughDetails("cabang");
-    expect(focusRow().getByText("Satu lokasi")).toBeTruthy();
-    expect(focusRow().getByText(/Kedai Fiksi Cimahi/)).toBeTruthy();
+    expect(fact("Fokus audit").textContent).toContain(
+      "Satu cabang: Kedai Fiksi Cimahi",
+    );
     const saved = JSON.parse(
       window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
@@ -1961,25 +2025,29 @@ describe("Spec 013 J4 focus and target screens", () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Tambah lokasi lain" }));
-    const lanjut = screen.getByRole("button", { name: "Lanjut" });
-    expect(lanjut).toHaveProperty("disabled", true);
-    fireEvent.change(screen.getByRole("textbox", { name: "Nama lokasi" }), {
-      target: { value: "Gerai Fiksi" },
-    });
-    expect(lanjut).toHaveProperty("disabled", true);
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    const forward = lanjutButton();
+    expect(forward).toHaveProperty("disabled", true);
+    // J12b: an added branch needs both its name and its address.
+    fireEvent.click(screen.getByRole("button", { name: "Tambah cabang" }));
+    const sheet = await screen.findByRole("dialog", { name: "Tambah cabang" });
+    const save = sheetSave(sheet);
+    expect(save).toHaveProperty("disabled", true);
     fireEvent.change(
-      screen.getByRole("textbox", { name: "Alamat atau area" }),
-      {
-        target: { value: "Jl. Fiksi 40, Bandung" },
-      },
+      within(sheet).getByRole("textbox", { name: "Nama cabang" }),
+      { target: { value: "Gerai Fiksi" } },
     );
-    expect(lanjut).toHaveProperty("disabled", false);
+    expect(save).toHaveProperty("disabled", true);
+    fireEvent.change(
+      within(sheet).getByRole("textbox", { name: "Alamat cabang" }),
+      { target: { value: "Jl. Fiksi 40, Bandung" } },
+    );
+    expect(save).toHaveProperty("disabled", false);
+    expect(forward).toHaveProperty("disabled", true);
+    await closeSheet(sheet, "Simpan");
+    expect(forward).toHaveProperty("disabled", false);
     // The completed manual entry shows as its own owner-labelled choice.
     const manual = screen.getByRole("radio", { name: /Gerai Fiksi/ });
     expect(manual.getAttribute("aria-checked")).toBe("true");
@@ -1990,61 +2058,46 @@ describe("Spec 013 J4 focus and target screens", () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Produk atau layanan mana?",
-    });
-    const lanjut = screen.getByRole("button", { name: "Lanjut" });
-    expect(lanjut).toHaveProperty("disabled", true);
+    await selectFocus(/Satu produk/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Produk mana?" });
+    const forward = lanjutButton();
+    expect(forward).toHaveProperty("disabled", true);
     const roti = screen.getByRole("radio", { name: /roti/ });
-    expect(roti.textContent).toContain("Dari website Anda");
+    // The offerings come from the website, said once on the screen.
+    expect(screen.getAllByText("Ditemukan di website")).toHaveLength(1);
     fireEvent.click(roti);
     expect(roti.getAttribute("aria-checked")).toBe("true");
     // A typed replacement becomes the owner's answer.
-    fireEvent.click(
-      screen.getByRole("button", { name: "Tambah produk atau layanan lain" }),
-    );
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Nama produk atau layanan" }),
-      { target: { value: "paket rapat" } },
-    );
+    await addProduct("paket rapat");
     const manual = screen.getByRole("radio", { name: /paket rapat/ });
     expect(manual.getAttribute("aria-checked")).toBe("true");
     expect(manual.textContent).toContain("Dari Anda");
     expect(roti.getAttribute("aria-checked")).toBe("false");
-    fireEvent.click(lanjut);
+    fireEvent.click(forward);
     await throughDetails("produk");
-    expect(focusRow().getByText(/paket rapat/)).toBeTruthy();
+    expect(fact("Fokus audit").textContent).toContain("paket rapat");
   });
 
   it("offers the manual location link when no usable published location exists", async () => {
     stubPreparation();
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    expect(screen.queryByRole("radio", { name: /Satu lokasi/ })).toBeNull();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Isi lokasi secara manual" }),
-    );
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    // With no published list the manual form is shown directly.
-    expect(screen.getByRole("textbox", { name: "Nama lokasi" })).toBeTruthy();
-    fireEvent.change(screen.getByRole("textbox", { name: "Nama lokasi" }), {
-      target: { value: "Gerai Satu" },
-    });
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Alamat atau area" }),
-      {
-        target: { value: "Jl. Fiksi 1" },
-      },
-    );
+    // The branch card is offered even with no published location.
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    // With no published list the screen says so and offers the add sheet.
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.getByText(
+        "Kami belum menemukan cabang di website Anda. Tambahkan cabang yang ingin diaudit.",
+      ),
+    ).toBeTruthy();
+    await addBranch("Gerai Satu", "Jl. Fiksi 1");
     lanjut();
     await throughDetails("cabang");
-    expect(focusRow().getByText(/Gerai Satu/)).toBeTruthy();
+    expect(fact("Fokus audit").textContent).toContain("Gerai Satu");
   });
 
   it("keeps a summary-opened focus edit returning to the summary", async () => {
@@ -2053,129 +2106,102 @@ describe("Spec 013 J4 focus and target screens", () => {
     await toFocusScreen();
     lanjut();
     await throughDetails();
-    fireEvent.click(focusRow().getByRole("button", { name: "Ubah" }));
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-    // In-flow Kembali returns to the summary this edit came from.
+    await editFocus();
+    // In-flow Kembali returns to the review this edit came from.
     kembali();
-    await screen.findByRole("heading", { name: "Ini yang akan Nuave audit" });
+    await screen.findByRole("heading", {
+      name: "Ini profil yang akan Nuave pakai",
+    });
   });
 
   it("walks back through the target screens one stage at a time", async () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
+    await selectFocus(/Satu cabang/);
     lanjut();
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    // location → focus → brand via in-flow Kembali.
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    // location → focus → business cover → brand via in-flow Kembali.
     kembali();
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    await focusScreen();
     expect(
       screen
-        .getByRole("radio", { name: /Satu lokasi/ })
+        .getByRole("radio", { name: /Satu cabang/ })
         .getAttribute("aria-checked"),
     ).toBe("true");
     kembali();
-    await screen.findByRole("heading", {
-      name: "Ini brand yang ingin Anda audit?",
-    });
-    // A location focus steps back through J6/JQ but skips market.
+    await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+    kembali();
+    await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
+    // A location focus steps back through the customer screens but skips
+    // market.
     lanjut();
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    await startStepTwo();
     lanjut();
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
+    await screen.findByRole("heading", { name: "Cabang mana?" });
     fireEvent.click(screen.getByRole("radio", { name: /Kedai Fiksi Dago/ }));
     lanjut();
     await throughDetails("cabang");
-    kembali();
+    // The review has no Kembali of its own (its bar holds the one forward
+    // action); a marked browser Back steps to its cover.
+    expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+    fireEvent.popState(window, { state: { nuaveIntake: true } });
     await screen.findByRole("heading", {
-      name: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
+      name: "Periksa, lalu jalankan audit",
     });
     kembali();
     await screen.findByRole("heading", {
-      name: "Apa yang membedakan bisnis Anda?",
+      name: "Apa yang membuat bisnis Anda berbeda?",
+    });
+    kembali();
+    await screen.findByRole("heading", { name: COMPETITORS_HEADING });
+    kembali();
+    await screen.findByRole("heading", {
+      name: "Bagaimana pelanggan mendapatkannya?",
     });
     kembali();
     await screen.findByRole("heading", {
-      name: "Ini yang mungkin dibandingkan dengan Anda",
+      name: "Apa yang mereka cari saat memilih?",
     });
     kembali();
     await screen.findByRole("heading", {
-      name: "Bagaimana pelanggan mendapatkan yang Anda tawarkan?",
+      name: "Siapa yang biasanya mencari bisnis Anda?",
     });
-    kembali();
-    await screen.findByRole("heading", {
-      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
-    });
-    kembali();
-    await screen.findByRole("heading", {
-      name: "Kenapa pelanggan biasanya mencari yang seperti ini?",
-    });
-    kembali();
-    await screen.findByRole("heading", { name: "Siapa pelanggan utama Anda?" });
   });
 
   it("restores the location stage and its answers after a reload", async () => {
     stubPreparation({ draft: j4Draft });
     const first = render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Tambah lokasi lain" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Nama lokasi" }), {
-      target: { value: "Gerai Reload" },
-    });
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Alamat atau area" }),
-      {
-        target: { value: "Jl. Muat Ulang 7" },
-      },
-    );
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    await addBranch("Gerai Reload", "Jl. Muat Ulang 7");
     first.unmount();
     render(<SmartIntakeJourney live={false} />);
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    expect(
-      (screen.getByRole("textbox", { name: "Nama lokasi" }) as HTMLInputElement)
-        .value,
-    ).toBe("Gerai Reload");
-    expect(
-      (
-        screen.getByRole("textbox", {
-          name: "Alamat atau area",
-        }) as HTMLInputElement
-      ).value,
-    ).toBe("Jl. Muat Ulang 7");
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    const manual = screen.getByRole("radio", { name: /Gerai Reload/ });
+    expect(manual.getAttribute("aria-checked")).toBe("true");
+    expect(manual.textContent).toContain("Jl. Muat Ulang 7");
+    expect(manual.textContent).toContain("Dari Anda");
   });
 
   it("clears an incompatible target when the focus changes (R-05)", async () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
+    await selectFocus(/Satu cabang/);
     lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
     fireEvent.click(screen.getByRole("radio", { name: /Kedai Fiksi Dago/ }));
     lanjut();
     await throughDetails("cabang");
-    // Re-open focus from the summary and switch to product: the location
+    // Re-open focus from the review and switch to product: the location
     // target no longer applies.
-    fireEvent.click(focusRow().getByRole("button", { name: "Ubah" }));
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
-    );
+    await editFocus();
+    await selectFocus(/Satu produk/);
     lanjut();
-    await screen.findByRole("heading", {
-      name: "Produk atau layanan mana?",
-    });
+    await screen.findByRole("heading", { name: "Produk mana?" });
     const saved = JSON.parse(
       window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
@@ -2188,30 +2214,28 @@ describe("Spec 013 J4 focus and target screens", () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Produk atau layanan mana?",
+    await selectFocus(/Satu produk/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Produk mana?" });
+    fireEvent.click(screen.getByRole("button", { name: "Tambah produk" }));
+    const sheet = await screen.findByRole("dialog", { name: "Tambah produk" });
+    const field = within(sheet).getByRole("textbox", {
+      name: "Nama produk atau layanan",
     });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Tambah produk atau layanan lain" }),
-    );
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Nama produk atau layanan" }),
-      { target: { value: "paket rapat" } },
-    );
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Nama produk atau layanan" }),
-      { target: { value: "nomor rekening 12345" } },
-    );
+    fireEvent.change(field, { target: { value: "paket rapat" } });
+    fireEvent.change(field, { target: { value: "nomor rekening 12345" } });
+    await closeSheet(sheet, "Simpan");
     expect((await screen.findByRole("alert")).textContent).toContain(
       "informasi sensitif",
     );
     expect(
       window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "",
     ).not.toContain("nomor rekening");
+    // Nothing was taken as the target.
+    expect(
+      JSON.parse(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}")
+        .selection.productTarget,
+    ).toBe("");
   });
 
   it("a summary-opened focus screen exits back only with a complete target (B1)", async () => {
@@ -2220,28 +2244,19 @@ describe("Spec 013 J4 focus and target screens", () => {
     await toFocusScreen();
     lanjut();
     await throughDetails();
-    // Switch to a product focus, then Kembali must not reach the summary —
+    // Switch to a product focus, then Kembali must not reach the review —
     // it would read back a focus with no target and no field to fill one.
-    fireEvent.click(focusRow().getByRole("button", { name: "Ubah" }));
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
-    );
+    await editFocus();
+    await selectFocus(/Satu produk/);
     kembali();
-    await screen.findByRole("heading", { name: "Produk atau layanan mana?" });
+    await screen.findByRole("heading", { name: "Produk mana?" });
     // Completing the detour's target walks the remaining chain — the
-    // category checkpoint, the read-only catalogue, service, market — and
-    // lands back on the summary.
-    fireEvent.click(
-      screen.getByRole("button", { name: "Tambah produk atau layanan lain" }),
-    );
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Nama produk atau layanan" }),
-      { target: { value: "paket rapat" } },
-    );
+    // category checkpoint, the read-only catalogue, the customer screens —
+    // and lands back on the review.
+    await addProduct("paket rapat");
     lanjut();
     await throughDetails("produk");
-    expect(focusRow().getByText(/paket rapat/)).toBeTruthy();
+    expect(fact("Fokus audit").textContent).toContain("paket rapat");
   });
 
   it("a summary-opened focus screen detours Kembali through an unready location target (B1)", async () => {
@@ -2250,46 +2265,39 @@ describe("Spec 013 J4 focus and target screens", () => {
     await toFocusScreen();
     lanjut();
     await throughDetails();
-    fireEvent.click(focusRow().getByRole("button", { name: "Ubah" }));
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
+    await editFocus();
+    await selectFocus(/Satu cabang/);
     kembali();
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
+    await screen.findByRole("heading", { name: "Cabang mana?" });
     // The detour consumes the return marker: backing out of the target
-    // screen resumes the ordinary focus → brand → entry chain.
+    // screen resumes the ordinary focus → cover → brand chain.
+    expect(
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.editReturn,
+    ).toBeUndefined();
     kembali();
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
+    await focusScreen();
     kembali();
-    await screen.findByRole("heading", {
-      name: "Ini brand yang ingin Anda audit?",
-    });
+    await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+    kembali();
+    await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
   });
 
   it("keeps the Satu lokasi card visible while cabang is the stored answer (B2)", async () => {
     stubPreparation();
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    expect(screen.queryByRole("radio", { name: /Satu lokasi/ })).toBeNull();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Isi lokasi secara manual" }),
-    );
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    fireEvent.change(screen.getByRole("textbox", { name: "Nama lokasi" }), {
-      target: { value: "Gerai Satu" },
-    });
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Alamat atau area" }),
-      { target: { value: "Jl. Fiksi 1" } },
-    );
+    // The branch card stays offered without any published location.
+    expect(screen.getByRole("radio", { name: /Satu cabang/ })).toBeTruthy();
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    await addBranch("Gerai Satu", "Jl. Fiksi 1");
     // Back to the focus screen: the stored cabang answer stays a visible,
     // checked card even though no published locations exist (R-02).
     fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
-    await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
-    const card = screen.getByRole("radio", { name: /Satu lokasi/ });
+    await focusScreen();
+    const card = screen.getByRole("radio", { name: /Satu cabang/ });
     expect(card.getAttribute("aria-checked")).toBe("true");
   });
 
@@ -2297,52 +2305,60 @@ describe("Spec 013 J4 focus and target screens", () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
     fireEvent.click(screen.getByRole("radio", { name: /Kedai Fiksi Dago/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Tambah lokasi lain" }));
-    const name = screen.getByRole("textbox", {
-      name: "Nama lokasi",
+    fireEvent.click(screen.getByRole("button", { name: "Tambah cabang" }));
+    const sheet = await screen.findByRole("dialog", { name: "Tambah cabang" });
+    const name = within(sheet).getByRole("textbox", {
+      name: "Nama cabang",
     }) as HTMLInputElement;
-    const address = screen.getByRole("textbox", {
-      name: "Alamat atau area",
+    const address = within(sheet).getByRole("textbox", {
+      name: "Alamat cabang",
     }) as HTMLInputElement;
-    // A picked published row is not a draft — the form opens empty instead
+    // A picked published row is not a draft — the sheet opens empty instead
     // of pre-filling the published values the owner is about to overwrite.
     expect(name.value).toBe("");
     expect(address.value).toBe("");
     fireEvent.change(name, { target: { value: "Gerai Baru" } });
     expect(name.value).toBe("Gerai Baru");
     expect(address.value).toBe("");
+    // The sheet is a draft: the published pick stays the stored answer until
+    // Simpan, which waits for both fields.
+    expect(sheetSave(sheet)).toHaveProperty("disabled", true);
     const saved = JSON.parse(
       window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );
-    expect(saved.selection.locationName).toBe("Gerai Baru");
-    expect(saved.selection.locationAddress).toBe("");
+    expect(saved.selection.locationName).toBe("Kedai Fiksi Dago");
+    expect(saved.selection.locationAddress).toBe(
+      "Jl. Fiksi Raya No. 10, Bandung",
+    );
+    await closeSheet(sheet, "Batal");
+    expect(
+      screen
+        .getByRole("radio", { name: /Kedai Fiksi Dago/ })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
   });
 
   it("keeps typed text whole across a transient match with a published offering (P2)", async () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(
-      screen.getByRole("radio", { name: /Satu produk atau layanan/ }),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", { name: "Produk atau layanan mana?" });
-    fireEvent.click(
-      screen.getByRole("button", { name: "Tambah produk atau layanan lain" }),
-    );
-    const input = screen.getByRole("textbox", {
+    await selectFocus(/Satu produk/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Produk mana?" });
+    fireEvent.click(screen.getByRole("button", { name: "Tambah produk" }));
+    const sheet = await screen.findByRole("dialog", { name: "Tambah produk" });
+    const input = within(sheet).getByRole("textbox", {
       name: "Nama produk atau layanan",
     }) as HTMLInputElement;
     // "kopi susu" is a published offering — the draft must not blank when
     // the owner types through it on the way to a longer name.
     typeChars(input, "kopi susu premium");
     expect(input.value).toBe("kopi susu premium");
+    await closeSheet(sheet, "Simpan");
     const manual = screen.getByRole("radio", { name: /kopi susu premium/ });
     expect(manual.getAttribute("aria-checked")).toBe("true");
     expect(manual.textContent).toContain("Dari Anda");
@@ -2352,17 +2368,16 @@ describe("Spec 013 J4 focus and target screens", () => {
     stubPreparation({ draft: j4Draft });
     render(<SmartIntakeJourney live={false} />);
     await toFocusScreen();
-    fireEvent.click(screen.getByRole("radio", { name: /Satu lokasi/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await screen.findByRole("heading", {
-      name: "Cabang mana yang ingin diaudit?",
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Tambah lokasi lain" }));
-    const name = screen.getByRole("textbox", {
-      name: "Nama lokasi",
+    await selectFocus(/Satu cabang/);
+    lanjut();
+    await screen.findByRole("heading", { name: "Cabang mana?" });
+    fireEvent.click(screen.getByRole("button", { name: "Tambah cabang" }));
+    const sheet = await screen.findByRole("dialog", { name: "Tambah cabang" });
+    const name = within(sheet).getByRole("textbox", {
+      name: "Nama cabang",
     }) as HTMLInputElement;
-    const address = screen.getByRole("textbox", {
-      name: "Alamat atau area",
+    const address = within(sheet).getByRole("textbox", {
+      name: "Alamat cabang",
     }) as HTMLInputElement;
     typeChars(name, "Kedai Fiksi Dago");
     // Mid-typing the pair equals the published row at
@@ -2370,6 +2385,7 @@ describe("Spec 013 J4 focus and target screens", () => {
     typeChars(address, "Jl. Fiksi Raya No. 10, Bandung Wetan");
     expect(name.value).toBe("Kedai Fiksi Dago");
     expect(address.value).toBe("Jl. Fiksi Raya No. 10, Bandung Wetan");
+    await closeSheet(sheet, "Simpan");
     const saved = JSON.parse(
       window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}",
     );

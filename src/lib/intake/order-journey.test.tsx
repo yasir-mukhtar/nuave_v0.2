@@ -22,6 +22,7 @@ import {
   writeActiveOrder,
   writeSmartSession,
   freshSmartSession,
+  type SmartSession,
 } from "./smart-session";
 
 // Spec 016 R-29..R-31, AC-19 in the browser: the order screen, saved progress,
@@ -235,6 +236,23 @@ async function startAudit() {
   fireEvent.click(
     within(sheet).getByRole("button", { name: "Mulai audit sekarang" }),
   );
+}
+/** The saved order screen of an order whose paid reading never began (say
+ * the tab closed right after the order was made): no reading mark on the
+ * order and no trace of a reading in the progress. */
+function orderBeforeReading(
+  saved: SmartSession,
+  order: { id: string; website: string; name: string } = saved.order!,
+): SmartSession {
+  return {
+    ...saved,
+    stage: "order",
+    order: { id: order.id, website: order.website, name: order.name },
+    prepared: null,
+    selection: null,
+    preparationCalls: [],
+    sourceExcerptStatus: undefined,
+  };
 }
 
 describe("the order screen (R-01, R-06, AC-01)", () => {
@@ -451,13 +469,12 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await toFocus();
     const saved = readSmartSession()!;
     first.unmount();
-    writeSmartSession({
-      ...saved,
-      stage: "order",
-      order: { ...saved.order!, website: "https://lama.example/" },
-      prepared: null,
-      selection: null,
-    });
+    writeSmartSession(
+      orderBeforeReading(saved, {
+        ...saved.order!,
+        website: "https://lama.example/",
+      }),
+    );
     server.orderResponse = () =>
       Response.json({ order_id: OTHER_ORDER_ID, state: "open" });
     const before = server.calls.length;
@@ -500,13 +517,8 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     await toFocus();
     const saved = readSmartSession()!;
     first.unmount();
-    // The order was made for this website, but its paid reading has not run.
-    writeSmartSession({
-      ...saved,
-      stage: "order",
-      prepared: null,
-      selection: null,
-    });
+    // The order was made for this website, but its paid reading never began.
+    writeSmartSession(orderBeforeReading(saved));
     const before = server.calls.length;
     render(<SmartIntakeJourney live={false} />);
     // No Lanjut: the reading runs by itself and lands on the Step 2 cover.
@@ -520,6 +532,38 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
       { order_id: ORDER_ID },
     ]);
     expect(readSmartSession()?.order?.id).toBe(ORDER_ID);
+  });
+
+  it("a saved test-pass order whose paid reading already started never starts it again by itself on reload, only on Lanjut", async () => {
+    const server = stubServer();
+    const first = render(<SmartIntakeJourney live={false} />);
+    await enterBusiness();
+    await typeEmail();
+    lanjut();
+    await toFocus();
+    const saved = orderBeforeReading(readSmartSession()!);
+    first.unmount();
+    // The same saved order, marked: its reading began (and failed or was cut
+    // off).
+    writeSmartSession({
+      ...saved,
+      order: { ...saved.order!, readingStarted: true },
+    });
+    const before = server.calls.length;
+    render(<SmartIntakeJourney live={false} />);
+    // The page knows the order needs no payment and offers Lanjut...
+    await screen.findByText(
+      "Pesanan Anda sudah dibuat. Tekan Lanjut untuk meneruskan.",
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    // ...but reads nothing by itself.
+    expect(server.calls.slice(before)).toEqual(["/api/orders/status"]);
+    lanjut();
+    await toFocus();
+    expect(server.calls.slice(before)).toEqual([
+      "/api/orders/status",
+      "/api/audit/extract",
+    ]);
   });
 
   it("a server that no longer knows the order counts as ended", async () => {
@@ -616,6 +660,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
       id: ORDER_ID,
       website: "https://kedai-fiksi.example/",
       name: "Kedai Fiksi",
+      readingStarted: true,
     });
   });
 });

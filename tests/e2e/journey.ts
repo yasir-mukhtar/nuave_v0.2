@@ -596,10 +596,12 @@ export async function payOrder(page: Page, email: string = ORDER_EMAIL) {
   return number!;
 }
 
-/** Checkout to the Step 2 cover: pay (see `payOrder`), or — for a tab that
- * holds the founder test code (`useTestPass`), or a paid order whose reading
- * must run again — type the email if asked and press `Lanjut`. The paid
- * reading (J09) then runs and the journey moves on to J10 by itself. */
+/** Checkout onwards: pay (see `payOrder`), or — for a tab that holds the
+ * founder test code (`useTestPass`), or a paid order whose reading must run
+ * again — type the email if asked and press `Lanjut`. Waits until checkout
+ * has moved on: to the paid reading (J09, then the Step 2 cover by itself),
+ * or — when saved progress continues on a replacement order (spec 016 R-30)
+ * — straight back to where the customer was. */
 export async function submitOrder(page: Page, email: string = ORDER_EMAIL) {
   await expectOrderScreen(page);
   const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
@@ -610,7 +612,7 @@ export async function submitOrder(page: Page, email: string = ORDER_EMAIL) {
     if (await emailInput(page).isVisible()) await emailInput(page).fill(email);
     await lanjut.click();
   }
-  await expectIntroBusiness(page);
+  await expect(orderScreen(page)).toHaveCount(0, { timeout: 15_000 });
 }
 
 /** This tab is the founder's: the code is in session storage before the page
@@ -634,10 +636,8 @@ export async function confirmBrand(page: Page, email: string = ORDER_EMAIL) {
   if (await found.isVisible()) {
     await continueToOrder(page);
     await submitOrder(page, email);
-  } else {
-    await lanjut.click();
-    await expectIntroBusiness(page);
-  }
+  } else await lanjut.click();
+  await expectIntroBusiness(page);
   await pressMulai(page);
   await expectFocusScreen(page);
 }
@@ -1290,7 +1290,7 @@ export async function editQuestion(page: Page, slot: number, wording: string) {
   });
   await expect(sheet).toBeVisible();
   await sheet
-    .getByRole("textbox", { name: new RegExp(`^Pertanyaan ${slot}\\b`) })
+    .getByRole("textbox", { name: `Pertanyaan ${slot}`, exact: true })
     .fill(wording);
   await sheet.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(sheet).toHaveCount(0);
