@@ -324,7 +324,7 @@ export function BottomBar({
               className={
                 layout === "full"
                   ? "w-full"
-                  : "h-auto min-h-12 min-w-0 shrink py-2 text-center whitespace-normal"
+                  : "h-auto min-h-12 min-w-0 shrink py-2 text-center whitespace-normal max-sm:min-h-12"
               }
               disabled={action.disabled || action.busy}
               aria-busy={action.busy || undefined}
