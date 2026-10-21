@@ -63,6 +63,31 @@ function useKeyboardInset(active: boolean): number {
   return active ? inset : 0;
 }
 
+/**
+ * True while `open`, and for the rest of a press that began while it was:
+ * a press elsewhere takes focus (closing the bar) before its click lands,
+ * and an inline bar leaving at once would move what is under the pointer,
+ * so the click would be lost.
+ */
+function useOpenThroughPress(open: boolean): boolean {
+  const [pressed, setPressed] = useState(false);
+  useEffect(() => {
+    if (!open && !pressed) return;
+    const down = () => setPressed(true);
+    // After the press's own click, which follows its pointerup.
+    const up = () => window.setTimeout(() => setPressed(false), 0);
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("pointerup", up, true);
+    document.addEventListener("pointercancel", up, true);
+    return () => {
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("pointerup", up, true);
+      document.removeEventListener("pointercancel", up, true);
+    };
+  }, [open, pressed]);
+  return open || pressed;
+}
+
 /** Taps on the bar's buttons must not take focus from the field (which
  * would close the phone keyboard, or hide the bar on a desktop). */
 function keepFieldFocus(event: React.PointerEvent | React.MouseEvent) {
@@ -90,8 +115,9 @@ export function KeyboardAccessory({
   const coarse = useCoarsePointer() && !inline;
   const animate = useMotionAllowed();
   const inset = useKeyboardInset(open && coarse);
+  const shownInline = useOpenThroughPress(open && !coarse);
   if (!coarse)
-    return open ? (
+    return shownInline ? (
       <div
         role="group"
         aria-label={label}
