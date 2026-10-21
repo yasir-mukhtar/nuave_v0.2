@@ -652,14 +652,22 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
         await expect(
           target.getByRole("heading", { level: 2 }).first(),
         ).toBeInViewport();
+        // R-09 visible focus: the v2 report draws the section ring with
+        // `:focus-visible`, so a section reached from the keyboard shows it
+        // and one reached by a pointer click does not.
         expect(
-          await target.evaluate((el) => getComputedStyle(el).outlineStyle),
-        ).not.toBe("none");
-        expect(
-          await target.evaluate((el) =>
-            parseFloat(getComputedStyle(el).outlineWidth),
-          ),
-        ).toBeGreaterThan(0);
+          await target.evaluate((el) => el.matches(":focus-visible")),
+        ).toBe(activation === "keyboard");
+        if (activation === "keyboard") {
+          expect(
+            await target.evaluate((el) => getComputedStyle(el).outlineStyle),
+          ).not.toBe("none");
+          expect(
+            await target.evaluate((el) =>
+              parseFloat(getComputedStyle(el).outlineWidth),
+            ),
+          ).toBeGreaterThan(0);
+        }
         expect(fresh.url()).toBe(urlBefore); // the secret stays in the address
         expect(await fresh.evaluate(() => history.length)).toBe(historyLength);
         expect(Object.entries(calls)).toEqual(requestsBefore);

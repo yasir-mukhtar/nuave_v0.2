@@ -19,6 +19,9 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:3100",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    launchOptions: process.env.NUAVE_E2E_CHROMIUM
+      ? { executablePath: process.env.NUAVE_E2E_CHROMIUM }
+      : undefined,
   },
   webServer: journeyWebServer(3100),
 });

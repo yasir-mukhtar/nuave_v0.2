@@ -15,6 +15,7 @@ import {
   expectStepsScreen,
   expectSummary,
   fillEntry,
+  holdAnswers,
   INTAKE_SESSION_KEY,
   intakeSession,
   NAME_LOCKED_NOTE,
@@ -203,15 +204,16 @@ test("a paid reading cut off by a reload waits for Lanjut and is never replayed"
   page,
 }) => {
   const calls = track(page);
-  // The paid reading never answers, so the reload cuts it off.
-  await page.route("**/api/audit/extract", () => new Promise(() => {}));
   await toOrderScreen(page);
-  await payOrder(page);
+  await emailInput(page).fill(ORDER_EMAIL);
+  // A slow server: the paid reading is still unanswered when the page reloads.
+  await holdAnswers(page, "/api/audit/extract");
+  await payButton(page).click();
   await expect(
     page.getByRole("heading", { level: 1, name: READING_HEADING }),
-  ).toBeVisible();
-  expect(calls["POST /api/audit/extract"]).toBe(1);
-  await page.unroute("**/api/audit/extract");
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(paidReadingScreen(page)).toContainText(PAID_HEADING);
+  await expect.poll(() => calls["POST /api/audit/extract"]).toBe(1);
   await page.reload();
   await expectOrderScreen(page);
   await expect(

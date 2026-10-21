@@ -1811,19 +1811,19 @@ test.describe("J5 business-detail screens", () => {
     await stubPreparationDraft(page, richDraft);
     await page.setViewportSize({ width: 320, height: 720 });
     await toFocus(page, false);
-    for (const stage of [
+    await expectNoOverflow(page);
+    for (const next of [
       "category",
       "offerings",
       "target-customer",
       "customer-needs",
       "service",
     ] as const) {
-      await lanjutTo(page, stage);
+      await pressLanjut(page);
+      await expect(
+        page.locator(`[data-intake-screen="${next}"]`),
+      ).toBeVisible();
       await expectNoOverflow(page);
-      if (stage !== "service") {
-        // Back to the focus screen's chain position for the next hop.
-        continue;
-      }
     }
     // A third channel stacks on the two prepared picks.
     const service = serviceScreen(page);

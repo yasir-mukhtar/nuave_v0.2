@@ -212,6 +212,31 @@ export async function stubPreparationDraft(page: Page, draft: ExtractionDraft) {
   );
 }
 
+/**
+ * Until the page next loads, its `fetch` calls to `path` still reach the
+ * server but their answers never reach the page: a slow server, as the page
+ * sees it. A reload then drops the wait the way a customer's browser drops a
+ * request in flight. A never-answered `page.route` cannot stand in here:
+ * Chromium fails a held route as soon as the page starts to reload, so the
+ * page's own error handling runs first, which a real slow request never
+ * causes.
+ */
+export async function holdAnswers(page: Page, path: string) {
+  await page.evaluate((held) => {
+    const send = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = new URL(
+        input instanceof Request ? input.url : String(input),
+        location.href,
+      );
+      const answer = send(input, init);
+      if (url.pathname !== held) return answer;
+      answer.catch(() => {});
+      return new Promise<Response>(() => {});
+    };
+  }, path);
+}
+
 /* ───────────────────────────── screens ───────────────────────────── */
 
 function intakeScreen(page: Page, name: string) {

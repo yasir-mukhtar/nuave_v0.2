@@ -8,6 +8,7 @@ import {
   fillEntry,
   fillWebsite,
   FICTIONAL_BUSINESS,
+  holdAnswers,
   INTAKE_SESSION_KEY,
   intakeSession,
   LOOKUP_HEADING,
@@ -51,6 +52,9 @@ test("sensitive entry text retains the last safe draft without a provider reques
 test("a slow free check offers the J04 way out with the name guessed from the address", async ({
   page,
 }) => {
+  // The page clock jumps the wait forward; it would also stall animation
+  // frames, so this customer prefers reduced motion (screens swap at once).
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.clock.install();
   const calls = trackApiCalls(page);
   // The free check never answers.
@@ -110,8 +114,9 @@ test("Kembali cancels the free check, and a check cut off by a reload is never r
   page,
 }) => {
   const calls = trackApiCalls(page);
-  await page.route("**/api/audit/identity?**", () => new Promise(() => {}));
   await fillEntry(page);
+  // A slow website: the free checks stay unanswered until the reload.
+  await holdAnswers(page, "/api/audit/identity");
   await pressPeriksa(page);
   await expect(
     page.getByRole("heading", { level: 1, name: LOOKUP_HEADING }),
