@@ -167,13 +167,34 @@ function questionContexts(page: Page) {
   return contexts;
 }
 
-/** No horizontal page scroll. */
+/** No horizontal page scroll once the screen has settled (a new screen
+ * slides in from the side for a moment). */
 async function expectNoOverflow(page: Page) {
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    )
+    .toBe(true);
+}
+
+/** Nothing inside `box` reaches past its sides. A sheet is fixed to the
+ * screen, so its overflow never widens the page; it is measured here. */
+async function expectInside(box: Locator) {
+  await expect
+    .poll(() =>
+      box.evaluate((root) => {
+        const edge = root.getBoundingClientRect();
+        return [...root.querySelectorAll("*")].every((element) => {
+          const rect = element.getBoundingClientRect();
+          // Visually hidden helpers are 1px boxes just off their parent.
+          if (rect.width <= 1 || rect.height <= 1) return true;
+          return rect.left >= edge.left - 0.5 && rect.right <= edge.right + 0.5;
+        });
+      }),
+    )
+    .toBe(true);
 }
 
 /** Focus is somewhere inside `container`. */
@@ -1283,6 +1304,7 @@ test("review edits return to the summary: sheets by Simpan, Batal and Escape, th
       await page.keyboard.press("Tab");
       await expectFocusWithin(sheet);
       await expectNoOverflow(page);
+      await expectInside(sheet);
       if (exit === "simpan") await saveReviewSheet(page, section);
       else if (exit === "batal") await cancelReviewSheet(page, section);
       else {
@@ -1719,6 +1741,7 @@ test.describe("J4 focus and target screens", () => {
       .click();
     await expect(addTargetSheet(page, "cabang")).toBeVisible();
     await expectNoOverflow(page);
+    await expectInside(addTargetSheet(page, "cabang"));
   });
 });
 
@@ -1917,6 +1940,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     // The 320px sheet stays inside the viewport, 160-char chip included.
     await expect(aliasChip(page, boundaryAlias)).toBeVisible();
     await expectNoOverflow(page);
+    await expectInside(reviewSheet(page, "Bisnis"));
     await saveReviewSheet(page, "Bisnis");
     expect((await intakeSession(page)).selection.aliases).toContain(
       boundaryAlias,

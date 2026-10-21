@@ -22,9 +22,6 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${process.env.NUAVE_E2E_PORT ?? "3000"}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    launchOptions: process.env.NUAVE_E2E_CHROMIUM
-      ? { executablePath: process.env.NUAVE_E2E_CHROMIUM }
-      : undefined,
   },
   webServer: journeyWebServer(Number(process.env.NUAVE_E2E_PORT ?? "3000"), {
     // Spec 010: the public audit journey is on, running its synthetic

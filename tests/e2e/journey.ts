@@ -521,6 +521,15 @@ export async function expectBrandConfirm(
   ).toBeVisible();
 }
 
+/** J05: "Bukan bisnis Anda?" → `Ganti tautan bisnis` returns to the entry
+ * with the website kept for correction. */
+export async function changeBusinessLink(page: Page) {
+  await brandScreen(page)
+    .getByRole("button", { name: "Ganti tautan bisnis", exact: true })
+    .click();
+  await expect(entryScreen(page)).toBeVisible();
+}
+
 /** J05b: `Ubah nama` opens the name sheet; `Simpan` keeps the new name. */
 export async function renameBusiness(page: Page, name: string) {
   await brandScreen(page)
