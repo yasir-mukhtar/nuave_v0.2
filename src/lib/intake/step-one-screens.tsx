@@ -757,7 +757,9 @@ export function BusinessFoundScreen({
           </button>
         </p>
       ) : null}
-      {error ? (
+      {/* While the sheet is open the page behind it is hidden from assistive
+          technology, so a refused name is announced inside the sheet. */}
+      {error && !editing ? (
         <p role="alert" className="type-copy-sm m-0 text-ember-700">
           {error}
         </p>
@@ -791,6 +793,7 @@ export function BusinessFoundScreen({
             enterKeyHint="done"
             onChange={(event) => setDraft(event.target.value)}
             hint="Pakai nama yang dikenal pelanggan."
+            error={editing ? error : null}
           />
         </form>
       </BottomSheet>

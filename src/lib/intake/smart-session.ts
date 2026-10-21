@@ -112,6 +112,10 @@ export type SmartSession = {
     /** The order number the server showed once paid (R-01), so the page can
      * still show it if the order later ends. */
     number?: string;
+    /** Set when this browser starts the paid reading for this order. From
+     * then on the reading never starts by itself: a failed or interrupted
+     * reading waits for the customer's own Lanjut (Spec 013 R-04). */
+    readingStarted?: true;
   } | null;
   /** An order the customer left by changing the website or the brand. It may
    * still be open; the next order tells the server to expire it, so it stops
@@ -358,6 +362,8 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         typeof value.order.name !== "string" ||
         value.order.name.length > 160 ||
         (value.order.paid !== undefined && value.order.paid !== true) ||
+        (value.order.readingStarted !== undefined &&
+          value.order.readingStarted !== true) ||
         (value.order.number !== undefined &&
           (typeof value.order.number !== "string" ||
             !/^NV-[A-Z0-9]{6}$/.test(value.order.number))))

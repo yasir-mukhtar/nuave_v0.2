@@ -839,6 +839,14 @@ export default function SmartIntakeJourney({
         session.order.name ===
           (session.brand?.name ?? session.entry.name.trim()))),
   );
+  // A reading already started for this order (or, in progress saved before
+  // that mark existed, any trace of an earlier reading) never starts again
+  // by itself.
+  const readingTried = Boolean(
+    session.order?.readingStarted ||
+    session.preparationCalls.length > 0 ||
+    session.sourceExcerptStatus !== undefined,
+  );
   // J09: once the server says the order is paid (or needs no payment), the
   // paid reading starts by itself, once per order in this tab. A reading that
   // failed here, or one a reload interrupted, waits for the customer's own
@@ -850,6 +858,7 @@ export default function SmartIntakeJourney({
       session.stage !== "order" ||
       !order ||
       !orderStillFits ||
+      readingTried ||
       session.prepared ||
       busy !== null ||
       error ||
@@ -870,6 +879,7 @@ export default function SmartIntakeJourney({
     session.order?.id,
     session.order?.paid,
     orderStillFits,
+    readingTried,
     paymentState,
     busy,
     error,
@@ -1301,7 +1311,12 @@ export default function SmartIntakeJourney({
       }
       setBusy("reading");
       setFindings(null);
-      working = { ...working, stage: "reading" };
+      // Saved before the call: a reload or a failure never replays it.
+      working = {
+        ...working,
+        stage: "reading",
+        order: { ...order, readingStarted: true },
+      };
       persist(working);
       await readWebsite(working, order.id, brand);
     } finally {
