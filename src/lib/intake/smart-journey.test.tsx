@@ -24,7 +24,11 @@ import {
   SMART_INTAKE_STORAGE_KEY,
 } from "./smart-intake-contract";
 import SmartIntakeJourney from "./SmartIntakeJourney";
-import { freshSmartSession, parseSmartSession } from "./smart-session";
+import {
+  ACTIVE_ORDER_STORAGE_KEY,
+  freshSmartSession,
+  parseSmartSession,
+} from "./smart-session";
 import { projectQuestionOutcome } from "./question-public-errors";
 
 beforeEach(() => {
@@ -4777,7 +4781,7 @@ describe("independent review, round 1", () => {
       savedAt: new Date().toISOString(),
     });
   /** The order's status and the free check of another website. */
-  function stubSavedOrder(payment: string) {
+  function stubSavedOrder(payment: string, state = "open") {
     const calls: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -4786,11 +4790,14 @@ describe("independent review, round 1", () => {
         calls.push(url);
         if (url === "/api/orders/status")
           return Response.json({
-            state: "open",
+            state,
             payment: { state: payment },
-            completed: 0,
+            completed: state === "delivered" ? 10 : 0,
             total: 10,
-            questions: [],
+            questions: Array.from({ length: 10 }, (_, index) => ({
+              prompt_id: `NUAVE-DT-${String(index + 1).padStart(2, "0")}`,
+              status: state === "delivered" ? "completed" : "pending",
+            })),
           });
         if (url.startsWith("/api/audit/identity"))
           return Response.json({
@@ -4799,6 +4806,7 @@ describe("independent review, round 1", () => {
             preparation_mode: "synthetic-local",
           });
         if (url === "/api/audit/extract") return new Promise(() => {});
+        if (url === "/api/payments/start") return new Promise(() => {});
         throw new Error(`Unexpected request ${url}`);
       }),
     );
@@ -4858,6 +4866,93 @@ describe("independent review, round 1", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Tutup" }));
     expect(screen.queryByText(/belum diperiksa/)).toBeNull();
+  });
+
+  it("drops the notice once the owner moves on with the saved order", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    stubSavedOrder("unpaid");
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(/Website toko-lain\.example belum diperiksa/);
+    fireEvent.click(screen.getByRole("button", { name: "Halaman sebelumnya" }));
+    await screen.findByRole("heading", { name: "Tinggal 3 langkah" });
+    expect(screen.queryByText(/belum diperiksa/)).toBeNull();
+  });
+
+  it("pressing Bayar for the saved order drops the notice", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const calls = stubSavedOrder("unpaid");
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(/Website toko-lain\.example belum diperiksa/);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Bayar Rp99.000" }),
+    );
+    await waitFor(() => expect(calls).toContain("/api/payments/start"));
+    expect(screen.queryByText(/belum diperiksa/)).toBeNull();
+  });
+
+  it("an ended unpaid order still says the typed website was not checked, and checks it on request", async () => {
+    window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, savedOrder(false));
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const calls = stubSavedOrder("unpaid", "expired");
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByText(
+      /Website toko-lain\.example belum diperiksa, karena audit untuk Kedai Fiksi masih tersimpan/,
+    );
+    expect(calls.some((url) => url.startsWith("/api/audit/identity"))).toBe(
+      false,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Periksa toko-lain.example" }),
+    );
+    await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
+    expect(
+      calls.filter((url) => url.startsWith("/api/audit/identity")),
+    ).toHaveLength(1);
+  });
+
+  it("an audit in this browser keeps its page, says the typed website was not checked, and keeps it for the next audit", async () => {
+    window.localStorage.setItem(
+      ACTIVE_ORDER_STORAGE_KEY,
+      JSON.stringify({ orderId: ORDER_ID }),
+    );
+    window.sessionStorage.setItem(
+      AUDIT_SOURCE_HANDOFF_STORAGE_KEY,
+      "toko-lain.example",
+    );
+    const calls = stubSavedOrder("paid", "delivered");
+    render(<SmartIntakeJourney live={false} />);
+    await screen.findByRole("heading", { name: "Laporan Anda sudah siap" });
+    expect(
+      screen.getByText(
+        "Website toko-lain.example belum diperiksa, karena browser ini masih menampilkan audit sebelumnya.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Periksa toko-lain.example" }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Mulai audit baru" }));
+    const field = await screen.findByRole("textbox", {
+      name: "Website atau akun Instagram bisnis",
+    });
+    // Waiting in the field, not checked until the owner asks.
+    expect((field as HTMLInputElement).value).toBe(
+      "https://toko-lain.example/",
+    );
+    expect(screen.queryByText(/belum diperiksa/)).toBeNull();
+    expect(calls.some((url) => url.startsWith("/api/audit/identity"))).toBe(
+      false,
+    );
   });
 
   it("continuing with a name on J04 says the website is read after payment, and J05 then claims nothing was read", async () => {

@@ -154,6 +154,7 @@ export default function SmartAuditStage({
   onRestart,
   questions,
   startedAt = null,
+  notice = null,
 }: {
   orderId: string;
   pollMs?: number;
@@ -162,6 +163,9 @@ export default function SmartAuditStage({
   questions?: string[] | null;
   /** When this tab started the audit (ms), while it still holds it. */
   startedAt?: number | null;
+  /** A note under the top bar (a website typed on the landing page that was
+   * not checked). */
+  notice?: ReactNode;
 }) {
   const animate = useMotionAllowed();
   const [status, setStatus] = useState<OrderStatusAnswer | null>(null);
@@ -238,6 +242,7 @@ export default function SmartAuditStage({
     return (
       <JourneyPage hasBottomBar={false}>
         <TopBar kind="brand" />
+        {notice}
         <div className="pt-10">
           <Centered
             headingRef={headingRef}
@@ -266,6 +271,7 @@ export default function SmartAuditStage({
     return (
       <JourneyPage tone="cream" hasBottomBar={false}>
         <TopBar kind="brand" orderNumber={orderNumber} />
+        {notice}
         <div className="pt-2.5">
           <Centered
             headingRef={headingRef}
@@ -348,6 +354,7 @@ export default function SmartAuditStage({
     return (
       <JourneyPage hasBottomBar={false}>
         <TopBar kind="brand" orderNumber={orderNumber} />
+        {notice}
         <div className="pt-10">
           <Centered
             headingRef={headingRef}
@@ -381,6 +388,7 @@ export default function SmartAuditStage({
   return (
     <JourneyPage hasBottomBar>
       <TopBar kind="brand" orderNumber={orderNumber} />
+      {notice}
       <section
         className="grid justify-items-center pt-1 text-center"
         data-order-stage={status?.state ?? "loading"}

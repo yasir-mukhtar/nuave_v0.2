@@ -960,14 +960,20 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   const prepared = competitorRow(competitors, "Kedai Tetangga");
   await expect(prepared).toBeChecked();
   await expect(prepared).toHaveAccessibleDescription("Saran Nuave");
-  // Unticking every name means "not sure"; Lanjut stays open.
+  // R-18: unticking every name keeps "named", so Lanjut waits for a name or
+  // another choice.
   await prepared.click();
   await expect(prepared).not.toBeChecked();
   expect((await intakeSession(page)).selection).toMatchObject({
-    comparatorMode: "unknown",
+    comparatorMode: "named",
     comparatorNames: [],
   });
-  await expect(lanjut).toBeEnabled();
+  await expect(
+    competitors.getByText(
+      "Centang atau tulis satu nama, atau pilih salah satu pilihan di bawah.",
+    ),
+  ).toBeVisible();
+  await expect(lanjut).toBeDisabled();
   for (const name of [
     "Pembanding satu",
     "Pembanding dua",

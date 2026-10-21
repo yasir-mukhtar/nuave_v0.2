@@ -632,8 +632,10 @@ export default function SmartIntakeJourney({
       const runningOrder = readActiveOrder();
       if (!saved && runningOrder) {
         // R-31: a reload during or after the audit shows its progress or
-        // result; the intake progress is already gone.
+        // result; the intake progress is already gone. A website typed on
+        // the landing page is not checked meanwhile, and the page says so.
         setActiveOrder(runningOrder);
+        if (handoffSource) setSkippedHandoff(handoffSource.normalizedUrl);
         setReady(true);
         return;
       }
@@ -964,6 +966,7 @@ export default function SmartIntakeJourney({
         ...backMarkerFields(current, target),
       };
       setError(null);
+      setSkippedHandoff(null);
       writeSmartSession(next);
       setSession(next);
       if (backTargetFor(next, lockRef.current))
@@ -1004,6 +1007,8 @@ export default function SmartIntakeJourney({
   // entry there, so the push is skipped once unmounted.
   const goStage = (next: SmartSession) => {
     persist(next);
+    // Moving on answers J01's "belum diperiksa" notice.
+    setSkippedHandoff(null);
     if (mounted.current) window.history.pushState(intakeMark(), "");
   };
   // The frame's `Kembali` moves in-flow without touching the stack; the trap
@@ -1011,6 +1016,7 @@ export default function SmartIntakeJourney({
   const goBack = () => {
     const target = backTargetFor(session, paymentLocked);
     if (!target) return;
+    setSkippedHandoff(null);
     persist({
       ...session,
       stage: target,
@@ -1024,7 +1030,13 @@ export default function SmartIntakeJourney({
   function newJourney() {
     clearSmartSession();
     setActiveOrder(null);
-    const next = freshSmartSession();
+    const fresh = freshSmartSession();
+    // A website typed on the landing page and not checked yet waits in the
+    // field (J01's notice); nothing is checked until the owner asks.
+    const next: SmartSession = skippedHandoff
+      ? { ...fresh, entry: { ...fresh.entry, source: skippedHandoff } }
+      : fresh;
+    setSkippedHandoff(null);
     persist(next);
     setHistorical(false);
     setError(null);
@@ -1245,6 +1257,13 @@ export default function SmartIntakeJourney({
    * (R-30) types the email again and the saved progress continues on the new
    * order with no new paid call.
    */
+  /** The owner's own Bayar or Lanjut on the order screen: going on with the
+   * saved order answers J01's "belum diperiksa" notice. */
+  function pressOrder() {
+    setSkippedHandoff(null);
+    void continueFromOrder();
+  }
+
   async function continueFromOrder() {
     if (inFlight.current) return;
     const session = sessionRef.current;
@@ -1801,6 +1820,49 @@ export default function SmartIntakeJourney({
     headingRef.current?.focus({ preventScroll: true });
   };
 
+  // J01 → a saved order or audit: the typed website was not checked; say so,
+  // and offer the check while nothing locks the saved progress.
+  const savedFor = session.order?.name ?? session.brand?.name ?? "";
+  const canCheckSkipped = !activeOrder && !paymentLocked;
+  const handoffNotice = skippedHandoff ? (
+    <div
+      role="status"
+      className="mt-2 grid gap-2.5 rounded-tile bg-stone-50 px-4 py-3.5"
+    >
+      <p className="type-copy-sm m-0 text-ink-700">
+        {activeOrder
+          ? `Website ${displayHost(skippedHandoff)} belum diperiksa, karena browser ini masih menampilkan audit sebelumnya.`
+          : paymentLocked
+            ? `Website ${displayHost(skippedHandoff)} belum diperiksa. Pesanan untuk ${savedFor} sudah dibayar atau sedang dibayar, jadi selesaikan audit ini dulu. Butuh bantuan? ${SUPPORT_EMAIL}`
+            : `Website ${displayHost(skippedHandoff)} belum diperiksa, karena ${session.order ? "pesanan" : "audit"} untuk ${savedFor} masih tersimpan di browser ini.`}
+      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        {canCheckSkipped ? (
+          <Button
+            type="button"
+            variant="inkOutline"
+            size="sm"
+            className="min-h-11 rounded-chip px-4"
+            onClick={checkSkippedWebsite}
+          >
+            Periksa {displayHost(skippedHandoff)}
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          variant="inkLink"
+          size="sm"
+          className="min-h-11"
+          onClick={() => setSkippedHandoff(null)}
+        >
+          {canCheckSkipped
+            ? `Lanjutkan ${session.order ? "pesanan" : "audit"} ${savedFor}`
+            : "Tutup"}
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   if (!ready)
     return (
       <JourneyPage hasBottomBar={false}>
@@ -1816,6 +1878,7 @@ export default function SmartIntakeJourney({
         onRestart={newJourney}
         questions={startedQuestions}
         startedAt={startedAt}
+        notice={handoffNotice}
       />
     );
   if (historical)
@@ -2030,7 +2093,7 @@ export default function SmartIntakeJourney({
           label: orderAction,
           tone: orderAction === "Lanjut" ? "ink" : "commit",
           busy: busy !== null,
-          onClick: () => void continueFromOrder(),
+          onClick: pressOrder,
         }}
         note={orderAction === "Lanjut" ? undefined : <PayConsent />}
       />
@@ -2247,7 +2310,7 @@ export default function SmartIntakeJourney({
         onCheckAgain={() => void checkOrder(session)}
         onPayAgain={payAgain}
         onNewOrder={newJourney}
-        onSubmit={() => void continueFromOrder()}
+        onSubmit={pressOrder}
         submitLabel={orderAction}
       />
     );
@@ -2448,45 +2511,6 @@ export default function SmartIntakeJourney({
       />
     );
   }
-
-  // J01 → saved order: the typed website was not checked; say so, and offer
-  // the check while the order can still be replaced.
-  const savedFor = session.order?.name ?? session.brand?.name ?? "";
-  const handoffNotice =
-    skippedHandoff && session.order ? (
-      <div
-        role="status"
-        className="mt-2 grid gap-2.5 rounded-tile bg-stone-50 px-4 py-3.5"
-      >
-        <p className="type-copy-sm m-0 text-ink-700">
-          {paymentLocked
-            ? `Website ${displayHost(skippedHandoff)} belum diperiksa. Pesanan untuk ${savedFor} sudah dibayar atau sedang dibayar, jadi selesaikan audit ini dulu. Butuh bantuan? ${SUPPORT_EMAIL}`
-            : `Website ${displayHost(skippedHandoff)} belum diperiksa, karena pesanan untuk ${savedFor} masih tersimpan di browser ini.`}
-        </p>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {paymentLocked ? null : (
-            <Button
-              type="button"
-              variant="inkOutline"
-              size="sm"
-              className="min-h-11 rounded-chip px-4"
-              onClick={checkSkippedWebsite}
-            >
-              Periksa {displayHost(skippedHandoff)}
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="inkLink"
-            size="sm"
-            className="min-h-11"
-            onClick={() => setSkippedHandoff(null)}
-          >
-            {paymentLocked ? "Tutup" : `Lanjutkan pesanan ${savedFor}`}
-          </Button>
-        </div>
-      </div>
-    ) : null;
 
   return (
     <PendingAddsContext.Provider value={pendingAdds}>
