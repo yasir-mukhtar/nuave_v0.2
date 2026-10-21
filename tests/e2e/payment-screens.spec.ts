@@ -19,6 +19,7 @@ import {
   INTAKE_SESSION_KEY,
   intakeSession,
   NAME_LOCKED_NOTE,
+  openAuditFromLanding,
   openReviewSheet,
   ORDER_EMAIL,
   orderScreen,
@@ -33,6 +34,7 @@ import {
   READ_HEADING,
   READING_HEADING,
   READING_INTERRUPTED_NOTICE,
+  renameBusiness,
   stepsScreen,
   submitOrder,
   TEST_PASS_SESSION_KEY,
@@ -479,4 +481,63 @@ test("useTestPass leaves the order unlocked by a payment", async ({ page }) => {
   ).toBeVisible();
   await pressKembali(page);
   await expectBrandConfirm(page);
+});
+
+test("a website typed on the landing page over a saved order gets a note that fits a 320px phone, long names included (R-27)", async ({
+  page,
+}) => {
+  const name = "Warung Makan Bu Tini Sejahtera Abadi Jaya";
+  const host = "toko-kelontong-sumber-rezeki-abadi.example";
+  await page.setViewportSize({ width: 320, height: 720 });
+  // A real order for a long business name, left unpaid (as in
+  // `orderLeftForPayment`).
+  await page.route("**/api/payments/start", (route) =>
+    route.fulfill({
+      status: 502,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Pembayaran belum bisa dimulai.",
+        code: "PAYMENT_START_FAILED",
+      }),
+    }),
+  );
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await renameBusiness(page, name);
+  await continueToOrder(page);
+  await emailInput(page).fill(ORDER_EMAIL);
+  await payButton(page).click();
+  await expect(orderScreen(page).getByRole("alert")).toContainText(
+    "Pembayaran belum bisa dimulai",
+  );
+  await page.unroute("**/api/payments/start");
+
+  // J01: another website over the saved order.
+  await page.goto("/");
+  await openAuditFromLanding(page, host);
+  const notice = page
+    .getByRole("status")
+    .filter({ hasText: "belum diperiksa" });
+  const check = notice.getByRole("button", {
+    name: `Periksa ${host}`,
+    exact: true,
+  });
+  const keep = notice.getByRole("button", {
+    name: `Lanjutkan pesanan ${name}`,
+    exact: true,
+  });
+  await expect(check).toBeVisible();
+  await expect(keep).toBeVisible();
+  // The note, its text and both buttons stay inside the phone and nothing
+  // in them is cut off (the page clips sideways overflow, so a too-wide part
+  // would be hidden, not scrollable).
+  for (const part of [notice, notice.locator("p"), check, keep]) {
+    const box = (await part.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(320);
+    expect(await part.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+      true,
+    );
+  }
 });

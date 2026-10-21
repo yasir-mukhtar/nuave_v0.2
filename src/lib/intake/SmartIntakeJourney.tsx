@@ -1835,12 +1835,14 @@ export default function SmartIntakeJourney({
     !activeOrder &&
     !paymentLocked &&
     (!session.order || checkedOrder === session.order.id);
+  // R-27: a long business name or website wraps inside the note (its
+  // buttons too) instead of running past a 320px screen.
   const handoffNotice = skippedHandoff ? (
     <div
       role="status"
-      className="mt-2 grid gap-2.5 rounded-tile bg-stone-50 px-4 py-3.5"
+      className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-2.5 rounded-tile bg-stone-50 px-4 py-3.5"
     >
-      <p className="type-copy-sm m-0 text-ink-700">
+      <p className="type-copy-sm m-0 text-ink-700 [overflow-wrap:anywhere]">
         {activeOrder
           ? `Website ${displayHost(skippedHandoff)} belum diperiksa, karena browser ini masih menampilkan audit sebelumnya.`
           : paymentLocked
@@ -1853,7 +1855,7 @@ export default function SmartIntakeJourney({
             type="button"
             variant="inkOutline"
             size="sm"
-            className="min-h-11 rounded-chip px-4"
+            className="h-auto min-h-11 max-w-full shrink rounded-chip px-4 py-2 text-left whitespace-normal [overflow-wrap:anywhere]"
             onClick={checkSkippedWebsite}
           >
             Periksa {displayHost(skippedHandoff)}
@@ -1863,7 +1865,7 @@ export default function SmartIntakeJourney({
           type="button"
           variant="inkLink"
           size="sm"
-          className="min-h-11"
+          className="h-auto min-h-11 max-w-full shrink px-0 py-2 text-left whitespace-normal [overflow-wrap:anywhere]"
           onClick={() => setSkippedHandoff(null)}
         >
           {activeOrder || paymentLocked

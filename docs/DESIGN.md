@@ -37,10 +37,10 @@ accent**. The historical Nuave purple skin is retired from the journey.
   `--ember-650` #d4420b: pay, run the audit, open the report; the Figma
   ember-600 darkened just enough for white labels to reach WCAG AA), a
   brand accent word (ember-500) and small orange text (ember-700, for
-  contrast). Small grey text is ink-500 or darker on white and stone, and
-  ink-600 on cream, where ink-500 reaches only 4.3:1 (ink-400 is for
-  borders, icons and disabled controls only). Selection is ink, never
-  ember: a 2px ink edge on stone-50 (`--edge-ink`).
+  contrast). Small grey text is ink-500 or darker on white and stone-50,
+  and ink-600 on stone-100 and cream, where ink-500 reaches only 4.4:1 and
+  4.3:1 (ink-400 is for borders, icons and disabled controls only).
+  Selection is ink, never ember: a 2px ink edge on stone-50 (`--edge-ink`).
 - **Shape.** Chips 22px pill, buttons and inputs 14px, tiles 16px, cards
   20–24px, sheets 28px (`--radius-token-*`). Two shadows on the white
   canvas: `--elevation-card` and `--elevation-float`. The ember paid
