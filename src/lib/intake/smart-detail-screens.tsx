@@ -46,11 +46,19 @@ type ScreenProps = {
   headingRef?: RefObject<HTMLHeadingElement | null>;
   /** Rejected sensitive input or navigation errors surface here (R-27). */
   error?: string | null;
+  /** A field's own refusal (a limit) for that same message slot. */
+  onRefuse?: (message: string) => void;
 };
 
 /** The picker part of a screen, also used inside the review's sheets (J26). */
 export type FieldsProps = Pick<ScreenProps, "prepared" | "selection"> & {
   onChange: (next: SmartSelection) => boolean | void;
+  /**
+   * Shows a field's own refusal (a limit) in the screen's one message slot,
+   * replacing whatever it showed before, so only the latest message stands.
+   * Without it the field shows the message itself.
+   */
+  onRefuse?: (message: string) => void;
 };
 
 const originKind = (origin: string | undefined) =>
@@ -516,7 +524,12 @@ export const REACH_LABELS: Record<string, string> = {
 
 const AREA_CAP = 8;
 
-export function MarketFields({ prepared, selection, onChange }: FieldsProps) {
+export function MarketFields({
+  prepared,
+  selection,
+  onChange,
+  onRefuse,
+}: FieldsProps) {
   const proposed = prepared.marketAreas.proposed ?? [];
   const ownerAdded = selection.marketAreas.filter(
     (item) => !proposed.some((row) => sameText(row, item)),
@@ -532,10 +545,12 @@ export function MarketFields({ prepared, selection, onChange }: FieldsProps) {
     });
   const setAreas = (areas: string[]) =>
     update({ marketAreas: areas, retainedBrandAreas: areas });
-  const blocked = () =>
-    setAreaBlock(
-      "Area dibatasi paling banyak 8. Hapus satu untuk menambah yang lain.",
-    );
+  const blocked = () => {
+    const message =
+      "Area dibatasi paling banyak 8. Hapus satu untuk menambah yang lain.";
+    if (onRefuse) onRefuse(message);
+    else setAreaBlock(message);
+  };
   const toggleArea = (area: string, on: boolean): boolean => {
     if (on && selection.marketAreas.some((item) => sameText(item, area))) {
       setAreaBlock(null);
@@ -576,9 +591,9 @@ export function MarketFields({ prepared, selection, onChange }: FieldsProps) {
       }
       next = [...next, area];
     }
-    setAreas(next);
+    // A refused change (sensitive text) keeps the typed text for correction.
     setAreaBlock(null);
-    return true;
+    return setAreas(next) !== false;
   };
   return (
     <div className="grid">
@@ -685,6 +700,7 @@ export function SmartMarketScreen({
   onChange,
   headingRef,
   error,
+  onRefuse,
 }: ScreenProps) {
   const areaBased =
     selection.marketReach === "sekitar" || selection.marketReach === "beberapa";
@@ -704,6 +720,7 @@ export function SmartMarketScreen({
           prepared={prepared}
           selection={selection}
           onChange={onChange}
+          onRefuse={onRefuse}
         />
       </div>
       {areaBased &&

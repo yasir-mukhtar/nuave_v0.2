@@ -477,6 +477,7 @@ export function BusinessCheckScreen({
   wayOutName,
   onWayOutNameChange,
   wayOutError,
+  footnote,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   phase: CheckPhase;
@@ -490,6 +491,8 @@ export function BusinessCheckScreen({
   wayOutName: string;
   onWayOutNameChange: (value: string) => void;
   wayOutError?: string | null;
+  /** The synthetic-mode label (Spec 013 R-07). */
+  footnote?: ReactNode;
 }) {
   const states: ("done" | "active" | "pending")[] = finished
     ? ["done", "done", "done"]
@@ -603,6 +606,7 @@ export function BusinessCheckScreen({
           ) : null}
         </>
       )}
+      {footnote ? <div className="mt-8">{footnote}</div> : null}
     </section>
   );
 }

@@ -109,9 +109,7 @@ async function toOrder() {
   await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
   fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
   await screen.findByRole("heading", { name: "Tinggal 3 langkah" });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Lanjut ke pembayaran" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut ke pembayaran" }));
 }
 
 /** Spec 016/017: the order screen. The email is typed and `Lanjut` (a test
@@ -178,7 +176,9 @@ async function closeSheet(sheet: HTMLElement, action: "Simpan" | "Batal") {
 
 /** A chip adder: type into its field and press the Tambah beside it. */
 function addThrough(field: string, value: string) {
-  const input = screen.getByRole("textbox", { name: field }) as HTMLInputElement;
+  const input = screen.getByRole("textbox", {
+    name: field,
+  }) as HTMLInputElement;
   fireEvent.change(input, { target: { value } });
   fireEvent.click(
     within(screen.getByRole("group", { name: field })).getByRole("button", {
@@ -810,9 +810,7 @@ describe("smart blank intake", () => {
       window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
     )!;
     expect(failed.pack).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "Jalankan audit" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Jalankan audit" })).toBeNull();
     expect(failed.generationAttempts).toHaveLength(1);
     expect(
       screen.getByText(
@@ -1232,7 +1230,9 @@ async function fillAndPeriksa(source = "https://kedai-fiksi.example/") {
     }),
     { target: { value: source } },
   );
-  fireEvent.click(screen.getByRole("button", { name: "Cek bisnis saya di AI" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Cek bisnis saya di AI" }),
+  );
 }
 
 const websiteField = () =>
@@ -1286,13 +1286,17 @@ describe("Spec 013 J2 screen frame", () => {
       screen
         .getAllByRole("button")
         .filter((button) => !(button as HTMLButtonElement).disabled)
-        .map((button) => button.getAttribute("aria-label") ?? button.textContent),
+        .map(
+          (button) => button.getAttribute("aria-label") ?? button.textContent,
+        ),
     ).toEqual(["Halaman sebelumnya", "Bantuan", "Kembali"]);
     releaseLookup();
     // J05: only what the free lookup found. Still no paid call.
     await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
     expect(calls).toEqual(["identity"]);
-    fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ya, ini bisnis saya" }),
+    );
     // J06, then J07: the order, with an email field. A test pass has no
     // price and no payment.
     await screen.findByRole("heading", { name: "Tinggal 3 langkah" });
@@ -1316,7 +1320,9 @@ describe("Spec 013 J2 screen frame", () => {
     });
     expect(reading.getAttribute("data-intake-screen")).toBe("reading");
     expect(
-      screen.getByRole("heading", { name: "Nuave sedang membaca website Anda" }),
+      screen.getByRole("heading", {
+        name: "Nuave sedang membaca website Anda",
+      }),
     ).toBeTruthy();
     expect(screen.getByText("Pembayaran diterima")).toBeTruthy();
     expect(screen.getByText("Yang sudah kami temukan")).toBeTruthy();
@@ -1746,7 +1752,9 @@ describe("Spec 013 J2 screen frame", () => {
     // checked again, reuses preparation and returns through the brand check,
     // where the name alone is corrected.
     sheet = await openSheet("Bisnis");
-    fireEvent.click(within(sheet).getByRole("button", { name: "Ganti website" }));
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: "Ganti website" }),
+    );
     await screen.findByRole("textbox", {
       name: "Website atau akun Instagram bisnis",
     });
@@ -2733,7 +2741,9 @@ describe("Spec 013 J5 business-detail screens", () => {
     // Deselect a prepared offering, then add an owner one.
     fireEvent.click(chips().getByRole("button", { name: "roti" }));
     expect(
-      chips().getByRole("button", { name: "roti" }).getAttribute("aria-pressed"),
+      chips()
+        .getByRole("button", { name: "roti" })
+        .getAttribute("aria-pressed"),
     ).toBe("false");
     addThrough("Produk atau layanan lain", "es teh");
     expect(
@@ -2791,7 +2801,9 @@ describe("Spec 013 J5 business-detail screens", () => {
     // Read-only context: no toggles and no field on the catalogue screen.
     expect(within(catalogue).queryByRole("button")).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
-    expect(screen.queryByRole("group", { name: "Produk dan layanan" })).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "Produk dan layanan" }),
+    ).toBeNull();
     expect(screen.queryByRole("textbox")).toBeNull();
     lanjut();
     await screen.findByRole("heading", {
@@ -3261,7 +3273,9 @@ describe("Spec 013 J7 final review", () => {
     expect(savedSession()?.selection?.origins.aliases).toBe("website");
     expect(business.getByRole("button", { name: "Ubah Bisnis" })).toBeTruthy();
     const sheet = await openSheet("Bisnis");
-    expect(within(sheet).getByRole("button", { name: "Ubah nama" })).toBeTruthy();
+    expect(
+      within(sheet).getByRole("button", { name: "Ubah nama" }),
+    ).toBeTruthy();
     expect(
       within(sheet).getByRole("button", { name: "Ganti website" }),
     ).toBeTruthy();
@@ -3350,7 +3364,9 @@ describe("Spec 013 J7 final review", () => {
     sheet = await openSheet("Bisnis");
     fireEvent.click(aliasChip(sheet, "Kedai Fiksi Pusat"));
     fireEvent.click(aliasChip(sheet, "Kedai Fiksi Baru"));
-    expect(within(sheet).queryByRole("group", { name: "Nama lain" })).toBeNull();
+    expect(
+      within(sheet).queryByRole("group", { name: "Nama lain" }),
+    ).toBeNull();
     await closeSheet(sheet, "Simpan");
     expect(fact("Nama").textContent).toBe("Kedai Fiksi");
     expect(savedSession()?.selection?.aliases).toEqual([]);
@@ -3413,9 +3429,9 @@ describe("Spec 013 J7 final review", () => {
     const sheet = await openSheet("Bisnis");
     addAlias("nomor rekening 12345");
     // The shared privacy message shows inside the sheet.
-    expect(
-      (await within(sheet).findByRole("alert")).textContent,
-    ).toContain("informasi sensitif");
+    expect((await within(sheet).findByRole("alert")).textContent).toContain(
+      "informasi sensitif",
+    );
     // The rejected draft stays; nothing unsafe enters the sheet's list.
     expect(aliasInput().value).toBe("nomor rekening 12345");
     expect(aliasChips(sheet)).toEqual(["Kedai Fiksi Pusat", "KopiFiksi"]);
@@ -3450,7 +3466,9 @@ describe("Spec 013 J7 final review", () => {
     addAlias("Alias Pemilik");
     await closeSheet(sheet, "Simpan");
     sheet = await openSheet("Bisnis");
-    fireEvent.click(within(sheet).getByRole("button", { name: "Ganti website" }));
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: "Ganti website" }),
+    );
     await screen.findByRole("textbox", {
       name: "Website atau akun Instagram bisnis",
     });
@@ -3484,7 +3502,9 @@ describe("Spec 013 J7 final review", () => {
     addAlias("Kedai Fiksi Baru");
     await closeSheet(sheet, "Simpan");
     sheet = await openSheet("Bisnis");
-    fireEvent.click(within(sheet).getByRole("button", { name: "Ganti website" }));
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: "Ganti website" }),
+    );
     const source = await screen.findByRole("textbox", {
       name: "Website atau akun Instagram bisnis",
     });
@@ -3797,6 +3817,9 @@ const jqRows = [
 
 // J17's second group of chips (what customers compare).
 const REASONS = "Mereka membandingkan…";
+// Its "+ Lainnya" chip, told apart from the needs one by "(pertimbangan)"
+// (jsdom drops the space a browser keeps before the bracket).
+const OTHER_REASON = /^Lainnya ?\(pertimbangan\)$/;
 
 /** A chip in a named chip group, on a screen or inside a sheet. */
 const chipIn = (container: HTMLElement, group: string, name: string) =>
@@ -4092,9 +4115,7 @@ describe("Spec 013 JQ customer screens", () => {
     render(<SmartIntakeJourney live={false} />);
     await toCustomerNeeds();
     const reasons = () => within(screen.getByRole("group", { name: REASONS }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Lainnya (pertimbangan)" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: OTHER_REASON }));
     const input = screen.getByRole("textbox", {
       name: "Pertimbangan pembeli lain",
     }) as HTMLInputElement;
@@ -4122,9 +4143,9 @@ describe("Spec 013 JQ customer screens", () => {
     fireEvent.change(input, { target: { value: "  JAM BUKA " } });
     fireEvent.click(tambah());
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(reasons().getAllByRole("button", { name: /jam buka/i })).toHaveLength(
-      1,
-    );
+    expect(
+      reasons().getAllByRole("button", { name: /jam buka/i }),
+    ).toHaveLength(1);
     expect(jqSession()?.selection?.decisionConsiderations).toEqual([
       "lokasi",
       "jam buka",
@@ -4172,9 +4193,7 @@ describe("Spec 013 JQ customer screens", () => {
     const { fetchMock } = stubPreparation({ draft: jqDraft });
     render(<SmartIntakeJourney live={false} />);
     await toCustomerNeeds();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Lainnya (pertimbangan)" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: OTHER_REASON }));
     const input = screen.getByRole("textbox", {
       name: "Pertimbangan pembeli lain",
     }) as HTMLInputElement;
@@ -4245,9 +4264,7 @@ describe("Spec 013 JQ customer screens", () => {
     });
     render(<SmartIntakeJourney live={false} />);
     await toCustomerNeeds();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Lainnya (pertimbangan)" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: OTHER_REASON }));
     const input = addThrough("Pertimbangan pembeli lain", "Ke-13");
     const tambah = () =>
       within(
@@ -4348,9 +4365,7 @@ describe("Spec 013 JQ customer screens", () => {
         ).toBe("true");
       else if (row === "Pertimbangan pembeli")
         expect(
-          chipIn(document.body, REASONS, "lokasi").getAttribute(
-            "aria-pressed",
-          ),
+          chipIn(document.body, REASONS, "lokasi").getAttribute("aria-pressed"),
         ).toBe("true");
       else
         expect(
@@ -4584,7 +4599,9 @@ describe("Spec 013 JQ customer screens", () => {
     await closeSheet(sheet, "Simpan");
     // A name-only edit on the same source preserves the JQ answers.
     sheet = await openSheet("Bisnis");
-    fireEvent.click(within(sheet).getByRole("button", { name: "Ganti website" }));
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: "Ganti website" }),
+    );
     await screen.findByRole("textbox", {
       name: "Website atau akun Instagram bisnis",
     });
@@ -4612,7 +4629,9 @@ describe("Spec 013 JQ customer screens", () => {
     });
     // A changed website prepares fresh meanings with their own provenance.
     sheet = await openSheet("Bisnis");
-    fireEvent.click(within(sheet).getByRole("button", { name: "Ganti website" }));
+    fireEvent.click(
+      within(sheet).getByRole("button", { name: "Ganti website" }),
+    );
     fireEvent.change(
       await screen.findByRole("textbox", {
         name: "Website atau akun Instagram bisnis",

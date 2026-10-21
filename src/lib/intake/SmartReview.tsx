@@ -618,12 +618,14 @@ export default function SmartReview({
                 prepared={prepared}
                 selection={draft}
                 onChange={changeDraft}
+                onRefuse={setSheetError}
               />
             </SheetBlock>
             <NeedsFields
               prepared={prepared}
               selection={draft}
               onChange={changeDraft}
+              onRefuse={setSheetError}
             />
             <SheetBlock title="Bagaimana pelanggan mendapatkannya?">
               <ServiceFields
@@ -638,6 +640,7 @@ export default function SmartReview({
                   prepared={prepared}
                   selection={draft}
                   onChange={changeDraft}
+                  onRefuse={setSheetError}
                 />
               </SheetBlock>
             ) : null}
@@ -649,6 +652,7 @@ export default function SmartReview({
                 prepared={prepared}
                 selection={draft}
                 onChange={changeDraft}
+                onRefuse={setSheetError}
               />
             </SheetBlock>
             <SheetBlock title="Yang membedakan Anda">

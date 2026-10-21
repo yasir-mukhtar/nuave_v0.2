@@ -29,6 +29,7 @@ export function PaidReadingScreen({
   findings,
   error,
   action,
+  footnote,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   orderNumber?: string | null;
@@ -37,6 +38,8 @@ export function PaidReadingScreen({
   error?: string | null;
   /** A way forward when the reading could not finish here. */
   action?: ReactNode;
+  /** The synthetic-mode label (Spec 013 R-07), on the white card. */
+  footnote?: ReactNode;
 }) {
   const animate = useMotionAllowed();
   const reading = !findings && !error;
@@ -172,6 +175,7 @@ export function PaidReadingScreen({
             </span>
           </div>
         ) : null}
+        {footnote}
       </motion.div>
     </section>
   );

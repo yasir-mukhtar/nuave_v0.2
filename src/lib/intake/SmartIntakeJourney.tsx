@@ -935,8 +935,12 @@ export default function SmartIntakeJourney({
     return () => window.clearInterval(timer);
   }, [lookupStartedAt]);
 
+  // The ref follows at once, so a second handler of the same tap (a focus
+  // card's own click and its radio change) builds on this save, not on the
+  // render before it.
   const persist = (next: SmartSession) => {
     writeSmartSession(next);
+    sessionRef.current = next;
     setSession(next);
   };
   // A forward transition keeps one marked entry on top of the stack so the
@@ -1687,7 +1691,7 @@ export default function SmartIntakeJourney({
       stopSensitiveInput();
       return false;
     }
-    persist({ ...session, selection });
+    persist({ ...sessionRef.current, selection });
     setError(null);
     return true;
   }
@@ -1826,6 +1830,8 @@ export default function SmartIntakeJourney({
           stage: target,
           ...markerFields(session, target),
         });
+        // A message about this screen does not follow to the next one.
+        setError(null);
       },
     };
   };
@@ -2034,6 +2040,12 @@ export default function SmartIntakeJourney({
   }
 
   // ── The screen ──
+  // Spec 013 R-07: synthetic mode stays visibly labelled while checking.
+  const syntheticFootnote = live ? null : (
+    <p className="type-copy-sm m-0 text-center text-ink-500">
+      {SYNTHETIC_LABEL}
+    </p>
+  );
   let screen: ReactNode = null;
   if (session.stage === "entry") {
     screen = (
@@ -2081,13 +2093,7 @@ export default function SmartIntakeJourney({
         busy={busy !== null}
         error={error || restoredSourceError}
         notice={interrupted ? LOOKUP_INTERRUPTED_NOTICE : null}
-        footnote={
-          !live ? (
-            <p className="type-copy-sm m-0 text-center text-ink-500">
-              {SYNTHETIC_LABEL}
-            </p>
-          ) : null
-        }
+        footnote={syntheticFootnote}
       />
     );
   } else if (isLookup) {
@@ -2106,6 +2112,7 @@ export default function SmartIntakeJourney({
           setError(null);
         }}
         wayOutError={error}
+        footnote={syntheticFootnote}
       />
     );
   } else if (isPaidReading) {
@@ -2114,6 +2121,11 @@ export default function SmartIntakeJourney({
         headingRef={headingRef}
         orderNumber={orderNumber}
         findings={findings}
+        footnote={
+          live ? null : (
+            <p className="type-caption m-0 text-ink-500">{SYNTHETIC_LABEL}</p>
+          )
+        }
       />
     );
   } else if (session.stage === "brand" && !prepared && session.identity) {
@@ -2221,6 +2233,9 @@ export default function SmartIntakeJourney({
       selection,
       onChange: updateSelection,
       error,
+      // One message at a time: a field's limit replaces a privacy stop and
+      // the other way round.
+      onRefuse: setError,
     };
     screen =
       session.stage === "focus" ? (

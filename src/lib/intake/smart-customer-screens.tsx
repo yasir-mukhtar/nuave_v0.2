@@ -29,6 +29,8 @@ type ScreenProps = {
   onChange: (next: SmartSelection) => boolean | void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
   error?: string | null;
+  /** A field's own refusal (a limit) for that same message slot. */
+  onRefuse?: (message: string) => void;
 };
 
 /** The audit context's limits for the optional lists (12 of 300 chars). */
@@ -59,6 +61,20 @@ function useKeptItems(current: string[]) {
 }
 
 /**
+ * A field's own refusal: in the screen's message slot when it has one (so a
+ * new message replaces the last), else under the field.
+ */
+function useRefusal(onRefuse?: (message: string) => void) {
+  const [problem, setProblem] = useState<string | null>(null);
+  return {
+    problem,
+    refuse: (message: string) =>
+      onRefuse ? onRefuse(message) : setProblem(message),
+    clear: () => setProblem(null),
+  };
+}
+
+/**
  * Tick and add for an optional chip list, within the context's limits. A
  * refused add keeps the typed text for correction.
  */
@@ -71,6 +87,7 @@ function useChipList({
   maxMessage,
   fits,
   fitMessage = "",
+  onRefuse,
 }: {
   selected: string[];
   write: (next: string[]) => boolean | void;
@@ -81,8 +98,9 @@ function useChipList({
   /** A limit on the whole list (the joined target-customer text). */
   fits?: (next: string[]) => boolean;
   fitMessage?: string;
+  onRefuse?: (message: string) => void;
 }) {
-  const [problem, setProblem] = useState<string | null>(null);
+  const { problem, refuse, clear } = useRefusal(onRefuse);
   const refusal = (next: string[], item: string) =>
     item.length > max
       ? maxMessage
@@ -91,10 +109,10 @@ function useChipList({
         : fits && !fits(next)
           ? fitMessage
           : null;
+  // A change the screen refused shows the screen's own message instead.
   const apply = (next: string[]) => {
-    const ok = write(next) !== false;
-    if (ok) setProblem(null);
-    return ok;
+    clear();
+    return write(next) !== false;
   };
   const toggle = (item: string, on: boolean): boolean => {
     if (!on) return apply(selected.filter((row) => !sameText(row, item)));
@@ -102,7 +120,7 @@ function useChipList({
     const next = [...selected, item];
     const why = refusal(next, item);
     if (why) {
-      setProblem(why);
+      refuse(why);
       return false;
     }
     return apply(next);
@@ -115,7 +133,7 @@ function useChipList({
       if (next.some((row) => sameText(row, item))) continue;
       const why = refusal([...next, item], item);
       if (why) {
-        setProblem(why);
+        refuse(why);
         return false;
       }
       next = [...next, item];
@@ -165,7 +183,12 @@ export function customerParts(value: string): string[] {
   );
 }
 
-export function CustomerFields({ prepared, selection, onChange }: FieldsProps) {
+export function CustomerFields({
+  prepared,
+  selection,
+  onChange,
+  onRefuse,
+}: FieldsProps) {
   const proposed = customerParts(prepared.targetCustomer.proposed ?? "");
   const selected = customerParts(selection.targetCustomer);
   const generic = CUSTOMER_TYPES.filter(
@@ -192,6 +215,7 @@ export function CustomerFields({ prepared, selection, onChange }: FieldsProps) {
     fits: (next) => next.join(", ").length <= TARGET_CUSTOMER_MAX,
     fitMessage:
       "Daftar pelanggan paling panjang 500 karakter. Lepas satu untuk menambah yang lain.",
+    onRefuse,
   });
   const chips = [...proposed, ...ownerAdded, ...generic];
   return (
@@ -236,6 +260,7 @@ export function SmartTargetCustomerScreen({
   onChange,
   headingRef,
   error,
+  onRefuse,
 }: ScreenProps) {
   const fromNuave =
     selection.origins.targetCustomer !== "owner" &&
@@ -252,6 +277,7 @@ export function SmartTargetCustomerScreen({
           prepared={prepared}
           selection={selection}
           onChange={onChange}
+          onRefuse={onRefuse}
         />
       </div>
       {fromNuave ? (
@@ -274,7 +300,7 @@ const COMPARISON_REASONS = [
   "kecepatan layanan",
 ];
 
-function NeedsList({ prepared, selection, onChange }: FieldsProps) {
+function NeedsList({ prepared, selection, onChange, onRefuse }: FieldsProps) {
   const proposed = prepared.customerNeeds.proposed ?? [];
   const selected = selection.customerNeeds;
   const [ownerAdded, keep] = useKeptItems(
@@ -293,6 +319,7 @@ function NeedsList({ prepared, selection, onChange }: FieldsProps) {
     capMessage:
       "Pilih paling banyak 12 kebutuhan. Lepas satu untuk menambah yang lain.",
     maxMessage: "Setiap kebutuhan paling panjang 300 karakter.",
+    onRefuse,
   });
   const chips = [...proposed, ...ownerAdded];
   return (
@@ -332,7 +359,7 @@ function NeedsList({ prepared, selection, onChange }: FieldsProps) {
   );
 }
 
-function ReasonsList({ prepared, selection, onChange }: FieldsProps) {
+function ReasonsList({ prepared, selection, onChange, onRefuse }: FieldsProps) {
   const proposed = prepared.decisionConsiderations.proposed ?? [];
   const selected = selection.decisionConsiderations;
   const generic = COMPARISON_REASONS.filter(
@@ -356,6 +383,7 @@ function ReasonsList({ prepared, selection, onChange }: FieldsProps) {
     capMessage:
       "Pilih paling banyak 12 pertimbangan. Lepas satu untuk menambah yang lain.",
     maxMessage: "Setiap pertimbangan paling panjang 300 karakter.",
+    onRefuse,
   });
   const chips = [...proposed, ...ownerAdded, ...generic];
   return (
@@ -414,6 +442,7 @@ export function SmartCustomerNeedsScreen({
   onChange,
   headingRef,
   error,
+  onRefuse,
 }: ScreenProps) {
   return (
     <section className="grid" data-intake-screen="customer-needs">
@@ -427,6 +456,7 @@ export function SmartCustomerNeedsScreen({
           prepared={prepared}
           selection={selection}
           onChange={onChange}
+          onRefuse={onRefuse}
         />
       </div>
       <ScreenError error={error} />
@@ -450,6 +480,7 @@ export function CompetitorFields({
   prepared,
   selection,
   onChange,
+  onRefuse,
   onSkip,
 }: FieldsProps & {
   /** "Lewati" in the keyboard bar while nothing is ticked (J21). */
@@ -460,22 +491,23 @@ export function CompetitorFields({
   const [ownerAdded, keep] = useKeptItems(
     names.filter((name) => !proposed.some((row) => sameText(row, name))),
   );
-  const [problem, setProblem] = useState<string | null>(null);
+  const { problem, refuse, clear } = useRefusal(onRefuse);
   // Nothing ticked means "not sure": the audit then compares with similar
-  // businesses in the category (the stored "unknown").
+  // businesses in the category (the stored "unknown"). A change the screen
+  // refused shows the screen's own message instead.
   const write = (next: string[]) => {
-    const ok =
+    clear();
+    return (
       onChange({
         ...selection,
         comparatorNames: next,
         comparatorMode: next.length ? "named" : "unknown",
         origins: { ...selection.origins, comparators: "owner" },
-      }) !== false;
-    if (ok) setProblem(null);
-    return ok;
+      }) !== false
+    );
   };
   const full = () =>
-    setProblem(
+    refuse(
       "Pilih paling banyak 5 bisnis pembanding. Lepas satu untuk menambah yang lain.",
     );
   const isOn = (name: string) => names.some((row) => sameText(row, name));
@@ -495,7 +527,7 @@ export function CompetitorFields({
       const name = rows.find((row) => sameText(row, value)) ?? value;
       if (next.some((row) => sameText(row, name))) continue;
       if (name.length > COMPARATOR_MAX) {
-        setProblem("Nama pembanding paling panjang 160 karakter.");
+        refuse("Nama pembanding paling panjang 160 karakter.");
         return false;
       }
       if (next.length >= COMPARATOR_CAP) {
@@ -564,6 +596,7 @@ export function SmartCompetitorsScreen({
   onChange,
   headingRef,
   error,
+  onRefuse,
   onSkip,
 }: ScreenProps & { onSkip: () => void }) {
   const found = Boolean(prepared.comparatorSuggestions.proposed?.length);
@@ -587,6 +620,7 @@ export function SmartCompetitorsScreen({
           prepared={prepared}
           selection={selection}
           onChange={onChange}
+          onRefuse={onRefuse}
           onSkip={onSkip}
         />
       </div>
