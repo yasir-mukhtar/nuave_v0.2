@@ -148,7 +148,9 @@ test("pay with the simulated payment: the order number shows, the paid reading s
       name: new RegExp(`^(${READING_HEADING}|${READ_HEADING})$`),
     }),
   ).toBeVisible();
-  await expect(paidReadingScreen(page)).toContainText("Yang sudah kami temukan");
+  await expect(paidReadingScreen(page)).toContainText(
+    "Yang sudah kami temukan",
+  );
   await expectIntroBusiness(page);
   expect(calls["POST /api/orders"]).toBe(1);
   expect(calls["POST /api/payments/start"]).toBe(1);
@@ -180,7 +182,9 @@ test("pay with the simulated payment: the order number shows, the paid reading s
   // None from the review: the Bisnis sheet says the name and website are
   // locked and offers neither change.
   const sheet = await openReviewSheet(page, "Bisnis");
-  await expect(sheet.getByText(NAME_LOCKED_NOTE, { exact: true })).toBeVisible();
+  await expect(
+    sheet.getByText(NAME_LOCKED_NOTE, { exact: true }),
+  ).toBeVisible();
   await expect(sheet.getByRole("button", { name: "Ubah nama" })).toHaveCount(0);
   await expect(
     sheet.getByRole("button", { name: "Ganti website" }),
@@ -190,7 +194,9 @@ test("pay with the simulated payment: the order number shows, the paid reading s
   await page.reload();
   await expectSummary(page);
   const again = await openReviewSheet(page, "Bisnis");
-  await expect(again.getByText(NAME_LOCKED_NOTE, { exact: true })).toBeVisible();
+  await expect(
+    again.getByText(NAME_LOCKED_NOTE, { exact: true }),
+  ).toBeVisible();
   await expect(
     again.getByRole("button", { name: "Ganti website" }),
   ).toHaveCount(0);

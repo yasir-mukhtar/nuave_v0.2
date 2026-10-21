@@ -201,9 +201,7 @@ async function expectInside(box: Locator) {
 async function expectFocusWithin(container: Locator) {
   await expect
     .poll(() =>
-      container.evaluate((element) =>
-        element.contains(document.activeElement),
-      ),
+      container.evaluate((element) => element.contains(document.activeElement)),
     )
     .toBe(true);
 }
@@ -765,9 +763,7 @@ test("material correction invalidates the old questions; cancel keeps the commit
       }),
     ).toBeChecked();
     await saveReviewSheet(page, "Bisnis");
-    await expect(reviewFact(page, "Disebut sebagai")).toHaveText(
-      "warung kopi",
-    );
+    await expect(reviewFact(page, "Disebut sebagai")).toHaveText("warung kopi");
   };
   await editCategory();
   await page.getByRole("button", { name: "Batalkan perubahan" }).click();
@@ -971,9 +967,7 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   }
   // A sixth is refused, never truncated: the draft stays for a retry.
   await addCompetitor(competitors, "Pembanding enam");
-  await expect(competitors.getByRole("alert")).toContainText(
-    "paling banyak 5",
-  );
+  await expect(competitors.getByRole("alert")).toContainText("paling banyak 5");
   await expect(competitorInput(competitors)).toHaveValue("Pembanding enam");
   saved = await intakeSession(page);
   expect(saved.selection.comparatorNames).toEqual([
@@ -1134,7 +1128,9 @@ test("JQ customer screens take keyboard-only edits that survive reload and freez
   /** Presses Tab (or Shift+Tab) until `target` has focus: keyboard only. */
   const tabTo = async (target: Locator, backwards = false) => {
     for (let step = 0; step < 30; step += 1) {
-      if (await target.evaluate((element) => element === document.activeElement))
+      if (
+        await target.evaluate((element) => element === document.activeElement)
+      )
         return;
       await page.keyboard.press(backwards ? "Shift+Tab" : "Tab");
     }
@@ -1166,7 +1162,9 @@ test("JQ customer screens take keyboard-only edits that survive reload and freez
   await tabTo(preparedCustomer);
   await page.keyboard.press("Space");
   await expect(preparedCustomer).toHaveAttribute("aria-pressed", "false");
-  await tabTo(target.getByRole("button", { name: "Tambah lainnya", exact: true }));
+  await tabTo(
+    target.getByRole("button", { name: "Tambah lainnya", exact: true }),
+  );
   await page.keyboard.press("Enter");
   const customerField = target.getByRole("textbox", {
     name: "Pelanggan lain",
@@ -1200,7 +1198,10 @@ test("JQ customer screens take keyboard-only edits that survive reload and freez
   const needs = customerNeedsScreen(page);
   const reasons = considerationsGroup(needs);
   const lokasi = reasons.getByRole("button", { name: "lokasi", exact: true });
-  const jamBuka = reasons.getByRole("button", { name: "jam buka", exact: true });
+  const jamBuka = reasons.getByRole("button", {
+    name: "jam buka",
+    exact: true,
+  });
   const parkir = reasons.getByRole("button", {
     name: "parkir luas",
     exact: true,
@@ -1589,7 +1590,9 @@ test.describe("J4 focus and target screens", () => {
     const sheet = addTargetSheet(page, "cabang");
     await expect(sheet).toBeVisible();
     const save = sheet.getByRole("button", { name: "Simpan", exact: true });
-    await sheet.getByRole("textbox", { name: "Nama cabang" }).fill("Cabang Baru");
+    await sheet
+      .getByRole("textbox", { name: "Nama cabang" })
+      .fill("Cabang Baru");
     await expect(save.first()).toBeDisabled();
     await sheet
       .getByRole("textbox", { name: "Alamat cabang" })
@@ -1901,7 +1904,9 @@ test.describe("J7 review and Nama lain aliases", () => {
     // `Ganti website` opens the entry with the current website kept.
     await editWebsiteFromReview(page);
     await expect(entryScreen(page)).toBeVisible();
-    await expect(websiteInput(page)).toHaveValue("https://kedai-fiksi.example/");
+    await expect(websiteInput(page)).toHaveValue(
+      "https://kedai-fiksi.example/",
+    );
   });
 
   test("aliases add and remove individually and persist over a reload", async ({

@@ -18,8 +18,9 @@ for (const path of ["/", "/audit"] as const) {
 }
 
 // J01: the mobile header no longer has a menu; its one popup control is
-// "Contoh laporan", which opens the example report as a sheet.
-test("the mobile header's popup control references its sheet only while it exists, and Escape returns focus", async ({
+// "Contoh laporan", which opens the example report as a sheet. It may name
+// the sheet in `aria-controls` only while the sheet exists.
+test("the mobile header's popup control never points at a missing sheet, and Escape returns focus", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -36,8 +37,20 @@ test("the mobile header's popup control references its sheet only while it exist
 
   await trigger.click();
   await expect(sheet).toBeVisible();
+  // The open modal sheet hides the page behind it from role queries.
+  const controls = await page
+    .getByRole("banner", { includeHidden: true })
+    .getByRole("button", {
+      name: "Contoh laporan",
+      exact: true,
+      includeHidden: true,
+    })
+    .getAttribute("aria-controls");
+  if (controls !== null) expect(controls).toBe(await sheet.getAttribute("id"));
   await expect
-    .poll(() => sheet.evaluate((element) => element.contains(document.activeElement)))
+    .poll(() =>
+      sheet.evaluate((element) => element.contains(document.activeElement)),
+    )
     .toBe(true);
 
   await page.keyboard.press("Escape");

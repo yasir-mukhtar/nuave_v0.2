@@ -24,6 +24,7 @@ import {
   downloadPdfButtons,
   editFocusFromReview,
   editQuestion,
+  emailInput,
   ENTRY_INVALID_NOTICE,
   expectAuditDelivered,
   expectAuditRunning,
@@ -218,7 +219,9 @@ async function auditEntry(ctx: DriveContext) {
   await ctx.step("audit-entry-empty", async () => {
     await page.goto("/audit");
     await expectEmptyEntry(page);
-    await expect(page.getByText(SYNTHETIC_LABEL, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(SYNTHETIC_LABEL, { exact: true }),
+    ).toBeVisible();
   });
   ctx.check(
     "`/audit` opens on the empty website step (J01) with its heading focused and the synthetic-mode label",
@@ -284,7 +287,9 @@ async function smartIntakeSummary(ctx: DriveContext) {
   const { page } = ctx;
   await ctx.step("entry-filled", async () => {
     await fillEntry(page);
-    await expect(page.getByText(SYNTHETIC_LABEL, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(SYNTHETIC_LABEL, { exact: true }),
+    ).toBeVisible();
   });
   await ctx.step("free-check-to-business-found", async () => {
     // A short same-origin delay keeps the free check (J02) up long enough to
@@ -485,7 +490,10 @@ async function richPreparation(ctx: DriveContext) {
       "Racikan kopi rumahan fiktif",
     );
     await fillDifferentiator(differentiator, "Pilihan roti rumahan fiktif");
-    await fillPublicFact(differentiator, "Buka setiap hari sampai pukul 21.00.");
+    await fillPublicFact(
+      differentiator,
+      "Buka setiap hari sampai pukul 21.00.",
+    );
     await pressLanjut(page);
     await expect(marketScreen(page)).toHaveCount(0);
     await expectIntroReview(page);
@@ -654,6 +662,7 @@ async function deliverAudit(ctx: DriveContext) {
   await ctx.step("order-summary", async () => {
     await continueToOrder(page);
     await expectOrderSummaryPrice(page);
+    await expect(emailInput(page)).toBeVisible();
   });
   expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
   ctx.check(

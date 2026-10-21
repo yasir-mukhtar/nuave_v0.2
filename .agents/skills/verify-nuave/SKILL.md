@@ -1,6 +1,6 @@
 ---
 name: verify-nuave
-description: Drive the Nuave web app's public audit journey (landing → /audit entry → brand confirm → order summary with the Rp99.000 price → simulated payment → paid reading → intake → ten questions → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
+description: Drive the Nuave web app's public audit journey (landing → /audit website step → free business check → business found → three steps → checkout with the Rp99.000 price → simulated payment → paid reading → intake → review → ten questions → start sheet → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
 ---
 
 # verify-nuave
@@ -51,21 +51,23 @@ Always run `cleanup`, even after a failure.
 `$V doctor [--allow-dirty] [--run <id>]`: one read-only check. Every line
 prints `PASS`, `FAIL` or `SKIP`. The exit code is 1 on any `FAIL`.
 
-| Check | Fails when |
-|---|---|
-| `state-root-is-this-checkout` | the state file was written by another checkout |
-| `process-group-alive` | the recorded process group is gone |
-| `port-owned-by-this-run` | nothing listens on the port, or the listener is in another process group |
-| `server-started-from-state-root` | the listening process was started from a different folder (another checkout or worktree). Prints `ROOT MISMATCH` |
-| `port-answers` | `http://127.0.0.1:<port>/` does not answer |
-| `state-mode-synthetic` | the state does not record `synthetic` |
-| `audit-entry-renders` | `/audit` does not show `[data-intake-screen="entry"]` (the entry screen `audit-entry.spec.ts` asserts) |
-| `served-mode-synthetic` | `/audit` does not show "Mode uji lokal menggunakan pengganti sintetis berlabel." (it shows only when the server is not live) |
-| `doctor-made-no-api-call` | loading `/audit` made an `/api/*` request |
-| `working-tree-clean` | `git status --porcelain` is not empty, unless `--allow-dirty` |
+| Check                            | Fails when                                                                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `state-root-is-this-checkout`    | the state file was written by another checkout                                                                               |
+| `process-group-alive`            | the recorded process group is gone                                                                                           |
+| `port-owned-by-this-run`         | nothing listens on the port, or the listener is in another process group                                                     |
+| `server-started-from-state-root` | the listening process was started from a different folder (another checkout or worktree). Prints `ROOT MISMATCH`             |
+| `port-answers`                   | `http://127.0.0.1:<port>/` does not answer                                                                                   |
+| `state-mode-synthetic`           | the state does not record `synthetic`                                                                                        |
+| `audit-entry-renders`            | `/audit` does not show `[data-intake-screen="entry"]` (the entry screen `audit-entry.spec.ts` asserts)                       |
+| `served-mode-synthetic`          | `/audit` does not show "Mode uji lokal menggunakan pengganti sintetis berlabel." (it shows only when the server is not live) |
+| `doctor-made-no-api-call`        | loading `/audit` made an `/api/*` request                                                                                    |
+| `working-tree-clean`             | `git status --porcelain` is not empty, unless `--allow-dirty`                                                                |
 
 **How doctor finds the folder a server was started from:** it lists the PIDs
-listening on the port with `lsof -nP -iTCP:<port> -sTCP:LISTEN -t`. The
+listening on the port. On macOS it uses `lsof -nP -iTCP:<port> -sTCP:LISTEN -t`.
+On Linux it reads the listening sockets from `/proc/net/tcp` and
+`/proc/net/tcp6` and finds the PIDs that hold them in `/proc/<pid>/fd`. The
 listener is `next-server`, a child of `npm`. Doctor reads each PID's working
 directory, which `npm run` sets to the package root. On macOS it uses
 `lsof -a -p <pid> -d cwd -Fn`. On Linux it uses `readlink /proc/<pid>/cwd`.
@@ -74,8 +76,11 @@ equal. It then compares that directory with the state file's `root`.
 
 - **macOS:** proven (Darwin 25.5, 2026-09-26), including the known-bad case:
   a server started from another `git worktree` fails with `ROOT MISMATCH`.
-- **Linux:** the code path exists but has not been run yet; it needs `lsof`
-  installed to list listeners.
+- **Linux:** run on Linux 6.18 (2026-10-21) for `launch`, `doctor`,
+  `drive all`, `capture` and `cleanup`; the other-worktree case has not been
+  tried. It does not use `lsof` to list listeners: lsof 4.95 skips the
+  `next-server` process, whose name (`next-server (v1`) holds a parenthesis,
+  so doctor reported "nothing listens" while the server answered.
 - **Windows:** not supported.
 
 `$V doctor --pr <n>` checks a PR preview instead of a local server. It reads
@@ -166,10 +171,10 @@ It then checks the port.
 `next-server` and one or two Turbopack `pool_entry` workers. The port listener
 is `next-server`, not the recorded `npm` PID.
 
-| Stop method | Observed result |
-|---|---|
-| SIGTERM to the group | the whole group exits after one SIGTERM (no SIGKILL needed); `lsof -i :3100` is empty |
-| SIGTERM to the `npm` PID alone | the port was freed too, because npm forwards SIGTERM to its child |
+| Stop method                    | Observed result                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| SIGTERM to the group           | the whole group exits after one SIGTERM (no SIGKILL needed); `lsof -i :3100` is empty           |
+| SIGTERM to the `npm` PID alone | the port was freed too, because npm forwards SIGTERM to its child                               |
 | SIGKILL to the `npm` PID alone | `next dev`, `next-server` and a Turbopack worker stayed alive, and `next-server` kept port 3100 |
 
 So stopping only the recorded PID is unsafe. Cleanup signals the group, which

@@ -736,7 +736,10 @@ export function addTargetSheet(page: Page, kind: "cabang" | "produk") {
 
 /** Saves an open add sheet (its header `Simpan`, not the hidden submit). */
 export async function saveTargetSheet(sheet: Locator) {
-  await sheet.getByRole("button", { name: "Simpan", exact: true }).first().click();
+  await sheet
+    .getByRole("button", { name: "Simpan", exact: true })
+    .first()
+    .click();
   await expect(sheet).toHaveCount(0);
 }
 
@@ -783,7 +786,9 @@ export async function addCategory(scope: Scope, value: string) {
 
 /** J14: the always-open `Produk atau layanan lain` field, Enter adds. */
 export async function addOffering(scope: Scope, value: string) {
-  const field = scope.getByRole("textbox", { name: "Produk atau layanan lain" });
+  const field = scope.getByRole("textbox", {
+    name: "Produk atau layanan lain",
+  });
   await field.fill(value);
   await field.press("Enter");
 }
@@ -810,7 +815,9 @@ export async function chooseReach(
 export async function addArea(scope: Scope, value: string) {
   const field = scope.getByRole("textbox", { name: "Kota atau area" });
   if (!(await field.isVisible()))
-    await scope.getByRole("button", { name: "Tambah kota", exact: true }).click();
+    await scope
+      .getByRole("button", { name: "Tambah kota", exact: true })
+      .click();
   await field.fill(value);
   await field.press("Enter");
 }
@@ -1268,7 +1275,10 @@ export function reviewConfirmation(page: Page) {
  * `Buat pertanyaan audit`. */
 export async function confirmSummary(page: Page) {
   const box = reviewConfirmation(page);
-  const create = page.getByRole("button", { name: CONFIRM_SUMMARY, exact: true });
+  const create = page.getByRole("button", {
+    name: CONFIRM_SUMMARY,
+    exact: true,
+  });
   if ((await box.getAttribute("aria-checked")) !== "true") {
     await expect(create).toBeDisabled();
     await box.click();

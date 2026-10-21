@@ -2,8 +2,8 @@
 
 When the audit is done the server saves the report and emails a private link.
 The link opens the report on `/r`, in any browser, with no login. The owner can
-save it with `Download PDF` (the browser print dialog) and download the
-evidence with `Unduh bukti JSON`. A wrong, expired or switched-off link shows
+save it with either `Download PDF` button (the browser print dialog) and
+download the evidence with `Unduh bukti JSON`. A wrong, expired or switched-off link shows
 only "Laporan ini tidak tersedia." The tab that ran the audit never shows the
 report itself.
 
@@ -16,8 +16,9 @@ report itself.
   request URL.
 - `report-view`: `[data-saved-report="ready"]`, `[data-direct-ten-report]` and
   the navigation `Report contents`.
-- `report-pdf`: `Download PDF` calls `window.print()` once. In print media,
-  all ten answers are visible.
+- `report-pdf`: the report has two `Download PDF` buttons, in the top bar and
+  under the report. Each calls `window.print()` once. In print media, all ten
+  answers are visible.
 - `report-json`: `Unduh bukti JSON` downloads `nuave-evidence-v5` with ten
   observations and a report, and no email.
 - `link-not-available`: a wrong secret shows `[data-saved-report="unavailable"]`
@@ -41,12 +42,14 @@ Preconditions:
 Run `$V drive report-link`. Steps, in order:
 
 - **Order path.** The same ten steps as `audit-run` up to the delivered tab
-  (`01` … `08`).
+  (`01-entry-filled` … `10-server-finishes-audit`).
 - **Report by link.** Opens the link from the fake mailbox in a new browser
-  context. `[data-saved-report="ready"]` and `Report contents` show.
-  Evidence: `09-report-by-link`.
-- **PDF.** Presses `Download PDF`. The counted `window.print()` calls equal 1.
-  Evidence: `10-download-pdf-pressed`.
+  context. The page is `noindex` and sends no referrer;
+  `[data-saved-report="ready"]` and `Report contents` show. Evidence:
+  `11-report-by-link`.
+- **PDF.** Two `Download PDF` buttons show. Pressing the first (top bar)
+  brings the counted `window.print()` calls to 1, the last (under the report)
+  to 2. Evidence: `12-download-pdf-pressed`.
 - **Print media.** Emulates print media. Every `[data-answer-body]` is
   visible. The drive saves `report-a4.headless.pdf` through `page.pdf()` (A4,
   backgrounds on). `result.json.artifacts` labels it
@@ -55,7 +58,7 @@ Run `$V drive report-link`. Steps, in order:
   `download-evidence.json`. It has `export_version` `nuave-evidence-v5`, ten
   `observations` and a `report`, and not the owner's email.
 - **Wrong link.** A second new browser context opens `/r#WWWW…`. The page is
-  only "Laporan ini tidak tersedia." Evidence: `11-wrong-link-not-available`.
+  only "Laporan ini tidak tersedia." Evidence: `13-wrong-link-not-available`.
 
 ## Gotchas
 
@@ -68,6 +71,8 @@ Run `$V drive report-link`. Steps, in order:
 - Headless Chromium cannot show a print dialog, so the drive replaces
   `window.print` with a counter before the page loads. Do not claim the native
   dialog was seen.
+- The report's contents links show a focus ring only for keyboard focus
+  (`:focus-visible`), not after a click. That is intended.
 - The JSON download's suggested file name is `nuave-audit-evidence.json`. The
   drive saves it under its own name.
 - Switched-off and expired links are proved by the unit tests

@@ -2,41 +2,49 @@
 
 The whole path of an order, in synthetic mode against the local database
 (spec 016 AC-20, spec 017 AC-24): the owner types a website, confirms the
-business from the free lookup, sees the order summary with its price
-(Rp99.000, sekali bayar), gives an email and pays with the labelled simulated
-payment (no Midtrans, no money), waits while Nuave reads the website, answers
-the intake and approves ten questions. The audit then runs on the server, so the
-tab may be closed. The report is opened later from the emailed link.
+business the free check found, sees the three steps and checkout with its
+price (Rp99.000, sekali bayar), gives an email and pays with the labelled
+simulated payment (no Midtrans, no money). The paid reading then starts by
+itself. The owner answers the intake, reviews the profile and starts the audit
+from the start sheet. The audit runs on the server, so the tab may be closed.
+The report is opened later from the emailed link.
 
 ## Sub-features
 
-- `order-free-first`: brand confirm (screen 3) and the order summary (screen 3a)
-  make no order and no paid request. The summary shows Rp99.000 "sekali
-  bayar", the delivery promise, links to `/terms` and `/privacy`, and the
-  `Bayar Rp99.000` button.
+- `order-free-first`: the business found (J05), "Tinggal 3 langkah" (J06) and
+  checkout (J07) make no order and no paid request. Checkout shows the card
+  `Ringkasan pesanan` ("AI Visibility Report", "Kedai Fiksi · 10 pertanyaan",
+  Total Rp99.000, "Sekali bayar. …", the delivery promise) and, in the bottom
+  bar, `Bayar Rp99.000` over the consent with links to `/terms` and
+  `/privacy`.
 - `order-paid-simulated`: `Bayar Rp99.000` with an email makes one order
   (`POST /api/orders`) and starts the simulated payment
   (`POST /api/payments/start`, answered `{simulated: true}`; Midtrans is never
-  called). The page shows "Pembayaran diterima" with the order number
-  (`NV-` and six characters).
-- `order-made`: `Lanjut` after payment runs the paid reading once
-  (`POST /api/audit/extract`) and the "Nuave sedang membaca" screen shows.
-- `run-on-server`: approving the ten questions (`POST /api/orders/approve`)
-  shows "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke
-  email Anda." The retired `/api/audit/run` and `/api/audit/report` are never
-  called.
+  called).
+- `paid-reading`: the paid reading (J09) starts by itself, once
+  (`POST /api/audit/extract`): "Nuave sedang membaca website Anda", the pill
+  "Pembayaran diterima · NV-…" (six characters), and "Yang sudah kami
+  temukan", then "Website Anda sudah terbaca" and the Step 2 cover
+  "Ceritakan bisnis Anda".
+- `start-sheet`: `Jalankan audit` opens "Mulai audit sekarang?" and approves
+  nothing by itself.
+- `run-on-server`: `Mulai audit sekarang` approves the ten questions
+  (`POST /api/orders/approve`) and shows "Anda boleh menutup halaman ini.
+  Audit akan tetap berjalan, dan link laporan dikirim ke email Anda.". The
+  retired `/api/audit/run` and `/api/audit/report` are never called.
 - `run-after-close`: after the first tab is closed, a new tab in the same
   browser shows the running audit.
 - `run-delivered`: once the server finishes, the tab says "Laporan Anda sudah
-  siap dan kami kirim ke email Anda." and shows no report.
+  siap" (J30) and shows no report.
 - `run-report-by-link`: the link from the email opens the report with ten
   `[data-answer-body]` and the notice "Audit uji — jawaban sintetis".
 
 ## How to get to it (user POV)
 
-- Press `Lanjut` on the brand check, type an email and press `Bayar Rp99.000`
-  on the order summary, then `Lanjut` on "Pembayaran diterima". Approve the
-  questions with `Mulai audit`.
+- Press `Ya, ini bisnis saya` on the business found, `Lanjut ke pembayaran`
+  on the three steps, type an email and press `Bayar Rp99.000` at checkout.
+  After the paid reading, press `Mulai` and answer the intake. On the ten
+  questions press `Jalankan audit`, then `Mulai audit sekarang`.
 - Close the tab, wait for the email, open its link.
 
 ## Driving it with verify-nuave
@@ -47,37 +55,45 @@ Preconditions:
 
 Run `$V drive audit-run`. Steps, in order:
 
-- **Entry.** Fills the entry. Evidence: `01-entry-filled`.
-- **Brand confirm.** `Periksa`, then "Ini brand yang ingin Anda audit?".
-  `network.json.apiCalls` has only `GET /api/audit/identity`. Evidence:
-  `02-brand-confirm`.
-- **Order summary.** `Lanjut` shows "Ringkasan pesanan" with the price
-  "Rp99.000" and "sekali bayar", the delivery promise (Q5, word for word), the
-  links "Syarat Penggunaan" (`/terms`) and "Kebijakan Privasi" (`/privacy`),
-  the email field and the `Bayar Rp99.000` button. Still no order. Evidence:
-  `03-order-summary`.
-- **Simulated payment.** Types the email, presses `Bayar Rp99.000`; the page
-  shows "Pembayaran diterima" with the order number. `network.json.apiCalls`
-  has `POST /api/orders: 1` and `POST /api/payments/start: 1`, and no
-  `POST /api/audit/extract` yet. Evidence: `04-simulated-payment`.
-- **Order and preparing.** Presses `Lanjut`; "Sebentar, Nuave sedang membaca"
-  shows (a 600 ms delay on the extract request keeps it observable), then the
-  focus screen. Evidence: `05-order-made-preparing`.
-- **Intake to questions.** Focus, detail screens, summary, ten questions.
-  Evidence: `06-intake-to-questions`.
-- **Audit started.** `Mulai audit`; the close-the-page note shows. Evidence:
-  `07-audit-started`.
+- **Entry.** Fills the website. Evidence: `01-entry-filled`.
+- **Business found.** `Cek bisnis saya di AI`, then "Kami menemukan bisnis
+  Anda" with `Kedai Fiksi`. `network.json.apiCalls` has only
+  `GET /api/audit/identity`. Evidence: `02-brand-confirm`.
+- **Checkout.** `Ya, ini bisnis saya` → "Tinggal 3 langkah" →
+  `Lanjut ke pembayaran`. Checkout ("Konfirmasi dan bayar") shows the order
+  card with "AI Visibility Report", "Kedai Fiksi · 10 pertanyaan", "Total",
+  "Rp99.000", the price note and the delivery promise (Q5, word for word);
+  the bottom bar shows `Bayar Rp99.000`, the consent "Dengan membayar, Anda
+  menyetujui Syarat Penggunaan dan Kebijakan Privasi." and both links. Still
+  no order. Evidence: `03-order-summary`.
+- **Simulated payment and paid reading.** Types the email and presses
+  `Bayar Rp99.000`. With no further press, the paid reading shows
+  "Pembayaran diterima · NV-…" and "Yang sudah kami temukan". An 800 ms
+  same-origin delay on the extract request keeps it visible. Evidence:
+  `04-simulated-payment-paid-reading`.
+- **Cover.** The Step 2 cover "Ceritakan bisnis Anda" shows.
+  `network.json.apiCalls` has `POST /api/orders: 1`,
+  `POST /api/payments/start: 1` and `POST /api/audit/extract: 1`. Evidence:
+  `05-reading-done-cover`.
+- **Intake to questions.** `Mulai`, focus, detail screens, Step 3 cover,
+  review, confirmation tick, `Buat pertanyaan audit`, ten questions. Evidence:
+  `06-intake-to-questions`.
+- **Start sheet.** `Jalankan audit` opens "Mulai audit sekarang?"; no
+  approval yet. Evidence: `07-start-sheet`.
+- **Audit started.** `Mulai audit sekarang`; the close-the-page note shows.
+  One `POST /api/orders/approve`. Evidence: `08-audit-started`.
 - **Tab closed and reopened.** Closes the tab, opens a new one in the same
   browser at `/audit`; the running audit shows. Evidence:
-  `08-tab-closed-and-reopened`.
+  `09-tab-closed-and-reopened`.
 - **Server finishes.** Runs the cron through `POST /api/dev/run-cron` until
-  the report is saved and emailed, reloads, and the delivered screen shows.
-  Evidence: `09-server-finishes-audit`.
+  the report is saved and emailed, reloads, and "Laporan Anda sudah siap"
+  shows. Evidence: `10-server-finishes-audit`.
 - **Report by link.** Reads the link from `.local-evidence/test-mail/` and
-  opens it in a never-used browser context. Evidence: `10-report-by-link`.
+  opens it in a never-used browser context; the page is `noindex`, not cached
+  and sends no referrer. Evidence: `11-report-by-link`.
 - **Ten answers and label.** Ten `[data-answer-body]`; the notice "Audit uji —
   jawaban sintetis" is visible. A reload keeps the report. Evidence:
-  `11-report-after-reload`.
+  `12-report-after-reload`.
 - **Proof.** `network.json.apiCalls` has `POST /api/orders: 1`,
   `POST /api/payments/start: 1`, `POST /api/orders/approve: 1`, and no
   `/api/audit/run` or `/api/audit/report`.
@@ -92,6 +108,9 @@ Run `$V drive audit-run`. Steps, in order:
   the locks after payment need a Midtrans state the simulated payment never
   produces. They are covered by `tests/e2e/payment-screens.spec.ts` and
   `src/lib/intake/payment-journey.test.tsx`, not by this drive.
+- The paid reading starts by itself only right after payment. A reading cut
+  off by a reload waits for `Lanjut` and is not replayed
+  (`tests/e2e/payment-screens.spec.ts`).
 - The founder test pass (`/uji`) is not part of this drive; its e2e spec is
   `tests/e2e/payment-screens.spec.ts`.
 - `POST /api/dev/run-cron` is a test helper that stands in for the one-minute

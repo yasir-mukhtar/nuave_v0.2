@@ -55,7 +55,10 @@ test("the landing website form reaches the new audit journey and starts only the
   ).toBeEnabled();
   // The website came from the landing page once and left session storage.
   expect(
-    await page.evaluate((key) => sessionStorage.getItem(key), SOURCE_HANDOFF_KEY),
+    await page.evaluate(
+      (key) => sessionStorage.getItem(key),
+      SOURCE_HANDOFF_KEY,
+    ),
   ).toBeNull();
   // No fixture business or fixture-preview wording appears on the way.
   await expect(
