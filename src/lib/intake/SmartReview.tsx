@@ -142,7 +142,9 @@ function Fact({
       <dt className="type-label-sm text-ink-500">{label}</dt>
       <dd
         className={cn(
-          "type-copy m-0 break-words",
+          // A long unbroken name wraps inside the column instead of
+          // widening the page.
+          "type-copy m-0 min-w-0 [overflow-wrap:anywhere]",
           missing
             ? required
               ? "text-ember-700"

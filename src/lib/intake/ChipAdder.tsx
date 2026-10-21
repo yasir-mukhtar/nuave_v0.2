@@ -78,6 +78,49 @@ export function ChipAdder({
     // Only when the person opens it, not on arrival.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+  // A press elsewhere takes focus from the empty field before its click
+  // lands. Folding at once would move what is under the finger (a short
+  // sheet shrinks from the top), and the click would be lost, so the field
+  // folds once the press is over.
+  const pressing = useRef(false);
+  useEffect(() => {
+    if (!open || alwaysOpen) return;
+    const down = () => {
+      pressing.current = true;
+    };
+    const up = () => {
+      pressing.current = false;
+    };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("pointerup", up, true);
+    document.addEventListener("pointercancel", up, true);
+    return () => {
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("pointerup", up, true);
+      document.removeEventListener("pointercancel", up, true);
+    };
+  }, [open, alwaysOpen]);
+  const foldWhenLeft = () => {
+    const fold = () =>
+      window.setTimeout(() => {
+        if (
+          document.activeElement !== field.current &&
+          !field.current?.value.trim()
+        )
+          setOpen(false);
+      }, 0);
+    if (!pressing.current) {
+      fold();
+      return;
+    }
+    const released = () => {
+      document.removeEventListener("pointerup", released, true);
+      document.removeEventListener("pointercancel", released, true);
+      fold();
+    };
+    document.addEventListener("pointerup", released, true);
+    document.addEventListener("pointercancel", released, true);
+  };
   const add = (values: string[]) => {
     if (!values.length) return;
     if (onAdd(values)) setDraft("");
@@ -96,7 +139,8 @@ export function ChipAdder({
   return (
     <motion.div
       id={panelId}
-      className="grid w-full gap-3"
+      // The bar's one-line hint must not widen the column on a narrow phone.
+      className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-3"
       initial={animate ? { opacity: 0, y: -4 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={SPRING_SETTLE}
@@ -114,7 +158,7 @@ export function ChipAdder({
         onFocus={() => setFocused(true)}
         onBlur={() => {
           setFocused(false);
-          if (!draft.trim() && !alwaysOpen) setOpen(false);
+          if (!draft.trim() && !alwaysOpen) foldWhenLeft();
         }}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => {

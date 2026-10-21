@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -141,20 +143,39 @@ describe("ChipAdder", () => {
     expect(field).toHaveFocus();
   });
 
-  it("folds back into its chip when left empty; the always-open box stays", () => {
+  it("folds back into its chip when left empty; the always-open box stays", async () => {
     renderAdder();
     const field = open();
     fireEvent.keyDown(field, { key: "Escape" });
     expect(screen.queryByRole("textbox", { name: FIELD })).toBeNull();
-    fireEvent.blur(open());
-    expect(screen.queryByRole("textbox", { name: FIELD })).toBeNull();
+    const again = open();
+    act(() => again.blur());
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: FIELD })).toBeNull(),
+    );
     cleanup();
 
     renderAdder({ variant: "field", addLabel: "Tambah" });
     const box = screen.getByRole("textbox", { name: FIELD });
     expect(box).not.toHaveFocus();
     fireEvent.keyDown(box, { key: "Escape" });
-    fireEvent.blur(box);
+    act(() => box.blur());
+    await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.getByRole("textbox", { name: FIELD })).toBe(box);
+  });
+
+  it("an empty field waits for a press elsewhere to finish before folding, so that press's click lands where it was aimed", async () => {
+    renderAdder();
+    const field = open();
+    // A press on something else takes focus first (as a mouse or pen does).
+    fireEvent.pointerDown(document.body);
+    act(() => field.blur());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByRole("textbox", { name: FIELD })).toBe(field);
+    fireEvent.pointerUp(document.body);
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: FIELD })).toBeNull(),
+    );
+    expect(screen.getByRole("button", { name: "Lainnya" })).toBeTruthy();
   });
 });

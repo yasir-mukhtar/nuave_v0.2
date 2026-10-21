@@ -95,7 +95,7 @@ export function KeyboardAccessory({
       <div
         role="group"
         aria-label={label}
-        className={cn("flex items-center gap-2", className)}
+        className={cn("flex min-w-0 items-center gap-2", className)}
         onPointerDown={keepFieldFocus}
         onMouseDown={keepFieldFocus}
       >

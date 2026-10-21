@@ -295,7 +295,14 @@ export function BottomBar({
         >
           {layout === "split" ? (
             back ? (
-              <Button variant="inkLink" size="touch" onClick={back.onClick}>
+              // The Figma ghost button: 4px sides, so the word lines up with
+              // the content edge and leaves room for the action.
+              <Button
+                variant="inkLink"
+                size="touch"
+                className="px-1"
+                onClick={back.onClick}
+              >
                 {back.label ?? "Kembali"}
               </Button>
             ) : (
@@ -312,7 +319,13 @@ export function BottomBar({
                     : "ink"
               }
               size={layout === "full" ? "xl" : "touch"}
-              className={layout === "full" ? "w-full" : undefined}
+              // On a very narrow phone a long label wraps instead of being
+              // cut off at the screen edge.
+              className={
+                layout === "full"
+                  ? "w-full"
+                  : "h-auto min-h-12 min-w-0 shrink py-2 text-center whitespace-normal"
+              }
               disabled={action.disabled || action.busy}
               aria-busy={action.busy || undefined}
               aria-describedby={action.ariaDescribedBy}
