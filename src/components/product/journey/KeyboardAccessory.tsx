@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { SPRING_SETTLE } from "@/components/motion/presets";
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { cn } from "@/lib/utils";
+import { BOTTOM_BAR_HEIGHT_VAR } from "./JourneyBars";
 
 const COARSE_QUERY = "(pointer: coarse)";
 
@@ -139,12 +140,13 @@ export function KeyboardAccessory({
             className,
           )}
           // Above the keyboard; with no on-screen keyboard (a tablet with a
-          // keyboard case) it floats above the bottom bar instead of on it.
+          // keyboard case) it floats just above the bottom bar, whatever
+          // that bar's height, so it never covers the bar's action.
           style={{
             bottom:
               inset > 0
                 ? inset
-                : "calc(84px + env(safe-area-inset-bottom, 0px))",
+                : `var(${BOTTOM_BAR_HEIGHT_VAR}, calc(84px + env(safe-area-inset-bottom, 0px)))`,
           }}
           initial={animate ? { opacity: 0, y: 12 } : false}
           animate={{ opacity: 1, y: 0 }}

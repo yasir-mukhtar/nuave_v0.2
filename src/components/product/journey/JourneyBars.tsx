@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { IconChevronLeft, IconLoader2 } from "@tabler/icons-react";
@@ -255,6 +255,9 @@ type BarAction = {
   ariaDescribedBy?: string;
 };
 
+/** The CSS variable a floating keyboard bar uses to sit above this bar. */
+export const BOTTOM_BAR_HEIGHT_VAR = "--journey-bottom-bar";
+
 /**
  * The fixed bottom bar: step progress on its top edge, `Kembali` on the left
  * and the one forward action on the right — or a single full-width action.
@@ -274,6 +277,25 @@ export function BottomBar({
   /** Small print under a full-width action (e.g. the consent line). */
   note?: ReactNode;
 }) {
+  // Its height, for a keyboard bar floating with no on-screen keyboard (a
+  // tablet keyboard case): that bar then sits just above this one.
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = bar.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() =>
+      root.style.setProperty(
+        BOTTOM_BAR_HEIGHT_VAR,
+        `${Math.ceil(element.getBoundingClientRect().height)}px`,
+      ),
+    );
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty(BOTTOM_BAR_HEIGHT_VAR);
+    };
+  }, []);
   return (
     <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
       {/* Content scrolling under the bar fades out instead of being cut. */}
@@ -281,7 +303,10 @@ export function BottomBar({
         className="mx-auto h-6 w-full max-w-[480px] bg-linear-to-b from-white/0 to-white"
         aria-hidden="true"
       />
-      <div className="pointer-events-auto mx-auto w-full max-w-[480px] bg-white">
+      <div
+        ref={bar}
+        className="pointer-events-auto mx-auto w-full max-w-[480px] bg-white"
+      >
         {progress ? (
           <StepProgress fills={progress.fills} label={progress.label} />
         ) : (

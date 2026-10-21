@@ -56,6 +56,8 @@ shows the same 480px column.
      "Ketentuan Layanan".
   10. The report keeps both downloads (PDF and the evidence JSON) and the
       header facts for the system and model tested.
+  11. Areas typed on J19b show as chips above the field, as products do on
+      J14/J15, rather than as tokens inside the field.
 
 ## 2026-10-18 — S4 live check; slow websites; refund check at G1
 
