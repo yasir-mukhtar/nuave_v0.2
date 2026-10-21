@@ -248,7 +248,10 @@ export function EntryScreen({
   inputRef?: RefObject<HTMLInputElement | null>;
 }) {
   return (
-    <section className="grid gap-6" data-intake-screen="entry">
+    <section
+      className="grid grid-cols-[minmax(0,1fr)] gap-6"
+      data-intake-screen="entry"
+    >
       {/* min-w-0: on a 320px phone the art is trimmed at its sides instead
           of widening the page (R-27). */}
       <div className="-mx-6 flex min-w-0 justify-center overflow-hidden">

@@ -296,7 +296,7 @@ export default function Landing() {
         </header>
 
         <main>
-          <section className="grid px-6">
+          <section className="grid grid-cols-[minmax(0,1fr)] px-6">
             <ResumeBanner />
             {/* min-w-0: on a 320px phone the art is trimmed at its sides
                 instead of widening the page. */}

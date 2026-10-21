@@ -47,58 +47,71 @@ export function PaidReadingScreen({
     findings && !findings.products.length && !findings.places.length;
   return (
     <section
-      className="relative grid justify-items-center pt-3 text-center"
+      className="relative grid grid-cols-[minmax(0,1fr)] justify-items-center pt-3 text-center"
       data-intake-screen="reading"
       data-reading-phase={reading ? "reading" : error ? "stopped" : "found"}
       aria-label="Pembacaan website"
     >
+      {/* On a narrow phone the pill wraps between its parts, never inside
+          the order number. */}
       <motion.p
-        className="type-label m-0 flex items-center gap-2 rounded-chip bg-white py-2 pr-4 pl-3 text-ink-900 shadow-(--elevation-ember-pill)"
+        className="type-label m-0 flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-[20px] bg-white py-2 pr-4 pl-3 text-ink-900 shadow-(--elevation-ember-pill)"
         initial={animate ? { opacity: 0, y: -14, scale: 0.94 } : false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ ...SPRING_POP, delay: 0.1 }}
       >
-        <IconCircleCheck size={18} stroke={1.75} aria-hidden="true" />
-        Pembayaran diterima
+        <span className="flex items-center gap-2 whitespace-nowrap">
+          <IconCircleCheck size={18} stroke={1.75} aria-hidden="true" />
+          Pembayaran diterima
+        </span>
         {orderNumber ? <span aria-hidden="true">·</span> : null}
-        {orderNumber ? <span>{orderNumber}</span> : null}
+        {orderNumber ? (
+          <span className="whitespace-nowrap">{orderNumber}</span>
+        ) : null}
       </motion.p>
-      <div className="relative mt-3 h-[260px] w-[330px]" aria-hidden="true">
-        <motion.div
-          className="absolute inset-0 rounded-full bg-(image:--glow-reading)"
-          animate={
-            animate && reading
-              ? { scale: [0.94, 1.04, 0.94], opacity: [0.8, 1, 0.8] }
-              : { scale: 1, opacity: 1 }
-          }
-          transition={
-            animate && reading
-              ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
-              : { duration: 0.3 }
-          }
-        />
-        <div className="absolute top-[73px] left-[44px]">
-          <Art name="website" width={220} priority enter />
+      {/* The 330px art is trimmed at its sides on a narrower phone instead
+          of widening the page. */}
+      <div
+        className="-mx-6 flex min-w-0 justify-center justify-self-stretch overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="relative mt-3 h-[260px] w-[330px] shrink-0">
+          <motion.div
+            className="absolute inset-0 rounded-full bg-(image:--glow-reading)"
+            animate={
+              animate && reading
+                ? { scale: [0.94, 1.04, 0.94], opacity: [0.8, 1, 0.8] }
+                : { scale: 1, opacity: 1 }
+            }
+            transition={
+              animate && reading
+                ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+                : { duration: 0.3 }
+            }
+          />
+          <div className="absolute top-[73px] left-[44px]">
+            <Art name="website" width={220} priority enter />
+          </div>
+          <motion.div
+            className="absolute top-[30px] left-[202px]"
+            animate={
+              animate && reading
+                ? {
+                    x: [0, -110, -60, 0],
+                    y: [0, 40, 84, 0],
+                    rotate: [0, -6, 4, 0],
+                  }
+                : { x: 0, y: 0, rotate: 0 }
+            }
+            transition={
+              animate && reading
+                ? { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
+                : SPRING_SETTLE
+            }
+          >
+            <Art name="magnifier" width={104} priority />
+          </motion.div>
         </div>
-        <motion.div
-          className="absolute top-[30px] left-[202px]"
-          animate={
-            animate && reading
-              ? {
-                  x: [0, -110, -60, 0],
-                  y: [0, 40, 84, 0],
-                  rotate: [0, -6, 4, 0],
-                }
-              : { x: 0, y: 0, rotate: 0 }
-          }
-          transition={
-            animate && reading
-              ? { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
-              : SPRING_SETTLE
-          }
-        >
-          <Art name="magnifier" width={104} priority />
-        </motion.div>
       </div>
       <motion.h1
         ref={headingRef}

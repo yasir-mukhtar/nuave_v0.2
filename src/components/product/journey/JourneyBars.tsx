@@ -183,7 +183,9 @@ export function JourneyPage({
   return (
     <div
       className={cn(
-        "relative min-h-svh w-full",
+        // A screen sliding in from the side never widens the page, even for
+        // the moment of the transition.
+        "relative min-h-svh w-full overflow-x-clip",
         tone === "ember" && "bg-(image:--surface-ember)",
         tone === "cream" && "bg-cream",
       )}
