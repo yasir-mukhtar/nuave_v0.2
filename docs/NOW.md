@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-18
+> Updated: 2026-10-21
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: S5 (terms, price and promise wording)
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -21,6 +21,12 @@
   through a private link emailed by Resend (PDF and JSON downloads on the
   report page). There is no payment yet. First live order (AC-21,
   2026-10-13): delivered about 10.5 minutes after approval, USD 0.1372.
+- **Design (2026-10-21):** the journey follows the founder's v2 mobile
+  design (Figma J01–J35) in
+  [PR #144](https://github.com/yasir-mukhtar/nuave_v0.2/pull/144); gates,
+  payment and the audit method are unchanged, and desktop shows the same
+  phone column until its own design is ready
+  ([decision](./DECISION_LOG.md#2026-10-21--adopt-the-v2-mobile-journey-design-figma-j01j35)).
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
   intake) is **Verified with documented evidence exceptions**; J2–J7/JQ and
   PR121 merged, the latter deployed. Alfred accepted JZ under delegated founder

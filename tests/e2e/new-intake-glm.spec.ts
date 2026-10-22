@@ -1,17 +1,23 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
+  confirmBrand,
   confirmSummary,
   downloadEvidenceJson,
+  downloadPdfButtons,
   editQuestion,
   expectAuditDelivered,
   expectAuditRunning,
   expectBrandConfirm,
+  expectCategoryScreen,
+  expectEmptyEntry,
   expectOfferingsScreen,
   expectQuestionReview,
   expectTenQuestions,
   fillEntry,
+  FICTIONAL_BUSINESS,
   INTAKE_SESSION_KEY,
   intakeSession,
+  openStartSheet,
   ORDER_EMAIL,
   orderScreen,
   pressLanjut,
@@ -31,6 +37,7 @@ import {
   trackApiCalls as track,
   unavailableReport,
   useTestPass,
+  websiteInput,
 } from "./journey";
 
 // Spec 016 S3a: the order flow in synthetic mode against the local D1 database,
@@ -99,6 +106,17 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   await page.reload();
   await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
 
+  // J27b: "Jalankan audit" only asks; "Kembali periksa" approves nothing.
+  const sheet = await openStartSheet(page);
+  await expect(sheet).toContainText(
+    "Setelah dimulai, informasi bisnis dan pertanyaan tidak dapat diubah.",
+  );
+  await sheet
+    .getByRole("button", { name: "Kembali periksa", exact: true })
+    .click();
+  await expect(sheet).toHaveCount(0);
+  await expectTenQuestions(page);
+  expect(calls["POST /api/orders/approve"]).toBeUndefined();
   await startAudit(page);
   await expectAuditRunning(page);
   // R-31: the intake progress is gone once the audit starts; only the order id
@@ -179,11 +197,10 @@ test("a reload at an intake screen continues at the same screen with the same an
   await fillEntry(page);
   await pressPeriksa(page);
   await expectBrandConfirm(page);
-  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
-  await submitOrder(page);
-  await expect(page.locator('[data-intake-screen="focus"]')).toBeVisible();
-  await pressLanjut(page); // category
-  await pressLanjut(page); // offerings
+  await confirmBrand(page); // pay → paid reading → cover → focus
+  await pressLanjut(page);
+  await expectCategoryScreen(page);
+  await pressLanjut(page);
   await expectOfferingsScreen(page);
   const before = { ...calls };
   const sessionBefore = await intakeSession(page);
@@ -199,6 +216,26 @@ test("a reload at an intake screen continues at the same screen with the same an
   expect(calls["POST /api/audit/glm-questions"]).toBeUndefined();
   expect(calls["POST /api/orders"]).toBe(1);
   expect(await allBrowserStorage(page)).not.toContain(ORDER_EMAIL);
+  // "Simpan & keluar" keeps the progress and leaves for the landing page,
+  // which offers it back; the journey resumes at the same screen.
+  await page
+    .getByRole("button", { name: "Simpan & keluar", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/$/);
+  const resume = page.getByRole("link", {
+    name: `Lanjutkan audit ${FICTIONAL_BUSINESS.name}`,
+  });
+  await expect(resume).toBeVisible();
+  await resume.click();
+  await expect(page).toHaveURL(/\/audit$/);
+  await expectOfferingsScreen(page);
+  expect((await intakeSession(page)).selection).toEqual(
+    sessionBefore.selection,
+  );
+  expect(calls["POST /api/audit/extract"]).toBe(
+    before["POST /api/audit/extract"],
+  );
+  expect(calls["POST /api/orders"]).toBe(1);
 });
 
 test("an ended order sends the customer back to the order screen; a new order continues with the answers and no new paid call", async ({
@@ -231,6 +268,8 @@ test("an ended order sends the customer back to the order screen; a new order co
   ).toBeVisible();
   // The email is asked again; nothing paid has run.
   await page.unroute("**/api/orders/status");
+  // The saved progress continues on the new order: straight back to the
+  // review, with no new reading.
   await submitOrder(page);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
   const sessionAfter = await intakeSession(page);
@@ -250,16 +289,15 @@ test("intake progress saved more than 7 days ago is removed", async ({
 }) => {
   await fillEntry(page);
   const stale = await intakeSession(page);
-  expect(stale.entry.name).toBe("Kedai Fiksi");
+  expect(stale.entry.source).toBe(FICTIONAL_BUSINESS.url);
   await page.evaluate((key) => {
     const saved = JSON.parse(localStorage.getItem(key)!);
     saved.savedAt = new Date(Date.now() - 8 * 24 * 3600_000).toISOString();
     localStorage.setItem(key, JSON.stringify(saved));
   }, INTAKE_SESSION_KEY);
   await page.reload();
-  await expect(
-    page.getByRole("textbox", { name: "Nama bisnis", exact: true }),
-  ).toHaveValue("");
+  await expectEmptyEntry(page);
+  await expect(websiteInput(page)).toHaveValue("");
   expect(
     await page.evaluate((key) => localStorage.getItem(key), INTAKE_SESSION_KEY),
   ).toBeNull();
@@ -281,6 +319,14 @@ test("question-writing failure is visible and never silently retried", async ({
     page.getByRole("alert").filter({ hasText: "synthetic timeout" }),
   ).toHaveCount(0);
   await expect(page.locator("[data-question-slot]")).toHaveCount(0);
+  // A retry is a new request, so it is only ever the owner's choice.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Pertanyaan belum diterima" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Coba siapkan pertanyaan", exact: true }),
+  ).toBeVisible();
+  await page.waitForTimeout(1_000);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
   expect(calls["POST /api/orders/approve"]).toBeUndefined();
 });
@@ -373,15 +419,18 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   expect(data.headers()["x-robots-tag"]).toContain("noindex");
   expect(data.headers()["referrer-policy"]).toBe("no-referrer");
 
-  // PDF is the browser's print, and JSON is the evidence download.
-  await fresh
-    .getByRole("button", { name: "Download PDF", exact: true })
-    .click();
-  expect(
-    await fresh.evaluate(
+  // PDF is the browser's print, and JSON is the evidence download. The
+  // report has two Download PDF buttons (top bar and under the report); each
+  // prints once.
+  const printCalls = () =>
+    fresh.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,
-    ),
-  ).toBe(1);
+    );
+  await expect(downloadPdfButtons(fresh)).toHaveCount(2);
+  await downloadPdfButtons(fresh).first().click();
+  expect(await printCalls()).toBe(1);
+  await downloadPdfButtons(fresh).last().click();
+  expect(await printCalls()).toBe(2);
   await fresh.emulateMedia({ media: "print" });
   for (const answer of await report.locator("[data-answer-body]").all())
     await expect(answer).toBeVisible();
@@ -603,14 +652,22 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
         await expect(
           target.getByRole("heading", { level: 2 }).first(),
         ).toBeInViewport();
+        // R-09 visible focus: the v2 report draws the section ring with
+        // `:focus-visible`, so a section reached from the keyboard shows it
+        // and one reached by a pointer click does not.
         expect(
-          await target.evaluate((el) => getComputedStyle(el).outlineStyle),
-        ).not.toBe("none");
-        expect(
-          await target.evaluate((el) =>
-            parseFloat(getComputedStyle(el).outlineWidth),
-          ),
-        ).toBeGreaterThan(0);
+          await target.evaluate((el) => el.matches(":focus-visible")),
+        ).toBe(activation === "keyboard");
+        if (activation === "keyboard") {
+          expect(
+            await target.evaluate((el) => getComputedStyle(el).outlineStyle),
+          ).not.toBe("none");
+          expect(
+            await target.evaluate((el) =>
+              parseFloat(getComputedStyle(el).outlineWidth),
+            ),
+          ).toBeGreaterThan(0);
+        }
         expect(fresh.url()).toBe(urlBefore); // the secret stays in the address
         expect(await fresh.evaluate(() => history.length)).toBe(historyLength);
         expect(Object.entries(calls)).toEqual(requestsBefore);
@@ -702,9 +759,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       .evaluate((el) => el.getBoundingClientRect().height),
   ).toBeGreaterThanOrEqual(44);
   // One print tree: the PDF button prints once, and every answer shows in print.
-  await fresh
-    .getByRole("button", { name: "Download PDF", exact: true })
-    .click();
+  await downloadPdfButtons(fresh).first().click();
   expect(
     await fresh.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,

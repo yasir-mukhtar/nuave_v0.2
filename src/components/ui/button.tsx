@@ -18,6 +18,14 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
         link: "text-primary underline-offset-4 hover:underline",
+        // v2: near-black for normal steps, ember only for the commit moments.
+        ink: "rounded-button bg-ink-900 text-white transition-[background-color,transform,opacity] duration-150 ease-(--motion-ease-standard) hover:bg-ink-800 active:not-aria-[haspopup]:translate-y-0 active:scale-[0.97] disabled:bg-line-200 disabled:text-ink-400 disabled:opacity-100",
+        commit:
+          "rounded-button bg-commit text-white transition-[background-color,transform,opacity] duration-150 ease-(--motion-ease-standard) hover:bg-commit-hover active:not-aria-[haspopup]:translate-y-0 active:scale-[0.97] disabled:bg-line-200 disabled:text-ink-400 disabled:opacity-100",
+        inkOutline:
+          "rounded-button border-[1.5px] border-ink-900 bg-white text-ink-900 transition-[background-color,transform] duration-150 ease-(--motion-ease-standard) hover:bg-stone-50 active:not-aria-[haspopup]:translate-y-0 active:scale-[0.97]",
+        inkLink:
+          "rounded-md px-1 text-ink-900 underline decoration-1 underline-offset-4 transition-[color,transform] duration-150 hover:text-ink-700 active:not-aria-[haspopup]:translate-y-0 active:scale-[0.97]",
       },
       size: {
         default:
@@ -31,6 +39,10 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg max-sm:size-11",
         "icon-lg": "size-9 max-sm:size-11",
+        // v2 thumb-sized actions: 56px with 18px labels, 48px with 16px.
+        xl: "h-14 gap-2 px-6 text-lg font-semibold [&_svg:not([class*='size-'])]:size-5",
+        touch:
+          "h-12 gap-2 px-6 text-base font-semibold [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

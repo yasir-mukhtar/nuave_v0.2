@@ -1,136 +1,39 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  IconAlertTriangle,
+  IconBuildingBank,
+  IconCircleCheck,
+  IconClockHour4,
+  IconInfoCircle,
+  IconLoader2,
+  IconQrcode,
+  IconWallet,
+} from "@tabler/icons-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SPRING_SETTLE } from "@/components/motion/presets";
+import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
+import { FloatingField } from "@/components/product/journey/FloatingField";
+import {
+  KeyboardAccessory,
+  useCoarsePointer,
+} from "@/components/product/journey/KeyboardAccessory";
 import { DELIVERY_PROMISE } from "@/lib/orders/promise";
+import { cn } from "@/lib/utils";
+import { emailCompletions, emailTypoSuggestion } from "./email-assist";
+import { BusinessMark } from "./step-one-screens";
 
 /**
- * Screens 3 and 3a of the order flow (spec 016). Screen 3 is the FREE brand
- * check: it shows only what the free lookup found, and no AI has run. Screen 3a
- * is the order summary: the business, what the report includes, the price, the
- * delivery promise, the email the report link goes to, and (spec 017) the state
- * of the payment. Wording is the draft that S5 finalizes.
+ * Screen 3a of the order flow (spec 016), drawn as the v2 checkout (J07/J08):
+ * what is bought, who receives it and how to pay, with (spec 017) the state of
+ * the payment. Wording of the price lines follows docs/VOICE.md §4 and the
+ * delivery promise is the approved Q5 line, word for word.
  */
 
 const SYNTHETIC_LABEL =
   "Mode uji lokal menggunakan pengganti sintetis berlabel.";
-
-const ORIGIN_TEXT = {
-  website: "Dari website Anda",
-  owner: "Dari Anda",
-} as const;
-
-function brandInitials(name: string): string {
-  const letters = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]!.toUpperCase());
-  return letters.join("") || "?";
-}
-
-export type FreeBrand = { name: string; origin: "owner" | "website" };
-
-export function FreeBrandScreen({
-  headingRef,
-  typedName,
-  discoveredName,
-  source,
-  brand,
-  editing,
-  onToggleEditing,
-  onChange,
-  error,
-}: {
-  headingRef: RefObject<HTMLHeadingElement | null>;
-  typedName: string;
-  discoveredName: string | null;
-  source: string;
-  brand: FreeBrand;
-  editing: boolean;
-  onToggleEditing: () => void;
-  onChange: (brand: FreeBrand) => void;
-  error: string | null;
-}) {
-  return (
-    <section className="grid gap-5" data-intake-screen="brand">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Ini brand yang ingin Anda audit?
-      </h1>
-      <article
-        className="flex items-center gap-4 rounded-xl border border-border p-5"
-        aria-label="Brand yang ditemukan"
-      >
-        <span
-          className="grid size-12 shrink-0 place-items-center rounded-full border border-border type-heading-sm"
-          aria-hidden="true"
-        >
-          {brandInitials(brand.name)}
-        </span>
-        <div className="min-w-0">
-          <h2 className="type-heading-sm m-0 break-words">{brand.name}</h2>
-          <p className="type-copy-sm m-0 mt-1 break-all text-muted-foreground">
-            {source} · {ORIGIN_TEXT[brand.origin]}
-          </p>
-        </div>
-      </article>
-      <div role="radiogroup" aria-label="Nama bisnis" className="grid gap-1">
-        <label className="flex min-h-11 items-center gap-3 type-copy">
-          <input
-            type="radio"
-            name="smart-brand-name"
-            checked={brand.name === typedName && brand.origin === "owner"}
-            onChange={() => onChange({ name: typedName, origin: "owner" })}
-          />
-          {typedName}{" "}
-          <span className="type-copy-sm text-muted-foreground">Dari Anda</span>
-        </label>
-        {discoveredName && discoveredName !== typedName ? (
-          <label className="flex min-h-11 items-center gap-3 type-copy">
-            <input
-              type="radio"
-              name="smart-brand-name"
-              checked={
-                brand.name === discoveredName && brand.origin === "website"
-              }
-              onChange={() =>
-                onChange({ name: discoveredName, origin: "website" })
-              }
-            />
-            {discoveredName}{" "}
-            <span className="type-copy-sm text-muted-foreground">
-              Dari website Anda
-            </span>
-          </label>
-        ) : null}
-      </div>
-      <div>
-        <Button variant="link" className="w-fit" onClick={onToggleEditing}>
-          Ubah nama
-        </Button>
-        {editing ? (
-          <label className="mt-2 grid gap-2 type-label">
-            Nama brand
-            <Input
-              value={brand.name}
-              maxLength={160}
-              onChange={(event) =>
-                onChange({ name: event.target.value, origin: "owner" })
-              }
-            />
-          </label>
-        ) : null}
-      </div>
-      {error ? (
-        <p role="alert" className="type-copy text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </section>
-  );
-}
 
 /** What `/api/orders/status` says about the payment (spec 017 R-14). */
 export type OrderPayment = {
@@ -153,17 +56,21 @@ const TRY_MESSAGE: Record<string, string> = {
 
 function OrderNumber({ number }: { number?: string }) {
   return number ? (
-    <p className="type-copy m-0">
-      Nomor pesanan: <span className="select-all font-semibold">{number}</span>
+    <p className="type-copy m-0 text-ink-700">
+      Nomor pesanan:{" "}
+      <span className="select-all font-semibold text-ink-900">{number}</span>
     </p>
   ) : null;
 }
 
 function Support() {
   return (
-    <p className="type-copy m-0">
+    <p className="type-copy m-0 text-ink-700">
       Hubungi{" "}
-      <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
+      <a
+        className="font-semibold text-ink-900 underline decoration-1 underline-offset-4"
+        href={`mailto:${SUPPORT_EMAIL}`}
+      >
         {SUPPORT_EMAIL}
       </a>
       .
@@ -189,9 +96,14 @@ function PaymentPanel({
   onPayAgain: () => void;
   onNewOrder: () => void;
 }) {
+  const animate = useMotionAllowed();
   const link = payment.redirect_url ? (
     <a
-      className={buttonVariants({ className: "min-h-11 w-fit px-4" })}
+      className={buttonVariants({
+        variant: "ink",
+        size: "touch",
+        className: "w-fit no-underline",
+      })}
       href={payment.redirect_url}
     >
       Lihat cara bayar
@@ -199,22 +111,53 @@ function PaymentPanel({
   ) : null;
   const again = (
     <Button
-      className="min-h-11 w-fit px-4"
+      variant="inkOutline"
+      size="touch"
+      className="w-fit"
       disabled={checking}
       onClick={onCheckAgain}
     >
+      {checking ? (
+        <IconLoader2 className="animate-spin" aria-hidden="true" />
+      ) : null}
       Cek lagi
     </Button>
   );
-  const box = (title: string, children: React.ReactNode, urgent = false) => (
-    <article
-      className="grid gap-3 rounded-xl border border-border p-5"
+  const box = (
+    title: string,
+    children: ReactNode,
+    tone: "calm" | "good" | "attention" = "calm",
+  ) => (
+    <motion.article
+      className={cn(
+        "grid gap-3 rounded-card p-5",
+        tone === "good" && "bg-stone-50",
+        tone === "calm" && "border border-line-200 bg-white",
+        tone === "attention" && "bg-ember-50",
+      )}
       data-payment-state={payment.state}
-      role={urgent ? "alert" : "status"}
+      role={tone === "attention" ? "alert" : "status"}
+      initial={animate ? { opacity: 0, y: 10 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={SPRING_SETTLE}
     >
-      <h2 className="type-heading-sm m-0">{title}</h2>
+      <h2 className="type-title m-0 flex items-center gap-2 text-ink-900">
+        {tone === "good" ? (
+          <IconCircleCheck size={22} stroke={1.75} aria-hidden="true" />
+        ) : tone === "attention" ? (
+          <IconAlertTriangle
+            size={22}
+            stroke={1.75}
+            className="text-ember-700"
+            aria-hidden="true"
+          />
+        ) : (
+          <IconClockHour4 size={22} stroke={1.75} aria-hidden="true" />
+        )}
+        {title}
+      </h2>
       {children}
-    </article>
+    </motion.article>
   );
   switch (payment.state) {
     case "paid":
@@ -222,16 +165,17 @@ function PaymentPanel({
         "Pembayaran diterima",
         <>
           <OrderNumber number={payment.order_number} />
-          <p className="type-copy m-0">
+          <p className="type-copy m-0 text-ink-700">
             Tekan Lanjut untuk mengisi data bisnis Anda.
           </p>
         </>,
+        "good",
       );
     case "waiting":
       return box(
         "Menunggu pembayaran",
         <>
-          <p className="type-copy m-0">
+          <p className="type-copy m-0 text-ink-700">
             Selesaikan pembayaran di halaman Midtrans. Halaman ini memeriksa
             statusnya sendiri.
           </p>
@@ -242,7 +186,7 @@ function PaymentPanel({
       return box(
         "Pembayaran belum berhasil",
         <>
-          <p className="type-copy m-0">
+          <p className="type-copy m-0 text-ink-700">
             {TRY_MESSAGE[payment.last_try ?? ""] ?? TRY_MESSAGE.failed}
           </p>
           {link}
@@ -252,7 +196,7 @@ function PaymentPanel({
       return box(
         "Kami sedang memeriksa pembayaran Anda",
         <>
-          <p className="type-copy m-0">
+          <p className="type-copy m-0 text-ink-700">
             Jangan bayar lagi. Kami memberi tahu hasilnya di halaman ini.
           </p>
           {again}
@@ -262,7 +206,7 @@ function PaymentPanel({
       return box(
         "Status pembayaran belum dapat diperiksa",
         <>
-          <p className="type-copy m-0">
+          <p className="type-copy m-0 text-ink-700">
             Jangan bayar lagi. Coba periksa lagi sebentar lagi.
           </p>
           {again}
@@ -272,11 +216,16 @@ function PaymentPanel({
       return box(
         "Pembayaran tidak kami terima",
         <>
-          <p className="type-copy m-0">
+          <p className="type-copy m-0 text-ink-700">
             Pesanan ini tidak dibayar dan sudah berakhir. Isian Anda tetap
             tersimpan.
           </p>
-          <Button className="min-h-11 w-fit px-4" onClick={onPayAgain}>
+          <Button
+            variant="ink"
+            size="touch"
+            className="w-fit"
+            onClick={onPayAgain}
+          >
             Coba bayar lagi
           </Button>
         </>,
@@ -288,7 +237,7 @@ function PaymentPanel({
           <OrderNumber number={payment.order_number} />
           <Support />
         </>,
-        true,
+        "attention",
       );
     case "needs_refund":
       return box(
@@ -297,7 +246,7 @@ function PaymentPanel({
           <OrderNumber number={payment.order_number} />
           <Support />
         </>,
-        true,
+        "attention",
       );
     case "refunded":
       return box(
@@ -306,11 +255,16 @@ function PaymentPanel({
           <OrderNumber number={payment.order_number} />
           <Support />
           {/* Q17: a fresh start; the refunded order stays ended on the server. */}
-          <Button className="min-h-11 w-fit px-4" onClick={onNewOrder}>
+          <Button
+            variant="ink"
+            size="touch"
+            className="w-fit"
+            onClick={onNewOrder}
+          >
             Mulai pesanan baru
           </Button>
         </>,
-        true,
+        "attention",
       );
     case "paid_ended":
       return box(
@@ -319,7 +273,7 @@ function PaymentPanel({
           <OrderNumber number={payment.order_number} />
           <Support />
         </>,
-        true,
+        "attention",
       );
     default:
       return null;
@@ -335,10 +289,105 @@ export function hasPaymentPanel(payment: OrderPayment | null): boolean {
   );
 }
 
+/** The ways Midtrans takes the payment (Snap shows exactly these four). */
+const PAYMENT_METHODS = [
+  { label: "QRIS", Icon: IconQrcode },
+  { label: "Transfer bank", Icon: IconBuildingBank },
+  { label: "GoPay", Icon: IconWallet },
+  { label: "DANA", Icon: IconWallet },
+] as const;
+
+function PaymentMethods() {
+  return (
+    <section className="grid gap-3" aria-labelledby="pay-with-heading">
+      <h2 id="pay-with-heading" className="type-title m-0 text-ink-900">
+        Bayar dengan
+      </h2>
+      <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0">
+        {PAYMENT_METHODS.map(({ label, Icon }) => (
+          <li
+            key={label}
+            className="flex h-[92px] flex-col justify-between rounded-tile border border-line-300 bg-white p-4"
+          >
+            <Icon size={28} stroke={1.5} aria-hidden="true" />
+            <span className="type-label-lg text-ink-900">{label}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="type-copy-sm m-0 text-ink-500">
+        Pilih salah satu di halaman pembayaran Midtrans.
+      </p>
+    </section>
+  );
+}
+
+function OrderCard({
+  businessName,
+  iconDataUrl,
+  priced,
+}: {
+  businessName: string;
+  iconDataUrl?: string | null;
+  priced: boolean;
+}) {
+  return (
+    <article
+      className="grid rounded-card border border-line-200 bg-white p-5"
+      aria-label="Ringkasan pesanan"
+    >
+      <div className="flex items-center gap-3.5">
+        <BusinessMark name={businessName} iconDataUrl={iconDataUrl} size="sm" />
+        <div className="grid min-w-0 gap-0.5">
+          <p className="type-title-sm m-0 text-ink-900">AI Visibility Report</p>
+          <p className="type-copy-sm m-0 break-words text-ink-600">
+            {businessName} · 10 pertanyaan
+          </p>
+        </div>
+      </div>
+      {priced ? (
+        <div
+          className="mt-4 grid border-t border-line-200 pt-4"
+          data-order-price
+        >
+          <p className="type-title m-0 flex items-center justify-between text-ink-900">
+            <span>Total</span>
+            <span>Rp99.000</span>
+          </p>
+          <p className="type-copy-sm m-0 mt-1.5 text-ink-600">
+            Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan
+            ini berlaku 30 hari.
+          </p>
+        </div>
+      ) : null}
+      <div className="mt-3 grid gap-2.5">
+        <p className="type-copy-sm m-0 flex items-start gap-2.5 text-ink-600">
+          <IconInfoCircle
+            size={18}
+            stroke={1.75}
+            className="mt-px shrink-0"
+            aria-hidden="true"
+          />
+          Pembayaran belum menjalankan audit. Anda masih memeriksa informasi
+          bisnis dan menyetujui pertanyaan dulu.
+        </p>
+        <p className="type-copy-sm m-0 flex items-start gap-2.5 text-ink-600">
+          <IconClockHour4
+            size={18}
+            stroke={1.75}
+            className="mt-px shrink-0"
+            aria-hidden="true"
+          />
+          {DELIVERY_PROMISE}
+        </p>
+      </div>
+    </article>
+  );
+}
+
 export function OrderScreen({
   headingRef,
   businessName,
-  website,
+  iconDataUrl,
   hasOrder,
   email,
   onEmailChange,
@@ -352,10 +401,12 @@ export function OrderScreen({
   onCheckAgain,
   onPayAgain,
   onNewOrder,
+  onSubmit,
+  submitLabel,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   businessName: string;
-  website: string;
+  iconDataUrl?: string | null;
   /** An order for this business and website is already open. */
   hasOrder: boolean;
   email: string;
@@ -373,95 +424,93 @@ export function OrderScreen({
   onCheckAgain: () => void;
   onPayAgain: () => void;
   onNewOrder: () => void;
+  /** The main action (also offered on the keyboard bar while typing). */
+  onSubmit: () => void;
+  submitLabel: string | null;
 }) {
+  const animate = useMotionAllowed();
+  const coarse = useCoarsePointer();
+  const [typing, setTyping] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
   const panel = hasPaymentPanel(payment);
   const free = payment?.state === "not_required";
+  const priced = !panel && !testPass && !free;
+  // J08: on a phone, typing the email clears the page down to the question.
+  const focusMode = typing && coarse && !hasOrder;
+  const typo = emailTypoSuggestion(email);
+  const completions = emailCompletions(email);
   return (
-    <section className="grid gap-5" data-intake-screen="order" aria-busy={busy}>
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Ringkasan pesanan
-      </h1>
-      {notice ? (
-        <p role="status" className="type-copy-sm text-muted-foreground">
-          {notice}
-        </p>
-      ) : null}
-      <article
-        className="rounded-xl border border-border p-5"
-        aria-label="Bisnis yang diaudit"
-      >
-        <h2 className="type-heading-sm m-0 break-words">{businessName}</h2>
-        <p className="type-copy-sm m-0 mt-1 break-all text-muted-foreground">
-          {website}
-        </p>
-      </article>
-      {hasOrder && payment && panel ? (
-        <PaymentPanel
-          payment={payment}
-          checking={checking}
-          onCheckAgain={onCheckAgain}
-          onPayAgain={onPayAgain}
-          onNewOrder={onNewOrder}
-        />
-      ) : null}
-      <div className="grid gap-2">
-        <h2 className="type-heading-sm m-0">Isi laporan</h2>
-        <ul className="type-copy m-0 grid list-disc gap-1 pl-5">
-          <li>
-            Jawaban AI untuk sepuluh pertanyaan konsumen yang Anda setujui.
-          </li>
-          <li>Ringkasan temuan dan tindakan yang didukung bukti.</li>
-          <li>Dikirim ke email Anda lewat link pribadi.</li>
-        </ul>
-      </div>
-      {!panel && !testPass && !free ? (
-        <div className="grid gap-3" data-order-price>
-          <div className="grid gap-1 rounded-xl border border-border p-5">
-            <p className="type-copy-sm m-0 text-muted-foreground">Total</p>
-            <p className="type-heading-md m-0">
-              Rp99.000{" "}
-              <span className="type-copy-sm font-normal text-muted-foreground">
-                sekali bayar
-              </span>
-            </p>
-          </div>
-          <p className="type-copy m-0">{DELIVERY_PROMISE}</p>
-          <p className="type-copy-sm m-0 text-muted-foreground">
-            Dengan membayar, Anda menyetujui{" "}
-            <a
-              className="underline"
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
+    <section
+      className="grid gap-7"
+      data-intake-screen="order"
+      data-order-focus={focusMode ? "email" : undefined}
+      aria-busy={busy}
+    >
+      <AnimatePresence initial={false} mode="popLayout">
+        {focusMode ? (
+          <motion.header
+            key="email-question"
+            className="grid gap-2.5"
+            initial={animate ? { opacity: 0, y: 8 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={SPRING_SETTLE}
+          >
+            <h1
+              ref={headingRef}
+              tabIndex={-1}
+              className="type-heading-lg m-0 text-ink-900 outline-none"
             >
-              Syarat Penggunaan
-            </a>{" "}
-            dan{" "}
-            <a
-              className="underline"
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Kebijakan Privasi
-            </a>{" "}
-            kami.
-          </p>
-          {!live ? (
-            <p className="type-copy-sm m-0 text-muted-foreground">
-              Pembayaran simulasi: tidak ada uang yang dibayar dan Midtrans
-              tidak dipanggil.
+              Ke mana laporan dikirim?
+            </h1>
+            <p className="type-copy m-0 text-ink-600">
+              Link laporan pribadi dikirim ke email ini.
             </p>
-          ) : null}
-        </div>
-      ) : null}
+          </motion.header>
+        ) : (
+          <motion.div
+            key="summary"
+            className="grid gap-7"
+            initial={animate ? { opacity: 0 } : false}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <h1 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+              Konfirmasi dan bayar
+            </h1>
+            {notice ? (
+              <p
+                role="status"
+                className="type-copy-sm m-0 rounded-tile bg-stone-50 px-4 py-3 text-ink-600"
+              >
+                {notice}
+              </p>
+            ) : null}
+            {hasOrder && payment && panel ? (
+              <PaymentPanel
+                payment={payment}
+                checking={checking}
+                onCheckAgain={onCheckAgain}
+                onPayAgain={onPayAgain}
+                onNewOrder={onNewOrder}
+              />
+            ) : null}
+            <OrderCard
+              businessName={businessName}
+              iconDataUrl={iconDataUrl}
+              priced={priced}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {testPass && !hasOrder ? (
-        <p className="type-copy-sm m-0 text-muted-foreground">
+        <p className="type-copy-sm m-0 text-ink-600">
           Mode uji pendiri: pesanan ini tidak memakai pembayaran.
         </p>
       ) : null}
       {hasOrder && !panel ? (
-        <p role="status" className="type-copy">
+        <p role="status" className="type-copy m-0 text-ink-700">
           {payment === null
             ? "Memeriksa status pesanan Anda…"
             : free
@@ -470,30 +519,122 @@ export function OrderScreen({
         </p>
       ) : null}
       {!hasOrder ? (
-        <label className="grid gap-2 type-label">
-          Email untuk link laporan
-          <Input
+        <div className="grid gap-3">
+          <FloatingField
+            ref={emailRef}
+            label="Email penerima laporan"
             type="email"
             inputMode="email"
             autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            enterKeyHint="go"
+            placeholder="nama@email.com"
             value={email}
             maxLength={254}
-            aria-invalid={Boolean(error)}
+            error={error}
+            onFocus={() => setTyping(true)}
+            onBlur={() => setTyping(false)}
             onChange={(event) => onEmailChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && submitLabel && !busy) {
+                event.preventDefault();
+                onSubmit();
+              }
+            }}
+            hint={
+              focusMode
+                ? undefined
+                : "Untuk pembayaran, akses laporan, dan info pesanan."
+            }
           />
-          <span className="type-copy-sm font-normal text-muted-foreground">
-            Kami memakai email ini untuk mengirim link laporan.
-          </span>
-        </label>
-      ) : null}
-      {error ? (
-        <p role="alert" className="type-copy text-destructive">
+          {typo ? (
+            <p className="type-copy-sm m-0 flex flex-wrap items-center gap-x-1.5 text-ink-600">
+              Maksud Anda
+              <button
+                type="button"
+                className="type-label-strong min-h-11 text-ink-900 underline decoration-1 underline-offset-4 sm:min-h-0"
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  onEmailChange(typo);
+                  emailRef.current?.focus();
+                }}
+              >
+                {typo}?
+              </button>
+            </p>
+          ) : null}
+          <KeyboardAccessory open={typing} label="Bantuan mengetik email">
+            {completions.map((completion) => (
+              <button
+                key={completion.value}
+                type="button"
+                className="type-label-lg h-10 shrink-0 rounded-chip border border-line-300 bg-white px-[18px] text-ink-900 transition-transform active:scale-[0.96]"
+                onClick={() => {
+                  onEmailChange(completion.value);
+                  emailRef.current?.focus();
+                }}
+              >
+                {completion.label}
+              </button>
+            ))}
+            <span className="flex-1" />
+            {coarse && submitLabel ? (
+              <Button
+                variant={submitLabel === "Lanjut" ? "ink" : "commit"}
+                size="touch"
+                disabled={busy}
+                onClick={onSubmit}
+              >
+                {submitLabel === "Lanjut" ? "Lanjut" : "Bayar"}
+              </Button>
+            ) : null}
+          </KeyboardAccessory>
+        </div>
+      ) : error ? (
+        <p role="alert" className="type-copy-sm m-0 text-ember-700">
           {error}
         </p>
       ) : null}
+      {!focusMode && priced ? <PaymentMethods /> : null}
       {!live ? (
-        <p className="type-copy-sm text-muted-foreground">{SYNTHETIC_LABEL}</p>
+        <div className="grid gap-1">
+          {priced ? (
+            <p className="type-copy-sm m-0 text-ink-500">
+              Pembayaran simulasi: tidak ada uang yang dibayar dan Midtrans
+              tidak dipanggil.
+            </p>
+          ) : null}
+          <p className="type-copy-sm m-0 text-ink-500">{SYNTHETIC_LABEL}</p>
+        </div>
       ) : null}
     </section>
+  );
+}
+
+/** The consent line under the pay button (J07). */
+export function PayConsent() {
+  return (
+    <>
+      Dengan membayar, Anda menyetujui{" "}
+      <a
+        className="underline decoration-1 underline-offset-2"
+        href="/terms"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Syarat Penggunaan
+      </a>{" "}
+      dan{" "}
+      <a
+        className="underline decoration-1 underline-offset-2"
+        href="/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Kebijakan Privasi
+      </a>
+      .
+    </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type RefObject } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   IconBuildingStore,
   IconHome,
@@ -10,69 +11,118 @@ import {
   IconTruckDelivery,
   IconWorld,
 } from "@tabler/icons-react";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { SPRING_SETTLE } from "@/components/motion/presets";
+import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import {
-  SelectionCard,
-  SelectionGroup,
-} from "@/components/product/selection/SelectionCard";
-import { Chip, ChipGroup } from "@/components/product/selection/Chip";
-import { AddLine } from "@/components/product/selection/AddLine";
-import { Reveal } from "@/components/product/selection/Reveal";
+  Chip,
+  ChipGroup,
+  ChipRadioGroup,
+  RadioChip,
+} from "@/components/product/selection/Chip";
+import {
+  RadioTile,
+  RadioTileGroup,
+  TileGrid,
+  ToggleTile,
+} from "@/components/product/selection/Tile";
 import {
   categorySuggestionsFor,
   smartCategoryReady,
   type PreparedUnderstanding,
   type SmartSelection,
 } from "./smart-intake-contract";
-import controls from "./controls.module.css";
+import { ChipAdder } from "./ChipAdder";
+import { OriginNote, ScreenError, sameText } from "./intake-bits";
+import { placeSuggestions } from "./indonesian-places";
+import { ScreenHeader } from "./step-one-screens";
 
 type ScreenProps = {
   prepared: PreparedUnderstanding;
   selection: SmartSelection;
-  /** Persists a new selection — the journey keeps the sensitive-text screen. */
-  onChange: (next: SmartSelection) => void;
+  /** Persists a new selection — the journey keeps the sensitive-text screen.
+   * Returns false when the change was refused. */
+  onChange: (next: SmartSelection) => boolean | void;
   /** The intake frame focuses this heading on screen arrival (R-27). */
   headingRef?: RefObject<HTMLHeadingElement | null>;
   /** Rejected sensitive input or navigation errors surface here (R-27). */
   error?: string | null;
+  /** A field's own refusal (a limit) for that same message slot. */
+  onRefuse?: (message: string) => void;
 };
 
-const ORIGIN_TEXT = {
-  website: "Dari website Anda",
-  nuave: "Saran Nuave",
-  owner: "Dari Anda",
-} as const;
+/** The picker part of a screen, also used inside the review's sheets (J26). */
+export type FieldsProps = Pick<ScreenProps, "prepared" | "selection"> & {
+  onChange: (next: SmartSelection) => boolean | void;
+  /**
+   * Shows a field's own refusal (a limit) in the screen's one message slot,
+   * replacing whatever it showed before, so only the latest message stands.
+   * Without it the field shows the message itself.
+   */
+  onRefuse?: (message: string) => void;
+};
 
-function ScreenError({ error }: { error?: string | null }) {
-  return error ? (
-    <p role="alert" className="type-copy text-destructive">
-      {error}
-    </p>
-  ) : null;
+const originKind = (origin: string | undefined) =>
+  origin === "website" ? "website" : origin === "nuave" ? "nuave" : "owner";
+
+/* ───────────────────────────── J13 · category ───────────────────────────── */
+
+function capitalise(value: string): string {
+  return value
+    ? value.charAt(0).toLocaleUpperCase("id-ID") + value.slice(1)
+    : value;
 }
 
-function sameText(a: string, b: string): boolean {
-  return (
-    a.trim().toLocaleLowerCase("id-ID") === b.trim().toLocaleLowerCase("id-ID")
-  );
+/** The town at the end of a street address ("…, Bandung" → "Bandung"). */
+function townOf(address: string): string | null {
+  const last = address.split(",").at(-1)?.trim() ?? "";
+  return last && last.length <= 30 && !/^\d/.test(last) ? last : null;
 }
 
 /**
- * R-05/R-13: the category the audit claims. The cards are the active focus's
- * `Saran Nuave` proposals — the whole-brand list for brand/location, the
- * offering-bound suggestion for product — plus the prepared website category
- * (`Dari website Anda`) and the current value as its own labelled card when
- * it matches neither. `Tulis kategori sendiri` keeps a local draft so a value
- * that transiently equals a card mid-keystroke never blanks the input.
+ * J13's live preview: the chosen word inside the kind of question a real
+ * customer types. An example only; the audit writes its own questions.
  */
-export function SmartCategoryScreen({
+function CustomerQuestionPreview({ selection }: { selection: SmartSelection }) {
+  const animate = useMotionAllowed();
+  const category = selection.category.trim();
+  if (!category) return null;
+  const area =
+    selection.focus === "cabang"
+      ? townOf(selection.locationAddress)
+      : ["sekitar", "beberapa"].includes(selection.marketReach)
+        ? (selection.marketAreas[0] ?? null)
+        : null;
+  return (
+    <figure className="m-0 grid gap-2 rounded-card bg-stone-50 px-5 pt-[18px] pb-5">
+      <figcaption className="type-label-sm text-ink-500">
+        Contoh pertanyaan pelanggan
+      </figcaption>
+      <blockquote className="type-copy-lg m-0 text-ink-900">
+        “
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.strong
+            key={category}
+            className="font-semibold text-ember-700"
+            initial={animate ? { opacity: 0, y: 6 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            exit={animate ? { opacity: 0, y: -6 } : { opacity: 0 }}
+            transition={SPRING_SETTLE}
+          >
+            {area ? capitalise(category) : `Rekomendasi ${category}`}
+          </motion.strong>
+        </AnimatePresence>
+        {area ? ` yang bagus di ${area} apa ya?` : " yang bagus apa ya?"}”
+      </blockquote>
+    </figure>
+  );
+}
+
+export function CategoryFields({
   prepared,
   selection,
   onChange,
-  headingRef,
-  error,
-}: ScreenProps) {
+  showPreview = true,
+}: FieldsProps & { showPreview?: boolean }) {
   const suggestions = categorySuggestionsFor(prepared, selection);
   const main = prepared.category.proposed?.trim()
     ? prepared.category.proposed!
@@ -86,133 +136,130 @@ export function SmartCategoryScreen({
     !(mainDistinct && sameText(mainDistinct, current))
       ? current
       : null;
-  const update = (patch: Partial<SmartSelection>, originKey?: string) =>
+  const update = (patch: Partial<SmartSelection>) =>
     onChange({
       ...selection,
       ...patch,
-      origins: originKey
-        ? { ...selection.origins, [originKey]: "owner" }
-        : selection.origins,
+      origins: { ...selection.origins, category: "owner" },
     });
-  const selectedValue = suggestions.findIndex((item) =>
+  const selectedIndex = suggestions.findIndex((item) =>
     sameText(item, current),
   );
-  const [manualDraft, setManualDraft] = useState<string | null>(null);
-  const shownManual =
-    manualDraft ??
-    (selection.categoryKind === "manual" ? selection.category : "");
-  const manualForm = (
-    <div className={`${controls.manual} grid gap-3`}>
-      <label className="grid gap-2 type-label">
-        Kategori
-        <Input
-          value={shownManual}
-          maxLength={200}
-          autoComplete="off"
-          onChange={(event) => {
-            const value = event.target.value;
-            setManualDraft(value);
-            update({ category: value, categoryKind: "manual" }, "category");
-          }}
-        />
-      </label>
-      <p className={`${controls.hint} type-copy-sm m-0`}>
-        Tulis sebutan yang dikenal pelanggan Anda.
-      </p>
-    </div>
-  );
-  const hasCards = Boolean(suggestions.length || mainDistinct);
+  const value =
+    selectedIndex >= 0
+      ? `sug-${selectedIndex}`
+      : mainDistinct && sameText(mainDistinct, current)
+        ? "main"
+        : currentUnmatched
+          ? "current"
+          : "";
   return (
-    <section className="grid gap-5" data-intake-screen="category">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        {selection.focus === "cabang"
-          ? "Lokasi ini biasanya disebut apa?"
-          : selection.focus === "produk"
-            ? "Produk atau layanan ini biasanya disebut apa?"
-            : "Bisnis Anda biasanya disebut apa?"}
-      </h1>
-      <p className="type-copy-sm text-muted-foreground">
-        Pilih sebutan yang mungkin dipakai pelanggan saat bertanya ke AI.
-      </p>
-      {hasCards ? (
-        <div className={`${controls.choices} ${controls.dynamicChoices}`}>
-          <SelectionGroup
+    <div className="grid gap-6">
+      <div className="flex flex-wrap items-start gap-2.5">
+        {suggestions.length || mainDistinct || currentUnmatched ? (
+          <ChipRadioGroup
             label="Pilihan kategori"
-            value={
-              selectedValue >= 0
-                ? `sug-${selectedValue}`
-                : mainDistinct && sameText(mainDistinct, current)
-                  ? "main"
-                  : currentUnmatched
-                    ? "current"
-                    : ""
-            }
+            value={value}
             onValueChange={(next) => {
-              setManualDraft(null);
               if (next.startsWith("sug-")) {
                 const picked = suggestions[Number(next.slice(4))];
                 if (picked)
-                  update(
-                    { category: picked, categoryKind: "suggestion" },
-                    "category",
-                  );
+                  update({ category: picked, categoryKind: "suggestion" });
               } else if (next === "main" && mainDistinct) {
-                update(
-                  { category: mainDistinct, categoryKind: "main" },
-                  "category",
-                );
+                update({ category: mainDistinct, categoryKind: "main" });
               }
             }}
           >
             {suggestions.map((item, index) => (
-              <SelectionCard
+              <RadioChip
                 key={`sug-${index}`}
                 value={`sug-${index}`}
-                title={item}
-                meta={
-                  ORIGIN_TEXT[
-                    sameText(item, current)
-                      ? (selection.origins.category ?? "owner")
-                      : "nuave"
-                  ]
-                }
+                label={item}
+                checked={value === `sug-${index}`}
               />
             ))}
             {mainDistinct ? (
-              <SelectionCard
+              <RadioChip
                 value="main"
-                title={mainDistinct}
-                meta={
-                  ORIGIN_TEXT[
-                    sameText(mainDistinct, current)
-                      ? (selection.origins.category ?? "owner")
-                      : prepared.category.origin
-                  ]
-                }
+                label={mainDistinct}
+                checked={value === "main"}
               />
             ) : null}
             {currentUnmatched ? (
-              <SelectionCard
+              <RadioChip
                 value="current"
-                title={current}
-                meta={ORIGIN_TEXT[selection.origins.category ?? "owner"]}
+                label={currentUnmatched}
+                checked={value === "current"}
               />
             ) : null}
-          </SelectionGroup>
-        </div>
+          </ChipRadioGroup>
+        ) : null}
+        <ChipAdder
+          addLabel="Lainnya"
+          fieldLabel="Kategori lain"
+          placeholder="Sebutan yang dikenal pelanggan"
+          splitOnComma={false}
+          maxLength={200}
+          startOpen={!suggestions.length && !mainDistinct && !currentUnmatched}
+          onAdd={([value]) => {
+            if (!value || value.length > 200) return false;
+            return (
+              update({ category: value, categoryKind: "manual" }) !== false
+            );
+          }}
+        />
+      </div>
+      {showPreview ? <CustomerQuestionPreview selection={selection} /> : null}
+    </div>
+  );
+}
+
+/**
+ * R-05/R-13, J13: the word the audit uses for the business. Chips instead of
+ * tall cards: the active focus's `Saran Nuave` proposals, the website's own
+ * category, and anything the owner typed. A live preview turns the choice
+ * into the kind of question a real customer types.
+ */
+export function SmartCategoryScreen({
+  prepared,
+  selection,
+  onChange,
+  headingRef,
+  error,
+}: ScreenProps) {
+  return (
+    <section className="grid" data-intake-screen="category">
+      <ScreenHeader
+        headingRef={headingRef}
+        title={
+          selection.focus === "cabang"
+            ? "Lokasi ini biasanya disebut apa?"
+            : selection.focus === "produk"
+              ? "Produk atau layanan ini biasanya disebut apa?"
+              : "Bisnis Anda biasanya disebut apa?"
+        }
+        lead="Pilih kata yang dipakai pelanggan saat bertanya ke AI."
+      />
+      <div className="mt-[22px]">
+        <CategoryFields
+          prepared={prepared}
+          selection={selection}
+          onChange={onChange}
+        />
+      </div>
+      {selection.category.trim() ? (
+        <OriginNote
+          className="mt-[18px]"
+          origin={originKind(selection.origins.category)}
+          text={
+            originKind(selection.origins.category) === "nuave"
+              ? "dari website Anda"
+              : undefined
+          }
+        />
       ) : null}
-      {hasCards ? (
-        <Reveal
-          trigger="Tulis kategori sendiri"
-          defaultOpen={selection.categoryKind === "manual"}
-        >
-          {manualForm}
-        </Reveal>
-      ) : (
-        manualForm
-      )}
       {!smartCategoryReady(selection) ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
           Pilih atau tulis satu kategori.
         </p>
       ) : null}
@@ -221,11 +268,83 @@ export function SmartCategoryScreen({
   );
 }
 
+/* ───────────────────────────── J14 · offerings ───────────────────────────── */
+
+export function OfferingsFields({
+  prepared,
+  selection,
+  onChange,
+}: FieldsProps) {
+  const proposed = prepared.offerings.proposed ?? [];
+  const ownerAdded = selection.offerings.filter(
+    (item) => !proposed.some((row) => sameText(row, item)),
+  );
+  const update = (offerings: string[]) =>
+    onChange({
+      ...selection,
+      offerings,
+      origins: { ...selection.origins, offerings: "owner" },
+    });
+  const toggle = (item: string, on: boolean) =>
+    update(
+      on
+        ? [...selection.offerings, item]
+        : selection.offerings.filter((row) => row !== item),
+    );
+  return (
+    <div className="grid gap-5">
+      {proposed.length || ownerAdded.length ? (
+        <ChipGroup label="Produk dan layanan">
+          {proposed.map((item) => (
+            <Chip
+              key={item}
+              label={item}
+              selected={selection.offerings.includes(item)}
+              selectedIndicator="check"
+              onToggle={(on) => toggle(item, on)}
+            />
+          ))}
+          {ownerAdded.map((item) => (
+            <Chip
+              key={item}
+              label={item}
+              selected
+              selectedIndicator="check"
+              onToggle={(on) => toggle(item, on)}
+            />
+          ))}
+        </ChipGroup>
+      ) : null}
+      <ChipAdder
+        variant="field"
+        addLabel="Tambah"
+        fieldLabel="Produk atau layanan lain"
+        placeholder="Contoh: nama produk, nama layanan"
+        hint="Bisa tempel daftar, pisahkan dengan koma."
+        onAdd={(items) => {
+          let next = [...selection.offerings];
+          for (const value of items) {
+            const match = [...proposed, ...ownerAdded].find((item) =>
+              sameText(item, value),
+            );
+            if (match) {
+              if (!next.includes(match)) next = [...next, match];
+            } else if (!next.some((item) => sameText(item, value))) {
+              next = [...next, value];
+            }
+          }
+          return update(next) !== false;
+        }}
+      />
+    </div>
+  );
+}
+
 /**
- * R-14: the offerings the audit covers. Prepared items sit in a
- * `Dari website Anda` chip group; owner additions form a `Dari Anda` group.
- * Under a product focus the audited product is already the frozen offering,
- * so the catalogue is read-only context instead of a control.
+ * R-14, J14/J15: what the business sells. Items found on the website are
+ * pre-selected; a tap switches one off or on. One box adds more, and accepts
+ * a pasted list. Under a product focus the audited product is already the
+ * frozen offering, so the catalogue is read-only context instead.
  */
 export function SmartOfferingsScreen({
   prepared,
@@ -235,132 +354,68 @@ export function SmartOfferingsScreen({
   error,
 }: ScreenProps) {
   const proposed = prepared.offerings.proposed ?? [];
-  const ownerAdded = selection.offerings.filter(
-    (item) => !proposed.some((row) => sameText(row, item)),
-  );
-  const update = (patch: Partial<SmartSelection>, originKey?: string) =>
-    onChange({
-      ...selection,
-      ...patch,
-      origins: originKey
-        ? { ...selection.origins, [originKey]: "owner" }
-        : selection.origins,
-    });
-  const toggle = (item: string, on: boolean): boolean => {
-    update(
-      {
-        offerings: on
-          ? [...selection.offerings, item]
-          : selection.offerings.filter((row) => row !== item),
-      },
-      "offerings",
-    );
-    return true;
-  };
-  const add = (value: string): boolean => {
-    const match = [...proposed, ...ownerAdded].find((item) =>
-      sameText(item, value),
-    );
-    if (match) {
-      if (!selection.offerings.includes(match)) toggle(match, true);
-      return true;
-    }
-    update({ offerings: [...selection.offerings, value] }, "offerings");
-    return true;
-  };
   if (selection.focus === "produk") {
     const catalogue = proposed.includes(selection.productTarget)
       ? proposed
       : [...proposed, selection.productTarget].filter(Boolean);
     return (
-      <section className="grid gap-5" data-intake-screen="offerings">
-        <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-          Apa saja yang Anda tawarkan?
-        </h1>
-        <p className="type-copy-sm text-muted-foreground">
-          Audit ini berfokus pada {selection.productTarget || "satu penawaran"}.
-          Penawaran lain dari website Anda tetap tercatat sebagai konteks dan
-          tidak ikut diaudit.
-        </p>
+      <section className="grid" data-intake-screen="offerings">
+        <ScreenHeader
+          headingRef={headingRef}
+          title="Apa saja yang Anda jual?"
+          lead={`Audit ini berfokus pada ${selection.productTarget || "satu penawaran"}. Penawaran lain dari website Anda tetap tercatat sebagai konteks dan tidak ikut diaudit.`}
+        />
         <ul
-          className="m-0 grid list-none gap-2 p-0"
+          className="m-0 mt-[22px] flex list-none flex-wrap gap-2.5 p-0"
           aria-label="Katalog penawaran"
         >
           {catalogue.map((item) => (
             <li
               key={item}
-              className="flex flex-wrap items-baseline gap-2 type-copy"
+              className={
+                item === selection.productTarget
+                  ? "type-label-lg inline-flex min-h-11 items-center rounded-[22px] bg-ink-900 px-[18px] text-white"
+                  : "type-label-lg inline-flex min-h-11 items-center rounded-[22px] border border-line-300 px-[18px] text-ink-900"
+              }
             >
               {item}
               {item === selection.productTarget ? (
-                <span className="type-copy-sm text-muted-foreground">
-                  · Fokus audit
-                </span>
+                <span className="sr-only"> · Fokus audit</span>
               ) : null}
             </li>
           ))}
         </ul>
-        <p className={`${controls.hint} type-copy-sm m-0`}>
-          {ORIGIN_TEXT[selection.origins.offerings ?? "website"]}
-        </p>
+        <OriginNote
+          className="mt-[18px]"
+          origin={originKind(selection.origins.offerings ?? "website")}
+        />
         <ScreenError error={error} />
       </section>
     );
   }
   return (
-    <section className="grid gap-5" data-intake-screen="offerings">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        {proposed.length
-          ? "Apakah ini yang Anda tawarkan?"
-          : "Apa saja yang Anda tawarkan?"}
-      </h1>
-      <p className="type-copy-sm text-muted-foreground">
-        {proposed.length
-          ? "Nuave sudah memilih yang ditemukan. Hapus yang salah, tambah yang kurang."
-          : "Tambahkan produk atau layanan utama yang pelanggan cari."}
-      </p>
-      {proposed.length ? (
-        <div className="grid gap-2">
-          <h2 className="type-label m-0">{ORIGIN_TEXT.website}</h2>
-          <ChipGroup label={ORIGIN_TEXT.website}>
-            {proposed.map((item) => (
-              <Chip
-                key={item}
-                label={item}
-                selected={selection.offerings.includes(item)}
-                selectedIndicator="check"
-                onToggle={(on) => toggle(item, on)}
-              />
-            ))}
-          </ChipGroup>
-        </div>
-      ) : null}
-      {ownerAdded.length ? (
-        <div className="grid gap-2">
-          <h2 className="type-label m-0">{ORIGIN_TEXT.owner}</h2>
-          <ChipGroup label={ORIGIN_TEXT.owner}>
-            {ownerAdded.map((item) => (
-              <Chip
-                key={item}
-                label={item}
-                selected
-                selectedIndicator="remove"
-                onToggle={(on) => toggle(item, on)}
-              />
-            ))}
-          </ChipGroup>
-        </div>
-      ) : null}
-      <div className={`${controls.manual} grid gap-3`}>
-        <AddLine
-          inputLabel="Penawaran lain"
-          placeholder="Tambah yang belum ada"
-          buttonLabel="Tambahkan"
-          onCommit={add}
+    <section className="grid" data-intake-screen="offerings">
+      <ScreenHeader
+        headingRef={headingRef}
+        title="Apa saja yang Anda jual?"
+        lead={
+          proposed.length
+            ? "Sudah kami pilih dari website. Ketuk untuk membuang, ketik untuk menambah."
+            : "Tambahkan produk atau layanan utama yang pelanggan cari."
+        }
+      />
+      <div className="mt-[22px]">
+        <OfferingsFields
+          prepared={prepared}
+          selection={selection}
+          onChange={onChange}
         />
       </div>
+      {proposed.length ? (
+        <OriginNote className="mt-[18px]" origin="website" />
+      ) : null}
       {!selection.offerings.length ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
           Pilih atau tambah setidaknya satu produk atau layanan.
         </p>
       ) : null}
@@ -369,46 +424,22 @@ export function SmartOfferingsScreen({
   );
 }
 
-const serviceChannels = [
-  {
-    value: "on_premise",
-    title: "Di lokasi bisnis Anda",
-    description: "Pelanggan datang untuk membeli atau menggunakan layanan.",
-    icon: IconBuildingStore,
-  },
-  {
-    value: "on_customer",
-    title: "Di lokasi pelanggan",
-    description: "Anda mendatangi pelanggan untuk memberikan layanan.",
-    icon: IconHome,
-  },
-  {
-    value: "delivery",
-    title: "Dikirim ke pelanggan",
-    description: "Produk dikirim tanpa pelanggan datang ke lokasi Anda.",
-    icon: IconTruckDelivery,
-  },
-  {
-    value: "online",
-    title: "Digunakan secara online",
-    description: "Layanan digunakan dari jarak jauh melalui internet.",
-    icon: IconWorld,
-  },
+/* ──────────────────────────── J18 · how they buy ──────────────────────────── */
+
+const SERVICE_TILES = [
+  { value: "on_premise", label: "Datang ke tempat", Icon: IconBuildingStore },
+  { value: "delivery", label: "Dikirim", Icon: IconTruckDelivery },
+  { value: "on_customer", label: "Anda yang datang", Icon: IconHome },
+  { value: "online", label: "Online", Icon: IconWorld },
 ] as const;
 
-/**
- * R-15: the fixed service-channel choices as multi-select cards; at least
- * one is required before Lanjut. A prepared pick notes `Dari website Anda`
- * once so a prepared set is never read as the owner's own confirmation.
- */
-export function SmartServiceScreen({
-  selection,
-  onChange,
-  headingRef,
-  error,
-}: ScreenProps) {
+export const SERVICE_LABELS: Record<string, string> = Object.fromEntries(
+  SERVICE_TILES.map((tile) => [tile.value, tile.label]),
+);
+
+export function ServiceFields({ selection, onChange }: FieldsProps) {
   const toggle = (
-    channel: (typeof serviceChannels)[number]["value"],
+    channel: (typeof SERVICE_TILES)[number]["value"],
     on: boolean,
   ) =>
     onChange({
@@ -419,54 +450,55 @@ export function SmartServiceScreen({
       origins: { ...selection.origins, serviceChannels: "owner" },
     });
   return (
-    <section className="grid gap-5" data-intake-screen="service">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Bagaimana pelanggan mendapatkan yang Anda tawarkan?
-      </h1>
-      <p className="type-copy-sm text-muted-foreground">
-        Pilih semua cara yang berlaku. Ini membantu Nuave memahami di mana
-        pengalaman pelanggan terjadi.
-      </p>
-      {selection.origins.serviceChannels === "website" &&
-      selection.serviceChannels.length ? (
-        <p className={`${controls.hint} type-copy-sm m-0`}>
-          Pilihan awal disiapkan dari website Anda.
-        </p>
-      ) : null}
-      <div
-        className={controls.checkboxList}
-        role="group"
-        aria-label="Cara pelanggan mendapatkan yang Anda tawarkan"
-      >
-        {serviceChannels.map(({ value, title, description, icon: Icon }) => (
-          <label
-            key={value}
-            className={controls.checkboxCard}
-            data-selected={selection.serviceChannels.includes(value)}
-          >
-            <Icon
-              className={controls.choiceIcon}
-              size={32}
-              stroke={1.5}
-              aria-hidden="true"
-            />
-            <span className={controls.choiceBody}>
-              <span className="type-heading-sm">{title}</span>
-              <span className={`${controls.hint} type-copy`}>
-                {description}
-              </span>
-            </span>
-            <Checkbox
-              className={controls.checkbox}
-              checked={selection.serviceChannels.includes(value)}
-              onCheckedChange={(checked) => toggle(value, checked === true)}
-            />
-          </label>
-        ))}
+    <TileGrid label="Cara pelanggan mendapatkan yang Anda tawarkan">
+      {SERVICE_TILES.map(({ value, label, Icon }) => (
+        <ToggleTile
+          key={value}
+          label={label}
+          icon={<Icon size={28} stroke={1.5} />}
+          pressed={selection.serviceChannels.includes(value)}
+          onPressedChange={(on) => toggle(value, on)}
+        />
+      ))}
+    </TileGrid>
+  );
+}
+
+/**
+ * R-15, J18: compact 2 x 2 tiles, like Airbnb's amenities. All four fit on
+ * one screen, pre-filled from the website; at least one is required.
+ */
+export function SmartServiceScreen({
+  prepared,
+  selection,
+  onChange,
+  headingRef,
+  error,
+}: ScreenProps) {
+  const fromWebsite =
+    selection.origins.serviceChannels === "website" &&
+    selection.serviceChannels.length > 0;
+  return (
+    <section className="grid" data-intake-screen="service">
+      <ScreenHeader
+        headingRef={headingRef}
+        title="Bagaimana pelanggan mendapatkannya?"
+        lead={
+          fromWebsite
+            ? "Pilih semua yang berlaku. Sudah kami isi dari website."
+            : "Pilih semua yang berlaku."
+        }
+      />
+      <div className="mt-[22px]">
+        <ServiceFields
+          prepared={prepared}
+          selection={selection}
+          onChange={onChange}
+        />
       </div>
       {!selection.serviceChannels.length ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
-          Pilih setidaknya satu cara layanan.
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
+          Pilih setidaknya satu cara.
         </p>
       ) : null}
       <ScreenError error={error} />
@@ -474,48 +506,31 @@ export function SmartServiceScreen({
   );
 }
 
-const reachOptions = [
-  {
-    value: "sekitar",
-    title: "Sekitar satu area",
-    description: "Pelanggan terutama datang dari satu kota atau area.",
-    icon: IconMapPin,
-  },
-  {
-    value: "beberapa",
-    title: "Beberapa area",
-    description: "Pelanggan berasal dari beberapa kota atau area tertentu.",
-    icon: IconMapPins,
-  },
-  {
-    value: "seluruh",
-    title: "Seluruh Indonesia",
-    description: "Produk atau layanan tersedia secara nasional.",
-    icon: IconMap,
-  },
-  {
-    value: "luar",
-    title: "Indonesia dan luar negeri",
-    description: "Pelanggan juga berada di negara lain.",
-    icon: IconWorld,
-  },
+/* ──────────────────────────── J19 · where they are ──────────────────────────── */
+
+const REACH_TILES = [
+  { value: "sekitar", label: "Satu area", Icon: IconMapPin },
+  { value: "beberapa", label: "Beberapa area", Icon: IconMapPins },
+  { value: "seluruh", label: "Seluruh Indonesia", Icon: IconMap },
+  { value: "luar", label: "Luar negeri", Icon: IconWorld },
 ] as const;
+
+export const REACH_LABELS: Record<string, string> = {
+  sekitar: "Satu area",
+  beberapa: "Beberapa area",
+  seluruh: "Seluruh Indonesia",
+  luar: "Indonesia dan luar negeri",
+};
 
 const AREA_CAP = 8;
 
-/**
- * R-16: the market the audit claims. `sekitar` keeps exactly one area,
- * `beberapa` keeps one to eight, and `seluruh`/`luar` keep none. A ninth
- * area — typed or toggled — is refused with a visible block, never silently
- * dropped. This screen is never reached under a location focus.
- */
-export function SmartMarketScreen({
+export function MarketFields({
   prepared,
   selection,
   onChange,
-  headingRef,
-  error,
-}: ScreenProps) {
+  onRefuse,
+}: FieldsProps) {
+  const animate = useMotionAllowed();
   const proposed = prepared.marketAreas.proposed ?? [];
   const ownerAdded = selection.marketAreas.filter(
     (item) => !proposed.some((row) => sameText(row, item)),
@@ -531,10 +546,12 @@ export function SmartMarketScreen({
     });
   const setAreas = (areas: string[]) =>
     update({ marketAreas: areas, retainedBrandAreas: areas });
-  const blocked = () =>
-    setAreaBlock(
-      "Area layanan dibatasi paling banyak 8. Hapus satu untuk menambah yang lain.",
-    );
+  const blocked = () => {
+    const message =
+      "Area dibatasi paling banyak 8. Hapus satu untuk menambah yang lain.";
+    if (onRefuse) onRefuse(message);
+    else setAreaBlock(message);
+  };
   const toggleArea = (area: string, on: boolean): boolean => {
     if (on && selection.marketAreas.some((item) => sameText(item, area))) {
       setAreaBlock(null);
@@ -557,124 +574,169 @@ export function SmartMarketScreen({
     setAreaBlock(null);
     return true;
   };
-  const addArea = (value: string): boolean => {
-    const match = [...proposed, ...ownerAdded].find((item) =>
-      sameText(item, value),
-    );
-    if (match) return toggleArea(match, true);
-    if (
-      selection.marketReach === "beberapa" &&
-      selection.marketAreas.length >= AREA_CAP
-    ) {
-      blocked();
-      return false;
+  /** Adds typed or suggested areas in one change; a ninth is refused. */
+  const addAreas = (values: string[]): boolean => {
+    let next = [...selection.marketAreas];
+    for (const value of values) {
+      const area =
+        [...proposed, ...ownerAdded].find((item) => sameText(item, value)) ??
+        value;
+      if (next.some((item) => sameText(item, area))) continue;
+      if (selection.marketReach === "sekitar") {
+        next = [area];
+        continue;
+      }
+      if (next.length >= AREA_CAP) {
+        blocked();
+        return false;
+      }
+      next = [...next, area];
     }
-    setAreas(
-      selection.marketReach === "sekitar"
-        ? [value]
-        : [...selection.marketAreas, value],
-    );
+    // A refused change (sensitive text) keeps the typed text for correction.
     setAreaBlock(null);
-    return true;
+    return setAreas(next) !== false;
   };
   return (
-    <section className="grid gap-5" data-intake-screen="market">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Di mana pelanggan Anda berada?
-      </h1>
-      <p className="type-copy-sm text-muted-foreground">
-        Pilih jangkauan utama untuk audit ini.
-      </p>
-      {selection.origins.market === "website" && selection.marketReach ? (
-        <p className={`${controls.hint} type-copy-sm m-0`}>
-          Pilihan awal disiapkan dari website Anda.
-        </p>
-      ) : null}
-      <div className={controls.choices}>
-        <SelectionGroup
-          label="Jangkauan pasar"
-          value={selection.marketReach}
-          onValueChange={(next) => {
-            update({
-              marketReach: next as SmartSelection["marketReach"],
-              marketAreas: [],
-              retainedBrandReach: next as SmartSelection["marketReach"],
-              retainedBrandAreas: [],
-            });
-            setAreaBlock(null);
-          }}
-        >
-          {reachOptions.map(({ value, title, description, icon: Icon }) => (
-            <SelectionCard
-              key={value}
-              value={value}
-              title={title}
-              description={description}
-              icon={<Icon stroke={1.5} />}
-            />
-          ))}
-        </SelectionGroup>
-      </div>
-      <Reveal open={areaBased}>
-        <div className={controls.areaPanel}>
-          <h2 className="type-heading-sm m-0">
-            {selection.marketReach === "sekitar"
-              ? "Pilih satu kota atau area"
-              : "Pilih semua kota atau area"}
-          </h2>
-          <ChipGroup label="Kota atau area">
-            {proposed.map((area) => (
-              <Chip
-                key={area}
-                label={area}
-                selected={selection.marketAreas.includes(area)}
-                selectedIndicator="check"
-                onToggle={(on) => toggleArea(area, on)}
+    <div className="grid">
+      <RadioTileGroup
+        label="Jangkauan pasar"
+        value={selection.marketReach}
+        onValueChange={(next) => {
+          update({
+            marketReach: next as SmartSelection["marketReach"],
+            marketAreas: [],
+            retainedBrandReach: next as SmartSelection["marketReach"],
+            retainedBrandAreas: [],
+          });
+          setAreaBlock(null);
+        }}
+      >
+        {REACH_TILES.map(({ value, label, Icon }) => (
+          <RadioTile
+            key={value}
+            value={value}
+            label={label}
+            icon={<Icon size={28} stroke={1.5} />}
+          />
+        ))}
+      </RadioTileGroup>
+      <AnimatePresence initial={false}>
+        {areaBased ? (
+          <motion.div
+            key="areas"
+            className="grid gap-3 overflow-hidden"
+            initial={animate ? { opacity: 0, height: 0 } : false}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={animate ? { opacity: 0, height: 0 } : { opacity: 0 }}
+            transition={SPRING_SETTLE}
+          >
+            <h2
+              className="type-title m-0 mt-[26px] text-ink-900"
+              id="area-heading"
+            >
+              {selection.marketReach === "sekitar"
+                ? "Area mana?"
+                : "Area mana saja?"}
+            </h2>
+            <div className="flex flex-wrap items-start gap-2.5">
+              {proposed.length || ownerAdded.length ? (
+                <ChipGroup labelId="area-heading">
+                  {proposed.map((area) => (
+                    <Chip
+                      key={area}
+                      label={area}
+                      selected={selection.marketAreas.includes(area)}
+                      selectedIndicator="check"
+                      onToggle={(on) => toggleArea(area, on)}
+                    />
+                  ))}
+                  {ownerAdded.map((area) => (
+                    <Chip
+                      key={area}
+                      label={area}
+                      selected
+                      selectedIndicator="check"
+                      onToggle={(on) => toggleArea(area, on)}
+                    />
+                  ))}
+                </ChipGroup>
+              ) : null}
+              <ChipAdder
+                addLabel="Tambah kota"
+                fieldLabel="Kota atau area"
+                placeholder="Ketik nama kota"
+                maxLength={120}
+                suggestionsFor={(draft) =>
+                  placeSuggestions(draft, selection.marketAreas)
+                }
+                onAdd={addAreas}
               />
-            ))}
-            {ownerAdded.map((area) => (
-              <Chip
-                key={area}
-                label={area}
-                selected
-                selectedIndicator="remove"
-                onToggle={(on) => toggleArea(area, on)}
-              />
-            ))}
-          </ChipGroup>
-          <div className={`${controls.manual} m-0`}>
-            <AddLine
-              inputLabel="Tambah area lain"
-              placeholder="Tambah area lain"
-              buttonLabel="Tambahkan"
-              onCommit={addArea}
-            />
-          </div>
-          {areaBlock ? (
-            <p role="alert" className="type-copy-sm m-0 text-destructive">
-              {areaBlock}
-            </p>
-          ) : null}
-        </div>
-      </Reveal>
+            </div>
+            {areaBlock ? (
+              <p role="alert" className="type-copy-sm m-0 text-ember-700">
+                {areaBlock}
+              </p>
+            ) : null}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       {selection.marketReach && selection.marketAreas.length > AREA_CAP ? (
-        <p role="alert" className="type-copy-sm m-0 text-destructive">
-          Pilih paling banyak 8 area layanan.
+        <p role="alert" className="type-copy-sm m-0 mt-3 text-ember-700">
+          Pilih paling banyak 8 area.
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * R-16, J19: where the customers are. `Satu area` keeps exactly one area,
+ * `Beberapa area` one to eight, and the other two keep none. A ninth area is
+ * refused with a visible note, never silently dropped. City names are
+ * suggested as the owner types. Never reached under a location focus.
+ */
+export function SmartMarketScreen({
+  prepared,
+  selection,
+  onChange,
+  headingRef,
+  error,
+  onRefuse,
+}: ScreenProps) {
+  const areaBased =
+    selection.marketReach === "sekitar" || selection.marketReach === "beberapa";
+  return (
+    <section className="grid" data-intake-screen="market">
+      <ScreenHeader
+        headingRef={headingRef}
+        title="Di mana pelanggan Anda berada?"
+        lead={
+          selection.origins.market === "website" && selection.marketReach
+            ? "Sudah kami isi dari website. Ganti jika perlu."
+            : undefined
+        }
+      />
+      <div className="mt-[22px]">
+        <MarketFields
+          prepared={prepared}
+          selection={selection}
+          onChange={onChange}
+          onRefuse={onRefuse}
+        />
+      </div>
       {areaBased &&
       (selection.marketReach === "sekitar"
         ? selection.marketAreas.length !== 1
         : !selection.marketAreas.length) ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
           {selection.marketReach === "sekitar"
             ? "Pilih satu kota atau area."
             : "Pilih setidaknya satu kota atau area."}
         </p>
       ) : null}
       {!selection.marketReach ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
-          Pilih jangkauan utama untuk melanjutkan.
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
+          Pilih satu jangkauan untuk melanjutkan.
         </p>
       ) : null}
       <ScreenError error={error} />

@@ -1,95 +1,81 @@
 # Smart intake summary
 
-After `Periksa`, Nuave reads the business's source on a labelled reading
-screen, in synthetic mode through a labelled substitute. It then asks
-"Ini brand yang ingin Anda audit?" with the typed name, the discovered name
-when different, and the website; `Lanjut` confirms the brand and opens the
-focus screen "Apa yang ingin Anda audit?" — whole brand (marked
-`Saran Nuave`), one location, or one product/service. A product pick opens
-"Produk atau layanan mana?" first. The chain then walks category
-("Bisnis Anda biasanya disebut apa?"), offerings ("Apakah ini yang Anda
-tawarkan?"), target customer ("Siapa pelanggan utama Anda?"), customer
-needs, buyer considerations ("Apa yang dipertimbangkan pelanggan saat
-memilih?"), service channels ("Bagaimana pelanggan
-mendapatkan yang Anda tawarkan?"), market ("Di mana pelanggan Anda berada?",
-skipped for a location focus), competitors, differentiator ("Apa yang
-membedakan bisnis Anda?"), and public fact before landing on
-"Ini yang akan Nuave audit", the final review whose business-detail rows are
-read-back: each `Ubah` re-opens the owning screen, `Ubah` on the `Bisnis`
-row re-opens the brand check and `Ubah website` re-opens the entry source
-fields, and `Nama lain` holds an inline alias editor. One confirmation,
-`Sudah sesuai — buat pertanyaan audit`, freezes the context and creates the
-audit questions.
+After `Cek bisnis saya di AI`, a free check (J02) looks the website up and
+shows "Kami menemukan bisnis Anda" (J05) with the name it read. `Ya, ini
+bisnis saya` leads through "Tinggal 3 langkah" (J06) to checkout (J07). After
+the simulated payment the paid reading (J09) starts by itself, and the Step 2
+cover "Ceritakan bisnis Anda" (J10) opens the intake with `Mulai`: the focus
+"Apa yang ingin Anda audit?" (whole brand, marked `Saran Nuave`, one branch or
+one product), category, offerings, target customer, what customers need and
+compare (one screen), service, market (skipped for a branch), competitors and
+the differentiator with its folded public fact. The Step 3 cover "Periksa,
+lalu jalankan audit" (J24) opens the review "Ini profil yang akan Nuave pakai"
+(J25), whose three sections each open an edit sheet. One tick and
+`Buat pertanyaan audit` freeze the context and create the ten questions.
 
 ## Sub-features
 
-- `reading-screen`: `Periksa` opens "Sebentar, Nuave sedang membaca" with the
-  labelled synthetic-mode note while the identity and extract requests run.
-- `brand-confirm`: the brand check shows the business name and source with
-  `Kembali` and `Lanjut`; `Lanjut` opens the order summary (spec 016), and
-  the shared `confirmBrand` step types the test email there, so the paid
-  reading runs and the focus screen opens.
-- `focus-screen`: whole brand carries `Saran Nuave`; the location scope shows
-  as a card only when usable published locations exist — otherwise as the
-  `Isi lokasi secara manual` link.
-- `product-target`: the product screen lists prepared offerings labelled
-  `Dari website Anda` or accepts a typed `Nama produk atau layanan` target
-  labelled `Dari Anda`; `Lanjut` stays blocked until one exists.
-- `category-screen`: prepared suggestions are `Saran Nuave` cards, the
-  website's main category is `Dari website Anda`, and `Tulis kategori
-sendiri` accepts a manual pick labelled `Dari Anda`; `Lanjut` stays
-  blocked until one exists.
-- `offerings-screen`: prepared offerings sit in a `Dari website Anda` chip
-  group, owner additions form `Dari Anda`, and `Penawaran lain` adds one;
-  under a product focus the catalogue is read-only context.
-- `service-screen`: the four fixed channel choices are multi-select
-  checkboxes; `Lanjut` stays blocked until at least one is picked.
-- `market-screen`: four reach cards; `sekitar` needs exactly one area and
-  `beberapa` needs one to eight — a ninth area is refused with a visible
-  block. A location focus never shows this screen.
-- `target-customer`: optional prepared target customer keeps its source
-  label; `Lanjut` is never blocked. Empty stays empty.
-- `customer-needs`: optional prepared needs keep their source label; the owner
-  can deselect a suggestion or add a need.
-- `decision-considerations`: optional prepared buyer considerations keep
-  their source label as togglable chips; the owner adds up to twelve
-  considerations of at most 300 characters each through `Pertimbangan
-  pembeli lain`, with trimmed case-insensitive duplicates and sensitive
-  drafts refused while the draft stays for correction. `Lanjut` is never
-  blocked.
-- `competitors`: named businesses, no direct competitor, and unknown are
-  distinct modes. Prepared names default to named mode; named mode requires
-  one to five names and refuses a sixth instead of truncating.
-- `differentiator`: optional prepared differentiator keeps its source
-  label; `Lanjut` is never blocked.
-- `public-fact`: optional public context accepts owner text through the
-  existing sensitive-text rejection path.
-- `summary-row-edit`: `Ubah` on a read-back row opens the owning detail
-  screen; `Kembali`, `Lanjut`, or marked browser Back returns to the review.
-  On the `Bisnis` row, `Ubah` opens the brand check (`Lanjut`, footer
-  `Kembali`, or marked browser Back return to the review) and `Ubah website`
-  opens the entry source fields — a same-URL name correction keeps every
-  answer and makes no new read, while a changed URL resets preparation,
-  aliases, frozen context and the question pack.
-- `alias-edit`: `Ubah` on `Nama lain` opens an inline chip editor for
-  prepared or owner aliases — add or remove one at a time, at most twelve
-  names of 160 characters each, duplicates refused; an empty list is valid
-  and hides the provenance badge. Sensitive names are rejected through the
-  same stop path as other owner text.
-- `summary-confirm`: `Sudah sesuai — buat pertanyaan audit` freezes the
-  context, edited `Nama lain` aliases included, and makes exactly one
-  question request; while a required meaning
-  is missing the button reads `Lengkapi yang perlu dipastikan` and opens the
-  first owning screen instead.
+- `free-check`: `Cek bisnis saya di AI` shows "Sebentar, kami cari bisnis
+  Anda" with the synthetic-mode label while `GET /api/audit/identity` runs.
+  A slow check offers a way out (J04); the e2e suite covers it.
+- `business-found`: "Kami menemukan bisnis Anda" shows the name read from the
+  website, the address, `Ubah nama`, `Ganti tautan bisnis`, `Kembali` and
+  `Ya, ini bisnis saya`. Nothing is ordered yet.
+- `steps-and-checkout`: "Tinggal 3 langkah" names the price
+  (Rp99.000 untuk satu audit); `Lanjut ke pembayaran` opens checkout, where
+  the shared `confirmBrand` step types the test email and presses
+  `Bayar Rp99.000`.
+- `paid-reading`: after payment, "Nuave sedang membaca website Anda" runs once
+  by itself (no button), with "Pembayaran diterima · NV-…", then the Step 2
+  cover shows.
+- `focus-screen`: the whole-brand pick carries `Saran Nuave`; `Satu cabang`
+  names an example ("misalnya …") only when the reading found published
+  branches. One tap on `Satu cabang` or `Satu produk` opens its list.
+- `product-target`: "Produk mana?" lists prepared products or takes one
+  through `Tambah produk` (`Nama produk atau layanan`, `Simpan`).
+- `category-screen`: suggestions are single-choice chips (`Pilihan kategori`);
+  `Lainnya` opens `Kategori lain`. `Lanjut` stays blocked until one is picked.
+- `offerings-screen`: prepared offerings are chips; the always-open
+  `Produk atau layanan lain` field adds one with Enter. Under a product focus
+  the list is read-only context.
+- `target-customer`: optional `Jenis pelanggan` chips, prepared ones marked
+  `Saran Nuave`; `Tambah lainnya` adds a phrase. `Lanjut` is never blocked.
+- `customer-needs`: one optional screen with two chip groups, `Mereka butuh…`
+  and `Mereka membandingkan…`. `Lainnya (kebutuhan)` and
+  `Lainnya (pertimbangan)` open adders with `Tambah`; refused drafts stay for
+  correction.
+- `service-screen`: four multi-select tiles (`Datang ke tempat`, `Dikirim`,
+  `Anda yang datang`, `Online`); `Lanjut` stays blocked until one is on.
+- `market-screen`: four reach tiles. `Satu area` needs one area,
+  `Beberapa area` one to eight; a ninth is refused, never cut. A branch focus
+  never shows this screen.
+- `competitors`: checkbox rows, prepared ones marked `Saran Nuave`;
+  `Tambah pembanding` adds up to five names and refuses a sixth. "Belum tahu?
+  Lewati, kami bandingkan dengan bisnis sejenis." stores "not sure".
+- `differentiator`: optional `Pembeda bisnis`; the fold "Ada info yang sering
+  salah ditulis AI?" holds the optional public fact (`Info yang benar`),
+  checked by the same sensitive-text stop as other owner text.
+- `review-sheets`: `Ubah Bisnis`, `Ubah Calon pelanggan` and
+  `Ubah Pembanding` open sheets. `Simpan` keeps the edits; `Batal` and Escape
+  drop them. The Bisnis sheet also offers `Ubah nama` (brand check),
+  `Ganti website` (entry), `Ganti fokus audit` (focus screen, whose chain
+  returns to the review) and `Tambah nama lain` (aliases).
+- `summary-confirm`: `Buat pertanyaan audit` stays disabled until the box
+  "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam
+  pertanyaan audit." is ticked, then makes exactly one question request.
+  While a required answer is missing the button reads
+  `Lengkapi yang perlu dipastikan` and opens the owning screen.
 
 ## How to get to it (user POV)
 
-- From the audit entry, fill `Nama bisnis` and `URL website publik`, then
-  press `Periksa`; confirm the brand with `Lanjut` and walk the detail
-  screens.
-- From the brand check, press `Kembali` to return to the filled entry.
-- From question review, press `Kembali ke informasi bisnis`. The e2e suite
-  covers this; this skill does not drive it.
+- From the audit entry, type the website and press `Cek bisnis saya di AI`;
+  press `Ya, ini bisnis saya`, `Lanjut ke pembayaran`, type an email and press
+  `Bayar Rp99.000`; after the paid reading press `Mulai` and walk the Step 2
+  screens with `Lanjut`.
+- From the business found, `Kembali` returns to the entry with the website
+  kept.
+- From the ten questions, the bottom bar's `Kembali` returns to the review.
+  The e2e suite covers this; this skill does not drive it.
 
 ## Driving it with verify-nuave
 
@@ -99,71 +85,74 @@ Preconditions:
 
 Run `$V drive smart-intake-summary`. Steps, in order:
 
-- **Entry.** Fills `Kedai Fiksi` and `https://kedai-fiksi.example/`.
-  Evidence: `01-entry-filled`.
-- **Reading and brand check.** Presses `Periksa`. The reading screen
-  `[data-intake-screen="reading"]` shows "Sebentar, Nuave sedang membaca"
-  with the synthetic-mode label, then the brand check
-  `[data-intake-screen="brand"]` shows "Ini brand yang ingin Anda audit?"
-  with the name, the source, `Kembali` and `Lanjut`. A short same-origin
-  delay on the extract request keeps the reading screen observable; the
-  response is the real route answer. Evidence: `02-reading`.
-- **Focus.** Presses `Lanjut`. The focus screen shows the three scopes'
-  honest labels: `Saran Nuave` on whole brand, no `Satu lokasi` card (the
-  synthetic reading publishes no locations) and the `Isi lokasi secara
-manual` link. Evidence: `03-brand-confirm-to-focus`.
-- **Detail screens.** `Lanjut` on the whole-brand default opens the
-  category screen. The synthetic reading found nothing, so each gated
-  screen takes the smallest owner answer: `kedai kopi` typed into
-  `Kategori`, `kopi susu` added through `Penawaran lain` + Enter, the
-  `Di lokasi bisnis Anda` checkbox, and the `Seluruh Indonesia` reach card.
-  The optional JQ and J6 screens stay empty on `Lanjut`: target customer,
-  customer needs, buyer considerations, and differentiator remain blank,
-  competitor mode remains `Belum tahu`, and public fact remains blank. The
-  chain then lands on the review "Ini yang akan Nuave audit". Evidence:
+- **Entry.** Opens `/audit` and fills `https://kedai-fiksi.example/`. The
+  synthetic-mode label shows. Evidence: `01-entry-filled`.
+- **Free check to business found.** Presses `Cek bisnis saya di AI`. The free
+  check `[data-intake-screen="reading"]` shows "Sebentar, kami cari bisnis
+  Anda", then `[data-intake-screen="brand"]` shows "Kami menemukan bisnis
+  Anda" with `Kedai Fiksi`, `kedai-fiksi.example`, `Kembali` and
+  `Ya, ini bisnis saya`. An 800 ms same-origin delay on the identity request
+  keeps the free check visible; the answer is the real route answer.
+  Evidence: `02-free-check-to-business-found`.
+- **Steps, payment, paid reading, focus.** `Ya, ini bisnis saya` → "Tinggal 3
+  langkah" → `Lanjut ke pembayaran` → checkout → email and `Bayar Rp99.000`.
+  The paid reading runs by itself, the cover "Ceritakan bisnis Anda" shows,
+  and `Mulai` opens the focus screen: `Saran Nuave` on whole brand, and a
+  `Satu cabang` card that names no example (the synthetic reading publishes
+  no branches). Evidence: `03-steps-payment-reading-to-focus`.
+- **Detail screens.** `Lanjut` on whole brand opens the category screen. The
+  synthetic reading found nothing, so each gated screen takes the smallest
+  owner answer: `kedai kopi` through `Lainnya` → `Kategori lain` + Enter,
+  `kopi susu` through `Produk atau layanan lain` + Enter, the
+  `Datang ke tempat` tile and the `Seluruh Indonesia` tile. Target customer,
+  needs and considerations, competitors and the differentiator stay empty on
+  `Lanjut`. The Step 3 cover's `Mulai` opens the review. Evidence:
   `04-detail-screens`.
-- **Product target.** Presses `Ubah` on the read-back focus row, picks
-  `Satu produk atau layanan` on the re-opened focus screen, presses
-  `Lanjut`, types `kopi susu` into `Nama produk atau layanan` on the
-  product screen, presses `Lanjut` again, and walks the changed-focus
-  detour — category checkpoint, then directly back to the summary with the focus row showing
-  `Satu produk atau layanan`. Evidence: `05-focus-one-offering`.
-- **Confirm.** Presses `Sudah sesuai — buat pertanyaan audit`. The heading
-  "Periksa pertanyaan audit" and ten `[data-question-slot]` show. Evidence:
-  `06-questions-created`.
-- **Proof.** The frozen context in `localStorage` `nuave.localIntake.v9`
-  has category `kedai kopi` (origin `owner`), focus
-  `{kind: "produk", name: "kopi susu"}`, reach `seluruh`, no optional
-  customer meanings (target customer, needs, considerations, differentiator
-  are absent), empty aliases, unknown competitor mode and a blank public
-  fact.
-  `network.json.apiCalls` is exactly one `GET /api/audit/identity`, one
-  `POST /api/orders`, one `POST /api/payments/start` (the simulated payment),
-  one `POST /api/audit/extract` and one `POST /api/audit/glm-questions`.
+- **Optional answers stay empty.** The stored selection has empty aliases,
+  target customer, needs, considerations, differentiator and public fact, and
+  competitor mode `unknown` with no names.
+- **Product focus.** `Ubah Bisnis` → `Ganti fokus audit` re-opens the focus
+  screen; `Satu produk` opens "Produk mana?"; `Tambah produk` adds
+  `kopi susu`; `Lanjut` passes the category checkpoint, whose `Lanjut`
+  returns to the review with `Fokus audit` reading `Satu produk: kopi susu`.
+  Evidence: `05-focus-one-offering`.
+- **Confirm.** Checks that `Buat pertanyaan audit` is disabled, ticks the
+  confirmation and presses it. "10 pertanyaan untuk AI" and ten
+  `[data-question-slot]` show. Evidence: `06-questions-created`.
+- **Proof.** The frozen context in `localStorage` `nuave.localIntake.v9` has
+  category `kedai kopi` (origin `owner`), focus
+  `{kind: "produk", name: "kopi susu"}`, reach `seluruh`, competitors
+  `{mode: "unknown"}` (origin `nuave`), and no target customer, needs,
+  considerations, differentiator or public fact. `network.json.apiCalls` has
+  exactly one `GET /api/audit/identity`, one `POST /api/orders`, one
+  `POST /api/payments/start` (the simulated payment), one
+  `POST /api/audit/extract` and one `POST /api/audit/glm-questions` (the free
+  `POST /api/orders/status` checks are not counted).
 
 ## Gotchas
 
-- The reading screen is transient: `verify-nuave` adds a short same-origin
-  delay on the extract request so it can be observed. Do not treat the
-  delay as product behavior.
-- The synthetic reading proposes no offerings and no locations, so the
-  product screen shows only the typed-target field and the focus screen
-  shows no `Satu lokasi` card. With a live reading, radios appear.
-- Under a product focus the offerings screen is read-only catalogue context
-  (the product target is the offering), so the owner-filled offerings pass
-  runs before the focus switch in this drive.
-- A location focus never shows the market screen — customer needs and buyer
-  considerations precede service, whose `Lanjut` lands on competitors, then
-  differentiator and public fact before the review.
-- Until category, offering, channel and reach are filled, the button reads
-  `Lengkapi yang perlu dipastikan`, not `Sudah sesuai — buat pertanyaan
-audit`. The forward chain's gates mean the review only shows it after an
-  edit that clears a required answer.
+- The free check and the paid reading are short: the drive adds a small
+  same-origin delay so they can be seen. Do not treat the delay as product
+  behavior.
+- The synthetic reading proposes no products and no branches, so "Produk
+  mana?" starts empty and the owner adds the target through `Tambah produk`.
+  With a live reading, rows appear.
+- Under a product focus the offerings screen is read-only context, so the
+  owner-filled offerings pass runs before the focus switch in this drive.
+- A branch focus never shows the market screen: service goes straight to
+  competitors.
+- The paid reading starts by itself after payment. A reading cut off by a
+  reload is not restarted by itself; it waits for `Lanjut` (covered by
+  `tests/e2e/payment-screens.spec.ts`).
+- The way out of a slow free check (J04), `Kembali` during the check, and a
+  check cut off by a reload are covered by `tests/e2e/smart-intake.spec.ts`,
+  not by this drive.
 - The other rich-reading variants (named competitors, corrections) need a
   stubbed extract response. They are covered by
-  `tests/e2e/new-intake-journey.spec.ts`, not by this drive. The labelled J3
-  rich preparation has its own drive: `rich-preparation`.
-- `Ubah website` on the review returns to the entry, and pressing `Periksa`
-  with only the name changed skips the read entirely — it reuses the stored
-  preparation and lands on the brand check. The e2e suite covers the
-  name-only and website-change paths.
+  `tests/e2e/new-intake-journey.spec.ts`. The labelled rich preparation has
+  its own drive: `rich-preparation`.
+- After payment the name and website are locked for the order: the Bisnis
+  sheet shows "Nama dan website sudah terkunci untuk pesanan ini." instead of
+  `Ubah nama` and `Ganti website`. The name-only and website-change paths
+  need an order no payment has locked (the founder test pass), so the e2e
+  suite covers them, not this drive.

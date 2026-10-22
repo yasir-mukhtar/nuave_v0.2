@@ -1,4 +1,5 @@
 import type { AuditSubject } from "../audit/direct-ten-context-v2";
+import { readyEmailDetails } from "./ready-email-details";
 import {
   OBSERVATION_CALL_TIMEOUT_MS,
   REPORT_CALL_TIMEOUT_MS,
@@ -991,6 +992,7 @@ async function readyEmailStep(
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
     orderNumber,
+    ...(await readyEmailDetails(deps.db, order)),
   });
   const result = await sendWithinAttempt(
     deps.sender,

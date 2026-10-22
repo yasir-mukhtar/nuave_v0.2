@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, type RefObject } from "react";
+import { useRef, useState, type RefObject } from "react";
+import { motion } from "motion/react";
 import {
-  IconBuildingStore,
-  IconMapPin,
-  IconPackage,
-} from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+  BottomSheet,
+  SheetActionsHeader,
+} from "@/components/motion/BottomSheet";
+import { SPRING_SETTLE } from "@/components/motion/presets";
+import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import {
   SelectionCard,
   SelectionGroup,
 } from "@/components/product/selection/SelectionCard";
-import { Reveal } from "@/components/product/selection/Reveal";
+import { SelectionRow } from "@/components/product/selection/SelectionRow";
+import { AddChip } from "@/components/product/selection/Chip";
+import { ART } from "@/components/product/journey/Art";
+import { FloatingField } from "@/components/product/journey/FloatingField";
 import {
   selectSmartFocus,
   smartLocationReady,
@@ -22,7 +25,8 @@ import {
   type PreparedUnderstanding,
   type SmartSelection,
 } from "./smart-intake-contract";
-import controls from "./controls.module.css";
+import { OriginNote, ScreenError } from "./intake-bits";
+import { ScreenHeader } from "./step-one-screens";
 
 type ScreenProps = {
   prepared: PreparedUnderstanding;
@@ -35,198 +39,258 @@ type ScreenProps = {
   error?: string | null;
 };
 
-function ScreenError({ error }: { error?: string | null }) {
-  return error ? (
-    <p role="alert" className="type-copy text-destructive">
-      {error}
-    </p>
-  ) : null;
-}
-
-const focusChoices = [
-  {
-    value: "brand",
-    title: "Brand secara keseluruhan",
-    description: "Semua lokasi, produk, dan layanan sebagai satu kesatuan.",
-    icon: IconBuildingStore,
-  },
-  {
-    value: "cabang",
-    title: "Satu lokasi",
-    description: "Satu gerai atau cabang tertentu.",
-    icon: IconMapPin,
-  },
-  {
-    value: "produk",
-    title: "Satu produk atau layanan",
-    description: "Satu produk, layanan, atau lini tertentu.",
-    icon: IconPackage,
-  },
-] as const;
+const FOCUS_HEADING = "Apa yang ingin Anda audit?";
 
 /**
- * R-10: the audit's point of view. `Brand secara keseluruhan` carries the
- * `Saran Nuave` label because whole-brand is Nuave's prepared proposal; the
- * combined focus row on the summary switches to `Dari Anda` once the owner
- * changes it. `Satu lokasi` is offered as a card while the business's own
- * source publishes at least one location — otherwise a secondary link opens
- * the manual location screen. The card also stays while `cabang` is the
- * stored answer, so the radio group never shows nothing selected for a
- * saved pick (R-02).
+ * R-10, J11: the audit's point of view, as three big rows with a small 3D
+ * object each. `Seluruh brand` is Nuave's prepared proposal and is labelled
+ * once. Tapping `Satu cabang` or `Satu produk` opens its list right away (the
+ * J12 view); moving through the rows with arrow keys only selects, and
+ * `Lanjut` goes on as before.
  */
 export function SmartFocusScreen({
   prepared,
   selection,
   onChange,
-  onEnterLocationManually,
+  onOpenTarget,
   headingRef,
   error,
-}: ScreenProps & { onEnterLocationManually: () => void }) {
+}: ScreenProps & {
+  /** Open the list for a just-tapped location or product focus. */
+  onOpenTarget: (next: SmartSelection) => void;
+}) {
   const locations = usablePublishedLocations(prepared);
+  const example = locations[0]?.name;
+  const choose = (focus: SmartSelection["focus"]) =>
+    selectSmartFocus(prepared, selection, focus);
+  const choices = [
+    {
+      value: "brand" as const,
+      title: "Seluruh brand",
+      description: "Semua cabang dan produk dinilai sebagai satu bisnis",
+      image: ART.focusBrand.src,
+    },
+    {
+      value: "cabang" as const,
+      title: "Satu cabang",
+      description: example
+        ? `Satu lokasi tertentu, misalnya ${example}`
+        : "Satu lokasi tertentu",
+      image: ART.focusBranch.src,
+    },
+    {
+      value: "produk" as const,
+      title: "Satu produk",
+      description: "Satu produk atau layanan tertentu",
+      image: ART.focusProduct.src,
+    },
+  ];
   return (
-    <section className="grid gap-5" data-intake-screen="focus">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Apa yang ingin Anda audit?
-      </h1>
-      <p className="type-copy-sm text-muted-foreground">
-        Ini menentukan sudut pandang seluruh audit.
-      </p>
-      <div className={controls.choices}>
+    <section className="grid" data-intake-screen="focus">
+      <ScreenHeader
+        headingRef={headingRef}
+        title={FOCUS_HEADING}
+        lead={
+          selection.origins.focus === "nuave" ? (
+            <OriginNote
+              origin="nuave"
+              text="sudah dipilih. Ganti jika perlu."
+            />
+          ) : (
+            "Ini menentukan sudut pandang seluruh audit."
+          )
+        }
+      />
+      <div className="mt-6">
         <SelectionGroup
           label="Fokus audit"
           value={selection.focus}
           onValueChange={(next) =>
-            onChange(
-              selectSmartFocus(
-                prepared,
-                selection,
-                next as SmartSelection["focus"],
-              ),
-            )
+            onChange(choose(next as SmartSelection["focus"]))
           }
         >
-          {focusChoices
-            .filter(
-              (choice) =>
-                choice.value !== "cabang" ||
-                locations.length > 0 ||
-                selection.focus === "cabang",
-            )
-            .map(({ value, title, description, icon: Icon }) => (
-              <SelectionCard
-                key={value}
-                value={value}
-                title={title}
-                description={description}
-                meta={value === "brand" ? "Saran Nuave" : undefined}
-                icon={<Icon stroke={1.5} />}
-              />
-            ))}
+          {choices.map(({ value, title, description, image }) => (
+            <SelectionCard
+              key={value}
+              value={value}
+              title={title}
+              description={description}
+              image={image}
+              onClick={
+                value === "brand"
+                  ? undefined
+                  : () => onOpenTarget(choose(value))
+              }
+            />
+          ))}
         </SelectionGroup>
       </div>
-      {!locations.length ? (
-        <div>
-          <Button
-            variant="link"
-            className="w-fit"
-            onClick={onEnterLocationManually}
-          >
-            Isi lokasi secara manual
-          </Button>
-        </div>
-      ) : null}
       <ScreenError error={error} />
     </section>
   );
 }
 
+/** The chosen focus, shown compact above its list (J12). Tapping changes it. */
+function ChosenFocus({
+  title,
+  description,
+  image,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  image: string;
+  onChange: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onChange}
+      aria-label={`${title}. Ganti fokus audit`}
+      className="flex w-full items-center gap-4 rounded-tile border border-ink-900 bg-stone-50 py-[18px] pr-4 pl-5 text-left shadow-(--edge-ink) transition-transform active:scale-[0.985]"
+    >
+      <span className="grid min-w-0 flex-1 gap-1">
+        <span className="type-title text-ink-900">{title}</span>
+        <span className="type-copy-sm text-ink-600">{description}</span>
+      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- static decorative art */}
+      <img
+        src={image}
+        alt=""
+        width={64}
+        height={64}
+        className="size-16 object-contain"
+      />
+    </motion.button>
+  );
+}
+
+/** One field sheet for adding a branch or product (J12b). */
+function AddSheet({
+  open,
+  onOpenChange,
+  title,
+  fields,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  fields: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    maxLength: number;
+    autoComplete?: string;
+  }[];
+  onSave: () => void;
+}) {
+  const first = useRef<HTMLInputElement>(null);
+  const ready = fields.every((field) => field.value.trim());
+  return (
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      initialFocus={first}
+      header={
+        <SheetActionsHeader
+          title={title}
+          onCancel={() => onOpenChange(false)}
+          onSave={onSave}
+          saveDisabled={!ready}
+        />
+      }
+    >
+      <form
+        className="grid gap-3.5 pb-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (ready) onSave();
+        }}
+      >
+        {fields.map((field, index) => (
+          <FloatingField
+            key={field.label}
+            ref={index === 0 ? first : undefined}
+            label={field.label}
+            value={field.value}
+            placeholder={field.placeholder}
+            maxLength={field.maxLength}
+            autoComplete={field.autoComplete ?? "off"}
+            enterKeyHint={index === fields.length - 1 ? "done" : "next"}
+            onChange={(event) => field.onChange(event.target.value)}
+          />
+        ))}
+        <button type="submit" className="sr-only" tabIndex={-1}>
+          Simpan
+        </button>
+      </form>
+    </BottomSheet>
+  );
+}
+
+function useListEntrance() {
+  const animate = useMotionAllowed();
+  return (index: number) =>
+    animate
+      ? {
+          initial: { opacity: 0, y: 12 },
+          animate: { opacity: 1, y: 0 },
+          transition: { ...SPRING_SETTLE, delay: 0.08 + index * 0.05 },
+        }
+      : {};
+}
+
 /**
- * R-11: one location the business itself publishes, or a manual name +
- * address. Published rows carry `Dari website Anda` — `prepared.locations`
- * is already host-screened, and `usablePublishedLocations` re-checks a
- * restored session before any label is shown. A typed answer renders as its
- * own `Dari Anda` row once both fields are filled, so a half-written name
- * never looks like a committed pick.
+ * R-11, J12: one location the business itself publishes, or one the owner
+ * adds in a sheet (name + address). Published rows are stated once as found
+ * on the website; `usablePublishedLocations` re-checks a restored session
+ * before that label is shown.
  */
 export function SmartLocationScreen({
   prepared,
   selection,
   onChange,
+  onChangeFocus,
   headingRef,
   error,
-}: ScreenProps) {
+}: ScreenProps & { onChangeFocus: () => void }) {
   const locations = usablePublishedLocations(prepared);
+  const entrance = useListEntrance();
   const selectedIndex = locations.findIndex(
     (item) =>
       item.name === selection.locationName &&
       item.address === selection.locationAddress,
   );
-  // Typed content that matches no published row is the owner's own answer.
-  const manualActive =
-    Boolean(
-      selection.locationName.trim() || selection.locationAddress.trim(),
-    ) && selectedIndex < 0;
-  const manualReady = manualActive && smartLocationReady(selection);
+  const manualReady = selectedIndex < 0 && smartLocationReady(selection);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({ name: "", address: "" });
   const updateTarget = (patch: Partial<SmartSelection>) =>
     onChange({
       ...selection,
       ...patch,
       origins: { ...selection.origins, focus: "owner" },
     });
-  // Manual typing lives in a local draft so a value that only transiently
-  // equals a published row mid-keystroke cannot blank the fields or drop the
-  // sibling input; the draft survives the match and typing continues on it.
-  const [manualDraft, setManualDraft] = useState<{
-    name: string;
-    address: string;
-  } | null>(null);
-  const shownManual = manualDraft ?? {
-    name: manualActive ? selection.locationName : "",
-    address: manualActive ? selection.locationAddress : "",
-  };
-  // The manual fields stay blank while a published row is the answer, and a
-  // published pick abandons the draft — a `Dari website Anda` row is never
-  // silently edited into a `Dari Anda` one.
-  const typeManual = (patch: { name?: string; address?: string }) => {
-    const next = { ...shownManual, ...patch };
-    setManualDraft(next);
-    updateTarget({ locationName: next.name, locationAddress: next.address });
-  };
-  const manualForm = (
-    <div className={`${controls.manual} grid gap-3`}>
-      <label className="grid gap-2 type-label">
-        Nama lokasi
-        <Input
-          value={shownManual.name}
-          maxLength={300}
-          autoComplete="off"
-          onChange={(event) => typeManual({ name: event.target.value })}
-        />
-      </label>
-      <label className="grid gap-2 type-label">
-        Alamat atau area
-        <Input
-          value={shownManual.address}
-          maxLength={500}
-          autoComplete="off"
-          placeholder="Jalan, nomor, dan kota atau area"
-          onChange={(event) => typeManual({ address: event.target.value })}
-        />
-      </label>
-      <p className={`${controls.hint} type-copy-sm m-0`}>
-        Nama lokasi dan alamat membantu membedakan antar lokasi.
-      </p>
-    </div>
-  );
   return (
-    <section className="grid gap-5" data-intake-screen="location">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Cabang mana yang ingin diaudit?
-      </h1>
-      {locations.length ? (
-        <div className={`${controls.choices} ${controls.dynamicChoices}`}>
+    <section className="grid" data-intake-screen="location">
+      <ScreenHeader headingRef={headingRef} title={FOCUS_HEADING} />
+      <div className="mt-5">
+        <ChosenFocus
+          title="Satu cabang"
+          description="Satu lokasi tertentu"
+          image={ART.focusBranch.src}
+          onChange={onChangeFocus}
+        />
+      </div>
+      <h2 className="type-heading-sm m-0 mt-7 text-ink-900" id="branch-heading">
+        Cabang mana?
+      </h2>
+      {locations.length || manualReady ? (
+        <div className="mt-3">
           <SelectionGroup
-            label="Pilih satu lokasi"
+            labelId="branch-heading"
             value={
               selectedIndex >= 0
                 ? `loc-${selectedIndex}`
@@ -237,69 +301,114 @@ export function SmartLocationScreen({
             onValueChange={(next) => {
               if (!next.startsWith("loc-")) return;
               const picked = locations[Number(next.slice(4))];
-              if (picked) {
-                setManualDraft(null);
+              if (picked)
                 updateTarget({
                   locationName: picked.name,
                   locationAddress: picked.address,
                 });
-              }
             }}
           >
             {locations.map((item, index) => (
-              <SelectionCard
+              <motion.div
                 key={`${item.name}::${item.address}`}
-                value={`loc-${index}`}
-                title={item.name}
-                description={item.address}
-                meta="Dari website Anda"
-              />
+                {...entrance(index)}
+              >
+                <SelectionRow
+                  value={`loc-${index}`}
+                  title={item.name}
+                  description={item.address}
+                />
+              </motion.div>
             ))}
             {manualReady ? (
-              <SelectionCard
-                value="manual"
-                title={selection.locationName}
-                description={selection.locationAddress}
-                meta="Dari Anda"
-              />
+              <motion.div {...entrance(locations.length)}>
+                <SelectionRow
+                  value="manual"
+                  title={selection.locationName}
+                  description={selection.locationAddress}
+                  meta="Dari Anda"
+                />
+              </motion.div>
             ) : null}
           </SelectionGroup>
         </div>
-      ) : null}
-      {locations.length ? (
-        <Reveal trigger="Tambah lokasi lain" defaultOpen={manualActive}>
-          {manualForm}
-        </Reveal>
       ) : (
-        manualForm
+        <p className="type-copy m-0 mt-2 text-ink-600">
+          Kami belum menemukan cabang di website Anda. Tambahkan cabang yang
+          ingin diaudit.
+        </p>
       )}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <AddChip
+          label="Tambah cabang"
+          onClick={() => {
+            setDraft({ name: "", address: "" });
+            setAdding(true);
+          }}
+        />
+        {locations.length ? <OriginNote origin="website" /> : null}
+      </div>
       {!smartLocationReady(selection) ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
-          Pilih satu lokasi, atau lengkapi nama dan alamatnya.
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
+          Pilih satu cabang, atau tambahkan cabang lain.
         </p>
       ) : null}
       <ScreenError error={error} />
+      <AddSheet
+        open={adding}
+        onOpenChange={setAdding}
+        title="Tambah cabang"
+        fields={[
+          {
+            label: "Nama cabang",
+            value: draft.name,
+            onChange: (name) => setDraft((current) => ({ ...current, name })),
+            placeholder: "Contoh: nama bisnis dan daerahnya",
+            maxLength: 300,
+          },
+          {
+            label: "Alamat cabang",
+            value: draft.address,
+            onChange: (address) =>
+              setDraft((current) => ({ ...current, address })),
+            placeholder: "Jalan, nomor, dan kota atau area",
+            maxLength: 500,
+            autoComplete: "street-address",
+          },
+        ]}
+        onSave={() => {
+          updateTarget({
+            locationName: draft.name.trim(),
+            locationAddress: draft.address.trim(),
+          });
+          setAdding(false);
+        }}
+      />
     </section>
   );
 }
 
 /**
- * R-12: one prepared offering, or a typed name. Offering rows carry
- * `Dari website Anda`; a typed target renders as its own `Dari Anda` row.
+ * R-12: one prepared offering, or one the owner adds in a sheet. Offerings are
+ * stated once as found on the website; a typed target is the owner's own.
  */
 export function SmartProductScreen({
   prepared,
   selection,
   onChange,
+  onChangeFocus,
   headingRef,
   error,
-}: ScreenProps) {
+}: ScreenProps & { onChangeFocus: () => void }) {
   const offerings = prepared.offerings.proposed ?? [];
+  const entrance = useListEntrance();
   const selectedIndex = offerings.findIndex(
     (item) => item === selection.productTarget,
   );
   const manualActive =
     Boolean(selection.productTarget.trim()) && selectedIndex < 0;
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
   // A target change re-resolves the category: the new product's suggestion
   // pre-selects unless the owner typed one (R-05).
   const updateTarget = (patch: Partial<SmartSelection>) =>
@@ -310,40 +419,27 @@ export function SmartProductScreen({
         origins: { ...selection.origins, focus: "owner" },
       }),
     );
-  // Same local-draft rule as the location screen: a typed value that
-  // transiently equals an offering mid-keystroke must not blank the input.
-  const [manualDraft, setManualDraft] = useState<string | null>(null);
-  const shownManual =
-    manualDraft ?? (manualActive ? selection.productTarget : "");
-  const manualForm = (
-    <div className={`${controls.manual} grid gap-3`}>
-      <label className="grid gap-2 type-label">
-        Nama produk atau layanan
-        <Input
-          value={shownManual}
-          maxLength={300}
-          autoComplete="off"
-          onChange={(event) => {
-            const value = event.target.value;
-            setManualDraft(value);
-            updateTarget({ productTarget: value });
-          }}
-        />
-      </label>
-      <p className={`${controls.hint} type-copy-sm m-0`}>
-        Pertanyaan pelanggan dan pembanding akan difokuskan ke penawaran ini.
-      </p>
-    </div>
-  );
   return (
-    <section className="grid gap-5" data-intake-screen="product">
-      <h1 ref={headingRef} tabIndex={-1} className="type-heading-lg">
-        Produk atau layanan mana?
-      </h1>
-      {offerings.length ? (
-        <div className={`${controls.choices} ${controls.dynamicChoices}`}>
+    <section className="grid" data-intake-screen="product">
+      <ScreenHeader headingRef={headingRef} title={FOCUS_HEADING} />
+      <div className="mt-5">
+        <ChosenFocus
+          title="Satu produk"
+          description="Satu produk atau layanan tertentu"
+          image={ART.focusProduct.src}
+          onChange={onChangeFocus}
+        />
+      </div>
+      <h2
+        className="type-heading-sm m-0 mt-7 text-ink-900"
+        id="product-heading"
+      >
+        Produk mana?
+      </h2>
+      {offerings.length || manualActive ? (
+        <div className="mt-3">
           <SelectionGroup
-            label="Pilih satu produk atau layanan"
+            labelId="product-heading"
             value={
               selectedIndex >= 0
                 ? `off-${selectedIndex}`
@@ -354,46 +450,64 @@ export function SmartProductScreen({
             onValueChange={(next) => {
               if (!next.startsWith("off-")) return;
               const picked = offerings[Number(next.slice(4))];
-              if (picked) {
-                setManualDraft(null);
-                updateTarget({ productTarget: picked });
-              }
+              if (picked) updateTarget({ productTarget: picked });
             }}
           >
             {offerings.map((offering, index) => (
-              <SelectionCard
-                key={offering}
-                value={`off-${index}`}
-                title={offering}
-                meta="Dari website Anda"
-              />
+              <motion.div key={offering} {...entrance(index)}>
+                <SelectionRow value={`off-${index}`} title={offering} />
+              </motion.div>
             ))}
             {manualActive ? (
-              <SelectionCard
-                value="manual"
-                title={selection.productTarget}
-                meta="Dari Anda"
-              />
+              <motion.div {...entrance(offerings.length)}>
+                <SelectionRow
+                  value="manual"
+                  title={selection.productTarget}
+                  meta="Dari Anda"
+                />
+              </motion.div>
             ) : null}
           </SelectionGroup>
         </div>
-      ) : null}
-      {offerings.length ? (
-        <Reveal
-          trigger="Tambah produk atau layanan lain"
-          defaultOpen={manualActive}
-        >
-          {manualForm}
-        </Reveal>
       ) : (
-        manualForm
+        <p className="type-copy m-0 mt-2 text-ink-600">
+          Kami belum menemukan produk di website Anda. Tambahkan produk atau
+          layanan yang ingin diaudit.
+        </p>
       )}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <AddChip
+          label="Tambah produk"
+          onClick={() => {
+            setDraft("");
+            setAdding(true);
+          }}
+        />
+        {offerings.length ? <OriginNote origin="website" /> : null}
+      </div>
       {!smartProductReady(selection) ? (
-        <p role="status" className="type-copy-sm m-0 text-muted-foreground">
-          Pilih atau tulis satu produk atau layanan.
+        <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
+          Pilih atau tambahkan satu produk atau layanan.
         </p>
       ) : null}
       <ScreenError error={error} />
+      <AddSheet
+        open={adding}
+        onOpenChange={setAdding}
+        title="Tambah produk"
+        fields={[
+          {
+            label: "Nama produk atau layanan",
+            value: draft,
+            onChange: setDraft,
+            maxLength: 300,
+          },
+        ]}
+        onSave={() => {
+          updateTarget({ productTarget: draft.trim() });
+          setAdding(false);
+        }}
+      />
     </section>
   );
 }

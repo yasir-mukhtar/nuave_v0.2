@@ -1,6 +1,16 @@
+import {
+  IconCircleCheck,
+  IconClock,
+  IconInfoCircle,
+} from "@tabler/icons-react";
 import { buildReportPresentation } from "@/lib/audit/report-presentation";
 import type { AuditObservation, AuditReport } from "@/lib/audit/types";
 import { ReportSectionHeading } from "@/components/product/ReportToolbar";
+import {
+  TenBeads,
+  questionList,
+  type BeadMark,
+} from "@/components/product/report/TenBeads";
 import { ReportAnswer, observationTime } from "./ReportAnswer";
 import { ReportReferences } from "./ReportReferences";
 import styles from "./report-body.module.css";
@@ -21,9 +31,12 @@ const relationships = {
 export function DirectTenReportBody({
   report,
   observations,
+  names = [],
 }: {
   report: AuditReport;
   observations: AuditObservation[];
+  /** The business's name and other names, marked inside the answers. */
+  names?: readonly string[];
 }) {
   const presentation = buildReportPresentation(report, observations);
   if (presentation.status !== "ready")
@@ -41,30 +54,81 @@ export function DirectTenReportBody({
       </div>
     );
   const { answers, references, measures } = presentation;
+  // One bead per question, in the order they were asked.
+  const beads = (held: (answer: (typeof answers)[number]) => boolean) =>
+    Array.from({ length: measures.overall.total }, (_, index): BeadMark => {
+      const answer = answers.find((item) => item.ordinal === index + 1);
+      if (!answer?.detail) return "untested";
+      return held(answer) ? "hit" : "miss";
+    });
+  const named = beads((answer) => answer.detail?.appearance === "mentioned");
+  const recommended = beads(
+    (answer) => answer.detail?.recommendation === "recommended",
+  );
+  const numbersOf = (marks: BeadMark[]) =>
+    marks.flatMap((mark, index) => (mark === "hit" ? [index + 1] : []));
   return (
     <div className={styles.body} data-direct-ten-report>
       <section className={styles.section} id="summary" tabIndex={-1}>
         <ReportSectionHeading number="01" className={styles.sectionHeading}>
           Hasil singkat
         </ReportSectionHeading>
-        <p className={styles.count}>
-          Bisnis Anda muncul di {measures.overall.appeared} dari{" "}
-          {measures.overall.total} pertanyaan
-        </p>
-        <p className={styles.count}>
-          Bisnis Anda direkomendasikan di {measures.recommendation.recommended}{" "}
-          dari {measures.recommendation.assessed} pertanyaan
-        </p>
-        <p className={styles.supporting}>
-          {answers.length} dari {measures.overall.total} pertanyaan berhasil
-          diuji
-        </p>
-        <p>{report.conclusion}</p>
-        <p className={styles.supporting}>
-          Hasil ini terbatas pada sepuluh pertanyaan yang disetujui dan jawaban
-          pada waktu pengamatan masing-masing. Model, waktu, lokasi, atau
-          percakapan berbeda dapat memberi jawaban berbeda. Disebut bukan
-          berarti direkomendasikan.
+        <div className={styles.resultCard}>
+          <p className={styles.bigNumber} aria-hidden="true">
+            <span>{measures.overall.appeared}</span>
+            <span>dari {measures.overall.total}</span>
+          </p>
+          <p className={styles.count}>
+            Bisnis Anda muncul di {measures.overall.appeared} dari{" "}
+            {measures.overall.total} pertanyaan
+          </p>
+          <TenBeads
+            marks={named}
+            tone="ember"
+            summary={
+              numbersOf(named).length
+                ? `Disebut di pertanyaan ${questionList(numbersOf(named))}.`
+                : "Tidak disebut di pertanyaan mana pun."
+            }
+          />
+          <div className={styles.cardRule} />
+          <p
+            className={`${styles.bigNumber} ${styles.bigNumberSmall}`}
+            aria-hidden="true"
+          >
+            <span>{measures.recommendation.recommended}</span>
+            <span>dari {measures.recommendation.assessed}</span>
+          </p>
+          <p className={styles.count}>
+            Bisnis Anda direkomendasikan di{" "}
+            {measures.recommendation.recommended} dari{" "}
+            {measures.recommendation.assessed} pertanyaan
+          </p>
+          <TenBeads
+            marks={recommended}
+            tone="ink"
+            summary={
+              numbersOf(recommended).length
+                ? `Direkomendasikan di pertanyaan ${questionList(numbersOf(recommended))}.`
+                : "Tidak direkomendasikan di pertanyaan mana pun."
+            }
+          />
+          <div className={styles.cardRule} />
+          <p className={styles.completion}>
+            <IconCircleCheck size={16} stroke={1.75} aria-hidden="true" />
+            {answers.length} dari {measures.overall.total} pertanyaan berhasil
+            diuji
+          </p>
+        </div>
+        <p className={styles.conclusion}>{report.conclusion}</p>
+        <p className={`${styles.supporting} ${styles.limit}`}>
+          <IconClock size={16} stroke={1.75} aria-hidden="true" />
+          <span>
+            Hasil ini terbatas pada sepuluh pertanyaan yang disetujui dan
+            jawaban pada waktu pengamatan masing-masing. Model, waktu, lokasi,
+            atau percakapan berbeda dapat memberi jawaban berbeda. Disebut bukan
+            berarti direkomendasikan.
+          </span>
         </p>
       </section>
       <section className={styles.section} id="detail" tabIndex={-1}>
@@ -76,7 +140,7 @@ export function DirectTenReportBody({
           Teks jawaban adalah bukti yang diamati, bukan pendapat Nuave.
         </p>
         {answers.map((answer) => (
-          <ReportAnswer key={answer.id} answer={answer} />
+          <ReportAnswer key={answer.id} answer={answer} names={names} />
         ))}
       </section>
       <section className={styles.section} id="findings" tabIndex={-1}>
@@ -85,8 +149,13 @@ export function DirectTenReportBody({
         </ReportSectionHeading>
         <ol className={styles.items}>
           {report.key_findings.map((finding, i) => (
-            <li key={i}>
-              <h3>{finding.title}</h3>
+            <li key={i} className={styles.card}>
+              <h3>
+                <span className={styles.ordinal} aria-hidden="true">
+                  {i + 1}
+                </span>
+                {finding.title}
+              </h3>
               <p>{finding.explanation}</p>
               <ReportReferences
                 ids={finding.evidence_prompt_ids}
@@ -103,10 +172,13 @@ export function DirectTenReportBody({
               seluruh nama dalam jawaban.
             </p>
             {report.observed_competitors.map((competitor, i) => (
-              <div key={i}>
+              <div key={i} className={styles.comparator}>
                 <p>
-                  <strong>{competitor.name}</strong> —{" "}
-                  {relationships[competitor.relationship]}
+                  <strong>{competitor.name}</strong>
+                  <span className={styles.relation}>
+                    {" · "}
+                    {relationships[competitor.relationship]}
+                  </span>
                 </p>
                 <ReportReferences
                   ids={competitor.evidence_prompt_ids}
@@ -125,8 +197,11 @@ export function DirectTenReportBody({
           {[...report.priorities]
             .sort((a, b) => a.order - b.order)
             .map((priority, i) => (
-              <li key={i} value={priority.order}>
-                <p className={styles.eyebrow}>
+              <li key={i} value={priority.order} className={styles.card}>
+                <p
+                  className={`${styles.eyebrow} ${styles.timing}`}
+                  data-timing={priority.timing}
+                >
                   {priority.timing === "do_first"
                     ? "Kerjakan dulu"
                     : "Kerjakan berikutnya"}
@@ -151,7 +226,14 @@ export function DirectTenReportBody({
                   </div>
                 </dl>
                 {priority.caveat && (
-                  <p className={styles.supporting}>{priority.caveat}</p>
+                  <p className={`${styles.supporting} ${styles.caveat}`}>
+                    <IconInfoCircle
+                      size={16}
+                      stroke={1.75}
+                      aria-hidden="true"
+                    />
+                    <span>{priority.caveat}</span>
+                  </p>
                 )}
                 <ReportReferences
                   ids={priority.evidence_prompt_ids}

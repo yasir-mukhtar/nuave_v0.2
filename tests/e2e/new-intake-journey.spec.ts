@@ -1,78 +1,115 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   addAlias,
+  addArea,
+  addBranch,
+  addCategory,
   addCompetitor,
+  addConsideration,
   addCustomerNeed,
+  addProduct,
+  addTargetSheet,
+  aliasChip,
   aliasInput,
-  brandScreen,
+  backToReview,
+  BRAND_HEADING,
+  cancelReviewSheet,
+  categoryChoices,
   categoryScreen,
-  chooseCompetitorMode,
   chooseFocus,
+  chooseReach,
+  competitorInput,
+  competitorRow,
+  competitorsScreen,
+  COMPLETE_GAPS,
+  CONFIRM_SUMMARY,
   confirmBrand,
   confirmFocus,
-  CONFIRM_SUMMARY,
   confirmSummary,
+  considerationInput,
+  considerationsGroup,
+  continueToOrder,
+  customerChips,
+  CUSTOMER_NEEDS_HEADING,
+  customerNeedsScreen,
+  differentiatorInput,
+  DIFFERENTIATOR_HEADING,
+  differentiatorScreen,
   editBusinessFromReview,
+  editFocusFromReview,
   editWebsiteFromReview,
+  emailInput,
   entryScreen,
   expectBrandConfirm,
   expectCategoryScreen,
   expectCompetitorsScreen,
+  expectConsiderationTextOnBackground,
   expectCustomerNeedsScreen,
+  expectDifferentiatorScreen,
+  expectEmptyEntry,
   expectFocusScreen,
+  expectIntroBusiness,
+  expectIntroReview,
   expectLocationScreen,
   expectMarketScreen,
   expectOfferingsScreen,
+  expectOrderScreen,
   expectProductScreen,
-  expectPublicFactScreen,
   expectServiceScreen,
   expectSummary,
   expectTargetCustomerScreen,
-  expectDecisionConsiderationsScreen,
-  expectDifferentiatorScreen,
   expectTenQuestions,
+  FICTIONAL_BUSINESS,
+  fillDifferentiator,
   fillEntry,
   fillPublicFact,
+  fillTargetCustomer,
+  fillWebsite,
+  focusCard,
+  FOCUS_HEADING,
   focusScreen,
-  intakeSession,
   INTAKE_SESSION_KEY,
+  intakeSession,
+  locationRow,
   locationScreen,
-  ORDER_EMAIL,
-  orderScreen,
   marketScreen,
+  needsGroup,
   openAliasEditor,
+  openFocusTarget,
+  openReviewSheet,
+  ORDER_EMAIL,
+  payButton,
   pressKembali,
   pressLanjut,
+  pressMulai,
   pressPeriksa,
+  productRow,
   productScreen,
-  competitorsScreen,
-  customerNeedsScreen,
-  decisionConsiderationsScreen,
-  differentiatorScreen,
-  publicFactScreen,
-  targetCustomerScreen,
-  addConsideration,
-  considerationInput,
-  differentiatorInput,
-  fillDifferentiator,
-  fillTargetCustomer,
-  targetCustomerInput,
-  toggleConsideration,
-  expectConsiderationTextOnBackground,
+  publicFactInput,
+  publicFactToggle,
   removeAlias,
-  reviewRow,
+  renameBusiness,
+  reviewConfirmation,
+  reviewFact,
   reviewScreen,
-  REVIEW_HEADING,
+  reviewSheet,
   RICH_PREPARATION_DRAFT,
+  saveReviewSheet,
+  saveTargetSheet,
   SENSITIVE_INPUT_NOTICE,
   serviceScreen,
+  serviceTile,
+  skipCompetitors,
   stubPreparationDraft,
-  submitOrder,
-  throughDetailScreens,
+  TARGET_CUSTOMER_HEADING,
+  targetCustomerScreen,
   throughCompetitorContext,
+  throughDetailScreens,
+  toggleConsideration,
   toggleCustomerNeed,
   toSummary,
   useTestPass,
+  websiteInput,
 } from "./journey";
 
 const richDraft = RICH_PREPARATION_DRAFT;
@@ -80,6 +117,93 @@ const richDraft = RICH_PREPARATION_DRAFT;
 async function enter(page: Page, rich = true) {
   if (rich) await stubPreparationDraft(page, richDraft);
   await toSummary(page);
+}
+
+/** Entry → business found → paid reading → the focus screen (J11). */
+async function toFocus(page: Page, rich = true) {
+  if (rich) await stubPreparationDraft(page, richDraft);
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await confirmBrand(page);
+}
+
+/** The whole-brand Step 2 chain after the focus screen. */
+const BRAND_CHAIN = [
+  "category",
+  "offerings",
+  "target-customer",
+  "customer-needs",
+  "service",
+  "market",
+  "competitors",
+  "differentiator",
+] as const;
+
+/** From the focus screen, `Lanjut` through the prepared screens to `stage`
+ * (every rich answer is prepared, so no screen holds the chain back). */
+async function lanjutTo(page: Page, stage: (typeof BRAND_CHAIN)[number]) {
+  await expectFocusScreen(page);
+  for (const next of BRAND_CHAIN) {
+    await pressLanjut(page);
+    await expect(page.locator(`[data-intake-screen="${next}"]`)).toBeVisible();
+    if (next === stage) return;
+  }
+}
+
+/** The context frozen into each question request, in request order. */
+function questionContexts(page: Page) {
+  const contexts: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
+      contexts.push(
+        (
+          request.postDataJSON() as {
+            intake: { context: Record<string, unknown> };
+          }
+        ).intake.context,
+      );
+  });
+  return contexts;
+}
+
+/** No horizontal page scroll once the screen has settled (a new screen
+ * slides in from the side for a moment). */
+async function expectNoOverflow(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    )
+    .toBe(true);
+}
+
+/** Nothing inside `box` reaches past its sides. A sheet is fixed to the
+ * screen, so its overflow never widens the page; it is measured here. */
+async function expectInside(box: Locator) {
+  await expect
+    .poll(() =>
+      box.evaluate((root) => {
+        const edge = root.getBoundingClientRect();
+        return [...root.querySelectorAll("*")].every((element) => {
+          const rect = element.getBoundingClientRect();
+          // Visually hidden helpers are 1px boxes just off their parent.
+          if (rect.width <= 1 || rect.height <= 1) return true;
+          return rect.left >= edge.left - 0.5 && rect.right <= edge.right + 0.5;
+        });
+      }),
+    )
+    .toBe(true);
+}
+
+/** Focus is somewhere inside `container`. */
+async function expectFocusWithin(container: Locator) {
+  await expect
+    .poll(() =>
+      container.evaluate((element) => element.contains(document.activeElement)),
+    )
+    .toBe(true);
 }
 
 test("failed extraction keeps the validated identity and the order, and retries under the same order", async ({
@@ -153,34 +277,48 @@ test("failed extraction keeps the validated identity and the order, and retries 
       }),
     });
   });
+  const extractCalls = () =>
+    calls.filter((call) => call === "POST /api/audit/extract");
   await fillEntry(page);
   await pressPeriksa(page);
   await expectBrandConfirm(page);
-  await pressLanjut(page);
-  await submitOrder(page);
+  await continueToOrder(page);
+  // The payment starts the paid reading by itself; this one fails.
+  await emailInput(page).fill(ORDER_EMAIL);
+  await payButton(page).click();
   await expect(page.getByText("Ekstraksi sementara gagal.")).toBeVisible();
-  const saved = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  await expectOrderScreen(page);
+  const saved = await intakeSession(page);
   expect(saved.identity.canonicalUrl).toBe("https://kedai-fiksi.example/");
   expect(saved.preparationCalls).toMatchObject([failedCall]);
   // Spec 016 R-31: the email is never kept in the browser.
   expect(JSON.stringify(saved)).not.toContain(ORDER_EMAIL);
   const orderId = saved.order.id as string;
+  // A failed reading waits for the customer's own Lanjut.
+  await expect(
+    page.getByRole("button", { name: "Lanjut", exact: true }),
+  ).toBeEnabled();
+  await page.waitForTimeout(1_000);
+  expect(extractCalls()).toHaveLength(1);
   await page.reload();
-  // The order is still open: the order screen has no email field, and `Lanjut`
-  // reads the website again under the same order.
-  await expect(orderScreen(page)).toBeVisible();
-  await expect(page.getByRole("textbox", { name: /Email/ })).toHaveCount(0);
+  // The order is still open and paid: the order screen has no email field,
+  // a reload never replays the reading, and `Lanjut` reads the website again
+  // under the same order.
+  await expectOrderScreen(page);
+  await expect(emailInput(page)).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Lanjut", exact: true }),
+  ).toBeEnabled();
+  await page.waitForTimeout(1_000);
+  expect(extractCalls()).toHaveLength(1);
   await pressLanjut(page);
+  await expectIntroBusiness(page);
+  await pressMulai(page);
   await expectFocusScreen(page);
   expect(
     calls.filter((call) => call === "GET /api/audit/identity"),
   ).toHaveLength(1);
-  expect(
-    calls.filter((call) => call === "POST /api/audit/extract"),
-  ).toHaveLength(2);
+  expect(extractCalls()).toHaveLength(2);
   // One order; the paid reading carries only its id (no budget, no website).
   expect(extractionBodies).toEqual([
     { order_id: orderId },
@@ -202,16 +340,18 @@ test("reload during question generation retains an unknown attempt and never aut
   await confirmSummary(page);
   await started;
   await page.reload();
+  // The questions never arrived; asking again is only the owner's choice.
   await expect(
-    page.getByRole("heading", { name: "Siapkan pertanyaan audit" }),
+    page.getByRole("heading", { level: 1, name: "Pertanyaan belum diterima" }),
   ).toBeVisible();
-  const saved = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  await expect(
+    page.getByRole("button", { name: "Coba siapkan pertanyaan", exact: true }),
+  ).toBeVisible();
+  const saved = await intakeSession(page);
   expect(saved.generationAttempts).toMatchObject([
     { outcome: "interrupted", execution: "unknown", cost_usd: null },
   ]);
+  await page.waitForTimeout(1_000);
   expect(calls).toHaveLength(1);
 });
 
@@ -219,24 +359,24 @@ test("a sensitive optional edit retains the last safe summary value", async ({
   page,
 }) => {
   await enter(page);
-  await page
-    .locator('section[aria-label="Pembeda bisnis"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectDifferentiatorScreen(page);
-  const differentiator = differentiatorScreen(page).getByRole("textbox", {
-    name: /Pembeda bisnis/,
-  });
+  // J26: the differentiator is edited in the review's Pembanding sheet.
+  const sheet = await openReviewSheet(page, "Pembanding");
+  const differentiator = differentiatorInput(sheet);
   await differentiator.fill("Racikan kopi khas");
   await differentiator.fill("nomor rekening 12345");
   await expect(
-    page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
+    sheet.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
   ).toBeVisible();
   await expect(differentiator).toHaveValue("Racikan kopi khas");
-  const saved = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
+  // Nothing is saved before Simpan, and the sensitive text never is.
+  let saved = await intakeSession(page);
+  expect(saved.selection.differentiator).toBe("Racikan kopi rumahan fiktif");
+  expect(JSON.stringify(saved)).not.toContain("nomor rekening");
+  await saveReviewSheet(page, "Pembanding");
+  await expect(reviewFact(page, "Yang membedakan Anda")).toHaveText(
+    "Racikan kopi khas",
   );
+  saved = await intakeSession(page);
   expect(saved.selection.differentiator).toBe("Racikan kopi khas");
   expect(JSON.stringify(saved)).not.toContain("nomor rekening");
 });
@@ -245,66 +385,63 @@ test("every manually selected comparator stays visible, correctable and removabl
   page,
 }) => {
   await enter(page, false);
-  await page
-    .locator('section[aria-label="Bisnis pembanding"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectCompetitorsScreen(page);
-  await chooseCompetitorMode(page, "Bisnis yang saya pilih");
-  await addCompetitor(page, "Kedai Baru");
-  await addCompetitor(page, "Kedai Samping");
-  const selected = page.getByRole("textbox", { name: "Pembanding terpilih 1" });
-  const otherSelected = page.getByRole("textbox", {
-    name: "Pembanding terpilih 2",
-  });
-  await expect(selected).toHaveValue("Kedai Baru");
-  await expect(otherSelected).toHaveValue("Kedai Samping");
-  await selected.fill(" kedai SAMPing ");
-  await expect(selected).toHaveAttribute("aria-invalid", "true");
-  const duplicateErrorId = await selected.getAttribute("aria-describedby");
-  expect(duplicateErrorId).toBeTruthy();
-  await expect(page.locator(`#${duplicateErrorId}`)).toContainText(
-    "Nama pembanding sudah dipakai",
+  // Nothing was found to compare with: the sheet opens on the typing field.
+  let sheet = await openReviewSheet(page, "Pembanding");
+  await addCompetitor(sheet, "Kedai Baru");
+  await addCompetitor(sheet, "Kedai Samping");
+  for (const name of ["Kedai Baru", "Kedai Samping"]) {
+    await expect(competitorRow(sheet, name)).toBeChecked();
+    await expect(competitorRow(sheet, name)).toHaveAccessibleDescription(
+      "Dari Anda",
+    );
+  }
+  // A typed duplicate (any case or spacing) is the same business, never a
+  // second row.
+  await addCompetitor(sheet, " kedai SAMPing ");
+  await expect(competitorInput(sheet)).toHaveValue("");
+  await expect(sheet.getByRole("checkbox")).toHaveCount(2);
+  // A wrong name is corrected by unticking it — it stays on screen, one tap
+  // from undo — and adding the right one.
+  await competitorRow(sheet, "Kedai Baru").click();
+  await expect(competitorRow(sheet, "Kedai Baru")).not.toBeChecked();
+  await addCompetitor(sheet, "Kedai Pilihan");
+  await expect(competitorRow(sheet, "Kedai Pilihan")).toBeChecked();
+  await expect(
+    sheet.getByRole("button", { name: "Simpan", exact: true }),
+  ).toBeEnabled();
+  await saveReviewSheet(page, "Pembanding");
+  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+    "Kedai Samping, Kedai Pilihan",
   );
-  await expect(page.getByRole("button", { name: "Lanjut" })).toBeDisabled();
-  await selected.fill("Kedai Pilihan");
-  await expect(selected).not.toHaveAttribute("aria-invalid", "true");
-  await expect(page.getByRole("button", { name: "Lanjut" })).toBeEnabled();
-  await pressLanjut(page);
-  await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
-  const frozen = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  const frozen = await intakeSession(page);
   expect(frozen.frozen.context.comparators.value).toEqual({
     mode: "named",
-    names: ["Kedai Pilihan", "Kedai Samping"],
+    names: ["Kedai Samping", "Kedai Pilihan"],
   });
-  await page
-    .getByRole("button", { name: "Kembali ke informasi bisnis" })
-    .click();
-  await expectSummary(page);
-  await page
-    .locator('section[aria-label="Bisnis pembanding"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectCompetitorsScreen(page);
+  await backToReview(page);
+  sheet = await openReviewSheet(page, "Pembanding");
+  await expect(competitorRow(sheet, "Kedai Samping")).toBeChecked();
+  await expect(competitorRow(sheet, "Kedai Pilihan")).toBeChecked();
+  await competitorRow(sheet, "Kedai Pilihan").click();
+  await expect(competitorRow(sheet, "Kedai Samping")).toBeChecked();
+  await competitorRow(sheet, "Kedai Samping").click();
+  await expect(sheet.getByRole("checkbox", { checked: true })).toHaveCount(0);
+  // R-18: with every name unticked "named" stays chosen, so Simpan waits for
+  // a name or another choice; "Belum tahu" is picked on purpose.
   await expect(
-    page.getByRole("textbox", { name: "Pembanding terpilih 1" }),
-  ).toHaveValue("Kedai Pilihan");
-  await page
-    .getByRole("button", { name: "Hapus pembanding Kedai Pilihan" })
-    .click();
-  const remaining = page.getByRole("textbox", {
-    name: "Pembanding terpilih 1",
+    sheet.getByRole("button", { name: "Simpan", exact: true }),
+  ).toBeDisabled();
+  await sheet.getByRole("button", { name: "Belum tahu", exact: true }).click();
+  await saveReviewSheet(page, "Pembanding");
+  expect((await intakeSession(page)).selection).toMatchObject({
+    comparatorMode: "unknown",
+    comparatorNames: [],
   });
-  await expect(remaining).toHaveValue("Kedai Samping");
-  await page
-    .getByRole("button", { name: "Hapus pembanding Kedai Samping" })
-    .click();
-  await expect(remaining).toHaveCount(0);
+  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+    "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+  );
 });
 
 test("rich reading reaches one review and question review without more typing", async ({
@@ -316,29 +453,27 @@ test("rich reading reaches one review and question review without more typing", 
       calls.push(`${request.method()} ${new URL(request.url()).pathname}`);
   });
   await enter(page);
-  await expect(reviewScreen(page)).toBeVisible();
-  await expect(reviewScreen(page)).toHaveAttribute(
-    "data-smart-summary",
-    "ready",
+  await expectSummary(page);
+  // The prepared profile reads back in the review's facts.
+  await expect(reviewFact(page, "Nama")).toHaveText(
+    "Kedai FiksiJuga disebut: Kedai Fiksi Bandung",
   );
-  await expect(
-    page.getByRole("heading", { name: REVIEW_HEADING }),
-  ).toBeVisible();
-  // The business name reads back with no inline name controls; the prepared
-  // alias keeps its website provenance.
-  await expect(reviewRow(page, "Bisnis")).toContainText("Kedai Fiksi");
-  const aliasRow = reviewRow(page, "Nama lain");
-  await expect(aliasRow).toContainText("Kedai Fiksi Bandung");
-  await expect(aliasRow).toContainText("Dari website Anda");
-  const focusRow = page.locator('section[aria-label="Fokus audit"]');
-  await expect(focusRow).toContainText("Brand secara keseluruhan");
-  await expect(focusRow).toContainText("Saran Nuave");
-  await expect(
-    page.locator('section[aria-label="Cara layanan"]'),
-  ).toContainText("Di lokasi bisnis Anda");
-  const marketRow = page.locator('section[aria-label="Jangkauan pasar"]');
-  await expect(marketRow).toContainText("Beberapa area");
-  await expect(marketRow).toContainText("Bandung");
+  await expect(reviewFact(page, "Website")).toHaveText("kedai-fiksi.example");
+  await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh brand");
+  await expect(reviewFact(page, "Disebut sebagai")).toHaveText("kedai kopi");
+  await expect(reviewFact(page, "Menjual")).toHaveText("kopi susu, roti");
+  await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
+    "datang ke tempat, dikirim",
+  );
+  await expect(reviewFact(page, "Area")).toHaveText("Bandung, Cimahi");
+  // The review states no source; the prepared answers keep theirs: the alias
+  // from the website, the focus as Nuave's proposal.
+  expect((await intakeSession(page)).selection.origins).toMatchObject({
+    aliases: "website",
+    focus: "nuave",
+    serviceChannels: "website",
+    market: "website",
+  });
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(calls).toEqual([
@@ -346,9 +481,7 @@ test("rich reading reaches one review and question review without more typing", 
     "POST /api/audit/extract",
     "POST /api/audit/glm-questions",
   ]);
-  await page
-    .getByRole("button", { name: "Kembali ke informasi bisnis" })
-    .click();
+  await backToReview(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(
@@ -519,45 +652,49 @@ test("a session stored under a previous intake version restarts at an empty entr
   await page.goto("/audit");
   // The pre-bump session is rejected: the entry restores empty, not the stale
   // "Kedai Lama" values.
-  await expect(page.getByRole("textbox", { name: "Nama bisnis" })).toHaveValue(
-    "",
-  );
-  await page.getByRole("textbox", { name: "Nama bisnis" }).fill("Kedai Fiksi");
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://kedai-fiksi.example/");
+  await expectEmptyEntry(page);
+  for (const stale of ["Kedai Lama", "Kedai Ketujuh", "Kedai Usang"])
+    await expect(page.getByText(stale)).toHaveCount(0);
+  await fillWebsite(page, "https://kedai-fiksi.example/");
   await pressPeriksa(page);
   await expectBrandConfirm(page);
 });
 
-test("a cleared detail row routes the summary CTA to its owning screen", async ({
+test("a required answer left open routes the summary CTA to its owning screen", async ({
   page,
 }) => {
-  await enter(page, false);
-  await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
-  // Clearing a required answer through its own screen leaves a gap; the
-  // summary then offers the single completion CTA instead of confirming.
-  await page
-    .locator('section[aria-label="Kategori"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectCategoryScreen(page);
-  await page.getByRole("textbox", { name: "Kategori" }).fill("");
-  await pressKembali(page);
-  await expectSummary(page);
-  await expect(page.getByText(/Perlu dipastikan: Kategori/)).toBeVisible();
-  await expect(page.getByRole("button", { name: CONFIRM_SUMMARY })).toHaveCount(
-    0,
-  );
-  // The CTA opens the owning detail screen marked to return: filling the
-  // gap and pressing Lanjut lands straight back on the review.
-  await page
-    .getByRole("button", { name: "Lengkapi yang perlu dipastikan" })
-    .click();
-  await expectCategoryScreen(page);
-  await page.getByRole("textbox", { name: "Kategori" }).fill("kedai kopi");
+  // The synthetic reading finds nothing, and a branch focus never asks for
+  // the market.
+  await toFocus(page, false);
+  await openFocusTarget(page, "Satu cabang");
+  await addBranch(page, "Kedai Fiksi Pusat", "Jl. Fiksi 1, Bandung");
+  await pressLanjut(page);
+  await throughDetailScreens(page);
+  await expect(reviewFact(page, "Area")).toHaveCount(0);
+  await expect(reviewConfirmation(page)).toBeVisible();
+  // Moving the audit back to the whole brand leaves the market unanswered:
+  // the summary then offers the single completion CTA instead of confirming.
+  await editFocusFromReview(page);
+  await chooseFocus(page, "Seluruh brand");
+  await confirmFocus(page);
   await pressLanjut(page);
   await expectSummary(page);
+  await expect(
+    page.getByText("Perlu dipastikan: Jangkauan pasar.", { exact: true }),
+  ).toBeVisible();
+  await expect(reviewFact(page, "Area")).toHaveText("Perlu dipastikan");
+  await expect(
+    page.getByRole("button", { name: CONFIRM_SUMMARY, exact: true }),
+  ).toHaveCount(0);
+  await expect(reviewConfirmation(page)).toHaveCount(0);
+  // The CTA opens the owning screen marked to return: answering it and
+  // pressing Lanjut lands straight back on the review.
+  await page.getByRole("button", { name: COMPLETE_GAPS, exact: true }).click();
+  await expectMarketScreen(page);
+  await chooseReach(marketScreen(page), "Seluruh Indonesia");
+  await pressLanjut(page);
+  await expectSummary(page);
+  await expect(reviewFact(page, "Area")).toHaveText("Seluruh Indonesia");
   await confirmSummary(page);
   await expectTenQuestions(page);
 });
@@ -565,63 +702,38 @@ test("a cleared detail row routes the summary CTA to its owning screen", async (
 test("product and location choices freeze only their active meaning", async ({
   page,
 }) => {
-  const contexts: Record<string, unknown>[] = [];
-  page.on("request", (request) => {
-    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
-      contexts.push(
-        (
-          request.postDataJSON() as {
-            intake: { context: Record<string, unknown> };
-          }
-        ).intake.context,
-      );
-  });
-  // First pass: pick the product focus on its dedicated screens.
-  await stubPreparationDraft(page, richDraft);
-  await fillEntry(page);
-  await pressPeriksa(page);
-  await expectBrandConfirm(page);
-  await confirmBrand(page);
-  await chooseFocus(page, "Satu produk atau layanan");
-  await pressLanjut(page);
-  await expectProductScreen(page);
-  await productScreen(page).getByRole("radio", { name: "roti" }).click();
+  const contexts = questionContexts(page);
+  // First pass: pick the product focus on its own list.
+  await toFocus(page);
+  await openFocusTarget(page, "Satu produk");
+  await productRow(page, "roti").click();
   await pressLanjut(page);
   // Product focus chains through the detail screens; its offering list is
   // read-only catalogue context and the market screen still applies.
   await throughDetailScreens(page);
+  await expect(reviewFact(page, "Fokus audit")).toHaveText("Satu produk: roti");
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
     focus: { value: { kind: "produk", name: "roti" } },
     offerings: { value: ["roti"] },
   });
-  // Editing the summary's focus row re-opens the focus screen; switching to a
-  // location clears the product target and freezes only the cabang meaning.
-  await page
-    .getByRole("button", { name: "Kembali ke informasi bisnis" })
-    .click();
-  const focusRow = page.locator('section[aria-label="Fokus audit"]');
-  await focusRow.getByRole("button", { name: "Ubah" }).click();
-  await expectFocusScreen(page);
-  await chooseFocus(page, "Satu lokasi");
-  await pressLanjut(page);
-  await expectLocationScreen(page);
-  await locationScreen(page)
-    .getByRole("button", { name: "Tambah lokasi lain" })
-    .click();
-  await locationScreen(page)
-    .getByRole("textbox", { name: "Nama lokasi" })
-    .fill("Cabang Timur");
-  await locationScreen(page)
-    .getByRole("textbox", { name: "Alamat atau area" })
-    .fill("Jl. Contoh 12");
+  // Changing the focus from the review re-opens the focus screen; switching
+  // to a branch clears the product target and freezes only the cabang
+  // meaning.
+  await backToReview(page);
+  await editFocusFromReview(page);
+  await openFocusTarget(page, "Satu cabang");
+  await addBranch(page, "Cabang Timur", "Jl. Contoh 12");
   await pressLanjut(page);
   // The focus change makes the detour pass the category checkpoint, whose
   // Lanjut then exits straight back to the review.
   await expectCategoryScreen(page);
   await pressLanjut(page);
   await expectSummary(page);
+  await expect(reviewFact(page, "Fokus audit")).toHaveText(
+    "Satu cabang: Cabang TimurJl. Contoh 12",
+  );
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
@@ -644,31 +756,26 @@ test("material correction invalidates the old questions; cancel keeps the commit
   await enter(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
-  await page
-    .getByRole("button", { name: "Kembali ke informasi bisnis" })
-    .click();
-  const categoryRow = page.locator('section[aria-label="Kategori"]');
+  await backToReview(page);
+  // J26: the category is corrected in the Bisnis sheet.
   const editCategory = async () => {
-    await categoryRow.getByRole("button", { name: "Ubah" }).click();
-    await expectCategoryScreen(page);
-    const input = categoryScreen(page).getByRole("textbox", {
-      name: "Kategori",
-    });
-    if (!(await input.isVisible()))
-      await categoryScreen(page)
-        .getByRole("button", { name: "Tulis kategori sendiri" })
-        .click();
-    await input.fill("warung kopi");
-    await pressKembali(page);
-    await expectSummary(page);
+    const sheet = await openReviewSheet(page, "Bisnis");
+    await addCategory(sheet, "warung kopi");
+    await expect(
+      categoryChoices(sheet).getByRole("radio", {
+        name: "warung kopi",
+        exact: true,
+      }),
+    ).toBeChecked();
+    await saveReviewSheet(page, "Bisnis");
+    await expect(reviewFact(page, "Disebut sebagai")).toHaveText("warung kopi");
   };
   await editCategory();
   await page.getByRole("button", { name: "Batalkan perubahan" }).click();
   await expectTenQuestions(page);
   expect(questions).toHaveLength(1);
-  await page
-    .getByRole("button", { name: "Kembali ke informasi bisnis" })
-    .click();
+  await backToReview(page);
+  await expect(reviewFact(page, "Disebut sebagai")).toHaveText("kedai kopi");
   await editCategory();
   await confirmSummary(page);
   await expectTenQuestions(page);
@@ -694,28 +801,33 @@ test("a name-only edit reuses the reading; changing the website reads again", as
       calls.push(new URL(request.url()).pathname);
   });
   await enter(page, false);
-  // `Ubah website` on the Bisnis row opens the entry source fields.
-  await editWebsiteFromReview(page);
-  await expect(entryScreen(page)).toBeVisible();
   expect(calls).toHaveLength(2);
-  await page
-    .getByRole("textbox", { name: "Nama bisnis" })
-    .fill("Kedai Fiksi Baru");
-  await pressPeriksa(page);
-  // Name-only correction returns to the brand check without a new read.
+  // `Ubah nama` in the Bisnis sheet opens the business check, whose name
+  // sheet corrects the name without a new read.
+  await editBusinessFromReview(page);
+  await expectBrandConfirm(page);
+  await renameBusiness(page, "Kedai Fiksi Baru");
   await expectBrandConfirm(page, "Kedai Fiksi Baru");
   expect(calls).toHaveLength(2);
   // The brand screen's Lanjut returns to the review through the marker.
   await pressLanjut(page);
   await expectSummary(page);
-  // A website change invalidates preparation: `Periksa` reads the source again.
+  await expect(reviewFact(page, "Nama")).toHaveText("Kedai Fiksi Baru");
+  // Checking the same website again reuses the lookup and the reading.
   await editWebsiteFromReview(page);
   await expect(entryScreen(page)).toBeVisible();
-  await page
-    .getByRole("textbox", { name: "URL website publik" })
-    .fill("https://fiksi-lain.example/");
+  await expect(websiteInput(page)).toHaveValue(FICTIONAL_BUSINESS.url);
   await pressPeriksa(page);
-  await expect(brandScreen(page)).toBeVisible();
+  await expectBrandConfirm(page, "Kedai Fiksi Baru");
+  expect(calls).toHaveLength(2);
+  await pressLanjut(page);
+  await expectSummary(page);
+  // A website change invalidates preparation: the check reads the source again.
+  await editWebsiteFromReview(page);
+  await expect(entryScreen(page)).toBeVisible();
+  await fillWebsite(page, "https://fiksi-lain.example/");
+  await pressPeriksa(page);
+  await expectBrandConfirm(page, "Fiksi Lain");
   // The new website is looked up for free; the paid reading waits for a new
   // order (spec 016 R-01).
   expect(calls).toHaveLength(3);
@@ -729,36 +841,22 @@ test("a name-only edit reuses the reading; changing the website reads again", as
 test("prepared competitor names are editable; alternatives carry no company names", async ({
   page,
 }) => {
-  const contexts: Record<string, unknown>[] = [];
-  page.on("request", (request) => {
-    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
-      contexts.push(
-        (
-          request.postDataJSON() as {
-            intake: { context: Record<string, unknown> };
-          }
-        ).intake.context,
-      );
-  });
+  const contexts = questionContexts(page);
   await enter(page);
-  const competitorRow = page.locator('section[aria-label="Bisnis pembanding"]');
-  await expect(competitorRow).toContainText("Kedai Tetangga");
-  const beforeEdit = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
+  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+    "Kedai Tetangga",
   );
+  const beforeEdit = await intakeSession(page);
   expect(beforeEdit.selection.comparatorMode).toBe("named");
   expect(beforeEdit.selection.comparatorNames).toEqual(["Kedai Tetangga"]);
-  await competitorRow.getByRole("button", { name: "Ubah" }).click();
-  await expectCompetitorsScreen(page);
+  let sheet = await openReviewSheet(page, "Pembanding");
+  await expect(competitorRow(sheet, "Kedai Tetangga")).toBeChecked();
   await expect(
-    competitorsScreen(page).getByRole("textbox", {
-      name: "Pembanding terpilih 1",
-    }),
-  ).toHaveValue("Kedai Tetangga");
-  await addCompetitor(page, "Warung Fiksi");
-  await pressLanjut(page);
-  await expectSummary(page);
+    competitorRow(sheet, "Kedai Tetangga"),
+  ).toHaveAccessibleDescription("Saran Nuave");
+  await addCompetitor(sheet, "Warung Fiksi");
+  await expect(competitorRow(sheet, "Warung Fiksi")).toBeChecked();
+  await saveReviewSheet(page, "Pembanding");
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
@@ -767,17 +865,23 @@ test("prepared competitor names are editable; alternatives carry no company name
       origin: "owner",
     },
   });
-  await page
-    .getByRole("button", { name: "Kembali ke informasi bisnis" })
+  await backToReview(page);
+  // R-18: unticking every name keeps "named", so Simpan waits for a name or
+  // another choice; "Tidak ada pembanding langsung" freezes as itself and
+  // names no company.
+  sheet = await openReviewSheet(page, "Pembanding");
+  await competitorRow(sheet, "Kedai Tetangga").click();
+  await competitorRow(sheet, "Warung Fiksi").click();
+  await expect(
+    sheet.getByRole("button", { name: "Simpan", exact: true }),
+  ).toBeDisabled();
+  await sheet
+    .getByRole("button", { name: "Tidak ada pembanding langsung", exact: true })
     .click();
-  await page
-    .locator('section[aria-label="Bisnis pembanding"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectCompetitorsScreen(page);
-  await chooseCompetitorMode(page, "Tidak ada pembanding langsung");
-  await pressLanjut(page);
-  await expectSummary(page);
+  await saveReviewSheet(page, "Pembanding");
+  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+    "Tidak ada pembanding langsung. Nuave membandingkan dengan bisnis sejenis.",
+  );
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[1]).toMatchObject({
@@ -792,28 +896,19 @@ test("empty optional screens keep no needs or facts and unknown competitors", as
   page,
 }) => {
   await enter(page, false);
-  await expect(
-    page.locator('section[aria-label="Pelanggan sasaran"]'),
-  ).toContainText("Belum diisi");
-  await expect(
-    page.locator('section[aria-label="Kebutuhan pelanggan"]'),
-  ).toContainText("Belum diisi");
-  await expect(
-    page.locator('section[aria-label="Pertimbangan pembeli"]'),
-  ).toContainText("Belum diisi");
-  await expect(
-    page.locator('section[aria-label="Bisnis pembanding"]'),
-  ).toContainText("Belum tahu");
-  await expect(
-    page.locator('section[aria-label="Pembeda bisnis"]'),
-  ).toContainText("Belum diisi");
-  await expect(
-    page.locator('section[aria-label="Fakta publik tambahan"]'),
-  ).toContainText("Belum diisi");
-  const saved = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  for (const [label, value] of [
+    ["Siapa", "Belum diisi"],
+    ["Mereka butuh", "Belum diisi"],
+    ["Mereka membandingkan", "Belum diisi"],
+    [
+      "Bisnis pembanding",
+      "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+    ],
+    ["Yang membedakan Anda", "Belum diisi"],
+    ["Info yang sering salah", "Tidak ada"],
+  ] as const)
+    await expect(reviewFact(page, label)).toHaveText(value);
+  const saved = await intakeSession(page);
   expect(saved.selection).toMatchObject({
     targetCustomer: "",
     customerNeeds: [],
@@ -828,40 +923,57 @@ test("empty optional screens keep no needs or facts and unknown competitors", as
 test("J6 screens keep prepared provenance, optional edits, and competitor limits", async ({
   page,
 }) => {
-  await enter(page);
-  await page
-    .locator('section[aria-label="Kebutuhan pelanggan"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectCustomerNeedsScreen(page);
-  await expect(customerNeedsScreen(page)).toContainText("Saran Nuave");
-  const preparedNeed = customerNeedsScreen(page).getByRole("button", {
+  await toFocus(page);
+  await lanjutTo(page, "customer-needs");
+  // J17: the prepared need is ticked; the owner unticks it and adds one.
+  const needs = customerNeedsScreen(page);
+  const preparedNeed = needsGroup(needs).getByRole("button", {
     name: "minuman dekat kantor",
+    exact: true,
   });
   await expect(preparedNeed).toHaveAttribute("aria-pressed", "true");
-  await toggleCustomerNeed(page, "minuman dekat kantor");
-  await addCustomerNeed(page, "pesanan untuk rapat pagi");
+  expect((await intakeSession(page)).selection.origins.customerNeeds).toBe(
+    "nuave",
+  );
+  await toggleCustomerNeed(needs, "minuman dekat kantor");
+  await expect(preparedNeed).toHaveAttribute("aria-pressed", "false");
+  await addCustomerNeed(needs, "pesanan untuk rapat pagi");
   await expect(
-    customerNeedsScreen(page).getByRole("button", {
+    needsGroup(needs).getByRole("button", {
       name: "pesanan untuk rapat pagi",
+      exact: true,
     }),
   ).toHaveAttribute("aria-pressed", "true");
+  let saved = await intakeSession(page);
+  expect(saved.selection.customerNeeds).toEqual(["pesanan untuk rapat pagi"]);
+  expect(saved.selection.origins.customerNeeds).toBe("owner");
   await pressLanjut(page);
-  await expectSummary(page);
+  await expectServiceScreen(page);
+  await pressLanjut(page);
+  await expectMarketScreen(page);
+  await pressLanjut(page);
 
-  await page
-    .locator('section[aria-label="Bisnis pembanding"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
+  // J20: the prepared business is ticked and labelled as Nuave's suggestion.
   await expectCompetitorsScreen(page);
-  await expect(competitorsScreen(page)).toContainText("Saran Nuave");
-  await competitorsScreen(page)
-    .getByRole("button", { name: "Kedai Tetangga", exact: true })
-    .click();
+  const competitors = competitorsScreen(page);
+  const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
+  const prepared = competitorRow(competitors, "Kedai Tetangga");
+  await expect(prepared).toBeChecked();
+  await expect(prepared).toHaveAccessibleDescription("Saran Nuave");
+  // R-18: unticking every name keeps "named", so Lanjut waits for a name or
+  // another choice.
+  await prepared.click();
+  await expect(prepared).not.toBeChecked();
+  expect((await intakeSession(page)).selection).toMatchObject({
+    comparatorMode: "named",
+    comparatorNames: [],
+  });
   await expect(
-    competitorsScreen(page).getByText(/Tambahkan nama pembanding/),
+    competitors.getByText(
+      "Centang atau tulis satu nama, atau pilih salah satu pilihan di bawah.",
+    ),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Lanjut" })).toBeDisabled();
+  await expect(lanjut).toBeDisabled();
   for (const name of [
     "Pembanding satu",
     "Pembanding dua",
@@ -869,20 +981,13 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
     "Pembanding empat",
     "Pembanding lima",
   ]) {
-    await addCompetitor(page, name);
+    await addCompetitor(competitors, name);
   }
-  await addCompetitor(page, "Pembanding enam");
-  await expect(competitorsScreen(page).getByRole("alert")).toContainText(
-    "paling banyak 5",
-  );
-  const addition = competitorsScreen(page).getByRole("textbox", {
-    name: "Nama pembanding lain",
-  });
-  await expect(addition).toHaveValue("Pembanding enam");
-  const saved = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  // A sixth is refused, never truncated: the draft stays for a retry.
+  await addCompetitor(competitors, "Pembanding enam");
+  await expect(competitors.getByRole("alert")).toContainText("paling banyak 5");
+  await expect(competitorInput(competitors)).toHaveValue("Pembanding enam");
+  saved = await intakeSession(page);
   expect(saved.selection.comparatorNames).toEqual([
     "Pembanding satu",
     "Pembanding dua",
@@ -890,18 +995,14 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
     "Pembanding empat",
     "Pembanding lima",
   ]);
-  await competitorsScreen(page)
-    .getByRole("button", { name: "Hapus pembanding Pembanding lima" })
-    .click();
-  await expect(addition).toHaveValue("Pembanding enam");
-  await competitorsScreen(page)
+  await competitorRow(competitors, "Pembanding lima").click();
+  await expect(competitorInput(competitors)).toHaveValue("Pembanding enam");
+  await competitors
+    .getByRole("group", { name: "Nama atau website bisnis", exact: true })
     .getByRole("button", { name: "Tambah", exact: true })
     .click();
-  await expect(addition).toHaveValue("");
-  const retried = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  await expect(competitorInput(competitors)).toHaveValue("");
+  const retried = await intakeSession(page);
   expect(retried.selection.comparatorNames).toEqual([
     "Pembanding satu",
     "Pembanding dua",
@@ -909,99 +1010,109 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
     "Pembanding empat",
     "Pembanding enam",
   ]);
-  await expect(page.getByRole("button", { name: "Lanjut" })).toBeEnabled();
-  await chooseCompetitorMode(page, "Belum tahu");
+  await expect(lanjut).toBeEnabled();
+  // "Belum tahu? Lewati…" stores "not sure" with no names and moves on.
+  await skipCompetitors(page);
+  await expectDifferentiatorScreen(page);
+  expect((await intakeSession(page)).selection).toMatchObject({
+    comparatorMode: "unknown",
+    comparatorNames: [],
+  });
+
+  // J22: the often-wrong public fact folds under the differentiator.
+  await fillPublicFact(
+    differentiatorScreen(page),
+    "Buka setiap hari sampai pukul 21.00.",
+  );
   await pressLanjut(page);
+  await expectIntroReview(page);
+  await pressMulai(page);
   await expectSummary(page);
-  await page
-    .locator('section[aria-label="Fakta publik tambahan"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectPublicFactScreen(page);
-  await fillPublicFact(page, "Buka setiap hari sampai pukul 21.00.");
-  await pressLanjut(page);
-  await expectSummary(page);
+  await expect(reviewFact(page, "Info yang sering salah")).toHaveText(
+    "Buka setiap hari sampai pukul 21.00.",
+  );
+  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+    "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+  );
 });
 
 test("JQ customer screens keep prepared provenance, take owner edits, and hold at 320px", async ({
   page,
 }, testInfo) => {
   const shots = testInfo.outputPath("jq-320px");
-  const contexts: Record<string, unknown>[] = [];
-  page.on("request", (request) => {
-    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
-      contexts.push(
-        (
-          request.postDataJSON() as {
-            intake: { context: Record<string, unknown> };
-          }
-        ).intake.context,
-      );
-  });
-  await enter(page);
+  const contexts = questionContexts(page);
   await page.setViewportSize({ width: 320, height: 720 });
-  // The read-back rows show the prepared meanings with their Nuave label.
-  for (const [row, value] of [
-    ["Pelanggan sasaran", "pekerja kantoran sekitar"],
-    ["Pertimbangan pembeli", "lokasi"],
-    ["Pembeda bisnis", "Racikan kopi rumahan fiktif"],
-  ] as const) {
-    const section = page.locator(`section[aria-label="${row}"]`);
-    await expect(section).toContainText(value);
-    await expect(section).toContainText("Saran Nuave");
-    await expect(section.getByRole("button", { name: "Ubah" })).toBeEnabled();
-  }
-  // Target customer: prepared value selected, owner edit returns to review.
-  await page
-    .locator('section[aria-label="Pelanggan sasaran"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectTargetCustomerScreen(page);
-  await expect(targetCustomerScreen(page)).toContainText("Saran Nuave");
-  await fillTargetCustomer(page, "keluarga sekitar");
-  await pressLanjut(page);
-  await expectSummary(page);
-  // Buyer considerations: prepared chip selected, owner edit wins.
-  await page
-    .locator('section[aria-label="Pertimbangan pembeli"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await expectDecisionConsiderationsScreen(page);
-  await expect(decisionConsiderationsScreen(page)).toContainText("Saran Nuave");
+  await toFocus(page);
+  await lanjutTo(page, "target-customer");
+  // J16: the prepared target customer is ticked and labelled as Nuave's.
+  const target = targetCustomerScreen(page);
   await expect(
-    decisionConsiderationsScreen(page).getByRole("button", { name: "lokasi" }),
+    customerChips(target).getByRole("button", {
+      name: "pekerja kantoran sekitar",
+      exact: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
-  await toggleConsideration(page, "lokasi");
-  await addConsideration(page, "jam buka");
+  await expect(target).toContainText("Saran Nuave");
+  await fillTargetCustomer(target, "keluarga sekitar");
+  await expect(
+    customerChips(target).getByRole("button", {
+      name: "keluarga sekitar",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(target).not.toContainText("Saran Nuave");
+  await expectNoOverflow(page);
+  await pressLanjut(page);
+
+  // J17: the prepared consideration is ticked; the owner's choice wins.
+  await expectCustomerNeedsScreen(page);
+  const needs = customerNeedsScreen(page);
+  await expect(
+    considerationsGroup(needs).getByRole("button", {
+      name: "lokasi",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await toggleConsideration(needs, "lokasi");
+  await addConsideration(needs, "jam buka");
   // An unbroken 300-character consideration fits the 320px layout and its
   // glyphs stay on the chip's painted background.
-  await addConsideration(page, "x".repeat(300));
-  await decisionConsiderationsScreen(page).screenshot({
-    path: `${shots}/decision-considerations-320px.png`,
-  });
-  await decisionConsiderationsScreen(page)
+  await addConsideration(needs, "x".repeat(300));
+  await needs.screenshot({ path: `${shots}/customer-needs-320px.png` });
+  await considerationsGroup(needs)
     .getByRole("button", { name: "jam buka", exact: true })
     .screenshot({ path: `${shots}/chip-singleline.png` });
-  await decisionConsiderationsScreen(page)
+  await considerationsGroup(needs)
     .getByRole("button", { name: "x".repeat(300), exact: true })
     .screenshot({ path: `${shots}/chip-tall-300.png` });
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
-  await expectConsiderationTextOnBackground(page, "x".repeat(300));
+  await expectNoOverflow(page);
+  await expectConsiderationTextOnBackground(needs, "x".repeat(300));
   await pressLanjut(page);
-  await expectSummary(page);
-  // Differentiator: prepared value selected, owner edit returns to review.
-  await page
-    .locator('section[aria-label="Pembeda bisnis"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
+  await expectServiceScreen(page);
+  await pressLanjut(page);
+  await expectMarketScreen(page);
+  await pressLanjut(page);
+  await expectCompetitorsScreen(page);
+  await pressLanjut(page);
+
+  // J22: the prepared differentiator carries Nuave's label until the owner
+  // rewrites it.
   await expectDifferentiatorScreen(page);
-  await expect(differentiatorScreen(page)).toContainText("Saran Nuave");
-  await fillDifferentiator(page, "Pilihan roti rumahan fiktif");
+  const differentiator = differentiatorScreen(page);
+  await expect(differentiatorInput(differentiator)).toHaveValue(
+    "Racikan kopi rumahan fiktif",
+  );
+  await expect(
+    differentiator.getByText("Saran Nuave", { exact: true }),
+  ).toBeVisible();
+  await fillDifferentiator(differentiator, "Pilihan roti rumahan fiktif");
+  await expect(
+    differentiator.getByText("Saran Nuave", { exact: true }),
+  ).toHaveCount(0);
+  await expectNoOverflow(page);
   await pressLanjut(page);
+  await expectIntroReview(page);
+  await pressMulai(page);
   await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
@@ -1025,145 +1136,159 @@ test("JQ customer screens keep prepared provenance, take owner edits, and hold a
 test("JQ customer screens take keyboard-only edits that survive reload and freeze exactly", async ({
   page,
 }, testInfo) => {
-  const contexts: Record<string, unknown>[] = [];
-  page.on("request", (request) => {
-    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
-      contexts.push(
-        (
-          request.postDataJSON() as {
-            intake: { context: Record<string, unknown> };
-          }
-        ).intake.context,
-      );
-  });
-  await enter(page);
+  const contexts = questionContexts(page);
   await page.setViewportSize({ width: 320, height: 720 });
+  await toFocus(page);
+  await lanjutTo(page, "target-customer");
   const shots = testInfo.outputPath("jq-keyboard");
   const kembali = page.getByRole("button", { name: "Kembali", exact: true });
   const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
-  // Test entry may focus the row's Ubah programmatically; every changed-screen
-  // action after that is keyboard only.
-  const openRowByKeyboard = async (row: string, heading: string) => {
-    await page
-      .locator(`section[aria-label="${row}"]`)
-      .getByRole("button", { name: "Ubah" })
-      .focus();
+  /** Presses Tab (or Shift+Tab) until `target` has focus: keyboard only. */
+  const tabTo = async (target: Locator, backwards = false) => {
+    for (let step = 0; step < 30; step += 1) {
+      if (
+        await target.evaluate((element) => element === document.activeElement)
+      )
+        return;
+      await page.keyboard.press(backwards ? "Shift+Tab" : "Tab");
+    }
+    await expect(target).toBeFocused();
+  };
+  /** Each screen arrives, and returns after a reload, with its heading focused. */
+  const expectHeadingFocused = (name: string) =>
+    expect(page.getByRole("heading", { level: 1, name })).toBeFocused();
+  /** The bottom bar is the end of the tab order: Kembali, then Lanjut. */
+  const lanjutByKeyboard = async () => {
+    await tabTo(kembali);
+    await page.keyboard.press("Tab");
+    await expect(lanjut).toBeFocused();
     await page.keyboard.press("Enter");
-    const head = page.getByRole("heading", { name: heading });
-    await expect(head).toBeVisible();
-    await expect(head).toBeFocused();
   };
 
-  // Target customer: keyboard edit, reload, keyboard return to the review.
-  await openRowByKeyboard("Pelanggan sasaran", "Siapa pelanggan utama Anda?");
-  await page.keyboard.press("Tab");
-  await expect(targetCustomerInput(page)).toBeFocused();
-  await page.keyboard.press("ControlOrMeta+A");
+  // J16: the prepared chip off by Space, a typed customer added by Enter.
+  await expectTargetCustomerScreen(page);
+  await expectHeadingFocused(TARGET_CUSTOMER_HEADING);
+  const target = targetCustomerScreen(page);
+  const preparedCustomer = customerChips(target).getByRole("button", {
+    name: "pekerja kantoran sekitar",
+    exact: true,
+  });
+  const ownerCustomer = customerChips(target).getByRole("button", {
+    name: "keluarga sekitar",
+    exact: true,
+  });
+  await tabTo(preparedCustomer);
+  await page.keyboard.press("Space");
+  await expect(preparedCustomer).toHaveAttribute("aria-pressed", "false");
+  await tabTo(
+    target.getByRole("button", { name: "Tambah lainnya", exact: true }),
+  );
+  await page.keyboard.press("Enter");
+  const customerField = target.getByRole("textbox", {
+    name: "Pelanggan lain",
+    exact: true,
+  });
+  await expect(customerField).toBeFocused();
   await page.keyboard.type("keluarga sekitar");
+  await page.keyboard.press("Enter");
+  await expect(customerField).toHaveValue("");
+  await expect(ownerCustomer).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await expectTargetCustomerScreen(page);
-  await expect(targetCustomerInput(page)).toHaveValue("keluarga sekitar");
-  await expect(targetCustomerScreen(page)).toContainText("Dari Anda");
-  await expect(
-    page.getByRole("heading", { name: "Siapa pelanggan utama Anda?" }),
-  ).toBeFocused();
+  await expectHeadingFocused(TARGET_CUSTOMER_HEADING);
+  await expect(ownerCustomer).toHaveAttribute("aria-pressed", "true");
+  await expect(preparedCustomer).toHaveAttribute("aria-pressed", "false");
+  await expect(target).not.toContainText("Saran Nuave");
+  expect((await intakeSession(page)).selection).toMatchObject({
+    targetCustomer: "keluarga sekitar",
+    origins: { targetCustomer: "owner" },
+  });
   await page.screenshot({
     path: `${shots}/target-customer.png`,
     fullPage: true,
   });
-  await page.keyboard.press("Tab");
-  await expect(targetCustomerInput(page)).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(kembali).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(lanjut).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expectSummary(page);
+  await lanjutByKeyboard();
 
-  // Buyer considerations: prepared chip toggled off, owner value committed and
-  // removed by Space, then re-committed from a focused input — all keyboard.
-  await openRowByKeyboard(
-    "Pertimbangan pembeli",
-    "Apa yang dipertimbangkan pelanggan saat memilih?",
-  );
-  const lokasiChip = decisionConsiderationsScreen(page).getByRole("button", {
-    name: "lokasi",
-  });
-  const ownerChip = decisionConsiderationsScreen(page).getByRole("button", {
+  // J17: considerations toggled by Space; a typed one added by Enter, then
+  // switched off again — it stays on screen until the screen closes.
+  await expectCustomerNeedsScreen(page);
+  await expectHeadingFocused(CUSTOMER_NEEDS_HEADING);
+  const needs = customerNeedsScreen(page);
+  const reasons = considerationsGroup(needs);
+  const lokasi = reasons.getByRole("button", { name: "lokasi", exact: true });
+  const jamBuka = reasons.getByRole("button", {
     name: "jam buka",
+    exact: true,
   });
-  await page.keyboard.press("Tab");
-  await expect(lokasiChip).toBeFocused();
+  const parkir = reasons.getByRole("button", {
+    name: "parkir luas",
+    exact: true,
+  });
+  await tabTo(lokasi);
   await page.keyboard.press("Space");
-  await expect(lokasiChip).toHaveAttribute("aria-pressed", "false");
-  await page.keyboard.press("Tab");
-  await expect(considerationInput(page)).toBeFocused();
-  await page.keyboard.type("jam buka");
-  await page.keyboard.press("Enter");
-  await expect(considerationInput(page)).toHaveValue("");
-  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
-  await page.keyboard.press("Shift+Tab");
-  await expect(ownerChip).toBeFocused();
+  await expect(lokasi).toHaveAttribute("aria-pressed", "false");
+  await tabTo(jamBuka);
   await page.keyboard.press("Space");
-  await expect(ownerChip).toHaveCount(0);
-  await considerationInput(page).focus();
-  await page.keyboard.type("jam buka");
+  await expect(jamBuka).toHaveAttribute("aria-pressed", "true");
+  await tabTo(
+    needs.getByRole("button", { name: "Lainnya (pertimbangan)", exact: true }),
+  );
   await page.keyboard.press("Enter");
-  await expect(considerationInput(page)).toHaveValue("");
-  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
+  await expect(considerationInput(needs)).toBeFocused();
+  await page.keyboard.type("parkir luas");
+  await page.keyboard.press("Enter");
+  await expect(considerationInput(needs)).toHaveValue("");
+  await expect(parkir).toHaveAttribute("aria-pressed", "true");
+  await tabTo(parkir, true);
+  await page.keyboard.press("Space");
+  await expect(parkir).toHaveAttribute("aria-pressed", "false");
   await page.reload();
-  await expectDecisionConsiderationsScreen(page);
-  await expect(
-    page.getByRole("heading", {
-      name: "Apa yang dipertimbangkan pelanggan saat memilih?",
-    }),
-  ).toBeFocused();
-  await expect(lokasiChip).toHaveAttribute("aria-pressed", "false");
-  await expect(ownerChip).toHaveAttribute("aria-pressed", "true");
-  await expect(decisionConsiderationsScreen(page)).toContainText("Dari Anda");
+  await expectCustomerNeedsScreen(page);
+  await expectHeadingFocused(CUSTOMER_NEEDS_HEADING);
+  await expect(lokasi).toHaveAttribute("aria-pressed", "false");
+  await expect(jamBuka).toHaveAttribute("aria-pressed", "true");
+  await expect(parkir).toHaveCount(0);
+  expect((await intakeSession(page)).selection).toMatchObject({
+    decisionConsiderations: ["jam buka"],
+    origins: { decisionConsiderations: "owner" },
+  });
   await page.screenshot({
-    path: `${shots}/decision-considerations.png`,
+    path: `${shots}/customer-needs.png`,
     fullPage: true,
   });
-  await page.keyboard.press("Tab");
-  await expect(lokasiChip).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(ownerChip).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(considerationInput(page)).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(kembali).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(lanjut).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expectSummary(page);
+  await lanjutByKeyboard();
 
-  // Differentiator: keyboard edit, reload, keyboard return to the review.
-  await openRowByKeyboard("Pembeda bisnis", "Apa yang membedakan bisnis Anda?");
-  await page.keyboard.press("Tab");
-  await expect(differentiatorInput(page)).toBeFocused();
+  // Service, market and competitors keep their prepared answers.
+  await expectServiceScreen(page);
+  await pressLanjut(page);
+  await expectMarketScreen(page);
+  await pressLanjut(page);
+  await expectCompetitorsScreen(page);
+  await pressLanjut(page);
+
+  // J22: keyboard edit, reload, keyboard return.
+  await expectDifferentiatorScreen(page);
+  await expectHeadingFocused(DIFFERENTIATOR_HEADING);
+  const differentiator = differentiatorScreen(page);
+  await tabTo(differentiatorInput(differentiator));
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("Pilihan roti rumahan fiktif");
   await page.reload();
   await expectDifferentiatorScreen(page);
-  await expect(differentiatorInput(page)).toHaveValue(
+  await expectHeadingFocused(DIFFERENTIATOR_HEADING);
+  await expect(differentiatorInput(differentiator)).toHaveValue(
     "Pilihan roti rumahan fiktif",
   );
-  await expect(differentiatorScreen(page)).toContainText("Dari Anda");
   await expect(
-    page.getByRole("heading", { name: "Apa yang membedakan bisnis Anda?" }),
-  ).toBeFocused();
+    differentiator.getByText("Saran Nuave", { exact: true }),
+  ).toHaveCount(0);
   await page.screenshot({
     path: `${shots}/differentiator.png`,
     fullPage: true,
   });
-  await page.keyboard.press("Tab");
-  await expect(differentiatorInput(page)).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(kembali).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(lanjut).toBeFocused();
-  await page.keyboard.press("Enter");
+  await lanjutByKeyboard();
+  await expectIntroReview(page);
+  await pressMulai(page);
   await expectSummary(page);
 
   // One confirmation, one question request, exact frozen meanings.
@@ -1180,156 +1305,173 @@ test("JQ customer screens take keyboard-only edits that survive reload and freez
   });
 });
 
-test("J6 and JQ edits return to the summary by Continue, footer Back, and browser Back", async ({
+test("review edits return to the summary: sheets by Simpan, Batal and Escape, the focus detour by Lanjut, Kembali and browser Back", async ({
   page,
 }) => {
   await enter(page);
   await page.setViewportSize({ width: 320, height: 720 });
-  const stages = [
-    {
-      row: "Pelanggan sasaran",
-      expectScreen: expectTargetCustomerScreen,
-      heading: "Siapa pelanggan utama Anda?",
-    },
-    {
-      row: "Kebutuhan pelanggan",
-      expectScreen: expectCustomerNeedsScreen,
-      heading: "Kenapa pelanggan biasanya mencari yang seperti ini?",
-    },
-    {
-      row: "Pertimbangan pembeli",
-      expectScreen: expectDecisionConsiderationsScreen,
-      heading: "Apa yang dipertimbangkan pelanggan saat memilih?",
-    },
-    {
-      row: "Bisnis pembanding",
-      expectScreen: expectCompetitorsScreen,
-      heading: "Ini yang mungkin dibandingkan dengan Anda",
-    },
-    {
-      row: "Pembeda bisnis",
-      expectScreen: expectDifferentiatorScreen,
-      heading: "Apa yang membedakan bisnis Anda?",
-    },
-    {
-      row: "Fakta publik tambahan",
-      expectScreen: expectPublicFactScreen,
-      heading: "Apa yang tidak boleh salah dipahami tentang brand Anda?",
-    },
-  ] as const;
-  for (const stage of stages) {
-    for (const back of ["continue", "footer", "browser"] as const) {
-      await page
-        .locator(`section[aria-label="${stage.row}"]`)
-        .getByRole("button", { name: "Ubah" })
-        .click();
-      await stage.expectScreen(page);
-      await expect
-        .poll(() =>
-          page.evaluate(
-            () => document.activeElement?.textContent?.trim() ?? "",
-          ),
-        )
-        .toContain(stage.heading);
+  const before = (await intakeSession(page)).selection;
+  for (const section of ["Bisnis", "Calon pelanggan", "Pembanding"] as const) {
+    for (const exit of ["simpan", "batal", "escape"] as const) {
+      const trigger = reviewScreen(page).getByRole("button", {
+        name: `Ubah ${section}`,
+        exact: true,
+      });
+      const sheet = await openReviewSheet(page, section);
+      // Focus moves into the sheet, and Tab keeps it there.
+      await expectFocusWithin(sheet);
       await page.keyboard.press("Tab");
-      await expect
-        .poll(() => page.evaluate(() => document.activeElement?.tagName ?? ""))
-        .not.toBe("H1");
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= window.innerWidth,
-        ),
-      ).toBe(true);
-      if (back === "continue") await pressLanjut(page);
-      else if (back === "footer") await pressKembali(page);
-      else await page.goBack();
+      await expectFocusWithin(sheet);
+      await expectNoOverflow(page);
+      await expectInside(sheet);
+      if (exit === "simpan") await saveReviewSheet(page, section);
+      else if (exit === "batal") await cancelReviewSheet(page, section);
+      else {
+        await page.keyboard.press("Escape");
+        await expect(sheet).toHaveCount(0);
+      }
       await expectSummary(page);
+      await expect(trigger).toBeFocused();
     }
+  }
+  expect((await intakeSession(page)).selection).toEqual(before);
+  // Batal drops an edit made in a sheet; Simpan applies it.
+  let sheet = await openReviewSheet(page, "Calon pelanggan");
+  await serviceTile(sheet, "Online").click();
+  await expect(serviceTile(sheet, "Online")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await cancelReviewSheet(page, "Calon pelanggan");
+  await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
+    "datang ke tempat, dikirim",
+  );
+  expect((await intakeSession(page)).selection).toEqual(before);
+  sheet = await openReviewSheet(page, "Calon pelanggan");
+  await serviceTile(sheet, "Online").click();
+  await saveReviewSheet(page, "Calon pelanggan");
+  await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
+    "datang ke tempat, dikirim, online",
+  );
+  expect((await intakeSession(page)).selection.serviceChannels).toEqual([
+    "on_premise",
+    "delivery",
+    "online",
+  ]);
+  // The focus detour keeps its three ways back to the review.
+  for (const back of ["continue", "footer", "browser"] as const) {
+    await editFocusFromReview(page);
+    await expect(
+      page.getByRole("heading", { level: 1, name: FOCUS_HEADING }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.tagName ?? ""))
+      .not.toBe("H1");
+    await expectNoOverflow(page);
+    if (back === "continue") await pressLanjut(page);
+    else if (back === "footer") await pressKembali(page);
+    else await page.goBack();
+    await expectSummary(page);
+    await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh brand");
   }
 });
 
 test("each J6 screen restores its value after a reload", async ({ page }) => {
-  await enter(page);
-  await page
-    .locator('section[aria-label="Kebutuhan pelanggan"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await addCustomerNeed(page, "pilihan sarapan ringan");
+  /** Reloads with the saved stage rewritten, as progress saved on a screen
+   * the v2 journey folded into a neighbour would be. */
+  const reloadAtStage = async (stage: string) => {
+    await page.evaluate(
+      ([key, value]) => {
+        const saved = JSON.parse(localStorage.getItem(key)!);
+        saved.stage = value;
+        localStorage.setItem(key, JSON.stringify(saved));
+      },
+      [INTAKE_SESSION_KEY, stage] as const,
+    );
+    await page.reload();
+  };
+  await toFocus(page);
+  await lanjutTo(page, "customer-needs");
+  await addCustomerNeed(customerNeedsScreen(page), "pilihan sarapan ringan");
+  const need = needsGroup(customerNeedsScreen(page)).getByRole("button", {
+    name: "pilihan sarapan ringan",
+    exact: true,
+  });
   await page.reload();
   await expectCustomerNeedsScreen(page);
-  await expect(
-    customerNeedsScreen(page).getByRole("button", {
-      name: "pilihan sarapan ringan",
-    }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await pressKembali(page);
-  await expectSummary(page);
+  await expect(need).toHaveAttribute("aria-pressed", "true");
+  // Progress saved on the former considerations screen reopens here.
+  await reloadAtStage("decision-considerations");
+  await expectCustomerNeedsScreen(page);
+  await expect(need).toHaveAttribute("aria-pressed", "true");
+  await pressLanjut(page);
+  await expectServiceScreen(page);
+  await pressLanjut(page);
+  await expectMarketScreen(page);
+  await pressLanjut(page);
 
-  await page
-    .locator('section[aria-label="Bisnis pembanding"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await addCompetitor(page, "Kedai Samping");
+  await expectCompetitorsScreen(page);
+  await addCompetitor(competitorsScreen(page), "Kedai Samping");
   await page.reload();
   await expectCompetitorsScreen(page);
   await expect(
-    competitorsScreen(page).getByRole("textbox", {
-      name: "Pembanding terpilih 2",
-    }),
-  ).toHaveValue("Kedai Samping");
-  await pressKembali(page);
-  await expectSummary(page);
+    competitorRow(competitorsScreen(page), "Kedai Tetangga"),
+  ).toBeChecked();
+  await expect(
+    competitorRow(competitorsScreen(page), "Kedai Samping"),
+  ).toBeChecked();
+  await pressLanjut(page);
 
-  await page
-    .locator('section[aria-label="Fakta publik tambahan"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await fillPublicFact(page, "Menyediakan area duduk di lantai dua.");
-  await page.reload();
-  await expectPublicFactScreen(page);
-  await expect(publicFactScreen(page).getByRole("textbox")).toHaveValue(
+  await expectDifferentiatorScreen(page);
+  await fillPublicFact(
+    differentiatorScreen(page),
     "Menyediakan area duduk di lantai dua.",
   );
-  await pressKembali(page);
+  await page.reload();
+  await expectDifferentiatorScreen(page);
+  // A saved fact opens its fold by itself.
+  await expect(publicFactToggle(page)).toHaveAttribute("aria-expanded", "true");
+  await expect(publicFactInput(page)).toHaveValue(
+    "Menyediakan area duduk di lantai dua.",
+  );
+  // Progress saved on the former public-fact screen reopens here.
+  await reloadAtStage("public-fact");
+  await expectDifferentiatorScreen(page);
+  await expect(publicFactInput(page)).toHaveValue(
+    "Menyediakan area duduk di lantai dua.",
+  );
+  await pressLanjut(page);
+  await expectIntroReview(page);
+  await pressMulai(page);
   await expectSummary(page);
 });
 
 test("unsafe public facts retain the safe value and frozen R20 context", async ({
   page,
 }) => {
-  const contexts: Record<string, unknown>[] = [];
-  page.on("request", (request) => {
-    if (new URL(request.url()).pathname === "/api/audit/glm-questions")
-      contexts.push(
-        (
-          request.postDataJSON() as {
-            intake: { context: Record<string, unknown> };
-          }
-        ).intake.context,
-      );
-  });
-  await enter(page);
-  await page
-    .locator('section[aria-label="Fakta publik tambahan"]')
-    .getByRole("button", { name: "Ubah" })
-    .click();
-  await fillPublicFact(page, "Buka setiap hari sampai pukul 21.00.");
-  await fillPublicFact(page, "nomor rekening 12345");
+  const contexts = questionContexts(page);
+  await toFocus(page);
+  await lanjutTo(page, "differentiator");
+  await fillPublicFact(
+    differentiatorScreen(page),
+    "Buka setiap hari sampai pukul 21.00.",
+  );
+  await publicFactInput(page).fill("nomor rekening 12345");
   await expect(
     page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
   ).toBeVisible();
-  await expect(publicFactScreen(page).getByRole("textbox")).toHaveValue(
+  await expect(publicFactInput(page)).toHaveValue(
     "Buka setiap hari sampai pukul 21.00.",
   );
-  const saved = await page.evaluate(
-    (key) => JSON.parse(localStorage.getItem(key) ?? "{}"),
-    INTAKE_SESSION_KEY,
-  );
+  const saved = await intakeSession(page);
   expect(saved.selection.publicFact).toBe(
     "Buka setiap hari sampai pukul 21.00.",
   );
   expect(JSON.stringify(saved)).not.toContain("nomor rekening");
   await pressLanjut(page);
+  await expectIntroReview(page);
+  await pressMulai(page);
   await expectSummary(page);
   await confirmSummary(page);
   await expectTenQuestions(page);
@@ -1366,33 +1508,28 @@ test.describe("J4 focus and target screens", () => {
       const path = new URL(request.url()).pathname;
       if (path.startsWith("/api/")) calls.push(`${request.method()} ${path}`);
     });
-    await stubPreparationDraft(page, richDraft);
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await expectBrandConfirm(page);
-    await confirmBrand(page);
-    const wholeBrand = focusScreen(page).getByRole("radio", {
-      name: "Brand secara keseluruhan",
-    });
+    await toFocus(page);
+    const wholeBrand = focusCard(page, "Seluruh brand");
     await expect(wholeBrand).toBeChecked();
-    await expect(
-      focusScreen(page).getByRole("radio", { name: "Satu lokasi" }),
-    ).toBeVisible();
-    await expect(
-      focusScreen(page).getByRole("radio", {
-        name: "Satu produk atau layanan",
-      }),
-    ).toBeVisible();
+    await expect(focusCard(page, "Satu cabang")).toBeVisible();
+    await expect(focusCard(page, "Satu produk")).toBeVisible();
+    // The published branches give the branch card its example.
+    await expect(focusCard(page, "Satu cabang")).toContainText(
+      "misalnya Kedai Fiksi Dago",
+    );
     await expect(
       focusScreen(page).getByText("Saran Nuave", { exact: true }),
     ).toBeVisible();
-    // Radio-group keyboard support: ArrowDown moves the checked choice.
+    // Radio-group keyboard support: ArrowDown moves the checked choice and
+    // stays on the screen.
     await wholeBrand.focus();
     await page.keyboard.press("ArrowDown");
-    await expect(
-      focusScreen(page).getByRole("radio", { name: "Satu lokasi" }),
-    ).toBeChecked();
-    // Kembali returns to the brand check with its answer intact.
+    await expect(focusCard(page, "Satu cabang")).toBeChecked();
+    await expectFocusScreen(page);
+    // Kembali returns to the Step 2 cover, and from there to the business
+    // check with its answer intact.
+    await pressKembali(page);
+    await expectIntroBusiness(page);
     await pressKembali(page);
     await expectBrandConfirm(page);
     await confirmBrand(page);
@@ -1403,42 +1540,46 @@ test.describe("J4 focus and target screens", () => {
       "POST /api/audit/extract",
     ]);
     // Whole-brand continues through the detail screens to the summary.
-    await chooseFocus(page, "Brand secara keseluruhan");
+    await chooseFocus(page, "Seluruh brand");
     await pressLanjut(page);
     await throughDetailScreens(page);
   });
 
-  test("one location picks a published row carrying Dari website Anda", async ({
+  test("a tap on Satu cabang or Satu produk opens its list at once (J11 to J12)", async ({
     page,
   }) => {
-    const contexts: Record<string, unknown>[] = [];
-    page.on("request", (request) => {
-      if (new URL(request.url()).pathname === "/api/audit/glm-questions")
-        contexts.push(
-          (
-            request.postDataJSON() as {
-              intake: { context: Record<string, unknown> };
-            }
-          ).intake.context,
-        );
-    });
-    await stubPreparationDraft(page, richDraft);
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await chooseFocus(page, "Satu lokasi");
-    await pressLanjut(page);
+    await toFocus(page);
+    await chooseFocus(page, "Satu cabang");
     await expectLocationScreen(page);
-    const published = locationScreen(page).getByRole("radio", {
-      name: /Kedai Fiksi Cimahi/,
-    });
-    await expect(published).toContainText("Dari website Anda");
+    await pressKembali(page);
+    await expectFocusScreen(page);
+    await chooseFocus(page, "Satu produk");
+    await expectProductScreen(page);
+    // The chosen card above the list changes the focus again.
+    await productScreen(page)
+      .getByRole("button", { name: "Satu produk. Ganti fokus audit" })
+      .click();
+    await expectFocusScreen(page);
+  });
+
+  test("one location picks a published row labelled as found on the website", async ({
+    page,
+  }) => {
+    const contexts = questionContexts(page);
+    await toFocus(page);
+    await openFocusTarget(page, "Satu cabang");
+    // The business publishes both branches; the list says once where they
+    // came from.
+    await expect(locationScreen(page)).toContainText("Ditemukan di website");
+    const published = locationRow(page, /^Kedai Fiksi Cimahi/);
+    await expect(published).toContainText("Jl. Contoh Fiksi No. 2, Cimahi");
     await published.click();
+    await expect(published).toBeChecked();
     await pressLanjut(page);
     await throughDetailScreens(page);
-    const focusRow = page.locator('section[aria-label="Fokus audit"]');
-    await expect(focusRow).toContainText("Satu lokasi");
-    await expect(focusRow).toContainText("Kedai Fiksi Cimahi");
+    await expect(reviewFact(page, "Fokus audit")).toHaveText(
+      "Satu cabang: Kedai Fiksi CimahiJl. Contoh Fiksi No. 2, Cimahi",
+    );
     await confirmSummary(page);
     await expectTenQuestions(page);
     expect(contexts[0]).toMatchObject({
@@ -1456,35 +1597,37 @@ test.describe("J4 focus and target screens", () => {
   test("the location screen blocks Lanjut until name and address are filled, and a reload restores both", async ({
     page,
   }) => {
-    await stubPreparationDraft(page, richDraft);
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await chooseFocus(page, "Satu lokasi");
-    await pressLanjut(page);
-    await expectLocationScreen(page);
-    await locationScreen(page)
-      .getByRole("button", { name: "Tambah lokasi lain" })
-      .click();
+    await toFocus(page);
+    await openFocusTarget(page, "Satu cabang");
     const lanjut = page.getByRole("button", { name: "Lanjut", exact: true });
-    const name = locationScreen(page).getByRole("textbox", {
-      name: "Nama lokasi",
-    });
-    const address = locationScreen(page).getByRole("textbox", {
-      name: "Alamat atau area",
-    });
-    await name.fill("Cabang Baru");
     await expect(lanjut).toBeDisabled();
-    await address.fill("Jl. Fiksi 40");
+    await locationScreen(page)
+      .getByRole("button", { name: "Tambah cabang", exact: true })
+      .click();
+    // J12b: the sheet saves only a branch with both a name and an address.
+    const sheet = addTargetSheet(page, "cabang");
+    await expect(sheet).toBeVisible();
+    const save = sheet.getByRole("button", { name: "Simpan", exact: true });
+    await sheet
+      .getByRole("textbox", { name: "Nama cabang" })
+      .fill("Cabang Baru");
+    await expect(save.first()).toBeDisabled();
+    await sheet
+      .getByRole("textbox", { name: "Alamat cabang" })
+      .fill("Jl. Fiksi 40");
+    await expect(save.first()).toBeEnabled();
+    await saveTargetSheet(sheet);
+    const added = locationRow(page, /^Cabang Baru/);
+    await expect(added).toBeChecked();
+    await expect(added).toContainText("Jl. Fiksi 40");
+    await expect(added).toContainText("Dari Anda");
     await expect(lanjut).toBeEnabled();
     await page.reload();
     await expectLocationScreen(page);
-    await expect(
-      locationScreen(page).getByRole("textbox", { name: "Nama lokasi" }),
-    ).toHaveValue("Cabang Baru");
-    await expect(
-      locationScreen(page).getByRole("textbox", { name: "Alamat atau area" }),
-    ).toHaveValue("Jl. Fiksi 40");
+    await expect(locationRow(page, /^Cabang Baru/)).toBeChecked();
+    await expect(locationRow(page, /^Cabang Baru/)).toContainText(
+      "Jl. Fiksi 40",
+    );
     await pressLanjut(page);
     await throughDetailScreens(page);
   });
@@ -1492,85 +1635,76 @@ test.describe("J4 focus and target screens", () => {
   test("a product target typed by hand carries Dari Anda and survives a reload", async ({
     page,
   }) => {
-    await stubPreparationDraft(page, richDraft);
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await chooseFocus(page, "Satu produk atau layanan");
-    await pressLanjut(page);
-    await expectProductScreen(page);
-    await expect(
-      productScreen(page).getByRole("radio", { name: "kopi susu" }),
-    ).toContainText("Dari website Anda");
-    await productScreen(page)
-      .getByRole("button", { name: "Tambah produk atau layanan lain" })
-      .click();
-    await productScreen(page)
-      .getByRole("textbox", { name: "Nama produk atau layanan" })
-      .fill("paket rapat");
-    await expect(
-      productScreen(page).getByRole("radio", { name: /paket rapat/ }),
-    ).toContainText("Dari Anda");
+    await toFocus(page);
+    await openFocusTarget(page, "Satu produk");
+    await expect(productRow(page, /^kopi susu$/)).toBeVisible();
+    await expect(productScreen(page)).toContainText("Ditemukan di website");
+    await addProduct(page, "paket rapat");
+    const typed = productRow(page, /^paket rapat/);
+    await expect(typed).toBeChecked();
+    await expect(typed).toContainText("Dari Anda");
     await page.reload();
     await expectProductScreen(page);
+    await expect(productRow(page, /^paket rapat/)).toBeChecked();
+    await expect(productRow(page, /^paket rapat/)).toContainText("Dari Anda");
     await pressLanjut(page);
     await throughDetailScreens(page);
-    const focusRow = page.locator('section[aria-label="Fokus audit"]');
-    await expect(focusRow).toContainText("Satu produk atau layanan");
-    await expect(focusRow).toContainText("paket rapat");
+    await expect(reviewFact(page, "Fokus audit")).toHaveText(
+      "Satu produk: paket rapat",
+    );
   });
 
   test("manual typing survives a transient match with a published row", async ({
     page,
   }) => {
-    await stubPreparationDraft(page, richDraft);
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await chooseFocus(page, "Satu lokasi");
-    await pressLanjut(page);
-    await expectLocationScreen(page);
+    await toFocus(page);
+    await openFocusTarget(page, "Satu cabang");
     await locationScreen(page)
-      .getByRole("button", { name: "Tambah lokasi lain" })
+      .getByRole("button", { name: "Tambah cabang", exact: true })
       .click();
-    const name = locationScreen(page).getByRole("textbox", {
-      name: "Nama lokasi",
-    });
-    const address = locationScreen(page).getByRole("textbox", {
-      name: "Alamat atau area",
-    });
+    const branchSheet = addTargetSheet(page, "cabang");
+    const name = branchSheet.getByRole("textbox", { name: "Nama cabang" });
+    const address = branchSheet.getByRole("textbox", { name: "Alamat cabang" });
     await name.pressSequentially("Kedai Fiksi Dago");
     // Mid-typing the pair equals the published row at
     // "Jl. Fiksi Raya No. 10, Bandung" — the name must survive the match.
     await address.pressSequentially("Jl. Fiksi Raya No. 10, Bandung Wetan");
     await expect(name).toHaveValue("Kedai Fiksi Dago");
     await expect(address).toHaveValue("Jl. Fiksi Raya No. 10, Bandung Wetan");
+    await saveTargetSheet(branchSheet);
+    const typedBranch = locationRow(page, /Bandung Wetan/);
+    await expect(typedBranch).toBeChecked();
+    await expect(typedBranch).toContainText("Dari Anda");
+    await expect(
+      locationRow(page, /^Kedai Fiksi Dago Jl\. Fiksi Raya No\. 10, Bandung$/),
+    ).not.toBeChecked();
 
     await pressKembali(page);
     await expectFocusScreen(page);
-    await chooseFocus(page, "Satu produk atau layanan");
-    await pressLanjut(page);
-    await expectProductScreen(page);
+    await openFocusTarget(page, "Satu produk");
     await productScreen(page)
-      .getByRole("button", { name: "Tambah produk atau layanan lain" })
+      .getByRole("button", { name: "Tambah produk", exact: true })
       .click();
-    const product = productScreen(page).getByRole("textbox", {
+    const productSheet = addTargetSheet(page, "produk");
+    const product = productSheet.getByRole("textbox", {
       name: "Nama produk atau layanan",
     });
     // "kopi susu" is a published offering — typing through it must keep
     // the draft instead of collapsing to the suffix after the match.
     await product.pressSequentially("kopi susu premium");
     await expect(product).toHaveValue("kopi susu premium");
-    await expect(
-      productScreen(page).getByRole("radio", { name: /kopi susu premium/ }),
-    ).toContainText("Dari Anda");
+    await saveTargetSheet(productSheet);
+    const typedProduct = productRow(page, /^kopi susu premium/);
+    await expect(typedProduct).toBeChecked();
+    await expect(typedProduct).toContainText("Dari Anda");
+    await expect(productRow(page, /^kopi susu$/)).not.toBeChecked();
   });
 
   test("locations whose source page lives off the business host are never offered", async ({
     page,
   }) => {
-    // Every published location points at a foreign host (M2): the cabang card
-    // disappears and only the manual link leads to the location screen.
+    // Every published location points at a foreign host (M2): no published
+    // row, and only the owner's own branch leads on.
     await stubPreparationDraft(page, {
       ...richDraft,
       published_locations: [
@@ -1586,94 +1720,86 @@ test.describe("J4 focus and target screens", () => {
         },
       ],
     });
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await expect(
-      focusScreen(page).getByRole("radio", { name: "Satu lokasi" }),
-    ).toHaveCount(0);
-    await focusScreen(page)
-      .getByRole("button", { name: "Isi lokasi secara manual" })
-      .click();
-    await expectLocationScreen(page);
-    await locationScreen(page)
-      .getByRole("textbox", { name: "Nama lokasi" })
-      .fill("Satu-satunya gerai");
-    await locationScreen(page)
-      .getByRole("textbox", { name: "Alamat atau area" })
-      .fill("Jl. Fiksi 1, Bandung");
+    await toFocus(page, false);
+    await expect(focusCard(page, "Satu cabang")).not.toContainText(
+      "Kedai Fiksi",
+    );
+    await openFocusTarget(page, "Satu cabang");
+    await expect(locationScreen(page).getByRole("radio")).toHaveCount(0);
+    await expect(locationScreen(page)).toContainText(
+      "Kami belum menemukan cabang di website Anda.",
+    );
+    await expect(locationScreen(page)).not.toContainText(
+      "Ditemukan di website",
+    );
+    await addBranch(page, "Satu-satunya gerai", "Jl. Fiksi 1, Bandung");
     await pressLanjut(page);
     await throughDetailScreens(page);
   });
 
-  test("Ubah on the summary focus row re-opens the focus screen and Kembali returns to the summary", async ({
+  test("Ganti fokus audit on the summary re-opens the focus screen and Kembali returns to the summary", async ({
     page,
   }) => {
     await enter(page);
-    const focusRow = page.locator('section[aria-label="Fokus audit"]');
-    await focusRow.getByRole("button", { name: "Ubah" }).click();
-    await expectFocusScreen(page);
+    await editFocusFromReview(page);
     await pressKembali(page);
     await expectSummary(page);
-    // The read-back row still reports the unchanged whole-brand focus.
-    await expect(focusRow).toContainText("Brand secara keseluruhan");
+    // The review still reports the unchanged whole-brand focus.
+    await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh brand");
   });
 
   test("the focus and location screens hold within a 320px viewport", async ({
     page,
   }) => {
-    const noOverflow = async () =>
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= window.innerWidth,
-        ),
-      ).toBe(true);
     await stubPreparationDraft(page, richDraft);
     await page.setViewportSize({ width: 320, height: 720 });
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await expectFocusScreen(page);
-    await noOverflow();
-    await chooseFocus(page, "Satu lokasi");
-    await pressLanjut(page);
-    await expectLocationScreen(page);
-    await noOverflow();
+    await toFocus(page, false);
+    await expectNoOverflow(page);
+    await openFocusTarget(page, "Satu cabang");
+    await expectNoOverflow(page);
     await locationScreen(page)
-      .getByRole("button", { name: "Tambah lokasi lain" })
+      .getByRole("button", { name: "Tambah cabang", exact: true })
       .click();
-    await noOverflow();
+    await expect(addTargetSheet(page, "cabang")).toBeVisible();
+    await expectNoOverflow(page);
+    await expectInside(addTargetSheet(page, "cabang"));
   });
 });
 
 test.describe("J5 business-detail screens", () => {
-  test("the category screen labels Nuave suggestions and keeps a typed pick", async ({
+  test("the category screen says where its pick came from and keeps a typed pick", async ({
     page,
   }) => {
-    await stubPreparationDraft(page, richDraft);
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await pressLanjut(page);
-    await expectCategoryScreen(page);
-    const group = categoryScreen(page).getByRole("radiogroup", {
-      name: "Pilihan kategori",
+    await toFocus(page);
+    await confirmFocus(page);
+    const choices = categoryChoices(categoryScreen(page));
+    // The website's category is picked and its source stated once; Nuave's
+    // other suggestions are one tap away.
+    const kedaiKopi = choices.getByRole("radio", {
+      name: "kedai kopi",
+      exact: true,
     });
-    // An overlapping suggestion keeps the selected website value's origin.
-    const kedaiKopi = group.getByRole("radio", { name: /kedai kopi/ });
-    await expect(kedaiKopi).toContainText("Dari website Anda");
     await expect(kedaiKopi).toBeChecked();
-    await expect(group.getByRole("radio", { name: /^kafe/ })).toBeVisible();
-    // Typing over the prepared pick replaces it with a `Dari Anda` card.
-    await categoryScreen(page)
-      .getByRole("button", { name: "Tulis kategori sendiri" })
-      .click();
-    await categoryScreen(page)
-      .getByRole("textbox", { name: "Kategori" })
-      .fill("rumah makan keluarga");
-    const own = group.getByRole("radio", { name: /rumah makan keluarga/ });
+    await expect(categoryScreen(page)).toContainText("Ditemukan di website");
+    await expect(
+      choices.getByRole("radio", { name: "kafe", exact: true }),
+    ).toBeVisible();
+    await expect(
+      choices.getByRole("radio", { name: "warung minuman", exact: true }),
+    ).toBeVisible();
+    // Typing over the prepared pick replaces it with the owner's own word.
+    await addCategory(categoryScreen(page), "rumah makan keluarga");
+    const own = choices.getByRole("radio", {
+      name: "rumah makan keluarga",
+      exact: true,
+    });
     await expect(own).toBeChecked();
-    await expect(own).toContainText("Dari Anda");
+    await expect(kedaiKopi).not.toBeChecked();
+    await expect(categoryScreen(page)).toContainText("Dari Anda");
+    expect((await intakeSession(page)).selection).toMatchObject({
+      category: "rumah makan keluarga",
+      origins: { category: "owner" },
+    });
     await pressLanjut(page);
     await expectOfferingsScreen(page);
   });
@@ -1695,92 +1821,87 @@ test.describe("J5 business-detail screens", () => {
         "Makassar",
       ],
     });
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await pressLanjut(page);
+    await toFocus(page, false);
     // Prepared values keep every detail screen's Lanjut enabled.
-    await pressLanjut(page);
-    await expectOfferingsScreen(page);
-    await pressLanjut(page);
-    await expectTargetCustomerScreen(page);
-    await pressLanjut(page);
-    await expectCustomerNeedsScreen(page);
-    await pressLanjut(page);
-    await expectDecisionConsiderationsScreen(page);
-    await pressLanjut(page);
-    await expectServiceScreen(page);
-    await pressLanjut(page);
-    await expectMarketScreen(page);
-    // All eight prepared areas sit selected; typing a ninth is refused with a
-    // visible block while Lanjut stays enabled for the valid set.
-    const areaInput = marketScreen(page).getByRole("textbox", {
-      name: "Tambah area lain",
-    });
-    await areaInput.fill("Denpasar");
-    await marketScreen(page).getByRole("button", { name: "Tambahkan" }).click();
-    await expect(areaInput).toHaveValue("Denpasar");
-    await expect(marketScreen(page).getByRole("alert")).toContainText(
+    await lanjutTo(page, "market");
+    // All eight prepared areas sit selected; typing a ninth is refused with
+    // a visible block while Lanjut stays enabled for the valid set.
+    const market = marketScreen(page);
+    await expect(
+      market
+        .getByRole("group", { name: "Area mana saja?", exact: true })
+        .getByRole("button", { pressed: true }),
+    ).toHaveCount(8);
+    await addArea(market, "Denpasar");
+    await expect(
+      market.getByRole("textbox", { name: "Kota atau area" }),
+    ).toHaveValue("Denpasar");
+    await expect(market.getByRole("alert")).toContainText(
       "dibatasi paling banyak 8",
     );
+    await expect(
+      page.getByRole("button", { name: "Lanjut", exact: true }),
+    ).toBeEnabled();
     await pressLanjut(page);
     await throughCompetitorContext(page);
-    await expect(
-      page.locator('section[aria-label="Jangkauan pasar"]'),
-    ).toContainText("Makassar");
+    await expect(reviewFact(page, "Area")).toContainText("Makassar");
+    await expect(reviewFact(page, "Area")).not.toContainText("Denpasar");
+    expect((await intakeSession(page)).selection.marketAreas).toHaveLength(8);
   });
 
   test("the service screen keeps multiple channels and the detail screens hold at 320px", async ({
     page,
   }) => {
-    const noOverflow = async () =>
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= window.innerWidth,
-        ),
-      ).toBe(true);
     await stubPreparationDraft(page, richDraft);
     await page.setViewportSize({ width: 320, height: 720 });
-    await fillEntry(page);
-    await pressPeriksa(page);
-    await confirmBrand(page);
-    await pressLanjut(page);
-    await expectCategoryScreen(page);
-    await noOverflow();
-    await pressLanjut(page);
-    await expectOfferingsScreen(page);
-    await noOverflow();
-    await pressLanjut(page);
-    await expectTargetCustomerScreen(page);
-    await noOverflow();
-    await pressLanjut(page);
-    await expectCustomerNeedsScreen(page);
-    await noOverflow();
-    await pressLanjut(page);
-    await expectDecisionConsiderationsScreen(page);
-    await noOverflow();
-    await pressLanjut(page);
-    await expectServiceScreen(page);
-    await noOverflow();
-    // A second channel stacks on the prepared pick.
-    await serviceScreen(page)
-      .getByRole("checkbox", { name: "Digunakan secara online" })
-      .click();
+    await toFocus(page, false);
+    await expectNoOverflow(page);
+    for (const next of [
+      "category",
+      "offerings",
+      "target-customer",
+      "customer-needs",
+      "service",
+    ] as const) {
+      await pressLanjut(page);
+      await expect(
+        page.locator(`[data-intake-screen="${next}"]`),
+      ).toBeVisible();
+      await expectNoOverflow(page);
+    }
+    // A third channel stacks on the two prepared picks.
+    const service = serviceScreen(page);
+    await serviceTile(service, "Online").click();
+    for (const name of ["Datang ke tempat", "Dikirim", "Online"])
+      await expect(serviceTile(service, name)).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
     await pressLanjut(page);
     await expectMarketScreen(page);
-    await noOverflow();
+    await expectNoOverflow(page);
     await pressLanjut(page);
-    await throughCompetitorContext(page);
-    const serviceRow = page.locator('section[aria-label="Cara layanan"]');
-    await expect(serviceRow).toContainText("Di lokasi bisnis Anda");
-    await expect(serviceRow).toContainText("Dikirim ke pelanggan");
-    await expect(serviceRow).toContainText("Digunakan secara online");
-    await expect(serviceRow).toContainText("Dari Anda");
+    await expectCompetitorsScreen(page);
+    await expectNoOverflow(page);
+    await pressLanjut(page);
+    await expectDifferentiatorScreen(page);
+    await expectNoOverflow(page);
+    await pressLanjut(page);
+    await expectIntroReview(page);
+    await pressMulai(page);
+    await expectSummary(page);
+    await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
+      "datang ke tempat, dikirim, online",
+    );
+    expect((await intakeSession(page)).selection).toMatchObject({
+      serviceChannels: ["on_premise", "delivery", "online"],
+      origins: { serviceChannels: "owner" },
+    });
   });
 });
 
 test.describe("J7 review and Nama lain aliases", () => {
-  test("the Bisnis row returns brand edits by Lanjut, Kembali, and browser Back", async ({
+  test("the business name edit returns by Lanjut, Kembali, and browser Back", async ({
     page,
   }) => {
     // A test-pass order: these steps change the website or the business, which a
@@ -1790,20 +1911,20 @@ test.describe("J7 review and Nama lain aliases", () => {
     for (const back of ["lanjut", "footer", "browser"] as const) {
       await editBusinessFromReview(page);
       await expectBrandConfirm(page);
+      await expect(
+        page.getByRole("heading", { level: 1, name: BRAND_HEADING }),
+      ).toBeFocused();
       if (back === "lanjut") await pressLanjut(page);
       else if (back === "footer") await pressKembali(page);
       else await page.goBack();
       await expectSummary(page);
     }
-    // `Ubah website` opens the entry fields with the current answers kept.
+    // `Ganti website` opens the entry with the current website kept.
     await editWebsiteFromReview(page);
     await expect(entryScreen(page)).toBeVisible();
-    await expect(
-      page.getByRole("textbox", { name: "URL website publik" }),
-    ).toHaveValue("https://kedai-fiksi.example/");
-    await expect(
-      page.getByRole("textbox", { name: "Nama bisnis" }),
-    ).toHaveValue("Kedai Fiksi");
+    await expect(websiteInput(page)).toHaveValue(
+      "https://kedai-fiksi.example/",
+    );
   });
 
   test("aliases add and remove individually and persist over a reload", async ({
@@ -1811,19 +1932,24 @@ test.describe("J7 review and Nama lain aliases", () => {
   }) => {
     await page.setViewportSize({ width: 320, height: 720 });
     await enter(page);
-    const row = reviewRow(page, "Nama lain");
-    await expect(row).toContainText("Kedai Fiksi Bandung");
-    await expect(row).toContainText("Dari website Anda");
+    const name = reviewFact(page, "Nama");
+    await expect(name).toContainText("Juga disebut: Kedai Fiksi Bandung");
+    expect((await intakeSession(page)).selection.origins.aliases).toBe(
+      "website",
+    );
     await openAliasEditor(page, true);
     await expect(aliasInput(page)).toBeFocused();
-    // Enter commits an addition through the same AddLine acceptance seam.
+    // Enter commits an addition through the same adder.
     await aliasInput(page).fill("Kedai Fiksi Pusat");
     await aliasInput(page).press("Enter");
-    await expect(row).toContainText("Kedai Fiksi Pusat");
+    await expect(aliasChip(page, "Kedai Fiksi Pusat")).toBeVisible();
     await expect(aliasInput(page)).toHaveValue("");
     await addAlias(page, "KopiFiksi");
-    await expect(row).toContainText("KopiFiksi");
-    await expect(row).toContainText("Dari Anda");
+    await expect(aliasChip(page, "KopiFiksi")).toBeVisible();
+    await saveReviewSheet(page, "Bisnis");
+    await expect(name).toContainText(
+      "Juga disebut: Kedai Fiksi Bandung, Kedai Fiksi Pusat, KopiFiksi",
+    );
     let saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual([
       "Kedai Fiksi Bandung",
@@ -1832,18 +1958,20 @@ test.describe("J7 review and Nama lain aliases", () => {
     ]);
     expect(saved.selection.origins.aliases).toBe("owner");
     const boundaryAlias = "A".repeat(160);
+    await openAliasEditor(page);
     await addAlias(page, boundaryAlias);
+    // The 320px sheet stays inside the viewport, 160-char chip included.
+    await expect(aliasChip(page, boundaryAlias)).toBeVisible();
+    await expectNoOverflow(page);
+    await expectInside(reviewSheet(page, "Bisnis"));
+    await saveReviewSheet(page, "Bisnis");
     expect((await intakeSession(page)).selection.aliases).toContain(
       boundaryAlias,
     );
-    // The 320px review and open editor stay inside the viewport, 160-char
-    // chip included.
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth,
-      ),
-    ).toBe(true);
+    await expectNoOverflow(page);
+    await openReviewSheet(page, "Bisnis");
     await removeAlias(page, boundaryAlias);
+    await saveReviewSheet(page, "Bisnis");
     await page.reload();
     await expectSummary(page);
     saved = await intakeSession(page);
@@ -1852,18 +1980,20 @@ test.describe("J7 review and Nama lain aliases", () => {
       "Kedai Fiksi Pusat",
       "KopiFiksi",
     ]);
-    await openAliasEditor(page);
+    await openReviewSheet(page, "Bisnis");
     await removeAlias(page, /KopiFiksi/, true);
+    await saveReviewSheet(page, "Bisnis");
     saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual([
       "Kedai Fiksi Bandung",
       "Kedai Fiksi Pusat",
     ]);
-    // Removing every alias is valid; the provenance badge hides.
+    // Removing every alias is valid; the review then names no other name.
+    await openReviewSheet(page, "Bisnis");
     await removeAlias(page, /Kedai Fiksi Bandung/);
     await removeAlias(page, /Kedai Fiksi Pusat/);
-    await expect(row).toContainText("Belum diisi");
-    await expect(row).not.toContainText("Dari Anda");
+    await saveReviewSheet(page, "Bisnis");
+    await expect(name).toHaveText("Kedai Fiksi");
     saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual([]);
   });
@@ -1873,22 +2003,20 @@ test.describe("J7 review and Nama lain aliases", () => {
   }) => {
     await enter(page);
     await openAliasEditor(page);
+    const sheet = reviewSheet(page, "Bisnis");
     // Trimmed case-insensitive duplicates are refused with the draft kept.
     await addAlias(page, "  kedai fiksi bandung ");
-    await expect(reviewScreen(page).getByRole("alert")).toContainText(
-      "sudah ada",
-    );
+    await expect(sheet.getByRole("alert")).toContainText("sudah ada");
     await expect(aliasInput(page)).toHaveValue("  kedai fiksi bandung ");
     // Overlong names are refused the same way.
     const longName = `Nama lain ${"sangat ".repeat(30)}`;
     await addAlias(page, longName);
-    await expect(reviewScreen(page).getByRole("alert")).toContainText(
-      "160 karakter",
-    );
+    await expect(sheet.getByRole("alert")).toContainText("160 karakter");
     await expect(aliasInput(page)).toHaveValue(longName);
     // The rejected draft corrects in place and commits.
     await addAlias(page, "Kedai Fiksi Pusat");
     await expect(aliasInput(page)).toHaveValue("");
+    await saveReviewSheet(page, "Bisnis");
     expect((await intakeSession(page)).selection.aliases).toEqual([
       "Kedai Fiksi Bandung",
       "Kedai Fiksi Pusat",
@@ -1906,7 +2034,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     await toSummary(page);
     await openAliasEditor(page);
     await addAlias(page, "Ketiga belas");
-    await expect(reviewScreen(page).getByRole("alert")).toContainText(
+    await expect(reviewSheet(page, "Bisnis").getByRole("alert")).toContainText(
       "paling banyak 12",
     );
     await expect(aliasInput(page)).toHaveValue("Ketiga belas");
@@ -1925,11 +2053,19 @@ test.describe("J7 review and Nama lain aliases", () => {
     await openAliasEditor(page);
     await addAlias(page, "nomor rekening 12345");
     await expect(
-      page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
+      reviewSheet(page, "Bisnis").getByText(SENSITIVE_INPUT_NOTICE, {
+        exact: true,
+      }),
     ).toBeVisible();
     // The refused draft stays; the committed list and session stay safe.
     await expect(aliasInput(page)).toHaveValue("nomor rekening 12345");
-    const saved = await intakeSession(page);
+    await expect(aliasChip(page, /nomor rekening/)).toHaveCount(0);
+    let saved = await intakeSession(page);
+    expect(saved.selection.aliases).toEqual(["Kedai Fiksi Bandung"]);
+    expect(JSON.stringify(saved)).not.toContain("nomor rekening");
+    // Simpan keeps only the safe list.
+    await saveReviewSheet(page, "Bisnis");
+    saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual(["Kedai Fiksi Bandung"]);
     expect(JSON.stringify(saved)).not.toContain("nomor rekening");
     // An edit alone never fires the question request.
@@ -1951,12 +2087,10 @@ test.describe("J7 review and Nama lain aliases", () => {
         );
     });
     await enter(page);
-    // The Bisnis row carries the source, and `Lihat sumber` lists the links.
-    await expect(reviewRow(page, "Bisnis")).toContainText(
-      "kedai-fiksi.example",
-    );
+    // The review names the website, and `Lihat sumber` lists the links.
+    await expect(reviewFact(page, "Website")).toHaveText("kedai-fiksi.example");
     await reviewScreen(page)
-      .getByRole("button", { name: "Lihat sumber" })
+      .getByRole("button", { name: /^Lihat sumber \(\d+\)$/ })
       .click();
     await expect(
       reviewScreen(page)
@@ -1965,6 +2099,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     ).toBeVisible();
     await openAliasEditor(page);
     await addAlias(page, "Kedai Fiksi Pusat");
+    await saveReviewSheet(page, "Bisnis");
     await confirmSummary(page);
     await expectTenQuestions(page);
     expect(contexts).toHaveLength(1);

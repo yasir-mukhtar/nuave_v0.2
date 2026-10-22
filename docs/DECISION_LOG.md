@@ -1,10 +1,96 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-14
+> Updated: 2026-10-21
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-21 — Adopt the v2 mobile journey design (Figma J01–J35)
+
+Yasir asked to adopt the new audit journey design from the Figma file
+(`eXCVryQzgx93oaYTR9NYGA`, mobile, J01–J35) on v2.nuave.ai, with intentional
+animation benchmarked on Airbnb, reviewed by an independent Opus review loop
+before merging. Desktop follows when its design is ready; until then desktop
+shows the same 480px column.
+
+- **What the customer sees:** the landing page (J01) is the website field,
+  "how customers ask", three steps and what the report holds. One website
+  field starts the free check (J02–J04, with a way out after 30 seconds);
+  the business card (J05), the three steps (J06), checkout (J07/J08), the
+  paid reading (J09), Step 2 (J10–J23), the profile review with edit sheets
+  (J25/J26), the ten questions with an edit sheet and a final start sheet
+  (J27/J27b/J28), the running and ready pages (J29/J30), the ready email
+  (J31) and the report (J32–J35) follow the design.
+- **Supersedes the screen split of 2026-10-02 (JQ):** decision
+  considerations share one optional screen with customer needs (J17); the
+  public fact sits under the differentiator (J22) instead of its own screen;
+  the target customer is picked as chips and stored as one phrase.
+- **After payment the paid reading starts by itself** (once per order in a
+  tab), as the design shows. A reading interrupted by a reload, or one that
+  failed, still waits for "Lanjut": a refresh never replays the call.
+- **Unchanged:** server-side provider and spending gates, the audit and
+  report method and wording rules, validation limits, what the browser
+  stores (R-31: the email never), Spec 017 payment states and locks.
+- **Spec 013's screen-level presentation follows the design where they
+  differ** (Yasir's Figma file is the founder's direction for it): one
+  website field and "Cek bisnis saya di AI" instead of R-06's two fields and
+  R-01's `Periksa`; the review (J25) reads the answers back without
+  repeating each one's source label, which stays on the answer's own screen
+  (R-02, R-21), and edits by section in sheets (J26) instead of one screen
+  per row; its confirmation is J25's tick plus "Buat pertanyaan audit"
+  instead of R-21's exact `Sudah sesuai — buat pertanyaan audit`, and it
+  calls the same confirmation and freeze. Behaviour Spec 013 fixes is kept:
+  R-18/AC-09's three competitor choices (named, "Tidak ada pembanding
+  langsung", "Belum tahu"), each freezing as itself, and unticking the last
+  name keeps "named" and blocks `Lanjut` until a name or another choice is
+  picked.
+- **Where the build differs from the Figma file, and why:**
+  1. The website field accepts a website or an Instagram account, not a
+     Google Maps link (the source parser does not accept one).
+  2. Payment methods are shown for information; the choice happens on the
+     Midtrans page.
+  3. No address autocomplete or location permission for branches (J12b);
+     areas get one-tap Indonesian place suggestions instead (J19b).
+  4. All ten questions are asked without the business name (the current
+     direct-ten method); the design's 6 + 4 split is not built.
+  5. No "Kirim ulang email" (there is no resend service for customers):
+     "Minta kirim ulang email" opens an email to support.
+  6. The running and ready pages do not show the order email, masked or not
+     (it is never stored in the browser).
+  7. The running page shows the question texts and the elapsed time only in
+     the tab that approved them (both stay in memory, never in browser
+     storage); after a reload it shows "Pertanyaan 1" to "Pertanyaan 10" and
+     no clock.
+  8. The differentiator counter shows the real limit (1,000 characters),
+     not 160; competitor names allow up to 5 (the context limit), and the
+     copy says so.
+  9. The payment consent links name the real page, "Syarat Penggunaan", not
+     "Ketentuan Layanan".
+  10. The report keeps both downloads (PDF and the evidence JSON) and the
+      header facts for the system and model tested.
+  11. Areas typed on J19b show as chips above the field, as products do on
+      J14/J15, rather than as tokens inside the field.
+  12. J04 says the website is read after payment, because continuing with a
+      name stops the free check; J05 then shows "Bisnis yang akan diaudit"
+      without the found tick (the design's "Kami tetap membaca website di
+      belakang layar" would not be true).
+  13. The free check's third line reads "Membaca deskripsi bisnis", not
+      "Mencari cabang dan produk": the free check reads only the name, logo
+      and description; branches and products come from the paid reading.
+  14. J12 does not pre-select a branch: the owner picks the one to audit.
+  15. J20 rows show a "Saran Nuave" or "Dari Anda" tag instead of a source
+      line, and the screen adds "Tidak ada pembanding langsung? Lewati
+      juga." under "Belum tahu? Lewati" (R-18's third choice; the review's
+      sheet offers both).
+  16. J10 has no `Kembali` after payment: the website and business are
+      locked (R-19).
+  17. The commit buttons (pay, start the audit, open the report) are filled
+      #d4420b instead of ember-600 #e2470b, so their white labels reach WCAG
+      AA (4.6:1; ember-600 gives 4.1:1).
+  18. Small grey text on cream (J01's sample note, J30's help line and
+      order number) is ink-600 instead of ink-500, so it reaches WCAG AA
+      (6.8:1; ink-500 gives 4.3:1 on cream).
 
 ## 2026-10-18 — S4 live check; slow websites; refund check at G1
 

@@ -1,7 +1,7 @@
 # Nuave design guide
 
 > Status: **Canonical current UI/design authority**
-> Updated: 2026-09-01
+> Updated: 2026-10-21 (v2 mobile journey from the founder's Figma file)
 
 This guide governs Nuave's presentation layer. Product, audit, voice, privacy,
 and journey contracts remain governed by their canonical documents in
@@ -17,13 +17,48 @@ and journey contracts remain governed by their canonical documents in
 - **BeUI** provides higher-order visual character, AI UI, progressive
   disclosure, and meaningful interaction patterns. Search its registry before
   building a custom animated, AI, or disclosure component.
-- **Motion** may be added only when a selected BeUI interaction genuinely needs
-  an animation engine. It is not a foundation dependency.
+- **Motion** (`motion/react`) is the one animation engine. Since the v2
+  journey (2026-10-21) it carries the journey's screen transitions, sheets and
+  small state changes, through the shared presets in
+  `src/components/motion/` (see Motion and accessibility).
 - **Tabler Icons** is the canonical generic icon library.
 
-The initial visual baseline is **BeUI light**: a light canvas, clear ink
-hierarchy, quiet hairlines, restrained radii and shadows, and a focused action
-accent. The historical Nuave purple skin is not an aesthetic constraint.
+The visual baseline is the **v2 kit** in the founder's Figma file
+(`eXCVryQzgx93oaYTR9NYGA`, mobile journey J01–J35): a white canvas, warm
+stone-and-ink neutrals, quiet hairlines, two elevations, and **one ember
+accent**. The historical Nuave purple skin is retired from the journey.
+
+### v2 visual system
+
+- **Colour.** Ink `--ink-900…400`, lines `--line-300/200`, stone surfaces
+  `--stone-100/50`, cream `--cream` for the two calm moments (the "how
+  customers ask" band and the report-ready page). Ember `--ember-50…900`
+  appears at most once per screen: the commit buttons (`--commit`,
+  `--ember-650` #d4420b: pay, run the audit, open the report; the Figma
+  ember-600 darkened just enough for white labels to reach WCAG AA), a
+  brand accent word (ember-500) and small orange text (ember-700, for
+  contrast). Small grey text is ink-500 or darker on white and stone-50,
+  and ink-600 on stone-100 and cream, where ink-500 reaches only 4.4:1 and
+  4.3:1 (ink-400 is for borders, icons and disabled controls only).
+  Selection is ink, never ember: a 2px ink edge on stone-50 (`--edge-ink`).
+- **Shape.** Chips 22px pill, buttons and inputs 14px, tiles 16px, cards
+  20–24px, sheets 28px (`--radius-token-*`). Two shadows on the white
+  canvas: `--elevation-card` and `--elevation-float`. The ember paid
+  reading (J09) uses its warm pair, `--elevation-ember-pill` and
+  `--elevation-ember-card`, and `--glow-reading`; the report beads use
+  `--bead-ember` / `--bead-ink` and their shadows. Components name these
+  tokens; they do not write colours or shadows inline.
+- **Frame.** The journey is one 480px phone column (`JourneyPage`): a top bar
+  (back · Bantuan, or Simpan & keluar · Bantuan) and a fixed bottom bar with
+  the three-step progress on its top edge, "Kembali" left and the one forward
+  action right. Desktop shows the same column until its own design exists.
+- **Illustration.** The custom 3D miniatures live in `public/v2/3d/` as WebP
+  at twice their largest size (`Art`); the kedai is the same shop built up
+  across the steps (bare → open → busy). Email uses PNG/JPEG copies in
+  `public/v2/email/`.
+- **Pickers.** Option rows (single choice with a 64px miniature), chips
+  (multi or single), 2 × 2 tiles, tick rows (`CheckRow`), and "+ Lainnya"
+  (`ChipAdder`), all on Base UI radio, toggle and checkbox semantics.
 
 ## Composition and ownership
 
@@ -106,6 +141,14 @@ Prefer semantic role classes for product and marketing copy:
 - `type-label-sm` — 12px metadata and compact labels.
 - `type-mono` — 14px technical/code text.
 - `type-mono-sm` — 12px compact technical identifiers.
+- `type-label-lg` — 16px medium labels (chips, step eyebrows).
+- `type-label-strong` — 14px semibold text links and emphasised labels.
+- `type-label-sm-strong` — 12px semibold eyebrows (e.g. "AI Visibility
+  Report").
+- `type-caption` — 12px regular notes and counters.
+- `type-title` — 18px semibold titles inside a screen (section titles).
+- `type-title-sm` — 16px semibold titles (rows, sheet headers).
+- `type-number` — 64px result numbers (report, J32).
 
 Each role owns font family, size, weight, line-height, and tracking. Color is a
 separate semantic concern. Do not mix a role with competing local font-size,
@@ -130,8 +173,8 @@ Keep responsive behavior intentional and scarce:
 
 Report display typography is a bounded editorial exception. Its serif display,
 heading, title, and metric values live in `tokens.css` and may only be used
-inside the report subtree. Report body copy, labels, controls, metadata, and
-technical identifiers still use the core Geist roles.
+inside the historical report renderer. The v2 direct-ten report (J32–J35)
+uses the core Geist roles throughout, like the rest of the journey.
 
 ### Drift guard
 
@@ -148,11 +191,26 @@ add Lucide or another general-purpose icon library.
 
 Motion communicates a meaningful state transition, progressive disclosure, AI
 activity, or visual character; it is not ambient decoration. Prefer named
-`fast`, `base`, and `slow` durations with one ease-out curve. Do not use
+`fast`, `base`, and `slow` durations with one ease-out curve.
+
+The v2 journey's motion (benchmark: Airbnb's host flow) comes from
+`src/components/motion/`: `presets.ts` (the standard and exit curves and three
+springs: settle, sheet, pop), `JourneyScene` (a new step slides in from the
+side the person is heading, 28px with a fade; the next view of the same
+question cross-fades instead), `BottomSheet` (rises from the bottom; drag the
+handle down past a third, or flick, to close) and `useMotionAllowed` (false on
+the server, under reduced motion, and where `matchMedia` is missing, so tests
+see instant swaps). Small moments: press scale 0.97, chip checks pop in,
+progress fills grow, findings and question rows drop in one after another, the
+kedai builds up across the chapter covers, and the magnifier sweeps only while
+a website is really being read. Do not use
 decorative perpetual loops, cursor glows, marquees, drifting gradients, or
 animated filler. Indeterminate activity indicators may loop only while genuine
 work is in progress. Reduced-motion mode must remove unnecessary spatial motion
-while preserving the state and information. Do not retain global Lenis scrolling
+while preserving the state and information: every enter, exit and height
+change checks `useMotionAllowed` (fades may stay), and `MotionPreferences`
+(Motion's `reducedMotion="user"`, around the whole app) drops any movement a
+component forgot to check. Do not retain global Lenis scrolling
 unless a concrete customer experience justifies it here.
 
 All migrated interactions preserve keyboard operation, visible focus, Escape

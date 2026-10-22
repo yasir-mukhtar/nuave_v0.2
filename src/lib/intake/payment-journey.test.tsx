@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { extractionDraftSchema } from "../audit/types";
@@ -56,7 +57,16 @@ type Stub = {
   status: () => Record<string, unknown> | Response;
   start: () => Response;
   create: () => Response;
+  extract: () => Response | Promise<Response>;
 };
+
+/** The paid reading's answer (screen 3b). */
+const extracted = () =>
+  Response.json({
+    draft,
+    telemetry: [],
+    preparation_mode: "synthetic-local",
+  });
 
 let navigated: string | null = null;
 const assign = vi.fn((url: string) => {
@@ -70,6 +80,7 @@ function stubServer(overrides: Partial<Stub> = {}): Stub {
     status: () => ({ state: "open", payment: { state: "unpaid" } }),
     start: () => Response.json({ redirect_url: MIDTRANS_PAGE }),
     create: () => Response.json({ order_id: ORDER_ID, state: "open" }),
+    extract: extracted,
     ...overrides,
   };
   vi.stubGlobal(
@@ -94,12 +105,7 @@ function stubServer(overrides: Partial<Stub> = {}): Stub {
         const answer = stub.status();
         return answer instanceof Response ? answer : Response.json(answer);
       }
-      if (key === "/api/audit/extract")
-        return Response.json({
-          draft,
-          telemetry: [],
-          preparation_mode: "synthetic-local",
-        });
+      if (key === "/api/audit/extract") return stub.extract();
       throw new Error(`Unexpected request ${url}`);
     }),
   );
@@ -128,24 +134,42 @@ const heading = (name: string | RegExp) =>
   screen.findByRole("heading", { name });
 const button = (name: string) => screen.findByRole("button", { name });
 
+/** J01 → J05 → J06 → J07: one website field, the found business, the three
+ * steps, then the order summary. The business name is read from the site. */
 async function toOrderScreen() {
-  await screen.findByRole("textbox", { name: "Nama bisnis" });
-  fireEvent.change(screen.getByRole("textbox", { name: "Nama bisnis" }), {
-    target: { value: "Kedai Fiksi" },
-  });
   fireEvent.change(
-    screen.getByRole("textbox", { name: "URL website publik" }),
+    await screen.findByRole("textbox", {
+      name: "Website atau akun Instagram bisnis",
+    }),
     { target: { value: "https://kedai-fiksi.example/" } },
   );
-  fireEvent.click(screen.getByRole("button", { name: "Periksa" }));
-  await heading("Ini brand yang ingin Anda audit?");
-  fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-  await heading("Ringkasan pesanan");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Cek bisnis saya di AI" }),
+  );
+  await heading("Kami menemukan bisnis Anda");
+  fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
+  await heading("Tinggal 3 langkah");
+  fireEvent.click(screen.getByRole("button", { name: "Lanjut ke pembayaran" }));
+  await heading("Konfirmasi dan bayar");
 }
 async function typeEmail() {
-  fireEvent.change(screen.getByRole("textbox", { name: /Email/ }), {
-    target: { value: EMAIL },
-  });
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "Email penerima laporan" }),
+    { target: { value: EMAIL } },
+  );
+}
+/** An extract answer held back until `release`, so the paid reading (J09)
+ * stays on screen. */
+function heldReading() {
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  return {
+    release,
+    extract: async () => {
+      await held;
+      return extracted();
+    },
+  };
 }
 async function pay() {
   await typeEmail();
@@ -155,7 +179,7 @@ async function pay() {
 async function reloadWith(stub: Stub) {
   cleanup();
   render(<SmartIntakeJourney live />);
-  await heading("Ringkasan pesanan");
+  await heading("Konfirmasi dan bayar");
   return stub;
 }
 
@@ -165,19 +189,27 @@ describe("the order summary (Experience 2, 3)", () => {
     render(<SmartIntakeJourney live />);
     await toOrderScreen();
     expect(screen.getByText("Rp99.000")).toBeTruthy();
-    expect(screen.getByText("sekali bayar")).toBeTruthy();
-    expect(screen.getByText(DELIVERY_PROMISE)).toBeTruthy();
     expect(
-      screen
-        .getByRole("link", { name: "Syarat Penggunaan" })
-        .getAttribute("href"),
-    ).toBe("/terms");
+      screen.getByText(
+        "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan ini berlaku 30 hari.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText(DELIVERY_PROMISE)).toBeTruthy();
+    // The consent line sits under the pay button, in the bottom bar.
+    const terms = screen.getByRole("link", { name: "Syarat Penggunaan" });
+    expect(terms.getAttribute("href")).toBe("/terms");
     expect(
       screen
         .getByRole("link", { name: "Kebijakan Privasi" })
         .getAttribute("href"),
     ).toBe("/privacy");
-    expect(screen.getByRole("textbox", { name: /Email/ })).toBeTruthy();
+    expect(terms.parentElement?.textContent).toBe(
+      "Dengan membayar, Anda menyetujui Syarat Penggunaan dan Kebijakan Privasi.",
+    );
+    expect(terms.closest('[data-intake-screen="order"]')).toBeNull();
+    expect(
+      screen.getByRole("textbox", { name: "Email penerima laporan" }),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Bayar Rp99.000" })).toBeTruthy();
     // A real payment screen has no simulation label.
     expect(document.body.textContent).not.toContain("Pembayaran simulasi");
@@ -185,6 +217,7 @@ describe("the order summary (Experience 2, 3)", () => {
 
   it("in synthetic mode the labelled simulated payment pays at once and shows the order number", async () => {
     let paid = false;
+    const reading = heldReading();
     const stub = stubServer({
       start: () => {
         paid = true;
@@ -196,19 +229,28 @@ describe("the order summary (Experience 2, 3)", () => {
           ? { state: "paid", order_number: NUMBER }
           : { state: "unpaid" },
       }),
+      extract: reading.extract,
     });
     render(<SmartIntakeJourney live={false} />);
     await toOrderScreen();
     expect(document.body.textContent).toContain("Pembayaran simulasi");
     await pay();
-    await heading("Pembayaran diterima");
-    expect(screen.getByText(NUMBER)).toBeTruthy();
+    // J09: once paid, the paid reading starts by itself (no Lanjut), under
+    // the order number.
+    await heading("Nuave sedang membaca website Anda");
+    expect(
+      document.querySelector('[data-journey-tone="ember"]'),
+    ).not.toBeNull();
+    expect(screen.getByText(NUMBER).closest("p")?.textContent).toBe(
+      `Pembayaran diterima·${NUMBER}`,
+    );
     expect(navigated).toBeNull();
     expect(stub.calls).toEqual([
       "identity",
       "/api/orders",
       "/api/payments/start",
       "/api/orders/status",
+      "/api/audit/extract",
     ]);
     // Paid: the website and business are locked and the order number is kept.
     expect(readSmartSession()?.order).toMatchObject({
@@ -217,10 +259,14 @@ describe("the order summary (Experience 2, 3)", () => {
       number: NUMBER,
     });
     // The intake continues as today.
-    fireEvent.click(await button("Lanjut"));
+    reading.release();
+    await heading("Ceritakan bisnis Anda");
+    fireEvent.click(await button("Mulai"));
     await heading("Apa yang ingin Anda audit?");
     expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
-    expect(stub.calls).toContain("/api/audit/extract");
+    expect(
+      stub.calls.filter((call) => call === "/api/audit/extract"),
+    ).toHaveLength(1);
   });
 
   it("creates the order, starts the payment and sends the browser to the Midtrans page", async () => {
@@ -321,12 +367,13 @@ describe("the order summary (Experience 2, 3)", () => {
 async function returnWith(
   payment: Record<string, unknown>,
   top: Record<string, unknown> = { state: "open" },
+  overrides: Partial<Stub> = {},
 ) {
   let answer: Record<string, unknown> = {
     state: "open",
     payment: { state: "unpaid" },
   };
-  const stub = stubServer({ status: () => answer });
+  const stub = stubServer({ status: () => answer, ...overrides });
   render(<SmartIntakeJourney live />);
   await toOrderScreen();
   await pay();
@@ -412,15 +459,25 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
   it("polls the status while waiting and moves on when it is paid", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      const { set } = await returnWith({
-        state: "waiting",
-        redirect_url: MIDTRANS_PAGE,
-      });
+      const reading = heldReading();
+      const { stub, set } = await returnWith(
+        { state: "waiting", redirect_url: MIDTRANS_PAGE },
+        { state: "open" },
+        { extract: reading.extract },
+      );
       await heading("Menunggu pembayaran");
       set({ state: "open", payment: { state: "paid", order_number: NUMBER } });
       await vi.advanceTimersByTimeAsync(10_500);
-      await heading("Pembayaran diterima");
-      expect(screen.getByText(NUMBER)).toBeTruthy();
+      // Paid: the paid reading starts by itself under the order number (J09).
+      await heading("Nuave sedang membaca website Anda");
+      expect(screen.getByText(NUMBER).closest("p")?.textContent).toBe(
+        `Pembayaran diterima·${NUMBER}`,
+      );
+      reading.release();
+      await heading("Ceritakan bisnis Anda");
+      expect(
+        stub.calls.filter((call) => call === "/api/audit/extract"),
+      ).toHaveLength(1);
     } finally {
       vi.useRealTimers();
     }
@@ -446,21 +503,36 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
   });
 
   it.each([
-    ["waiting", { state: "waiting", redirect_url: MIDTRANS_PAGE }],
+    [
+      "waiting",
+      { state: "waiting", redirect_url: MIDTRANS_PAGE },
+      "Menunggu pembayaran",
+    ],
     [
       "try_failed",
       { state: "try_failed", last_try: "denied", redirect_url: MIDTRANS_PAGE },
+      "Pembayaran belum berhasil",
     ],
-    ["checking", { state: "checking" }],
-    ["cannot_check", { state: "cannot_check" }],
+    [
+      "checking",
+      { state: "checking" },
+      "Kami sedang memeriksa pembayaran Anda",
+    ],
+    [
+      "cannot_check",
+      { state: "cannot_check" },
+      "Status pembayaran belum dapat diperiksa",
+    ],
   ])(
     "while %s the website and business are locked: no Kembali to the brand check",
-    async (_name, payment) => {
+    async (_name, payment, title) => {
       await returnWith(payment);
-      await screen.findAllByText(
-        /Menunggu|belum berhasil|memeriksa|belum dapat diperiksa/,
-      );
+      await heading(title);
+      // Neither the bottom bar's Kembali nor the top bar's round back button.
       expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Halaman sebelumnya" }),
+      ).toBeNull();
       expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
     },
   );
@@ -501,20 +573,25 @@ describe("a latest try finally unpaid after an earlier unknown try (Q18 A)", () 
       screen.queryByRole("button", { name: "Coba bayar lagi" }),
     ).toBeNull();
     expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Halaman sebelumnya" }),
+    ).toBeNull();
   });
 });
 
 describe("Mulai pesanan baru after a refund (Q17)", () => {
-  it.each(["closed_unknown", "needs_refund", "paid_ended", "unpaid_final"])(
-    "a %s order has no Mulai pesanan baru",
-    async (state) => {
-      await returnWith({ state, order_number: NUMBER }, { state: "failed" });
-      await screen.findAllByRole("heading", { level: 2 });
-      expect(
-        screen.queryByRole("button", { name: "Mulai pesanan baru" }),
-      ).toBeNull();
-    },
-  );
+  it.each([
+    ["closed_unknown", "Pembayaran belum dapat dipastikan"],
+    ["needs_refund", "Pembayaran ini tidak dapat dipakai untuk pesanan ini"],
+    ["paid_ended", "Pesanan ini tidak dapat dilanjutkan di sini"],
+    ["unpaid_final", "Pembayaran tidak kami terima"],
+  ])("a %s order has no Mulai pesanan baru", async (state, title) => {
+    await returnWith({ state, order_number: NUMBER }, { state: "failed" });
+    await heading(title);
+    expect(
+      screen.queryByRole("button", { name: "Mulai pesanan baru" }),
+    ).toBeNull();
+  });
 
   it("a refunded order offers it; it returns to the entry and the next order carries no previous_order_id", async () => {
     const { stub, set } = await returnWith(
@@ -523,7 +600,9 @@ describe("Mulai pesanan baru after a refund (Q17)", () => {
     );
     await heading("Pembayaran sudah dikembalikan");
     fireEvent.click(await button("Mulai pesanan baru"));
-    await screen.findByRole("textbox", { name: "Nama bisnis" });
+    await screen.findByRole("textbox", {
+      name: "Website atau akun Instagram bisnis",
+    });
     expect(readSmartSession()?.order ?? null).toBeNull();
     expect(readSmartSession()?.supersededOrder ?? null).toBeNull();
     // A fresh journey: a new order is made with no previous_order_id.
@@ -592,6 +671,9 @@ describe("ended payment states lock the order (Q13 A, R-12, R-19)", () => {
       await returnWith({ state, order_number: NUMBER }, { state: "failed" });
       await screen.findByText(NUMBER);
       expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Halaman sebelumnya" }),
+      ).toBeNull();
       expect(screen.queryByRole("button", { name: /Ubah/ })).toBeNull();
       expect(
         screen.queryByRole("button", { name: "Bayar Rp99.000" }),
@@ -614,6 +696,9 @@ describe("ended payment states lock the order (Q13 A, R-12, R-19)", () => {
         number: NUMBER,
       });
       expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Halaman sebelumnya" }),
+      ).toBeNull();
       expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(
         1,
       );
@@ -709,15 +794,25 @@ describe("a replacement refused because the old order is active (R-19)", () => {
     await waitFor(() =>
       expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull(),
     );
-    // Back to the brand check, a different business name, forward again.
-    fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
-    await heading("Ini brand yang ingin Anda audit?");
+    // Back to the brand check (through the three steps), a different
+    // business name, forward again.
+    fireEvent.click(screen.getByRole("button", { name: "Halaman sebelumnya" }));
+    await heading("Tinggal 3 langkah");
+    fireEvent.click(screen.getByRole("button", { name: "Halaman sebelumnya" }));
+    await heading("Kami menemukan bisnis Anda");
     fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Nama brand" }), {
-      target: { value: "Nama Lain Fiksi" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
-    await heading("Ringkasan pesanan");
+    const rename = await screen.findByRole("dialog", { name: "Nama bisnis" });
+    fireEvent.change(
+      within(rename).getByRole("textbox", { name: "Nama bisnis" }),
+      { target: { value: "Nama Lain Fiksi" } },
+    );
+    fireEvent.click(within(rename).getByRole("button", { name: "Simpan" }));
+    fireEvent.click(await button("Ya, ini bisnis saya"));
+    await heading("Tinggal 3 langkah");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Lanjut ke pembayaran" }),
+    );
+    await heading("Konfirmasi dan bayar");
     await typeEmail();
     fireEvent.click(await button("Bayar Rp99.000"));
     await waitFor(() => expect(created).toBe(2));
@@ -755,16 +850,29 @@ describe("locks after payment (R-19, AC-13)", () => {
     render(<SmartIntakeJourney live={false} />);
     await toOrderScreen();
     await pay();
-    fireEvent.click(await button("Lanjut"));
+    // The paid reading starts by itself and lands on the Step 2 cover.
+    await heading("Ceritakan bisnis Anda");
+    fireEvent.click(await button("Mulai"));
     await heading("Apa yang ingin Anda audit?");
     return stub;
   }
 
   it("has no way back to the business or the website", async () => {
     await paidAtFocus();
+    expect(
+      screen.queryByRole("button", { name: "Halaman sebelumnya" }),
+    ).toBeNull();
+    // Kembali on the focus screen only reaches the Step 2 cover...
+    fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
+    await heading("Ceritakan bisnis Anda");
+    // ...which has no way back to the business, the steps or the order.
     expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Halaman sebelumnya" }),
+    ).toBeNull();
     // The main button still works.
-    expect(screen.getByRole("button", { name: "Lanjut" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mulai" }));
+    await heading("Apa yang ingin Anda audit?");
   });
 
   it("a paid order that the server no longer knows is never turned into a new order", async () => {
@@ -805,6 +913,9 @@ describe("the founder test pass (R-20)", () => {
     expect(screen.queryByText("Rp99.000")).toBeNull();
     await typeEmail();
     fireEvent.click(await button("Lanjut"));
+    // No payment: the paid reading runs at once and the intake continues.
+    await heading("Ceritakan bisnis Anda");
+    fireEvent.click(await button("Mulai"));
     await heading("Apa yang ingin Anda audit?");
     expect(stub.bodies["/api/orders"]![0]).toMatchObject({
       test_pass_code: "founder-code-0123456789abcdef",
