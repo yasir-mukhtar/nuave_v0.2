@@ -27,6 +27,12 @@ what the audit sold to the first paying customers will be:
 - **Order:** build this first ([Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)),
   then S5 (terms, price and promise wording), S6 (landing page) and G1, so the
   promise and landing page describe the new audit once.
+- **Failed checks:** one free re-run of only the failed part; if it still
+  fails, the customer is sent to support; a refund only when it cannot be
+  fixed.
+- **Report design:** no Figma design now; build from the existing report
+  design and evaluate later.
+- **Promise:** the order preview and checkout name "ChatGPT dan Google".
 
 ## 2026-10-23 — Errors use Jeton red
 

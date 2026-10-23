@@ -1,8 +1,8 @@
 # Spec 018: Real-search questions, answered by ChatGPT and Google (Rp249.000)
 
-> Status: **Draft** — waiting for founder review
+> Status: **In review** — founder answered Q-1..Q-3 on 2026-10-23; independent plan review next
 > Owner: orchestrator
-> Updated: 2026-10-23
+> Updated: 2026-10-23 (revision 2: founder answers, report layout proposal)
 > Implements: the new audit the founder chose to sell first (Option A, before
 > S5 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md))
 > Decision basis: [2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000](../../docs/DECISION_LOG.md#2026-10-23--real-search-questions-chatgpt-and-google-rp249000)
@@ -80,6 +80,9 @@ and what to publish to be named.
 - Showing both answers, demand numbers and sources in the web report, PDF and
   JSON export.
 - Price change to Rp249.000 everywhere it is shown or charged.
+- Naming "ChatGPT dan Google" on the order preview and checkout (founder
+  answer to Q-3).
+- One free re-run of failed checks from the report (founder answer to Q-1).
 - Spend guard, secrets and deployment for the new provider.
 
 ## Non-scope
@@ -117,14 +120,36 @@ and what to publish to be named.
    customer's text is what is asked.
 4. **Audit:** runs on the server as today; each question is asked twice
    (ChatGPT, then Google). The progress screen counts 20 checks.
-5. **Report:** for each question: the question, its label, topic demand, then
-   two answer blocks, "ChatGPT" and "Google (Ringkasan AI)", each with: named
-   or not, recommended or not, competitors named, and sources used. The
-   summary shows results per source ("ChatGPT: disebut di X dari 10",
-   "Google: disebut di Y dari 10; ringkasan AI muncul di Z dari 10") and a
-   short "Apa yang perlu dipublikasikan" list built from the questions where
-   the business was missing and the sources the AIs relied on.
-6. All customer text is Indonesian and follows `docs/VOICE.md`.
+5. **Report:** see "Report layout" below. In short: results per source, then
+   each question with its label and topic demand followed by a ChatGPT answer
+   and a Google answer, then Nuave's analysis, next steps with "Apa yang
+   perlu dipublikasikan", and the method.
+6. **Failed checks (founder answer to Q-1):** if any check failed, the report
+   is still delivered and shows which ones. It offers one free button,
+   "Periksa ulang bagian yang gagal", which re-runs only the failed checks.
+   If the re-run still fails, the report shows "Minta bantuan" (the support
+   contact from S5) and the founder resolves it by hand. A refund is offered
+   only when support cannot fix it.
+7. All customer text is Indonesian and follows `docs/VOICE.md`.
+
+## Report layout (proposal from the existing design; founder evaluates later)
+
+No Figma design will be made now (founder answer to Q-2). The worker builds
+from the existing direct-ten report (`src/app/audit/report/`) and its
+components, in the same phone-column layout, colours and type. Changes:
+
+| Section (existing number) | Today | Proposed |
+|---|---|---|
+| Header | Business name, date | Adds one line: "Diperiksa di ChatGPT dan Google · <kota> · <tanggal>" |
+| 01 Hasil singkat | One result card: "muncul di X dari 10" and "direkomendasikan di Y dari 10", each with the row of ten beads | **Two result cards, stacked:** "ChatGPT" and "Google · Ringkasan AI". Each keeps the same big number and ten beads. The Google card adds a line "Ringkasan AI muncul di Z dari 10 pencarian". The conclusion and the limit note stay; the limit note adds the city and that Google results change over time |
+| 02 Jawaban model AI → "Pertanyaan dan jawaban" | One `ReportAnswer` per question | **One block per question:** number, question text, the origin label chip ("Dicari di Google" / "Disusun dari topik yang dicari" / "Disusun dari profil bisnis" / "Diubah oleh Anda"), and a line "Topik: … · ±N pencarian/bulan di Google". Under it, **two stacked answers** using the existing `ReportAnswer` style, each with a small source heading ("ChatGPT", "Google · Ringkasan AI"), the existing name highlight and the existing references list. Google adds "Posisi di peta: #n" or "Tidak ada di hasil peta" when available. No tabs, so the PDF shows everything |
+| 03 Analisis Nuave | Findings; "Bisnis lain yang disebut" | Findings name the source they come from. "Bisnis lain yang disebut" becomes two short lists, one per source |
+| 04 Langkah berikutnya | Priorities | Same, plus a sub-block **"Apa yang perlu dipublikasikan"** (R-17) |
+| 05 Cara kerja audit | Method | Adds where questions came from (Google search data via DataForSEO, data month, city), that ChatGPT answers come from the OpenAI model with web search and not the ChatGPT app, and that Google answers come from Google's results page |
+
+A failed check shows inside its answer slot as "Tidak dapat diperiksa" with
+the re-run button (once) or "Minta bantuan" (after the re-run). The founder
+reviews screenshots of a synthetic and a live report before release (AC-14).
 
 ## Requirements
 
@@ -191,6 +216,19 @@ and what to publish to be named.
   (same attempt limit and back-off). A Google check that still fails is
   marked "Tidak dapat diperiksa" for that question; ChatGPT results are not
   affected.
+- **R-14a (free re-run):** When the delivered report has any check marked
+  "Tidak dapat diperiksa", the report page offers one free re-run of only
+  those checks for that order. The re-run uses the same question text, city
+  and the existing spend guard and per-order hold. The first saved report is
+  kept unchanged; the re-run saves a second report version for the same
+  order, the private link opens the newest version, and the customer is
+  emailed when it is ready. (This is the one exception the founder makes to
+  S0's "one report per order".)
+- **R-14b (after the re-run):** Checks that still fail show "Minta bantuan"
+  with the support contact; the founder gets a notice naming the order
+  number and failed checks. No second free re-run is offered in the page.
+  The founder may resolve by hand; a refund is offered only when support
+  cannot fix it (the exact refund wording is set in S5).
 
 ### Report
 
@@ -211,6 +249,9 @@ and what to publish to be named.
 - **R-19:** The price is Rp249.000 in Midtrans (`gross_amount` 249000), on
   every screen, email, and page that shows it. No Rp99.000 remains in customer
   text.
+- **R-19a:** The order preview and checkout say the audit checks "ChatGPT dan
+  Google" (founder answer to Q-3). Landing page and terms wording follow in
+  S6 and S5.
 - **R-20:** Every DataForSEO call reserves a fixed maximum in the spend ledger
   before sending and settles to the `cost` the API returns, under the existing
   daily cap and per-order hold.
@@ -228,8 +269,8 @@ and what to publish to be named.
 | Failure | What happens | Customer sees |
 |---|---|---|
 | Discovery fails or is thin | R-07 fallback; no extra charge to the customer | Questions labelled "Disusun dari profil bisnis"; one sentence in the report |
-| One Google check fails after retries | That question's Google block is "Tidak dapat diperiksa" | Report delivered; the summary states how many Google checks completed |
-| More than 3 of 10 Google checks fail | Report still delivered; founder notice sent; treated as a partial delivery under the refund rules S5 sets | Report says clearly that the Google part is incomplete |
+| Any check fails after retries | That answer slot is "Tidak dapat diperiksa"; report delivered | Summary states how many checks completed per source; one free "Periksa ulang bagian yang gagal" (R-14a) |
+| Re-run still fails | Founder notice with order number and failed checks (R-14b) | "Minta bantuan" with the support contact; refund only if support cannot fix it |
 | ChatGPT failures | Unchanged from today | Unchanged |
 | DataForSEO balance empty / credentials rejected | Founder notice; no new orders are taken (R-22); orders already paid finish with Google marked "Tidak dapat diperiksa" | Existing "audit belum tersedia" path for new orders |
 
@@ -282,6 +323,14 @@ number is shown as missing, never estimated or filled in.
 - **AC-12:** Given the daily cap is reached, then no DataForSEO call is sent.
 - **AC-13:** Given synthetic mode, then `verify-nuave drive all` passes with
   labelled synthetic discovery and Google answers and no external calls.
+- **AC-15:** Given a delivered report with a failed check, when the customer
+  uses the re-run, then only the failed checks are sent, a second report
+  version is saved, the link opens it, the first version is unchanged, the
+  customer is emailed, and the button is no longer offered.
+- **AC-16:** Given the re-run also fails, then the slot shows "Minta bantuan"
+  and the founder receives one notice with the order number.
+- **AC-17:** Given the order preview and checkout, then both say "ChatGPT dan
+  Google" and Rp249.000.
 - **AC-14 (live, founder-run):** one live order on a real business is
   delivered with both sources; total cost recorded; founder judges that the
   questions read as real human questions and the report is understandable
@@ -289,19 +338,19 @@ number is shown as missing, never estimated or filled in.
 
 ## Open questions
 
-- **Q-1 (founder):** Refund rule when Google is incomplete (more than 3 of 10
-  failed). Proposed: partial refund or free re-run; to settle in S5.
-- **Q-2 (founder):** Report design for two answers per question. Proposed:
-  the worker follows the current report style and the founder reviews
-  screenshots; a Figma design can replace it later.
-- **Q-3 (founder):** Should the order preview and landing promise name
-  "ChatGPT dan Google"? Proposed: yes, wording approved in S5/S6.
+None open. Founder answers (2026-10-23):
+
+- **Q-1 → answered:** free re-run of the failed part; if it still fails, send
+  the customer to support; refund only when it cannot be fixed (R-14a, R-14b).
+- **Q-2 → answered:** no Figma design now; build from the existing report
+  design (see "Report layout"); the founder evaluates it later.
+- **Q-3 → answered:** yes, name "ChatGPT dan Google" (R-19a).
 
 ## Implementation notes
 
-- Suggested build order, each a separate PR: (1) price change; (2) discovery
-  + question choice + fallback, synthetic first; (3) Google checks + report;
-  (4) live run AC-14.
+- Suggested build order, each a separate PR: (1) price change and "ChatGPT
+  dan Google" wording; (2) discovery + question choice + fallback, synthetic
+  first; (3) Google checks + report; (4) free re-run; (5) live run AC-14.
 - DataForSEO uses HTTP Basic auth; one task per live request. Working calls
   and response shapes are in `experiments/dataforseo-sozo/run.mjs`.
 - City locations: check DataForSEO's SERP location list for Indonesian
