@@ -150,7 +150,7 @@ function newItems(items: string[], chips: string[]): string[] {
 
 function Problem({ text }: { text: string | null }) {
   return text ? (
-    <p role="alert" className="type-copy-sm m-0 text-ember-700">
+    <p role="alert" className="type-copy-sm m-0 text-error">
       {text}
     </p>
   ) : null;

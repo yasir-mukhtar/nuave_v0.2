@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const boxClass =
-  "group/field relative grid w-full gap-0.5 rounded-input border border-line-300 bg-white px-4 py-2.5 text-left transition-[border-color,box-shadow] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-(--edge-ink) has-[[aria-invalid=true]]:border-ember-700 has-[[aria-invalid=true]]:shadow-(--edge-ember)";
+  "group/field relative grid w-full gap-0.5 rounded-input border border-line-300 bg-white px-4 py-2.5 text-left transition-[border-color,box-shadow] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-(--edge-ink) has-[[aria-invalid=true]]:border-error-edge has-[[aria-invalid=true]]:shadow-(--edge-error)";
 
 const controlClass =
   "h-auto min-h-0 w-full rounded-none border-0 bg-transparent p-0 text-base text-ink-900 shadow-none outline-none placeholder:text-ink-500 focus-visible:border-0 focus-visible:ring-0 aria-invalid:ring-0 md:text-base";
@@ -13,7 +13,7 @@ const controlClass =
 /**
  * The v2 field ("v2/Field"): the label sits small inside the box and the
  * value below it, so a filled form still reads at a glance. Focus draws the
- * 2px ink edge; an error draws it in ember-700 with the message underneath.
+ * 2px ink edge; an error draws it in red with the message underneath.
  */
 export const FloatingField = forwardRef<
   HTMLInputElement,
@@ -55,11 +55,7 @@ export const FloatingField = forwardRef<
         </span>
       </label>
       {error ? (
-        <p
-          id={errorId}
-          role="alert"
-          className="type-copy-sm m-0 text-ember-700"
-        >
+        <p id={errorId} role="alert" className="type-copy-sm m-0 text-error">
           {error}
         </p>
       ) : null}
@@ -149,11 +145,7 @@ export const FloatingTextarea = forwardRef<
         </span>
       </label>
       {error ? (
-        <p
-          id={errorId}
-          role="alert"
-          className="type-copy-sm m-0 text-ember-700"
-        >
+        <p id={errorId} role="alert" className="type-copy-sm m-0 text-error">
           {error}
         </p>
       ) : null}

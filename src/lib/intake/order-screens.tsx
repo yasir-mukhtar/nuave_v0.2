@@ -133,7 +133,7 @@ function PaymentPanel({
         "grid gap-3 rounded-card p-5",
         tone === "good" && "bg-stone-50",
         tone === "calm" && "border border-line-200 bg-white",
-        tone === "attention" && "bg-ember-50",
+        tone === "attention" && "bg-error-light",
       )}
       data-payment-state={payment.state}
       role={tone === "attention" ? "alert" : "status"}
@@ -148,7 +148,7 @@ function PaymentPanel({
           <IconAlertTriangle
             size={22}
             stroke={1.75}
-            className="text-ember-700"
+            className="text-error-edge"
             aria-hidden="true"
           />
         ) : (
@@ -592,7 +592,7 @@ export function OrderScreen({
           </KeyboardAccessory>
         </div>
       ) : error ? (
-        <p role="alert" className="type-copy-sm m-0 text-ember-700">
+        <p role="alert" className="type-copy-sm m-0 text-error">
           {error}
         </p>
       ) : null}

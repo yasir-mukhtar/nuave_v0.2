@@ -76,9 +76,14 @@
   --green: #16a34a;
   --green-light: #dcfce7;
   --green-border: #86efac;
-  --red: #dc2626;
-  --red-light: #fee2e2;
-  --red-border: #fca5a5;
+  /* Errors use Jeton red (Figma page 09's "JETON" study: #f73b20 / #e02e14),
+     never the violet accent, so a mistake never reads as a highlight.
+     Jeton's #e02e14 draws error edges and icons (4.6:1); small error text
+     takes one step darker (#c42410, 5.8:1 on white, 5.5:1 on stone-50). */
+  --red: #c42410;
+  --red-edge: #e02e14;
+  --red-light: #fff1ee;
+  --red-border: #ffc4b8;
   --amber: #f59e0b;
   --amber-light: #fef3c7;
   --amber-border: #fde68a;
@@ -293,6 +298,7 @@
   /* Selection and focus: the 2px edge is a 1px border plus this inset. */
   --edge-ink: inset 0 0 0 1px var(--ink-900);
   --edge-ember: inset 0 0 0 1px var(--ember-700);
+  --edge-error: inset 0 0 0 1px var(--red-edge);
   /* Report beads (J32): a lit ball for a hit, violet or ink. */
   --bead-ember: radial-gradient(
     circle at 35% 30%,
@@ -355,7 +361,7 @@
   /* Destructive */
   --btn-destructive-bg: var(--red);
   --btn-destructive-text: #ffffff;
-  --btn-destructive-bg-hover: #b91c1c;
+  --btn-destructive-bg-hover: #a51d0c;
 
   /* ── Landing page aliases (mapped to foundation) ── */
   --lp-bg: var(--bg-surface);

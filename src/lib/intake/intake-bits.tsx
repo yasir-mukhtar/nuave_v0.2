@@ -55,7 +55,7 @@ export function OriginNote({
 
 export function ScreenError({ error }: { error?: string | null }) {
   return error ? (
-    <p role="alert" className="type-copy-sm m-0 mt-4 text-ember-700">
+    <p role="alert" className="type-copy-sm m-0 mt-4 text-error">
       {error}
     </p>
   ) : null;

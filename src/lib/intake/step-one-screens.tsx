@@ -141,7 +141,7 @@ export function WebsiteForm({
         onSubmit();
       }}
     >
-      <label className="flex h-[60px] items-center gap-3 rounded-chip border border-line-200 bg-white px-5 shadow-float transition-[box-shadow,border-color] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[var(--edge-ink),var(--elevation-float)] has-[[aria-invalid=true]]:border-ember-700">
+      <label className="flex h-[60px] items-center gap-3 rounded-chip border border-line-200 bg-white px-5 shadow-float transition-[box-shadow,border-color] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[var(--edge-ink),var(--elevation-float)] has-[[aria-invalid=true]]:border-error-edge">
         <IconWorld
           size={22}
           stroke={1.75}
@@ -172,7 +172,7 @@ export function WebsiteForm({
         <p
           id="website-error"
           role="alert"
-          className="type-copy-sm m-0 px-2 text-ember-700"
+          className="type-copy-sm m-0 px-2 text-error"
         >
           {error}
         </p>
@@ -784,7 +784,7 @@ export function BusinessFoundScreen({
       {/* While the sheet is open the page behind it is hidden from assistive
           technology, so a refused name is announced inside the sheet. */}
       {error && !editing ? (
-        <p role="alert" className="type-copy-sm m-0 text-ember-700">
+        <p role="alert" className="type-copy-sm m-0 text-error">
           {error}
         </p>
       ) : null}
