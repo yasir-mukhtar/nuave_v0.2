@@ -3,6 +3,7 @@
     "allow": [
       "mcp__claude-in-chrome__tabs_context_mcp",
       "mcp__claude_ai_Figma__get_screenshot",
+      "mcp__Figma",
       "Bash(system_profiler *)",
       "Bash(npm run test:audit)",
       "Bash(gh search repos *)",
