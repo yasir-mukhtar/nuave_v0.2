@@ -1,0 +1,513 @@
+{
+  "version": "0.1.20261022",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "5.6884 sec.",
+  "cost": 0.00215,
+  "tasks_count": 1,
+  "tasks_error": 0,
+  "tasks": [
+    {
+      "id": "10231346-2907-0139-0000-37f97d0d5013",
+      "status_code": 20000,
+      "status_message": "Ok.",
+      "time": "5.6264 sec.",
+      "cost": 0.00215,
+      "result_count": 1,
+      "path": [
+        "v3",
+        "serp",
+        "google",
+        "organic",
+        "live",
+        "advanced"
+      ],
+      "data": {
+        "api": "serp",
+        "function": "live",
+        "se": "google",
+        "se_type": "organic",
+        "keyword": "sozo skin clinic",
+        "location_code": 2360,
+        "language_code": "id",
+        "device": "mobile",
+        "load_async_ai_overview": true,
+        "people_also_ask_click_depth": 1,
+        "os": "android"
+      },
+      "result": [
+        {
+          "keyword": "sozo skin clinic",
+          "type": "organic",
+          "se_domain": "google.com",
+          "location_code": 2360,
+          "language_code": "id",
+          "check_url": "https://www.google.com/search?q=sozo%20skin%20clinic&hl=id&gl=ID&ie=UTF-8&uule=w+CAIQIFISCbcEZEnXB0wsEYX0rRvnTXvj",
+          "datetime": "2026-10-23 13:46:35 +00:00",
+          "spell": null,
+          "refinement_chips": null,
+          "item_types": [
+            "local_pack",
+            "people_also_ask",
+            "organic",
+            "images",
+            "people_also_search"
+          ],
+          "se_results_count": 0,
+          "pages_count": 1,
+          "items_count": 12,
+          "items": [
+            {
+              "type": "local_pack",
+              "rank_group": 1,
+              "rank_absolute": 1,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/c-wiz[1]",
+              "title": "Sozo Skin Clinic - Tanjung Duren | Klinik Kecantikan Terbaik untuk Kulit, Rambut, dan Slimming",
+              "description": "Tutup · Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta",
+              "domain": "sozoskinclinic.com",
+              "phone": "085175225664",
+              "booking_url": null,
+              "url": "https://sozoskinclinic.com/",
+              "is_paid": false,
+              "rating": null,
+              "cid": "2763407381234932750",
+              "rectangle": null
+            },
+            {
+              "type": "local_pack",
+              "rank_group": 2,
+              "rank_absolute": 2,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/c-wiz[2]",
+              "title": "Sozo Skin Clinic - Balikpapan | Klinik Kecantikan Terdekat, Harga Terjangkau",
+              "description": "Tutup · Kota Balikpapan, Kalimantan Timur",
+              "domain": "sozoskinclinic.com",
+              "phone": "085175225664",
+              "booking_url": null,
+              "url": "https://sozoskinclinic.com/",
+              "is_paid": false,
+              "rating": null,
+              "cid": "16387654042624688269",
+              "rectangle": null
+            },
+            {
+              "type": "local_pack",
+              "rank_group": 3,
+              "rank_absolute": 3,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[1]/div[1]/div[1]/div[3]/div[1]/c-wiz[3]",
+              "title": "Sozo Skin Clinic - PIK | Klinik Kecantikan Terbaik untuk Kulit, Rambut, dan Slimming",
+              "description": "Tutup · Jkt Utara, Daerah Khusus Ibukota Jakarta",
+              "domain": "sozoskinclinic.com",
+              "phone": "085175225664",
+              "booking_url": null,
+              "url": "https://sozoskinclinic.com/",
+              "is_paid": false,
+              "rating": null,
+              "cid": "10576784814298513800",
+              "rectangle": null
+            },
+            {
+              "type": "people_also_ask",
+              "rank_group": 1,
+              "rank_absolute": 4,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]",
+              "items": [
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Sozo skin punya siapa?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[2]/div[2]/div[1]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa biaya treatment di sozo?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[2]/div[2]/div[2]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa banyak klinik kecantikan di Indonesia?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[2]/div[2]/div[3]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa biaya perawatan wajah di klinik kecantikan?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[2]/div[2]/div[4]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Apa saja 10 klinik kecantikan terbaik di Indonesia?",
+                  "seed_question": "Berapa biaya perawatan wajah di klinik kecantikan?",
+                  "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[2]/div[2]/div[5]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa biaya laser untuk menghilangkan flek hitam di wajah?",
+                  "seed_question": "Berapa biaya perawatan wajah di klinik kecantikan?",
+                  "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[2]/div[2]/div[6]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                }
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 1,
+              "rank_absolute": 5,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "sozoskinclinic.com",
+              "title": "Semua Beauty Treatment Sozo Skin Clinic - Lengkap & Terpercaya",
+              "url": "https://sozoskinclinic.com/treatment/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://sozoskinclinic.com",
+              "website_name": "Sozo Clinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Temukan beauty treatment lengkap di Sozo: laser, facial, filler, hair removal, hingga body treatment. Aman ditangani dokter di 60+ cabang se-Indonesia.",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo skin clinic",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "images",
+              "rank_group": 1,
+              "rank_absolute": 6,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[7]",
+              "title": "Gambar",
+              "url": null,
+              "items": [
+                {
+                  "type": "images_element",
+                  "alt": "SOZO Skin Clinic | WAKTUNYA GAJIAN, WAKTUNYA PERAWATAN ...",
+                  "url": "https://www.instagram.com/p/DLUfa6oBiN5/",
+                  "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTX5j9oybUFdSE-_BPqTi3xa4NAXqX4vLm2LXGMzzXboM3TAOb4T5C-FDs&s"
+                },
+                {
+                  "type": "images_element",
+                  "alt": "SOZO Skin Clinic | Book Now, Glow Now🫰🏻 Waktunya glowing ...",
+                  "url": "https://www.instagram.com/p/DOxtwB5k4-l/",
+                  "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIsv39XOhdmgXIybI7iMtISCQZ-OP2c1hOdT-ID5lzNOhaZ0LMAdQqmH4&s"
+                },
+                {
+                  "type": "images_element",
+                  "alt": "SOZO Skin Clinic | OPEN NOW BALIKPAPAN DAN PONTIANAK🤩 Kabar ...",
+                  "url": "https://www.instagram.com/p/DGM5-pvh835/",
+                  "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTE48SxOAxgyPeg5dvG7Mo1wALcQcKHzKLiPRfaltY19opCUc66nK1hT_k&s"
+                },
+                {
+                  "type": "images_element",
+                  "alt": "Sozo Skin Clinic AEON Mall Tanjung Barat - Yoka Design Build",
+                  "url": "https://yokabuild.com/project/sozo-skin-clinic-aeon-mall-tanjung-barat/",
+                  "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgdGh8ok-oQUy_Rk7ySbheA5NgcWWExe10UItzyMBLi8VE_HRTzkI96Bk&s"
+                }
+              ],
+              "related_image_searches": null,
+              "rectangle": null
+            },
+            {
+              "type": "people_also_search",
+              "rank_group": 1,
+              "rank_absolute": 7,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[9]",
+              "title": "Orang lain juga menelusuri",
+              "items": [
+                "Sozo Skin Clinic price list",
+                "Sozo Skin Clinic PIK",
+                "Sozo Skin Clinic Cikarang",
+                "Sozo Skin Clinic Terdekat",
+                "Sozo Skin Clinic Tegal",
+                "Sozo Skin Clinic Jakarta"
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 2,
+              "rank_absolute": 8,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[11]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.instagram.com",
+              "title": "SOZO Hair Clinic (@sozo.hairclinic)",
+              "url": "https://www.instagram.com/sozo.hairclinic/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "106,3 rb+ pengikut",
+              "website_name": "Instagram · sozo.hairclinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Unlock The Ultimate Hair Solution • Personalized Treatments by Our Experts More than 30+ Clinics Part of @sozo.skinclinic.",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo skin clinic",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 3,
+              "rank_absolute": 9,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[13]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "sozoskinclinic.com",
+              "title": "Klinik Kecantikan Terdekat Terbaik di Bandung",
+              "url": "https://sozoskinclinic.com/lokasi/bandung/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://sozoskinclinic.com",
+              "website_name": "Sozo Clinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Sebagai pilihan utama untuk klinik kecantikan Bandung, Sozo Skin Clinic memiliki 3 cabang strategis di Bandung Buah Batu (Jl. Buah Batu No.250, Cijagra, Kec.",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo skin clinic",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 4,
+              "rank_absolute": 10,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[15]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "sozoskinclinic.com",
+              "title": "Lokasi Sozo Skin Clinic Treatment Kecantikan Terdekat",
+              "url": "https://sozoskinclinic.com/lokasi/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://sozoskinclinic.com",
+              "website_name": "Sozo Clinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Temukan lokasi klinik kecantikan Sozo Skin Clinic terdekat dari tempat tinggal Anda. 17 cabang di Jabodetabek, Medan, dan Semarang.",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo skin clinic",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 5,
+              "rank_absolute": 11,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[17]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "sozoskinclinic.com",
+              "title": "Klinik Kecantikan Semarang - Sozo Skin Clinic",
+              "url": "https://sozoskinclinic.com/lokasi/semarang/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://sozoskinclinic.com",
+              "website_name": "Sozo Clinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "SOZO Skin Clinic Semarang menyediakan berbagai pilihan treatment, mulai dari treatment wajah untuk jerawat, bekas jerawat, flek hitam, kulit kusam, anti-aging, ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo skin clinic",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin",
+                "sozo skin"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "people_also_search",
+              "rank_group": 2,
+              "rank_absolute": 12,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[4]/div[2]/div[1]/div[12]/div[4]/div[1]/div[3]/div[1]",
+              "title": "Orang lain juga menelusuri",
+              "items": [
+                "Sozo Skin Clinic Depok",
+                "Sozo Skin Clinic Cibinong",
+                "Sozo Skin Clinic Bintaro",
+                "Sozo Skin Clinic Review",
+                "Sozo Skin Clinic Batam",
+                "Sozo Skin Clinic Rawamangun"
+              ],
+              "rectangle": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

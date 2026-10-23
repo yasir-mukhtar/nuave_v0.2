@@ -1,0 +1,871 @@
+{
+  "version": "0.1.20261022",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "3.8865 sec.",
+  "cost": 0.00215,
+  "tasks_count": 1,
+  "tasks_error": 0,
+  "tasks": [
+    {
+      "id": "10231346-2907-0139-0000-a7b43f486bdd",
+      "status_code": 20000,
+      "status_message": "Ok.",
+      "time": "3.8340 sec.",
+      "cost": 0.00215,
+      "result_count": 1,
+      "path": [
+        "v3",
+        "serp",
+        "google",
+        "organic",
+        "live",
+        "advanced"
+      ],
+      "data": {
+        "api": "serp",
+        "function": "live",
+        "se": "google",
+        "se_type": "organic",
+        "keyword": "facial untuk kulit berjerawat",
+        "location_code": 2360,
+        "language_code": "id",
+        "device": "mobile",
+        "load_async_ai_overview": true,
+        "people_also_ask_click_depth": 1,
+        "os": "android"
+      },
+      "result": [
+        {
+          "keyword": "facial untuk kulit berjerawat",
+          "type": "organic",
+          "se_domain": "google.com",
+          "location_code": 2360,
+          "language_code": "id",
+          "check_url": "https://www.google.com/search?q=facial%20untuk%20kulit%20berjerawat&hl=id&gl=ID&ie=UTF-8&uule=w+CAIQIFISCbcEZEnXB0wsEYX0rRvnTXvj",
+          "datetime": "2026-10-23 13:46:30 +00:00",
+          "spell": null,
+          "refinement_chips": null,
+          "item_types": [
+            "ai_overview",
+            "organic",
+            "people_also_ask",
+            "people_also_search",
+            "images"
+          ],
+          "se_results_count": 0,
+          "pages_count": 1,
+          "items_count": 13,
+          "items": [
+            {
+              "type": "ai_overview",
+              "rank_group": 1,
+              "rank_absolute": 1,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[1]/div[1]",
+              "asynchronous_ai_overview": false,
+              "markdown": "Facial treatment untuk wajah berjerawat `bertujuan membersihkan pori-pori tersumbat, mengontrol minyak berlebih, dan meredakan peradangan`.[[1]](https://rspermatagunungputri.com/perawatan-untuk-membantu-mengatasi-jerawat-dan-menjaga-kesehatan-kulit-wajah/)\n\n### Jenis-Jenis Treatment untuk Jerawat\n\n- **Acne Facial / Double Peeling:** Pembersihan mendalam (*deep cleansing* ), eksfoliasi ringan, dan ekstraksi komedo atau jerawat yang tidak meradang.[[1]](https://www.miracle-clinic.com/news/read/mengenal-berbagai-pilihan-facial-treatment-untuk-kulit-berjerawat)[[2]](https://sebyclinic.co.id/treatment-untuk-kulit-berjerawat/)[[3]](https://www.halodoc.com/kesehatan/facial)\n- **Chemical Peeling / Acne Peeling:** Menggunakan larutan asam khusus (seperti salicylic acid) untuk mengangkat sel kulit mati, membuka pori-pori, dan mempercepat regenerasi kulit . Tersedia di klinik seperti [ERHA Ultimate](https://erhaultimate.co.id/id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang).[[1]](https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang)[[2]](https://www.alodokter.com/treatment-wajah-ini-pilihan-yang-bisa-disesuaikan-dengan-kebutuhan)\n- **Acne Injection:** Penyuntikan obat antiinflamasi langsung ke jerawat besar atau meradang agar cepat kempes dan tidak nyeri.[[1]](https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang)\n- **IPL & Terapi Cahaya (Blue Light / Photofacial):** Menggunakan energi cahaya untuk membunuh bakteri *P. acnes* dan meredakan kemerahan, seperti di [ZAP Clinic](https://zapclinic.com/treatment-category/face).[[1]](https://zapclinic.com/treatment-category/face)[[2]](https://www.youtube.com/watch?v=e1PsQlZr3LI)[[3]](https://www.instagram.com/reel/DUX6jMfj8yx/)\n- **Laser (Black Laser / Laser Fractional):** Membantu mengatasi jerawat aktif serta memudarkan hiperpigmentasi atau bekas jerawat.[[1]](https://www.youtube.com/watch?v=oj-13zN72G0)[[2]](https://www.alodokter.com/treatment-wajah-ini-pilihan-yang-bisa-disesuaikan-dengan-kebutuhan)\n\n\n\n---\n\n### Hal yang Perlu Diperhatikan\n\n- **Hindari ekstraksi paksa:** Jangan memencet atau melakukan ekstraksi pada jerawat yang sedang meradang parah karena berisiko menyebabkan infeksi dan bopeng.[[1]](https://hellosehat.com/penyakit-kulit/jerawat/bolehkah-facial-wajah-berjerawat/)\n- **Frekuensi:** Idealnya dilakukan 1 kali dalam sebulan mengikuti siklus regenerasi kulit (sekitar 30 hari).[[1]](https://www.halodoc.com/kesehatan/facial)\n- **Konsultasi dokter:** Sebaiknya lakukan pemeriksaan awal dengan dokter kulit agar jenis treatment sesuai dengan tingkat keparahan jerawat Anda.[[1]](https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang)[[2]](https://www.youtube.com/watch?v=oj-13zN72G0)",
+              "items": [
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": null,
+                  "text": "Facial treatment untuk wajah berjerawat bertujuan membersihkan pori-pori tersumbat, mengontrol minyak berlebih, dan meredakan peradangan.",
+                  "markdown": "Facial treatment untuk wajah berjerawat `bertujuan membersihkan pori-pori tersumbat, mengontrol minyak berlebih, dan meredakan peradangan`.[[1]](https://rspermatagunungputri.com/perawatan-untuk-membantu-mengatasi-jerawat-dan-menjaga-kesehatan-kulit-wajah/)",
+                  "links": null,
+                  "images": null,
+                  "references": [
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "RS Permata Gunung Putri",
+                      "domain": "rspermatagunungputri.com",
+                      "url": "https://rspermatagunungputri.com/perawatan-untuk-membantu-mengatasi-jerawat-dan-menjaga-kesehatan-kulit-wajah/",
+                      "title": "Facial Acne untuk Kulit Berjerawat | RS Permata Gunung Putri",
+                      "text": "Perawatan untuk Membantu Mengatasi Jerawat dan Menjaga Kesehatan Kulit Wajah. admin. 4 months ago. Perawatan Facial Acne untuk kulit berjerawat di RS Permata Gu..."
+                    }
+                  ]
+                },
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": "Jenis-Jenis Treatment untuk Jerawat",
+                  "text": "Acne Facial / Double Peeling: Pembersihan mendalam (deep cleansing), eksfoliasi ringan, dan ekstraksi komedo atau jerawat yang tidak meradang. Chemical Peeling / Acne Peeling: Menggunakan larutan asam khusus (seperti salicylic acid) untuk mengangkat sel kulit mati, membuka pori-pori, dan mempercepat regenerasi kulit. Tersedia di klinik seperti ERHA Ultimate. Acne Injection: Penyuntikan obat antiinflamasi langsung ke jerawat besar atau meradang agar cepat kempes dan tidak nyeri. IPL & Terapi Cahaya (Blue Light / Photofacial): Menggunakan energi cahaya untuk membunuh bakteri P. acnes dan meredakan kemerahan, seperti di ZAP Clinic. Laser (Black Laser / Laser Fractional): Membantu mengatasi jerawat aktif serta memudarkan hiperpigmentasi atau bekas jerawat.",
+                  "markdown": "- **Acne Facial / Double Peeling:** Pembersihan mendalam (*deep cleansing* ), eksfoliasi ringan, dan ekstraksi komedo atau jerawat yang tidak meradang.[[1]](https://www.miracle-clinic.com/news/read/mengenal-berbagai-pilihan-facial-treatment-untuk-kulit-berjerawat)[[2]](https://sebyclinic.co.id/treatment-untuk-kulit-berjerawat/)[[3]](https://www.halodoc.com/kesehatan/facial)\n- **Chemical Peeling / Acne Peeling:** Menggunakan larutan asam khusus (seperti salicylic acid) untuk mengangkat sel kulit mati, membuka pori-pori, dan mempercepat regenerasi kulit . Tersedia di klinik seperti [ERHA Ultimate](https://erhaultimate.co.id/id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang).[[1]](https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang)[[2]](https://www.alodokter.com/treatment-wajah-ini-pilihan-yang-bisa-disesuaikan-dengan-kebutuhan)\n- **Acne Injection:** Penyuntikan obat antiinflamasi langsung ke jerawat besar atau meradang agar cepat kempes dan tidak nyeri.[[1]](https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang)\n- **IPL & Terapi Cahaya (Blue Light / Photofacial):** Menggunakan energi cahaya untuk membunuh bakteri *P. acnes* dan meredakan kemerahan, seperti di [ZAP Clinic](https://zapclinic.com/treatment-category/face).[[1]](https://zapclinic.com/treatment-category/face)[[2]](https://www.youtube.com/watch?v=e1PsQlZr3LI)[[3]](https://www.instagram.com/reel/DUX6jMfj8yx/)\n- **Laser (Black Laser / Laser Fractional):** Membantu mengatasi jerawat aktif serta memudarkan hiperpigmentasi atau bekas jerawat.[[1]](https://www.youtube.com/watch?v=oj-13zN72G0)[[2]](https://www.alodokter.com/treatment-wajah-ini-pilihan-yang-bisa-disesuaikan-dengan-kebutuhan)",
+                  "links": [
+                    {
+                      "type": "link_element",
+                      "title": "ERHA Ultimate",
+                      "description": null,
+                      "url": "https://erhaultimate.co.id/id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang",
+                      "domain": "erhaultimate.co.id"
+                    },
+                    {
+                      "type": "link_element",
+                      "title": "ZAP Clinic",
+                      "description": null,
+                      "url": "https://zapclinic.com/treatment-category/face",
+                      "domain": "zapclinic.com"
+                    }
+                  ],
+                  "images": null,
+                  "references": [
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Miracle Aesthetic Clinic",
+                      "domain": "www.miracle-clinic.com",
+                      "url": "https://www.miracle-clinic.com/news/read/mengenal-berbagai-pilihan-facial-treatment-untuk-kulit-berjerawat",
+                      "title": "Mengenal Berbagai Pilihan Facial Treatment untuk Kulit Berjerawat - Miracle Aesthetic Clinic",
+                      "text": "Miracle Aesthetic Clinic acne treatments (24 Jan 2024): Aesthetic: - Miracle Double Peeling Acne Facial: double peeling for active/inflamed acne, oily skin, com..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Seby Clinic",
+                      "domain": "sebyclinic.co.id",
+                      "url": "https://sebyclinic.co.id/treatment-untuk-kulit-berjerawat/",
+                      "title": "2 Treatment untuk Kulit Berjerawat: Facial Acne & Acne Peeling",
+                      "text": "Proses Facial Acne Treatment. Treatment ini biasanya dilakukan melalui beberapa tahap, antara lain: Deep cleansing untuk membersihkan kotoran dan minyak pada wa..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Halodoc",
+                      "domain": "www.halodoc.com",
+                      "url": "https://www.halodoc.com/kesehatan/facial",
+                      "title": "Facial Treatment - Tujuan, Jenis, dan Prosedur | Halodoc",
+                      "text": "Facial: skin treatment by certified estheticians for exfoliation, deep cleaning, and removing dead cells/blackheads. Freq: Ideal monthly (30-day skin regenerati..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "ERHA Ultimate",
+                      "domain": "erhaultimate.co.id",
+                      "url": "https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang",
+                      "title": "Treatment Wajah Berjerawat untuk Kulit Sensitif dan Meradang",
+                      "text": "Treatment Wajah B... * 26 February 2026 - ... Maka dari itu, akan lebih baik untuk mengkonsultasikannya ke tenaga profesional atau dokter spesialis supaya ditan..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Alodokter",
+                      "domain": "www.alodokter.com",
+                      "url": "https://www.alodokter.com/treatment-wajah-ini-pilihan-yang-bisa-disesuaikan-dengan-kebutuhan",
+                      "title": "Treatment Wajah, Ini Pilihan yang Bisa Disesuaikan dengan Kebutuhan - Alodokter",
+                      "text": "* Facial: bersihkan kulit, angkat sel mati, atasi komedo/jerawat ringan. * Mikrodermabrasi: kikis kulit mati, picu sel baru. * Chemical peeling: larutan kimia p..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "ZAP Clinic",
+                      "domain": "zapclinic.com",
+                      "url": "https://zapclinic.com/treatment-category/face",
+                      "title": "Wajah - Treatment ZAP Clinic",
+                      "text": "Perawatan kombinasi yang diformulasikan khusus untuk kulit berjerawat. IPL Rejuvenation bekerja dengan cahaya intens berenergi tinggi untuk membantu mengurangi ..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "YouTube",
+                      "domain": "www.youtube.com",
+                      "url": "https://www.youtube.com/watch?v=e1PsQlZr3LI",
+                      "title": "PERAWATAN UNTUK KULIT BERJERAWAT DI NATASHA SKIN ...",
+                      "text": "PERAWATAN UNTUK KULIT BERJERAWAT DI NATASHA SKIN CLINIC CENTER memiliki wajah berjerawat muka kemerahan produksi minyak berlebih jangan khawatir sahabat bisa me..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Instagram",
+                      "domain": "www.instagram.com",
+                      "url": "https://www.instagram.com/reel/DUX6jMfj8yx/",
+                      "title": "𝐂𝐎𝐌𝐁𝐎 𝐓𝐑𝐄𝐀𝐓𝐌𝐄𝐍𝐓 𝐉𝐄𝐑𝐀𝐖𝐀𝐓 𝐌𝐄𝐑𝐀𝐃𝐀𝐍𝐆 Kalau jerawatnya ...",
+                      "text": "Perawatan kombo ini ditujukan untuk jerawat yang sering muncul kembali di tempat yang sama, menandakan kulit membutuhkan perawatan yang tepat. Perawatan ini ter..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "YouTube",
+                      "domain": "www.youtube.com",
+                      "url": "https://www.youtube.com/watch?v=oj-13zN72G0",
+                      "title": "Skincare Aja Nggak Cukup! Treatment Kulit Berjerawat Yang Wajib Kamu ...",
+                      "text": "Skincare Aja Nggak Cukup! Treatment Kulit Berjerawat Yang Wajib Kamu Coba! hai balik lagi sama aku Andin karena bentar lagi udah mau lebaran tapi aku lagi jeraw..."
+                    }
+                  ]
+                },
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": "Hal yang Perlu Diperhatikan",
+                  "text": "Hindari ekstraksi paksa: Jangan memencet atau melakukan ekstraksi pada jerawat yang sedang meradang parah karena berisiko menyebabkan infeksi dan bopeng. Frekuensi: Idealnya dilakukan 1 kali dalam sebulan mengikuti siklus regenerasi kulit (sekitar 30 hari). Konsultasi dokter: Sebaiknya lakukan pemeriksaan awal dengan dokter kulit agar jenis treatment sesuai dengan tingkat keparahan jerawat Anda.",
+                  "markdown": "- **Hindari ekstraksi paksa:** Jangan memencet atau melakukan ekstraksi pada jerawat yang sedang meradang parah karena berisiko menyebabkan infeksi dan bopeng.[[1]](https://hellosehat.com/penyakit-kulit/jerawat/bolehkah-facial-wajah-berjerawat/)\n- **Frekuensi:** Idealnya dilakukan 1 kali dalam sebulan mengikuti siklus regenerasi kulit (sekitar 30 hari).[[1]](https://www.halodoc.com/kesehatan/facial)\n- **Konsultasi dokter:** Sebaiknya lakukan pemeriksaan awal dengan dokter kulit agar jenis treatment sesuai dengan tingkat keparahan jerawat Anda.[[1]](https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang)[[2]](https://www.youtube.com/watch?v=oj-13zN72G0)",
+                  "links": null,
+                  "images": null,
+                  "references": [
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Hello Sehat",
+                      "domain": "hellosehat.com",
+                      "url": "https://hellosehat.com/penyakit-kulit/jerawat/bolehkah-facial-wajah-berjerawat/",
+                      "title": "Bolehkah Melakukan Facial Saat Wajah Berjerawat? Ini Jawabannya",
+                      "text": "Author: dr. Dikky Prawiratama, M.Sc, Sp.KK (Erha Derma Center Yogyakarta), updated 11/07/2024. - Facial saat berjerawat: Boleh, kecuali ekstraksi pada jerawat m..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Halodoc",
+                      "domain": "www.halodoc.com",
+                      "url": "https://www.halodoc.com/kesehatan/facial",
+                      "title": "Facial Treatment - Tujuan, Jenis, dan Prosedur | Halodoc",
+                      "text": "Facial: skin treatment by certified estheticians for exfoliation, deep cleaning, and removing dead cells/blackheads. Freq: Ideal monthly (30-day skin regeneration ..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "ERHA Ultimate",
+                      "domain": "erhaultimate.co.id",
+                      "url": "https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang",
+                      "title": "Treatment Wajah Berjerawat untuk Kulit Sensitif dan Meradang",
+                      "text": "Treatment Wajah B..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "YouTube",
+                      "domain": "www.youtube.com",
+                      "url": "https://www.youtube.com/watch?v=oj-13zN72G0",
+                      "title": "Skincare Aja Nggak Cukup! Treatment Kulit Berjerawat Yang Wajib Kamu ...",
+                      "text": "Skincare Aja Nggak Cukup! Treatment Kulit Berjerawat Yang Wajib Kamu Coba! hai balik lagi sama aku Andin karena bentar lagi udah mau lebaran tapi aku lagi jerawata"
+                    }
+                  ]
+                }
+              ],
+              "references": [
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Miracle Aesthetic Clinic",
+                  "domain": "www.miracle-clinic.com",
+                  "url": "https://www.miracle-clinic.com/news/read/mengenal-berbagai-pilihan-facial-treatment-untuk-kulit-berjerawat",
+                  "title": "Mengenal Berbagai Pilihan Facial Treatment untuk Kulit Berjerawat - Miracle Aesthetic Clinic",
+                  "text": "Miracle Aesthetic Clinic acne treatments (24 Jan 2024): Aesthetic: - Miracle Double Peeling Acne Facial: double peeling for active/inflamed acne, oily skin, comedo..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "ERHA Ultimate",
+                  "domain": "erhaultimate.co.id",
+                  "url": "https://erhaultimate.co.id/article/treatment-wajah-berjerawat-yang-aman-untuk-kulit-sensitif-dan-meradang",
+                  "title": "Treatment Wajah Berjerawat untuk Kulit Sensitif dan Meradang",
+                  "text": "Treatment Wajah B..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Hello Sehat",
+                  "domain": "hellosehat.com",
+                  "url": "https://hellosehat.com/penyakit-kulit/jerawat/bolehkah-facial-wajah-berjerawat/",
+                  "title": "Bolehkah Melakukan Facial Saat Wajah Berjerawat? Ini Jawabannya",
+                  "text": "Author: dr. Dikky Prawiratama, M.Sc, Sp.KK (Erha Derma Center Yogyakarta), updated 11/07/2024. - Facial saat berjerawat: Boleh, kecuali ekstraksi pada jerawat mera..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "YouTube",
+                  "domain": "www.youtube.com",
+                  "url": "https://www.youtube.com/watch?v=oj-13zN72G0",
+                  "title": "Skincare Aja Nggak Cukup! Treatment Kulit Berjerawat Yang Wajib Kamu ...",
+                  "text": "Skincare Aja Nggak Cukup! Treatment Kulit Berjerawat Yang Wajib Kamu Coba! hai balik lagi sama aku Andin karena bentar lagi udah mau lebaran tapi aku lagi jerawata"
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "ZAP Clinic",
+                  "domain": "zapclinic.com",
+                  "url": "https://zapclinic.com/treatment-category/face",
+                  "title": "Wajah - Treatment ZAP Clinic",
+                  "text": "Perawatan kombinasi yang diformulasikan khusus untuk kulit berjerawat. IPL Rejuvenation bekerja dengan cahaya intens berenergi tinggi untuk membantu mengurangi jer..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "RS Permata Gunung Putri",
+                  "domain": "rspermatagunungputri.com",
+                  "url": "https://rspermatagunungputri.com/perawatan-untuk-membantu-mengatasi-jerawat-dan-menjaga-kesehatan-kulit-wajah/",
+                  "title": "Facial Acne untuk Kulit Berjerawat | RS Permata Gunung Putri",
+                  "text": "Perawatan untuk Membantu Mengatasi Jerawat dan Menjaga Kesehatan Kulit Wajah. admin. 4 months ago. Perawatan Facial Acne untuk kulit berjerawat di RS Permata Gunun..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Halodoc",
+                  "domain": "www.halodoc.com",
+                  "url": "https://www.halodoc.com/kesehatan/facial",
+                  "title": "Facial Treatment - Tujuan, Jenis, dan Prosedur | Halodoc",
+                  "text": "Facial: skin treatment by certified estheticians for exfoliation, deep cleaning, and removing dead cells/blackheads. Freq: Ideal monthly (30-day skin regeneration ..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Seby Clinic",
+                  "domain": "sebyclinic.co.id",
+                  "url": "https://sebyclinic.co.id/treatment-untuk-kulit-berjerawat/",
+                  "title": "2 Treatment untuk Kulit Berjerawat: Facial Acne & Acne Peeling",
+                  "text": "Proses Facial Acne Treatment. Treatment ini biasanya dilakukan melalui beberapa tahap, antara lain: Deep cleansing untuk membersihkan kotoran dan minyak pada wajah..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "YouTube",
+                  "domain": "www.youtube.com",
+                  "url": "https://www.youtube.com/watch?v=e1PsQlZr3LI",
+                  "title": "PERAWATAN UNTUK KULIT BERJERAWAT DI NATASHA SKIN ...",
+                  "text": "PERAWATAN UNTUK KULIT BERJERAWAT DI NATASHA SKIN CLINIC CENTER memiliki wajah berjerawat muka kemerahan produksi minyak berlebih jangan khawatir sahabat bisa melak"
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Alodokter",
+                  "domain": "www.alodokter.com",
+                  "url": "https://www.alodokter.com/treatment-wajah-ini-pilihan-yang-bisa-disesuaikan-dengan-kebutuhan",
+                  "title": "Treatment Wajah, Ini Pilihan yang Bisa Disesuaikan dengan Kebutuhan - Alodokter",
+                  "text": "* Facial: bersihkan kulit, angkat sel mati, atasi komedo/jerawat ringan. * Mikrodermabrasi: kikis kulit mati, picu sel baru. * Chemical peeling: larutan kimia perb..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Instagram",
+                  "domain": "www.instagram.com",
+                  "url": "https://www.instagram.com/reel/DUX6jMfj8yx/",
+                  "title": "𝐂𝐎𝐌𝐁𝐎 𝐓𝐑𝐄𝐀𝐓𝐌𝐄𝐍𝐓 𝐉𝐄𝐑𝐀𝐖𝐀𝐓 𝐌𝐄𝐑𝐀𝐃𝐀𝐍𝐆 Kalau jerawatnya ...",
+                  "text": "Perawatan kombo ini ditujukan untuk jerawat yang sering muncul kembali di tempat yang sama, menandakan kulit membutuhkan perawatan yang tepat. Perawatan ini terdir"
+                }
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 1,
+              "rank_absolute": 2,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.siloamhospitals.com",
+              "title": "9 Perawatan Wajah Berjerawat yang Tepat agar Lekas Membaik",
+              "url": "https://www.siloamhospitals.com/informasi-siloam/artikel/perawatan-wajah-berjerawat",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.siloamhospitals.com",
+              "website_name": "Siloam Hospitals",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "1. Rutin Mencuci Muka · 2. Hindari Menyentuh atau Memecah Jerawat · 3. Membersihkan Riasan di Wajah Sebelum Tidur · 4. Melindungi Kulit Wajah dari ...",
+              "pre_snippet": "11/04/2025 00:00:00",
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2025-11-04 00:00:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "people_also_ask",
+              "rank_group": 1,
+              "rank_absolute": 3,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]",
+              "items": [
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Bolehkah facial saat berjerawat?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[1]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa biaya perawatan wajah di klinik kecantikan?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[2]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Apa obat jerawat di muka?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[3]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa lama hasil facial terlihat?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[4]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Setelah facial tidak boleh apa?",
+                  "seed_question": "Berapa lama hasil facial terlihat?",
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[5]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Bolehkah facial seminggu sekali?",
+                  "seed_question": "Berapa lama hasil facial terlihat?",
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[6]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                }
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "people_also_search",
+              "rank_group": 1,
+              "rank_absolute": 4,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[7]",
+              "title": "Orang lain juga menelusuri",
+              "items": [
+                "Perawatan sehari hari untuk wajah berjerawat",
+                "Cara merawat kulit berjerawat dan bekasnya",
+                "Biaya Treatment wajah berjerawat",
+                "Skincare untuk muka berjerawat",
+                "Harga facial wajah",
+                "Facial acne"
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 2,
+              "rank_absolute": 5,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.alodokter.com",
+              "title": "Bolehkah Facial Saat Sedang Pengobatan Jerawat?",
+              "url": "https://www.alodokter.com/komunitas/topic/facialc347ef",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.alodokter.com",
+              "website_name": "Alodokter",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "halo dok, saya sedang menggunakan resep kulit untuk pengobatan jerawat saya, apakah boleh saya facial dok? terima kasih..",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 3,
+              "rank_absolute": 6,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[11]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "ristraclinic.co.id",
+              "title": "Biaya Treatment Wajah Berjerawat: Jenis Perawatan & Harganya",
+              "url": "https://ristraclinic.co.id/blog/biaya-treatment-wajah-berjerawat-jenis-perawatan-dan-harganya",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://ristraclinic.co.id",
+              "website_name": "Ristra Clinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Ristra Signature Facial for Acne, sebuah facial yang diformulasikan khusus untuk kulit berjerawat. Treatment ini membersihkan pori-pori ...",
+              "pre_snippet": "03/31/2026 00:00:00",
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2026-03-31 00:00:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "images",
+              "rank_group": 1,
+              "rank_absolute": 7,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[13]",
+              "title": "Gambar",
+              "url": null,
+              "items": [
+                {
+                  "type": "images_element",
+                  "alt": "Bolehkah Facial Wajah Saat Berjerawat? | HDmall",
+                  "url": "https://hdmall.id/c/facial-wajah-berjerawat",
+                  "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPGP92g77Jz581HIAzbIbwZJMwQLVCx4OKMSqjPxiwDP7wuydfTF3n78c&s"
+                },
+                {
+                  "type": "images_element",
+                  "alt": "Bolehkah Melakukan Facial Saat Wajah Berjerawat? Ini Jawabannya",
+                  "url": "https://hellosehat.com/penyakit-kulit/jerawat/bolehkah-facial-wajah-berjerawat/",
+                  "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQI3897z8RXDkQJgSr3PktQGB9PgsTyCaRJ5NkhSypyLYUcv71uhvemgkI&s"
+                }
+              ],
+              "related_image_searches": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 4,
+              "rank_absolute": 8,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[15]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.alodokter.com",
+              "title": "7 Manfaat Facial Wajah yang Sayang untuk Dilewatkan",
+              "url": "https://www.alodokter.com/7-manfaat-facial-wajah-yang-sayang-untuk-dilewatkan",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.alodokter.com",
+              "website_name": "Alodokter",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "1. Membersihkan kotoran di wajah · 2. Mengangkat sel kulit mati · 3. Mengangkat komedo · 4. Menghaluskan kulit ·. Mencegah munculnya jerawat.",
+              "pre_snippet": "12/04/2025 00:00:00",
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2025-12-04 00:00:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 5,
+              "rank_absolute": 9,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[17]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "coterieclinic.com",
+              "title": "4 Jenis Treatment Facial yang Cocok untuk Jerawat",
+              "url": "https://coterieclinic.com/4-jenis-treatment-facial-yang-cocok-untuk-jerawat/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://coterieclinic.com",
+              "website_name": "Coterie Clinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "5 Jenis Facial yang Cocok untuk Jerawat · 1. Treatment LED Facial · 2. Microdermabrasion Facial · 3. Oxygen Facial. Fungsi acne treatment biasanya ...",
+              "pre_snippet": "05/11/2025 00:00:00",
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2025-05-11 00:00:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 6,
+              "rank_absolute": 10,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[19]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.alodokter.com",
+              "title": "4 Basic Skincare untuk Kulit Berjerawat Agar Wajah Tetap Sehat",
+              "url": "https://www.alodokter.com/4-basic-skincare-untuk-kulit-berjerawat-agar-wajah-tetap-sehat",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.alodokter.com",
+              "website_name": "Alodokter",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "1. Bersihkan Wajah dengan Face Wash yang Lembut · 2. Gunakan Pelembap Non-Komedogenik · 3. Oleskan Salep Jerawat · 4. Lindungi Kulit dengan Tabir ...",
+              "pre_snippet": "07/02/2025 00:00:00",
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2025-07-02 00:00:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 7,
+              "rank_absolute": 11,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[20]/div[1]/div[1]",
+              "domain": "www.instagram.com",
+              "title": "Jerawatan gak boleh facial? Jangan mundur dulu, biar Bu Yulian selaku ...",
+              "url": "https://www.instagram.com/reel/DNuamCeZj8B/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "370+ suka",
+              "website_name": "Instagram · zapcoid",
+              "is_image": false,
+              "is_video": true,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": [
+                "is_video"
+              ],
+              "description": "✨ Apapun permasalahan kulitmu, ZAP punya solusinya   Mulai dari jerawat, bekas jerawat, flek hitam, kulit kusam, hingga tanda-tanda penuaan, ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": [
+                {
+                  "type": "link_element",
+                  "title": "0:48",
+                  "description": null,
+                  "url": "https://www.instagram.com/reel/DNuamCeZj8B/",
+                  "domain": "www.instagram.com"
+                }
+              ],
+              "faq": null,
+              "extended_people_also_search": null,
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2025-10-23 13:46:28 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 8,
+              "rank_absolute": 12,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[22]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.alodokter.com",
+              "title": "Facial Pada Wajah Yang Berjerawat Dan Berminyak",
+              "url": "https://www.alodokter.com/komunitas/topic/wajah-jerawat-dan-berminyak",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.alodokter.com",
+              "website_name": "Alodokter",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Prinsip pengobatan jerawat adalah pengurangan produksi minyak kulit, menghambat pertumbuhan bakteri, membuka sumbatan sel kulit pada pori.",
+              "pre_snippet": "05/27/2016 00:00:00",
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "perawatan sehari hari",
+                "cara merawat kulit",
+                "biaya treatment",
+                "skincare untuk",
+                "harga facial",
+                "facial acne",
+                "cara mencegah timbulnya jerawat",
+                "manfaat facial"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2016-05-27 00:00:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "people_also_search",
+              "rank_group": 2,
+              "rank_absolute": 13,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[4]/div[1]/div[3]/div[1]",
+              "title": "Orang lain juga menelusuri",
+              "items": [
+                "Cara mencegah timbulnya jerawat dan menghilangkan bekasnya",
+                "Manfaat facial treatment",
+                "Cara MENGHILANGKAN jerawat secara alami dan cepat",
+                "Cara agar jerawat tidak tumbuh lagi secara alami",
+                "Facial adalah",
+                "Produk perawatan wajah berjerawat"
+              ],
+              "rectangle": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
