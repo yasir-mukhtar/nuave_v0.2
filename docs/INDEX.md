@@ -101,6 +101,7 @@ pages live in `src/`.
 | [`content/audit-report-sample-wip.md`](./content/audit-report-sample-wip.md)               | Founder-edited report sample, work in progress            |
 | [`content/WEBSITE_STRUCTURE_CONTENT_PLAN.md`](./content/WEBSITE_STRUCTURE_CONTENT_PLAN.md) | Site structure, routes, and legal/compliance content plan |
 | [`content/website/`](./content/website/)                                                   | `FAQ`, `TERMS`, `PRIVACY`, and `SUPPORT` page copy        |
+| [`content/CLINIC_CONTENT_PLAN.md`](./content/CLINIC_CONTENT_PLAN.md)                       | Clinic copy for the landing, journey, report and FAQ (proposed 2026-10-23; founder decisions in its §11) |
 
 ## Working documents
 
