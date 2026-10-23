@@ -1,0 +1,116 @@
+{
+  "version": "0.1.20261022",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "12.9864 sec.",
+  "cost": 0.024193,
+  "tasks_count": 1,
+  "tasks_error": 0,
+  "tasks": [
+    {
+      "id": "10231348-2907-0612-0000-d5f68075d4dd",
+      "status_code": 20000,
+      "status_message": "Ok.",
+      "time": "12.9766 sec.",
+      "cost": 0.024193,
+      "result_count": 1,
+      "path": [
+        "v3",
+        "ai_optimization",
+        "chat_gpt",
+        "llm_responses",
+        "live"
+      ],
+      "data": {
+        "api": "ai_optimization",
+        "function": "llm_responses",
+        "se": "chat_gpt",
+        "user_prompt": "Klinik kecantikan yang cabangnya banyak dan harganya terjangkau di Indonesia apa saja?",
+        "model_name": "gpt-5.6-luna",
+        "web_search": true,
+        "web_search_country_iso_code": "ID"
+      },
+      "result": [
+        {
+          "model_name": "gpt-5.6-luna",
+          "input_tokens": 13004,
+          "output_tokens": 827,
+          "reasoning_tokens": 170,
+          "web_search": true,
+          "money_spent": 0.0235932,
+          "datetime": "2026-10-23 13:48:13 +00:00",
+          "items": [
+            {
+              "type": "reasoning",
+              "sections": [
+                {
+                  "type": "summary_text",
+                  "text": "**Searching for clinics**\n\nI need to find some affordable Indonesian clinics with multiple branches. It seems like a good idea to browse the web for recommendations that are current and relevant to what I'm looking for. There might be valuable information available online that can help pinpoint the best options. Let's explore this together and see what I can find!"
+                }
+              ]
+            },
+            {
+              "type": "reasoning",
+              "sections": null
+            },
+            {
+              "type": "message",
+              "sections": [
+                {
+                  "type": "text",
+                  "text": "Kalau kriterianya **cabang banyak + relatif terjangkau**, beberapa pilihan yang bisa dipertimbangkan di Indonesia:\n\n| Klinik | Perkiraan posisi harga | Kelebihan |\n|---|---|---|\n| **SOZO Skin Clinic** | Mulai sekitar **Rp199 ribuan** untuk promo/treatment tertentu | Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo. ([sozoskinclinic.cloudindo.co.id](https://sozoskinclinic.cloudindo.co.id/?utm_source=openai)) |\n| **SuperSkin Clinic** | Cenderung ekonomis, sering ada promo facial/peeling | Memiliki sekitar **22 cabang di Pulau Jawa** dan kerap menawarkan promo tebus murah atau facial gratis bersyarat. ([superskinme.id](https://superskinme.id/id?utm_source=openai)) |\n| **Naavagreen Natural Skin Care** | Umumnya termasuk budget-friendly | Banyak dikenal di kota-kota Jawa dan beberapa kota luar Jawa; cocok untuk facial, perawatan jerawat, dan produk skincare rutin. |\n| **Larissa Aesthetic Center** | Relatif terjangkau, terutama produk dan facial dasar | Jaringan kuat di Pulau Jawa; pilihan populer untuk perawatan rutin dengan biaya lebih rendah dibanding klinik estetika premium. |\n| **Natasha Skin Clinic** | Menengah dan sering ada paket perawatan | Salah satu jaringan lama dengan banyak cabang di berbagai kota; cocok bila ingin konsultasi dan produk yang terstandardisasi. |\n| **ZAP Clinic** | Menengah; promo tertentu cukup terjangkau | Jaringan besar dan pilihan treatment luas, terutama laser, hair removal, dan perawatan kulit. Namun beberapa treatment bisa cukup mahal—contoh harga di marketplace dapat mencapai jutaan rupiah, jadi perlu cek treatment spesifik. ([traveloka.com](https://www.traveloka.com/id-id/activities/indonesia/country/indonesia-100003/beauty-and-spa/beauty-clinic?utm_source=openai)) |\n| **ERHA** | Menengah hingga premium | Cabangnya banyak dan lebih kuat untuk masalah dermatologi seperti jerawat, flek, dermatitis, dan rambut rontok; biasanya tidak semurah klinik facial umum. Sumber pihak ketiga menyebut ERHA memiliki lebih dari 100 cabang. ([hadirr.com](https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/?utm_source=openai)) |\n\n### Kalau ingin yang paling hemat\n\n- **Facial atau perawatan dasar:** coba bandingkan **Naavagreen, Larissa, SuperSkin, atau SOZO**.\n- **Jerawat yang cukup berat, flek, atau masalah kulit berulang:** pertimbangkan **ERHA, Natasha, atau ZAP**, tetapi jangan hanya memilih berdasarkan promo.\n- **Laser atau hair removal:** biasanya **ZAP dan SOZO** lebih mudah ditemukan di kota-kota besar.\n- **Di luar Pulau Jawa:** **SOZO** bisa menjadi salah satu pilihan yang lebih mudah dicari karena jaringannya mencakup Medan, Makassar, dan kota besar lainnya. ([sozoskinclinic.com](https://sozoskinclinic.com/?utm_source=openai))\n\n**Catatan penting:** harga sangat bergantung pada kota, dokter, jenis treatment, dan promo. Harga mulai Rp100–200 ribuan biasanya hanya untuk facial, konsultasi, peeling ringan, atau promo pertama—bukan total biaya rangkaian perawatan. Sebaiknya cek dulu apakah harga sudah termasuk konsultasi dokter, obat, anestesi, pajak, dan biaya produk pulang.\n\nKalau ingin pilihan paling aman untuk mulai, ambil **konsultasi atau facial dasar satu kali dulu**, jangan langsung membeli paket mahal.",
+                  "annotations": [
+                    {
+                      "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+                      "url": "https://sozoskinclinic.cloudindo.co.id/?utm_source=openai",
+                      "start_index": 373,
+                      "end_index": 466,
+                      "text": "([sozoskinclinic.cloudindo.co.id](https://sozoskinclinic.cloudindo.co.id/?utm_source=openai))"
+                    },
+                    {
+                      "title": "Klinik Kecantikan Terbaik | Superskin Skincare & Treatment",
+                      "url": "https://superskinme.id/id?utm_source=openai",
+                      "start_index": 662,
+                      "end_index": 725,
+                      "text": "([superskinme.id](https://superskinme.id/id?utm_source=openai))"
+                    },
+                    {
+                      "title": "Rekomendasi Klinik Kecantikan di Indonesia - Traveloka",
+                      "url": "https://www.traveloka.com/id-id/activities/indonesia/country/indonesia-100003/beauty-and-spa/beauty-clinic?utm_source=openai",
+                      "start_index": 1638,
+                      "end_index": 1781,
+                      "text": "([traveloka.com](https://www.traveloka.com/id-id/activities/indonesia/country/indonesia-100003/beauty-and-spa/beauty-clinic?utm_source=openai))"
+                    },
+                    {
+                      "title": "7 Klinik Kecantikan dengan Cabang Terbanyak - Aplikasi Absensi Online Karyawan",
+                      "url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/?utm_source=openai",
+                      "start_index": 2044,
+                      "end_index": 2148,
+                      "text": "([hadirr.com](https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/?utm_source=openai))"
+                    },
+                    {
+                      "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+                      "url": "https://sozoskinclinic.com/?utm_source=openai",
+                      "start_index": 2701,
+                      "end_index": 2770,
+                      "text": "([sozoskinclinic.com](https://sozoskinclinic.com/?utm_source=openai))"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "fan_out_queries": [
+            "klinik kecantikan Indonesia banyak cabang harga terjangkau official",
+            "klinik kecantikan cabang seluruh Indonesia official harga treatment",
+            "klinik kecantikan murah banyak cabang Indonesia",
+            "site:zapclinic.com cabang ZAP Clinic Indonesia",
+            "site:erha.co.id lokasi cabang ERHA clinic Indonesia",
+            "site:natasha-skin.com cabang Natasha skin clinic Indonesia",
+            "site:larissa.co.id cabang Larissa aesthetic center"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,885 @@
+{
+  "version": "0.1.20261022",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "8.1123 sec.",
+  "cost": 0.00215,
+  "tasks_count": 1,
+  "tasks_error": 0,
+  "tasks": [
+    {
+      "id": "10231348-2907-0139-0000-6c8ef614eacb",
+      "status_code": 20000,
+      "status_message": "Ok.",
+      "time": "8.0596 sec.",
+      "cost": 0.00215,
+      "result_count": 1,
+      "path": [
+        "v3",
+        "serp",
+        "google",
+        "organic",
+        "live",
+        "advanced"
+      ],
+      "data": {
+        "api": "serp",
+        "function": "live",
+        "se": "google",
+        "se_type": "organic",
+        "keyword": "berapa biaya treatment di sozo",
+        "location_code": 2360,
+        "language_code": "id",
+        "device": "mobile",
+        "load_async_ai_overview": true,
+        "people_also_ask_click_depth": 1,
+        "os": "android"
+      },
+      "result": [
+        {
+          "keyword": "berapa biaya treatment di sozo",
+          "type": "organic",
+          "se_domain": "google.com",
+          "location_code": 2360,
+          "language_code": "id",
+          "check_url": "https://www.google.com/search?q=berapa%20biaya%20treatment%20di%20sozo&hl=id&gl=ID&ie=UTF-8&uule=w+CAIQIFISCbcEZEnXB0wsEYX0rRvnTXvj",
+          "datetime": "2026-10-23 13:49:02 +00:00",
+          "spell": null,
+          "refinement_chips": null,
+          "item_types": [
+            "ai_overview",
+            "organic",
+            "people_also_ask",
+            "people_also_search"
+          ],
+          "se_results_count": 0,
+          "pages_count": 1,
+          "items_count": 13,
+          "items": [
+            {
+              "type": "ai_overview",
+              "rank_group": 1,
+              "rank_absolute": 1,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[1]/div[1]",
+              "asynchronous_ai_overview": false,
+              "markdown": "Harga treatment di **SOZO Skin Clinic** sangat bervariasi, mulai dari **Rp100 ribuan** hingga **jutaan rupiah** , tergantung jenis perawatan dan promo yang sedang berjalan.[[1]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[2]](https://www.instagram.com/p/C3SVBbjvLV6/)\n\n### Kisaran Harga Treatment Umum\n\n- **Facial & Laser:** \n\t- Biolight Face / Hair: Rp194.000 – Rp199.000\n\t- IPL Acne / IPL Glow: Rp199.000 – Rp314.000 (diskon dari ~Rp399.000)\n\t- Radiofrequency Face: Rp314.000\n\t- Sozo Signature Facial: Rp499.000 – Rp699.000\n\t- Acne Laser Facial / Diamond Laser Facial: Rp899.000 – Rp1.499.000[[1]](https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat)[[2]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284)[[3]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959)[[4]](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp)[[5]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)\n- **Hair Removal:** \n\t- Underarm Hair Removal: Rp199.000\n\t- Brazilian V Hair Removal: Rp349.000[[1]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284)[[2]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959)\n- **Skin Booster & Peremajaan Kulit:** \n\t- Melasma Skinbooster: Rp499.000\n\t- DNA Glow / DNA Salmon: Rp1.499.000\n\t- Glass Skin / Aqua Shine / Pink Bomb: Rp1.999.000 – Rp2.999.000[[1]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[2]](https://www.instagram.com/reel/DdTyfs2zP6L/)\n- **Botox & Filler:** \n\t- Botox Standard: Rp599.000 – Rp1.493.900 (tergantung unit/promo)\n\t- Botox Premium: Rp999.000\n\t- Filler Korean: Rp2.849.000 – Rp2.999.000\n\t- Filler Premium: Rp6.799.000 – Rp6.999.000[[1]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[2]](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp)\n\n*Catatan: Harga dapat berubah sewaktu-waktu dan sering tersedia diskon atau paket promo khusus (seperti potongan harga atau voucher first timer) melalui platform seperti [Traveloka](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433), [Tiket.com](https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat), [Tokopedia](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp) , atau langsung di website resmi [Sozo Skin Clinic](https://sozoskinclinic.com/).* [[1]](https://sozoskinclinic.com/)[[2]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[3]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433)[[4]](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp)[[5]](https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat)Jika Anda mau, beri tahu saya:\n\n- **Jenis masalah kulit atau treatment spesifik** yang ingin Anda lakukan\n- **Lokasi cabang SOZO** yang paling dekat dari tempat Anda\n\nSaya bisa bantu carikan informasi harga dan promo terbarunya.",
+              "items": [
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": null,
+                  "text": "Harga treatment di SOZO Skin Clinic sangat bervariasi, mulai dari Rp100 ribuan hingga jutaan rupiah, tergantung jenis perawatan dan promo yang sedang berjalan.",
+                  "markdown": "Harga treatment di **SOZO Skin Clinic** sangat bervariasi, mulai dari **Rp100 ribuan** hingga **jutaan rupiah** , tergantung jenis perawatan dan promo yang sedang berjalan.[[1]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[2]](https://www.instagram.com/p/C3SVBbjvLV6/)",
+                  "links": null,
+                  "images": null,
+                  "references": [
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Scribd",
+                      "domain": "id.scribd.com",
+                      "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+                      "title": "Daftar Harga Perawatan Sozo Clinic | PDF",
+                      "text": "Sozo Clinic Treatment & Location Pricing: Facial: Mini 149K; Acne/Skin Bright Basic 299K, Medical 499K/475K; Signature 699K/649K; Diamond/Acne Laser 1.499K/1.39..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Instagram",
+                      "domain": "www.instagram.com",
+                      "url": "https://www.instagram.com/p/C3SVBbjvLV6/",
+                      "title": "SOZO Skin Clinic | Treatment Jutaan Jadi Cuma 100RB-an Bisa Bikin Kulit ...",
+                      "text": "Treatment Jutaan Jadi Cuma 100RB-an Bisa Bikin Kulit Glowing & Tirus Hanya di SOZO🤩 Jangan takut treatment di SOZO mahal ya, karena mimin mau kasih kabar gembi..."
+                    }
+                  ]
+                },
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": "Kisaran Harga Treatment Umum",
+                  "text": "Facial & Laser: Biolight Face / Hair: Rp194.000 – Rp199.000 IPL Acne / IPL Glow: Rp199.000 – Rp314.000 (diskon dari ~Rp399.000) Radiofrequency Face: Rp314.000 Sozo Signature Facial: Rp499.000 – Rp699.000 Acne Laser Facial / Diamond Laser Facial: Rp899.000 – Rp1.499.000 Hair Removal: Underarm Hair Removal: Rp199.000 Brazilian V Hair Removal: Rp349.000 Skin Booster & Peremajaan Kulit: Melasma Skinbooster: Rp499.000 DNA Glow / DNA Salmon: Rp1.499.000 Glass Skin / Aqua Shine / Pink Bomb: Rp1.999.000 – Rp2.999.000 Botox & Filler: Botox Standard: Rp599.000 – Rp1.493.900 (tergantung unit/promo) Botox Premium: Rp999.000 Filler Korean: Rp2.849.000 – Rp2.999.000 Filler Premium: Rp6.799.000 – Rp6.999.000",
+                  "markdown": "- **Facial & Laser:** \n\t- Biolight Face / Hair: Rp194.000 – Rp199.000\n\t- IPL Acne / IPL Glow: Rp199.000 – Rp314.000 (diskon dari ~Rp399.000)\n\t- Radiofrequency Face: Rp314.000\n\t- Sozo Signature Facial: Rp499.000 – Rp699.000\n\t- Acne Laser Facial / Diamond Laser Facial: Rp899.000 – Rp1.499.000[[1]](https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat)[[2]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284)[[3]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959)[[4]](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp)[[5]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)\n- **Hair Removal:** \n\t- Underarm Hair Removal: Rp199.000\n\t- Brazilian V Hair Removal: Rp349.000[[1]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284)[[2]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959)\n- **Skin Booster & Peremajaan Kulit:** \n\t- Melasma Skinbooster: Rp499.000\n\t- DNA Glow / DNA Salmon: Rp1.499.000\n\t- Glass Skin / Aqua Shine / Pink Bomb: Rp1.999.000 – Rp2.999.000[[1]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[2]](https://www.instagram.com/reel/DdTyfs2zP6L/)\n- **Botox & Filler:** \n\t- Botox Standard: Rp599.000 – Rp1.493.900 (tergantung unit/promo)\n\t- Botox Premium: Rp999.000\n\t- Filler Korean: Rp2.849.000 – Rp2.999.000\n\t- Filler Premium: Rp6.799.000 – Rp6.999.000[[1]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[2]](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp)",
+                  "links": null,
+                  "images": null,
+                  "references": [
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Tiket.com",
+                      "domain": "www.tiket.com",
+                      "url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+                      "title": "Tiket Sozo Clinic Tanjung Barat Harga Promo",
+                      "text": "‍♀️ Treatment Facial ; Sozo Signature Facial. Detail. Tidak bisa refund. Pesan tiket untuk besok. tiket FLEXIBerlaku hingga 30 hari sejak dibeli. Reservasi pali..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Traveloka",
+                      "domain": "www.traveloka.com",
+                      "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+                      "title": "Beli Tiket Sozo Skin Clinic - Kemang - Harga Promo 2026 di Traveloka",
+                      "text": "* Loc: Jl. Kemang Raya No.72, Bangka, Mampang Prpt., Jakarta Selatan 12730 * Hours: 10:00-20:00 (Friday listed separately) * Rating: 8.6/10 (22 reviews) * Price..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Traveloka",
+                      "domain": "www.traveloka.com",
+                      "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+                      "title": "Beli Tiket Sozo Skin Clinic - Pondok Bambu - Harga Promo 2026 di Traveloka",
+                      "text": "Location: Jl. Pahlawan Revolusi No.2, Pd. Bambu, Duren Sawit, Jakarta Timur. Hours: 10:00-20:00. Rating: 9.5/10 (13 reviews). Pricing: From Rp 199.000. Treatmen..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Tokopedia",
+                      "domain": "www.tokopedia.com",
+                      "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp",
+                      "title": "Promo SOZO SKIN Acne Laser Facial - Tokopedia",
+                      "text": "1%. SOZO SKIN Treatment Meso Acne. Rp494.000. Rp499.000. Hemat s.d 8% Pakai Bonus. rating. 5.0. 60+ terjual. product-image. 50%. SOZO SKIN IPL Acne | Intense Pu..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Scribd",
+                      "domain": "id.scribd.com",
+                      "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+                      "title": "Daftar Harga Perawatan Sozo Clinic | PDF",
+                      "text": "Sozo Clinic Treatment & Location Pricing: Facial: Mini 149K; Acne/Skin Bright Basic 299K, Medical 499K/475K; Signature 699K/649K; Diamond/Acne Laser 1.499K/1.394K."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Instagram",
+                      "domain": "www.instagram.com",
+                      "url": "https://www.instagram.com/reel/DdTyfs2zP6L/",
+                      "title": "SOZO Skin Clinic | Kapan Lagi DNA Salmon Cuma 1 JUTAAN? ...",
+                      "text": "Kapan Lagi DNA Salmon Cuma 1 JUTAAN? CUMA DI SOZO! 🤪 Udah Dapet DNA Salmon Sekaligus Pico Laser Cuy Ambil Nih Paketnya: 3 IN 1 DERMAGLOW Memperbaiki Skin Barri..."
+                    }
+                  ]
+                },
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": null,
+                  "text": "Catatan: Harga dapat berubah sewaktu-waktu dan sering tersedia diskon atau paket promo khusus (seperti potongan harga atau voucher first timer) melalui platform seperti Traveloka, Tiket.com, Tokopedia, atau langsung di website resmi Sozo Skin Clinic.",
+                  "markdown": "*Catatan: Harga dapat berubah sewaktu-waktu dan sering tersedia diskon atau paket promo khusus (seperti potongan harga atau voucher first timer) melalui platform seperti [Traveloka](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433), [Tiket.com](https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat), [Tokopedia](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp) , atau langsung di website resmi [Sozo Skin Clinic](https://sozoskinclinic.com/).* [[1]](https://sozoskinclinic.com/)[[2]](https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info)[[3]](https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433)[[4]](https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp)[[5]](https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat)",
+                  "links": [
+                    {
+                      "type": "link_element",
+                      "title": "Traveloka",
+                      "description": null,
+                      "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+                      "domain": "www.traveloka.com"
+                    },
+                    {
+                      "type": "link_element",
+                      "title": "Tiket.com",
+                      "description": null,
+                      "url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+                      "domain": "www.tiket.com"
+                    },
+                    {
+                      "type": "link_element",
+                      "title": "Tokopedia",
+                      "description": null,
+                      "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp",
+                      "domain": "www.tokopedia.com"
+                    },
+                    {
+                      "type": "link_element",
+                      "title": "Sozo Skin Clinic",
+                      "description": null,
+                      "url": "https://sozoskinclinic.com/",
+                      "domain": "sozoskinclinic.com"
+                    }
+                  ],
+                  "images": null,
+                  "references": [
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Sozo Clinic",
+                      "domain": "sozoskinclinic.com",
+                      "url": "https://sozoskinclinic.com/",
+                      "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+                      "text": "Sozo Skin Clinic: affordable beauty clinic in major Indonesian cities. Treatments: * Injectable: Skin Booster (moisture/brightness), Botox (anti-aging/pores), I..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Scribd",
+                      "domain": "id.scribd.com",
+                      "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+                      "title": "Daftar Harga Perawatan Sozo Clinic | PDF",
+                      "text": "Sozo Clinic Treatment & Location Pricing: Facial: Mini 149K; Acne/Skin Bright Basic 299K, Medical 499K/475K; Signature 699K/649K; Diamond/Acne Laser 1.499K/1.394K."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Traveloka",
+                      "domain": "www.traveloka.com",
+                      "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+                      "title": "Beli Tiket Sozo Skin Clinic - Puri Indah - Harga Promo 2026 di Traveloka",
+                      "text": "Entity: Sozo Skin Clinic - Puri Indah Loc: Jl. Puri Indah Raya No.3A Blok T1, Kembangan, Jakarta Barat Rating: 9.1/10 (18 ulasan) Hours: 10:00-20:00 Pricing: Fr..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Tokopedia",
+                      "domain": "www.tokopedia.com",
+                      "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp",
+                      "title": "Promo SOZO SKIN Acne Laser Facial - Tokopedia",
+                      "text": "1%. SOZO SKIN Treatment Meso Acne. Rp494.000. Rp499.000. Hemat s.d 8% Pakai Bonus. rating. 5.0. 60+ terjual. product-image. 50%. SOZO SKIN IPL Acne | Intense Pulse..."
+                    },
+                    {
+                      "type": "ai_overview_reference",
+                      "position": "left",
+                      "source": "Tiket.com",
+                      "domain": "www.tiket.com",
+                      "url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+                      "title": "Tiket Sozo Clinic Tanjung Barat Harga Promo",
+                      "text": "‍♀️ Treatment Facial ; Sozo Signature Facial. Detail. Tidak bisa refund. Pesan tiket untuk besok. tiket FLEXIBerlaku hingga 30 hari sejak dibeli. Reservasi paling ..."
+                    }
+                  ]
+                },
+                {
+                  "type": "ai_overview_element",
+                  "position": "left",
+                  "title": null,
+                  "text": "Jika Anda mau, beri tahu saya:Jenis masalah kulit atau treatment spesifik yang ingin Anda lakukan\nLokasi cabang SOZO yang paling dekat dari tempat Anda\nSaya bisa bantu carikan informasi harga dan promo terbarunya.",
+                  "markdown": "Jika Anda mau, beri tahu saya:\n\n- **Jenis masalah kulit atau treatment spesifik** yang ingin Anda lakukan\n- **Lokasi cabang SOZO** yang paling dekat dari tempat Anda\n\nSaya bisa bantu carikan informasi harga dan promo terbarunya.",
+                  "links": null,
+                  "images": null,
+                  "references": null
+                }
+              ],
+              "references": [
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Scribd",
+                  "domain": "id.scribd.com",
+                  "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+                  "title": "Daftar Harga Perawatan Sozo Clinic | PDF",
+                  "text": "Sozo Clinic Treatment & Location Pricing: Facial: Mini 149K; Acne/Skin Bright Basic 299K, Medical 499K/475K; Signature 699K/649K; Diamond/Acne Laser 1.499K/1.394K."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Sozo Clinic",
+                  "domain": "sozoskinclinic.com",
+                  "url": "https://sozoskinclinic.com/",
+                  "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+                  "text": "Sozo Skin Clinic: affordable beauty clinic in major Indonesian cities. Treatments: * Injectable: Skin Booster (moisture/brightness), Botox (anti-aging/pores), Infu..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Tiket.com",
+                  "domain": "www.tiket.com",
+                  "url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+                  "title": "Tiket Sozo Clinic Tanjung Barat Harga Promo",
+                  "text": "‍♀️ Treatment Facial ; Sozo Signature Facial. Detail. Tidak bisa refund. Pesan tiket untuk besok. tiket FLEXIBerlaku hingga 30 hari sejak dibeli. Reservasi paling ..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Traveloka",
+                  "domain": "www.traveloka.com",
+                  "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+                  "title": "Beli Tiket Sozo Skin Clinic - Puri Indah - Harga Promo 2026 di Traveloka",
+                  "text": "Entity: Sozo Skin Clinic - Puri Indah Loc: Jl. Puri Indah Raya No.3A Blok T1, Kembangan, Jakarta Barat Rating: 9.1/10 (18 ulasan) Hours: 10:00-20:00 Pricing: From ..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Traveloka",
+                  "domain": "www.traveloka.com",
+                  "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+                  "title": "Beli Tiket Sozo Skin Clinic - Kemang - Harga Promo 2026 di Traveloka",
+                  "text": "* Loc: Jl. Kemang Raya No.72, Bangka, Mampang Prpt., Jakarta Selatan 12730 * Hours: 10:00-20:00 (Friday listed separately) * Rating: 8.6/10 (22 reviews) * Price: F..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Tokopedia",
+                  "domain": "www.tokopedia.com",
+                  "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial?utm_source=google&utm_medium=organic&utm_campaign=pdp",
+                  "title": "Promo SOZO SKIN Acne Laser Facial - Tokopedia",
+                  "text": "1%. SOZO SKIN Treatment Meso Acne. Rp494.000. Rp499.000. Hemat s.d 8% Pakai Bonus. rating. 5.0. 60+ terjual. product-image. 50%. SOZO SKIN IPL Acne | Intense Pulse..."
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Traveloka",
+                  "domain": "www.traveloka.com",
+                  "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+                  "title": "Beli Tiket Sozo Skin Clinic - Pondok Bambu - Harga Promo 2026 di Traveloka",
+                  "text": "Location: Jl. Pahlawan Revolusi No.2, Pd. Bambu, Duren Sawit, Jakarta Timur. Hours: 10:00-20:00. Rating: 9.5/10 (13 reviews). Pricing: From Rp 199.000. Treatments"
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Instagram",
+                  "domain": "www.instagram.com",
+                  "url": "https://www.instagram.com/p/C3SVBbjvLV6/",
+                  "title": "SOZO Skin Clinic | Treatment Jutaan Jadi Cuma 100RB-an Bisa Bikin Kulit ...",
+                  "text": "Treatment Jutaan Jadi Cuma 100RB-an Bisa Bikin Kulit Glowing & Tirus Hanya di SOZO🤩 Jangan takut treatment di SOZO mahal ya, karena mimin mau kasih kabar gembira"
+                },
+                {
+                  "type": "ai_overview_reference",
+                  "position": "right",
+                  "source": "Instagram",
+                  "domain": "www.instagram.com",
+                  "url": "https://www.instagram.com/reel/DdTyfs2zP6L/",
+                  "title": "SOZO Skin Clinic | Kapan Lagi DNA Salmon Cuma 1 JUTAAN? ...",
+                  "text": "Kapan Lagi DNA Salmon Cuma 1 JUTAAN? CUMA DI SOZO! 🤪 Udah Dapet DNA Salmon Sekaligus Pico Laser Cuy Ambil Nih Paketnya: 3 IN 1 DERMAGLOW Memperbaiki Skin Barrier"
+                }
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 1,
+              "rank_absolute": 2,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.tokopedia.com",
+              "title": "Promo SOZO SKIN Advanced Slimming",
+              "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-advanced-slimming-1730763613657597697?utm_source=google&utm_medium=organic&utm_campaign=pdp",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.tokopedia.com",
+              "website_name": "Tokopedia",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "39%. SOZO SKIN Meso Slim Body Premium + Radiofrequency. Rp1.474.000 ; 36%. SOZO SKIN Rejuran Healer Skinbooster. Rp4.149.000 ; 3%. SOZO SKIN Treatment Diamond ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "people_also_ask",
+              "rank_group": 1,
+              "rank_absolute": 3,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]",
+              "items": [
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Sozo clinic tempat apa?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[1]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa harga HIFU di Sozo?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[2]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa gaji di Sozo Skin Clinic?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[3]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Treatment wajah bayar berapa?",
+                  "seed_question": null,
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[4]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Facial di sozo berapa?",
+                  "seed_question": "Treatment wajah bayar berapa?",
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[5]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                },
+                {
+                  "type": "people_also_ask_element",
+                  "title": "Berapa kali sebulan treatment wajah?",
+                  "seed_question": "Treatment wajah bayar berapa?",
+                  "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[5]/div[1]/div[2]/div[2]/div[6]",
+                  "expanded_element": [
+                    {
+                      "type": "people_also_ask_ai_overview_expanded_element",
+                      "items": null,
+                      "references": null,
+                      "asynchronous_ai_overview": true
+                    }
+                  ]
+                }
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 2,
+              "rank_absolute": 4,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[7]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.scribd.com",
+              "title": "Daftar Harga Perawatan Sozo Clinic | PDF | Griya & Taman",
+              "url": "https://www.scribd.com/document/504959167/Preslist-Treatment",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.scribd.com",
+              "website_name": "Scribd",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "PRICELIST TREATMENT · Basic Facial Rp 60.000 · Facial Whitening Rp 120,000 · Facial Acne Rp 130.000 · Facial Placenta Brigthening · Facial Oxy Glow Rp 180,000.",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 3,
+              "rank_absolute": 5,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.instagram.com",
+              "title": "SOZO Skin Clinic | 🛍️PROMO EXCLUSIVE CUMA DI BOOTH ...",
+              "url": "https://www.instagram.com/p/DAKg5uGBXu5/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "220+ suka",
+              "website_name": "Instagram · sozo.skinclinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Gebyar Promo Perawatan di SOZO! Treatment Murmer Mulai dari 100 RIBUAN AJA! Catat Tanggalnya: 3 - 6 September 2026. Yuk, Klik Link di ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2024-10-23 13:49:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 4,
+              "rank_absolute": 6,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[11]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.traveloka.com",
+              "title": "Beli Tiket Sozo Skin Clinic - Bintaro 5 - Harga Promo 2026 di ...",
+              "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-bintaro-5-5274768986402",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.traveloka.com",
+              "website_name": "Traveloka",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Berapa harga voucher Sozo Skin Clinic - Bintaro 5? Harga voucher untuk Sozo Skin Clinic - Bintaro 5 mulai dari Rp 199.000. Kunjungi halaman ini untuk ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 5,
+              "rank_absolute": 7,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[13]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.instagram.com",
+              "title": "SOZO Skin Clinic | Dengan HARGA YANG TERJANGKAU kamu bisa ...",
+              "url": "https://www.instagram.com/p/Cn1fh-vhloF/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "90+ suka",
+              "website_name": "Instagram · sozo.skinclinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Promo Treatment Facial mulai dari 200ribuan aja?, waktunya me time di CI+ Clinic. Ada pilihan treatment yang bisa bantu hempas komedo dan ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2023-10-23 13:49:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 6,
+              "rank_absolute": 8,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[15]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "hdmall.id",
+              "title": "Sozo Skin Clinic - Cek Harga Treatment & Review Klinik",
+              "url": "https://hdmall.id/perawatan-kecantikan/sozo-skin-clinic",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://hdmall.id",
+              "website_name": "HDmall Indonesia",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Booking klinik Sozo Skin Clinic sekarang lebih mudah dengan HDmall! Cek harga online dan temukan review dari pengguna untuk menentukan treatment yang cocok ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 7,
+              "rank_absolute": 9,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[17]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.traveloka.com",
+              "title": "Tiket Sozo Skin Clinic - Tanjung Barat - Diskon s.d 20% di ...",
+              "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-tanjung-barat-9175746533368",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://www.traveloka.com",
+              "website_name": "Traveloka",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Berapa harga voucher Sozo Skin Clinic - Tanjung Barat? Harga voucher untuk Sozo Skin Clinic - Tanjung Barat mulai dari Rp 199.000. Kunjungi halaman ini ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "people_also_search",
+              "rank_group": 1,
+              "rank_absolute": 10,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[19]",
+              "title": "Orang lain juga menelusuri",
+              "items": [
+                "Sozo Clinic",
+                "Sozo Slim terdekat",
+                "Sozo Skin Clinic price list",
+                "Sozo Slim Clinic",
+                "Sozo Skin Clinic BSD",
+                "Sozo bintaro sektor 7"
+              ],
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 8,
+              "rank_absolute": 11,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[21]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "www.instagram.com",
+              "title": "SOZO Skin Clinic | Treatment Hempas Lemak START FROM 100 RIBUAN! ...",
+              "url": "https://www.instagram.com/p/DYjspwIk3xk/",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "130+ suka",
+              "website_name": "Instagram · sozo.skinclinic",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "Treatment Hempas Lemak START FROM 100 RIBUAN! ✨ Disc. Up To 60% 19-25 Mei 2026 Harga mulai dari 100rb-an. Buruan booking sekarang sebelum ...",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": "2026-05-23 13:49:00 +00:00",
+              "rectangle": null
+            },
+            {
+              "type": "organic",
+              "rank_group": 9,
+              "rank_absolute": 12,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[3]/div[1]/div[1]/div[23]/div[1]/div[1]/div[1]/div[1]",
+              "domain": "id.scribd.com",
+              "title": "Daftar Harga Perawatan Sozo Clinic | PDF | Griya & Taman",
+              "url": "https://id.scribd.com/document/504959167/Preslist-Treatment",
+              "cache_url": null,
+              "related_search_url": null,
+              "breadcrumb": "https://id.scribd.com",
+              "website_name": "Scribd",
+              "is_image": false,
+              "is_video": false,
+              "is_featured_snippet": false,
+              "is_malicious": false,
+              "is_web_story": false,
+              "checks": null,
+              "description": "PRICELIST TREATMENT · Basic Facial Rp 60.000 · Facial Whitening Rp 120,000 · Facial Acne Rp 130.000 · Facial Placenta Brigthening · Facial Oxy Glow Rp 180,000.",
+              "pre_snippet": null,
+              "extended_snippet": null,
+              "images": null,
+              "amp_version": false,
+              "rating": null,
+              "price": null,
+              "highlighted": null,
+              "links": null,
+              "faq": null,
+              "extended_people_also_search": [
+                "sozo clinic",
+                "sozo slim",
+                "sozo skin clinic",
+                "sozo slim",
+                "sozo skin",
+                "sozo bintaro",
+                "sozo aeon tanjung",
+                "gambar sozo skin clinic"
+              ],
+              "about_this_result": null,
+              "related_result": null,
+              "timestamp": null,
+              "rectangle": null
+            },
+            {
+              "type": "people_also_search",
+              "rank_group": 2,
+              "rank_absolute": 13,
+              "page": 1,
+              "position": "left",
+              "xpath": "/html[1]/body[1]/div[5]/div[2]/div[1]/div[12]/div[4]/div[1]/div[3]/div[1]",
+              "title": "Orang lain juga menelusuri",
+              "items": [
+                "Sozo aeon tanjung barat lantai berapa",
+                "Gambar sozo skin clinic aeon tanjung barat",
+                "Sozo Clinic Bintaro",
+                "Sozo skin clinic bintaro sektor 7 south tangerang city",
+                "Gambar Sozo Bintaro",
+                "Sozo Skin Clinic Cinere"
+              ],
+              "rectangle": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
