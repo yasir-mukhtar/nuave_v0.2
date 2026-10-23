@@ -203,6 +203,44 @@ const PATIENT_EXAMPLES: {
   },
 ];
 
+/** One patient question as a chat bubble, and the AI's short list. */
+function PatientExchange({
+  example,
+}: {
+  example: (typeof PATIENT_EXAMPLES)[number];
+}) {
+  return (
+    <>
+      <div className="flex justify-end">
+        <p className="type-copy m-0 max-w-[290px] rounded-[22px] rounded-br-md bg-ink-900 px-[18px] py-3.5 text-white">
+          {example.question}
+        </p>
+      </div>
+      <div className="flex justify-start">
+        <div className="grid max-w-[310px] gap-2 rounded-[22px] rounded-bl-md bg-white px-[18px] py-3.5 shadow-card">
+          <p className="type-label-sm-strong m-0 flex items-center gap-1.5 text-ember-700">
+            <IconSparkles size={14} stroke={2} aria-hidden="true" />
+            Jawaban AI
+          </p>
+          <p className="type-copy-sm m-0 text-ink-700">
+            Berikut beberapa klinik yang bisa dipertimbangkan:
+          </p>
+          <ol className="m-0 grid list-none gap-1.5 p-0">
+            {example.clinics.map(([name, area], index) => (
+              <li key={name} className="type-copy-sm text-ink-900">
+                <strong>
+                  {index + 1}. {name}
+                </strong>{" "}
+                <span className="text-ink-600">· {area}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /** The cream band: pick a kind of clinic, see what a patient asks and the
  * short list AI answers with. Nothing is fetched; the examples are fixed. */
 function PatientQuestionExample() {
@@ -230,43 +268,26 @@ function PatientQuestionExample() {
         </ChipRadioGroup>
       </div>
       <div aria-live="polite" className="text-left" data-patient-example={kind}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={example.id}
-            className="grid gap-3"
-            initial={animate ? { opacity: 0, y: 8 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            exit={animate ? { opacity: 0, y: -6 } : { opacity: 0 }}
-            transition={animate ? SPRING_SETTLE : { duration: 0 }}
-          >
-            <div className="flex justify-end">
-              <p className="type-copy m-0 max-w-[290px] rounded-[22px] rounded-br-md bg-ink-900 px-[18px] py-3.5 text-white">
-                {example.question}
-              </p>
-            </div>
-            <div className="flex justify-start">
-              <div className="grid max-w-[310px] gap-2 rounded-[22px] rounded-bl-md bg-white px-[18px] py-3.5 shadow-card">
-                <p className="type-label-sm-strong m-0 flex items-center gap-1.5 text-ember-700">
-                  <IconSparkles size={14} stroke={2} aria-hidden="true" />
-                  Jawaban AI
-                </p>
-                <p className="type-copy-sm m-0 text-ink-700">
-                  Berikut beberapa klinik yang bisa dipertimbangkan:
-                </p>
-                <ol className="m-0 grid list-none gap-1.5 p-0">
-                  {example.clinics.map(([name, area], index) => (
-                    <li key={name} className="type-copy-sm text-ink-900">
-                      <strong>
-                        {index + 1}. {name}
-                      </strong>{" "}
-                      <span className="text-ink-600">· {area}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+        {/* With reduced motion the example simply swaps, as JourneyScene
+            does. */}
+        {animate ? (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={example.id}
+              className="grid gap-3"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={SPRING_SETTLE}
+            >
+              <PatientExchange example={example} />
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div className="grid gap-3">
+            <PatientExchange example={example} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -73,6 +73,34 @@ test("the landing website form reaches the new audit journey and starts only the
   ]);
 });
 
+/** The landing's patient-question example: each clinic chip shows its own
+ * question and AI answer, with reduced motion and without, and the band makes
+ * no request. With reduced motion the example must swap, not disappear. */
+for (const reducedMotion of ["reduce", "no-preference"] as const) {
+  test(`each clinic chip on the landing shows its own patient question (${reducedMotion})`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    const requests = collectRequests(page);
+    await page.goto("/");
+    const group = page.getByRole("radiogroup", { name: "Jenis klinik" });
+    const example = page.locator("[data-patient-example]");
+    await expect(example.getByText(/pasang behel/)).toBeVisible();
+    for (const [label, question] of [
+      ["Kecantikan", /laser flek hitam/],
+      ["Khitan", /metode klamp/],
+      ["Anak", /buat vaksin/],
+      ["Umum", /pakai BPJS/],
+      ["Gigi", /pasang behel/],
+    ] as const) {
+      await group.getByRole("radio", { name: label, exact: true }).click();
+      await expect(example.getByText(question)).toBeVisible();
+      await expect(example.getByRole("listitem")).toHaveCount(3);
+    }
+    await assertNoSideEffects(page, requests);
+  });
+}
+
 test("the former preview path redirects to /audit without seeding old fixture facts", async ({
   page,
 }) => {
