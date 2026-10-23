@@ -6,6 +6,28 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000
+
+Yasir decided, after the DataForSEO test on Sozo Skin Clinic
+([`experiments/dataforseo-sozo/`](../experiments/dataforseo-sozo/), USD 0.16),
+what the audit sold to the first paying customers will be:
+
+- **Questions from real searches:** the ten questions come from real Google
+  search data for the business's type and city (People also ask,
+  autocomplete, keyword volumes), keep real human wording, and show how often
+  their topic is searched. Cheaper Inference stays the question writer and the
+  fallback when search data is missing.
+- **Two answers per question:** the same question is asked to ChatGPT and to
+  Google's AI summary (via DataForSEO). This reopens the earlier "two grounded
+  API surfaces for v0" row for this one addition; Gemini is left out for now.
+- **One package, no tiers.**
+- **City:** the business's main city by default, or the branch the customer
+  chooses.
+- **Price:** Rp249.000 (was Rp99.000).
+- **Order:** build this first ([Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)),
+  then S5 (terms, price and promise wording), S6 (landing page) and G1, so the
+  promise and landing page describe the new audit once.
+
 ## 2026-10-23 — Errors use Jeton red
 
 Yasir chose red for errors, "probably Jeton red" (Figma page 09's JETON

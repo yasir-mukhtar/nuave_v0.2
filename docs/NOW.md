@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-21
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: S5 (terms, price and promise wording)
+> Updated: 2026-10-23
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: Spec 018 (real-search questions, ChatGPT + Google, Rp249.000; Draft, founder review), then S5 (terms, price and promise wording)
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -43,6 +43,12 @@
   adopted 2026-09-26; its §B.3 guards merged through PR #91 on 2026-09-27.
 
 ## Next action
+
+- **Spec 018 first (decided 2026-10-23):** [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+  is a Draft waiting for Yasir's review: questions from real Google search
+  data, each answered by ChatGPT and Google's AI summary, one package at
+  Rp249.000 ([decision](./DECISION_LOG.md#2026-10-23--real-search-questions-chatgpt-and-google-rp249000)).
+  S5, S6 and G1 follow it. Do not build before approval.
 
 - **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
   one immutable private report per order, stored on the server, reached through
