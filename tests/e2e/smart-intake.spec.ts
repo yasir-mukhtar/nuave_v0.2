@@ -74,7 +74,7 @@ test("a slow free check offers the J04 way out with the name guessed from the ad
   await page.clock.fastForward(20_000);
   await expect(heading(LOOKUP_WAY_OUT_HEADING)).toBeVisible();
   const name = readingScreen(page).getByRole("textbox", {
-    name: "Nama bisnis",
+    name: "Nama klinik",
     exact: true,
   });
   await expect(name).toHaveValue(FICTIONAL_BUSINESS.name);

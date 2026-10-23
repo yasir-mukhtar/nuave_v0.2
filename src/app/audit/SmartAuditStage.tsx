@@ -401,7 +401,7 @@ export default function SmartAuditStage({
         >
           {reporting
             ? "Semua pertanyaan selesai, laporan sedang dibuat"
-            : "Audit bisnis Anda sedang berjalan"}
+            : "Audit klinik Anda sedang berjalan"}
         </h1>
         <p
           role="status"

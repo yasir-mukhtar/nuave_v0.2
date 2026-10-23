@@ -33,7 +33,7 @@ then use the matching feature file as the recipe. `V` below means
   `data-report-answer`. Never use coordinates.
 - UI text is Indonesian. Copy names exactly, including the ellipsis in
   `Mereka butuh…` and the middle dot in `Pembayaran diterima · NV-…`.
-- Edit sheets (`Ubah Bisnis`, `Tambah produk`, `Ubah pertanyaan 1`, the start
+- Edit sheets (`Ubah Klinik`, `Tambah layanan`, `Ubah pertanyaan 1`, the start
   sheet) are dialogs. While one is open the page behind it is hidden from
   role queries, so look for controls inside the sheet.
 - Screens slide in and out. A step waits for the next screen's heading
@@ -68,13 +68,13 @@ user-visible behavior. It then uses exactly four H2 sections in this order:
 
 - [Audit entry](./audit-entry.md) covers the `/audit` website step (J01), its
   validation, the landing form that hands its website to `/audit`, and
-  `Ganti tautan bisnis` on the business found.
+  `Ganti tautan` on the business found.
 - [Smart intake summary](./smart-intake-summary.md) covers the free check
   (J02), the business found (J05), the three steps and checkout, the paid
   reading, the Step 2 screens (focus, category, offerings, target customer,
   customer needs and considerations, service, market, competitors,
   differentiator with its folded public fact), the Step 3 cover, the review
-  "Ini profil yang akan Nuave pakai" with its edit sheets, and question
+  "Ini profil klinik yang akan Nuave pakai" with its edit sheets, and question
   creation.
 - [Rich preparation](./rich-preparation.md) covers the labelled fictional
   preparation: published branches, category suggestions, the prepared

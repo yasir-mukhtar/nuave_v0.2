@@ -3,12 +3,12 @@
 import { useState, type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  IconBuildingStore,
+  IconBuildingHospital,
   IconHome,
   IconMap,
   IconMapPin,
   IconMapPins,
-  IconTruckDelivery,
+  IconPackage,
   IconWorld,
 } from "@tabler/icons-react";
 import { SPRING_SETTLE } from "@/components/motion/presets";
@@ -95,7 +95,7 @@ function CustomerQuestionPreview({ selection }: { selection: SmartSelection }) {
   return (
     <figure className="m-0 grid gap-2 rounded-card bg-stone-50 px-5 pt-[18px] pb-5">
       <figcaption className="type-label-sm text-ink-500">
-        Contoh pertanyaan pelanggan
+        Contoh pertanyaan calon pasien
       </figcaption>
       <blockquote className="type-copy-lg m-0 text-ink-900">
         “
@@ -197,7 +197,7 @@ export function CategoryFields({
         <ChipAdder
           addLabel="Lainnya"
           fieldLabel="Kategori lain"
-          placeholder="Sebutan yang dikenal pelanggan"
+          placeholder="Sebutan yang dikenal pasien"
           splitOnComma={false}
           maxLength={200}
           startOpen={!suggestions.length && !mainDistinct && !currentUnmatched}
@@ -233,12 +233,12 @@ export function SmartCategoryScreen({
         headingRef={headingRef}
         title={
           selection.focus === "cabang"
-            ? "Lokasi ini biasanya disebut apa?"
+            ? "Cabang ini biasanya disebut apa?"
             : selection.focus === "produk"
-              ? "Produk atau layanan ini biasanya disebut apa?"
-              : "Bisnis Anda biasanya disebut apa?"
+              ? "Layanan ini biasanya disebut apa?"
+              : "Klinik Anda biasanya disebut apa?"
         }
-        lead="Pilih kata yang dipakai pelanggan saat bertanya ke AI."
+        lead="Pilih kata yang dipakai calon pasien saat bertanya ke AI."
       />
       <div className="mt-[22px]">
         <CategoryFields
@@ -294,7 +294,7 @@ export function OfferingsFields({
   return (
     <div className="grid gap-5">
       {proposed.length || ownerAdded.length ? (
-        <ChipGroup label="Produk dan layanan">
+        <ChipGroup label="Layanan">
           {proposed.map((item) => (
             <Chip
               key={item}
@@ -318,8 +318,8 @@ export function OfferingsFields({
       <ChipAdder
         variant="field"
         addLabel="Tambah"
-        fieldLabel="Produk atau layanan lain"
-        placeholder="Contoh: nama produk, nama layanan"
+        fieldLabel="Layanan lain"
+        placeholder="Contoh: nama layanan atau perawatan"
         hint="Bisa tempel daftar, pisahkan dengan koma."
         onAdd={(items) => {
           let next = [...selection.offerings];
@@ -362,12 +362,12 @@ export function SmartOfferingsScreen({
       <section className="grid" data-intake-screen="offerings">
         <ScreenHeader
           headingRef={headingRef}
-          title="Apa saja yang Anda jual?"
-          lead={`Audit ini berfokus pada ${selection.productTarget || "satu penawaran"}. Penawaran lain dari website Anda tetap tercatat sebagai konteks dan tidak ikut diaudit.`}
+          title="Apa saja layanan klinik Anda?"
+          lead={`Audit ini fokus ke ${selection.productTarget || "satu layanan"}. Layanan lain tetap dicatat, tetapi tidak ikut diaudit.`}
         />
         <ul
           className="m-0 mt-[22px] flex list-none flex-wrap gap-2.5 p-0"
-          aria-label="Katalog penawaran"
+          aria-label="Daftar layanan"
         >
           {catalogue.map((item) => (
             <li
@@ -397,11 +397,11 @@ export function SmartOfferingsScreen({
     <section className="grid" data-intake-screen="offerings">
       <ScreenHeader
         headingRef={headingRef}
-        title="Apa saja yang Anda jual?"
+        title="Apa saja layanan klinik Anda?"
         lead={
           proposed.length
             ? "Sudah kami pilih dari website. Ketuk untuk membuang, ketik untuk menambah."
-            : "Tambahkan produk atau layanan utama yang pelanggan cari."
+            : "Tambahkan layanan utama yang dicari pasien."
         }
       />
       <div className="mt-[22px]">
@@ -416,7 +416,7 @@ export function SmartOfferingsScreen({
       ) : null}
       {!selection.offerings.length ? (
         <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
-          Pilih atau tambah setidaknya satu produk atau layanan.
+          Pilih atau tambah setidaknya satu layanan.
         </p>
       ) : null}
       <ScreenError error={error} />
@@ -427,10 +427,14 @@ export function SmartOfferingsScreen({
 /* ──────────────────────────── J18 · how they buy ──────────────────────────── */
 
 const SERVICE_TILES = [
-  { value: "on_premise", label: "Datang ke tempat", Icon: IconBuildingStore },
-  { value: "delivery", label: "Dikirim", Icon: IconTruckDelivery },
-  { value: "on_customer", label: "Anda yang datang", Icon: IconHome },
-  { value: "online", label: "Online", Icon: IconWorld },
+  {
+    value: "on_premise",
+    label: "Datang ke klinik",
+    Icon: IconBuildingHospital,
+  },
+  { value: "on_customer", label: "Kunjungan ke rumah", Icon: IconHome },
+  { value: "online", label: "Konsultasi online", Icon: IconWorld },
+  { value: "delivery", label: "Produk dikirim", Icon: IconPackage },
 ] as const;
 
 export const SERVICE_LABELS: Record<string, string> = Object.fromEntries(
@@ -450,7 +454,7 @@ export function ServiceFields({ selection, onChange }: FieldsProps) {
       origins: { ...selection.origins, serviceChannels: "owner" },
     });
   return (
-    <TileGrid label="Cara pelanggan mendapatkan yang Anda tawarkan">
+    <TileGrid label="Cara pasien dilayani">
       {SERVICE_TILES.map(({ value, label, Icon }) => (
         <ToggleTile
           key={value}
@@ -482,7 +486,7 @@ export function SmartServiceScreen({
     <section className="grid" data-intake-screen="service">
       <ScreenHeader
         headingRef={headingRef}
-        title="Bagaimana pelanggan mendapatkannya?"
+        title="Bagaimana pasien dilayani?"
         lead={
           fromWebsite
             ? "Pilih semua yang berlaku. Sudah kami isi dari website."
@@ -709,7 +713,7 @@ export function SmartMarketScreen({
     <section className="grid" data-intake-screen="market">
       <ScreenHeader
         headingRef={headingRef}
-        title="Di mana pelanggan Anda berada?"
+        title="Pasien Anda datang dari mana?"
         lead={
           selection.origins.market === "website" && selection.marketReach
             ? "Sudah kami isi dari website. Ganti jika perlu."

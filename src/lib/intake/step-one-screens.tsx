@@ -148,7 +148,7 @@ export function WebsiteForm({
           className="shrink-0 text-ink-900"
           aria-hidden="true"
         />
-        <span className="sr-only">Website atau akun Instagram bisnis</span>
+        <span className="sr-only">Website atau akun Instagram klinik</span>
         <input
           ref={inputRef}
           value={value}
@@ -162,7 +162,7 @@ export function WebsiteForm({
           enterKeyHint="go"
           maxLength={2_000}
           autoFocus={autoFocus}
-          placeholder="Website atau akun Instagram"
+          placeholder="Website atau Instagram klinik"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "website-error" : "website-note"}
           className="type-copy min-w-0 flex-1 border-0 bg-transparent p-0 text-ink-900 outline-none placeholder:text-ink-500"
@@ -188,13 +188,13 @@ export function WebsiteForm({
         {busy ? (
           <IconLoader2 className="animate-spin" aria-hidden="true" />
         ) : null}
-        Cek bisnis saya di AI
+        Cek klinik saya di AI
       </Button>
       <p
         id="website-note"
-        className="type-copy-sm m-0 text-center text-ink-500"
+        className="type-copy-sm m-0 text-center text-balance text-ink-500"
       >
-        Pratinjau gratis. Audit Rp99.000, sekali bayar.
+        Pratinjau gratis. Audit Rp99.000, sekali bayar. Tanpa data pasien.
       </p>
     </form>
   );
@@ -215,11 +215,11 @@ export function HeroHeadline({
         tabIndex={-1}
         className="type-display m-0 text-ink-900 outline-none"
       >
-        Bisnis Anda <span className="block text-ember-500">disebut AI?</span>
+        Klinik Anda <span className="block text-ember-500">disebut AI?</span>
       </Tag>
       <p className="type-copy m-0 text-ink-600">
-        Sekarang pelanggan tanya AI dulu. Nuave bertanya seperti mereka, lalu
-        menunjukkan bisnis mana yang disebut.
+        Sekarang calon pasien tanya AI dulu. AI biasanya cuma menyebut beberapa
+        klinik. Lihat apakah klinik Anda salah satunya.
       </p>
     </div>
   );
@@ -301,7 +301,7 @@ export function checkPhaseFor(
 const CHECK_STEPS = [
   "Membuka website",
   "Membaca nama dan logo",
-  "Membaca deskripsi bisnis",
+  "Membaca deskripsi klinik",
 ] as const;
 
 function StepIcon({ state }: { state: "done" | "active" | "pending" }) {
@@ -519,7 +519,7 @@ export function BusinessCheckScreen({
       className="grid"
       data-intake-screen="reading"
       data-check-phase={phase}
-      aria-label="Pemeriksaan bisnis"
+      aria-label="Pemeriksaan klinik"
     >
       {phase === "wayout" ? (
         <motion.div
@@ -532,12 +532,12 @@ export function BusinessCheckScreen({
             headingRef={headingRef}
             live
             title="Website Anda butuh waktu lebih lama"
-            lead="Anda bisa lanjut sekarang dengan nama bisnis Anda. Website Anda kami baca lengkap setelah pembayaran."
+            lead="Anda bisa lanjut sekarang dengan nama klinik Anda. Website Anda kami baca lengkap setelah pembayaran."
           />
           <div className="mt-6">
             <FloatingField
               ref={fieldRef}
-              label="Nama bisnis"
+              label="Nama klinik"
               value={wayOutName}
               maxLength={160}
               autoComplete="organization"
@@ -577,7 +577,7 @@ export function BusinessCheckScreen({
             title={
               phase === "long"
                 ? "Masih membaca. Website Anda cukup lengkap."
-                : "Sebentar, kami cari bisnis Anda"
+                : "Sebentar, kami cari klinik Anda"
             }
             lead={
               phase === "long"
@@ -601,12 +601,12 @@ export function BusinessCheckScreen({
               transition={{ ...SPRING_SETTLE, delay: 0.15 }}
             >
               <p className="type-label m-0 text-ink-500">
-                Sambil menunggu: begini pelanggan bertanya ke AI
+                Sambil menunggu: begini calon pasien bertanya ke AI
               </p>
               <CustomerBubble text="Klinik gigi dekat kantor di Dago yang buka sore apa ya?" />
               <p className="type-copy-sm m-0 text-ink-600">
-                Laporan Anda menunjukkan apakah bisnis Anda ikut disebut, dan
-                siapa saja yang disebut.
+                Laporan Anda menunjukkan apakah klinik Anda ikut disebut, dan
+                klinik mana saja yang disebut.
               </p>
             </motion.div>
           ) : null}
@@ -716,7 +716,7 @@ export function BusinessFoundScreen({
       <ScreenHeader
         headingRef={headingRef}
         title={
-          guessed ? "Bisnis yang akan diaudit" : "Kami menemukan bisnis Anda"
+          guessed ? "Klinik yang akan diaudit" : "Kami menemukan klinik Anda"
         }
         lead={
           guessed
@@ -726,7 +726,7 @@ export function BusinessFoundScreen({
       />
       {notice}
       <motion.article
-        aria-label="Bisnis yang ditemukan"
+        aria-label="Klinik yang ditemukan"
         className="mt-2 flex flex-col items-center rounded-3xl bg-white px-6 pt-7 pb-[26px] text-center shadow-float"
         initial={animate ? { opacity: 0, y: 18, scale: 0.97 } : false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -771,13 +771,13 @@ export function BusinessFoundScreen({
       </motion.article>
       {onChangeWebsite ? (
         <p className="type-copy-sm m-0 mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5 text-ink-600">
-          Bukan bisnis Anda?
+          Bukan klinik Anda?
           <button
             type="button"
             onClick={onChangeWebsite}
             className="type-label-strong min-h-11 text-ink-900 underline decoration-1 underline-offset-4 sm:min-h-0"
           >
-            Ganti tautan bisnis
+            Ganti tautan
           </button>
         </p>
       ) : null}
@@ -791,11 +791,11 @@ export function BusinessFoundScreen({
       <BottomSheet
         open={editing}
         onOpenChange={setEditing}
-        title="Nama bisnis"
+        title="Nama klinik"
         initialFocus={fieldRef}
         header={
           <SheetActionsHeader
-            title="Nama bisnis"
+            title="Nama klinik"
             onCancel={() => setEditing(false)}
             onSave={save}
             saveDisabled={!draft.trim()}
@@ -810,13 +810,13 @@ export function BusinessFoundScreen({
         >
           <FloatingField
             ref={fieldRef}
-            label="Nama bisnis"
+            label="Nama klinik"
             value={draft}
             maxLength={160}
             autoComplete="organization"
             enterKeyHint="done"
             onChange={(event) => setDraft(event.target.value)}
-            hint="Pakai nama yang dikenal pelanggan."
+            hint="Pakai nama yang dikenal pasien."
             error={editing ? error : null}
           />
         </form>
@@ -830,12 +830,12 @@ export function BusinessFoundScreen({
 const THREE_STEPS = [
   {
     title: "Konfirmasi dan bayar",
-    body: "Cek bisnis Anda, lalu bayar Rp99.000 sekali. Tanpa langganan.",
+    body: "Cek klinik Anda, lalu bayar Rp99.000 sekali. Tanpa langganan.",
     art: "website" as const,
     artWidth: 71,
   },
   {
-    title: "Ceritakan bisnis Anda",
+    title: "Ceritakan klinik Anda",
     body: "Sebagian besar sudah kami isi dari website. Anda cukup cek dan ketuk.",
     art: "form" as const,
     artWidth: 48,

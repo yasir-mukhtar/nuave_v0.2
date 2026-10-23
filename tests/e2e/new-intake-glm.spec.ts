@@ -109,7 +109,7 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   // J27b: "Jalankan audit" only asks; "Kembali periksa" approves nothing.
   const sheet = await openStartSheet(page);
   await expect(sheet).toContainText(
-    "Setelah dimulai, informasi bisnis dan pertanyaan tidak dapat diubah.",
+    "Setelah dimulai, info klinik dan pertanyaan tidak dapat diubah.",
   );
   await sheet
     .getByRole("button", { name: "Kembali periksa", exact: true })

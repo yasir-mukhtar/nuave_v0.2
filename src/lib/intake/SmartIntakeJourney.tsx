@@ -148,7 +148,7 @@ const PAYMENT_POLL_MS = 10_000;
 
 /** A free check cut off by a reload (Spec 013 R-04: never replayed). */
 const LOOKUP_INTERRUPTED_NOTICE =
-  "Pemeriksaan website sebelumnya terputus. Tekan Cek bisnis saya di AI untuk mencoba lagi.";
+  "Pemeriksaan website sebelumnya terputus. Tekan Cek klinik saya di AI untuk mencoba lagi.";
 
 /** The paid reading cut off by a reload: the order screen offers it again. */
 const READING_INTERRUPTED_NOTICE =
@@ -1135,7 +1135,7 @@ export default function SmartIntakeJourney({
       };
       if (!stillMine()) return;
       if (!response.ok || typeof result.canonical_url !== "string")
-        throw new Error(result.error || "Sumber bisnis belum dapat dibaca.");
+        throw new Error(result.error || "Website klinik belum dapat dibaca.");
       const canonical = parseSourceInput(result.canonical_url);
       const displayName =
         typeof result.display_name === "string"
@@ -1152,7 +1152,7 @@ export default function SmartIntakeJourney({
         (description && unsafeSmartName(description))
       )
         throw new Error(
-          "Sumber bisnis berisi informasi yang tidak dapat digunakan.",
+          "Website klinik berisi informasi yang tidak dapat digunakan.",
         );
       const name =
         displayName || nameFromAddress(canonical.normalizedUrl) || "";
@@ -1517,7 +1517,7 @@ export default function SmartIntakeJourney({
       persist(working);
       if (!extractionResponse.ok || !extraction.draft)
         throw new Error(
-          extraction.error || "Fakta bisnis belum dapat disiapkan.",
+          extraction.error || "Info klinik belum dapat disiapkan.",
         );
       const prepared = prepareUnderstanding({
         typedName: working.entry.name.trim() || brand.name,
@@ -2038,7 +2038,7 @@ export default function SmartIntakeJourney({
                 disabled: !wayOutName.trim(),
               }
             : {
-                label: "Ya, ini bisnis saya",
+                label: "Ya, ini klinik saya",
                 onClick: () => {},
                 disabled: true,
               }
@@ -2052,7 +2052,7 @@ export default function SmartIntakeJourney({
         progress={progress ?? undefined}
         back={back}
         action={{
-          label: "Ya, ini bisnis saya",
+          label: "Ya, ini klinik saya",
           disabled: !brandName.trim(),
           onClick: () => {
             // Spec 016 D1: the free brand check is followed by the order
@@ -2332,7 +2332,7 @@ export default function SmartIntakeJourney({
       <ChapterCover
         headingRef={headingRef}
         step={2}
-        title="Ceritakan bisnis Anda"
+        title="Ceritakan klinik Anda"
         body="Sebagian besar sudah kami isi dari website Anda. Anda cukup memeriksa, mengetuk, lalu lanjut."
         art="kedaiOpen"
         from="kedaiBare"
@@ -2344,7 +2344,7 @@ export default function SmartIntakeJourney({
         headingRef={headingRef}
         step={3}
         title="Periksa, lalu jalankan audit"
-        body="Cek profil bisnis dan 10 pertanyaan sekali saja. Setelah itu Nuave bekerja sendiri, dan laporan dikirim ke email Anda."
+        body="Cek profil klinik dan 10 pertanyaan sekali saja. Setelah itu Nuave bekerja sendiri, dan laporan dikirim ke email Anda."
         art="kedaiBusy"
         from="kedaiOpen"
       />
@@ -2517,7 +2517,6 @@ export default function SmartIntakeJourney({
       <QuestionsPreparing
         headingRef={headingRef}
         preparing={busy === "questions"}
-        live={live}
         onRetry={() => void confirm()}
         onBack={goBack}
         error={error}

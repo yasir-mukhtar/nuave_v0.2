@@ -47,19 +47,19 @@ describe("J6 typed additions", () => {
     // "+ Lainnya" under "Mereka butuh…" opens the typed field (J17). jsdom
     // drops the space before the screen-reader-only "(kebutuhan)".
     expect(
-      screen.queryByRole("textbox", { name: "Kebutuhan pelanggan lain" }),
+      screen.queryByRole("textbox", { name: "Kebutuhan pasien lain" }),
     ).toBeNull();
     fireEvent.click(
       screen.getByRole("button", { name: /^Lainnya ?\(kebutuhan\)$/ }),
     );
     const value = "n".repeat(301);
     const input = screen.getByRole("textbox", {
-      name: "Kebutuhan pelanggan lain",
+      name: "Kebutuhan pasien lain",
     });
     fireEvent.change(input, { target: { value } });
     fireEvent.click(
       within(
-        screen.getByRole("group", { name: "Kebutuhan pelanggan lain" }),
+        screen.getByRole("group", { name: "Kebutuhan pasien lain" }),
       ).getByRole("button", { name: "Tambah" }),
     );
 
@@ -88,17 +88,17 @@ describe("J6 typed additions", () => {
     );
 
     expect(
-      screen.queryByRole("textbox", { name: "Nama atau website bisnis" }),
+      screen.queryByRole("textbox", { name: "Nama atau website klinik" }),
     ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Tambah pembanding" }));
     const value = "p".repeat(161);
     const input = screen.getByRole("textbox", {
-      name: "Nama atau website bisnis",
+      name: "Nama atau website klinik",
     });
     fireEvent.change(input, { target: { value } });
     fireEvent.click(
       within(
-        screen.getByRole("group", { name: "Nama atau website bisnis" }),
+        screen.getByRole("group", { name: "Nama atau website klinik" }),
       ).getByRole("button", { name: "Tambah" }),
     );
 

@@ -31,24 +31,24 @@ export const FICTIONAL_BUSINESS = {
 } as const;
 
 // J01: the landing hero and the `/audit` entry share the headline and form.
-export const ENTRY_HEADING = "Bisnis Anda disebut AI?";
-export const WEBSITE_FIELD = "Website atau akun Instagram bisnis";
-export const CHECK_BUSINESS = "Cek bisnis saya di AI";
+export const ENTRY_HEADING = "Klinik Anda disebut AI?";
+export const WEBSITE_FIELD = "Website atau akun Instagram klinik";
+export const CHECK_BUSINESS = "Cek klinik saya di AI";
 export const ENTRY_INVALID_NOTICE =
   "Masukkan satu website atau akun Instagram yang valid.";
 /** Shown under the entry form while the server is not live. */
 export const SYNTHETIC_LABEL =
   "Mode uji lokal menggunakan pengganti sintetis berlabel.";
 // J02–J04: the free check.
-export const LOOKUP_HEADING = "Sebentar, kami cari bisnis Anda";
+export const LOOKUP_HEADING = "Sebentar, kami cari klinik Anda";
 export const LOOKUP_LONG_HEADING = "Masih membaca. Website Anda cukup lengkap.";
 export const LOOKUP_WAY_OUT_HEADING = "Website Anda butuh waktu lebih lama";
 export const CONTINUE_WITH_NAME = "Lanjut dengan nama ini";
 export const LOOKUP_INTERRUPTED_NOTICE =
-  "Pemeriksaan website sebelumnya terputus. Tekan Cek bisnis saya di AI untuk mencoba lagi.";
+  "Pemeriksaan website sebelumnya terputus. Tekan Cek klinik saya di AI untuk mencoba lagi.";
 // J05–J08: business found, three steps, checkout.
-export const BRAND_HEADING = "Kami menemukan bisnis Anda";
-export const CONFIRM_BRAND = "Ya, ini bisnis saya";
+export const BRAND_HEADING = "Kami menemukan klinik Anda";
+export const CONFIRM_BRAND = "Ya, ini klinik saya";
 export const STEPS_HEADING = "Tinggal 3 langkah";
 export const TO_PAYMENT = "Lanjut ke pembayaran";
 export const ORDER_HEADING = "Konfirmasi dan bayar";
@@ -61,29 +61,29 @@ export const READ_HEADING = "Website Anda sudah terbaca";
 export const READING_INTERRUPTED_NOTICE =
   "Pembacaan website sebelumnya terputus. Isian Anda tetap tersimpan. Tekan Lanjut untuk membaca ulang.";
 // J10/J24: the chapter covers.
-export const INTRO_BUSINESS_HEADING = "Ceritakan bisnis Anda";
+export const INTRO_BUSINESS_HEADING = "Ceritakan klinik Anda";
 export const INTRO_REVIEW_HEADING = "Periksa, lalu jalankan audit";
 // J11–J23: Step 2.
 export const FOCUS_HEADING = "Apa yang ingin Anda audit?";
 export const LOCATION_HEADING = "Cabang mana?";
-export const PRODUCT_HEADING = "Produk mana?";
+export const PRODUCT_HEADING = "Layanan mana?";
 export const CATEGORY_HEADING =
-  /^(Bisnis Anda|Lokasi ini|Produk atau layanan ini) biasanya disebut apa\?$/;
-export const OFFERINGS_HEADING = "Apa saja yang Anda jual?";
+  /^(Klinik Anda|Cabang ini|Layanan ini) biasanya disebut apa\?$/;
+export const OFFERINGS_HEADING = "Apa saja layanan klinik Anda?";
 export const TARGET_CUSTOMER_HEADING =
-  "Siapa yang biasanya mencari bisnis Anda?";
-export const CUSTOMER_NEEDS_HEADING = "Apa yang mereka cari saat memilih?";
-export const SERVICE_HEADING = "Bagaimana pelanggan mendapatkannya?";
-export const MARKET_HEADING = "Di mana pelanggan Anda berada?";
+  "Siapa yang biasanya mencari klinik Anda?";
+export const CUSTOMER_NEEDS_HEADING =
+  "Apa yang mereka cari saat memilih klinik?";
+export const SERVICE_HEADING = "Bagaimana pasien dilayani?";
+export const MARKET_HEADING = "Pasien Anda datang dari mana?";
 /** J20 when Nuave found businesses to compare, J21 when it found none. */
-export const COMPETITORS_HEADING =
-  /^(Siapa yang mungkin dibandingkan dengan Anda|Bisnis mana yang sering dibandingkan dengan Anda)\?$/;
+export const COMPETITORS_HEADING = /^Klinik mana pembanding Anda\?$/;
 export const SKIP_COMPETITORS =
-  "Belum tahu? Lewati, kami bandingkan dengan bisnis sejenis.";
-export const DIFFERENTIATOR_HEADING = "Apa yang membuat bisnis Anda berbeda?";
+  "Belum tahu? Lewati, kami bandingkan dengan klinik sejenis.";
+export const DIFFERENTIATOR_HEADING = "Apa yang membuat klinik Anda berbeda?";
 export const PUBLIC_FACT_TOGGLE = "Ada info yang sering salah ditulis AI?";
 // J25/J26: the review and its edit sheets.
-export const REVIEW_HEADING = "Ini profil yang akan Nuave pakai";
+export const REVIEW_HEADING = "Ini profil klinik yang akan Nuave pakai";
 export const REVIEW_CONFIRMATION =
   "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.";
 export const CONFIRM_SUMMARY = "Buat pertanyaan audit";
@@ -98,7 +98,7 @@ export const START_AUDIT = "Mulai audit sekarang";
 /** Mirrors `SMART_INTAKE_STORAGE_KEY` in `src/lib/intake/smart-intake-contract.ts`. */
 export const INTAKE_SESSION_KEY = "nuave.localIntake.v9";
 export const SENSITIVE_INPUT_NOTICE =
-  "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
+  "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang klinik Anda, tanpa data pasien, data pribadi, atau akses akun.";
 
 /** Counts every same-origin `/api/*` request as `"<METHOD> <path>"`. */
 export function trackApiCalls(page: Page): Record<string, number> {
@@ -500,7 +500,7 @@ export async function fillEntry(
   await fillWebsite(page, url);
 }
 
-/** The entry's `Cek bisnis saya di AI`: the free check (J02). */
+/** The entry's `Cek klinik saya di AI`: the free check (J02). */
 export async function pressPeriksa(page: Page) {
   await entryScreen(page)
     .getByRole("button", { name: CHECK_BUSINESS, exact: true })
@@ -521,11 +521,11 @@ export async function expectBrandConfirm(
   ).toBeVisible();
 }
 
-/** J05: "Bukan bisnis Anda?" → `Ganti tautan bisnis` returns to the entry
+/** J05: "Bukan klinik Anda?" → `Ganti tautan` returns to the entry
  * with the website kept for correction. */
 export async function changeBusinessLink(page: Page) {
   await brandScreen(page)
-    .getByRole("button", { name: "Ganti tautan bisnis", exact: true })
+    .getByRole("button", { name: "Ganti tautan", exact: true })
     .click();
   await expect(entryScreen(page)).toBeVisible();
 }
@@ -535,10 +535,10 @@ export async function renameBusiness(page: Page, name: string) {
   await brandScreen(page)
     .getByRole("button", { name: "Ubah nama", exact: true })
     .click();
-  const sheet = page.getByRole("dialog", { name: "Nama bisnis", exact: true });
+  const sheet = page.getByRole("dialog", { name: "Nama klinik", exact: true });
   await expect(sheet).toBeVisible();
   await sheet
-    .getByRole("textbox", { name: "Nama bisnis", exact: true })
+    .getByRole("textbox", { name: "Nama klinik", exact: true })
     .fill(name);
   await sheet.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(sheet).toHaveCount(0);
@@ -562,7 +562,7 @@ export const E2E_TEST_PASS_CODE = "e2e-test-pass-code-not-a-secret-0001";
 /** Mirrors `TEST_PASS_STORAGE_KEY` in `src/lib/intake/test-pass.ts`. */
 export const TEST_PASS_SESSION_KEY = "nuave.testPass.v1";
 
-/** J05 → J06 → J07: `Ya, ini bisnis saya`, the three steps, then
+/** J05 → J06 → J07: `Ya, ini klinik saya`, the three steps, then
  * `Lanjut ke pembayaran` opens checkout. Nothing is ordered on the way. */
 export async function continueToOrder(page: Page) {
   await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
@@ -662,7 +662,7 @@ export async function useTestPass(page: Page) {
 }
 
 /** The business check to the focus screen. A newly found business (J05):
- * `Ya, ini bisnis saya` → three steps → checkout → pay (see `submitOrder`)
+ * `Ya, ini klinik saya` → three steps → checkout → pay (see `submitOrder`)
  * → paid reading → cover. A brand check that already has its reading
  * (reached again by `Kembali`): `Lanjut` → cover. Then the cover's `Mulai`. */
 export async function confirmBrand(page: Page, email: string = ORDER_EMAIL) {
@@ -680,7 +680,7 @@ export async function confirmBrand(page: Page, email: string = ORDER_EMAIL) {
 
 /* ───────────────────────── J11–J12: focus and target ───────────────────────── */
 
-export type FocusChoice = "Seluruh brand" | "Satu cabang" | "Satu produk";
+export type FocusChoice = "Seluruh klinik" | "Satu cabang" | "Satu layanan";
 
 /** One of the three focus cards (the radio's name also holds its line). */
 export function focusCard(page: Page, name: FocusChoice) {
@@ -708,7 +708,7 @@ export async function confirmFocus(page: Page) {
  */
 export async function openFocusTarget(
   page: Page,
-  name: "Satu cabang" | "Satu produk",
+  name: "Satu cabang" | "Satu layanan",
 ) {
   await chooseFocus(page, name);
   const target = name === "Satu cabang" ? "location" : "product";
@@ -731,7 +731,7 @@ export function productRow(page: Page, name: string | RegExp) {
 /** The J12b add sheet of the location or product screen. */
 export function addTargetSheet(page: Page, kind: "cabang" | "produk") {
   return page.getByRole("dialog", {
-    name: kind === "cabang" ? "Tambah cabang" : "Tambah produk",
+    name: kind === "cabang" ? "Tambah cabang" : "Tambah layanan",
     exact: true,
   });
 }
@@ -757,16 +757,14 @@ export async function addBranch(page: Page, name: string, address: string) {
   await saveTargetSheet(sheet);
 }
 
-/** Product screen: `Tambah produk`, the name, `Simpan`. */
+/** Product screen: `Tambah layanan`, the name, `Simpan`. */
 export async function addProduct(page: Page, name: string) {
   await productScreen(page)
-    .getByRole("button", { name: "Tambah produk", exact: true })
+    .getByRole("button", { name: "Tambah layanan", exact: true })
     .click();
   const sheet = addTargetSheet(page, "produk");
   await expect(sheet).toBeVisible();
-  await sheet
-    .getByRole("textbox", { name: "Nama produk atau layanan" })
-    .fill(name);
+  await sheet.getByRole("textbox", { name: "Nama layanan" }).fill(name);
   await saveTargetSheet(sheet);
 }
 
@@ -786,21 +784,21 @@ export async function addCategory(scope: Scope, value: string) {
   await field.press("Enter");
 }
 
-/** J14: the always-open `Produk atau layanan lain` field, Enter adds. */
+/** J14: the always-open `Layanan lain` field, Enter adds. */
 export async function addOffering(scope: Scope, value: string) {
   const field = scope.getByRole("textbox", {
-    name: "Produk atau layanan lain",
+    name: "Layanan lain",
   });
   await field.fill(value);
   await field.press("Enter");
 }
 
-/** J18: one of the four service tiles (`Datang ke tempat`, `Dikirim`,
- * `Anda yang datang`, `Online`). */
+/** J18: one of the four service tiles (`Datang ke klinik`, `Produk dikirim`,
+ * `Kunjungan ke rumah`, `Konsultasi online`). */
 export function serviceTile(scope: Scope, name: string) {
   return scope
     .getByRole("group", {
-      name: "Cara pelanggan mendapatkan yang Anda tawarkan",
+      name: "Cara pasien dilayani",
     })
     .getByRole("button", { name, exact: true });
 }
@@ -847,7 +845,7 @@ export async function throughDetailScreens(page: Page) {
   await pressLanjut(page);
   await expectServiceScreen(page);
   if (await lanjut.isDisabled())
-    await serviceTile(serviceScreen(page), "Datang ke tempat").click();
+    await serviceTile(serviceScreen(page), "Datang ke klinik").click();
   await pressLanjut(page);
   // A location focus audits no market: service hops to competitors.
   await page
@@ -880,12 +878,12 @@ export async function throughCompetitorContext(page: Page) {
 
 /** J16: the customer-type chips (toggle buttons). */
 export function customerChips(scope: Scope) {
-  return scope.getByRole("group", { name: "Jenis pelanggan", exact: true });
+  return scope.getByRole("group", { name: "Jenis pasien", exact: true });
 }
 
 /** J16: `Tambah lainnya` (unless open), type, Enter. */
 export async function addTargetCustomer(scope: Scope, value: string) {
-  const field = scope.getByRole("textbox", { name: "Pelanggan lain" });
+  const field = scope.getByRole("textbox", { name: "Pasien lain" });
   if (!(await field.isVisible()))
     await scope
       .getByRole("button", { name: "Tambah lainnya", exact: true })
@@ -943,12 +941,12 @@ async function addThroughAdder(
     .click();
 }
 
-/** J17: `Lainnya (kebutuhan)` opens `Kebutuhan pelanggan lain`; `Tambah`. */
+/** J17: `Lainnya (kebutuhan)` opens `Kebutuhan pasien lain`; `Tambah`. */
 export async function addCustomerNeed(scope: Scope, name: string) {
   await addThroughAdder(
     scope,
     "Lainnya (kebutuhan)",
-    "Kebutuhan pelanggan lain",
+    "Kebutuhan pasien lain",
     name,
   );
 }
@@ -960,11 +958,11 @@ export async function toggleConsideration(scope: Scope, name: string) {
     .click();
 }
 
-/** The `Pertimbangan pembeli lain` field (open it with
+/** The `Pertimbangan pasien lain` field (open it with
  * `Lainnya (pertimbangan)` first). */
 export function considerationInput(scope: Scope) {
   return scope.getByRole("textbox", {
-    name: "Pertimbangan pembeli lain",
+    name: "Pertimbangan pasien lain",
     exact: true,
   });
 }
@@ -974,7 +972,7 @@ export async function addConsideration(scope: Scope, name: string) {
   await addThroughAdder(
     scope,
     "Lainnya (pertimbangan)",
-    "Pertimbangan pembeli lain",
+    "Pertimbangan pasien lain",
     name,
   );
 }
@@ -1045,10 +1043,10 @@ export function competitorRow(scope: Scope, name: string) {
   return scope.getByRole("checkbox", { name, exact: true });
 }
 
-/** The `Nama atau website bisnis` field (open it with `Tambah pembanding`). */
+/** The `Nama atau website klinik` field (open it with `Tambah pembanding`). */
 export function competitorInput(scope: Scope) {
   return scope.getByRole("textbox", {
-    name: "Nama atau website bisnis",
+    name: "Nama atau website klinik",
     exact: true,
   });
 }
@@ -1059,7 +1057,7 @@ export async function addCompetitor(scope: Scope, name: string) {
   await addThroughAdder(
     scope,
     "Tambah pembanding",
-    "Nama atau website bisnis",
+    "Nama atau website klinik",
     name,
   );
 }
@@ -1071,9 +1069,9 @@ export async function skipCompetitors(page: Page) {
     .click();
 }
 
-/** J22: the `Pembeda bisnis` textarea. */
+/** J22: the `Pembeda klinik` textarea. */
 export function differentiatorInput(scope: Scope) {
-  return scope.getByRole("textbox", { name: /^Pembeda bisnis/ });
+  return scope.getByRole("textbox", { name: /^Pembeda klinik/ });
 }
 
 export async function fillDifferentiator(scope: Scope, value: string) {
@@ -1107,7 +1105,7 @@ export async function fillPublicFact(scope: Scope, value: string) {
 
 /* ───────────────────────── J25/J26: review and edit sheets ───────────────────────── */
 
-export type ReviewSection = "Bisnis" | "Calon pelanggan" | "Pembanding";
+export type ReviewSection = "Klinik" | "Calon pasien" | "Pembanding";
 
 /** One of the review's three sections, named by its heading. */
 export function reviewSection(page: Page, section: ReviewSection) {
@@ -1122,8 +1120,8 @@ function escapeRegExp(value: string) {
 }
 
 /** The read-back value (`dd`) of one review fact (`dt`): Nama, Website,
- * Fokus audit, Disebut sebagai, Menjual, Siapa, Mereka butuh, Mereka
- * membandingkan, Cara mendapatkan, Area, Bisnis pembanding, Yang membedakan
+ * Fokus audit, Disebut sebagai, Layanan, Siapa, Mereka butuh, Mereka
+ * membandingkan, Cara dilayani, Area, Klinik pembanding, Yang membedakan
  * Anda, Info yang sering salah. */
 export function reviewFact(page: Page, label: string) {
   return reviewScreen(page)
@@ -1183,14 +1181,14 @@ export async function cancelReviewSheet(page: Page, section: ReviewSection) {
 
 /** Bisnis sheet: `Ubah nama` opens the brand check for a name correction. */
 export async function editBusinessFromReview(page: Page) {
-  const sheet = await openReviewSheet(page, "Bisnis");
+  const sheet = await openReviewSheet(page, "Klinik");
   await sheet.getByRole("button", { name: "Ubah nama", exact: true }).click();
   await expect(sheet).toHaveCount(0);
 }
 
 /** Bisnis sheet: `Ganti website` opens the entry with the website kept. */
 export async function editWebsiteFromReview(page: Page) {
-  const sheet = await openReviewSheet(page, "Bisnis");
+  const sheet = await openReviewSheet(page, "Klinik");
   await sheet
     .getByRole("button", { name: "Ganti website", exact: true })
     .click();
@@ -1200,7 +1198,7 @@ export async function editWebsiteFromReview(page: Page) {
 /** Bisnis sheet: `Ganti fokus audit` opens the focus screen; its chain then
  * returns to the review. */
 export async function editFocusFromReview(page: Page) {
-  const sheet = await openReviewSheet(page, "Bisnis");
+  const sheet = await openReviewSheet(page, "Klinik");
   await sheet
     .getByRole("button", { name: "Ganti fokus audit", exact: true })
     .click();
@@ -1210,7 +1208,7 @@ export async function editFocusFromReview(page: Page) {
 
 /** The Bisnis sheet's `Nama lain baru` field. */
 export function aliasInput(page: Page) {
-  return reviewSheet(page, "Bisnis").getByRole("textbox", {
+  return reviewSheet(page, "Klinik").getByRole("textbox", {
     name: "Nama lain baru",
     exact: true,
   });
@@ -1218,7 +1216,7 @@ export function aliasInput(page: Page) {
 
 /** Opens the Bisnis sheet and its `Tambah nama lain` field. */
 export async function openAliasEditor(page: Page, keyboard = false) {
-  const sheet = await openReviewSheet(page, "Bisnis", keyboard);
+  const sheet = await openReviewSheet(page, "Klinik", keyboard);
   const add = sheet.getByRole("button", {
     name: "Tambah nama lain",
     exact: true,
@@ -1232,7 +1230,7 @@ export async function openAliasEditor(page: Page, keyboard = false) {
 
 /** Types an alias and commits it with the field's `Tambah` button. */
 export async function addAlias(page: Page, value: string) {
-  const sheet = reviewSheet(page, "Bisnis");
+  const sheet = reviewSheet(page, "Klinik");
   if (!(await aliasInput(page).isVisible()))
     await sheet
       .getByRole("button", { name: "Tambah nama lain", exact: true })
@@ -1246,7 +1244,7 @@ export async function addAlias(page: Page, value: string) {
 
 /** A committed alias chip in the Bisnis sheet. */
 export function aliasChip(page: Page, name: string | RegExp) {
-  return reviewSheet(page, "Bisnis")
+  return reviewSheet(page, "Klinik")
     .getByRole("group", { name: "Nama lain", exact: true })
     .getByRole("button", { name });
 }

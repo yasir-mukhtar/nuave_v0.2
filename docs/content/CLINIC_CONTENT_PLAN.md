@@ -8,6 +8,11 @@
 > Audited: live `v2.nuave.ai` on 2026-10-23 (phone 390 px and desktop 1440 px,
 > no submissions), and `main` at `56619db` walked end to end in synthetic
 > mode with a fictional dental clinic ("Klinik Fiksi"). No live AI call was made.
+> Prototype: this branch also builds every recommended decision for the
+> landing, the journey, the FAQ, the payment email and the page titles, so the
+> founder can try them in the pull-request preview. The report wording (§7.1)
+> is not built yet. The prototype is a reference, not an approval: if a
+> decision changes, follow this plan, not the prototype.
 
 Nuave now sells to Indonesian clinics that already spend on digital marketing:
 beauty and aesthetic clinics, dental clinics, circumcision (khitan) clinics,
@@ -77,7 +82,7 @@ was made for them.
 | # | Finding | Why it matters | Fix |
 |---|---|---|---|
 | FJ1 | About 25 screens say *bisnis*, *pelanggan*, *produk*, *jual*, "Seluruh brand", "Datang ke tempat", "Dikirim", "Anda yang datang". | The owner keeps translating. "Apa saja yang Anda jual?" is wrong for a clinic. | §6 |
-| FJ2 | Coffee-shop chip lists. Who searches: "pekerja remote, wisatawan, komunitas, pelaku usaha". What they compare: "harga, kualitas, jam buka, kecepatan layanan". | These are the first optional choices a clinic sees after paying. They look made for someone else. | §6 J16, J17 |
+| FJ2 | Coffee-shop chip lists. Who searches: "pekerja remote, wisatawan, komunitas, pelaku usaha". What they compare: "harga, kualitas, kecepatan layanan". | These are the first optional choices a clinic sees after paying. They look made for someone else. | §6 J16, J17 |
 | FJ3 | **The questions screen shows the stack on live:** "Pertanyaan disiapkan melalui satu panggilan provider. Model diminta: glm-5.3-flash. Model diterima: … Biaya: USD …". | Directly against "do not show the tech stack". Also reads like internal billing. | §6 J27 |
 | FJ4 | The retry state says trying again "dapat menambah biaya penggunaan AI". | A founder-testing note. To a paying clinic it reads like a hidden charge. | §6 J27 |
 | FJ5 | The differentiator examples, placeholder and keyboard starters push "Satu-satunya…" and "harga terjangkau". | Superlative and "only" claims are what health advertising rules restrict (§4.4) and what AI cannot check. Nuave should model factual claims. | §6 J22 |
@@ -602,7 +607,7 @@ asks AI is the parent, not the patient.
 | Title | Apa yang mereka cari saat memilih? | **Apa yang mereka cari saat memilih klinik?** |
 | Lead | Boleh dilewati. | keep |
 | "Mereka butuh…" and "Mereka membandingkan…" | | keep |
-| Common comparison chips (`COMPARISON_REASONS`, ~L294) | harga, lokasi, kualitas, ulasan, jam buka, kecepatan layanan | **biaya, lokasi, dokter, metode perawatan, ulasan, jam praktik, BPJS atau asuransi, waktu tunggu** |
+| Common comparison chips (`COMPARISON_REASONS`, ~L294) | harga, lokasi, kualitas, ulasan, jam buka, kecepatan layanan | **biaya, lokasi, dokter, metode perawatan, ulasan, jam buka, BPJS atau asuransi, waktu tunggu** |
 | Needs field | Kebutuhan pelanggan lain | **Kebutuhan pasien lain** |
 | Needs placeholder | Contoh: periksa tanpa antre lama | keep |
 | Comparison field | Pertimbangan pembeli lain | **Pertimbangan pasien lain** |
@@ -613,6 +618,11 @@ klamp, stapler, sealer, laser; for beauty: laser or peeling), reviews, schedule,
 BPJS or insurance, and waiting time. Some Muslim patients ask for a female
 doctor or halal products; that stays an example, not a default chip
 (Appendix A.2).
+
+Keep **jam buka** exactly as written. The question writer reads it as an
+access need (`SHARED_ACCESS_MARKERS` in `src/lib/audit/question-facts-v3.ts`),
+so a new word such as "jam praktik" would quietly change what the questions
+receive. Check every new chip word against that list.
 
 ### J18 how patients are served (`smart-detail-screens.tsx`)
 
@@ -694,6 +704,7 @@ location, payment options), never superlatives.
 | Comparator text | …Nuave membandingkan dengan bisnis sejenis. (two lines) | **…Nuave membandingkan dengan klinik sejenis.** |
 | Alias help (~L286) | Nama lain membantu Nuave memastikan pertanyaan tanpa nama bisnis benar-benar tidak menyebut bisnis Anda. | **Nama lain membantu Nuave memastikan pertanyaan tidak menyebut klinik Anda.** |
 | Sheet blocks that repeat J16 to J19 titles | | follow the new titles |
+| "Lengkapi: …" labels (`requiredSmartGaps` in `smart-intake-contract.ts`) | Nama bisnis · Produk atau layanan utama · Produk atau layanan yang diaudit · Nama dan alamat lokasi · Bisnis pembanding | **Nama klinik · Layanan utama · Layanan yang diaudit · Nama dan alamat cabang · Klinik pembanding** (the others stay) |
 | Confirmation sentence, "Buat pertanyaan audit" | | keep |
 
 ### J27 and J28 the ten questions (`SmartQuestionsScreen.tsx`)
@@ -709,8 +720,19 @@ location, payment options), never superlatives.
 | Edit sheet hint | Tulis satu pertanyaan seperti calon pelanggan bertanya. Mengubah kalimat dapat mengubah apa yang diukur. | **Tulis satu pertanyaan seperti calon pasien bertanya. Mengubah kalimat dapat mengubah apa yang diukur.** |
 | Preparing lead | Ditulis seperti calon pelanggan bertanya, dari profil yang Anda setujui. | **Ditulis seperti calon pasien bertanya, dari profil yang Anda setujui.** |
 | **Retry note, live mode (~L627)** | Mencoba lagi mengirim permintaan baru dan dapat menambah biaya penggunaan AI. | **Remove** (D7). The per-order cost limit on the server already protects spending. |
+| **Interrupted request, live mode** (`question-public-errors.ts`, `interrupted`) | Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima. | **Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat, tetapi belum diterima.** (D7; the customer is never charged per request) |
+| Edit sheet warnings (J28) | Ada nama bisnis Anda / bisnis pembanding di pertanyaan ini, and the two explanations | the same sentences with **klinik** |
 | Start sheet description and body (~L316) | …Setelah dimulai, informasi bisnis dan pertanyaan tidak dapat diubah. | **…Setelah dimulai, info klinik dan pertanyaan tidak dapat diubah.** |
 | Start sheet, technical-problem note, buttons | | keep |
+
+### Error fallbacks (`SmartIntakeJourney.tsx`)
+
+| Now | New |
+|---|---|
+| Sumber bisnis belum dapat dibaca. | **Website klinik belum dapat dibaca.** |
+| Sumber bisnis berisi informasi yang tidak dapat digunakan. | **Website klinik berisi informasi yang tidak dapat digunakan.** |
+| Fakta bisnis belum dapat disiapkan. | **Info klinik belum dapat disiapkan.** |
+| Tekan Lanjut untuk mengisi data bisnis Anda. (`order-screens.tsx`, paid state) | **Tekan Lanjut untuk melengkapi profil klinik Anda.** |
 
 ### J29 and J30 running and ready (`src/app/audit/SmartAuditStage.tsx`)
 
@@ -851,7 +873,7 @@ the ones to change. The implementing agent records the answers in
 | D4 | Focus names "Seluruh klinik / Satu cabang / Satu layanan" in the journey and the report scope line | Approve | Keep "Seluruh brand / Satu produk" |
 | D5 | The search-data line stays off until gate G-DATA (§4.3) is met | Approve | Not applicable: the line cannot ship while untrue |
 | D6 | The report names the tested AI in plain words ("AI buatan OpenAI, dengan pencarian web"); system and model IDs move into "Detail teknis". This replaces item 10 of the 2026-10-21 design decision | Approve | Keep the header facts, but still rewrite the "Jawaban dari API…" bullet |
-| D7 | Remove the question model, provider and cost line, and the "biaya penggunaan AI" retry note, from live screens | Approve (follows your instruction) | Not applicable |
+| D7 | Remove the question model, provider and cost line, the "biaya penggunaan AI" retry note, and "mungkin sudah dikenai biaya" from the interrupted-request message, on live screens | Approve (follows your instruction) | Not applicable |
 | D8 | Landing section 2 becomes the patient-question example (§5.2) | Approve | Use the copy-only fallback in §5.2 |
 | D9 | Two new blocks in the example report sheet (§5.6) | Approve | Keep the sheet, new words only |
 | D10 | Rewrite the FAQ (§8) | Approve | At least remove the false statements |
@@ -938,8 +960,11 @@ one small pull request that links the decision-log entry.
    (the FAQ question "Apakah klinik saya pasti disebut AI…", answered "no", is
    the one allowed exception).
 8. "data pencarian" appears nowhere unless G-DATA is recorded.
-9. The pull request description has the finish condition, the commands and
-   their outputs, the screenshots, and the "Corrections:" line.
+9. New chip words and examples: none trips `isSensitiveIntakeText`
+   (`src/lib/audit/sensitive-intake.ts`), and none adds or drops a word that
+   `SHARED_ACCESS_MARKERS` recognises (see J17).
+10. The pull request description has the finish condition, the commands and
+    their outputs, the screenshots, and the "Corrections:" line.
 
 ---
 

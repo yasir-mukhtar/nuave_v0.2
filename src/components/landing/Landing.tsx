@@ -3,20 +3,23 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   IconArrowRight,
   IconBrandInstagram,
   IconBrandLinkedin,
   IconBrandX,
   IconChartBar,
+  IconInfoCircle,
   IconListCheck,
   IconQuote,
+  IconSparkles,
   IconUsers,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/motion/BottomSheet";
 import { SPRING_SETTLE } from "@/components/motion/presets";
+import { ChipRadioGroup, RadioChip } from "@/components/product/selection/Chip";
 import {
   motionAllowedNow,
   useMotionAllowed,
@@ -100,31 +103,174 @@ function ResumeBanner() {
 const STEPS: { title: string; body: string; art: ArtName; artWidth: number }[] =
   [
     {
-      title: "Cek bisnis Anda",
-      body: "Masukkan website. Kami tampilkan bisnis yang kami temukan. Gratis.",
+      title: "Cek klinik Anda",
+      body: "Masukkan website klinik. Kami tunjukkan klinik yang kami temukan. Gratis.",
       art: "website",
       artWidth: 71,
     },
     {
-      title: "Ceritakan bisnis Anda",
-      body: "Setelah bayar Rp99.000, periksa informasi yang sudah kami isi.",
+      title: "Ceritakan klinik Anda",
+      body: "Setelah bayar Rp99.000, cek layanan dan info klinik yang sudah kami isi.",
       art: "form",
       artWidth: 48,
     },
     {
       title: "Jalankan audit",
-      body: "Periksa 10 pertanyaan. Laporan dikirim ke email Anda.",
+      body: "Setujui 10 pertanyaan calon pasien. Laporan dikirim ke email Anda.",
       art: "magnifierCheck",
       artWidth: 86,
     },
   ];
 
 const RECEIVES = [
-  { Icon: IconChartBar, text: "Skor kemunculan, misalnya 4 dari 10" },
+  {
+    Icon: IconChartBar,
+    text: "Di berapa dari 10 pertanyaan klinik Anda disebut dan direkomendasikan",
+  },
   { Icon: IconQuote, text: "Jawaban AI apa adanya, dengan sumbernya" },
-  { Icon: IconUsers, text: "Bisnis lain yang disebut" },
-  { Icon: IconListCheck, text: "Saran perbaikan sesuai temuan" },
+  { Icon: IconUsers, text: "Klinik lain yang disebut AI" },
+  {
+    Icon: IconInfoCircle,
+    text: "Info klinik yang keliru atau kurang di jawaban AI",
+  },
+  {
+    Icon: IconListCheck,
+    text: "Saran perbaikan untuk tim Anda, sesuai temuan",
+  },
 ];
+
+/**
+ * One patient question and a short AI answer per kind of clinic. Every name
+ * holds "Fiksi", "Rekaan" or "Contoh", so none can match a real clinic.
+ */
+const PATIENT_EXAMPLES: {
+  id: string;
+  label: string;
+  question: string;
+  clinics: [name: string, area: string][];
+}[] = [
+  {
+    id: "gigi",
+    label: "Gigi",
+    question:
+      "Klinik gigi di Bekasi yang bagus buat pasang behel, biayanya kira-kira berapa?",
+    clinics: [
+      ["Klinik Gigi Rekaan", "Bekasi Barat"],
+      ["Senyum Fiksi Dental", "Summarecon"],
+      ["Klinik Contoh Sehat", "Galaxy"],
+    ],
+  },
+  {
+    id: "kecantikan",
+    label: "Kecantikan",
+    question:
+      "Mau laser flek hitam pertama kali di Surabaya, klinik mana yang dokternya berpengalaman?",
+    clinics: [
+      ["Klinik Kulit Rekaan", "Darmo"],
+      ["Estetika Fiksi", "Pakuwon"],
+      ["Klinik Contoh Ayu", "Rungkut"],
+    ],
+  },
+  {
+    id: "khitan",
+    label: "Khitan",
+    question: "Sunat anak di Depok metode klamp, ada yang bisa home service?",
+    clinics: [
+      ["Rumah Khitan Rekaan", "Margonda"],
+      ["Klinik Sunat Fiksi", "Cinere"],
+      ["Khitan Contoh", "Sawangan"],
+    ],
+  },
+  {
+    id: "anak",
+    label: "Anak",
+    question: "Klinik anak di Bintaro buat vaksin, jadwal dokternya kapan aja?",
+    clinics: [
+      ["Klinik Anak Rekaan", "Bintaro"],
+      ["Klinik Fiksi Ceria", "Pondok Aren"],
+      ["Klinik Contoh Bunda", "Pesanggrahan"],
+    ],
+  },
+  {
+    id: "umum",
+    label: "Umum",
+    question: "Klinik dekat Kemang yang bisa pakai BPJS dan buka sampai malam?",
+    clinics: [
+      ["Klinik Pratama Rekaan", "Kemang"],
+      ["Klinik Fiksi 24 Jam", "Mampang"],
+      ["Klinik Contoh Medika", "Cipete"],
+    ],
+  },
+];
+
+/** The cream band: pick a kind of clinic, see what a patient asks and the
+ * short list AI answers with. Nothing is fetched; the examples are fixed. */
+function PatientQuestionExample() {
+  const animate = useMotionAllowed();
+  const [kind, setKind] = useState(PATIENT_EXAMPLES[0].id);
+  const example =
+    PATIENT_EXAMPLES.find((item) => item.id === kind) ?? PATIENT_EXAMPLES[0];
+  return (
+    <div className="grid w-full gap-5">
+      {/* Centred like the heading above, also when the chips wrap. */}
+      <div className="[&>[role=radiogroup]]:justify-center">
+        <ChipRadioGroup
+          label="Jenis klinik"
+          value={kind}
+          onValueChange={setKind}
+        >
+          {PATIENT_EXAMPLES.map((item) => (
+            <RadioChip
+              key={item.id}
+              value={item.id}
+              label={item.label}
+              checked={item.id === kind}
+            />
+          ))}
+        </ChipRadioGroup>
+      </div>
+      <div aria-live="polite" className="text-left" data-patient-example={kind}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={example.id}
+            className="grid gap-3"
+            initial={animate ? { opacity: 0, y: 8 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            exit={animate ? { opacity: 0, y: -6 } : { opacity: 0 }}
+            transition={animate ? SPRING_SETTLE : { duration: 0 }}
+          >
+            <div className="flex justify-end">
+              <p className="type-copy m-0 max-w-[290px] rounded-[22px] rounded-br-md bg-ink-900 px-[18px] py-3.5 text-white">
+                {example.question}
+              </p>
+            </div>
+            <div className="flex justify-start">
+              <div className="grid max-w-[310px] gap-2 rounded-[22px] rounded-bl-md bg-white px-[18px] py-3.5 shadow-card">
+                <p className="type-label-sm-strong m-0 flex items-center gap-1.5 text-ember-700">
+                  <IconSparkles size={14} stroke={2} aria-hidden="true" />
+                  Jawaban AI
+                </p>
+                <p className="type-copy-sm m-0 text-ink-700">
+                  Berikut beberapa klinik yang bisa dipertimbangkan:
+                </p>
+                <ol className="m-0 grid list-none gap-1.5 p-0">
+                  {example.clinics.map(([name, area], index) => (
+                    <li key={name} className="type-copy-sm text-ink-900">
+                      <strong>
+                        {index + 1}. {name}
+                      </strong>{" "}
+                      <span className="text-ink-600">· {area}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
 
 /** The fictional example's ten questions: where the business was named. */
 const EXAMPLE_MENTIONED = [2, 7, 9];
@@ -166,8 +312,7 @@ function ExampleReportSheet({
     <BottomSheet open={open} onOpenChange={onOpenChange} title="Contoh laporan">
       <div className="grid gap-4 pt-1 pb-2">
         <p className="type-copy-sm m-0 text-ink-600">
-          Contoh tampilan. Nama bisnis fiktif. Hasil untuk bisnis Anda bisa
-          berbeda.
+          Contoh. Nama klinik fiktif. Hasil klinik Anda bisa berbeda.
         </p>
         <div className="flex items-center gap-3">
           <div className="grid flex-1 gap-1">
@@ -176,7 +321,7 @@ function ExampleReportSheet({
             </p>
             <p className="type-heading-md m-0 text-ink-900">Klinik Fiksi</p>
             <p className="type-copy-sm m-0 text-ink-600">
-              Seluruh brand · Bandung
+              Seluruh klinik · Bandung
             </p>
           </div>
           <Art name="kedaiBusy" width={96} />
@@ -187,7 +332,7 @@ function ExampleReportSheet({
             <span className="type-copy-lg text-ink-500">dari 10</span>
           </p>
           <p className="type-title-sm m-0 text-ink-900">
-            Bisnis Anda muncul di 3 dari 10 pertanyaan
+            Klinik Anda muncul di 3 dari 10 pertanyaan
           </p>
           <Beads on={EXAMPLE_MENTIONED} tone="ember" />
           <div className="h-px bg-line-200" />
@@ -212,9 +357,38 @@ function ExampleReportSheet({
             belum banyak ditemukan.…”
           </p>
         </div>
+        <div className="grid gap-2.5 rounded-card bg-stone-50 p-4">
+          <p className="type-label-sm-strong m-0 text-ember-700">
+            Bisnis lain yang disebut
+          </p>
+          <ul className="m-0 grid list-none gap-2.5 p-0">
+            <li className="type-copy-sm text-ink-900">
+              <strong>Klinik Gigi Rekaan</strong>{" "}
+              <span className="text-ink-600">
+                · Bisnis lain diunggulkan · Pertanyaan 2, 5, 7
+              </span>
+            </li>
+            <li className="type-copy-sm text-ink-900">
+              <strong>Senyum Fiksi Dental</strong>{" "}
+              <span className="text-ink-600">
+                · Disebut dalam jawaban · Pertanyaan 2
+              </span>
+            </li>
+          </ul>
+        </div>
+        <div className="grid gap-2 rounded-[24px] border border-line-200 bg-white px-5 pt-4 pb-4 shadow-card">
+          <span className="type-label-sm-strong inline-flex w-fit rounded-full bg-ember-50 px-2.5 py-1 text-ember-700">
+            Kerjakan dulu
+          </span>
+          <p className="type-title-sm m-0 text-ink-900">
+            Tampilkan jadwal praktik dokter di halaman layanan.
+          </p>
+          <p className="type-caption m-0 text-ink-500">
+            Berdasarkan Pertanyaan 2
+          </p>
+        </div>
         <p className="type-caption m-0 text-ink-500">
-          Laporan lengkap juga memuat semua jawaban AI apa adanya, sumber yang
-          tersimpan, bisnis lain yang disebut, dan saran perbaikan.
+          Laporan lengkap memuat 10 jawaban AI apa adanya, dengan sumbernya.
         </p>
       </div>
     </BottomSheet>
@@ -339,15 +513,22 @@ export default function Landing() {
           >
             <Reveal>
               <h2 id="ask-title" className="type-heading-md m-0 text-ink-900">
-                Pelanggan tidak lagi cek website satu per satu. Mereka tanya ke
-                AI.
+                Begini calon pasien bertanya ke AI
               </h2>
             </Reveal>
-            <Reveal delay={0.08}>
-              <Art name="phoneChat" width={130} />
+            <Reveal delay={0.08} className="w-full">
+              <PatientQuestionExample />
             </Reveal>
+            <div className="grid gap-1">
+              <p className="type-title-sm m-0 text-ink-900">
+                Klinik Anda ada di jawaban ini?
+              </p>
+              <p className="type-copy-sm m-0 text-ink-600">
+                Dashboard iklan dan statistik website Anda tidak menunjukkannya.
+              </p>
+            </div>
             <p className="type-caption m-0 text-ink-600">
-              Contoh tampilan. Nama bisnis fiktif.
+              Contoh. Nama klinik fiktif.
             </p>
           </section>
 
@@ -431,7 +612,7 @@ export default function Landing() {
               className="w-full"
               onClick={toForm}
             >
-              Cek bisnis saya di AI
+              Cek klinik saya di AI
             </Button>
             <p className="type-caption m-0 text-ink-500">
               Ini bukan peringkat atau jaminan. Jawaban AI bisa berubah dari

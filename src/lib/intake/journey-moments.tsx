@@ -156,13 +156,13 @@ export function PaidReadingScreen({
         ) : findings ? (
           nothingFound ? (
             <p className="type-copy-sm m-0 text-ink-600">
-              Website Anda belum menyebut produk atau cabang dengan jelas. Anda
+              Website Anda belum menyebut layanan atau cabang dengan jelas. Anda
               bisa mengisinya di langkah berikutnya.
             </p>
           ) : (
             <>
               {findings.products.length ? (
-                <FoundGroup label="Produk" items={findings.products} />
+                <FoundGroup label="Layanan" items={findings.products} />
               ) : null}
               {findings.places.length ? (
                 <FoundGroup

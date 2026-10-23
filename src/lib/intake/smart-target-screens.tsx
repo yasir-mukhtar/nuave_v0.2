@@ -61,13 +61,14 @@ export function SmartFocusScreen({
 }) {
   const locations = usablePublishedLocations(prepared);
   const example = locations[0]?.name;
+  const serviceExample = prepared.offerings.proposed?.[0]?.trim();
   const choose = (focus: SmartSelection["focus"]) =>
     selectSmartFocus(prepared, selection, focus);
   const choices = [
     {
       value: "brand" as const,
-      title: "Seluruh brand",
-      description: "Semua cabang dan produk dinilai sebagai satu bisnis",
+      title: "Seluruh klinik",
+      description: "Semua cabang dan layanan, sebagai satu klinik",
       image: ART.focusBrand.src,
     },
     {
@@ -80,8 +81,10 @@ export function SmartFocusScreen({
     },
     {
       value: "produk" as const,
-      title: "Satu produk",
-      description: "Satu produk atau layanan tertentu",
+      title: "Satu layanan",
+      description: serviceExample
+        ? `Satu layanan tertentu, misalnya ${serviceExample}`
+        : "Satu layanan tertentu",
       image: ART.focusProduct.src,
     },
   ];
@@ -97,7 +100,7 @@ export function SmartFocusScreen({
               text="sudah dipilih. Ganti jika perlu."
             />
           ) : (
-            "Ini menentukan sudut pandang seluruh audit."
+            "Pertanyaan audit akan fokus ke pilihan ini."
           )
         }
       />
@@ -363,7 +366,7 @@ export function SmartLocationScreen({
             label: "Nama cabang",
             value: draft.name,
             onChange: (name) => setDraft((current) => ({ ...current, name })),
-            placeholder: "Contoh: nama bisnis dan daerahnya",
+            placeholder: "Contoh: nama klinik dan daerahnya",
             maxLength: 300,
           },
           {
@@ -424,8 +427,8 @@ export function SmartProductScreen({
       <ScreenHeader headingRef={headingRef} title={FOCUS_HEADING} />
       <div className="mt-5">
         <ChosenFocus
-          title="Satu produk"
-          description="Satu produk atau layanan tertentu"
+          title="Satu layanan"
+          description="Satu layanan tertentu"
           image={ART.focusProduct.src}
           onChange={onChangeFocus}
         />
@@ -434,7 +437,7 @@ export function SmartProductScreen({
         className="type-heading-sm m-0 mt-7 text-ink-900"
         id="product-heading"
       >
-        Produk mana?
+        Layanan mana?
       </h2>
       {offerings.length || manualActive ? (
         <div className="mt-3">
@@ -471,13 +474,13 @@ export function SmartProductScreen({
         </div>
       ) : (
         <p className="type-copy m-0 mt-2 text-ink-600">
-          Kami belum menemukan produk di website Anda. Tambahkan produk atau
-          layanan yang ingin diaudit.
+          Kami belum menemukan layanan di website Anda. Tambahkan layanan yang
+          ingin diaudit.
         </p>
       )}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <AddChip
-          label="Tambah produk"
+          label="Tambah layanan"
           onClick={() => {
             setDraft("");
             setAdding(true);
@@ -487,17 +490,17 @@ export function SmartProductScreen({
       </div>
       {!smartProductReady(selection) ? (
         <p role="status" className="type-copy-sm m-0 mt-4 text-ink-500">
-          Pilih atau tambahkan satu produk atau layanan.
+          Pilih atau tambahkan satu layanan.
         </p>
       ) : null}
       <ScreenError error={error} />
       <AddSheet
         open={adding}
         onOpenChange={setAdding}
-        title="Tambah produk"
+        title="Tambah layanan"
         fields={[
           {
-            label: "Nama produk atau layanan",
+            label: "Nama layanan",
             value: draft,
             onChange: setDraft,
             maxLength: 300,

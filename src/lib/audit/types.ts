@@ -19,9 +19,9 @@ export const SOURCE_EXCERPT_EMPTY_NOTICE =
 export const SOURCE_EXCERPT_UNAVAILABLE_MESSAGE =
   "Halaman website belum dapat dibaca untuk menyiapkan informasi bisnis. Coba lagi atau ganti URL.";
 export const SOURCE_EXCERPT_RESTRICTED_MESSAGE =
-  "Nuave belum dapat menyiapkan informasi dari halaman ini. Sebagian teks mungkin berisi informasi sensitif. Pilih halaman lain yang hanya memuat informasi publik tentang brand Anda.";
+  "Nuave belum dapat menyiapkan informasi dari halaman ini. Sebagian teks mungkin berisi informasi sensitif. Pilih halaman lain yang hanya memuat informasi publik tentang klinik Anda.";
 export const INTAKE_TEXT_RESTRICTED_MESSAGE =
-  "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
+  "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang klinik Anda, tanpa data pasien, data pribadi, atau akses akun.";
 
 /** Internal extractor input. Deliberately absent from extractionRequestSchema. */
 export const publicSourceDataSchema = z

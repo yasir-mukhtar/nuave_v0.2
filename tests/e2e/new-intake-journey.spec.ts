@@ -410,7 +410,7 @@ test("every manually selected comparator stays visible, correctable and removabl
     sheet.getByRole("button", { name: "Simpan", exact: true }),
   ).toBeEnabled();
   await saveReviewSheet(page, "Pembanding");
-  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+  await expect(reviewFact(page, "Klinik pembanding")).toHaveText(
     "Kedai Samping, Kedai Pilihan",
   );
   await confirmSummary(page);
@@ -439,8 +439,8 @@ test("every manually selected comparator stays visible, correctable and removabl
     comparatorMode: "unknown",
     comparatorNames: [],
   });
-  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
-    "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+  await expect(reviewFact(page, "Klinik pembanding")).toHaveText(
+    "Belum tahu. Nuave membandingkan dengan klinik sejenis.",
   );
 });
 
@@ -459,11 +459,11 @@ test("rich reading reaches one review and question review without more typing", 
     "Kedai FiksiJuga disebut: Kedai Fiksi Bandung",
   );
   await expect(reviewFact(page, "Website")).toHaveText("kedai-fiksi.example");
-  await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh brand");
+  await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh klinik");
   await expect(reviewFact(page, "Disebut sebagai")).toHaveText("kedai kopi");
-  await expect(reviewFact(page, "Menjual")).toHaveText("kopi susu, roti");
-  await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
-    "datang ke tempat, dikirim",
+  await expect(reviewFact(page, "Layanan")).toHaveText("kopi susu, roti");
+  await expect(reviewFact(page, "Cara dilayani")).toHaveText(
+    "datang ke klinik, produk dikirim",
   );
   await expect(reviewFact(page, "Area")).toHaveText("Bandung, Cimahi");
   // The review states no source; the prepared answers keep theirs: the alias
@@ -675,7 +675,7 @@ test("a required answer left open routes the summary CTA to its owning screen", 
   // Moving the audit back to the whole brand leaves the market unanswered:
   // the summary then offers the single completion CTA instead of confirming.
   await editFocusFromReview(page);
-  await chooseFocus(page, "Seluruh brand");
+  await chooseFocus(page, "Seluruh klinik");
   await confirmFocus(page);
   await pressLanjut(page);
   await expectSummary(page);
@@ -705,13 +705,15 @@ test("product and location choices freeze only their active meaning", async ({
   const contexts = questionContexts(page);
   // First pass: pick the product focus on its own list.
   await toFocus(page);
-  await openFocusTarget(page, "Satu produk");
+  await openFocusTarget(page, "Satu layanan");
   await productRow(page, "roti").click();
   await pressLanjut(page);
   // Product focus chains through the detail screens; its offering list is
   // read-only catalogue context and the market screen still applies.
   await throughDetailScreens(page);
-  await expect(reviewFact(page, "Fokus audit")).toHaveText("Satu produk: roti");
+  await expect(reviewFact(page, "Fokus audit")).toHaveText(
+    "Satu layanan: roti",
+  );
   await confirmSummary(page);
   await expectTenQuestions(page);
   expect(contexts[0]).toMatchObject({
@@ -759,7 +761,7 @@ test("material correction invalidates the old questions; cancel keeps the commit
   await backToReview(page);
   // J26: the category is corrected in the Bisnis sheet.
   const editCategory = async () => {
-    const sheet = await openReviewSheet(page, "Bisnis");
+    const sheet = await openReviewSheet(page, "Klinik");
     await addCategory(sheet, "warung kopi");
     await expect(
       categoryChoices(sheet).getByRole("radio", {
@@ -767,7 +769,7 @@ test("material correction invalidates the old questions; cancel keeps the commit
         exact: true,
       }),
     ).toBeChecked();
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     await expect(reviewFact(page, "Disebut sebagai")).toHaveText("warung kopi");
   };
   await editCategory();
@@ -843,7 +845,7 @@ test("prepared competitor names are editable; alternatives carry no company name
 }) => {
   const contexts = questionContexts(page);
   await enter(page);
-  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
+  await expect(reviewFact(page, "Klinik pembanding")).toHaveText(
     "Kedai Tetangga",
   );
   const beforeEdit = await intakeSession(page);
@@ -879,8 +881,8 @@ test("prepared competitor names are editable; alternatives carry no company name
     .getByRole("button", { name: "Tidak ada pembanding langsung", exact: true })
     .click();
   await saveReviewSheet(page, "Pembanding");
-  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
-    "Tidak ada pembanding langsung. Nuave membandingkan dengan bisnis sejenis.",
+  await expect(reviewFact(page, "Klinik pembanding")).toHaveText(
+    "Tidak ada pembanding langsung. Nuave membandingkan dengan klinik sejenis.",
   );
   await confirmSummary(page);
   await expectTenQuestions(page);
@@ -901,8 +903,8 @@ test("empty optional screens keep no needs or facts and unknown competitors", as
     ["Mereka butuh", "Belum diisi"],
     ["Mereka membandingkan", "Belum diisi"],
     [
-      "Bisnis pembanding",
-      "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+      "Klinik pembanding",
+      "Belum tahu. Nuave membandingkan dengan klinik sejenis.",
     ],
     ["Yang membedakan Anda", "Belum diisi"],
     ["Info yang sering salah", "Tidak ada"],
@@ -998,7 +1000,7 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   await competitorRow(competitors, "Pembanding lima").click();
   await expect(competitorInput(competitors)).toHaveValue("Pembanding enam");
   await competitors
-    .getByRole("group", { name: "Nama atau website bisnis", exact: true })
+    .getByRole("group", { name: "Nama atau website klinik", exact: true })
     .getByRole("button", { name: "Tambah", exact: true })
     .click();
   await expect(competitorInput(competitors)).toHaveValue("");
@@ -1031,8 +1033,8 @@ test("J6 screens keep prepared provenance, optional edits, and competitor limits
   await expect(reviewFact(page, "Info yang sering salah")).toHaveText(
     "Buka setiap hari sampai pukul 21.00.",
   );
-  await expect(reviewFact(page, "Bisnis pembanding")).toHaveText(
-    "Belum tahu. Nuave membandingkan dengan bisnis sejenis.",
+  await expect(reviewFact(page, "Klinik pembanding")).toHaveText(
+    "Belum tahu. Nuave membandingkan dengan klinik sejenis.",
   );
 });
 
@@ -1185,7 +1187,7 @@ test("JQ customer screens take keyboard-only edits that survive reload and freez
   );
   await page.keyboard.press("Enter");
   const customerField = target.getByRole("textbox", {
-    name: "Pelanggan lain",
+    name: "Pasien lain",
     exact: true,
   });
   await expect(customerField).toBeFocused();
@@ -1311,7 +1313,7 @@ test("review edits return to the summary: sheets by Simpan, Batal and Escape, th
   await enter(page);
   await page.setViewportSize({ width: 320, height: 720 });
   const before = (await intakeSession(page)).selection;
-  for (const section of ["Bisnis", "Calon pelanggan", "Pembanding"] as const) {
+  for (const section of ["Klinik", "Calon pasien", "Pembanding"] as const) {
     for (const exit of ["simpan", "batal", "escape"] as const) {
       const trigger = reviewScreen(page).getByRole("button", {
         name: `Ubah ${section}`,
@@ -1336,22 +1338,22 @@ test("review edits return to the summary: sheets by Simpan, Batal and Escape, th
   }
   expect((await intakeSession(page)).selection).toEqual(before);
   // Batal drops an edit made in a sheet; Simpan applies it.
-  let sheet = await openReviewSheet(page, "Calon pelanggan");
-  await serviceTile(sheet, "Online").click();
-  await expect(serviceTile(sheet, "Online")).toHaveAttribute(
+  let sheet = await openReviewSheet(page, "Calon pasien");
+  await serviceTile(sheet, "Konsultasi online").click();
+  await expect(serviceTile(sheet, "Konsultasi online")).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await cancelReviewSheet(page, "Calon pelanggan");
-  await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
-    "datang ke tempat, dikirim",
+  await cancelReviewSheet(page, "Calon pasien");
+  await expect(reviewFact(page, "Cara dilayani")).toHaveText(
+    "datang ke klinik, produk dikirim",
   );
   expect((await intakeSession(page)).selection).toEqual(before);
-  sheet = await openReviewSheet(page, "Calon pelanggan");
-  await serviceTile(sheet, "Online").click();
-  await saveReviewSheet(page, "Calon pelanggan");
-  await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
-    "datang ke tempat, dikirim, online",
+  sheet = await openReviewSheet(page, "Calon pasien");
+  await serviceTile(sheet, "Konsultasi online").click();
+  await saveReviewSheet(page, "Calon pasien");
+  await expect(reviewFact(page, "Cara dilayani")).toHaveText(
+    "datang ke klinik, produk dikirim, konsultasi online",
   );
   expect((await intakeSession(page)).selection.serviceChannels).toEqual([
     "on_premise",
@@ -1373,7 +1375,7 @@ test("review edits return to the summary: sheets by Simpan, Batal and Escape, th
     else if (back === "footer") await pressKembali(page);
     else await page.goBack();
     await expectSummary(page);
-    await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh brand");
+    await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh klinik");
   }
 });
 
@@ -1509,10 +1511,10 @@ test.describe("J4 focus and target screens", () => {
       if (path.startsWith("/api/")) calls.push(`${request.method()} ${path}`);
     });
     await toFocus(page);
-    const wholeBrand = focusCard(page, "Seluruh brand");
+    const wholeBrand = focusCard(page, "Seluruh klinik");
     await expect(wholeBrand).toBeChecked();
     await expect(focusCard(page, "Satu cabang")).toBeVisible();
-    await expect(focusCard(page, "Satu produk")).toBeVisible();
+    await expect(focusCard(page, "Satu layanan")).toBeVisible();
     // The published branches give the branch card its example.
     await expect(focusCard(page, "Satu cabang")).toContainText(
       "misalnya Kedai Fiksi Dago",
@@ -1540,12 +1542,12 @@ test.describe("J4 focus and target screens", () => {
       "POST /api/audit/extract",
     ]);
     // Whole-brand continues through the detail screens to the summary.
-    await chooseFocus(page, "Seluruh brand");
+    await chooseFocus(page, "Seluruh klinik");
     await pressLanjut(page);
     await throughDetailScreens(page);
   });
 
-  test("a tap on Satu cabang or Satu produk opens its list at once (J11 to J12)", async ({
+  test("a tap on Satu cabang or Satu layanan opens its list at once (J11 to J12)", async ({
     page,
   }) => {
     await toFocus(page);
@@ -1553,11 +1555,11 @@ test.describe("J4 focus and target screens", () => {
     await expectLocationScreen(page);
     await pressKembali(page);
     await expectFocusScreen(page);
-    await chooseFocus(page, "Satu produk");
+    await chooseFocus(page, "Satu layanan");
     await expectProductScreen(page);
     // The chosen card above the list changes the focus again.
     await productScreen(page)
-      .getByRole("button", { name: "Satu produk. Ganti fokus audit" })
+      .getByRole("button", { name: "Satu layanan. Ganti fokus audit" })
       .click();
     await expectFocusScreen(page);
   });
@@ -1636,7 +1638,7 @@ test.describe("J4 focus and target screens", () => {
     page,
   }) => {
     await toFocus(page);
-    await openFocusTarget(page, "Satu produk");
+    await openFocusTarget(page, "Satu layanan");
     await expect(productRow(page, /^kopi susu$/)).toBeVisible();
     await expect(productScreen(page)).toContainText("Ditemukan di website");
     await addProduct(page, "paket rapat");
@@ -1650,7 +1652,7 @@ test.describe("J4 focus and target screens", () => {
     await pressLanjut(page);
     await throughDetailScreens(page);
     await expect(reviewFact(page, "Fokus audit")).toHaveText(
-      "Satu produk: paket rapat",
+      "Satu layanan: paket rapat",
     );
   });
 
@@ -1681,13 +1683,13 @@ test.describe("J4 focus and target screens", () => {
 
     await pressKembali(page);
     await expectFocusScreen(page);
-    await openFocusTarget(page, "Satu produk");
+    await openFocusTarget(page, "Satu layanan");
     await productScreen(page)
-      .getByRole("button", { name: "Tambah produk", exact: true })
+      .getByRole("button", { name: "Tambah layanan", exact: true })
       .click();
     const productSheet = addTargetSheet(page, "produk");
     const product = productSheet.getByRole("textbox", {
-      name: "Nama produk atau layanan",
+      name: "Nama layanan",
     });
     // "kopi susu" is a published offering — typing through it must keep
     // the draft instead of collapsing to the suffix after the match.
@@ -1745,7 +1747,7 @@ test.describe("J4 focus and target screens", () => {
     await pressKembali(page);
     await expectSummary(page);
     // The review still reports the unchanged whole-brand focus.
-    await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh brand");
+    await expect(reviewFact(page, "Fokus audit")).toHaveText("Seluruh klinik");
   });
 
   test("the focus and location screens hold within a 320px viewport", async ({
@@ -1871,8 +1873,12 @@ test.describe("J5 business-detail screens", () => {
     }
     // A third channel stacks on the two prepared picks.
     const service = serviceScreen(page);
-    await serviceTile(service, "Online").click();
-    for (const name of ["Datang ke tempat", "Dikirim", "Online"])
+    await serviceTile(service, "Konsultasi online").click();
+    for (const name of [
+      "Datang ke klinik",
+      "Produk dikirim",
+      "Konsultasi online",
+    ])
       await expect(serviceTile(service, name)).toHaveAttribute(
         "aria-pressed",
         "true",
@@ -1890,8 +1896,8 @@ test.describe("J5 business-detail screens", () => {
     await expectIntroReview(page);
     await pressMulai(page);
     await expectSummary(page);
-    await expect(reviewFact(page, "Cara mendapatkan")).toHaveText(
-      "datang ke tempat, dikirim, online",
+    await expect(reviewFact(page, "Cara dilayani")).toHaveText(
+      "datang ke klinik, produk dikirim, konsultasi online",
     );
     expect((await intakeSession(page)).selection).toMatchObject({
       serviceChannels: ["on_premise", "delivery", "online"],
@@ -1946,7 +1952,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     await expect(aliasInput(page)).toHaveValue("");
     await addAlias(page, "KopiFiksi");
     await expect(aliasChip(page, "KopiFiksi")).toBeVisible();
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     await expect(name).toContainText(
       "Juga disebut: Kedai Fiksi Bandung, Kedai Fiksi Pusat, KopiFiksi",
     );
@@ -1963,15 +1969,15 @@ test.describe("J7 review and Nama lain aliases", () => {
     // The 320px sheet stays inside the viewport, 160-char chip included.
     await expect(aliasChip(page, boundaryAlias)).toBeVisible();
     await expectNoOverflow(page);
-    await expectInside(reviewSheet(page, "Bisnis"));
-    await saveReviewSheet(page, "Bisnis");
+    await expectInside(reviewSheet(page, "Klinik"));
+    await saveReviewSheet(page, "Klinik");
     expect((await intakeSession(page)).selection.aliases).toContain(
       boundaryAlias,
     );
     await expectNoOverflow(page);
-    await openReviewSheet(page, "Bisnis");
+    await openReviewSheet(page, "Klinik");
     await removeAlias(page, boundaryAlias);
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     await page.reload();
     await expectSummary(page);
     saved = await intakeSession(page);
@@ -1980,19 +1986,19 @@ test.describe("J7 review and Nama lain aliases", () => {
       "Kedai Fiksi Pusat",
       "KopiFiksi",
     ]);
-    await openReviewSheet(page, "Bisnis");
+    await openReviewSheet(page, "Klinik");
     await removeAlias(page, /KopiFiksi/, true);
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual([
       "Kedai Fiksi Bandung",
       "Kedai Fiksi Pusat",
     ]);
     // Removing every alias is valid; the review then names no other name.
-    await openReviewSheet(page, "Bisnis");
+    await openReviewSheet(page, "Klinik");
     await removeAlias(page, /Kedai Fiksi Bandung/);
     await removeAlias(page, /Kedai Fiksi Pusat/);
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     await expect(name).toHaveText("Kedai Fiksi");
     saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual([]);
@@ -2003,7 +2009,7 @@ test.describe("J7 review and Nama lain aliases", () => {
   }) => {
     await enter(page);
     await openAliasEditor(page);
-    const sheet = reviewSheet(page, "Bisnis");
+    const sheet = reviewSheet(page, "Klinik");
     // Trimmed case-insensitive duplicates are refused with the draft kept.
     await addAlias(page, "  kedai fiksi bandung ");
     await expect(sheet.getByRole("alert")).toContainText("sudah ada");
@@ -2016,7 +2022,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     // The rejected draft corrects in place and commits.
     await addAlias(page, "Kedai Fiksi Pusat");
     await expect(aliasInput(page)).toHaveValue("");
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     expect((await intakeSession(page)).selection.aliases).toEqual([
       "Kedai Fiksi Bandung",
       "Kedai Fiksi Pusat",
@@ -2034,7 +2040,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     await toSummary(page);
     await openAliasEditor(page);
     await addAlias(page, "Ketiga belas");
-    await expect(reviewSheet(page, "Bisnis").getByRole("alert")).toContainText(
+    await expect(reviewSheet(page, "Klinik").getByRole("alert")).toContainText(
       "paling banyak 12",
     );
     await expect(aliasInput(page)).toHaveValue("Ketiga belas");
@@ -2053,7 +2059,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     await openAliasEditor(page);
     await addAlias(page, "nomor rekening 12345");
     await expect(
-      reviewSheet(page, "Bisnis").getByText(SENSITIVE_INPUT_NOTICE, {
+      reviewSheet(page, "Klinik").getByText(SENSITIVE_INPUT_NOTICE, {
         exact: true,
       }),
     ).toBeVisible();
@@ -2064,7 +2070,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     expect(saved.selection.aliases).toEqual(["Kedai Fiksi Bandung"]);
     expect(JSON.stringify(saved)).not.toContain("nomor rekening");
     // Simpan keeps only the safe list.
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     saved = await intakeSession(page);
     expect(saved.selection.aliases).toEqual(["Kedai Fiksi Bandung"]);
     expect(JSON.stringify(saved)).not.toContain("nomor rekening");
@@ -2099,7 +2105,7 @@ test.describe("J7 review and Nama lain aliases", () => {
     ).toBeVisible();
     await openAliasEditor(page);
     await addAlias(page, "Kedai Fiksi Pusat");
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     await confirmSummary(page);
     await expectTenQuestions(page);
     expect(contexts).toHaveLength(1);

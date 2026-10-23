@@ -4,9 +4,9 @@ import AuditIntakeClient from "./audit-intake.client";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Buat AI Visibility Report | Nuave",
+  title: "Cek klinik Anda di AI | Nuave",
   description:
-    "Periksa satu bisnis, tinjau sepuluh pertanyaan, lalu buat AI Visibility Report berbasis bukti.",
+    "Masukkan website klinik, setujui 10 pertanyaan calon pasien, lalu terima AI Visibility Report.",
 };
 
 type Search = Record<string, string | string[] | undefined>;

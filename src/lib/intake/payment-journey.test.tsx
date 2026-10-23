@@ -139,15 +139,15 @@ const button = (name: string) => screen.findByRole("button", { name });
 async function toOrderScreen() {
   fireEvent.change(
     await screen.findByRole("textbox", {
-      name: "Website atau akun Instagram bisnis",
+      name: "Website atau akun Instagram klinik",
     }),
     { target: { value: "https://kedai-fiksi.example/" } },
   );
   fireEvent.click(
-    screen.getByRole("button", { name: "Cek bisnis saya di AI" }),
+    screen.getByRole("button", { name: "Cek klinik saya di AI" }),
   );
-  await heading("Kami menemukan bisnis Anda");
-  fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
+  await heading("Kami menemukan klinik Anda");
+  fireEvent.click(screen.getByRole("button", { name: "Ya, ini klinik saya" }));
   await heading("Tinggal 3 langkah");
   fireEvent.click(screen.getByRole("button", { name: "Lanjut ke pembayaran" }));
   await heading("Konfirmasi dan bayar");
@@ -260,7 +260,7 @@ describe("the order summary (Experience 2, 3)", () => {
     });
     // The intake continues as today.
     reading.release();
-    await heading("Ceritakan bisnis Anda");
+    await heading("Ceritakan klinik Anda");
     fireEvent.click(await button("Mulai"));
     await heading("Apa yang ingin Anda audit?");
     expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
@@ -474,7 +474,7 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
         `Pembayaran diterima·${NUMBER}`,
       );
       reading.release();
-      await heading("Ceritakan bisnis Anda");
+      await heading("Ceritakan klinik Anda");
       expect(
         stub.calls.filter((call) => call === "/api/audit/extract"),
       ).toHaveLength(1);
@@ -601,7 +601,7 @@ describe("Mulai pesanan baru after a refund (Q17)", () => {
     await heading("Pembayaran sudah dikembalikan");
     fireEvent.click(await button("Mulai pesanan baru"));
     await screen.findByRole("textbox", {
-      name: "Website atau akun Instagram bisnis",
+      name: "Website atau akun Instagram klinik",
     });
     expect(readSmartSession()?.order ?? null).toBeNull();
     expect(readSmartSession()?.supersededOrder ?? null).toBeNull();
@@ -799,15 +799,15 @@ describe("a replacement refused because the old order is active (R-19)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Halaman sebelumnya" }));
     await heading("Tinggal 3 langkah");
     fireEvent.click(screen.getByRole("button", { name: "Halaman sebelumnya" }));
-    await heading("Kami menemukan bisnis Anda");
+    await heading("Kami menemukan klinik Anda");
     fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
-    const rename = await screen.findByRole("dialog", { name: "Nama bisnis" });
+    const rename = await screen.findByRole("dialog", { name: "Nama klinik" });
     fireEvent.change(
-      within(rename).getByRole("textbox", { name: "Nama bisnis" }),
+      within(rename).getByRole("textbox", { name: "Nama klinik" }),
       { target: { value: "Nama Lain Fiksi" } },
     );
     fireEvent.click(within(rename).getByRole("button", { name: "Simpan" }));
-    fireEvent.click(await button("Ya, ini bisnis saya"));
+    fireEvent.click(await button("Ya, ini klinik saya"));
     await heading("Tinggal 3 langkah");
     fireEvent.click(
       screen.getByRole("button", { name: "Lanjut ke pembayaran" }),
@@ -851,7 +851,7 @@ describe("locks after payment (R-19, AC-13)", () => {
     await toOrderScreen();
     await pay();
     // The paid reading starts by itself and lands on the Step 2 cover.
-    await heading("Ceritakan bisnis Anda");
+    await heading("Ceritakan klinik Anda");
     fireEvent.click(await button("Mulai"));
     await heading("Apa yang ingin Anda audit?");
     return stub;
@@ -864,7 +864,7 @@ describe("locks after payment (R-19, AC-13)", () => {
     ).toBeNull();
     // Kembali on the focus screen only reaches the Step 2 cover...
     fireEvent.click(screen.getByRole("button", { name: "Kembali" }));
-    await heading("Ceritakan bisnis Anda");
+    await heading("Ceritakan klinik Anda");
     // ...which has no way back to the business, the steps or the order.
     expect(screen.queryByRole("button", { name: "Kembali" })).toBeNull();
     expect(
@@ -914,7 +914,7 @@ describe("the founder test pass (R-20)", () => {
     await typeEmail();
     fireEvent.click(await button("Lanjut"));
     // No payment: the paid reading runs at once and the intake continues.
-    await heading("Ceritakan bisnis Anda");
+    await heading("Ceritakan klinik Anda");
     fireEvent.click(await button("Mulai"));
     await heading("Apa yang ingin Anda audit?");
     expect(stub.bodies["/api/orders"]![0]).toMatchObject({

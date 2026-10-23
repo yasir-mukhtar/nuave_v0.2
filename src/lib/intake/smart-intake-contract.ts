@@ -677,21 +677,21 @@ export function initialSmartSelection(
 /** Required meanings the review must route back to their owning screen. */
 export function requiredSmartGaps(selection: SmartSelection): string[] {
   const gaps: string[] = [];
-  if (!selection.name.trim()) gaps.push("Nama bisnis");
+  if (!selection.name.trim()) gaps.push("Nama klinik");
   if (!selection.category.trim()) gaps.push("Kategori");
   if (selection.focus !== "produk" && !selection.offerings.length)
-    gaps.push("Produk atau layanan utama");
+    gaps.push("Layanan utama");
   if (selection.focus === "produk" && !selection.productTarget.trim())
-    gaps.push("Produk atau layanan yang diaudit");
+    gaps.push("Layanan yang diaudit");
   if (
     selection.focus === "cabang" &&
     (!selection.locationName.trim() || !selection.locationAddress.trim())
   )
-    gaps.push("Nama dan alamat lokasi");
+    gaps.push("Nama dan alamat cabang");
   if (!selection.serviceChannels.length) gaps.push("Cara layanan");
   if (selection.focus !== "cabang" && !smartMarketReady(selection))
     gaps.push(selection.marketReach ? "Area layanan" : "Jangkauan pasar");
-  if (!smartComparatorsReady(selection)) gaps.push("Bisnis pembanding");
+  if (!smartComparatorsReady(selection)) gaps.push("Klinik pembanding");
   return gaps;
 }
 

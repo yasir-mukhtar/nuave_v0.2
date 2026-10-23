@@ -342,8 +342,8 @@ async function post(value: Record<string, unknown> = input()) {
     }),
   );
 }
-const WEBSITE_FIELD = "Website atau akun Instagram bisnis";
-const REVIEW_HEADING = "Ini profil yang akan Nuave pakai";
+const WEBSITE_FIELD = "Website atau akun Instagram klinik";
+const REVIEW_HEADING = "Ini profil klinik yang akan Nuave pakai";
 const REVIEW_CONFIRMATION =
   "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.";
 async function passOrder() {
@@ -356,8 +356,8 @@ async function passOrder() {
 }
 /** J05 → J06: the business the free check found, then the three steps. */
 async function confirmBrand() {
-  await screen.findByRole("heading", { name: "Kami menemukan bisnis Anda" });
-  fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
+  await screen.findByRole("heading", { name: "Kami menemukan klinik Anda" });
+  fireEvent.click(screen.getByRole("button", { name: "Ya, ini klinik saya" }));
   await screen.findByRole("heading", { name: "Tinggal 3 langkah" });
   fireEvent.click(screen.getByRole("button", { name: "Lanjut ke pembayaran" }));
 }
@@ -374,10 +374,10 @@ async function inspect() {
   const website = await screen.findByRole("textbox", { name: WEBSITE_FIELD });
   fireEvent.change(website, { target: { value: source } });
   fireEvent.click(
-    screen.getByRole("button", { name: "Cek bisnis saya di AI" }),
+    screen.getByRole("button", { name: "Cek klinik saya di AI" }),
   );
 }
-// `Cek bisnis saya di AI` lands on the brand check; the order's reading opens
+// `Cek klinik saya di AI` lands on the brand check; the order's reading opens
 // the Step 2 cover and `Mulai` the focus; whole-brand continues through
 // category → offerings → target customer → customer needs (with what they
 // compare) → service → market → competitors → differentiator (with the often
@@ -387,7 +387,7 @@ const lanjut = () => screen.getByRole("button", { name: "Lanjut" });
 async function throughOrderToFocus() {
   await confirmBrand();
   await passOrder();
-  await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+  await screen.findByRole("heading", { name: "Ceritakan klinik Anda" });
   fireEvent.click(screen.getByRole("button", { name: "Mulai" }));
   await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
 }
@@ -397,22 +397,22 @@ async function toCategory() {
 }
 async function fromCategoryToMarket() {
   fireEvent.click(lanjut());
-  await screen.findByRole("heading", { name: "Apa saja yang Anda jual?" });
+  await screen.findByRole("heading", { name: "Apa saja layanan klinik Anda?" });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
-    name: "Siapa yang biasanya mencari bisnis Anda?",
+    name: "Siapa yang biasanya mencari klinik Anda?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
-    name: "Apa yang mereka cari saat memilih?",
+    name: "Apa yang mereka cari saat memilih klinik?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
-    name: "Bagaimana pelanggan mendapatkannya?",
+    name: "Bagaimana pasien dilayani?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
-    name: "Di mana pelanggan Anda berada?",
+    name: "Pasien Anda datang dari mana?",
   });
 }
 async function fromFocusToMarket() {
@@ -427,11 +427,11 @@ async function fromMarketToSummary() {
   fireEvent.click(lanjut());
   // The fixtures name no similar businesses, so the field is already open.
   await screen.findByRole("heading", {
-    name: "Bisnis mana yang sering dibandingkan dengan Anda?",
+    name: "Klinik mana pembanding Anda?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", {
-    name: "Apa yang membuat bisnis Anda berbeda?",
+    name: "Apa yang membuat klinik Anda berbeda?",
   });
   fireEvent.click(lanjut());
   await screen.findByRole("heading", { name: "Periksa, lalu jalankan audit" });
@@ -459,9 +459,7 @@ function fact(label: string) {
     ?.textContent;
 }
 /** J26: a review section's edit sheet. */
-async function editSection(
-  section: "Bisnis" | "Calon pelanggan" | "Pembanding",
-) {
+async function editSection(section: "Klinik" | "Calon pasien" | "Pembanding") {
   fireEvent.click(screen.getByRole("button", { name: `Ubah ${section}` }));
   return screen.findByRole("dialog", { name: `Ubah ${section}` });
 }
@@ -510,7 +508,7 @@ describe("server excerpt through the active Smart preparation", () => {
         origin: "website",
       });
       expect(saved?.selection?.offerings).toEqual([text]);
-      expect(fact("Menjual")).toBe(text);
+      expect(fact("Layanan")).toBe(text);
       await makeQuestions();
       const confirmed = parseSmartSession(
         window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
@@ -538,7 +536,7 @@ describe("server excerpt through the active Smart preparation", () => {
     "%s page stop preserves accounting, clear copy and reload without work",
     async (_label, text) => {
       const expected =
-        "Nuave belum dapat menyiapkan informasi dari halaman ini. Sebagian teks mungkin berisi informasi sensitif. Pilih halaman lain yang hanya memuat informasi publik tentang brand Anda.";
+        "Nuave belum dapat menyiapkan informasi dari halaman ini. Sebagian teks mungkin berisi informasi sensitif. Pilih halaman lain yang hanya memuat informasi publik tentang klinik Anda.";
       expect(SOURCE_EXCERPT_RESTRICTED_MESSAGE).toBe(expected);
       const initial = freshSmartSession();
       initial.preparationCalls = input().budget.calls;
@@ -587,7 +585,7 @@ describe("server excerpt through the active Smart preparation", () => {
     "later proposal, entered name and owner edit use the distinct stop without saving text: %s",
     async (text) => {
       const expected =
-        "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.";
+        "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang klinik Anda, tanpa data pasien, data pribadi, atau akses akun.";
       const stored = () =>
         window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "";
       const first = render(<SmartIntakeJourney live />);
@@ -622,7 +620,7 @@ describe("server excerpt through the active Smart preparation", () => {
       await throughBrand();
       const calls = [...clientRequests];
       const before = window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY);
-      const sheet = await editSection("Bisnis");
+      const sheet = await editSection("Klinik");
       typeCategory(sheet, text);
       expect(within(sheet).getByRole("alert").textContent).toBe(expected);
       expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBe(
@@ -655,13 +653,13 @@ describe("server excerpt through the active Smart preparation", () => {
       render(<SmartIntakeJourney live />);
       await inspect();
       await screen.findByRole("heading", {
-        name: "Kami menemukan bisnis Anda",
+        name: "Kami menemukan klinik Anda",
       });
       const looked = [...clientRequests];
       fireEvent.click(screen.getByRole("button", { name: "Ubah nama" }));
-      const rename = await screen.findByRole("dialog", { name: "Nama bisnis" });
+      const rename = await screen.findByRole("dialog", { name: "Nama klinik" });
       fireEvent.change(
-        within(rename).getByRole("textbox", { name: "Nama bisnis" }),
+        within(rename).getByRole("textbox", { name: "Nama klinik" }),
         { target: { value: text } },
       );
       fireEvent.click(within(rename).getByRole("button", { name: "Simpan" }));
@@ -676,7 +674,7 @@ describe("server excerpt through the active Smart preparation", () => {
     await inspect();
     await throughBrand();
     const text = "Keluarga kami membuka kedai di jantung kota.";
-    const sheet = await editSection("Bisnis");
+    const sheet = await editSection("Klinik");
     typeCategory(sheet, text);
     expect(within(sheet).queryByRole("alert")).toBeNull();
     expect(
@@ -816,7 +814,7 @@ describe("server excerpt through the active Smart preparation", () => {
       mounted.unmount();
       render(<SmartIntakeJourney live />);
       await screen.findByRole("heading", {
-        name: "Di mana pelanggan Anda berada?",
+        name: "Pasien Anda datang dari mana?",
       });
       expect(requests).toHaveLength(1);
       expect(pageReads).toBe(2); // Existing identity read plus one excerpt read.
@@ -876,8 +874,8 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(iconReads).toBe(1);
     expect(requests).toHaveLength(1);
     expect(fact("Disebut sebagai")).toBe("kedai kopi");
-    expect(fact("Menjual")).toBe("Kopi susu, Roti panggang");
-    expect(fact("Cara mendapatkan")).toBe("datang ke tempat");
+    expect(fact("Layanan")).toBe("Kopi susu, Roti panggang");
+    expect(fact("Cara dilayani")).toBe("datang ke klinik");
     expect(fact("Area")).toBe("Dago, Bandung");
     const user = JSON.parse(requests[0].input[1].content);
     expect(user.public_source_data).toEqual({
@@ -894,7 +892,7 @@ describe("server excerpt through the active Smart preparation", () => {
     expect(
       (await screen.findByRole("link", { name: source })).getAttribute("href"),
     ).toBe(source);
-    const sheet = await editSection("Bisnis");
+    const sheet = await editSection("Klinik");
     typeCategory(sheet, "kafe");
     fireEvent.click(within(sheet).getByRole("button", { name: "Simpan" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -1037,7 +1035,7 @@ describe("server excerpt through the active Smart preparation", () => {
     await toCategory();
     expect(
       screen.getByRole("heading", {
-        name: "Bisnis Anda biasanya disebut apa?",
+        name: "Klinik Anda biasanya disebut apa?",
       }),
     ).toBeTruthy();
     expect((lanjut() as HTMLButtonElement).disabled).toBe(true);
@@ -1069,7 +1067,7 @@ describe("server excerpt through the active Smart preparation", () => {
       await inspectAndOrder();
       // The no-usable-text note first lands on the first question screen
       // after the paid reading and its Step 2 cover (J11).
-      await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+      await screen.findByRole("heading", { name: "Ceritakan klinik Anda" });
       fireEvent.click(screen.getByRole("button", { name: "Mulai" }));
       await screen.findByRole("heading", {
         name: "Apa yang ingin Anda audit?",
@@ -1081,16 +1079,16 @@ describe("server excerpt through the active Smart preparation", () => {
       await fromFocusToMarket();
       await fromMarketToSummary();
       expect(screen.getByText(SOURCE_EXCERPT_EMPTY_NOTICE)).toBeTruthy();
-      expect(fact("Menjual")).toBe("Kopi susu, Roti panggang");
-      const sheet = await editSection("Bisnis");
+      expect(fact("Layanan")).toBe("Kopi susu, Roti panggang");
+      const sheet = await editSection("Klinik");
       fireEvent.click(
         within(sheet).getByRole("button", { name: "Ganti website" }),
       );
       fireEvent.click(
-        await screen.findByRole("button", { name: "Cek bisnis saya di AI" }),
+        await screen.findByRole("button", { name: "Cek klinik saya di AI" }),
       );
       await screen.findByRole("heading", {
-        name: "Kami menemukan bisnis Anda",
+        name: "Kami menemukan klinik Anda",
       });
       expect(screen.getByText(SOURCE_EXCERPT_EMPTY_NOTICE)).toBeTruthy();
       first.unmount();
@@ -1133,7 +1131,7 @@ describe("server excerpt through the active Smart preparation", () => {
     // no email typed again.
     expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
     fireEvent.click(lanjut());
-    await screen.findByRole("heading", { name: "Ceritakan bisnis Anda" });
+    await screen.findByRole("heading", { name: "Ceritakan klinik Anda" });
     fireEvent.click(screen.getByRole("button", { name: "Mulai" }));
     await screen.findByRole("heading", { name: "Apa yang ingin Anda audit?" });
     expect(pageReads).toBe(3);

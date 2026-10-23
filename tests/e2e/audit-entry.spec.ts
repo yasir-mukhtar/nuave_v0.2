@@ -51,7 +51,7 @@ test("the landing website form reaches the new audit journey and starts only the
   // The business name is read from the website, not typed.
   await expectBrandConfirm(page, "Example");
   await expect(
-    page.getByRole("button", { name: "Ya, ini bisnis saya", exact: true }),
+    page.getByRole("button", { name: "Ya, ini klinik saya", exact: true }),
   ).toBeEnabled();
   // The website came from the landing page once and left session storage.
   expect(

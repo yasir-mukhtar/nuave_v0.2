@@ -27,13 +27,15 @@ describe("Wave 2 public truth", () => {
       expect(source(file)).not.toContain("GPT-4o");
   });
 
-  it("describes unimplemented payment and email delivery as unavailable", () => {
-    expect(source("src/app/faq/page.tsx")).toContain(
-      "Alur pembayaran belum aktif",
-    );
-    expect(source("src/app/faq/page.tsx")).toContain(
-      "Belum. State audit saat ini bersifat browser/session-based",
-    );
+  it("describes payment and email delivery as they work today", () => {
+    // Payment (Spec 017) and the emailed report link (Spec 016) are live, so
+    // the FAQ states the price, the delivery promise and the email link.
+    const faq = source("src/app/faq/page.tsx");
+    expect(faq).toContain("Rp99.000 untuk satu audit, sekali bayar");
+    expect(faq).toContain("{DELIVERY_PROMISE}");
+    expect(faq).toContain("Link laporan dikirim ke email Anda");
+    expect(faq).not.toContain("Alur pembayaran belum aktif");
+    expect(faq).not.toContain("browser/session-based");
     expect(source("src/app/terms/page.tsx")).toContain(
       "Checkout, pemrosesan pembayaran",
     );

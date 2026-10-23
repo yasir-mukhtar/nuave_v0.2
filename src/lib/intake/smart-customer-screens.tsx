@@ -160,13 +160,14 @@ function Problem({ text }: { text: string | null }) {
 
 /** Common customer types offered as one-tap chips next to the website's. */
 const CUSTOMER_TYPES = [
-  "keluarga",
+  "orang tua dengan anak",
+  "remaja",
   "mahasiswa",
   "pekerja kantoran",
-  "pekerja remote",
-  "wisatawan",
-  "komunitas",
-  "pelaku usaha",
+  "ibu hamil",
+  "keluarga",
+  "lansia",
+  "calon pengantin",
 ];
 
 const LEADING_JOINER = /^(dan|serta|atau)\s+/i;
@@ -209,19 +210,19 @@ export function CustomerFields({
       }),
     cap: LIST_CAP,
     max: ITEM_MAX,
-    capMessage: "Pilih paling banyak 12 jenis pelanggan.",
-    maxMessage: "Setiap jenis pelanggan paling panjang 300 karakter.",
+    capMessage: "Pilih paling banyak 12 jenis pasien.",
+    maxMessage: "Setiap jenis pasien paling panjang 300 karakter.",
     // Stored as one phrase, which has its own 500-character limit.
     fits: (next) => next.join(", ").length <= TARGET_CUSTOMER_MAX,
     fitMessage:
-      "Daftar pelanggan paling panjang 500 karakter. Lepas satu untuk menambah yang lain.",
+      "Daftar pasien paling panjang 500 karakter. Lepas satu untuk menambah yang lain.",
     onRefuse,
   });
   const chips = [...proposed, ...ownerAdded, ...generic];
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap items-start gap-2.5">
-        <ChipGroup label="Jenis pelanggan">
+        <ChipGroup label="Jenis pasien">
           {chips.map((item) => (
             <Chip
               key={item}
@@ -234,8 +235,8 @@ export function CustomerFields({
         </ChipGroup>
         <ChipAdder
           addLabel="Tambah lainnya"
-          fieldLabel="Pelanggan lain"
-          placeholder="Contoh: ibu hamil, lansia"
+          fieldLabel="Pasien lain"
+          placeholder="Contoh: atlet, ekspatriat"
           maxLength={ITEM_MAX}
           onAdd={(items) => {
             const ok = list.add(items, chips);
@@ -269,8 +270,8 @@ export function SmartTargetCustomerScreen({
     <section className="grid" data-intake-screen="target-customer">
       <ScreenHeader
         headingRef={headingRef}
-        title="Siapa yang biasanya mencari bisnis Anda?"
-        lead="Pilih semua yang cocok. Boleh lebih dari satu."
+        title="Siapa yang biasanya mencari klinik Anda?"
+        lead="Pilih semua yang cocok."
       />
       <div className="mt-6">
         <CustomerFields
@@ -292,12 +293,14 @@ export function SmartTargetCustomerScreen({
 
 /** Reasons people compare businesses of almost any kind. */
 const COMPARISON_REASONS = [
-  "harga",
+  "biaya",
   "lokasi",
-  "kualitas",
+  "dokter",
+  "metode perawatan",
   "ulasan",
   "jam buka",
-  "kecepatan layanan",
+  "BPJS atau asuransi",
+  "waktu tunggu",
 ];
 
 function NeedsList({ prepared, selection, onChange, onRefuse }: FieldsProps) {
@@ -344,7 +347,7 @@ function NeedsList({ prepared, selection, onChange, onRefuse }: FieldsProps) {
         <ChipAdder
           addLabel="Lainnya"
           addContext="kebutuhan"
-          fieldLabel="Kebutuhan pelanggan lain"
+          fieldLabel="Kebutuhan pasien lain"
           placeholder="Contoh: periksa tanpa antre lama"
           maxLength={ITEM_MAX}
           onAdd={(items) => {
@@ -406,8 +409,8 @@ function ReasonsList({ prepared, selection, onChange, onRefuse }: FieldsProps) {
         <ChipAdder
           addLabel="Lainnya"
           addContext="pertimbangan"
-          fieldLabel="Pertimbangan pembeli lain"
-          placeholder="Contoh: parkir"
+          fieldLabel="Pertimbangan pasien lain"
+          placeholder="Contoh: dokter perempuan, produk halal"
           maxLength={ITEM_MAX}
           onAdd={(items) => {
             const ok = list.add(items, chips);
@@ -448,7 +451,7 @@ export function SmartCustomerNeedsScreen({
     <section className="grid" data-intake-screen="customer-needs">
       <ScreenHeader
         headingRef={headingRef}
-        title="Apa yang mereka cari saat memilih?"
+        title="Apa yang mereka cari saat memilih klinik?"
         lead="Boleh dilewati."
       />
       <div className="mt-[22px]">
@@ -509,7 +512,7 @@ export function CompetitorFields({
   };
   const full = () =>
     refuse(
-      "Pilih paling banyak 5 bisnis pembanding. Lepas satu untuk menambah yang lain.",
+      "Pilih paling banyak 5 klinik pembanding. Lepas satu untuk menambah yang lain.",
     );
   const isOn = (name: string) => names.some((row) => sameText(row, name));
   const toggle = (name: string, on: boolean) => {
@@ -544,7 +547,7 @@ export function CompetitorFields({
   return (
     <div className="grid gap-2.5">
       {rows.length ? (
-        <CheckList label="Bisnis pembanding">
+        <CheckList label="Klinik pembanding">
           {rows.map((name) => (
             <CheckRow
               key={name}
@@ -561,8 +564,8 @@ export function CompetitorFields({
       <div className="flex">
         <ChipAdder
           addLabel="Tambah pembanding"
-          fieldLabel="Nama atau website bisnis"
-          hint="Contoh: usaha di jalan yang sama, atau yang sering disebut pelanggan."
+          fieldLabel="Nama atau website klinik"
+          hint="Contoh: klinik di jalan yang sama, atau yang sering disebut pasien."
           maxLength={COMPARATOR_MAX}
           startOpen={!rows.length}
           onAdd={add}
@@ -612,14 +615,10 @@ export function SmartCompetitorsScreen({
     <section className="grid" data-intake-screen="competitors">
       <ScreenHeader
         headingRef={headingRef}
-        title={
-          found
-            ? "Siapa yang mungkin dibandingkan dengan Anda?"
-            : "Bisnis mana yang sering dibandingkan dengan Anda?"
-        }
+        title="Klinik mana pembanding Anda?"
         lead={
           found
-            ? "AI sering menyebut bisnis lain. Centang yang Anda kenal."
+            ? "AI sering menyebut klinik lain. Centang yang Anda kenal."
             : "Kami belum menemukannya di website Anda. Tulis 1 sampai 5 nama."
         }
       />
@@ -645,7 +644,7 @@ export function SmartCompetitorsScreen({
           className="type-label-strong m-0 min-h-11 text-left text-ink-900 underline underline-offset-4"
           onClick={() => onSkip("unknown")}
         >
-          Belum tahu? Lewati, kami bandingkan dengan bisnis sejenis.
+          Belum tahu? Lewati, kami bandingkan dengan klinik sejenis.
         </button>
         <button
           type="button"
@@ -666,7 +665,7 @@ export function SmartCompetitorsScreen({
 const STARTER_PHRASES = [
   "buka sampai malam",
   "dokter spesialis",
-  "harga terjangkau",
+  "menerima BPJS",
   "bisa daftar online",
   "berdiri sejak",
 ];
@@ -677,11 +676,15 @@ const EXAMPLES = [
     kind: "Klinik gigi",
   },
   {
-    text: "Perawatan wajah langsung oleh dokter, bukan terapis.",
+    text: "Perawatan wajah dikerjakan langsung oleh dokter.",
     kind: "Klinik kecantikan",
   },
   {
-    text: "Satu-satunya klinik anak di Dago yang buka hari Minggu.",
+    text: "Khitan metode klamp, bisa di rumah pasien.",
+    kind: "Klinik khitan",
+  },
+  {
+    text: "Klinik anak yang buka hari Minggu, dengan dokter spesialis anak.",
     kind: "Klinik anak",
   },
 ];
@@ -720,7 +723,7 @@ function Examples() {
   return (
     <section className="grid gap-2.5" aria-labelledby="examples-heading">
       <h2 id="examples-heading" className="type-title-sm m-0 text-ink-900">
-        Contoh dari bisnis lain
+        Contoh dari klinik lain
       </h2>
       <ul className="-mx-6 my-0 flex list-none snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto px-6 pb-1 [scrollbar-width:none]">
         {EXAMPLES.map((example) => (
@@ -768,8 +771,8 @@ function PublicFactFold({
           label="Info yang benar"
           value={selection.publicFact}
           maxLength={PUBLIC_FACT_MAX}
-          placeholder="Contoh: kami buka setiap hari, termasuk Minggu."
-          hint="Hanya fakta publik, bukan info pribadi atau rahasia."
+          placeholder="Contoh: klinik kami sudah pindah ke Jl. Merdeka No. 10."
+          hint="Hanya fakta publik. Jangan tulis data pasien."
           onChange={(event) =>
             onChange({
               ...selection,
@@ -817,11 +820,11 @@ export function DifferentiatorFields({
       >
         <FloatingTextarea
           ref={field}
-          label="Pembeda bisnis"
+          label="Pembeda klinik"
           labelHidden
           value={value}
           maxLength={DIFFERENTIATOR_MAX}
-          placeholder="Contoh: satu-satunya di area ini yang…"
+          placeholder="Contoh: dokter spesialis anak praktik setiap Sabtu"
           onChange={(event) => write(event.target.value)}
           footer={fromNuave ? <OriginTag>Saran Nuave</OriginTag> : null}
         />
@@ -848,8 +851,8 @@ export function DifferentiatorFields({
                 aria-hidden="true"
               />
               <span>
-                Contoh: “Satu-satunya klinik anak di Dago yang buka hari
-                Minggu.”
+                Contoh: “Klinik anak yang buka hari Minggu, dengan dokter
+                spesialis anak.”
               </span>
             </motion.p>
           ) : null}
@@ -903,7 +906,7 @@ export function SmartDifferentiatorScreen({
     <section className="grid" data-intake-screen="differentiator">
       <ScreenHeader
         headingRef={headingRef}
-        title="Apa yang membuat bisnis Anda berbeda?"
+        title="Apa yang membuat klinik Anda berbeda?"
         lead="Satu atau dua kalimat. Pakai info yang memang publik."
       />
       <div className="mt-[18px]">

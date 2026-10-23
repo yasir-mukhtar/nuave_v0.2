@@ -6,9 +6,17 @@ import { geistMono, geistSans } from "@/app/fonts";
 import { MotionPreferences } from "@/components/motion/MotionPreferences";
 
 export const metadata: Metadata = {
-  title: "Nuave · Apakah brand Anda muncul di ChatGPT?",
+  title: "Nuave · Klinik Anda disebut AI?",
   description:
-    "Nuave memberi Anda laporan bagaimana AI menyebut brand Anda dan apa yang bisa diperbaiki.",
+    "Calon pasien kini tanya AI sebelum memilih klinik. Nuave menunjukkan apakah klinik Anda disebut, klinik mana yang disebut, dan apa yang perlu dibenahi.",
+  openGraph: {
+    title: "Nuave · Klinik Anda disebut AI?",
+    description:
+      "Calon pasien kini tanya AI sebelum memilih klinik. Nuave menunjukkan apakah klinik Anda disebut, klinik mana yang disebut, dan apa yang perlu dibenahi.",
+    siteName: "Nuave",
+    locale: "id_ID",
+    type: "website",
+  },
   robots: { index: false, follow: false },
   manifest: "/site.webmanifest",
   icons: {

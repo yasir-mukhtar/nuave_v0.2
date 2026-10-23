@@ -41,7 +41,7 @@ const messages = {
     "Permintaan ini tidak dapat dikirim ulang. Tidak ada permintaan baru yang dikirim.",
   unavailable: "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
   interrupted:
-    "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima.",
+    "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat, tetapi belum diterima.",
   syntheticInterrupted:
     "Permintaan pembuatan pertanyaan terputus. Pertanyaan belum diterima.",
   disabled: "Audit tidak tersedia saat ini.",

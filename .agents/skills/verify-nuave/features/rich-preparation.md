@@ -41,7 +41,7 @@ anything about live extraction quality. The default synthetic preparation
 
 ## How to get to it (user POV)
 
-- From the audit entry, type the website and press `Cek bisnis saya di AI`,
+- From the audit entry, type the website and press `Cek klinik saya di AI`,
   then follow the same path as [smart-intake-summary](./smart-intake-summary.md)
   to the focus screen, with the fixture standing in for the reading. Tap
   `Satu cabang`, pick one published branch, then press `Lanjut` through
@@ -83,7 +83,7 @@ order:
 - **Reload.** Refreshes; the review shows again and the stored `prepared` is
   identical. Evidence: `03-summary-after-reload`.
 - **Alias edit.** `Nama` reads "Juga disebut: Kedai Fiksi Bandung".
-  `Ubah Bisnis` → `Tambah nama lain` → `Nama lain baru` = `Kedai Fiksi Pusat`
+  `Ubah Klinik` → `Tambah nama lain` → `Nama lain baru` = `Kedai Fiksi Pusat`
   → `Tambah` → `Simpan`. `Nama` then reads "Juga disebut: Kedai Fiksi
   Bandung, Kedai Fiksi Pusat". Evidence: `04-alias-edit`.
 - **Questions.** Ticks the confirmation and presses `Buat pertanyaan audit`;

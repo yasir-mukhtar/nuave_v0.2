@@ -25,7 +25,7 @@ The report is opened later from the emailed link.
   (`POST /api/audit/extract`): "Nuave sedang membaca website Anda", the pill
   "Pembayaran diterima · NV-…" (six characters), and "Yang sudah kami
   temukan", then "Website Anda sudah terbaca" and the Step 2 cover
-  "Ceritakan bisnis Anda".
+  "Ceritakan klinik Anda".
 - `start-sheet`: `Jalankan audit` opens "Mulai audit sekarang?" and approves
   nothing by itself.
 - `run-on-server`: `Mulai audit sekarang` approves the ten questions
@@ -41,7 +41,7 @@ The report is opened later from the emailed link.
 
 ## How to get to it (user POV)
 
-- Press `Ya, ini bisnis saya` on the business found, `Lanjut ke pembayaran`
+- Press `Ya, ini klinik saya` on the business found, `Lanjut ke pembayaran`
   on the three steps, type an email and press `Bayar Rp99.000` at checkout.
   After the paid reading, press `Mulai` and answer the intake. On the ten
   questions press `Jalankan audit`, then `Mulai audit sekarang`.
@@ -56,10 +56,10 @@ Preconditions:
 Run `$V drive audit-run`. Steps, in order:
 
 - **Entry.** Fills the website. Evidence: `01-entry-filled`.
-- **Business found.** `Cek bisnis saya di AI`, then "Kami menemukan bisnis
+- **Business found.** `Cek klinik saya di AI`, then "Kami menemukan bisnis
   Anda" with `Kedai Fiksi`. `network.json.apiCalls` has only
   `GET /api/audit/identity`. Evidence: `02-brand-confirm`.
-- **Checkout.** `Ya, ini bisnis saya` → "Tinggal 3 langkah" →
+- **Checkout.** `Ya, ini klinik saya` → "Tinggal 3 langkah" →
   `Lanjut ke pembayaran`. Checkout ("Konfirmasi dan bayar") shows the order
   card with "AI Visibility Report", "Kedai Fiksi · 10 pertanyaan", "Total",
   "Rp99.000", the price note and the delivery promise (Q5, word for word);
@@ -71,7 +71,7 @@ Run `$V drive audit-run`. Steps, in order:
   "Pembayaran diterima · NV-…" and "Yang sudah kami temukan". An 800 ms
   same-origin delay on the extract request keeps it visible. Evidence:
   `04-simulated-payment-paid-reading`.
-- **Cover.** The Step 2 cover "Ceritakan bisnis Anda" shows.
+- **Cover.** The Step 2 cover "Ceritakan klinik Anda" shows.
   `network.json.apiCalls` has `POST /api/orders: 1`,
   `POST /api/payments/start: 1` and `POST /api/audit/extract: 1`. Evidence:
   `05-reading-done-cover`.

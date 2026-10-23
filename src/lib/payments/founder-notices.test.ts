@@ -473,7 +473,7 @@ describe("the payment-received email (R-22, AC-19)", () => {
       "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.",
     );
     expect(message.text).toContain(
-      "Lanjutkan di browser yang sama untuk mengisi data bisnis Anda",
+      "Lanjutkan di browser yang sama untuk melengkapi profil klinik Anda",
     );
     expect(message.text).toContain("support@nuave.ai");
     expect(message.text + message.html).not.toMatch(/https?:|\/r#|<a /);

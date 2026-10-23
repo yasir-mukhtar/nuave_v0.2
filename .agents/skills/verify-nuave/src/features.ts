@@ -233,7 +233,7 @@ async function auditEntry(ctx: DriveContext) {
     ).toBeVisible();
   });
   ctx.check(
-    `\`Cek bisnis saya di AI\` with the field empty shows "${ENTRY_INVALID_NOTICE}"`,
+    `\`Cek klinik saya di AI\` with the field empty shows "${ENTRY_INVALID_NOTICE}"`,
   );
   await ctx.step("invalid-url-rejected", async () => {
     await fillWebsite(page, "bukan alamat web");
@@ -268,7 +268,7 @@ async function auditEntry(ctx: DriveContext) {
     await expectBrandConfirm(page, "Example");
   });
   ctx.check(
-    'The landing website form (`Cek bisnis saya di AI`) opens /audit, which checks `example.com` at once and shows "Kami menemukan bisnis Anda" with the name read from the website ("Example")',
+    'The landing website form (`Cek klinik saya di AI`) opens /audit, which checks `example.com` at once and shows "Kami menemukan klinik Anda" with the name read from the website ("Example")',
   );
   expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
   ctx.check(
@@ -279,7 +279,7 @@ async function auditEntry(ctx: DriveContext) {
     await expect(websiteInput(page)).toHaveValue("https://example.com/");
   });
   ctx.check(
-    "`Ganti tautan bisnis` returns to the entry with the website kept for correction",
+    "`Ganti tautan` returns to the entry with the website kept for correction",
   );
 }
 
@@ -309,11 +309,11 @@ async function smartIntakeSummary(ctx: DriveContext) {
       page.getByRole("button", { name: "Kembali", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Ya, ini bisnis saya", exact: true }),
+      page.getByRole("button", { name: "Ya, ini klinik saya", exact: true }),
     ).toBeEnabled();
   });
   ctx.check(
-    '`Cek bisnis saya di AI` shows the free check "Sebentar, kami cari bisnis Anda", then "Kami menemukan bisnis Anda" with the name read from the website, the source, Kembali and `Ya, ini bisnis saya`',
+    '`Cek klinik saya di AI` shows the free check "Sebentar, kami cari klinik Anda", then "Kami menemukan klinik Anda" with the name read from the website, the source, Kembali and `Ya, ini klinik saya`',
   );
   await ctx.step("steps-payment-reading-to-focus", async () => {
     await confirmBrand(page);
@@ -326,7 +326,7 @@ async function smartIntakeSummary(ctx: DriveContext) {
     ).toBeVisible();
   });
   ctx.check(
-    '`Ya, ini bisnis saya` → "Tinggal 3 langkah" → checkout → simulated payment; the paid reading starts by itself, and the Step 2 cover\'s `Mulai` opens "Apa yang ingin Anda audit?" with the labelled whole-brand suggestion',
+    '`Ya, ini klinik saya` → "Tinggal 3 langkah" → checkout → simulated payment; the paid reading starts by itself, and the Step 2 cover\'s `Mulai` opens "Apa yang ingin Anda audit?" with the labelled whole-brand suggestion',
   );
   await ctx.step("detail-screens", async () => {
     // Whole-brand `Lanjut` lands on the category screen; the synthetic
@@ -357,7 +357,7 @@ async function smartIntakeSummary(ctx: DriveContext) {
     // turns the offerings into read-only context, so this runs after the
     // owner-filled first pass.
     await editFocusFromReview(page);
-    await openFocusTarget(page, "Satu produk");
+    await openFocusTarget(page, "Satu layanan");
     // The synthetic reading proposes no products: the owner adds the target.
     await addProduct(page, "kopi susu");
     await pressLanjut(page);
@@ -367,11 +367,11 @@ async function smartIntakeSummary(ctx: DriveContext) {
     await pressLanjut(page);
     await expectSummary(page);
     await expect(reviewFact(page, "Fokus audit")).toHaveText(
-      "Satu produk: kopi susu",
+      "Satu layanan: kopi susu",
     );
   });
   ctx.check(
-    "`Ganti fokus audit` in the review's Bisnis sheet re-opens the focus screen; the product list takes an added target (`Tambah produk`) and the detour returns to the review",
+    "`Ganti fokus audit` in the review's Bisnis sheet re-opens the focus screen; the product list takes an added target (`Tambah layanan`) and the detour returns to the review",
   );
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
@@ -578,7 +578,7 @@ async function richPreparation(ctx: DriveContext) {
     await expect(name).toContainText("Juga disebut: Kedai Fiksi Bandung");
     await openAliasEditor(page);
     await addAlias(page, "Kedai Fiksi Pusat");
-    await saveReviewSheet(page, "Bisnis");
+    await saveReviewSheet(page, "Klinik");
     await expect(name).toContainText(
       "Juga disebut: Kedai Fiksi Bandung, Kedai Fiksi Pusat",
     );
@@ -697,7 +697,7 @@ async function deliverAudit(ctx: DriveContext) {
   expect(ctx.calls["POST /api/payments/start"]).toBe(1);
   expect(ctx.calls["POST /api/audit/extract"]).toBe(1);
   ctx.check(
-    'The paid reading ran once by itself, under the same single order, then the Step 2 cover "Ceritakan bisnis Anda" shows',
+    'The paid reading ran once by itself, under the same single order, then the Step 2 cover "Ceritakan klinik Anda" shows',
   );
   await ctx.step("intake-to-questions", async () => {
     await pressMulai(page);

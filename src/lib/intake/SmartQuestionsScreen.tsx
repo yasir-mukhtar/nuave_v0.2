@@ -217,7 +217,7 @@ function QuestionEditor({
           />
         </span>
         <OriginTag id={tagId} className="justify-self-start">
-          Tanpa menyebut bisnis Anda
+          Tanpa menyebut klinik Anda
         </OriginTag>
       </label>
       {own || comparator ? (
@@ -229,13 +229,13 @@ function QuestionEditor({
           <p className="type-title-sm m-0 flex items-center gap-2 text-error">
             <IconAlertTriangle size={18} stroke={1.75} aria-hidden="true" />
             {own
-              ? "Ada nama bisnis Anda di pertanyaan ini"
-              : "Ada nama bisnis pembanding di pertanyaan ini"}
+              ? "Ada nama klinik Anda di pertanyaan ini"
+              : "Ada nama klinik pembanding di pertanyaan ini"}
           </p>
           <p className="type-copy-sm m-0 text-ink-700">
             {own
-              ? "Pertanyaan ini seharusnya tanpa nama bisnis Anda. Kalau namanya ada, AI cenderung ikut menyebutnya, jadi hasilnya kurang adil."
-              : "Pertanyaan audit tidak menyebut bisnis pembanding, supaya AI memilih sendiri tanpa diarahkan."}
+              ? "Pertanyaan ini seharusnya tanpa nama klinik Anda. Kalau namanya ada, AI cenderung ikut menyebutnya, jadi hasilnya kurang adil."
+              : "Pertanyaan audit tidak menyebut klinik pembanding, supaya AI memilih sendiri tanpa diarahkan."}
           </p>
           <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">
             <Button
@@ -271,8 +271,8 @@ function QuestionEditor({
         </p>
       ) : (
         <p className="type-copy-sm m-0 text-ink-500">
-          Tulis satu pertanyaan seperti calon pelanggan bertanya. Mengubah
-          kalimat dapat mengubah apa yang diukur.
+          Tulis satu pertanyaan seperti calon pasien bertanya. Mengubah kalimat
+          dapat mengubah apa yang diukur.
         </p>
       )}
       {!own && !comparator && draft !== original ? (
@@ -313,7 +313,7 @@ function StartSheet({
       }}
       title="Mulai audit sekarang?"
       titleHidden
-      description="Setelah dimulai, informasi bisnis dan pertanyaan tidak dapat diubah."
+      description="Setelah dimulai, info klinik dan pertanyaan tidak dapat diubah."
     >
       <div className="grid justify-items-center gap-3 pt-1 text-center">
         <Art name="phoneChat" width={65} enter className="mb-1" />
@@ -322,7 +322,7 @@ function StartSheet({
         </p>
         <p className="type-copy m-0 text-ink-600">
           Nuave akan menjalankan 10 pertanyaan ini satu per satu. Setelah
-          dimulai, informasi bisnis dan pertanyaan tidak dapat diubah.
+          dimulai, info klinik dan pertanyaan tidak dapat diubah.
         </p>
         <div className="mt-2 flex w-full gap-2.5 rounded-input border border-line-200 bg-stone-50 px-3.5 py-3 text-left">
           <IconCircleCheck
@@ -447,22 +447,22 @@ export default function SmartQuestionsScreen({
       <ScreenHeader
         headingRef={headingRef}
         title="10 pertanyaan untuk AI"
-        lead="Ditulis seperti calon pelanggan bertanya. Anda bisa mengubahnya."
+        lead="Ditulis seperti calon pasien bertanya. Anda bisa mengubahnya."
       />
       <div className="mt-3.5 flex flex-wrap gap-2">
-        <OriginTag>10 Tanpa menyebut bisnis Anda</OriginTag>
+        <OriginTag>10 Tanpa menyebut klinik Anda</OriginTag>
       </div>
       <Collapsible.Root className="mt-3">
         <Collapsible.Trigger className="type-label-strong inline-flex min-h-11 items-center gap-2 text-left text-ink-900 underline underline-offset-4">
           <IconInfoCircle size={18} stroke={1.75} aria-hidden="true" />
-          Kenapa pertanyaannya tanpa nama bisnis?
+          Kenapa tanpa nama klinik?
         </Collapsible.Trigger>
         <Collapsible.Panel className={selectionStyles.revealPanel}>
           <p className="type-copy-sm m-0 rounded-tile bg-stone-50 p-4 text-ink-700">
-            Calon pelanggan yang belum mengenal bisnis Anda bertanya tanpa
-            menyebut namanya. Pertanyaan seperti ini menunjukkan apakah AI
-            menyebut bisnis Anda dengan sendirinya. Nama bisnis pembanding juga
-            tidak dipakai, supaya AI tidak diarahkan.
+            Calon pasien yang belum mengenal klinik Anda bertanya tanpa menyebut
+            namanya. Dari sini terlihat apakah AI menyebut klinik Anda dengan
+            sendirinya. Nama klinik pembanding juga tidak dipakai, supaya AI
+            tidak diarahkan.
           </p>
         </Collapsible.Panel>
       </Collapsible.Root>
@@ -488,7 +488,7 @@ export default function SmartQuestionsScreen({
                 {question}
               </p>
               <p className="type-caption m-0 text-ink-500">
-                Tanpa menyebut bisnis Anda
+                Tanpa menyebut klinik Anda
                 {question !== pack.originals[slot] ? " · diubah" : ""}
               </p>
             </div>
@@ -506,20 +506,17 @@ export default function SmartQuestionsScreen({
           </motion.li>
         ))}
       </ol>
-      <p
-        className="type-caption m-0 mt-2 border-t border-line-200 pt-4 text-ink-500"
-        data-glm-provenance={pack.provenance.transport}
-      >
-        {pack.provenance.transport === "synthetic-stub"
-          ? "Respons sintetis berlabel, bukan keluaran provider."
-          : "Pertanyaan disiapkan melalui satu panggilan provider."}{" "}
-        Model diminta: {pack.provenance.requestedModel}. Model diterima:{" "}
-        {pack.provenance.returnedModel ?? "tidak ada"}. Biaya:{" "}
-        {pack.billedCostUsd === null
-          ? "tidak tersedia"
-          : `USD ${pack.billedCostUsd}`}
-        .
-      </p>
+      {/* How the questions were made (model, cost) stays in the stored
+          evidence, never on screen. Only the test-mode label shows, so a
+          synthetic pack is never mistaken for a real one. */}
+      {pack.provenance.transport === "synthetic-stub" ? (
+        <p
+          className="type-caption m-0 mt-2 border-t border-line-200 pt-4 text-ink-500"
+          data-glm-provenance={pack.provenance.transport}
+        >
+          Respons sintetis berlabel, bukan keluaran provider.
+        </p>
+      ) : null}
       <ScreenError error={error} />
 
       <BottomSheet
@@ -569,15 +566,12 @@ export default function SmartQuestionsScreen({
 export function QuestionsPreparing({
   headingRef,
   preparing,
-  live,
   onRetry,
   onBack,
   error,
 }: {
   headingRef?: RefObject<HTMLHeadingElement | null>;
   preparing: boolean;
-  /** A live provider request may add AI cost. */
-  live: boolean;
   onRetry: () => void;
   onBack: () => void;
   error?: string | null;
@@ -593,7 +587,7 @@ export function QuestionsPreparing({
         }
         lead={
           preparing
-            ? "Ditulis seperti calon pelanggan bertanya, dari profil yang Anda setujui."
+            ? "Ditulis seperti calon pasien bertanya, dari profil yang Anda setujui."
             : "Coba lagi hanya jika Anda ingin membuat permintaan baru."
         }
       />
@@ -622,12 +616,6 @@ export function QuestionsPreparing({
           <Button type="button" variant="ink" size="touch" onClick={onRetry}>
             Coba siapkan pertanyaan
           </Button>
-          {live ? (
-            <p className="type-copy-sm m-0 text-ink-600">
-              Mencoba lagi mengirim permintaan baru dan dapat menambah biaya
-              penggunaan AI.
-            </p>
-          ) : null}
           <Button type="button" variant="inkLink" size="touch" onClick={onBack}>
             Kembali ke profil
           </Button>

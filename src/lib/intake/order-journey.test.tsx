@@ -160,15 +160,15 @@ const heading = (name: string | RegExp) =>
 async function enterBusiness() {
   fireEvent.change(
     await screen.findByRole("textbox", {
-      name: "Website atau akun Instagram bisnis",
+      name: "Website atau akun Instagram klinik",
     }),
     { target: { value: "https://kedai-fiksi.example/" } },
   );
   fireEvent.click(
-    screen.getByRole("button", { name: "Cek bisnis saya di AI" }),
+    screen.getByRole("button", { name: "Cek klinik saya di AI" }),
   );
-  await heading("Kami menemukan bisnis Anda");
-  fireEvent.click(screen.getByRole("button", { name: "Ya, ini bisnis saya" }));
+  await heading("Kami menemukan klinik Anda");
+  fireEvent.click(screen.getByRole("button", { name: "Ya, ini klinik saya" }));
   await heading("Tinggal 3 langkah");
   fireEvent.click(screen.getByRole("button", { name: "Lanjut ke pembayaran" }));
   await heading("Konfirmasi dan bayar");
@@ -182,21 +182,21 @@ async function typeEmail(value = EMAIL) {
 /** The paid reading (J09) runs by itself after the order and lands on the
  * Step 2 cover (J10); its "Mulai" opens the focus screen. */
 async function toFocus() {
-  await heading("Ceritakan bisnis Anda");
+  await heading("Ceritakan klinik Anda");
   mulai();
   await heading("Apa yang ingin Anda audit?");
 }
 async function throughDetails() {
   await toFocus();
   for (const name of [
-    "Bisnis Anda biasanya disebut apa?",
-    "Apa saja yang Anda jual?",
-    "Siapa yang biasanya mencari bisnis Anda?",
-    "Apa yang mereka cari saat memilih?",
-    "Bagaimana pelanggan mendapatkannya?",
-    "Di mana pelanggan Anda berada?",
-    "Bisnis mana yang sering dibandingkan dengan Anda?",
-    "Apa yang membuat bisnis Anda berbeda?",
+    "Klinik Anda biasanya disebut apa?",
+    "Apa saja layanan klinik Anda?",
+    "Siapa yang biasanya mencari klinik Anda?",
+    "Apa yang mereka cari saat memilih klinik?",
+    "Bagaimana pasien dilayani?",
+    "Pasien Anda datang dari mana?",
+    "Klinik mana pembanding Anda?",
+    "Apa yang membuat klinik Anda berbeda?",
   ]) {
     lanjut();
     await heading(name);
@@ -204,7 +204,7 @@ async function throughDetails() {
   lanjut();
   await heading("Periksa, lalu jalankan audit");
   mulai();
-  await heading("Ini profil yang akan Nuave pakai");
+  await heading("Ini profil klinik yang akan Nuave pakai");
 }
 /** J25: the owner ticks the confirmation, then asks for the questions. */
 function makeQuestions() {
@@ -358,9 +358,9 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     lanjut();
     await toFocus();
     lanjut();
-    await heading("Bisnis Anda biasanya disebut apa?");
+    await heading("Klinik Anda biasanya disebut apa?");
     lanjut();
-    await heading("Apa saja yang Anda jual?");
+    await heading("Apa saja layanan klinik Anda?");
     const before = readSmartSession();
     expect(before?.stage).toBe("offerings");
     const paidBefore = server.calls.filter((call) =>
@@ -373,7 +373,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     first.unmount();
 
     render(<SmartIntakeJourney live={false} />);
-    await heading("Apa saja yang Anda jual?");
+    await heading("Apa saja layanan klinik Anda?");
     expect(readSmartSession()?.selection).toEqual(before?.selection);
     expect(
       server.calls.filter((call) =>
@@ -397,7 +397,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     lanjut();
     await toFocus();
     lanjut();
-    await heading("Bisnis Anda biasanya disebut apa?");
+    await heading("Klinik Anda biasanya disebut apa?");
     const savedSelection = readSmartSession()?.selection;
     first.unmount();
 
@@ -415,7 +415,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
       Response.json({ order_id: OTHER_ORDER_ID, state: "open" });
     await typeEmail("baru@example.com");
     lanjut();
-    await heading("Bisnis Anda biasanya disebut apa?");
+    await heading("Klinik Anda biasanya disebut apa?");
     const after = readSmartSession();
     expect(after?.order?.id).toBe(OTHER_ORDER_ID);
     expect(after?.selection).toEqual(savedSelection);
@@ -595,7 +595,7 @@ describe("saved progress (R-29, R-30, R-31, AC-19)", () => {
     window.localStorage.setItem(SMART_INTAKE_STORAGE_KEY, JSON.stringify(old));
     render(<SmartIntakeJourney live={false} />);
     const website = await screen.findByRole("textbox", {
-      name: "Website atau akun Instagram bisnis",
+      name: "Website atau akun Instagram klinik",
     });
     expect((website as HTMLInputElement).value).toBe("");
     expect(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY)).toBeNull();

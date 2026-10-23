@@ -90,7 +90,7 @@ describe("smart intake exact confirmed meaning", () => {
       expect(smartComparatorsReady(selection)).toBe(false);
       expect(firstSmartGapStage(selection)).toBe("competitors");
       expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
-        "Bisnis pembanding",
+        "Klinik pembanding",
       );
       expect(selection.comparatorNames).toEqual(names);
       expect(selection.comparatorMode).toBe("named");
@@ -148,7 +148,7 @@ describe("smart intake exact confirmed meaning", () => {
     "Keluarga kami menyajikan kopi sejak 1990, positif dan hangat.",
   ])("stops later proposal, owner selection and forged context: %s", (text) => {
     expect(() => prepared({ verified_offerings: [text] })).toThrow(
-      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang brand Anda, tanpa data pribadi atau akses akun.",
+      "Persiapan audit belum dapat dilanjutkan. Ada teks yang mungkin berisi informasi sensitif. Gunakan hanya informasi publik tentang klinik Anda, tanpa data pasien, data pribadi, atau akses akun.",
     );
     const proposal = prepared();
     const selection = initialSmartSelection(proposal);
@@ -578,7 +578,7 @@ describe("smart intake exact confirmed meaning", () => {
     expect(selection.marketAreas).toEqual([]);
     expect(requiredSmartGaps(selection)).toEqual([
       "Kategori",
-      "Produk atau layanan utama",
+      "Layanan utama",
       "Cara layanan",
       "Jangkauan pasar",
     ]);
@@ -588,10 +588,10 @@ describe("smart intake exact confirmed meaning", () => {
     const proposal = prepared();
     const selection = initialSmartSelection(proposal);
     selection.name = name;
-    expect(requiredSmartGaps(selection)).toEqual(["Nama bisnis"]);
+    expect(requiredSmartGaps(selection)).toEqual(["Nama klinik"]);
     expect(firstSmartGapStage(selection)).toBe("brand");
     expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
-      "Lengkapi: Nama bisnis",
+      "Lengkapi: Nama klinik",
     );
   });
 });

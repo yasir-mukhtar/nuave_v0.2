@@ -183,7 +183,7 @@ test("pay with the simulated payment: the order number shows, the paid reading s
   await expectSummary(page);
   // None from the review: the Bisnis sheet says the name and website are
   // locked and offers neither change.
-  const sheet = await openReviewSheet(page, "Bisnis");
+  const sheet = await openReviewSheet(page, "Klinik");
   await expect(
     sheet.getByText(NAME_LOCKED_NOTE, { exact: true }),
   ).toBeVisible();
@@ -191,18 +191,18 @@ test("pay with the simulated payment: the order number shows, the paid reading s
   await expect(
     sheet.getByRole("button", { name: "Ganti website" }),
   ).toHaveCount(0);
-  await cancelReviewSheet(page, "Bisnis");
+  await cancelReviewSheet(page, "Klinik");
   // The same on a reload: still locked, still one order and one reading.
   await page.reload();
   await expectSummary(page);
-  const again = await openReviewSheet(page, "Bisnis");
+  const again = await openReviewSheet(page, "Klinik");
   await expect(
     again.getByText(NAME_LOCKED_NOTE, { exact: true }),
   ).toBeVisible();
   await expect(
     again.getByRole("button", { name: "Ganti website" }),
   ).toHaveCount(0);
-  await cancelReviewSheet(page, "Bisnis");
+  await cancelReviewSheet(page, "Klinik");
   expect((await intakeSession(page)).order.paid).toBe(true);
   expect(calls["POST /api/orders"]).toBe(1);
   expect(calls["POST /api/audit/extract"]).toBe(1);

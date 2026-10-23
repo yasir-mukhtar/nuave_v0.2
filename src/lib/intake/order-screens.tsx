@@ -166,7 +166,7 @@ function PaymentPanel({
         <>
           <OrderNumber number={payment.order_number} />
           <p className="type-copy m-0 text-ink-700">
-            Tekan Lanjut untuk mengisi data bisnis Anda.
+            Tekan Lanjut untuk melengkapi profil klinik Anda.
           </p>
         </>,
         "good",
@@ -367,8 +367,8 @@ function OrderCard({
             className="mt-px shrink-0"
             aria-hidden="true"
           />
-          Pembayaran belum menjalankan audit. Anda masih memeriksa informasi
-          bisnis dan menyetujui pertanyaan dulu.
+          Pembayaran belum menjalankan audit. Anda masih memeriksa info klinik
+          dan menyetujui pertanyaan dulu.
         </p>
         <p className="type-copy-sm m-0 flex items-start gap-2.5 text-ink-600">
           <IconClockHour4

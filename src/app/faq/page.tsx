@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
 import LandingNav from "@/components/LandingNav";
 import Footer from "@/components/Footer";
+import { DELIVERY_PROMISE } from "@/lib/orders/promise";
 
 export const metadata: Metadata = {
   title: "Pertanyaan yang Sering Diajukan | Nuave",
   description:
-    "Jawaban tentang audit visibilitas AI Nuave dalam tahap pengujian privat, cara kerja audit, bukti, dan batasannya.",
+    "Jawaban singkat untuk klinik: cara kerja Nuave, biaya, waktu laporan, data, dan batasannya.",
 };
 
-const EMAIL = "hello@nuave.ai";
+const EMAIL = "support@nuave.ai";
 
 function FaqSection({
   question,
@@ -32,124 +32,91 @@ export default function FaqPage() {
     <div className="min-h-screen bg-white">
       <LandingNav />
       <main className="type-copy mx-auto max-w-[760px] px-8 pt-[150px] pb-[120px] text-[#374151] [&_a]:text-[var(--lp-purple)] [&_a]:underline [&_a]:underline-offset-[3px] [&_li]:mb-2 [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-5">
-        <h1 className="type-heading-xl m-0 mb-2 text-[#111827]">
+        <h1 className="type-heading-xl m-0 mb-10 text-[#111827]">
           Pertanyaan yang sering diajukan
         </h1>
-        <p>
-          Nuave saat ini berada dalam pengujian privat. Halaman ini menjelaskan
-          kemampuan produk yang aktif sekarang, bukan fitur komersial yang masih
-          direncanakan.
-        </p>
 
         <FaqSection question="Apa itu Nuave?">
           <p>
-            Nuave mengaudit bagaimana sebuah bisnis muncul dalam sepuluh jawaban
-            AI. Anda memasukkan sumber resmi bisnis, memeriksa fakta yang
-            ditemukan, meninjau sepuluh pertanyaan, lalu menjalankan audit.
-          </p>
-          <p>
-            Hasilnya adalah laporan sesi yang menunjukkan kemunculan bisnis,
-            bukti jawaban dan sumber, bisnis lain yang teramati, interpretasi,
-            dan tindakan yang didukung oleh temuan.
+            Nuave mengecek apa jawaban AI saat calon pasien mencari klinik
+            seperti klinik Anda. Anda menerima satu laporan: apakah klinik Anda
+            disebut atau direkomendasikan, klinik mana yang disebut, dan apa
+            yang perlu dibenahi dulu.
           </p>
         </FaqSection>
 
-        <FaqSection question="Sumber bisnis apa yang didukung?">
+        <FaqSection question="AI apa yang diuji?">
           <p>
-            Intake aktif menerima URL website resmi atau profil akun Instagram.
-            Google Business Profile/Google Maps belum menjadi sumber intake yang
-            didukung pada versi ini.
+            AI buatan OpenAI, pembuat ChatGPT, dengan pencarian web. Jawaban di
+            aplikasi ChatGPT di ponsel Anda bisa sedikit berbeda.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apa yang diuji?">
+        <FaqSection question="Pertanyaan apa yang ditanyakan?">
           <p>
-            Nuave membuat sepuluh pertanyaan berbahasa Indonesia: lima
-            pertanyaan awal tanpa menyebut bisnis Anda dan lima yang menyebut
-            bisnis Anda. Anda dapat mengubah pertanyaan sebelum audit dimulai.
-            Setelah audit dimulai, identitas dan urutan pertanyaan dikunci untuk
-            menjaga bukti tetap konsisten.
+            10 pertanyaan seperti yang biasa ditanyakan calon pasien, tanpa
+            menyebut nama klinik Anda. Anda bisa memeriksa dan mengubah setiap
+            pertanyaan sebelum audit dimulai.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apakah ini sama dengan aplikasi ChatGPT konsumen?">
+        <FaqSection question="Berapa biayanya?">
           <p>
-            Tidak. Audit menggunakan metode API dengan pencarian web yang
-            dilindungi dan dicatat oleh sistem. Hasilnya adalah observasi dari
-            metode audit Nuave, bukan reproduksi persis antarmuka atau sesi
-            ChatGPT konsumen.
+            Rp99.000 untuk satu audit, sekali bayar, tanpa langganan. Tidak ada
+            pajak atau biaya tambahan dari Nuave. Bayar dengan QRIS, transfer
+            bank, GoPay, atau DANA.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apa yang saya terima saat ini?">
-          <ul>
-            <li>ringkasan kemunculan bisnis pada sepuluh pertanyaan;</li>
-            <li>hasil per pertanyaan dengan kutipan jawaban dan sumber;</li>
-            <li>bisnis lain yang benar-benar teramati dalam bukti;</li>
-            <li>
-              temuan, interpretasi, dan tindakan yang terkait dengan bukti;
-            </li>
-            <li>metode serta batasan audit; dan</li>
-            <li>
-              opsi mencetak atau menyimpan tampilan laporan sebagai PDF melalui
-              peramban serta mengunduh bukti JSON.
-            </li>
-          </ul>
+        <FaqSection question="Berapa lama sampai laporan jadi?">
           <p>
-            Versi ini belum menyediakan akun, dashboard persisten, pengiriman
-            laporan lewat email, atau tautan laporan privat yang tersimpan di
-            server.
+            {DELIVERY_PROMISE} Link laporan dikirim ke email Anda dan berlaku 12
+            bulan.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apakah hasil Nuave merupakan peringkat?">
+        <FaqSection question="Apakah Nuave butuh data pasien atau akses akun klinik?">
           <p>
-            Tidak. Laporan adalah snapshot dari sepuluh pertanyaan pada satu
-            metode dan waktu tertentu. Jawaban AI dapat berubah. Disebut juga
-            tidak sama dengan direkomendasikan.
+            Tidak. Nuave hanya membaca informasi publik klinik Anda, seperti
+            website dan Instagram. Jangan masukkan data pasien, kata sandi, atau
+            data pribadi.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apakah Nuave menjamin hasil bisnis?">
+        <FaqSection question="Apa bedanya dengan SEO atau iklan yang sudah berjalan?">
           <p>
-            Tidak. Nuave tidak menjamin kenaikan visibilitas, traffic, calon
-            pelanggan, penjualan, atau pendapatan. Laporan menunjukkan bukti
-            yang diamati dan tindakan yang didukung bukti tersebut.
+            SEO dan iklan membawa orang ke website dan media sosial Anda. Nuave
+            melihat sisi lain: apa yang dijawab AI saat calon pasien bertanya.
+            Laporannya bisa Anda bagikan ke tim pemasaran atau agensi.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apakah audit saat ini berbayar?">
+        <FaqSection question="Apakah klinik saya pasti disebut AI setelah perbaikan?">
           <p>
-            Alur pembayaran belum aktif pada produk pengujian privat ini. Karena
-            itu halaman publik Nuave saat ini tidak menjanjikan harga, metode
-            pembayaran, refund, atau waktu pengiriman komersial tertentu.
+            Tidak ada yang bisa menjamin itu. Jawaban AI bisa berubah. Laporan
+            menunjukkan apa yang terlihat saat diuji, dan perbaikan mana yang
+            layak dikerjakan dulu.
           </p>
         </FaqSection>
 
-        <FaqSection question="Apakah laporan disimpan atau dikirim lewat email?">
+        <FaqSection question="Klinik saya punya beberapa cabang. Bisa?">
           <p>
-            Belum. State audit saat ini bersifat browser/session-based. Menutup
-            tab menghentikan proses yang sedang berjalan, dan belum ada
-            pekerjaan server tahan lama yang meneruskan audit di latar belakang.
+            Bisa. Pilih fokus audit: seluruh klinik, satu cabang, atau satu
+            layanan.
           </p>
         </FaqSection>
 
-        <FaqSection question="Data apa yang sebaiknya saya masukkan?">
+        <FaqSection question="Kapan sebaiknya dicek lagi?">
           <p>
-            Gunakan informasi bisnis yang memang diperlukan dan sumber publik.
-            Jangan masukkan kata sandi, data pelanggan, data kesehatan, data
-            keuangan pribadi, atau informasi sensitif lain. Lihat{" "}
-            <Link href="/privacy">Kebijakan Privasi dan Data</Link> untuk
-            keadaan produk saat ini.
+            Kami sarankan audit lagi sekitar 6 sampai 8 minggu setelah perbaikan
+            dikerjakan.
           </p>
         </FaqSection>
 
-        <FaqSection question="Bagaimana meminta bantuan?">
+        <FaqSection question="Bagaimana kalau ada masalah?">
           <p>
-            Pengujian privat ini menggunakan bantuan founder. Hubungi{" "}
-            <a href={`mailto:${EMAIL}`}>{EMAIL}</a> atau buka{" "}
-            <Link href="/support">Kontak dan Bantuan</Link>. Kami tidak
-            menjanjikan SLA respons tertentu pada tahap ini.
+            Email <a href={`mailto:${EMAIL}`}>{EMAIL}</a> dan sebutkan nomor
+            pesanan Anda.
           </p>
         </FaqSection>
       </main>

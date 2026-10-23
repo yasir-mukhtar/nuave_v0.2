@@ -79,16 +79,16 @@ type Props = {
 type Section = "business" | "customers" | "comparison";
 
 const SECTION_TITLES: Record<Section, string> = {
-  business: "Bisnis",
-  customers: "Calon pelanggan",
+  business: "Klinik",
+  customers: "Calon pasien",
   comparison: "Pembanding",
 };
 
 const CHANNEL_WORDS: Record<string, string> = {
-  on_premise: "datang ke tempat",
-  delivery: "dikirim",
-  on_customer: "Anda yang datang",
-  online: "online",
+  on_premise: "datang ke klinik",
+  delivery: "produk dikirim",
+  on_customer: "kunjungan ke rumah",
+  online: "konsultasi online",
 };
 
 function focusText(selection: SmartSelection): string {
@@ -98,9 +98,9 @@ function focusText(selection: SmartSelection): string {
       : "Satu cabang";
   if (selection.focus === "produk")
     return selection.productTarget.trim()
-      ? `Satu produk: ${selection.productTarget.trim()}`
-      : "Satu produk";
-  return "Seluruh brand";
+      ? `Satu layanan: ${selection.productTarget.trim()}`
+      : "Satu layanan";
+  return "Seluruh klinik";
 }
 
 function areaText(selection: SmartSelection): string {
@@ -121,8 +121,8 @@ function comparatorText(selection: SmartSelection): string {
   if (selection.comparatorMode === "named")
     return selection.comparatorNames.join(", ");
   if (selection.comparatorMode === "category-alternatives")
-    return "Tidak ada pembanding langsung. Nuave membandingkan dengan bisnis sejenis.";
-  return "Belum tahu. Nuave membandingkan dengan bisnis sejenis.";
+    return "Tidak ada pembanding langsung. Nuave membandingkan dengan klinik sejenis.";
+  return "Belum tahu. Nuave membandingkan dengan klinik sejenis.";
 }
 
 /** One read-back line: a quiet label over the value. */
@@ -283,8 +283,8 @@ function AliasFields({
         />
       </div>
       <p className="type-copy-sm m-0 text-ink-500">
-        Nama lain membantu Nuave memastikan pertanyaan tanpa nama bisnis
-        benar-benar tidak menyebut bisnis Anda.
+        Nama lain membantu Nuave memastikan pertanyaan tidak menyebut klinik
+        Anda.
       </p>
       {problem ? (
         <p role="alert" className="type-copy-sm m-0 text-error">
@@ -384,7 +384,7 @@ export default function SmartReview({
     >
       <ScreenHeader
         headingRef={headingRef}
-        title="Ini profil yang akan Nuave pakai"
+        title="Ini profil klinik yang akan Nuave pakai"
         lead="Cek sekilas. Ketuk Ubah jika ada yang kurang tepat."
       />
       {sourceExcerptStatus === "no-usable-text" ? (
@@ -437,7 +437,7 @@ export default function SmartReview({
             ) : null}
           </Fact>
           <Fact label="Disebut sebagai" value={selection.category} required />
-          <Fact label="Menjual" value={offeringsText} required />
+          <Fact label="Layanan" value={offeringsText} required />
         </ReviewSection>
 
         <ReviewSection
@@ -456,7 +456,7 @@ export default function SmartReview({
             value={selection.decisionConsiderations.join(", ")}
           />
           <Fact
-            label="Cara mendapatkan"
+            label="Cara dilayani"
             value={selection.serviceChannels
               .map((channel) => CHANNEL_WORDS[channel] ?? channel)
               .join(", ")}
@@ -478,7 +478,7 @@ export default function SmartReview({
           disabled={busy}
         >
           <Fact
-            label="Bisnis pembanding"
+            label="Klinik pembanding"
             value={
               smartComparatorsReady(selection) ? comparatorText(selection) : ""
             }
@@ -614,7 +614,7 @@ export default function SmartReview({
                 />
               </SheetBlock>
               {draft.focus !== "produk" ? (
-                <SheetBlock title="Menjual">
+                <SheetBlock title="Layanan">
                   <OfferingsFields
                     prepared={prepared}
                     selection={draft}
@@ -625,7 +625,7 @@ export default function SmartReview({
             </div>
           ) : section === "customers" ? (
             <div className="grid gap-[26px] pt-2">
-              <SheetBlock title="Siapa yang biasanya mencari bisnis Anda?">
+              <SheetBlock title="Siapa yang biasanya mencari klinik Anda?">
                 <CustomerFields
                   prepared={prepared}
                   selection={draft}
@@ -639,7 +639,7 @@ export default function SmartReview({
                 onChange={changeDraft}
                 onRefuse={setSheetError}
               />
-              <SheetBlock title="Bagaimana pelanggan mendapatkannya?">
+              <SheetBlock title="Bagaimana pasien dilayani?">
                 <ServiceFields
                   prepared={prepared}
                   selection={draft}
@@ -647,7 +647,7 @@ export default function SmartReview({
                 />
               </SheetBlock>
               {draft.focus !== "cabang" ? (
-                <SheetBlock title="Di mana pelanggan Anda berada?">
+                <SheetBlock title="Pasien Anda datang dari mana?">
                   <MarketFields
                     prepared={prepared}
                     selection={draft}
@@ -659,7 +659,7 @@ export default function SmartReview({
             </div>
           ) : (
             <div className="grid gap-[26px] pt-2">
-              <SheetBlock title="Bisnis pembanding">
+              <SheetBlock title="Klinik pembanding">
                 <CompetitorFields
                   prepared={prepared}
                   selection={draft}

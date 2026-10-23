@@ -14,7 +14,7 @@ const unavailable =
 const unusable =
   "Respons pembuatan pertanyaan tidak dapat digunakan. Coba siapkan pertanyaan lagi.";
 const interrupted =
-  "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima.";
+  "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat, tetapi belum diterima.";
 const synthetic =
   "Permintaan pembuatan pertanyaan terputus. Pertanyaan belum diterima.";
 const provenance = {
