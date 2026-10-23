@@ -141,7 +141,7 @@ export function WebsiteForm({
         onSubmit();
       }}
     >
-      <label className="flex h-[60px] items-center gap-3 rounded-chip border border-line-200 bg-white px-5 shadow-float transition-[box-shadow,border-color] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[var(--edge-ink),var(--elevation-float)] has-[[aria-invalid=true]]:border-error-edge">
+      <label className="flex h-[60px] items-center gap-3 rounded-chip border border-line-200 bg-white px-5 shadow-float transition-[box-shadow,border-color] duration-150 ease-(--motion-ease-standard) focus-within:border-ink-900 focus-within:shadow-[var(--edge-ink),var(--elevation-float)] has-[[aria-invalid=true]]:border-error-edge has-[[aria-invalid=true]]:shadow-[var(--edge-error),var(--elevation-float)]">
         <IconWorld
           size={22}
           stroke={1.75}

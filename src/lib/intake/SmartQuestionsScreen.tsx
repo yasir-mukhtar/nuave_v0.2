@@ -180,7 +180,7 @@ function QuestionEditor({
     <div className="grid gap-3.5 pt-1">
       <label
         htmlFor={`smart-question-${index}`}
-        className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-(--edge-ink)"
+        className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-(--edge-ink) has-[[aria-invalid=true]]:border-error-edge has-[[aria-invalid=true]]:shadow-(--edge-error)"
       >
         <span id={labelId} className="sr-only">
           Pertanyaan {index + 1}

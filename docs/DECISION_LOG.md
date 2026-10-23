@@ -13,8 +13,8 @@ study: #f73b20 / #e02e14), so a mistake no longer looks like a violet
 highlight. Error messages, wrong-field edges, the "business name in this
 question" warning, missing required profile details and payment problems
 are red; running states, accent words and highlights stay violet. Small
-error text uses one step darker than Jeton's #e02e14 (#c42410) to stay
-clearly readable on the grey surfaces.
+error text uses Jeton's next step, ember-700 #bc2410, to stay clearly
+readable on the grey surfaces.
 
 ## 2026-10-23 — Switch the v2 journey to the violet design (Figma page 11)
 
