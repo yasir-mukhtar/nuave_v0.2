@@ -673,7 +673,7 @@ export function MarketFields({
               />
             </div>
             {areaBlock ? (
-              <p role="alert" className="type-copy-sm m-0 text-ember-700">
+              <p role="alert" className="type-copy-sm m-0 text-error">
                 {areaBlock}
               </p>
             ) : null}
@@ -681,7 +681,7 @@ export function MarketFields({
         ) : null}
       </AnimatePresence>
       {selection.marketReach && selection.marketAreas.length > AREA_CAP ? (
-        <p role="alert" className="type-copy-sm m-0 mt-3 text-ember-700">
+        <p role="alert" className="type-copy-sm m-0 mt-3 text-error">
           Pilih paling banyak 8 area.
         </p>
       ) : null}

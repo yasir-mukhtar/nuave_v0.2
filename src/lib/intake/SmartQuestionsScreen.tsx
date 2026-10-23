@@ -124,7 +124,7 @@ function Marked({ text, ranges }: { text: string; ranges: Range[] }) {
     parts.push(
       <mark
         key={index}
-        className="bg-transparent text-ember-700 underline decoration-ember-700 underline-offset-2"
+        className="bg-transparent text-error underline decoration-error-edge underline-offset-2"
       >
         {text.slice(range.start, range.end)}
       </mark>,
@@ -180,7 +180,7 @@ function QuestionEditor({
     <div className="grid gap-3.5 pt-1">
       <label
         htmlFor={`smart-question-${index}`}
-        className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-(--edge-ink)"
+        className="grid gap-3 rounded-input border border-line-300 bg-white px-4 pt-4 pb-3.5 transition-[border-color,box-shadow] focus-within:border-ink-900 focus-within:shadow-(--edge-ink) has-[[aria-invalid=true]]:border-error-edge has-[[aria-invalid=true]]:shadow-(--edge-error)"
       >
         <span id={labelId} className="sr-only">
           Pertanyaan {index + 1}
@@ -224,9 +224,9 @@ function QuestionEditor({
         <div
           id={warningId}
           role="status"
-          className="grid gap-2.5 rounded-tile bg-ember-50 p-4"
+          className="grid gap-2.5 rounded-tile bg-error-light p-4"
         >
-          <p className="type-title-sm m-0 flex items-center gap-2 text-ember-700">
+          <p className="type-title-sm m-0 flex items-center gap-2 text-error">
             <IconAlertTriangle size={18} stroke={1.75} aria-hidden="true" />
             {own
               ? "Ada nama bisnis Anda di pertanyaan ini"
@@ -266,11 +266,7 @@ function QuestionEditor({
         </div>
       ) : null}
       {issues.length ? (
-        <p
-          id={issueId}
-          role="alert"
-          className="type-copy-sm m-0 text-ember-700"
-        >
+        <p id={issueId} role="alert" className="type-copy-sm m-0 text-error">
           {issues.join(" ")}
         </p>
       ) : (

@@ -150,11 +150,7 @@ function Fact({
           // A long unbroken name wraps inside the column instead of
           // widening the page.
           "type-copy m-0 min-w-0 [overflow-wrap:anywhere]",
-          missing
-            ? required
-              ? "text-ember-700"
-              : "text-ink-500"
-            : "text-ink-900",
+          missing ? (required ? "text-error" : "text-ink-500") : "text-ink-900",
         )}
       >
         {missing ? (required ? "Perlu dipastikan" : empty) : value}
@@ -291,7 +287,7 @@ function AliasFields({
         benar-benar tidak menyebut bisnis Anda.
       </p>
       {problem ? (
-        <p role="alert" className="type-copy-sm m-0 text-ember-700">
+        <p role="alert" className="type-copy-sm m-0 text-error">
           {problem}
         </p>
       ) : null}
@@ -412,7 +408,7 @@ export default function SmartReview({
         </div>
       ) : null}
       {gaps.length ? (
-        <p role="status" className="type-copy-sm m-0 mt-4 text-ember-700">
+        <p role="status" className="type-copy-sm m-0 mt-4 text-error">
           Perlu dipastikan: {gaps.join(", ")}.
         </p>
       ) : null}
@@ -711,7 +707,7 @@ export default function SmartReview({
             </div>
           )}
           {sheetError ? (
-            <p role="alert" className="type-copy-sm m-0 mt-4 text-ember-700">
+            <p role="alert" className="type-copy-sm m-0 mt-4 text-error">
               {sheetError}
             </p>
           ) : null}

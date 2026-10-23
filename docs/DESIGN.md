@@ -44,6 +44,10 @@ values are the "Nuave v2" collection's Violet mode.
   and cream, where ink-500 reaches only 4.6:1 and 4.8:1, too close to the
   4.5:1 line (ink-400 is for borders, icons and disabled controls only).
   Selection is ink, never ember: a 2px ink edge on stone-50 (`--edge-ink`).
+  Errors are red, never violet: Jeton red from Figma page 09's "JETON"
+  study. Error text is `text-error` (`--red` #bc2410, 6.2:1), a wrong
+  field's edge and warning icons `--red-edge` #e02e14 (`--edge-error`), and
+  a problem box `bg-error-light`. Running states and highlights stay violet.
 - **Shape.** Chips 22px pill, buttons and inputs 14px, tiles 16px, cards
   20–24px, sheets 28px (`--radius-token-*`). Two shadows on the white
   canvas: `--elevation-card` and `--elevation-float`. The full-violet paid

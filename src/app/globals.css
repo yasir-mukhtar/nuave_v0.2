@@ -531,6 +531,7 @@
   --color-success-light: var(--green-light);
   --color-error: var(--red);
   --color-error-light: var(--red-light);
+  --color-error-edge: var(--red-edge);
   --color-warning: var(--amber);
   --color-warning-light: var(--amber-light);
   --shadow-app-subtle: var(--shadow-subtle);
