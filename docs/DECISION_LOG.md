@@ -1,10 +1,27 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-21
+> Updated: 2026-10-23
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-23 — Switch the v2 journey to the violet design (Figma page 11)
+
+Yasir asked to update v2.nuave.ai to the violet copy of the mobile journey
+(Figma `eXCVryQzgx93oaYTR9NYGA`, page 11, node `238:1967`), reviewed by an
+independent Opus review before merging, and authorised merging once the
+review passes and checks are green.
+
+- **What changes:** the look only. Cool ink greys and one violet accent
+  replace the warm greys and orange; the paid reading (J09) is the one
+  full-violet screen. The 3D miniatures are re-exported from page 11 (the
+  kedai is now a small clinic). The report-ready email takes the same
+  colours, picture and logo.
+- **Unchanged:** every screen, word and layout of the 2026-10-21 journey
+  (page 11 is a copy of page 09 with the same frames and text), gates,
+  payment, the audit and report method, and what the browser stores. The
+  orange page 09 stays in Figma.
 
 ## 2026-10-21 — Adopt the v2 mobile journey design (Figma J01–J35)
 
