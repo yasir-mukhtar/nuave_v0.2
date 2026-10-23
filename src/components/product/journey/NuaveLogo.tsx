@@ -1,6 +1,6 @@
 /**
  * The v2 lockup (Figma kit "v2/Logo", 99 x 28): the ember mark and the
- * warm-ink wordmark. Inline, so it stays crisp and costs no request.
+ * ink wordmark. Inline, so it stays crisp and costs no request.
  */
 export function NuaveLogo({
   className,

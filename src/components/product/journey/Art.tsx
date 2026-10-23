@@ -6,26 +6,29 @@ import { SPRING_SETTLE } from "@/components/motion/presets";
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 
 /**
- * The custom 3D miniatures from the v2 kit, served from `public/v2/3d/` as
- * WebP at twice their largest on-screen size. Names follow what each object
- * shows; the kedai is the same shop built up across the three steps.
+ * The custom 3D miniatures from the v2 violet journey (Figma page 11),
+ * served from `public/v2/3d/` as WebP at about twice their largest
+ * on-screen size. The kedai is now a small clinic, built up across the three
+ * steps; the names stay so every screen keeps its picture slot.
  */
 export const ART = {
-  /** Step 1: the bare shop (business check). */
-  kedaiBare: { src: "/v2/3d/kedai-bare.webp", width: 300, height: 218 },
+  /** Step 1: the bare clinic (business check). */
+  kedaiBare: { src: "/v2/3d/kedai-bare.webp", width: 300, height: 211 },
   /** Step 2 cover: awning, chairs and scooter. */
-  kedaiOpen: { src: "/v2/3d/kedai-open.webp", width: 390, height: 241 },
-  /** Step 3 cover and landing hero: the busy shop with AI chat bubbles. */
-  kedaiBusy: { src: "/v2/3d/kedai-busy.webp", width: 390, height: 277 },
-  magnifier: { src: "/v2/3d/magnifier.webp", width: 122, height: 127 },
-  phoneChat: { src: "/v2/3d/phone-chat.webp", width: 150, height: 242 },
-  website: { src: "/v2/3d/website.webp", width: 300, height: 246 },
-  form: { src: "/v2/3d/form.webp", width: 92, height: 76 },
-  magnifierCheck: { src: "/v2/3d/magnifier-check.webp", width: 92, height: 67 },
-  envelope: { src: "/v2/3d/envelope.webp", width: 260, height: 240 },
-  focusBrand: { src: "/v2/3d/focus-brand.webp", width: 64, height: 67 },
-  focusBranch: { src: "/v2/3d/focus-branch.webp", width: 64, height: 73 },
-  focusProduct: { src: "/v2/3d/focus-product.webp", width: 64, height: 82 },
+  kedaiOpen: { src: "/v2/3d/kedai-open.webp", width: 390, height: 229 },
+  /** Step 3 cover and landing hero: the busy clinic with AI chat bubbles. */
+  kedaiBusy: { src: "/v2/3d/kedai-busy.webp", width: 390, height: 262 },
+  magnifier: { src: "/v2/3d/magnifier.webp", width: 122, height: 117 },
+  phoneChat: { src: "/v2/3d/phone-chat.webp", width: 141, height: 314 },
+  website: { src: "/v2/3d/website.webp", width: 300, height: 216 },
+  form: { src: "/v2/3d/form.webp", width: 64, height: 78 },
+  magnifierCheck: { src: "/v2/3d/magnifier-check.webp", width: 92, height: 64 },
+  envelope: { src: "/v2/3d/envelope.webp", width: 153, height: 183 },
+  /* The three J11 option pictures keep Figma's clear space (untrimmed), so
+     the card's 64 x 64 contain box shows them at Figma's size. */
+  focusBrand: { src: "/v2/3d/focus-brand.webp", width: 62, height: 64 },
+  focusBranch: { src: "/v2/3d/focus-branch.webp", width: 57, height: 64 },
+  focusProduct: { src: "/v2/3d/focus-product.webp", width: 51, height: 64 },
 } as const;
 
 export type ArtName = keyof typeof ART;

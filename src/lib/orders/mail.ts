@@ -109,33 +109,33 @@ export function readyEmail(input: {
     // No pictures without a site address; the words carry the email.
   }
   const href = escapeHtml(input.link);
-  const muted = `margin:0;font-family:${EMAIL_FONT};font-size:13px;line-height:19px;color:#57534e;`;
+  const muted = `margin:0;font-family:${EMAIL_FONT};font-size:13px;line-height:19px;color:#52516a;`;
   const html = `<!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Laporan Anda sudah siap</title></head>
-<body style="margin:0;padding:0;background:#fafaf9;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;"><tr><td align="center" style="padding:16px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e7e5e4;border-radius:20px;">
+<body style="margin:0;padding:0;background:#f8f8fb;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f8fb;"><tr><td align="center" style="padding:16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e7e6ee;border-radius:20px;">
 <tr><td style="padding:24px 24px 0;">${
     origin
       ? `<img src="${escapeHtml(origin)}/v2/email/nuave-logo.png" width="79" height="22" alt="Nuave" style="display:block;border:0;">`
-      : `<p style="margin:0;font-family:${EMAIL_FONT};font-size:18px;font-weight:600;color:#1c1917;">Nuave</p>`
+      : `<p style="margin:0;font-family:${EMAIL_FONT};font-size:18px;font-weight:600;color:#16161d;">Nuave</p>`
   }</td></tr>
 ${
   origin
-    ? `<tr><td style="padding:20px 24px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f1ea;border-radius:16px;"><tr><td align="center" style="padding:6px;"><img src="${escapeHtml(origin)}/v2/email/kedai-busy.jpg" width="220" height="156" alt="" style="display:block;border:0;"></td></tr></table></td></tr>`
+    ? `<tr><td style="padding:20px 24px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:16px;"><tr><td align="center" style="padding:6px;"><img src="${escapeHtml(origin)}/v2/email/kedai-busy.jpg" width="204" height="137" alt="" style="display:block;border:0;"></td></tr></table></td></tr>`
     : ""
 }
-<tr><td style="padding:22px 24px 0;"><h1 style="margin:0;font-family:${EMAIL_FONT};font-size:24px;line-height:30px;font-weight:600;color:#1c1917;">Laporan Anda sudah siap</h1>
-<p style="margin:10px 0 0;font-family:${EMAIL_FONT};font-size:16px;line-height:24px;color:#57534e;">${escapeHtml(about)}</p></td></tr>
-<tr><td style="padding:22px 24px 0;"><a href="${href}" style="display:block;background:#d4420b;border-radius:14px;padding:17px 24px;font-family:${EMAIL_FONT};font-size:18px;line-height:22px;font-weight:600;color:#ffffff;text-align:center;text-decoration:none;">Buka laporan</a>
-<p style="${muted}margin-top:12px;text-align:center;color:#78716c;">Di halaman laporan, pilih Download PDF untuk menyimpan versi PDF.</p></td></tr>
-<tr><td style="padding:20px 24px 0;"><div style="height:1px;background:#e7e5e4;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
+<tr><td style="padding:22px 24px 0;"><h1 style="margin:0;font-family:${EMAIL_FONT};font-size:24px;line-height:30px;font-weight:600;color:#16161d;">Laporan Anda sudah siap</h1>
+<p style="margin:10px 0 0;font-family:${EMAIL_FONT};font-size:16px;line-height:24px;color:#52516a;">${escapeHtml(about)}</p></td></tr>
+<tr><td style="padding:22px 24px 0;"><a href="${href}" style="display:block;background:#4129e0;border-radius:14px;padding:17px 24px;font-family:${EMAIL_FONT};font-size:18px;line-height:22px;font-weight:600;color:#ffffff;text-align:center;text-decoration:none;">Buka laporan</a>
+<p style="${muted}margin-top:12px;text-align:center;color:#6b6a85;">Di halaman laporan, pilih Download PDF untuk menyimpan versi PDF.</p></td></tr>
+<tr><td style="padding:20px 24px 0;"><div style="height:1px;background:#e7e6ee;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
 <tr><td style="padding:16px 24px 0;"><p style="${muted}">Link ini pribadi: siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan email ini. Link berlaku 12 bulan.</p>
 <p style="${muted}margin-top:10px;">Laporan ini merekam jawaban model AI untuk 10 pertanyaan pada satu waktu. Jawaban dapat berubah.</p></td></tr>
-<tr><td style="padding:16px 24px 0;"><div style="height:1px;background:#e7e5e4;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
-<tr><td style="padding:16px 24px 24px;"><p style="${muted}color:#78716c;">Ada masalah dengan laporan? Balas email ini atau tulis ke <a href="mailto:${SUPPORT_EMAIL}" style="color:#1c1917;">${SUPPORT_EMAIL}</a>.</p>
-<p style="margin:10px 0 0;font-family:ui-monospace, Menlo, Consolas, monospace;font-size:12px;line-height:16px;color:#78716c;">No. pesanan ${escapeHtml(input.orderNumber)}</p>
-<p style="${muted}margin-top:14px;font-size:12px;color:#78716c;">Jika tombol tidak bisa dibuka, salin link ini: <span style="word-break:break-all;">${href}</span></p></td></tr>
+<tr><td style="padding:16px 24px 0;"><div style="height:1px;background:#e7e6ee;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
+<tr><td style="padding:16px 24px 24px;"><p style="${muted}color:#6b6a85;">Ada masalah dengan laporan? Balas email ini atau tulis ke <a href="mailto:${SUPPORT_EMAIL}" style="color:#16161d;">${SUPPORT_EMAIL}</a>.</p>
+<p style="margin:10px 0 0;font-family:ui-monospace, Menlo, Consolas, monospace;font-size:12px;line-height:16px;color:#6b6a85;">No. pesanan ${escapeHtml(input.orderNumber)}</p>
+<p style="${muted}margin-top:14px;font-size:12px;color:#6b6a85;">Jika tombol tidak bisa dibuka, salin link ini: <span style="word-break:break-all;">${href}</span></p></td></tr>
 </table></td></tr></table></body></html>`;
   return {
     subject: `AI Visibility Report untuk ${input.businessName} sudah siap`,

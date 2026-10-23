@@ -832,16 +832,19 @@ const THREE_STEPS = [
     title: "Konfirmasi dan bayar",
     body: "Cek bisnis Anda, lalu bayar Rp99.000 sekali. Tanpa langganan.",
     art: "website" as const,
+    artWidth: 71,
   },
   {
     title: "Ceritakan bisnis Anda",
     body: "Sebagian besar sudah kami isi dari website. Anda cukup cek dan ketuk.",
     art: "form" as const,
+    artWidth: 48,
   },
   {
     title: "Periksa 10 pertanyaan",
     body: "Lalu jalankan audit. Laporan dikirim ke email Anda.",
     art: "magnifierCheck" as const,
+    artWidth: 86,
   },
 ];
 
@@ -880,7 +883,11 @@ export function StepsScreen({
               </h2>
               <p className="type-copy-sm m-0 text-ink-600">{step.body}</p>
             </div>
-            <Art name={step.art} width={92} className="mt-0.5 h-16 w-[92px]" />
+            {/* The size Figma shows inside the 92 x 64 slot (its images
+                carry clear space around the object; ours are trimmed). */}
+            <span className="mt-0.5 flex h-16 w-[92px] shrink-0 items-center justify-center">
+              <Art name={step.art} width={step.artWidth} />
+            </span>
           </motion.li>
         ))}
       </ol>

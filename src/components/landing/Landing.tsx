@@ -95,23 +95,29 @@ function ResumeBanner() {
   );
 }
 
-const STEPS: { title: string; body: string; art: ArtName }[] = [
-  {
-    title: "Cek bisnis Anda",
-    body: "Masukkan website. Kami tampilkan bisnis yang kami temukan. Gratis.",
-    art: "website",
-  },
-  {
-    title: "Ceritakan bisnis Anda",
-    body: "Setelah bayar Rp99.000, periksa informasi yang sudah kami isi.",
-    art: "form",
-  },
-  {
-    title: "Jalankan audit",
-    body: "Periksa 10 pertanyaan. Laporan dikirim ke email Anda.",
-    art: "magnifierCheck",
-  },
-];
+/** Each step's miniature at the size Figma shows it inside its 92 x 64 slot
+ * (the Figma images carry clear space around the object; ours are trimmed). */
+const STEPS: { title: string; body: string; art: ArtName; artWidth: number }[] =
+  [
+    {
+      title: "Cek bisnis Anda",
+      body: "Masukkan website. Kami tampilkan bisnis yang kami temukan. Gratis.",
+      art: "website",
+      artWidth: 71,
+    },
+    {
+      title: "Ceritakan bisnis Anda",
+      body: "Setelah bayar Rp99.000, periksa informasi yang sudah kami isi.",
+      art: "form",
+      artWidth: 48,
+    },
+    {
+      title: "Jalankan audit",
+      body: "Periksa 10 pertanyaan. Laporan dikirim ke email Anda.",
+      art: "magnifierCheck",
+      artWidth: 86,
+    },
+  ];
 
 const RECEIVES = [
   { Icon: IconChartBar, text: "Skor kemunculan, misalnya 4 dari 10" },
@@ -338,7 +344,7 @@ export default function Landing() {
               </h2>
             </Reveal>
             <Reveal delay={0.08}>
-              <Art name="phoneChat" width={196} />
+              <Art name="phoneChat" width={130} />
             </Reveal>
             <p className="type-caption m-0 text-ink-600">
               Contoh tampilan. Nama bisnis fiktif.
@@ -374,7 +380,9 @@ export default function Landing() {
                         {step.body}
                       </span>
                     </span>
-                    <Art name={step.art} width={92} className="h-16 w-[92px]" />
+                    <span className="flex h-16 w-[92px] shrink-0 items-center justify-center">
+                      <Art name={step.art} width={step.artWidth} />
+                    </span>
                   </Reveal>
                 </li>
               ))}

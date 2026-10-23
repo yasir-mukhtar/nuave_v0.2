@@ -27,6 +27,9 @@
   payment and the audit method are unchanged, and desktop shows the same
   phone column until its own design is ready
   ([decision](./DECISION_LOG.md#2026-10-21--adopt-the-v2-mobile-journey-design-figma-j01j35)).
+  Since 2026-10-23 it uses the violet look of Figma page 11: same screens and
+  words, violet accent, cool greys, clinic miniatures
+  ([decision](./DECISION_LOG.md#2026-10-23--switch-the-v2-journey-to-the-violet-design-figma-page-11)).
 - **Specs:** [Spec 013](../specs/013-airbnb-intake-journey/SPEC.md) (Stage 1
   intake) is **Verified with documented evidence exceptions**; J2–J7/JQ and
   PR121 merged, the latter deployed. Alfred accepted JZ under delegated founder

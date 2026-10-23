@@ -19,7 +19,7 @@ export type ReadingFindings = {
 };
 
 /**
- * J09, the one full-orange moment: payment is confirmed, the website is being
+ * J09, the one full-violet moment: payment is confirmed, the website is being
  * read under the magnifier, and what Nuave finds drops in as chips before the
  * journey moves on by itself. Body text sits on white for contrast.
  */
