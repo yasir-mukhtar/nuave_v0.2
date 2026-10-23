@@ -115,7 +115,7 @@ const STEPS: { title: string; body: string; art: ArtName; artWidth: number }[] =
       title: "Jalankan audit",
       body: "Periksa 10 pertanyaan. Laporan dikirim ke email Anda.",
       art: "magnifierCheck",
-      artWidth: 80,
+      artWidth: 86,
     },
   ];
 

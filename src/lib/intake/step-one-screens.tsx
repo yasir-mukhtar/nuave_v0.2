@@ -844,7 +844,7 @@ const THREE_STEPS = [
     title: "Periksa 10 pertanyaan",
     body: "Lalu jalankan audit. Laporan dikirim ke email Anda.",
     art: "magnifierCheck" as const,
-    artWidth: 80,
+    artWidth: 86,
   },
 ];
 

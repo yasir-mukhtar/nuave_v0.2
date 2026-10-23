@@ -59,8 +59,9 @@ values are the "Nuave v2" collection's Violet mode.
   at about twice their largest size (`Art`); the kedai (now a small clinic)
   is the same building made busier across the steps (bare → open → busy).
   The files are trimmed to the object, while Figma's carry clear space, so
-  a call site sizes the picture to what Figma shows, not to the frame. Email uses PNG/JPEG copies in
-  `public/v2/email/`.
+  a call site sizes the picture to what Figma shows, not to the frame (the
+  J11 option pictures are the exception: untrimmed, in a 64px box). Email
+  uses PNG/JPEG copies in `public/v2/email/`.
 - **Pickers.** Option rows (single choice with a 64px miniature), chips
   (multi or single), 2 × 2 tiles, tick rows (`CheckRow`), and "+ Lainnya"
   (`ChipAdder`), all on Base UI radio, toggle and checkbox semantics.

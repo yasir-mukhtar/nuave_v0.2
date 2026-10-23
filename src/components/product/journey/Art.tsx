@@ -24,9 +24,11 @@ export const ART = {
   form: { src: "/v2/3d/form.webp", width: 64, height: 78 },
   magnifierCheck: { src: "/v2/3d/magnifier-check.webp", width: 92, height: 64 },
   envelope: { src: "/v2/3d/envelope.webp", width: 153, height: 183 },
-  focusBrand: { src: "/v2/3d/focus-brand.webp", width: 64, height: 66 },
-  focusBranch: { src: "/v2/3d/focus-branch.webp", width: 64, height: 70 },
-  focusProduct: { src: "/v2/3d/focus-product.webp", width: 64, height: 63 },
+  /* The three J11 option pictures keep Figma's clear space (untrimmed), so
+     the card's 64 x 64 contain box shows them at Figma's size. */
+  focusBrand: { src: "/v2/3d/focus-brand.webp", width: 62, height: 64 },
+  focusBranch: { src: "/v2/3d/focus-branch.webp", width: 57, height: 64 },
+  focusProduct: { src: "/v2/3d/focus-product.webp", width: 51, height: 64 },
 } as const;
 
 export type ArtName = keyof typeof ART;
