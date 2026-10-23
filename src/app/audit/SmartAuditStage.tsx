@@ -285,7 +285,7 @@ export default function SmartAuditStage({
                 </span>
                 <Art
                   name="envelope"
-                  width={220}
+                  width={153}
                   enter
                   priority
                   className="my-1"
@@ -393,7 +393,7 @@ export default function SmartAuditStage({
         className="grid justify-items-center pt-1 text-center"
         data-order-stage={status?.state ?? "loading"}
       >
-        <Art name="phoneChat" width={92} enter priority />
+        <Art name="phoneChat" width={66} enter priority />
         <h1
           ref={headingRef}
           tabIndex={-1}

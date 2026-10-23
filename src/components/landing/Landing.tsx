@@ -338,7 +338,7 @@ export default function Landing() {
               </h2>
             </Reveal>
             <Reveal delay={0.08}>
-              <Art name="phoneChat" width={196} />
+              <Art name="phoneChat" width={141} />
             </Reveal>
             <p className="type-caption m-0 text-ink-600">
               Contoh tampilan. Nama bisnis fiktif.
