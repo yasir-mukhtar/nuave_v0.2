@@ -24,27 +24,30 @@ and journey contracts remain governed by their canonical documents in
 - **Tabler Icons** is the canonical generic icon library.
 
 The visual baseline is the **v2 kit** in the founder's Figma file
-(`eXCVryQzgx93oaYTR9NYGA`, mobile journey J01–J35): a white canvas, warm
-stone-and-ink neutrals, quiet hairlines, two elevations, and **one ember
-accent**. The historical Nuave purple skin is retired from the journey.
+(`eXCVryQzgx93oaYTR9NYGA`), in its **violet** version since 2026-10-23
+(page 11, mobile journey J01–J35): a white canvas, cool ink neutrals, quiet
+hairlines, two elevations, and **one violet accent**. The orange version
+(page 09) stays in Figma but is no longer used. Figma keeps the kit's
+variable names, so the accent ramp is still called `ember` in code; its
+values are the "Nuave v2" collection's Violet mode.
 
 ### v2 visual system
 
 - **Colour.** Ink `--ink-900…400`, lines `--line-300/200`, stone surfaces
-  `--stone-100/50`, cream `--cream` for the two calm moments (the "how
-  customers ask" band and the report-ready page). Ember `--ember-50…900`
-  appears at most once per screen: the commit buttons (`--commit`,
-  `--ember-650` #d4420b: pay, run the audit, open the report; the Figma
-  ember-600 darkened just enough for white labels to reach WCAG AA), a
-  brand accent word (ember-500) and small orange text (ember-700, for
-  contrast). Small grey text is ink-500 or darker on white and stone-50,
-  and ink-600 on stone-100 and cream, where ink-500 reaches only 4.4:1 and
-  4.3:1 (ink-400 is for borders, icons and disabled controls only).
+  `--stone-100/50`, cream `--cream` (a pale lavender, #f5f3ff) for the two
+  calm moments (the "how customers ask" band and the report-ready page).
+  The violet accent `--ember-50…900` appears at most once per screen: the
+  commit buttons (`--commit`, `--ember-650` = ember-600 #4129e0: pay, run
+  the audit, open the report; white labels read 8.0:1), a brand accent word
+  (ember-500) and small violet text (ember-700, for contrast). Small grey
+  text is ink-500 or darker on white and stone-50, and ink-600 on stone-100
+  and cream, where ink-500 reaches only 4.6:1 and 4.8:1, too close to the
+  4.5:1 line (ink-400 is for borders, icons and disabled controls only).
   Selection is ink, never ember: a 2px ink edge on stone-50 (`--edge-ink`).
 - **Shape.** Chips 22px pill, buttons and inputs 14px, tiles 16px, cards
   20–24px, sheets 28px (`--radius-token-*`). Two shadows on the white
-  canvas: `--elevation-card` and `--elevation-float`. The ember paid
-  reading (J09) uses its warm pair, `--elevation-ember-pill` and
+  canvas: `--elevation-card` and `--elevation-float`. The full-violet paid
+  reading (J09) uses its violet-tinted pair, `--elevation-ember-pill` and
   `--elevation-ember-card`, and `--glow-reading`; the report beads use
   `--bead-ember` / `--bead-ink` and their shadows. Components name these
   tokens; they do not write colours or shadows inline.
@@ -53,8 +56,10 @@ accent**. The historical Nuave purple skin is retired from the journey.
   the three-step progress on its top edge, "Kembali" left and the one forward
   action right. Desktop shows the same column until its own design exists.
 - **Illustration.** The custom 3D miniatures live in `public/v2/3d/` as WebP
-  at twice their largest size (`Art`); the kedai is the same shop built up
-  across the steps (bare → open → busy). Email uses PNG/JPEG copies in
+  at about twice their largest size (`Art`); the kedai (now a small clinic)
+  is the same building made busier across the steps (bare → open → busy).
+  The files are trimmed to the object, while Figma's carry clear space, so
+  a call site sizes the picture to what Figma shows, not to the frame. Email uses PNG/JPEG copies in
   `public/v2/email/`.
 - **Pickers.** Option rows (single choice with a 64px miniature), chips
   (multi or single), 2 × 2 tiles, tick rows (`CheckRow`), and "+ Lainnya"

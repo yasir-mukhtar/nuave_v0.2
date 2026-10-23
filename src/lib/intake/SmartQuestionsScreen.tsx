@@ -320,7 +320,7 @@ function StartSheet({
       description="Setelah dimulai, informasi bisnis dan pertanyaan tidak dapat diubah."
     >
       <div className="grid justify-items-center gap-3 pt-1 text-center">
-        <Art name="phoneChat" width={74} enter className="mb-1" />
+        <Art name="phoneChat" width={65} enter className="mb-1" />
         <p className="type-heading-md m-0 text-ink-900" aria-hidden="true">
           Mulai audit sekarang?
         </p>

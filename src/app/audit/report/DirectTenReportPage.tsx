@@ -143,7 +143,7 @@ export function DirectTenReportPage({
             </h1>
             <Art
               name="kedaiBusy"
-              width={96}
+              width={89}
               className="col-start-2 row-span-2 row-start-1"
             />
             <p className="type-copy-sm col-span-2 row-start-3 m-0 mt-1.5 text-ink-600">

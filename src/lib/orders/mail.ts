@@ -122,7 +122,7 @@ export function readyEmail(input: {
   }</td></tr>
 ${
   origin
-    ? `<tr><td style="padding:20px 24px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:16px;"><tr><td align="center" style="padding:6px;"><img src="${escapeHtml(origin)}/v2/email/kedai-busy.jpg" width="220" height="148" alt="" style="display:block;border:0;"></td></tr></table></td></tr>`
+    ? `<tr><td style="padding:20px 24px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:16px;"><tr><td align="center" style="padding:6px;"><img src="${escapeHtml(origin)}/v2/email/kedai-busy.jpg" width="204" height="137" alt="" style="display:block;border:0;"></td></tr></table></td></tr>`
     : ""
 }
 <tr><td style="padding:22px 24px 0;"><h1 style="margin:0;font-family:${EMAIL_FONT};font-size:24px;line-height:30px;font-weight:600;color:#16161d;">Laporan Anda sudah siap</h1>

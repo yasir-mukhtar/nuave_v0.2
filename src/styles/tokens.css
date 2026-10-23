@@ -4,10 +4,10 @@
      names, so the accent ramp is still called "ember" here: ember-* is
      violet. It appears at most once per screen outside the 3D art: the
      commit button, an accent word or "you" in the data. Small violet text
-     uses ember-700. Steps marked "derived" are not Figma variables; they
-     fill the ramp between the ones the design uses. */
+     uses ember-700. Values are the "Nuave v2" collection's Violet mode;
+     ink-800 is the one step Figma does not define. */
   --ink-900: #16161d;
-  --ink-800: #26252f; /* derived */
+  --ink-800: #26252f; /* not in Figma: between ink-900 and ink-700 */
   --ink-700: #3b3a4a;
   --ink-600: #52516a; /* 7.6:1 on #ffffff */
   --ink-500: #6b6a85; /* 5.2:1 on #ffffff */
@@ -19,17 +19,17 @@
   --cream: #f5f3ff; /* Figma surface/cream: the pale violet band */
   --ember-50: #f3f0ff;
   --ember-100: #e5e0ff;
-  --ember-200: #cbc2ff; /* derived */
-  --ember-300: #a898ff; /* derived */
-  --ember-400: #7f6bff; /* derived */
+  --ember-200: #ccc3ff;
+  --ember-300: #a99bff;
+  --ember-400: #7f6cfe;
   --ember-500: #533afd;
   --ember-600: #4129e0;
   /* The commit buttons' fill. White labels read 8.0:1 on ember-600, so it
      no longer needs the darker step the orange palette had. */
   --ember-650: var(--ember-600);
   --ember-700: #3620b8;
-  --ember-800: #2b1a8f; /* derived */
-  --ember-900: #22166b; /* derived */
+  --ember-800: #2a1a8f;
+  --ember-900: #1b1464;
 
   /* ── Colors: Canvas & Surfaces ── */
   --bg-page: #ffffff;
