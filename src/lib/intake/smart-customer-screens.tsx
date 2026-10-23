@@ -235,7 +235,7 @@ export function CustomerFields({
         <ChipAdder
           addLabel="Tambah lainnya"
           fieldLabel="Pelanggan lain"
-          placeholder="Contoh: pelajar, ibu rumah tangga"
+          placeholder="Contoh: ibu hamil, lansia"
           maxLength={ITEM_MAX}
           onAdd={(items) => {
             const ok = list.add(items, chips);
@@ -345,7 +345,7 @@ function NeedsList({ prepared, selection, onChange, onRefuse }: FieldsProps) {
           addLabel="Lainnya"
           addContext="kebutuhan"
           fieldLabel="Kebutuhan pelanggan lain"
-          placeholder="Contoh: tempat untuk rapat"
+          placeholder="Contoh: periksa tanpa antre lama"
           maxLength={ITEM_MAX}
           onAdd={(items) => {
             const ok = list.add(items, chips);
@@ -665,24 +665,24 @@ export function SmartCompetitorsScreen({
 /** Openings that help the owner start a sentence (J23's keyboard bar). */
 const STARTER_PHRASES = [
   "buka sampai malam",
-  "bahan lokal",
+  "dokter spesialis",
   "harga terjangkau",
-  "bisa pesan antar",
+  "bisa daftar online",
   "berdiri sejak",
 ];
 
 const EXAMPLES = [
   {
-    text: "Servis selesai dalam 1 jam, bisa ditunggu sambil ngopi.",
-    kind: "Bengkel motor",
+    text: "Dokter gigi praktik sampai jam 9 malam, daftar cukup lewat WhatsApp.",
+    kind: "Klinik gigi",
   },
   {
-    text: "Antar jemput gratis di Cimahi, selesai dalam 6 jam.",
-    kind: "Laundry",
+    text: "Perawatan wajah langsung oleh dokter, bukan terapis.",
+    kind: "Klinik kecantikan",
   },
   {
-    text: "Satu-satunya kedai di Dago yang buka sampai jam 2 pagi.",
-    kind: "Kedai kopi",
+    text: "Satu-satunya klinik anak di Dago yang buka hari Minggu.",
+    kind: "Klinik anak",
   },
 ];
 
@@ -848,8 +848,8 @@ export function DifferentiatorFields({
                 aria-hidden="true"
               />
               <span>
-                Contoh: “Satu-satunya kedai di Dago yang buka sampai jam 2
-                pagi.”
+                Contoh: “Satu-satunya klinik anak di Dago yang buka hari
+                Minggu.”
               </span>
             </motion.p>
           ) : null}

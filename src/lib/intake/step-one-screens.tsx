@@ -73,7 +73,7 @@ export function initialsOf(name: string): string {
   return letters.join("") || "?";
 }
 
-/** "kedai-fiksi.example" from a canonical URL, for display only. */
+/** "klinik-fiksi.example" from a canonical URL, for display only. */
 export function displayHost(url: string): string {
   try {
     const parsed = new URL(url);
@@ -603,7 +603,7 @@ export function BusinessCheckScreen({
               <p className="type-label m-0 text-ink-500">
                 Sambil menunggu: begini pelanggan bertanya ke AI
               </p>
-              <CustomerBubble text="Kedai kopi enak dekat kantor di Dago apa ya?" />
+              <CustomerBubble text="Klinik gigi dekat kantor di Dago yang buka sore apa ya?" />
               <p className="type-copy-sm m-0 text-ink-600">
                 Laporan Anda menunjukkan apakah bisnis Anda ikut disebut, dan
                 siapa saja yang disebut.
