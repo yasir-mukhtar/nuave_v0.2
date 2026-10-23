@@ -174,7 +174,7 @@ function ExampleReportSheet({
             <p className="type-label-sm-strong m-0 text-ember-700">
               AI Visibility Report
             </p>
-            <p className="type-heading-md m-0 text-ink-900">Kedai Fiksi</p>
+            <p className="type-heading-md m-0 text-ink-900">Klinik Fiksi</p>
             <p className="type-copy-sm m-0 text-ink-600">
               Seluruh brand · Bandung
             </p>
@@ -201,14 +201,14 @@ function ExampleReportSheet({
             Pertanyaan 2
           </p>
           <p className="type-title-sm m-0 text-ink-900">
-            Cariin kedai kopi dekat kantor di Dago yang enak buat kerja.
+            Cariin klinik gigi di Dago yang buka sore, setelah jam kantor.
           </p>
           <p className="type-copy-sm m-0 text-ink-700">
             “…Ada juga{" "}
             <mark className="bg-transparent font-semibold text-ember-700 underline">
-              Kedai Fiksi
+              Klinik Fiksi
             </mark>{" "}
-            di Jalan Dago, tetapi informasi jam buka dan fasilitas kerjanya
+            di Jalan Dago, tetapi informasi jadwal dokter dan biaya perawatannya
             belum banyak ditemukan.…”
           </p>
         </div>
