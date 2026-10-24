@@ -1,6 +1,6 @@
 # Clinic landing page: content strategy
 
-> Status: draft for founder review (not approved copy, not live)
+> Status: v1, kept as history. Yasir found it too heavy; the proposed direction is now [`STRATEGY-v2.md`](./STRATEGY-v2.md) (light). Not approved copy, not live.
 > Date: 24 October 2026
 > Made by: orchestrator, with a copywriter, a growth marketer and a designer (three AI agents)
 > Read with: [`COPY.md`](./COPY.md) (every word on the page), [`GROWTH.md`](./GROWTH.md) (funnel, metrics, tests), [`LOFI.md`](./LOFI.md) (layout and visuals), [`BRIEF.md`](./BRIEF.md) (the original brief)
