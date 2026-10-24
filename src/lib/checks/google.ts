@@ -138,7 +138,11 @@ export function googleBusinesses(
   ownNames: readonly string[],
 ): string[] {
   const haystack = ` ${comparable(visibleAnswerText(summary))} `;
-  const own = new Set(ownNames.map(comparable));
+  const own = ownNames.map(comparable).filter(Boolean);
+  // N-21: a branch of the business ("CS Dental Surabaya") is not another
+  // business: any name holding an own name as whole words is skipped.
+  const isOwn = (key: string) =>
+    own.some((name) => ` ${key} `.includes(` ${name} `));
   const names: string[] = [];
   for (const item of list(result.items)) {
     const name =
@@ -150,7 +154,7 @@ export function googleBusinesses(
     const key = comparable(name);
     if (
       key &&
-      !own.has(key) &&
+      !isOwn(key) &&
       haystack.includes(` ${key} `) &&
       !names.some((existing) => comparable(existing) === key)
     )

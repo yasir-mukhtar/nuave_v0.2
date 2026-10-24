@@ -205,6 +205,8 @@ describe("a two-source order, synthetic, whole path (R-12..R-20, AC-02, AC-06, A
     });
     expect(two.search_data_available).toBe(true);
     expect(two.other_businesses.chatgpt).toEqual(["Klinik Sintesa Contoh"]);
+    // N-19: Google's summaries name the other business, so its list does too.
+    expect(two.other_businesses.google).toEqual(["Klinik Sintesa Contoh"]);
 
     // The model's details keep the failed record (R-20); the report measures
     // count only completed answers.

@@ -130,6 +130,7 @@ export function syntheticCheckSend(input: {
                 },
               ],
         },
+        { type: "local_pack", title: OTHER_BUSINESS },
       ],
     },
   });

@@ -300,6 +300,10 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     );
     const others = container.querySelector("[data-other-businesses]")!;
     expect(others).toHaveTextContent("Kopi Lain");
+    // N-19: Google showed summaries, so an empty list never reads "Tidak ada."
+    expect(others).toHaveTextContent(
+      "Tidak ada nama bisnis lain yang kami kenali.",
+    );
     const topics = container.querySelector("[data-topics-missing]")!;
     expect(topics).toHaveTextContent("Topik yang belum menyebut Anda");
     expect(topics).toHaveTextContent("topik 2");

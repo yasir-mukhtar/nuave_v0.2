@@ -241,7 +241,14 @@ export function buildTwoSourceReport(input: {
   orderNumber: string | null;
 }): TwoSourceReport {
   const { setup } = input;
-  const ownNames = new Set(setup.names.map(normalized));
+  const own = setup.names.map(normalized).filter(Boolean);
+  // N-21: a branch of the business ("CS Dental Surabaya") is not another
+  // business: any name holding an own name as whole words is skipped.
+  const isOwn = (name: string) => {
+    const key = ` ${normalized(name)} `;
+    return own.some((ownName) => key.includes(` ${ownName} `));
+  };
+  const googleTexts: string[] = [];
   const chatgptBusinesses: string[] = [];
   const googleBusinesses: string[] = [];
   const times: string[] = [];
@@ -260,16 +267,18 @@ export function buildTwoSourceReport(input: {
     if (answered && facts)
       for (const name of facts.businesses)
         if (
-          !ownNames.has(normalized(name)) &&
+          !isOwn(name) &&
           !chatgptBusinesses.includes(name)
         )
           chatgptBusinesses.push(name);
     const googleDone = row?.g_status === "done" && google !== null;
     if (googleDone) times.push(google.observed_at);
-    if (googleDone && google.outcome === "summary")
+    if (googleDone && google.outcome === "summary") {
+      googleTexts.push(` ${normalized(google.text)} `);
       for (const name of google.businesses ?? [])
-        if (!ownNames.has(normalized(name)) && !googleBusinesses.includes(name))
+        if (!isOwn(name) && !googleBusinesses.includes(name))
           googleBusinesses.push(name);
+    }
     const detail = input.report.details.find(
       (item) => item.prompt_id === prompt.prompt_id,
     );
@@ -359,7 +368,16 @@ export function buildTwoSourceReport(input: {
     topics_missing: topicsMissing(questions),
     other_businesses: {
       chatgpt: chatgptBusinesses.slice(0, 10),
-      google: googleBusinesses.slice(0, 10),
+      // N-19: Google's own page names, plus any business ChatGPT named that
+      // the AI Overview text also names.
+      google: [
+        ...googleBusinesses,
+        ...chatgptBusinesses.filter(
+          (name) =>
+            !googleBusinesses.includes(name) &&
+            googleTexts.some((text) => text.includes(` ${normalized(name)} `)),
+        ),
+      ].slice(0, 10),
     },
   };
 }

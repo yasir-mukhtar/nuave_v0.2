@@ -406,7 +406,13 @@ export function OtherBusinesses({ two }: { two: TwoSourceReport }) {
           <p>
             <strong>{source}</strong>
           </p>
-          <p>{names.length ? names.join(", ") : "Tidak ada."}</p>
+          <p>
+            {names.length
+              ? names.join(", ")
+              : source === "Google AI Overview" && two.counts.google.summaries
+                ? "Tidak ada nama bisnis lain yang kami kenali."
+                : "Tidak ada."}
+          </p>
         </div>
       ))}
     </div>

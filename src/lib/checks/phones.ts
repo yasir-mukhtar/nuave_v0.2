@@ -33,6 +33,10 @@ export function containsPhoneNumber(text: string): boolean {
   return [...text.matchAll(CANDIDATE)].some(([match]) => looksLikePhone(match));
 }
 
+/** N-20: in a link's path only an Indonesian mobile number counts (08… or
+ * 628…, 10 to 13 digits): article IDs such as kompas.com's "080000565" stay. */
+const MOBILE_IN_PATH = /(?:^|\D)(?:\+?62|0)8\d{8,11}(?!\d)/;
+
 const MESSAGING_HOSTS = /(^|\.)(wa\.me|whatsapp\.com|wa\.link)$/i;
 
 /**
@@ -57,7 +61,7 @@ export function phoneSafeUrl(url: string): string | null {
       return value;
     }
   };
-  if (containsPhoneNumber(decoded(parsed.pathname))) return null;
+  if (MOBILE_IN_PATH.test(decoded(parsed.pathname))) return null;
   if (
     containsPhoneNumber(decoded(parsed.search)) ||
     containsPhoneNumber(decoded(parsed.hash))

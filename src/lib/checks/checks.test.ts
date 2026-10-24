@@ -428,6 +428,16 @@ describe("phone numbers in cited links (N-5)", () => {
       "https://klinik.example/harga?utm_source=openai",
     );
   });
+
+  it("N-20: keeps article links whose digit runs are not Indonesian mobile numbers", () => {
+    const kompas =
+      "https://www.kompas.com/read/2023/05/12/080000565/tips-memilih-klinik";
+    expect(phoneSafeUrl(kompas)).toBe(kompas);
+    expect(phoneSafeUrl("https://berita.example/2024/021234567/klinik")).toBe(
+      "https://berita.example/2024/021234567/klinik",
+    );
+    expect(phoneSafeUrl("https://klinik.example/wa/6281234567890")).toBeNull();
+  });
 });
 
 describe("Google's own business list (N-6)", () => {
@@ -451,5 +461,21 @@ describe("Google's own business list (N-6)", () => {
         ["Kopi Nuave"],
       ),
     ).toEqual(["Klinik Gigi Senyum", "Dental Prima"]);
+  });
+
+  it("N-21: a branch of the business is not listed as another business", () => {
+    const result = {
+      items: [
+        { type: "local_pack", title: "CS Dental Surabaya" },
+        { type: "local_pack", title: "Dental Prima" },
+      ],
+    };
+    expect(
+      googleBusinesses(
+        result,
+        "CS Dental Surabaya dan Dental Prima sering disebut.",
+        ["CS Dental"],
+      ),
+    ).toEqual(["Dental Prima"]);
   });
 });
