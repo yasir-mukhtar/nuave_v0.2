@@ -2,7 +2,8 @@
 
 > Result: **Fail** (build verification, round 1); **Fail** (round 2, at `1b50615`: see
 > [Round 2](#round-2-build-verification-at-1b50615)); **Fail** (round 3, at `727843a`: see
-> [Round 3](#round-3-build-verification-at-727843a))
+> [Round 3](#round-3-build-verification-at-727843a)); **Pass with notes** (round 4, at `7e9c0f5`:
+> see [Round 4](#round-4-build-verification-at-7e9c0f5))
 > Reviewer: independent verifier agent (Claude Code, fresh context; did not build the change)
 > Date: 2026-10-24
 > Spec version or commit: `SPEC.md` revision 8 at `65eb165`, plus the PR 2 worker notes added in `16ced38`
@@ -797,3 +798,226 @@ Cheap and recommended in the same pass:
 - N-27: check each "X dari Y" against the code counts.
 
 N-17 and N-28 need the founder.
+
+---
+
+## Round 4 (build verification at `7e9c0f5`)
+
+> Result: **Pass with notes**
+> Reviewer: independent verifier agent (Claude Code, fresh context; did not build the change or the
+> fixes)
+> Date: 2026-10-24
+> Spec version: `SPEC.md` revision 8, unchanged since round 3
+> Implementation: `7e9c0f5` on `claude/laughing-fermi-prsgqf`, the PR head. The round-3 fixes are
+> `ff21b1b` (B-5, N-26), `bcf5391` (N-25) and `7e9c0f5` (N-24): `git diff bdbcbaf..7e9c0f5`,
+> 7 files.
+
+### Scope reviewed
+
+- The fix diff, read against the spec, `AGENTS.md`, `docs/WORKFLOW.md` and the round-1 to round-3
+  records above.
+- The new tests: `two-source-writing.test.ts` (B-5, N-26), `two-source.test.ts` (B-5 through the
+  runner), `checks.test.ts` (N-25) and `smart-journey.test.tsx` (N-24).
+- The places the fixes could break something else:
+  - the wider source check against true sentences, and whether any of them can fail an order;
+  - the repair sentences, in every layout I could build, and against the cards;
+  - the new prompt line;
+  - the phone rule against article, product and dated links;
+  - the place lock.
+- Environments: this sandbox (Node 22.22.0, Chromium from `/opt/pw-browsers`), synthetic mode,
+  plus offline tests of the real runner with scripted report text. No DataForSEO, OpenAI or
+  Cheaper Inference call was made.
+
+### Round-3 findings: status
+
+| Finding | Status | Evidence |
+|---|---|---|
+| B-5: plain false negations passed the source check | **Fixed**; residual gaps are notes (N-31, N-32) | A sentence that says a source did not name the business ("tidak/belum/bukan (pernah/sama sekali) disebut/disebutkan/muncul/menyebut/menyebutkan/ditemukan") is now flagged when that source named it, unless the sentence holds a limiting word or only that source's true counts (`two-source-report.ts:216-290`). All four round-3 sentences are flagged, and so is round 3's "…tidak disebut di ChatGPT maupun Google AI Overview." (N-27). Through the real runner, each of the four, kept by the writer through its one revision, is replaced by the code sentence, and the order is delivered with `source_sentence_replaced`: for example the conclusion becomes "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan." under the Google card "Bisnis Anda muncul di 3 dari 8 pertanyaan", and the title becomes "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban" (ChatGPT card 3 of 9). A revision that limits the sentence is kept as written. A failing revision call still ends in the code sentence and delivery. The prompt now names plain negations and says how to limit or count them (`openai.ts:725`). Wider set, 48 false sentences (negations, titles, counted, limited, both-source, wrong counts): the head flags 24, round 3 flagged 5, round 2 flagged 22. The 24 it misses are in N-31 and N-32. |
+| B-5: no true sentence may fail an order | **Holds** | 43 true sentences: the head passes 28 and flags 15 (round 3 flagged 1, round 2 flagged 26). All true sentences from rounds 2 and 3 pass, including the real 2026-10-23 Sozo finding with "Di ChatGPT" added. Every flagged true sentence costs one revision; if the writer keeps it, the code sentence replaces it and stays true. Through the runner, three flagged true sentences (a price detail, a contrast across both sources, a sentence with "drg.") were each delivered after one revision. The one way a flagged sentence can still end an order is the existing revision rule (N-35). |
+| N-24: the journey step that passes `locked` | **Fixed** | `smart-journey.test.tsx:5331-5366`: with discovery answering `locked: true`, the order keeps `searchPlaceLocked` and the review shows "Kota sudah terkunci untuk pesanan ini."; with `false`, it does not. In a scratch copy, removing either wiring point (`SmartIntakeJourney.tsx:1716` or `:2475`) makes the first test fail; the unchanged copy passes. |
+| N-25: separated mobile numbers in a link's path | **Mostly fixed** | `phones.ts:39-48`. Of round 3's four links, `…-hubungi-0812-3456-7890-…`, `…/kontak-0812.3456.7890` and `…/kontak/0812%203456%207890` are now dropped. `…/hubungi-62-812-3456-7890` is still kept, and so is `+62 812 3456 7890` in a path. All 15 article, product and dated links in my set are kept (kompas.com, CNN Indonesia, detik, Tokopedia, Shopee, Facebook IDs, "2024-10-24-0800-…"). Query and fragment numbers are still removed. |
+| N-26: rough edges of the repair | **Fixed** | No more "0 dari 0": with no AI Overview anywhere the repair says "di Google AI Overview, Google tidak menampilkan AI Overview untuk pertanyaan yang diuji" (through the runner), which agrees with the card "Google menampilkan AI Overview di 0 dari 10 pertanyaan". A finding that says only "AI Overview" no longer gets "Di ChatGPT:". A replaced clause keeps its ";", starts lowercase after a ";", and a replaced title has no final full stop. New edge: N-33. |
+| N-27: wrong counts | **Partly fixed** | A wrong count inside a negation is flagged ("…tidak disebut di 7 dari 9 jawaban", "(0 dari 9 jawaban)"). Counts in positive sentences are still not checked (N-32). |
+| N-28, N-29, N-17 | Open (founder) | Unchanged; not blocking. |
+| N-30 | Not seen | "material correction invalidates the old questions…" passed in the full browser run (14.1 s). |
+| Older notes | Unchanged | N-4, N-8 (the Depok label), N-9, N-12, N-14, and N-5's numbers written without 0, 62 or +. |
+
+### Acceptance results: changes from round 3
+
+| Criterion | Round 3 | Round 4 | Evidence |
+|---|---|---|---|
+| AC-11 | Pass, with notes | Pass, with notes | The code-built counts, sentences and rows are unchanged. The Report layout requirement that the written conclusion never contradicts the cards is now met for plain negations (B-5); N-31 and N-32 are the residual gaps. |
+| AC-12 | Pass, with note | Pass, with note | The downloaded export at `7e9c0f5` holds no phone-like number, no email address and no raw DataForSEO key, and nine "[nomor telepon dihapus]" markers. N-25's remaining link form is noted below. |
+| AC-16 | Pass | Pass | Run `20261024T093345Z-rk1c`: 6 of 6 the first time, 0 unexpected external requests. The report holds an empty AI Overview (question 3), no AI Overview (question 5) and a failed ChatGPT check (question 7, "Tidak dapat diuji" with "Minta bantuan"). |
+| AC-17 | Pass | Pass | Checkout at `7e9c0f5`: "Diperiksa di ChatGPT dan Google AI Overview", "Total Rp249.000", "Bayar Rp249.000" and the approved promise (`report-link/03-order-summary.aria.yml`). No Rp99.000 in `src/` or the skills. |
+| AC-14 | Not verified | Not verified | The founder's live run. |
+
+All other criteria that passed in round 3 still pass:
+
+- AC-00: the recorded probe.
+- AC-01 to AC-04c, AC-05, AC-06 to AC-10, AC-13, AC-15, AC-18 and AC-19: the unit and browser
+  suites are green on `7e9c0f5`, and so is CI.
+- AC-01 in the browser: "Kota: Bandung", pre-filled, with the exact helper text
+  (`rich-preparation/03-summary-after-reload.aria.yml`).
+- AC-05: round 2's check through the real routes, re-run. A fallback pack with one edited question
+  saves `fallback`, `search_data_available` is false, and the method list has no search-data line.
+- AC-09: round 1's end-to-end test, re-run: delivered with N = 9, M = 8 and K = 3, three "Minta
+  bantuan" links naming the order and the question, and one `checks_failed` notice.
+- AC-15: the discovery measurements, re-run: 33, 39 and 27 subrequests. `spend-worst-case.test.ts`
+  is green.
+- AC-18: no file that renders old reports changed since round 3, and the snapshot file is unchanged
+  (sha256 `648eeffa…`). The changed helpers in `two-source-report.ts` are used only by the report
+  pipeline.
+- AC-19: "Diubah oleh Anda" and "Topik awal: harga kopi susu · Tidak ada data jumlah pencarian" on
+  the question screen and in the report (`question-review/`).
+
+### Requirements trace: changes
+
+- Report layout, "Findings name the source they come from": met. The contradiction check now catches
+  plain negations (B-5), with the residual gaps in N-31 and N-32.
+- R-19 ("A denominator of 0 shows 'Tidak diuji'"): the repair no longer writes "0 dari 0" (N-26).
+- R-28 / AC-12: N-25 is narrower.
+- `SPEC.md`'s worker note on the source check describes round 3's rule (N-36).
+- Still not met: R-11a in `report-pipeline.ts` (N-4).
+- Deviation from approved text: N-17, unchanged, waiting for the founder.
+
+### Checks run (round 4)
+
+| Check | Result |
+|---|---|
+| `npm run check` | Exit 0. Typecheck, lint (0 errors, 24 warnings, as in rounds 1 to 3), format and typography pass. |
+| `npm run test:unit` | Exit 0. 139 files, 2,504 tests passed (round 3: 2,496; the 8 new tests are this round's). |
+| `npm run build` | Exit 0. The route list includes `/api/audit/discovery`. |
+| `CI=true npm run test:e2e` (as `ci.yml`; Chromium from `/opt/pw-browsers`, no browser install) | Exit 0. 67 passed (11.8 min); the switched-off suite: 3 passed. I ran nothing else on the machine during the run. |
+| GitHub CI | `validate` success on `7e9c0f5` ([run 40081037814](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/40081037814)), including `build:cf` and the browser tests. `PR Preview` success. |
+| verify-nuave `launch`, `doctor`, `drive all`, `capture`, `cleanup` (synthetic) | Run `20261024T093345Z-rk1c` at `7e9c0f5`. `doctor` all PASS (clean tree). `drive all`: 6 of 6 passed the first time. `capture`: 6 passed, 0 unexpected external requests, 114 files. `cleanup`: group stopped, port 3100 free, tree still clean. Evidence is in `.local-evidence/verify-nuave/20261024T093345Z-rk1c/` (git-ignored). |
+| Report evidence read | `report-link/11-report-by-link.png` (cropped and read), the `.aria.yml` snapshots, `report-link/report-a4.headless.pdf` (15 pages; its text matches round 3's apart from times and the order number) and `report-link/download-evidence.json`. The cards and the written conclusion agree: ChatGPT 0 of 9; Google AI Overview shown in 8 of 10, naming the business in 3 of 8. |
+| Scratch tests, outside the repo (Vitest on the repo's code) | (1) The source check on 48 false and 43 true sentences in six count setups, at round 2's (`cdb3eae`), round 3's (`727843a`) and the head's code, with the repair output for every flagged sentence and 13 layout cases. (2) Through the real runner (synthetic mode, sqlite D1), 14 scenarios: the four B-5 sentences kept through the revision, a revision that fixes the sentence, a true sentence, two flagged true sentences, a sentence with "drg.", the "klinik lain" gap, a positive wrong count, a failing revision call, no AI Overview anywhere, and a revision that changes evidence IDs. (3) `phoneSafeUrl` on 37 links at `727843a` and the head. (4) The N-24 test against two mutations in a scratch copy. (5) The round-1 to round-3 scratch suites, re-run on the head: the only differences are the intended B-5, N-25 and N-26 changes. |
+
+No paid provider call was made.
+
+### Findings (round 4)
+
+#### Blocking
+
+None.
+
+#### Notes (should fix or decide; not blocking)
+
+- **N-31. Negations the check still misses.** Each needs the writer to contradict `source_counts`
+  despite the new prompt line, so they should be rare. Missed (ChatGPT named the business 3 of 9,
+  Google 3 of 8):
+  - A limiting word anywhere in the sentence exempts it. "lain", "beberapa" and "tentang" also
+    appear in "klinik lain", "beberapa klinik pesaing" and "tentang layanan Anda". Examples: "Di
+    Google AI Overview, bisnis Anda tidak disebut, sementara klinik lain lebih sering muncul." and
+    the title "Di ChatGPT, bisnis Anda tidak muncul, klinik lain yang dipilih". Round 2's check
+    caught these. **Reproduced through the runner:** the first was delivered unchanged after one
+    report call, under the Google card "Bisnis Anda muncul di 3 dari 8 pertanyaan".
+  - One source's true count exempts the other source's negation in the same sentence: "Di ChatGPT,
+    bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak muncul di Google AI Overview."
+  - A count of the wrong kind passes: "Di Google AI Overview, bisnis Anda tidak disebut di 3 dari 8
+    ringkasan." (true: 5 of 8). Both "named" and "not named" counts are accepted in either
+    sentence.
+  - A source with no mentions skips the count check: with ChatGPT at 0 of 9, "…tidak disebut di 3
+    dari 9 jawaban" passes.
+  - Other wordings: "tak (pernah) disebut", "tidak ada jawaban yang menyebut…", "tidak satu pun
+    ringkasan menyebut…", "tidak terlihat", "absen", "tidak menyinggung", and a negation carried
+    to the next sentence ("…; begitu pula di ringkasan Google.", "Di Google AI Overview juga.").
+    After a repair, a carried sentence can change meaning: "Di ChatGPT, bisnis Anda tidak disebut!
+    Di Google AI Overview juga." becomes "…disebut di 3 dari 9 jawaban. Di Google AI Overview
+    juga."
+  - Cheap narrowing: accept "lain(nya)" only after a question word ("pertanyaan, kebutuhan,
+    jawaban, ringkasan, topik lain(nya)"); match each count to the source named in its own clause,
+    and check that it is the right kind; add "tak".
+- **N-32. Counts in positive sentences are not checked** (the rest of N-27). "Di ChatGPT, bisnis
+  Anda disebut di 3 dari 9 jawaban; di Google AI Overview, di 3 dari 8 ringkasan." with ChatGPT at 0
+  of 9 was **delivered unchanged through the runner** after one report call, under the ChatGPT card
+  "0 dari 9". This is the exact form the prompt asks the conclusion to take, so it is the most
+  likely sentence, and a copied-wrong number is the likeliest false claim left. Positive overclaims
+  ("Di ChatGPT dan Google AI Overview, bisnis Anda disebut." with ChatGPT at 0; "disebut di semua
+  ringkasan") are not checked either. Cheap fix: check every "X dari Y" next to a source name
+  against that source's counts, whatever the verb.
+- **N-33. The repair garbles a sentence that holds an abbreviation.** The checker splits sentences
+  at every ". ", so "drg.", "dr.", "Jl." or "No." cut a sentence in two. The part after the
+  abbreviation loses its source and counts as about both sources; if it is flagged and the writer
+  keeps it, only that part is replaced. **Reproduced through the runner** (ChatGPT 0 of 9, Google 3
+  of 8): the true conclusion "Di ChatGPT, drg. Linda Dental tidak disebut. Di Google AI Overview,
+  bisnis Anda disebut di 3 dari 8 ringkasan." was delivered as "Di ChatGPT, drg. Di ChatGPT, bisnis
+  Anda disebut di 0 dari 9 jawaban; di Google AI Overview, bisnis Anda disebut di 3 dari 8
+  ringkasan. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan." The revision request
+  quoted only "Linda Dental tidak disebut.", which makes a good revision less likely. Nothing false
+  is said, but the conclusion under the cards reads as broken. Dental and beauty clinics often carry
+  "drg." or "dr." in their names. Fix before selling to such clinics: do not split after common
+  Indonesian abbreviations (dr., drg., Jl., No., PT., CV., Hj., dll.), or replace the whole original
+  sentence.
+- **N-34. The wider check flags true sentences, 15 of 43 in my set** (round 3: 1). The common kinds:
+  - a missing detail: "Di ChatGPT, harga layanan Anda tidak disebut.", "…jawaban tidak menyebut
+    alamat cabang Anda.";
+  - an AI Overview that was not shown: "Di Google AI Overview, AI Overview tidak muncul untuk 2 dari
+    10 pertanyaan.";
+  - a contrast across sources without "X dari Y": "Di ChatGPT, bisnis Anda tidak disebut, tetapi
+    Google AI Overview menyebutnya di 3 ringkasan." (ChatGPT 0);
+  - a count in words, or without "dari": "enam dari sembilan jawaban", "di 6 jawaban";
+  - a limit the word list does not know: "untuk kebutuhan implan gigi", "ketika pelanggan mencari
+    …", "dalam jawaban pertanyaan 5, 6 dan 7";
+  - a source-less sentence in a finding's explanation, read as both sources.
+
+  Each costs one revision call, within the 3-call limit, and the repair keeps the report true.
+  Through the runner, a kept detail sentence turned the finding "Di ChatGPT, informasi harga belum
+  lengkap" into "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban. Pelanggan perlu menghubungi
+  klinik.": true, but the finding loses its point. Suggest: check only sentences whose subject is
+  the business ("bisnis Anda", its name or aliases), and treat "AI Overview / ringkasan tidak
+  muncul / tampil" as Google coverage, not as the business.
+- **N-35. A revision that changes protected fields ends a paid order.** This is the existing rule:
+  `REPORT_INTEGRITY_FAILURE` is final (`report-recovery.ts:52-54`, thrown at
+  `report-pipeline.ts:529-537`). B-5 sends more drafts to a revision, true ones included, and its
+  message asks the writer to "limit the sentence to some questions", which could tempt a writer to
+  edit that finding's evidence IDs as well. The prompt does tell it to keep them. **Reproduced
+  through the runner:** after a flag on a finding title, a revision that changed that finding's
+  evidence IDs left the order `failed` (`report_integrity_failure`), and the failure email went out.
+  Suggest: when a revision breaks the protected shape, keep the first draft (it already passed the
+  evidence checks) and let the code repair run, as the pipeline already does when the revision call
+  itself fails.
+- **N-36. `SPEC.md`'s worker note is out of date.** It still says the conclusion and findings "may
+  not state an absolute negation ('sama sekali', 'tidak pernah', 'mana pun'…)" and that "partial or
+  counted sentences are fine" (`SPEC.md:1077-1088`). Update it to this round's rule and repairs.
+  Round 3's suggestion to record the landline exception for AC-12 (N-25) is not in the note either.
+- **N-25 (rest).** A mobile number with the country code and a separator in a link's path is still
+  kept: `…/hubungi-62-812-3456-7890` (a slug of "+62 812-3456-7890"), `…/hubungi-+62-812-…`, and
+  rarer forms (`0812_3456_7890`, `(0812)-3456-7890`, `08-123-456-789`). Round 3's suggestion still
+  fits: remove separators between digits in the path, then apply the mobile check.
+- **Small.** Two flagged titles become the same sentence. A flagged title that ended with "?" gets
+  a full stop.
+- Still open:
+  - N-17, N-28 and N-29 (the founder);
+  - N-4, N-8's Depok label, N-9, N-12 and N-14;
+  - N-5's numbers written without 0, 62 or +.
+
+#### Founder actions
+
+- Decide N-17. Consider N-28 (the promise's hedge) before AC-14.
+- Before merging:
+  - confirm the DataForSEO repository secrets;
+  - squash-merge or rebuild the branch, because `050bf9d` and `e986e24` with the raw probe JSON
+    are still in its history;
+  - keep production on Workers Paid.
+- Run AC-14. In the live report, read the conclusion and every finding against the cards, look for
+  `source_sentence_replaced` in the saved report's telemetry, and record the time.
+
+### Verdict (round 4)
+
+**Pass with notes.** B-5 is fixed: the four round-3 sentences and most plain negations are caught,
+including wrong counts inside a negation. A writer that keeps one through its revision gets a
+code-built sentence that matches the cards, and the order is delivered. No true sentence fails an
+order on the check. N-24 and N-26 are fixed, N-25 mostly. Every criterion that passed before still
+passes. AC-14 is the founder's live run.
+
+Recommended next, cheapest first, before paying clinics rather than before AC-14:
+
+1. N-33: no sentence split after abbreviations.
+2. N-32: check every "X dari Y" next to a source name.
+3. N-31: narrow "lain" and match counts to their clause.
+4. N-35: keep the first draft when a revision breaks the protected shape.
+5. N-36: update the SPEC worker note.
+
+N-17, N-28 and N-29 need the founder.
