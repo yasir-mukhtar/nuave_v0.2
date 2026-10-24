@@ -713,14 +713,16 @@ export async function generateReportContent(
             input.question_method,
             "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",
           ),
-          "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
+          input.two_source_facts
+            ? 'Make the conclusion say, for each source, how often the business was named in this tested sample ("Di ChatGPT …; di Google AI Overview …"). Do not imply a wider or permanent result.'
+            : "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
           "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
           "Return exactly one assessment for each of the ten prompt IDs.",
           ...(input.two_source_facts
             ? [
                 "The observations are answers from the ChatGPT app. google_ai_overview gives, for the same prompt IDs, code-checked facts from Google AI Overview (shown or not, whether the business was named in its text, the cited domains); source_counts gives the code counts for both sources.",
                 'Name the source in the conclusion and in every key finding: write "Di ChatGPT" or "Di Google AI Overview". Never state a result for both sources unless the counts support it for each.',
-                "Do not contradict source_counts: never say a source did not name the business when its named count is above zero.",
+                'Do not contradict source_counts: when a source named the business at least once, never write an absolute negation for it ("sama sekali", "tidak pernah", "di mana pun", "di semua jawaban"). A statement limited to some questions, or one that carries a count, is fine.',
                 "Findings, priorities and evidence_prompt_ids still cite only what the ChatGPT answers or the supplied Google facts show.",
               ]
             : []),

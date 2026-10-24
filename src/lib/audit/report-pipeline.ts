@@ -1,4 +1,5 @@
 import {
+  repairTwoSourceWriting,
   twoSourceWritingViolations,
   type TwoSourceReportFacts,
 } from "./two-source-report";
@@ -540,19 +541,17 @@ export async function createValidatedAuditReport(
     }
   }
 
-  // Spec 018: a two-source report never ships a conclusion or finding that
-  // speaks for no source or contradicts the code counts. The one revision
-  // call above was the fix; past it, the attempt fails and the runner may try
-  // again within the report-call ceiling.
-  const finalSourceErrors = sourceErrorsFor(content);
-  if (finalSourceErrors.length) {
-    throw new ReportPipelineError(
-      finalSourceErrors.join(" "),
-      422,
-      reportCalls,
-      "REPORT_USEFULNESS_FAILURE",
-      [...diagnostics],
-    );
+  // Spec 018 (B-4): a two-source report never ships a conclusion or finding
+  // that speaks for no source or contradicts the code counts. The one revision
+  // call above was the writer's chance; past it, code replaces the offending
+  // sentence with the per-source count sentence. A paid order is never failed
+  // for this check.
+  if (sourceFacts && sourceErrorsFor(content).length) {
+    const repairedSources = repairTwoSourceWriting(content, sourceFacts);
+    if (repairedSources.changed) {
+      content = repairedSources.content;
+      diagnostics.add("source_sentence_replaced");
+    }
   }
 
   // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and

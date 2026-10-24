@@ -351,12 +351,12 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
         /ChatGPT|Google/,
       );
     expect(report.method_summary).toBe(
-      "Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google (AI Overview), ditanyakan melalui DataForSEO. 9 dari 10 pemeriksaan ChatGPT dan 10 dari 10 pemeriksaan Google selesai; 1 pemeriksaan tidak dapat diuji.",
+      "Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google AI Overview melalui DataForSEO. 9 dari 10 pemeriksaan ChatGPT dan 10 dari 10 pemeriksaan Google selesai; 1 pemeriksaan tidak dapat diuji.",
     );
     expect(report.method_summary).not.toMatch(/LLM Scraper|synthetic-local/);
   });
 
-  it("the report writer gets the Google facts; a draft without sources gets one revision, and a draft that still contradicts the counts fails the attempt", async () => {
+  it("B-4: a draft that keeps contradicting the counts after its one revision is repaired by code and the paid order is delivered", async () => {
     const id = await makeOrder(d1.db, { now: clock });
     await approveTwoSource(d1.db, id, { now: clock });
     const revisions: unknown[] = [];
@@ -377,12 +377,42 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
       },
     });
     await runUntilEnded(t, id);
-    // Each attempt asks for one revision naming the contradiction; past the
-    // report ceiling the order fails rather than ship the false sentence.
-    expect(revisions.length).toBeGreaterThan(0);
+    // One revision names the contradiction; when the writer keeps it, code
+    // swaps the sentence for the per-source count sentence and delivers.
+    expect(revisions).toHaveLength(1);
     expect(JSON.stringify(revisions[0])).toContain("contradicts the counts");
-    expect(orderRow(id).state).toBe("failed");
-    expect(orderRow(id).report_json).toBeNull();
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(report.conclusion).not.toMatch(/sama sekali/);
+    expect(report.conclusion).toBe(
+      `Di Google AI Overview, bisnis Anda disebut di ${two.counts.google.named} dari ${two.counts.google.summaries} ringkasan.`,
+    );
+  });
+
+  it("B-4: true partial sentences pass without revision and the order is delivered", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion:
+              "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5 ringkasan lainnya. Di ChatGPT, bisnis Anda tidak muncul pada kebutuhan lain.",
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(0);
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.conclusion).toContain("tidak disebut di 5 ringkasan lainnya");
   });
 
   it("the report writer reads code-built Google facts for both sources (R-28)", async () => {

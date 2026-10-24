@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  repairTwoSourceWriting,
   twoSourceMethodSentence,
   twoSourceWritingViolations,
   type TwoSourceReportFacts,
@@ -81,6 +82,51 @@ describe("two-source writing checks", () => {
     ).toEqual([expect.stringContaining("named in at least one answer")]);
   });
 
+  it("B-4: keeps true sentences that are partial, counted or about recommendation", () => {
+    expect(
+      twoSourceWritingViolations(
+        {
+          conclusion:
+            "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak direkomendasikan. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5 ringkasan lainnya.",
+          key_findings: [
+            finding("Di ChatGPT, bisnis Anda tidak muncul untuk pertanyaan tentang harga."),
+            finding("Di ChatGPT, Sozo tidak muncul pada kebutuhan lain"),
+          ],
+        },
+        facts(3, 3),
+      ),
+    ).toEqual([]);
+  });
+
+  it("B-4: code replaces a contradicting sentence and marks a finding without a source", () => {
+    const { content, changed } = repairTwoSourceWriting(
+      {
+        conclusion:
+          "Di Google AI Overview, bisnis Anda tidak disebut sama sekali. Di ChatGPT, klinik lain lebih sering dipilih.",
+        key_findings: [finding("Harga sering ditanyakan", "Banyak jawaban.")],
+      },
+      facts(1, 3),
+    );
+    expect(changed).toBe(true);
+    expect(content.conclusion).toBe(
+      "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan. Di ChatGPT, klinik lain lebih sering dipilih.",
+    );
+    expect(content.key_findings[0]!.explanation).toBe(
+      "Di ChatGPT: Banyak jawaban.",
+    );
+    expect(twoSourceWritingViolations(content, facts(1, 3))).toEqual([]);
+  });
+
+  it("B-4: a conclusion with no source gets both count sentences in front", () => {
+    const { content } = repairTwoSourceWriting(
+      { conclusion: "Bisnis Anda jarang disebut.", key_findings: [] },
+      facts(2, 1),
+    );
+    expect(content.conclusion).toBe(
+      "Di ChatGPT, bisnis Anda disebut di 2 dari 9 jawaban; di Google AI Overview, bisnis Anda disebut di 1 dari 8 ringkasan. Bisnis Anda jarang disebut.",
+    );
+  });
+
   it("the method sentence counts both sources and names no internal system", () => {
     const sentence = twoSourceMethodSentence({
       counts: {
@@ -90,7 +136,7 @@ describe("two-source writing checks", () => {
       },
     });
     expect(sentence).toBe(
-      "Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google (AI Overview), ditanyakan melalui DataForSEO. 9 dari 10 pemeriksaan ChatGPT dan 8 dari 10 pemeriksaan Google selesai; 3 pemeriksaan tidak dapat diuji.",
+      "Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google AI Overview melalui DataForSEO. 9 dari 10 pemeriksaan ChatGPT dan 8 dari 10 pemeriksaan Google selesai; 3 pemeriksaan tidak dapat diuji.",
     );
     expect(sentence).not.toMatch(/LLM Scraper/);
   });

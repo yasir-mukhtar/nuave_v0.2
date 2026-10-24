@@ -19,6 +19,7 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "noncorrective_action_inserted",
   "usefulness_minimum_not_met",
   "unrecoverable_report_failure",
+  "source_sentence_replaced",
 ] as const;
 
 export type ReportDiagnosticCode = (typeof REPORT_DIAGNOSTIC_CODES)[number];

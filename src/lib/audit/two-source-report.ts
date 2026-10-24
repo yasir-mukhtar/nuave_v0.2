@@ -214,13 +214,101 @@ export const SOURCE_CHATGPT = "ChatGPT";
 export const SOURCE_GOOGLE = "Google AI Overview";
 
 const NEGATIVE =
-  /\btidak\s+(?:pernah\s+)?(?:disebut|disebutkan|muncul|menyebut|ditemukan|direkomendasikan)\b/i;
+  /\btidak\s+(?:pernah\s+)?(?:disebut|disebutkan|muncul|menyebut|ditemukan)\b/i;
+
+/** Only an absolute claim can contradict a non-zero count. A sentence limited
+ * to some questions ("tidak muncul pada kebutuhan lain") or carrying a count
+ * ("tidak disebut di 5 ringkasan lainnya") is true and stays (B-4). */
+const ABSOLUTE =
+  /\b(?:sama\s+sekali|tidak\s+pernah|mana\s*pun|satu\s*pun|semua|seluruh|kedua)\b/i;
+const COUNTED = /\b\d+\s+dari\s+\d+\b/;
+
+function absoluteNegation(sentence: string): boolean {
+  return (
+    NEGATIVE.test(sentence) &&
+    ABSOLUTE.test(sentence) &&
+    !COUNTED.test(sentence)
+  );
+}
+
+/** The code-built per-source sentence used when the writer's sentence cannot
+ * be kept. */
+export function twoSourceCountSentence(
+  facts: TwoSourceReportFacts,
+  source?: "chatgpt" | "google",
+): string {
+  const { chatgpt, google } = facts.counts;
+  const gpt = `Di ${SOURCE_CHATGPT}, bisnis Anda disebut di ${chatgpt.named} dari ${chatgpt.completed} jawaban`;
+  const ggl = `Di ${SOURCE_GOOGLE}, bisnis Anda disebut di ${google.named} dari ${google.summaries} ringkasan`;
+  if (source === "chatgpt") return `${gpt}.`;
+  if (source === "google") return `${ggl}.`;
+  return `${gpt}; ${ggl.charAt(0).toLowerCase()}${ggl.slice(1)}.`;
+}
 
 function sentences(text: string): string[] {
   return text
     .split(/(?<=[.!?;])\s+/)
     .map((sentence) => sentence.trim())
     .filter(Boolean);
+}
+
+function contradictedSource(
+  sentence: string,
+  facts: TwoSourceReportFacts,
+): "chatgpt" | "google" | "both" | null {
+  if (!absoluteNegation(sentence)) return null;
+  const aboutChatGpt = sentence.includes(SOURCE_CHATGPT);
+  const aboutGoogle = sentence.includes("Google");
+  const { chatgpt, google } = facts.counts;
+  if (aboutChatGpt && !aboutGoogle) return chatgpt.named > 0 ? "chatgpt" : null;
+  if (aboutGoogle && !aboutChatGpt) return google.named > 0 ? "google" : null;
+  return chatgpt.named + google.named > 0 ? "both" : null;
+}
+
+/**
+ * B-4: what the pipeline does when the writer's one revision still breaks the
+ * source checks. A paid order is never failed for it. A contradicting
+ * sentence is replaced by the code-built count sentence for its source; a
+ * conclusion that names no source gets the count sentence in front; a finding
+ * that names no source speaks about the ChatGPT answers it cites, so its
+ * explanation is marked "Di ChatGPT".
+ */
+export function repairTwoSourceWriting<
+  T extends {
+    conclusion: string;
+    key_findings: { title: string; explanation: string }[];
+  },
+>(content: T, facts: TwoSourceReportFacts): { content: T; changed: boolean } {
+  let changed = false;
+  const fix = (text: string) =>
+    sentences(text)
+      .map((sentence) => {
+        const source = contradictedSource(sentence, facts);
+        if (!source) return sentence;
+        changed = true;
+        return twoSourceCountSentence(
+          facts,
+          source === "both" ? undefined : source,
+        );
+      })
+      .join(" ");
+  const names = (text: string) =>
+    text.includes(SOURCE_CHATGPT) || text.includes("Google");
+  let conclusion = fix(content.conclusion);
+  if (!names(conclusion)) {
+    conclusion = `${twoSourceCountSentence(facts)} ${conclusion}`;
+    changed = true;
+  }
+  const key_findings = content.key_findings.map((finding) => {
+    const title = fix(finding.title);
+    let explanation = fix(finding.explanation);
+    if (!names(`${title} ${explanation}`)) {
+      explanation = `Di ${SOURCE_CHATGPT}: ${explanation}`;
+      changed = true;
+    }
+    return { ...finding, title, explanation };
+  });
+  return { content: { ...content, conclusion, key_findings }, changed };
 }
 
 /**
@@ -253,22 +341,16 @@ export function twoSourceWritingViolations(
     ...content.key_findings.flatMap((f) => [f.title, f.explanation]),
   ];
   for (const sentence of texts.flatMap(sentences)) {
-    if (!NEGATIVE.test(sentence)) continue;
-    const aboutChatGpt = sentence.includes(SOURCE_CHATGPT);
-    const aboutGoogle = sentence.includes("Google");
-    if (aboutChatGpt && !aboutGoogle && facts.counts.chatgpt.named > 0)
+    const source = contradictedSource(sentence, facts);
+    if (source === "chatgpt")
       violations.push(
         `"${sentence}" contradicts the counts: ChatGPT named the business in ${facts.counts.chatgpt.named} answers.`,
       );
-    if (aboutGoogle && !aboutChatGpt && facts.counts.google.named > 0)
+    else if (source === "google")
       violations.push(
         `"${sentence}" contradicts the counts: Google AI Overview named the business in ${facts.counts.google.named} summaries.`,
       );
-    if (
-      ((aboutChatGpt && aboutGoogle) || (!aboutChatGpt && !aboutGoogle)) &&
-      /\b(?:mana pun|semua|seluruh|kedua)\b/i.test(sentence) &&
-      facts.counts.chatgpt.named + facts.counts.google.named > 0
-    )
+    else if (source === "both")
       violations.push(
         `"${sentence}" contradicts the counts: the business was named in at least one answer.`,
       );
@@ -286,5 +368,5 @@ export function twoSourceMethodSentence(
 ): string {
   const { chatgpt, google, failed } = two.counts;
   const failedPart = failed ? `; ${failed} pemeriksaan tidak dapat diuji` : "";
-  return `Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google (AI Overview), ditanyakan melalui DataForSEO. ${chatgpt.completed} dari 10 pemeriksaan ChatGPT dan ${google.completed} dari 10 pemeriksaan Google selesai${failedPart}.`;
+  return `Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google AI Overview melalui DataForSEO. ${chatgpt.completed} dari 10 pemeriksaan ChatGPT dan ${google.completed} dari 10 pemeriksaan Google selesai${failedPart}.`;
 }
