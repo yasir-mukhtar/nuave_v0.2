@@ -90,6 +90,18 @@ export const ORDER_STAGE_STATES: Record<string, readonly OrderState[]> = {
   report: ["reporting"],
 };
 
+/**
+ * Spec 018 R-09 and R-25: per-order ceilings for the two preparation stages
+ * that can repeat before payment-time work starts. Every attempt reserves a
+ * row, so a retried or repeated call counts in full. Discovery's ceiling is
+ * shared by both discovery runs; question writing allows one full request
+ * (grounded, grounded again, fallback) and a second shorter one.
+ */
+export const ORDER_STAGE_CAP_USD: Readonly<Record<string, number>> = {
+  discovery: 0.12,
+  questions: 0.25,
+};
+
 /** Literal SQL list from a constant array (never from user input). */
 function inList(values: readonly string[]): string {
   return values.map((value) => `'${value}'`).join(", ");
@@ -101,6 +113,8 @@ const DAILY_SUM = (day: string) =>
   `(SELECT COALESCE(SUM(held_units), 0) FROM provider_spend WHERE day = ${day} AND kind != 'order_call')`;
 const CALL_SUM = (id: string) =>
   `(SELECT COALESCE(SUM(held_units), 0) FROM provider_spend WHERE kind = 'order_call' AND order_id = ${id})`;
+const STAGE_SUM = (id: string, stage: string) =>
+  `(SELECT COALESCE(SUM(held_units), 0) FROM provider_spend WHERE kind = 'order_call' AND order_id = ${id} AND stage = ${stage})`;
 const HOLD_AMOUNT = (id: string) =>
   `(SELECT reserved_units FROM provider_spend WHERE kind = 'order_hold' AND order_id = ${id})`;
 
@@ -455,6 +469,10 @@ export async function reserveOrderCall(
   const id = crypto.randomUUID();
   const at = now();
   const units = usdToUnits(input.usd);
+  const stageCap = ORDER_STAGE_CAP_USD[input.stage];
+  // A stage without a ceiling compares against its own hold check only.
+  const stageCapUnits =
+    stageCap === undefined ? Number.MAX_SAFE_INTEGER : usdToUnits(stageCap);
   // R-18: the insert below needs a paid, test-pass or legacy order (an unpaid
   // order has no hold either), and R-20: a test-pass order's rows are marked.
   let changes: unknown;
@@ -473,7 +491,8 @@ export async function reserveOrderCall(
            AND EXISTS (
                  SELECT 1 FROM provider_spend
                  WHERE kind = 'order_hold' AND order_id = ?7 AND status = 'reserved')
-           AND ${CALL_SUM("?7")} + ?5 <= ${HOLD_AMOUNT("?7")}`,
+           AND ${CALL_SUM("?7")} + ?5 <= ${HOLD_AMOUNT("?7")}
+           AND ${STAGE_SUM("?7", "?4")} + ?5 <= ?8`,
       )
       .bind(
         id,
@@ -483,6 +502,7 @@ export async function reserveOrderCall(
         units,
         at.toISOString(),
         input.orderId,
+        stageCapUnits,
       )
       .run();
     changes = result.meta?.changes;

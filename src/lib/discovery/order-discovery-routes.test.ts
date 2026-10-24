@@ -335,3 +335,137 @@ describe("live discovery spend (R-25, AC-13)", () => {
     }
   });
 });
+
+/** Counts D1 round trips the way a Worker pays for them: each statement run
+ * and each batch is one subrequest. */
+function countingDb(db: typeof d1.db) {
+  let count = 0;
+  const wrap = (statement: object): object =>
+    new Proxy(statement, {
+      get(target, property) {
+        const value = Reflect.get(target, property) as unknown;
+        if (typeof value !== "function") return value;
+        if (property === "bind")
+          return (...args: unknown[]) =>
+            wrap((value as (...a: unknown[]) => object).apply(target, args));
+        if (["run", "first", "all", "raw"].includes(String(property)))
+          return (...args: unknown[]) => {
+            count += 1;
+            return (value as (...a: unknown[]) => unknown).apply(target, args);
+          };
+        return (value as (...a: unknown[]) => unknown).bind(target);
+      },
+    });
+  const counted = new Proxy(db, {
+    get(target, property) {
+      const value = Reflect.get(target, property) as unknown;
+      if (property === "prepare")
+        return (sql: string) =>
+          wrap((value as (sql: string) => object).call(target, sql));
+      if (property === "batch")
+        return (statements: unknown[]) => {
+          count += 1;
+          return (value as (s: unknown[]) => unknown).call(target, statements);
+        };
+      return typeof value === "function"
+        ? (value as (...a: unknown[]) => unknown).bind(target)
+        : value;
+    },
+  });
+  return { db: counted, count: () => count };
+}
+
+describe("one discovery request's worst case (R-09, R-15, AC-15)", () => {
+  it("stays under 50 subrequests and USD 0.12 when every call asks to retry", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("DATAFORSEO_LOGIN", "offline-login");
+    vi.stubEnv("DATAFORSEO_PASSWORD", "offline-password");
+    const id = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    const counted = countingDb(d1.db);
+    const limiter = vi.fn(async () => ({ success: true }));
+    mocks.getCloudflareContext.mockReturnValue({
+      env: {
+        SPEND_DB: counted.db,
+        EXTRACT_CALLER_RATE_LIMITER: { limit: limiter },
+        GLM_CALLER_RATE_LIMITER: { limit: limiter },
+        ORDER_STATUS_CALLER_RATE_LIMITER: { limit: limiter },
+      },
+    });
+    // 50000: DataForSEO asks to try again; it charged nothing.
+    fetchSpy.mockImplementation(async () =>
+      Response.json({
+        status_code: 20000,
+        tasks: [{ status_code: 50000, cost: 0, result: null }],
+      }),
+    );
+    const response = await discoveryPOST(
+      post("/api/audit/discovery", { order_id: id, intake: frozen(dental()) }),
+    );
+    expect(response.status).toBe(200);
+    const outbound = fetchSpy.mock.calls.length;
+    const subrequests = counted.count() + outbound + limiter.mock.calls.length;
+    // Ten calls and at most DISCOVERY_MAX_RETRIES (2) retries in all.
+    expect(outbound).toBeLessThanOrEqual(12);
+    expect(subrequests).toBeLessThan(50);
+    const [held] = d1.query<{ units: number }>(
+      `SELECT COALESCE(SUM(reserved_units), 0) AS units FROM provider_spend
+         WHERE kind = 'order_call' AND order_id = ? AND stage = 'discovery'`,
+      id,
+    );
+    expect(held.units / 100_000_000).toBeLessThanOrEqual(0.12 + 1e-9);
+  });
+
+  it("counts every attempt against the hard stop, so a second run only has what is left", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("DATAFORSEO_LOGIN", "offline-login");
+    vi.stubEnv("DATAFORSEO_PASSWORD", "offline-password");
+    const id = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    // Unknown cost (a timeout): every reservation stays held at its maximum.
+    fetchSpy.mockImplementation(async () => {
+      throw new Error("timeout");
+    });
+    await discoveryPOST(
+      post("/api/audit/discovery", { order_id: id, intake: frozen(dental()) }),
+    );
+    const first = fetchSpy.mock.calls.length;
+    await discoveryPOST(
+      post("/api/audit/discovery", {
+        order_id: id,
+        intake: frozen(dental(bandung)),
+      }),
+    );
+    const [held] = d1.query<{ units: number }>(
+      `SELECT COALESCE(SUM(held_units), 0) AS units FROM provider_spend
+         WHERE kind = 'order_call' AND order_id = ? AND stage = 'discovery'`,
+      id,
+    );
+    expect(first).toBeLessThanOrEqual(12);
+    expect(held.units / 100_000_000).toBeLessThanOrEqual(0.12 + 1e-9);
+  });
+});
+
+describe("discovery refused by DataForSEO (R-14, R-21, N-7)", () => {
+  it("a balance or credentials refusal raises one dataforseo_unavailable notice and sends nothing more", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("DATAFORSEO_LOGIN", "offline-login");
+    vi.stubEnv("DATAFORSEO_PASSWORD", "offline-password");
+    const id = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    // 40200: payment required (balance).
+    fetchSpy.mockImplementation(async () =>
+      Response.json({
+        status_code: 40200,
+        tasks: [{ status_code: 40200, cost: 0, result: null }],
+      }),
+    );
+    const response = await discoveryPOST(
+      post("/api/audit/discovery", { order_id: id, intake: frozen(dental()) }),
+    );
+    expect(response.status).toBe(200);
+    expect(fetchSpy.mock.calls.length).toBe(1);
+    expect(
+      d1.query<{ kind: string }>(
+        "SELECT kind FROM founder_notices WHERE kind = 'dataforseo_unavailable'",
+      ),
+    ).toHaveLength(1);
+  });
+});

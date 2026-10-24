@@ -6,6 +6,7 @@
  */
 import type { DirectTenAuditContext } from "../audit/direct-ten-context-v2";
 import { SpendCapError } from "../spending/provider-spend";
+import { ORDER_STAGE_CAP_USD } from "../spending/spend-ledger";
 import {
   callDataForSeo,
   DATAFORSEO_CALL_MAX_USD,
@@ -26,7 +27,12 @@ import {
 } from "./pool";
 
 export const DISCOVERY_TARGET_USD = 0.08;
-export const DISCOVERY_HARD_STOP_USD = 0.12;
+/** R-09: per order, shared by both runs; the ledger enforces it across runs
+ * and this run checks it before every attempt. */
+export const DISCOVERY_HARD_STOP_USD = ORDER_STAGE_CAP_USD.discovery;
+/** R-15: retries one discovery request may make in all, so its worst case
+ * stays under 50 subrequests (AC-15). */
+export const DISCOVERY_MAX_RETRIES = 2;
 const MAX_PHRASES = 4;
 const KEYWORD_LIMIT = 20;
 const LANGUAGE = "id";
@@ -37,6 +43,10 @@ export function brandInputFor(context: DirectTenAuditContext): BrandInput {
     aliases: context.identity.aliases,
     source: context.identity.source,
     category: context.category.value,
+    place:
+      context.searchPlace?.value.kind === "place"
+        ? context.searchPlace.value.display
+        : null,
   };
 }
 
@@ -140,21 +150,29 @@ export async function runDiscovery(input: {
   let spentUsd = 0;
   let reservedUsd = 0;
   let calls = 0;
+  let retriesLeft = DISCOVERY_MAX_RETRIES;
   let incomplete = false;
   let unavailable = false;
+
+  // R-09 hard stop: every attempt, the retry included, counts its maximum,
+  // and no attempt starts whose maximum could pass the stop.
+  const beforeAttempt = (call: DataForSeoCall) => (attempt: number) => {
+    if (attempt > 1 && retriesLeft <= 0) return false;
+    if (reservedUsd + DATAFORSEO_CALL_MAX_USD[call] > DISCOVERY_HARD_STOP_USD) {
+      incomplete = true;
+      return false;
+    }
+    if (attempt > 1) retriesLeft -= 1;
+    reservedUsd += DATAFORSEO_CALL_MAX_USD[call];
+    calls += 1;
+    return true;
+  };
 
   const send = async (
     call: DataForSeoCall,
     body: Record<string, unknown>,
   ): Promise<Record<string, unknown> | null> => {
     if (incomplete) return null;
-    // R-09 hard stop: never start a call whose maximum could pass it.
-    if (reservedUsd + DATAFORSEO_CALL_MAX_USD[call] > DISCOVERY_HARD_STOP_USD) {
-      incomplete = true;
-      return null;
-    }
-    reservedUsd += DATAFORSEO_CALL_MAX_USD[call];
-    calls += 1;
     let outcome: DataForSeoOutcome;
     try {
       const result = await callDataForSeo({
@@ -163,6 +181,7 @@ export async function runDiscovery(input: {
         stage: "discovery",
         transport,
         forbiddenWords: forbidden,
+        beforeAttempt: beforeAttempt(call),
       });
       spentUsd += result.costUsd;
       outcome = result.outcome;

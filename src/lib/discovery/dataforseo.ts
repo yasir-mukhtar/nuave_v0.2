@@ -166,7 +166,8 @@ export function requestContainsWords(
 /**
  * One paid DataForSEO task: reserve its maximum, send once (a retryable
  * status is sent once more), settle to the returned cost. A request that
- * would carry a brand word is never sent (R-02).
+ * would carry a brand word is never sent (R-02). `beforeAttempt` may refuse
+ * any attempt, the retry included, so a caller's budget counts every attempt.
  */
 export async function callDataForSeo(input: {
   call: DataForSeoCall;
@@ -174,6 +175,7 @@ export async function callDataForSeo(input: {
   stage: string;
   transport: DataForSeoTransport;
   forbiddenWords: readonly string[];
+  beforeAttempt?: (attempt: number) => boolean;
 }): Promise<DataForSeoResult> {
   const request: DataForSeoRequest = {
     path: DATAFORSEO_PATHS[input.call],
@@ -184,6 +186,7 @@ export async function callDataForSeo(input: {
   let costUsd = 0;
   let last: DataForSeoResult | null = null;
   for (let attempt = 1; attempt <= 2; attempt++) {
+    if (input.beforeAttempt && !input.beforeAttempt(attempt)) break;
     const spend = await reserveProviderSpend({
       provider: DATAFORSEO_PROVIDER,
       stage: input.stage,
@@ -207,5 +210,7 @@ export async function callDataForSeo(input: {
     };
     if (outcome !== "retry") break;
   }
-  return last!;
+  return (
+    last ?? { outcome: "failed", statusCode: null, result: null, costUsd: 0 }
+  );
 }

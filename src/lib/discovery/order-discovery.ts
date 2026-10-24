@@ -12,6 +12,7 @@ import {
   saveDiscoveryPool,
   type OrderRow,
 } from "../orders/store";
+import { recordFounderNotice, utcDayOf } from "../payments/notices";
 import type { SpendDb } from "../spending/spend-ledger";
 import { withOrderSpend } from "../spending/provider-spend";
 import {
@@ -91,12 +92,21 @@ export async function discoverForOrder(input: {
     };
   const now = input.now ?? new Date();
   const transport = input.transport ?? transportForMode();
-  const pool = transport
-    ? (
-        await withOrderSpend({ db, orderId: order.id }, () =>
-          runDiscovery({ context, place, transport, now }),
-        )
-      ).pool
+  const run = transport
+    ? await withOrderSpend({ db, orderId: order.id }, () =>
+        runDiscovery({ context, place, transport, now }),
+      )
+    : null;
+  if (run?.unavailable) {
+    // R-21: credentials, access, balance or cost limit; at most once a day.
+    await recordFounderNotice(db, {
+      kind: "dataforseo_unavailable",
+      subject: utcDayOf(now),
+      now,
+    }).catch(() => false);
+  }
+  const pool = run
+    ? run.pool
     : buildDiscoveryPool(
         {
           keywords: [],
