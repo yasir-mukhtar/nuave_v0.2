@@ -1,28 +1,55 @@
-# Clinic landing page: lofi v2.1 (light, ChatGPT and Google AI Overview)
+# Clinic landing page: lofi v2.2 (light, ChatGPT and Google AI Overview)
 
-> Status: lofi v2.1, for founder review (not hi-fi, not built), 24 October 2026. It updates v2.0 (kept in git history) after Yasir's feedback: Rp249.000, ChatGPT and Google AI Overview side by side, questions based on Google searches, and a list of everything the clinic gets. It replaces [`LOFI.md`](./LOFI.md) (v1.1, kept as history). Built by the designer agent from [`COPY-v2.md`](./COPY-v2.md) v2.1, with every text placed word for word. Checked by the growth marketer ([`GROWTH.md`](./GROWTH.md) Part 5) and the orchestrator.
-> **Release gate:** the page describes the Spec 018 audit (approved, not merged; branch `claude/laughing-fermi-prsgqf`). It ships only in the same release as Spec 018.
-> **Figma:** file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), page [Lofi v2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2):
-> - [00 · Strategy at a glance · v2.1](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=34-2)
-> - [01 · Mobile 390 · lofi v2.1](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=35-2), with a note beside each section, plus the fold check, the sticky bar in use, the other three demo tabs and all four report tabs
-> - [02 · Desktop 1440 · lofi v2.1](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=36-2), with notes on the right and the 1200×630 link-preview image
+> Status: lofi v2.2, for founder review (not hi-fi, not built), 24 October 2026.
+> - **v2.2:** applies Yasir's annotations and Fable's Indonesian-voice review of v2.1 (see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §11), and gives mobile and desktop exactly the same content and structure.
+> - **v2.1:** added Rp249.000, ChatGPT and Google AI Overview side by side, questions based on Google searches, and the value list.
+> - **History:** it replaces [`LOFI.md`](./LOFI.md) (v1.1). v2.0 and v2.1 are in git history.
+> - **Who:** built by the designer agent from [`COPY-v2.md`](./COPY-v2.md) v2.2, with every text placed word for word; checked by the orchestrator.
 >
-> v2.0 is in Figma's version history; v1.1 stays on the page "Lofi v1 · history (too heavy)".
+> **Release gate:** the page describes the Spec 018 audit (approved, not merged; branch `claude/laughing-fermi-prsgqf`). It ships only in the same release as Spec 018.
+> **Figma:** file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2):
+> - [00 · Strategy at a glance · v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=49-2)
+> - [01 · Mobile 390 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=50-2), with a note beside each section. Below the page it has these extra frames:
+>   - the fold check;
+>   - the menu opened;
+>   - the sticky bar in use;
+>   - the demo tabs, including "Lainnya";
+>   - all four report tabs.
+> - [02 · Desktop 1440 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=51-2), with notes on the right, the sticky bar in use, and the 1200×630 link-preview image
+>
+> The reviewed v2.1 frames, with Yasir's annotations, Fable's blue review column and Fable's summary frame, are kept on the page [Lofi v2.1 · review notes (Yasir + Fable)](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=48-2). v1.1 stays on "Lofi v1 · history (too heavy)".
 >
 > **Source:** [`lofi-v2.html`](./lofi-v2.html), a static, self-contained page. Open it in a browser to see both boards. Before the Figma import:
 > - each note was moved beside its section;
 > - each multi-line headline got a fixed width that keeps its line breaks even, with room to spare.
 >
-> Figma drops non-breaking spaces on import, so two were put back by hand in Figma: "ke ChatGPT" in the S3 headline and "saat pasien" in the S2 line (mobile).
+> Figma drops non-breaking spaces on import, so they were put back in Figma, in the same places as the source. "Google AI Overview" and "15 menit" never split; neither do a few headline phrases such as "pertanyaan pasien" and "Klinik Anda termasuk?".
 > **How to read it:** grayscale on purpose. The dark button is the one action; grey buttons inside the pictures are not tappable. The `S0` to `S9` and `F` markers match the notes. Founder questions live in the notes only. Every clinic name is fictional; the search numbers in the examples are real Spec 018 probe data, labelled "Contoh".
-> **Size:** mobile is about 9.1 phone screens (390×844) to the end of the final call to action (v2.0: 7.5); desktop is about 7.7 screens at 1440×900 (v2.0: 6.5). About 570 visible words.
+> **Size:** about 9.6 phone screens (390×844) to the end of the final call to action (v2.1: 9.1; v2.0: 7.5). The extra half screen is mobile catching up with desktop. Desktop is about 7.7 screens at 1440×900. About 585 visible words.
 > **Production notes:** the lofi uses Inter only so it renders without web fonts. Production uses Geist and the violet v2 kit ([`docs/DESIGN.md`](../../DESIGN.md)).
+
+## Mobile = desktop
+
+Both boards carry the same text in the same order, section by section. A script compares the visible text of every section on the two artboards (`diff-boards.cjs`, run on the source before import). For v2.2 it reports "identical" for S1 to S9 and the footer.
+
+S0 differs by design: on mobile, the four menu links sit behind the menu icon and are drawn open in the "Menu terbuka" frame. Only the layout differs between the boards: desktop puts some things side by side that mobile stacks.
+
+The five gaps found in v2.1, now closed:
+
+| Where | v2.1 | v2.2 |
+|---|---|---|
+| S0 menu | Links on desktop only | Mobile: a menu icon that opens the same 4 links and the button |
+| S3 ChatGPT panel | "Tanyakan apa saja" input bar on desktop only | On both |
+| S3 AI Overview box | 2 source chips on desktop, 1 on mobile | 2 on both, on their own row |
+| S4 Cara kerja | Step 1 and step 3 pictures and their caption on desktop only | On both, under each step |
+| S7 value card | "AI Visibility Report" label and row ticks on desktop only | On both |
+| Sticky bar | "Gratis dulu · Audit Rp249.000" on mobile only | Desktop's sticky top bar shows it too after the hero (extra frame) |
 
 ## Layout
 
 - **Page:** white with soft grey bands (#f6f6f7) marking the "look at this" moments: S3 (both places), S5 report, S9 final call to action.
 - **Desktop:** 1440 wide, 1152 container, section padding 96px, centred section heads.
-- **Mobile:** 390 wide, 24px gutters, section padding 52px (v2.0: 64, trimmed to stay near 9 screens). No eyebrows or labels above titles.
+- **Mobile:** 390 wide, 24px gutters, section padding 52px. No eyebrows or labels above titles.
 - **Type:**
 
   | Role | Desktop | Mobile |
@@ -34,55 +61,57 @@
   | Card line | 14/20 | 13 to 14/18 to 20 |
   | Source / caption | 12 | 12 |
 
-- **Line breaks:** headlines and the lines under them use balanced breaks, so no line ends with one word on its own. "Google AI Overview" never splits across lines. The H1 breaks at the comma: "Pasien sekarang / tanya AI dulu, / baru pilih klinik."
+- **Line breaks:**
+  - Headlines and the lines under them use balanced breaks, so no line ends with one word on its own.
+  - "Google AI Overview" never splits across lines.
+  - The H1 breaks at the comma: "Pasien sekarang / tanya AI dulu, / baru pilih klinik."
+  - The S3 headline does too: "Satu pertanyaan pasien, / dua jawaban AI."
+- **Chat mocks:** clinic names are bold with a colon ("**Klinik A:** behel bisa dicicil"), the way ChatGPT writes them; middle dots are kept for Nuave's own chips and labels.
 - **Cards:** soft fill or hairline border (never both), 18 to 20px radius. The product pictures carry a hairline plus a soft shadow so they read as product, not decoration. These are the hero demo, the S3 panels, the report panel and the value card.
-- **One dark button style** for the one action: the hero form, the price-card form, the final form and the mobile sticky bar.
-  - The menu button is an outline.
+- **One dark button style** for the one action: the hero form, the price-card form, the final form and the sticky bars.
+  - The menu button is an outline, and so is the button in the opened mobile menu.
   - Buttons inside the pictures are grey and inert ("Download PDF", "Buka laporan").
-- **New small parts (v2.1):**
-  - the Google search bar (pill);
-  - the "AI Overview" box (soft fill, diamond mark, label);
-  - source chips;
-  - the dark "Dipakai sebagai sumber" tag;
-  - the origin-label chip ("Dicari di Google");
-  - the black "Contoh" tag;
-  - mini bead rows in the hero report card.
 - **Small print:** one source line under the number cards, and one "Contoh. Nama klinik fiktif." under each picture. The S3 caption adds "Google tidak selalu menampilkan AI Overview." `[KONFIRMASI]` items live only in the notes.
 - **Section markers** (S0 to S9, F) are tiny grey tags at each section's top-left, used to place the notes. Delete them in Figma if unwanted.
 
 ## Sections and visuals
 
-| # | Section | Desktop | Mobile | Visual |
-|---|---|---|---|---|
-| S0 | Menu | Logo · 4 anchors · outline "Cek klinik saya" (sticky top bar) | Logo + outline "Cek klinik saya" | none. "Harga" jumps to the S7 heading, where the price now sits |
-| S1 | Hero | Text left (500px), demo right (600px) | H1 → line → field → button → microcopy → facts → demo | **AI chat demo** with clinic tabs (Gigi active; the other three drawn as extra frames), dashed "Klinik Anda?" slot. Floating "AI Visibility Report" card with two tiny rows: **ChatGPT** "muncul di 3 dari 10" and **Google AI Overview** "muncul di 1 dari 6" |
-| S2 | AI kini jadi rujukan pasien | 3 number cards in a row | 3 horizontal number cards | numbers with their scope, plus one source line. The 47% card uses rater8's "AI seperti ChatGPT atau Google AI Overview"; the 2024 card says "Google AI Overview hadir di Indonesia." |
-| S3 | **Pasien bertanya ke ChatGPT dan mencari di Google.** (new) | Two panels side by side (1000px, equal height) | Stacked, a label above each panel | The same question, word for word, in both. **ChatGPT** chat names Klinik A, B and C. **Google** page: search bar, tabs, a labelled **AI Overview** box with source chips naming Klinik A, D and E, then two greyed results. Both end in the dashed "Klinik Anda?". Replaces v2.0's dashboards picture |
-| S4 | Cara kerja | 3 cards with small screen sketches | 3 numbered rows | Step 2's picture is a real probe question card: "Contoh", "Pertanyaan 3", the chip "Dicari di Google", "implan gigi surabaya harga", and the topic line "Topik: harga implan gigi · ±4.400 pencarian/bulan di Google, seluruh Indonesia (data September 2026)". Tags Gratis / Rp249.000. Step 3 names both sources and "Biasanya 15 menit." |
-| S5 | Laporan | Tabs + 720px report panel | Same, full width | **The two-source report in 4 tabs**, with the exact Spec 018 labels. Klinik Gigi Fiksi · Surabaya, "Diperiksa di ChatGPT dan Google AI Overview · 20 Oktober 2026", "Google: Surabaya · ChatGPT: Indonesia". **Skor:** two cards, ChatGPT 3 and 1 of 10, Google AI Overview shown in 6 of 10 with the clinic in 1 of 6. **Jawaban AI:** a real probe question, then both answers with sources, one marked "Dipakai sebagai sumber". **Klinik lain:** one list per source. **Perbaikan:** the priority card and "Topik yang belum menyebut Anda". All four states are drawn beside the mobile board |
-| S6 | Bukti, bukan janji | 4 cards in a row | 2×2 cards, icon beside the title | icon + 1 to 2 word title + one line (copy unchanged) |
-| S7 | **Yang Anda dapat dari satu audit.** (new) | One card split in two: the list left (header "Diperiksa di ChatGPT dan Google AI Overview", nine rows), the price block right | One card: the list, then the price block joined at its foot | The price sits in the line under the H2. Nine rows, each an icon box, a bold title and one line. Price block: Rp249.000; "Sekali bayar. Tanpa langganan. Tanpa biaya tambahan."; "Bayar setelah klinik Anda kami temukan."; **the form**; payment chips (names only); "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan." |
-| S8 | FAQ | 760px accordion | Full width | 11 rows, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq |
-| S9 | Final call to action | Centred, inline form 600px | Stacked form | Rp249.000 in the microcopy; founder contact line |
-| F | Footer | One row | Stacked | |
+| # | Section | Visual (same on both boards) |
+|---|---|---|
+| S0 | Menu | Logo · 4 anchors (desktop) or menu icon (mobile) · outline "Cek klinik saya". "Harga" jumps to the S7 heading |
+| S1 | Hero | **AI chat demo** with clinic tabs **Gigi · Kecantikan · Kulit · Anak · Lainnya**. "Lainnya" opens more types (Mata · Fisioterapi · Kandungan · THT · Klinik umum), drawn as an extra frame. Dashed "Klinik Anda?" slot. Floating "AI Visibility Report" card with two rows: **ChatGPT** "muncul di 3 dari 10" and **Google AI Overview** "muncul di 1 dari 6" |
+| S2 | Makin banyak pasien pilih dokter lewat AI. | Three number cards, Indonesia first: 2024 (Google AI Overview mulai muncul di pencarian di Indonesia), 47% (warga AS, rater8), 40 juta (OpenAI). One source line in the same order |
+| S3 | Satu pertanyaan pasien, dua jawaban AI. | The same question in a **ChatGPT** chat (with its "Tanyakan apa saja" input bar) and on a **Google** results page with the labelled **AI Overview** box (two source chips). The chat names Klinik A, B and C; the AI Overview box names Klinik A, D and E. Both end in the dashed "Klinik Anda?". The line ends "Klinik Anda termasuk?" |
+| S4 | Kami tanya AI persis seperti pasien Anda. | Three steps, each with its picture: the website field and the found clinic; the real probe question card ("implan gigi surabaya harga", "Dicari di Google", ±4.400 pencarian/bulan, data September 2026); the "Tim Nuave" email. Tags Gratis / Rp249.000. Caption under the steps |
+| S5 | Lihat apa kata AI tentang klinik Anda. | **The two-source report in 4 tabs** with the exact Spec 018 labels (Skor · Jawaban AI · Klinik lain · Perbaikan); all four states drawn beside the mobile board |
+| S6 | Bukti, bukan janji. | Four cards: Apa adanya · Bahasa pasien · Data publik · Batasnya jelas |
+| S7 | Yang Anda dapat dari satu audit. | One card: "AI Visibility Report · Diperiksa di ChatGPT dan Google AI Overview", nine rows with ticks, then the price block: Rp249.000, "Bayar setelah klinik Anda ketemu.", **the form**, payment chips, "Laporan siap dalam 15 menit setelah audit dimulai." Desktop: list left, price right; mobile: stacked |
+| S8 | FAQ | 11 rows, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq |
+| S9 | Final call to action | Rp249.000 in the microcopy; founder line "Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai." |
+| F | Footer | Logo, four links, © |
 
-**Extra frames (mobile board):**
+**Extra frames, mobile board:**
 - the fold check at 360×640;
-- the sticky bar in use (390×844, at the report), showing "Gratis dulu · Audit Rp249.000" and "Cek klinik saya";
-- the hero demo tabs Kecantikan, Kulit and Anak;
+- "Menu terbuka" (the opened menu);
+- the sticky bar in use (390×844, at the report);
+- the demo tabs Kecantikan, Kulit, Anak and Lainnya;
 - all four report tabs.
 
-**Desktop board:** the link-preview (OG) image at 1200×630: "Klinik Anda muncul di Google AI Overview?", the logo, and the search bar with the AI Overview box ending in "Klinik Anda?".
+**Extra frames, desktop board:**
+- the sticky bar in use (the top bar with "Gratis dulu · Audit Rp249.000" and the button, at the report);
+- the link-preview (OG) image at 1200×630: "Klinik Anda muncul di Google AI Overview?", the logo, and the search bar with the AI Overview box ending in "Klinik Anda?".
 
 **Interactions** (described in the notes, not drawn):
 - the demo tabs swap the question and the answers;
+- "Lainnya" opens the extra clinic types;
 - the report tabs swap the panel and the caption;
 - FAQ rows expand one at a time;
-- sticky bar:
-  - shows after the hero form leaves view;
-  - hides while any form is on screen or the keyboard is open;
+- the mobile menu icon opens the links;
+- sticky bars:
+  - show after the hero form leaves view;
+  - hide while any form is on screen or the keyboard is open;
   - a tap scrolls to the nearest form below;
-  - safe-area padding.
+  - safe-area padding on mobile.
 
 ## Fold check (mobile, 360×640)
 
@@ -92,40 +121,34 @@
 | Line (3 lines) | 283 | visible |
 | Field | 351 | visible |
 | Button | 413 | visible |
-| Microcopy (free step + Rp249.000) | **461** | **Pass** (growth limit: about 520) |
+| Microcopy (free check + Rp249.000) | **461** | **Pass** (growth limit: about 520) |
 | Three facts | 569 | visible (fold at 640) |
 
-At 390×844 the demo's top edge sits at 580px, so it still peeks above the fold.
+The demo's tab row starts just above the 640 fold. At 390×844 the demo's top edge sits at 580px, so it peeks above the fold.
 
 ## Length (to the end of the final call to action)
 
-| | Pixels | Screens | v2.0 | Target |
+| | Pixels | Screens | v2.1 | v2.0 |
 |---|---|---|---|---|
-| **Mobile** (390×844) | 7,700 | **9.1** | 7.5 | about 9 |
-| **Desktop** (1440×900) | 6,886 | **7.7** | 6.5 | none set |
+| **Mobile** (390×844) | 8,104 | **9.6** | 9.1 | 7.5 |
+| **Desktop** (1440×900) | 6,914 | **7.7** | 7.7 | 6.5 |
 
-| Section | Mobile px | Desktop px | Mobile v2.0 |
-|---|---|---|---|
-| S0 menu | 56 | 72 | 56 |
-| S1 hero | 1,068 | 602 | 1,018 |
-| S2 numbers | 644 | 598 | 624 |
-| S3 both places | 1,120 | 962 | 810 |
-| S4 cara kerja | 624 | 670 | 492 |
-| S5 laporan | 945 | 961 | 753 |
-| S6 bukti | 442 | 466 | 516 |
-| S7 value list + price | 1,394 | 1,116 | 763 |
-| S8 FAQ | 880 | 922 | 744 |
-| S9 final call to action | 527 | 517 | 551 |
+| Section | S0 | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Mobile px | 56 | 1,052 | 620 | 1,184 | 908 | 969 | 510 | 1,398 | 880 | 527 |
+| Desktop px | 72 | 622 | 590 | 962 | 686 | 961 | 466 | 1,116 | 922 | 517 |
 
-v2.1 adds about 1,370px on mobile (1.6 phone screens). Most of it is the new S3 picture (+310) and the value list (+631). S4, S5 and the FAQ grew with the two sources; S6 and S9 got shorter. If the page must be under 9 screens, the cheapest cuts are one greyed Google result on mobile (about 30px) or a shorter open FAQ answer (about 60px).
+Most of mobile's extra length is the step pictures in S4 (about +280px), now on both boards. If the page must get shorter, the cheapest cut is smaller step 1 and step 3 pictures, on both boards.
 
 ## Open items for Yasir (also in the notes)
 
-- Approve the exact delivery and refund words from Spec 018 (its Q-1). They appear in step 3, the price card, "Berapa lama?" and "Kalau ada masalah?".
-- Keep or remove the one "Ringkasan AI" mention in the FAQ "AI apa yang diuji?".
-- OK to draw a recognisable Google results page and ChatGPT chat in production (text labels only, no logos)?
-- At launch, let search engines in (`src/app/robots.ts` blocks the whole site while it is pre-release).
-- The wording of the founder contact line.
-- H1 variants for a later test: "Lihat apa kata AI tentang klinik Anda." and "Klinik Anda direkomendasikan AI?".
+- **Delivery wording:** decided by Yasir ("Laporan siap dalam 15 menit setelah audit dimulai."). Spec 018's promise text (R-23) still says "biasanya ... paling lama 24 jam"; align them before launch.
+- **Refund wording:** approve the spoken version in "Kalau ada masalah?".
+- **WhatsApp:** a WhatsApp number next to the founder line (Fable).
+- **"Ringkasan AI":** use it as the label inside the Google mock and the preview image (Fable's vote)? For now the mock keeps "AI Overview".
+- **Report label:** "Bisnis Anda" or "Klinik Anda" (a Spec 018 product question).
+- **Indonesian proof:** a "coba sendiri" line under S2, only after a quick test.
+- **H1 variant:** the optional "Pasien mulai tanya AI dulu, baru pilih klinik.".
+- **Launch:** let search engines in (`src/app/robots.ts` blocks the whole site while it is pre-release).
 
 Already decided: the rater8 figure stays, labelled as a US survey ("di AS").

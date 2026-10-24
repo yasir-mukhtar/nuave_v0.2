@@ -1,6 +1,6 @@
 # Clinic landing page: content strategy v2 (light)
 
-> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list), then to **v2.2** after his and Fable's review (see §11: one spoken register, his wording, mobile = desktop). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
+> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list), then to **v2.2** after his and Fable's review (see §11: one spoken register, his wording, mobile = desktop). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
 > Reading note: §1 to §9 are the v2.0 strategy as approved (Rp99.000, the old S3 and price section). Where they differ from §10 and §11, the later section wins.
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
@@ -266,7 +266,12 @@ The hero headline as recommended, the rater8 figure labelled as a US survey, the
 
 Yasir also asked for mobile and desktop to have exactly the same content and structure.
 
-**Where the review lives.** Yasir's notes and Fable's priority notes are Dev Mode annotations on the mobile frame. Fable's per-section cards sit in the blue column of the mobile frame, and the cross-page summary is in frame "03 · Review summary · Indonesian voice". Fable marked each card [P1] fix before build, [P2] worth doing, [P3] optional, or [Yasir] founder decision.
+**Where the review lives.** In Figma, on the page [Lofi v2.1 · review notes (Yasir + Fable)](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=48-2), which keeps the reviewed v2.1 frames:
+- Yasir's notes and Fable's priority notes are Dev Mode annotations on the mobile frame;
+- Fable's per-section cards sit in the blue column of the mobile frame;
+- the cross-page summary is in frame "03 · Review summary · Indonesian voice".
+
+v2.2 is on the page "Lofi v2.2 · Light". Fable marked each card [P1] fix before build, [P2] worth doing, [P3] optional, or [Yasir] founder decision.
 
 **Applied as written (Yasir).** The hero and final microcopy "Cek dulu apakah klinik Anda bisa ditemukan, gratis." keeps "Auditnya Rp249.000, sekali bayar." after it, so the first screen still shows the price. Also applied:
 - **More clinic types:** a "Lainnya" tab in the hero demo (Mata, Fisioterapi, Kandungan, THT, Klinik umum), so other clinic types see themselves;
